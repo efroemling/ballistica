@@ -59,7 +59,7 @@ void FrameDef::Reset() {
   // Update & grab the current settings.
   settings_snapshot_ = g_base->graphics->GetGraphicsSettingsSnapshot();
 
-  auto* settings = settings_snapshot_->Get();
+  auto* settings = settings_snapshot_->get();
   auto* client_context = g_base->graphics->client_context();
 
   app_time_microsecs_ = 0;

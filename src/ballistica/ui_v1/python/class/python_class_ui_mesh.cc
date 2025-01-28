@@ -43,7 +43,7 @@ auto PythonClassUIMesh::Create(const Object::Ref<base::MeshAsset>& mesh)
 
 auto PythonClassUIMesh::tp_repr(PythonClassUIMesh* self) -> PyObject* {
   BA_PYTHON_TRY;
-  base::MeshAsset* s = self->mesh_->Get();
+  base::MeshAsset* s = self->mesh_->get();
   return Py_BuildValue(
       "s", (std::string("<bauiv1.Mesh '") + (s->GetName()) + "'>").c_str());
   BA_PYTHON_CATCH;

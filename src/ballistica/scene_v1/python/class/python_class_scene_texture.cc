@@ -16,7 +16,7 @@ auto PythonClassSceneTexture::tp_repr(PythonClassSceneTexture* self)
   auto&& t = *(self->texture_);
   return Py_BuildValue(
       "s", (std::string("<bascenev1.Texture ")
-            + (t.Exists() ? ("\"" + t->name() + "\"") : "(empty ref)") + ">")
+            + (t.exists() ? ("\"" + t->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
 }
@@ -58,7 +58,7 @@ auto PythonClassSceneTexture::Create(SceneTexture* texture) -> PyObject* {
 }
 
 auto PythonClassSceneTexture::GetTexture(bool doraise) const -> SceneTexture* {
-  SceneTexture* texture = texture_->Get();
+  SceneTexture* texture = texture_->get();
   if (!texture && doraise) {
     throw Exception("Invalid Texture.", PyExcType::kNotFound);
   }

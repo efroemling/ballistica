@@ -90,12 +90,12 @@ void RendererGL::CheckGLError(const char* file, int line) {
     BA_PRECONDITION_FATAL(vendor);
     const char* renderer = (const char*)glGetString(GL_RENDERER);
     BA_PRECONDITION_FATAL(renderer);
-    g_core->Log(
-        LogName::kBaGraphics, LogLevel::kError,
-        "OpenGL Error at " + std::string(file) + " line " + std::to_string(line)
-            + ": " + GLErrorToString(err) + "\nrenderer: " + renderer
-            + "\nvendor: " + vendor + "\nversion: " + version
-            + "\ntime: " + std::to_string(g_core->GetAppTimeMillisecs()));
+    g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                "OpenGL Error at " + std::string(file) + " line "
+                    + std::to_string(line) + ": " + GLErrorToString(err)
+                    + "\nrenderer: " + renderer + "\nvendor: " + vendor
+                    + "\nversion: " + version
+                    + "\ntime: " + std::to_string(g_core->AppTimeMillisecs()));
   }
 }
 
@@ -827,21 +827,21 @@ void RendererGL::SyncGLState_() {
   assert(*index_size == 4 || *index_size == 2);                 \
   bool use_indices32 = (*index_size == 4);                      \
   if (use_indices32) {                                          \
-    indices32 = static_cast<MeshIndexBuffer32*>(buffer->Get()); \
+    indices32 = static_cast<MeshIndexBuffer32*>(buffer->get()); \
     assert(indices32&& indices32                                \
-           == dynamic_cast<MeshIndexBuffer32*>(buffer->Get())); \
+           == dynamic_cast<MeshIndexBuffer32*>(buffer->get())); \
   } else {                                                      \
-    indices16 = static_cast<MeshIndexBuffer16*>(buffer->Get()); \
+    indices16 = static_cast<MeshIndexBuffer16*>(buffer->get()); \
     assert(indices16&& indices16                                \
-           == dynamic_cast<MeshIndexBuffer16*>(buffer->Get())); \
+           == dynamic_cast<MeshIndexBuffer16*>(buffer->get())); \
   }                                                             \
   index_size++;                                                 \
   buffer++
 
 #define GET_BUFFER(TYPE, VAR)                              \
   assert(buffer != buffers.end());                         \
-  auto* VAR = static_cast<TYPE*>(buffer->Get());           \
-  assert(VAR&& VAR == dynamic_cast<TYPE*>(buffer->Get())); \
+  auto* VAR = static_cast<TYPE*>(buffer->get());           \
+  assert(VAR&& VAR == dynamic_cast<TYPE*>(buffer->get())); \
   buffer++
 
 // Takes all latest mesh data from the client side and applies it to our gl
@@ -3128,7 +3128,7 @@ void RendererGL::GenerateCameraBufferBlurPasses() {
   FramebufferObjectGL* src_fb =
       static_cast<RenderTargetGL*>(camera_render_target())->framebuffer();
   for (auto&& i : blur_buffers_) {
-    FramebufferObjectGL* fb = i.Get();
+    FramebufferObjectGL* fb = i.get();
     assert(fb);
     fb->Bind();
     SetViewport_(0, 0, fb->width(), fb->height());

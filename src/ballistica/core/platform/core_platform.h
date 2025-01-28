@@ -346,31 +346,31 @@ class CorePlatform {
   /// monotonic. For most purposes, AppTime values are preferable since
   /// their progression pauses during app suspension and they are 100%
   /// guaranteed to not go backwards.
-  auto GetTicks() const -> millisecs_t;
+  auto TimeSinceLaunchMillisecs() const -> millisecs_t;
 
   /// Return a raw current milliseconds value. It *should* be monotonic. It
   /// is relative to an undefined start point; only use it for time
   /// differences. Generally the AppTime values are preferable since their
   /// progression pauses during app suspension and they are 100% guaranteed
   /// to not go backwards.
-  static auto GetCurrentMillisecs() -> millisecs_t;
+  static auto TimeMonotonicMillisecs() -> millisecs_t;
 
   /// Return a raw current microseconds value. It *should* be monotonic. It
   /// is relative to an undefined start point; only use it for time
   /// differences. Generally the AppTime values are preferable since their
   /// progression pauses during app suspension and they are 100% guaranteed
   /// to not go backwards.
-  static auto GetCurrentMicrosecs() -> microsecs_t;
+  static auto TimeMonotonicMicrosecs() -> microsecs_t;
 
   /// Return a raw current seconds integer value. It *should* be monotonic.
   /// It is relative to an undefined start point; only use it for time
   /// differences. Generally the AppTime values are preferable since their
   /// progression pauses during app suspension and they are 100% guaranteed
   /// to not go backwards.
-  static auto GetCurrentWholeSeconds() -> int64_t;
+  static auto TimeMonotonicWholeSeconds() -> int64_t;
 
   /// Return seconds since the epoch; same as Python's time.time().
-  static auto GetSecondsSinceEpoch() -> double;
+  static auto TimeSinceEpochSeconds() -> double;
 
   static void SleepSeconds(seconds_t duration);
   static void SleepMillisecs(millisecs_t duration);

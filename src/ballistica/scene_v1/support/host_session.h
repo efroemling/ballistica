@@ -21,7 +21,7 @@ class HostSession : public Session {
   ~HostSession() override;
 
   // Return a borrowed python ref.
-  auto GetSessionPyObj() const -> PyObject* { return session_py_obj_.Get(); }
+  auto GetSessionPyObj() const -> PyObject* { return session_py_obj_.get(); }
 
   // Set focus to a Context (it must belong to this session).
   void SetForegroundHostActivity(HostActivity* sgc);
@@ -74,11 +74,11 @@ class HostSession : public Session {
   auto GetHostSession() -> HostSession* override;
   auto GetMutableScene() -> Scene* override;
   auto scene() -> Scene* {
-    assert(scene_.Exists());
-    return scene_.Get();
+    assert(scene_.exists());
+    return scene_.get();
   }
   void RegisterContextCall(base::PythonContextCall* call) override;
-  auto GetSceneStream() const -> SessionStream* { return output_stream_.Get(); }
+  auto GetSceneStream() const -> SessionStream* { return output_stream_.get(); }
   auto is_main_menu() const -> bool {
     return is_main_menu_;
   }  // fixme remove this

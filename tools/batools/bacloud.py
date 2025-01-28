@@ -35,6 +35,8 @@ TOOL_NAME = 'bacloud'
 
 TIMEOUT_SECONDS = 60 * 5
 
+VERBOSE = os.environ.get('BACLOUD_VERBOSE') == '1'
+
 # Server we talk to (can override via env var).
 BACLOUD_SERVER = os.getenv('BACLOUD_SERVER', 'ballistica.net')
 
@@ -154,33 +156,44 @@ class App:
             ),
         }
 
-        # Trying urllib for comparison (note that this doesn't support
-        # files arg so not actually production ready)
-        if bool(False):
-            import urllib.request
-            import urllib.parse
+        try:
+            # Trying urllib for comparison (note that this doesn't support
+            # files arg so not actually production ready)
+            if bool(False):
+                import urllib.request
+                import urllib.parse
 
-            with urllib.request.urlopen(
-                urllib.request.Request(
-                    url, urllib.parse.urlencode(rdata).encode(), headers
-                )
-            ) as raw_response:
-                if raw_response.getcode() != 200:
-                    raise RuntimeError('Error talking to server')
-                response_content = raw_response.read().decode()
+                with urllib.request.urlopen(
+                    urllib.request.Request(
+                        url, urllib.parse.urlencode(rdata).encode(), headers
+                    )
+                ) as raw_response:
+                    if raw_response.getcode() != 200:
+                        raise RuntimeError('Error talking to server')
+                    response_content = raw_response.read().decode()
 
-        # Using requests module.
-        else:
-            with requests.post(
-                url,
-                headers=headers,
-                data=rdata,
-                files=files,
-                timeout=TIMEOUT_SECONDS,
-            ) as response_raw:
-                response_raw.raise_for_status()
-                assert isinstance(response_raw.content, bytes)
-                response_content = response_raw.content.decode()
+            # Using requests module.
+            else:
+                with requests.post(
+                    url,
+                    headers=headers,
+                    data=rdata,
+                    files=files,
+                    timeout=TIMEOUT_SECONDS,
+                ) as response_raw:
+                    response_raw.raise_for_status()
+                    assert isinstance(response_raw.content, bytes)
+                    response_content = response_raw.content.decode()
+
+        except Exception as exc:
+            if VERBOSE:
+                import traceback
+
+                traceback.print_exc()
+            raise CleanError(
+                'Unable to talk to bacloud server.'
+                ' Set env-var BACLOUD_VERBOSE=1 for details.'
+            ) from exc
 
         assert response_content is not None
         response = dataclass_from_json(ResponseData, response_content)

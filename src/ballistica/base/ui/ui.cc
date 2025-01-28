@@ -370,7 +370,7 @@ void UI::SetUIInputDevice(InputDevice* input_device) {
   ui_input_device_ = input_device;
 
   // So they dont get stolen from immediately.
-  last_input_device_use_time_ = g_core->GetAppTimeMillisecs();
+  last_input_device_use_time_ = g_core->AppTimeMillisecs();
 }
 
 void UI::Reset() {
@@ -418,7 +418,7 @@ void UI::LanguageChanged() {
 
 auto UI::GetUIInputDevice() const -> InputDevice* {
   assert(g_base->InLogicThread());
-  return ui_input_device_.Get();
+  return ui_input_device_.get();
 }
 
 auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
@@ -432,7 +432,7 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
     return nullptr;
   }
 
-  millisecs_t time = g_core->GetAppTimeMillisecs();
+  millisecs_t time = g_core->AppTimeMillisecs();
 
   bool print_menu_owner{};
   ui_v1::Widget* ret_val;
@@ -557,7 +557,7 @@ auto UI::InDevConsoleButton_(float x, float y) const -> bool {
 }
 
 void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
-  if (!dev_console_button_txt_.Exists()) {
+  if (!dev_console_button_txt_.exists()) {
     dev_console_button_txt_ = Object::New<TextGroup>();
     dev_console_button_txt_->SetText("dev");
   }

@@ -27,20 +27,22 @@ class AppMode:
         """Return whether this mode can handle the provided intent.
 
         For this to return True, the AppMode must claim to support the
-        provided intent (via its _supports_intent() method) AND the
+        provided intent (via its _can_handle_intent() method) AND the
         AppExperience associated with the AppMode must be supported by
         the current app and runtime environment.
         """
-        # TODO: check AppExperience.
-        return cls._supports_intent(intent)
+        # TODO: check AppExperience against current environment.
+        return cls._can_handle_intent(intent)
 
     @classmethod
-    def _supports_intent(cls, intent: AppIntent) -> bool:
+    def _can_handle_intent(cls, intent: AppIntent) -> bool:
         """Return whether our mode can handle the provided intent.
 
-        AppModes should override this to define what they can handle.
-        Note that AppExperience does not have to be considered here; that
-        is handled automatically by the can_handle_intent() call."""
+        AppModes should override this to communicate what they can
+        handle. Note that AppExperience does not have to be considered
+        here; that is handled automatically by the can_handle_intent()
+        call.
+        """
         raise NotImplementedError('AppMode subclasses must override this.')
 
     def handle_intent(self, intent: AppIntent) -> None:

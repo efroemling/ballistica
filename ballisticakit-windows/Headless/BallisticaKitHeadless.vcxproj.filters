@@ -1726,6 +1726,12 @@
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\scroll_widget.h">
       <Filter>ballistica\ui_v1\widget</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\spinner_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\spinner_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\stack_widget.cc">
       <Filter>ballistica\ui_v1\widget</Filter>
     </ClCompile>

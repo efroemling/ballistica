@@ -22,11 +22,11 @@ class MeshIndexedBase : public Mesh {
   }
 
   void SetIndexData(const Object::Ref<MeshIndexBuffer32>& data) {
-    assert(data.Exists() && !data->elements.empty());
+    assert(data.exists() && !data->elements.empty());
     // unlike vertex data, index data might often remain the same, so lets test
     // for that and avoid some gl updates..
-    if (index_data_32_.Exists()) {
-      assert(data.Exists() && index_data_32_.Get());
+    if (index_data_32_.exists()) {
+      assert(data.exists() && index_data_32_.get());
       if (data->elements == index_data_32_->elements) {
         return;  // just keep our existing one
       }
@@ -39,11 +39,11 @@ class MeshIndexedBase : public Mesh {
   }
 
   void SetIndexData(const Object::Ref<MeshIndexBuffer16>& data) {
-    assert(data.Exists() && !data->elements.empty());
+    assert(data.exists() && !data->elements.empty());
     // unlike vertex data, index data might often remain the same, so lets test
     // for that and avoid some gl updates..
-    if (index_data_16_.Exists()) {
-      assert(index_data_16_.Get());
+    if (index_data_16_.exists()) {
+      assert(index_data_16_.get());
       if (data->elements == index_data_16_->elements) {
         return;  // just keep our existing one
       }
@@ -64,9 +64,9 @@ class MeshIndexedBase : public Mesh {
   auto IsValid() const -> bool override {
     switch (index_data_size()) {
       case 4:
-        return (index_data_32_.Exists() && !index_data_32_->elements.empty());
+        return (index_data_32_.exists() && !index_data_32_->elements.empty());
       case 2:
-        return (index_data_16_.Exists() && !index_data_16_->elements.empty());
+        return (index_data_16_.exists() && !index_data_16_->elements.empty());
       default:
         return false;
     }
@@ -87,9 +87,9 @@ class MeshIndexedBase : public Mesh {
   auto GetIndexData() const -> MeshBufferBase* {
     switch (index_data_size()) {
       case 4:
-        return index_data_32_.Get();
+        return index_data_32_.get();
       case 2:
-        return index_data_16_.Get();
+        return index_data_16_.get();
       default:
         throw Exception();
     }

@@ -56,7 +56,7 @@ auto ClientSession::DoesFillScreen() const -> bool {
   // Look for any scene that has something that covers the background.
   // NOLINTNEXTLINE(readability-use-anyofallof)
   for (const auto& scene : scenes_) {
-    if ((scene.Exists()) && (*scene).has_bg_cover()) {
+    if ((scene.exists()) && (*scene).has_bg_cover()) {
       return true;
     }
   }
@@ -70,7 +70,7 @@ void ClientSession::Draw(base::FrameDef* f) {
     // in a host-session we draw session first followed by activities
     // (that should be the same order in both cases, but just something to keep
     // in mind...)
-    if (i.Exists()) {
+    if (i.exists()) {
       i->Draw(f);
     }
   }
@@ -249,7 +249,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
             offset += 4;
             int body_count = current_cmd_[offset++];
             Node* n =
-                (node_id < nodes_.size()) ? nodes_[node_id].Get() : nullptr;
+                (node_id < nodes_.size()) ? nodes_[node_id].get() : nullptr;
             for (int j = 0; j < body_count; j++) {
               int bodyid = current_cmd_[offset++];
               uint16_t body_data_len;
@@ -319,7 +319,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           if (static_cast<int>(scenes_.size()) < (id + 1)) {
             scenes_.resize(static_cast<size_t>(id) + 1);
           }
-          assert(!scenes_[id].Exists());
+          assert(!scenes_[id].exists());
           scenes_[id] = Object::New<Scene>(starttime);
           scenes_[id]->set_stream_id(id);
           break;
@@ -358,7 +358,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           if (static_cast<int>(nodes_.size()) < (id + 1)) {
             nodes_.resize(static_cast<size_t>(id) + 1);
           }
-          assert(!nodes_[id].Exists());
+          assert(!nodes_[id].exists());
           {
             base::ScopedSetContext ssc(this);
             nodes_[id] = scene->NewNode(node_type->name(), "", nullptr);
@@ -416,7 +416,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           if (static_cast<int>(materials_.size()) < (id + 1)) {
             materials_.resize(static_cast<size_t>(id) + 1);
           }
-          assert(!materials_[id].Exists());
+          assert(!materials_[id].exists());
           materials_[id] = Object::New<Material>("", scene);
           materials_[id]->stream_id_ = id;
           break;
@@ -459,7 +459,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           if (static_cast<int>(textures_.size()) < (id + 1)) {
             textures_.resize(static_cast<size_t>(id) + 1);
           }
-          assert(!textures_[id].Exists());
+          assert(!textures_[id].exists());
           textures_[id] = Object::New<SceneTexture>(name, scene);
           textures_[id]->set_stream_id(id);
           break;
@@ -485,7 +485,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           if (static_cast<int>(meshes_.size()) < (id + 1)) {
             meshes_.resize(static_cast<size_t>(id) + 1);
           }
-          assert(!meshes_[id].Exists());
+          assert(!meshes_[id].exists());
           meshes_[id] = Object::New<SceneMesh>(name, scene);
           meshes_[id]->set_stream_id(id);
           break;
@@ -510,7 +510,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           if (static_cast<int>(sounds_.size()) < (id + 1)) {
             sounds_.resize(static_cast<size_t>(id) + 1);
           }
-          assert(!sounds_[id].Exists());
+          assert(!sounds_[id].exists());
           sounds_[id] = Object::New<SceneSound>(name, scene);
           sounds_[id]->set_stream_id(id);
           break;
@@ -536,7 +536,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           if (static_cast<int>(collision_meshes_.size()) < (id + 1)) {
             collision_meshes_.resize(static_cast<size_t>(id) + 1);
           }
-          assert(!collision_meshes_[id].Exists());
+          assert(!collision_meshes_[id].exists());
           collision_meshes_[id] = Object::New<SceneCollisionMesh>(name, scene);
           collision_meshes_[id]->set_stream_id(id);
           break;
@@ -551,7 +551,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           int id = ReadInt32();
           Node* n = GetNode(id);
           n->scene()->DeleteNode(n);
-          assert(!nodes_[id].Exists());
+          assert(!nodes_[id].exists());
           break;
         }
         case SessionCommand::kSetNodeAttrFloat: {
@@ -883,7 +883,7 @@ ClientSession::~ClientSession() = default;
 void ClientSession::OnScreenSizeChange() {
   // Let all our scenes know.
   for (auto&& i : scenes_) {
-    if (Scene* sg = i.Get()) {
+    if (Scene* sg = i.get()) {
       sg->OnScreenSizeChange();
     }
   }
@@ -892,7 +892,7 @@ void ClientSession::OnScreenSizeChange() {
 void ClientSession::LanguageChanged() {
   // Let all our scenes know.
   for (auto&& i : scenes_) {
-    if (Scene* sg = i.Get()) {
+    if (Scene* sg = i.get()) {
       sg->LanguageChanged();
     }
   }
@@ -902,7 +902,7 @@ auto ClientSession::GetScene(int id) const -> Scene* {
   if (id < 0 || id >= static_cast<int>(scenes_.size())) {
     throw Exception("Invalid scene id");
   }
-  Scene* sg = scenes_[id].Get();
+  Scene* sg = scenes_[id].get();
   if (!sg) {
     throw Exception("Invalid scene id");
   }
@@ -912,7 +912,7 @@ auto ClientSession::GetNode(int id) const -> Node* {
   if (id < 0 || id >= static_cast<int>(nodes_.size())) {
     throw Exception("Invalid node (out of range)");
   }
-  Node* n = nodes_[id].Get();
+  Node* n = nodes_[id].get();
   if (!n) {
     throw Exception("Invalid node id (empty slot)");
   }
@@ -922,7 +922,7 @@ auto ClientSession::GetMaterial(int id) const -> Material* {
   if (id < 0 || id >= static_cast<int>(materials_.size())) {
     throw Exception("Invalid material (out of range)");
   }
-  Material* n = materials_[id].Get();
+  Material* n = materials_[id].get();
   if (!n) {
     throw Exception("Invalid material id (empty slot)");
   }
@@ -932,7 +932,7 @@ auto ClientSession::GetTexture(int id) const -> SceneTexture* {
   if (id < 0 || id >= static_cast<int>(textures_.size())) {
     throw Exception("Invalid texture (out of range)");
   }
-  SceneTexture* n = textures_[id].Get();
+  SceneTexture* n = textures_[id].get();
   if (!n) {
     throw Exception("Invalid texture id (empty slot)");
   }
@@ -942,7 +942,7 @@ auto ClientSession::GetMesh(int id) const -> SceneMesh* {
   if (id < 0 || id >= static_cast<int>(meshes_.size())) {
     throw Exception("Invalid mesh (out of range)");
   }
-  SceneMesh* n = meshes_[id].Get();
+  SceneMesh* n = meshes_[id].get();
   if (!n) {
     throw Exception("Invalid mesh id (empty slot)");
   }
@@ -952,7 +952,7 @@ auto ClientSession::GetSound(int id) const -> SceneSound* {
   if (id < 0 || id >= static_cast<int>(sounds_.size())) {
     throw Exception("Invalid sound (out of range)");
   }
-  SceneSound* n = sounds_[id].Get();
+  SceneSound* n = sounds_[id].get();
   if (!n) {
     throw Exception("Invalid sound id (empty slot)");
   }
@@ -962,7 +962,7 @@ auto ClientSession::GetCollisionMesh(int id) const -> SceneCollisionMesh* {
   if (id < 0 || id >= static_cast<int>(collision_meshes_.size())) {
     throw Exception("Invalid collision_mesh (out of range)");
   }
-  SceneCollisionMesh* n = collision_meshes_[id].Get();
+  SceneCollisionMesh* n = collision_meshes_[id].get();
   if (!n) {
     throw Exception("Invalid collision_mesh id (empty slot)");
   }
@@ -1015,7 +1015,7 @@ void ClientSession::HandleSessionMessage(const std::vector<uint8_t>& buffer) {
           // let's also use this opportunity to graph our command-buffer size
           // for network debugging... if (NetGraph *graph =
           // g_graphics->GetClientSessionStepBufferGraph()) {
-          //   graph->addSample(GetAppTimeMillisecs(), steps_on_list_);
+          //   graph->addSample(AppTimeMillisecs(), steps_on_list_);
           // }
 
           break;
@@ -1074,7 +1074,7 @@ void ClientSession::GetCorrectionMessages(
     bool blend, std::vector<std::vector<uint8_t> >* messages) {
   std::vector<uint8_t> message;
   for (auto&& i : scenes_) {
-    if (Scene* sg = i.Get()) {
+    if (Scene* sg = i.get()) {
       message = sg->GetCorrectionMessage(blend);
       // A correction packet of size 4 is empty; ignore it.
       if (message.size() > 4) {
@@ -1087,7 +1087,7 @@ void ClientSession::GetCorrectionMessages(
 void ClientSession::DumpFullState(SessionStream* out) {
   // Add all scenes.
   for (auto&& i : scenes()) {
-    if (Scene* sg = i.Get()) {
+    if (Scene* sg = i.get()) {
       sg->Dump(out);
     }
   }
@@ -1096,36 +1096,36 @@ void ClientSession::DumpFullState(SessionStream* out) {
   // (but *not* their components, which may reference the nodes that we haven't
   // made yet)
   for (auto&& i : materials()) {
-    if (Material* m = i.Get()) {
+    if (Material* m = i.get()) {
       out->AddMaterial(m);
     }
   }
 
   // Add all media.
   for (auto&& i : textures()) {
-    if (SceneTexture* t = i.Get()) {
+    if (SceneTexture* t = i.get()) {
       out->AddTexture(t);
     }
   }
   for (auto&& i : meshes()) {
-    if (SceneMesh* s = i.Get()) {
+    if (SceneMesh* s = i.get()) {
       out->AddMesh(s);
     }
   }
   for (auto&& i : sounds()) {
-    if (SceneSound* s = i.Get()) {
+    if (SceneSound* s = i.get()) {
       out->AddSound(s);
     }
   }
   for (auto&& i : collision_meshes()) {
-    if (SceneCollisionMesh* s = i.Get()) {
+    if (SceneCollisionMesh* s = i.get()) {
       out->AddCollisionMesh(s);
     }
   }
 
   // Add all scene nodes.
   for (auto&& i : scenes()) {
-    if (Scene* sg = i.Get()) {
+    if (Scene* sg = i.get()) {
       sg->DumpNodes(out);
     }
   }
@@ -1133,7 +1133,7 @@ void ClientSession::DumpFullState(SessionStream* out) {
   // Now fill out materials since we know all the nodes/etc. that they
   // refer to exist.
   for (auto&& i : materials()) {
-    if (Material* m = i.Get()) {
+    if (Material* m = i.get()) {
       m->DumpComponents(out);
     }
   }

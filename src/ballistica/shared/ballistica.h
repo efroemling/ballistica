@@ -49,8 +49,8 @@ const int kBaseVirtualResY = 720;
 
 // Our 'small' res which is used for 'small' ui mode only. This matches
 // the 19.5:9 aspect ratio common on modern smartphones (as of 2024).
-const int kBaseVirtualResSmallX = 1300;
-const int kBaseVirtualResSmallY = 600;
+// const int kBaseVirtualResSmallX = 1300;
+// const int kBaseVirtualResSmallY = 600;
 
 // Magic numbers at the start of our file types.
 const int kBrpFileID = 83749;

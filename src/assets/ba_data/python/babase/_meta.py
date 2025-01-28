@@ -327,7 +327,11 @@ class DirectoryScan:
         meta_lines = {
             lnum: l[1:].split()
             for lnum, l in enumerate(flines)
-            if '# ba_meta ' in l
+            # Do a simple 'in' check for speed but then make sure its
+            # also at the beginning of the line. This allows disabling
+            # meta-lines and avoids false positives from code that
+            # wrangles them.
+            if ('# ba_meta' in l and l.strip().startswith('# ba_meta '))
         }
         is_top_level = len(subpath.parts) <= 1
         required_api = self._get_api_requirement(

@@ -210,7 +210,7 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
   assert(g_core->InMainThread());
 
   while (!done_) {
-    microsecs_t cycle_start_time = g_core->GetAppTimeMicrosecs();
+    microsecs_t cycle_start_time = g_core->AppTimeMicrosecs();
 
     // Events.
     SDL_Event event;
@@ -274,7 +274,7 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
 
   // Normally we just calc when our next draw should happen and sleep 'til
   // then.
-  microsecs_t now = g_core->GetAppTimeMicrosecs();
+  microsecs_t now = g_core->AppTimeMicrosecs();
   auto used_max_fps = max_fps_;
   millisecs_t millisecs_per_frame = 1000000 / used_max_fps;
 
@@ -319,7 +319,7 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
   // Maintain an 'oversleep' amount to compensate for the timer not being
   // exact. This should keep us exactly at our target frame-rate in the
   // end.
-  now = g_core->GetAppTimeMicrosecs();
+  now = g_core->AppTimeMicrosecs();
   oversleep_ = now - target_time;
 
   // Prevent oversleep from compensating by more than a few millisecs per
@@ -438,7 +438,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       break;
 
     case SDL_QUIT:
-      if (g_core->GetAppTimeSeconds() - last_windowevent_close_time_ < 0.1) {
+      if (g_core->AppTimeSeconds() - last_windowevent_close_time_ < 0.1) {
         // If they hit the window close button, skip the confirm.
         g_base->QuitApp(false);
       } else {
@@ -459,7 +459,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
         case SDL_WINDOWEVENT_CLOSE: {
           // Simply note that this happened. We use this to adjust our
           // SDL_QUIT behavior (quit is called right after this).
-          last_windowevent_close_time_ = g_core->GetAppTimeSeconds();
+          last_windowevent_close_time_ = g_core->AppTimeSeconds();
           break;
         }
 
@@ -671,8 +671,8 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
     // A reasonable default window size.
     int width, height;
     if (g_base->ui->scale() == UIScale::kSmall) {
-      width = static_cast<int>(kBaseVirtualResSmallX * 0.8f);
-      height = static_cast<int>(kBaseVirtualResSmallY * 0.8f);
+      width = static_cast<int>(1300.0f * 0.8f);
+      height = static_cast<int>(600.0f * 0.8f);
     } else {
       width = static_cast<int>(kBaseVirtualResX * 0.8f);
       height = static_cast<int>(kBaseVirtualResY * 0.8f);

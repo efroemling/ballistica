@@ -5,7 +5,6 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 
@@ -22,7 +21,7 @@ class AppTimer : public Object {
   template <typename F>
   static auto New(seconds_t length, bool repeat, const F& lambda) {
     return Object::New<AppTimer>(length, repeat,
-                                 NewLambdaRunnable<F>(lambda).Get());
+                                 NewLambdaRunnable<F>(lambda).get());
   }
 
   void SetLength(seconds_t length) {

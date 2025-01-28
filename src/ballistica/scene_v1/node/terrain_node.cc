@@ -102,9 +102,9 @@ TerrainNode::~TerrainNode() {
   // If we've got a collision-mesh, this is a good time to mark
   // it as used since it may be getting opened up to pruning
   // without our reference.
-  if (collision_mesh_.Exists()) {
+  if (collision_mesh_.exists()) {
     collision_mesh_->collision_mesh_data()->set_last_used_time(
-        g_core->GetAppTimeMillisecs());
+        g_core->AppTimeMillisecs());
   }
 }
 
@@ -121,23 +121,23 @@ void TerrainNode::set_mesh(SceneMesh* val) { mesh_ = val; }
 
 void TerrainNode::set_collision_mesh(SceneCollisionMesh* val) {
   // if we had an old one, mark its last-used time so caching works properly..
-  if (collision_mesh_.Exists()) {
+  if (collision_mesh_.exists()) {
     collision_mesh_->collision_mesh_data()->set_last_used_time(
-        g_core->GetAppTimeMillisecs());
+        g_core->AppTimeMillisecs());
   }
   collision_mesh_ = val;
 
   // remove any existing..
   RemoveFromBGDynamics();
 
-  if (collision_mesh_.Exists()) {
+  if (collision_mesh_.exists()) {
     uint32_t flags = bumper_ ? RigidBody::kIsBumper : 0;
     flags |= RigidBody::kIsTerrain;
     body_ = Object::New<RigidBody>(
         0, &terrain_part_, RigidBody::Type::kGeomOnly,
         RigidBody::Shape::kTrimesh, RigidBody::kCollideBackground,
         RigidBody::kCollideAll ^ RigidBody::kCollideBackground,
-        collision_mesh_.Get(), flags);
+        collision_mesh_.get(), flags);
     body_->set_can_cause_impact_damage(true);
 
     // also ship it to the BG-Dynamics thread..
@@ -191,7 +191,7 @@ void TerrainNode::SetReflection(const std::string& val) {
 
 void TerrainNode::SetBumper(bool val) {
   bumper_ = val;
-  if (body_.Exists()) {
+  if (body_.exists()) {
     uint32_t is_bumper{RigidBody::kIsBumper};
     if (bumper_) {
       body_->set_flags(body_->flags() | is_bumper);  // on
@@ -202,9 +202,9 @@ void TerrainNode::SetBumper(bool val) {
 }
 
 void TerrainNode::AddToBGDynamics() {
-  assert(bg_dynamics_collision_mesh_ == nullptr && collision_mesh_.Exists()
+  assert(bg_dynamics_collision_mesh_ == nullptr && collision_mesh_.exists()
          && !bumper_ && affect_bg_dynamics_);
-  bg_dynamics_collision_mesh_ = collision_mesh_.Get();
+  bg_dynamics_collision_mesh_ = collision_mesh_.get();
 #if !BA_HEADLESS_BUILD
   g_base->bg_dynamics->AddTerrain(
       bg_dynamics_collision_mesh_->collision_mesh_data());
@@ -222,7 +222,7 @@ void TerrainNode::RemoveFromBGDynamics() {
 }
 
 void TerrainNode::Draw(base::FrameDef* frame_def) {
-  if (!mesh_.Exists()) {
+  if (!mesh_.exists()) {
     return;
   }
   if (vr_only_ && !g_core->vr_mode()) {
@@ -232,7 +232,7 @@ void TerrainNode::Draw(base::FrameDef* frame_def) {
                           : background_ ? frame_def->beauty_pass_bg()
                                         : frame_def->beauty_pass());
   c.SetWorldSpace(true);
-  if (color_texture_.Exists()) {
+  if (color_texture_.exists()) {
     c.SetTexture(color_texture_->texture_data());
   }
   if (lighting_) {

@@ -30,7 +30,7 @@ void AssetsServer::OnAppStartInThread_() {
   // Ask our thread to give us periodic processing time (close to but not
   // *exactly* one second; try to avoid aliasing with similar updates).
   process_timer_ = event_loop()->NewTimer(
-      987 * 1000, true, NewLambdaRunnable([this] { Process_(); }).Get());
+      987 * 1000, true, NewLambdaRunnable([this] { Process_(); }).get());
 }
 
 void AssetsServer::PushPendingPreload(Object::Ref<Asset>* asset_ref_ptr) {

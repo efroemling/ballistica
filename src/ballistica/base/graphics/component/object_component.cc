@@ -10,12 +10,12 @@ void ObjectComponent::WriteConfig() {
   // If they didn't give us a texture, just use a blank white texture.
   // This is not a common case and easier than forking all our shaders to
   // create non-textured versions.
-  if (!texture_.Exists()) {
+  if (!texture_.exists()) {
     texture_ = g_base->assets->SysTexture(SysTextureID::kWhite);
   }
   if (reflection_ == ReflectionType::kNone) {
     assert(!double_sided_);               // Unsupported combo.
-    assert(!colorize_texture_.Exists());  // Unsupported combo.
+    assert(!colorize_texture_.exists());  // Unsupported combo.
     assert(!have_color_add_);             // Unsupported combo.
     if (light_shadow_ == LightShadowType::kNone) {
       if (transparent_) {
@@ -47,7 +47,7 @@ void ObjectComponent::WriteConfig() {
   } else {
     if (light_shadow_ == LightShadowType::kNone) {
       assert(!double_sided_);               // Unsupported combo.
-      assert(!colorize_texture_.Exists());  // Unsupported combo.
+      assert(!colorize_texture_.exists());  // Unsupported combo.
       if (transparent_) {
         assert(!world_space_);  // Unsupported combo.
         if (have_color_add_) {
@@ -87,7 +87,7 @@ void ObjectComponent::WriteConfig() {
       // With add.
       assert(!transparent_);  // Unsupported combo.
       if (!have_color_add_) {
-        if (colorize_texture_.Exists()) {
+        if (colorize_texture_.exists()) {
           assert(!double_sided_);  // Unsupported combo.
           assert(!world_space_);   // Unsupported combo.
           if (do_colorize_2_) {
@@ -148,7 +148,7 @@ void ObjectComponent::WriteConfig() {
       } else {
         assert(!double_sided_);  // Unsupported combo.
         assert(!world_space_);   // Unsupported config.
-        if (colorize_texture_.Exists()) {
+        if (colorize_texture_.exists()) {
           if (do_colorize_2_) {
             ConfigForShading(
                 ShadingType::kObjectReflectLightShadowAddColorized2);

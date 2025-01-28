@@ -24,8 +24,8 @@ class MeshIndexedStaticDynamic : public MeshIndexedBase {
     dynamic_data_->state = ++dynamic_state_;
   }
   auto IsValid() const -> bool override {
-    if (!static_data_.Exists() || static_data_->elements.empty()
-        || !dynamic_data_.Exists() || dynamic_data_->elements.empty()
+    if (!static_data_.exists() || static_data_->elements.empty()
+        || !dynamic_data_.exists() || dynamic_data_->elements.empty()
         || !MeshIndexedBase::IsValid()) {
       return false;
     }

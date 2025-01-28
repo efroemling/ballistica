@@ -1129,6 +1129,74 @@ def test_soft_default() -> None:
     assert dataclass_from_dict(_TestClassE8, todict) == orig
 
 
+def test_enum_fallback() -> None:
+    """Test enum_fallback IOAttr values."""
+    # pylint: disable=missing-class-docstring
+    # pylint: disable=unused-variable
+
+    @ioprepped
+    @dataclass
+    class TestClass:
+
+        class TestEnum1(Enum):
+            VAL1 = 'val1'
+            VAL2 = 'val2'
+            VAL3 = 'val3'
+
+        class TestEnum2(Enum):
+            VAL1 = 'val1'
+            VAL2 = 'val2'
+            VAL3 = 'val3'
+
+        enum1val: Annotated[TestEnum1, IOAttrs('e1')]
+        enum2val: Annotated[
+            TestEnum2, IOAttrs('e2', enum_fallback=TestEnum2.VAL1)
+        ]
+
+    # All valid values; should work.
+    _obj = dataclass_from_dict(TestClass, {'e1': 'val1', 'e2': 'val1'})
+
+    # Bad Enum1 value; should fail since there's no fallback.
+    with pytest.raises(ValueError):
+        _obj = dataclass_from_dict(TestClass, {'e1': 'val4', 'e2': 'val1'})
+
+    # Bad Enum2 value; the attr provides a fallback but still should
+    # fail since we didn't explicitly specify lossy loading.
+    with pytest.raises(ValueError):
+        obj = dataclass_from_dict(TestClass, {'e1': 'val1', 'e2': 'val4'})
+
+    # Bad Enum2 value; should successfully substitute our fallback value
+    # since we specify lossy loading.
+    obj_w_fb = dataclass_from_dict(
+        TestClass, {'e1': 'val1', 'e2': 'val4'}, lossy=True
+    )
+    assert obj_w_fb.enum2val is obj_w_fb.TestEnum2.VAL1
+
+    # Allowing fallbacks means data might be lost on any load, so we
+    # disallow writes for such data to be safe.
+    with pytest.raises(ValueError):
+        dataclass_to_dict(obj_w_fb)
+
+    # Using wrong type as enum_fallback should fail.
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class TestClass2:
+
+            class TestEnum1(Enum):
+                VAL1 = 'val1'
+                VAL2 = 'val2'
+
+            class TestEnum2(Enum):
+                VAL1 = 'val1'
+                VAL2 = 'val2'
+
+            enum1val: Annotated[
+                TestEnum1, IOAttrs('e1', enum_fallback=TestEnum2.VAL1)
+            ]
+
+
 class MTTestTypeID(Enum):
     """IDs for our multi-type class."""
 
@@ -1460,56 +1528,295 @@ def test_multi_type_2() -> None:
         val3 = dataclass_from_dict(MTTest2Base, indict3)
 
 
-def test_enum_fallback() -> None:
-    """Test enum_fallback IOAttr values."""
-    # pylint: disable=missing-class-docstring
-    # pylint: disable=unused-variable
+# Define 2 variations of Test3 - an 'old' and 'new' one - to simulate
+# older/newer versions of the same schema.
+class MTTest3OldTypeID(Enum):
+    """IDs for our multi-type class."""
 
-    @ioprepped
-    @dataclass
-    class TestClass:
+    CLASS_1 = 'm1'
+    CLASS_2 = 'm2'
 
-        class TestEnum1(Enum):
-            VAL1 = 'val1'
-            VAL2 = 'val2'
-            VAL3 = 'val3'
 
-        class TestEnum2(Enum):
-            VAL1 = 'val1'
-            VAL2 = 'val2'
-            VAL3 = 'val3'
+class MTTest3OldBase(IOMultiType[MTTest3OldTypeID]):
+    """Our multi-type class.
 
-        enum1val: Annotated[TestEnum1, IOAttrs('e1')]
-        enum2val: Annotated[
-            TestEnum2, IOAttrs('e2', enum_fallback=TestEnum2.VAL1)
-        ]
+    These top level multi-type classes are special parent classes
+    that know about all of their child classes and how to serialize
+    & deserialize them using explicit type ids. We can then use the
+    parent class in annotations and dataclassio will do the right thing.
+    Useful for stuff like Message classes where we may want to store a
+    bunch of different types of them into one place.
+    """
 
-    # All valid values; should work.
-    _obj = dataclass_from_dict(TestClass, {'e1': 'val1', 'e2': 'val1'})
+    @override
+    @classmethod
+    def get_type(cls, type_id: MTTest3OldTypeID) -> type[MTTest3OldBase]:
+        """Return the subclass for each of our type-ids."""
 
-    # Bad Enum1 value; should fail since there's no fallback.
+        # This uses assert_never() to ensure we cover all cases in the
+        # enum. Though this is less efficient than looking up by dict
+        # would be. If we had lots of values we could also support lazy
+        # loading by importing classes only when their value is being
+        # requested.
+        val: type[MTTest3OldBase]
+        if type_id is MTTest3OldTypeID.CLASS_1:
+            val = MTTest3OldClass1
+        elif type_id is MTTest3OldTypeID.CLASS_2:
+            val = MTTest3OldClass2
+        else:
+            assert_never(type_id)
+        return val
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest3OldTypeID:
+        """Provide the type-id for this subclass."""
+        # If we wanted, we could just maintain a static mapping of
+        # types-to-ids here, but there are benefits to letting each
+        # child class speak for itself. Namely that we can do
+        # lazy-loading and don't need to have all types present here.
+
+        # So we'll let all our child classes override this.
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_unknown_type_fallback(cls) -> MTTest3OldBase | None:
+        # Define a fallback here that can be returned in cases of
+        # unrecognized types (though only if 'lossy' is enabled for the
+        # load).
+        return MTTest3OldClass1(ival=42)
+
+
+@ioprepped
+@dataclass
+class MTTest3OldClass1(MTTest3OldBase):
+    """A test child-class for use with our multi-type class."""
+
+    ival: int
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest3OldTypeID:
+        return MTTest3OldTypeID.CLASS_1
+
+
+@ioprepped
+@dataclass
+class MTTest3OldClass2(MTTest3OldBase):
+    """Another test child-class for use with our multi-type class."""
+
+    sval: str
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest3OldTypeID:
+        return MTTest3OldTypeID.CLASS_2
+
+
+@ioprepped
+@dataclass
+class MTTest3OldWrapper:
+    """Testing something *containing* a test class instance."""
+
+    child: MTTest3OldBase
+
+
+@ioprepped
+@dataclass
+class MTTest3OldListWrapper:
+    """Testing something *containing* a test class instance."""
+
+    children: list[MTTest3OldBase]
+
+
+class MTTest3NewTypeID(Enum):
+    """IDs for our multi-type class."""
+
+    CLASS_1 = 'm1'
+    CLASS_2 = 'm2'
+    CLASS_3 = 'm3'
+
+
+class MTTest3NewBase(IOMultiType[MTTest3NewTypeID]):
+    """Our multi-type class.
+
+    These top level multi-type classes are special parent classes
+    that know about all of their child classes and how to serialize
+    & deserialize them using explicit type ids. We can then use the
+    parent class in annotations and dataclassio will do the right thing.
+    Useful for stuff like Message classes where we may want to store a
+    bunch of different types of them into one place.
+    """
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: MTTest3NewTypeID) -> type[MTTest3NewBase]:
+        """Return the subclass for each of our type-ids."""
+
+        # This uses assert_never() to ensure we cover all cases in the
+        # enum. Though this is less efficient than looking up by dict
+        # would be. If we had lots of values we could also support lazy
+        # loading by importing classes only when their value is being
+        # requested.
+        val: type[MTTest3NewBase]
+        if type_id is MTTest3NewTypeID.CLASS_1:
+            val = MTTest3NewClass1
+        elif type_id is MTTest3NewTypeID.CLASS_2:
+            val = MTTest3NewClass2
+        elif type_id is MTTest3NewTypeID.CLASS_3:
+            val = MTTest3NewClass3
+        else:
+            assert_never(type_id)
+        return val
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest3NewTypeID:
+        """Provide the type-id for this subclass."""
+        # If we wanted, we could just maintain a static mapping of
+        # types-to-ids here, but there are benefits to letting each
+        # child class speak for itself. Namely that we can do
+        # lazy-loading and don't need to have all types present here.
+
+        # So we'll let all our child classes override this.
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_unknown_type_fallback(cls) -> MTTest3NewBase | None:
+        # Define a fallback here that can be returned in cases of
+        # unrecognized types (though only if 'lossy' is enabled for the
+        # load).
+        return MTTest3NewClass1(ival=43)
+
+
+@ioprepped
+@dataclass
+class MTTest3NewClass1(MTTest3NewBase):
+    """A test child-class for use with our multi-type class."""
+
+    ival: int
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest3NewTypeID:
+        return MTTest3NewTypeID.CLASS_1
+
+
+@ioprepped
+@dataclass
+class MTTest3NewClass2(MTTest3NewBase):
+    """Another test child-class for use with our multi-type class."""
+
+    sval: str
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest3NewTypeID:
+        return MTTest3NewTypeID.CLASS_2
+
+
+@ioprepped
+@dataclass
+class MTTest3NewClass3(MTTest3NewBase):
+    """Another test child-class for use with our multi-type class."""
+
+    bval: bool
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest3NewTypeID:
+        return MTTest3NewTypeID.CLASS_3
+
+
+@ioprepped
+@dataclass
+class MTTest3NewWrapper:
+    """Testing something *containing* a test class instance."""
+
+    child: MTTest3NewBase
+
+
+@ioprepped
+@dataclass
+class MTTest3NewListWrapper:
+    """Testing something *containing* a test class instance."""
+
+    children: list[MTTest3NewBase]
+
+
+def test_multi_type_3() -> None:
+    """Test IOMultiType stuff."""
+
+    # Define some data using our 'newer' schema and it should load using
+    # our 'older' one.
+    data2 = dataclass_to_dict(MTTest3NewClass2(sval='foof'))
+    obj2 = dataclass_from_dict(MTTest3OldBase, data2)
+    assert isinstance(obj2, MTTest3OldClass2)
+
+    # However, this won't work with class 3 which only exists in the
+    # 'newer' schema. So this should fail.
+    data3 = dataclass_to_dict(MTTest3NewClass3(bval=True))
     with pytest.raises(ValueError):
-        _obj = dataclass_from_dict(TestClass, {'e1': 'val4', 'e2': 'val1'})
+        obj3 = dataclass_from_dict(MTTest3OldBase, data3)
 
-    # Bad Enum2 value; should substitute our fallback value.
-    obj = dataclass_from_dict(TestClass, {'e1': 'val1', 'e2': 'val4'})
-    assert obj.enum2val is obj.TestEnum2.VAL1
+    # Running in lossy mode should succeed, however, since we define a
+    # fallback call on our multitype. The fallback should give us a
+    # particular MTTestClass1.
+    obj3 = dataclass_from_dict(MTTest3OldBase, data3, lossy=True)
+    assert obj3 == MTTest3OldClass1(ival=42)
 
-    # Using wrong type as enum_fallback should fail.
-    with pytest.raises(TypeError):
+    # ----------------------------------------------------------------
+    # Now do the same tests with a dataclass *containing* one of these
+    # dataclasses (since this goes through a different code path).
+    # ----------------------------------------------------------------
 
-        @ioprepped
-        @dataclass
-        class TestClass2:
+    # Define some data using our 'newer' schema and it should load using
+    # our 'older' one.
+    wdata2 = dataclass_to_dict(
+        MTTest3NewWrapper(child=MTTest3NewClass2(sval='foof'))
+    )
+    wobj2 = dataclass_from_dict(MTTest3OldWrapper, wdata2)
+    assert isinstance(wobj2, MTTest3OldWrapper)
+    assert isinstance(wobj2.child, MTTest3OldClass2)
 
-            class TestEnum1(Enum):
-                VAL1 = 'val1'
-                VAL2 = 'val2'
+    # However, this won't work with class 3 which only exists in the
+    # 'newer' schema. So this should fail.
+    wdata3 = dataclass_to_dict(MTTest3NewWrapper(MTTest3NewClass3(bval=True)))
+    with pytest.raises(ValueError):
+        wobj3 = dataclass_from_dict(MTTest3OldWrapper, wdata3)
 
-            class TestEnum2(Enum):
-                VAL1 = 'val1'
-                VAL2 = 'val2'
+    # Running in lossy mode should succeed, however, since we define a
+    # fallback call on our multitype. The fallback should give us a
+    # particular MTTestClass1.
+    wobj3 = dataclass_from_dict(MTTest3OldWrapper, wdata3, lossy=True)
+    assert wobj3 == MTTest3OldWrapper(child=MTTest3OldClass1(ival=42))
 
-            enum1val: Annotated[
-                TestEnum1, IOAttrs('e1', enum_fallback=TestEnum2.VAL1)
-            ]
+    # ----------------------------------------------------------------
+    # Once more with a dataclass containing a *sequence* of these, which
+    # is a slightly different code path again.
+    # ----------------------------------------------------------------
+
+    # Define some data using our 'newer' schema and it should load using
+    # our 'older' one.
+    wldata2 = dataclass_to_dict(
+        MTTest3NewListWrapper(children=[MTTest3NewClass2(sval='foof')])
+    )
+    wlobj2 = dataclass_from_dict(MTTest3OldListWrapper, wldata2)
+    assert isinstance(wlobj2, MTTest3OldListWrapper)
+    assert isinstance(wlobj2.children[0], MTTest3OldClass2)
+
+    # However, this won't work with class 3 which only exists in the
+    # 'newer' schema. So this should fail.
+    wldata3 = dataclass_to_dict(
+        MTTest3NewListWrapper([MTTest3NewClass3(bval=True)])
+    )
+    with pytest.raises(ValueError):
+        wlobj3 = dataclass_from_dict(MTTest3OldListWrapper, wldata3)
+
+    # Running in lossy mode should succeed, however, since we define a
+    # fallback call on our multitype. The fallback should give us a
+    # particular MTTestClass1.
+    wlobj3 = dataclass_from_dict(MTTest3OldListWrapper, wldata3, lossy=True)
+    assert wlobj3 == MTTest3OldListWrapper(children=[MTTest3OldClass1(ival=42)])

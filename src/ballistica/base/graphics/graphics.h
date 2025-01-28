@@ -152,13 +152,13 @@ class Graphics {
                  r, g, b, a);
   }
 
-  void DrawUIBounds(RenderPass* pass);
+  void DrawVirtualSafeAreaBounds(RenderPass* pass);
   static void GetBaseVirtualRes(float* x, float* y);
 
   // Enable progress bar drawing locally.
   void EnableProgressBar(bool fade_in);
 
-  auto* camera() { return camera_.Get(); }
+  auto* camera() { return camera_.get(); }
   void ToggleManualCamera();
   void LocalCameraShake(float intensity);
   void ToggleDebugDraw();
@@ -316,8 +316,8 @@ class Graphics {
 
   auto* settings() const {
     assert(g_base->InLogicThread());
-    assert(settings_snapshot_.Exists());
-    return settings_snapshot_.Get()->Get();
+    assert(settings_snapshot_.exists());
+    return settings_snapshot_.get()->get();
   }
 
   auto GetGraphicsSettingsSnapshot() -> Snapshot<GraphicsSettings>*;
@@ -328,13 +328,13 @@ class Graphics {
   void UpdatePlaceholderSettings();
 
   auto has_client_context() -> bool {
-    return client_context_snapshot_.Exists();
+    return client_context_snapshot_.exists();
   }
 
   auto client_context() const -> const GraphicsClientContext* {
     assert(g_base->InLogicThread());
-    assert(client_context_snapshot_.Exists());
-    return client_context_snapshot_.Get()->Get();
+    assert(client_context_snapshot_.exists());
+    return client_context_snapshot_.get()->get();
   }
 
   static auto GraphicsQualityFromRequest(GraphicsQualityRequest request,
@@ -348,7 +348,7 @@ class Graphics {
   /// possible and replaced with proper safe thread-specific access patterns
   /// (so we can support switching renderers/etc.).
   auto placeholder_texture_quality() const {
-    assert(client_context_snapshot_.Exists());
+    assert(client_context_snapshot_.exists());
     return texture_quality_placeholder_;
   }
 
@@ -359,11 +359,15 @@ class Graphics {
     // Using this from arbitrary threads is currently ok currently since
     // context never changes once set. Will need to kill this call once that
     // can happen though.
-    assert(client_context_snapshot_.Exists());
-    return client_context_snapshot_.Get()->Get();
+    assert(client_context_snapshot_.exists());
+    return client_context_snapshot_.get()->get();
   }
-  auto draw_ui_bounds() const { return draw_ui_bounds_; }
-  void set_draw_ui_bounds(bool val) { draw_ui_bounds_ = val; }
+  auto draw_virtual_safe_area_bounds() const {
+    return draw_virtual_safe_area_bounds_;
+  }
+  void set_draw_virtual_safe_area_bounds(bool val) {
+    draw_virtual_safe_area_bounds_ = val;
+  }
 
   ScreenMessages* const screenmessages;
 
@@ -424,7 +428,7 @@ class Graphics {
   bool applied_app_config_{};
   bool sent_initial_graphics_settings_{};
   bool got_screen_resolution_{};
-  bool draw_ui_bounds_{};
+  bool draw_virtual_safe_area_bounds_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};

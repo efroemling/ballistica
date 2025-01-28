@@ -3,9 +3,10 @@
 """Functionality related to cloud functionality."""
 
 from __future__ import annotations
+
+from enum import Enum
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated, override
-from enum import Enum
 
 from efro.message import Message, Response
 from efro.dataclassio import ioprepped, IOAttrs
@@ -299,59 +300,3 @@ class StoreQueryResponse(Response):
 
     available_purchases: Annotated[list[Purchase], IOAttrs('p')]
     token_info_url: Annotated[str, IOAttrs('tiu')]
-
-
-@ioprepped
-@dataclass
-class BSPrivatePartyMessage(Message):
-    """Message asking about info we need for private-party UI."""
-
-    need_datacode: Annotated[bool, IOAttrs('d')]
-
-    @override
-    @classmethod
-    def get_response_types(cls) -> list[type[Response] | None]:
-        return [BSPrivatePartyResponse]
-
-
-@ioprepped
-@dataclass
-class BSPrivatePartyResponse(Response):
-    """Here's that private party UI info you asked for, boss."""
-
-    success: Annotated[bool, IOAttrs('s')]
-    tokens: Annotated[int, IOAttrs('t')]
-    gold_pass: Annotated[bool, IOAttrs('g')]
-    datacode: Annotated[str | None, IOAttrs('d')]
-
-
-@ioprepped
-@dataclass
-class ClassicAccountLiveData:
-    """Account related data kept up to date live for classic app mode."""
-
-    class LeagueType(Enum):
-        """Type of league we are in."""
-
-        BRONZE = 'b'
-        SILVER = 's'
-        GOLD = 'g'
-        DIAMOND = 'd'
-
-    tickets: Annotated[int, IOAttrs('ti')]
-
-    tokens: Annotated[int, IOAttrs('to')]
-    gold_pass: Annotated[bool, IOAttrs('g')]
-
-    achievements: Annotated[int, IOAttrs('a')]
-    achievements_total: Annotated[int, IOAttrs('at')]
-
-    league_type: Annotated[LeagueType | None, IOAttrs('lt')]
-    league_num: Annotated[int | None, IOAttrs('ln')]
-    league_rank: Annotated[int | None, IOAttrs('lr')]
-
-    level: Annotated[int, IOAttrs('lv')]
-    xp: Annotated[int, IOAttrs('xp')]
-    xpmax: Annotated[int, IOAttrs('xpm')]
-
-    inbox_count: Annotated[int, IOAttrs('ibc')]

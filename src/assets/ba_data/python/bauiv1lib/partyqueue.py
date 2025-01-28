@@ -566,7 +566,7 @@ class PartyQueueWindow(bui.Window):
 
     def on_boost_press(self) -> None:
         """Boost was pressed."""
-        from bauiv1lib import account
+        from bauiv1lib.account.signin import show_sign_in_prompt
 
         # from bauiv1lib import gettickets
 
@@ -574,11 +574,15 @@ class PartyQueueWindow(bui.Window):
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
 
         if plus.get_v1_account_ticket_count() < self._boost_tickets:
             bui.getsound('error').play()
+            bui.screenmessage(
+                bui.Lstr(resource='notEnoughTicketsText'),
+                color=(1, 0, 0),
+            )
             # gettickets.show_get_tickets_prompt()
             return
 

@@ -95,7 +95,7 @@ ConnectionToClient::~ConnectionToClient() {
 void ConnectionToClient::Update() {
   Connection::Update();  // Handles common stuff.
 
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   // If we're waiting for handshake response still, keep sending out handshake
   // attempts.
@@ -191,6 +191,17 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
         string_buffer[string_buffer.size() - 1] = 0;
         set_peer_spec(PlayerSpec(&(string_buffer[0])));
       }
+
+      // If they sent us a garbage player-spec, kick them right out.
+      if (!peer_spec().valid()) {
+        g_core->Log(LogName::kBaNetworking, LogLevel::kDebug, [] {
+          return std::string(
+              "Rejecting client for submitting invalid player-spec.");
+        });
+        Error("");
+        return;
+      }
+
       // FIXME: We should maybe set some sort of 'pending' peer-spec
       //  and fetch their actual info from the master-server.
       //  (or at least make that an option for internet servers)
@@ -198,6 +209,9 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
       // Compare this against our blocked specs.. if there's a match, reject
       // them.
       if (appmode->IsPlayerBanned(peer_spec())) {
+        g_core->Log(LogName::kBaNetworking, LogLevel::kDebug, [] {
+          return std::string("Rejecting join attempt by banned player.");
+        });
         Error("");
         return;
       }
@@ -232,7 +246,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
 
         // Don't allow fresh clients to start kick votes for a while.
         next_kick_vote_allow_time_ =
-            g_core->GetAppTimeMillisecs() + kNewClientKickVoteDelay;
+            g_core->AppTimeMillisecs() + kNewClientKickVoteDelay;
 
         // At this point we have their name, so lets announce their arrival.
         if (appmode->ShouldAnnouncePartyJoinsAndLeaves()) {
@@ -249,7 +263,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
         // Also mark the time for flashing the 'someone just joined your
         // party' message in the corner.
         appmode->set_last_connection_to_client_join_time(
-            g_core->GetAppTimeMillisecs());
+            g_core->AppTimeMillisecs());
 
         // Added midway through protocol 29:
         // We now send a json dict of info about ourself first thing. This
@@ -285,7 +299,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
         for (auto&& i : appmode->connections()->connections_to_clients()) {
           // Also send a 'party-member-joined' notification to all clients
           // *except* the new one.
-          if (i.second.Exists() && i.second.Get() != this
+          if (i.second.exists() && i.second.get() != this
               && appmode->ShouldAnnouncePartyJoinsAndLeaves()) {
             i.second->SendReliableMessage(join_msg);
           }
@@ -324,8 +338,7 @@ void ConnectionToClient::SendScreenMessage(const std::string& s, float r,
   // Older clients don't support the screen-message message, so in that case
   // we just send it as a chat-message from <HOST>.
   if (build_number() < 14248) {
-    std::string value =
-        g_base->assets->CompileResourceString(s, "sendScreenMessage");
+    std::string value = g_base->assets->CompileResourceString(s);
     std::string our_spec_string =
         PlayerSpec::GetDummyPlayerSpec("<HOST>").GetSpecString();
     std::vector<uint8_t> msg_out(1 + 1 + our_spec_string.size() + value.size());
@@ -384,7 +397,7 @@ void ConnectionToClient::HandleMessagePacket(
     case BA_MESSAGE_KICK_VOTE: {
       if (buffer.size() == 2) {
         for (auto&& i : appmode->connections()->connections_to_clients()) {
-          ConnectionToClient* client = i.second.Get();
+          ConnectionToClient* client = i.second.get();
           if (client->id() == static_cast<int>(buffer[1])) {
             appmode->StartKickVote(this, client);
             break;
@@ -431,7 +444,7 @@ void ConnectionToClient::HandleMessagePacket(
           if (!token_.empty()) {
             // Kick off a query to the master-server for this client's info.
             // FIXME: we need to add retries for this in case of failure.
-            g_base->plus()->ClientInfoQuery(
+            g_base->Plus()->ClientInfoQuery(
                 token_, our_handshake_player_spec_str_ + our_handshake_salt_,
                 peer_hash_, build_number_);
           }
@@ -461,7 +474,7 @@ void ConnectionToClient::HandleMessagePacket(
         PythonRef results = g_core->python->objs()
                                 .Get(core::CorePython::ObjID::kJsonLoadsCall)
                                 .Call(args);
-        if (results.Exists()) {
+        if (results.exists()) {
           player_profiles_ = results;
         }
       }
@@ -486,7 +499,7 @@ void ConnectionToClient::HandleMessagePacket(
 
     case BA_MESSAGE_CHAT: {
       // We got a chat message from a client.
-      millisecs_t now = g_core->GetAppTimeMillisecs();
+      millisecs_t now = g_core->AppTimeMillisecs();
 
       // Ignore this if they're chat blocked.
       if (now >= chat_block_time_) {
@@ -622,7 +635,7 @@ void ConnectionToClient::HandleMessagePacket(
     }
 
     case BA_MESSAGE_REMOVE_REMOTE_PLAYER: {
-      last_remove_player_time_ = g_core->GetAppTimeMillisecs();
+      last_remove_player_time_ = g_core->AppTimeMillisecs();
       if (buffer.size() != 2) {
         g_core->Log(LogName::kBaNetworking, LogLevel::kError,
                     "Error: invalid remove-remote-player packet");
@@ -679,7 +692,7 @@ void ConnectionToClient::HandleMessagePacket(
           // master-server info for this client, delay their join (we'll
           // eventually give up and just give them a blank slate).
           if (still_waiting_for_auth
-              && (g_core->GetAppTimeMillisecs() - creation_time() < 10000)) {
+              && (g_core->AppTimeMillisecs() - creation_time() < 10000)) {
             SendScreenMessage(
                 "{\"v\":\"${A}...\",\"s\":[[\"${A}\",{\"r\":"
                 "\"loadingTryAgainText\",\"f\":\"loadingText\"}]]}",

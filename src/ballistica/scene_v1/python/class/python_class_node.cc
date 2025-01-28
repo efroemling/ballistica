@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/session_stream.h"
@@ -63,7 +64,7 @@ void PythonClassNode::SetupType(PyTypeObject* cls) {
 auto PythonClassNode::Create(Node* node) -> PyObject* {
   // Make sure we only have one python ref per node.
   if (node) {
-    assert(!node->has_py_ref());
+    assert(!node->HasPyRef());
   }
 
   s_create_empty_ = true;  // Prevent class from erroring on create.
@@ -80,7 +81,7 @@ auto PythonClassNode::Create(Node* node) -> PyObject* {
 }
 
 auto PythonClassNode::GetNode(bool doraise) const -> Node* {
-  Node* n = node_->Get();
+  Node* n = node_->get();
   if (!n && doraise) {
     throw Exception(PyExcType::kNodeNotFound);
   }
@@ -133,7 +134,7 @@ void PythonClassNode::tp_dealloc(PythonClassNode* self) {
 
 auto PythonClassNode::tp_repr(PythonClassNode* self) -> PyObject* {
   BA_PYTHON_TRY;
-  Node* node = self->node_->Get();
+  Node* node = self->node_->get();
   return Py_BuildValue(
       "s",
       std::string("<bascenev1.Node "
@@ -152,7 +153,7 @@ auto PythonClassNode::tp_getattro(PythonClassNode* self, PyObject* attr)
 
   // If our node exists and has this attr, return it.
   // Otherwise do default python path.
-  Node* node = self->node_->Get();
+  Node* node = self->node_->get();
   const char* attr_name = PyUnicode_AsUTF8(attr);
   if (node && node->HasAttribute(attr_name)) {
     return SceneV1Python::GetNodeAttr(node, attr_name);
@@ -164,7 +165,7 @@ auto PythonClassNode::tp_getattro(PythonClassNode* self, PyObject* attr)
 
 auto PythonClassNode::Exists(PythonClassNode* self) -> PyObject* {
   BA_PYTHON_TRY;
-  if (self->node_->Exists()) {
+  if (self->node_->exists()) {
     Py_RETURN_TRUE;
   } else {
     Py_RETURN_FALSE;
@@ -175,7 +176,7 @@ auto PythonClassNode::Exists(PythonClassNode* self) -> PyObject* {
 auto PythonClassNode::GetNodeType(PythonClassNode* self) -> PyObject* {
   BA_PYTHON_TRY;
 
-  Node* node = self->node_->Get();
+  Node* node = self->node_->get();
   if (!node) {
     throw Exception(PyExcType::kNodeNotFound);
   }
@@ -187,7 +188,7 @@ auto PythonClassNode::GetNodeType(PythonClassNode* self) -> PyObject* {
 auto PythonClassNode::GetName(PythonClassNode* self) -> PyObject* {
   BA_PYTHON_TRY;
 
-  Node* node = self->node_->Get();
+  Node* node = self->node_->get();
   if (!node) {
     throw Exception(PyExcType::kNodeNotFound);
   }
@@ -206,7 +207,7 @@ auto PythonClassNode::GetDelegate(PythonClassNode* self, PyObject* args,
           args, keywds, "O|p", const_cast<char**>(kwlist), &tp_obj, &doraise)) {
     return nullptr;
   }
-  Node* node = self->node_->Get();
+  Node* node = self->node_->get();
   if (!node) {
     throw Exception(PyExcType::kNodeNotFound);
   }
@@ -249,7 +250,7 @@ auto PythonClassNode::Delete(PythonClassNode* self, PyObject* args,
           args, keywds, "|i", const_cast<char**>(kwlist), &ignore_missing)) {
     return nullptr;
   }
-  Node* node = self->node_->Get();
+  Node* node = self->node_->get();
   if (!node) {
     if (!ignore_missing) {
       throw Exception(PyExcType::kNodeNotFound);
@@ -274,7 +275,7 @@ auto PythonClassNode::HandleMessage(PythonClassNode* self, PyObject* args)
   SceneV1Python::DoBuildNodeMessage(args, 0, &b, &user_message_obj);
 
   // Should we fail if the node doesn't exist??
-  Node* node = self->node_->Get();
+  Node* node = self->node_->get();
   if (node) {
     HostActivity* host_activity = node->context_ref().GetHostActivity();
     if (!host_activity) {
@@ -303,7 +304,7 @@ auto PythonClassNode::AddDeathAction(PythonClassNode* self, PyObject* args)
   if (!PyArg_ParseTuple(args, "O", &call_obj)) {
     return nullptr;
   }
-  Node* n = self->node_->Get();
+  Node* n = self->node_->get();
   if (!n) {
     throw Exception(PyExcType::kNodeNotFound);
   }
@@ -323,7 +324,7 @@ auto PythonClassNode::ConnectAttr(PythonClassNode* self, PyObject* args)
     -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* dst_node_obj;
-  Node* node = self->node_->Get();
+  Node* node = self->node_->get();
   if (!node) {
     throw Exception(PyExcType::kNodeNotFound);
   }
@@ -362,14 +363,14 @@ auto PythonClassNode::Dir(PythonClassNode* self) -> PyObject* {
   assert(PyList_Check(dir_list));
 
   // ..now grab all this guy's BA attributes and add them in.
-  Node* node = self->node_->Get();
+  Node* node = self->node_->get();
   if (node) {
     std::list<std::string> attrs;
     node->ListAttributes(&attrs);
     for (auto& attr : attrs) {
       PyList_Append(dir_list, PythonRef(PyUnicode_FromString(attr.c_str()),
                                         PythonRef::kSteal)
-                                  .Get());
+                                  .get());
     }
   }
   PyList_Sort(dir_list);
@@ -378,7 +379,7 @@ auto PythonClassNode::Dir(PythonClassNode* self) -> PyObject* {
 }
 
 auto PythonClassNode::nb_bool(PythonClassNode* self) -> int {
-  return self->node_->Exists();
+  return self->node_->exists();
 }
 
 auto PythonClassNode::tp_setattro(PythonClassNode* self, PyObject* attr,
@@ -387,7 +388,7 @@ auto PythonClassNode::tp_setattro(PythonClassNode* self, PyObject* attr,
 
   // FIXME: do we need to support other attr types?
   assert(PyUnicode_Check(attr));
-  Node* n = self->node_->Get();
+  Node* n = self->node_->get();
   if (!n) {
     throw Exception(PyExcType::kNodeNotFound);
   }

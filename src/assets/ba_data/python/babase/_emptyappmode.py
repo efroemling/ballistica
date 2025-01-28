@@ -26,7 +26,7 @@ class EmptyAppMode(AppMode):
 
     @override
     @classmethod
-    def _supports_intent(cls, intent: AppIntent) -> bool:
+    def _can_handle_intent(cls, intent: AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(intent, AppIntentExec | AppIntentDefault)
 

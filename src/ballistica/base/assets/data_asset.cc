@@ -49,7 +49,7 @@ void DataAsset::DoLoad() {
   object_ = g_core->python->objs()
                 .Get(core::CorePython::ObjID::kJsonLoadsCall)
                 .Call(args);
-  if (!object_.Exists()) {
+  if (!object_.exists()) {
     throw Exception("Unable to load data: '" + file_name_ + "'.");
   }
 }

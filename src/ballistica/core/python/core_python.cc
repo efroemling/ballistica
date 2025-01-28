@@ -278,7 +278,7 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
     auto logname{pair.first};
     auto objid{pair.second};
     auto out{objs().Get(objid).GetAttr("getEffectiveLevel").Call()};
-    assert(out.Exists());
+    assert(out.exists());
     auto outval{static_cast<int>(out.ValueAsInt())};
 
     switch (outval) {
@@ -316,7 +316,7 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
 void CorePython::SoftImportBase() {
   auto gil{Python::ScopedInterpreterLock()};
   auto result = PythonRef::StolenSoft(PyImport_ImportModule("_babase"));
-  if (!result.Exists()) {
+  if (!result.exists()) {
     // Ignore any errors here for now. All that will matter is whether base
     // gave us its interface.
     PyErr_Clear();
@@ -387,7 +387,7 @@ void CorePython::MonolithicModeBaEnvConfigure() {
   auto result = objs()
                     .Get(ObjID::kBaEnvConfigureCall)
                     .Call(objs().Get(ObjID::kEmptyTuple), kwargs);
-  if (!result.Exists()) {
+  if (!result.exists()) {
     FatalError("Environment setup failed (no error info available).");
   }
   if (result.ValueIsString()) {
@@ -504,7 +504,7 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
       break;
   }
   PythonRef args(
-      Py_BuildValue("(Os)", objs().Get(loglevelobjid).Get(), msg.c_str()),
+      Py_BuildValue("(Os)", objs().Get(loglevelobjid).get(), msg.c_str()),
       PythonRef::kSteal);
   objs().Get(logcallobj).Call(args);
 }

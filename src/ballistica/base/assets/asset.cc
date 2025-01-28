@@ -11,7 +11,7 @@ namespace ballistica::base {
 Asset::Asset() {
   assert(g_base);
   assert(g_base->InLogicThread());
-  last_used_time_ = g_core->GetAppTimeMillisecs();
+  last_used_time_ = g_core->AppTimeMillisecs();
 }
 
 auto Asset::AssetTypeName(AssetType assettype) -> const char* {
@@ -65,9 +65,9 @@ void Asset::Preload(bool already_locked) {
       return std::string("preloading ") + AssetTypeName(GetAssetType()) + " "
              + GetName();
     });
-    preload_start_time_ = g_core->GetAppTimeMillisecs();
+    preload_start_time_ = g_core->AppTimeMillisecs();
     DoPreload();
-    preload_end_time_ = g_core->GetAppTimeMillisecs();
+    preload_end_time_ = g_core->AppTimeMillisecs();
     preloaded_ = true;
   }
 }
@@ -87,9 +87,9 @@ void Asset::Load(bool already_locked) {
       return std::string("loading ") + AssetTypeName(GetAssetType()) + " "
              + GetName();
     });
-    load_start_time_ = g_core->GetAppTimeMillisecs();
+    load_start_time_ = g_core->AppTimeMillisecs();
     DoLoad();
-    load_end_time_ = g_core->GetAppTimeMillisecs();
+    load_end_time_ = g_core->AppTimeMillisecs();
     BA_DEBUG_FUNCTION_TIMER_END_THREAD_EX(50, GetName());
     loaded_ = true;
   }

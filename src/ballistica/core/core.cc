@@ -72,7 +72,7 @@ auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
 }
 
 void CoreFeatureSet::DoImport_(const CoreConfig& config) {
-  millisecs_t start_millisecs = CorePlatform::GetCurrentMillisecs();
+  millisecs_t start_millisecs = CorePlatform::TimeMonotonicMillisecs();
 
   assert(g_core == nullptr);
   g_core = new CoreFeatureSet(config);
@@ -87,7 +87,7 @@ CoreFeatureSet::CoreFeatureSet(CoreConfig config)
       python{new CorePython()},
       platform{CorePlatform::Create()},
       core_config_{std::move(config)},
-      last_app_time_measure_microsecs_{CorePlatform::GetCurrentMicrosecs()},
+      last_app_time_measure_microsecs_{CorePlatform::TimeMonotonicMicrosecs()},
       vr_mode_{config.vr_mode} {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_core == nullptr);
@@ -144,7 +144,7 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   // Ask baenv for the config we should use.
   auto envcfg =
       python->objs().Get(core::CorePython::ObjID::kBaEnvGetConfigCall).Call();
-  BA_PRECONDITION_FATAL(envcfg.Exists());
+  BA_PRECONDITION_FATAL(envcfg.exists());
 
   assert(!have_ba_env_vals_);
   have_ba_env_vals_ = true;
@@ -313,7 +313,7 @@ auto CoreFeatureSet::SoftImportBase() -> BaseSoftInterface* {
 //     // We include time-since-start as part of the message here.
 //     char buffer[128];
 //     snprintf(buffer, sizeof(buffer), "%s @ %.3fs.", msg,
-//              g_core->GetAppTimeSeconds() + offset_seconds);
+//              g_core->AppTimeSeconds() + offset_seconds);
 //     Log(LogName::kBaLifecycle, LogLevel::kDebug, buffer);
 //   } else {
 //     Log(LogName::kBaLifecycle, LogLevel::kDebug, msg);
@@ -355,23 +355,23 @@ static void WaitThenDie(millisecs_t wait, const std::string& action) {
   FatalError("Timed out waiting for " + action + ".");
 }
 
-auto CoreFeatureSet::GetAppTimeMillisecs() -> millisecs_t {
+auto CoreFeatureSet::AppTimeMillisecs() -> millisecs_t {
   UpdateAppTime_();
   return app_time_microsecs_ / 1000;
 }
 
-auto CoreFeatureSet::GetAppTimeMicrosecs() -> microsecs_t {
+auto CoreFeatureSet::AppTimeMicrosecs() -> microsecs_t {
   UpdateAppTime_();
   return app_time_microsecs_;
 }
 
-auto CoreFeatureSet::GetAppTimeSeconds() -> seconds_t {
+auto CoreFeatureSet::AppTimeSeconds() -> seconds_t {
   UpdateAppTime_();
   return static_cast<seconds_t>(app_time_microsecs_) / 1000000;
 }
 
 void CoreFeatureSet::UpdateAppTime_() {
-  microsecs_t t = CorePlatform::GetCurrentMicrosecs();
+  microsecs_t t = CorePlatform::TimeMonotonicMicrosecs();
 
   // If we're at a different time than our last query, do our funky math.
   if (t != last_app_time_measure_microsecs_) {

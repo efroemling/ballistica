@@ -45,8 +45,8 @@ class HostActivity : public SceneV1Context {
   void StepDisplayTime(millisecs_t time_advance);
   auto base_time() const -> millisecs_t { return base_time_; }
   auto scene() -> Scene* {
-    assert(scene_.Exists());
-    return scene_.Get();
+    assert(scene_.exists());
+    return scene_.get();
   }
   void Start();
 

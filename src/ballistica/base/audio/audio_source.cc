@@ -103,7 +103,7 @@ void AudioSource::Lock(int debug_id) {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
   mutex_.lock();
 #if BA_DEBUG_BUILD
-  last_lock_time_ = g_core->GetAppTimeMillisecs();
+  last_lock_time_ = g_core->AppTimeMillisecs();
   lock_debug_id_ = debug_id;
   locked_ = true;
 #endif
@@ -115,7 +115,7 @@ auto AudioSource::TryLock(int debug_id) -> bool {
 #if (BA_DEBUG_BUILD || BA_TEST_BUILD)
   if (locked) {
     locked_ = true;
-    last_lock_time_ = g_core->GetAppTimeMillisecs();
+    last_lock_time_ = g_core->AppTimeMillisecs();
     lock_debug_id_ = debug_id;
   }
 #endif

@@ -25,7 +25,7 @@ from babase._appintent import AppIntentDefault, AppIntentExec
 from babase._stringedit import StringEditSubsystem
 from babase._devconsole import DevConsoleSubsystem
 from babase._appconfig import AppConfig
-from babase._logging import lifecyclelog
+from babase._logging import lifecyclelog, applog
 
 if TYPE_CHECKING:
     import asyncio
@@ -68,9 +68,10 @@ class App:
     health_monitor: AppHealthMonitor
 
     # How long we allow shutdown tasks to run before killing them.
-    # Currently the entire app hard-exits if shutdown takes 10 seconds,
-    # so we need to keep it under that.
-    SHUTDOWN_TASK_TIMEOUT_SECONDS = 5
+    # Currently the entire app hard-exits if shutdown takes 15 seconds,
+    # so we need to keep it under that. Staying above 10 should allow
+    # 10 second network timeouts to happen though.
+    SHUTDOWN_TASK_TIMEOUT_SECONDS = 12
 
     class State(Enum):
         """High level state the app can be in."""
@@ -257,6 +258,12 @@ class App:
         are covering it, etc. (depending on the platform).
         """
         return _babase.app_is_active()
+
+    @property
+    def mode(self) -> AppMode | None:
+        """The app's current mode."""
+        assert _babase.in_logic_thread()
+        return self._mode
 
     @property
     def asyncio_loop(self) -> asyncio.AbstractEventLoop:
@@ -597,8 +604,8 @@ class App:
     def set_ui_scale(self, scale: babase.UIScale) -> None:
         """Change ui-scale on the fly.
 
-        Currently this is mainly for debugging and will not
-        be called as part of normal app operation.
+        Currently this is mainly for debugging and will not be called as
+        part of normal app operation.
         """
         assert _babase.in_logic_thread()
 
@@ -611,10 +618,25 @@ class App:
         assert self._subsystem_registration_ended
         for subsystem in self._subsystems:
             try:
-                subsystem.on_screen_change()
+                subsystem.on_ui_scale_change()
             except Exception:
                 logging.exception(
-                    'Error in on_screen_change() for subsystem %s.', subsystem
+                    'Error in on_ui_scale_change() for subsystem %s.', subsystem
+                )
+
+    def on_screen_size_change(self) -> None:
+        """Screen size has changed."""
+
+        # Inform all app subsystems in the same order they were inited.
+        # Operate on a copy of the list here because this can be called
+        # while subsystems are still being added.
+        for subsystem in self._subsystems.copy():
+            try:
+                subsystem.on_screen_size_change()
+            except Exception:
+                logging.exception(
+                    'Error in on_screen_size_change() for subsystem %s.',
+                    subsystem,
                 )
 
     def _set_intent(self, intent: AppIntent) -> None:
@@ -903,6 +925,7 @@ class App:
             # Entering shutdown state:
             if self.state is not self.State.SHUTTING_DOWN:
                 self.state = self.State.SHUTTING_DOWN
+                applog.info('Shutting down...')
                 lifecyclelog.info('app-state is now %s', self.state.name)
                 self._on_shutting_down()
 

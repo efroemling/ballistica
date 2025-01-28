@@ -89,13 +89,13 @@ class ClassicAppMode : public base::AppMode {
 
   // Return whichever session is front and center.
   auto GetForegroundSession() const -> scene_v1::Session* {
-    return foreground_session_.Get();
+    return foreground_session_.get();
   }
 
   // Used to know which globals is in control currently/etc.
   auto GetForegroundScene() const -> scene_v1::Scene* {
     assert(g_base->InLogicThread());
-    return foreground_scene_.Get();
+    return foreground_scene_.get();
   }
   auto GetForegroundContext() -> base::ContextRef override;
   auto debug_speed_mult() const -> float { return debug_speed_mult_; }
@@ -105,6 +105,8 @@ class ClassicAppMode : public base::AppMode {
   void OnScreenSizeChange() override;
   auto kick_idle_players() const -> bool { return kick_idle_players_; }
   void LanguageChanged() override;
+  auto GetBottomLeftEdgeHeight() -> float override;
+
   void SetDebugSpeedExponent(int val);
   void SetReplaySpeedExponent(int val);
   void PauseReplay();
@@ -213,13 +215,25 @@ class ClassicAppMode : public base::AppMode {
     public_party_public_address_ipv6_ = val;
   }
 
-  void SetRootUITicketsMeterText(const std::string text);
-  void SetRootUITokensMeterText(const std::string text);
-  void SetRootUILeagueRankText(const std::string text);
+  void SetRootUITicketsMeterValue(int value);
+  void SetRootUITokensMeterValue(int value);
+  void SetRootUILeagueRankValue(int value);
   void SetRootUILeagueType(const std::string text);
   void SetRootUIAchievementsPercentText(const std::string text);
   void SetRootUILevelText(const std::string text);
   void SetRootUIXPText(const std::string text);
+  void SetRootUIInboxCountText(const std::string text);
+  void SetRootUIGoldPass(bool enabled);
+  void SetRootUIChests(
+      const std::string& chest_0_appearance,
+      const std::string& chest_1_appearance,
+      const std::string& chest_2_appearance,
+      const std::string& chest_3_appearance, seconds_t chest_0_unlock_time,
+      seconds_t chest_1_unlock_time, seconds_t chest_2_unlock_time,
+      seconds_t chest_3_unlock_time, seconds_t chest_0_ad_allow_time,
+      seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
+      seconds_t chest_3_ad_allow_time);
+  void SetRootUIHaveLiveValues(bool val);
 
  private:
   ClassicAppMode();
@@ -237,6 +251,19 @@ class ClassicAppMode : public base::AppMode {
   // forward declarations of their template params.
   std::map<std::string, ScanResultsEntryPriv_> scan_results_;
   std::mutex scan_results_mutex_;
+  std::string root_ui_chest_0_appearance_;
+  std::string root_ui_chest_1_appearance_;
+  std::string root_ui_chest_2_appearance_;
+  std::string root_ui_chest_3_appearance_;
+  seconds_t root_ui_chest_0_unlock_time_;
+  seconds_t root_ui_chest_1_unlock_time_;
+  seconds_t root_ui_chest_2_unlock_time_;
+  seconds_t root_ui_chest_3_unlock_time_;
+  seconds_t root_ui_chest_0_ad_allow_time_;
+  seconds_t root_ui_chest_1_ad_allow_time_;
+  seconds_t root_ui_chest_2_ad_allow_time_;
+  seconds_t root_ui_chest_3_ad_allow_time_;
+
   uint32_t next_scan_query_id_{};
   int scan_socket_{-1};
   int host_protocol_version_{-1};
@@ -257,7 +284,9 @@ class ClassicAppMode : public base::AppMode {
   bool game_roster_dirty_{};
   bool kick_vote_in_progress_{};
   bool kick_voting_enabled_{true};
-  bool replay_paused_{false};
+  bool replay_paused_{};
+  bool root_ui_gold_pass_{};
+  bool root_ui_have_live_values_{};
 
   ui_v1::UIV1FeatureSet* uiv1_{};
   cJSON* game_roster_{};
@@ -286,6 +315,9 @@ class ClassicAppMode : public base::AppMode {
   int public_party_max_size_{8};
   int public_party_player_count_{0};
   int public_party_max_player_count_{8};
+  int root_ui_tickets_meter_value_{-1};
+  int root_ui_tokens_meter_value_{-1};
+  int root_ui_league_rank_value_{-1};
   float debug_speed_mult_{1.0f};
   float replay_speed_mult_{1.0f};
   std::set<std::string> admin_public_ids_;
@@ -293,13 +325,11 @@ class ClassicAppMode : public base::AppMode {
   std::string public_party_name_;
   std::string public_party_min_league_;
   std::string public_party_stats_url_;
-  std::string root_ui_tickets_meter_text_;
-  std::string root_ui_tokens_meter_text_;
-  std::string root_ui_league_rank_text_;
   std::string root_ui_league_type_;
   std::string root_ui_achievement_percent_text_;
   std::string root_ui_level_text_;
   std::string root_ui_xp_text_;
+  std::string root_ui_inbox_count_text_;
   std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};

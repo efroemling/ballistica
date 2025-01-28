@@ -1,11 +1,13 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Small handy bits of functionality."""
 
 from __future__ import annotations
 
 import os
 import time
+import random
 import weakref
 import functools
 import datetime
@@ -14,7 +16,7 @@ from typing import TYPE_CHECKING, cast, TypeVar, Generic, overload, ParamSpec
 
 if TYPE_CHECKING:
     import asyncio
-    from typing import Any, Callable, Literal
+    from typing import Any, Callable, Literal, Sequence
 
 T = TypeVar('T')
 ValT = TypeVar('ValT')
@@ -75,8 +77,6 @@ def explicit_bool(val: bool) -> bool:
     # pylint: disable=no-else-return
     if TYPE_CHECKING:
         # infer this! <boom>
-        import random
-
         return random.random() < 0.5
     else:
         return val
@@ -118,9 +118,22 @@ def utc_now_naive() -> datetime.datetime:
 
     This can be used to replace datetime.utcnow(), which is now deprecated.
     Most all code should migrate to use timezone-aware times instead of
-    this.
+    relying on this.
     """
     return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+
+
+def utc_from_timestamp_naive(timestamp: float) -> datetime.datetime:
+    """Get a naive utc time from a timestamp.
+
+    This can be used to replace datetime.utcfromtimestamp(), which is now
+    deprecated. Most all code should migrate to use timezone-aware times
+    instead of relying on this.
+    """
+
+    return datetime.datetime.fromtimestamp(timestamp, tz=datetime.UTC).replace(
+        tzinfo=None
+    )
 
 
 def utc_today() -> datetime.datetime:
@@ -969,3 +982,30 @@ def extract_arg(
     del args[argindex : argindex + 2]
 
     return val
+
+
+def pairs_to_flat(pairs: Sequence[tuple[T, T]]) -> list[T]:
+    """Given a sequence of same-typed pairs, flattens to a list."""
+    return [item for pair in pairs for item in pair]
+
+
+def pairs_from_flat(flat: Sequence[T]) -> list[tuple[T, T]]:
+    """Given a flat even numbered sequence, returns pairs."""
+    if len(flat) % 2 != 0:
+        raise ValueError('Provided sequence has an odd number of elements.')
+    out: list[tuple[T, T]] = []
+    for i in range(0, len(flat) - 1, 2):
+        out.append((flat[i], flat[i + 1]))
+    return out
+
+
+def weighted_choice(*args: tuple[T, float]) -> T:
+    """Given object/weight pairs as args, returns a random object.
+
+    Intended as a shorthand way to call random.choices on a few explicit
+    options.
+    """
+    items: tuple[T]
+    weights: tuple[float]
+    items, weights = zip(*args)
+    return random.choices(items, weights=weights)[0]

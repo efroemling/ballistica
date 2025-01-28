@@ -42,11 +42,12 @@ class PlayWindow(bui.MainWindow):
         self._playlist_select_context = playlist_select_context
 
         uiscale = bui.app.ui_v1.uiscale
-        width = 1100 if uiscale is bui.UIScale.SMALL else 800
-        x_offs = 150 if uiscale is bui.UIScale.SMALL else 0
-        y_offs = -60 if uiscale is bui.UIScale.SMALL else 0
-        height = 650 if uiscale is bui.UIScale.SMALL else 550
-        button_width = 400
+        width = 1300 if uiscale is bui.UIScale.SMALL else 1000
+        height = 1000 if uiscale is bui.UIScale.SMALL else 550
+
+        button_width = 400.0
+        button_height = 360.0
+        button_spacing = 3.0
 
         if origin_widget is not None:
 
@@ -58,6 +59,30 @@ class PlayWindow(bui.MainWindow):
 
         self._r = 'playWindow'
 
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        safesize = bui.get_virtual_safe_area_size()
+
+        # We're a generally widescreen shaped window, so bump our
+        # overall scale up a bit when screen width is wider than safe
+        # bounds to take advantage of the extra space.
+        smallscale = min(1.6, 1.35 * screensize[0] / safesize[0])
+
+        scale = (
+            smallscale
+            if uiscale is bui.UIScale.SMALL
+            else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_height = min(height - 80, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * height + 0.5 * target_height + 30.0
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
@@ -66,17 +91,12 @@ class PlayWindow(bui.MainWindow):
                     if playlist_select_context is None
                     else 'menu_minimal'
                 ),
-                scale=(
-                    1.35
-                    if uiscale is bui.UIScale.SMALL
-                    else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
-                ),
-                stack_offset=(
-                    (0, 20) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         self._back_button: bui.Widget | None
@@ -89,7 +109,7 @@ class PlayWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(55 + x_offs, height - 132 + y_offs),
+                position=(50, yoffs - 100),
                 size=(60, 60),
                 scale=1.1,
                 text_res_scale=1.5,
@@ -103,11 +123,12 @@ class PlayWindow(bui.MainWindow):
                 edit=self._root_widget, cancel_button=self._back_button
             )
 
-        txt = bui.textwidget(
+        bui.textwidget(
             parent=self._root_widget,
-            position=(width * 0.5, height - 101 + y_offs),
-            # position=(width * 0.5, height -
-            #           (101 if main_menu else 61)),
+            position=(
+                width * 0.5,
+                yoffs - (50 if uiscale is bui.UIScale.SMALL else 70),
+            ),
             size=(0, 0),
             text=bui.Lstr(
                 resource=(
@@ -116,32 +137,24 @@ class PlayWindow(bui.MainWindow):
                     else 'playlistsText'
                 )
             ),
-            scale=1.7,
+            scale=1.2 if uiscale is bui.UIScale.SMALL else 1.7,
             res_scale=2.0,
-            maxwidth=400,
+            maxwidth=250,
             color=bui.app.ui_v1.heading_color,
             h_align='center',
             v_align='center',
         )
 
-        if uiscale is bui.UIScale.SMALL:
-            bui.textwidget(edit=txt, text='')
-
-        v = (
-            height
-            - (110 if self._playlist_select_context is None else 90)
-            + y_offs
-        )
-        v -= 100
+        scl = 0.75 if self._playlist_select_context is None else 0.68
+        v = height * 0.5 - button_height * scl * 0.5 - 20.0
         clr = (0.6, 0.7, 0.6, 1.0)
-        v -= 280 if self._playlist_select_context is None else 180
-        v += 30 if uiscale is bui.UIScale.SMALL else 0
-        hoffs = (
-            x_offs + 80
-            if self._playlist_select_context is None
-            else x_offs - 100
+
+        bcount = 3 if self._playlist_select_context is None else 2
+
+        total_b_width = (
+            bcount * button_width * scl + (bcount - 1) * button_spacing
         )
-        scl = 1.13 if self._playlist_select_context is None else 0.68
+        hoffs = (width - total_b_width) * 0.5
 
         self._lineup_tex = bui.gettexture('playerLineup')
         angry_computer_transparent_mesh = bui.getmesh(
@@ -167,16 +180,15 @@ class PlayWindow(bui.MainWindow):
         if self._playlist_select_context is None:
             self._coop_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(hoffs, v + (scl * 15)),
+                position=(hoffs, v),
                 size=(
                     scl * button_width,
-                    scl * 300,
+                    scl * button_height,
                 ),
                 extra_touch_border_scale=0.1,
                 autoselect=True,
                 label='',
                 button_type='square',
-                text_scale=1.13,
                 on_activate_call=self._coop,
             )
 
@@ -247,7 +259,7 @@ class PlayWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 color=(0.7, 0.9, 0.7, 1.0),
-                scale=scl * 2.3,
+                scale=scl * 1.5,
             )
 
             bui.textwidget(
@@ -264,32 +276,20 @@ class PlayWindow(bui.MainWindow):
                 color=clr,
             )
 
-        scl = 0.5 if self._playlist_select_context is None else 0.68
-        hoffs += 440 if self._playlist_select_context is None else 216
-        v += 180 if self._playlist_select_context is None else -68
+            hoffs += scl * button_width + button_spacing
 
         self._teams_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(
-                hoffs,
-                v + (scl * 15 if self._playlist_select_context is None else 0),
-            ),
+            position=(hoffs, v),
             size=(
                 scl * button_width,
-                scl * (300 if self._playlist_select_context is None else 360),
+                scl * button_height,
             ),
             extra_touch_border_scale=0.1,
             autoselect=True,
             label='',
             button_type='square',
-            text_scale=1.13,
             on_activate_call=self._team_tourney,
-        )
-
-        bui.widget(
-            edit=btn,
-            up_widget=bui.get_special_widget('get_tokens_button'),
-            right_widget=bui.get_special_widget('squad_button'),
         )
 
         xxx = -14
@@ -381,7 +381,7 @@ class PlayWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             color=(0.7, 0.9, 0.7, 1.0),
-            scale=scl * 2.3,
+            scale=scl * 1.5,
         )
         bui.textwidget(
             parent=self._root_widget,
@@ -392,29 +392,21 @@ class PlayWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             res_scale=1.5,
-            scale=0.9 * scl,
+            scale=0.83 * scl,
             flatness=1.0,
             maxwidth=scl * button_width * 0.7,
             color=clr,
         )
 
-        hoffs += 0 if self._playlist_select_context is None else 300
-        v -= 155 if self._playlist_select_context is None else 0
+        hoffs += scl * button_width + button_spacing
         self._free_for_all_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(
-                hoffs,
-                v + (scl * 15 if self._playlist_select_context is None else 0),
-            ),
-            size=(
-                scl * button_width,
-                scl * (300 if self._playlist_select_context is None else 360),
-            ),
+            position=(hoffs, v),
+            size=(scl * button_width, scl * button_height),
             extra_touch_border_scale=0.1,
             autoselect=True,
             label='',
             button_type='square',
-            text_scale=1.13,
             on_activate_call=self._free_for_all,
         )
 
@@ -505,7 +497,7 @@ class PlayWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             color=(0.7, 0.9, 0.7, 1.0),
-            scale=scl * 1.9,
+            scale=scl * 1.5,
         )
         bui.textwidget(
             parent=self._root_widget,
@@ -515,7 +507,7 @@ class PlayWindow(bui.MainWindow):
             text=bui.Lstr(resource=f'{self._r}.twoToEightPlayersText'),
             h_align='center',
             v_align='center',
-            scale=0.9 * scl,
+            scale=0.83 * scl,
             flatness=1.0,
             maxwidth=scl * button_width * 0.7,
             color=clr,
@@ -572,7 +564,7 @@ class PlayWindow(bui.MainWindow):
 
     def _coop(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.coop.browser import CoopBrowserWindow
 
         # no-op if we're not currently in control.

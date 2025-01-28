@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import time
 import logging
 import inspect
 import weakref
@@ -52,10 +53,10 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         TOKENS_METER = 'tokens_meter'
         TROPHY_METER = 'trophy_meter'
         LEVEL_METER = 'level_meter'
+        CHEST_SLOT_0 = 'chest_slot_0'
         CHEST_SLOT_1 = 'chest_slot_1'
         CHEST_SLOT_2 = 'chest_slot_2'
         CHEST_SLOT_3 = 'chest_slot_3'
-        CHEST_SLOT_4 = 'chest_slot_4'
 
     def __init__(self) -> None:
         from bauiv1._uitypes import MainWindow
@@ -84,6 +85,10 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self.title_color = (0.72, 0.7, 0.75)
         self.heading_color = (0.72, 0.7, 0.75)
         self.infotextcolor = (0.7, 0.9, 0.7)
+
+        self._last_win_recreate_size: tuple[float, float] | None = None
+        self._last_screen_size_win_recreate_time: float | None = None
+        self._screen_size_win_recreate_timer: babase.AppTimer | None = None
 
         # Elements in our root UI will call anything here when
         # activated.
@@ -162,40 +167,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # checks.
         self.upkeeptimer = babase.AppTimer(2.6543, ui_upkeep, repeat=True)
 
-    def auto_set_back_window(self, from_window: MainWindow) -> None:
-        """Sets the main menu window automatically from a parent WindowState."""
-
-        main_window = self._main_window()
-
-        # This should never get called for top-level main-windows.
-        assert (
-            main_window is None or main_window.main_window_is_top_level is False
-        )
-
-        back_state = (
-            None if main_window is None else main_window.main_window_back_state
-        )
-        if back_state is None:
-            raise RuntimeError(
-                f'Main window {main_window} provides no back-state;'
-                f' cannot use auto-back.'
-            )
-
-        # Valid states should have values here.
-        assert back_state.is_top_level is not None
-        assert back_state.is_auxiliary is not None
-        assert back_state.window_type is not None
-
-        backwin = back_state.create_window(transition='in_left')
-
-        self.set_main_window(
-            backwin,
-            from_window=from_window,
-            is_back=True,
-            back_state=back_state,
-            suppress_warning=True,
-        )
-
     def get_main_window(self) -> bauiv1.MainWindow | None:
         """Return main window, if any."""
         return self._main_window()
@@ -211,11 +182,14 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         back_state: MainWindowState | None = None,
         suppress_warning: bool = False,
     ) -> None:
-        """Set the current 'main' window, replacing any existing.
+        """Set the current 'main' window.
 
         Generally this should not be called directly; The high level
         MainWindow methods main_window_replace() and main_window_back()
-        should be used when possible for navigation.
+        should be used whenever possible to implement navigation.
+
+        The caller is responsible for cleaning up any previous main
+        window.
         """
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
@@ -243,10 +217,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         window_weakref = weakref.ref(window)
         window_widget = window.get_root_widget()
 
-        if isinstance(from_window, MainWindow):
-            # from_window_widget = from_window.get_root_widget()
-            pass
-        else:
+        if not isinstance(from_window, MainWindow):
             if from_window is not None and not isinstance(from_window, bool):
                 raise RuntimeError(
                     f'set_main_window() now takes a MainWindow or bool or None'
@@ -267,6 +238,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                     'Provided back_state is incomplete.'
                     ' Make sure to only pass fully-filled-out MainWindowStates.'
                 )
+
         # If a top-level main-window is being set, complain if there already
         # is a main-window.
         if is_top_level:
@@ -278,8 +250,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                     existing,
                 )
         else:
-            # In other cases, sanity-check that the window ordering this
-            # switch is the one we're switching away from.
+            # In other cases, sanity-check that the window asking for
+            # this switch is the one we're switching away from.
             try:
                 if isinstance(from_window, bool):
                     # For default val True we warn that the arg wasn't
@@ -391,7 +363,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
     def save_main_window_state(self, window: MainWindow) -> MainWindowState:
         """Fully initialize a window-state from a window.
 
-        Use this to get a state for later restoration purposes.
+        Use this to get a complete state for later restoration purposes.
         Calling the window's get_main_window_state() directly is
         insufficient.
         """
@@ -427,12 +399,12 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         )
 
     @override
-    def on_screen_change(self) -> None:
+    def on_ui_scale_change(self) -> None:
         # Update our stored UIScale.
         self._update_ui_scale()
 
         # Update native bits (allow root widget to rebuild itself/etc.)
-        _bauiv1.on_screen_change()
+        _bauiv1.on_ui_scale_change()
 
         # Lastly, if we have a main window, recreate it to pick up the
         # new UIScale/etc.
@@ -441,3 +413,57 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             winstate = self.save_main_window_state(mainwindow)
             self.clear_main_window(transition='instant')
             self.restore_main_window_state(winstate)
+
+            # Store the size we created this for to avoid redundant
+            # future recreates.
+            self._last_win_recreate_size = babase.get_virtual_screen_size()
+
+    @override
+    def on_screen_size_change(self) -> None:
+
+        # Recreating a MainWindow is a kinda heavy thing and it doesn't
+        # seem like we should be doing it at 120hz during a live window
+        # resize, so let's limit the max rate we do it.
+        now = time.monotonic()
+
+        # 4 refreshes per second seems reasonable.
+        interval = 0.25
+
+        # If there is a timer set already, do nothing.
+        if self._screen_size_win_recreate_timer is not None:
+            return
+
+        # Ok; there's no timer. Schedule one.
+        till_update = (
+            0.0
+            if self._last_screen_size_win_recreate_time is None
+            else max(
+                0.0, self._last_screen_size_win_recreate_time + interval - now
+            )
+        )
+        self._screen_size_win_recreate_timer = babase.AppTimer(
+            till_update, self._do_screen_size_win_recreate
+        )
+
+    def _do_screen_size_win_recreate(self) -> None:
+        self._last_screen_size_win_recreate_time = time.monotonic()
+        self._screen_size_win_recreate_timer = None
+
+        # Avoid recreating if we're already at this size. This prevents
+        # a redundant recreate when ui scale changes.
+        virtual_screen_size = babase.get_virtual_screen_size()
+        if virtual_screen_size == self._last_win_recreate_size:
+            return
+
+        mainwindow = self.get_main_window()
+        if (
+            mainwindow is not None
+            and mainwindow.refreshes_on_screen_size_changes
+        ):
+            winstate = self.save_main_window_state(mainwindow)
+            self.clear_main_window(transition='instant')
+            self.restore_main_window_state(winstate)
+
+            # Store the size we created this for to avoid redundant
+            # future recreates.
+            self._last_win_recreate_size = virtual_screen_size

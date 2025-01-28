@@ -12,7 +12,7 @@ class SessionGlobalsNode : public Node {
   static auto InitType() -> NodeType*;
   explicit SessionGlobalsNode(Scene* scene);
   ~SessionGlobalsNode() override;
-  auto GetAppTimeMillisecs() -> millisecs_t;
+  auto AppTimeMillisecs() -> millisecs_t;
   auto GetTime() -> millisecs_t;
   auto GetStep() -> int64_t;
 };

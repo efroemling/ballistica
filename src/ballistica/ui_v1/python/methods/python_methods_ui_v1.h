@@ -3,9 +3,9 @@
 #ifndef BALLISTICA_UI_V1_PYTHON_METHODS_PYTHON_METHODS_UI_V1_H_
 #define BALLISTICA_UI_V1_PYTHON_METHODS_PYTHON_METHODS_UI_V1_H_
 
-#include <vector>
+#include <Python.h>
 
-#include "ballistica/shared/ballistica.h"
+#include <vector>
 
 namespace ballistica::ui_v1 {
 

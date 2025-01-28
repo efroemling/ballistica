@@ -37,7 +37,7 @@ class ProfileUpgradeWindow(bui.Window):
         self._height = 450 if uiscale is bui.UIScale.SMALL else 350
         assert bui.app.classic is not None
         self._base_scale = (
-            1.9
+            1.92
             if uiscale is bui.UIScale.SMALL
             else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.2
         )
@@ -205,7 +205,10 @@ class ProfileUpgradeWindow(bui.Window):
             tickets = plus.get_v1_account_ticket_count()
             if tickets < self._cost:
                 bui.getsound('error').play()
-                print('FIXME - show not-enough-tickets msg.')
+                bui.screenmessage(
+                    bui.Lstr(resource='notEnoughTicketsText'),
+                    color=(1, 0, 0),
+                )
                 # gettickets.show_get_tickets_prompt()
                 return
             bui.screenmessage(

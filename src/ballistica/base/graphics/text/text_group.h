@@ -29,7 +29,7 @@ class TextGroup : public Object {
 
   auto GetElementTexture(int index) const -> TextureAsset* {
     assert(index < static_cast<int>(entries_.size()));
-    return entries_[index]->tex.Get();
+    return entries_[index]->tex.get();
   }
 
   // if you are doing any shader effects in UV-space (such as drop-shadows),

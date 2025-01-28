@@ -35,71 +35,145 @@ class RootWidget : public ContainerWidget {
   /// Called when UIScale or screen dimensions change.
   void OnUIScaleChange();
 
+  void OnLanguageChange() override;
   void UpdateLayout() override;
   void SetSquadSizeLabel(int val);
   void SetAccountState(bool signed_in, const std::string& name);
 
-  void SetTicketsMeterText(const std::string& val);
-  void SetTokensMeterText(const std::string& val);
-  void SetLeagueRankText(const std::string& val);
+  void SetTicketsMeterValue(int val);
+  void SetTokensMeterValue(int val, bool gold_pass);
+  void SetLeagueRankValue(int val);
   void SetLeagueType(const std::string& val);
   void SetAchievementPercentText(const std::string& val);
   void SetLevelText(const std::string& val);
   void SetXPText(const std::string& val);
+  void SetInboxCountText(const std::string& val);
+  void SetChests(const std::string& chest_0_appearance,
+                 const std::string& chest_1_appearance,
+                 const std::string& chest_2_appearance,
+                 const std::string& chest_3_appearance,
+                 seconds_t chest_0_unlock_time, seconds_t chest_1_unlock_time,
+                 seconds_t chest_2_unlock_time, seconds_t chest_3_unlock_time,
+                 seconds_t chest_0_ad_allow_time,
+                 seconds_t chest_1_ad_allow_time,
+                 seconds_t chest_2_ad_allow_time,
+                 seconds_t chest_3_ad_allow_time);
+  void SetHaveLiveValues(bool have_live_values);
+
+  auto bottom_left_height() const { return bottom_left_height_; }
+
+  /// Temporarily pause updates to things such as
+  /// ticket/token meters so they can be applied at a
+  /// set time or animated.
+  void PauseUpdates();
+
+  /// Resume updates to things such as ticket/token
+  /// meters. Snaps to the latest values.
+  void ResumeUpdates();
 
  private:
-  struct ButtonDef;
-  struct Button;
-  struct TextDef;
-  struct ImageDef;
-  struct Text;
-  struct Image;
-  enum class MeterType { kLevel, kTrophy, kTickets, kTokens };
-  enum class VAlign { kTop, kCenter, kBottom };
+  struct ButtonDef_;
+  struct Button_;
+  struct TextDef_;
+  struct ImageDef_;
+  struct Text_;
+  struct Image_;
+  enum class MeterType_ { kLevel, kTrophy, kTickets, kTokens };
+  enum class VAlign_ { kTop, kCenter, kBottom };
+
+  auto GetTimeStr_(seconds_t diff) -> std::string;
+  void UpdateChests_();
+  void UpdateTokensMeterText_();
   void UpdateForFocusedWindow_(Widget* widget);
-  auto AddButton_(const ButtonDef& def) -> Button*;
-  auto AddText_(const TextDef& def) -> Text*;
-  auto AddImage_(const ImageDef& def) -> Image*;
-  void StepPositions_(float dt);
-  void AddMeter_(MeterType type, float h_align, float r, float g, float b,
+  auto AddButton_(const ButtonDef_& def) -> Button_*;
+  auto AddText_(const TextDef_& def) -> Text_*;
+  auto AddImage_(const ImageDef_& def) -> Image_*;
+  void StepChildWidgets_(seconds_t dt);
+  void StepChests_();
+  void AddMeter_(MeterType_ type, float h_align, float r, float g, float b,
                  bool plus, const std::string& s);
-  ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kInGame};
+  void UpdateTokensMeterTextColor_();
+
+  std::string chest_0_appearance_;
+  std::string chest_1_appearance_;
+  std::string chest_2_appearance_;
+  std::string chest_3_appearance_;
+  std::string time_suffix_hours_;
+  std::string time_suffix_minutes_;
+  std::string time_suffix_seconds_;
+  std::list<Button_> buttons_;
+  std::list<Text_> texts_;
+  std::list<Image_> images_;
+  std::vector<Button_*> top_left_buttons_;
+  std::vector<Button_*> top_right_buttons_;
+  std::vector<Button_*> bottom_left_buttons_;
+  std::vector<Button_*> bottom_right_buttons_;
   StackWidget* screen_stack_widget_{};
   StackWidget* overlay_stack_widget_{};
+  Button_* back_button_{};
+  Button_* account_button_{};
+  Button_* achievements_button_{};
+  Button_* inbox_button_{};
+  Button_* tickets_meter_button_{};
+  Button_* tokens_meter_button_{};
+  Button_* trophy_meter_button_{};
+  Button_* settings_button_{};
+  Button_* store_button_{};
+  Button_* get_tokens_button_{};
+  Button_* inventory_button_{};
+  Button_* menu_button_{};
+  Button_* squad_button_{};
+  Button_* level_meter_button_{};
+  Button_* chest_0_button_{};
+  Button_* chest_1_button_{};
+  Button_* chest_2_button_{};
+  Button_* chest_3_button_{};
+  Button_* chest_backing_{};
+  Image_* trophy_icon_{};
+  Image_* tickets_meter_icon_{};
+  Image_* tokens_meter_icon_{};
+  Image_* inbox_count_backing_{};
+  Image_* chest_0_lock_icon_{};
+  Image_* chest_1_lock_icon_{};
+  Image_* chest_2_lock_icon_{};
+  Image_* chest_3_lock_icon_{};
+  Image_* chest_0_tv_icon_{};
+  Image_* chest_1_tv_icon_{};
+  Image_* chest_2_tv_icon_{};
+  Image_* chest_3_tv_icon_{};
+  Text_* squad_size_text_{};
+  Text_* account_name_text_{};
+  Text_* tickets_meter_text_{};
+  Text_* tokens_meter_text_{};
+  Text_* league_rank_text_{};
+  Text_* achievement_percent_text_{};
+  Text_* level_text_{};
+  Text_* xp_text_{};
+  Text_* inbox_count_text_{};
+  Text_* chest_0_time_text_{};
+  Text_* chest_1_time_text_{};
+  Text_* chest_2_time_text_{};
+  Text_* chest_3_time_text_{};
+  seconds_t chest_0_unlock_time_{-1.0};
+  seconds_t chest_1_unlock_time_{-1.0};
+  seconds_t chest_2_unlock_time_{-1.0};
+  seconds_t chest_3_unlock_time_{-1.0};
+  seconds_t chest_0_ad_allow_time_{-1.0};
+  seconds_t chest_1_ad_allow_time_{-1.0};
+  seconds_t chest_2_ad_allow_time_{-1.0};
+  seconds_t chest_3_ad_allow_time_{-1.0};
+  seconds_t last_chests_step_time_{-1.0f};
+  seconds_t update_pause_time_{};
+  seconds_t update_time_{};
   float base_scale_{1.0f};
-  millisecs_t update_time_{};
-  std::list<Button> buttons_;
-  std::list<Text> texts_;
-  std::list<Image> images_;
-  std::vector<Button*> top_left_buttons_;
-  std::vector<Button*> top_right_buttons_;
-  std::vector<Button*> bottom_left_buttons_;
-  std::vector<Button*> bottom_right_buttons_;
-  bool positions_dirty_{true};
+  float bottom_left_height_{};
+  int update_pause_count_{};
+  ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kInGame};
+  bool child_widgets_dirty_{true};
   bool in_main_menu_{};
-  Button* back_button_{};
-  Button* account_button_{};
-  Button* achievements_button_{};
-  Button* inbox_button_{};
-  Button* tickets_meter_button_{};
-  Button* tokens_meter_button_{};
-  Button* trophy_meter_button_{};
-  Button* settings_button_{};
-  Button* store_button_{};
-  Button* get_tokens_button_{};
-  Button* inventory_button_{};
-  Button* menu_button_{};
-  Button* squad_button_{};
-  Button* level_meter_button_{};
-  Image* trophy_icon_{};
-  Text* squad_size_text_{};
-  Text* account_name_text_{};
-  Text* tickets_meter_text_{};
-  Text* tokens_meter_text_{};
-  Text* league_rank_text_{};
-  Text* achievement_percent_text_{};
-  Text* level_text_{};
-  Text* xp_text_{};
+  bool gold_pass_{};
+  bool have_live_values_{};
+  bool translations_dirty_{true};
 };
 
 }  // namespace ballistica::ui_v1

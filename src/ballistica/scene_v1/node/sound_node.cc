@@ -90,7 +90,7 @@ void SoundNode::SetLoop(bool val) {
 }
 
 void SoundNode::SetSound(SceneSound* s) {
-  if (s == sound_.Get()) {
+  if (s == sound_.get()) {
     return;
   }
   sound_ = s;
@@ -127,7 +127,7 @@ void SoundNode::SetMusic(bool val) {
 
 void SoundNode::Step() {
   // If we want to start playing, do so.
-  if (!playing_ && sound_.Exists()) {
+  if (!playing_ && sound_.exists()) {
     base::AudioSource* s = g_base->audio->SourceBeginNew();
     if (s) {
       assert(position_.size() == 3);
@@ -142,7 +142,7 @@ void SoundNode::Step() {
     }
   }
   if (positional_ && position_dirty_ && playing_) {
-    millisecs_t t = g_core->GetAppTimeMillisecs();
+    millisecs_t t = g_core->AppTimeMillisecs();
     if (t - last_position_update_time_ > 100) {
       base::AudioSource* s = g_base->audio->SourceBeginExisting(play_id_, 107);
       if (s) {

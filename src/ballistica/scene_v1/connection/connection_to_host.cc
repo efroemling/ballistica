@@ -58,7 +58,7 @@ ConnectionToHost::~ConnectionToHost() {
 }
 
 void ConnectionToHost::Update() {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   // Send out null messages occasionally for ping measurement purposes.
   // Note that we currently only do this from the client since we might not
@@ -202,7 +202,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           set_peer_spec(PlayerSpec(string_buffer.data()));
         }
 
-        peer_hash_ = g_base->plus()->CalcV1PeerHash(peer_hash_input_);
+        peer_hash_ = g_base->Plus()->CalcV1PeerHash(peer_hash_input_);
 
         set_can_communicate(true);
         appmode->LaunchClientSession();
@@ -227,7 +227,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           JsonDict dict;
           dict.AddNumber("b", kEngineBuildNumber);
 
-          g_base->plus()->V1SetClientInfo(&dict);
+          g_base->Plus()->V1SetClientInfo(&dict);
 
           // Pass the hash we generated from their handshake; they can use
           // this to make sure we're who we say we are.
@@ -253,7 +253,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
             g_core->Log(LogName::kBaNetworking, LogLevel::kError,
                         "No profiles found; sending empty list to host");
             empty_dict.Steal(PyDict_New());
-            profiles = empty_dict.Get();
+            profiles = empty_dict.get();
           }
           if (profiles != nullptr) {
             // Dump them to a json string.
@@ -264,7 +264,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
                 g_core->python->objs()
                     .Get(core::CorePython::ObjID::kJsonDumpsCall)
                     .Call(args, keywds);
-            if (!results.Exists()) {
+            if (!results.exists()) {
               g_core->Log(LogName::kBaNetworking, LogLevel::kError,
                           "Error getting json dump of local profiles");
             } else {
@@ -556,7 +556,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     case BA_MESSAGE_SESSION_RESET:
     case BA_MESSAGE_SESSION_DYNAMICS_CORRECTION: {
       // These commands are consumed directly by the session.
-      if (client_session_.Exists()) {
+      if (client_session_.exists()) {
         client_session_->HandleSessionMessage(buffer);
       }
       break;

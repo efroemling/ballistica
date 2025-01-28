@@ -21,6 +21,7 @@ from efro.dataclassio._base import (
     Codec,
     _parse_annotated,
     EXTRA_ATTRS_ATTR,
+    LOSSY_ATTR,
     _is_valid_for_codec,
     _get_origin,
     SIMPLE_TYPES,
@@ -60,6 +61,14 @@ class _Outputter:
         # mypy workaround - if we check 'obj' here it assumes the
         # isinstance call below fails.
         assert dataclasses.is_dataclass(self._obj)
+
+        # If this data has been flagged as lossy, don't allow outputting
+        # it. This hopefully helps avoid unintentional data
+        # modification/loss.
+        if getattr(obj, LOSSY_ATTR, False):
+            raise ValueError(
+                'Object has been flagged as lossy; output is disallowed.'
+            )
 
         # For special extended data types, call their 'will_output' callback.
         # FIXME - should probably move this into _process_dataclass so it

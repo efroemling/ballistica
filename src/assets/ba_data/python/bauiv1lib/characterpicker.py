@@ -193,7 +193,7 @@ class CharacterPicker(PopupWindow):
         bui.widget(edit=btn, show_buffer_top=30, show_buffer_bottom=30)
 
     def _on_store_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
 
         plus = bui.app.plus
         assert plus is not None

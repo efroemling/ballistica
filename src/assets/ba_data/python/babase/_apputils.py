@@ -11,6 +11,7 @@ from functools import partial
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
+from efro.util import utc_now
 from efro.logging import LogLevel
 from efro.dataclassio import ioprepped, dataclass_to_json, dataclass_from_json
 
@@ -18,9 +19,21 @@ import _babase
 from babase._appsubsystem import AppSubsystem
 
 if TYPE_CHECKING:
+    import datetime
     from typing import Any, TextIO, Callable
 
     import babase
+
+
+def utc_now_cloud() -> datetime.datetime:
+    """Returns estimated utc time regardless of local clock settings.
+
+    Applies offsets pulled from server communication/etc.
+    """
+    # TODO: wire this up. Just using local time for now. Make sure that
+    # BaseFeatureSet::TimeSinceEpochCloudSeconds() and this are synced
+    # up.
+    return utc_now()
 
 
 def is_browser_likely_available() -> bool:
@@ -28,8 +41,8 @@ def is_browser_likely_available() -> bool:
 
     category: General Utility Functions
 
-    If this returns False you may want to avoid calling babase.show_url()
-    with any lengthy addresses. (ba.show_url() will display an address
+    If this returns False you may want to avoid calling babase.open_url()
+    with any lengthy addresses. (babase.open_url() will display an address
     as a string in a window if unable to bring up a browser, but that
     is only useful for simple URLs.)
     """

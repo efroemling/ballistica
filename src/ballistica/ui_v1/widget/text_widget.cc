@@ -47,11 +47,11 @@ TextWidget::TextWidget() {
 
 TextWidget::~TextWidget() = default;
 
-void TextWidget::set_on_return_press_call(PyObject* call_tuple) {
+void TextWidget::SetOnReturnPressCall(PyObject* call_tuple) {
   on_return_press_call_ = Object::New<base::PythonContextCall>(call_tuple);
 }
 
-void TextWidget::set_on_activate_call(PyObject* call_tuple) {
+void TextWidget::SetOnActivateCall(PyObject* call_tuple) {
   on_activate_call_ = Object::New<base::PythonContextCall>(call_tuple);
 }
 
@@ -227,7 +227,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         {
           auto xf = c.ScopedTransform();
           c.Translate(bound_l, bound_b, 0.1f);
-          c.DrawMesh(highlight_mesh_.Get());
+          c.DrawMesh(highlight_mesh_.get());
         }
       }
     }
@@ -343,7 +343,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // Apply subs/resources to get our actual text if need be.
   UpdateTranslation_();
 
-  if (!text_group_.Exists()) {
+  if (!text_group_.exists()) {
     text_group_ = Object::New<base::TextGroup>();
   }
   if (text_group_dirty_) {
@@ -547,8 +547,7 @@ void TextWidget::SetText(const std::string& text_in_raw) {
 
   if (do_format_check) {
     bool valid;
-    g_base->assets->CompileResourceString(
-        text_in_raw, "TextWidget::set_text format check", &valid);
+    g_base->assets->CompileResourceString(text_in_raw, &valid);
     if (!valid) {
       BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                   "Invalid resource string: '" + text_in_raw + "'");
@@ -597,7 +596,7 @@ void TextWidget::Activate() {
   last_activate_time_millisecs_ =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
-  if (auto* call = on_activate_call_.Get()) {
+  if (auto* call = on_activate_call_.get()) {
     // Schedule this to run immediately after any current UI traversal.
     call->ScheduleInUIOperation();
   }
@@ -631,9 +630,9 @@ void TextWidget::InvokeStringEditor_() {
   assert(g_base->InLogicThread());
 
   // If there's already a valid edit attached to us, do nothing.
-  if (string_edit_adapter_.Exists()
+  if (string_edit_adapter_.exists()
       && !g_base->python->CanPyStringEditAdapterBeReplaced(
-          string_edit_adapter_.Get())) {
+          string_edit_adapter_.get())) {
     return;
   }
 
@@ -643,7 +642,7 @@ void TextWidget::InvokeStringEditor_() {
   auto result = g_ui_v1->python->objs()
                     .Get(UIV1Python::ObjID::kTextWidgetStringEditAdapterClass)
                     .Call(args);
-  if (!result.Exists()) {
+  if (!result.exists()) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "Error invoking string edit dialog.");
     return;
@@ -651,7 +650,7 @@ void TextWidget::InvokeStringEditor_() {
 
   // If this new one is already marked replacable, it means it wasn't able
   // to register as the active one, so we can ignore it.
-  if (g_base->python->CanPyStringEditAdapterBeReplaced(result.Get())) {
+  if (g_base->python->CanPyStringEditAdapterBeReplaced(result.get())) {
     return;
   }
 
@@ -663,9 +662,9 @@ void TextWidget::InvokeStringEditor_() {
   // explicitly wants us to use our own.
   if (g_base->platform->HaveStringEditor()
       && !g_ui_v1->always_use_internal_on_screen_keyboard()) {
-    g_base->platform->InvokeStringEditor(string_edit_adapter_.Get());
+    g_base->platform->InvokeStringEditor(string_edit_adapter_.get());
   } else {
-    g_ui_v1->python->InvokeStringEditor(string_edit_adapter_.Get());
+    g_ui_v1->python->InvokeStringEditor(string_edit_adapter_.get());
   }
 }
 
@@ -724,7 +723,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           parent_widget()->SelectWidget(nullptr);
           return true;
         } else {
-          if (auto* call = on_return_press_call_.Get()) {
+          if (auto* call = on_return_press_call_.get()) {
             claimed = true;
             // Schedule this to run immediately after any current UI traversal.
             call->ScheduleInUIOperation();
@@ -951,8 +950,7 @@ void TextWidget::UpdateTranslation_() {
     if (editable()) {
       text_translated_ = text_raw_;
     } else {
-      text_translated_ = g_base->assets->CompileResourceString(
-          text_raw_, "TextWidget::UpdateTranslation");
+      text_translated_ = g_base->assets->CompileResourceString(text_raw_);
     }
     text_translation_dirty_ = false;
     text_group_dirty_ = true;
@@ -967,5 +965,26 @@ auto TextWidget::GetTextWidth() -> float {
 }
 
 void TextWidget::OnLanguageChange() { text_translation_dirty_ = true; }
+
+void TextWidget::SetHAlign(HAlign a) {
+  if (alignment_h_ != a) {
+    text_group_dirty_ = true;
+  }
+  alignment_h_ = a;
+}
+void TextWidget::SetVAlign(VAlign a) {
+  if (alignment_v_ != a) {
+    text_group_dirty_ = true;
+  }
+  alignment_v_ = a;
+}
+
+void TextWidget::SetGlowType(GlowType glow_type) {
+  if (glow_type == glow_type_) {
+    return;
+  }
+  glow_type_ = glow_type;
+  highlight_dirty_ = true;
+}
 
 }  // namespace ballistica::ui_v1

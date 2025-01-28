@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import random
+import weakref
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
@@ -59,12 +60,15 @@ class GameButton:
         else:
             stars = 1
 
+        self._window = weakref.ref(window)
+        self._game = game
+
         self._button = btn = bui.buttonwidget(
             parent=parent,
             position=(x + 23, y + 4),
             size=(sclx, scly),
             label='',
-            on_activate_call=bui.Call(window.run_game, game),
+            on_activate_call=self._on_press,
             button_type='square',
             autoselect=True,
             on_select_call=bui.Call(window.sel_change, row, game),
@@ -187,12 +191,16 @@ class GameButton:
         )
         self._update()
 
+    def _on_press(self) -> None:
+        window = self._window()
+        if window is not None:
+            window.run_game(self._game, origin_widget=self._button)
+
     def get_button(self) -> bui.Widget:
         """Return the underlying button bui.Widget."""
         return self._button
 
     def _update(self) -> None:
-        # pylint: disable=too-many-boolean-expressions
 
         plus = bui.app.plus
         assert plus is not None
@@ -232,54 +240,7 @@ class GameButton:
 
         # Hard-code games we haven't unlocked.
         assert bui.app.classic is not None
-        if (
-            (
-                game
-                in (
-                    'Challenges:Infinite Runaround',
-                    'Challenges:Infinite Onslaught',
-                )
-                and not bui.app.classic.accounts.have_pro()
-            )
-            or (
-                game in ('Challenges:Meteor Shower',)
-                and not plus.get_v1_account_product_purchased(
-                    'games.meteor_shower'
-                )
-            )
-            or (
-                game
-                in (
-                    'Challenges:Target Practice',
-                    'Challenges:Target Practice B',
-                )
-                and not plus.get_v1_account_product_purchased(
-                    'games.target_practice'
-                )
-            )
-            or (
-                game in ('Challenges:Ninja Fight',)
-                and not plus.get_v1_account_product_purchased(
-                    'games.ninja_fight'
-                )
-            )
-            or (
-                game in ('Challenges:Pro Ninja Fight',)
-                and not plus.get_v1_account_product_purchased(
-                    'games.ninja_fight'
-                )
-            )
-            or (
-                game
-                in (
-                    'Challenges:Easter Egg Hunt',
-                    'Challenges:Pro Easter Egg Hunt',
-                )
-                and not plus.get_v1_account_product_purchased(
-                    'games.easter_egg_hunt'
-                )
-            )
-        ):
+        if not bui.app.classic.is_game_unlocked(game):
             unlocked = False
 
         # Let's tint levels a slightly different color when easy mode

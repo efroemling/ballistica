@@ -79,7 +79,7 @@ void Widget::SetSelected(bool s, SelectionCause cause) {
     return;
   }
   selected_ = s;
-  if (selected_ && on_select_call_.Exists()) {
+  if (selected_ && on_select_call_.exists()) {
     // Schedule this to run immediately after any current UI traversal.
     on_select_call_->ScheduleInUIOperation();
   }
@@ -202,7 +202,7 @@ void Widget::ScreenPointToWidget(float* x, float* y) const {
 #endif  // BA_DEBUG_BUILD || BA_TEST_BUILD
 }
 
-auto Widget::GetPyWidget(bool new_ref) -> PyObject* {
+auto Widget::GetPyWidget_(bool new_ref) -> PyObject* {
   assert(g_base->InLogicThread());
   if (py_ref_ == nullptr) {
     py_ref_ = PythonClassWidget::Create(this);
@@ -233,5 +233,25 @@ auto Widget::IsAcceptingInput() const -> bool { return true; }
 void Widget::Activate() {}
 
 auto Widget::IsTransitioningOut() const -> bool { return false; }
+
+void Widget::SetRightWidget(Widget* w) {
+  BA_PRECONDITION(!neighbors_locked_);
+  right_widget_ = w;
+}
+
+void Widget::SetLeftWidget(Widget* w) {
+  BA_PRECONDITION(!neighbors_locked_);
+  left_widget_ = w;
+}
+
+void Widget::SetUpWidget(Widget* w) {
+  BA_PRECONDITION(!neighbors_locked_);
+  up_widget_ = w;
+}
+
+void Widget::SetDownWidget(Widget* w) {
+  BA_PRECONDITION(!neighbors_locked_);
+  down_widget_ = w;
+}
 
 }  // namespace ballistica::ui_v1

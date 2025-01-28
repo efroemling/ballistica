@@ -324,7 +324,7 @@ void SoundAsset::DoUnload() {
 }
 
 void SoundAsset::UpdatePlayTime() {
-  last_play_time_ = g_core->GetAppTimeMillisecs();
+  last_play_time_ = g_core->AppTimeMillisecs();
 }
 
 }  // namespace ballistica::base

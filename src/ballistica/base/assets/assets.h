@@ -111,8 +111,8 @@ class Assets {
       const std::unordered_map<std::string, std::string>& language);
   auto GetResourceString(const std::string& key) -> std::string;
   auto CharStr(SpecialChar id) -> std::string;
-  auto CompileResourceString(const std::string& s, const std::string& loc,
-                             bool* valid = nullptr) -> std::string;
+  auto CompileResourceString(const std::string& s, bool* valid = nullptr)
+      -> std::string;
 
   auto sys_assets_loaded() const { return sys_assets_loaded_; }
 

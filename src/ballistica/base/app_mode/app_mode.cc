@@ -71,4 +71,6 @@ auto AppMode::LastClientJoinTime() const -> millisecs_t { return -1; }
 
 auto AppMode::IsInMainMenu() const -> bool { return false; }
 
+auto AppMode::GetBottomLeftEdgeHeight() -> float { return 0.0f; }
+
 }  // namespace ballistica::base

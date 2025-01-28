@@ -74,7 +74,6 @@ class GatherWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from bauiv1lib.gather.abouttab import AboutGatherTab
@@ -88,39 +87,56 @@ class GatherWindow(bui.MainWindow):
 
         bui.set_analytics_screen('Gather Window')
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1640 if uiscale is bui.UIScale.SMALL else 1040
-        x_offs = 200 if uiscale is bui.UIScale.SMALL else 0
-        y_offs = -65 if uiscale is bui.UIScale.SMALL else 0
-        self._height = (
-            650
+        self._width = (
+            1640
             if uiscale is bui.UIScale.SMALL
-            else 680 if uiscale is bui.UIScale.MEDIUM else 800
+            else 1100 if uiscale is bui.UIScale.MEDIUM else 1200
+        )
+        self._height = (
+            1000
+            if uiscale is bui.UIScale.SMALL
+            else 730 if uiscale is bui.UIScale.MEDIUM else 900
         )
         self._current_tab: GatherWindow.TabID | None = None
-        extra_top = 20 if uiscale is bui.UIScale.SMALL else 0
         self._r = 'gatherWindow'
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.4
+            if uiscale is bui.UIScale.SMALL
+            else 0.88 if uiscale is bui.UIScale.MEDIUM else 0.66
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 130, screensize[0] / scale)
+        target_height = min(self._height - 130, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 65
+        self._scroll_bottom = yoffs - 93 - self._scroll_height
+        self._scroll_left = (self._width - self._scroll_width) * 0.5
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + extra_top),
+                size=(self._width, self._height),
                 toolbar_visibility=(
                     'menu_tokens'
                     if uiscale is bui.UIScale.SMALL
                     else 'menu_full'
                 ),
-                scale=(
-                    1.15
-                    if uiscale is bui.UIScale.SMALL
-                    else 0.95 if uiscale is bui.UIScale.MEDIUM else 0.7
-                ),
-                stack_offset=(
-                    (0, 0)
-                    if uiscale is bui.UIScale.SMALL
-                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         if uiscale is bui.UIScale.SMALL:
@@ -131,45 +147,37 @@ class GatherWindow(bui.MainWindow):
         else:
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(70 + x_offs, self._height - 74 + y_offs),
-                size=(140, 60),
+                position=(70, yoffs - 43),
+                size=(60, 60),
                 scale=1.1,
                 autoselect=True,
-                label=bui.Lstr(resource='backText'),
-                button_type='back',
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
                 on_activate_call=self.main_window_back,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-            bui.buttonwidget(
-                edit=btn,
-                button_type='backSmall',
-                position=(70 + x_offs, self._height - 78),
-                size=(60, 60),
-                label=bui.charstr(bui.SpecialChar.BACK),
-            )
 
-        condensed = uiscale is not bui.UIScale.LARGE
-        t_offs_y = (
-            0 if not condensed else 25 if uiscale is bui.UIScale.MEDIUM else 33
-        )
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 42 + t_offs_y + y_offs),
+            position=(
+                (
+                    self._width * 0.5
+                    + (
+                        (self._scroll_width * -0.5 + 170.0 - 70.0)
+                        if uiscale is bui.UIScale.SMALL
+                        else 0.0
+                    )
+                ),
+                yoffs - (64 if uiscale is bui.UIScale.SMALL else 4),
+            ),
             size=(0, 0),
             color=bui.app.ui_v1.title_color,
-            scale=(
-                1.5
-                if not condensed
-                else 1.0 if uiscale is bui.UIScale.MEDIUM else 1.0
-            ),
-            h_align='center',
+            scale=1.3 if uiscale is bui.UIScale.SMALL else 1.0,
+            h_align='left' if uiscale is bui.UIScale.SMALL else 'center',
             v_align='center',
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
-            maxwidth=320,
+            text=(bui.Lstr(resource=f'{self._r}.titleText')),
+            maxwidth=135 if uiscale is bui.UIScale.SMALL else 320,
         )
-
-        scroll_buffer_h = 130 + 2 * x_offs
-        tab_buffer_h = (320 if condensed else 250) + 2 * x_offs
 
         # Build up the set of tabs we want.
         tabdefs: list[tuple[GatherWindow.TabID, bui.Lstr]] = [
@@ -192,17 +200,16 @@ class GatherWindow(bui.MainWindow):
             (self.TabID.MANUAL, bui.Lstr(resource=f'{self._r}.manualText'))
         )
 
-        # On small UI, push our tabs up closer to the top of the screen to
-        # save a bit of space.
-        tabs_top_extra = 42 if condensed else 0
+        tab_inset = 250.0 if uiscale is bui.UIScale.SMALL else 100.0
+
         self._tab_row = TabRow(
             self._root_widget,
             tabdefs,
+            size=(self._scroll_width - 2.0 * tab_inset, 50),
             pos=(
-                tab_buffer_h * 0.5,
-                self._height - 130 + tabs_top_extra + y_offs,
+                self._scroll_left + tab_inset,
+                self._scroll_bottom + self._scroll_height - 4.0,
             ),
-            size=(self._width - tab_buffer_h, 50),
             on_select_call=bui.WeakCall(self._set_tab),
         )
 
@@ -220,48 +227,30 @@ class GatherWindow(bui.MainWindow):
             if tabtype is not None:
                 self._tabs[tab_id] = tabtype(self)
 
+        # Eww; tokens meter may or may not be here; should be smarter
+        # about this.
         bui.widget(
             edit=self._tab_row.tabs[tabdefs[-1][0]].button,
-            right_widget=bui.get_special_widget('squad_button'),
+            right_widget=bui.get_special_widget('tokens_meter'),
         )
         if uiscale is bui.UIScale.SMALL:
             bui.widget(
                 edit=self._tab_row.tabs[tabdefs[0][0]].button,
                 left_widget=bui.get_special_widget('back_button'),
+                up_widget=bui.get_special_widget('back_button'),
             )
-
-        self._scroll_width = self._width - scroll_buffer_h
-        self._scroll_height = (
-            self._height
-            - (270.0 if uiscale is bui.UIScale.SMALL else 180.0)
-            + tabs_top_extra
-        )
-
-        self._scroll_left = (self._width - self._scroll_width) * 0.5
-        self._scroll_bottom = (
-            self._height
-            - self._scroll_height
-            - 79
-            - 48
-            + tabs_top_extra
-            + y_offs
-        )
-        buffer_h = 10
-        buffer_v = 4
 
         # Not actually using a scroll widget anymore; just an image.
         bui.imagewidget(
             parent=self._root_widget,
+            size=(self._scroll_width, self._scroll_height),
             position=(
-                self._scroll_left - buffer_h,
-                self._scroll_bottom - buffer_v,
-            ),
-            size=(
-                self._scroll_width + 2 * buffer_h,
-                self._scroll_height + 2 * buffer_v,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                self._scroll_bottom,
             ),
             texture=bui.gettexture('scrollWidget'),
             mesh_transparent=bui.getmesh('softEdgeOutside'),
+            opacity=0.4,
         )
         self._tab_container: bui.Widget | None = None
 

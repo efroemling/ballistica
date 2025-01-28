@@ -128,7 +128,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
                 scale=(
-                    1.95
+                    2.3
                     if uiscale is bui.UIScale.SMALL
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
@@ -205,15 +205,14 @@ class PlaylistEditGameWindow(bui.MainWindow):
             ),
             highlight=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
+            border_opacity=0.4,
         )
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
             size=(scroll_width, scroll_height),
             background=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 

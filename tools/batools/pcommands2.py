@@ -476,20 +476,17 @@ def wsl_build_check_win_drive() -> None:
                     ),
                     _wrap(
                         'Visual Studio compiles will error here'
-                        ' for reasons related'
-                        ' to Linux filesystem case-sensitivity, and thus are'
-                        ' disallowed.'
+                        ' for reasons related to Linux filesystem'
+                        ' case-sensitivity, and thus are disallowed.'
                         ' Clone the repo to a location that maps to a native'
                         ' Windows drive such as \'/mnt/c/ballistica\''
                         ' and try again.'
                     ),
                     _wrap(
                         'Note that WSL2 filesystem performance'
-                        ' is poor when accessing'
-                        ' native Windows drives,'
-                        ' so if Visual Studio builds are not'
-                        ' needed it may be best to keep things here'
-                        ' on the Linux filesystem.'
+                        ' is poor when accessing native Windows drives,'
+                        ' so if Visual Studio builds are not needed it may'
+                        ' be best to keep things here on the Linux filesystem.'
                         ' This behavior may differ under WSL1 (untested).'
                     ),
                     _wrap(
@@ -643,8 +640,9 @@ def asset_package_assemble() -> None:
     """Assemble asset package data and its manifest."""
     import os
     import subprocess
-    from efro.error import CleanError
 
+    from efro.error import CleanError
+    from efro.terminal import Clr
     from efrotools.project import getprojectconfig
 
     pcommand.disallow_in_batch()
@@ -671,6 +669,9 @@ def asset_package_assemble() -> None:
         )
 
     try:
+        print(
+            f'{Clr.BLU}Assembling {apversion} ({flavor} flavor)...', flush=True
+        )
         subprocess.run(
             [
                 f'{pcommand.PROJROOT}/tools/bacloud',
@@ -683,5 +684,5 @@ def asset_package_assemble() -> None:
         )
     except Exception as exc:
         raise CleanError(
-            f'Failed to assemble {apversion}' f' ({flavor} flavor).'
+            f'Failed to assemble {apversion} ({flavor} flavor).'
         ) from exc

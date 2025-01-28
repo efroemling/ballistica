@@ -45,7 +45,7 @@ auto SceneV1Context::GetContextDescription() -> std::string {
   if (HostActivity* ha = GetAsHostActivity()) {
     // Return our Python activity class description if possible.
     PythonRef ha_obj(ha->GetPyActivity(), PythonRef::kAcquire);
-    if (ha_obj.Get() != Py_None) {
+    if (ha_obj.get() != Py_None) {
       return ha_obj.Str();
     }
   }

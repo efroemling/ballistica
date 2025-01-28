@@ -15,6 +15,30 @@ if TYPE_CHECKING:
     from typing import Any
 
 
+def register_all_maps() -> None:
+    """Registering all maps."""
+    for maptype in [
+        HockeyStadium,
+        FootballStadium,
+        Bridgit,
+        BigG,
+        Roundabout,
+        MonkeyFace,
+        ZigZag,
+        ThePad,
+        DoomShroom,
+        LakeFrigid,
+        TipTop,
+        CragCastle,
+        TowerD,
+        HappyThoughts,
+        StepRightUp,
+        Courtyard,
+        Rampage,
+    ]:
+        bs.register_map(maptype)
+
+
 class HockeyStadium(bs.Map):
     """Stadium map used for ice hockey games."""
 

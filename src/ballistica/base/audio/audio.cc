@@ -156,7 +156,7 @@ auto Audio::SourceBeginExisting(uint32_t play_id, int debug_id)
 }
 
 auto Audio::ShouldPlay(SoundAsset* sound) -> bool {
-  millisecs_t time = g_core->GetAppTimeMillisecs();
+  millisecs_t time = g_core->AppTimeMillisecs();
   assert(sound);
   return (time - sound->last_play_time() > 50);
 }

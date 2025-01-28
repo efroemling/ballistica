@@ -63,6 +63,12 @@ def root_ui_store_button_press() -> None:
     _root_ui_button_press(UIV1AppSubsystem.RootUIElement.STORE_BUTTON)
 
 
+def root_ui_chest_slot_0_press() -> None:
+    from bauiv1._appsubsystem import UIV1AppSubsystem
+
+    _root_ui_button_press(UIV1AppSubsystem.RootUIElement.CHEST_SLOT_0)
+
+
 def root_ui_chest_slot_1_press() -> None:
     from bauiv1._appsubsystem import UIV1AppSubsystem
 
@@ -79,12 +85,6 @@ def root_ui_chest_slot_3_press() -> None:
     from bauiv1._appsubsystem import UIV1AppSubsystem
 
     _root_ui_button_press(UIV1AppSubsystem.RootUIElement.CHEST_SLOT_3)
-
-
-def root_ui_chest_slot_4_press() -> None:
-    from bauiv1._appsubsystem import UIV1AppSubsystem
-
-    _root_ui_button_press(UIV1AppSubsystem.RootUIElement.CHEST_SLOT_4)
 
 
 def root_ui_inventory_button_press() -> None:

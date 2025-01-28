@@ -13,13 +13,13 @@ namespace ballistica::scene_v1 {
 
 void ClientInputDeviceDelegate::StoreClientDeviceInfo(
     ClientInputDevice* device) {
-  assert(!connection_to_client_.Exists());
+  assert(!connection_to_client_.exists());
   connection_to_client_ = device->connection_to_client();
   remote_device_id_ = device->remote_device_id();
 }
 
 void ClientInputDeviceDelegate::AttachToLocalPlayer(Player* player) {
-  if (ConnectionToClient* c = connection_to_client_.Get()) {
+  if (ConnectionToClient* c = connection_to_client_.get()) {
     // Send a new-style message with a 32 bit player-id.
     // (added during protocol 29; not always present)
     {
@@ -52,7 +52,7 @@ void ClientInputDeviceDelegate::AttachToLocalPlayer(Player* player) {
 
 void ClientInputDeviceDelegate::DetachFromPlayer() {
   // Tell the client that their device is no longer attached to a player.
-  if (ConnectionToClient* c = connection_to_client_.Get()) {
+  if (ConnectionToClient* c = connection_to_client_.get()) {
     std::vector<uint8_t> data(2);
     data[0] = BA_MESSAGE_DETACH_REMOTE_PLAYER;
     data[1] = static_cast_check_fit<unsigned char>(remote_device_id_);
@@ -62,7 +62,7 @@ void ClientInputDeviceDelegate::DetachFromPlayer() {
 }
 
 auto ClientInputDeviceDelegate::GetClientID() const -> int {
-  if (ConnectionToClient* c = connection_to_client_.Get()) {
+  if (ConnectionToClient* c = connection_to_client_.get()) {
     return c->id();
   } else {
     g_core->Log(
@@ -75,7 +75,7 @@ auto ClientInputDeviceDelegate::GetClientID() const -> int {
 
 auto ClientInputDeviceDelegate::GetPublicV1AccountID() const -> std::string {
   assert(g_base->InLogicThread());
-  if (connection_to_client_.Exists()) {
+  if (connection_to_client_.exists()) {
     return connection_to_client_->peer_public_account_id();
   }
   return "";
@@ -83,7 +83,7 @@ auto ClientInputDeviceDelegate::GetPublicV1AccountID() const -> std::string {
 
 auto ClientInputDeviceDelegate::GetAccountName(bool full) const -> std::string {
   assert(g_base->InLogicThread());
-  if (connection_to_client_.Exists()) {
+  if (connection_to_client_.exists()) {
     if (full) {
       return connection_to_client_->peer_spec().GetDisplayString();
     } else {
@@ -94,7 +94,7 @@ auto ClientInputDeviceDelegate::GetAccountName(bool full) const -> std::string {
 }
 
 auto ClientInputDeviceDelegate::GetPlayerProfiles() const -> PyObject* {
-  if (connection_to_client_.Exists()) {
+  if (connection_to_client_.exists()) {
     return connection_to_client_->GetPlayerProfiles();
   }
   return nullptr;

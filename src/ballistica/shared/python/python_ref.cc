@@ -4,6 +4,7 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/support/base_soft.h"
@@ -140,15 +141,15 @@ auto PythonRef::Str() const -> std::string {
   }
   auto s = PythonRef::Stolen(str_obj);
   assert(PyUnicode_Check(str_obj));  // NOLINT (signed with bitwise)
-  return PyUnicode_AsUTF8(s.Get());
+  return PyUnicode_AsUTF8(s.get());
 }
 
 auto PythonRef::Repr() const -> std::string {
   assert(Python::HaveGIL());
   ThrowIfUnset();
   auto s = PythonRef::Stolen(PyObject_Repr(obj_));
-  assert(PyUnicode_Check(s.Get()));  // NOLINT (signed with bitwise)
-  return PyUnicode_AsUTF8(s.Get());
+  assert(PyUnicode_Check(s.get()));  // NOLINT (signed with bitwise)
+  return PyUnicode_AsUTF8(s.get());
 }
 
 auto PythonRef::Type() const -> PythonRef {
@@ -239,7 +240,7 @@ auto PythonRef::ValueAsDouble() const -> double {
 auto PythonRef::GetAttr(const char* name) const -> PythonRef {
   assert(Python::HaveGIL());
   ThrowIfUnset();
-  PyObject* val = PyObject_GetAttrString(Get(), name);
+  PyObject* val = PyObject_GetAttrString(get(), name);
   if (!val) {
     PyErr_Clear();
     throw Exception("Attribute not found: '" + std::string(name) + "'.",
@@ -251,6 +252,7 @@ auto PythonRef::GetAttr(const char* name) const -> PythonRef {
 auto PythonRef::DictGetItem(const char* name) const -> PythonRef {
   assert(Python::HaveGIL());
   ThrowIfUnset();
+  assert(PyDict_Check(obj_));  // Caller's job to ensure this.
   PyObject* key = PyUnicode_FromString(name);
   PyObject* out = PyDict_GetItemWithError(obj_, key);
   Py_DECREF(key);
@@ -268,6 +270,26 @@ auto PythonRef::DictGetItem(const char* name) const -> PythonRef {
   }
   // Must be because dict key didn't exist. Return empty ref.
   return {};
+}
+
+auto PythonRef::DictItems() const
+    -> std::vector<std::pair<PythonRef, PythonRef>> {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+
+  assert(PyDict_Check(obj_));  // Caller's job to ensure this.
+
+  Py_ssize_t pos{};
+  PyObject *key, *value;
+  std::vector<std::pair<PythonRef, PythonRef>> out;
+  out.resize(PyDict_Size(obj_));
+  size_t i = 0;
+  while (PyDict_Next(obj_, &pos, &key, &value)) {
+    out[i].first.Acquire(key);
+    out[i].second.Acquire(value);
+    i++;
+  }
+  return out;
 }
 
 auto PythonRef::NewRef() const -> PyObject* {
@@ -335,7 +357,7 @@ auto PythonRef::Call(const Vector2f& val, bool print_errors) const
     -> PythonRef {
   assert(Python::HaveGIL());
   PythonRef args(Py_BuildValue("((ff))", val.x, val.y), PythonRef::kSteal);
-  return Call(args.Get(), nullptr, print_errors);
+  return Call(args.get(), nullptr, print_errors);
 }
 
 PythonRef::~PythonRef() { Release(); }

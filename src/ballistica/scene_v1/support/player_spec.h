@@ -46,10 +46,13 @@ class PlayerSpec {
   /// party hosts, etc.
   static auto GetDummyPlayerSpec(const std::string& name) -> PlayerSpec;
 
+  auto valid() const { return valid_; }
+
  private:
   std::string name_;
   std::string short_name_;
   int v1_account_type_{};
+  bool valid_{true};
 };
 
 }  // namespace ballistica::scene_v1

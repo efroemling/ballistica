@@ -22,44 +22,59 @@ class InventoryWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        width = 1050 if uiscale is bui.UIScale.SMALL else 750
-        height = (
-            500
+        self._width = 1400 if uiscale is bui.UIScale.SMALL else 750
+        self._height = (
+            1200
             if uiscale is bui.UIScale.SMALL
             else 530 if uiscale is bui.UIScale.MEDIUM else 600
         )
-        x_offs = 70 if uiscale is bui.UIScale.SMALL else 0
-        yoffs = -45 if uiscale is bui.UIScale.SMALL else 0
+        # xoffs = 70 if uiscale is bui.UIScale.SMALL else 0
+        # yoffs = -45 if uiscale is bui.UIScale.SMALL else 0
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.55
+            if uiscale is bui.UIScale.SMALL
+            else 1.15 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        # target_width = min(self._width - 60, screensize[0] / scale)
+        target_height = min(self._height - 100, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(width, height),
+                size=(self._width, self._height),
                 toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
+                    'menu_full' if uiscale is bui.UIScale.SMALL else 'menu_full'
                 ),
-                scale=(
-                    1.55
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.15 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
-                stack_offset=(
-                    (0, 0)
-                    if uiscale is bui.UIScale.SMALL
-                    else (0, 15) if uiscale is bui.UIScale.MEDIUM else (0, 0)
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, height - 45 + yoffs),
-            size=(width, 25),
-            text='INVENTORY',
+            position=(
+                self._width * 0.5,
+                yoffs - (50 if uiscale is bui.UIScale.SMALL else 30),
+            ),
+            size=(0, 0),
+            text=bui.Lstr(resource='inventoryText'),
             color=bui.app.ui_v1.title_color,
+            scale=0.9 if uiscale is bui.UIScale.SMALL else 1.0,
+            maxwidth=(130 if uiscale is bui.UIScale.SMALL else 200),
             h_align='center',
             v_align='center',
         )
@@ -71,7 +86,7 @@ class InventoryWindow(bui.MainWindow):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(x_offs + 50, height - 55 + yoffs),
+                position=(50, yoffs - 50),
                 size=(60, 55),
                 scale=0.8,
                 label=bui.charstr(bui.SpecialChar.BACK),
@@ -82,20 +97,10 @@ class InventoryWindow(bui.MainWindow):
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(0, height - 120 + yoffs),
-            size=(width, 25),
-            text='(under construction)',
-            scale=0.7,
-            h_align='center',
-            v_align='center',
-        )
-
         button_width = 300
         self._player_profiles_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=((width - button_width) * 0.5, height - 200 + yoffs),
+            position=(self._width * 0.5 - button_width * 0.5, yoffs - 200),
             autoselect=True,
             size=(button_width, 60),
             label=bui.Lstr(resource='playerProfilesWindow.titleText'),
@@ -103,6 +108,16 @@ class InventoryWindow(bui.MainWindow):
             icon=bui.gettexture('cuteSpaz'),
             textcolor=(0.75, 0.7, 0.8),
             on_activate_call=self._player_profiles_press,
+        )
+        bui.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, yoffs - 250),
+            size=(0, 0),
+            text=bui.Lstr(resource='moreSoonText'),
+            scale=0.7,
+            maxwidth=self._width * 0.9,
+            h_align='center',
+            v_align='center',
         )
 
     def _player_profiles_press(self) -> None:

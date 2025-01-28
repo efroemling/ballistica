@@ -7,6 +7,7 @@
 
 #include "ballistica/base/assets/mesh_asset.h"
 #include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/mesh/mesh.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/graphics/support/render_command_buffer.h"

@@ -44,8 +44,13 @@ class LanguageSubsystem(AppSubsystem):
         (which may differ from locale if the user sets a language, etc.)
         """
         env = _babase.env()
-        assert isinstance(env['locale'], str)
-        return env['locale']
+        locale = env.get('locale')
+        if not isinstance(locale, str):
+            logging.warning(
+                'Seem to be running in a dummy env; returning en_US locale.'
+            )
+            locale = 'en_US'
+        return locale
 
     @property
     def language(self) -> str:
@@ -433,7 +438,7 @@ class LanguageSubsystem(AppSubsystem):
                 'Thai',
                 'Tamil',
             }
-            and not _babase.can_display_full_unicode()
+            and not _babase.supports_unicode_display()
         ):
             return False
         return True
@@ -524,8 +529,10 @@ class Lstr:
     ...     subs=[('${NAME}', babase.Lstr(resource='res_b'))])
     """
 
-    # pylint: disable=dangerous-default-value
-    # noinspection PyDefaultArgument
+    # This class is used a lot in UI stuff and doesn't need to be
+    # flexible, so let's optimize its performance a bit.
+    __slots__ = ['args']
+
     @overload
     def __init__(
         self,
@@ -533,28 +540,27 @@ class Lstr:
         resource: str,
         fallback_resource: str = '',
         fallback_value: str = '',
-        subs: Sequence[tuple[str, str | Lstr]] = [],
+        subs: Sequence[tuple[str, str | Lstr]] | None = None,
     ) -> None:
         """Create an Lstr from a string resource."""
 
-    # noinspection PyShadowingNames,PyDefaultArgument
     @overload
     def __init__(
         self,
         *,
         translate: tuple[str, str],
-        subs: Sequence[tuple[str, str | Lstr]] = [],
+        subs: Sequence[tuple[str, str | Lstr]] | None = None,
     ) -> None:
         """Create an Lstr by translating a string in a category."""
 
-    # noinspection PyDefaultArgument
     @overload
     def __init__(
-        self, *, value: str, subs: Sequence[tuple[str, str | Lstr]] = []
+        self,
+        *,
+        value: str,
+        subs: Sequence[tuple[str, str | Lstr]] | None = None,
     ) -> None:
         """Create an Lstr from a raw string value."""
-
-    # pylint: enable=redefined-outer-name, dangerous-default-value
 
     def __init__(self, *args: Any, **keywds: Any) -> None:
         """Instantiate a Lstr.
@@ -583,14 +589,16 @@ class Lstr:
         if isinstance(self.args.get('value'), our_type):
             raise TypeError("'value' must be a regular string; not an Lstr")
 
-        if 'subs' in self.args:
-            subs_new = []
-            for key, value in keywds['subs']:
-                if isinstance(value, our_type):
-                    subs_new.append((key, value.args))
-                else:
-                    subs_new.append((key, value))
-            self.args['subs'] = subs_new
+        if 'subs' in keywds:
+            subs = keywds.get('subs')
+            subs_filtered = []
+            if subs is not None:
+                for key, value in keywds['subs']:
+                    if isinstance(value, our_type):
+                        subs_filtered.append((key, value.args))
+                    else:
+                        subs_filtered.append((key, value))
+            self.args['subs'] = subs_filtered
 
         # As of protocol 31 we support compact key names
         # ('t' instead of 'translate', etc). Convert as needed.

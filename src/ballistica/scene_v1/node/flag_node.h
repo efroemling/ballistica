@@ -26,7 +26,7 @@ class FlagNode : public Node {
   void SetIsAreaOfInterest(bool val);
   auto getPosition() const -> std::vector<float>;
   void SetPosition(const std::vector<float>& vals);
-  auto color_texture() const -> SceneTexture* { return color_texture_.Get(); }
+  auto color_texture() const -> SceneTexture* { return color_texture_.get(); }
   void set_color_texture(SceneTexture* val) { color_texture_ = val; }
   auto light_weight() const -> bool { return light_weight_; }
   void SetLightWeight(bool val);

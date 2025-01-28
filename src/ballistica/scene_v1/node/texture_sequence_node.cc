@@ -54,7 +54,7 @@ auto TextureSequenceNode::output_texture() const -> SceneTexture* {
     return nullptr;
   }
   assert(index_ < static_cast<int>(input_textures_.size()));
-  return input_textures_[index_].Get();
+  return input_textures_[index_].get();
 }
 
 void TextureSequenceNode::Step() {

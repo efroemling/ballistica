@@ -111,8 +111,8 @@ void Graphics::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void Graphics::DoApplyAppConfig() {
   assert(g_base->InLogicThread());
 
-  // Any time we load the config we ship a new graphics-settings to
-  // the graphics server since something likely changed.
+  // Any time we load the config we ship a new graphics-settings to the
+  // graphics server since something likely changed.
   graphics_settings_dirty_ = true;
 
   show_fps_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowFPS);
@@ -162,7 +162,7 @@ void Graphics::UpdateInitialGraphicsSettingsSend_() {
 
     g_base->app_adapter->PushGraphicsContextCall([settings] {
       assert(g_base->app_adapter->InGraphicsContext());
-      g_base->graphics_server->ApplySettings(settings->Get());
+      g_base->graphics_server->ApplySettings(settings->get());
       g_base->logic->event_loop()->PushCall([settings] {
         // Release our strong ref back here in the logic thread.
         assert(g_base->InLogicThread());
@@ -253,13 +253,13 @@ auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
 void Graphics::SetGyroEnabled(bool enable) {
   // If we're turning back on, suppress gyro updates for a bit.
   if (enable && !gyro_enabled_) {
-    last_suppress_gyro_time_ = g_core->GetAppTimeMicrosecs();
+    last_suppress_gyro_time_ = g_core->AppTimeMicrosecs();
   }
   gyro_enabled_ = enable;
 }
 
 void Graphics::UpdateProgressBarProgress(float target) {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
   float p = target;
   if (p < 0) {
     p = 0;
@@ -274,7 +274,7 @@ void Graphics::UpdateProgressBarProgress(float target) {
 }
 
 void Graphics::DrawProgressBar(RenderPass* pass, float opacity) {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
   float amount = progress_bar_progress_;
   if (amount < 0) {
     amount = 0;
@@ -319,11 +319,11 @@ void Graphics::DrawProgressBar(RenderPass* pass, float opacity) {
                                              (t - b));
 
   c.SetColor(0.0f, 0.07f, 0.0f, 1 * o);
-  c.DrawMesh(progress_bar_bottom_mesh_.Get());
+  c.DrawMesh(progress_bar_bottom_mesh_.get());
   c.Submit();
 
   c.SetColor(0.23f, 0.17f, 0.35f, 1 * o);
-  c.DrawMesh(progress_bar_top_mesh_.Get());
+  c.DrawMesh(progress_bar_top_mesh_.get());
   c.Submit();
 }
 
@@ -361,9 +361,9 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
   assert(g_base && g_base->InLogicThread());
 
   // Every now and then, update our stats.
-  while (g_core->GetAppTimeMillisecs() >= next_stat_update_time_) {
-    if (g_core->GetAppTimeMillisecs() - next_stat_update_time_ > 1000) {
-      next_stat_update_time_ = g_core->GetAppTimeMillisecs() + 1000;
+  while (g_core->AppTimeMillisecs() >= next_stat_update_time_) {
+    if (g_core->AppTimeMillisecs() - next_stat_update_time_ > 1000) {
+      next_stat_update_time_ = g_core->AppTimeMillisecs() + 1000;
     } else {
       next_stat_update_time_ += 1000;
     }
@@ -373,12 +373,16 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     last_total_frames_rendered_ = total_frames_rendered;
   }
 
+  float bot_left_offset{};
+  if (show_fps_ || show_ping_) {
+    bot_left_offset = g_base->app_mode()->GetBottomLeftEdgeHeight();
+  }
   if (show_fps_) {
     char fps_str[32];
     snprintf(fps_str, sizeof(fps_str), "%d", last_fps_);
     if (fps_str != fps_string_) {
       fps_string_ = fps_str;
-      if (!fps_text_group_.Exists()) {
+      if (!fps_text_group_.exists()) {
         fps_text_group_ = Object::New<TextGroup>();
       }
       fps_text_group_->SetText(fps_string_);
@@ -401,7 +405,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
       c.SetFlatness(1.0f);
       {
         auto xf = c.ScopedTransform();
-        c.Translate(6.0f, 6.0f, kScreenTextZDepth);
+        c.Translate(6.0f, bot_left_offset + 6.0f, kScreenTextZDepth);
         c.DrawMesh(fps_text_group_->GetElementMesh(e));
       }
     }
@@ -415,7 +419,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
       snprintf(ping_str, sizeof(ping_str), "%.0f ms", *ping);
       if (ping_str != ping_string_) {
         ping_string_ = ping_str;
-        if (!ping_text_group_.Exists()) {
+        if (!ping_text_group_.exists()) {
           ping_text_group_ = Object::New<TextGroup>();
         }
         ping_text_group_->SetText(ping_string_);
@@ -436,8 +440,9 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
         c.SetFlatness(1.0f);
         {
           auto xf = c.ScopedTransform();
-          c.Translate(6.0f + 14.0f + (show_fps_ ? 35.0f : 0.0f), 6.0f + 1.0f,
-                      kScreenTextZDepth);
+          c.Translate(
+              6.0f, bot_left_offset + 6.0f + 1.0f + (show_fps_ ? 30.0f : 0.0f),
+              kScreenTextZDepth);
           c.Scale(0.7f, 0.7f);
           c.DrawMesh(ping_text_group_->GetElementMesh(e));
         }
@@ -451,7 +456,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     if (!net_info_str.empty()) {
       if (net_info_str != net_info_string_) {
         net_info_string_ = net_info_str;
-        if (!net_info_text_group_.Exists()) {
+        if (!net_info_text_group_.exists()) {
           net_info_text_group_ = Object::New<TextGroup>();
         }
         net_info_text_group_->SetText(net_info_string_);
@@ -477,9 +482,9 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
   // Draw any debug graphs.
   {
     float debug_graph_y = 50.0;
-    auto now = g_core->GetAppTimeMillisecs();
+    auto now = g_core->AppTimeMillisecs();
     for (auto it = debug_graphs_.begin(); it != debug_graphs_.end();) {
-      assert(it->second.Exists());
+      assert(it->second.exists());
       if (now - it->second->LastUsedTime() > 1000) {
         it = debug_graphs_.erase(it);
       } else {
@@ -503,8 +508,8 @@ auto Graphics::GetDebugGraph(const std::string& name, bool smoothed)
     debug_graphs_[name]->SetLabel(name);
     debug_graphs_[name]->SetSmoothed(smoothed);
   }
-  debug_graphs_[name]->SetLastUsedTime(g_core->GetAppTimeMillisecs());
-  return debug_graphs_[name].Get();
+  debug_graphs_[name]->SetLastUsedTime(g_core->AppTimeMillisecs());
+  return debug_graphs_[name].get();
 }
 
 void Graphics::GetSafeColor(float* red, float* green, float* blue,
@@ -543,7 +548,7 @@ void Graphics::Reset() {
   fade_ = 0;
   fade_start_ = 0;
 
-  if (!camera_.Exists()) {
+  if (!camera_.exists()) {
     camera_ = Object::New<Camera>();
   }
 
@@ -599,13 +604,13 @@ auto Graphics::GetGraphicsSettingsSnapshot() -> Snapshot<GraphicsSettings>* {
     graphics_settings_dirty_ = false;
 
     // We keep a cached copy of this value since we use it a lot.
-    tv_border_ = settings_snapshot_->Get()->tv_border;
+    tv_border_ = settings_snapshot_->get()->tv_border;
 
     // This can affect placeholder settings; keep those up to date.
     UpdatePlaceholderSettings();
   }
-  assert(settings_snapshot_.Exists());
-  return settings_snapshot_.Get();
+  assert(settings_snapshot_.exists());
+  return settings_snapshot_.get();
 }
 
 void Graphics::ClearFrameDefDeleteList() {
@@ -628,7 +633,7 @@ void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
   assert(g_base->InLogicThread());
   // If there's an ourstanding fade-end command, go ahead and run it.
   // (otherwise, overlapping fades can cause things to get lost)
-  if (fade_end_call_.Exists()) {
+  if (fade_end_call_.exists()) {
     if (g_buildconfig.debug_build()) {
       g_core->Log(LogName::kBaGraphics, LogLevel::kWarning,
                   "2 fades overlapping; running first fade-end-call early.");
@@ -657,7 +662,7 @@ void Graphics::DrawLoadDot(RenderPass* pass) {
   } else {
     c.SetColor(0, 0.2f, 0, 1);
   }
-  c.DrawMesh(load_dot_mesh_.Get());
+  c.DrawMesh(load_dot_mesh_.get());
   c.Submit();
 }
 
@@ -743,8 +748,8 @@ void Graphics::DrawUI(FrameDef* frame_def) {
   // Special variants like GraphicsVR may do fancier stuff here.
   g_base->ui->Draw(frame_def);
 
-  // We may want to see the bounds of our virtual screen.
-  DrawUIBounds(frame_def->overlay_pass());
+  // We may want to see the virtual screen safe area.
+  DrawVirtualSafeAreaBounds(frame_def->overlay_pass());
 }
 
 void Graphics::DrawDevUI(FrameDef* frame_def) {
@@ -757,7 +762,7 @@ void Graphics::BuildAndPushFrameDef() {
   assert(g_base->InLogicThread());
 
   assert(g_base->logic->app_bootstrapping_complete());
-  assert(camera_.Exists());
+  assert(camera_.exists());
   assert(!g_core->HeadlessMode());
 
   // Keep track of when we're in here; can be useful for making sure stuff
@@ -765,7 +770,7 @@ void Graphics::BuildAndPushFrameDef() {
   assert(!building_frame_def_);
   building_frame_def_ = true;
 
-  microsecs_t app_time_microsecs = g_core->GetAppTimeMicrosecs();
+  microsecs_t app_time_microsecs = g_core->AppTimeMicrosecs();
 
   // Store how much time this frame_def represents.
   auto display_time_microsecs = g_base->logic->display_time_microsecs();
@@ -1045,7 +1050,7 @@ void Graphics::DrawFades(FrameDef* frame_def) {
       }
     } else {
       fade_ = 0;
-      if (!was_done && fade_end_call_.Exists()) {
+      if (!was_done && fade_end_call_.exists()) {
         fade_end_call_->Schedule();
         fade_end_call_.Clear();
       }
@@ -1087,7 +1092,7 @@ void Graphics::DoDrawFade(FrameDef* frame_def, float amt) {
     // need stuff covering this methinks.
     auto xf = c.ScopedTransform();
     c.Translate(0.0f, 0.0f, 1.0f);
-    c.DrawMesh(screen_mesh_.Get());
+    c.DrawMesh(screen_mesh_.get());
   }
   c.Submit();
 }
@@ -1145,7 +1150,7 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
 
 void Graphics::DrawBlotches(FrameDef* frame_def) {
   if (!blotch_verts_.empty()) {
-    if (!shadow_blotch_mesh_.Exists()) {
+    if (!shadow_blotch_mesh_.exists()) {
       shadow_blotch_mesh_ = Object::New<SpriteMesh>();
     }
     shadow_blotch_mesh_->SetIndexData(Object::New<MeshIndexBuffer16>(
@@ -1154,11 +1159,11 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
         blotch_verts_.size(), &blotch_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLight));
-    c.DrawMesh(shadow_blotch_mesh_.Get());
+    c.DrawMesh(shadow_blotch_mesh_.get());
     c.Submit();
   }
   if (!blotch_soft_verts_.empty()) {
-    if (!shadow_blotch_soft_mesh_.Exists()) {
+    if (!shadow_blotch_soft_mesh_.exists()) {
       shadow_blotch_soft_mesh_ = Object::New<SpriteMesh>();
     }
     shadow_blotch_soft_mesh_->SetIndexData(Object::New<MeshIndexBuffer16>(
@@ -1167,11 +1172,11 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
         blotch_soft_verts_.size(), &blotch_soft_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLightSoft));
-    c.DrawMesh(shadow_blotch_soft_mesh_.Get());
+    c.DrawMesh(shadow_blotch_soft_mesh_.get());
     c.Submit();
   }
   if (!blotch_soft_obj_verts_.empty()) {
-    if (!shadow_blotch_soft_obj_mesh_.Exists()) {
+    if (!shadow_blotch_soft_obj_mesh_.exists()) {
       shadow_blotch_soft_obj_mesh_ = Object::New<SpriteMesh>();
     }
     shadow_blotch_soft_obj_mesh_->SetIndexData(Object::New<MeshIndexBuffer16>(
@@ -1180,7 +1185,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
         blotch_soft_obj_verts_.size(), &blotch_soft_obj_verts_[0]));
     SpriteComponent c(frame_def->light_pass());
     c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLightSoft));
-    c.DrawMesh(shadow_blotch_soft_obj_mesh_.Get());
+    c.DrawMesh(shadow_blotch_soft_obj_mesh_.get());
     c.Submit();
   }
 }
@@ -1217,7 +1222,7 @@ void Graphics::EnableProgressBar(bool fade_in) {
   if (progress_bar_loads_ > 0) {
     progress_bar_ = true;
     progress_bar_fade_in_ = fade_in;
-    last_progress_bar_draw_time_ = g_core->GetAppTimeMillisecs();
+    last_progress_bar_draw_time_ = g_core->AppTimeMillisecs();
     last_progress_bar_start_time_ = last_progress_bar_draw_time_;
     progress_bar_progress_ = 0.0f;
   }
@@ -1235,7 +1240,7 @@ void Graphics::ToggleManualCamera() {
 
 void Graphics::LocalCameraShake(float mag) {
   assert(g_base->InLogicThread());
-  if (camera_.Exists()) {
+  if (camera_.exists()) {
     camera_->Shake(mag);
   }
 }
@@ -1522,13 +1527,13 @@ void Graphics::GetBaseVirtualRes(float* x, float* y) {
   assert(y);
   float base_virtual_res_x;
   float base_virtual_res_y;
-  if (g_base->ui->scale() == UIScale::kSmall) {
-    base_virtual_res_x = kBaseVirtualResSmallX;
-    base_virtual_res_y = kBaseVirtualResSmallY;
-  } else {
-    base_virtual_res_x = kBaseVirtualResX;
-    base_virtual_res_y = kBaseVirtualResY;
-  }
+  // if (g_base->ui->scale() == UIScale::kSmall) {
+  //   base_virtual_res_x = kBaseVirtualResSmallX;
+  //   base_virtual_res_y = kBaseVirtualResSmallY;
+  // } else {
+  base_virtual_res_x = kBaseVirtualResX;
+  base_virtual_res_y = kBaseVirtualResY;
+  // }
   *x = base_virtual_res_x;
   *y = base_virtual_res_y;
 }
@@ -1731,7 +1736,7 @@ void Graphics::set_client_context(Snapshot<GraphicsClientContext>* context) {
   // Currently we only expect this to be set once. That will change once we
   // support renderer swapping/etc.
   assert(!g_base->logic->graphics_ready());
-  assert(!client_context_snapshot_.Exists());
+  assert(!client_context_snapshot_.exists());
   client_context_snapshot_ = context;
 
   // Placeholder settings are affected by client context, so update them
@@ -1747,7 +1752,7 @@ void Graphics::UpdatePlaceholderSettings() {
   assert(g_base->InLogicThread());
 
   // Need both of these in place.
-  if (!settings_snapshot_.Exists() || !has_client_context()) {
+  if (!settings_snapshot_.exists() || !has_client_context()) {
     return;
   }
 
@@ -1755,9 +1760,9 @@ void Graphics::UpdatePlaceholderSettings() {
       settings()->texture_quality, client_context()->auto_texture_quality);
 }
 
-void Graphics::DrawUIBounds(RenderPass* pass) {
+void Graphics::DrawVirtualSafeAreaBounds(RenderPass* pass) {
   // We can optionally draw a guide to show the edges of the overlay pass
-  if (draw_ui_bounds_) {
+  if (draw_virtual_safe_area_bounds_) {
     SimpleComponent c(pass);
     c.SetColor(1, 0, 0);
     {

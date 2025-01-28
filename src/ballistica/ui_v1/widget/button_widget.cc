@@ -20,8 +20,8 @@ ButtonWidget::ButtonWidget()
           static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)} {
   text_ = Object::New<TextWidget>();
   set_text("Button");
-  text_->set_valign(TextWidget::VAlign::kCenter);
-  text_->set_halign(TextWidget::HAlign::kCenter);
+  text_->SetVAlign(TextWidget::VAlign::kCenter);
+  text_->SetHAlign(TextWidget::HAlign::kCenter);
   text_->SetWidth(0.0f);
   text_->SetHeight(0.0f);
 }
@@ -30,7 +30,7 @@ ButtonWidget::~ButtonWidget() = default;
 
 void ButtonWidget::SetTextResScale(float val) { text_->set_res_scale(val); }
 
-void ButtonWidget::set_on_activate_call(PyObject* call_obj) {
+void ButtonWidget::SetOnActivateCall(PyObject* call_obj) {
   on_activate_call_ = Object::New<base::PythonContextCall>(call_obj);
 }
 
@@ -100,7 +100,7 @@ auto ButtonWidget::GetMult(millisecs_t current_time) const -> float {
         0.8f
         + std::abs(sinf(static_cast<float>(current_time) * 0.006467f)) * 0.2f;
 
-    if (!texture_.Exists()) {
+    if (!texture_.exists()) {
       mult *= 1.7f;
     } else {
       // Let's make custom textures pulsate brighter since they can be dark/etc.
@@ -134,7 +134,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   auto* device = g_base->ui->GetUIInputDevice();
 
   // If there's an explicit user-set icon we always show.
-  if (icon_.Exists()) {
+  if (icon_.exists()) {
     show_icons = true;
   }
 
@@ -202,15 +202,15 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     bool do_draw_mesh;
 
     // Normal buttons draw in both transparent and opaque passes.
-    if (!texture_.Exists()) {
+    if (!texture_.exists()) {
       do_draw_mesh = true;
     } else {
       // If we're supplying any custom meshes, draw whichever is provided.
-      if (mesh_opaque_.Exists() || mesh_transparent_.Exists()) {
-        if (draw_transparent && mesh_transparent_.Exists()) {
+      if (mesh_opaque_.exists() || mesh_transparent_.exists()) {
+        if (draw_transparent && mesh_transparent_.exists()) {
           do_draw_mesh = true;
           custom_mesh = mesh_transparent_;
-        } else if ((!draw_transparent) && mesh_opaque_.Exists()) {
+        } else if ((!draw_transparent) && mesh_opaque_.exists()) {
           do_draw_mesh = true;
           custom_mesh = mesh_opaque_;
         } else {
@@ -229,7 +229,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       // We currently only support non-1.0 opacity values when using
       // custom textures and no custom opaque mesh.
-      assert(opacity_ == 1.0f || (texture_.Exists() && !mesh_opaque_.Exists()));
+      assert(opacity_ == 1.0f || (texture_.exists() && !mesh_opaque_.exists()));
 
       c.SetColor(mult * color_red_, mult * color_green_, mult * color_blue_,
                  opacity_);
@@ -241,24 +241,24 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::MeshAsset* mesh;
 
       // Custom button texture.
-      if (texture_.Exists()) {
-        if (!custom_mesh.Exists()) {
+      if (texture_.exists()) {
+        if (!custom_mesh.exists()) {
           mesh = g_base->assets->SysMesh(base::SysMeshID::kImage1x1);
         } else {
-          mesh = custom_mesh.Get();
+          mesh = custom_mesh.get();
         }
         if (texture_->loaded() && mesh->loaded()
-            && (!mask_texture_.Exists() || mask_texture_->loaded())
-            && (!tint_texture_.Exists() || tint_texture_->loaded())) {
+            && (!mask_texture_.exists() || mask_texture_->loaded())
+            && (!tint_texture_.exists() || tint_texture_->loaded())) {
           c.SetTexture(texture_);
-          if (tint_texture_.Exists()) {
-            c.SetColorizeTexture(tint_texture_.Get());
+          if (tint_texture_.exists()) {
+            c.SetColorizeTexture(tint_texture_.get());
             c.SetColorizeColor(tint_color_red_, tint_color_green_,
                                tint_color_blue_);
             c.SetColorizeColor2(tint2_color_red_, tint2_color_green_,
                                 tint2_color_blue_);
           }
-          c.SetMaskTexture(mask_texture_.Get());
+          c.SetMaskTexture(mask_texture_.get());
         } else {
           do_draw = false;
         }
@@ -384,7 +384,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             c.SetTexture(
                 g_base->assets->SysTexture(base::SysTextureID::kBombButton));
           }
-        } else if (icon_.Exists()) {
+        } else if (icon_.exists()) {
           c.SetColor(icon_color_red_
                          * (icon_tint_ * (1.7f * mult * (color_red_))
                             + (1.0f - icon_tint_) * mult),
@@ -563,7 +563,7 @@ void ButtonWidget::DoActivate(bool is_repeat) {
       g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish3);
     }
   }
-  if (auto* call = on_activate_call_.Get()) {
+  if (auto* call = on_activate_call_.get()) {
     // If we're being activated as part of a ui-operation (a click or other
     // such event) then run at the end of that operation to avoid mucking
     // with volatile UI.

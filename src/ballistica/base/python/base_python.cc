@@ -61,7 +61,7 @@ void BasePython::AddPythonClasses(PyObject* module) {
           .GetAttr("Sequence")
           .GetAttr("register");
   PythonRef args(Py_BuildValue("(O)", vec3), PythonRef::kSteal);
-  BA_PRECONDITION(register_call.Call(args).Exists());
+  BA_PRECONDITION(register_call.Call(args).exists());
 }
 
 void BasePython::ImportPythonObjs() {
@@ -84,7 +84,7 @@ void BasePython::SoftImportPlus() {
 
   auto gil{Python::ScopedInterpreterLock()};
   auto result = PythonRef::StolenSoft(PyImport_ImportModule("_baplus"));
-  if (!result.Exists()) {
+  if (!result.exists()) {
     // Ignore any errors here for now. All that will matter is whether plus
     // gave us its interface.
     PyErr_Clear();
@@ -99,7 +99,7 @@ void BasePython::SoftImportClassic() {
 
   auto gil{Python::ScopedInterpreterLock()};
   auto result = PythonRef::StolenSoft(PyImport_ImportModule("_baclassic"));
-  if (!result.Exists()) {
+  if (!result.exists()) {
     // Ignore any errors here for now. All that will matter is whether plus
     // gave us its interface.
     PyErr_Clear();
@@ -123,7 +123,7 @@ void BasePython::OnMainThreadStartApp() {
   auto result = g_base->python->objs()
                     .Get(BasePython::ObjID::kOnMainThreadStartAppCall)
                     .Call();
-  if (!result.Exists()) {
+  if (!result.exists()) {
     FatalError("babase._env.on_main_thread_start_app() failed.");
   }
 }
@@ -155,7 +155,35 @@ void BasePython::OnAppShutdownComplete() {
 
 void BasePython::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 
-void BasePython::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
+void BasePython::OnScreenSizeChange() {
+  assert(g_base->InLogicThread());
+
+  float screen_res_x{g_base->graphics->screen_virtual_width()};
+  float screen_res_y{g_base->graphics->screen_virtual_height()};
+
+  // This call runs for all screen sizes including the initial one. However
+  // we only want to inform the Python layer of *changes*, so we only store
+  // the initial one and don't pass it on.
+  if (last_screen_res_x_ < 0.0) {
+    last_screen_res_x_ = screen_res_x;
+    last_screen_res_y_ = g_base->graphics->screen_virtual_height();
+    return;
+  }
+
+  // Ignore any redundant values that might come through.
+  if (last_screen_res_x_ == screen_res_x
+      && last_screen_res_y_ == screen_res_y) {
+    return;
+  }
+
+  // Aight; we got a fresh, non-initial value. Store it and inform Python.
+  last_screen_res_x_ = screen_res_x;
+  last_screen_res_y_ = screen_res_y;
+
+  g_base->python->objs()
+      .Get(BasePython::ObjID::kAppOnScreenSizeChangeCall)
+      .Call();
+}
 
 void BasePython::StepDisplayTime() { assert(g_base->InLogicThread()); }
 
@@ -191,7 +219,7 @@ auto BasePython::IsPyLString(PyObject* o) -> bool {
   assert(base::g_base);
 
   return (PyUnicode_Check(o)
-          || PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).Get()));
+          || PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).get()));
 }
 
 auto BasePython::GetPyLString(PyObject* o) -> std::string {
@@ -203,7 +231,7 @@ auto BasePython::GetPyLString(PyObject* o) -> std::string {
     return PyUnicode_AsUTF8(o);
   } else {
     // Check if its a Lstr.  If so; we pull its json string representation.
-    int result = PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).Get());
+    int result = PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).get());
     if (result == -1) {
       PyErr_Clear();
       result = 0;
@@ -217,8 +245,8 @@ auto BasePython::GetPyLString(PyObject* o) -> std::string {
                               PythonRef::kSteal);
       if (get_json_call.CallableCheck()) {
         PythonRef json = get_json_call.Call();
-        if (PyUnicode_Check(json.Get())) {
-          return PyUnicode_AsUTF8(json.Get());
+        if (PyUnicode_Check(json.get())) {
+          return PyUnicode_AsUTF8(json.get());
         }
       }
     }
@@ -239,9 +267,9 @@ auto BasePython::GetPyLStrings(PyObject* o) -> std::vector<std::string> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  Py_ssize_t size = PySequence_Fast_GET_SIZE(sequence.Get());
-  PyObject** py_objects = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  Py_ssize_t size = PySequence_Fast_GET_SIZE(sequence.get());
+  PyObject** py_objects = PySequence_Fast_ITEMS(sequence.get());
   std::vector<std::string> vals(static_cast<size_t>(size));
   assert(vals.size() == size);
   for (Py_ssize_t i = 0; i < size; i++) {
@@ -261,14 +289,14 @@ auto BasePython::CanGetPyVector3f(PyObject* o) -> bool {
     return false;
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());  // Should always work; we checked seq.
-  if (PySequence_Fast_GET_SIZE(sequence.Get()) != 3) {
+  assert(sequence.exists());  // Should always work; we checked seq.
+  if (PySequence_Fast_GET_SIZE(sequence.get()) != 3) {
     return false;
   }
   return (
-      Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.Get(), 0))
-      && Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.Get(), 1))
-      && Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.Get(), 2)));
+      Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.get(), 0))
+      && Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.get(), 1))
+      && Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.get(), 2)));
 }
 
 auto BasePython::GetPyVector3f(PyObject* o) -> Vector3f {
@@ -283,13 +311,13 @@ auto BasePython::GetPyVector3f(PyObject* o) -> Vector3f {
                     PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());  // Should always work; we checked seq.
-  if (PySequence_Fast_GET_SIZE(sequence.Get()) != 3) {
+  assert(sequence.exists());  // Should always work; we checked seq.
+  if (PySequence_Fast_GET_SIZE(sequence.get()) != 3) {
     throw Exception("Sequence is not of size 3.", PyExcType::kValue);
   }
-  return {Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.Get(), 0)),
-          Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.Get(), 1)),
-          Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.Get(), 2))};
+  return {Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.get(), 0)),
+          Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.get(), 1)),
+          Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.get(), 2))};
 }
 
 void BasePython::StoreEnv(PyObject* obj) { objs_.Store(ObjID::kEnv, obj); }
@@ -301,8 +329,8 @@ void BasePython::SetRawConfigValue(const char* name, float value) {
   assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PythonRef value_obj(PyFloat_FromDouble(value), PythonRef::kSteal);
-  int result = PyDict_SetItemString(objs().Get(ObjID::kConfig).Get(), name,
-                                    value_obj.Get());
+  int result = PyDict_SetItemString(objs().Get(ObjID::kConfig).get(), name,
+                                    value_obj.get());
   if (result == -1) {
     // Failed, we have. Clear any Python error that got us here; we're in
     // C++ Exception land now.
@@ -314,7 +342,7 @@ void BasePython::SetRawConfigValue(const char* name, float value) {
 auto BasePython::GetRawConfigValue(const char* name) -> PyObject* {
   assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
-  return PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
+  return PyDict_GetItemString(objs().Get(ObjID::kConfig).get(), name);
 }
 
 auto BasePython::GetRawConfigValue(const char* name, const char* default_value)
@@ -322,7 +350,7 @@ auto BasePython::GetRawConfigValue(const char* name, const char* default_value)
   assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
-      PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
+      PyDict_GetItemString(objs().Get(ObjID::kConfig).get(), name);
   if (value == nullptr || !PyUnicode_Check(value)) {
     return default_value;
   }
@@ -334,7 +362,7 @@ auto BasePython::GetRawConfigValue(const char* name, float default_value)
   assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
-      PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
+      PyDict_GetItemString(objs().Get(ObjID::kConfig).get(), name);
   if (value == nullptr) {
     return default_value;
   }
@@ -354,7 +382,7 @@ auto BasePython::GetRawConfigValue(const char* name,
   assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
-      PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
+      PyDict_GetItemString(objs().Get(ObjID::kConfig).get(), name);
   if (value == nullptr) {
     return default_value;
   }
@@ -375,7 +403,7 @@ auto BasePython::GetRawConfigValue(const char* name, int default_value) -> int {
   assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
-      PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
+      PyDict_GetItemString(objs().Get(ObjID::kConfig).get(), name);
   if (value == nullptr) {
     return default_value;
   }
@@ -394,7 +422,7 @@ auto BasePython::GetRawConfigValue(const char* name, bool default_value)
   assert(Python::HaveGIL());
   assert(objs().Exists(ObjID::kConfig));
   PyObject* value =
-      PyDict_GetItemString(objs().Get(ObjID::kConfig).Get(), name);
+      PyDict_GetItemString(objs().Get(ObjID::kConfig).get(), name);
   if (value == nullptr) {
     return default_value;
   }
@@ -409,7 +437,7 @@ auto BasePython::GetRawConfigValue(const char* name, bool default_value)
 }
 template <typename T>
 auto IsPyEnum(BasePython::ObjID enum_class_id, PyObject* obj) -> bool {
-  PyObject* enum_class_obj = g_base->python->objs().Get(enum_class_id).Get();
+  PyObject* enum_class_obj = g_base->python->objs().Get(enum_class_id).get();
   assert(enum_class_obj != nullptr && enum_class_obj != Py_None);
   return static_cast<bool>(PyObject_IsInstance(obj, enum_class_obj));
 }
@@ -418,7 +446,7 @@ template <typename T>
 auto GetPyEnum(BasePython::ObjID enum_class_id, PyObject* obj) -> T {
   // First, make sure what they passed is an instance of the enum class
   // we want.
-  PyObject* enum_class_obj = g_base->python->objs().Get(enum_class_id).Get();
+  PyObject* enum_class_obj = g_base->python->objs().Get(enum_class_id).get();
   assert(enum_class_obj != nullptr && enum_class_obj != Py_None);
   if (!PyObject_IsInstance(obj, enum_class_obj)) {
     throw Exception(Python::ObjToString(obj) + " is not an instance of "
@@ -429,12 +457,12 @@ auto GetPyEnum(BasePython::ObjID enum_class_id, PyObject* obj) -> T {
   // Now get its value as an int and make sure its in range
   // (based on its kLast member in C++ land).
   PythonRef value_obj(PyObject_GetAttrString(obj, "value"), PythonRef::kSteal);
-  if (!value_obj.Exists() || !PyLong_Check(value_obj.Get())) {
+  if (!value_obj.exists() || !PyLong_Check(value_obj.get())) {
     throw Exception(
         Python::ObjToString(obj) + " is not a valid int-valued enum.",
         PyExcType::kType);
   }
-  auto value = PyLong_AS_LONG(value_obj.Get());
+  auto value = PyLong_AS_LONG(value_obj.get());
   if (value < 0 || value >= static_cast<int>(T::kLast)) {
     throw Exception(
         Python::ObjToString(obj) + " is an invalid out-of-range enum value.",
@@ -467,7 +495,7 @@ auto BasePython::GetPyEnum_InputType(PyObject* obj) -> InputType {
 auto BasePython::PyQuitType(QuitType val) -> PythonRef {
   auto args = PythonRef::Stolen(Py_BuildValue("(i)", static_cast<int>(val)));
   auto out = objs().Get(BasePython::ObjID::kQuitTypeClass).Call(args);
-  BA_PRECONDITION(out.Exists());
+  BA_PRECONDITION(out.exists());
   return out;
 }
 
@@ -506,9 +534,9 @@ auto BasePython::GetResource(const char* key, const char* fallback_resource,
     // Don't print errors.
     results = get_resource_call.Call(args, PythonRef(), false);
   }
-  if (results.Exists()) {
+  if (results.exists()) {
     try {
-      return g_base->python->GetPyLString(results.Get());
+      return g_base->python->GetPyLString(results.get());
     } catch (const std::exception&) {
       g_core->Log(LogName::kBa, LogLevel::kError,
                   "GetResource failed for '" + std::string(key) + "'");
@@ -535,9 +563,9 @@ auto BasePython::GetTranslation(const char* category, const char* s)
   results = g_base->python->objs()
                 .Get(base::BasePython::ObjID::kTranslateCall)
                 .Call(args, PythonRef(), false);
-  if (results.Exists()) {
+  if (results.exists()) {
     try {
-      return g_base->python->GetPyLString(results.Get());
+      return g_base->python->GetPyLString(results.get());
     } catch (const std::exception&) {
       g_core->Log(LogName::kBa, LogLevel::kError,
                   "GetTranslation failed for '" + std::string(category) + "'");
@@ -581,15 +609,15 @@ auto BasePython::CanPyStringEditAdapterBeReplaced(PyObject* o) -> bool {
   auto result = g_base->python->objs()
                     .Get(BasePython::ObjID::kStringEditAdapterCanBeReplacedCall)
                     .Call(args);
-  if (!result.Exists()) {
+  if (!result.exists()) {
     g_core->Log(LogName::kBa, LogLevel::kError,
                 "Error getting StringEdit valid state.");
     return false;
   }
-  if (result.Get() == Py_True) {
+  if (result.get() == Py_True) {
     return true;
   }
-  if (result.Get() == Py_False) {
+  if (result.get() == Py_False) {
     return false;
   }
   g_core->Log(LogName::kBa, LogLevel::kError,

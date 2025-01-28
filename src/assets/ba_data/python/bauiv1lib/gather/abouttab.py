@@ -200,7 +200,7 @@ class AboutGatherTab(GatherTab):
         return scroll_widget
 
     def _invite_to_try_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.appinvite import handle_app_invites_press
 
         plus = bui.app.plus

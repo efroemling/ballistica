@@ -121,7 +121,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   bool success = g_base->python->objs()
                      .Get(BasePython::ObjID::kEnvOnNativeModuleImportCall)
                      .Call()
-                     .Exists();
+                     .exists();
   if (!success) {
     FatalError("babase._env.on_native_module_import() call failed.");
   }
@@ -174,10 +174,15 @@ void BaseFeatureSet::ErrorScreenMessage() {
 }
 
 auto BaseFeatureSet::GetV2AccountID() -> std::optional<std::string> {
+  // Guard against this getting called early.
+  if (!IsAppStarted()) {
+    return {};
+  }
+
   auto gil = Python::ScopedInterpreterLock();
   auto result =
       python->objs().Get(BasePython::ObjID::kGetV2AccountIdCall).Call();
-  if (result.Exists()) {
+  if (result.exists()) {
     if (result.ValueIsNone()) {
       return {};
     }
@@ -199,14 +204,14 @@ void BaseFeatureSet::StartApp() {
   BA_PRECONDITION(g_core->InMainThread());
   BA_PRECONDITION(g_base);
 
-  auto start_time = g_core->GetAppTimeSeconds();
+  auto start_time = g_core->AppTimeSeconds();
 
   // Currently limiting this to once per process.
   BA_PRECONDITION(!called_start_app_);
   called_start_app_ = true;
   assert(!app_started_);  // Shouldn't be possible.
 
-  LogVersionInfo_();
+  LogStartupMessage_();
 
   g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
               "start-app begin (main thread)");
@@ -253,7 +258,7 @@ void BaseFeatureSet::StartApp() {
   // Make some noise if this takes more than a few seconds. If we pass 5
   // seconds or so we start to trigger App-Not-Responding reports which
   // isn't good.
-  auto duration = g_core->GetAppTimeSeconds() - start_time;
+  auto duration = g_core->AppTimeSeconds() - start_time;
   if (duration > 3.0) {
     char buffer[128];
     snprintf(buffer, sizeof(buffer),
@@ -272,7 +277,7 @@ void BaseFeatureSet::SuspendApp() {
     return;
   }
 
-  millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};
+  millisecs_t start_time{core::CorePlatform::TimeMonotonicMillisecs()};
 
   // Apple mentioned 5 seconds to run stuff once backgrounded or they bring
   // down the hammer. Let's aim to stay under 2.
@@ -280,7 +285,7 @@ void BaseFeatureSet::SuspendApp() {
 
   g_core->platform->LowLevelDebugLog(
       "SuspendApp@"
-      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()));
   app_suspended_ = true;
 
   // IMPORTANT: Any pause related stuff that event-loop-threads need to do
@@ -288,7 +293,6 @@ void BaseFeatureSet::SuspendApp() {
   // push runnables to them from here they may or may not be called before
   // their event-loop is actually paused.
 
-  // Pause all event loops.
   EventLoop::SetEventLoopsSuspended(true);
 
   if (g_base->network_reader) {
@@ -312,13 +316,13 @@ void BaseFeatureSet::SuspendApp() {
         g_core->Log(
             LogName::kBa, LogLevel::kDebug,
             "SuspendApp() completed in "
-                + std::to_string(core::CorePlatform::GetCurrentMillisecs()
+                + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()
                                  - start_time)
                 + "ms.");
       }
       return;
     }
-  } while (std::abs(core::CorePlatform::GetCurrentMillisecs() - start_time)
+  } while (std::abs(core::CorePlatform::TimeMonotonicMillisecs() - start_time)
            < max_duration);
 
   // If we made it here, we timed out. Complain.
@@ -326,7 +330,8 @@ void BaseFeatureSet::SuspendApp() {
       std::string("SuspendApp() took too long; ")
       + std::to_string(running_loops.size())
       + " event-loops not yet suspended after "
-      + std::to_string(core::CorePlatform::GetCurrentMillisecs() - start_time)
+      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()
+                       - start_time)
       + " ms: (";
   bool first = true;
   for (auto* loop : running_loops) {
@@ -384,10 +389,10 @@ void BaseFeatureSet::UnsuspendApp() {
         "AppAdapter::UnsuspendApp() called with app not in suspendedstate.");
     return;
   }
-  millisecs_t start_time{core::CorePlatform::GetCurrentMillisecs()};
+  millisecs_t start_time{core::CorePlatform::TimeMonotonicMillisecs()};
   g_core->platform->LowLevelDebugLog(
       "UnsuspendApp@"
-      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()));
   app_suspended_ = false;
 
   // Spin all event-loops back up.
@@ -398,11 +403,12 @@ void BaseFeatureSet::UnsuspendApp() {
   g_base->networking->OnAppUnsuspend();
 
   if (g_buildconfig.debug_build()) {
-    g_core->Log(LogName::kBa, LogLevel::kDebug,
-                "UnsuspendApp() completed in "
-                    + std::to_string(core::CorePlatform::GetCurrentMillisecs()
-                                     - start_time)
-                    + "ms.");
+    g_core->Log(
+        LogName::kBa, LogLevel::kDebug,
+        "UnsuspendApp() completed in "
+            + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()
+                             - start_time)
+            + "ms.");
   }
 }
 
@@ -421,7 +427,7 @@ void BaseFeatureSet::OnAppShutdownComplete() {
   }
 }
 
-void BaseFeatureSet::LogVersionInfo_() {
+void BaseFeatureSet::LogStartupMessage_() {
   char buffer[256];
   if (g_buildconfig.headless_build()) {
     snprintf(buffer, sizeof(buffer),
@@ -501,13 +507,13 @@ auto BaseFeatureSet::HavePlus() -> bool {
   return plus_soft_ != nullptr;
 }
 
-void BaseFeatureSet::set_plus(PlusSoftInterface* plus) {
+void BaseFeatureSet::SetPlus(PlusSoftInterface* plus) {
   assert(plus_soft_ == nullptr);
   plus_soft_ = plus;
 }
 
 /// Access the plus feature-set. Will throw an exception if not present.
-auto BaseFeatureSet::plus() -> PlusSoftInterface* {
+auto BaseFeatureSet::Plus() -> PlusSoftInterface* {
   if (!plus_soft_ && !tried_importing_plus_) {
     python->SoftImportPlus();
     // Important to set this *after* import attempt, or a second import
@@ -561,7 +567,7 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
       Python::ScopedInterpreterLock gil;
       auto uuid =
           g_base->python->objs().Get(BasePython::ObjID::kUUIDStrCall).Call();
-      if (uuid.Exists()) {
+      if (uuid.exists()) {
         app_instance_uuid = uuid.ValueAsString();
         have_app_instance_uuid = true;
       }
@@ -572,7 +578,7 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
       g_core->Log(LogName::kBa, LogLevel::kWarning,
                   "GetSessionUUID() using rand fallback.");
       srand(static_cast<unsigned int>(
-          core::CorePlatform::GetCurrentMillisecs()));  // NOLINT
+          core::CorePlatform::TimeMonotonicMillisecs()));  // NOLINT
       app_instance_uuid =
           std::to_string(static_cast<uint32_t>(rand()));  // NOLINT
       have_app_instance_uuid = true;
@@ -609,7 +615,7 @@ auto BaseFeatureSet::FeatureSetFromData(PyObject* obj)
 auto BaseFeatureSet::IsUnmodifiedBlessedBuild() -> bool {
   // If we've got plus present, ask them. Otherwise assume no.
   if (HavePlus()) {
-    return plus()->IsUnmodifiedBlessedBuild();
+    return Plus()->IsUnmodifiedBlessedBuild();
   }
   return false;
 }
@@ -725,7 +731,7 @@ void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
   if (g_core == nullptr) {
     logsuffix = msg;
   }
-  plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
+  Plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
 }
 
 void BaseFeatureSet::PushDevConsolePrintCall(const std::string& msg,
@@ -736,31 +742,31 @@ void BaseFeatureSet::PushDevConsolePrintCall(const std::string& msg,
 PyObject* BaseFeatureSet::GetPyExceptionType(PyExcType exctype) {
   switch (exctype) {
     case PyExcType::kContext:
-      return python->objs().Get(BasePython::ObjID::kContextError).Get();
+      return python->objs().Get(BasePython::ObjID::kContextError).get();
     case PyExcType::kNotFound:
-      return python->objs().Get(BasePython::ObjID::kNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kNotFoundError).get();
     case PyExcType::kNodeNotFound:
-      return python->objs().Get(BasePython::ObjID::kNodeNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kNodeNotFoundError).get();
     case PyExcType::kSessionPlayerNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kSessionPlayerNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kInputDeviceNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kInputDeviceNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kDelegateNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kDelegateNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kWidgetNotFound:
-      return python->objs().Get(BasePython::ObjID::kWidgetNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kWidgetNotFoundError).get();
     case PyExcType::kActivityNotFound:
       return python->objs()
           .Get(BasePython::ObjID::kActivityNotFoundError)
-          .Get();
+          .get();
     case PyExcType::kSessionNotFound:
-      return python->objs().Get(BasePython::ObjID::kSessionNotFoundError).Get();
+      return python->objs().Get(BasePython::ObjID::kSessionNotFoundError).get();
     default:
       return nullptr;
   }
@@ -967,7 +973,7 @@ void BaseFeatureSet::SetAppActive(bool active) {
 
   g_core->platform->LowLevelDebugLog(
       "SetAppActive(" + std::to_string(active) + ")@"
-      + std::to_string(core::CorePlatform::GetCurrentMillisecs()));
+      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()));
 
   // Issue a gentle warning if they are feeding us the same state twice in a
   // row; might imply faulty logic on an app-adapter or whatnot.
@@ -989,6 +995,12 @@ void BaseFeatureSet::Reset() {
   graphics->Reset();
   python->Reset();
   audio->Reset();
+}
+
+auto BaseFeatureSet::TimeSinceEpochCloudSeconds() -> seconds_t {
+  // TODO(ericf): wire this up. Just using local time for now. And make sure
+  // that this and utc_now_cloud() in the Python layer are synced up.
+  return core::CorePlatform::TimeSinceEpochSeconds();
 }
 
 void BaseFeatureSet::SetUIScale(UIScale scale) {

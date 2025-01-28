@@ -43,7 +43,7 @@ auto PythonClassUITexture::Create(
 
 auto PythonClassUITexture::tp_repr(PythonClassUITexture* self) -> PyObject* {
   BA_PYTHON_TRY;
-  base::TextureAsset* s = self->texture_->Get();
+  base::TextureAsset* s = self->texture_->get();
   return Py_BuildValue(
       "s", (std::string("<bauiv1.Texture '") + (s->GetName()) + "'>").c_str());
   BA_PYTHON_CATCH;

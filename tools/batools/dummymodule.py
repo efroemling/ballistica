@@ -892,6 +892,8 @@ class Generator:
             '# pylint: disable=redefined-outer-name\n'
             '# pylint: disable=invalid-name\n'
             '# pylint: disable=no-value-for-parameter\n'
+            '# pylint: disable=unused-import\n'
+            '# pylint: disable=too-many-positional-arguments\n'
             '\n'
             'from __future__ import annotations\n'
             '\n'

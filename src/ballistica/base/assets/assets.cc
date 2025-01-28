@@ -165,6 +165,19 @@ void Assets::StartLoading() {
   LoadSystemTexture(SysTextureID::kCharacterIconMask, "characterIconMask");
   LoadSystemTexture(SysTextureID::kBlack, "black");
   LoadSystemTexture(SysTextureID::kWings, "wings");
+  LoadSystemTexture(SysTextureID::kSpinner, "spinner");
+  LoadSystemTexture(SysTextureID::kSpinner0, "spinner0");
+  LoadSystemTexture(SysTextureID::kSpinner1, "spinner1");
+  LoadSystemTexture(SysTextureID::kSpinner2, "spinner2");
+  LoadSystemTexture(SysTextureID::kSpinner3, "spinner3");
+  LoadSystemTexture(SysTextureID::kSpinner4, "spinner4");
+  LoadSystemTexture(SysTextureID::kSpinner5, "spinner5");
+  LoadSystemTexture(SysTextureID::kSpinner6, "spinner6");
+  LoadSystemTexture(SysTextureID::kSpinner7, "spinner7");
+  LoadSystemTexture(SysTextureID::kSpinner8, "spinner8");
+  LoadSystemTexture(SysTextureID::kSpinner9, "spinner9");
+  LoadSystemTexture(SysTextureID::kSpinner10, "spinner10");
+  LoadSystemTexture(SysTextureID::kSpinner11, "spinner11");
 
   // System cube map textures:
   LoadSystemCubeMapTexture(SysCubeMapTextureID::kReflectionChar,
@@ -386,30 +399,30 @@ void Assets::MarkAllAssetsForLoad() {
   AssetListLock m_lock;
   for (auto&& i : textures_) {
     if (!i.second->preloaded()) {
-      Asset::LockGuard lock(i.second.Get());
+      Asset::LockGuard lock(i.second.get());
       have_pending_loads_[static_cast<int>(AssetType::kTexture)] = true;
-      MarkAssetForLoad(i.second.Get());
+      MarkAssetForLoad(i.second.get());
     }
   }
   for (auto&& i : text_textures_) {
     if (!i.second->preloaded()) {
-      Asset::LockGuard lock(i.second.Get());
+      Asset::LockGuard lock(i.second.get());
       have_pending_loads_[static_cast<int>(AssetType::kTexture)] = true;
-      MarkAssetForLoad(i.second.Get());
+      MarkAssetForLoad(i.second.get());
     }
   }
   for (auto&& i : qr_textures_) {
     if (!i.second->preloaded()) {
-      Asset::LockGuard lock(i.second.Get());
+      Asset::LockGuard lock(i.second.get());
       have_pending_loads_[static_cast<int>(AssetType::kTexture)] = true;
-      MarkAssetForLoad(i.second.Get());
+      MarkAssetForLoad(i.second.get());
     }
   }
   for (auto&& i : meshes_) {
     if (!i.second->preloaded()) {
-      Asset::LockGuard lock(i.second.Get());
+      Asset::LockGuard lock(i.second.get());
       have_pending_loads_[static_cast<int>(AssetType::kMesh)] = true;
-      MarkAssetForLoad(i.second.Get());
+      MarkAssetForLoad(i.second.get());
     }
   }
 }
@@ -423,21 +436,21 @@ void Assets::UnloadRendererBits(bool do_textures, bool do_meshes) {
   if (do_textures) {
     assert(asset_lists_locked_);
     for (auto&& i : textures_) {
-      Asset::LockGuard lock(i.second.Get());
+      Asset::LockGuard lock(i.second.get());
       i.second->Unload(true);
     }
     for (auto&& i : text_textures_) {
-      Asset::LockGuard lock(i.second.Get());
+      Asset::LockGuard lock(i.second.get());
       i.second->Unload(true);
     }
     for (auto&& i : qr_textures_) {
-      Asset::LockGuard lock(i.second.Get());
+      Asset::LockGuard lock(i.second.get());
       i.second->Unload(true);
     }
   }
   if (do_meshes) {
     for (auto&& i : meshes_) {
-      Asset::LockGuard lock(i.second.Get());
+      Asset::LockGuard lock(i.second.get());
       i.second->Unload(true);
     }
   }
@@ -470,16 +483,16 @@ auto Assets::GetAsset(const std::string& file_name,
   assert(asset_loads_allowed_);
   auto i = c_list->find(file_name);
   if (i != c_list->end()) {
-    return Object::Ref<T>(i->second.Get());
+    return Object::Ref<T>(i->second.get());
   } else {
     auto d(Object::New<T>(file_name));
     (*c_list)[file_name] = d;
     {
-      Asset::LockGuard lock(d.Get());
+      Asset::LockGuard lock(d.get());
       have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
-      MarkAssetForLoad(d.Get());
+      MarkAssetForLoad(d.get());
     }
-    d->set_last_used_time(g_core->GetAppTimeMillisecs());
+    d->set_last_used_time(g_core->AppTimeMillisecs());
     return Object::Ref<T>(d);
   }
 }
@@ -490,16 +503,16 @@ auto Assets::GetTexture(TextPacker* packer) -> Object::Ref<TextureAsset> {
   const std::string& hash(packer->hash());
   auto i = text_textures_.find(hash);
   if (i != text_textures_.end()) {
-    return Object::Ref<TextureAsset>(i->second.Get());
+    return Object::Ref<TextureAsset>(i->second.get());
   } else {
     auto d{Object::New<TextureAsset>(packer)};
     text_textures_[hash] = d;
     {
-      Asset::LockGuard lock(d.Get());
+      Asset::LockGuard lock(d.get());
       have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
-      MarkAssetForLoad(d.Get());
+      MarkAssetForLoad(d.get());
     }
-    d->set_last_used_time(g_core->GetAppTimeMillisecs());
+    d->set_last_used_time(g_core->AppTimeMillisecs());
     return Object::Ref<TextureAsset>(d);
   }
 }
@@ -510,16 +523,16 @@ auto Assets::GetQRCodeTexture(const std::string& url)
   assert(asset_lists_locked_);
   auto i = qr_textures_.find(url);
   if (i != qr_textures_.end()) {
-    return Object::Ref<TextureAsset>(i->second.Get());
+    return Object::Ref<TextureAsset>(i->second.get());
   } else {
     auto d(Object::New<TextureAsset>(url));
     qr_textures_[url] = d;
     {
-      Asset::LockGuard lock(d.Get());
+      Asset::LockGuard lock(d.get());
       have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
-      MarkAssetForLoad(d.Get());
+      MarkAssetForLoad(d.get());
     }
-    d->set_last_used_time(g_core->GetAppTimeMillisecs());
+    d->set_last_used_time(g_core->AppTimeMillisecs());
     return Object::Ref<TextureAsset>(d);
   }
 }
@@ -532,17 +545,17 @@ auto Assets::GetCubeMapTexture(const std::string& file_name)
   assert(asset_lists_locked_);
   auto i = textures_.find(file_name);
   if (i != textures_.end()) {
-    return Object::Ref<TextureAsset>(i->second.Get());
+    return Object::Ref<TextureAsset>(i->second.get());
   } else {
     auto d(Object::New<TextureAsset>(file_name, TextureType::kCubeMap,
                                      TextureMinQuality::kLow));
     textures_[file_name] = d;
     {
-      Asset::LockGuard lock(d.Get());
+      Asset::LockGuard lock(d.get());
       have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
-      MarkAssetForLoad(d.Get());
+      MarkAssetForLoad(d.get());
     }
-    d->set_last_used_time(g_core->GetAppTimeMillisecs());
+    d->set_last_used_time(g_core->AppTimeMillisecs());
     return Object::Ref<TextureAsset>(d);
   }
 }
@@ -555,7 +568,7 @@ auto Assets::GetTexture(const std::string& file_name)
   assert(asset_lists_locked_);
   auto i = textures_.find(file_name);
   if (i != textures_.end()) {
-    return Object::Ref<TextureAsset>(i->second.Get());
+    return Object::Ref<TextureAsset>(i->second.get());
   } else {
     static std::set<std::string>* quality_map_medium = nullptr;
     static std::set<std::string>* quality_map_high = nullptr;
@@ -594,11 +607,11 @@ auto Assets::GetTexture(const std::string& file_name)
     auto d(Object::New<TextureAsset>(file_name, TextureType::k2D, min_quality));
     textures_[file_name] = d;
     {
-      Asset::LockGuard lock(d.Get());
+      Asset::LockGuard lock(d.get());
       have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
-      MarkAssetForLoad(d.Get());
+      MarkAssetForLoad(d.get());
     }
-    d->set_last_used_time(g_core->GetAppTimeMillisecs());
+    d->set_last_used_time(g_core->AppTimeMillisecs());
     return Object::Ref<TextureAsset>(d);
   }
 }
@@ -713,9 +726,9 @@ auto Assets::GetAssetPendingLoadCount(
 
   int c = 0;
   for (auto&& i : (*t_list)) {
-    if (i.second.Exists()) {
+    if (i.second.exists()) {
       if (i.second->TryLock()) {
-        Asset::LockGuard lock(i.second.Get(),
+        Asset::LockGuard lock(i.second.get(),
                               Asset::LockGuard::Type::kInheritLock);
         if (!i.second->loaded()) {
           c++;
@@ -750,7 +763,7 @@ auto Assets::RunPendingLoadsLogicThread() -> bool {
 template <typename T>
 auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
   bool flush = false;
-  millisecs_t starttime = g_core->GetAppTimeMillisecs();
+  millisecs_t starttime = g_core->AppTimeMillisecs();
 
   std::vector<Object::Ref<T>*> l;
   std::vector<Object::Ref<T>*> l_unfinished;
@@ -760,8 +773,7 @@ auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
 
     // If we're already out of time.
     if (!flush
-        && g_core->GetAppTimeMillisecs() - starttime
-               > PENDING_LOAD_PROCESS_TIME) {
+        && g_core->AppTimeMillisecs() - starttime > PENDING_LOAD_PROCESS_TIME) {
       bool return_val = (!c_list->empty());
       return return_val;
     }
@@ -790,8 +802,7 @@ auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
           // If the load finished, pop it on our "done-loading" list.. otherwise
           // keep it around.
           l_finished.push_back(*i);  // else l_unfinished.push_back(*i);
-          if (g_core->GetAppTimeMillisecs() - starttime
-                  > PENDING_LOAD_PROCESS_TIME
+          if (g_core->AppTimeMillisecs() - starttime > PENDING_LOAD_PROCESS_TIME
               && !flush) {
             out_of_time = true;
           }
@@ -832,7 +843,7 @@ auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
 
 void Assets::Prune(int level) {
   assert(g_base->InLogicThread());
-  millisecs_t current_time = g_core->GetAppTimeMillisecs();
+  millisecs_t current_time = g_core->AppTimeMillisecs();
 
   // Need lists locked while accessing/modifying them.
   AssetListLock lock;
@@ -876,7 +887,7 @@ void Assets::Prune(int level) {
   // Prune textures.
   assert(asset_lists_locked_);
   for (auto i = textures_.begin(); i != textures_.end();) {
-    TextureAsset* texture = i->second.Get();
+    TextureAsset* texture = i->second.get();
     // Attempt to prune if there are no references remaining except our own and
     // its been a while since it was used.
     if (current_time - texture->last_used_time() > standard_asset_prune_time
@@ -902,7 +913,7 @@ void Assets::Prune(int level) {
   //  time.
   assert(asset_lists_locked_);
   for (auto i = text_textures_.begin(); i != text_textures_.end();) {
-    TextureAsset* texture = i->second.Get();
+    TextureAsset* texture = i->second.get();
     // Attempt to prune if there are no references remaining except our own and
     // its been a while since it was used.
     if (current_time - texture->last_used_time() > text_texture_prune_time
@@ -926,7 +937,7 @@ void Assets::Prune(int level) {
   // Prune qr-textures.
   assert(asset_lists_locked_);
   for (auto i = qr_textures_.begin(); i != qr_textures_.end();) {
-    TextureAsset* texture = i->second.Get();
+    TextureAsset* texture = i->second.get();
     // Attempt to prune if there are no references remaining except our own and
     // its been a while since it was used.
     if (current_time - texture->last_used_time() > qr_texture_prune_time
@@ -950,7 +961,7 @@ void Assets::Prune(int level) {
   // Prune meshes.
   assert(asset_lists_locked_);
   for (auto i = meshes_.begin(); i != meshes_.end();) {
-    MeshAsset* mesh = i->second.Get();
+    MeshAsset* mesh = i->second.get();
     // Attempt to prune if there are no references remaining except our own and
     // its been a while since it was used.
     if (current_time - mesh->last_used_time() > standard_asset_prune_time
@@ -974,7 +985,7 @@ void Assets::Prune(int level) {
   // Prune collision-meshes.
   assert(asset_lists_locked_);
   for (auto i = collision_meshes_.begin(); i != collision_meshes_.end();) {
-    CollisionMeshAsset* mesh = i->second.Get();
+    CollisionMeshAsset* mesh = i->second.get();
     // Attempt to prune if there are no references remaining except our own and
     // its been a while since it was used.
     if (current_time - mesh->last_used_time() > standard_asset_prune_time
@@ -998,7 +1009,7 @@ void Assets::Prune(int level) {
   if (explicit_bool(false)) {
     assert(asset_lists_locked_);
     for (auto i = sounds_.begin(); i != sounds_.end();) {
-      SoundAsset* sound = i->second.Get();
+      SoundAsset* sound = i->second.get();
       // Attempt to prune if there are no references remaining except our own
       // and its been a while since it was used.
       if (current_time - sound->last_used_time() > standard_asset_prune_time
@@ -1168,11 +1179,11 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
   // We wanna fail gracefully for some types.
   if (type == FileType::kSound && name != "blank") {
     g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "Unable to load audio: '" + name + "'; trying fallback...");
+                "Unable to load audio: '" + name + "'.");
     return FindAssetFile(type, "blank");
   } else if (type == FileType::kTexture && name != "white") {
     g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "Unable to load texture: '" + name + "'; trying fallback...");
+                "Unable to load texture: '" + name + "'.");
     return FindAssetFile(type, "white");
   }
 
@@ -1560,8 +1571,8 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
   return result;
 }
 
-auto Assets::CompileResourceString(const std::string& s, const std::string& loc,
-                                   bool* valid) -> std::string {
+auto Assets::CompileResourceString(const std::string& s, bool* valid)
+    -> std::string {
   bool dummyvalid;
   if (valid == nullptr) {
     valid = &dummyvalid;
@@ -1577,8 +1588,7 @@ auto Assets::CompileResourceString(const std::string& s, const std::string& loc,
   cJSON* root = cJSON_Parse(s.c_str());
   if (root == nullptr) {
     g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "CompileResourceString failed (loc " + loc
-                    + "); invalid json: '" + s + "'");
+                "CompileResourceString failed; invalid json: '" + s + "'");
     *valid = false;
     return "";
   }
@@ -1588,8 +1598,8 @@ auto Assets::CompileResourceString(const std::string& s, const std::string& loc,
     *valid = true;
   } catch (const std::exception& e) {
     g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "CompileResourceString failed (loc " + loc
-                    + "): " + std::string(e.what()) + "; str='" + s + "'");
+                "CompileResourceString failed: " + std::string(e.what())
+                    + "; str='" + s + "'");
     result = "<error>";
     *valid = false;
   }
@@ -1641,14 +1651,14 @@ auto Assets::SysTexture(SysTextureID id) -> TextureAsset* {
   assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
   assert(static_cast<size_t>(id) < system_textures_.size());
-  return system_textures_[static_cast<int>(id)].Get();
+  return system_textures_[static_cast<int>(id)].get();
 }
 
 auto Assets::SysCubeMapTexture(SysCubeMapTextureID id) -> TextureAsset* {
   assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
   assert(static_cast<size_t>(id) < system_cube_map_textures_.size());
-  return system_cube_map_textures_[static_cast<int>(id)].Get();
+  return system_cube_map_textures_[static_cast<int>(id)].get();
 }
 
 auto Assets::IsValidSysSound(SysSoundID id) -> bool {
@@ -1659,14 +1669,14 @@ auto Assets::SysSound(SysSoundID id) -> SoundAsset* {
   assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
   assert(IsValidSysSound(id));
-  return system_sounds_[static_cast<int>(id)].Get();
+  return system_sounds_[static_cast<int>(id)].get();
 }
 
 auto Assets::SysMesh(SysMeshID id) -> MeshAsset* {
   assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
   assert(static_cast<size_t>(id) < system_meshes_.size());
-  return system_meshes_[static_cast<int>(id)].Get();
+  return system_meshes_[static_cast<int>(id)].get();
 }
 
 }  // namespace ballistica::base

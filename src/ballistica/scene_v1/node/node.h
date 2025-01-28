@@ -144,7 +144,7 @@ class Node : public Object {
     return node_type_;
   }
   auto HasAttribute(const std::string& name) const -> bool;
-  auto has_py_ref() -> bool { return (py_ref_ != nullptr); }
+  auto HasPyRef() -> bool { return (py_ref_ != nullptr); }
   void UpdateConnections();
   auto iterator() -> NodeList::iterator { return iterator_; }
 

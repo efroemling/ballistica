@@ -11,14 +11,17 @@ from typing import TYPE_CHECKING, override
 from bacommon.app import AppExperience
 import babase
 import bauiv1
+from bauiv1lib.connectivity import wait_for_connectivity
+from bauiv1lib.account.signin import show_sign_in_prompt
 
 import _baclassic
 
 if TYPE_CHECKING:
-    from typing import Callable, Any
+    from typing import Callable, Any, Literal
 
     from efro.call import CallbackRegistration
     import bacommon.cloud
+    from bauiv1lib.chest import ChestWindow
 
 
 # ba_meta export babase.AppMode
@@ -29,8 +32,14 @@ class ClassicAppMode(babase.AppMode):
         self._on_primary_account_changed_callback: (
             CallbackRegistration | None
         ) = None
+        self._on_connectivity_changed_callback: CallbackRegistration | None = (
+            None
+        )
         self._test_sub: babase.CloudSubscription | None = None
         self._account_data_sub: babase.CloudSubscription | None = None
+
+        self._have_account_values = False
+        self._have_connectivity = False
 
     @override
     @classmethod
@@ -39,7 +48,7 @@ class ClassicAppMode(babase.AppMode):
 
     @override
     @classmethod
-    def _supports_intent(cls, intent: babase.AppIntent) -> bool:
+    def _can_handle_intent(cls, intent: babase.AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(
             intent, babase.AppIntentExec | babase.AppIntentDefault
@@ -104,6 +113,9 @@ class ClassicAppMode(babase.AppMode):
         ui.root_ui_calls[ui.RootUIElement.ACHIEVEMENTS_BUTTON] = (
             self._root_ui_achievements_press
         )
+        ui.root_ui_calls[ui.RootUIElement.CHEST_SLOT_0] = partial(
+            self._root_ui_chest_slot_pressed, 0
+        )
         ui.root_ui_calls[ui.RootUIElement.CHEST_SLOT_1] = partial(
             self._root_ui_chest_slot_pressed, 1
         )
@@ -113,18 +125,23 @@ class ClassicAppMode(babase.AppMode):
         ui.root_ui_calls[ui.RootUIElement.CHEST_SLOT_3] = partial(
             self._root_ui_chest_slot_pressed, 3
         )
-        ui.root_ui_calls[ui.RootUIElement.CHEST_SLOT_4] = partial(
-            self._root_ui_chest_slot_pressed, 4
-        )
 
+        # We want to be informed when connectivity changes.
+        self._on_connectivity_changed_callback = (
+            plus.cloud.on_connectivity_changed_callbacks.register(
+                self._update_for_connectivity_change
+            )
+        )
         # We want to be informed when primary account changes.
         self._on_primary_account_changed_callback = (
             plus.accounts.on_primary_account_changed_callbacks.register(
-                self.update_for_primary_account
+                self._update_for_primary_account
             )
         )
         # Establish subscriptions/etc. for any current primary account.
-        self.update_for_primary_account(plus.accounts.primary)
+        self._update_for_primary_account(plus.accounts.primary)
+        self._have_connectivity = plus.cloud.is_connected()
+        self._update_for_connectivity_change(self._have_connectivity)
 
     @override
     def on_deactivate(self) -> None:
@@ -135,7 +152,7 @@ class ClassicAppMode(babase.AppMode):
         self._on_primary_account_changed_callback = None
 
         # Remove anything following any current account.
-        self.update_for_primary_account(None)
+        self._update_for_primary_account(None)
 
         # Save where we were in the UI so we return there next time.
         if classic is not None:
@@ -151,7 +168,7 @@ class ClassicAppMode(babase.AppMode):
         if not babase.app.active:
             babase.invoke_main_menu()
 
-    def update_for_primary_account(
+    def _update_for_primary_account(
         self, account: babase.AccountV2Handle | None
     ) -> None:
         """Update subscriptions/etc. for a new primary account state."""
@@ -159,6 +176,9 @@ class ClassicAppMode(babase.AppMode):
         plus = babase.app.plus
 
         assert plus is not None
+
+        classic = babase.app.classic
+        assert classic is not None
 
         if account is not None:
             babase.set_ui_account_state(True, account.tag)
@@ -178,16 +198,34 @@ class ClassicAppMode(babase.AppMode):
             self._test_sub = None
 
         if account is None:
+            classic.gold_pass = False
+            classic.remove_ads = False
             self._account_data_sub = None
-            _baclassic.set_root_ui_values(
-                tickets_text='-',
-                tokens_text='-',
-                league_rank_text='-',
+            _baclassic.set_root_ui_account_values(
+                tickets=-1,
+                tokens=-1,
+                league_rank=-1,
                 league_type='',
-                achievements_percent_text='-',
-                level_text='-',
-                xp_text='-',
+                achievements_percent_text='',
+                level_text='',
+                xp_text='',
+                inbox_count_text='',
+                gold_pass=False,
+                chest_0_appearance='',
+                chest_1_appearance='',
+                chest_2_appearance='',
+                chest_3_appearance='',
+                chest_0_unlock_time=-1.0,
+                chest_1_unlock_time=-1.0,
+                chest_2_unlock_time=-1.0,
+                chest_3_unlock_time=-1.0,
+                chest_0_ad_allow_time=-1.0,
+                chest_1_ad_allow_time=-1.0,
+                chest_2_ad_allow_time=-1.0,
+                chest_3_ad_allow_time=-1.0,
             )
+            self._have_account_values = False
+            self._update_ui_live_state()
 
         else:
             with account:
@@ -197,26 +235,107 @@ class ClassicAppMode(babase.AppMode):
                     )
                 )
 
+    def _update_for_connectivity_change(self, connected: bool) -> None:
+        """Update when the app's connectivity state changes."""
+        self._have_connectivity = connected
+        self._update_ui_live_state()
+
+    def _update_ui_live_state(self) -> None:
+        # We want to show ui elements faded if we don't have a live
+        # connection to the master-server OR if we haven't received a
+        # set of account values from them yet. If we just plug in raw
+        # connectivity state here we get UI stuff un-fading a moment or
+        # two before values appear (since the subscriptions have not
+        # sent us any values yet) which looks odd.
+        _baclassic.set_root_ui_have_live_values(
+            self._have_connectivity and self._have_account_values
+        )
+
     def _on_sub_test_update(self, val: int | None) -> None:
         print(f'GOT SUB TEST UPDATE: {val}')
 
     def _on_classic_account_data_change(
-        self, val: bacommon.cloud.ClassicAccountLiveData
+        self, val: bacommon.bs.ClassicAccountLiveData
     ) -> None:
+        # print('ACCOUNT CHANGED:', val)
         achp = round(val.achievements / max(val.achievements_total, 1) * 100.0)
-        _baclassic.set_root_ui_values(
-            tickets_text=str(val.tickets),
-            tokens_text=str(val.tokens),
-            league_rank_text=(
-                '-' if val.league_rank is None else f'#{val.league_rank}'
-            ),
+        ibc = str(val.inbox_count)
+        if val.inbox_count_is_max:
+            ibc += '+'
+
+        chest0 = val.chests.get('0')
+        chest1 = val.chests.get('1')
+        chest2 = val.chests.get('2')
+        chest3 = val.chests.get('3')
+
+        # Keep a few handy values on classic updated with the latest
+        # data.
+        classic = babase.app.classic
+        assert classic is not None
+        classic.remove_ads = val.remove_ads
+        classic.gold_pass = val.gold_pass
+
+        _baclassic.set_root_ui_account_values(
+            tickets=val.tickets,
+            tokens=val.tokens,
+            league_rank=(-1 if val.league_rank is None else val.league_rank),
             league_type=(
                 '' if val.league_type is None else val.league_type.value
             ),
             achievements_percent_text=f'{achp}%',
             level_text=str(val.level),
             xp_text=f'{val.xp}/{val.xpmax}',
+            inbox_count_text=ibc,
+            gold_pass=val.gold_pass,
+            chest_0_appearance=(
+                '' if chest0 is None else chest0.appearance.value
+            ),
+            chest_1_appearance=(
+                '' if chest1 is None else chest1.appearance.value
+            ),
+            chest_2_appearance=(
+                '' if chest2 is None else chest2.appearance.value
+            ),
+            chest_3_appearance=(
+                '' if chest3 is None else chest3.appearance.value
+            ),
+            chest_0_unlock_time=(
+                -1.0 if chest0 is None else chest0.unlock_time.timestamp()
+            ),
+            chest_1_unlock_time=(
+                -1.0 if chest1 is None else chest1.unlock_time.timestamp()
+            ),
+            chest_2_unlock_time=(
+                -1.0 if chest2 is None else chest2.unlock_time.timestamp()
+            ),
+            chest_3_unlock_time=(
+                -1.0 if chest3 is None else chest3.unlock_time.timestamp()
+            ),
+            chest_0_ad_allow_time=(
+                -1.0
+                if chest0 is None or chest0.ad_allow_time is None
+                else chest0.ad_allow_time.timestamp()
+            ),
+            chest_1_ad_allow_time=(
+                -1.0
+                if chest1 is None or chest1.ad_allow_time is None
+                else chest1.ad_allow_time.timestamp()
+            ),
+            chest_2_ad_allow_time=(
+                -1.0
+                if chest2 is None or chest2.ad_allow_time is None
+                else chest2.ad_allow_time.timestamp()
+            ),
+            chest_3_ad_allow_time=(
+                -1.0
+                if chest3 is None or chest3.ad_allow_time is None
+                else chest3.ad_allow_time.timestamp()
+            ),
         )
+
+        # Note that we have values and updated faded state accordingly.
+        self._have_account_values = True
+        self._update_ui_live_state()
 
     def _root_ui_menu_press(self) -> None:
         from babase import push_back_press
@@ -234,6 +353,7 @@ class ClassicAppMode(babase.AppMode):
             ui.clear_main_window()
             return
 
+        # Otherwise
         push_back_press()
 
     def _root_ui_account_press(self) -> None:
@@ -362,31 +482,48 @@ class ClassicAppMode(babase.AppMode):
     def _root_ui_achievements_press(self) -> None:
         from bauiv1lib.achievements import AchievementsWindow
 
-        self._auxiliary_window_nav(
-            win_type=AchievementsWindow,
-            win_create_call=lambda: AchievementsWindow(
-                origin_widget=bauiv1.get_special_widget('achievements_button')
-            ),
+        if not self._ensure_signed_in_v1():
+            return
+
+        wait_for_connectivity(
+            on_connected=lambda: self._auxiliary_window_nav(
+                win_type=AchievementsWindow,
+                win_create_call=lambda: AchievementsWindow(
+                    origin_widget=bauiv1.get_special_widget(
+                        'achievements_button'
+                    )
+                ),
+            )
         )
 
     def _root_ui_inbox_press(self) -> None:
         from bauiv1lib.inbox import InboxWindow
 
-        self._auxiliary_window_nav(
-            win_type=InboxWindow,
-            win_create_call=lambda: InboxWindow(
-                origin_widget=bauiv1.get_special_widget('inbox_button')
-            ),
+        if not self._ensure_signed_in():
+            return
+
+        wait_for_connectivity(
+            on_connected=lambda: self._auxiliary_window_nav(
+                win_type=InboxWindow,
+                win_create_call=lambda: InboxWindow(
+                    origin_widget=bauiv1.get_special_widget('inbox_button')
+                ),
+            )
         )
 
     def _root_ui_store_press(self) -> None:
         from bauiv1lib.store.browser import StoreBrowserWindow
 
-        self._auxiliary_window_nav(
-            win_type=StoreBrowserWindow,
-            win_create_call=lambda: StoreBrowserWindow(
-                origin_widget=bauiv1.get_special_widget('store_button')
-            ),
+        if not self._ensure_signed_in_v1():
+            return
+
+        wait_for_connectivity(
+            on_connected=lambda: self._auxiliary_window_nav(
+                win_type=StoreBrowserWindow,
+                win_create_call=lambda: StoreBrowserWindow(
+                    origin_widget=bauiv1.get_special_widget('store_button')
+                ),
+            )
         )
 
     def _root_ui_tickets_meter_press(self) -> None:
@@ -404,13 +541,9 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_trophy_meter_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
         from bauiv1lib.league.rankwindow import LeagueRankWindow
 
-        plus = bauiv1.app.plus
-        assert plus is not None
-        if plus.get_v1_account_state() != 'signed_in':
-            show_sign_in_prompt()
+        if not self._ensure_signed_in_v1():
             return
 
         self._auxiliary_window_nav(
@@ -430,6 +563,9 @@ class ClassicAppMode(babase.AppMode):
     def _root_ui_inventory_press(self) -> None:
         from bauiv1lib.inventory import InventoryWindow
 
+        if not self._ensure_signed_in_v1():
+            return
+
         self._auxiliary_window_nav(
             win_type=InventoryWindow,
             win_create_call=lambda: InventoryWindow(
@@ -437,8 +573,35 @@ class ClassicAppMode(babase.AppMode):
             ),
         )
 
+    def _ensure_signed_in(self) -> bool:
+        """Make sure we're signed in (requiring modern v2 accounts)."""
+        plus = bauiv1.app.plus
+        if plus is None:
+            bauiv1.screenmessage('This requires plus.', color=(1, 0, 0))
+            bauiv1.getsound('error').play()
+            return False
+        if plus.accounts.primary is None:
+            show_sign_in_prompt()
+            return False
+        return True
+
+    def _ensure_signed_in_v1(self) -> bool:
+        """Make sure we're signed in (allowing legacy v1-only accounts)."""
+        plus = bauiv1.app.plus
+        if plus is None:
+            bauiv1.screenmessage('This requires plus.', color=(1, 0, 0))
+            bauiv1.getsound('error').play()
+            return False
+        if plus.get_v1_account_state() != 'signed_in':
+            show_sign_in_prompt()
+            return False
+        return True
+
     def _root_ui_get_tokens_press(self) -> None:
         from bauiv1lib.gettokens import GetTokensWindow
+
+        if not self._ensure_signed_in():
+            return
 
         self._auxiliary_window_nav(
             win_type=GetTokensWindow,
@@ -448,5 +611,41 @@ class ClassicAppMode(babase.AppMode):
         )
 
     def _root_ui_chest_slot_pressed(self, index: int) -> None:
-        print(f'CHEST {index} PRESSED')
-        babase.screenmessage('UNDER CONSTRUCTION.')
+        from bauiv1lib.chest import (
+            ChestWindow0,
+            ChestWindow1,
+            ChestWindow2,
+            ChestWindow3,
+        )
+
+        widgetid: Literal[
+            'chest_0_button',
+            'chest_1_button',
+            'chest_2_button',
+            'chest_3_button',
+        ]
+        winclass: type[ChestWindow]
+        if index == 0:
+            widgetid = 'chest_0_button'
+            winclass = ChestWindow0
+        elif index == 1:
+            widgetid = 'chest_1_button'
+            winclass = ChestWindow1
+        elif index == 2:
+            widgetid = 'chest_2_button'
+            winclass = ChestWindow2
+        elif index == 3:
+            widgetid = 'chest_3_button'
+            winclass = ChestWindow3
+        else:
+            raise RuntimeError(f'Invalid index {index}')
+
+        wait_for_connectivity(
+            on_connected=lambda: self._auxiliary_window_nav(
+                win_type=winclass,
+                win_create_call=lambda: winclass(
+                    index=index,
+                    origin_widget=bauiv1.get_special_widget(widgetid),
+                ),
+            )
+        )

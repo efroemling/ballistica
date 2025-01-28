@@ -206,7 +206,7 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
   // If we've got active timers, wait for messages with a timeout so we can
   // run the next timer payload.
   if (!suspended_ && timers_.ActiveTimerCount() > 0) {
-    microsecs_t apptime = g_core->GetAppTimeMicrosecs();
+    microsecs_t apptime = g_core->AppTimeMicrosecs();
     microsecs_t wait_time = timers_.TimeToNextExpire(apptime);
     if (wait_time > 0) {
       std::unique_lock<std::mutex> lock(thread_message_mutex_);
@@ -306,7 +306,7 @@ void EventLoop::Run_(bool single_cycle) {
     }
 
     if (!suspended_) {
-      timers_.Run(g_core->GetAppTimeMicrosecs());
+      timers_.Run(g_core->AppTimeMicrosecs());
       RunPendingRunnables_();
     }
 
@@ -584,7 +584,7 @@ auto EventLoop::NewTimer(microsecs_t length, bool repeat, Runnable* runnable)
   assert(g_core);
   assert(ThreadIsCurrent());
   assert(Object::IsValidManagedObject(runnable));
-  return timers_.NewTimer(g_core->GetAppTimeMicrosecs(), length, 0,
+  return timers_.NewTimer(g_core->AppTimeMicrosecs(), length, 0,
                           repeat ? -1 : 0, runnable);
 }
 
@@ -718,7 +718,7 @@ void EventLoop::AcquireGIL_() {
   assert(g_base_soft && g_base_soft->InLogicThread());
   auto debug_timing{g_core->core_config().debug_timing};
   millisecs_t startmillisecs{
-      debug_timing ? core::CorePlatform::GetCurrentMillisecs() : 0};
+      debug_timing ? core::CorePlatform::TimeMonotonicMillisecs() : 0};
 
   if (py_thread_state_) {
     PyEval_RestoreThread(py_thread_state_);
@@ -726,7 +726,8 @@ void EventLoop::AcquireGIL_() {
   }
 
   if (debug_timing) {
-    auto duration{core::CorePlatform::GetCurrentMillisecs() - startmillisecs};
+    auto duration{core::CorePlatform::TimeMonotonicMillisecs()
+                  - startmillisecs};
     if (duration > (1000 / 120)) {
       g_core->Log(LogName::kBa, LogLevel::kInfo,
                   "GIL acquire took too long (" + std::to_string(duration)

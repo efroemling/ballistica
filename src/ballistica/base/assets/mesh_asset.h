@@ -22,8 +22,8 @@ class MeshAsset : public Asset {
   auto GetName() const -> std::string override;
 
   auto renderer_data() const -> MeshAssetRendererData* {
-    assert(renderer_data_.Exists());
-    return renderer_data_.Get();
+    assert(renderer_data_.exists());
+    return renderer_data_.get();
   }
   auto vertices() const -> const std::vector<VertexObjectFull>& {
     return vertices_;
@@ -53,7 +53,6 @@ class MeshAsset : public Asset {
   std::vector<uint8_t> indices8_;
   std::vector<uint16_t> indices16_;
   std::vector<uint32_t> indices32_;
-  friend class MeshAssetRendererData;
   BA_DISALLOW_CLASS_COPIES(MeshAsset);
 };
 

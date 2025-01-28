@@ -105,13 +105,13 @@ class AccountLinkWindow(bui.Window):
         )
 
     def _generate_press(self) -> None:
-        from bauiv1lib import account
+        from bauiv1lib.account.signin import show_sign_in_prompt
 
         plus = bui.app.plus
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         bui.screenmessage(
             bui.Lstr(resource='gatherWindow.requestingAPromoCodeText'),

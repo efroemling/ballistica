@@ -25,7 +25,7 @@ class SoundNode : public Node {
   void SetMusic(bool val);
   auto loop() const -> bool { return loop_; }
   void SetLoop(bool val);
-  auto sound() const -> SceneSound* { return sound_.Get(); }
+  auto sound() const -> SceneSound* { return sound_.get(); }
   void SetSound(SceneSound* s);
 
  private:

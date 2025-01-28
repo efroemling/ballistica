@@ -772,6 +772,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/row_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/scroll_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/scroll_widget.h
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/spinner_widget.cc
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/spinner_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/stack_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/stack_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/text_widget.cc

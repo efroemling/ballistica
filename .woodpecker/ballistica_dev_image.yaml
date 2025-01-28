@@ -1,0 +1,15 @@
+when:
+  - event: manual
+
+steps:
+  - name: build-and-publish
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      dockerfile: .woodpecker/ballistica_dev_dockerfile
+      registry: codeberg.org
+      repo: codeberg.org/${CI_REPO}-dev
+      tags:
+        - latest
+      username: ${CI_REPO_OWNER}
+      password:
+        from_secret: ACCESS_TOKEN

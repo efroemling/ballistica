@@ -33,7 +33,7 @@ auto MaterialComponent::eval_conditions(
     const Part* part, const Part* opposing_part, const MaterialContext& s)
     -> bool {
   // If there's no condition, succeed.
-  if (!condition.Exists()) {
+  if (!condition.exists()) {
     return true;
   }
 
@@ -46,10 +46,10 @@ auto MaterialComponent::eval_conditions(
         return false;
       case MaterialCondition::kDstIsMaterial:
         return (
-            (opposing_part->ContainsMaterial(condition->val1_material.Get())));
+            (opposing_part->ContainsMaterial(condition->val1_material.get())));
       case MaterialCondition::kDstNotMaterial:
         return (
-            !(opposing_part->ContainsMaterial(condition->val1_material.Get())));
+            !(opposing_part->ContainsMaterial(condition->val1_material.get())));
       case MaterialCondition::kDstIsPart:
         return ((opposing_part->id() == condition->val1));
       case MaterialCondition::kDstNotPart:
@@ -84,8 +84,8 @@ auto MaterialComponent::eval_conditions(
   } else {
     // A trunk node; eval our left and right children and return
     // the boolean operation between them.
-    assert(condition->left_child.Exists());
-    assert(condition->right_child.Exists());
+    assert(condition->left_child.exists());
+    assert(condition->right_child.exists());
 
     bool left_result =
         eval_conditions(condition->left_child, c, part, opposing_part, s);
@@ -128,7 +128,7 @@ auto MaterialComponent::GetFlattenedSize() -> size_t {
   size += 1;
 
   // Embed the size of the condition tree.
-  if (conditions.Exists()) {
+  if (conditions.exists()) {
     size += conditions->GetFlattenedSize();
   }
 
@@ -147,10 +147,10 @@ auto MaterialComponent::GetFlattenedSize() -> size_t {
 
 void MaterialComponent::Flatten(char** buffer, SessionStream* output_stream) {
   // Embed a byte telling whether we have conditions.
-  Utils::EmbedInt8(buffer, conditions.Exists());
+  Utils::EmbedInt8(buffer, conditions.exists());
 
   // If we have conditions, have the tree embed itself.
-  if (conditions.Exists()) {
+  if (conditions.exists()) {
     conditions->Flatten(buffer, output_stream);
   }
 

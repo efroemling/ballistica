@@ -144,6 +144,9 @@ class FlagDiedMessage:
     flag: Flag
     """The `Flag` that died."""
 
+    self_kill: bool = False
+    """If the `Flag` killed itself or not."""
+
 
 @dataclass
 class FlagDroppedMessage:
@@ -283,7 +286,9 @@ class Flag(bs.Actor):
                     )
                     self._counter.text = str(self._count)
                     if self._count < 1:
-                        self.handlemessage(bs.DieMessage())
+                        self.handlemessage(
+                            bs.DieMessage(how=bs.DeathType.LEFT_GAME)
+                        )
                 else:
                     assert self._counter
                     self._counter.text = ''
@@ -337,7 +342,11 @@ class Flag(bs.Actor):
             if self.node:
                 self.node.delete()
                 if not msg.immediate:
-                    self.activity.handlemessage(FlagDiedMessage(self))
+                    self.activity.handlemessage(
+                        FlagDiedMessage(
+                            self, (msg.how is bs.DeathType.LEFT_GAME)
+                        )
+                    )
         elif isinstance(msg, bs.HitMessage):
             assert self.node
             assert msg.force_direction is not None

@@ -34,9 +34,9 @@ void Repeater::PostInit_() {
   auto weak_this = Object::WeakRef<Repeater>(this);
   timer_ = DisplayTimer::New(weak_this->initial_delay_, false, [weak_this] {
     // Timer should not have fired if we died.
-    assert(weak_this.Exists());
+    assert(weak_this.exists());
     weak_this->runnable_->RunAndLogErrors();
-    if (!weak_this.Exists()) {
+    if (!weak_this.exists()) {
       // Runnable we just ran might have killed us.
       return;
     }
@@ -44,7 +44,7 @@ void Repeater::PostInit_() {
     weak_this->timer_ =
         DisplayTimer::New(weak_this->repeat_delay_, true, [weak_this] {
           // Timer should not have fired if we died.
-          assert(weak_this.Exists());
+          assert(weak_this.exists());
           weak_this->runnable_->RunAndLogErrors();
           // Doesn't matter if Runnable killed us since we don't
           // touch anything for the remainder of this function.

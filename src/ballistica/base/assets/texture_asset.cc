@@ -112,7 +112,7 @@ void TextureAsset::DoPreload() {
   auto texture_quality = g_base->graphics->placeholder_texture_quality();
 
   // If we're a text-texture.
-  if (packer_.Exists()) {
+  if (packer_.exists()) {
     assert(type_ == TextureType::k2D);
 
     int width = packer_->texture_width();
@@ -448,9 +448,9 @@ void TextureAsset::DoPreload() {
 
 void TextureAsset::DoLoad() {
   assert(g_base->app_adapter->InGraphicsContext());
-  assert(!renderer_data_.Exists());
+  assert(!renderer_data_.exists());
   renderer_data_ = g_base->graphics_server->renderer()->NewTextureData(*this);
-  assert(renderer_data_.Exists());
+  assert(renderer_data_.exists());
   renderer_data_->Load();
 
   // Store our base-level from the preload-data so we know if we're lower than
@@ -465,7 +465,7 @@ void TextureAsset::DoLoad() {
 void TextureAsset::DoUnload() {
   assert(g_base->app_adapter->InGraphicsContext());
   assert(valid_);
-  assert(renderer_data_.Exists());
+  assert(renderer_data_.exists());
   renderer_data_.Clear();
   base_level_ = 0;
 }

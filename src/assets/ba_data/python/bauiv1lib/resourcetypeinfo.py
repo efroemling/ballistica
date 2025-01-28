@@ -26,11 +26,12 @@ class ResourceTypeInfoWindow(PopupWindow):
         scale = (
             2.0
             if uiscale is bui.UIScale.SMALL
-            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 1.4 if uiscale is bui.UIScale.MEDIUM else 0.8
         )
         self._transitioning_out = False
         self._width = 570
-        self._height = 350
+        self._height = 400
+        self._get_tokens_button: bui.Widget | None = None
         bg_color = (0.5, 0.4, 0.6)
         super().__init__(
             size=(self._width, self._height),
@@ -53,24 +54,75 @@ class ResourceTypeInfoWindow(PopupWindow):
             iconscale=1.2,
         )
 
+        yoffs = self._height - 145
+
+        max_rdesc_height = 160
+
+        rdesc: bui.Lstr | str
+
         if resource_type == 'tickets':
-            rdesc = 'Will describe tickets.'
+            yoffs -= 20
+            rdesc = bui.Lstr(resource='ticketsDescriptionText')
+            texname = 'tickets'
         elif resource_type == 'tokens':
-            rdesc = 'Will describe tokens.'
+            rdesc = bui.Lstr(resource='tokens.tokensDescriptionText')
+            texname = 'coin'
+            bwidth = 200
+            bheight = 50
+
+            # Show 'Get Tokens' button if we don't have a gold pass
+            # (in case a user doesn't notice the '+' button or we have
+            # it disabled for some reason).
+            if not bui.app.classic.gold_pass:
+                self._get_tokens_button = bui.buttonwidget(
+                    parent=self.root_widget,
+                    position=(
+                        self._width * 0.5 - bwidth * 0.5,
+                        yoffs - 15.0 - bheight - max_rdesc_height,
+                    ),
+                    color=bg_color,
+                    textcolor=(0.8, 0.8, 0.8),
+                    label=bui.Lstr(resource='tokens.getTokensText'),
+                    size=(bwidth, bheight),
+                    autoselect=True,
+                    on_activate_call=bui.WeakCall(self._on_get_tokens_press),
+                )
+
         elif resource_type == 'trophies':
-            rdesc = 'Will show trophies & league rankings.'
+            rdesc = 'TODO: Will show trophies & league rankings.'
+            texname = 'crossOut'
         elif resource_type == 'xp':
-            rdesc = 'Will describe xp/levels.'
+            rdesc = 'TODO: Will describe xp/levels.'
+            texname = 'crossOut'
         else:
             assert_never(resource_type)
+
+        imgsize = 100.0
+        bui.imagewidget(
+            parent=self.root_widget,
+            position=(self._width * 0.5 - imgsize * 0.5, yoffs + 5.0),
+            size=(imgsize, imgsize),
+            texture=bui.gettexture(texname),
+        )
 
         bui.textwidget(
             parent=self.root_widget,
             h_align='center',
-            v_align='center',
+            v_align='top',
             size=(0, 0),
-            position=(self._width * 0.5, self._height * 0.5),
-            text=(f'UNDER CONSTRUCTION.\n({rdesc})'),
+            maxwidth=self._width * 0.8,
+            max_height=max_rdesc_height,
+            position=(self._width * 0.5, yoffs - 5.0),
+            text=rdesc,
+            scale=0.8,
+        )
+
+    def _on_get_tokens_press(self) -> None:
+        from bauiv1lib.gettokens import show_get_tokens_window
+
+        self._transition_out()
+        show_get_tokens_window(
+            origin_widget=bui.existing(self._get_tokens_button)
         )
 
     def _on_cancel_press(self) -> None:

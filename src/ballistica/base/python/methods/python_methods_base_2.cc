@@ -434,15 +434,15 @@ static auto PySafeColor(PyObject* self, PyObject* args, PyObject* keywds)
   PythonRef red_obj(PySequence_GetItem(color_obj, 0), PythonRef::kSteal);
   PythonRef green_obj(PySequence_GetItem(color_obj, 1), PythonRef::kSteal);
   PythonRef blue_obj(PySequence_GetItem(color_obj, 2), PythonRef::kSteal);
-  red = Python::GetPyFloat(red_obj.Get());
-  green = Python::GetPyFloat(green_obj.Get());
-  blue = Python::GetPyFloat(blue_obj.Get());
+  red = Python::GetPyFloat(red_obj.get());
+  green = Python::GetPyFloat(green_obj.get());
+  blue = Python::GetPyFloat(blue_obj.get());
   Graphics::GetSafeColor(&red, &green, &blue, target_intensity);
   if (len == 3) {
     return Py_BuildValue("(fff)", red, green, blue);
   } else {
     PythonRef alpha_obj(PySequence_GetItem(color_obj, 3), PythonRef::kSteal);
-    float alpha = Python::GetPyFloat(alpha_obj.Get());
+    float alpha = Python::GetPyFloat(alpha_obj.get());
     return Py_BuildValue("(ffff)", red, green, blue, alpha);
   }
   BA_PYTHON_CATCH;
@@ -497,7 +497,7 @@ static auto PyEvaluateLstr(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   return PyUnicode_FromString(
-      g_base->assets->CompileResourceString(value, "evaluate_lstr").c_str());
+      g_base->assets->CompileResourceString(value).c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -533,9 +533,9 @@ static auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
   }
   s = g_base->python->GetPyLString(s_obj);
 #if BA_DEBUG_BUILD
-  if (g_base->assets->CompileResourceString(s, "get_string_height test") != s) {
+  if (g_base->assets->CompileResourceString(s) != s) {
     BA_LOG_PYTHON_TRACE(
-        "resource-string passed to get_string_height; this should be avoided");
+        "Resource-string passed to get_string_height; this should be avoided.");
   }
 #endif
   assert(g_base->graphics);
@@ -579,8 +579,7 @@ static auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
   }
   s = g_base->python->GetPyLString(s_obj);
 #if BA_DEBUG_BUILD
-  if (g_base->assets->CompileResourceString(s, "get_string_width debug test")
-      != s) {
+  if (g_base->assets->CompileResourceString(s) != s) {
     BA_LOG_PYTHON_TRACE(
         "resource-string passed to get_string_width; this should be avoided");
   }
@@ -905,6 +904,28 @@ static PyMethodDef PySupportsMaxFPSDef = {
     "(internal)\n",
 };
 
+// ---------------------- supports_unicode_display -----------------------------
+
+static auto PySupportsUnicodeDisplay(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (g_buildconfig.enable_os_font_rendering()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySupportsUnicodeDisplayDef = {
+    "supports_unicode_display",             // name
+    (PyCFunction)PySupportsUnicodeDisplay,  // method
+    METH_NOARGS,                            // flags
+
+    "supports_unicode_display() -> bool\n"
+    "\n"
+    "Return whether we can display all unicode characters in the gui.\n",
+};
+
 // --------------------------- show_progress_bar -------------------------------
 
 static auto PyShowProgressBar(PyObject* self, PyObject* args, PyObject* keywds)
@@ -965,6 +986,55 @@ static PyMethodDef PySetUIAccountStateDef = {
     "\n"
     "(internal)\n",
 };
+
+// ------------------------ get_virtual_screen_size ----------------------------
+
+static auto PyGetVirtualScreenSize(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  float x{g_base->graphics->screen_virtual_width()};
+  float y{g_base->graphics->screen_virtual_height()};
+  return Py_BuildValue("(ff)", x, y);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetVirtualScreenSizeDef = {
+    "get_virtual_screen_size",            // name
+    (PyCFunction)PyGetVirtualScreenSize,  // method
+    METH_NOARGS,                          // flags
+
+    "get_virtual_screen_size() -> tuple[float, float]\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Return the current virtual size of the display.",
+};
+
+// ----------------------- get_virtual_safe_area_size --------------------------
+
+static auto PyGetVirtualSafeAreaSize(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  float x, y;
+  g_base->graphics->GetBaseVirtualRes(&x, &y);
+  return Py_BuildValue("(ff)", x, y);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetVirtualSafeAreaSizeDef = {
+    "get_virtual_safe_area_size",           // name
+    (PyCFunction)PyGetVirtualSafeAreaSize,  // method
+    METH_NOARGS,                            // flags
+
+    "get_virtual_safe_area_size() -> tuple[float, float]\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Return the size of the area on screen that will always be visible.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
@@ -994,11 +1064,14 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyAllowsTicketSalesDef,
       PySupportsVSyncDef,
       PySupportsMaxFPSDef,
+      PySupportsUnicodeDisplayDef,
       PyShowProgressBarDef,
       PyFullscreenControlKeyShortcutDef,
       PyFullscreenControlGetDef,
       PyFullscreenControlSetDef,
       PySetUIAccountStateDef,
+      PyGetVirtualScreenSizeDef,
+      PyGetVirtualSafeAreaSizeDef,
   };
 }
 

@@ -63,7 +63,7 @@ def existing(obj: ExistableT | None) -> ExistableT | None:
     For more info, see notes on 'existables' here:
     https://ballistica.net/wiki/Coding-Style-Guide
     """
-    assert obj is None or hasattr(obj, 'exists'), f'No "exists" on {obj}'
+    assert obj is None or hasattr(obj, 'exists'), f'No "exists" attr on {obj}.'
     return obj if obj is not None and obj.exists() else None
 
 
@@ -156,6 +156,9 @@ class _WeakCall:
     to wrap them in weakrefs manually if desired.
     """
 
+    # Optimize performance a bit; we shouldn't need to be super dynamic.
+    __slots__ = ['_call', '_args', '_keywds']
+
     _did_invalid_call_warning = False
 
     def __init__(self, *args: Any, **keywds: Any) -> None:
@@ -173,9 +176,10 @@ class _WeakCall:
                     'Warning: callable passed to babase.WeakCall() is not'
                     ' weak-referencable (%s); use functools.partial instead'
                     ' to avoid this warning.',
+                    args[0],
                     stack_info=True,
                 )
-                self._did_invalid_call_warning = True
+                type(self)._did_invalid_call_warning = True
             self._call = args[0]
         self._args = args[1:]
         self._keywds = keywds
@@ -213,6 +217,9 @@ class _Call:
     alive too. Use babase.WeakCall if you want to pass a method to a callback
     without keeping its object alive.
     """
+
+    # Optimize performance a bit; we shouldn't need to be super dynamic.
+    __slots__ = ['_call', '_args', '_keywds']
 
     def __init__(self, *args: Any, **keywds: Any):
         """Instantiate a Call.
@@ -252,6 +259,14 @@ if TYPE_CHECKING:
     # type checking on both positional and keyword arguments (as of mypy
     # 1.11).
 
+    # FIXME: Actually, currently (as of Dec 2024) mypy doesn't fully
+    # type check partial. The partial() call itself is checked, but the
+    # resulting callable seems to be essentially untyped. We should
+    # probably revise this stuff so that Call and WeakCall are for 100%
+    # complete calls so we can fully type check them using ParamSpecs or
+    # whatnot. We could then write a weak_partial() call if we actually
+    # need that particular combination of functionality.
+
     # Note: Something here is wonky with pylint, possibly related to our
     # custom pylint plugin. Disabling all checks seems to fix it.
     # pylint: disable=all
@@ -271,6 +286,9 @@ class WeakMethod:
     Wraps a bound method using weak references so that the original is
     free to die. If called with a dead target, is simply a no-op.
     """
+
+    # Optimize performance a bit; we shouldn't need to be super dynamic.
+    __slots__ = ['_func', '_obj']
 
     def __init__(self, call: types.MethodType):
         assert isinstance(call, types.MethodType)

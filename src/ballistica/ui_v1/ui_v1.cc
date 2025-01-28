@@ -83,12 +83,12 @@ bool UIV1FeatureSet::PartyIconVisible() {
 }
 
 void UIV1FeatureSet::SetAccountState(bool signed_in, const std::string& name) {
-  assert(root_widget_.Exists());
+  assert(root_widget_.exists());
   root_widget_->SetAccountState(signed_in, name);
 }
 
 void UIV1FeatureSet::SetSquadSizeLabel(int num) {
-  assert(root_widget_.Exists());
+  assert(root_widget_.exists());
   root_widget_->SetSquadSizeLabel(num);
 }
 
@@ -104,7 +104,7 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
   base::RenderPass* overlay_flat_pass = frame_def->GetOverlayFlatPass();
 
   // Draw interface elements.
-  auto* root_widget = root_widget_.Get();
+  auto* root_widget = root_widget_.get();
 
   if (root_widget && root_widget->HasChildren()) {
     // Draw our opaque and transparent parts separately. This way we can
@@ -175,9 +175,9 @@ void UIV1FeatureSet::OnActivate() {
   root_widget_ = rw;
   rw->SetWidth(g_base->graphics->screen_virtual_width());
   rw->SetHeight(g_base->graphics->screen_virtual_height());
-  rw->SetScreenWidget(sw.Get());
+  rw->SetScreenWidget(sw.get());
   rw->Setup();
-  rw->SetOverlayWidget(ow.Get());
+  rw->SetOverlayWidget(ow.get());
 
   // Plug in all values we're storing.
   // rw->SetSquadSizeLabel(party_icon_number_);
@@ -203,8 +203,8 @@ void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
   // have lost focus will not get stuck running or whatnot. We should come
   // up with a more generalized way to track this sort of focus as this is a
   // bit hacky, but it works for now.
-  auto* screen_root_widget = screen_root_widget_.Get();
-  auto* overlay_root_widget = overlay_root_widget_.Get();
+  auto* screen_root_widget = screen_root_widget_.get();
+  auto* overlay_root_widget = overlay_root_widget_.get();
   if ((screen_root_widget && !screen_root_widget->HasChildren()
        && parent == screen_root_widget)
       || (overlay_root_widget && !overlay_root_widget->HasChildren()
@@ -217,20 +217,20 @@ void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
 
 void UIV1FeatureSet::OnScreenSizeChange() {
   // This gets called by the native layer as window is resized/etc.
-  if (root_widget_.Exists()) {
+  if (root_widget_.exists()) {
     root_widget_->SetWidth(g_base->graphics->screen_virtual_width());
     root_widget_->SetHeight(g_base->graphics->screen_virtual_height());
   }
 }
 
-void UIV1FeatureSet::OnScreenChange() {
+void UIV1FeatureSet::OnUIScaleChange() {
   // This gets called by the Python layer when UIScale or window size
   // changes.
   assert(g_base->InLogicThread());
 
   // We allow OnScreenSizeChange() to handle size changes but *do* handle
   // UIScale changes here.
-  if (auto* root_widget = root_widget_.Get()) {
+  if (auto* root_widget = root_widget_.get()) {
     root_widget->OnUIScaleChange();
   }
 }
@@ -251,7 +251,7 @@ void UIV1FeatureSet::OnLanguageChange() {
 Widget* UIV1FeatureSet::GetRootWidget() { return root_widget(); }
 
 auto UIV1FeatureSet::SendWidgetMessage(const base::WidgetMessage& m) -> int {
-  if (!root_widget_.Exists()) {
+  if (!root_widget_.exists()) {
     return false;
   }
   return root_widget_->HandleMessage(m);
@@ -278,7 +278,6 @@ void UIV1FeatureSet::ConfirmQuit(QuitType quit_type) {
 }
 
 UIV1FeatureSet::UILock::UILock(bool write) {
-  assert(g_base->ui);
   assert(g_base->InLogicThread());
 
   if (write && g_ui_v1->ui_lock_count_ != 0) {

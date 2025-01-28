@@ -34,7 +34,10 @@ class AudioSettingsWindow(bui.MainWindow):
 
         spacing = 50.0
         width = 460.0
-        height = 210.0
+        height = 240.0
+        uiscale = bui.app.ui_v1.uiscale
+
+        yoffs = -5.0
 
         # Update: hard-coding head-relative audio to true now,
         # so not showing options.
@@ -49,11 +52,10 @@ class AudioSettingsWindow(bui.MainWindow):
             show_soundtracks = True
             height += spacing * 2.0
 
-        uiscale = bui.app.ui_v1.uiscale
         base_scale = (
-            2.05
+            1.9
             if uiscale is bui.UIScale.SMALL
-            else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
         popup_menu_scale = base_scale * 1.2
 
@@ -61,9 +63,6 @@ class AudioSettingsWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(width, height),
                 scale=base_scale,
-                stack_offset=(
-                    (0, -20) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
                 toolbar_visibility=(
                     None if uiscale is bui.UIScale.SMALL else 'menu_full'
                 ),
@@ -74,21 +73,20 @@ class AudioSettingsWindow(bui.MainWindow):
 
         self._back_button = back_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(35, height - 55),
-            size=(120, 60),
+            position=(35, height + yoffs - 55),
+            size=(60, 60),
             scale=0.8,
             text_scale=1.2,
-            label=bui.Lstr(resource='backText'),
-            button_type='back',
+            label=bui.charstr(bui.SpecialChar.BACK),
+            button_type='backSmall',
             on_activate_call=self.main_window_back,
             autoselect=True,
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-        v = height - 60
-        v -= spacing * 1.0
+
         bui.textwidget(
             parent=self._root_widget,
-            position=(width * 0.5, height - 32),
+            position=(width * 0.5, height + yoffs - 32),
             size=(0, 0),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
@@ -97,12 +95,8 @@ class AudioSettingsWindow(bui.MainWindow):
             v_align='center',
         )
 
-        bui.buttonwidget(
-            edit=self._back_button,
-            button_type='backSmall',
-            size=(60, 60),
-            label=bui.charstr(bui.SpecialChar.BACK),
-        )
+        v = height + yoffs - 60
+        v -= spacing * 1.0
 
         self._sound_volume_numedit = svne = ConfigNumberEdit(
             parent=self._root_widget,

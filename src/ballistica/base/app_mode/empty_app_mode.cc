@@ -51,7 +51,7 @@ void EmptyAppMode::DrawWorld(base::FrameDef* frame_def) {
   }
 
   // Draw some lovely spinning text.
-  if (!hello_text_group_.Exists()) {
+  if (!hello_text_group_.exists()) {
     hello_text_group_ = Object::New<TextGroup>();
     hello_text_group_->SetText("Potato!");
   }
