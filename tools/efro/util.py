@@ -336,7 +336,7 @@ class DispatchMethodWrapper(Generic[ArgT, RetT]):
 
     @staticmethod
     def register(
-        func: Callable[[Any, Any], RetT]
+        func: Callable[[Any, Any], RetT],
     ) -> Callable[[Any, Any], RetT]:
         """Register a new dispatch handler for this dispatch-method."""
         raise RuntimeError('Should not get here')
@@ -346,7 +346,7 @@ class DispatchMethodWrapper(Generic[ArgT, RetT]):
 
 # noinspection PyProtectedMember,PyTypeHints
 def dispatchmethod(
-    func: Callable[[Any, ArgT], RetT]
+    func: Callable[[Any, ArgT], RetT],
 ) -> DispatchMethodWrapper[ArgT, RetT]:
     """A variation of functools.singledispatch for methods.
 
@@ -430,7 +430,7 @@ class ValueDispatcher(Generic[ValT, RetT]):
 
 
 def valuedispatch1arg(
-    call: Callable[[ValT, ArgT], RetT]
+    call: Callable[[ValT, ArgT], RetT],
 ) -> ValueDispatcher1Arg[ValT, ArgT, RetT]:
     """Like valuedispatch but for functions taking an extra argument."""
     return ValueDispatcher1Arg(call)
@@ -481,7 +481,7 @@ if TYPE_CHECKING:
 
 
 def valuedispatchmethod(
-    call: Callable[[SelfT, ValT], RetT]
+    call: Callable[[SelfT, ValT], RetT],
 ) -> ValueDispatcherMethod[ValT, RetT]:
     """Like valuedispatch but works with methods instead of functions."""
 

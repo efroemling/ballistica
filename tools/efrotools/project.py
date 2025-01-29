@@ -18,7 +18,7 @@ _g_local_configs: dict[str, dict[str, Any]] = {}
 
 
 def get_public_legal_notice(
-    style: Literal['python', 'c++', 'makefile', 'raw']
+    style: Literal['python', 'c++', 'makefile', 'raw'],
 ) -> str:
     """Return the license notice as used for our public facing stuff.
 
