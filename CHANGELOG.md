@@ -257,7 +257,7 @@
   incompatibilities with the older sys scripts. This should help with that
   problem.
   
-### 1.7.35 (Nuild 21889, API 8, 2024-06-20)
+### 1.7.35 (Build 21889, API 8, 2024-06-20)
 - Fixed an issue where the engine would block at exit on some distro of Linux
   until Ctrl-D was pressed in the calling terminal.
 - V2 accounts have been around for a while now, so the old V1 device login
