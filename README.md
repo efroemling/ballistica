@@ -2,7 +2,7 @@
 src="https://files.ballistica.net/ballistica_media/ballistica_logo_half.png"
 height="50" alt="logo">
 
-***bal·lis·tic***: Physics of an object in motion; behaving like a projectile.
+***Bal·lis·tic***: Physics of an object in motion; behaving like a projectile.
 
 ***-ica***: Collection of things related to a specific theme.
 
