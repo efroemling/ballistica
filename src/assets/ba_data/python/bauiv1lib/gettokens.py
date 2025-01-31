@@ -70,6 +70,7 @@ class GetTokensWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
+        # pylint: disable=too-many-locals
         bwidthstd = 170
         bwidthwide = 300
         ycolor = (0, 0, 0.3)
@@ -310,25 +311,36 @@ class GetTokensWindow(bui.MainWindow):
         )
 
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1000.0 if uiscale is bui.UIScale.SMALL else 1070.0
-        self._x_inset = 25.0 if uiscale is bui.UIScale.SMALL else 0.0
-        self._height = 550 if uiscale is bui.UIScale.SMALL else 520.0
-        self._y_offset = -60 if uiscale is bui.UIScale.SMALL else -30
+        self._width = 1200.0 if uiscale is bui.UIScale.SMALL else 1070.0
+        self._height = 800 if uiscale is bui.UIScale.SMALL else 520.0
 
         self._r = 'getTokensWindow'
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.5
+            if uiscale is bui.UIScale.SMALL
+            else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.95
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 60, screensize[0] / scale)
+        target_height = min(self._height - 70, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        self._yoffs = 0.5 * self._height + 0.5 * target_height + 20.0
+
+        self._scroll_width = target_width
 
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 color=(0.3, 0.23, 0.36),
-                scale=(
-                    1.5
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.95
-                ),
-                stack_offset=(
-                    (0, -3) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
+                scale=scale,
                 toolbar_visibility=(
                     'get_tokens'
                     if uiscale is bui.UIScale.SMALL
@@ -337,6 +349,8 @@ class GetTokensWindow(bui.MainWindow):
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         if uiscale is bui.UIScale.SMALL:
@@ -347,10 +361,7 @@ class GetTokensWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(
-                    55 + self._x_inset,
-                    self._height - 80 + self._y_offset,
-                ),
+                position=(60, self._yoffs - 90),
                 size=((60, 60)),
                 scale=1.0,
                 autoselect=True,
@@ -364,7 +375,7 @@ class GetTokensWindow(bui.MainWindow):
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 42 + self._y_offset),
+            position=(self._width * 0.5, self._yoffs - 42),
             size=(0, 0),
             color=self._textcolor,
             flatness=0.0,
@@ -520,35 +531,39 @@ class GetTokensWindow(bui.MainWindow):
 
         bui.textwidget(edit=self._status_text, text='')
 
-        xinset = 40
-
-        scrollwidth = self._width - 2 * (self._x_inset + xinset)
         scrollheight = 280
         buttonpadding = -5
 
         yoffs = 5
 
+        available_purchases = {
+            p.purchaseid for p in response.available_purchases
+        }
+        buttondefs_shown = [
+            b for b in self._buttondefs if b.itemid in available_purchases
+        ]
+
         # We currently don't handle the zero-button case.
-        assert self._buttondefs
+        assert buttondefs_shown
 
         sidepad = 10.0
         xfudge = 6.0
         total_button_width = (
-            sum(b.width + b.prepad for b in self._buttondefs)
-            + buttonpadding * (len(self._buttondefs) - 1)
+            sum(b.width + b.prepad for b in buttondefs_shown)
+            + buttonpadding * (len(buttondefs_shown) - 1)
             + 2 * sidepad
         )
 
         h_scroll = bui.hscrollwidget(
             parent=self._root_widget,
-            size=(scrollwidth, scrollheight),
+            size=(self._scroll_width, scrollheight),
             position=(
-                self._x_inset + xinset,
-                self._height - 415 + self._y_offset,
+                self._width * 0.5 - 0.5 * self._scroll_width,
+                self._height * 0.5 - 0.5 * scrollheight - 40,
             ),
             claims_left_right=True,
             highlight=False,
-            border_opacity=0.4,
+            border_opacity=0.15,
             center_small_content=True,
         )
         subcontainer = bui.containerwidget(
@@ -563,7 +578,7 @@ class GetTokensWindow(bui.MainWindow):
             text_scale=0.7,
             position=(
                 self._width * 0.5 - 75,
-                self._height - 100 + self._y_offset,
+                self._yoffs - 100,
             ),
             size=(180, 40),
             scale=0.8,
@@ -587,12 +602,12 @@ class GetTokensWindow(bui.MainWindow):
 
         x = sidepad + xfudge
         bwidgets: list[bui.Widget] = []
-        for i, buttondef in enumerate(self._buttondefs):
+        for i, buttondef in enumerate(buttondefs_shown):
 
             price = None if plus is None else plus.get_price(buttondef.itemid)
 
             x += buttondef.prepad
-            tdelay = 0.3 - i / len(self._buttondefs) * 0.25
+            tdelay = 0.3 - i / len(buttondefs_shown) * 0.25
             btn = bui.buttonwidget(
                 autoselect=True,
                 label='',
@@ -666,7 +681,7 @@ class GetTokensWindow(bui.MainWindow):
                 parent=self._root_widget,
                 position=(
                     self._width * 0.5,
-                    self._height - 70 + self._y_offset,
+                    self._yoffs - 70,
                 ),
                 color=self._textcolor,
                 shadow=1.0,
@@ -687,7 +702,7 @@ class GetTokensWindow(bui.MainWindow):
                 parent=self._root_widget,
                 position=(
                     self._width * 0.5,
-                    self._height - 120 + self._y_offset,
+                    self._yoffs - 120,
                 ),
                 color=(0.4, 1.0, 0.4),
                 shadow=1.0,
@@ -695,7 +710,7 @@ class GetTokensWindow(bui.MainWindow):
                 size=(0, 0),
                 h_align='center',
                 v_align='center',
-                maxwidth=scrollwidth * 0.9,
+                maxwidth=self._scroll_width * 0.9,
                 text=bui.Lstr(resource='removeInGameAdsTokenPurchaseText'),
             )
 
