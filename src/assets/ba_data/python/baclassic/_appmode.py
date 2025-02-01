@@ -199,6 +199,7 @@ class ClassicAppMode(babase.AppMode):
 
         if account is None:
             classic.gold_pass = False
+            classic.chest_dock_full = False
             classic.remove_ads = False
             self._account_data_sub = None
             _baclassic.set_root_ui_account_values(
@@ -274,6 +275,12 @@ class ClassicAppMode(babase.AppMode):
         assert classic is not None
         classic.remove_ads = val.remove_ads
         classic.gold_pass = val.gold_pass
+        classic.chest_dock_full = (
+            chest0 is not None
+            and chest1 is not None
+            and chest2 is not None
+            and chest3 is not None
+        )
 
         _baclassic.set_root_ui_account_values(
             tickets=val.tickets,

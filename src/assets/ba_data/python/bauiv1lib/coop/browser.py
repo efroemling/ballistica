@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, override
 
+
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -1003,6 +1004,30 @@ class CoopBrowserWindow(bui.MainWindow):
         self, game: str, origin_widget: bui.Widget | None = None
     ) -> None:
         """Run the provided game."""
+        from efro.util import strict_partial
+        from bauiv1lib.confirm import ConfirmWindow
+
+        classic = bui.app.classic
+        assert classic is not None
+
+        if classic.chest_dock_full:
+            ConfirmWindow(
+                bui.Lstr(resource='chests.slotsFullWarningText'),
+                width=550,
+                height=140,
+                ok_text=bui.Lstr(resource='continueText'),
+                origin_widget=origin_widget,
+                action=strict_partial(
+                    self._run_game, game=game, origin_widget=origin_widget
+                ),
+            )
+        else:
+            self._run_game(game=game, origin_widget=origin_widget)
+
+    def _run_game(
+        self, game: str, origin_widget: bui.Widget | None = None
+    ) -> None:
+        """Run the provided game."""
         # pylint: disable=cyclic-import
         from bauiv1lib.confirm import ConfirmWindow
         from bauiv1lib.purchase import PurchaseWindow
@@ -1039,21 +1064,6 @@ class CoopBrowserWindow(bui.MainWindow):
                         items=[purchase], origin_widget=origin_widget
                     )
                 return
-
-        # if required_purchases and not all(
-        #     plus.get_v1_account_product_purchased(p)
-        # for p in required_purchases
-        # ):
-        #     if plus.get_v1_account_state() != 'signed_in':
-        #         show_sign_in_prompt()
-        #     else:
-        #         # Hmm just ask about the first I guess.. They can pop
-        #         # this window back up to the next if they purchase the
-        #         # first.
-        #         PurchaseWindow(
-        #             items=[required_purchases[0]], origin_widget=origin_widget
-        #         )
-        #     return
 
         self._save_state()
 
