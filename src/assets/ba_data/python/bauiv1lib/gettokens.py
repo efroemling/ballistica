@@ -395,7 +395,15 @@ class GetTokensWindow(bui.MainWindow):
             v_align='center',
             color=(0.6, 0.6, 0.6),
             scale=0.75,
-            text=bui.Lstr(resource='store.loadingText'),
+            text='',
+        )
+        # Create a spinner - it will get cleared when state changes from
+        # LOADING.
+        bui.spinnerwidget(
+            parent=self._root_widget,
+            size=60,
+            position=(self._width * 0.5, self._height * 0.5),
+            style='bomb',
         )
 
         self._core_widgets = [
@@ -543,8 +551,14 @@ class GetTokensWindow(bui.MainWindow):
             b for b in self._buttondefs if b.itemid in available_purchases
         ]
 
-        # We currently don't handle the zero-button case.
-        assert buttondefs_shown
+        # Fail if something errored server-side or they didn't send us
+        # anything we can show.
+        if (
+            response.result is not response.Result.SUCCESS
+            or not buttondefs_shown
+        ):
+            self._on_load_error()
+            return
 
         sidepad = 10.0
         xfudge = 6.0
