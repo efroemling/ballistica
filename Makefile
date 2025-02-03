@@ -1200,27 +1200,27 @@ clion-staging: assets-cmake resources meta
 
 # Build the gui release docker image
 docker-gui-release: assets-cmake
-	$(PCOMMAND) build_docker_gui_release
+	$(PCOMMAND) compose_docker_gui_release
 
 # Build the gui debug docker image 
 docker-gui-debug: assets-cmake
-	$(PCOMMAND) build_docker_gui_debug
+	$(PCOMMAND) compose_docker_gui_debug
 
 # Build the server release docker image
 docker-server-release: assets-cmake
-	$(PCOMMAND) build_docker_server_release
+	$(PCOMMAND) compose_docker_server_release
 
 # Build the server debug docker image
 docker-server-debug: assets-cmake
-	$(PCOMMAND) build_docker_server_debug
+	$(PCOMMAND) compose_docker_server_debug
 
 # Build the gui release docker image for arm64
 docker-arm64-gui-release: assets-cmake
-	$(PCOMMAND) build_docker_arm64_gui_release
+	$(PCOMMAND) compose_docker_arm64_gui_release
 
 # Build the server release docker image for arm64
 docker-arm64-server-release: assets-cmake
-	$(PCOMMAND) build_docker_arm64_server_release 
+	$(PCOMMAND) compose_docker_arm64_server_release 
 
 # Save the bombsquad_server docker image to build/docker/bombsquad_server_docker.tar
 docker-save:
