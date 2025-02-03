@@ -100,18 +100,12 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         vbase = v = self._height * 0.5 + 130
 
         h = 43 + x_inset
-        # v = yoffs - 60
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
         lock_tex = bui.gettexture('lock')
         self._lock_images: list[bui.Widget] = []
 
-        scl = (
-            1.2
-            # 1.0
-            # if uiscale is bui.UIScale.SMALL
-            # else 1.13 if uiscale is bui.UIScale.MEDIUM else 1.4
-        )
+        scl = 1.2
         v -= 60.0 * scl
         self._new_button = btn = bui.buttonwidget(
             parent=self._root_widget,
@@ -231,11 +225,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         )
         self._update()
 
-        # v = self._height - 65 + yoffs
         v = vbase - 6
-        # scroll_height = self._height - (
-        #     160 if uiscale is bui.UIScale.SMALL else 105
-        # )
         scroll_height = 280
         v -= scroll_height
         self._scrollwidget = scrollwidget = bui.scrollwidget(
@@ -243,6 +233,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             position=(152 + x_inset, v),
             highlight=False,
             size=(450, scroll_height),
+            border_opacity=0.4,
         )
         bui.widget(
             edit=self._scrollwidget,
