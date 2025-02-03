@@ -63,11 +63,18 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         # To get top/left coords, go to the center of our window and
         # offset by half the width/height of our target area.
-        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+        yoffs = (
+            0.5 * self._height
+            + 0.5 * target_height
+            + (30.0 if uiscale is bui.UIScale.SMALL else 50)
+        )
 
         self._button_width = 90
-        self._scroll_width = target_width - self._button_width
-        self._scroll_height = target_height - 70
+        self._x_inset = 10
+        self._scroll_width = (
+            target_width - self._button_width - 2.0 * self._x_inset
+        )
+        self._scroll_height = target_height - 75
         self._scroll_bottom = yoffs - 98 - self._scroll_height
         self._button_height = self._scroll_height / 6.0
 
@@ -96,7 +103,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(43, yoffs - 82),
+                position=(43, yoffs - 87),
                 size=(60, 60),
                 scale=0.77,
                 autoselect=True,
@@ -107,7 +114,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, yoffs - (77 if uiscale is bui.UIScale.SMALL else 72)),
+            position=(0, yoffs - (77 if uiscale is bui.UIScale.SMALL else 77)),
             size=(self._width, 25),
             text=bui.Lstr(
                 resource=f'{self._r}.titleText',

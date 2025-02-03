@@ -85,7 +85,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                yoffs - (46 if uiscale is bui.UIScale.SMALL else 35),
+                yoffs - (55 if uiscale is bui.UIScale.SMALL else 35),
             ),
             size=(0, 0),
             maxwidth=300,

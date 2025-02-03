@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 # if provided it will make debug build
 ARG cmake_build_type=Release
 # whether to make GUI or headless build (defaults to headless)
@@ -10,24 +8,22 @@ ARG base_image=ubuntu:latest
 
 #-------------------------------BUILDER--------------------------------
 # Start with the base image
-FROM ${base_image} AS builder
+FROM --platform=$TARGETPLATFORM ${base_image} AS builder
 
 # Renew the args
 ARG headless_build
 ARG cmake_build_type
 
 # Environment settings
-ENV LANG=en_US.UTF-8
-ENV LANGUAGE=en_US:en
-ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.utf8
+ENV LANGUAGE=en_US
+ENV LC_ALL=en_US.utf8
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CMAKE_BUILD_TYPE=${cmake_build_type}
 ENV HEADLESS_BUILD=${headless_build}
 
 # Install build dependencies
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
         clang \
@@ -63,12 +59,12 @@ RUN mkdir /ballistica_cmake && \
 
 #-------------------------------RUNNER--------------------------------
 # Create a new stage for the runtime environment
-FROM ${base_image} AS runner
+FROM --platform=$TARGETPLATFORM ${base_image} as runner
 
 # Environment settings
-ENV LANG=en_US.UTF-8
-ENV LANGUAGE=en_US:en
-ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.utf8
+ENV LANGUAGE=en_US
+ENV LC_ALL=en_US.utf8
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Renew the args
@@ -78,9 +74,7 @@ ARG cmake_build_type
 LABEL BOMBSQUAD_BUILD_TYPE=${cmake_build_type}
 
 # Install runtime dependencies
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y \
         python3.12-dev && \
     if [ "$HEADLESS_BUILD" = "0" ]; then \
