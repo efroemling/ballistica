@@ -86,7 +86,9 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 size=(width, height),
                 scale=scale,
                 toolbar_visibility=(
-                    None if uiscale is bui.UIScale.SMALL else 'menu_full'
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
             ),
             transition=transition,
