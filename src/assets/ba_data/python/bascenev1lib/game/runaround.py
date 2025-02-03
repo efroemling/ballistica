@@ -487,9 +487,9 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         assert bs.app.classic is not None
         uiscale = bs.app.ui_v1.uiscale
         l_offs = (
-            -80
+            -120
             if uiscale is bs.UIScale.SMALL
-            else -40 if uiscale is bs.UIScale.MEDIUM else 0
+            else -60 if uiscale is bs.UIScale.MEDIUM else -30
         )
 
         self._lives_bg = bs.NodeActor(
