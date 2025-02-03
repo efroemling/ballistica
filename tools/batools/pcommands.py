@@ -669,46 +669,46 @@ def prefab_binary_path() -> None:
     )
 
 
-def build_docker_gui_release() -> None:
+def compose_docker_gui_release() -> None:
     """Build the docker image with bombsquad cmake gui."""
     import batools.docker
 
-    batools.docker.docker_build(headless_build=False)
+    batools.docker.docker_compose(headless_build=False)
 
 
-def build_docker_gui_debug() -> None:
+def compose_docker_gui_debug() -> None:
     """Build the docker image with bombsquad debug cmake gui."""
     import batools.docker
 
-    batools.docker.docker_build(headless_build=False, build_type='Debug')
+    batools.docker.docker_compose(headless_build=False, build_type='Debug')
 
 
-def build_docker_server_release() -> None:
+def compose_docker_server_release() -> None:
     """Build the docker image with bombsquad cmake server."""
     import batools.docker
 
-    batools.docker.docker_build()
+    batools.docker.docker_compose()
 
 
-def build_docker_server_debug() -> None:
+def compose_docker_server_debug() -> None:
     """Build the docker image with bombsquad debug cmake server."""
     import batools.docker
 
-    batools.docker.docker_build(build_type='Debug')
+    batools.docker.docker_compose(build_type='Debug')
 
 
-def build_docker_arm64_gui_release() -> None:
+def compose_docker_arm64_gui_release() -> None:
     """Build the docker image with bombsquad cmake for arm64."""
     import batools.docker
 
-    batools.docker.docker_build(headless_build=False, platform='linux/arm64')
+    batools.docker.docker_compose(headless_build=False, platform='linux/arm64')
 
 
-def build_docker_arm64_server_release() -> None:
+def compose_docker_arm64_server_release() -> None:
     """Build the docker image with bombsquad cmake server for arm64."""
     import batools.docker
 
-    batools.docker.docker_build(platform='linux/arm64')
+    batools.docker.docker_compose(platform='linux/arm64')
 
 
 def save_docker_images() -> None:
