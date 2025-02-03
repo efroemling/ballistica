@@ -4,8 +4,8 @@
 
 import subprocess
 import os
-DOCKER_DIR = os.path.abspath("config/docker")
-SERVICE_NAME = {0:"bombsquad_gui",1:"bombsquad_server"}
+DOCKER_DIR = os.path.abspath('config/docker')
+SERVICE_NAME = {0:'bombsquad_gui',1:'bombsquad_server'}
 
 def _docker_compose(
     image_name: str,
