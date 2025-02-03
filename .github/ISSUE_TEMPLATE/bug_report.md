@@ -9,7 +9,7 @@ assignees: ''
 
 ### Description
 Describe the bug.
-Make sure you're running the game without any modifications (including private DNS, etc.)
+Make sure you're running the game without any modifications (including using a private DNS, etc.)
 
 ### Steps to reproduce
 1. Launch BombSquad
