@@ -25,6 +25,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-locals
 
         appconfig = bui.app.config
         self._r = 'editSoundtrackWindow'
@@ -32,35 +33,53 @@ class SoundtrackEditWindow(bui.MainWindow):
         self._file_tex = bui.gettexture('file')
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 900 if uiscale is bui.UIScale.SMALL else 648
-        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1200 if uiscale is bui.UIScale.SMALL else 648
         self._height = (
-            450
+            800
             if uiscale is bui.UIScale.SMALL
             else 450 if uiscale is bui.UIScale.MEDIUM else 560
         )
-        yoffs = -48 if uiscale is bui.UIScale.SMALL else 0
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.8
+            if uiscale is bui.UIScale.SMALL
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 70, screensize[0] / scale)
+        target_height = min(self._height - 80, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = (
+            0.5 * self._height
+            + 0.5 * target_height
+            + (10.0 if uiscale is bui.UIScale.SMALL else 20)
+        )
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 113
+        scroll_bottom = yoffs - 120 - self._scroll_height
+
+        x_inset = self._width * 0.5 - 0.5 * self._scroll_width
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height),
-                scale=(
-                    1.8
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
-                stack_offset=(
-                    (0, 0)
-                    if uiscale is bui.UIScale.SMALL
-                    else (0, 15) if uiscale is bui.UIScale.MEDIUM else (0, 0)
-                ),
+                size=(self._width, self._height), scale=scale
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(38 + x_inset, self._height - 60 + yoffs),
+            position=(x_inset + 10, yoffs - 60),
             size=(160, 60),
             autoselect=True,
             label=bui.Lstr(resource='cancelText'),
@@ -68,7 +87,12 @@ class SoundtrackEditWindow(bui.MainWindow):
         )
         save_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - (168 + x_inset), self._height - 60 + yoffs),
+            position=(
+                self._width * 0.5
+                + self._scroll_width * 0.5
+                - (190 if uiscale is bui.UIScale.SMALL else 140),
+                yoffs - 60,
+            ),
             autoselect=True,
             size=(160, 60),
             label=bui.Lstr(resource='saveText'),
@@ -78,7 +102,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         bui.widget(edit=cancel_button, right_widget=save_button)
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, self._height - 50 + yoffs),
+            position=(0, yoffs - 50),
             size=(self._width, 25),
             text=bui.Lstr(
                 resource=self._r
@@ -91,9 +115,9 @@ class SoundtrackEditWindow(bui.MainWindow):
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
-            maxwidth=280,
+            maxwidth=270,
         )
-        v = self._height - 110 + yoffs
+        v = yoffs - 110
         if 'Soundtracks' not in appconfig:
             appconfig['Soundtracks'] = {}
 
@@ -167,17 +191,18 @@ class SoundtrackEditWindow(bui.MainWindow):
             on_return_press_call=self._do_it_with_sound,
         )
 
-        scroll_height = self._height - (
-            230 if uiscale is bui.UIScale.SMALL else 180
-        )
         self._scrollwidget = scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            position=(40 + x_inset, v - (scroll_height + 10)),
-            size=(self._width - (80 + 2 * x_inset), scroll_height),
+            size=(self._scroll_width, self._scroll_height),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+            ),
             simple_culling_v=10,
             claims_left_right=True,
             selection_loops_to_parent=True,
+            border_opacity=0.4,
         )
         bui.widget(edit=self._text_field, down_widget=self._scrollwidget)
         self._col = bui.columnwidget(
@@ -252,20 +277,20 @@ class SoundtrackEditWindow(bui.MainWindow):
         for index, song_type in enumerate(types):
             row = bui.rowwidget(
                 parent=self._col,
-                size=(self._width - 40, 40),
+                size=(self._scroll_width, 40),
                 claims_left_right=True,
                 selection_loops_to_parent=True,
             )
             type_name = type_names_translated.get(song_type, song_type)
             bui.textwidget(
                 parent=row,
-                size=(230, 25),
+                size=(self._scroll_width - 350, 25),
                 always_highlight=True,
                 text=type_name,
                 scale=0.7,
                 h_align='left',
                 v_align='center',
-                maxwidth=190,
+                maxwidth=self._scroll_width - 360,
             )
 
             if song_type in self._soundtrack:
