@@ -34,10 +34,10 @@ class RendererGL::ShaderGL : public Object {
       src_fin = "out " BA_GLSL_HIGHP "vec4 " BA_GLSL_FRAGCOLOR ";\n" + src_fin;
     }
 
-#if !BA_OPENGL_IS_ES
-    src_fin = "#version 150 core\n" + src_fin;
-#else
+#if BA_OPENGL_IS_ES
     src_fin = "#version 300 es\n" + src_fin;
+#else
+    src_fin = "#version 150 core\n" + src_fin;
 #endif
 
     const char* s = src_fin.c_str();
