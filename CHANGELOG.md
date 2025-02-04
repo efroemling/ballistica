@@ -222,6 +222,8 @@
   if you want to run debug builds on Windows you'll need to install Visual
   Studio. Most people should be fine with release builds and don't need to worry
   about this.
+- Added `docker-compose.yml` which can now be used with `docker compose` command
+- Changed Docker make targets to use `docker compose` instead of `docker build`
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
