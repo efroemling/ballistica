@@ -4,12 +4,14 @@
 
 import subprocess
 import os
+
 DOCKER_DIR = os.path.abspath('config/docker')
-SERVICE_NAME = {0:'bombsquad_gui',1:'bombsquad_server'}
+SERVICE_NAME = {0: 'bombsquad_gui', 1: 'bombsquad_server'}
+
 
 def _docker_compose(
     image_name: str,
-    service_name : str,
+    service_name: str,
     dockercompose_file: str,
     *,
     cmake_build_type: str | None = None,
@@ -43,6 +45,7 @@ def _docker_compose(
 
     subprocess.run(build_cmd, check=True, env=env)
 
+
 def docker_compose(
     platform: str | None = 'linux/amd64',
     headless_build: bool | str | None = None,
@@ -51,6 +54,7 @@ def docker_compose(
     """Compose docker image.
     platform == 'linux/arm64' or platform == 'linux/amd64'"""
     from batools import version
+
     version_num, build_num = version.get_current_version()
     if headless_build is None:
         headless_build = True
@@ -63,8 +67,9 @@ def docker_compose(
 
     compose_file = os.path.join(DOCKER_DIR, 'docker-compose.yml')
 
-    print('\n' +
-        f'Building docker image \n\t{image_name} '
+    print(
+        '\n'
+        + f'Building docker image \n\t{image_name} '
         + f'\n\tversion {version_num}:{build_num}'
     )
 
@@ -80,6 +85,7 @@ def docker_compose(
         version=version_num,
         build_number=str(build_num),
     )
+
 
 def get_docker_image_name(headless_build: bool | str, build_type: str) -> str:
     """Get name of docker images in predefined format."""
@@ -159,6 +165,7 @@ def docker_remove_images() -> None:
     if img_name in output.stdout:
         subprocess.run(remove_cmd + [img_name], check=True)
 
+
 # Unused, using docker compose instead
 def _docker_build(
     image_name: str,
@@ -206,6 +213,7 @@ def _docker_build(
             f'--label={i}={labels[i]}' for i in labels.keys()
         ]
     subprocess.run(build_cmd, check=True)
+
 
 # Unused, using docker compose instead
 def docker_build(
