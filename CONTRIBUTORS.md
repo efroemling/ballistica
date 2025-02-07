@@ -67,6 +67,9 @@
 - Added docker build system
 - Various CI/CD improvements
 
+### Zacker Tz
+- PW: King of the Hill: Fix flag region on the Happy Thoughts
+
 ### komasio71
 - Retired Discord server moderator
 - Small contributor
