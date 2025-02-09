@@ -70,3 +70,6 @@
 ### komasio71
 - Retired Discord server moderator
 - Small contributor
+
+### HeyFang
+- Developer
