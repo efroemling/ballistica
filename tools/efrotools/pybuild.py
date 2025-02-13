@@ -17,7 +17,7 @@ APPLE_NEW = False
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.12'
-PY_VER_EXACT_ANDROID = '3.12.4'
+PY_VER_EXACT_ANDROID = '3.12.9'
 PY_VER_APPLE = '3.12'
 PY_VER_EXACT_APPLE = '3.12.4' if APPLE_NEW else '3.12.0'
 
@@ -41,7 +41,7 @@ VERSION_MIN_TVOS = '12.0' if APPLE_NEW else '9.0'
 #
 # For now will try to ride out this 3.0 LTS version as long as possible.
 OPENSSL_VER_APPLE = '3.0.12-1'
-OPENSSL_VER_ANDROID = '3.0.14'
+OPENSSL_VER_ANDROID = '3.0.15'
 
 LIBFFI_VER_APPLE = '3.4.6-1' if APPLE_NEW else '3.4.4-1'
 BZIP2_VER_APPLE = '1.0.8-1'

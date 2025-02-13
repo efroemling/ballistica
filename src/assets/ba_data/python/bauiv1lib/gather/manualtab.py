@@ -47,11 +47,15 @@ class _HostLookupThread(Thread):
         try:
             import socket
 
-            result = [
+            aresult = [
                 item[-1][0]
                 for item in socket.getaddrinfo(self.name, self._port)
             ][0]
+            if isinstance(aresult, int):
+                raise RuntimeError('Unexpected getaddrinfo int result')
+            result = aresult
         except Exception:
+            # Hmm should we be logging this?
             result = None
         bui.pushcall(
             lambda: self._call(result, self._port), from_other_thread=True
