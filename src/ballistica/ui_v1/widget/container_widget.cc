@@ -1281,7 +1281,8 @@ void ContainerWidget::SetTransition(TransitionType t) {
 
 void ContainerWidget::ReselectLastSelectedWidget() {
   if (prev_selected_widget_ != nullptr
-      && prev_selected_widget_ != selected_widget_) {
+      && prev_selected_widget_ != selected_widget_
+      && prev_selected_widget_->IsSelectable()) {
     SelectWidget(prev_selected_widget_);
   }
 }
