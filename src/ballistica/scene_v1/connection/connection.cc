@@ -156,12 +156,17 @@ void Connection::HandleGamePacketCompressed(const std::vector<uint8_t>& data) {
   try {
     data_decompressed = g_base->huffman->decompress(data);
   } catch (const std::exception& e) {
-    g_core->Log(
+    // Allow a few of these through just in case it is a fluke, but kill the
+    // connection after that to stop attacks based on this.
+    BA_LOG_ONCE(
         LogName::kBaNetworking, LogLevel::kError,
         std::string("Error in huffman decompression for packet: ") + e.what());
-
-    // Hmmm i guess lets just ignore this packet and keep on trucking?.. or
-    // should we kill the connection?
+    huffman_error_count_ += 1;
+    if (huffman_error_count_ > 5) {
+      BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                  "Closing connection due to excessive huffman errors.");
+      Error("");
+    }
     return;
   }
   bytes_in_compressed_ += data.size();
