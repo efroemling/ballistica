@@ -577,7 +577,7 @@ class GetTokensWindow(bui.MainWindow):
             ),
             claims_left_right=True,
             highlight=False,
-            border_opacity=0.15,
+            border_opacity=0.0,
             center_small_content=True,
         )
         subcontainer = bui.containerwidget(

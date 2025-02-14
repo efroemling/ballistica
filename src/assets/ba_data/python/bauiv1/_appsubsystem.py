@@ -421,12 +421,22 @@ class UIV1AppSubsystem(babase.AppSubsystem):
     @override
     def on_screen_size_change(self) -> None:
 
+        # HACK-ish: We currently ignore all resizes that happen while a
+        # string-edit is in progress. Otherwise the target text-widget
+        # of the edit generally dies during window recreates and the
+        # edit doesn't work. And it seems that in some cases on Android
+        # bringing up the on-screen keyboard results in the screen size
+        # changing due to nav-bars being shown or whatnot which makes
+        # the problem worse.
+        if babase.app.stringedit.active_adapter() is not None:
+            return
+
         # Recreating a MainWindow is a kinda heavy thing and it doesn't
         # seem like we should be doing it at 120hz during a live window
         # resize, so let's limit the max rate we do it.
         now = time.monotonic()
 
-        # 4 refreshes per second seems reasonable.
+        # Up to 4 refreshes per second seems reasonable.
         interval = 0.25
 
         # If there is a timer set already, do nothing.

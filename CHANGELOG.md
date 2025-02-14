@@ -1,4 +1,4 @@
-### 1.7.37 (build 22285, api 9, 2025-02-13)
+### 1.7.37 (build 22287, api 9, 2025-02-14)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -224,6 +224,10 @@
   about this.
 - Added `docker-compose.yml` which can now be used with `docker compose` command
 - Changed Docker make targets to use `docker compose` instead of `docker build`
+- (build 22285) Window auto-recreation due to screen resizing is now disabled
+  while onscreen-keyboards are present. This works around an issue where text
+  editing on Android could break due to on-screen-keyboards causing screen
+  resizes which kill the text-widgets they target.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

@@ -264,10 +264,8 @@ def printsizes(
 
 def _desctype(obj: Any) -> str:
     cls = type(obj)
-    # noinspection PyPep8
     if cls is types.ModuleType:
         return f'{type(obj).__name__} {obj.__name__}'
-    # noinspection PyPep8
     if cls is types.MethodType:
         bnd = 'bound' if hasattr(obj, '__self__') else 'unbound'
         return f'{bnd} {type(obj).__name__} {obj.__name__}'
@@ -287,8 +285,8 @@ def _desc(obj: Any) -> str:
         )
         extra = f' (len {len(obj)}{tpss})'
     elif isinstance(obj, dict):
-        # If it seems to be the vars() for a type or module,
-        # try to identify what.
+        # If it seems to be the vars() for a type or module, try to
+        # identify what.
         for ref in getrefs(obj):
             if hasattr(ref, '__dict__') and vars(ref) is obj:
                 extra = f' (vars for {_desctype(ref)} @ {id(ref)})'
@@ -325,9 +323,9 @@ def _printrefs(
     if level < max_level or (id(obj) in expand_ids and level < ABS_MAX_LEVEL):
         refs = getrefs(obj)
         for ref in refs:
-            # It seems we tend to get a transient cell object with contents
-            # set to obj. Would be nice to understand why that happens
-            # but just ignoring it for now.
+            # It seems we tend to get a transient cell object with
+            # contents set to obj. Would be nice to understand why that
+            # happens but just ignoring it for now.
             if isinstance(ref, types.CellType) and ref.cell_contents is obj:
                 continue
 
@@ -341,7 +339,8 @@ def _printrefs(
                 continue
 
             # The 'refs' list we just made will be listed as a referrer
-            # of this obj, so explicitly exclude it from the obj's listing.
+            # of this obj, so explicitly exclude it from the obj's
+            # listing.
             _printrefs(
                 ref,
                 level=level + 1,
