@@ -23,6 +23,7 @@ void Logging::Log(LogName name, LogLevel level, const std::string& msg) {
   // Wrappers calling us should check these bits.
   assert(g_core);
   assert(g_core->LogLevelEnabled(name, level));
+
   g_core->python->LoggingCall(name, level, msg);
 }
 

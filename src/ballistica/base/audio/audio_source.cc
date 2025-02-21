@@ -73,11 +73,10 @@ auto AudioSource::Play(SoundAsset* ptr_in) -> uint32_t {
   assert(g_base->audio_server);
   assert(client_queue_size_ > 0);
 
-  // allocate a new reference to this guy and pass it along
-  // to the thread... (these refs can't be created or destroyed
-  // or have their ref-counts changed outside the main thread...)
-  // the thread will then send back this allocated ptr when it's done
-  // with it for the main thread to destroy.
+  // Allocate a new reference to this guy and pass it along to the thread
+  // (these refs can't be created or destroyed or have their ref-counts
+  // changed outside the main thread). The thread will then send back this
+  // allocated ptr when it's done with it for the main thread to destroy.
 
   ptr_in->UpdatePlayTime();
   auto ptr = new Object::Ref<SoundAsset>(ptr_in);

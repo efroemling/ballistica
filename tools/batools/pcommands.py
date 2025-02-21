@@ -788,17 +788,15 @@ def logcat() -> None:
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args')
     adb = sys.argv[2]
-    plat = sys.argv[3]
+    _plat = sys.argv[3]
 
     # My amazon tablet chokes on the color format.
-    if plat == 'amazon':
-        format_args = ''
-    else:
-        format_args = '-v color '
+    # if plat == 'amazon':
+    #     format_args = ''
+    # else:
+    format_args = '-v color '
     cmd = (
-        f'{adb} logcat {format_args}SDL:V BallisticaKit:V VrLib:V'
-        ' VrApi:V VrApp:V TimeWarp:V EyeBuf:V GlUtils:V DirectRender:V'
-        ' HmdInfo:V IabHelper:V CrashAnrDetector:V DEBUG:V \'*:S\''
+        f'{adb} logcat {format_args}BallisticaKit:D CrashAnrDetector:V \'*:S\''
     )
     print(f'{Clr.BLU}Running logcat command: {Clr.BLD}{cmd}{Clr.RST}')
     subprocess.run(cmd, shell=True, check=True)

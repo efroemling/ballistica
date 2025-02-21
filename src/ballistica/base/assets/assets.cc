@@ -210,6 +210,8 @@ void Assets::StartLoading() {
   LoadSystemSound(SysSoundID::kSparkle, "sparkle01");
   LoadSystemSound(SysSoundID::kSparkle2, "sparkle02");
   LoadSystemSound(SysSoundID::kSparkle3, "sparkle03");
+  LoadSystemSound(SysSoundID::kScoreIncrease, "scoreIncrease");
+  LoadSystemSound(SysSoundID::kCashRegister, "cashRegister");
 
   // System datas:
   // (crickets)

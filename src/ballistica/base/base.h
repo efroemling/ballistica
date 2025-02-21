@@ -517,7 +517,9 @@ enum class SysSoundID {
   kTickingCrazy,
   kSparkle,
   kSparkle2,
-  kSparkle3
+  kSparkle3,
+  kScoreIncrease,
+  kCashRegister
 };
 
 enum class SystemDataID : uint8_t {};

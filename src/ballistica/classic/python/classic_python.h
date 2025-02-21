@@ -24,6 +24,8 @@ class ClassicPython {
     kGetInputDeviceMappedValueCall,
     kChestAppearanceDisplayInfoDefault,
     kChestAppearanceDisplayInfos,
+    kOnEngineWillResetCall,
+    kOnEngineDidResetCall,
     kLast  // Sentinel; must be at end.
   };
 

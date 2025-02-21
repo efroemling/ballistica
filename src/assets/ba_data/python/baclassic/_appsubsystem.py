@@ -802,6 +802,9 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             if babase.app.env.gui:
                 bauiv1.getsound('swish').play()
 
+            # Pause gameplay.
+            self.pause()
+
             babase.app.ui_v1.set_main_window(
                 InGameMenuWindow(), is_top_level=True, suppress_warning=True
             )

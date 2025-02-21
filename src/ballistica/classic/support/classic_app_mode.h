@@ -217,8 +217,10 @@ class ClassicAppMode : public base::AppMode {
 
   void SetRootUITicketsMeterValue(int value);
   void SetRootUITokensMeterValue(int value);
-  void SetRootUILeagueRankValue(int value);
-  void SetRootUILeagueType(const std::string text);
+  void SetRootUILeagueValues(const std::string league_type, int league_number,
+                             int rank);
+  // void SetRootUILeagueRankValue(int value);
+  // void SetRootUILeagueType(const std::string text);
   void SetRootUIAchievementsPercentText(const std::string text);
   void SetRootUILevelText(const std::string text);
   void SetRootUIXPText(const std::string text);
@@ -234,6 +236,10 @@ class ClassicAppMode : public base::AppMode {
       seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
       seconds_t chest_3_ad_allow_time);
   void SetRootUIHaveLiveValues(bool val);
+  void GetRootUIAccountLeagueVisValues(std::string* league_type,
+                                       int* league_number, int* league_rank);
+  void SetRootUIAccountLeagueVisValues(const std::string& league_type,
+                                       int league_number, int league_rank);
 
  private:
   ClassicAppMode();
@@ -317,7 +323,8 @@ class ClassicAppMode : public base::AppMode {
   int public_party_max_player_count_{8};
   int root_ui_tickets_meter_value_{-1};
   int root_ui_tokens_meter_value_{-1};
-  int root_ui_league_rank_value_{-1};
+  int root_ui_league_rank_{-1};
+  int root_ui_league_number_;
   float debug_speed_mult_{1.0f};
   float replay_speed_mult_{1.0f};
   std::set<std::string> admin_public_ids_;

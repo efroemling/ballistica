@@ -42,8 +42,8 @@ class RootWidget : public ContainerWidget {
 
   void SetTicketsMeterValue(int val);
   void SetTokensMeterValue(int val, bool gold_pass);
-  void SetLeagueRankValue(int val);
-  void SetLeagueType(const std::string& val);
+  void SetLeagueRankValues(const std::string& league_type, int league_number,
+                           int league_rank);
   void SetAchievementPercentText(const std::string& val);
   void SetLevelText(const std::string& val);
   void SetXPText(const std::string& val);
@@ -71,6 +71,12 @@ class RootWidget : public ContainerWidget {
   /// meters. Snaps to the latest values.
   void ResumeUpdates();
 
+  auto league_type_vis_value() const { return league_type_vis_value_; }
+  auto league_number_vis_value() const { return league_number_vis_value_; }
+  auto league_rank_vis_value() const { return league_rank_vis_value_; }
+  void RestoreLeagueRankDisplayVisValues(const std::string& league_type,
+                                         int league_num, int league_rank);
+
  private:
   struct ButtonDef_;
   struct Button_;
@@ -90,10 +96,17 @@ class RootWidget : public ContainerWidget {
   auto AddImage_(const ImageDef_& def) -> Image_*;
   void StepChildWidgets_(seconds_t dt);
   void StepChests_();
+  void StepLeagueRankAnim_(base::RenderPass* pass, seconds_t dt);
   void AddMeter_(MeterType_ type, float h_align, float r, float g, float b,
                  bool plus, const std::string& s);
   void UpdateTokensMeterTextColor_();
+  void ShowTrophyMeterAnnotation_(const std::string& val);
+  void HideTrophyMeterAnnotation_();
+  void UpdateLeagueRankDisplayValue_();
+  auto ColorForLeagueValue_(const std::string& value) -> Vector3f;
 
+  Object::Ref<base::AppTimer> trophy_meter_annotation_timer_;
+  Object::Ref<base::AppTimer> trophy_meter_display_timer_;
   std::string chest_0_appearance_;
   std::string chest_1_appearance_;
   std::string chest_2_appearance_;
@@ -101,6 +114,8 @@ class RootWidget : public ContainerWidget {
   std::string time_suffix_hours_;
   std::string time_suffix_minutes_;
   std::string time_suffix_seconds_;
+  std::string league_type_vis_value_;
+  std::string league_type_value_;
   std::list<Button_> buttons_;
   std::list<Text_> texts_;
   std::list<Image_> images_;
@@ -154,6 +169,7 @@ class RootWidget : public ContainerWidget {
   Text_* chest_1_time_text_{};
   Text_* chest_2_time_text_{};
   Text_* chest_3_time_text_{};
+  Text_* trophy_meter_annotation_text_{};
   seconds_t chest_0_unlock_time_{-1.0};
   seconds_t chest_1_unlock_time_{-1.0};
   seconds_t chest_2_unlock_time_{-1.0};
@@ -165,15 +181,24 @@ class RootWidget : public ContainerWidget {
   seconds_t last_chests_step_time_{-1.0f};
   seconds_t update_pause_time_{};
   seconds_t update_time_{};
+  seconds_t league_rank_anim_start_time_{};
   float base_scale_{1.0f};
   float bottom_left_height_{};
+  float league_rank_anim_val_{};
   int update_pause_count_{};
+  int league_rank_vis_value_{-1};
+  int league_rank_value_{-1};
+  int league_rank_anim_start_val_{};
+  int league_number_vis_value_{-1};
+  int league_number_value_{-1};
+  std::optional<uint32_t> league_rank_anim_sound_play_id_{};
   ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kInGame};
   bool child_widgets_dirty_{true};
   bool in_main_menu_{};
   bool gold_pass_{};
   bool have_live_values_{};
   bool translations_dirty_{true};
+  bool league_rank_animating_{};
 };
 
 }  // namespace ballistica::ui_v1

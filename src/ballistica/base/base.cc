@@ -291,7 +291,30 @@ void BaseFeatureSet::SuspendApp() {
   // IMPORTANT: Any pause related stuff that event-loop-threads need to do
   // should be done from their registered pause-callbacks. If we instead
   // push runnables to them from here they may or may not be called before
-  // their event-loop is actually paused.
+  // their event-loop is actually paused (event-loops don't exhaust queued
+  // runnables before pausing since those could block on other
+  // already-paused threads).
+
+  // Currently the only Python level call related to this is
+  // AppMode.on_app_active_changed(), but that runs in the logic thread and,
+  // as mentioned above, we don't have any strict guarantees that it gets
+  // run before this suspend goes through. So let's wait for up to a
+  // fraction of our total max-duration here to make sure it has been called
+  // and make some noise if it hasn't been.
+  millisecs_t max_duration_part{max_duration / 2};
+  while (true) {
+    if (g_base->logic->app_active_applied() == false) {
+      break;
+    }
+    if (std::abs(core::CorePlatform::TimeMonotonicMillisecs() - start_time)
+        >= max_duration_part) {
+      BA_LOG_ONCE(
+          LogName::kBa, LogLevel::kError,
+          "SuspendApp timed out waiting for app-active callback to complete.");
+      break;
+    }
+    core::CorePlatform::SleepMillisecs(1);
+  }
 
   EventLoop::SetEventLoopsSuspended(true);
 
@@ -308,9 +331,7 @@ void BaseFeatureSet::SuspendApp() {
   do {
     // If/when we get to a point with no threads waiting to be paused, we're
     // good to go.
-    // auto loops{EventLoop::GetStillSuspendingEventLoops()};
     running_loops = EventLoop::GetStillSuspendingEventLoops();
-    // running_loop_count = loops.size();
     if (running_loops.empty()) {
       if (g_buildconfig.debug_build()) {
         g_core->Log(
@@ -338,7 +359,7 @@ void BaseFeatureSet::SuspendApp() {
     if (!first) {
       msg += ", ";
     }
-    // Note: not adding a default here so compiler complains if we
+    // Note: not adding a default here so the compiler complains if we
     // add/change something.
     switch (loop->identifier()) {
       case EventLoopID::kInvalid:

@@ -179,10 +179,6 @@ void UIV1FeatureSet::OnActivate() {
   rw->Setup();
   rw->SetOverlayWidget(ow.get());
 
-  // Plug in all values we're storing.
-  // rw->SetSquadSizeLabel(party_icon_number_);
-  // rw->SetAccountState(account_signed_in_, account_name_);
-
   sw->GlobalSelect();
 }
 

@@ -50,14 +50,33 @@ class AppMode:
         raise NotImplementedError('AppMode subclasses must override this.')
 
     def on_activate(self) -> None:
-        """Called when the mode is being activated."""
+        """Called when the mode is becoming the active one fro the app."""
 
     def on_deactivate(self) -> None:
-        """Called when the mode is being deactivated."""
+        """Called when the mode stops being the active one for the app.
+
+        Note: On platforms where the app is explicitly exited (such as
+        desktop PC) this will also be called at app shutdown.
+
+        To best cover both mobile and desktop style platforms, actions
+        such as saving state should generally happen in response to both
+        on_deactivate() and on_app_active_changed() (when active is
+        False).
+        """
 
     def on_app_active_changed(self) -> None:
-        """Called when ba*.app.active changes while this mode is active.
+        """Called when ba*.app.active changes while in this app-mode.
 
-        The app-mode may want to take action such as pausing a running
-        game in such cases.
+        Active state becomes false when the app is hidden, minimized,
+        backgrounded, etc. The app-mode may want to take action such as
+        pausing a running game or saving state when this occurs.
+
+        Note: On platforms such as mobile where apps get suspended and
+        later silently terminated by the OS, this is likely to be the
+        last reliable place to save state/etc.
+
+        To best cover both mobile and desktop style platforms, actions
+        such as saving state should generally happen in response to both
+        on_deactivate() and on_app_active_changed() (when active is
+        False).
         """

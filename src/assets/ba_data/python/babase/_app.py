@@ -1065,6 +1065,19 @@ class App:
         """(internal)"""
         assert _babase.in_logic_thread()
 
+        # Deactivate any active app-mode. This allows things like saving
+        # state to happen naturally without needing to handle
+        # app-shutdown as a special case.
+        if self._mode is not None:
+            try:
+                self._mode.on_deactivate()
+            except Exception:
+                logging.exception(
+                    'Error deactivating app-mode %s at app shutdown.',
+                    self._mode,
+                )
+            self._mode = None
+
         # Inform app subsystems that we're done shutting down in the opposite
         # order they were inited.
         for subsystem in reversed(self._subsystems):

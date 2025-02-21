@@ -723,6 +723,8 @@ void Logic::OnAppActiveChanged() {
     // For now just informing Python (which informs Python level app-mode).
     // Can expand this to inform everyone else if needed.
     g_base->python->OnAppActiveChanged();
+
+    app_active_applied_ = app_active;
   }
 }
 

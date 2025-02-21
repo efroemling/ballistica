@@ -28,6 +28,8 @@ if TYPE_CHECKING:
 class ClassicAppMode(babase.AppMode):
     """AppMode for the classic BombSquad experience."""
 
+    LEAGUE_VIS_VALS_CONFIG_KEY = 'ClassicLeagueVisVals'
+
     def __init__(self) -> None:
         self._on_primary_account_changed_callback: (
             CallbackRegistration | None
@@ -40,6 +42,8 @@ class ClassicAppMode(babase.AppMode):
 
         self._have_account_values = False
         self._have_connectivity = False
+        self._current_account_id: str | None = None
+        self._should_restore_account_league_vis_vals = False
 
     @override
     @classmethod
@@ -148,6 +152,9 @@ class ClassicAppMode(babase.AppMode):
 
         classic = babase.app.classic
 
+        # Store latest league vis vals for any active account.
+        self._save_account_league_vis_vals()
+
         # Stop being informed of account changes.
         self._on_primary_account_changed_callback = None
 
@@ -163,10 +170,14 @@ class ClassicAppMode(babase.AppMode):
 
     @override
     def on_app_active_changed(self) -> None:
-        # If we've gone inactive, bring up the main menu, which has the
-        # side effect of pausing the action (when possible).
         if not babase.app.active:
+            # If we've gone inactive, bring up the main menu, which has the
+            # side effect of pausing the action (when possible).
             babase.invoke_main_menu()
+
+            # Also store any league vis state for the active account.
+            # this may be our last chance to do this on mobile.
+            self._save_account_league_vis_vals()
 
     def _update_for_primary_account(
         self, account: babase.AccountV2Handle | None
@@ -181,9 +192,18 @@ class ClassicAppMode(babase.AppMode):
         assert classic is not None
 
         if account is not None:
+            self._current_account_id = account.accountid
             babase.set_ui_account_state(True, account.tag)
+            self._should_restore_account_league_vis_vals = True
         else:
+            # If we had an account, save any existing league vis state
+            # so we'll properly animate to new values the next time we
+            # sign in.
+            self._save_account_league_vis_vals()
+
+            self._current_account_id = None
             babase.set_ui_account_state(False)
+            self._should_restore_account_league_vis_vals = False
 
         # For testing subscription functionality.
         if os.environ.get('BA_SUBSCRIPTION_TEST') == '1':
@@ -205,8 +225,9 @@ class ClassicAppMode(babase.AppMode):
             _baclassic.set_root_ui_account_values(
                 tickets=-1,
                 tokens=-1,
-                league_rank=-1,
                 league_type='',
+                league_number=-1,
+                league_rank=-1,
                 achievements_percent_text='',
                 level_text='',
                 xp_text='',
@@ -285,10 +306,11 @@ class ClassicAppMode(babase.AppMode):
         _baclassic.set_root_ui_account_values(
             tickets=val.tickets,
             tokens=val.tokens,
-            league_rank=(-1 if val.league_rank is None else val.league_rank),
             league_type=(
                 '' if val.league_type is None else val.league_type.value
             ),
+            league_number=(-1 if val.league_num is None else val.league_num),
+            league_rank=(-1 if val.league_rank is None else val.league_rank),
             achievements_percent_text=f'{achp}%',
             level_text=str(val.level),
             xp_text=f'{val.xp}/{val.xpmax}',
@@ -339,6 +361,14 @@ class ClassicAppMode(babase.AppMode):
                 else chest3.ad_allow_time.timestamp()
             ),
         )
+        if self._should_restore_account_league_vis_vals:
+            # If we have previous league vis vals for this account,
+            # restore them. This will cause us to animate or otherwise
+            # display league changes that have occurred since we were
+            # last visible. Note we need to do this *after* setting real
+            # vals so there is something to animate to.
+            self._restore_account_league_vis_vals()
+            self._should_restore_account_league_vis_vals = False
 
         # Note that we have values and updated faded state accordingly.
         self._have_account_values = True
@@ -656,3 +686,54 @@ class ClassicAppMode(babase.AppMode):
                 ),
             )
         )
+
+    def _save_account_league_vis_vals(self) -> None:
+
+        # If we currently have an account, save any currently-displayed
+        # league info alongside the account id. We'll then restore this
+        # state as a starting point the next time we are active, meaning
+        # any changes that occur while we're away will be animated for
+        # the user to see.
+
+        if self._current_account_id is not None:
+            vals = _baclassic.get_root_ui_account_league_vis_values()
+            if vals is not None:
+                assert 'a' not in vals
+                vals['a'] = self._current_account_id
+                cfg = babase.app.config
+                cfg[self.LEAGUE_VIS_VALS_CONFIG_KEY] = vals
+                cfg.commit()
+
+    def _restore_account_league_vis_vals(self) -> None:
+
+        # If we currently have an account and it matches vis-vals we have
+        # stored in the config, restore those values.
+        if self._current_account_id is not None:
+            cfg = babase.app.config
+            vals = cfg.get(self.LEAGUE_VIS_VALS_CONFIG_KEY)
+            if isinstance(vals, dict):
+                valsaccount = vals.get('a')
+                if (
+                    isinstance(valsaccount, str)
+                    and valsaccount == self._current_account_id
+                ):
+                    _baclassic.set_root_ui_account_league_vis_values(vals)
+
+    def on_engine_will_reset(self) -> None:
+        """Called just before classic resets the engine.
+
+        This happens at various times such as session switches.
+        """
+
+        self._save_account_league_vis_vals()
+
+    def on_engine_did_reset(self) -> None:
+        """Called just after classic resets the engine.
+
+        This happens at various times such as session switches.
+        """
+
+        # Restore any old league vis state we had; this allows the user
+        # to see league improvements/etc. that occurred while we were
+        # gone.
+        self._restore_account_league_vis_vals()

@@ -16,6 +16,8 @@
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/classic/classic.h"
+#include "ballistica/classic/python/classic_python.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
@@ -126,6 +128,16 @@ void ClassicAppMode::Reset_() {
   assert(g_base);
   assert(g_base->InLogicThread());
 
+  // Let our Python delegate know we're gonna do a reset so it can save any
+  // state it needs to or whatnot.
+  // HMM; should we make resets an official part of AppModes or something?
+  PythonRef result = g_classic->python->objs()
+                         .Get(ClassicPython::ObjID::kOnEngineWillResetCall)
+                         .Call();
+  if (!result.exists()) {
+    throw Exception("Error calling kOnEngineWillResetCall.");
+  }
+
   // Tear down any existing session.
   foreground_session_.Clear();
   PruneSessions_();
@@ -152,8 +164,8 @@ void ClassicAppMode::Reset_() {
       root_widget->SetTicketsMeterValue(root_ui_tickets_meter_value_);
       root_widget->SetTokensMeterValue(root_ui_tokens_meter_value_,
                                        root_ui_gold_pass_);
-      root_widget->SetLeagueRankValue(root_ui_league_rank_value_);
-      root_widget->SetLeagueType(root_ui_league_type_);
+      root_widget->SetLeagueRankValues(
+          root_ui_league_type_, root_ui_league_number_, root_ui_league_rank_);
       root_widget->SetAchievementPercentText(root_ui_achievement_percent_text_);
       root_widget->SetLevelText(root_ui_level_text_);
       root_widget->SetXPText(root_ui_xp_text_);
@@ -171,6 +183,14 @@ void ClassicAppMode::Reset_() {
 
   // Fade in if we currently aren't.
   g_base->graphics->FadeScreen(true, 250, nullptr);
+
+  // Let our Python delegate know we're done doing our reset.
+  result = g_classic->python->objs()
+               .Get(ClassicPython::ObjID::kOnEngineDidResetCall)
+               .Call();
+  if (!result.exists()) {
+    throw Exception("Error calling kOnEngineDidResetCall.");
+  }
 }
 
 // Note: for now we're making our host-scan network calls directly from the
@@ -1555,7 +1575,7 @@ void ClassicAppMode::RunMainMenu() {
 }
 
 void ClassicAppMode::SetRootUITicketsMeterValue(int value) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   if (value == root_ui_tickets_meter_value_) {
     return;
   }
@@ -1571,7 +1591,7 @@ void ClassicAppMode::SetRootUITicketsMeterValue(int value) {
 }
 
 void ClassicAppMode::SetRootUITokensMeterValue(int value) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   if (value == root_ui_tokens_meter_value_) {
     return;
   }
@@ -1587,40 +1607,72 @@ void ClassicAppMode::SetRootUITokensMeterValue(int value) {
   }
 }
 
-void ClassicAppMode::SetRootUILeagueRankValue(int value) {
-  BA_PRECONDITION(g_base->InLogicThread());
-  if (value == root_ui_league_rank_value_) {
+void ClassicAppMode::SetRootUILeagueValues(const std::string league_type,
+                                           int league_number, int rank) {
+  assert(g_base->InLogicThread());
+
+  // Filter out redundant sets.
+  if (league_type == root_ui_league_type_
+      && league_number == root_ui_league_number_
+      && rank == root_ui_league_rank_) {
     return;
   }
-  // Store the value.
-  root_ui_league_rank_value_ = value;
 
-  // Apply it to any existing UI.
+  // Store new values.
+  root_ui_league_type_ = league_type;
+  root_ui_league_number_ = league_number;
+  root_ui_league_rank_ = rank;
+
+  // Apply to any existing UI.
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
-      root_widget->SetLeagueRankValue(root_ui_league_rank_value_);
+      root_widget->SetLeagueRankValues(
+          root_ui_league_type_, root_ui_league_number_, root_ui_league_rank_);
     }
   }
 }
 
-void ClassicAppMode::SetRootUILeagueType(const std::string text) {
-  BA_PRECONDITION(g_base->InLogicThread());
-  if (text == root_ui_league_type_) {
-    return;
+void ClassicAppMode::GetRootUIAccountLeagueVisValues(std::string* league_type,
+                                                     int* league_number,
+                                                     int* league_rank) {
+  assert(g_base->InLogicThread());
+  assert(league_type && league_number && league_rank);
+
+  // What we're asking for here is the current *displayed* values in the ui
+  // (the latest values we have provided to them may not be visible yet due
+  // to the meter being offscreen/etc.)
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      *league_type = root_widget->league_type_vis_value();
+      *league_number = root_widget->league_number_vis_value();
+      *league_rank = root_widget->league_rank_vis_value();
+      return;
+    }
   }
-  // Store the value.
-  root_ui_league_type_ = text;
+
+  // Unset.
+  *league_type = "";
+  *league_number = -1;
+  *league_rank = -1;
+}
+
+void ClassicAppMode::SetRootUIAccountLeagueVisValues(
+    const std::string& league_type, int league_number, int league_rank) {
+  assert(g_base->InLogicThread());
 
   // Apply it to any existing UI.
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
-      root_widget->SetLeagueType(root_ui_league_type_);
+      // Ask the root widget to restore these vis values and kick off anims
+      // to the current actual values or whatnot if applicable.
+      root_widget->RestoreLeagueRankDisplayVisValues(league_type, league_number,
+                                                     league_rank);
     }
   }
 }
 
 void ClassicAppMode::SetRootUIAchievementsPercentText(const std::string text) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   if (text == root_ui_achievement_percent_text_) {
     return;
   }
@@ -1636,7 +1688,7 @@ void ClassicAppMode::SetRootUIAchievementsPercentText(const std::string text) {
 }
 
 void ClassicAppMode::SetRootUILevelText(const std::string text) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   if (text == root_ui_level_text_) {
     return;
   }
@@ -1653,7 +1705,7 @@ void ClassicAppMode::SetRootUILevelText(const std::string text) {
 }
 
 void ClassicAppMode::SetRootUIXPText(const std::string text) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   if (text == root_ui_xp_text_) {
     return;
   }
@@ -1670,7 +1722,7 @@ void ClassicAppMode::SetRootUIXPText(const std::string text) {
 }
 
 void ClassicAppMode::SetRootUIInboxCountText(const std::string text) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   if (text == root_ui_inbox_count_text_) {
     return;
   }
@@ -1687,7 +1739,7 @@ void ClassicAppMode::SetRootUIInboxCountText(const std::string text) {
 }
 
 void ClassicAppMode::SetRootUIGoldPass(bool enabled) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   if (enabled == root_ui_gold_pass_) {
     return;
   }
@@ -1729,7 +1781,7 @@ void ClassicAppMode::SetRootUIChests(
     seconds_t chest_3_unlock_time, seconds_t chest_0_ad_allow_time,
     seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
     seconds_t chest_3_ad_allow_time) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   if (chest_0_appearance == root_ui_chest_0_appearance_
       && chest_1_appearance == root_ui_chest_1_appearance_
       && chest_2_appearance == root_ui_chest_2_appearance_

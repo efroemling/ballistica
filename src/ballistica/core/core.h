@@ -201,6 +201,9 @@ class CoreFeatureSet {
   auto LogLevelEnabled(LogName name, LogLevel level) -> bool {
     return log_levels_[static_cast<int>(name)] <= level;
   }
+  auto GetLogLevel(LogName name) -> int {
+    return static_cast<int>(log_levels_[static_cast<int>(name)]);
+  }
 
   auto ba_env_launch_timestamp() {
     // Make sure we set this before accessing it.

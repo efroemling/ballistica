@@ -3,14 +3,19 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/audio/audio.h"
+#include "ballistica/base/audio/audio_source.h"
+#include "ballistica/base/base.h"
 #include "ballistica/base/graphics/renderer/render_pass.h"
 #include "ballistica/base/graphics/support/frame_def.h"
+#include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
@@ -27,6 +32,12 @@ namespace ballistica::ui_v1 {
 static const float kBotLeftColorR{0.6f};
 static const float kBotLeftColorG{0.6f};
 static const float kBotLeftColorB{0.8f};
+
+static const float kMeterColorR{0.4f};
+static const float kMeterColorG{0.38f};
+static const float kMeterColorB{0.5f};
+
+static const bool kDebugPrint{false};
 
 // Flip this to true when we're ready to use levels.
 static const bool kShowLevels{false};
@@ -147,7 +158,28 @@ RootWidget::RootWidget() {
   set_background(false);
 }
 
-RootWidget::~RootWidget() = default;
+RootWidget::~RootWidget() {
+  // Stop any currently playing sounds.
+  if (league_rank_anim_sound_play_id_.has_value()) {
+    g_base->audio->PushSourceStopSoundCall(*league_rank_anim_sound_play_id_);
+    league_rank_anim_sound_play_id_.reset();
+  }
+}
+
+void RootWidget::ShowTrophyMeterAnnotation_(const std::string& val) {
+  assert(trophy_meter_annotation_text_);
+  trophy_meter_annotation_text_->widget->SetText(val);
+
+  Object::WeakRef<RootWidget> weakref(this);
+
+  trophy_meter_annotation_timer_ = base::AppTimer::New(
+      1.0f, false, [this] { HideTrophyMeterAnnotation_(); });
+}
+
+void RootWidget::HideTrophyMeterAnnotation_() {
+  assert(trophy_meter_annotation_text_);
+  trophy_meter_annotation_text_->widget->SetText("");
+}
 
 void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
                            float b, bool plus, const std::string& s) {
@@ -169,9 +201,9 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
     bd.mesh_transparent = "currencyMeter";
     bd.selectable = true;
 
-    bd.color_r = 0.4f;
-    bd.color_g = 0.38f;
-    bd.color_b = 0.5f;
+    bd.color_r = kMeterColorR;
+    bd.color_g = kMeterColorG;
+    bd.color_b = kMeterColorB;
 
     bd.depth_min = 0.3f;
 
@@ -304,6 +336,22 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
         default:
           break;
       }
+    }
+    // Below-bar annotation.
+    if (type == MeterType_::kTrophy) {
+      TextDef_ td;
+      td.button = btn;
+      td.text = "";
+      td.scale = 0.8f;
+      td.flatness = 1.0f;
+      td.shadow = 1.0f;
+      td.depth_min = 0.3f;
+      td.y = -35.0f;
+      td.color_r = 0.0f;
+      td.color_g = 1.0f;
+      td.color_b = 0.0f;
+      auto* text = AddText_(td);
+      trophy_meter_annotation_text_ = text;
     }
 
     // Icon on side.
@@ -956,6 +1004,51 @@ void RootWidget::Setup() {
   UpdateForFocusedWindow_(nullptr);
 }
 
+void RootWidget::StepLeagueRankAnim_(base::RenderPass* pass, seconds_t dt) {
+  if (!league_rank_animating_) {
+    return;
+  }
+  assert(league_rank_text_);
+  assert(trophy_meter_button_);
+
+  float anim_dir{league_rank_vis_value_ > league_rank_anim_val_ ? 1.0f : -1.0f};
+
+  seconds_t anim_time{g_core->AppTimeSeconds() - league_rank_anim_start_time_};
+  auto anim_speed{4.0 + anim_time * 20.0};
+  league_rank_anim_val_ += dt * anim_speed * anim_dir;
+  league_rank_text_->widget->SetText(
+      "#" + std::to_string(static_cast<int>(league_rank_anim_val_)));
+  float cscale{1.5f - 0.5f * sinf(40.0f * pass->frame_def()->display_time())};
+  trophy_meter_button_->widget->set_color(
+      kMeterColorR * cscale, kMeterColorG * cscale, kMeterColorB * cscale);
+
+  // If we reach/pass the target point, set the exact final value and end
+  // the anim.
+  if ((anim_dir > 0.0f
+       && league_rank_anim_val_ >= static_cast<float>(league_rank_vis_value_))
+      || (anim_dir <= 0.0f
+          && league_rank_anim_val_
+                 <= static_cast<float>(league_rank_vis_value_))) {
+    // printf("STOPPING ANIM\n");
+    league_rank_animating_ = false;
+    if (league_rank_anim_sound_play_id_.has_value()) {
+      g_base->audio->PushSourceStopSoundCall(*league_rank_anim_sound_play_id_);
+      league_rank_anim_sound_play_id_.reset();
+    }
+    g_base->audio->SafePlaySysSound(base::SysSoundID::kCashRegister);
+    league_rank_text_->widget->SetText(
+        "#" + std::to_string(league_rank_vis_value_));
+    trophy_meter_button_->widget->set_color(kMeterColorR, kMeterColorG,
+                                            kMeterColorB);
+    int diff{league_rank_anim_start_val_ - league_rank_vis_value_};
+    auto diff_str{std::to_string(diff)};
+    if (diff >= 0) {
+      diff_str = "+" + diff_str;
+    }
+    ShowTrophyMeterAnnotation_(diff_str);
+  }
+}
+
 void RootWidget::Draw(base::RenderPass* pass, bool transparent) {
   // Opaque pass gets drawn first; use that as an opportunity to step up our
   // motion.
@@ -969,6 +1062,7 @@ void RootWidget::Draw(base::RenderPass* pass, bool transparent) {
 
     StepChildWidgets_(time_diff);
     StepChests_();
+    StepLeagueRankAnim_(pass, time_diff);
 
     if (update_pause_count_ != 0) {
       // update_pause_time_ +=
@@ -1159,7 +1253,15 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     if (b.force_hide) {
       enable_button = false;
     }
+    auto prev_enabled{b.enabled};
     b.enabled = enable_button;
+
+    // If trophy meter just became enabled, give it a chance to display
+    // new value animations/etc.
+    if (&b == trophy_meter_button_ && !prev_enabled && enable_button) {
+      trophy_meter_display_timer_ = base::AppTimer::New(
+          1.0f, false, [this] { UpdateLeagueRankDisplayValue_(); });
+    }
   }
 
   // Go through our corner button lists updating positions based on
@@ -1509,31 +1611,128 @@ void RootWidget::UpdateTokensMeterTextColor_() {
   }
 }
 
-void RootWidget::SetLeagueRankValue(int val) {
-  assert(league_rank_text_);
-  league_rank_text_->widget->SetText(val > 0 ? ("#" + std::to_string(val))
-                                             : "");
-}
-
-void RootWidget::SetLeagueType(const std::string& val) {
+auto RootWidget::ColorForLeagueValue_(const std::string& value) -> Vector3f {
   Vector3f color{};
-
-  if (val == "") {
+  // Set league icon color.
+  if (league_type_vis_value_ == "") {
     color = {0.4f, 0.4f, 0.4f};
-  } else if (val == "b") {
+  } else if (league_type_vis_value_ == "b") {
     color = {1.0f, 0.7f, 0.5f};
-  } else if (val == "s") {
+  } else if (league_type_vis_value_ == "s") {
     color = {1.0f, 1.0f, 1.4f};
-  } else if (val == "g") {
+  } else if (league_type_vis_value_ == "g") {
     color = {1.4f, 1.0f, 0.4f};
-  } else if (val == "d") {
+  } else if (league_type_vis_value_ == "d") {
     color = {1.0f, 0.8f, 2.0f};
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "RootWidget: Invalid league type '" + val + "'.");
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
+        "RootWidget: Invalid league type '" + league_type_vis_value_ + "'.");
   }
-  assert(trophy_icon_);
+  return color;
+}
+
+void RootWidget::RestoreLeagueRankDisplayVisValues(
+    const std::string& league_type, int league_number, int league_rank) {
+  // Only restore if we already have actual values. Otherwise we just get an
+  // instant switch back to the unset state anyway.
+  if (league_type_value_.empty()) {
+    return;
+  }
+
+  // Store these vis values.
+  league_type_vis_value_ = league_type;
+  league_number_vis_value_ = league_number;
+  league_rank_vis_value_ = league_rank;
+
+  // Apply them instantly to our widgets.
+  league_rank_text_->widget->SetText(
+      league_rank_vis_value_ > 0
+          ? ("#" + std::to_string(league_rank_vis_value_))
+          : "");
+
+  auto color{ColorForLeagueValue_(league_type_vis_value_)};
   trophy_icon_->widget->set_color(color.x, color.y, color.z);
+
+  // Kick off any instant updates or animations to more current values.
+  UpdateLeagueRankDisplayValue_();
+}
+
+void RootWidget::UpdateLeagueRankDisplayValue_() {
+  assert(trophy_icon_);
+  assert(league_rank_text_);
+  assert(trophy_meter_button_);
+
+  auto animate{true};
+
+  if (!trophy_meter_button_->enabled) {
+    // If we're offscreen, don't animate.
+    animate = false;
+  } else if (league_rank_value_ <= 0 || league_rank_vis_value_ <= 0) {
+    // If we're coming from or going to an 'empty' value, don't animate.
+    animate = false;
+  } else if (league_number_vis_value_ != league_number_value_
+             || league_type_vis_value_ != league_type_value_) {
+    // If league type or num is changing, don't animate.
+    animate = false;
+  } else if (league_rank_value_ >= league_rank_vis_value_) {
+    // If our rank is staying same or worsening, don't animate.
+    animate = false;
+  }
+
+  auto prev_rank{league_rank_vis_value_};
+
+  // ONLY update display values if we're onscreen or if we were showing no
+  // value. Otherwise we'll update (and possibly animate) them when we next
+  // come onscreen.
+  const char* animstr = animate ? "ANIM" : "INSTANT";
+  if (trophy_meter_button_->enabled || league_rank_vis_value_ <= 0) {
+    if (kDebugPrint) {
+      printf("Showing rank change from %d to %d (%s)\n", league_rank_vis_value_,
+             league_rank_value_, animstr);
+    }
+    league_rank_vis_value_ = league_rank_value_;
+    league_type_vis_value_ = league_type_value_;
+    league_number_vis_value_ = league_number_value_;
+  }
+
+  if (league_rank_animating_) {
+    // If there's already an animation going, do nothing. It will get us to
+    // wherever we need to be.
+  } else {
+    if (animate) {
+      // Start up an animation.
+      league_rank_animating_ = true;
+      league_rank_anim_start_val_ = prev_rank;
+      league_rank_anim_val_ = prev_rank;
+
+      league_rank_anim_start_time_ = g_core->AppTimeSeconds();
+      if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
+        s->SetPositional(false);
+        league_rank_anim_sound_play_id_ =
+            s->Play(g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+        s->End();
+      }
+    } else {
+      // Just set new values immediately.
+      league_rank_text_->widget->SetText(
+          league_rank_vis_value_ > 0
+              ? ("#" + std::to_string(league_rank_vis_value_))
+              : "");
+    }
+  }
+
+  auto color{ColorForLeagueValue_(league_type_vis_value_)};
+  trophy_icon_->widget->set_color(color.x, color.y, color.z);
+}
+
+void RootWidget::SetLeagueRankValues(const std::string& league_type,
+                                     int league_number, int league_rank) {
+  // Store latest values and then (possibly) apply them to our display.
+  league_type_value_ = league_type;
+  league_number_value_ = league_number;
+  league_rank_value_ = league_rank;
+  UpdateLeagueRankDisplayValue_();
 }
 
 void RootWidget::SetAchievementPercentText(const std::string& val) {
@@ -1560,14 +1759,11 @@ void RootWidget::SetHaveLiveValues(bool have_live_values) {
   assert(tickets_meter_text_);
   assert(tickets_meter_icon_);
   tickets_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
-  // tickets_meter_icon_->widget->set_color(cval, cval, cval);
   tickets_meter_icon_->widget->set_opacity(oval2);
 
   assert(tokens_meter_text_);
   assert(tokens_meter_icon_);
   UpdateTokensMeterTextColor_();
-  // tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
-  // tokens_meter_icon_->widget->set_color(cval, cval, cval);
   tokens_meter_icon_->widget->set_opacity(oval2);
 
   assert(inbox_button_);
