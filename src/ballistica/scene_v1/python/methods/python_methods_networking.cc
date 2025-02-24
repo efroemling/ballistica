@@ -124,7 +124,7 @@ static auto PySetPublicPartyStatsURL(PyObject* self, PyObject* args,
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // The call expects an empty string for the no-url option.
-  std::string url = (url_obj == Py_None) ? "" : Python::GetPyString(url_obj);
+  std::string url = (url_obj == Py_None) ? "" : Python::GetString(url_obj);
   appmode->SetPublicPartyStatsURL(url);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -237,7 +237,7 @@ static auto PySetPublicPartyPublicAddressIPV4(PyObject* self, PyObject* args,
 
   std::optional<std::string> address{};
   if (address_obj != Py_None) {
-    address = Python::GetPyString(address_obj);
+    address = Python::GetString(address_obj);
   }
   appmode->set_public_party_public_address_ipv4(address);
   Py_RETURN_NONE;
@@ -271,7 +271,7 @@ static auto PySetPublicPartyPublicAddressIPV6(PyObject* self, PyObject* args,
 
   std::optional<std::string> address{};
   if (address_obj != Py_None) {
-    address = Python::GetPyString(address_obj);
+    address = Python::GetString(address_obj);
   }
   appmode->set_public_party_public_address_ipv6(address);
   Py_RETURN_NONE;
@@ -404,7 +404,7 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
   // Error if we're not in our app-mode.
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
-  address = Python::GetPyString(address_obj);
+  address = Python::GetString(address_obj);
 
   // Disallow in headless build (people were using this for spam-bots).
 
@@ -838,7 +838,7 @@ static auto PyChatMessage(PyObject* self, PyObject* args, PyObject* keywds)
   }
 
   if (clients_obj != Py_None) {
-    clients = Python::GetPyInts(clients_obj);
+    clients = Python::GetInts(clients_obj);
     clients_p = &clients;
   }
   appmode->connections()->SendChatMessage(message, clients_p,

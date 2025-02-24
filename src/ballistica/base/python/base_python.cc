@@ -293,10 +293,9 @@ auto BasePython::CanGetPyVector3f(PyObject* o) -> bool {
   if (PySequence_Fast_GET_SIZE(sequence.get()) != 3) {
     return false;
   }
-  return (
-      Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.get(), 0))
-      && Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.get(), 1))
-      && Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.get(), 2)));
+  return (Python::IsNumber(PySequence_Fast_GET_ITEM(sequence.get(), 0))
+          && Python::IsNumber(PySequence_Fast_GET_ITEM(sequence.get(), 1))
+          && Python::IsNumber(PySequence_Fast_GET_ITEM(sequence.get(), 2)));
 }
 
 auto BasePython::GetPyVector3f(PyObject* o) -> Vector3f {
@@ -315,9 +314,9 @@ auto BasePython::GetPyVector3f(PyObject* o) -> Vector3f {
   if (PySequence_Fast_GET_SIZE(sequence.get()) != 3) {
     throw Exception("Sequence is not of size 3.", PyExcType::kValue);
   }
-  return {Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.get(), 0)),
-          Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.get(), 1)),
-          Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.get(), 2))};
+  return {Python::GetFloat(PySequence_Fast_GET_ITEM(sequence.get(), 0)),
+          Python::GetFloat(PySequence_Fast_GET_ITEM(sequence.get(), 1)),
+          Python::GetFloat(PySequence_Fast_GET_ITEM(sequence.get(), 2))};
 }
 
 void BasePython::StoreEnv(PyObject* obj) { objs_.Store(ObjID::kEnv, obj); }
@@ -367,7 +366,7 @@ auto BasePython::GetRawConfigValue(const char* name, float default_value)
     return default_value;
   }
   try {
-    return Python::GetPyFloat(value);
+    return Python::GetFloat(value);
   } catch (const std::exception&) {
     g_core->Log(
         LogName::kBa, LogLevel::kError,
@@ -390,7 +389,7 @@ auto BasePython::GetRawConfigValue(const char* name,
     if (value == Py_None) {
       return {};
     }
-    return Python::GetPyFloat(value);
+    return Python::GetFloat(value);
   } catch (const std::exception&) {
     g_core->Log(
         LogName::kBa, LogLevel::kError,
@@ -408,7 +407,7 @@ auto BasePython::GetRawConfigValue(const char* name, int default_value) -> int {
     return default_value;
   }
   try {
-    return static_cast_check_fit<int>(Python::GetPyInt64(value));
+    return static_cast_check_fit<int>(Python::GetInt64(value));
   } catch (const std::exception&) {
     g_core->Log(
         LogName::kBa, LogLevel::kError,
@@ -427,7 +426,7 @@ auto BasePython::GetRawConfigValue(const char* name, bool default_value)
     return default_value;
   }
   try {
-    return Python::GetPyBool(value);
+    return Python::GetBool(value);
   } catch (const std::exception&) {
     g_core->Log(
         LogName::kBa, LogLevel::kError,

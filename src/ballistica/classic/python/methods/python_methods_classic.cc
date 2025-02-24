@@ -20,11 +20,6 @@
 
 namespace ballistica::classic {
 
-// Ignore signed bitwise warnings; python macros do it quite a bit.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
-#pragma ide diagnostic ignored "RedundantCast"
-
 // -------------------------------- value_test ---------------------------------
 
 static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
@@ -48,11 +43,11 @@ static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
       throw Exception("Can't provide both a change and absolute");
     }
     have_change = true;
-    change = Python::GetPyDouble(change_obj);
+    change = Python::GetDouble(change_obj);
   }
   if (absolute_obj != Py_None) {
     have_absolute = true;
-    absolute = Python::GetPyDouble(absolute_obj);
+    absolute = Python::GetDouble(absolute_obj);
   }
   double return_val = 0.0f;
   if (!strcmp(arg, "bufferTime")) {
@@ -456,10 +451,10 @@ static PyMethodDef PyGetRootUIAccountLeagueVisValuesDef = {
     "(internal)",
 };
 
-// ----------------- set_root_ui_account_league_vis_values ---------------------
+// ----------------------- set_account_display_state ---------------------------
 
-static auto PySetRootUIAccountLeagueVisValues(PyObject* self, PyObject* args,
-                                              PyObject* keywds) -> PyObject* {
+static auto PySetAccountDisplayState(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -476,34 +471,23 @@ static auto PySetRootUIAccountLeagueVisValues(PyObject* self, PyObject* args,
   auto* appmode = ClassicAppMode::GetActiveOrThrow();
 
   BA_PRECONDITION(PyDict_Check(vals_obj));
-  auto* league_type_obj = PyDict_GetItemString(vals_obj, "tp");
-  if (league_type_obj == nullptr || !PyUnicode_Check(league_type_obj)) {
-    throw Exception("Incorrect type for league-type arg", PyExcType::kType);
-  }
 
-  auto* league_number_obj = PyDict_GetItemString(vals_obj, "num");
-  if (league_number_obj == nullptr || !PyLong_Check(league_number_obj)) {
-    throw Exception("Incorrect type for league-number arg", PyExcType::kType);
-  }
+  auto league_type{Python::GetString(PyDict_GetItemString(vals_obj, "tp"))};
+  auto league_number{Python::GetInt(PyDict_GetItemString(vals_obj, "num"))};
+  auto league_rank{Python::GetInt(PyDict_GetItemString(vals_obj, "rank"))};
 
-  auto* league_rank_obj = PyDict_GetItemString(vals_obj, "rank");
-  if (league_rank_obj == nullptr || !PyLong_Check(league_rank_obj)) {
-    throw Exception("Incorrect type for league-rank arg", PyExcType::kType);
-  }
-  appmode->SetRootUIAccountLeagueVisValues(PyUnicode_AsUTF8(league_type_obj),
-                                           PyLong_AsLong(league_number_obj),
-                                           PyLong_AsLong(league_rank_obj));
+  appmode->SetAccountDisplayState(league_type, league_number, league_rank);
   Py_RETURN_NONE;
 
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PySetRootUIAccountLeagueVisValuesDef = {
-    "set_root_ui_account_league_vis_values",         // name
-    (PyCFunction)PySetRootUIAccountLeagueVisValues,  // method
-    METH_VARARGS | METH_KEYWORDS,                    // flags
+static PyMethodDef PySetAccountDisplayStateDef = {
+    "set_account_display_state",            // name
+    (PyCFunction)PySetAccountDisplayState,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
 
-    "set_root_ui_account_league_vis_values(vals: dict) -> None\n"
+    "set_account_display_state(vals: dict) -> None\n"
     "\n"
     "(internal)",
 };
@@ -552,11 +536,9 @@ auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
       PyClassicAppModeDeactivateDef,
       PySetRootUIAccountValuesDef,
       PyGetRootUIAccountLeagueVisValuesDef,
-      PySetRootUIAccountLeagueVisValuesDef,
+      PySetAccountDisplayStateDef,
       PySetRootUIHaveLiveValuesDef,
   };
 }
-
-#pragma clang diagnostic pop
 
 }  // namespace ballistica::classic

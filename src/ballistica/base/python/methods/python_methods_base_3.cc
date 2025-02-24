@@ -76,8 +76,7 @@ static auto PySetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
   }
   InputDevice* device{};
   if (input_device_id_obj != Py_None) {
-    device =
-        g_base->input->GetInputDevice(Python::GetPyInt(input_device_id_obj));
+    device = g_base->input->GetInputDevice(Python::GetInt(input_device_id_obj));
     if (!device) {
       throw Exception("Invalid input-device id.");
     }

@@ -13,7 +13,7 @@ python-daemon==3.1.2
 python-lsp-black==2.0.0
 python-lsp-server==1.12.2
 requests==2.32.3
-Sphinx==8.2.0
+Sphinx==8.2.1
 tomlkit==0.13.2
 types-certifi==2021.10.8.3
 types-filelock==3.2.7

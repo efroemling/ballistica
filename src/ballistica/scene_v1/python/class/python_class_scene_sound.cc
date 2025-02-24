@@ -117,7 +117,7 @@ auto PythonClassSceneSound::Play(PythonClassSceneSound* self, PyObject* args,
                       PyExcType::kContext);
     }
     if (pos_obj != Py_None) {
-      std::vector<float> vals = Python::GetPyFloats(pos_obj);
+      std::vector<float> vals = Python::GetFloats(pos_obj);
       if (vals.size() != 3) {
         throw Exception("Expected 3 floats for pos (got "
                             + std::to_string(vals.size()) + ")",

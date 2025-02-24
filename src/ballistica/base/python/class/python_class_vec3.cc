@@ -102,7 +102,7 @@ auto PythonClassVec3::tp_new(PyTypeObject* type, PyObject* args,
   assert(PyTuple_Check(args));
   Py_ssize_t numargs = PyTuple_GET_SIZE(args);
   if (numargs == 1 && PySequence_Check(PyTuple_GET_ITEM(args, 0))) {
-    auto vals = Python::GetPyFloats(PyTuple_GET_ITEM(args, 0));
+    auto vals = Python::GetFloats(PyTuple_GET_ITEM(args, 0));
     if (vals.size() != 3) {
       throw Exception("Expected a 3 member numeric sequence.",
                       PyExcType::kValue);
@@ -110,9 +110,8 @@ auto PythonClassVec3::tp_new(PyTypeObject* type, PyObject* args,
     self->value.x = vals[0];
     self->value.y = vals[1];
     self->value.z = vals[2];
-  } else if (numargs == 1
-             && Python::CanGetPyDouble(PyTuple_GET_ITEM(args, 0))) {
-    float val = Python::GetPyFloat(PyTuple_GET_ITEM(args, 0));
+  } else if (numargs == 1 && Python::IsNumber(PyTuple_GET_ITEM(args, 0))) {
+    float val = Python::GetFloat(PyTuple_GET_ITEM(args, 0));
     self->value.x = self->value.y = self->value.z = val;
   } else {
     // Otherwise interpret as individual x, y, z float vals defaulting to 0.
@@ -156,7 +155,7 @@ auto PythonClassVec3::sq_ass_item(PythonClassVec3* self, Py_ssize_t i,
   if (i < 0 || i >= kMemberCount) {
     throw Exception("Vec3 index out of range.", PyExcType::kValue);
   }
-  float val = Python::GetPyFloat(valobj);
+  float val = Python::GetFloat(valobj);
   self->value.v[i] = val;
   return 0;
   BA_PYTHON_INT_CATCH;
@@ -204,10 +203,10 @@ auto PythonClassVec3::nb_multiply(PyObject* l, PyObject* r) -> PyObject* {
   // If left side is vec3.
   if (Check(l)) {
     // Try right as single number.
-    if (Python::CanGetPyDouble(r)) {
+    if (Python::IsNumber(r)) {
       assert(Check(l));
       return Create(reinterpret_cast<PythonClassVec3*>(l)->value
-                    * Python::GetPyFloat(r));
+                    * Python::GetFloat(r));
     }
 
     // Try right as a vec3-able value.
@@ -222,9 +221,9 @@ auto PythonClassVec3::nb_multiply(PyObject* l, PyObject* r) -> PyObject* {
     assert(Check(r));
 
     // Try left as single value.
-    if (Python::CanGetPyDouble(l)) {
+    if (Python::IsNumber(l)) {
       assert(Check(r));
-      return Create(Python::GetPyFloat(l)
+      return Create(Python::GetFloat(l)
                     * reinterpret_cast<PythonClassVec3*>(r)->value);
     }
 
@@ -334,7 +333,7 @@ auto PythonClassVec3::tp_setattro(PythonClassVec3* self, PyObject* attrobj,
   BA_PYTHON_TRY;
   assert(PyUnicode_Check(attrobj));
   const char* attr = PyUnicode_AsUTF8(attrobj);
-  float val = Python::GetPyFloat(valobj);
+  float val = Python::GetFloat(valobj);
   if (!strcmp(attr, "x")) {
     self->value.x = val;
   } else if (!strcmp(attr, "y")) {

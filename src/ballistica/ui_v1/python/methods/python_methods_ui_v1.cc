@@ -279,7 +279,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Set applicable values.
   if (id_obj != Py_None) {
-    b->set_id(Python::GetPyString(id_obj));
+    b->set_id(Python::GetString(id_obj));
   }
   if (label_obj != Py_None) {
     b->set_text(g_base->python->GetPyLString(label_obj));
@@ -303,7 +303,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->SetUpWidget(up_widget);
   }
   if (autoselect_obj != Py_None) {
-    b->set_auto_select(Python::GetPyBool(autoselect_obj));
+    b->set_auto_select(Python::GetBool(autoselect_obj));
   }
   if (left_widget_obj != Py_None) {
     left_widget = UIV1Python::GetPyWidget(left_widget_obj);
@@ -324,7 +324,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
         &PythonClassUIMesh::FromPyObj(mesh_transparent_obj).mesh());
   }
   if (show_buffer_top_obj != Py_None) {
-    b->set_show_buffer_top(Python::GetPyFloat(show_buffer_top_obj));
+    b->set_show_buffer_top(Python::GetFloat(show_buffer_top_obj));
   }
   if (mesh_opaque_obj != Py_None) {
     b->SetMeshOpaque(&PythonClassUIMesh::FromPyObj(mesh_opaque_obj).mesh());
@@ -333,28 +333,28 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->SetOnSelectCall(on_select_call_obj);
   }
   if (selectable_obj != Py_None) {
-    b->set_selectable(Python::GetPyBool(selectable_obj));
+    b->set_selectable(Python::GetBool(selectable_obj));
   }
   if (size_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(size_obj);
+    Point2D p = Python::GetPoint2D(size_obj);
     b->set_width(p.x);
     b->set_height(p.y);
   }
   if (pos_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(pos_obj);
+    Point2D p = Python::GetPoint2D(pos_obj);
     b->set_translate(p.x, p.y);
   }
   if (scale_obj != Py_None) {
-    b->set_scale(Python::GetPyFloat(scale_obj));
+    b->set_scale(Python::GetFloat(scale_obj));
   }
   if (icon_scale_obj != Py_None) {
-    b->set_icon_scale(Python::GetPyFloat(icon_scale_obj));
+    b->set_icon_scale(Python::GetFloat(icon_scale_obj));
   }
   if (icon_tint_obj != Py_None) {
-    b->set_icon_tint(Python::GetPyFloat(icon_tint_obj));
+    b->set_icon_tint(Python::GetFloat(icon_tint_obj));
   }
   if (icon_color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(icon_color_obj);
+    std::vector<float> c = Python::GetFloats(icon_color_obj);
     if (c.size() != 3 && c.size() != 4) {
       throw Exception("Expected 3 or 4 floats for icon_color.",
                       PyExcType::kValue);
@@ -363,7 +363,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (extra_touch_border_scale_obj != Py_None) {
     b->set_extra_touch_border_scale(
-        Python::GetPyFloat(extra_touch_border_scale_obj));
+        Python::GetFloat(extra_touch_border_scale_obj));
   }
   if (texture_obj != Py_None) {
     b->SetTexture(&PythonClassUITexture::FromPyObj(texture_obj).texture());
@@ -380,7 +380,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->SetIcon(&PythonClassUITexture::FromPyObj(icon_obj).texture());
   }
   if (button_type_obj != Py_None) {
-    std::string button_type = Python::GetPyString(button_type_obj);
+    std::string button_type = Python::GetString(button_type_obj);
     if (button_type == "back") {
       b->set_style(ButtonWidget::Style::kBack);
     } else if (button_type == "backSmall") {
@@ -397,17 +397,17 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   }
   if (repeat_obj != Py_None) {
-    b->set_repeat(Python::GetPyBool(repeat_obj));
+    b->set_repeat(Python::GetBool(repeat_obj));
   }
   if (color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(color_obj);
+    std::vector<float> c = Python::GetFloats(color_obj);
     if (c.size() != 3) {
       throw Exception("Expected 3 floats for color.", PyExcType::kValue);
     }
     b->set_color(c[0], c[1], c[2]);
   }
   if (textcolor_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(textcolor_obj);
+    std::vector<float> c = Python::GetFloats(textcolor_obj);
     if (c.size() != 3 && c.size() != 4) {
       throw Exception("Expected 3 or 4 floats for textcolor.",
                       PyExcType::kValue);
@@ -415,38 +415,38 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->set_text_color(c[0], c[1], c[2], (c.size() > 3) ? c[3] : 1.0f);
   }
   if (tint_color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(tint_color_obj);
+    std::vector<float> c = Python::GetFloats(tint_color_obj);
     if (c.size() != 3) {
       throw Exception("Expected 3 floats for tint_color.", PyExcType::kValue);
     }
     b->set_tint_color(c[0], c[1], c[2]);
   }
   if (tint2_color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(tint2_color_obj);
+    std::vector<float> c = Python::GetFloats(tint2_color_obj);
     if (c.size() != 3) {
       throw Exception("Expected 3 floats for tint2_color.", PyExcType::kValue);
     }
     b->set_tint2_color(c[0], c[1], c[2]);
   }
   if (text_flatness_obj != Py_None) {
-    b->set_text_flatness(Python::GetPyFloat(text_flatness_obj));
+    b->set_text_flatness(Python::GetFloat(text_flatness_obj));
   }
   if (text_scale_obj != Py_None) {
-    b->set_text_scale(Python::GetPyFloat(text_scale_obj));
+    b->set_text_scale(Python::GetFloat(text_scale_obj));
   }
   if (enable_sound_obj != Py_None) {
-    b->set_enable_sound(Python::GetPyBool(enable_sound_obj));
+    b->set_enable_sound(Python::GetBool(enable_sound_obj));
   }
   if (transition_delay_obj != Py_None) {
     // We accept this as seconds; widget takes milliseconds.
     b->set_transition_delay(static_cast<millisecs_t>(
-        1000.0f * Python::GetPyFloat(transition_delay_obj)));
+        1000.0f * Python::GetFloat(transition_delay_obj)));
   }
   if (text_res_scale_obj != Py_None) {
-    b->SetTextResScale(Python::GetPyFloat(text_res_scale_obj));
+    b->SetTextResScale(Python::GetFloat(text_res_scale_obj));
   }
   if (enabled_obj != Py_None) {
-    b->set_enabled(Python::GetPyBool(selectable_obj));
+    b->set_enabled(Python::GetBool(selectable_obj));
   }
 
   // If making a new widget add it at the end.
@@ -595,40 +595,40 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Set applicable values.
   if (id_obj != Py_None) {
-    widget->set_id(Python::GetPyString(id_obj));
+    widget->set_id(Python::GetString(id_obj));
   }
   if (size_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(size_obj);
+    Point2D p = Python::GetPoint2D(size_obj);
     widget->SetWidth(p.x);
     widget->SetHeight(p.y);
   }
   if (pos_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(pos_obj);
+    Point2D p = Python::GetPoint2D(pos_obj);
     widget->set_translate(p.x, p.y);
   }
   if (autoselect_obj != Py_None) {
-    widget->set_auto_select(Python::GetPyBool(autoselect_obj));
+    widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
   if (text_obj != Py_None) {
     widget->SetText(g_base->python->GetPyLString(text_obj));
   }
   if (value_obj != Py_None) {
-    widget->SetValue(Python::GetPyBool(value_obj));
+    widget->SetValue(Python::GetBool(value_obj));
   }
   if (color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(color_obj);
+    std::vector<float> c = Python::GetFloats(color_obj);
     if (c.size() != 3)
       throw Exception("Expected 3 floats for color.", PyExcType::kValue);
     widget->set_color(c[0], c[1], c[2]);
   }
   if (maxwidth_obj != Py_None) {
-    widget->SetMaxWidth(Python::GetPyFloat(maxwidth_obj));
+    widget->SetMaxWidth(Python::GetFloat(maxwidth_obj));
   }
   if (is_radio_button_obj != Py_None) {
-    widget->SetIsRadioButton(Python::GetPyBool(is_radio_button_obj));
+    widget->SetIsRadioButton(Python::GetBool(is_radio_button_obj));
   }
   if (scale_obj != Py_None) {
-    widget->set_scale(Python::GetPyFloat(scale_obj));
+    widget->set_scale(Python::GetFloat(scale_obj));
   }
   if (on_value_change_call_obj != Py_None) {
     widget->SetOnValueChangeCall(on_value_change_call_obj);
@@ -637,10 +637,10 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->SetOnSelectCall(on_select_call_obj);
   }
   if (text_scale_obj != Py_None) {
-    widget->SetTextScale(Python::GetPyFloat(text_scale_obj));
+    widget->SetTextScale(Python::GetFloat(text_scale_obj));
   }
   if (textcolor_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(textcolor_obj);
+    std::vector<float> c = Python::GetFloats(textcolor_obj);
     if (c.size() != 3 && c.size() != 4) {
       throw Exception("Expected 3 or 4 float values for textcolor.",
                       PyExcType::kValue);
@@ -779,7 +779,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b = Object::New<ImageWidget>();
   }
   if (size_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(size_obj);
+    Point2D p = Python::GetPoint2D(size_obj);
     b->set_width(p.x);
     b->set_height(p.y);
   }
@@ -810,48 +810,48 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->set_draw_control_parent(dcw);
   }
   if (has_alpha_channel_obj != Py_None) {
-    b->set_has_alpha_channel(Python::GetPyBool(has_alpha_channel_obj));
+    b->set_has_alpha_channel(Python::GetBool(has_alpha_channel_obj));
   }
   if (opacity_obj != Py_None) {
-    b->set_opacity(Python::GetPyFloat(opacity_obj));
+    b->set_opacity(Python::GetFloat(opacity_obj));
   }
   if (radial_amount_obj != Py_None) {
-    b->set_radial_amount(Python::GetPyFloat(radial_amount_obj));
+    b->set_radial_amount(Python::GetFloat(radial_amount_obj));
   }
   if (pos_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(pos_obj);
+    Point2D p = Python::GetPoint2D(pos_obj);
     b->set_translate(p.x, p.y);
   }
   if (transition_delay_obj != Py_None) {
     // We accept this as seconds; widget takes milliseconds.
-    b->set_transition_delay(1000.0f * Python::GetPyFloat(transition_delay_obj));
+    b->set_transition_delay(1000.0f * Python::GetFloat(transition_delay_obj));
   }
   if (color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(color_obj);
+    std::vector<float> c = Python::GetFloats(color_obj);
     if (c.size() != 3) {
       throw Exception("Expected 3 floats for color.", PyExcType::kValue);
     }
     b->set_color(c[0], c[1], c[2]);
   }
   if (tint_color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(tint_color_obj);
+    std::vector<float> c = Python::GetFloats(tint_color_obj);
     if (c.size() != 3) {
       throw Exception("Expected 3 floats for tint_color.", PyExcType::kValue);
     }
     b->set_tint_color(c[0], c[1], c[2]);
   }
   if (tint2_color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(tint2_color_obj);
+    std::vector<float> c = Python::GetFloats(tint2_color_obj);
     if (c.size() != 3) {
       throw Exception("Expected 3 floats for tint2_color.", PyExcType::kValue);
     }
     b->set_tint2_color(c[0], c[1], c[2]);
   }
   if (tilt_scale_obj != Py_None) {
-    b->set_tilt_scale(Python::GetPyFloat(tilt_scale_obj));
+    b->set_tilt_scale(Python::GetFloat(tilt_scale_obj));
   }
   if (draw_controller_mult_obj != Py_None) {
-    b->set_draw_controller_mult(Python::GetPyFloat(draw_controller_mult_obj));
+    b->set_draw_controller_mult(Python::GetFloat(draw_controller_mult_obj));
   }
 
   // if making a new widget add it at the end
@@ -949,18 +949,18 @@ static auto PySpinnerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b = Object::New<SpinnerWidget>();
   }
   if (size_obj != Py_None) {
-    auto size{Python::GetPyFloat(size_obj)};
+    auto size{Python::GetFloat(size_obj)};
     b->set_size(size);
   }
   if (pos_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(pos_obj);
+    Point2D p = Python::GetPoint2D(pos_obj);
     b->set_translate(p.x, p.y);
   }
   if (visible_obj != Py_None) {
-    b->set_visible(Python::GetPyBool(visible_obj));
+    b->set_visible(Python::GetBool(visible_obj));
   }
   if (style_obj != Py_None) {
-    auto style_str = Python::GetPyString(style_obj);
+    auto style_str = Python::GetString(style_obj);
     if (style_str == "bomb") {
       b->set_style(SpinnerWidget::Style::kBomb);
     } else if (style_str == "simple") {
@@ -1085,38 +1085,38 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Set applicable values.
   if (size_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(size_obj);
+    Point2D p = Python::GetPoint2D(size_obj);
     widget->SetWidth(p.x);
     widget->SetHeight(p.y);
   }
   if (single_depth_obj != Py_None) {
-    widget->set_single_depth(Python::GetPyBool(single_depth_obj));
+    widget->set_single_depth(Python::GetBool(single_depth_obj));
   }
   if (pos_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(pos_obj);
+    Point2D p = Python::GetPoint2D(pos_obj);
     widget->set_translate(p.x, p.y);
   }
   if (left_border_obj != Py_None) {
-    widget->set_left_border(Python::GetPyFloat(left_border_obj));
+    widget->set_left_border(Python::GetFloat(left_border_obj));
   }
   if (top_border_obj != Py_None) {
-    widget->set_top_border(Python::GetPyFloat(top_border_obj));
+    widget->set_top_border(Python::GetFloat(top_border_obj));
   }
   if (border_obj != Py_None) {
-    widget->set_border(Python::GetPyFloat(border_obj));
+    widget->set_border(Python::GetFloat(border_obj));
   }
   if (margin_obj != Py_None) {
-    widget->set_margin(Python::GetPyFloat(margin_obj));
+    widget->set_margin(Python::GetFloat(margin_obj));
   }
   if (bottom_border_obj != Py_None) {
-    widget->set_bottom_border(Python::GetPyFloat(bottom_border_obj));
+    widget->set_bottom_border(Python::GetFloat(bottom_border_obj));
   }
   if (print_list_exit_instructions_obj != Py_None) {
     widget->set_should_print_list_exit_instructions(
-        Python::GetPyBool(print_list_exit_instructions_obj));
+        Python::GetBool(print_list_exit_instructions_obj));
   }
   if (background_obj != Py_None) {
-    widget->set_background(Python::GetPyBool(background_obj));
+    widget->set_background(Python::GetBool(background_obj));
   }
   if (selected_child_obj != Py_None) {
     // Need to wrap this in an operation because it can trigger user code.
@@ -1132,10 +1132,10 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (selection_loops_to_parent_obj != Py_None) {
     widget->set_selection_loops_to_parent(
-        Python::GetPyBool(selection_loops_to_parent_obj));
+        Python::GetBool(selection_loops_to_parent_obj));
   }
   if (claims_left_right_obj != Py_None) {
-    widget->set_claims_left_right(Python::GetPyBool(claims_left_right_obj));
+    widget->set_claims_left_right(Python::GetBool(claims_left_right_obj));
   }
 
   // If making a new widget, add it at the end.
@@ -1305,7 +1305,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
     // Id needs to be set before adding to parent.
     if (id_obj != Py_None) {
-      widget->set_id(Python::GetPyString(id_obj));
+      widget->set_id(Python::GetString(id_obj));
     }
 
     g_ui_v1->AddWidget(widget.get(), parent_widget);
@@ -1313,42 +1313,42 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Set applicable values.
   if (size_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(size_obj);
+    Point2D p = Python::GetPoint2D(size_obj);
     widget->SetWidth(p.x);
     widget->SetHeight(p.y);
   }
   if (pos_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(pos_obj);
+    Point2D p = Python::GetPoint2D(pos_obj);
     widget->set_translate(p.x, p.y);
   }
   if (on_cancel_call_obj != Py_None) {
     widget->SetOnCancelCall(on_cancel_call_obj);
   }
   if (scale_obj != Py_None) {
-    widget->set_scale(Python::GetPyFloat(scale_obj));
+    widget->set_scale(Python::GetFloat(scale_obj));
   }
   if (on_select_call_obj != Py_None) {
     widget->SetOnSelectCall(on_select_call_obj);
   }
   if (selectable_obj != Py_None) {
-    widget->set_selectable(Python::GetPyBool(selectable_obj));
+    widget->set_selectable(Python::GetBool(selectable_obj));
   }
   if (single_depth_obj != Py_None) {
-    widget->set_single_depth(Python::GetPyBool(single_depth_obj));
+    widget->set_single_depth(Python::GetBool(single_depth_obj));
   }
   if (stack_offset_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(stack_offset_obj);
+    Point2D p = Python::GetPoint2D(stack_offset_obj);
     widget->set_stack_offset(p.x, p.y);
   }
   if (scale_origin_stack_offset_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(scale_origin_stack_offset_obj);
+    Point2D p = Python::GetPoint2D(scale_origin_stack_offset_obj);
     widget->SetScaleOriginStackOffset(p.x, p.y);
   }
   if (visible_child_obj != Py_None) {
     widget->ShowWidget(UIV1Python::GetPyWidget(visible_child_obj));
   }
   if (color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(color_obj);
+    std::vector<float> c = Python::GetFloats(color_obj);
     if (c.size() != 3 && c.size() != 4) {
       throw Exception("Expected 3 or floats for color.", PyExcType::kValue);
     }
@@ -1368,10 +1368,10 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
 
   if (background_obj != Py_None) {
-    widget->set_background(Python::GetPyBool(background_obj));
+    widget->set_background(Python::GetBool(background_obj));
   }
   if (root_selectable_obj != Py_None) {
-    widget->SetRootSelectable(Python::GetPyBool(root_selectable_obj));
+    widget->SetRootSelectable(Python::GetBool(root_selectable_obj));
   }
   if (selected_child_obj != Py_None) {
     // Special case: passing 0 implies deselect.
@@ -1384,7 +1384,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
 
   if (transition_obj != Py_None) {
-    std::string t = Python::GetPyString(transition_obj);
+    std::string t = Python::GetString(transition_obj);
     if (t == "in_left") {
       widget->SetTransition(ContainerWidget::TransitionType::kInLeft);
     } else if (t == "in_right") {
@@ -1417,31 +1417,31 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->SetStartButton(button_widget);
   }
   if (claims_left_right_obj != Py_None) {
-    widget->set_claims_left_right(Python::GetPyBool(claims_left_right_obj));
+    widget->set_claims_left_right(Python::GetBool(claims_left_right_obj));
   }
   if (claims_up_down_obj != Py_None) {
-    widget->set_claims_up_down(Python::GetPyBool(claims_up_down_obj));
+    widget->set_claims_up_down(Python::GetBool(claims_up_down_obj));
   }
   if (selection_loops_obj != Py_None) {
-    widget->set_selection_loops(Python::GetPyBool(selection_loops_obj));
+    widget->set_selection_loops(Python::GetBool(selection_loops_obj));
   }
   if (selection_loops_to_parent_obj != Py_None) {
     widget->set_selection_loops_to_parent(
-        Python::GetPyBool(selection_loops_to_parent_obj));
+        Python::GetBool(selection_loops_to_parent_obj));
   }
   if (print_list_exit_instructions_obj != Py_None) {
     widget->set_should_print_list_exit_instructions(
-        Python::GetPyBool(print_list_exit_instructions_obj));
+        Python::GetBool(print_list_exit_instructions_obj));
   }
   if (click_activate_obj != Py_None) {
-    widget->set_click_activate(Python::GetPyBool(click_activate_obj));
+    widget->set_click_activate(Python::GetBool(click_activate_obj));
   }
   if (always_highlight_obj != Py_None) {
-    widget->set_always_highlight(Python::GetPyBool(always_highlight_obj));
+    widget->set_always_highlight(Python::GetBool(always_highlight_obj));
   }
   if (toolbar_visibility_obj != Py_None) {
     Widget::ToolbarVisibility val;
-    std::string sval = Python::GetPyString(toolbar_visibility_obj);
+    std::string sval = Python::GetString(toolbar_visibility_obj);
     if (sval == "menu_minimal") {
       val = Widget::ToolbarVisibility::kMenuMinimal;
     } else if (sval == "menu_minimal_no_back") {
@@ -1474,7 +1474,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (claim_outside_clicks_obj != Py_None) {
     widget->set_claims_outside_clicks(
-        Python::GetPyBool(claim_outside_clicks_obj));
+        Python::GetBool(claim_outside_clicks_obj));
   }
 
   // Run any calls built up by UI callbacks.
@@ -1608,17 +1608,17 @@ static auto PyRowWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Set applicable values.
   if (size_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(size_obj);
+    Point2D p = Python::GetPoint2D(size_obj);
     widget->SetWidth(p.x);
     widget->SetHeight(p.y);
   }
   if (pos_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(pos_obj);
+    Point2D p = Python::GetPoint2D(pos_obj);
     widget->set_translate(p.x, p.y);
   }
 
   if (background_obj != Py_None) {
-    widget->set_background(Python::GetPyBool(background_obj));
+    widget->set_background(Python::GetBool(background_obj));
   }
   if (selected_child_obj != Py_None) {
     widget->SelectWidget(UIV1Python::GetPyWidget(selected_child_obj));
@@ -1627,11 +1627,11 @@ static auto PyRowWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->ShowWidget(UIV1Python::GetPyWidget(visible_child_obj));
   }
   if (claims_left_right_obj != Py_None) {
-    widget->set_claims_left_right(Python::GetPyBool(claims_left_right_obj));
+    widget->set_claims_left_right(Python::GetBool(claims_left_right_obj));
   }
   if (selection_loops_to_parent_obj != Py_None) {
     widget->set_selection_loops_to_parent(
-        Python::GetPyBool(selection_loops_to_parent_obj));
+        Python::GetBool(selection_loops_to_parent_obj));
   }
 
   // If making a new widget, add it to the parent.
@@ -1756,62 +1756,61 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Set applicable values.
   if (size_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(size_obj);
+    Point2D p = Python::GetPoint2D(size_obj);
     widget->SetWidth(p.x);
     widget->SetHeight(p.y);
   }
   if (pos_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(pos_obj);
+    Point2D p = Python::GetPoint2D(pos_obj);
     widget->set_translate(p.x, p.y);
   }
   if (highlight_obj != Py_None) {
-    widget->set_highlight(Python::GetPyBool(highlight_obj));
+    widget->set_highlight(Python::GetBool(highlight_obj));
   }
   if (border_opacity_obj != Py_None) {
-    widget->set_border_opacity(Python::GetPyFloat(border_opacity_obj));
+    widget->set_border_opacity(Python::GetFloat(border_opacity_obj));
   }
   if (on_select_call_obj != Py_None) {
     widget->SetOnSelectCall(on_select_call_obj);
   }
   if (center_small_content_obj != Py_None) {
-    widget->set_center_small_content(
-        Python::GetPyBool(center_small_content_obj));
+    widget->set_center_small_content(Python::GetBool(center_small_content_obj));
   }
   if (center_small_content_horizontally_obj != Py_None) {
     widget->set_center_small_content_horizontally(
-        Python::GetPyBool(center_small_content_horizontally_obj));
+        Python::GetBool(center_small_content_horizontally_obj));
   }
   if (color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(color_obj);
+    std::vector<float> c = Python::GetFloats(color_obj);
     if (c.size() != 3) {
       throw Exception("Expected 3 floats for color.", PyExcType::kValue);
     }
     widget->set_color(c[0], c[1], c[2]);
   }
   if (capture_arrows_obj != Py_None) {
-    widget->set_capture_arrows(Python::GetPyBool(capture_arrows_obj));
+    widget->set_capture_arrows(Python::GetBool(capture_arrows_obj));
   }
   if (background_obj != Py_None) {
-    widget->set_background(Python::GetPyBool(background_obj));
+    widget->set_background(Python::GetBool(background_obj));
   }
   if (simple_culling_v_obj != Py_None) {
-    widget->set_simple_culling_v(Python::GetPyFloat(simple_culling_v_obj));
+    widget->set_simple_culling_v(Python::GetFloat(simple_culling_v_obj));
   }
   if (selected_child_obj != Py_None) {
     widget->SelectWidget(UIV1Python::GetPyWidget(selected_child_obj));
   }
   if (selection_loops_to_parent_obj != Py_None) {
     widget->set_selection_loops_to_parent(
-        Python::GetPyBool(selection_loops_to_parent_obj));
+        Python::GetBool(selection_loops_to_parent_obj));
   }
   if (claims_left_right_obj != Py_None) {
-    widget->set_claims_left_right(Python::GetPyBool(claims_left_right_obj));
+    widget->set_claims_left_right(Python::GetBool(claims_left_right_obj));
   }
   if (claims_up_down_obj != Py_None) {
-    widget->set_claims_up_down(Python::GetPyBool(claims_up_down_obj));
+    widget->set_claims_up_down(Python::GetBool(claims_up_down_obj));
   }
   if (autoselect_obj != Py_None) {
-    widget->set_auto_select(Python::GetPyBool(autoselect_obj));
+    widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
 
   // If making a new widget add it at the end.
@@ -1942,53 +1941,53 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Set applicable values.
   if (size_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(size_obj);
+    Point2D p = Python::GetPoint2D(size_obj);
     widget->SetWidth(p.x);
     widget->SetHeight(p.y);
   }
   if (pos_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(pos_obj);
+    Point2D p = Python::GetPoint2D(pos_obj);
     widget->set_translate(p.x, p.y);
   }
   if (highlight_obj != Py_None) {
-    widget->set_highlight(Python::GetPyBool(highlight_obj));
+    widget->set_highlight(Python::GetBool(highlight_obj));
   }
   if (border_opacity_obj != Py_None) {
-    widget->setBorderOpacity(Python::GetPyFloat(border_opacity_obj));
+    widget->setBorderOpacity(Python::GetFloat(border_opacity_obj));
   }
   if (on_select_call_obj != Py_None) {
     widget->SetOnSelectCall(on_select_call_obj);
   }
   if (center_small_content_obj != Py_None) {
-    widget->SetCenterSmallContent(Python::GetPyBool(center_small_content_obj));
+    widget->SetCenterSmallContent(Python::GetBool(center_small_content_obj));
   }
   if (color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(color_obj);
+    std::vector<float> c = Python::GetFloats(color_obj);
     if (c.size() != 3) {
       throw Exception("Expected 3 floats for color.", PyExcType::kValue);
     }
     widget->SetColor(c[0], c[1], c[2]);
   }
   if (capture_arrows_obj != Py_None) {
-    widget->set_capture_arrows(Python::GetPyBool(capture_arrows_obj));
+    widget->set_capture_arrows(Python::GetBool(capture_arrows_obj));
   }
   if (background_obj != Py_None) {
-    widget->set_background(Python::GetPyBool(background_obj));
+    widget->set_background(Python::GetBool(background_obj));
   }
   if (simple_culling_h_obj != Py_None) {
-    widget->set_simple_culling_h(Python::GetPyFloat(simple_culling_h_obj));
+    widget->set_simple_culling_h(Python::GetFloat(simple_culling_h_obj));
   }
   if (selected_child_obj != Py_None) {
     widget->SelectWidget(UIV1Python::GetPyWidget(selected_child_obj));
   }
   if (claims_left_right_obj != Py_None) {
-    widget->set_claims_left_right(Python::GetPyBool(claims_left_right_obj));
+    widget->set_claims_left_right(Python::GetBool(claims_left_right_obj));
   }
   if (claims_up_down_obj != Py_None) {
-    widget->set_claims_up_down(Python::GetPyBool(claims_up_down_obj));
+    widget->set_claims_up_down(Python::GetBool(claims_up_down_obj));
   }
   if (autoselect_obj != Py_None) {
-    widget->set_auto_select(Python::GetPyBool(autoselect_obj));
+    widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
 
   // if making a new widget add it at the end
@@ -2201,10 +2200,10 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   // Set applicable values.
   if (max_chars_obj != Py_None) {
     widget->set_max_chars(
-        static_cast_check_fit<int>(Python::GetPyInt64(max_chars_obj)));
+        static_cast_check_fit<int>(Python::GetInt64(max_chars_obj)));
   }
   if (size_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(size_obj);
+    Point2D p = Python::GetPoint2D(size_obj);
     widget->SetWidth(p.x);
     widget->SetHeight(p.y);
   }
@@ -2216,56 +2215,56 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
         g_base->python->GetPyLString(description_obj)));
   }
   if (autoselect_obj != Py_None) {
-    widget->set_auto_select(Python::GetPyBool(autoselect_obj));
+    widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
   if (transition_delay_obj != Py_None) {
     // We accept this as seconds; widget takes milliseconds.
     widget->set_transition_delay(1000.0f
-                                 * Python::GetPyFloat(transition_delay_obj));
+                                 * Python::GetFloat(transition_delay_obj));
   }
   if (enabled_obj != Py_None) {
-    widget->SetEnabled(Python::GetPyBool(enabled_obj));
+    widget->SetEnabled(Python::GetBool(enabled_obj));
   }
   if (always_show_carat_obj != Py_None) {
-    widget->set_always_show_carat(Python::GetPyBool(always_show_carat_obj));
+    widget->set_always_show_carat(Python::GetBool(always_show_carat_obj));
   }
   if (big_obj != Py_None) {
-    widget->SetBig(Python::GetPyBool(big_obj));
+    widget->SetBig(Python::GetBool(big_obj));
   }
   if (force_internal_editing_obj != Py_None) {
     widget->set_force_internal_editing(
-        Python::GetPyBool(force_internal_editing_obj));
+        Python::GetBool(force_internal_editing_obj));
   }
   if (pos_obj != Py_None) {
-    Point2D p = Python::GetPyPoint2D(pos_obj);
+    Point2D p = Python::GetPoint2D(pos_obj);
     widget->set_translate(p.x, p.y);
   }
   if (flatness_obj != Py_None) {
-    widget->set_flatness(Python::GetPyFloat(flatness_obj));
+    widget->set_flatness(Python::GetFloat(flatness_obj));
   }
   if (rotate_obj != Py_None) {
-    widget->set_rotate(Python::GetPyFloat(rotate_obj));
+    widget->set_rotate(Python::GetFloat(rotate_obj));
   }
   if (shadow_obj != Py_None) {
-    widget->set_shadow(Python::GetPyFloat(shadow_obj));
+    widget->set_shadow(Python::GetFloat(shadow_obj));
   }
   if (maxwidth_obj != Py_None) {
-    widget->set_max_width(Python::GetPyFloat(maxwidth_obj));
+    widget->set_max_width(Python::GetFloat(maxwidth_obj));
   }
   if (max_height_obj != Py_None) {
-    widget->set_max_height(Python::GetPyFloat(max_height_obj));
+    widget->set_max_height(Python::GetFloat(max_height_obj));
   }
   // note: need to make sure to set this before settings text
   // (influences whether we look for json strings or not)
   if (editable_obj != Py_None) {
-    widget->SetEditable(Python::GetPyBool(editable_obj));
+    widget->SetEditable(Python::GetBool(editable_obj));
   }
 
   if (text_obj != Py_None) {
     widget->SetText(g_base->python->GetPyLString(text_obj));
   }
   if (h_align_obj != Py_None) {
-    std::string halign = Python::GetPyString(h_align_obj);
+    std::string halign = Python::GetString(h_align_obj);
     if (halign == "left") {
       widget->SetHAlign(TextWidget::HAlign::kLeft);
     } else if (halign == "center") {
@@ -2277,7 +2276,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   }
   if (v_align_obj != Py_None) {
-    std::string valign = Python::GetPyString(v_align_obj);
+    std::string valign = Python::GetString(v_align_obj);
     if (valign == "top") {
       widget->SetVAlign(TextWidget::VAlign::kTop);
     } else if (valign == "center") {
@@ -2289,17 +2288,17 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   }
   if (always_highlight_obj != Py_None) {
-    widget->set_always_highlight(Python::GetPyBool(always_highlight_obj));
+    widget->set_always_highlight(Python::GetBool(always_highlight_obj));
   }
   if (padding_obj != Py_None) {
-    widget->set_padding(Python::GetPyFloat(padding_obj));
+    widget->set_padding(Python::GetFloat(padding_obj));
   }
   if (scale_obj != Py_None) {
-    widget->set_center_scale(Python::GetPyFloat(scale_obj));
+    widget->set_center_scale(Python::GetFloat(scale_obj));
   }
   // *normal* widget scale.. we currently plug 'scale' into 'centerScale'.  ew.
   if (corner_scale_obj != Py_None) {
-    widget->set_scale(Python::GetPyFloat(corner_scale_obj));
+    widget->set_scale(Python::GetFloat(corner_scale_obj));
   }
   if (draw_controller_obj != Py_None) {
     auto* dcw = UIV1Python::GetPyWidget(draw_controller_obj);
@@ -2319,10 +2318,10 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->SetOnActivateCall(on_activate_call_obj);
   }
   if (selectable_obj != Py_None)
-    widget->set_selectable(Python::GetPyBool(selectable_obj));
+    widget->set_selectable(Python::GetBool(selectable_obj));
 
   if (color_obj != Py_None) {
-    std::vector<float> c = Python::GetPyFloats(color_obj);
+    std::vector<float> c = Python::GetFloats(color_obj);
     if (c.size() == 3) {
       widget->set_color(c[0], c[1], c[2], 1.0f);
     } else if (c.size() == 4) {
@@ -2332,14 +2331,14 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   }
   if (click_activate_obj != Py_None) {
-    widget->set_click_activate(Python::GetPyBool(click_activate_obj));
+    widget->set_click_activate(Python::GetBool(click_activate_obj));
   }
   if (extra_touch_border_scale_obj != Py_None) {
     widget->set_extra_touch_border_scale(
-        Python::GetPyFloat(extra_touch_border_scale_obj));
+        Python::GetFloat(extra_touch_border_scale_obj));
   }
   if (res_scale_obj != Py_None) {
-    widget->set_res_scale(Python::GetPyFloat(res_scale_obj));
+    widget->set_res_scale(Python::GetFloat(res_scale_obj));
   }
   if (adapter_finished_obj != Py_None) {
     if (adapter_finished_obj == Py_True) {
@@ -2349,7 +2348,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
   }
   if (glow_type_obj != Py_None) {
-    auto glow_type_s = Python::GetPyString(glow_type_obj);
+    auto glow_type_s = Python::GetString(glow_type_obj);
     TextWidget::GlowType glow_type;
     if (glow_type_s == "uniform") {
       glow_type = TextWidget::GlowType::kUniform;
@@ -2361,7 +2360,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->SetGlowType(glow_type);
   }
   if (allow_clear_button_obj != Py_None) {
-    widget->set_allow_clear_button(Python::GetPyBool(allow_clear_button_obj));
+    widget->set_allow_clear_button(Python::GetBool(allow_clear_button_obj));
   }
 
   // If making a new widget, add it at the end.
@@ -2517,19 +2516,19 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
     widget->SetRightWidget(right_widget);
   }
   if (show_buffer_top_obj != Py_None) {
-    widget->set_show_buffer_top(Python::GetPyFloat(show_buffer_top_obj));
+    widget->set_show_buffer_top(Python::GetFloat(show_buffer_top_obj));
   }
   if (show_buffer_bottom_obj != Py_None) {
-    widget->set_show_buffer_bottom(Python::GetPyFloat(show_buffer_bottom_obj));
+    widget->set_show_buffer_bottom(Python::GetFloat(show_buffer_bottom_obj));
   }
   if (show_buffer_left_obj != Py_None) {
-    widget->set_show_buffer_left(Python::GetPyFloat(show_buffer_left_obj));
+    widget->set_show_buffer_left(Python::GetFloat(show_buffer_left_obj));
   }
   if (show_buffer_right_obj != Py_None) {
-    widget->set_show_buffer_right(Python::GetPyFloat(show_buffer_right_obj));
+    widget->set_show_buffer_right(Python::GetFloat(show_buffer_right_obj));
   }
   if (depth_range_obj != Py_None) {
-    auto depth_range = Python::GetPyFloats(depth_range_obj);
+    auto depth_range = Python::GetFloats(depth_range_obj);
     if (depth_range.size() != 2) {
       throw Exception("Expected 2 float values.", PyExcType::kValue);
     }
@@ -2544,7 +2543,7 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
     widget->set_depth_range(depth_range[0], depth_range[1]);
   }
   if (autoselect_obj != Py_None) {
-    widget->set_auto_select(Python::GetPyBool(autoselect_obj));
+    widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
 
   // Run any calls built up by UI callbacks.

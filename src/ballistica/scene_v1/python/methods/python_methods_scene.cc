@@ -359,7 +359,7 @@ static auto PyNewReplaySession(PyObject* self, PyObject* args, PyObject* keywds)
   }
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
-  file_name = Python::GetPyString(file_name_obj);
+  file_name = Python::GetString(file_name_obj);
   appmode->LaunchReplaySession(file_name);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -675,7 +675,7 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
     std::vector<int32_t> client_ids;
     if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       if (clients_obj != Py_None) {
-        std::vector<int> client_ids2 = Python::GetPyInts(clients_obj);
+        std::vector<int> client_ids2 = Python::GetInts(clients_obj);
         appmode->connections()->SendScreenMessageToSpecificClients(
             message, color.x, color.y, color.z, client_ids2);
       } else {
@@ -1113,7 +1113,7 @@ static auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds)
   float x, y, z;
   assert(pos_obj);
   {
-    std::vector<float> vals = Python::GetPyFloats(pos_obj);
+    std::vector<float> vals = Python::GetFloats(pos_obj);
     if (vals.size() != 3) {
       throw Exception("Expected 3 floats for position.", PyExcType::kValue);
     }
@@ -1125,7 +1125,7 @@ static auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds)
   float vy = 0.0f;
   float vz = 0.0f;
   if (vel_obj != Py_None) {
-    std::vector<float> vals = Python::GetPyFloats(vel_obj);
+    std::vector<float> vals = Python::GetFloats(vel_obj);
     if (vals.size() != 3) {
       throw Exception("Expected 3 floats for velocity.", PyExcType::kValue);
     }

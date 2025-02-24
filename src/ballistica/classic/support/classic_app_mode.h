@@ -219,8 +219,6 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUITokensMeterValue(int value);
   void SetRootUILeagueValues(const std::string league_type, int league_number,
                              int rank);
-  // void SetRootUILeagueRankValue(int value);
-  // void SetRootUILeagueType(const std::string text);
   void SetRootUIAchievementsPercentText(const std::string text);
   void SetRootUILevelText(const std::string text);
   void SetRootUIXPText(const std::string text);
@@ -238,8 +236,8 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUIHaveLiveValues(bool val);
   void GetRootUIAccountLeagueVisValues(std::string* league_type,
                                        int* league_number, int* league_rank);
-  void SetRootUIAccountLeagueVisValues(const std::string& league_type,
-                                       int league_number, int league_rank);
+  void SetAccountDisplayState(const std::string& league_type, int league_number,
+                              int league_rank);
 
  private:
   ClassicAppMode();

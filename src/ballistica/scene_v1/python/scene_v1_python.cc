@@ -98,7 +98,7 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
   NodeAttribute attr = node->GetAttribute(attr_name);
   switch (attr.type()) {
     case NodeAttributeType::kFloat: {
-      float val = Python::GetPyFloat(value_obj);
+      float val = Python::GetFloat(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, val);
       }
@@ -109,7 +109,7 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
       break;
     }
     case NodeAttributeType::kInt: {
-      int64_t val = Python::GetPyInt64(value_obj);
+      int64_t val = Python::GetInt64(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, val);
       }
@@ -120,7 +120,7 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
       break;
     }
     case NodeAttributeType::kBool: {
-      bool val = Python::GetPyBool(value_obj);
+      bool val = Python::GetBool(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, val);
       }
@@ -131,7 +131,7 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
       break;
     }
     case NodeAttributeType::kFloatArray: {
-      std::vector<float> vals = Python::GetPyFloats(value_obj);
+      std::vector<float> vals = Python::GetFloats(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, vals);
       }
@@ -142,7 +142,7 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
       break;
     }
     case NodeAttributeType::kIntArray: {
-      std::vector<int64_t> vals = Python::GetPyInts64(value_obj);
+      std::vector<int64_t> vals = Python::GetInts64(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, vals);
       }
@@ -331,7 +331,7 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
 
   std::string name;
   if (name_obj != Py_None) {
-    name = Python::GetPyString(name_obj);
+    name = Python::GetString(name_obj);
   } else {
     // By default do something like 'text@foo.py:20'.
     name = std::string(type) + "@" + Python::GetPythonFileLocation();
@@ -1176,7 +1176,7 @@ void SceneV1Python::DoBuildNodeMessage(PyObject* args, int arg_offset,
   } else {
     (*user_message_obj) = nullptr;
   }
-  type = Python::GetPyString(obj);
+  type = Python::GetString(obj);
   NodeMessageType ac = Scene::GetNodeMessageType(type);
   const char* format = Scene::GetNodeMessageFormat(ac);
   assert(format);
@@ -1286,25 +1286,25 @@ void SceneV1Python::DoBuildNodeMessage(PyObject* args, int arg_offset,
     switch (*f) {
       case 'I':
         Utils::EmbedInt32NBO(
-            &ptr, static_cast_check_fit<int32_t>(Python::GetPyInt64(obj)));
+            &ptr, static_cast_check_fit<int32_t>(Python::GetInt64(obj)));
         break;
       case 'i':
         Utils::EmbedInt16NBO(
-            &ptr, static_cast_check_fit<int16_t>(Python::GetPyInt64(obj)));
+            &ptr, static_cast_check_fit<int16_t>(Python::GetInt64(obj)));
         break;
       case 'c':  // NOLINT(bugprone-branch-clone)
-        Utils::EmbedInt8(
-            &ptr, static_cast_check_fit<int8_t>(Python::GetPyInt64(obj)));
+        Utils::EmbedInt8(&ptr,
+                         static_cast_check_fit<int8_t>(Python::GetInt64(obj)));
         break;
       case 'b':
-        Utils::EmbedInt8(
-            &ptr, static_cast_check_fit<int8_t>(Python::GetPyInt64(obj)));
+        Utils::EmbedInt8(&ptr,
+                         static_cast_check_fit<int8_t>(Python::GetInt64(obj)));
         break;
       case 'F':
-        Utils::EmbedFloat32(&ptr, Python::GetPyFloat(obj));
+        Utils::EmbedFloat32(&ptr, Python::GetFloat(obj));
         break;
       case 'f':
-        Utils::EmbedFloat16NBO(&ptr, Python::GetPyFloat(obj));
+        Utils::EmbedFloat16NBO(&ptr, Python::GetFloat(obj));
         break;
       case 's':
         Utils::EmbedString(&ptr, PyUnicode_AsUTF8(obj));

@@ -3,7 +3,6 @@
 #ifndef BALLISTICA_SHARED_PYTHON_PYTHON_REF_H_
 #define BALLISTICA_SHARED_PYTHON_PYTHON_REF_H_
 
-#include <list>
 #include <optional>
 #include <string>
 #include <vector>
@@ -177,10 +176,10 @@ class PythonRef {
 
   auto ValueIsString() const -> bool;
   auto ValueAsString() const -> std::string;
-  auto ValueAsStringSequence() const -> std::list<std::string>;
+  auto ValueAsStringSequence() const -> std::vector<std::string>;
   auto ValueAsOptionalString() const -> std::optional<std::string>;
   auto ValueAsOptionalStringSequence() const
-      -> std::optional<std::list<std::string>>;
+      -> std::optional<std::vector<std::string>>;
 
   auto ValueAsInt() const -> int64_t;
   auto ValueAsDouble() const -> double;

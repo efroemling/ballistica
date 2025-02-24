@@ -587,13 +587,13 @@ auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  std::string texture_name = Python::GetPyString(texture_name_obj);
-  std::string tint_texture_name = Python::GetPyString(tint_texture_name_obj);
-  std::vector<float> tint_color = Python::GetPyFloats(tint_color_obj);
+  std::string texture_name = Python::GetString(texture_name_obj);
+  std::string tint_texture_name = Python::GetString(tint_texture_name_obj);
+  std::vector<float> tint_color = Python::GetFloats(tint_color_obj);
   if (tint_color.size() != 3) {
     throw Exception("Expected 3 floats for tint-color.", PyExcType::kValue);
   }
-  std::vector<float> tint2_color = Python::GetPyFloats(tint2_color_obj);
+  std::vector<float> tint2_color = Python::GetFloats(tint2_color_obj);
   if (tint2_color.size() != 3) {
     throw Exception("Expected 3 floats for tint-color.", PyExcType::kValue);
   }

@@ -1656,8 +1656,9 @@ void ClassicAppMode::GetRootUIAccountLeagueVisValues(std::string* league_type,
   *league_rank = -1;
 }
 
-void ClassicAppMode::SetRootUIAccountLeagueVisValues(
-    const std::string& league_type, int league_number, int league_rank) {
+void ClassicAppMode::SetAccountDisplayState(const std::string& league_type,
+                                            int league_number,
+                                            int league_rank) {
   assert(g_base->InLogicThread());
 
   // Apply it to any existing UI.

@@ -118,7 +118,7 @@ class DevConsole {
   TextGroup prompt_text_group_;
   TextGroup input_text_group_;
   std::string input_string_;
-  std::list<std::string> tabs_;
+  std::vector<std::string> tabs_;
   std::string active_tab_;
   PythonRef string_edit_adapter_;
   std::list<std::string> input_history_;

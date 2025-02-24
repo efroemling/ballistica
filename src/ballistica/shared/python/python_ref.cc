@@ -25,7 +25,7 @@ using core::g_core;
 
 static void ClearPythonExceptionAndWarnIfUnset() {
   // We're assuming that a nullptr passed to us means a Python call has
-  // failed and set an exception. So we're clearing that exception since
+  // failed and has set an exception. So we're clearing that exception since
   // we'll be handling it by converting it to a C++ one. However let's warn
   // if we were passed nullptr but *no* Python exception is set. We want to
   // avoid that situation because it opens up the possibility of us clearing
@@ -35,7 +35,8 @@ static void ClearPythonExceptionAndWarnIfUnset() {
         LogName::kBa, LogLevel::kWarning,
         "A PythonRef acquire/steal call was passed nullptr but no Python "
         "exception is set. This situation should be avoided; only pass "
-        "acquire/steal if it is directly due to a Python exception.");
+        "nullptr to acquire/steal if it is the direct result of a Python "
+        "exception.");
   } else {
     PyErr_Clear();
   }
@@ -167,7 +168,7 @@ auto PythonRef::ValueIsNone() const -> bool {
 auto PythonRef::ValueIsString() const -> bool {
   assert(Python::HaveGIL());
   ThrowIfUnset();
-  return Python::IsPyString(obj_);
+  return Python::IsString(obj_);
 }
 
 auto PythonRef::ValueAsLString() const -> std::string {
@@ -182,13 +183,13 @@ auto PythonRef::ValueAsLString() const -> std::string {
 auto PythonRef::ValueAsString() const -> std::string {
   assert(Python::HaveGIL());
   ThrowIfUnset();
-  return Python::GetPyString(obj_);
+  return Python::GetString(obj_);
 }
 
-auto PythonRef::ValueAsStringSequence() const -> std::list<std::string> {
+auto PythonRef::ValueAsStringSequence() const -> std::vector<std::string> {
   assert(Python::HaveGIL());
   ThrowIfUnset();
-  return Python::GetPyStringSequence(obj_);
+  return Python::GetStrings(obj_);
 }
 
 auto PythonRef::ValueAsOptionalInt() const -> std::optional<int64_t> {
@@ -197,7 +198,7 @@ auto PythonRef::ValueAsOptionalInt() const -> std::optional<int64_t> {
   if (obj_ == Py_None) {
     return {};
   }
-  return Python::GetPyInt(obj_);
+  return Python::GetInt(obj_);
 }
 
 void PythonRef::ThrowIfUnset() const {
@@ -212,29 +213,29 @@ auto PythonRef::ValueAsOptionalString() const -> std::optional<std::string> {
   if (obj_ == Py_None) {
     return {};
   }
-  return Python::GetPyString(obj_);
+  return Python::GetString(obj_);
 }
 
 auto PythonRef::ValueAsOptionalStringSequence() const
-    -> std::optional<std::list<std::string>> {
+    -> std::optional<std::vector<std::string>> {
   assert(Python::HaveGIL());
   ThrowIfUnset();
   if (obj_ == Py_None) {
     return {};
   }
-  return Python::GetPyStringSequence(obj_);
+  return Python::GetStrings(obj_);
 }
 
 auto PythonRef::ValueAsInt() const -> int64_t {
   assert(Python::HaveGIL());
   ThrowIfUnset();
-  return Python::GetPyInt64(obj_);
+  return Python::GetInt64(obj_);
 }
 
 auto PythonRef::ValueAsDouble() const -> double {
   assert(Python::HaveGIL());
   ThrowIfUnset();
-  return Python::GetPyDouble(obj_);
+  return Python::GetDouble(obj_);
 }
 
 auto PythonRef::GetAttr(const char* name) const -> PythonRef {
