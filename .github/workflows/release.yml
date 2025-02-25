@@ -91,48 +91,6 @@ jobs:
         body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
         allowUpdates: true
         artifacts: linux_arm64_server_debug.tar
-
-  release_mac_x86_64_gui_debug_build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    - name: Setup project environment
-      run: make env
-    - name: Make the build
-      run: make prefab-mac-x86-64-gui-debug-build
-    - name: Compress the build
-      run: tar -cf "mac_x86_64_gui_debug.tar" build/prefab/full/mac_x86_64_gui/
-    - name: Upload the build
-      uses: ncipollo/release-action@v1
-      with:
-        body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
-        allowUpdates: true
-        artifacts: mac_x86_64_gui_debug.tar
-
-  release_mac_x86_64_server_debug_build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    - name: Setup project environment
-      run: make env
-    - name: Make the build
-      run: make prefab-mac-x86-64-server-debug-build
-    - name: Compress the build
-      run: tar -cf "mac_x86_64_server_debug.tar" build/prefab/full/mac_x86_64_server/
-    - name: Upload the build
-      uses: ncipollo/release-action@v1
-      with:
-        body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
-        allowUpdates: true
-        artifacts: mac_x86_64_server_debug.tar
     
   release_mac_arm64_gui_debug_build:
     runs-on: ubuntu-latest
@@ -218,7 +176,7 @@ jobs:
         allowUpdates: true
         artifacts: windows_x86_server_debug.tar
     
-  release_docker_gui_image:
+  release_docker_gui_debug_image:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -230,18 +188,18 @@ jobs:
       run: make env
     - name: Make the build
       run: |
-        make docker-gui-release
+        make docker-gui-debug
         make docker-save
     - name: Zip the build
-      run: zip build/docker/bombsquad_docker_gui.tar.zip build/docker/bombsquad_gui_release_docker.tar
+      run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
         allowUpdates: true
-        artifacts: build/docker/bombsquad_docker_gui.tar.zip
+        artifacts: bombsquad_docker_gui_debug.tar.zip
     
-  release_docker_server_image:
+  release_docker_server_debug_image:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -253,16 +211,16 @@ jobs:
       run: make env
     - name: Make the build
       run: |
-        make docker-server-release
+        make docker-server-debug
         make docker-save
     - name: Zip the build
-      run: zip build/docker/bombsquad_docker_server.tar.zip build/docker/bombsquad_server_release_docker.tar
+      run: zip -j bombsquad_docker_server_debug.tar.zip build/docker/bombsquad_server_debug_docker.tar
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
         allowUpdates: true
-        artifacts: build/docker/bombsquad_docker_server.tar.zip
+        artifacts: bombsquad_docker_server_debug.tar.zip
 
   release_sphinx_docs:
     runs-on: ubuntu-latest

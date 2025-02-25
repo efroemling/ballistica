@@ -6,7 +6,7 @@ height="50" alt="logo">
 
 ***-ica***: collection of things relating to a specific theme.
 
-[![](https://github.com/efroemling/ballistica/actions/workflows/ci.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/ci.yml) [![](https://github.com/efroemling/ballistica/actions/workflows/cd.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/cd.yml)
+[![](https://github.com/efroemling/ballistica/actions/workflows/ci.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/ci.yml) [![](https://github.com/efroemling/ballistica/actions/workflows/cd.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/cd.yml) [![](https://github.com/efroemling/ballistica/actions/workflows/nightly.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/nightly.yml)
 
 The Ballistica project is the foundation for
 [BombSquad](https://www.froemling.net/apps/bombsquad) and potentially other
