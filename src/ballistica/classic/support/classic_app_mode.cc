@@ -39,22 +39,22 @@
 
 namespace ballistica::classic {
 
-const int kMaxChatMessages = 40;
+const int kMaxChatMessages{40};
 
 /// How long a kick vote lasts.
-const int kKickVoteDuration = 30000;
+const int kKickVoteDuration{30000};
 
 /// How long everyone has to wait to start a new kick vote after a failed one.
-const int kKickVoteFailRetryDelay = 60000;
+const int kKickVoteFailRetryDelay{60000};
 
 /// Extra delay for the initiator of a failed vote.
-const int kKickVoteFailRetryDelayInitiatorExtra = 120000;
+const int kKickVoteFailRetryDelayInitiatorExtra{120000};
 
 // Minimum clients that must be present for a kick vote to count. (for
 // non-headless builds we require more votes since the host doesn't count
 // but may be playing (in a 2on2 with 3 clients, don't want 2 clients able
 // to kick).
-const int kKickVoteMinimumClients = (g_buildconfig.headless_build() ? 3 : 4);
+const int kKickVoteMinimumClients{g_buildconfig.headless_build() ? 3 : 4};
 
 struct ClassicAppMode::ScanResultsEntryPriv_ {
   scene_v1::PlayerSpec player_spec;
@@ -77,7 +77,7 @@ base::InputDeviceDelegate* ClassicAppMode::CreateInputDeviceDelegate(
 }
 
 // Go with 5 minute ban.
-const int kKickBanSeconds = 5 * 60;
+const int kKickBanSeconds{5 * 60};
 
 bool ClassicAppMode::IsInMainMenu() const {
   scene_v1::HostSession* hostsession =
@@ -1632,9 +1632,9 @@ void ClassicAppMode::SetRootUILeagueValues(const std::string league_type,
   }
 }
 
-void ClassicAppMode::GetRootUIAccountLeagueVisValues(std::string* league_type,
-                                                     int* league_number,
-                                                     int* league_rank) {
+void ClassicAppMode::GetAccountDisplayState(std::string* league_type,
+                                            int* league_number,
+                                            int* league_rank) {
   assert(g_base->InLogicThread());
   assert(league_type && league_number && league_rank);
 
@@ -1757,7 +1757,7 @@ void ClassicAppMode::SetRootUIGoldPass(bool enabled) {
   }
 }
 
-void ClassicAppMode::SetRootUIHaveLiveValues(bool have_live_values) {
+void ClassicAppMode::SetHaveLiveAccountValues(bool have_live_values) {
   if (have_live_values == root_ui_have_live_values_) {
     return;
   }

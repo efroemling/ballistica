@@ -43,7 +43,7 @@ class ClassicAppMode(babase.AppMode):
         self._have_account_values = False
         self._have_connectivity = False
         self._current_account_id: str | None = None
-        self._should_restore_account_league_vis_vals = False
+        self._should_restore_account_display_state = False
 
     @override
     @classmethod
@@ -194,7 +194,7 @@ class ClassicAppMode(babase.AppMode):
         if account is not None:
             self._current_account_id = account.accountid
             babase.set_ui_account_state(True, account.tag)
-            self._should_restore_account_league_vis_vals = True
+            self._should_restore_account_display_state = True
         else:
             # If we had an account, save any existing league vis state
             # so we'll properly animate to new values the next time we
@@ -203,7 +203,7 @@ class ClassicAppMode(babase.AppMode):
 
             self._current_account_id = None
             babase.set_ui_account_state(False)
-            self._should_restore_account_league_vis_vals = False
+            self._should_restore_account_display_state = False
 
         # For testing subscription functionality.
         if os.environ.get('BA_SUBSCRIPTION_TEST') == '1':
@@ -269,7 +269,7 @@ class ClassicAppMode(babase.AppMode):
         # connectivity state here we get UI stuff un-fading a moment or
         # two before values appear (since the subscriptions have not
         # sent us any values yet) which looks odd.
-        _baclassic.set_root_ui_have_live_values(
+        _baclassic.set_have_live_account_values(
             self._have_connectivity and self._have_account_values
         )
 
@@ -361,14 +361,14 @@ class ClassicAppMode(babase.AppMode):
                 else chest3.ad_allow_time.timestamp()
             ),
         )
-        if self._should_restore_account_league_vis_vals:
-            # If we have previous league vis vals for this account,
-            # restore them. This will cause us to animate or otherwise
+        if self._should_restore_account_display_state:
+            # If we have a previous display-state for this account,
+            # restore it. This will cause us to animate or otherwise
             # display league changes that have occurred since we were
             # last visible. Note we need to do this *after* setting real
-            # vals so there is something to animate to.
+            # vals so there is a current state to animate to.
             self._restore_account_display_state()
-            self._should_restore_account_league_vis_vals = False
+            self._should_restore_account_display_state = False
 
         # Note that we have values and updated faded state accordingly.
         self._have_account_values = True
@@ -697,8 +697,10 @@ class ClassicAppMode(babase.AppMode):
         # or while the UI was hidden.
 
         if self._current_account_id is not None:
-            vals = _baclassic.get_root_ui_account_league_vis_values()
+            vals = _baclassic.get_account_display_state()
             if vals is not None:
+                # Stuff our account id in there and save it to our
+                # config.
                 assert 'a' not in vals
                 vals['a'] = self._current_account_id
                 cfg = babase.app.config

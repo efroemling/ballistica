@@ -100,7 +100,8 @@ class RootWidget : public ContainerWidget {
   void AddMeter_(MeterType_ type, float h_align, float r, float g, float b,
                  bool plus, const std::string& s);
   void UpdateTokensMeterTextColor_();
-  void ShowTrophyMeterAnnotation_(const std::string& val);
+  void ShowTrophyMeterAnnotation_(const std::string& val,
+                                  const Vector3f& color);
   void HideTrophyMeterAnnotation_();
   void UpdateLeagueRankDisplayValue_();
   auto ColorForLeagueValue_(const std::string& value) -> Vector3f;

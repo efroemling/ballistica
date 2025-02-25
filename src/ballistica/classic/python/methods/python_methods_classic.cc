@@ -285,6 +285,39 @@ static PyMethodDef PyClassicAppModeDeactivateDef = {
     "(internal)\n",
 };
 
+// --------------------- set_have_live_account_values --------------------------
+
+static auto PySetHaveLiveAccountValues(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  int have_live_values{};
+
+  static const char* kwlist[] = {"have", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "p", const_cast<char**>(kwlist), &have_live_values)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  auto* appmode = ClassicAppMode::GetActiveOrThrow();
+  appmode->SetHaveLiveAccountValues(have_live_values);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetHaveLiveAccountValuesDef = {
+    "set_have_live_account_values",           // name
+    (PyCFunction)PySetHaveLiveAccountValues,  // method
+    METH_VARARGS | METH_KEYWORDS,             // flags
+
+    "set_have_live_account_values(have: bool) -> None\n"
+    "\n"
+    "Inform the native layer whether we are being fed with live account\n"
+    "values from the server.",
+};
+
 // ---------------------- set_root_ui_account_values ---------------------------
 
 static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
@@ -402,13 +435,13 @@ static PyMethodDef PySetRootUIAccountValuesDef = {
     "      chest_3_ad_allow_time: float,\n"
     ") -> None\n"
     "\n"
-    "(internal)",
+    "Pass values to the native layer for use in the root UI or elsewhere.",
 };
 
-// ----------------- get_root_ui_account_league_vis_values ---------------------
+// ----------------------- get_account_display_state ---------------------------
 
-static auto PyGetRootUIAccountLeagueVisValues(PyObject* self, PyObject* args,
-                                              PyObject* keywds) -> PyObject* {
+static auto PyGetAccountDisplayState(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -419,14 +452,14 @@ static auto PyGetRootUIAccountLeagueVisValues(PyObject* self, PyObject* args,
   int league_number;
   int league_rank;
 
-  appmode->GetRootUIAccountLeagueVisValues(&league_type, &league_number,
-                                           &league_rank);
+  appmode->GetAccountDisplayState(&league_type, &league_number, &league_rank);
   // If values are unset, return None.
   if (league_type.empty()) {
     Py_RETURN_NONE;
   }
 
   // clang-format off
+
   return Py_BuildValue(
      "{"
      "ss"  // league type
@@ -436,17 +469,18 @@ static auto PyGetRootUIAccountLeagueVisValues(PyObject* self, PyObject* args,
      "tp", league_type.c_str(),
      "num", league_number,
      "rank", league_rank);
+
   // clang-format on
 
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyGetRootUIAccountLeagueVisValuesDef = {
-    "get_root_ui_account_league_vis_values",         // name
-    (PyCFunction)PyGetRootUIAccountLeagueVisValues,  // method
-    METH_NOARGS,                                     // flags
+static PyMethodDef PyGetAccountDisplayStateDef = {
+    "get_account_display_state",            // name
+    (PyCFunction)PyGetAccountDisplayState,  // method
+    METH_NOARGS,                            // flags
 
-    "get_root_ui_account_league_vis_values() -> Any\n"
+    "get_account_display_state() -> Any\n"
     "\n"
     "(internal)",
 };
@@ -492,38 +526,6 @@ static PyMethodDef PySetAccountDisplayStateDef = {
     "(internal)",
 };
 
-// --------------------- set_root_ui_have_live_values --------------------------
-
-static auto PySetRootUIHaveLiveValues(PyObject* self, PyObject* args,
-                                      PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-
-  int have_live_values{};
-
-  static const char* kwlist[] = {"have_live_values", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "p", const_cast<char**>(kwlist), &have_live_values)) {
-    return nullptr;
-  }
-  BA_PRECONDITION(g_base->InLogicThread());
-
-  auto* appmode = ClassicAppMode::GetActiveOrThrow();
-  appmode->SetRootUIHaveLiveValues(have_live_values);
-
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PySetRootUIHaveLiveValuesDef = {
-    "set_root_ui_have_live_values",          // name
-    (PyCFunction)PySetRootUIHaveLiveValues,  // method
-    METH_VARARGS | METH_KEYWORDS,            // flags
-
-    "set_root_ui_have_live_values(have_live_values: bool) -> None\n"
-    "\n"
-    "(internal)",
-};
-
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
@@ -535,9 +537,9 @@ auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
       PyClassicAppModeActivateDef,
       PyClassicAppModeDeactivateDef,
       PySetRootUIAccountValuesDef,
-      PyGetRootUIAccountLeagueVisValuesDef,
+      PyGetAccountDisplayStateDef,
       PySetAccountDisplayStateDef,
-      PySetRootUIHaveLiveValuesDef,
+      PySetHaveLiveAccountValuesDef,
   };
 }
 

@@ -14,7 +14,6 @@ class AppMode:
     """A high level mode for the app.
 
     Category: **App Classes**
-
     """
 
     @classmethod
@@ -55,8 +54,8 @@ class AppMode:
     def on_deactivate(self) -> None:
         """Called when the mode stops being the active one for the app.
 
-        Note: On platforms where the app is explicitly exited (such as
-        desktop PC) this will also be called at app shutdown.
+        On platforms where the app is explicitly exited (such as desktop
+        PC) this will also be called at app shutdown.
 
         To best cover both mobile and desktop style platforms, actions
         such as saving state should generally happen in response to both
@@ -67,13 +66,14 @@ class AppMode:
     def on_app_active_changed(self) -> None:
         """Called when ba*.app.active changes while in this app-mode.
 
-        Active state becomes false when the app is hidden, minimized,
-        backgrounded, etc. The app-mode may want to take action such as
-        pausing a running game or saving state when this occurs.
+        App-active state becomes false when the app is hidden,
+        minimized, backgrounded, etc. The app-mode may want to take
+        action such as pausing a running game or saving state when this
+        occurs.
 
-        Note: On platforms such as mobile where apps get suspended and
-        later silently terminated by the OS, this is likely to be the
-        last reliable place to save state/etc.
+        On platforms such as mobile where apps get suspended and later
+        silently terminated by the OS, this is likely to be the last
+        reliable place to save state/etc.
 
         To best cover both mobile and desktop style platforms, actions
         such as saving state should generally happen in response to both

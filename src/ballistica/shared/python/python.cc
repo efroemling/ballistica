@@ -13,8 +13,10 @@
 
 // Sanity test: our XCode, Android, and Windows builds should be
 // using a debug build of the Python library.
-// Todo: could also verify this at runtime by checking for
-//  existence of sys.gettotalrefcount(). (is that still valid in 3.8?)
+//
+// TODO(ericf): could also verify this at runtime by checking for existence
+//  of sys.gettotalrefcount() (is that still valid in 3.8?).
+
 #if BA_XCODE_BUILD || BA_OSTYPE_ANDROID || BA_OSTYPE_WINDOWS
 #if BA_DEBUG_BUILD
 #ifndef Py_DEBUG
@@ -25,7 +27,7 @@
 #error Expected Py_DEBUG to NOT be defined for this build.
 #endif  // Py_DEBUG
 #endif  // BA_DEBUG_BUILD
-#endif  // BA_XCODE_BUILD || BA_OSTYPE_ANDROID
+#endif  // BA_XCODE_BUILD || BA_OSTYPE_ANDROID || BA_OSTYPE_WINDOWS
 
 namespace ballistica {
 
@@ -219,6 +221,8 @@ auto Python::GetDouble(PyObject* o) -> double {
   // Failed, we have. Clear any Python error that got us here; we're in C++
   // Exception land now.
   PyErr_Clear();
+
+  // Assuming any failure here was type related.
   throw Exception(
       "Can't get double from value: " + Python::ObjToString(o) + ".",
       PyExcType::kType);
@@ -492,11 +496,11 @@ _Py_IDENTIFIER(__dict__);
 /* ------------------------- PyObject_Dir() helpers ------------------------- */
 
 /*
- Merge the __dict__ of aclass into dict, and recursively also all
- the __dict__s of aclass's base classes.  The order of merging isn't
- defined, as it's expected that only the final set of dict keys is
- interesting.
- Return 0 on success, -1 on error.
+  Merge the __dict__ of aclass into dict, and recursively also all
+  the __dict__s of aclass's base classes.  The order of merging isn't
+  defined, as it's expected that only the final set of dict keys is
+  interesting.
+  Return 0 on success, -1 on error.
  */
 
 static auto merge_class_dict(PyObject* dict, PyObject* aclass) -> int {
@@ -550,7 +554,7 @@ static auto merge_class_dict(PyObject* dict, PyObject* aclass) -> int {
 }
 
 /* __dir__ for generic objects: returns __dict__, __class__,
- and recursively up the __class__.__bases__ chain.
+   and recursively up the __class__.__bases__ chain.
  */
 auto Python::generic_dir(PyObject* self) -> PyObject* {
   PyObject* result = nullptr;
@@ -578,7 +582,7 @@ auto Python::generic_dir(PyObject* self) -> PyObject* {
   itsclass = _PyObject_GetAttrId(self, &PyId___class__);
   if (itsclass == nullptr)
     /* XXX(tomer): Perhaps fall back to obj->ob_type if no
-     __class__ exists? */
+       __class__ exists? */
     PyErr_Clear();
   else if (merge_class_dict(dict, itsclass) != 0)
     goto error;

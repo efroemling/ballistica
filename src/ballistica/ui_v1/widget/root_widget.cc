@@ -166,14 +166,18 @@ RootWidget::~RootWidget() {
   }
 }
 
-void RootWidget::ShowTrophyMeterAnnotation_(const std::string& val) {
+void RootWidget::ShowTrophyMeterAnnotation_(const std::string& val,
+                                            const Vector3f& color) {
   assert(trophy_meter_annotation_text_);
-  trophy_meter_annotation_text_->widget->SetText(val);
+  auto* widget{trophy_meter_annotation_text_->widget.get()};
+  assert(widget);
+  widget->set_color(color.x, color.y, color.z, 1.0);
+  widget->SetText(val);
 
   Object::WeakRef<RootWidget> weakref(this);
 
   trophy_meter_annotation_timer_ = base::AppTimer::New(
-      1.0f, false, [this] { HideTrophyMeterAnnotation_(); });
+      2.0f, false, [this] { HideTrophyMeterAnnotation_(); });
 }
 
 void RootWidget::HideTrophyMeterAnnotation_() {
@@ -425,7 +429,6 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
     bd.h_align = h_align;
     bd.v_align = VAlign_::kTop;
     bd.width = bd.height = 45.0f;
-    // bd.x = x - 68;
     bd.y = -36.0f + 11.0f - y_offs_small;
     bd.y_offs_small = y_offs_small;
     bd.img = "uiAtlas2";
@@ -1011,16 +1014,30 @@ void RootWidget::StepLeagueRankAnim_(base::RenderPass* pass, seconds_t dt) {
   assert(league_rank_text_);
   assert(trophy_meter_button_);
 
+  auto improving{league_rank_vis_value_ < league_rank_anim_start_val_};
+
   float anim_dir{league_rank_vis_value_ > league_rank_anim_val_ ? 1.0f : -1.0f};
 
-  seconds_t anim_time{g_core->AppTimeSeconds() - league_rank_anim_start_time_};
-  auto anim_speed{4.0 + anim_time * 20.0};
-  league_rank_anim_val_ += dt * anim_speed * anim_dir;
+  float anim_time{static_cast<float>(g_core->AppTimeSeconds()
+                                     - league_rank_anim_start_time_)};
+  auto anim_speed{4.0f + anim_time * 20.0f};
+  // Get the pain over with quickly if things are getting worse.
+  if (!improving) {
+    anim_speed *= 4.0f;
+  }
+  league_rank_anim_val_ += static_cast<float>(dt) * anim_speed * anim_dir;
   league_rank_text_->widget->SetText(
       "#" + std::to_string(static_cast<int>(league_rank_anim_val_)));
   float cscale{1.5f - 0.5f * sinf(40.0f * pass->frame_def()->display_time())};
-  trophy_meter_button_->widget->set_color(
-      kMeterColorR * cscale, kMeterColorG * cscale, kMeterColorB * cscale);
+  float cscale2{0.7f * 1.0f + 0.3f * cscale};
+
+  if (improving) {
+    trophy_meter_button_->widget->set_color(
+        kMeterColorR * cscale2, kMeterColorG * cscale, kMeterColorB * cscale2);
+  } else {
+    trophy_meter_button_->widget->set_color(
+        kMeterColorR * cscale, kMeterColorG * cscale2, kMeterColorB * cscale2);
+  }
 
   // If we reach/pass the target point, set the exact final value and end
   // the anim.
@@ -1029,13 +1046,13 @@ void RootWidget::StepLeagueRankAnim_(base::RenderPass* pass, seconds_t dt) {
       || (anim_dir <= 0.0f
           && league_rank_anim_val_
                  <= static_cast<float>(league_rank_vis_value_))) {
-    // printf("STOPPING ANIM\n");
     league_rank_animating_ = false;
     if (league_rank_anim_sound_play_id_.has_value()) {
       g_base->audio->PushSourceStopSoundCall(*league_rank_anim_sound_play_id_);
       league_rank_anim_sound_play_id_.reset();
     }
-    g_base->audio->SafePlaySysSound(base::SysSoundID::kCashRegister);
+    g_base->audio->SafePlaySysSound(improving ? base::SysSoundID::kCashRegister
+                                              : base::SysSoundID::kPowerDown);
     league_rank_text_->widget->SetText(
         "#" + std::to_string(league_rank_vis_value_));
     trophy_meter_button_->widget->set_color(kMeterColorR, kMeterColorG,
@@ -1045,7 +1062,8 @@ void RootWidget::StepLeagueRankAnim_(base::RenderPass* pass, seconds_t dt) {
     if (diff >= 0) {
       diff_str = "+" + diff_str;
     }
-    ShowTrophyMeterAnnotation_(diff_str);
+    ShowTrophyMeterAnnotation_(
+        diff_str, improving ? Vector3f(0, 1, 0) : Vector3f(1, 0, 0));
   }
 }
 
@@ -1055,10 +1073,6 @@ void RootWidget::Draw(base::RenderPass* pass, bool transparent) {
   if (!transparent) {
     seconds_t current_time = pass->frame_def()->display_time();
     seconds_t time_diff = std::min(seconds_t{0.1}, current_time - update_time_);
-
-    // millisecs_t current_time = pass->frame_def()->display_time_millisecs();
-    // millisecs_t time_diff =
-    //     std::min(millisecs_t{100}, current_time - update_time_);
 
     StepChildWidgets_(time_diff);
     StepChests_();
@@ -1675,8 +1689,8 @@ void RootWidget::UpdateLeagueRankDisplayValue_() {
              || league_type_vis_value_ != league_type_value_) {
     // If league type or num is changing, don't animate.
     animate = false;
-  } else if (league_rank_value_ >= league_rank_vis_value_) {
-    // If our rank is staying same or worsening, don't animate.
+  } else if (league_rank_value_ == league_rank_vis_value_) {
+    // If our rank is staying the same, don't animate.
     animate = false;
   }
 
@@ -1707,11 +1721,17 @@ void RootWidget::UpdateLeagueRankDisplayValue_() {
       league_rank_anim_val_ = prev_rank;
 
       league_rank_anim_start_time_ = g_core->AppTimeSeconds();
-      if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
-        s->SetPositional(false);
-        league_rank_anim_sound_play_id_ =
-            s->Play(g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
-        s->End();
+
+      auto improving{league_rank_vis_value_ < league_rank_anim_start_val_};
+
+      // Play score-increase sound only if we're improving.
+      if (improving) {
+        if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
+          s->SetPositional(false);
+          league_rank_anim_sound_play_id_ = s->Play(
+              g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+          s->End();
+        }
       }
     } else {
       // Just set new values immediately.

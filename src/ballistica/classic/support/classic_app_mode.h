@@ -21,7 +21,7 @@
 
 namespace ballistica::classic {
 
-const int kMaxPartyNameCombinedSize = 25;
+const int kMaxPartyNameCombinedSize{25};
 
 /// Defines high level app behavior when we're active.
 class ClassicAppMode : public base::AppMode {
@@ -233,9 +233,9 @@ class ClassicAppMode : public base::AppMode {
       seconds_t chest_3_unlock_time, seconds_t chest_0_ad_allow_time,
       seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
       seconds_t chest_3_ad_allow_time);
-  void SetRootUIHaveLiveValues(bool val);
-  void GetRootUIAccountLeagueVisValues(std::string* league_type,
-                                       int* league_number, int* league_rank);
+  void SetHaveLiveAccountValues(bool val);
+  void GetAccountDisplayState(std::string* league_type, int* league_number,
+                              int* league_rank);
   void SetAccountDisplayState(const std::string& league_type, int league_number,
                               int league_rank);
 
@@ -255,6 +255,7 @@ class ClassicAppMode : public base::AppMode {
   // forward declarations of their template params.
   std::map<std::string, ScanResultsEntryPriv_> scan_results_;
   std::mutex scan_results_mutex_;
+
   std::string root_ui_chest_0_appearance_;
   std::string root_ui_chest_1_appearance_;
   std::string root_ui_chest_2_appearance_;
