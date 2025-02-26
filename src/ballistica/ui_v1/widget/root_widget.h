@@ -47,7 +47,7 @@ class RootWidget : public ContainerWidget {
   void SetAchievementPercentText(const std::string& val);
   void SetLevelText(const std::string& val);
   void SetXPText(const std::string& val);
-  void SetInboxCountText(const std::string& val);
+  void SetInboxCount(int val, bool is_max);
   void SetChests(const std::string& chest_0_appearance,
                  const std::string& chest_1_appearance,
                  const std::string& chest_2_appearance,
@@ -74,8 +74,13 @@ class RootWidget : public ContainerWidget {
   auto league_type_vis_value() const { return league_type_vis_value_; }
   auto league_number_vis_value() const { return league_number_vis_value_; }
   auto league_rank_vis_value() const { return league_rank_vis_value_; }
-  void RestoreLeagueRankDisplayVisValues(const std::string& league_type,
-                                         int league_num, int league_rank);
+  auto inbox_count_vis_value() const { return inbox_count_vis_value_; }
+  auto inbox_count_is_max_vis_value() const {
+    return inbox_count_is_max_vis_value_;
+  }
+  void RestoreAccountDisplayState(const std::string& league_type,
+                                  int league_num, int league_rank,
+                                  int inbox_count, bool inbox_count_is_max);
 
  private:
   struct ButtonDef_;
@@ -97,17 +102,21 @@ class RootWidget : public ContainerWidget {
   void StepChildWidgets_(seconds_t dt);
   void StepChests_();
   void StepLeagueRankAnim_(base::RenderPass* pass, seconds_t dt);
+  void StepInboxAnim_(base::RenderPass* pass, seconds_t dt);
   void AddMeter_(MeterType_ type, float h_align, float r, float g, float b,
                  bool plus, const std::string& s);
   void UpdateTokensMeterTextColor_();
   void ShowTrophyMeterAnnotation_(const std::string& val,
                                   const Vector3f& color);
   void HideTrophyMeterAnnotation_();
-  void UpdateLeagueRankDisplayValue_();
+  void UpdateLeagueRankDisplay_();
+  void UpdateInboxCountDisplay_();
   auto ColorForLeagueValue_(const std::string& value) -> Vector3f;
+  void SetInboxCountValue_(int count, bool is_max);
 
   Object::Ref<base::AppTimer> trophy_meter_annotation_timer_;
   Object::Ref<base::AppTimer> trophy_meter_display_timer_;
+  Object::Ref<base::AppTimer> inbox_display_timer_;
   std::string chest_0_appearance_;
   std::string chest_1_appearance_;
   std::string chest_2_appearance_;
@@ -183,6 +192,7 @@ class RootWidget : public ContainerWidget {
   seconds_t update_pause_time_{};
   seconds_t update_time_{};
   seconds_t league_rank_anim_start_time_{};
+  seconds_t inbox_anim_flash_time_{};
   float base_scale_{1.0f};
   float bottom_left_height_{};
   float league_rank_anim_val_{};
@@ -192,6 +202,8 @@ class RootWidget : public ContainerWidget {
   int league_rank_anim_start_val_{};
   int league_number_vis_value_{-1};
   int league_number_value_{-1};
+  int inbox_count_vis_value_{-1};
+  int inbox_count_value_{-1};
   std::optional<uint32_t> league_rank_anim_sound_play_id_{};
   ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kInGame};
   bool child_widgets_dirty_{true};
@@ -200,6 +212,9 @@ class RootWidget : public ContainerWidget {
   bool have_live_values_{};
   bool translations_dirty_{true};
   bool league_rank_animating_{};
+  bool inbox_animating_{};
+  bool inbox_count_is_max_vis_value_{};
+  bool inbox_count_is_max_value_{};
 };
 
 }  // namespace ballistica::ui_v1

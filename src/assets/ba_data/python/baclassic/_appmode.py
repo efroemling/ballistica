@@ -231,7 +231,8 @@ class ClassicAppMode(babase.AppMode):
                 achievements_percent_text='',
                 level_text='',
                 xp_text='',
-                inbox_count_text='',
+                inbox_count=-1,
+                inbox_count_is_max=False,
                 gold_pass=False,
                 chest_0_appearance='',
                 chest_1_appearance='',
@@ -279,11 +280,10 @@ class ClassicAppMode(babase.AppMode):
     def _on_classic_account_data_change(
         self, val: bacommon.bs.ClassicAccountLiveData
     ) -> None:
-        # print('ACCOUNT CHANGED:', val)
         achp = round(val.achievements / max(val.achievements_total, 1) * 100.0)
-        ibc = str(val.inbox_count)
-        if val.inbox_count_is_max:
-            ibc += '+'
+        # ibc = str(val.inbox_count)
+        # if val.inbox_count_is_max:
+        #     ibc += '+'
 
         chest0 = val.chests.get('0')
         chest1 = val.chests.get('1')
@@ -314,7 +314,8 @@ class ClassicAppMode(babase.AppMode):
             achievements_percent_text=f'{achp}%',
             level_text=str(val.level),
             xp_text=f'{val.xp}/{val.xpmax}',
-            inbox_count_text=ibc,
+            inbox_count=val.inbox_count,
+            inbox_count_is_max=val.inbox_count_is_max,
             gold_pass=val.gold_pass,
             chest_0_appearance=(
                 '' if chest0 is None else chest0.appearance.value

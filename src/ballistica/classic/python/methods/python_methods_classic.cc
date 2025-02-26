@@ -332,7 +332,8 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
   const char* achievements_percent_text;
   const char* level_text;
   const char* xp_text;
-  const char* inbox_count_text;
+  int inbox_count;
+  int inbox_count_is_max;
   const char* chest_0_appearance;
   const char* chest_1_appearance;
   const char* chest_2_appearance;
@@ -355,7 +356,8 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
                                  "achievements_percent_text",
                                  "level_text",
                                  "xp_text",
-                                 "inbox_count_text",
+                                 "inbox_count",
+                                 "inbox_count_is_max",
                                  "gold_pass",
                                  "chest_0_appearance",
                                  "chest_1_appearance",
@@ -371,13 +373,13 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
                                  "chest_3_ad_allow_time",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "iisiisssspssssdddddddd", const_cast<char**>(kwlist),
+          args, keywds, "iisiisssippssssdddddddd", const_cast<char**>(kwlist),
           &tickets, &tokens, &league_type, &league_number, &league_rank,
-          &achievements_percent_text, &level_text, &xp_text, &inbox_count_text,
-          &gold_pass, &chest_0_appearance, &chest_1_appearance,
-          &chest_2_appearance, &chest_3_appearance, &chest_0_unlock_time,
-          &chest_1_unlock_time, &chest_2_unlock_time, &chest_3_unlock_time,
-          &chest_0_ad_allow_time, &chest_1_ad_allow_time,
+          &achievements_percent_text, &level_text, &xp_text, &inbox_count,
+          &inbox_count_is_max, &gold_pass, &chest_0_appearance,
+          &chest_1_appearance, &chest_2_appearance, &chest_3_appearance,
+          &chest_0_unlock_time, &chest_1_unlock_time, &chest_2_unlock_time,
+          &chest_3_unlock_time, &chest_0_ad_allow_time, &chest_1_ad_allow_time,
           &chest_2_ad_allow_time, &chest_3_ad_allow_time)) {
     return nullptr;
   }
@@ -393,7 +395,7 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
   appmode->SetRootUIAchievementsPercentText(achievements_percent_text);
   appmode->SetRootUILevelText(level_text);
   appmode->SetRootUIXPText(xp_text);
-  appmode->SetRootUIInboxCountText(inbox_count_text);
+  appmode->SetRootUIInboxCount(inbox_count, inbox_count_is_max);
   appmode->SetRootUIGoldPass(gold_pass);
   appmode->SetRootUIChests(
       chest_0_appearance, chest_1_appearance, chest_2_appearance,
@@ -419,7 +421,8 @@ static PyMethodDef PySetRootUIAccountValuesDef = {
     "      achievements_percent_text: str,\n"
     "      level_text: str,\n"
     "      xp_text: str,\n"
-    "      inbox_count_text: str,\n"
+    "      inbox_count: int,\n"
+    "      inbox_count_is_max: bool,\n"
     "      gold_pass: bool,\n"
     "      chest_0_appearance: str,\n"
     "      chest_1_appearance: str,\n"
@@ -451,8 +454,11 @@ static auto PyGetAccountDisplayState(PyObject* self, PyObject* args,
   std::string league_type;
   int league_number;
   int league_rank;
+  int inbox_count;
+  bool inbox_count_is_max;
 
-  appmode->GetAccountDisplayState(&league_type, &league_number, &league_rank);
+  appmode->GetAccountDisplayState(&league_type, &league_number, &league_rank,
+                                  &inbox_count, &inbox_count_is_max);
   // If values are unset, return None.
   if (league_type.empty()) {
     Py_RETURN_NONE;
@@ -465,10 +471,14 @@ static auto PyGetAccountDisplayState(PyObject* self, PyObject* args,
      "ss"  // league type
      "si"  // league number
      "si"  // league rank
+     "si"  // inbox count
+     "sO"  // inbox count is max
      "}",
      "tp", league_type.c_str(),
      "num", league_number,
-     "rank", league_rank);
+     "rank", league_rank,
+     "c", inbox_count,
+     "m", inbox_count_is_max ? Py_True : Py_False);
 
   // clang-format on
 
@@ -510,7 +520,21 @@ static auto PySetAccountDisplayState(PyObject* self, PyObject* args,
   auto league_number{Python::GetInt(PyDict_GetItemString(vals_obj, "num"))};
   auto league_rank{Python::GetInt(PyDict_GetItemString(vals_obj, "rank"))};
 
-  appmode->SetAccountDisplayState(league_type, league_number, league_rank);
+  int inbox_count;
+  if (auto* inbox_count_obj = PyDict_GetItemString(vals_obj, "c")) {
+    inbox_count = Python::GetInt(inbox_count_obj);
+  } else {
+    inbox_count = -1;  // Special case for 'unset'.
+  }
+  bool inbox_count_is_max;
+  if (auto* inbox_count_is_max_obj = PyDict_GetItemString(vals_obj, "m")) {
+    inbox_count_is_max = Python::GetBool(inbox_count_is_max_obj);
+  } else {
+    inbox_count_is_max = false;
+  }
+
+  appmode->SetAccountDisplayState(league_type, league_number, league_rank,
+                                  inbox_count, inbox_count_is_max);
   Py_RETURN_NONE;
 
   BA_PYTHON_CATCH;

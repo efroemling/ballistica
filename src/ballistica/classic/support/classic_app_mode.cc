@@ -169,7 +169,8 @@ void ClassicAppMode::Reset_() {
       root_widget->SetAchievementPercentText(root_ui_achievement_percent_text_);
       root_widget->SetLevelText(root_ui_level_text_);
       root_widget->SetXPText(root_ui_xp_text_);
-      root_widget->SetInboxCountText(root_ui_inbox_count_text_);
+      root_widget->SetInboxCount(root_ui_inbox_count_,
+                                 root_ui_inbox_count_is_max_);
       root_widget->SetChests(
           root_ui_chest_0_appearance_, root_ui_chest_1_appearance_,
           root_ui_chest_2_appearance_, root_ui_chest_3_appearance_,
@@ -1634,9 +1635,11 @@ void ClassicAppMode::SetRootUILeagueValues(const std::string league_type,
 
 void ClassicAppMode::GetAccountDisplayState(std::string* league_type,
                                             int* league_number,
-                                            int* league_rank) {
+                                            int* league_rank, int* inbox_count,
+                                            bool* inbox_count_is_max) {
   assert(g_base->InLogicThread());
-  assert(league_type && league_number && league_rank);
+  assert(league_type && league_number && league_rank && inbox_count
+         && inbox_count_is_max);
 
   // What we're asking for here is the current *displayed* values in the ui
   // (the latest values we have provided to them may not be visible yet due
@@ -1646,6 +1649,8 @@ void ClassicAppMode::GetAccountDisplayState(std::string* league_type,
       *league_type = root_widget->league_type_vis_value();
       *league_number = root_widget->league_number_vis_value();
       *league_rank = root_widget->league_rank_vis_value();
+      *inbox_count = root_widget->inbox_count_vis_value();
+      *inbox_count_is_max = root_widget->inbox_count_is_max_vis_value();
       return;
     }
   }
@@ -1654,11 +1659,14 @@ void ClassicAppMode::GetAccountDisplayState(std::string* league_type,
   *league_type = "";
   *league_number = -1;
   *league_rank = -1;
+  *inbox_count = -1;
+  *inbox_count_is_max = false;
 }
 
 void ClassicAppMode::SetAccountDisplayState(const std::string& league_type,
-                                            int league_number,
-                                            int league_rank) {
+                                            int league_number, int league_rank,
+                                            int inbox_count,
+                                            bool inbox_count_is_max) {
   assert(g_base->InLogicThread());
 
   // Apply it to any existing UI.
@@ -1666,8 +1674,9 @@ void ClassicAppMode::SetAccountDisplayState(const std::string& league_type,
     if (auto* root_widget = uiv1_->root_widget()) {
       // Ask the root widget to restore these vis values and kick off anims
       // to the current actual values or whatnot if applicable.
-      root_widget->RestoreLeagueRankDisplayVisValues(league_type, league_number,
-                                                     league_rank);
+      root_widget->RestoreAccountDisplayState(league_type, league_number,
+                                              league_rank, inbox_count,
+                                              inbox_count_is_max);
     }
   }
 }
@@ -1722,19 +1731,21 @@ void ClassicAppMode::SetRootUIXPText(const std::string text) {
   }
 }
 
-void ClassicAppMode::SetRootUIInboxCountText(const std::string text) {
+void ClassicAppMode::SetRootUIInboxCount(int count, bool is_max) {
   assert(g_base->InLogicThread());
-  if (text == root_ui_inbox_count_text_) {
+  if (count == root_ui_inbox_count_ && is_max == root_ui_inbox_count_is_max_) {
     return;
   }
 
   // Store the value.
-  root_ui_inbox_count_text_ = text;
+  root_ui_inbox_count_ = count;
+  root_ui_inbox_count_is_max_ = is_max;
 
   // Apply it to any existing UI.
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
-      root_widget->SetInboxCountText(root_ui_inbox_count_text_);
+      root_widget->SetInboxCount(root_ui_inbox_count_,
+                                 root_ui_inbox_count_is_max_);
     }
   }
 }

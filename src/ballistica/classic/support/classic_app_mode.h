@@ -222,7 +222,7 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUIAchievementsPercentText(const std::string text);
   void SetRootUILevelText(const std::string text);
   void SetRootUIXPText(const std::string text);
-  void SetRootUIInboxCountText(const std::string text);
+  void SetRootUIInboxCount(int count, bool is_max);
   void SetRootUIGoldPass(bool enabled);
   void SetRootUIChests(
       const std::string& chest_0_appearance,
@@ -235,9 +235,11 @@ class ClassicAppMode : public base::AppMode {
       seconds_t chest_3_ad_allow_time);
   void SetHaveLiveAccountValues(bool val);
   void GetAccountDisplayState(std::string* league_type, int* league_number,
-                              int* league_rank);
+                              int* league_rank, int* inbox_count,
+                              bool* inbox_count_is_max);
   void SetAccountDisplayState(const std::string& league_type, int league_number,
-                              int league_rank);
+                              int league_rank, int inbox_count,
+                              bool inbox_count_is_max);
 
  private:
   ClassicAppMode();
@@ -323,7 +325,8 @@ class ClassicAppMode : public base::AppMode {
   int root_ui_tickets_meter_value_{-1};
   int root_ui_tokens_meter_value_{-1};
   int root_ui_league_rank_{-1};
-  int root_ui_league_number_;
+  int root_ui_league_number_{-1};
+  int root_ui_inbox_count_{-1};
   float debug_speed_mult_{1.0f};
   float replay_speed_mult_{1.0f};
   std::set<std::string> admin_public_ids_;
@@ -335,12 +338,12 @@ class ClassicAppMode : public base::AppMode {
   std::string root_ui_achievement_percent_text_;
   std::string root_ui_level_text_;
   std::string root_ui_xp_text_;
-  std::string root_ui_inbox_count_text_;
   std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};
   std::optional<std::string> public_party_public_address_ipv4_{};
   std::optional<std::string> public_party_public_address_ipv6_{};
+  bool root_ui_inbox_count_is_max_{};
 };
 
 }  // namespace ballistica::classic

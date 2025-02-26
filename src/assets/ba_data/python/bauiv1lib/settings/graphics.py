@@ -51,7 +51,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
 
         show_max_fps = bui.supports_max_fps()
         if show_max_fps:
-            height += 50
+            height += 60
 
         show_resolution = True
         if app.env.vr:
@@ -98,7 +98,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
         )
 
         # Center most of our content in the middle of the window.
-        v = height * 0.5 + 85
+        v = height * 0.5 + (100 if show_max_fps else 85)
         h_offs = width * 0.5 - 220
 
         if uiscale is bui.UIScale.SMALL:

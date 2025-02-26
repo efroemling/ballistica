@@ -1007,6 +1007,29 @@ void RootWidget::Setup() {
   UpdateForFocusedWindow_(nullptr);
 }
 
+void RootWidget::StepInboxAnim_(base::RenderPass* pass, seconds_t dt) {
+  assert(inbox_button_);
+  auto* widget{inbox_button_->widget.get()};
+  assert(widget);
+
+  if (!inbox_animating_) {
+    return;
+  }
+  if (pass->frame_def()->display_time() > inbox_anim_flash_time_) {
+    inbox_animating_ = false;
+    widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
+    return;
+  } else {
+    float mult{1.5f
+               - 1.0f
+                     * sinf(30.0f
+                            * (pass->frame_def()->display_time()
+                               - inbox_anim_flash_time_))};
+    widget->set_color(kBotLeftColorR * mult, kBotLeftColorG * mult,
+                      kBotLeftColorB * mult);
+  }
+}
+
 void RootWidget::StepLeagueRankAnim_(base::RenderPass* pass, seconds_t dt) {
   if (!league_rank_animating_) {
     return;
@@ -1077,6 +1100,7 @@ void RootWidget::Draw(base::RenderPass* pass, bool transparent) {
     StepChildWidgets_(time_diff);
     StepChests_();
     StepLeagueRankAnim_(pass, time_diff);
+    StepInboxAnim_(pass, time_diff);
 
     if (update_pause_count_ != 0) {
       // update_pause_time_ +=
@@ -1270,11 +1294,17 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     auto prev_enabled{b.enabled};
     b.enabled = enable_button;
 
-    // If trophy meter just became enabled, give it a chance to display
+    // If trophy meter just switched to enabled, give it a chance to display
     // new value animations/etc.
     if (&b == trophy_meter_button_ && !prev_enabled && enable_button) {
       trophy_meter_display_timer_ = base::AppTimer::New(
-          1.0f, false, [this] { UpdateLeagueRankDisplayValue_(); });
+          1.0f, false, [this] { UpdateLeagueRankDisplay_(); });
+    }
+
+    // Same for inbox.
+    if (&b == inbox_button_ && !prev_enabled && enable_button) {
+      inbox_display_timer_ = base::AppTimer::New(
+          1.0f, false, [this] { UpdateInboxCountDisplay_(); });
     }
   }
 
@@ -1646,10 +1676,12 @@ auto RootWidget::ColorForLeagueValue_(const std::string& value) -> Vector3f {
   return color;
 }
 
-void RootWidget::RestoreLeagueRankDisplayVisValues(
-    const std::string& league_type, int league_number, int league_rank) {
-  // Only restore if we already have actual values. Otherwise we just get an
-  // instant switch back to the unset state anyway.
+void RootWidget::RestoreAccountDisplayState(const std::string& league_type,
+                                            int league_number, int league_rank,
+                                            int inbox_count,
+                                            bool inbox_count_is_max) {
+  // Only restore display values if we currently have *actual* values.
+  // Otherwise we'll get a janky switch right back to the unset state.
   if (league_type_value_.empty()) {
     return;
   }
@@ -1658,6 +1690,8 @@ void RootWidget::RestoreLeagueRankDisplayVisValues(
   league_type_vis_value_ = league_type;
   league_number_vis_value_ = league_number;
   league_rank_vis_value_ = league_rank;
+  inbox_count_vis_value_ = inbox_count;
+  inbox_count_is_max_vis_value_ = inbox_count_is_max;
 
   // Apply them instantly to our widgets.
   league_rank_text_->widget->SetText(
@@ -1665,60 +1699,142 @@ void RootWidget::RestoreLeagueRankDisplayVisValues(
           ? ("#" + std::to_string(league_rank_vis_value_))
           : "");
 
+  SetInboxCountValue_(inbox_count_vis_value_, inbox_count_is_max_vis_value_);
+
   auto color{ColorForLeagueValue_(league_type_vis_value_)};
   trophy_icon_->widget->set_color(color.x, color.y, color.z);
 
-  // Kick off any instant updates or animations to more current values.
-  UpdateLeagueRankDisplayValue_();
+  // Kick off timers to animate/switch us from these restored values to our
+  // latest actual ones.
+  trophy_meter_display_timer_ =
+      base::AppTimer::New(1.0f, false, [this] { UpdateLeagueRankDisplay_(); });
+  inbox_display_timer_ =
+      base::AppTimer::New(1.0f, false, [this] { UpdateInboxCountDisplay_(); });
 }
 
-void RootWidget::UpdateLeagueRankDisplayValue_() {
+void RootWidget::SetInboxCountValue_(int count, bool is_max) {
+  assert(inbox_count_text_);
+
+  std::string sval;
+
+  if (count > 0) {
+    sval = std::to_string(count);
+    if (is_max) {
+      sval += "+";
+    }
+  } else {
+    sval = "";
+  }
+  inbox_count_text_->widget->SetText(sval);
+
+  auto backing_was_visible{inbox_count_backing_->visible};
+
+  // Hide for both 'unset' (-1) and 0.
+  auto backing_is_visible = (count > 0);
+
+  // Request a refresh if our visibility is changing.
+  if (backing_was_visible != backing_is_visible) {
+    inbox_count_backing_->visible = backing_is_visible;
+    inbox_count_text_->visible = backing_is_visible;
+    child_widgets_dirty_ = true;
+  }
+}
+
+void RootWidget::UpdateInboxCountDisplay_() {
+  assert(inbox_count_text_);
+
+  // If we're offscreen AND are displaying some values already, we're
+  // done for now. We'll try updating again next time we're visible.
+  if (!inbox_button_->enabled && inbox_count_vis_value_ >= 0) {
+    return;
+  }
+
+  auto prev_inbox_count_vis_value{inbox_count_vis_value_};
+
+  // Ok; we officially want to show the latest values we have. Mark them as
+  // visible and either animate or immediately switch to them.
+  inbox_count_vis_value_ = inbox_count_value_;
+  inbox_count_is_max_vis_value_ = inbox_count_is_max_value_;
+
+  SetInboxCountValue_(inbox_count_vis_value_, inbox_count_is_max_vis_value_);
+
+  // Let's flash the inbox icon when new messages come in.
+  auto flash{true};
+
+  // Don't flash if we're going from/to an unset state.
+  if (prev_inbox_count_vis_value < 0 || inbox_count_vis_value_ < 0) {
+    flash = false;
+  }
+
+  // Don't flash if count is staying same or going down.
+  if (inbox_count_vis_value_ <= prev_inbox_count_vis_value) {
+    flash = false;
+  }
+
+  if (flash) {
+    inbox_animating_ = true;
+    inbox_anim_flash_time_ = g_base->logic->display_time() + 1.0;
+  }
+}
+
+void RootWidget::UpdateLeagueRankDisplay_() {
   assert(trophy_icon_);
   assert(league_rank_text_);
   assert(trophy_meter_button_);
 
-  auto animate{true};
-
-  if (!trophy_meter_button_->enabled) {
-    // If we're offscreen, don't animate.
-    animate = false;
-  } else if (league_rank_value_ <= 0 || league_rank_vis_value_ <= 0) {
-    // If we're coming from or going to an 'empty' value, don't animate.
-    animate = false;
-  } else if (league_number_vis_value_ != league_number_value_
-             || league_type_vis_value_ != league_type_value_) {
-    // If league type or num is changing, don't animate.
-    animate = false;
-  } else if (league_rank_value_ == league_rank_vis_value_) {
-    // If our rank is staying the same, don't animate.
-    animate = false;
+  // If we're offscreen AND are displaying some values already, we're
+  // done for now. We'll try updating again next time we're visible.
+  if (!trophy_meter_button_->enabled && league_rank_vis_value_ > 0) {
+    return;
   }
 
-  auto prev_rank{league_rank_vis_value_};
+  auto prev_league_type_vis_value{league_type_vis_value_};
+  auto prev_league_number_vis_value{league_number_vis_value_};
+  auto prev_league_rank_vis_value{league_rank_vis_value_};
 
-  // ONLY update display values if we're onscreen or if we were showing no
-  // value. Otherwise we'll update (and possibly animate) them when we next
-  // come onscreen.
-  const char* animstr = animate ? "ANIM" : "INSTANT";
-  if (trophy_meter_button_->enabled || league_rank_vis_value_ <= 0) {
-    if (kDebugPrint) {
-      printf("Showing rank change from %d to %d (%s)\n", league_rank_vis_value_,
-             league_rank_value_, animstr);
-    }
-    league_rank_vis_value_ = league_rank_value_;
-    league_type_vis_value_ = league_type_value_;
-    league_number_vis_value_ = league_number_value_;
-  }
+  // Ok; we officially want to show the latest values we have. Mark them as
+  // visible and either animate or immediately switch to them.
+  league_rank_vis_value_ = league_rank_value_;
+  league_type_vis_value_ = league_type_value_;
+  league_number_vis_value_ = league_number_value_;
 
+  // We don't animate league color; always just apply it immediately.
+  auto color{ColorForLeagueValue_(league_type_vis_value_)};
+  trophy_icon_->widget->set_color(color.x, color.y, color.z);
+
+  // We may want to animate rank.
   if (league_rank_animating_) {
-    // If there's already an animation going, do nothing. It will get us to
-    // wherever we need to be.
+    // If there's already an animation going, do nothing. It will keep going
+    // until we're showing our vis vals.
   } else {
+    auto animate{true};
+
+    // Don't animate if we're offscreen.
+    if (!trophy_meter_button_->enabled) {
+      animate = false;
+    }
+
+    // Don't animate if we're coming from or going to an 'empty' value.
+    if (prev_league_rank_vis_value <= 0 || league_rank_vis_value_ <= 0) {
+      animate = false;
+    }
+
+    // Don't animate if league type or league num is changing.
+    if (prev_league_number_vis_value != league_number_vis_value_
+        || prev_league_type_vis_value != league_type_vis_value_) {
+      animate = false;
+    }
+
+    // Don't animate if our rank is staying the same.
+    if (prev_league_rank_vis_value == league_rank_vis_value_) {
+      animate = false;
+    }
+
     if (animate) {
       // Start up an animation.
       league_rank_animating_ = true;
-      league_rank_anim_start_val_ = prev_rank;
-      league_rank_anim_val_ = prev_rank;
+      league_rank_anim_start_val_ = prev_league_rank_vis_value;
+      league_rank_anim_val_ = prev_league_rank_vis_value;
 
       league_rank_anim_start_time_ = g_core->AppTimeSeconds();
 
@@ -1741,9 +1857,6 @@ void RootWidget::UpdateLeagueRankDisplayValue_() {
               : "");
     }
   }
-
-  auto color{ColorForLeagueValue_(league_type_vis_value_)};
-  trophy_icon_->widget->set_color(color.x, color.y, color.z);
 }
 
 void RootWidget::SetLeagueRankValues(const std::string& league_type,
@@ -1752,7 +1865,14 @@ void RootWidget::SetLeagueRankValues(const std::string& league_type,
   league_type_value_ = league_type;
   league_number_value_ = league_number;
   league_rank_value_ = league_rank;
-  UpdateLeagueRankDisplayValue_();
+  UpdateLeagueRankDisplay_();
+}
+
+void RootWidget::SetInboxCount(int val, bool is_max) {
+  // Store latest values and then (possibly) apply them to our display.
+  inbox_count_value_ = val;
+  inbox_count_is_max_value_ = is_max;
+  UpdateInboxCountDisplay_();
 }
 
 void RootWidget::SetAchievementPercentText(const std::string& val) {
@@ -2070,21 +2190,6 @@ auto RootWidget::GetTimeStr_(seconds_t diff) -> std::string {
     output = "-" + output;
   }
   return output;
-}
-
-void RootWidget::SetInboxCountText(const std::string& val) {
-  assert(inbox_count_text_);
-
-  inbox_count_text_->widget->SetText(val);
-
-  auto backing_was_visible{inbox_count_backing_->visible};
-  auto backing_is_visible = (val != "" && val != "0");
-
-  if (backing_was_visible != backing_is_visible) {
-    inbox_count_backing_->visible = backing_is_visible;
-    inbox_count_text_->visible = backing_is_visible;
-    child_widgets_dirty_ = true;
-  }
 }
 
 void RootWidget::PauseUpdates() {
