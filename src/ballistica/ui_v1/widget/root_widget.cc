@@ -1020,11 +1020,14 @@ void RootWidget::StepInboxAnim_(base::RenderPass* pass, seconds_t dt) {
     widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
     return;
   } else {
-    float mult{1.5f
-               - 1.0f
-                     * sinf(30.0f
-                            * (pass->frame_def()->display_time()
-                               - inbox_anim_flash_time_))};
+    auto sinput = 3.141592f
+                  * static_cast<float>(inbox_anim_flash_time_
+                                       - pass->frame_def()->display_time());
+    float mult{1.0f
+               + fabs(2.0f
+                      * sinf(4.0f * 3.1415f
+                             * (inbox_anim_flash_time_
+                                - pass->frame_def()->display_time())))};
     widget->set_color(kBotLeftColorR * mult, kBotLeftColorG * mult,
                       kBotLeftColorB * mult);
   }
@@ -1773,7 +1776,8 @@ void RootWidget::UpdateInboxCountDisplay_() {
 
   if (flash) {
     inbox_animating_ = true;
-    inbox_anim_flash_time_ = g_base->logic->display_time() + 1.0;
+    inbox_anim_flash_time_ = g_base->logic->display_time() + 1.5;
+    g_base->audio->SafePlaySysSound(base::SysSoundID::kDing);
   }
 }
 

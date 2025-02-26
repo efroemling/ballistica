@@ -213,6 +213,7 @@ void Assets::StartLoading() {
   LoadSystemSound(SysSoundID::kScoreIncrease, "scoreIncrease");
   LoadSystemSound(SysSoundID::kCashRegister, "cashRegister");
   LoadSystemSound(SysSoundID::kPowerDown, "powerDown01");
+  LoadSystemSound(SysSoundID::kDing, "ding");
 
   // System datas:
   // (crickets)
