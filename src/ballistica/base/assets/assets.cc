@@ -212,7 +212,7 @@ void Assets::StartLoading() {
   LoadSystemSound(SysSoundID::kSparkle3, "sparkle03");
   LoadSystemSound(SysSoundID::kScoreIncrease, "scoreIncrease");
   LoadSystemSound(SysSoundID::kCashRegister, "cashRegister");
-  LoadSystemSound(SysSoundID::kPowerDown, "powerDown01");
+  LoadSystemSound(SysSoundID::kPowerDown, "powerdown01");
   LoadSystemSound(SysSoundID::kDing, "ding");
 
   // System datas:

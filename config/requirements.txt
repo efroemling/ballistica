@@ -1,4 +1,5 @@
 cpplint==2.0.0
+cryptography==44.0.1
 dmgbuild==1.6.4
 filelock==3.17.0
 furo==2024.8.6

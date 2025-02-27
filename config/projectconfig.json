@@ -47,7 +47,9 @@
     "jinja2",
     "jinja2.Environment",
     "tomlkit",
-    "urllib3.exceptions"
+    "urllib3.exceptions",
+    "cryptography.exceptions",
+    "cryptography.hazmat.primitives.asymmetric.ed25519"
   ],
   "python_paths": [
     "src/assets/ba_data/python",
