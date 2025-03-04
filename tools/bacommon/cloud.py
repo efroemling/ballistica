@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Annotated, override
 
 from efro.message import Message, Response
 from efro.dataclassio import ioprepped, IOAttrs
+from bacommon.securedata import SecureDataChecker
 from bacommon.transfer import DirectoryManifest
 from bacommon.login import LoginType
 
@@ -300,3 +301,45 @@ class StoreQueryResponse(Response):
 
     available_purchases: Annotated[list[Purchase], IOAttrs('p')]
     token_info_url: Annotated[str, IOAttrs('tiu')]
+
+
+@ioprepped
+@dataclass
+class SecureDataCheckMessage(Message):
+    """Was this data signed by the master-server?."""
+
+    data: Annotated[bytes, IOAttrs('d')]
+    signature: Annotated[bytes, IOAttrs('s')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [SecureDataCheckResponse]
+
+
+@ioprepped
+@dataclass
+class SecureDataCheckResponse(Response):
+    """Here's the result of that data check, boss."""
+
+    # Whether the data signature was valid.
+    result: Annotated[bool, IOAttrs('v')]
+
+
+@ioprepped
+@dataclass
+class SecureDataCheckerRequest(Message):
+    """Can I get a checker over here?."""
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [SecureDataCheckerResponse]
+
+
+@ioprepped
+@dataclass
+class SecureDataCheckerResponse(Response):
+    """Here's that checker ya asked for, boss."""
+
+    checker: Annotated[SecureDataChecker, IOAttrs('c')]

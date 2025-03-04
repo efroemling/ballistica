@@ -1498,8 +1498,8 @@ void ClassicAppMode::SetInternalMusic(base::SoundAsset* music, float volume,
 void ClassicAppMode::HandleGameQuery(const char* buffer, size_t size,
                                      sockaddr_storage* from) {
   if (size == 5) {
-    // If we're already in a party, don't advertise since they
-    // wouldn't be able to join us anyway.
+    // If we're already in a party, don't advertise since they wouldn't be
+    // able to join us anyway.
     if (g_base->app_mode()->HasConnectionToHost()) {
       return;
     }
@@ -1508,16 +1508,15 @@ void ClassicAppMode::HandleGameQuery(const char* buffer, size_t size,
     uint32_t query_id;
     memcpy(&query_id, buffer + 1, 4);
 
-    // Ship them a response packet containing the query id,
-    // our protocol version, our unique-app-instance-id, and our
-    // player_spec.
+    // Ship them a response packet containing the query id, our protocol
+    // version, our unique-app-instance-id, and our player_spec.
     char msg[400];
 
     std::string usid = g_base->GetAppInstanceUUID();
     std::string player_spec_string;
 
-    // If we're signed in, send our account spec.
-    // Otherwise just send a dummy made with our device name.
+    // If we're signed in, send our account spec. Otherwise just send a
+    // dummy made with our device name.
     player_spec_string =
         scene_v1::PlayerSpec::GetAccountPlayerSpec().GetSpecString();
 

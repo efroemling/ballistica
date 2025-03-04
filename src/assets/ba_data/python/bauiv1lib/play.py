@@ -32,6 +32,24 @@ class PlayWindow(bui.MainWindow):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
 
+        import bacommon.cloud
+
+        # TEMP TESTING
+        if bool(False):
+            print('HELLO FROM TEST')
+            plus = bui.app.plus
+            assert plus is not None
+            plus.cloud.send_message_cb(
+                bacommon.cloud.SecureDataCheckMessage(
+                    data=b'fo', signature=b'mo'
+                ),
+                on_response=lambda r: print('GOT CHECK RESPONSE', r),
+            )
+            plus.cloud.send_message_cb(
+                bacommon.cloud.SecureDataCheckerRequest(),
+                on_response=lambda r: print('GOT CHECKER RESPONSE', r),
+            )
+
         # Preload some modules we use in a background thread so we won't
         # have a visual hitch when the user taps them.
         bui.app.threadpool.submit_no_wait(self._preload_modules)

@@ -23,7 +23,7 @@ class SecureDataChecker:
     endtime: Annotated[datetime.datetime, IOAttrs('e')]
 
     # Current set of public keys.
-    keys: Annotated[list[bytes], IOAttrs('k')]
+    publickeys: Annotated[list[bytes], IOAttrs('k')]
 
     def check(self, data: bytes, signature: bytes) -> bool:
         """Verify data, returning True if successful.
@@ -45,7 +45,7 @@ class SecureDataChecker:
 
         # Try our keys from newest to oldest. Most stuff will be using
         # the newest key so this should be most efficient.
-        for key in reversed(self.keys):
+        for key in reversed(self.publickeys):
             try:
                 publickey = ed25519.Ed25519PublicKey.from_public_bytes(key)
                 publickey.verify(signature, data)
