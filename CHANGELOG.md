@@ -1,4 +1,4 @@
-### 1.7.37 (build 22299, api 9, 2025-03-04)
+### 1.7.37 (build 22301, api 9, 2025-03-06)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
@@ -228,6 +228,10 @@
   while onscreen-keyboards are present. This works around an issue where text
   editing on Android could break due to on-screen-keyboards causing screen
   resizes which kill the text-widgets they target.
+- (build 22300) There is now a 'Secure V1 Connections' option in account
+  settings on ballistica.net which should prevent V1 account spoofing attacks
+  when enabled. The downside is that clients older than build 22300 will no
+  longer be able to access the account while that setting is enabled.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these
