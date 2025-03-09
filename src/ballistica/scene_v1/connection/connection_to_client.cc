@@ -178,7 +178,13 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           // Newer builds also send their public-device-id; servers
           // can use this to combat simple spam attacks.
           if (cJSON* pubdeviceid = cJSON_GetObjectItem(handshake, "d")) {
-            public_device_id_ = pubdeviceid->valuestring;
+              // Check for exploit of sending empty d spec (was makin servers crash with -11 error)
+              if (cJSON_IsObject(pubdeviceid) && cJSON_GetArraySize(pubdeviceid) == 0) {
+                  g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                    "Rejecting empty spec packet \"d\"");
+              } else {
+                  public_device_id_ = pubdeviceid->valuestring;
+              }
           }
           cJSON_Delete(handshake);
         }
