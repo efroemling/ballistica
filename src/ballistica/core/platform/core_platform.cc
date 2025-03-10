@@ -2,6 +2,7 @@
 
 #include "ballistica/core/platform/core_platform.h"
 
+#include <chrono>
 #include <cstdio>
 #include <list>
 #include <string>
