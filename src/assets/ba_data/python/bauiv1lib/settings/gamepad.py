@@ -1036,9 +1036,6 @@ class AwaitGamepadInputWindow(bui.Window):
         )
         bs.capture_gamepad_input(bui.WeakCall(self._event_callback))
 
-    def __del__(self) -> None:
-        pass
-
     def die(self) -> None:
         """Kill the window."""
 

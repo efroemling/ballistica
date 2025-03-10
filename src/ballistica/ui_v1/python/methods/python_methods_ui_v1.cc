@@ -26,10 +26,6 @@
 
 namespace ballistica::ui_v1 {
 
-// Ignore signed bitwise stuff; python macros do it quite a bit.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
-
 // ------------------------------ getsound -------------------------------------
 
 static auto PyGetSound(PyObject* self, PyObject* args, PyObject* keywds)
@@ -2823,31 +2819,31 @@ static PyMethodDef PyRootUIResumeUpdatesDef = {
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
-  return {PyRootUIBackPressDef,
-          PyGetSpecialWidgetDef,
-          PySetPartyWindowOpenDef,
-          PyButtonWidgetDef,
-          PyCheckBoxWidgetDef,
-          PyImageWidgetDef,
-          PySpinnerWidgetDef,
-          PyColumnWidgetDef,
-          PyContainerWidgetDef,
-          PyRowWidgetDef,
-          PyScrollWidgetDef,
-          PyHScrollWidgetDef,
-          PyTextWidgetDef,
-          PyWidgetDef,
-          PyUIBoundsDef,
-          PyGetSoundDef,
-          PyGetTextureDef,
-          PyGetQRCodeTextureDef,
-          PyGetMeshDef,
-          PyIsAvailableDef,
-          PyOnUIScaleChangeDef,
-          PyRootUIPauseUpdatesDef,
-          PyRootUIResumeUpdatesDef};
+  return {
+      PyRootUIBackPressDef,
+      PyGetSpecialWidgetDef,
+      PySetPartyWindowOpenDef,
+      PyButtonWidgetDef,
+      PyCheckBoxWidgetDef,
+      PyImageWidgetDef,
+      PySpinnerWidgetDef,
+      PyColumnWidgetDef,
+      PyContainerWidgetDef,
+      PyRowWidgetDef,
+      PyScrollWidgetDef,
+      PyHScrollWidgetDef,
+      PyTextWidgetDef,
+      PyWidgetDef,
+      PyUIBoundsDef,
+      PyGetSoundDef,
+      PyGetTextureDef,
+      PyGetQRCodeTextureDef,
+      PyGetMeshDef,
+      PyIsAvailableDef,
+      PyOnUIScaleChangeDef,
+      PyRootUIPauseUpdatesDef,
+      PyRootUIResumeUpdatesDef,
+  };
 }
-
-#pragma clang diagnostic pop
 
 }  // namespace ballistica::ui_v1

@@ -33,12 +33,29 @@ class Window:
     functionality.
     """
 
-    def __init__(self, root_widget: bauiv1.Widget, cleanupcheck: bool = True):
+    def __init__(
+        self,
+        root_widget: bauiv1.Widget,
+        cleanupcheck: bool = True,
+        prevent_window_auto_recreate: bool = True,
+    ):
         self._root_widget = root_widget
 
-        # Complain if we outlive our root widget.
+        # The presence of any generic windows prevents the app from
+        # running its fancy auto-window-recreate stuff on screen
+        # resizes; this avoids things like temporary popup windows
+        # getting stuck under an auto-re-created main-window.
+        self._prevent_window_auto_recreate = prevent_window_auto_recreate
+        if prevent_window_auto_recreate:
+            babase.app.ui_v1.window_auto_recreate_suppress_count += 1
+
+        # Generally we complain if we outlive our root widget.
         if cleanupcheck:
             uicleanupcheck(self, root_widget)
+
+    def __del__(self) -> None:
+        if self._prevent_window_auto_recreate:
+            babase.app.ui_v1.window_auto_recreate_suppress_count -= 1
 
     def get_root_widget(self) -> bauiv1.Widget:
         """Return the root widget."""
@@ -66,8 +83,8 @@ class MainWindow(Window):
     ):
         """Create a MainWindow given a root widget and transition info.
 
-        Automatically handles in and out transitions on the provided widget,
-        so there is no need to set transitions when creating it.
+        Automatically handles in and out transitions on the provided
+        widget, so there is no need to set transitions when creating it.
         """
         # A back-state supplied by the ui system.
         self.main_window_back_state: MainWindowState | None = None
@@ -89,7 +106,11 @@ class MainWindow(Window):
 
         self._main_window_transition = transition
         self._main_window_origin_widget = origin_widget
-        super().__init__(root_widget, cleanupcheck)
+        super().__init__(
+            root_widget,
+            cleanupcheck=cleanupcheck,
+            prevent_window_auto_recreate=False,
+        )
 
         scale_origin: tuple[float, float] | None
         if origin_widget is not None:
@@ -120,7 +141,7 @@ class MainWindow(Window):
 
         # Note: normally transition of None means instant, but we use
         # that to mean 'do the default' so we support a special
-        # 'instant' string..
+        # 'instant' string.
         if transition == 'instant':
             self._root_widget.delete()
         else:

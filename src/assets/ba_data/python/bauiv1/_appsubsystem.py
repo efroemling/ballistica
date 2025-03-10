@@ -86,6 +86,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self.heading_color = (0.72, 0.7, 0.75)
         self.infotextcolor = (0.7, 0.9, 0.7)
 
+        self.window_auto_recreate_suppress_count = 0
+
         self._last_win_recreate_size: tuple[float, float] | None = None
         self._last_screen_size_win_recreate_time: float | None = None
         self._screen_size_win_recreate_timer: babase.AppTimer | None = None
@@ -398,6 +400,23 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             suppress_warning=True,
         )
 
+    def should_suppress_window_recreates(self) -> bool:
+        """Should we avoid auto-recreating windows at the current time?"""
+
+        # This is slightly hack-ish and ideally we can get to the point
+        # where we never need this and can remove it.
+
+        # Currently string-edits grab a weak-ref to the exact text
+        # widget they're targeting. So we need to suppress recreates
+        # while edits are in progress. Ideally we should change that to
+        # use ids or something that would survive a recreate.
+        if babase.app.stringedit.active_adapter() is not None:
+            return True
+
+        # Suppress if anything else is requesting suppression (such as
+        # generic Windows that don't handle being recreated).
+        return babase.app.ui_v1.window_auto_recreate_suppress_count > 0
+
     @override
     def on_ui_scale_change(self) -> None:
         # Update our stored UIScale.
@@ -409,7 +428,10 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # Lastly, if we have a main window, recreate it to pick up the
         # new UIScale/etc.
         mainwindow = self.get_main_window()
-        if mainwindow is not None:
+        if (
+            mainwindow is not None
+            and not self.should_suppress_window_recreates()
+        ):
             winstate = self.save_main_window_state(mainwindow)
             self.clear_main_window(transition='instant')
             self.restore_main_window_state(winstate)
@@ -421,14 +443,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
     @override
     def on_screen_size_change(self) -> None:
 
-        # HACK-ish: We currently ignore all resizes that happen while a
-        # string-edit is in progress. Otherwise the target text-widget
-        # of the edit generally dies during window recreates and the
-        # edit doesn't work. And it seems that in some cases on Android
-        # bringing up the on-screen keyboard results in the screen size
-        # changing due to nav-bars being shown or whatnot which makes
-        # the problem worse.
-        if babase.app.stringedit.active_adapter() is not None:
+        if self.should_suppress_window_recreates():
             return
 
         # Recreating a MainWindow is a kinda heavy thing and it doesn't

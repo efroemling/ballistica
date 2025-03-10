@@ -183,7 +183,9 @@ class ChestWindow(bui.MainWindow):
                 on_response=bui.WeakCall(self._on_chest_info_response),
             )
 
+    @override
     def __del__(self) -> None:
+        super().__del__()
 
         # Make sure UI updates are resumed if we haven't done so.
         if self._root_ui_updates_paused:

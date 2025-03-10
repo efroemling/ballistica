@@ -19,9 +19,10 @@ def wait_for_connectivity(
     """Wait for the engine to establish a master-server connection.
 
     If need be, shows a window to keep the user informed of connectivity
-    state and allows the user to cancel the operation. Note that canceling
-    does not prevent the engine from continuing its attempt to establish
-    connectivity; it simply cancels the operation that depends on it.
+    state and allows the user to cancel the operation. Note that
+    canceling does not prevent the engine from continuing its attempt to
+    establish connectivity; it simply cancels the operation that is
+    waiting for connectivity.
     """
     plus = bui.app.plus
     assert plus is not None
