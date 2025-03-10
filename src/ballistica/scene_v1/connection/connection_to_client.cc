@@ -169,16 +169,25 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
         std::vector<char> string_buffer(data.size() - 3 + 1);
         memcpy(&(string_buffer[0]), &(data[3]), data.size() - 3);
         string_buffer[string_buffer.size() - 1] = 0;
-        cJSON* handshake = cJSON_Parse(string_buffer.data());
-        if (handshake) {
-          if (cJSON* pspec = cJSON_GetObjectItem(handshake, "s")) {
-            set_peer_spec(PlayerSpec(pspec->valuestring));
-          }
+        if (cJSON* handshake = cJSON_Parse(string_buffer.data())) {
+          if (cJSON_IsObject(handshake)) {
+            if (cJSON* pspec = cJSON_GetObjectItem(handshake, "s")) {
+              set_peer_spec(PlayerSpec(pspec->valuestring));
+            }
 
-          // Newer builds also send their public-device-id; servers
-          // can use this to combat simple spam attacks.
-          if (cJSON* pubdeviceid = cJSON_GetObjectItem(handshake, "d")) {
-            public_device_id_ = pubdeviceid->valuestring;
+            // Newer builds also send their public-device-id; servers
+            // can use this to combat simple spam attacks.
+            if (cJSON* pubdeviceid = cJSON_GetObjectItem(handshake, "d")) {
+              if (cJSON_IsString(pubdeviceid)) {
+                public_device_id_ = pubdeviceid->valuestring;
+              } else {
+                BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                            "Ignoring non-string player-spec data.");
+              }
+            }
+          } else {
+            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                        "Ignoring non-object player-data container.");
           }
           cJSON_Delete(handshake);
         }

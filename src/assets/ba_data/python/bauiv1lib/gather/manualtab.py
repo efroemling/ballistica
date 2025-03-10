@@ -355,7 +355,7 @@ class ManualGatherTab(GatherTab):
         )
         bui.widget(edit=self._check_button, up_widget=btn)
 
-    # Tab containing saved favorite addresses
+    # Tab containing saved favorite addresses.
     def _build_favorites_tab(
         self, region_width: float, region_height: float
     ) -> None:
@@ -364,7 +364,6 @@ class ManualGatherTab(GatherTab):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        # self._width = 1240 if uiscale is bui.UIScale.SMALL else 1040
         self._width = region_width
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
