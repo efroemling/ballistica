@@ -210,6 +210,9 @@ class FreezeMessage:
     As seen in the effects of an ice bascenev1.Bomb.
     """
 
+    time: float = 5.0
+    """The amount of time the object will be frozen."""
+
 
 @dataclass
 class ThawMessage:
