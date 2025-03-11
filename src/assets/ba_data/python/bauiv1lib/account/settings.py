@@ -338,8 +338,8 @@ class AccountSettingsWindow(bui.MainWindow):
         deprecated_space = 60
 
         # Game Center currently has a single UI for everything.
-        show_game_service_button = game_center_active
-        game_service_button_space = 60.0
+        show_game_center_button = game_center_active
+        game_center_button_space = 60.0
 
         # Phasing this out (for V2 accounts at least).
         show_linked_accounts_text = (
@@ -431,8 +431,8 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sub_height += sign_in_button_space
         if show_device_sign_in_button:
             self._sub_height += sign_in_button_space + deprecated_space
-        if show_game_service_button:
-            self._sub_height += game_service_button_space
+        if show_game_center_button:
+            self._sub_height += game_center_button_space
         if show_linked_accounts_text:
             self._sub_height += linked_accounts_text_space
         if show_achievements_text:
@@ -880,14 +880,14 @@ class AccountSettingsWindow(bui.MainWindow):
             bui.widget(edit=btn, left_widget=bbtn)
 
         # the button to go to OS-Specific leaderboards/high-score-lists/etc.
-        if show_game_service_button:
+        if show_game_center_button:
             button_width = 300
-            v -= game_service_button_space * 0.6
+            v -= game_center_button_space * 1.0
             if game_center_active:
                 # Note: Apparently Game Center is just called 'Game Center'
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
-                game_service_button_label = bui.Lstr(
+                game_center_button_label = bui.Lstr(
                     value=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO)
                     + 'Game Center'
                 )
@@ -895,15 +895,15 @@ class AccountSettingsWindow(bui.MainWindow):
                 raise ValueError(
                     "unknown account type: '" + str(v1_account_type) + "'"
                 )
-            self._game_service_button = btn = bui.buttonwidget(
+            self._game_center_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 position=((self._sub_width - button_width) * 0.5, v),
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
-                on_activate_call=self._on_game_service_button_press,
+                on_activate_call=self._on_game_center_button_press,
                 size=(button_width, 50),
-                label=game_service_button_label,
+                label=game_center_button_label,
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -911,9 +911,9 @@ class AccountSettingsWindow(bui.MainWindow):
                 edit=btn, right_widget=bui.get_special_widget('squad_button')
             )
             bui.widget(edit=btn, left_widget=bbtn)
-            v -= game_service_button_space * 0.4
+            v -= game_center_button_space * 0.4
         else:
-            self.game_service_button = None
+            self.game_center_button = None
 
         self._achievements_text: bui.Widget | None
         if show_achievements_text:
@@ -1214,7 +1214,7 @@ class AccountSettingsWindow(bui.MainWindow):
             )
         self._needs_refresh = False
 
-    def _on_game_service_button_press(self) -> None:
+    def _on_game_center_button_press(self) -> None:
         if bui.app.plus is not None:
             bui.app.plus.show_game_service_ui()
         else:
