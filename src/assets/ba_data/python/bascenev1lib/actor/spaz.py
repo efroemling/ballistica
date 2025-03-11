@@ -887,8 +887,7 @@ class Spaz(bs.Actor):
                 self.frozen = True
                 self.node.frozen = True
                 bs.timer(
-                    msg.time,
-                    bs.WeakCall(self.handlemessage, bs.ThawMessage())
+                    msg.time, bs.WeakCall(self.handlemessage, bs.ThawMessage())
                 )
                 # Instantly shatter if we're already dead.
                 # (otherwise its hard to tell we're dead).
