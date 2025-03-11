@@ -37,16 +37,19 @@ class Window:
         self,
         root_widget: bauiv1.Widget,
         cleanupcheck: bool = True,
-        prevent_window_auto_recreate: bool = True,
+        prevent_main_window_auto_recreate: bool = True,
     ):
         self._root_widget = root_widget
 
-        # The presence of any generic windows prevents the app from
-        # running its fancy auto-window-recreate stuff on screen
-        # resizes; this avoids things like temporary popup windows
-        # getting stuck under an auto-re-created main-window.
-        self._prevent_window_auto_recreate = prevent_window_auto_recreate
-        if prevent_window_auto_recreate:
+        # By default, the presence of any generic windows prevents the
+        # app from running its fancy main-window-auto-recreate mechanism
+        # on screen-resizes and whatnot. This avoids things like
+        # temporary popup windows getting stuck under auto-re-created
+        # main-windows.
+        self._prevent_main_window_auto_recreate = (
+            prevent_main_window_auto_recreate
+        )
+        if prevent_main_window_auto_recreate:
             babase.app.ui_v1.window_auto_recreate_suppress_count += 1
 
         # Generally we complain if we outlive our root widget.
@@ -54,7 +57,7 @@ class Window:
             uicleanupcheck(self, root_widget)
 
     def __del__(self) -> None:
-        if self._prevent_window_auto_recreate:
+        if self._prevent_main_window_auto_recreate:
             babase.app.ui_v1.window_auto_recreate_suppress_count -= 1
 
     def get_root_widget(self) -> bauiv1.Widget:
@@ -109,7 +112,7 @@ class MainWindow(Window):
         super().__init__(
             root_widget,
             cleanupcheck=cleanupcheck,
-            prevent_window_auto_recreate=False,
+            prevent_main_window_auto_recreate=False,
         )
 
         scale_origin: tuple[float, float] | None

@@ -85,6 +85,10 @@ class PopupWindow:
             (focus_position[1] + focus_size[1] * 0.5) - (size[1] * 0.5)
         ) * scale
 
+        # NOTE: We do NOT need to suppress main-window-recreates here
+        # (like regular windows do) since we are always in the overlay
+        # stack and thus aren't affected by main-window recreation.
+
         self.root_widget = bui.containerwidget(
             transition='in_scale',
             scale=scale,

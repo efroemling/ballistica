@@ -61,7 +61,10 @@ class PartyWindow(bui.Window):
                         (260, 0) if uiscale is bui.UIScale.MEDIUM else (370, 60)
                     )
                 ),
-            )
+            ),
+            # We exist in the overlay stack so main-windows being
+            # recreated doesn't affect us.
+            prevent_main_window_auto_recreate=False,
         )
 
         self._cancel_button = bui.buttonwidget(

@@ -259,6 +259,8 @@ class ChestWindow(bui.MainWindow):
             self._error(bui.Lstr(translate=('serverResponses', response.error)))
             return
 
+        # print('WOULD SHOW EFFECTS')
+
         # Show any bundled success message.
         if response.success_msg is not None:
             bui.screenmessage(
@@ -274,11 +276,6 @@ class ChestWindow(bui.MainWindow):
                 color=(1, 0.5, 0),
             )
             bui.getsound('error').play()
-
-        # If we just paid for something, make a sound accordingly.
-        if bool(False):  # Hmm maybe this feels odd.
-            if response.tokens_charged > 0:
-                bui.getsound('cashRegister').play()
 
         # If there's contents listed in the response, show them.
         if response.contents is not None:

@@ -1,5 +1,8 @@
-### 1.7.38 (build 22307, api 9, 2025-03-10)
-
+### 1.7.38 (build 22310, api 9, 2025-03-11)
+- Made MainWindow auto-recreate smarter. If something such as text input or a
+  popup window is suppressing main-window-auto-recreate, it'll now do a single
+  recreate once the suppression ends.
+  
 ### 1.7.37 (build 22304, api 9, 2025-03-10)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't

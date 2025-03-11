@@ -341,64 +341,6 @@ class ChestInfoResponse(Response):
     user_tokens: Annotated[int | None, IOAttrs('t')]
 
 
-@ioprepped
-@dataclass
-class ChestActionMessage(Message):
-    """Request action about a chest."""
-
-    class Action(Enum):
-        """Types of actions we can request."""
-
-        # Unlocking (for free or with tokens).
-        UNLOCK = 'u'
-
-        # Watched an ad to reduce wait.
-        AD = 'ad'
-
-    action: Annotated[Action, IOAttrs('a')]
-
-    # Tokens we are paying (only applies to unlock).
-    token_payment: Annotated[int, IOAttrs('t')]
-
-    chest_id: Annotated[str, IOAttrs('i')]
-
-    @override
-    @classmethod
-    def get_response_types(cls) -> list[type[Response] | None]:
-        return [ChestActionResponse]
-
-
-@ioprepped
-@dataclass
-class ChestActionResponse(Response):
-    """Here's the results of that action you asked for, boss."""
-
-    # Tokens that were actually charged.
-    tokens_charged: Annotated[int, IOAttrs('t')] = 0
-
-    # If present, signifies the chest has been opened and we should show
-    # the user this stuff that was in it.
-    contents: Annotated[list[DisplayItemWrapper] | None, IOAttrs('c')] = None
-
-    # If contents are present, which of the chest's prize-sets they
-    # represent.
-    prizeindex: Annotated[int, IOAttrs('i')] = 0
-
-    # Printable error if something goes wrong.
-    error: Annotated[str | None, IOAttrs('e')] = None
-
-    # Printable warning. Shown in orange with an error sound. Does not
-    # mean the action failed; only that there's something to tell the
-    # users such as 'It looks like you are faking ad views; stop it or
-    # you won't have ad options anymore.'
-    warning: Annotated[str | None, IOAttrs('w')] = None
-
-    # Printable success message. Shown in green with a cash-register
-    # sound. Can be used for things like successful wait reductions via
-    # ad views.
-    success_msg: Annotated[str | None, IOAttrs('s')] = None
-
-
 class ClientUITypeID(Enum):
     """Type ID for each of our subclasses."""
 
@@ -885,3 +827,68 @@ class ScoreSubmitResponse(Response):
 
     # Things we should show on our end.
     effects: Annotated[list[ClientEffect], IOAttrs('fx')]
+
+
+@ioprepped
+@dataclass
+class ChestActionMessage(Message):
+    """Request action about a chest."""
+
+    class Action(Enum):
+        """Types of actions we can request."""
+
+        # Unlocking (for free or with tokens).
+        UNLOCK = 'u'
+
+        # Watched an ad to reduce wait.
+        AD = 'ad'
+
+    action: Annotated[Action, IOAttrs('a')]
+
+    # Tokens we are paying (only applies to unlock).
+    token_payment: Annotated[int, IOAttrs('t')]
+
+    chest_id: Annotated[str, IOAttrs('i')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [ChestActionResponse]
+
+
+@ioprepped
+@dataclass
+class ChestActionResponse(Response):
+    """Here's the results of that action you asked for, boss."""
+
+    # Tokens that were actually charged.
+    tokens_charged: Annotated[int, IOAttrs('t')] = 0
+
+    # If present, signifies the chest has been opened and we should show
+    # the user this stuff that was in it.
+    contents: Annotated[list[DisplayItemWrapper] | None, IOAttrs('c')] = None
+
+    # If contents are present, which of the chest's prize-sets they
+    # represent.
+    prizeindex: Annotated[int, IOAttrs('i')] = 0
+
+    # Printable error if something goes wrong.
+    error: Annotated[str | None, IOAttrs('e')] = None
+
+    # Printable warning. Shown in orange with an error sound. Does not
+    # mean the action failed; only that there's something to tell the
+    # users such as 'It looks like you are faking ad views; stop it or
+    # you won't have ad options anymore.'
+    warning: Annotated[str | None, IOAttrs('w', store_default=False)] = None
+
+    # Printable success message. Shown in green with a cash-register
+    # sound. Can be used for things like successful wait reductions via
+    # ad views. Used in builds earlier than 22308; can remove once
+    # 22308+ is ubiquitous.
+    success_msg: Annotated[str | None, IOAttrs('s', store_default=False)] = None
+
+    # Effects to show on the client. Replaces warning and success_msg in
+    # build 22308 or newer.
+    effects: Annotated[
+        list[ClientEffect], IOAttrs('fx', store_default=False)
+    ] = field(default_factory=list)
