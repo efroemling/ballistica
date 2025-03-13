@@ -441,6 +441,130 @@ static PyMethodDef PySetRootUIAccountValuesDef = {
     "Pass values to the native layer for use in the root UI or elsewhere.",
 };
 
+// ------------------- animate_root_ui_chest_unlock_time -----------------------
+
+static auto PyAnimateRootUIChestUnlockTime(PyObject* self, PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  const char* chestid;
+  double duration;
+  double startvalue;
+  double endvalue;
+
+  static const char* kwlist[] = {"chestid", "duration", "startvalue",
+                                 "endvalue", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sddd",
+                                   const_cast<char**>(kwlist), &chestid,
+                                   &duration, &startvalue, &endvalue)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  auto* appmode = ClassicAppMode::GetActiveOrThrow();
+
+  appmode->AnimateRootUIChestUnlockTime(chestid, duration, startvalue,
+                                        endvalue);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAnimateRootUIChestUnlockTimeDef = {
+    "animate_root_ui_chest_unlock_time",          // name
+    (PyCFunction)PyAnimateRootUIChestUnlockTime,  // method
+    METH_VARARGS | METH_KEYWORDS,                 // flags
+
+    "animate_root_ui_chest_unlock_time(*,\n"
+    "      chestid: str,\n"
+    "      duration: float,\n"
+    "      startvalue: float,\n"
+    "      endvalue: float,\n"
+    ") -> None\n"
+    "\n"
+    "Animate the unlock time on a chest.",
+};
+
+// ------------------------ animate_root_ui_tickets ----------------------------
+
+static auto PyAnimateRootUITickets(PyObject* self, PyObject* args,
+                                   PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  double duration;
+  int startvalue;
+  int endvalue;
+
+  static const char* kwlist[] = {"duration", "startvalue", "endvalue", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dii",
+                                   const_cast<char**>(kwlist), &duration,
+                                   &startvalue, &endvalue)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  auto* appmode = ClassicAppMode::GetActiveOrThrow();
+
+  appmode->AnimateRootUITickets(duration, startvalue, endvalue);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAnimateRootUITicketsDef = {
+    "animate_root_ui_tickets",            // name
+    (PyCFunction)PyAnimateRootUITickets,  // method
+    METH_VARARGS | METH_KEYWORDS,         // flags
+
+    "animate_root_ui_tickets(*,\n"
+    "      duration: float,\n"
+    "      startvalue: int,\n"
+    "      endvalue: int,\n"
+    ") -> None\n"
+    "\n"
+    "Animate the displayed tickets value.",
+};
+
+// ------------------------ animate_root_ui_tokens -----------------------------
+
+static auto PyAnimateRootUITokens(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  double duration;
+  int startvalue;
+  int endvalue;
+
+  static const char* kwlist[] = {"duration", "startvalue", "endvalue", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dii",
+                                   const_cast<char**>(kwlist), &duration,
+                                   &startvalue, &endvalue)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  auto* appmode = ClassicAppMode::GetActiveOrThrow();
+
+  appmode->AnimateRootUITokens(duration, startvalue, endvalue);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAnimateRootUITokensDef = {
+    "animate_root_ui_tokens",            // name
+    (PyCFunction)PyAnimateRootUITokens,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+
+    "animate_root_ui_tokens(*,\n"
+    "      duration: float,\n"
+    "      startvalue: int,\n"
+    "      endvalue: int,\n"
+    ") -> None\n"
+    "\n"
+    "Animate the displayed tokens value.",
+};
+
 // ----------------------- get_account_display_state ---------------------------
 
 static auto PyGetAccountDisplayState(PyObject* self, PyObject* args,
@@ -561,6 +685,9 @@ auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
       PyClassicAppModeActivateDef,
       PyClassicAppModeDeactivateDef,
       PySetRootUIAccountValuesDef,
+      PyAnimateRootUIChestUnlockTimeDef,
+      PyAnimateRootUITicketsDef,
+      PyAnimateRootUITokensDef,
       PyGetAccountDisplayStateDef,
       PySetAccountDisplayStateDef,
       PySetHaveLiveAccountValuesDef,

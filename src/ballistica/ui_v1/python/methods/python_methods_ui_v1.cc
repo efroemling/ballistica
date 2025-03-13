@@ -2789,8 +2789,9 @@ static PyMethodDef PyRootUIPauseUpdatesDef = {
 
     "root_ui_pause_updates() -> None\n"
     "\n"
-    "Temporarily pause updates to the root ui for animation purposes.",
-};
+    "Temporarily pause updates to the root ui for animation purposes.\n"
+    "Make sure that each call to this is matched by a call to \n"
+    "root_ui_resume_updates()."};
 
 // ------------------------ root_ui_resume_updates -----------------------------
 
@@ -2813,7 +2814,7 @@ static PyMethodDef PyRootUIResumeUpdatesDef = {
 
     "root_ui_resume_updates() -> None\n"
     "\n"
-    "Temporarily resume updates to the root ui for animation purposes.",
+    "Resume paused updates to the root ui for animation purposes.",
 };
 
 // -----------------------------------------------------------------------------

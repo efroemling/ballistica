@@ -431,3 +431,13 @@ class TextWidgetStringEditAdapter(babase.StringEditAdapter):
     def _do_cancel(self) -> None:
         if self.widget:
             _bauiv1.textwidget(edit=self.widget, adapter_finished=True)
+
+
+class RootUIUpdatePause:
+    """Pauses updates to the root-ui while in existence."""
+
+    def __init__(self) -> None:
+        _bauiv1.root_ui_pause_updates()
+
+    def __del__(self) -> None:
+        _bauiv1.root_ui_resume_updates()

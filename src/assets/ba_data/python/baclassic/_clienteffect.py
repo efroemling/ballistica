@@ -12,17 +12,23 @@ from efro.util import strict_partial
 import bacommon.bs
 import bauiv1
 
+import _baclassic
+
 if TYPE_CHECKING:
     pass
 
 
-def run_bs_client_effects(effects: list[bacommon.bs.ClientEffect]) -> None:
+def run_bs_client_effects(
+    effects: list[bacommon.bs.ClientEffect], delay: float = 0.0
+) -> None:
     """Run effects."""
     # pylint: disable=too-many-branches
+    from bacommon.bs import ClientEffectTypeID
 
-    delay = 0.0
     for effect in effects:
-        if isinstance(effect, bacommon.bs.ClientEffectScreenMessage):
+        effecttype = effect.get_type_id()
+        if effecttype is ClientEffectTypeID.SCREEN_MESSAGE:
+            assert isinstance(effect, bacommon.bs.ClientEffectScreenMessage)
             textfin = bauiv1.Lstr(
                 translate=('serverResponses', effect.message)
             ).evaluate()
@@ -41,7 +47,8 @@ def run_bs_client_effects(effects: list[bacommon.bs.ClientEffect]) -> None:
                 ),
             )
 
-        elif isinstance(effect, bacommon.bs.ClientEffectSound):
+        elif effecttype is ClientEffectTypeID.SOUND:
+            assert isinstance(effect, bacommon.bs.ClientEffectSound)
             smcls = bacommon.bs.ClientEffectSound.Sound
             soundfile: str | None = None
             if effect.sound is smcls.UNKNOWN:
@@ -66,12 +73,63 @@ def run_bs_client_effects(effects: list[bacommon.bs.ClientEffect]) -> None:
                     ),
                 )
 
-        elif isinstance(effect, bacommon.bs.ClientEffectDelay):
+        elif effecttype is ClientEffectTypeID.DELAY:
+            assert isinstance(effect, bacommon.bs.ClientEffectDelay)
             delay += effect.seconds
-        else:
+
+        elif effecttype is ClientEffectTypeID.CHEST_WAIT_TIME_ANIMATION:
+            assert isinstance(
+                effect, bacommon.bs.ClientEffectChestWaitTimeAnimation
+            )
+            bauiv1.apptimer(
+                delay,
+                strict_partial(
+                    _baclassic.animate_root_ui_chest_unlock_time,
+                    chestid=effect.chestid,
+                    duration=effect.duration,
+                    startvalue=effect.startvalue.timestamp(),
+                    endvalue=effect.endvalue.timestamp(),
+                ),
+            )
+
+        elif effecttype is ClientEffectTypeID.TICKETS_ANIMATION:
+            assert isinstance(effect, bacommon.bs.ClientEffectTicketsAnimation)
+            bauiv1.apptimer(
+                delay,
+                strict_partial(
+                    _baclassic.animate_root_ui_tickets,
+                    duration=effect.duration,
+                    startvalue=effect.startvalue,
+                    endvalue=effect.endvalue,
+                ),
+            )
+
+        elif effecttype is ClientEffectTypeID.TOKENS_ANIMATION:
+            assert isinstance(effect, bacommon.bs.ClientEffectTokensAnimation)
+            bauiv1.apptimer(
+                delay,
+                strict_partial(
+                    _baclassic.animate_root_ui_tokens,
+                    duration=effect.duration,
+                    startvalue=effect.startvalue,
+                    endvalue=effect.endvalue,
+                ),
+            )
+
+        elif effecttype is ClientEffectTypeID.UNKNOWN:
             # Server should not send us stuff we can't digest. Make
             # some noise if it happens.
             logging.error(
                 'Got unrecognized bacommon.bs.ClientEffect;'
                 ' should not happen.'
             )
+
+        else:
+            # For type-checking purposes to remind us to implement new
+            # types; should this this in real life.
+            assert_never(effecttype)
+
+    # Lastly, put a pause on root ui auto-updates so that everything we
+    # just scheduled is free to muck with it freely.
+    bauiv1.root_ui_pause_updates()
+    bauiv1.apptimer(delay + 0.25, bauiv1.root_ui_resume_updates)

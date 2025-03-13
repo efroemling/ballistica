@@ -52,6 +52,8 @@ class ChestWindow(bui.MainWindow):
             None
         )
 
+        self._chest_action_ui_pause: bui.RootUIUpdatePause | None = None
+
         # The set of widgets we keep when doing a clear.
         self._core_widgets: list[bui.Widget] = []
 
@@ -90,12 +92,6 @@ class ChestWindow(bui.MainWindow):
             # We're affected by screen size only at small ui-scale.
             refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
-
-        # Tell the root-ui to stop updating toolbar values immediately;
-        # this allows it to run animations based on the results of our
-        # chest opening.
-        bui.root_ui_pause_updates()
-        self._root_ui_updates_paused = True
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
@@ -184,14 +180,6 @@ class ChestWindow(bui.MainWindow):
             )
 
     @override
-    def __del__(self) -> None:
-        super().__del__()
-
-        # Make sure UI updates are resumed if we haven't done so.
-        if self._root_ui_updates_paused:
-            bui.root_ui_resume_updates()
-
-    @override
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
         cls = type(self)
@@ -246,6 +234,10 @@ class ChestWindow(bui.MainWindow):
         assert self._action_in_flight  # Should be us.
         self._action_in_flight = False
 
+        # Allow the root ui to resume its normal automatic value display
+        # as soon as any animations we kick off here complete.
+        self._chest_action_ui_pause = None
+
         # Communication/local error:
         if isinstance(response, Exception):
             self._error(
@@ -259,30 +251,17 @@ class ChestWindow(bui.MainWindow):
             self._error(bui.Lstr(translate=('serverResponses', response.error)))
             return
 
-        # print('WOULD SHOW EFFECTS')
-
-        # Show any bundled success message.
-        if response.success_msg is not None:
-            bui.screenmessage(
-                bui.Lstr(translate=('serverResponses', response.success_msg)),
-                color=(0, 1.0, 0),
-            )
-            bui.getsound('cashRegister').play()
-
-        # Show any bundled warning.
-        if response.warning is not None:
-            bui.screenmessage(
-                bui.Lstr(translate=('serverResponses', response.warning)),
-                color=(1, 0.5, 0),
-            )
-            bui.getsound('error').play()
-
+        toffs = 0.0
         # If there's contents listed in the response, show them.
         if response.contents is not None:
-            self._show_chest_contents(response)
+            toffs = self._show_chest_contents(response)
         else:
             # Otherwise we're done here; just close out our UI.
             self.main_window_back()
+
+        # Lastly, run any bundled effects.
+        assert bui.app.classic is not None
+        bui.app.classic.run_bs_client_effects(response.effects, delay=toffs)
 
     def _show_chest_actions(
         self, user_tokens: int, chest: bacommon.bs.ChestInfoResponse.Chest
@@ -724,6 +703,12 @@ class ChestWindow(bui.MainWindow):
             return
 
         self._action_in_flight = True
+
+        # Pause implicit root-ui updates at least until we're done with
+        # this message, as we might want to explicitly animate stuff from
+        # the results and don't want live values to jump the gun.
+        self._chest_action_ui_pause = bui.RootUIUpdatePause()
+
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
                 bacommon.bs.ChestActionMessage(
@@ -790,6 +775,12 @@ class ChestWindow(bui.MainWindow):
             return
 
         self._action_in_flight = True
+
+        # Pause implicit root-ui updates at least until we're done with
+        # this message, as we might want to explicitly animate stuff from
+        # the results and don't want live values to jump the gun.
+        self._chest_action_ui_pause = bui.RootUIUpdatePause()
+
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
                 bacommon.bs.ChestActionMessage(
@@ -830,14 +821,14 @@ class ChestWindow(bui.MainWindow):
 
     def _show_chest_contents(
         self, response: bacommon.bs.ChestActionResponse
-    ) -> None:
+    ) -> float:
         # pylint: disable=too-many-locals
 
         from baclassic import show_display_item
 
         # No-op if our ui is dead.
         if not self._root_widget:
-            return
+            return 0.0
 
         assert response.contents is not None
 
@@ -984,6 +975,10 @@ class ChestWindow(bui.MainWindow):
                 toffs2 -= amt
                 amt *= 1.05 * random.uniform(0.9, 1.1)
                 i = (i - 1) % len(self._prizesets)
+
+        # Let the caller know how long we'll take in case they want to
+        # schedule stuff after.
+        return toffs + tincr
 
     def _show_chest_opening(self) -> None:
 

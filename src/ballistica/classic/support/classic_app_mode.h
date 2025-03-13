@@ -215,6 +215,11 @@ class ClassicAppMode : public base::AppMode {
     public_party_public_address_ipv6_ = val;
   }
 
+  void AnimateRootUIChestUnlockTime(const std::string& chestid,
+                                    seconds_t duration, seconds_t startvalue,
+                                    seconds_t endvalue);
+  void AnimateRootUITickets(seconds_t duration, int startvalue, int endvalue);
+  void AnimateRootUITokens(seconds_t duration, int startvalue, int endvalue);
   void SetRootUITicketsMeterValue(int value);
   void SetRootUITokensMeterValue(int value);
   void SetRootUILeagueValues(const std::string league_type, int league_number,

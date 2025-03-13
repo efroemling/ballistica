@@ -137,6 +137,7 @@ from bauiv1._uitypes import (
     BasicMainWindowState,
     uicleanupcheck,
     MainWindow,
+    RootUIUpdatePause,
 )
 from bauiv1._appsubsystem import UIV1AppSubsystem
 
@@ -229,6 +230,7 @@ __all__ = [
     'request_permission',
     'root_ui_pause_updates',
     'root_ui_resume_updates',
+    'RootUIUpdatePause',
     'rowwidget',
     'safecolor',
     'screenmessage',

@@ -3,6 +3,7 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -37,10 +38,35 @@ static const float kMeterColorR{0.4f};
 static const float kMeterColorG{0.38f};
 static const float kMeterColorB{0.5f};
 
+static const float kChestTextColorR{0.6f};
+static const float kChestTextColorG{1.0f};
+static const float kChestTextColorB{0.6f};
+
 static const bool kDebugPrint{false};
+
+constexpr std::array<const char*, 4> chest_ids{"0", "1", "2", "3"};
+
+int RootWidget::update_pause_count_;
 
 // Flip this to true when we're ready to use levels.
 static const bool kShowLevels{false};
+
+struct RootWidget::ChestSlot_ {
+  std::string appearance;
+  Button_* button{};
+  Image_* lock_icon{};
+  Image_* tv_icon{};
+  Text_* text{};
+  double unlock_time{-1.0};
+  double vis_unlock_time{-1.0};
+  double ad_allow_time{-1.0};
+  bool unlock_time_animating{};
+  double unlock_time_animation_start_time{};
+  double unlock_time_animation_end_time{};
+  double unlock_time_animation_start_val{};
+  double unlock_time_animation_end_val{};
+  bool live_display_dirty{};
+};
 
 // For defining toolbar buttons.
 struct RootWidget::ButtonDef_ {
@@ -156,6 +182,12 @@ RootWidget::RootWidget() {
   set_single_depth(true);
   set_single_depth_root(true);
   set_background(false);
+
+  // Currently have 4 hard coded chest slot ids; this may change in the
+  // future.
+  for (auto&& id : chest_ids) {
+    chest_slots_[id] = {};
+  }
 }
 
 RootWidget::~RootWidget() {
@@ -163,6 +195,19 @@ RootWidget::~RootWidget() {
   if (league_rank_anim_sound_play_id_.has_value()) {
     g_base->audio->PushSourceStopSoundCall(*league_rank_anim_sound_play_id_);
     league_rank_anim_sound_play_id_.reset();
+  }
+  if (chest_unlock_time_anim_sound_play_id_.has_value()) {
+    g_base->audio->PushSourceStopSoundCall(
+        *chest_unlock_time_anim_sound_play_id_);
+    chest_unlock_time_anim_sound_play_id_.reset();
+  }
+  if (tickets_anim_sound_play_id_.has_value()) {
+    g_base->audio->PushSourceStopSoundCall(*tickets_anim_sound_play_id_);
+    tickets_anim_sound_play_id_.reset();
+  }
+  if (tokens_anim_sound_play_id_.has_value()) {
+    g_base->audio->PushSourceStopSoundCall(*tokens_anim_sound_play_id_);
+    tokens_anim_sound_play_id_.reset();
   }
 }
 
@@ -848,6 +893,11 @@ void RootWidget::Setup() {
       chest_backing_ = AddButton_(bd);
     }
 
+    auto&& chest0{chest_slots_["0"]};
+    auto&& chest1{chest_slots_["1"]};
+    auto&& chest2{chest_slots_["2"]};
+    auto&& chest3{chest_slots_["3"]};
+
     // Chest/Slot buttons.
     ButtonDef_ b;
     b.h_align = 0.5f;
@@ -867,19 +917,19 @@ void RootWidget::Setup() {
 
     b.call = UIV1Python::ObjID::kRootUIChestSlot0PressCall;
     b.x = -1.5f * spacing;
-    chest_0_button_ = AddButton_(b);
+    chest0.button = AddButton_(b);
 
     b.call = UIV1Python::ObjID::kRootUIChestSlot1PressCall;
     b.x = -0.5f * spacing;
-    chest_1_button_ = AddButton_(b);
+    chest1.button = AddButton_(b);
 
     b.x = 0.5f * spacing;
     b.call = UIV1Python::ObjID::kRootUIChestSlot2PressCall;
-    chest_2_button_ = AddButton_(b);
+    chest2.button = AddButton_(b);
 
     b.x = 1.5f * spacing;
     b.call = UIV1Python::ObjID::kRootUIChestSlot3PressCall;
-    chest_3_button_ = AddButton_(b);
+    chest3.button = AddButton_(b);
 
     // Lock icons.
     {
@@ -891,17 +941,17 @@ void RootWidget::Setup() {
       imgd.img = "lock";
       imgd.depth_min = 0.3f;
 
-      imgd.button = chest_0_button_;
-      chest_0_lock_icon_ = AddImage_(imgd);
+      imgd.button = chest0.button;
+      chest0.lock_icon = AddImage_(imgd);
 
-      imgd.button = chest_1_button_;
-      chest_1_lock_icon_ = AddImage_(imgd);
+      imgd.button = chest1.button;
+      chest1.lock_icon = AddImage_(imgd);
 
-      imgd.button = chest_2_button_;
-      chest_2_lock_icon_ = AddImage_(imgd);
+      imgd.button = chest2.button;
+      chest2.lock_icon = AddImage_(imgd);
 
-      imgd.button = chest_3_button_;
-      chest_3_lock_icon_ = AddImage_(imgd);
+      imgd.button = chest3.button;
+      chest3.lock_icon = AddImage_(imgd);
     }
 
     // TV icons.
@@ -917,17 +967,17 @@ void RootWidget::Setup() {
       imgd.color_g = 1.0f;
       imgd.color_b = 2.0f;
 
-      imgd.button = chest_0_button_;
-      chest_0_tv_icon_ = AddImage_(imgd);
+      imgd.button = chest0.button;
+      chest0.tv_icon = AddImage_(imgd);
 
-      imgd.button = chest_1_button_;
-      chest_1_tv_icon_ = AddImage_(imgd);
+      imgd.button = chest1.button;
+      chest1.tv_icon = AddImage_(imgd);
 
-      imgd.button = chest_2_button_;
-      chest_2_tv_icon_ = AddImage_(imgd);
+      imgd.button = chest2.button;
+      chest2.tv_icon = AddImage_(imgd);
 
-      imgd.button = chest_3_button_;
-      chest_3_tv_icon_ = AddImage_(imgd);
+      imgd.button = chest3.button;
+      chest3.tv_icon = AddImage_(imgd);
     }
 
     // Lock times.
@@ -940,21 +990,21 @@ void RootWidget::Setup() {
       td.flatness = 1.0f;
       td.shadow = 1.0f;
       td.depth_min = 0.3f;
-      td.color_r = 0.6f;
-      td.color_g = 1.0f;
-      td.color_b = 0.6f;
+      td.color_r = kChestTextColorR;
+      td.color_g = kChestTextColorG;
+      td.color_b = kChestTextColorB;
 
-      td.button = chest_0_button_;
-      chest_0_time_text_ = AddText_(td);
+      td.button = chest0.button;
+      chest0.text = AddText_(td);
 
-      td.button = chest_1_button_;
-      chest_1_time_text_ = AddText_(td);
+      td.button = chest1.button;
+      chest1.text = AddText_(td);
 
-      td.button = chest_2_button_;
-      chest_2_time_text_ = AddText_(td);
+      td.button = chest2.button;
+      chest2.text = AddText_(td);
 
-      td.button = chest_3_button_;
-      chest_3_time_text_ = AddText_(td);
+      td.button = chest3.button;
+      chest3.text = AddText_(td);
     }
   }
 
@@ -1007,33 +1057,103 @@ void RootWidget::Setup() {
   UpdateForFocusedWindow_(nullptr);
 }
 
-void RootWidget::StepInboxAnim_(base::RenderPass* pass, seconds_t dt) {
+void RootWidget::StepInbox_(base::RenderPass* renderpass, seconds_t dt) {
+  // We only do work here during animations.
+  if (!inbox_animating_) {
+    return;
+  }
+
   assert(inbox_button_);
   auto* widget{inbox_button_->widget.get()};
   assert(widget);
 
-  if (!inbox_animating_) {
-    return;
-  }
-  if (pass->frame_def()->display_time() > inbox_anim_flash_time_) {
+  if (renderpass->frame_def()->display_time() > inbox_anim_flash_time_) {
     inbox_animating_ = false;
     widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
     return;
   } else {
-    auto sinput = 3.141592f
-                  * static_cast<float>(inbox_anim_flash_time_
-                                       - pass->frame_def()->display_time());
+    auto sinput =
+        3.141592f
+        * static_cast<float>(inbox_anim_flash_time_
+                             - renderpass->frame_def()->display_time());
     float mult{1.0f
                + fabs(2.0f
                       * sinf(4.0f * 3.1415f
                              * (inbox_anim_flash_time_
-                                - pass->frame_def()->display_time())))};
+                                - renderpass->frame_def()->display_time())))};
     widget->set_color(kBotLeftColorR * mult, kBotLeftColorG * mult,
                       kBotLeftColorB * mult);
   }
 }
 
-void RootWidget::StepLeagueRankAnim_(base::RenderPass* pass, seconds_t dt) {
+void RootWidget::StepChests_(base::RenderPass* renderpass, seconds_t dt) {
+  auto current_display_time = renderpass->frame_def()->display_time();
+  auto current_seconds_since_epoch{g_base->TimeSinceEpochCloudSeconds()};
+
+  bool should_update{};
+
+  for (auto&& chest_id : chest_ids) {
+    auto&& slot{chest_slots_[chest_id]};
+
+    // If the slot needs a regular update (and is not currently animating
+    // and updates are not currently paused) give it an opportunity to do
+    // so.
+    if (slot.live_display_dirty && !slot.unlock_time_animating
+        && !update_pause_count_) {
+      should_update = true;
+    }
+
+    if (!slot.unlock_time_animating) {
+      continue;
+    }
+
+    // Ok; this slot is animating. No matter what we'll want to update to
+    // show the latest vis value.
+    should_update = true;
+
+    if (current_display_time > slot.unlock_time_animation_end_time) {
+      // Anim is done; reset stuff and do an update to get things back
+      // to their default display.
+      slot.unlock_time_animating = false;
+      // Make note that we need to go back to a live value after this
+      // animation. It might not be possible immediately if updates are
+      // paused/etc.
+      slot.live_display_dirty = true;
+      // Stop any playing anim sound.
+      if (chest_unlock_time_anim_sound_play_id_.has_value()) {
+        g_base->audio->PushSourceStopSoundCall(
+            *chest_unlock_time_anim_sound_play_id_);
+        chest_unlock_time_anim_sound_play_id_.reset();
+      }
+    } else {
+      // Calc value from 0 to 1 for animation progression.
+      auto amt{std::max(
+          0.0, std::min(1.0, (current_display_time
+                              - slot.unlock_time_animation_start_time)
+                                 / (slot.unlock_time_animation_end_time
+                                    - slot.unlock_time_animation_start_time)))};
+
+      // Calc the current vis value for the animation.
+      slot.vis_unlock_time =
+          amt * slot.unlock_time_animation_end_val
+          + (1.0 - amt) * slot.unlock_time_animation_start_val;
+    }
+  }
+
+  // Aim to run at least once per second so time strings stay up to date.
+  if (current_display_time - last_chests_step_time_ >= 1.0) {
+    should_update = true;
+  }
+  if (!should_update) {
+    return;
+  }
+
+  last_chests_step_time_ = current_display_time;
+  UpdateChests_();
+}
+
+void RootWidget::StepLeagueRank_(base::RenderPass* renderpass, seconds_t dt) {
+  // We only do work here during animations.
   if (!league_rank_animating_) {
     return;
   }
@@ -1041,12 +1161,11 @@ void RootWidget::StepLeagueRankAnim_(base::RenderPass* pass, seconds_t dt) {
   assert(trophy_meter_button_);
 
   auto improving{league_rank_vis_value_ < league_rank_anim_start_val_};
-
   float anim_dir{league_rank_vis_value_ > league_rank_anim_val_ ? 1.0f : -1.0f};
-
-  float anim_time{static_cast<float>(g_core->AppTimeSeconds()
+  float anim_time{static_cast<float>(renderpass->frame_def()->display_time()
                                      - league_rank_anim_start_time_)};
   auto anim_speed{4.0f + anim_time * 20.0f};
+
   // Get the pain over with quickly if things are getting worse.
   if (!improving) {
     anim_speed *= 4.0f;
@@ -1054,7 +1173,8 @@ void RootWidget::StepLeagueRankAnim_(base::RenderPass* pass, seconds_t dt) {
   league_rank_anim_val_ += static_cast<float>(dt) * anim_speed * anim_dir;
   league_rank_text_->widget->SetText(
       "#" + std::to_string(static_cast<int>(league_rank_anim_val_)));
-  float cscale{1.5f - 0.5f * sinf(40.0f * pass->frame_def()->display_time())};
+  float cscale{1.5f
+               - 0.5f * sinf(40.0f * renderpass->frame_def()->display_time())};
   float cscale2{0.7f * 1.0f + 0.3f * cscale};
 
   if (improving) {
@@ -1093,27 +1213,174 @@ void RootWidget::StepLeagueRankAnim_(base::RenderPass* pass, seconds_t dt) {
   }
 }
 
-void RootWidget::Draw(base::RenderPass* pass, bool transparent) {
+void RootWidget::StepTicketsMeter_(base::RenderPass* renderpass, seconds_t dt) {
+  auto do_update{false};
+
+  auto current_display_time = renderpass->frame_def()->display_time();
+
+  // If our live display is dirty and there's not animation or pauses going
+  // on, update our display from the live data.
+  if (tickets_meter_live_display_dirty_ && !tickets_meter_animating_
+      && !update_pause_count_) {
+    tickets_meter_vis_value_ = tickets_meter_value_;
+    tickets_meter_live_display_dirty_ = false;
+    do_update = true;
+  }
+
+  // If we're animating, calc a new interpolated value and always update.
+  if (tickets_meter_animating_) {
+    // Always update when animating.
+    do_update = true;
+
+    if (current_display_time > tickets_anim_end_time_) {
+      // Anim is done; reset stuff and do an update to get things back
+      // to their default display.
+      tickets_meter_animating_ = false;
+      // g_base->audio->SafePlaySysSound(base::SysSoundID::kCashRegister);
+      // Make note that we need to go back to a live value after this
+      // animation. It might not be possible immediately if updates are
+      // paused/etc.
+      tickets_meter_live_display_dirty_ = true;
+      // Stop any playing anim sound.
+      if (tickets_anim_sound_play_id_.has_value()) {
+        g_base->audio->PushSourceStopSoundCall(*tickets_anim_sound_play_id_);
+        tickets_anim_sound_play_id_.reset();
+      }
+    } else {
+      // Still animating - calc current interp values.
+      // Calc value from 0 to 1 for animation progression.
+      auto amt{std::max(
+          0.0, std::min(1.0, (current_display_time - tickets_anim_start_time_)
+                                 / (tickets_anim_end_time_
+                                    - tickets_anim_start_time_)))};
+
+      // Calc the current vis value for the animation.
+      tickets_meter_vis_value_ = static_cast<int>(
+          amt * static_cast<double>(tickets_anim_end_value_)
+          + (1.0 - amt) * static_cast<double>(tickets_anim_start_value_));
+    }
+  }
+
+  if (!do_update) {
+    return;
+  }
+
+  // Ok; update our visuals.
+  assert(tickets_meter_text_);
+  tickets_meter_text_->widget->SetText(
+      tickets_meter_vis_value_ >= 0 ? std::to_string(tickets_meter_vis_value_)
+                                    : "");
+  UpdateTicketsMeterTextColor_();
+}
+
+void RootWidget::StepTokensMeter_(base::RenderPass* renderpass, seconds_t dt) {
+  auto do_update{false};
+
+  auto current_display_time = renderpass->frame_def()->display_time();
+
+  // If our live display is dirty and there's not animation or pauses going
+  // on, update our display from the live data.
+  if (tokens_meter_live_display_dirty_ && !tokens_meter_animating_
+      && !update_pause_count_) {
+    tokens_meter_vis_value_ = tokens_meter_value_;
+    tokens_meter_live_display_dirty_ = false;
+    do_update = true;
+  }
+
+  // If we're animating, calc a new interpolated value and always update.
+  if (tokens_meter_animating_) {
+    // Always update when animating.
+    do_update = true;
+
+    if (current_display_time > tokens_anim_end_time_) {
+      // Anim is done; reset stuff and do an update to get things back
+      // to their default display.
+      tokens_meter_animating_ = false;
+      // g_base->audio->SafePlaySysSound(base::SysSoundID::kCashRegister);
+      // Make note that we need to go back to a live value after this
+      // animation. It might not be possible immediately if updates are
+      // paused/etc.
+      tokens_meter_live_display_dirty_ = true;
+      // Stop any playing anim sound.
+      if (tokens_anim_sound_play_id_.has_value()) {
+        g_base->audio->PushSourceStopSoundCall(*tokens_anim_sound_play_id_);
+        tokens_anim_sound_play_id_.reset();
+      }
+    } else {
+      // Still animating - calc current interp values.
+      // Calc value from 0 to 1 for animation progression.
+      auto amt{std::max(
+          0.0, std::min(1.0, (current_display_time - tokens_anim_start_time_)
+                                 / (tokens_anim_end_time_
+                                    - tokens_anim_start_time_)))};
+
+      // Calc the current vis value for the animation.
+      tokens_meter_vis_value_ = static_cast<int>(
+          amt * static_cast<double>(tokens_anim_end_value_)
+          + (1.0 - amt) * static_cast<double>(tokens_anim_start_value_));
+    }
+  }
+
+  if (!do_update) {
+    return;
+  }
+
+  // Ok; update our visuals.
+  assert(tokens_meter_text_);
+  assert(get_tokens_button_);
+  if (gold_pass_) {
+    // Use the infinity symbol if we have full unicode support.
+    tokens_meter_text_->widget->SetText(
+        g_buildconfig.enable_os_font_rendering() ? "\xE2\x88\x9E" : "inf");
+  } else {
+    tokens_meter_text_->widget->SetText(
+        tokens_meter_vis_value_ >= 0 ? std::to_string(tokens_meter_vis_value_)
+                                     : "");
+  }
+  UpdateTokensMeterTextColor_();
+}
+
+void RootWidget::Draw(base::RenderPass* renderpass, bool transparent) {
+  // Keep this handy for stuff that wants to use it.
+  last_draw_display_time_ = renderpass->frame_def()->display_time();
+
   // Opaque pass gets drawn first; use that as an opportunity to step up our
   // motion.
   if (!transparent) {
-    seconds_t current_time = pass->frame_def()->display_time();
-    seconds_t time_diff = std::min(seconds_t{0.1}, current_time - update_time_);
-
-    StepChildWidgets_(time_diff);
-    StepChests_();
-    StepLeagueRankAnim_(pass, time_diff);
-    StepInboxAnim_(pass, time_diff);
-
-    if (update_pause_count_ != 0) {
-      // update_pause_time_ +=
-    } else {
-      update_pause_time_ = 0.0;
-    }
-
-    update_time_ = current_time;
+    seconds_t current_time = renderpass->frame_def()->display_time();
+    Update_(renderpass);
   }
-  ContainerWidget::Draw(pass, transparent);
+  ContainerWidget::Draw(renderpass, transparent);
+}
+
+void RootWidget::Update_(base::RenderPass* renderpass) {
+  seconds_t current_time = renderpass->frame_def()->display_time();
+  seconds_t time_diff = std::min(seconds_t{0.1}, current_time - update_time_);
+
+  // Keep track of how long updates have been paused for and warn if it
+  // seems like we're stuck.
+  if (update_pause_count_ > 0) {
+    auto oldtime{update_pause_total_time_};
+    update_pause_total_time_ += time_diff;
+    seconds_t threshold{30.0};
+    if (oldtime < threshold && update_pause_total_time_ >= threshold) {
+      g_core->Log(LogName::kBaApp, LogLevel::kWarning,
+                  "RootWidget updates have been paused for "
+                      + std::to_string(update_pause_total_time_)
+                      + " seconds; something may be broken.");
+    }
+  } else {
+    update_pause_total_time_ = 0.0;
+  }
+
+  StepChildWidgets_(time_diff);
+  StepChests_(renderpass, time_diff);
+  StepLeagueRank_(renderpass, time_diff);
+  StepInbox_(renderpass, time_diff);
+  StepTicketsMeter_(renderpass, time_diff);
+  StepTokensMeter_(renderpass, time_diff);
+
+  update_time_ = current_time;
 }
 
 auto RootWidget::AddButton_(const ButtonDef_& def) -> RootWidget::Button_* {
@@ -1245,16 +1512,6 @@ void RootWidget::UpdateForFocusedWindow_(Widget* widget) {
     toolbar_visibility_ = widget->toolbar_visibility();
   }
   MarkForUpdate();
-}
-
-void RootWidget::StepChests_() {
-  // Aim to run this once per second.
-  auto now = g_core->AppTimeSeconds();
-  if (now - last_chests_step_time_ < 1.0) {
-    return;
-  }
-  last_chests_step_time_ = now;
-  UpdateChests_();
 }
 
 void RootWidget::StepChildWidgets_(seconds_t dt) {
@@ -1519,6 +1776,7 @@ auto RootWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     return ContainerWidget::HandleMessage(m);
   }
 }
+
 void RootWidget::SquadPress() {
   assert(g_base->InLogicThread());
   if (squad_button_) {
@@ -1578,13 +1836,13 @@ auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
   } else if (s == "overlay_stack") {
     return overlay_stack_widget_;
   } else if (s == "chest_0_button") {
-    return chest_0_button_->widget.get();
+    return chest_slots_.at("0").button->widget.get();
   } else if (s == "chest_1_button") {
-    return chest_1_button_->widget.get();
+    return chest_slots_.at("1").button->widget.get();
   } else if (s == "chest_2_button") {
-    return chest_2_button_->widget.get();
+    return chest_slots_.at("2").button->widget.get();
   } else if (s == "chest_3_button") {
-    return chest_3_button_->widget.get();
+    return chest_slots_.at("3").button->widget.get();
   }
   return nullptr;
 }
@@ -1626,36 +1884,29 @@ void RootWidget::SetSquadSizeLabel(int val) {
 }
 
 void RootWidget::SetTicketsMeterValue(int val) {
-  assert(tickets_meter_text_);
-  tickets_meter_text_->widget->SetText(val >= 0 ? std::to_string(val) : "");
+  // Simply store our live value and flag that we have a new live value to
+  // update with.
+  tickets_meter_value_ = val;
+  tickets_meter_live_display_dirty_ = true;
 }
 
 void RootWidget::SetTokensMeterValue(int val, bool gold_pass) {
-  assert(tokens_meter_text_);
-  assert(get_tokens_button_);
+  // Simply store our live value and flag that we have a new live value to
+  // update with.
+  tokens_meter_value_ = val;
   gold_pass_ = gold_pass;
+  tokens_meter_live_display_dirty_ = true;
+
+  // Flag a re-layout since gold pass appearing/disappearing may change our
+  // widget layout (plus button disappearing, etc.).
+  assert(get_tokens_button_);
   if (gold_pass_) {
     get_tokens_button_->force_hide = true;
-
-    // Use the infinity symbol if we have full unicode support.
-    tokens_meter_text_->widget->SetText(
-        g_buildconfig.enable_os_font_rendering() ? "\xE2\x88\x9E" : "inf");
   } else {
     get_tokens_button_->force_hide = false;
-    tokens_meter_text_->widget->SetText(val >= 0 ? std::to_string(val) : "");
   }
-  UpdateTokensMeterTextColor_();
-  // May need to animate in/out.
-  child_widgets_dirty_ = true;
-}
 
-void RootWidget::UpdateTokensMeterTextColor_() {
-  auto oval{have_live_values_ ? 1.0f : 0.4f};
-  if (gold_pass_ && have_live_values_) {
-    tokens_meter_text_->widget->set_color(1.0f, 0.6f, 0.1f, 0.6f);
-  } else {
-    tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
-  }
+  child_widgets_dirty_ = true;
 }
 
 auto RootWidget::ColorForLeagueValue_(const std::string& value) -> Vector3f {
@@ -1840,7 +2091,7 @@ void RootWidget::UpdateLeagueRankDisplay_() {
       league_rank_anim_start_val_ = prev_league_rank_vis_value;
       league_rank_anim_val_ = prev_league_rank_vis_value;
 
-      league_rank_anim_start_time_ = g_core->AppTimeSeconds();
+      league_rank_anim_start_time_ = g_base->logic->display_time();
 
       auto improving{league_rank_vis_value_ < league_rank_anim_start_val_};
 
@@ -1894,16 +2145,51 @@ void RootWidget::SetXPText(const std::string& val) {
   xp_text_->widget->SetText(val);
 }
 
+void RootWidget::UpdateTicketsMeterTextColor_() {
+  assert(tickets_meter_text_);
+
+  if (!have_live_values_) {
+    tickets_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, 0.4f);
+  } else {
+    if (tickets_meter_animating_) {
+      float mult{1.2f
+                 + (0.5f * sinf(8.0f * 3.1415f * (last_draw_display_time_)))};
+      tickets_meter_text_->widget->set_color(0.2f * mult, 1.0f * mult,
+                                             0.2f * mult, 1.0f);
+    } else {
+      tickets_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+  }
+}
+
+void RootWidget::UpdateTokensMeterTextColor_() {
+  if (gold_pass_ && have_live_values_) {
+    tokens_meter_text_->widget->set_color(1.0f, 0.6f, 0.1f, 0.6f);
+    return;
+  }
+
+  if (!have_live_values_) {
+    tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, 0.4f);
+  } else {
+    if (tokens_meter_animating_) {
+      float mult{1.2f
+                 + (0.5f * sinf(8.0f * 3.1415f * (last_draw_display_time_)))};
+      tokens_meter_text_->widget->set_color(0.2f * mult, 1.0f * mult,
+                                            0.2f * mult, 1.0f);
+    } else {
+      tokens_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+  }
+}
+
 void RootWidget::SetHaveLiveValues(bool have_live_values) {
   have_live_values_ = have_live_values;
-  // auto cval{have_live_values ? 1.0f : 0.4f};
   auto oval{have_live_values ? 1.0f : 0.4f};
   auto oval2{have_live_values ? 1.0f : 0.4f};
 
-  assert(tickets_meter_text_);
   assert(tickets_meter_icon_);
-  tickets_meter_text_->widget->set_color(1.0f, 1.0f, 1.0f, oval);
   tickets_meter_icon_->widget->set_opacity(oval2);
+  UpdateTicketsMeterTextColor_();
 
   assert(tokens_meter_text_);
   assert(tokens_meter_icon_);
@@ -1942,8 +2228,8 @@ void RootWidget::SetHaveLiveValues(bool have_live_values) {
   assert(trophy_icon_);
   trophy_icon_->widget->set_opacity(oval2);
 
-  for (auto* button :
-       {chest_0_button_, chest_1_button_, chest_2_button_, chest_3_button_}) {
+  for (auto&& chest_id : chest_ids) {
+    auto&& button{chest_slots_.at(chest_id).button};
     assert(button);
     button->widget->set_opacity(have_live_values ? 1.0f : 0.5f);
   }
@@ -1960,19 +2246,29 @@ void RootWidget::SetChests(
     seconds_t chest_3_unlock_time, seconds_t chest_0_ad_allow_time,
     seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
     seconds_t chest_3_ad_allow_time) {
-  chest_0_appearance_ = chest_0_appearance;
-  chest_1_appearance_ = chest_1_appearance;
-  chest_2_appearance_ = chest_2_appearance;
-  chest_3_appearance_ = chest_3_appearance;
-  chest_0_unlock_time_ = chest_0_unlock_time;
-  chest_1_unlock_time_ = chest_1_unlock_time;
-  chest_2_unlock_time_ = chest_2_unlock_time;
-  chest_3_unlock_time_ = chest_3_unlock_time;
-  chest_0_ad_allow_time_ = chest_0_ad_allow_time;
-  chest_1_ad_allow_time_ = chest_1_ad_allow_time;
-  chest_2_ad_allow_time_ = chest_2_ad_allow_time;
-  chest_3_ad_allow_time_ = chest_3_ad_allow_time;
-  UpdateChests_();
+  auto& chest0{chest_slots_["0"]};
+  chest0.appearance = chest_0_appearance;
+  chest0.unlock_time = chest_0_unlock_time;
+  chest0.ad_allow_time = chest_0_ad_allow_time;
+  chest0.live_display_dirty = true;
+
+  auto& chest1{chest_slots_["1"]};
+  chest1.appearance = chest_1_appearance;
+  chest1.unlock_time = chest_1_unlock_time;
+  chest1.ad_allow_time = chest_1_ad_allow_time;
+  chest1.live_display_dirty = true;
+
+  auto& chest2{chest_slots_["2"]};
+  chest2.appearance = chest_2_appearance;
+  chest2.unlock_time = chest_2_unlock_time;
+  chest2.ad_allow_time = chest_2_ad_allow_time;
+  chest2.live_display_dirty = true;
+
+  auto& chest3{chest_slots_["3"]};
+  chest3.appearance = chest_3_appearance;
+  chest3.unlock_time = chest_3_unlock_time;
+  chest3.ad_allow_time = chest_3_ad_allow_time;
+  chest3.live_display_dirty = true;
 }
 
 void RootWidget::OnLanguageChange() {
@@ -1981,6 +2277,8 @@ void RootWidget::OnLanguageChange() {
 }
 
 void RootWidget::UpdateChests_() {
+  // Note: For consistency, this should only be run as part of Draw().
+
   // Make sure we've got the latest translated strings for open times.
   if (translations_dirty_) {
     time_suffix_hours_ =
@@ -1992,82 +2290,57 @@ void RootWidget::UpdateChests_() {
     translations_dirty_ = false;
   }
 
-  std::vector<std::tuple<const std::string&, Button_*, Image_*, Image_*, Text_*,
-                         seconds_t, seconds_t>>
-      slots =
-          // NOLINTNEXTLINE (clang-format's formatting here upsets cpplint).
-      {
-          {chest_0_appearance_, chest_0_button_, chest_0_lock_icon_,
-           chest_0_tv_icon_, chest_0_time_text_, chest_0_unlock_time_,
-           chest_0_ad_allow_time_},
-          {chest_1_appearance_, chest_1_button_, chest_1_lock_icon_,
-           chest_1_tv_icon_, chest_1_time_text_, chest_1_unlock_time_,
-           chest_1_ad_allow_time_},
-          {chest_2_appearance_, chest_2_button_, chest_2_lock_icon_,
-           chest_2_tv_icon_, chest_2_time_text_, chest_2_unlock_time_,
-           chest_2_ad_allow_time_},
-          {chest_3_appearance_, chest_3_button_, chest_3_lock_icon_,
-           chest_3_tv_icon_, chest_3_time_text_, chest_3_unlock_time_,
-           chest_3_ad_allow_time_},
-      };
-
   // We drop the backing/slots down a bit if we have no chests.
   auto have_chests{false};
 
-  // clang-format off
-  for (const auto& [appearance,
-                    b,
-                    l,
-                    tv,
-                    t,
-                    ut,
-                    aat] : slots) {
-    // clang-format on
-
-    if (appearance != "") {
+  for (auto&& chest_id : chest_ids) {
+    const auto& slot{chest_slots_[chest_id]};
+    if (slot.appearance != "") {
       have_chests = true;
+      break;
     }
   }
 
   auto now{g_base->TimeSinceEpochCloudSeconds()};
 
-  // clang-format off
-  for (const auto& [appearance,
-                    btn,
-                    lock_img,
-                    tv_img,
-                    txt,
-                    unlocktm,
-                    adallowtm] : slots) {
-    // clang-format on
+  for (auto&& chest_id : chest_ids) {
+    auto&& slot{chest_slots_[chest_id]};
 
-    assert(btn);
-    assert(lock_img);
+    // Make our live unlock time visible *unless* we've got live updates
+    // paused or are in the middle of an animation.
+    if (!update_pause_count_ && !slot.unlock_time_animating) {
+      slot.vis_unlock_time = slot.unlock_time;
+      // We're updating from live values here.
+      slot.live_display_dirty = false;
+    }
+
+    assert(slot.button);
+    assert(slot.lock_icon);
     Object::Ref<base::TextureAsset> tex;
-    if (appearance == "") {
+    if (slot.appearance == "") {
       // Empty slot.
-      btn->widget->set_color(0.473f, 0.44f, 0.583f);
-      btn->width = btn->height = 80.0f;
-      btn->y = have_chests ? 44.0f : -2.0f;
+      slot.button->widget->set_color(0.473f, 0.44f, 0.583f);
+      slot.button->width = slot.button->height = 80.0f;
+      slot.button->y = have_chests ? 44.0f : -2.0f;
       {
         base::Assets::AssetListLock lock;
         tex = g_base->assets->GetTexture("chestIconEmpty");
       }
-      lock_img->visible = false;
-      tv_img->visible = false;
-      txt->visible = false;
+      slot.lock_icon->visible = false;
+      slot.tv_icon->visible = false;
+      slot.text->visible = false;
 
-      btn->widget->SetTintTexture(nullptr);
-      btn->widget->set_tint_color(1.0f, 1.0f, 1.0f);
-      btn->widget->set_tint2_color(1.0f, 1.0f, 1.0f);
+      slot.button->widget->SetTintTexture(nullptr);
+      slot.button->widget->set_tint_color(1.0f, 1.0f, 1.0f);
+      slot.button->widget->set_tint2_color(1.0f, 1.0f, 1.0f);
 
     } else {
       Object::Ref<base::TextureAsset> textint;
 
       // Chest in slot.
       have_chests = true;
-      btn->width = btn->height = 110.0f;
-      btn->y = 44.0f;
+      slot.button->width = slot.button->height = 110.0f;
+      slot.button->y = 44.0f;
       std::string chest_tex_closed;
       std::string chest_tex_closed_tint;
       Vector3f chest_color;
@@ -2075,8 +2348,8 @@ void RootWidget::UpdateChests_() {
       Vector3f chest_tint2;
       if (auto* classic = g_base->classic()) {
         classic->GetClassicChestDisplayInfo(
-            appearance, &chest_tex_closed, &chest_tex_closed_tint, &chest_color,
-            &chest_tint, &chest_tint2);
+            slot.appearance, &chest_tex_closed, &chest_tex_closed_tint,
+            &chest_color, &chest_tint, &chest_tint2);
       } else {
         chest_tex_closed = "chestIcon";
         chest_tex_closed_tint = "white";
@@ -2089,31 +2362,44 @@ void RootWidget::UpdateChests_() {
         tex = g_base->assets->GetTexture(chest_tex_closed);
         textint = g_base->assets->GetTexture(chest_tex_closed_tint);
       }
-      btn->widget->set_color(chest_color.x, chest_color.y, chest_color.z);
-      btn->widget->SetTintTexture(textint.get());
-      btn->widget->set_tint_color(chest_tint.x, chest_tint.y, chest_tint.z);
-      btn->widget->set_tint2_color(chest_tint2.x, chest_tint2.y, chest_tint2.z);
+      slot.button->widget->set_color(chest_color.x, chest_color.y,
+                                     chest_color.z);
+      slot.button->widget->SetTintTexture(textint.get());
+      slot.button->widget->set_tint_color(chest_tint.x, chest_tint.y,
+                                          chest_tint.z);
+      slot.button->widget->set_tint2_color(chest_tint2.x, chest_tint2.y,
+                                           chest_tint2.z);
 
-      auto to_unlock{gold_pass_ ? 0
-                                : static_cast<int>(std::ceil(unlocktm - now))};
+      auto to_unlock{
+          gold_pass_ ? 0
+                     : static_cast<int>(std::ceil(slot.vis_unlock_time - now))};
 
       if (to_unlock > 0) {
-        // Show the ad-available tag IF the ad provides an allow-ad time AND
-        // that time has passed AND we've got an ad ready to go.
-        auto allow_ad{adallowtm > 0.0 && adallowtm <= now
+        // Show the ad-available tag IF the ad provides an allow-ad time
+        // AND that time has passed AND we've got an ad ready to go.
+        auto allow_ad{slot.ad_allow_time > 0.0 && slot.ad_allow_time <= now
                       && g_core->have_incentivized_ad};
 
-        lock_img->visible = true;
-        txt->visible = true;
-        tv_img->visible = allow_ad;
-        txt->widget->SetText(GetTimeStr_(to_unlock));
+        slot.lock_icon->visible = true;
+        slot.text->visible = true;
+        slot.tv_icon->visible = allow_ad;
+        slot.text->widget->SetText(
+            GetTimeStr_(to_unlock, slot.unlock_time_animating));
+        if (slot.unlock_time_animating) {
+          float mult{
+              1.2f + (0.5f * sinf(8.0f * 3.1415f * (last_chests_step_time_)))};
+          slot.text->widget->set_color(0.2 * mult, 1.0 * mult, 0.2 * mult, 1.0);
+        } else {
+          slot.text->widget->set_color(kChestTextColorR, kChestTextColorG,
+                                       kChestTextColorB, 1.0);
+        }
       } else {
-        lock_img->visible = false;
-        tv_img->visible = false;
-        txt->visible = false;
+        slot.lock_icon->visible = false;
+        slot.tv_icon->visible = false;
+        slot.text->visible = false;
       }
     }
-    btn->widget->SetTexture(tex.get());
+    slot.button->widget->SetTexture(tex.get());
   }
 
   assert(chest_backing_);
@@ -2122,7 +2408,7 @@ void RootWidget::UpdateChests_() {
   child_widgets_dirty_ = true;
 }
 
-auto RootWidget::GetTimeStr_(seconds_t diff) -> std::string {
+auto RootWidget::GetTimeStr_(seconds_t diff, bool animating) -> std::string {
   // NOTE: Adapted from time_display_node.cc. Not sure if it would make
   // sense to share this code somewhere?..
   std::string output;
@@ -2161,8 +2447,10 @@ auto RootWidget::GetTimeStr_(seconds_t diff) -> std::string {
     output += s;
   }
 
-  // Only show seconds when within a few minutes.
-  if (m < 2) {
+  // Only show seconds when within a few minutes and only if we aren't
+  // animating (otherwise we see animations go 3m..2m..1m 57s etc which
+  // looks odd.)
+  if (m < 2 && !animating) {
     if (show_sub_seconds) {
       float sec = fmod(static_cast<float>(t) / 1000.0f, 60.0f);
       if (sec >= 0.005f || output.empty()) {
@@ -2198,16 +2486,91 @@ auto RootWidget::GetTimeStr_(seconds_t diff) -> std::string {
 
 void RootWidget::PauseUpdates() {
   assert(g_base->InLogicThread());
-  // TODO(ericf): wire this up.
-  // printf("HELLO PAUSING\n");
   update_pause_count_ += 1;
 }
 
 void RootWidget::ResumeUpdates() {
   assert(g_base->InLogicThread());
-  // TODO(ericf): wire this up.
-  // printf("HELLO RESUMING\n");
   update_pause_count_ -= 1;
+  if (update_pause_count_ < 0) {
+    BA_LOG_ONCE(LogName::kBaApp, LogLevel::kError,
+                "RootWidget update-pause-count < 0; should not happen.");
+  }
+}
+
+void RootWidget::AnimateChestUnlockTime(const std::string& chestid,
+                                        seconds_t duration,
+                                        seconds_t startvalue,
+                                        seconds_t endvalue) {
+  assert(g_base->InLogicThread());
+
+  auto&& chest_iter{chest_slots_.find(chestid)};
+  if (chest_iter == chest_slots_.end()) {
+    throw Exception("Invalid chest slot id: " + chestid, PyExcType::kValue);
+  }
+  auto&& chest{chest_iter->second};
+  chest.unlock_time_animating = true;
+  chest.unlock_time_animation_start_time = g_base->logic->display_time();
+  chest.unlock_time_animation_end_time =
+      chest.unlock_time_animation_start_time + duration;
+
+  chest.unlock_time_animation_start_val = startvalue;
+  chest.unlock_time_animation_end_val = endvalue;
+
+  // Only do one of these sounds at a time; if we ever need multiple we'll
+  // need multiple sound-play-ids.
+  if (!chest_unlock_time_anim_sound_play_id_.has_value()) {
+    if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
+      s->SetPositional(false);
+      chest_unlock_time_anim_sound_play_id_ =
+          s->Play(g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+      s->End();
+    }
+  }
+}
+
+void RootWidget::AnimateTickets(seconds_t duration, int startvalue,
+                                int endvalue) {
+  assert(g_base->InLogicThread());
+
+  tickets_meter_animating_ = true;
+  tickets_anim_start_time_ = g_base->logic->display_time();
+  tickets_anim_end_time_ = tickets_anim_start_time_ + duration;
+  tickets_anim_start_value_ = startvalue;
+  tickets_anim_end_value_ = endvalue;
+
+  // Only do one of these sounds at a time; if we ever need multiple we'll
+  // need multiple sound-play-ids.
+  if (!tickets_anim_sound_play_id_.has_value()) {
+    if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
+      s->SetPositional(false);
+      tickets_anim_sound_play_id_ =
+          s->Play(g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+      s->End();
+    }
+  }
+}
+
+void RootWidget::AnimateTokens(seconds_t duration, int startvalue,
+                               int endvalue) {
+  assert(g_base->InLogicThread());
+
+  tokens_meter_animating_ = true;
+  tokens_anim_start_time_ = g_base->logic->display_time();
+  tokens_anim_end_time_ = tokens_anim_start_time_ + duration;
+  tokens_anim_start_value_ = startvalue;
+  tokens_anim_end_value_ = endvalue;
+
+  // Only do one of these sounds at a time; if we ever need multiple we'll
+  // need multiple sound-play-ids.
+  if (!tokens_anim_sound_play_id_.has_value()) {
+    if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
+      s->SetPositional(false);
+      tokens_anim_sound_play_id_ =
+          s->Play(g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+      s->End();
+    }
+  }
 }
 
 }  // namespace ballistica::ui_v1

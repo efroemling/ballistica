@@ -857,11 +857,13 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                         )
 
     @staticmethod
-    def run_bs_client_effects(effects: list[bacommon.bs.ClientEffect]) -> None:
+    def run_bs_client_effects(
+        effects: list[bacommon.bs.ClientEffect], delay: float = 0.0
+    ) -> None:
         """Run client effects sent from the master server."""
         from baclassic._clienteffect import run_bs_client_effects
 
-        run_bs_client_effects(effects)
+        run_bs_client_effects(effects, delay=delay)
 
     @staticmethod
     def basic_client_ui_button_label_str(

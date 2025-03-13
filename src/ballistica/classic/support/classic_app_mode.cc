@@ -1846,4 +1846,37 @@ auto ClassicAppMode::GetBottomLeftEdgeHeight() -> float {
   return 0.0f;
 }
 
+void ClassicAppMode::AnimateRootUIChestUnlockTime(const std::string& chestid,
+                                                  seconds_t duration,
+                                                  seconds_t startvalue,
+                                                  seconds_t endvalue) {
+  assert(g_base->InLogicThread());
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->AnimateChestUnlockTime(chestid, duration, startvalue,
+                                          endvalue);
+    }
+  }
+}
+
+void ClassicAppMode::AnimateRootUITickets(seconds_t duration, int startvalue,
+                                          int endvalue) {
+  assert(g_base->InLogicThread());
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->AnimateTickets(duration, startvalue, endvalue);
+    }
+  }
+}
+
+void ClassicAppMode::AnimateRootUITokens(seconds_t duration, int startvalue,
+                                         int endvalue) {
+  assert(g_base->InLogicThread());
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->AnimateTokens(duration, startvalue, endvalue);
+    }
+  }
+}
+
 }  // namespace ballistica::classic

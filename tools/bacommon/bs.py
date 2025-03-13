@@ -659,6 +659,9 @@ class ClientEffectTypeID(Enum):
     SCREEN_MESSAGE = 'm'
     SOUND = 's'
     DELAY = 'd'
+    CHEST_WAIT_TIME_ANIMATION = 't'
+    TICKETS_ANIMATION = 'ta'
+    TOKENS_ANIMATION = 'toa'
 
 
 class ClientEffect(IOMultiType[ClientEffectTypeID]):
@@ -680,6 +683,7 @@ class ClientEffect(IOMultiType[ClientEffectTypeID]):
     def get_type(cls, type_id: ClientEffectTypeID) -> type[ClientEffect]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
+        # pylint: disable=too-many-return-statements
 
         t = ClientEffectTypeID
         if type_id is t.UNKNOWN:
@@ -690,6 +694,12 @@ class ClientEffect(IOMultiType[ClientEffectTypeID]):
             return ClientEffectSound
         if type_id is t.DELAY:
             return ClientEffectDelay
+        if type_id is t.CHEST_WAIT_TIME_ANIMATION:
+            return ClientEffectChestWaitTimeAnimation
+        if type_id is t.TICKETS_ANIMATION:
+            return ClientEffectTicketsAnimation
+        if type_id is t.TOKENS_ANIMATION:
+            return ClientEffectTokensAnimation
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -749,6 +759,52 @@ class ClientEffectSound(ClientEffect):
     @classmethod
     def get_type_id(cls) -> ClientEffectTypeID:
         return ClientEffectTypeID.SOUND
+
+
+@ioprepped
+@dataclass
+class ClientEffectChestWaitTimeAnimation(ClientEffect):
+    """Animate chest wait time changing."""
+
+    chestid: Annotated[str, IOAttrs('c')]
+    duration: Annotated[float, IOAttrs('u')]
+    startvalue: Annotated[datetime.datetime, IOAttrs('o')]
+    endvalue: Annotated[datetime.datetime, IOAttrs('n')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ClientEffectTypeID:
+        return ClientEffectTypeID.CHEST_WAIT_TIME_ANIMATION
+
+
+@ioprepped
+@dataclass
+class ClientEffectTicketsAnimation(ClientEffect):
+    """Animate tickets count."""
+
+    duration: Annotated[float, IOAttrs('u')]
+    startvalue: Annotated[int, IOAttrs('s')]
+    endvalue: Annotated[int, IOAttrs('e')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ClientEffectTypeID:
+        return ClientEffectTypeID.TICKETS_ANIMATION
+
+
+@ioprepped
+@dataclass
+class ClientEffectTokensAnimation(ClientEffect):
+    """Animate tokens count."""
+
+    duration: Annotated[float, IOAttrs('u')]
+    startvalue: Annotated[int, IOAttrs('s')]
+    endvalue: Annotated[int, IOAttrs('e')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ClientEffectTypeID:
+        return ClientEffectTypeID.TOKENS_ANIMATION
 
 
 @ioprepped
@@ -883,12 +939,12 @@ class ChestActionResponse(Response):
 
     # Printable success message. Shown in green with a cash-register
     # sound. Can be used for things like successful wait reductions via
-    # ad views. Used in builds earlier than 22308; can remove once
-    # 22308+ is ubiquitous.
+    # ad views. Used in builds earlier than 22311; can remove once
+    # 22311+ is ubiquitous.
     success_msg: Annotated[str | None, IOAttrs('s', store_default=False)] = None
 
     # Effects to show on the client. Replaces warning and success_msg in
-    # build 22308 or newer.
+    # build 22311 or newer.
     effects: Annotated[
         list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)

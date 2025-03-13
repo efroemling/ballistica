@@ -88,7 +88,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         self.window_auto_recreate_suppress_count = 0
 
-        self._last_win_recreate_size: tuple[float, float] | None = None
+        self._last_win_recreate_screen_size: tuple[float, float] | None = None
         self._last_win_recreate_uiscale: bauiv1.UIScale | None = None
         self._last_win_recreate_time: float | None = None
         self._win_recreate_timer: babase.AppTimer | None = None
@@ -198,6 +198,15 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         from bauiv1._uitypes import MainWindow
+
+        # If we haven't grabbed initial uiscale or screen size for recreate
+        # comparision purposes, this is a good time to do so.
+        if self._last_win_recreate_screen_size is None:
+            self._last_win_recreate_screen_size = (
+                babase.get_virtual_screen_size()
+            )
+        if self._last_win_recreate_uiscale is None:
+            self._last_win_recreate_uiscale = babase.app.ui_v1.uiscale
 
         # Encourage migration to the new higher level nav calls.
         if not suppress_warning:
@@ -483,10 +492,15 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         virtual_screen_size = babase.get_virtual_screen_size()
         uiscale = babase.app.ui_v1.uiscale
 
+        # These should always get actual values when a main-window is
+        # assigned so should never still be None here.
+        assert self._last_win_recreate_uiscale is not None
+        assert self._last_win_recreate_screen_size is not None
+
         # If uiscale hasn't changed and our screen-size hasn't either
         # (or it has but we don't care) then we're done.
         if uiscale is self._last_win_recreate_uiscale and (
-            virtual_screen_size == self._last_win_recreate_size
+            virtual_screen_size == self._last_win_recreate_screen_size
             or not mainwindow.refreshes_on_screen_size_changes
         ):
             return
@@ -498,5 +512,5 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         # Store the size we created this for to avoid redundant
         # future recreates.
-        self._last_win_recreate_size = virtual_screen_size
         self._last_win_recreate_uiscale = uiscale
+        self._last_win_recreate_screen_size = virtual_screen_size
