@@ -13,6 +13,12 @@ from efro.util import pairs_to_flat
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 from efro.message import Message, Response
 
+# Token counts for our various packs.
+TOKENS1_COUNT = 50
+TOKENS2_COUNT = 500
+TOKENS3_COUNT = 1200
+TOKENS4_COUNT = 2600
+
 
 @ioprepped
 @dataclass

@@ -1246,19 +1246,17 @@ void RootWidget::StepTicketsMeter_(base::RenderPass* renderpass, seconds_t dt) {
         g_base->audio->PushSourceStopSoundCall(*tickets_anim_sound_play_id_);
         tickets_anim_sound_play_id_.reset();
       }
-    } else {
-      // Still animating - calc current interp values.
-      // Calc value from 0 to 1 for animation progression.
-      auto amt{std::max(
-          0.0, std::min(1.0, (current_display_time - tickets_anim_start_time_)
-                                 / (tickets_anim_end_time_
-                                    - tickets_anim_start_time_)))};
-
-      // Calc the current vis value for the animation.
-      tickets_meter_vis_value_ = static_cast<int>(
-          amt * static_cast<double>(tickets_anim_end_value_)
-          + (1.0 - amt) * static_cast<double>(tickets_anim_start_value_));
     }
+    // Calc value from 0 to 1 for animation progression.
+    auto amt{std::max(
+        0.0, std::min(1.0, (current_display_time - tickets_anim_start_time_)
+                               / (tickets_anim_end_time_
+                                  - tickets_anim_start_time_)))};
+
+    // Calc the current vis value for the animation.
+    tickets_meter_vis_value_ = static_cast<int>(
+        amt * static_cast<double>(tickets_anim_end_value_)
+        + (1.0 - amt) * static_cast<double>(tickets_anim_start_value_));
   }
 
   if (!do_update) {
@@ -1306,19 +1304,16 @@ void RootWidget::StepTokensMeter_(base::RenderPass* renderpass, seconds_t dt) {
         g_base->audio->PushSourceStopSoundCall(*tokens_anim_sound_play_id_);
         tokens_anim_sound_play_id_.reset();
       }
-    } else {
-      // Still animating - calc current interp values.
-      // Calc value from 0 to 1 for animation progression.
-      auto amt{std::max(
-          0.0, std::min(1.0, (current_display_time - tokens_anim_start_time_)
-                                 / (tokens_anim_end_time_
-                                    - tokens_anim_start_time_)))};
-
-      // Calc the current vis value for the animation.
-      tokens_meter_vis_value_ = static_cast<int>(
-          amt * static_cast<double>(tokens_anim_end_value_)
-          + (1.0 - amt) * static_cast<double>(tokens_anim_start_value_));
     }
+    // Calc value from 0 to 1 for animation progression.
+    auto amt{std::max(
+        0.0, std::min(1.0, (current_display_time - tokens_anim_start_time_)
+                               / (tokens_anim_end_time_
+                                  - tokens_anim_start_time_)))};
+    // Calc the current vis value for the animation.
+    tokens_meter_vis_value_ = static_cast<int>(
+        amt * static_cast<double>(tokens_anim_end_value_)
+        + (1.0 - amt) * static_cast<double>(tokens_anim_start_value_));
   }
 
   if (!do_update) {

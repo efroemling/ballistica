@@ -4,6 +4,7 @@
 
 #include <Python.h>
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -328,10 +329,9 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     case BA_MESSAGE_HOST_INFO: {
       if (buffer.size() > 1) {
         std::vector<char> str_buffer(buffer.size());
-        memcpy(&(str_buffer[0]), &(buffer[1]), buffer.size() - 1);
-        str_buffer[str_buffer.size() - 1] = 0;
-        cJSON* info = cJSON_Parse(reinterpret_cast<const char*>(&(buffer[1])));
-        if (info) {
+        std::copy(buffer.begin() + 1, buffer.end(), str_buffer.begin());
+        str_buffer.back() = 0;  // Ensure null termination
+        if (cJSON* info = cJSON_Parse(str_buffer.data())) {
           // Build number.
           cJSON* b = cJSON_GetObjectItem(info, "b");
           if (b) {

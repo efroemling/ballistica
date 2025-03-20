@@ -1,8 +1,10 @@
-### 1.7.38 (build 22312, api 9, 2025-03-12)
+### 1.7.38 (build 22318, api 9, 2025-03-20)
 - Added animations for reducing chest wait times or gaining tickets or tokens
 - Made MainWindow auto-recreate smarter. If something such as text input or a
   popup window is suppressing main-window-auto-recreate, it'll now do a single
   recreate once the suppression ends.
+- (build 22313) Fixed a possible client crash due to uninitialized memory when
+  handling `BA_MESSAGE_HOST_INFO` data.
   
 ### 1.7.37 (build 22304, api 9, 2025-03-10)
 - Bumping api version to 9. As you'll see below, there's some UI changes that

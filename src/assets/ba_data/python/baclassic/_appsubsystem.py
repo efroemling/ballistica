@@ -77,6 +77,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # Classic-specific account state.
         self.remove_ads = False
         self.gold_pass = False
+        self.tokens = 0
         self.chest_dock_full = False
 
         # Main Menu.

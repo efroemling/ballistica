@@ -80,3 +80,65 @@ class AppMode:
         on_deactivate() and on_app_active_changed() (when active is
         False).
         """
+
+    def on_purchase_process_begin(
+        self, item_id: str, user_initiated: bool
+    ) -> None:
+        """Called when in-app-purchase processing is beginning.
+
+        This call happens after a purchase has been completed locally
+        but before its receipt/info is sent to the master-server to
+        apply to the account.
+        """
+        # pylint: disable=cyclic-import
+        import babase
+
+        del item_id  # Unused.
+
+        # Show nothing for stuff not directly kicked off by the user.
+        if not user_initiated:
+            return
+
+        babase.screenmessage(
+            babase.Lstr(resource='updatingAccountText'),
+            color=(0, 1, 0),
+        )
+        # Ick; we can be called early in the bootstrapping process
+        # before we're allowed to load assets. Guard against that.
+        if babase.asset_loads_allowed():
+            babase.getsimplesound('click01').play()
+
+    def on_purchase_process_end(
+        self, item_id: str, user_initiated: bool, applied: bool
+    ) -> None:
+        """Called when in-app-purchase processing completes.
+
+        Each call to on_purchase_process_begin will be followed up by a
+        call to this method. If the purchase was found to be valid and
+        was applied to the account, applied will be True. In the case of
+        redundant or invalid purchases or communication failures it will
+        be False.
+        """
+        # pylint: disable=cyclic-import
+        import babase
+
+        # Ignore this; we want to announce newly applied stuff even if
+        # it was from a different launch or client or whatever.
+        del user_initiated
+
+        # If the purchase wasn't applied, do nothing. This likely means it
+        # was redundant or something else harmless.
+        if not applied:
+            return
+
+        # By default just announce the item id we got. Real app-modes
+        # probably want to do something more specific based on item-id.
+        babase.screenmessage(
+            babase.Lstr(
+                translate=('serverResponses', 'You got a ${ITEM}!'),
+                subs=[('${ITEM}', item_id)],
+            ),
+            color=(0, 1, 0),
+        )
+        if babase.asset_loads_allowed():
+            babase.getsimplesound('cashRegister').play()

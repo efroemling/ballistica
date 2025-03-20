@@ -41,7 +41,7 @@ VERSION_MIN_TVOS = '12.0' if APPLE_NEW else '9.0'
 #
 # For now will try to ride out this 3.0 LTS version as long as possible.
 OPENSSL_VER_APPLE = '3.0.12-1'
-OPENSSL_VER_ANDROID = '3.0.15'
+OPENSSL_VER_ANDROID = '3.0.16'
 
 LIBFFI_VER_APPLE = '3.4.6-1' if APPLE_NEW else '3.4.4-1'
 BZIP2_VER_APPLE = '1.0.8-1'
@@ -55,7 +55,7 @@ XZ_VER_ANDROID = '5.6.4'
 BZIP2_VER_ANDROID = '1.0.8'
 GDBM_VER_ANDROID = '1.24'
 LIBFFI_VER_ANDROID = '3.4.7'
-LIBUUID_VER_ANDROID = ('2.40', '2.40.4')
+LIBUUID_VER_ANDROID = ('2.41', '2.41')
 NCURSES_VER_ANDROID = '6.5'
 READLINE_VER_ANDROID = '8.2'
 SQLITE_VER_ANDROID = ('2024', '3460000')
@@ -429,6 +429,22 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         count=1,
     )
 
+    # Seems we need to explicitly tell 32 bit libuuid builds to be ok
+    # with 32 bit timestamps. Should check this again once NDK 29 comes
+    # around.
+    if arch in {'arm', 'x86'}:
+        ftxt = replace_exact(
+            ftxt,
+            (
+                "    configure_args = ['--disable-all-programs',"
+                " '--enable-libuuid']"
+            ),
+            (
+                "    configure_args = ['--disable-all-programs',"
+                " '--disable-year2038', '--enable-libuuid']"
+            ),
+        )
+
     # Set specific NCurses version.
     ftxt = replace_exact(
         ftxt,
@@ -484,6 +500,8 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     ftxt = readfile('build.sh')
 
     # Repo has gone 30+, but we currently want our own which is lower.
+    # timestampfix = '--disable-year2038 ' if arch == 'arm' else ''
+
     ftxt = replace_exact(
         ftxt,
         'COMMON_ARGS="--arch ${ARCH:-arm} --api ${ANDROID_API:-30}"',

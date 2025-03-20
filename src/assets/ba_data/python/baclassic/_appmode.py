@@ -9,6 +9,7 @@ from functools import partial
 from typing import TYPE_CHECKING, override
 
 from bacommon.app import AppExperience
+import bacommon.bs
 import babase
 import bauiv1
 from bauiv1lib.connectivity import wait_for_connectivity
@@ -44,6 +45,9 @@ class ClassicAppMode(babase.AppMode):
         self._have_connectivity = False
         self._current_account_id: str | None = None
         self._should_restore_account_display_state = False
+
+        self._purchase_ui_pause: bauiv1.RootUIUpdatePause | None = None
+        self._last_tokens_value = 0
 
     @override
     @classmethod
@@ -158,6 +162,9 @@ class ClassicAppMode(babase.AppMode):
         # Stop being informed of account changes.
         self._on_primary_account_changed_callback = None
 
+        # Cancel any ui-pause we may have had going.
+        self._purchase_ui_pause = None
+
         # Remove anything following any current account.
         self._update_for_primary_account(None)
 
@@ -178,6 +185,142 @@ class ClassicAppMode(babase.AppMode):
             # Also store any league vis state for the active account.
             # this may be our last chance to do this on mobile.
             self._save_account_display_state()
+
+    @override
+    def on_purchase_process_begin(
+        self, item_id: str, user_initiated: bool
+    ) -> None:
+
+        # Do the default thing (announces 'updating account...')
+        super().on_purchase_process_begin(
+            item_id=item_id, user_initiated=user_initiated
+        )
+
+        # Pause the root ui so stuff like token counts don't change
+        # automatically, allowing us to animate them. Note that we
+        # need to explicitly kill this pause if we are deactivated since
+        # we wouldn't get the on_purchase_process_end() call; the next
+        # app-mode would.
+        self._purchase_ui_pause = bauiv1.RootUIUpdatePause()
+
+        # Also grab our last known token count here to plug into animations.
+        # We need to do this here before the purchase gets submitted so that
+        # we know we're seeing the old value.
+        assert babase.app.classic is not None
+        self._last_tokens_value = babase.app.classic.tokens
+
+    @override
+    def on_purchase_process_end(
+        self, item_id: str, user_initiated: bool, applied: bool
+    ) -> None:
+
+        # Let the UI auto-update again after any animations we may apply
+        # here.
+        self._purchase_ui_pause = None
+
+        # Ignore user_initiated; we want to announce newly applied stuff
+        # even if it was from a different launch or client or whatever.
+        del user_initiated
+
+        # If the purchase wasn't applied, do nothing. This likely means it
+        # was redundant or something else harmless.
+        if not applied:
+            return
+
+        if item_id.startswith('tokens'):
+            if item_id == 'tokens1':
+                tokens = bacommon.bs.TOKENS1_COUNT
+                tokens_str = str(tokens)
+                anim_time = 2.0
+            elif item_id == 'tokens2':
+                tokens = bacommon.bs.TOKENS2_COUNT
+                tokens_str = str(tokens)
+                anim_time = 2.5
+            elif item_id == 'tokens3':
+                tokens = bacommon.bs.TOKENS3_COUNT
+                tokens_str = str(tokens)
+                anim_time = 3.0
+            elif item_id == 'tokens4':
+                tokens = bacommon.bs.TOKENS4_COUNT
+                tokens_str = str(tokens)
+                anim_time = 3.5
+            else:
+                tokens = 0
+                tokens_str = '???'
+                anim_time = 2.5
+                logging.warning(
+                    'Unhandled item_id in on_purchase_process_end: %s', item_id
+                )
+
+            assert babase.app.classic is not None
+            effects: list[bacommon.bs.ClientEffect] = [
+                bacommon.bs.ClientEffectTokensAnimation(
+                    duration=anim_time,
+                    startvalue=self._last_tokens_value,
+                    endvalue=self._last_tokens_value + tokens,
+                ),
+                bacommon.bs.ClientEffectDelay(anim_time),
+                bacommon.bs.ClientEffectScreenMessage(
+                    message='You got ${COUNT} tokens!',
+                    subs=['${COUNT}', tokens_str],
+                    color=(0, 1, 0),
+                ),
+                bacommon.bs.ClientEffectSound(
+                    sound=bacommon.bs.ClientEffectSound.Sound.CASH_REGISTER
+                ),
+            ]
+            babase.app.classic.run_bs_client_effects(effects)
+
+        elif item_id.startswith('gold_pass'):
+            babase.screenmessage(
+                babase.Lstr(
+                    translate=('serverResponses', 'You got a ${ITEM}!'),
+                    subs=[
+                        (
+                            '${ITEM}',
+                            babase.Lstr(resource='goldPass.goldPassText'),
+                        )
+                    ],
+                ),
+                color=(0, 1, 0),
+            )
+            if babase.asset_loads_allowed():
+                babase.getsimplesound('cashRegister').play()
+
+        else:
+
+            # Fallback: simply announce item id.
+            logging.warning(
+                'on_purchase_process_end got unexpected item_id: %s.', item_id
+            )
+            babase.screenmessage(
+                babase.Lstr(
+                    translate=('serverResponses', 'You got a ${ITEM}!'),
+                    subs=[('${ITEM}', item_id)],
+                ),
+                color=(0, 1, 0),
+            )
+            if babase.asset_loads_allowed():
+                babase.getsimplesound('cashRegister').play()
+
+    def on_engine_will_reset(self) -> None:
+        """Called just before classic resets the engine.
+
+        This happens at various times such as session switches.
+        """
+
+        self._save_account_display_state()
+
+    def on_engine_did_reset(self) -> None:
+        """Called just after classic resets the engine.
+
+        This happens at various times such as session switches.
+        """
+
+        # Restore any old league vis state we had; this allows the user
+        # to see animations for league improvements or other changes
+        # that have occurred since the last time we were visible.
+        self._restore_account_display_state()
 
     def _update_for_primary_account(
         self, account: babase.AccountV2Handle | None
@@ -219,6 +362,7 @@ class ClassicAppMode(babase.AppMode):
 
         if account is None:
             classic.gold_pass = False
+            classic.tokens = 0
             classic.chest_dock_full = False
             classic.remove_ads = False
             self._account_data_sub = None
@@ -296,6 +440,7 @@ class ClassicAppMode(babase.AppMode):
         assert classic is not None
         classic.remove_ads = val.remove_ads
         classic.gold_pass = val.gold_pass
+        classic.tokens = val.tokens
         classic.chest_dock_full = (
             chest0 is not None
             and chest1 is not None
@@ -722,22 +867,3 @@ class ClassicAppMode(babase.AppMode):
                     and valsaccount == self._current_account_id
                 ):
                     _baclassic.set_account_display_state(vals)
-
-    def on_engine_will_reset(self) -> None:
-        """Called just before classic resets the engine.
-
-        This happens at various times such as session switches.
-        """
-
-        self._save_account_display_state()
-
-    def on_engine_did_reset(self) -> None:
-        """Called just after classic resets the engine.
-
-        This happens at various times such as session switches.
-        """
-
-        # Restore any old league vis state we had; this allows the user
-        # to see animations for league improvements or other changes
-        # that have occurred since the last time we were visible.
-        self._restore_account_display_state()

@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never, override
 
 import bacommon.cloud
+import bacommon.bs
 import bauiv1 as bui
 
 
@@ -105,7 +106,7 @@ class GetTokensWindow(bui.MainWindow):
                     _TxtDef(
                         bui.Lstr(
                             resource='tokens.numTokensText',
-                            subs=[('${COUNT}', '50')],
+                            subs=[('${COUNT}', str(bacommon.bs.TOKENS1_COUNT))],
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -145,7 +146,7 @@ class GetTokensWindow(bui.MainWindow):
                     _TxtDef(
                         bui.Lstr(
                             resource='tokens.numTokensText',
-                            subs=[('${COUNT}', '500')],
+                            subs=[('${COUNT}', str(bacommon.bs.TOKENS2_COUNT))],
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -185,7 +186,7 @@ class GetTokensWindow(bui.MainWindow):
                     _TxtDef(
                         bui.Lstr(
                             resource='tokens.numTokensText',
-                            subs=[('${COUNT}', '1200')],
+                            subs=[('${COUNT}', str(bacommon.bs.TOKENS3_COUNT))],
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -225,7 +226,7 @@ class GetTokensWindow(bui.MainWindow):
                     _TxtDef(
                         bui.Lstr(
                             resource='tokens.numTokensText',
-                            subs=[('${COUNT}', '2600')],
+                            subs=[('${COUNT}', str(bacommon.bs.TOKENS4_COUNT))],
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
