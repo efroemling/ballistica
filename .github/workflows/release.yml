@@ -205,7 +205,7 @@ jobs:
         artifacts: bombsquad_docker_gui_debug.tar.zip
     - name: Push to github repository
       run: |
-        docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui_debug:latest
+        docker tag bombsquad_gui_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui_debug:latest
         docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui_debug:latest
 
   release_docker_server_debug_image:
@@ -237,8 +237,8 @@ jobs:
         artifacts: bombsquad_docker_server_debug.tar.zip
     - name: Push to github repository
       run: |
-        docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server_debug:${{ github.ref }}
-        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server_debug:${{ github.ref }}
+        docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server_debug:${{ github.ref_name }}
+        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server_debug:${{ github.ref_name }}
 
   release_sphinx_docs:
     runs-on: ubuntu-latest
