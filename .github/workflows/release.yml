@@ -186,7 +186,8 @@ jobs:
         python-version: '3.12'
     - name: Setup project environment
       run: make env
-    - uses: docker/login-action@v3
+    - name: Docker login
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
@@ -203,10 +204,10 @@ jobs:
         body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
         allowUpdates: true
         artifacts: bombsquad_docker_gui_debug.tar.zip
-    - name: Push to github repository
+    - name: Push to github image repository
       run: |
-        docker tag bombsquad_gui_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui_debug:latest
-        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui_debug:latest
+        docker tag bombsquad_gui_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui_debug:${{ github.ref_name }}
+        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui_debug:${{ github.ref_name }}
 
   release_docker_server_debug_image:
     runs-on: ubuntu-latest
@@ -218,7 +219,8 @@ jobs:
         python-version: '3.12'
     - name: Setup project environment
       run: make env
-    - uses: docker/login-action@v3
+    - name: Docker login
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
@@ -235,7 +237,7 @@ jobs:
         body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
         allowUpdates: true
         artifacts: bombsquad_docker_server_debug.tar.zip
-    - name: Push to github repository
+    - name: Push to github image repository
       run: |
         docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server_debug:${{ github.ref_name }}
         docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server_debug:${{ github.ref_name }}

@@ -27,6 +27,8 @@ ENV HEADLESS_BUILD=${headless_build}
 # Install build dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=cache,target=/root/.cache/venv \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
@@ -91,7 +93,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
             pulseaudio-utils \
             libopenal-dev; \
     fi && \
-    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean && \
     python3.12 -c "import uuid; print(uuid.uuid4())" > /etc/machine-id
 
 # Copy the compiled application from the builder stage
