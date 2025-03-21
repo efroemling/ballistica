@@ -49,12 +49,13 @@ T = TypeVar('T')
 
 
 class App:
-    """A class for high level app functionality and state.
+    """High level Ballistica app functionality and state.
 
     Category: **App Classes**
 
-    Use :attr:`bauiv1.app` to access the single shared instance of this
-    class.
+    Access the single shared instance of this class via the 'app' attr
+    available on various high level modules such as :mod:`bauiv1` and
+    :mod:`bascenev1`.
     """
 
     # pylint: disable=too-many-public-methods

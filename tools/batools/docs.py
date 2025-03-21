@@ -178,6 +178,7 @@ def _run_pdoc() -> None:
     import time
 
     import pdoc
+
     from batools.version import get_current_version
 
     starttime = time.monotonic()
@@ -220,65 +221,89 @@ def generate_sphinxdoc() -> None:
     _run_sphinx()
 
 
+@dataclass
+class SphinxSettings:
+    """Our settings for sphinx stuff."""
+
+    project_name: str
+    project_author: str
+    copyright: str
+    version: str
+    buildnum: int
+    logo_small: str
+    logo_large: str
+
+
+def get_sphinx_settings(projroot: str) -> SphinxSettings:
+    """Settings for our Sphinx runs."""
+    from batools.version import get_current_version
+
+    version, buildnum = get_current_version(projroot=projroot)
+    return SphinxSettings(
+        project_name='Ballistica',
+        project_author='Eric Froemling',
+        copyright=f'{utc_now().year} Eric Froemling',
+        version=version,
+        buildnum=buildnum,
+        logo_small=(
+            'https://files.ballistica.net/'
+            'ballistica_media/ballistica_logo_half.png'
+        ),
+        logo_large=(
+            'https://files.ballistica.net/'
+            'ballistica_media/ballistica_logo.png'
+        ),
+    )
+
+
 def _run_sphinx(
     project_name: str = 'ballistica',
     project_author: str = 'Eric Froemling',
     copyright_text: str = f'{utc_now().year}, Eric Froemling',
-    generate_dummymodules_doc: bool = False,
-    generate_tools_doc: bool = True,
 ) -> None:
     """Do the actual docs generation with sphinx."""
     # pylint: disable=too-many-locals
 
     import time
-    from batools.version import get_current_version
+
     from jinja2 import Environment, FileSystemLoader
+
+    from batools.version import get_current_version
 
     version, buildnum = get_current_version()
 
-    assets_dirs: dict = {
-        'ba_data': 'src/assets/ba_data/python/',
-        'dummy_modules': 'build/dummymodules/',
-        'efro_tools': 'tools/',  # for efro and bacommon package
-    }
-    paths: dict = {
-        'sphinx_src': 'src/assets/sphinx/',
-        'build_dir': 'build/sphinx/',
-        'sphinx_cache_dir': '.cache/sphinx/',
-    }
-    paths.update(
-        {
-            'template_dir': paths['sphinx_src'] + 'template/',
-            'static_dir': paths['sphinx_src'] + 'static/',
-        }
-    )
+    cache_dir = Path('.cache/sphinx')
+    sphinx_src_dir = Path('src/assets/sphinx')
+    build_dir = Path('build/sphinx')
+    template_dir = Path(sphinx_src_dir, 'template')
+    static_dir = Path(sphinx_src_dir, 'static')
 
-    assert Path(paths['template_dir']).is_dir()
-    assert Path(paths['static_dir']).is_dir()
+    assert template_dir.is_dir()
+    assert static_dir.is_dir()
 
-    os.makedirs(paths['build_dir'], exist_ok=True)
-    os.makedirs(paths['sphinx_cache_dir'], exist_ok=True)
+    build_dir.mkdir(parents=True, exist_ok=True)
+    cache_dir.mkdir(parents=True, exist_ok=True)
 
     os.environ['BALLISTICA_ROOT'] = os.getcwd()  # used in sphinx conf.py
-    os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
-    os.environ['SPHINX_SETTINGS'] = str(
+    # os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
+    os.environ['SPHINX_SETTINGS'] = repr(
         {
             'project_name': project_name,
             'project_author': project_author,
             'copyright': copyright_text,
             'version': version,
             'buildnum': buildnum,
-            'ballistica_logo': 'https://files.ballistica.net/ballistica_media/ballistica_logo_half.png',  # pylint: disable=line-too-long
+            'ballistica_logo': (
+                'https://files.ballistica.net/'
+                'ballistica_media/ballistica_logo_half.png'
+            ),
         }
     )
 
-    file_loader = FileSystemLoader(paths['template_dir'])
-    env = Environment(loader=file_loader)
+    env = Environment(loader=FileSystemLoader(template_dir))
     index_template = env.get_template('index.rst_t')
     # maybe make it automatically render all files in templates dir in future
-    with open(
-        paths['sphinx_cache_dir'] + 'index.rst', 'w', encoding='utf-8'
-    ) as index_rst:
+    with open(Path(cache_dir, 'index.rst'), 'w', encoding='utf-8') as index_rst:
         data = {
             # 'ballistica_image_url': 'https://camo.githubusercontent.com/25021344ceaa7def6fa6523f79115f7ffada8d26b4768bb9a0cf65fc33304f45/68747470733a2f2f66696c65732e62616c6c6973746963612e6e65742f62616c6c6973746963615f6d656469612f62616c6c6973746963615f6c6f676f5f68616c662e706e67',  # pylint: disable=line-too-long
             'version_no': version,
@@ -290,73 +315,130 @@ def _run_sphinx(
 
     apidoc_cmd = [
         'sphinx-apidoc',
-        '-A',
+        '--doc-author',
         project_author,
-        '-V',
-        str(version),  # version
-        '-R',
-        str(buildnum),  # release
-        # '--templatedir', template_dir,
-        '-o',
-        paths['sphinx_cache_dir'],
+        '--doc-version',
+        str(version),
+        '--doc-release',
+        str(buildnum),
+        '--output-dir',
+        str(cache_dir),
     ]
 
-    # Prevents Python from writing __pycache__ dirs in our source tree
-    # which leads to slight annoyances.
-    environ = dict(os.environ, PYTHONDONTWRITEBYTECODE='1')
+    # Make sure we won't break some existing use of PYTHONPATH.
+    assert 'PYTHONPATH' not in os.environ
 
-    if generate_dummymodules_doc:
-        subprocess.run(
-            apidoc_cmd
-            + [
-                '-H',
-                'dummy modules',
-                assets_dirs['dummy_modules'],
-                '--private',
-                '-f',
-            ],
-            check=True,
-            env=environ,
-        )
+    environ = dict(
+        os.environ,
+        # Prevent Python from writing __pycache__ dirs in our source tree
+        # which leads to slight annoyances.
+        PYTHONDONTWRITEBYTECODE='1',
+        # Allow Ballistica stuff to partially bootstrap itself using
+        # dummy modules.
+        BA_RUNNING_WITH_DUMMY_MODULES='1',
+        # Also prevent our set_canonical_module_names() stuff from running
+        # which seems to prevent sphinx from parsing docs from comments. It
+        # seems that sphinx spits out pretty class names based on where we
+        # expose the classes anyway so its all good.
+        EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES='1',
+        # Also set PYTHONPATH so sphinx can find all our stuff.
+        PYTHONPATH='src/assets/ba_data/python:tools:build/dummymodules',
+    )
 
-    if generate_tools_doc:
-        subprocess.run(
-            apidoc_cmd
-            + [
-                '-H',
-                'runtime and tools',
-                assets_dirs['efro_tools'],
-                '--tocfile',
-                'othermodules',
-                '-f',
-            ],
-            check=True,
-            env=environ,
-        )
+    # To me, the default max-depth of 4 seems weird for these categories
+    # we create. We start on our top level page with a high level view
+    # of our categories and the modules & packages directly under them,
+    # but then if we click a category we suddenly see an extremely long
+    # exhaustive list of children of children of children. Going with
+    # maxdepth 1 so we instead just see the top level stuff for that
+    # category. Clicking anything there then takes us to the
+    # ultra-detailed page, which feels more natural.
+    module_list_max_depth = '1'
 
+    # This makes package module docs the first thing you see when you
+    # click a package which feels clean to me.
+    module_first_arg = '--module-first'
+
+    # Generate modules.rst containing everything in ba_data.
     subprocess.run(
         apidoc_cmd
         + [
-            '-H',
-            'runtime only',
-            assets_dirs['ba_data'],
+            '--doc-project',
+            'runtime',
+            '--tocfile',
+            'runtimemodules',
+            module_first_arg,
+            '--maxdepth',
+            module_list_max_depth,
             '-f',
+            'src/assets/ba_data/python',
         ],
         check=True,
         env=environ,
     )
-    # -f for regenerating index page so it contains the ba_data modules
+
+    # Both our common and our tools packages live in 'tools' dir. So we
+    # need to build a list of things to ignore in that dir when creating
+    # those two listings.
+    excludes_tools: list[str] = []
+    excludes_common: list[str] = []
+    for name in os.listdir('tools'):
+
+        # Skip anything not looking like a Python package.
+        if not os.path.isdir(os.path.join('tools', name)) or not os.path.exists(
+            os.path.join('tools', name, '__init__.py')
+        ):
+            continue
+
+        # Assume anything with 'tools' in the name goes with tools.
+        exclude_list = excludes_common if 'tools' in name else excludes_tools
+        exclude_list.append(f'tools/{name}')
+
+    subprocess.run(
+        apidoc_cmd
+        + [
+            '--doc-project',
+            'tools',
+            '--tocfile',
+            'toolsmodules',
+            module_first_arg,
+            '--maxdepth',
+            module_list_max_depth,
+            '-f',
+            'tools',
+        ]
+        + excludes_tools,
+        check=True,
+        env=environ,
+    )
+
+    subprocess.run(
+        apidoc_cmd
+        + [
+            '--doc-project',
+            'common',
+            '--tocfile',
+            'commonmodules',
+            module_first_arg,
+            '--maxdepth',
+            module_list_max_depth,
+            '-f',
+            'tools',
+        ]
+        + excludes_common,
+        check=True,
+        env=environ,
+    )
 
     subprocess.run(
         [
             'sphinx-build',
             '-c',  # config file dir
-            paths['static_dir'],
-            paths['sphinx_cache_dir'],  # input dir
-            paths['build_dir'],  # output dir
+            static_dir,
+            cache_dir,  # input dir
+            build_dir,  # output dir
             '-d',
-            paths['sphinx_cache_dir'],
-            # '-Q', #quiet now
+            cache_dir,
         ],
         check=True,
         env=environ,

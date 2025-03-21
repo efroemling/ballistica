@@ -47,7 +47,27 @@ static PyMethodDef PyAppNameDef = {
 
     "appname() -> str\n"
     "\n"
-    "(internal)\n",
+    "Return current app name (all lowercase).\n",
+};
+
+// -------------------------------- appnameupper -------------------------------
+
+static auto PyAppNameUpper(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  // This will get subbed out by standard filtering.
+  return PyUnicode_FromString("BallisticaKit");
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAppNameUpperDef = {
+    "appnameupper",               // name
+    (PyCFunction)PyAppNameUpper,  // method
+    METH_NOARGS,                  // flags
+
+    "appnameupper() -> str\n"
+    "\n"
+    "Return current app name with capitalized characters.",
 };
 
 // ------------------------------ app_is_active --------------------------------
@@ -120,30 +140,6 @@ static PyMethodDef PyCompleteShutdownDef = {
     "complete_shutdown() -> None\n"
     "\n"
     "Complete the shutdown process, triggering the app to exit.\n",
-};
-
-// -------------------------------- appnameupper -------------------------------
-
-static auto PyAppNameUpper(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-
-  // This will get subbed out by standard filtering.
-  return PyUnicode_FromString("BallisticaKit");
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyAppNameUpperDef = {
-    "appnameupper",               // name
-    (PyCFunction)PyAppNameUpper,  // method
-    METH_NOARGS,                  // flags
-
-    "appnameupper() -> str\n"
-    "\n"
-    "(internal)\n"
-    "\n"
-    "Return whether this build of the game can display full unicode such "
-    "as\n"
-    "Emoji, Asian languages, etc.",
 };
 
 // ---------------------------- is_xcode_build ---------------------------------

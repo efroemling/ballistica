@@ -5,8 +5,8 @@
 This package/feature-set contains functionality related to the classic
 BombSquad experience. Note that much legacy BombSquad code is still a
 bit tangled and thus this feature-set is largely inseperable from
-scenev1 and uiv1. Future feature-sets will be designed in a more modular
-way.
+:mod:`bascenev1` and :mod:`bauiv1`. Future feature-sets will be
+designed in a more modular way.
 """
 
 # ba_meta require api 9

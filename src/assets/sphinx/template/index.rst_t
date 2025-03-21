@@ -5,20 +5,21 @@
    
    see https://pradyunsg.me/furo/reference/ and https://en.wikipedia.org/wiki/ReStructuredText for formatting help
 
-Welcome to ballistica documentation!
+Ballistica **{{data.version_no}}** documentation
 ================================================
-*Last updated for Ballistica* **{{data.version_no}}** *(build {{data.build_no}})*
+*Last updated for build {{data.build_no}}*
 
 .. toctree::
    :maxdepth: 2
    :caption: Python API Reference:
 
-   modules
-   othermodules
+   commonmodules
+   runtimemodules
+   toolsmodules
 
 
-Indices and tables
-==================
+Indices
+=======
 
 * :ref:`genindex`
 * :ref:`modindex`

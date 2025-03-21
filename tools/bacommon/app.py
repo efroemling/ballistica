@@ -23,32 +23,32 @@ class AppInterfaceIdiom(Enum):
     instance if a mobile device or computer is connected to a TV).
     """
 
-    # Small screen; assumed to have touch as primary input.
+    #: Small screen; assumed to have touch as primary input.
     PHONE = 'phn'
 
-    # Medium size screen; assumed to have touch as primary input.
+    #: Medium size screen; assumed to have touch as primary input.
     TABLET = 'tab'
 
-    # Medium size screen; assumed to have game controller as primary
-    # input.
+    #: Medium size screen; assumed to have game controller as primary
+    #: input.
     HANDHELD = 'hnd'
 
-    # Large screen with high amount of detail visible; assumed to have
-    # keyboard/mouse as primary input.
+    #: Large screen with high amount of detail visible; assumed to have
+    #: keyboard/mouse as primary input.
     DESKTOP = 'dsk'
 
-    # Large screen with medium amount of detail visible; assumed to have
-    # game controller as primary input.
+    #: Large screen with medium amount of detail visible; assumed to have
+    #: game controller as primary input.
     TV = 'tv'
 
-    # Displayed over or in place of of the real world on a headset;
-    # assumed to have hand tracking or spacial controllers as primary
-    # input.
+    #: Displayed over or in place of of the real world on a headset;
+    #: assumed to have hand tracking or spacial controllers as primary
+    #: input.
     XR_HEADSET = 'xrh'
 
-    # Displayed over or instead of the real world on a screen; assumed
-    # to have device movement augmented by physical or touchscreen
-    # controls as primary input.
+    #: Displayed over or instead of the real world on a screen; assumed
+    #: to have device movement augmented by physical or touchscreen
+    #: controls as primary input.
     XR_SCREEN = 'xrs'
 
 
@@ -89,7 +89,7 @@ class AppExperience(Enum):
 
 
 class AppArchitecture(Enum):
-    """Processor architecture the App is running on."""
+    """Processor architecture an app can be running on."""
 
     ARM = 'arm'
     ARM64 = 'arm64'
@@ -98,7 +98,7 @@ class AppArchitecture(Enum):
 
 
 class AppPlatform(Enum):
-    """Overall platform a Ballistica build is targeting.
+    """Overall platform a build can target.
 
     Each distinct flavor of an app has a unique combination of
     AppPlatform and AppVariant. Generally platform describes a set of
@@ -123,11 +123,11 @@ class AppVariant(Enum):
     build.
     """
 
-    # Default builds.
+    #: Default builds.
     GENERIC = 'gen'
 
-    # Builds intended for public testing (may have some extra checks
-    # or logging enabled).
+    #: Builds intended for public testing (may have some extra checks
+    #: or logging enabled).
     TEST = 'tst'
 
     # Various stores.
@@ -176,5 +176,5 @@ class AppInstanceInfo:
     interface_idiom: Annotated[AppInterfaceIdiom, IOAttrs('intf')]
     locale: Annotated[Locale, IOAttrs('loc')]
 
-    # OS-specific string describing the device running the app.
+    #: OS-specific string describing the device running the app.
     device: Annotated[str | None, IOAttrs('devc')]

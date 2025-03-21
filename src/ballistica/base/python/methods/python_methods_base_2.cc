@@ -857,7 +857,7 @@ static PyMethodDef PyAllowsTicketSalesDef = {
 
     "allows_ticket_sales() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------------- supports_vsync --------------------------------

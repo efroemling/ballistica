@@ -73,11 +73,11 @@ class SpinoffContext:
     ) -> None:
         # pylint: disable=too-many-statements
 
-        # By default, if dst files have their modtimes changed but
-        # still line up with src files, we can recover. But one may
-        # choose to error in that case to track down things mucking
-        # with dst files when they shouldn't be.
-        self.strict = False
+        #: By default, if dst files have their modtimes changed but
+        #: still line up with src files, we can recover. But one may
+        #: choose to error in that case to track down things mucking
+        #: with dst files when they shouldn't be.
+        self.strict: bool = False
 
         self._mode = mode
         self._force = force

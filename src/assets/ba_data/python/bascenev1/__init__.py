@@ -20,6 +20,7 @@ from efro.util import set_canonical_module_names
 from babase import (
     add_clean_frame_callback,
     app,
+    App,
     AppIntent,
     AppIntentDefault,
     AppIntentExec,
@@ -251,6 +252,7 @@ __all__ = [
     'animate_array',
     'add_clean_frame_callback',
     'app',
+    'App',
     'AppIntent',
     'AppIntentDefault',
     'AppIntentExec',

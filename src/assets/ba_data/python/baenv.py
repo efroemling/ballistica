@@ -1,11 +1,11 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Manage ballistica execution environment.
+"""Manage Ballistica execution environment.
 
 This module is used to set up and/or check the global Python environment
-before running a ballistica app. This includes things such as paths,
+before running a Ballistica app. This includes things such as paths,
 logging, and app-dirs. Because these things are global in nature, this
-should be done before any ballistica modules are imported.
+should be done before any Ballistica modules are imported.
 
 This module can also be exec'ed directly to set up a default environment
 and then run the app.
@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22320
+TARGET_BALLISTICA_BUILD = 22321
 TARGET_BALLISTICA_VERSION = '1.7.39'
 
 

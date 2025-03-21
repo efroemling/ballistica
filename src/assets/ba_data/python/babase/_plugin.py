@@ -162,7 +162,7 @@ class PluginSubsystem(AppSubsystem):
     def on_app_running(self) -> None:
         # Load up our plugins and go ahead and call their on_app_running
         # calls.
-        self.load_plugins()
+        self._load_plugins()
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_running()
@@ -213,8 +213,7 @@ class PluginSubsystem(AppSubsystem):
                     'Error in plugin on_app_shutdown_complete()'
                 )
 
-    def load_plugins(self) -> None:
-        """(internal)"""
+    def _load_plugins(self) -> None:
 
         # Load plugins from any specs that are enabled & able to.
         for _class_path, plug_spec in sorted(self.plugin_specs.items()):
