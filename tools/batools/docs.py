@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from efro.util import utc_now
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
@@ -221,9 +222,9 @@ def generate_sphinxdoc() -> None:
 
 def _run_sphinx(
     project_name: str = 'ballistica',
-    project_author: str = 'Efroemling',
-    copyright_text: str = '2024, Efroemling',
-    generate_dummymodules_doc: bool = True,
+    project_author: str = 'Eric Froemling',
+    copyright_text: str = f'{utc_now().year}, Eric Froemling',
+    generate_dummymodules_doc: bool = False,
     generate_tools_doc: bool = True,
 ) -> None:
     """Do the actual docs generation with sphinx."""
@@ -289,9 +290,6 @@ def _run_sphinx(
 
     apidoc_cmd = [
         'sphinx-apidoc',
-        # '-f',  # Force overwriting of any existing generated files.
-        '-H',
-        project_name,
         '-A',
         project_author,
         '-V',
@@ -309,19 +307,41 @@ def _run_sphinx(
 
     if generate_dummymodules_doc:
         subprocess.run(
-            apidoc_cmd + [assets_dirs['dummy_modules']] + ['--private'],
+            apidoc_cmd
+            + [
+                '-H',
+                'dummy modules',
+                assets_dirs['dummy_modules'],
+                '--private',
+                '-f',
+            ],
             check=True,
             env=environ,
         )
 
     if generate_tools_doc:
         subprocess.run(
-            apidoc_cmd + [assets_dirs['efro_tools']],
+            apidoc_cmd
+            + [
+                '-H',
+                'runtime and tools',
+                assets_dirs['efro_tools'],
+                '--tocfile',
+                'othermodules',
+                '-f',
+            ],
             check=True,
             env=environ,
         )
+
     subprocess.run(
-        apidoc_cmd + [assets_dirs['ba_data'], '-f'],
+        apidoc_cmd
+        + [
+            '-H',
+            'runtime only',
+            assets_dirs['ba_data'],
+            '-f',
+        ],
         check=True,
         env=environ,
     )

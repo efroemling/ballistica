@@ -1,3 +1,7 @@
+### 1.7.39 (build 22320, api 9, 2025-03-20)
+- Tidied up the sphinx documentation generation a bit. Docs are now generated
+  for both runtime and tools packages.
+  
 ### 1.7.38 (build 22318, api 9, 2025-03-20)
 - Added animations for reducing chest wait times or gaining tickets or tokens
 - Made MainWindow auto-recreate smarter. If something such as text input or a

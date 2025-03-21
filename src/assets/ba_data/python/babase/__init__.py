@@ -2,10 +2,10 @@
 #
 """Common shared Ballistica components.
 
-For modding purposes, this package should generally not be used directly.
-Instead one should use purpose-built packages such as bascenev1 or bauiv1
-which themselves import various functionality from here and reexpose it in
-a more focused way.
+For modding purposes, this package should generally not be used
+directly. Instead one should use purpose-built packages such as
+:mod:`bascenev1` or :mod:`bauiv1` which themselves import various
+functionality from here and reexpose it in a more focused way.
 """
 # pylint: disable=redefined-builtin
 
@@ -194,7 +194,6 @@ from babase._plugin import PluginSpec, Plugin, PluginSubsystem
 from babase._stringedit import StringEditAdapter, StringEditSubsystem
 from babase._text import timestring
 
-
 _babase.app = app = App()
 app.postinit()
 
@@ -206,7 +205,6 @@ __all__ = [
     'allows_ticket_sales',
     'add_clean_frame_callback',
     'android_get_external_files_dir',
-    'app',
     'app',
     'App',
     'AppConfig',

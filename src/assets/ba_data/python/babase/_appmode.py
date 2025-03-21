@@ -64,12 +64,12 @@ class AppMode:
         """
 
     def on_app_active_changed(self) -> None:
-        """Called when ba*.app.active changes while in this app-mode.
+        """Called when app active state changes while in this app-mode.
 
-        App-active state becomes false when the app is hidden,
-        minimized, backgrounded, etc. The app-mode may want to take
-        action such as pausing a running game or saving state when this
-        occurs.
+        This corresponds to :attr:`babase.App.active`. App-active state
+        becomes false when the app is hidden, minimized, backgrounded,
+        etc. The app-mode may want to take action such as pausing a
+        running game or saving state when this occurs.
 
         On platforms such as mobile where apps get suspended and later
         silently terminated by the OS, this is likely to be the last

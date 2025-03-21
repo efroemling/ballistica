@@ -4,12 +4,16 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+# pylint: disable=invalid-name, redefined-builtin, eval-used
+# pylint: disable=missing-module-docstring
+
 # -- Path setup --------------------------------------------------------------
 import os
 import sys
 
-sphinx_settings = eval(os.getenv('SPHINX_SETTINGS')) # set in tools/batools/docs.py
-ballistica_root = os.getenv('BALLISTICA_ROOT') + '/'
+# Set in tools/batools/docs.py.
+sphinx_settings = eval(os.environ['SPHINX_SETTINGS'])
+ballistica_root = os.environ['BALLISTICA_ROOT'] + '/'
 
 assets_dirs: dict = {
     'ba_data': 'src/assets/ba_data/python/',
@@ -25,6 +29,7 @@ sys.path.append(os.path.abspath(ballistica_root + assets_dirs['efro_tools']))
 project = sphinx_settings['project_name']
 copyright = sphinx_settings['copyright']
 author = sphinx_settings['project_author']
+
 # The full version, including alpha/beta/rc tags
 version = str(sphinx_settings['version'])
 release = str(sphinx_settings['buildnum'])
@@ -32,9 +37,8 @@ release = str(sphinx_settings['buildnum'])
 
 # -- Options for HTML output -------------------------------------------------
 # for more themes visit https://sphinx-themes.org/
-html_theme = 'furo'  # python_docs_theme, groundwork, furo, sphinx_rtd_theme 
+html_theme = 'furo'  # python_docs_theme, groundwork, furo, sphinx_rtd_theme
 html_title = project + ' ' + version + ' documentation'
-html_show_sphinx = False
 
 # do not remove, sets the logo on side panel
 html_logo = sphinx_settings['ballistica_logo']
@@ -50,7 +54,8 @@ if html_theme == 'furo':
             'color-brand-primary': '#3cda0b',
             'color-brand-content': '#7C4DFF',
         },
-        'footer_icons': [{
+        'footer_icons': [
+            {
                 'name': 'GitHub',
                 'url': 'https://github.com/efroemling/ballistica/',
                 'html': """
@@ -59,8 +64,8 @@ if html_theme == 'furo':
                     </svg>
                 """,
                 'class': '',
-                },
-            ],
+            },
+        ],
         'top_of_page_button': 'edit',
         'navigation_with_keys': True,
     }
@@ -74,29 +79,32 @@ rst_epilog = """
 rst_prolog = f"""
 .. image:: {html_logo}
     :target: index.html
-    :alt: Ballistica Logo 
+    :alt: Ballistica Logo
 """
-# intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}   
-autosummary_generate = True
+# Gives us links to common Python types.
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+
 extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
-    # might want to use this in future
-    # for linking with efro and bacommon packages
     'sphinx.ext.intersphinx',
 ]
 
+# Reduces ugly wrapping in the sidebar.
+toc_object_entries_show_parents = 'hide'
+
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+# templates_path = ['_templates']
 
 # List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
+# directories to ignore when looking for source files. This pattern also
+# affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# Add any paths that contain custom static files (such as style sheets)
+# here, relative to this directory. They are copied after the builtin
+# static files, so a file named "default.css" will overwrite the builtin
+# "default.css".
+# html_static_path = ['_static']
