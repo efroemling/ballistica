@@ -4,7 +4,7 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name, redefined-builtin
 # pylint: disable=missing-module-docstring
 
 import os
@@ -14,7 +14,7 @@ from batools.docs import get_sphinx_settings
 settings = get_sphinx_settings(projroot=os.environ['BALLISTICA_ROOT'])
 
 # -- Options for HTML output -------------------------------------------------
-# for more themes visit https://sphinx-themes.org/
+# For more themes visit https://sphinx-themes.org/
 html_theme = 'furo'  # python_docs_theme, groundwork, furo, sphinx_rtd_theme
 html_title = f'{settings.project_name} {settings.version} documentation'
 
@@ -47,6 +47,15 @@ if html_theme == 'furo':
         'top_of_page_button': 'edit',
         'navigation_with_keys': True,
     }
+
+# -- Project information -----------------------------------------------------
+project = settings.project_name
+copyright = settings.copyright
+author = settings.project_author
+
+# The full version, including alpha/beta/rc tags.
+version = str(settings.version)
+release = str(settings.buildnum)
 
 # -- General configuration ---------------------------------------------------
 

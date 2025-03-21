@@ -256,11 +256,7 @@ def get_sphinx_settings(projroot: str) -> SphinxSettings:
     )
 
 
-def _run_sphinx(
-    project_name: str = 'ballistica',
-    project_author: str = 'Eric Froemling',
-    copyright_text: str = f'{utc_now().year}, Eric Froemling',
-) -> None:
+def _run_sphinx() -> None:
     """Do the actual docs generation with sphinx."""
     # pylint: disable=too-many-locals
 
@@ -268,9 +264,7 @@ def _run_sphinx(
 
     from jinja2 import Environment, FileSystemLoader
 
-    from batools.version import get_current_version
-
-    version, buildnum = get_current_version()
+    settings = get_sphinx_settings('.')
 
     cache_dir = Path('.cache/sphinx')
     sphinx_src_dir = Path('src/assets/sphinx')
@@ -285,20 +279,6 @@ def _run_sphinx(
     cache_dir.mkdir(parents=True, exist_ok=True)
 
     os.environ['BALLISTICA_ROOT'] = os.getcwd()  # used in sphinx conf.py
-    # os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
-    os.environ['SPHINX_SETTINGS'] = repr(
-        {
-            'project_name': project_name,
-            'project_author': project_author,
-            'copyright': copyright_text,
-            'version': version,
-            'buildnum': buildnum,
-            'ballistica_logo': (
-                'https://files.ballistica.net/'
-                'ballistica_media/ballistica_logo_half.png'
-            ),
-        }
-    )
 
     env = Environment(loader=FileSystemLoader(template_dir))
     index_template = env.get_template('index.rst_t')
@@ -306,8 +286,8 @@ def _run_sphinx(
     with open(Path(cache_dir, 'index.rst'), 'w', encoding='utf-8') as index_rst:
         data = {
             # 'ballistica_image_url': 'https://camo.githubusercontent.com/25021344ceaa7def6fa6523f79115f7ffada8d26b4768bb9a0cf65fc33304f45/68747470733a2f2f66696c65732e62616c6c6973746963612e6e65742f62616c6c6973746963615f6d656469612f62616c6c6973746963615f6c6f676f5f68616c662e706e67',  # pylint: disable=line-too-long
-            'version_no': version,
-            'build_no': str(buildnum),
+            'version_no': settings.version,
+            'build_no': str(settings.buildnum),
         }
         index_rst.write(index_template.render(data=data))
 
@@ -316,11 +296,11 @@ def _run_sphinx(
     apidoc_cmd = [
         'sphinx-apidoc',
         '--doc-author',
-        project_author,
+        settings.project_author,
         '--doc-version',
-        str(version),
+        str(settings.version),
         '--doc-release',
-        str(buildnum),
+        str(settings.buildnum),
         '--output-dir',
         str(cache_dir),
     ]
@@ -433,12 +413,12 @@ def _run_sphinx(
     subprocess.run(
         [
             'sphinx-build',
-            '-c',  # config file dir
+            '--conf-dir',
             static_dir,
+            '--doctree-dir',
+            cache_dir,
             cache_dir,  # input dir
             build_dir,  # output dir
-            '-d',
-            cache_dir,
         ],
         check=True,
         env=environ,
