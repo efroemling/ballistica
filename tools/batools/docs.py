@@ -318,7 +318,7 @@ def _sphinx_pre_filter_file(path: str) -> None:
             ' likely only forward-declared\n'
             '# in our actual source code so that docs tools can find it.\n'
             'from typing import (Coroutine, Any, Literal, Callable,\n'
-            '  Generator, Awaitable, Sequence)\n'
+            '  Generator, Awaitable, Sequence, Self)\n'
             'import asyncio\n'
             'from concurrent.futures import Future'
         )
@@ -491,7 +491,7 @@ def _run_sphinx() -> None:
         apidoc_cmd
         + [
             '--doc-project',
-            'runtime',
+            'Runtime',
             '--tocfile',
             'runtimemodules',
             module_first_arg,
@@ -526,7 +526,7 @@ def _run_sphinx() -> None:
         apidoc_cmd
         + [
             '--doc-project',
-            'tools',
+            'Tools',
             '--tocfile',
             'toolsmodules',
             module_first_arg,
@@ -544,7 +544,7 @@ def _run_sphinx() -> None:
         apidoc_cmd
         + [
             '--doc-project',
-            'common',
+            'Common',
             '--tocfile',
             'commonmodules',
             module_first_arg,

@@ -16,7 +16,7 @@ settings = get_sphinx_settings(projroot=os.environ['BALLISTICA_ROOT'])
 # -- Options for HTML output -------------------------------------------------
 # For more themes visit https://sphinx-themes.org/
 html_theme = 'furo'  # python_docs_theme, groundwork, furo, sphinx_rtd_theme
-html_title = f'{settings.project_name} {settings.version} documentation'
+html_title = f'{settings.project_name} Developer\'s Guide'
 
 # Sets logo on side panel.
 html_logo = settings.logo_small
@@ -82,7 +82,7 @@ extensions = [
     'sphinx.ext.intersphinx',  # Allows linking to base Python types.
 ]
 
-# Reduces ugly wrapping in the sidebar.
+# Reduces ugly wrapping in the on-this-page sidebar.
 toc_object_entries_show_parents = 'hide'
 
 # List of patterns, relative to source directory, that match files and

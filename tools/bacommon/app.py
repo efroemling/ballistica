@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Common high level values/functionality related to apps."""
+"""Common high level values/functionality related to Ballistica apps."""
 
 from __future__ import annotations
 
