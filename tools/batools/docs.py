@@ -398,7 +398,10 @@ def _run_sphinx() -> None:
     # everything each time which is crazy slow.
     def _copy_modtime(src_file: str, dest_file: str) -> None:
         if not os.path.isfile(dest_file):
-            raise RuntimeError(f'Expected file not found: "{dest_file}".')
+            # Testing..
+            time.sleep(2.0)
+            if not os.path.isfile(dest_file):
+                raise RuntimeError(f'Expected file not found: "{dest_file}".')
 
         # Get the modification time of the source file
         mod_time = os.path.getmtime(src_file)
