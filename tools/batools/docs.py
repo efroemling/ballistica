@@ -334,6 +334,7 @@ def _run_sphinx() -> None:
     # pylint: disable=too-many-statements
 
     import time
+    import shutil
     from multiprocessing import cpu_count
     from concurrent.futures import ProcessPoolExecutor
 
@@ -374,7 +375,8 @@ def _run_sphinx() -> None:
     ]
     for srcdir, dstdir in dirpairs:
         os.makedirs(dstdir, exist_ok=True)
-        subprocess.run(['cp', '-rv', srcdir, dstdir], check=True)
+        shutil.copytree(srcdir, dstdir, dirs_exist_ok=True)
+        # subprocess.run(['cp', '-rv', srcdir, dstdir], check=True)
 
     # Filter all files. Doing this with multiprocessing gives us a very
     # nice speedup vs multithreading which seems gil-constrained.
@@ -400,10 +402,7 @@ def _run_sphinx() -> None:
     # everything each time which is crazy slow.
     def _copy_modtime(src_file: str, dest_file: str) -> None:
         if not os.path.isfile(dest_file):
-            # Testing..
-            time.sleep(2.0)
-            if not os.path.isfile(dest_file):
-                raise RuntimeError(f'Expected file not found: "{dest_file}".')
+            raise RuntimeError(f'Expected file not found: "{dest_file}".')
 
         # Get the modification time of the source file
         mod_time = os.path.getmtime(src_file)
