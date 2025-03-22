@@ -325,7 +325,6 @@ def _sphinx_pre_filter_file(path: str) -> None:
 
     with open(filenameout, 'w', encoding='utf-8') as f:
         f.write(final_code)
-    print('filtered', filenameout)
 
 
 def _run_sphinx() -> None:
