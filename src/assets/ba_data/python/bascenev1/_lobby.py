@@ -178,10 +178,7 @@ class ChangeMessage:
 
 
 class Chooser:
-    """A character/team selector for a bascenev1.Player.
-
-    Category: Gameplay Classes
-    """
+    """A character/team selector for a bascenev1.Player."""
 
     def __del__(self) -> None:
         # Just kill off our base node; the rest should go down with it.
@@ -940,10 +937,7 @@ class Chooser:
 
 
 class Lobby:
-    """Container for baclassic.Choosers.
-
-    Category: Gameplay Classes
-    """
+    """Container for baclassic.Choosers."""
 
     def __del__(self) -> None:
         # Reset any players that still have a chooser in us.

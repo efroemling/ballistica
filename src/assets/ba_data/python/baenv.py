@@ -1,11 +1,11 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Manage ballistica execution environment.
+"""Manage Ballistica execution environment.
 
 This module is used to set up and/or check the global Python environment
-before running a ballistica app. This includes things such as paths,
+before running a Ballistica app. This includes things such as paths,
 logging, and app-dirs. Because these things are global in nature, this
-should be done before any ballistica modules are imported.
+should be done before any Ballistica modules are imported.
 
 This module can also be exec'ed directly to set up a default environment
 and then run the app.
@@ -53,46 +53,46 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22318
-TARGET_BALLISTICA_VERSION = '1.7.38'
+TARGET_BALLISTICA_BUILD = 22323
+TARGET_BALLISTICA_VERSION = '1.7.39'
 
 
 @dataclass
 class EnvConfig:
     """Final config values we provide to the engine."""
 
-    # Where app config/state data lives.
+    #: Where app config/state data lives.
     config_dir: str
 
-    # Directory containing ba_data and any other platform-specific data.
+    #: Directory containing ba_data and any other platform-specific data.
     data_dir: str
 
-    # Where the app's built-in Python stuff lives.
+    #: Where the app's built-in Python stuff lives.
     app_python_dir: str | None
 
-    # Where the app's built-in Python stuff lives in the default case.
+    #: Where the app's built-in Python stuff lives in the default case.
     standard_app_python_dir: str
 
-    # Where the app's bundled third party Python stuff lives.
+    #: Where the app's bundled third party Python stuff lives.
     site_python_dir: str | None
 
-    # Custom Python provided by the user (mods).
+    #: Custom Python provided by the user (mods).
     user_python_dir: str | None
 
-    # We have a mechanism allowing app scripts to be overridden by
-    # placing a specially named directory in a user-scripts dir.
-    # This is true if that is enabled.
+    #: We have a mechanism allowing app scripts to be overridden by
+    #: placing a specially named directory in a user-scripts dir. This is
+    #: true if that is enabled.
     is_user_app_python_dir: bool
 
-    # Our fancy app log handler. This handles feeding logs, stdout, and
-    # stderr into the engine so they show up on in-app consoles, etc.
+    #: Our fancy app log handler. This handles feeding logs, stdout, and
+    #: stderr into the engine so they show up on in-app consoles, etc.
     log_handler: LogHandler | None
 
-    # Initial data from the config.json file in the config dir. The
-    # config file is parsed by
+    #: Initial data from the config.json file in the config dir. The
+    #: config file is parsed by
     initial_app_config: Any
 
-    # Timestamp when we first started doing stuff.
+    #: Timestamp when we first started doing stuff.
     launch_time: float
 
 
@@ -100,10 +100,9 @@ class EnvConfig:
 class _EnvGlobals:
     """Globals related to baenv's operation.
 
-    We store this in __main__ instead of in our own module because it
-    is likely that multiple versions of our module will be spun up
-    and we want a single set of globals (see notes at top of our module
-    code).
+    We store this in __main__ instead of in our own module because it is
+    likely that multiple versions of our module will be spun up and we
+    want a single set of globals (see notes at top of our module code).
     """
 
     config: EnvConfig | None = None

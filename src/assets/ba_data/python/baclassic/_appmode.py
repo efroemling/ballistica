@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 class ClassicAppMode(babase.AppMode):
     """AppMode for the classic BombSquad experience."""
 
-    LEAGUE_VIS_VALS_CONFIG_KEY = 'ClassicLeagueVisVals'
+    _LEAGUE_VIS_VALS_CONFIG_KEY = 'ClassicLeagueVisVals'
 
     def __init__(self) -> None:
         self._on_primary_account_changed_callback: (
@@ -850,7 +850,7 @@ class ClassicAppMode(babase.AppMode):
                 assert 'a' not in vals
                 vals['a'] = self._current_account_id
                 cfg = babase.app.config
-                cfg[self.LEAGUE_VIS_VALS_CONFIG_KEY] = vals
+                cfg[self._LEAGUE_VIS_VALS_CONFIG_KEY] = vals
                 cfg.commit()
 
     def _restore_account_display_state(self) -> None:
@@ -859,7 +859,7 @@ class ClassicAppMode(babase.AppMode):
         # display-state we have stored in the config, restore the state.
         if self._current_account_id is not None:
             cfg = babase.app.config
-            vals = cfg.get(self.LEAGUE_VIS_VALS_CONFIG_KEY)
+            vals = cfg.get(self._LEAGUE_VIS_VALS_CONFIG_KEY)
             if isinstance(vals, dict):
                 valsaccount = vals.get('a')
                 if (

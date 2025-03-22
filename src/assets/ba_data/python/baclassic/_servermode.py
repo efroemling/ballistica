@@ -87,10 +87,7 @@ def _cmd(command_data: bytes) -> None:
 
 
 class ServerController:
-    """Overall controller for the app in server mode.
-
-    Category: **App Classes**
-    """
+    """Overall controller for the app in server mode."""
 
     def __init__(self, config: ServerConfig) -> None:
         self._config = config

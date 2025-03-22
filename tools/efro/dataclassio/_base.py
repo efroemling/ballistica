@@ -8,7 +8,7 @@ import dataclasses
 import typing
 import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, get_args, TypeVar, Generic
+from typing import TYPE_CHECKING, get_args, TypeVar, Generic, override
 
 # noinspection PyProtectedMember
 from typing import _AnnotatedAlias  # type: ignore
@@ -25,25 +25,25 @@ SIMPLE_TYPES = {int, bool, str, float, type(None)}
 EXTRA_ATTRS_ATTR = '_DCIOEXATTRS'
 
 # Attr name for a bool attr for flagging data as lossy, which means it
-# may have been modified in some way during load and should generally not
-# be written back out.
+# may have been modified in some way during load and should generally
+# not be written back out.
 LOSSY_ATTR = '_DCIOLOSSY'
 
 
 class Codec(Enum):
     """Specifies expected data format exported to or imported from."""
 
-    # Use only types that will translate cleanly to/from json: lists,
-    # dicts with str keys, bools, ints, floats, and None.
+    #: Use only types that will translate cleanly to/from json: lists,
+    #: dicts with str keys, bools, ints, floats, and None.
     JSON = 'json'
 
-    # Mostly like JSON but passes bytes and datetime objects through
-    # as-is instead of converting them to json-friendly types.
+    #: Mostly like JSON but passes bytes and datetime objects through
+    #: as-is instead of converting them to json-friendly types.
     FIRESTORE = 'firestore'
 
 
 class IOExtendedData:
-    """A class that data types can inherit from for extra functionality."""
+    """A class types can inherit from for extra functionality."""
 
     def will_output(self) -> None:
         """Called before data is sent to an outputter.
@@ -54,7 +54,7 @@ class IOExtendedData:
 
     @classmethod
     def will_input(cls, data: dict) -> None:
-        """Called on raw data before a class instance is created from it.
+        """Called on data before a class instance is created from it.
 
         Can be overridden to migrate old data formats to new, etc.
         """
@@ -96,10 +96,10 @@ EnumT = TypeVar('EnumT', bound=Enum)
 class IOMultiType(Generic[EnumT]):
     """A base class for types that can map to multiple dataclass types.
 
-    This enables usage of high level base classes (for example
-    a 'Message' type) in annotations, with dataclassio automatically
-    serializing & deserializing dataclass subclasses based on their
-    type ('MessagePing', 'MessageChat', etc.)
+    This enables usage of high level base classes (for example a
+    'Message' type) in annotations, with dataclassio automatically
+    serializing & deserializing dataclass subclasses based on their type
+    ('MessagePing', 'MessageChat', etc.)
 
     Standard usage involves creating a class which inherits from this
     one which acts as a 'registry', and then creating dataclass classes
@@ -155,48 +155,52 @@ class IOMultiType(Generic[EnumT]):
 class IOAttrs:
     """For specifying io behavior in annotations.
 
-    'storagename', if passed, is the name used when storing to json/etc.
+    :param storagename: If passed, is the name used when storing to
+        json/etc.
 
-    'store_default' can be set to False to avoid writing values when
-        equal to the default value. Note that this requires the
+    :param store_default: Can be set to False to avoid writing values
+        when equal to the default value. Note that this requires the
         dataclass field to define a default or default_factory or for
         its IOAttrs to define a soft_default value.
 
-    'whole_days', if True, requires datetime values to be exactly on day
-        boundaries (see efro.util.utc_today()).
+    :param whole_days: If True, requires datetime values to be exactly
+        on day boundaries (see efro.util.utc_today()).
 
-    'whole_hours', if True, requires datetime values to lie exactly on
-        hour boundaries (see efro.util.utc_this_hour()).
+    :param whole_hours: If True, requires datetime values to lie exactly
+        on hour boundaries (see efro.util.utc_this_hour()).
 
-    'whole_minutes', if True, requires datetime values to lie exactly on
-        minute boundaries (see efro.util.utc_this_minute()).
+    :param whole_minutes: If True, requires datetime values to lie
+        exactly on minute boundaries (see efro.util.utc_this_minute()).
 
-    'soft_default', if passed, injects a default value into dataclass
-        instantiation when the field is not present in the input data.
-        This allows dataclasses to add new non-optional fields while
-        gracefully 'upgrading' old data. Note that when a soft_default
-        is present it will take precedence over field defaults when
-        determining whether to store a value for a field with
-        store_default=False (since the soft_default value is what we'll
-        get when reading that same data back in when the field is
+    :param soft_default: If passed, injects a default value into
+        dataclass instantiation when the field is not present in the
+        input data. This allows dataclasses to add new non-optional
+        fields while gracefully 'upgrading' old data. Note that when a
+        soft_default is present it will take precedence over field
+        defaults when determining whether to store a value for a field
+        with store_default=False (since the soft_default value is what
+        we'll get when reading that same data back in when the field is
         omitted).
 
-    'soft_default_factory' is similar to 'default_factory' in dataclass
-        fields; it should be used instead of 'soft_default' for mutable
-        types such as lists to prevent a single default object from
-        unintentionally changing over time.
+    :param soft_default_factory: Is similar to 'default_factory' in
+        dataclass fields; it should be used instead of 'soft_default'
+        for mutable types such as lists to prevent a single default
+        object from unintentionally changing over time.
 
-    'enum_fallback', if provided, specifies an enum value that can be
-        substituted in the case of unrecognized input values. This can
-        allow newer data to remain loadable in older environments. Note
-        that 'lossy' must be enabled in the top level load call for this
-        to apply, since it can fundamentally modify data.
+    :param enum_fallback: If provided, specifies an enum value that can
+        be substituted in the case of unrecognized input values. This
+        can allow newer data to remain loadable in older environments.
+        Note that 'lossy' must be enabled in the top level load call for
+        this to apply, since it can fundamentally modify data.
     """
 
     # A sentinel object to detect if a parameter is supplied or not. Use
     # a class to give it a better repr.
     class _MissingType:
-        pass
+
+        @override
+        def __repr__(self) -> str:
+            return '<MISSING>'
 
     MISSING = _MissingType()
 
@@ -253,10 +257,11 @@ class IOAttrs:
             self.enum_fallback = enum_fallback
 
     def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
-        """Ensure the IOAttrs instance is ok to use with the provided field."""
+        """Ensure the IOAttrs is ok to use with provided field."""
 
-        # Turning off store_default requires the field to have either
-        # a default or a default_factory or for us to have soft equivalents.
+        # Turning off store_default requires the field to have either a
+        # default or a default_factory or for us to have soft
+        # equivalents.
 
         if not self.store_default:
             field_default_factory: Any = field.default_factory
@@ -354,8 +359,8 @@ def _is_valid_for_codec(obj: Any, codec: Codec) -> bool:
 def _get_origin(anntype: Any) -> Any:
     """Given a type annotation, return its origin or itself if there is none.
 
-    This differs from typing.get_origin in that it will never return None.
-    This lets us use the same code path for handling typing.List
+    This differs from typing.get_origin in that it will never return
+    None. This lets us use the same code path for handling typing.List
     that we do for handling list, which is good since they can be used
     interchangeably in annotations.
     """

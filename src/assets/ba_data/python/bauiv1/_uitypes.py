@@ -27,8 +27,6 @@ DEBUG_UI_CLEANUP_CHECKS = os.environ.get('BA_DEBUG_UI_CLEANUP_CHECKS') == '1'
 class Window:
     """A basic window.
 
-    Category: User Interface Classes
-
     Essentially wraps a ContainerWidget with some higher level
     functionality.
     """
@@ -327,8 +325,6 @@ class UICleanupCheck:
 
 def uicleanupcheck(obj: Any, widget: bauiv1.Widget) -> None:
     """Checks to ensure a widget-owning object gets cleaned up properly.
-
-    Category: User Interface Functions
 
     This adds a check which will print an error message if the provided
     object still exists ~5 seconds after the provided bauiv1.Widget dies.

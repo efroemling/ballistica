@@ -24,8 +24,6 @@ void PythonClassContextCall::SetupType(PyTypeObject* cls) {
       "\n"
       "A context-preserving callable.\n"
       "\n"
-      "Category: **General Utility Classes**\n"
-      "\n"
       "A ContextCall wraps a callable object along with a reference\n"
       "to the current context (see babase.ContextRef); it handles restoring\n"
       "the context when run and automatically clears itself if the context\n"

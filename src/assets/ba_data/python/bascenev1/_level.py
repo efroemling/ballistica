@@ -16,10 +16,7 @@ if TYPE_CHECKING:
 
 
 class Level:
-    """An entry in a bascenev1.Campaign.
-
-    Category: **Gameplay Classes**
-    """
+    """An entry in a bascenev1.Campaign."""
 
     def __init__(
         self,

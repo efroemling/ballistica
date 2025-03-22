@@ -31,8 +31,6 @@ class GameResults:
     """
     Results for a completed game.
 
-    Category: **Gameplay Classes**
-
     Upon completion, a game should fill one of these out and pass it to its
     bascenev1.Activity.end call.
     """

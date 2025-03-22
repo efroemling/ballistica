@@ -23,10 +23,7 @@ TeamT = TypeVar('TeamT', bound='bascenev1.Team')
 
 
 class CoopGameActivity(GameActivity[PlayerT, TeamT]):
-    """Base class for cooperative-mode games.
-
-    Category: **Gameplay Classes**
-    """
+    """Base class for cooperative-mode games."""
 
     # We can assume our session is a CoopSession.
     session: bascenev1.CoopSession

@@ -16,8 +16,6 @@ T = TypeVar('T', bound=type)
 class AppComponentSubsystem:
     """Subsystem for wrangling AppComponents.
 
-    Category: **App Classes**
-
     This subsystem acts as a registry for classes providing particular
     functionality for the app, and allows plugins or other custom code
     to easily override said functionality.

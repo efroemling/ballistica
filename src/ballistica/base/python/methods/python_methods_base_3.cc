@@ -233,8 +233,6 @@ static PyMethodDef PyClipboardIsSupportedDef = {
     "\n"
     "Return whether this platform supports clipboard operations at all.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "If this returns False, UIs should not show 'copy to clipboard'\n"
     "buttons, etc.",
 };
@@ -258,8 +256,6 @@ static PyMethodDef PyClipboardHasTextDef = {
     "clipboard_has_text() -> bool\n"
     "\n"
     "Return whether there is currently text on the clipboard.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "This will return False if no system clipboard is available; no need\n"
     " to call babase.clipboard_is_supported() separately.",
@@ -290,8 +286,6 @@ static PyMethodDef PyClipboardSetTextDef = {
     "\n"
     "Copy a string to the system clipboard.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Ensure that babase.clipboard_is_supported() returns True before adding\n"
     " buttons/etc. that make use of this functionality.",
 };
@@ -313,8 +307,6 @@ static PyMethodDef PyClipboardGetTextDef = {
     "clipboard_get_text() -> str\n"
     "\n"
     "Return text currently on the system clipboard.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "Ensure that babase.clipboard_has_text() returns True before calling\n"
     " this function.",
@@ -708,9 +700,7 @@ static PyMethodDef PyPrintLoadInfoDef = {
 
     "print_load_info() -> None\n"
     "\n"
-    "(internal)\n"
-    "\n"
-    "Category: **General Utility Functions**",
+    "(internal)",
 };
 
 // -------------------------- get_replays_dir ----------------------------------
@@ -1176,8 +1166,6 @@ static PyMethodDef PySetAnalyticsScreenDef = {
     "\n"
     "Used for analytics to see where in the app players spend their time.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Generally called when opening a new window or entering some UI.\n"
     "'screen' should be a string description of an app location\n"
     "('Main Menu', etc.)",
@@ -1360,8 +1348,6 @@ static PyMethodDef PyDoOnceDef = {
     "\n"
     "Return whether this is the first time running a line of code.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "This is used by 'print_once()' type calls to keep from overflowing\n"
     "logs. The call functions by registering the filename and line where\n"
     "The call is made from.  Returns True if this location has not been\n"
@@ -1470,8 +1456,6 @@ static PyMethodDef PyNativeStackTraceDef = {
     "native_stack_trace() -> str | None\n"
     "\n"
     "Return a native stack trace as a string, or None if not available.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "Stack traces contain different data and formatting across platforms.\n"
     "Only use them for debugging.",

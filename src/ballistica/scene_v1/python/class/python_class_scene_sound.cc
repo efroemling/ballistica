@@ -23,8 +23,6 @@ void PythonClassSceneSound::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a sound.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
       "Use bascenev1.getsound() to instantiate one.";
   cls->tp_methods = tp_methods;
   cls->tp_repr = (reprfunc)tp_repr;
@@ -49,7 +47,7 @@ auto PythonClassSceneSound::Create(SceneSound* sound) -> PyObject* {
       PyObject_CallObject(reinterpret_cast<PyObject*>(&type_obj), nullptr));
   s_create_empty_ = false;
   if (!t) {
-    throw Exception("babase.Sound creation failed.");
+    throw Exception("bascenev1.Sound creation failed.");
   }
   *t->sound_ = sound;
   return reinterpret_cast<PyObject*>(t);
@@ -161,8 +159,6 @@ PyMethodDef PythonClassSceneSound::tp_methods[] = {
         "     host_only: bool = False) -> None\n"
         "\n"
         "Play the sound a single time.\n"
-        "\n"
-        "Category: **Gameplay Functions**\n"
         "\n"
         "If position is not provided, the sound will be at a constant volume\n"
         "everywhere. Position should be a float tuple of size 3.",

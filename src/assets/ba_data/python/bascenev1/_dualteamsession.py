@@ -15,10 +15,7 @@ if TYPE_CHECKING:
 
 
 class DualTeamSession(MultiTeamSession):
-    """bascenev1.Session type for teams mode games.
-
-    Category: **Gameplay Classes**
-    """
+    """bascenev1.Session type for teams mode games."""
 
     # Base class overrides:
     use_teams = True

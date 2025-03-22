@@ -17,8 +17,6 @@ def timestring(
 ) -> babase.Lstr:
     """Generate a babase.Lstr for displaying a time value.
 
-    Category: **General Utility Functions**
-
     Given a time value, returns a babase.Lstr with:
     (hours if > 0 ) : minutes : seconds : (centiseconds if centi=True).
 

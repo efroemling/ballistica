@@ -24,8 +24,6 @@ class _TouchedMessage:
 class PowerupBoxFactory:
     """A collection of media and other resources used by bs.Powerups.
 
-    Category: **Gameplay Classes**
-
     A single instance of this is shared between all powerups
     and can be retrieved via bs.Powerup.get_factory().
     """

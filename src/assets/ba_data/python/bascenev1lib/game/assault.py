@@ -29,8 +29,14 @@ class Team(bs.Team[Player]):
     """Our team type for this game."""
 
     def __init__(self, base_pos: Sequence[float], flag: Flag) -> None:
+
+        #: Where our base is.
         self.base_pos = base_pos
+
+        #: Flag for this team.
         self.flag = flag
+
+        #: Current score.
         self.score = 0
 
 

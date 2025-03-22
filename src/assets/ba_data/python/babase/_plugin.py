@@ -20,8 +20,6 @@ if TYPE_CHECKING:
 class PluginSubsystem(AppSubsystem):
     """Subsystem for plugin handling in the app.
 
-    Category: **App Classes**
-
     Access the single shared instance of this class at `ba.app.plugins`.
     """
 
@@ -162,7 +160,7 @@ class PluginSubsystem(AppSubsystem):
     def on_app_running(self) -> None:
         # Load up our plugins and go ahead and call their on_app_running
         # calls.
-        self.load_plugins()
+        self._load_plugins()
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_running()
@@ -213,8 +211,7 @@ class PluginSubsystem(AppSubsystem):
                     'Error in plugin on_app_shutdown_complete()'
                 )
 
-    def load_plugins(self) -> None:
-        """(internal)"""
+    def _load_plugins(self) -> None:
 
         # Load plugins from any specs that are enabled & able to.
         for _class_path, plug_spec in sorted(self.plugin_specs.items()):
@@ -226,19 +223,17 @@ class PluginSubsystem(AppSubsystem):
 class PluginSpec:
     """Represents a plugin the engine knows about.
 
-    Category: **App Classes**
-
     The 'enabled' attr represents whether this plugin is set to load.
     Getting or setting that attr affects the corresponding app-config
     key. Remember to commit the app-config after making any changes.
 
     The 'attempted_load' attr will be True if the engine has attempted
-    to load the plugin. If 'attempted_load' is True for a PluginSpec
-    but the 'plugin' attr is None, it means there was an error loading
-    the plugin. If a plugin's api-version does not match the running
-    app, if a new plugin is detected with auto-enable-plugins disabled,
-    or if the user has explicitly disabled a plugin, the engine will not
-    even attempt to load it.
+    to load the plugin. If 'attempted_load' is True for a PluginSpec but
+    the 'plugin' attr is None, it means there was an error loading the
+    plugin. If a plugin's api-version does not match the running app, if
+    a new plugin is detected with auto-enable-plugins disabled, or if
+    the user has explicitly disabled a plugin, the engine will not even
+    attempt to load it.
     """
 
     def __init__(self, class_path: str, loadable: bool):
@@ -320,8 +315,6 @@ class PluginSpec:
 
 class Plugin:
     """A plugin to alter app behavior in some way.
-
-    Category: **App Classes**
 
     Plugins are discoverable by the meta-tag system
     and the user can select which ones they want to enable.

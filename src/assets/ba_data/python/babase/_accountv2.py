@@ -25,8 +25,6 @@ logger = logging.getLogger('ba.accountv2')
 class AccountV2Subsystem:
     """Subsystem for modern account handling in the app.
 
-    Category: **App Classes**
-
     Access the single shared instance of this class at 'ba.app.plus.accounts'.
     """
 
@@ -284,7 +282,10 @@ class AccountV2Subsystem:
         self._update_auto_sign_in()
 
     def do_get_primary(self) -> AccountV2Handle | None:
-        """Internal - should be overridden by subclass."""
+        """Internal; should be overridden by subclass.
+
+        :meta private:
+        """
         raise NotImplementedError()
 
     def set_primary_credentials(self, credentials: str | None) -> None:

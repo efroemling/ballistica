@@ -17,115 +17,115 @@ from bascenev1lib.gameutils import SharedObjects
 if TYPE_CHECKING:
     from typing import Any, Sequence, Callable
 
+    import bascenev1
+
 PlayerT = TypeVar('PlayerT', bound='bs.Player')
 
 
 class BombFactory:
     """Wraps up media and other resources used by bs.Bombs.
 
-    Category: **Gameplay Classes**
-
     A single instance of this is shared between all bombs
     and can be retrieved via bascenev1lib.actor.bomb.get_factory().
     """
 
-    bomb_mesh: bs.Mesh
-    """The bs.Mesh of a standard or ice bomb."""
+    bomb_mesh: bascenev1.Mesh
+    """The mesh used for standard or ice bombs."""
 
-    sticky_bomb_mesh: bs.Mesh
-    """The bs.Mesh of a sticky-bomb."""
+    sticky_bomb_mesh: bascenev1.Mesh
+    """The mesh used for sticky-bombs."""
 
-    impact_bomb_mesh: bs.Mesh
-    """The bs.Mesh of an impact-bomb."""
+    impact_bomb_mesh: bascenev1.Mesh
+    """The mesh used for impact-bombs."""
 
-    land_mine_mesh: bs.Mesh
-    """The bs.Mesh of a land-mine."""
+    land_mine_mesh: bascenev1.Mesh
+    """The mesh used for land-mines."""
 
-    tnt_mesh: bs.Mesh
-    """The bs.Mesh of a tnt box."""
+    tnt_mesh: bascenev1.Mesh
+    """The mesh used of a tnt box."""
 
-    regular_tex: bs.Texture
-    """The bs.Texture for regular bombs."""
+    regular_tex: bascenev1.Texture
+    """The texture used for regular bombs."""
 
-    ice_tex: bs.Texture
+    ice_tex: bascenev1.Texture
     """The bs.Texture for ice bombs."""
 
-    sticky_tex: bs.Texture
+    sticky_tex: bascenev1.Texture
     """The bs.Texture for sticky bombs."""
 
-    impact_tex: bs.Texture
+    impact_tex: bascenev1.Texture
     """The bs.Texture for impact bombs."""
 
-    impact_lit_tex: bs.Texture
+    impact_lit_tex: bascenev1.Texture
     """The bs.Texture for impact bombs with lights lit."""
 
-    land_mine_tex: bs.Texture
+    land_mine_tex: bascenev1.Texture
     """The bs.Texture for land-mines."""
 
-    land_mine_lit_tex: bs.Texture
+    land_mine_lit_tex: bascenev1.Texture
     """The bs.Texture for land-mines with the light lit."""
 
-    tnt_tex: bs.Texture
+    tnt_tex: bascenev1.Texture
     """The bs.Texture for tnt boxes."""
 
-    hiss_sound: bs.Sound
-    """The bs.Sound for the hiss sound an ice bomb makes."""
+    hiss_sound: bascenev1.Sound
+    """The sound for the hiss sound an ice bomb makes."""
 
-    debris_fall_sound: bs.Sound
-    """The bs.Sound for random falling debris after an explosion."""
+    debris_fall_sound: bascenev1.Sound
+    """The sound for random falling debris after an explosion."""
 
-    wood_debris_fall_sound: bs.Sound
-    """A bs.Sound for random wood debris falling after an explosion."""
+    wood_debris_fall_sound: bascenev1.Sound
+    """A sound for random wood debris falling after an explosion."""
 
-    explode_sounds: Sequence[bs.Sound]
-    """A tuple of bs.Sound-s for explosions."""
+    explode_sounds: Sequence[bascenev1.Sound]
+    """A tuple of sounds for explosions."""
 
-    freeze_sound: bs.Sound
-    """A bs.Sound of an ice bomb freezing something."""
+    freeze_sound: bascenev1.Sound
+    """A sound of an ice bomb freezing something."""
 
-    fuse_sound: bs.Sound
-    """A bs.Sound of a burning fuse."""
+    fuse_sound: bascenev1.Sound
+    """A sound of a burning fuse."""
 
-    activate_sound: bs.Sound
-    """A bs.Sound for an activating impact bomb."""
+    activate_sound: bascenev1.Sound
+    """A sound for an activating impact bomb."""
 
-    warn_sound: bs.Sound
-    """A bs.Sound for an impact bomb about to explode due to time-out."""
+    warn_sound: bascenev1.Sound
+    """A sound for an impact bomb about to explode due to time-out."""
 
-    bomb_material: bs.Material
+    bomb_material: bascenev1.Material
     """A bs.Material applied to all bombs."""
 
-    normal_sound_material: bs.Material
+    normal_sound_material: bascenev1.Material
     """A bs.Material that generates standard bomb noises on impacts, etc."""
 
-    sticky_material: bs.Material
+    sticky_material: bascenev1.Material
     """A bs.Material that makes 'splat' sounds and makes collisions softer."""
 
-    land_mine_no_explode_material: bs.Material
+    land_mine_no_explode_material: bascenev1.Material
     """A bs.Material that keeps land-mines from blowing up.
        Applied to land-mines when they are created to allow land-mines to
        touch without exploding."""
 
-    land_mine_blast_material: bs.Material
+    land_mine_blast_material: bascenev1.Material
     """A bs.Material applied to activated land-mines that causes them to
        explode on impact."""
 
-    impact_blast_material: bs.Material
+    impact_blast_material: bascenev1.Material
     """A bs.Material applied to activated impact-bombs that causes them to
        explode on impact."""
 
-    blast_material: bs.Material
+    blast_material: bascenev1.Material
     """A bs.Material applied to bomb blast geometry which triggers impact
        events with what it touches."""
 
-    dink_sounds: Sequence[bs.Sound]
-    """A tuple of bs.Sound-s for when bombs hit the ground."""
+    dink_sounds: Sequence[bascenev1.Sound]
+    """A tuple of sounds for when bombs hit the ground."""
 
-    sticky_impact_sound: bs.Sound
-    """The bs.Sound for a squish made by a sticky bomb hitting something."""
+    sticky_impact_sound: bascenev1.Sound
+    """The sound for a squish made by a sticky bomb hitting something."""
 
-    roll_sound: bs.Sound
-    """bs.Sound for a rolling bomb."""
+    roll_sound: bascenev1.Sound
+    """The sound for a rolling bomb."""
 
     _STORENAME = bs.storagename()
 
@@ -140,8 +140,8 @@ class BombFactory:
         assert isinstance(factory, BombFactory)
         return factory
 
-    def random_explode_sound(self) -> bs.Sound:
-        """Return a random explosion bs.Sound from the factory."""
+    def random_explode_sound(self) -> bascenev1.Sound:
+        """Return a random explosion sound from the factory."""
         return self.explode_sounds[random.randrange(len(self.explode_sounds))]
 
     def __init__(self) -> None:

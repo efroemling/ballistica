@@ -14,10 +14,7 @@ if TYPE_CHECKING:
 
 @unique
 class ScoreType(Enum):
-    """Type of scores.
-
-    Category: **Enums**
-    """
+    """Type of scores."""
 
     SECONDS = 's'
     MILLISECONDS = 'ms'
@@ -26,10 +23,7 @@ class ScoreType(Enum):
 
 @dataclass
 class ScoreConfig:
-    """Settings for how a game handles scores.
-
-    Category: **Gameplay Classes**
-    """
+    """Settings for how a game handles scores."""
 
     label: str = 'Score'
     """A label show to the user for scores; 'Score', 'Time Survived', etc."""

@@ -385,8 +385,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def getmaps(self, playtype: str) -> list[str]:
         """Return a list of bascenev1.Map types supporting a playtype str.
 
-        Category: **Asset Functions**
-
         Maps supporting a given playtype must provide a particular set of
         features and lend themselves to a certain style of play.
 
@@ -752,10 +750,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         )
 
     def preload_map_preview_media(self) -> None:
-        """Preload media needed for map preview UIs.
-
-        Category: **Asset Functions**
-        """
+        """Preload media needed for map preview UIs."""
         try:
             bauiv1.getmesh('level_select_button_opaque')
             bauiv1.getmesh('level_select_button_transparent')

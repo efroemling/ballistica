@@ -47,7 +47,27 @@ static PyMethodDef PyAppNameDef = {
 
     "appname() -> str\n"
     "\n"
-    "(internal)\n",
+    "Return current app name (all lowercase).\n",
+};
+
+// -------------------------------- appnameupper -------------------------------
+
+static auto PyAppNameUpper(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  // This will get subbed out by standard filtering.
+  return PyUnicode_FromString("BallisticaKit");
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAppNameUpperDef = {
+    "appnameupper",               // name
+    (PyCFunction)PyAppNameUpper,  // method
+    METH_NOARGS,                  // flags
+
+    "appnameupper() -> str\n"
+    "\n"
+    "Return current app name with capitalized characters.",
 };
 
 // ------------------------------ app_is_active --------------------------------
@@ -120,30 +140,6 @@ static PyMethodDef PyCompleteShutdownDef = {
     "complete_shutdown() -> None\n"
     "\n"
     "Complete the shutdown process, triggering the app to exit.\n",
-};
-
-// -------------------------------- appnameupper -------------------------------
-
-static auto PyAppNameUpper(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-
-  // This will get subbed out by standard filtering.
-  return PyUnicode_FromString("BallisticaKit");
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyAppNameUpperDef = {
-    "appnameupper",               // name
-    (PyCFunction)PyAppNameUpper,  // method
-    METH_NOARGS,                  // flags
-
-    "appnameupper() -> str\n"
-    "\n"
-    "(internal)\n"
-    "\n"
-    "Return whether this build of the game can display full unicode such "
-    "as\n"
-    "Emoji, Asian languages, etc.",
 };
 
 // ---------------------------- is_xcode_build ---------------------------------
@@ -306,7 +302,6 @@ static PyMethodDef PyPushCallDef = {
     "     raw: bool = False) -> None\n"
     "\n"
     "Push a call to the logic event-loop.\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "This call expects to be used in the logic thread, and will "
     "automatically\n"
@@ -343,8 +338,6 @@ static PyMethodDef PyAppTimeDef = {
     "apptime() -> babase.AppTime\n"
     "\n"
     "Return the current app-time in seconds.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "App-time is a monotonic time value; it starts at 0.0 when the app\n"
     "launches and will never jump by large amounts or go backwards, even if\n"
@@ -389,29 +382,25 @@ static PyMethodDef PyAppTimerDef = {
     "\n"
     "Schedule a callable object to run based on app-time.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "This function creates a one-off timer which cannot be canceled or\n"
     "modified once created. If you require the ability to do so, or need\n"
     "a repeating timer, use the babase.AppTimer class instead.\n"
     "\n"
-    "##### Arguments\n"
-    "###### time (float)\n"
-    "> Length of time in seconds that the timer will wait before firing.\n"
+    "Args:\n"
+    "    time: Length of time in seconds that the timer will wait before\n"
+    "        firing.\n"
     "\n"
-    "###### call (Callable[[], Any])\n"
-    "> A callable Python object. Note that the timer will retain a\n"
-    "strong reference to the callable for as long as the timer exists, so you\n"
-    "may want to look into concepts such as babase.WeakCall if that is not\n"
-    "desired.\n"
+    "    call: A callable Python object. Note that the timer will retain a\n"
+    "        strong reference to the callable for as long as the timer\n"
+    "        exists, so you may want to look into concepts such as\n"
+    "        babase.WeakCall if that is not desired.\n"
     "\n"
-    "##### Examples\n"
-    "Print some stuff through time:\n"
-    ">>> babase.screenmessage('hello from now!')\n"
-    ">>> babase.apptimer(1.0, babase.Call(babase.screenmessage,\n"
-    "                          'hello from the future!'))\n"
-    ">>> babase.apptimer(2.0, babase.Call(babase.screenmessage,\n"
-    "...                       'hello from the future 2!'))\n",
+    "Example: Print some stuff through time:\n"
+    "  >>> babase.screenmessage('hello from now!')\n"
+    "  >>> babase.apptimer(1.0, babase.Call(babase.screenmessage,\n"
+    "  ...                 'hello from the future!'))\n"
+    "  >>> babase.apptimer(2.0, babase.Call(babase.screenmessage,\n"
+    "  ...                 'hello from the future 2!'))\n",
 };
 
 // --------------------------- displaytime -------------------------------------
@@ -436,8 +425,6 @@ static PyMethodDef PyDisplayTimeDef = {
     "displaytime() -> babase.DisplayTime\n"
     "\n"
     "Return the current display-time in seconds.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "Display-time is a time value intended to be used for animation and other\n"
     "visual purposes. It will generally increment by a consistent amount each\n"
@@ -481,8 +468,6 @@ static PyMethodDef PyDisplayTimerDef = {
     "displaytimer(time: float, call: Callable[[], Any]) -> None\n"
     "\n"
     "Schedule a callable object to run based on display-time.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "This function creates a one-off timer which cannot be canceled or\n"
     "modified once created. If you require the ability to do so, or need\n"
@@ -547,8 +532,6 @@ static PyMethodDef PyQuitDef = {
     ") -> None\n"
     "\n"
     "Quit the app.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "If 'confirm' is True, a confirm dialog will be presented if conditions\n"
     "allow; otherwise the quit will still be immediate.\n"

@@ -29,8 +29,6 @@ TeamT = TypeVar('TeamT', bound='bascenev1.Team')
 class TeamGameActivity(GameActivity[PlayerT, TeamT]):
     """Base class for teams and free-for-all mode games.
 
-    Category: **Gameplay Classes**
-
     (Free-for-all is essentially just a special case where every
     bascenev1.Player has their own bascenev1.Team)
     """

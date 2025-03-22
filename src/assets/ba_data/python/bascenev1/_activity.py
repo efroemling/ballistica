@@ -25,8 +25,6 @@ TeamT = TypeVar('TeamT', bound=Team)
 class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
     """Units of execution wrangled by a bascenev1.Session.
 
-    Category: Gameplay Classes
-
     Examples of Activities include games, score-screens, cutscenes, etc.
     A bascenev1.Session has one 'current' Activity at any time, though
     their existence can overlap during transitions.
@@ -331,7 +329,8 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
     def session(self) -> bascenev1.Session:
         """The bascenev1.Session this bascenev1.Activity belongs to.
 
-        Raises a babase.SessionNotFoundError if the Session no longer exists.
+        Raises a :class:`~bascenev1.SessionNotFoundError` if the Session
+        no longer exists.
         """
         session = self._session()
         if session is None:

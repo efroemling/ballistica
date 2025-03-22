@@ -29,17 +29,15 @@ ActorT = TypeVar('ActorT', bound='Actor')
 class Actor:
     """High level logical entities in a bascenev1.Activity.
 
-    Category: **Gameplay Classes**
-
     Actors act as controllers, combining some number of Nodes, Textures,
     Sounds, etc. into a high-level cohesive unit.
 
     Some example actors include the Bomb, Flag, and Spaz classes that
     live in the bascenev1lib.actor.* modules.
 
-    One key feature of Actors is that they generally 'die'
-    (killing off or transitioning out their nodes) when the last Python
-    reference to them disappears, so you can use logic such as:
+    One key feature of Actors is that they generally 'die' (killing off
+    or transitioning out their nodes) when the last Python reference to
+    them disappears, so you can use logic such as:
 
     ##### Example
     >>> # Create a flag Actor in our game activity:

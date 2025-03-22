@@ -565,10 +565,7 @@ class StoreSubsystem:
             return None
 
     def get_unowned_maps(self) -> list[str]:
-        """Return the list of local maps not owned by the current account.
-
-        Category: **Asset Functions**
-        """
+        """Return the list of local maps not owned by the current account."""
         plus = babase.app.plus
         unowned_maps: set[str] = set()
         if babase.app.env.gui:

@@ -26,12 +26,10 @@ auto PythonClassSceneTexture::type_name() -> const char* { return "Texture"; }
 void PythonClassSceneTexture::SetupType(PyTypeObject* cls) {
   PythonClass::SetupType(cls);
   // Fully qualified type path we will be exposed as:
-  cls->tp_name = "babase.Texture";
+  cls->tp_name = "bascenev1.Texture";
   cls->tp_basicsize = sizeof(PythonClassSceneTexture);
   cls->tp_doc =
       "A reference to a texture.\n"
-      "\n"
-      "Category: **Asset Classes**\n"
       "\n"
       "Use bascenev1.gettexture() to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;

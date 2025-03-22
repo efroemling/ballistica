@@ -34,10 +34,7 @@ DisplayTime = NewType('DisplayTime', float)
 
 
 class Existable(Protocol):
-    """A Protocol for objects supporting an exists() method.
-
-    Category: **Protocols**
-    """
+    """A Protocol for objects supporting an exists() method."""
 
     def exists(self) -> bool:
         """Whether this object exists."""
@@ -49,8 +46,6 @@ T = TypeVar('T')
 
 def existing(obj: ExistableT | None) -> ExistableT | None:
     """Convert invalid references to None for any babase.Existable object.
-
-    Category: **Gameplay Functions**
 
     To best support type checking, it is important that invalid references
     not be passed around and instead get converted to values of None.
@@ -71,8 +66,6 @@ def getclass(
     name: str, subclassof: type[T], check_sdlib_modulename_clash: bool = False
 ) -> type[T]:
     """Given a full class name such as foo.bar.MyClass, return the class.
-
-    Category: **General Utility Functions**
 
     The class will be checked to make sure it is a subclass of the provided
     'subclassof' class, and a TypeError will be raised if not.
@@ -115,8 +108,6 @@ def get_type_name(cls: type) -> str:
 
 class _WeakCall:
     """Wrap a callable and arguments into a single callable object.
-
-    Category: **General Utility Classes**
 
     When passed a bound method as the callable, the instance portion
     of it is weak-referenced, meaning the underlying instance is
@@ -202,8 +193,6 @@ class _WeakCall:
 
 class _Call:
     """Wraps a callable and arguments into a single callable object.
-
-    Category: **General Utility Classes**
 
     The callable is strong-referenced so it won't die until this
     object does.
@@ -309,8 +298,6 @@ class WeakMethod:
 def verify_object_death(obj: object) -> None:
     """Warn if an object does not get freed within a short period.
 
-    Category: **General Utility Functions**
-
     This can be handy to detect and prevent memory/resource leaks.
     """
 
@@ -350,8 +337,6 @@ def _verify_object_death(wref: weakref.ref) -> None:
 
 def storagename(suffix: str | None = None) -> str:
     """Generate a unique name for storing class data in shared places.
-
-    Category: **General Utility Functions**
 
     This consists of a leading underscore, the module path at the
     call site with dots replaced by underscores, the containing class's

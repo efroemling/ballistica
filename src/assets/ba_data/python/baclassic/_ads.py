@@ -18,8 +18,6 @@ if TYPE_CHECKING:
 class AdsSubsystem:
     """Subsystem for ads functionality in the app.
 
-    Category: **App Classes**
-
     Access the single shared instance of this class at 'ba.app.ads'.
     """
 

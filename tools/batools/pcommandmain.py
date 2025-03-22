@@ -144,6 +144,7 @@ from batools.pcommands2 import (
     get_modern_make,
     asset_package_resolve,
     asset_package_assemble,
+    cst_test,
 )
 
 # pylint: enable=unused-import

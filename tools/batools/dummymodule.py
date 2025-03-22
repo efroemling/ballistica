@@ -611,10 +611,13 @@ def _filterdoc(docstr: str, funcname: str | None = None) -> str:
         and docslines[0]
         and docslines[0].startswith(funcname)
     ):
-        # Remove this signature from python docstring
-        # as not to repeat ourselves.
-        _, docstr = docstr.split('\n\n', maxsplit=1)
-        docslines = docstr.splitlines()
+        if '\n' in docstr:
+            # Remove this signature from python docstring
+            # as not to repeat ourselves.
+            _, docstr = docstr.split('\n\n', maxsplit=1)
+            docslines = docstr.splitlines()
+        else:
+            docstr = ''
 
     # Assuming that each line between 'Attributes:' and '\n\n' belongs to
     # attrs descriptions.

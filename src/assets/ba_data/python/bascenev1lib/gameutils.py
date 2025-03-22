@@ -15,8 +15,6 @@ if TYPE_CHECKING:
 class SharedObjects:
     """Various common components for use in games.
 
-    Category: Gameplay Classes
-
     Objects contained here are created on-demand as accessed and shared
     by everything in the current activity. This includes things such as
     standard materials.

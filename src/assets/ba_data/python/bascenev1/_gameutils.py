@@ -31,10 +31,7 @@ TROPHY_CHARS = {
 
 @dataclass
 class GameTip:
-    """Defines a tip presentable to the user at the start of a game.
-
-    Category: **Gameplay Classes**
-    """
+    """Defines a tip presentable to the user at the start of a game."""
 
     text: str
     icon: bascenev1.Texture | None = None
@@ -56,8 +53,6 @@ def animate(
     offset: float = 0,
 ) -> bascenev1.Node:
     """Animate values on a target bascenev1.Node.
-
-    Category: **Gameplay Functions**
 
     Creates an 'animcurve' node with the provided values and time as an input,
     connect it to the provided attribute, and set it to die with the target.
@@ -118,8 +113,6 @@ def animate_array(
 ) -> None:
     """Animate an array of values on a target bascenev1.Node.
 
-    Category: **Gameplay Functions**
-
     Like bs.animate, but operates on array attributes.
     """
     combine = _bascenev1.newnode('combine', owner=node, attrs={'size': size})
@@ -176,10 +169,7 @@ def animate_array(
 def show_damage_count(
     damage: str, position: Sequence[float], direction: Sequence[float]
 ) -> None:
-    """Pop up a damage count at a position in space.
-
-    Category: **Gameplay Functions**
-    """
+    """Pop up a damage count at a position in space."""
     lifespan = 1.0
     app = babase.app
 
@@ -238,8 +228,6 @@ def show_damage_count(
 
 def cameraflash(duration: float = 999.0) -> None:
     """Create a strobing camera flash effect.
-
-    Category: **Gameplay Functions**
 
     (as seen when a team wins a game)
     Duration is in seconds.

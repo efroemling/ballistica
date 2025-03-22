@@ -19,10 +19,7 @@ def register_campaign(campaign: bascenev1.Campaign) -> None:
 
 
 class Campaign:
-    """Represents a unique set or series of baclassic.Level-s.
-
-    Category: **App Classes**
-    """
+    """Represents a unique set or series of :class:`bascenev1.Level`s."""
 
     def __init__(
         self,

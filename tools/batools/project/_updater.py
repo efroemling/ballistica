@@ -40,7 +40,7 @@ class _LineChange:
 
 
 class ProjectUpdater:
-    """Context for an project-updater run."""
+    """Context for a project-updater run."""
 
     def __init__(
         self,

@@ -59,8 +59,6 @@ static PyMethodDef PyOpenURLDef = {
     "\n"
     "Open the provided URL.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Attempts to open the provided url in a web-browser. If that is not\n"
     "possible (or force_fallback is True), instead displays the url as\n"
     "a string and/or qrcode."};
@@ -86,8 +84,6 @@ static PyMethodDef PyOverlayWebBrowserIsSupportedDef = {
     "overlay_web_browser_is_supported() -> bool\n"
     "\n"
     "Return whether an overlay web browser is supported here.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "An overlay web browser is a small dialog that pops up over the top\n"
     "of the main engine window. It can be used for performing simple\n"
@@ -119,8 +115,6 @@ static PyMethodDef PyOverlayWebBrowserOpenURLDef = {
     "\n"
     "Open the provided URL in an overlayw web browser.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "An overlay web browser is a small dialog that pops up over the top\n"
     "of the main engine window. It can be used for performing simple\n"
     "tasks such as sign-ins."};
@@ -145,9 +139,7 @@ static PyMethodDef PyOverlayWebBrowserIsOpenDef = {
 
     "overlay_web_browser_is_open() -> bool\n"
     "\n"
-    "Return whether an overlay web browser is open currently.\n"
-    "\n"
-    "Category: **General Utility Functions**"};
+    "Return whether an overlay web browser is open currently."};
 
 // ------------------------ overlay_web_browser_close --------------------------
 
@@ -166,9 +158,7 @@ static PyMethodDef PyOverlayWebBrowserCloseDef = {
 
     "overlay_web_browser_close() -> bool\n"
     "\n"
-    "Close any open overlay web browser.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"};
+    "Close any open overlay web browser."};
 // ---------------------------- screenmessage ----------------------------------
 
 static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
@@ -211,8 +201,6 @@ static PyMethodDef PyScreenMessageDef = {
     " -> None\n"
     "\n"
     "Print a message to the local client's screen, in a given color.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "Note that this version of the function is purely for local display.\n"
     "To broadcast screen messages in network play, look for methods such as\n"
@@ -399,8 +387,6 @@ static PyMethodDef PyCharStrDef = {
     "\n"
     "Get a unicode string representing a special character.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Note that these utilize the private-use block of unicode characters\n"
     "(U+E000-U+F8FF) and are specific to the game; exporting or rendering\n"
     "them elsewhere will be meaningless.\n"
@@ -457,8 +443,6 @@ static PyMethodDef PySafeColorDef = {
     "  -> tuple[float, ...]\n"
     "\n"
     "Given a color tuple, return a color safe to display as text.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "Accepts tuples of length 3 or 4. This will slightly brighten very\n"
     "dark colors, etc.",
@@ -857,7 +841,7 @@ static PyMethodDef PyAllowsTicketSalesDef = {
 
     "allows_ticket_sales() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------------- supports_vsync --------------------------------
@@ -944,9 +928,7 @@ static PyMethodDef PyShowProgressBarDef = {
 
     "show_progress_bar() -> None\n"
     "\n"
-    "(internal)\n"
-    "\n"
-    "Category: **General Utility Functions**",
+    "(internal)",
 };
 
 // ------------------------- set_ui_account_state ------------------------------

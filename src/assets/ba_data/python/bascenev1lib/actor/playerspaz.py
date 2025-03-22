@@ -17,10 +17,7 @@ PlayerT = TypeVar('PlayerT', bound=bs.Player)
 
 
 class PlayerSpazHurtMessage:
-    """A message saying a PlayerSpaz was hurt.
-
-    Category: **Message Classes**
-    """
+    """A message saying a PlayerSpaz was hurt."""
 
     spaz: PlayerSpaz
     """The PlayerSpaz that was hurt"""
@@ -32,8 +29,6 @@ class PlayerSpazHurtMessage:
 
 class PlayerSpaz(Spaz):
     """A Spaz subclass meant to be controlled by a bascenev1.Player.
-
-    Category: **Gameplay Classes**
 
     When a PlayerSpaz dies, it delivers a bascenev1.PlayerDiedMessage
     to the current bascenev1.Activity. (unless the death was the result

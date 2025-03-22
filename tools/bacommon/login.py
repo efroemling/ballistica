@@ -20,18 +20,18 @@ if TYPE_CHECKING:
 class LoginType(Enum):
     """Types of logins available."""
 
-    # Email/password
+    #: Email/password
     EMAIL = 'email'
 
-    # Google Play Game Services
+    #: Google Play Game Services
     GPGS = 'gpgs'
 
-    # Apple's Game Center
+    #: Apple's Game Center
     GAME_CENTER = 'game_center'
 
     @property
     def displayname(self) -> str:
-        """Human readable name for this value."""
+        """A human readable name for this value."""
         cls = type(self)
         match self:
             case cls.EMAIL:
@@ -43,7 +43,7 @@ class LoginType(Enum):
 
     @property
     def displaynameshort(self) -> str:
-        """Human readable name for this value."""
+        """A short human readable name for this value."""
         cls = type(self)
         match self:
             case cls.EMAIL:
