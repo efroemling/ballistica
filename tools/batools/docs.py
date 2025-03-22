@@ -366,14 +366,15 @@ def _run_sphinx() -> None:
     # ugly so we strip those out).
     print('Copying sources...', flush=True)
     subprocess.run(['rm', '-rf', filtered_data_dir], check=True)
+
     dirpairs: list[tuple[str, str]] = [
-        ('src/assets/ba_data/python/', str(ba_data_filtered_dir)),
-        ('build/dummymodules/', str(dummy_modules_filtered_dir)),
-        ('tools/', str(tools_filtered_dir)),
+        ('src/assets/ba_data/python/', f'{ba_data_filtered_dir}/'),
+        ('build/dummymodules/', f'{dummy_modules_filtered_dir}/'),
+        ('tools/', f'{tools_filtered_dir}/'),
     ]
     for srcdir, dstdir in dirpairs:
         os.makedirs(dstdir, exist_ok=True)
-        subprocess.run(['cp', '-r', srcdir, dstdir], check=True)
+        subprocess.run(['cp', '-rv', srcdir, dstdir], check=True)
 
     # Filter all files. Doing this with multiprocessing gives us a very
     # nice speedup vs multithreading which seems gil-constrained.
