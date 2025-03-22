@@ -360,11 +360,14 @@ def _run_sphinx() -> None:
 
     os.environ['BALLISTICA_ROOT'] = os.getcwd()  # used in sphinx conf.py
 
+    def _printstatus(msg: str) -> None:
+        print(f'{Clr.BLU}{Clr.BLD}{msg}{Clr.RST}', flush=True)
+
     # Create copies of all Python sources we're documenting. This way we
     # can filter them beforehand to make some docs prettier (in
     # particular, the Annotated[] stuff we use a lot makes things very
     # ugly so we strip those out).
-    print('Copying sources...', flush=True)
+    _printstatus('Gathering sources...')
     subprocess.run(['rm', '-rf', filtered_data_dir], check=True)
 
     dirpairs: list[tuple[str, str]] = [
@@ -379,7 +382,7 @@ def _run_sphinx() -> None:
 
     # Filter all files. Doing this with multiprocessing gives us a very
     # nice speedup vs multithreading which seems gil-constrained.
-    print('Filtering sources...', flush=True)
+    _printstatus('Filtering sources...')
     futures: list[Future] = []
     with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
         for root, _dirs, files in os.walk(filtered_data_dir):
@@ -410,7 +413,7 @@ def _run_sphinx() -> None:
         # source
         os.utime(dest_file, (mod_time, mod_time))
 
-    print('Updating source modtimes...', flush=True)
+    _printstatus('Updating source modtimes...')
     futures = []
     for srcdir, dstdir in dirpairs:
         for root, _dirs, files in os.walk(srcdir):
@@ -422,7 +425,7 @@ def _run_sphinx() -> None:
                 dstpath = os.path.join(dstdir, fpath.removeprefix(srcdir))
                 _copy_modtime(fpath, dstpath)
 
-    print('Running sphinx stuff...', flush=True)
+    _printstatus('Generating index.rst...')
     env = Environment(loader=FileSystemLoader(template_dir))
     index_template = env.get_template('index.rst_t')
     # maybe make it automatically render all files in templates dir in future
@@ -486,7 +489,7 @@ def _run_sphinx() -> None:
     # click a package which feels clean to me.
     module_first_arg = '--module-first'
 
-    # Generate modules.rst containing everything in ba_data.
+    _printstatus('Generating runtimemodules...')
     subprocess.run(
         apidoc_cmd
         + [
@@ -522,6 +525,7 @@ def _run_sphinx() -> None:
         exclude_list = excludes_common if 'tools' in name else excludes_tools
         exclude_list.append(str(Path(tools_filtered_dir, name)))
 
+    _printstatus('Generating toolsmodules...')
     subprocess.run(
         apidoc_cmd
         + [
@@ -536,10 +540,11 @@ def _run_sphinx() -> None:
             str(tools_filtered_dir),
         ]
         + excludes_tools,
-        check=True,
         env=environ,
+        check=True,
     )
 
+    _printstatus('Generating commonmodules...')
     subprocess.run(
         apidoc_cmd
         + [
@@ -554,10 +559,11 @@ def _run_sphinx() -> None:
             str(tools_filtered_dir),
         ]
         + excludes_common,
-        check=True,
         env=environ,
+        check=True,
     )
 
+    _printstatus('Running sphinx-build...')
     subprocess.run(
         [
             'sphinx-build',
@@ -568,8 +574,8 @@ def _run_sphinx() -> None:
             cache_dir,  # input dir
             build_dir,  # output dir
         ],
-        check=True,
         env=environ,
+        check=True,
     )
 
     duration = time.monotonic() - starttime

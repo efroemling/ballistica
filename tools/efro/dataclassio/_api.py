@@ -27,16 +27,16 @@ T = TypeVar('T')
 class JsonStyle(Enum):
     """Different style types for json."""
 
-    # Single line, no spaces, no sorting. Not deterministic.
-    # Use this where speed is more important than determinism.
+    #: Single line, no spaces, no sorting. Not deterministic.
+    #: Use this where speed is more important than determinism.
     FAST = 'fast'
 
-    # Single line, no spaces, sorted keys. Deterministic.
-    # Use this when output may be hashed or compared for equality.
+    #: Single line, no spaces, sorted keys. Deterministic.
+    #: Use this when output may be hashed or compared for equality.
     SORTED = 'sorted'
 
-    # Multiple lines, spaces, sorted keys. Deterministic.
-    # Use this for pretty human readable output.
+    #: Multiple lines, spaces, sorted keys. Deterministic.
+    #: Use this for pretty human readable output.
     PRETTY = 'pretty'
 
 
