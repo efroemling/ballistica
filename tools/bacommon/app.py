@@ -76,10 +76,9 @@ class AppExperience(Enum):
     #: empty AppMode when starting the app, etc.
     EMPTY = 'empt'
 
-    #: The traditional BombSquad experience: multiple players using
-    #: traditional game controllers (or touch screen equivalents) in a
-    #: single arena small enough for all action to be viewed on a single
-    #: screen.
+    #: The traditional BombSquad experience - multiple players using
+    #: game controllers (or touch screen equivalents) in a single arena
+    #: small enough for all action to be viewed on a single screen.
     MELEE = 'mlee'
 
     #: The traditional BombSquad Remote experience; buttons on a

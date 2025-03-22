@@ -6,8 +6,13 @@ from __future__ import annotations
 # Note: import as little as possible here at the module level to
 # keep launch times fast for small snippets.
 import sys
+from typing import TYPE_CHECKING
 
 from efrotools import pcommand
+
+if TYPE_CHECKING:
+    from libcst import BaseExpression
+    from libcst.metadata import CodeRange
 
 
 def gen_monolithic_register_modules() -> None:
@@ -686,3 +691,48 @@ def asset_package_assemble() -> None:
         raise CleanError(
             f'Failed to assemble {apversion} ({flavor} flavor).'
         ) from exc
+
+
+def cst_test() -> None:
+    """Test filtering a Python file using LibCST."""
+
+    from typing import override
+
+    from efro.error import CleanError
+    import libcst as cst
+    from libcst import CSTTransformer, Name, Index, Subscript
+
+    args = pcommand.get_args()
+
+    if len(args) != 2:
+        raise CleanError('Expected an in-path and out-path.')
+
+    filename = args[0]
+    filenameout = args[1]
+
+    class RemoveAnnotatedTransformer(CSTTransformer):
+        """Replaces `Annotated[FOO, ...]` with just `FOO`"""
+
+        @override
+        def leave_Subscript(
+            self, original_node: BaseExpression, updated_node: BaseExpression
+        ) -> BaseExpression:
+            if (
+                isinstance(updated_node, Subscript)
+                and isinstance(updated_node.value, Name)
+                and updated_node.value.value == 'Annotated'
+                and isinstance(updated_node.slice[0].slice, Index)
+            ):
+                return updated_node.slice[0].slice.value
+            return updated_node
+
+    with open(filename, 'r', encoding='utf-8') as f:
+        source_code: str = f.read()
+
+    tree: cst.Module = cst.parse_module(source_code)
+    modified_tree: cst.Module = tree.visit(RemoveAnnotatedTransformer())
+
+    with open(filenameout, 'w', encoding='utf-8') as f:
+        f.write(modified_tree.code)
+
+    print('Success!')

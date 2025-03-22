@@ -480,7 +480,8 @@ class App:
         """Add a task to be run on app shutdown.
 
         Note that shutdown tasks will be canceled after
-        :py:const:`SHUTDOWN_TASK_TIMEOUT_SECONDS` if they are still running.
+        :py:const:`SHUTDOWN_TASK_TIMEOUT_SECONDS` if they are still
+        running.
         """
         if (
             self.state is self.State.SHUTTING_DOWN

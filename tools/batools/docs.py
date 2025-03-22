@@ -13,11 +13,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from efro.util import utc_now
+from efro.util import utc_now, strict_partial
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    pass
+    from concurrent.futures import Future
+
+    from libcst import BaseExpression
+    from libcst.metadata import CodeRange
 
 
 @dataclass
@@ -256,11 +259,82 @@ def get_sphinx_settings(projroot: str) -> SphinxSettings:
     )
 
 
+def _sphinx_pre_filter_file(path: str) -> None:
+    from typing import override
+
+    import libcst as cst
+    from libcst import CSTTransformer, Name, Index, Subscript
+
+    filename = path
+    filenameout = path
+
+    class RemoveAnnotatedTransformer(CSTTransformer):
+        """Replaces `Annotated[FOO, ...]` with just `FOO`"""
+
+        @override
+        def leave_Subscript(
+            self, original_node: BaseExpression, updated_node: BaseExpression
+        ) -> BaseExpression:
+            if (
+                isinstance(updated_node, Subscript)
+                and isinstance(updated_node.value, Name)
+                and updated_node.value.value == 'Annotated'
+                and isinstance(updated_node.slice[0].slice, Index)
+            ):
+                return updated_node.slice[0].slice.value
+            return updated_node
+
+    with open(filename, 'r', encoding='utf-8') as f:
+        source_code: str = f.read()
+
+    tree: cst.Module = cst.parse_module(source_code)
+    modified_tree: cst.Module = tree.visit(RemoveAnnotatedTransformer())
+
+    final_code = modified_tree.code
+
+    # It seems there's a good amount of stuff that sphinx can't create
+    # links for because we don't actually import it at runtime; it is
+    # just forward-declared under a 'if TYPE_CHECKING' block. We want to
+    # actually import that stuff so that sphinx can find it. However we
+    # can't simply run the code in the 'if TYPE_CHECKING' block because
+    # we get cyclical reference errors (modules importing other ones
+    # before they are finished being built). For now let's just
+    # hard-code some common harmless imports at the end of filtered
+    # files. Perhaps the ideal solution would be to run 'if
+    # TYPE_CHECKING' blocks in the context of each module but only after
+    # everything had been initially imported. Sounds tricky but could
+    # work I think.
+    if bool(False):
+        final_code = final_code.replace(
+            '\nif TYPE_CHECKING:\n',
+            (
+                '\nTYPE_CHECKING = True  # Docs-generation hack\n'
+                'if TYPE_CHECKING:\n'
+            ),
+        )
+    if bool(True):
+        final_code = final_code + (
+            '\n\n# Docs-generation hack; import some stuff that we'
+            ' likely only forward-declared\n'
+            '# in our actual source code so that docs tools can find it.\n'
+            'from typing import (Coroutine, Any, Literal, Callable,\n'
+            '  Generator, Awaitable, Sequence)\n'
+            'import asyncio\n'
+            'from concurrent.futures import Future'
+        )
+
+    with open(filenameout, 'w', encoding='utf-8') as f:
+        f.write(final_code)
+
+
 def _run_sphinx() -> None:
     """Do the actual docs generation with sphinx."""
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
 
     import time
+    from multiprocessing import cpu_count
+    from concurrent.futures import ProcessPoolExecutor
 
     from jinja2 import Environment, FileSystemLoader
 
@@ -272,6 +346,11 @@ def _run_sphinx() -> None:
     template_dir = Path(sphinx_src_dir, 'template')
     static_dir = Path(sphinx_src_dir, 'static')
 
+    filtered_data_dir = Path('.cache/sphinxfiltered')
+    ba_data_filtered_dir = Path(filtered_data_dir, 'ba_data')
+    dummy_modules_filtered_dir = Path(filtered_data_dir, 'dummymodules')
+    tools_filtered_dir = Path(filtered_data_dir, 'tools')
+
     assert template_dir.is_dir()
     assert static_dir.is_dir()
 
@@ -280,6 +359,66 @@ def _run_sphinx() -> None:
 
     os.environ['BALLISTICA_ROOT'] = os.getcwd()  # used in sphinx conf.py
 
+    # Create copies of all Python sources we're documenting. This way we
+    # can filter them beforehand to make some docs prettier (in
+    # particular, the Annotated[] stuff we use a lot makes things very
+    # ugly so we strip those out).
+    print('Copying sources...', flush=True)
+    subprocess.run(['rm', '-rf', filtered_data_dir], check=True)
+    dirpairs: list[tuple[str, str]] = [
+        ('src/assets/ba_data/python/', str(ba_data_filtered_dir)),
+        ('build/dummymodules/', str(dummy_modules_filtered_dir)),
+        ('tools/', str(tools_filtered_dir)),
+    ]
+    for srcdir, dstdir in dirpairs:
+        os.makedirs(dstdir, exist_ok=True)
+        subprocess.run(['cp', '-r', srcdir, dstdir], check=True)
+
+    # Filter all files. Doing this with multiprocessing gives us a very
+    # nice speedup vs multithreading which seems gil-constrained.
+    print('Filtering sources...', flush=True)
+    futures: list[Future] = []
+    with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
+        for root, _dirs, files in os.walk(filtered_data_dir):
+            for fname in files:
+                if not fname.endswith('.py'):
+                    continue
+                fpath = os.path.join(root, fname)
+                futures.append(
+                    executor.submit(
+                        strict_partial(_sphinx_pre_filter_file, fpath)
+                    )
+                )
+    # Surface any exceptions.
+    for future in futures:
+        _ = future.result()
+
+    # Lastly, copy mod-times from original files onto our filtered ones.
+    # Otherwise the 'highlighting module code' step has to run on
+    # everything each time which is crazy slow.
+    def _copy_modtime(src_file: str, dest_file: str) -> None:
+        assert os.path.isfile(dest_file)
+
+        # Get the modification time of the source file
+        mod_time = os.path.getmtime(src_file)
+
+        # Set the modification time of the destination file to match the
+        # source
+        os.utime(dest_file, (mod_time, mod_time))
+
+    print('Updating source modtimes...', flush=True)
+    futures = []
+    for srcdir, dstdir in dirpairs:
+        for root, _dirs, files in os.walk(srcdir):
+            for fname in files:
+                if not fname.endswith('.py'):
+                    continue
+                fpath = os.path.join(root, fname)
+                assert fpath.startswith(srcdir)
+                dstpath = os.path.join(dstdir, fpath.removeprefix(srcdir))
+                _copy_modtime(fpath, dstpath)
+
+    print('Running sphinx stuff...', flush=True)
     env = Environment(loader=FileSystemLoader(template_dir))
     index_template = env.get_template('index.rst_t')
     # maybe make it automatically render all files in templates dir in future
@@ -322,7 +461,11 @@ def _run_sphinx() -> None:
         # expose the classes anyway so its all good.
         EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES='1',
         # Also set PYTHONPATH so sphinx can find all our stuff.
-        PYTHONPATH='src/assets/ba_data/python:tools:build/dummymodules',
+        PYTHONPATH=(
+            f'{ba_data_filtered_dir}:'
+            f'{tools_filtered_dir}:'
+            f'{dummy_modules_filtered_dir}'
+        ),
     )
 
     # To me, the default max-depth of 4 seems weird for these categories
@@ -351,7 +494,7 @@ def _run_sphinx() -> None:
             '--maxdepth',
             module_list_max_depth,
             '-f',
-            'src/assets/ba_data/python',
+            ba_data_filtered_dir,
         ],
         check=True,
         env=environ,
@@ -362,17 +505,18 @@ def _run_sphinx() -> None:
     # those two listings.
     excludes_tools: list[str] = []
     excludes_common: list[str] = []
-    for name in os.listdir('tools'):
+    for name in os.listdir(tools_filtered_dir):
 
         # Skip anything not looking like a Python package.
-        if not os.path.isdir(os.path.join('tools', name)) or not os.path.exists(
-            os.path.join('tools', name, '__init__.py')
+        if (
+            not Path(tools_filtered_dir, name).is_dir()
+            or not Path(tools_filtered_dir, name, '__init__.py').exists()
         ):
             continue
 
         # Assume anything with 'tools' in the name goes with tools.
         exclude_list = excludes_common if 'tools' in name else excludes_tools
-        exclude_list.append(f'tools/{name}')
+        exclude_list.append(str(Path(tools_filtered_dir, name)))
 
     subprocess.run(
         apidoc_cmd
@@ -385,7 +529,7 @@ def _run_sphinx() -> None:
             '--maxdepth',
             module_list_max_depth,
             '-f',
-            'tools',
+            str(tools_filtered_dir),
         ]
         + excludes_tools,
         check=True,
@@ -403,7 +547,7 @@ def _run_sphinx() -> None:
             '--maxdepth',
             module_list_max_depth,
             '-f',
-            'tools',
+            str(tools_filtered_dir),
         ]
         + excludes_common,
         check=True,

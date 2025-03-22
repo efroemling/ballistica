@@ -329,7 +329,8 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
     def session(self) -> bascenev1.Session:
         """The bascenev1.Session this bascenev1.Activity belongs to.
 
-        Raises a babase.SessionNotFoundError if the Session no longer exists.
+        Raises a :class:`~bascenev1.SessionNotFoundError` if the Session
+        no longer exists.
         """
         session = self._session()
         if session is None:
