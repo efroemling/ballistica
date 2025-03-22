@@ -68,8 +68,6 @@ class Graphics;
 // BA_EXPORT_PYTHON_ENUM
 /// Types of input a controller can send to the game.
 ///
-/// Category: Enums
-///
 enum class InputType : uint8_t {
   kUpDown = 2,
   kLeftRight,
@@ -102,8 +100,6 @@ enum class InputType : uint8_t {
 // BA_EXPORT_PYTHON_ENUM
 /// Types of input a controller can send to the game.
 ///
-/// Category: Enums
-///
 /// 'soft' may hide/reset the app but keep the process running, depending
 ///    on the platform.
 ///
@@ -128,8 +124,6 @@ typedef int64_t TimerMedium;
 /// might render the game at similar pixel resolutions but the size they
 /// display content at will vary significantly.
 ///
-/// Category: Enums
-///
 /// 'large' is used for devices such as desktop PCs where fine details can
 ///    be clearly seen. UI elements are generally smaller on the screen
 ///    and more content can be seen at once.
@@ -150,8 +144,6 @@ enum class UIScale : uint8_t {
 
 // BA_EXPORT_PYTHON_ENUM
 /// Permissions that can be requested from the OS.
-///
-/// Category: Enums
 enum class Permission : uint8_t {
   kStorage,
   kLast  // Sentinel.
@@ -159,8 +151,6 @@ enum class Permission : uint8_t {
 
 // BA_EXPORT_PYTHON_ENUM
 /// Special characters the game can print.
-///
-/// Category: Enums
 enum class SpecialChar : uint8_t {
   kDownArrow,
   kUpArrow,

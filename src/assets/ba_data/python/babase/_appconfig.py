@@ -14,19 +14,19 @@ _g_pending_apply = False  # pylint: disable=invalid-name
 
 
 class AppConfig(dict):
-    """A special dict that holds the game's persistent configuration values.
+    """A special dict that holds persistent app configuration values.
 
-    Category: **App Classes**
+    It also provides methods for fetching values with app-defined
+    fallback defaults, applying contained values to the game, and
+    committing the config to storage.
 
-    It also provides methods for fetching values with app-defined fallback
-    defaults, applying contained values to the game, and committing the
-    config to storage.
+    Call babase.appconfig() to get the single shared instance of this
+    class.
 
-    Call babase.appconfig() to get the single shared instance of this class.
-
-    AppConfig data is stored as json on disk on so make sure to only place
-    json-friendly values in it (dict, list, str, float, int, bool).
-    Be aware that tuples will be quietly converted to lists when stored.
+    AppConfig data is stored as json on disk on so make sure to only
+    place json-friendly values in it (dict, list, str, float, int,
+    bool). Be aware that tuples will be quietly converted to lists when
+    stored.
     """
 
     def resolve(self, key: str) -> Any:
@@ -102,8 +102,6 @@ class AppConfig(dict):
 
 def commit_app_config() -> None:
     """Commit the config to persistent storage.
-
-    Category: **General Utility Functions**
 
     (internal)
     """

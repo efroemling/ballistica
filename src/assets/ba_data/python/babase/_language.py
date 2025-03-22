@@ -21,8 +21,6 @@ if TYPE_CHECKING:
 class LanguageSubsystem(AppSubsystem):
     """Language functionality for the app.
 
-    Category: **App Classes**
-
     Access the single instance of this class at 'babase.app.lang'.
     """
 
@@ -494,8 +492,6 @@ class LanguageSubsystem(AppSubsystem):
 
 class Lstr:
     """Used to define strings in a language-independent way.
-
-    Category: **General Utility Classes**
 
     These should be used whenever possible in place of hard-coded
     strings so that in-game or UI elements show up correctly on all

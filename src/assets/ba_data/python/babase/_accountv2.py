@@ -25,8 +25,6 @@ logger = logging.getLogger('ba.accountv2')
 class AccountV2Subsystem:
     """Subsystem for modern account handling in the app.
 
-    Category: **App Classes**
-
     Access the single shared instance of this class at 'ba.app.plus.accounts'.
     """
 

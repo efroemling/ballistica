@@ -587,9 +587,7 @@ static PyMethodDef PyDisconnectFromHostDef = {
 
     "disconnect_from_host() -> None\n"
     "\n"
-    "(internal)\n"
-    "\n"
-    "Category: General Utility Functions",
+    "(internal)",
 };
 
 // --------------------------- disconnect_client -------------------------------
@@ -668,8 +666,6 @@ static PyMethodDef PyGetClientPublicDeviceUUIDDef = {
     "get_client_public_device_uuid(client_id: int) -> str | None\n"
     "\n"
     "(internal)\n"
-    "\n"
-    "Category: General Utility Functions\n"
     "\n"
     "Return a public device UUID for a client. If the client does not\n"
     "exist or is running a version older than 1.6.10, returns None.\n"
@@ -777,9 +773,7 @@ static PyMethodDef PyEndHostScanningDef = {
 
     "end_host_scanning() -> None\n"
     "\n"
-    "(internal)\n"
-    "\n"
-    "Category: General Utility Functions",
+    "(internal)",
 };
 
 // ------------------------- have_connected_clients ----------------------------
@@ -802,9 +796,7 @@ static PyMethodDef PyHaveConnectedClientsDef = {
 
     "have_connected_clients() -> bool\n"
     "\n"
-    "(internal)\n"
-    "\n"
-    "Category: General Utility Functions",
+    "(internal)",
 };
 
 // ------------------------------ chatmessage ----------------------------------

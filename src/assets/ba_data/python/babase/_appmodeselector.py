@@ -13,8 +13,6 @@ if TYPE_CHECKING:
 class AppModeSelector:
     """Defines which AppModes are available or used to handle given AppIntents.
 
-    Category: **App Classes**
-
     The app calls an instance of this class when passed an AppIntent to
     determine which AppMode to use to handle the intent. Plugins or
     spinoff projects can modify high level app behavior by replacing or

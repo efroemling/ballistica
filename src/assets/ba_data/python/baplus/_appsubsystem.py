@@ -160,10 +160,7 @@ class PlusAppSubsystem(AppSubsystem):
 
     @staticmethod
     def mark_config_dirty() -> None:
-        """(internal)
-
-        Category: General Utility Functions
-        """
+        """(internal)"""
         return _baplus.mark_config_dirty()
 
     @staticmethod
@@ -200,18 +197,12 @@ class PlusAppSubsystem(AppSubsystem):
 
     @staticmethod
     def sign_in_v1(account_type: str) -> None:
-        """(internal)
-
-        Category: General Utility Functions
-        """
+        """(internal)"""
         return _baplus.sign_in_v1(account_type)
 
     @staticmethod
     def sign_out_v1(v2_embedded: bool = False) -> None:
-        """(internal)
-
-        Category: General Utility Functions
-        """
+        """(internal)"""
         return _baplus.sign_out_v1(v2_embedded)
 
     @staticmethod

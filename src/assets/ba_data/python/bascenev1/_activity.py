@@ -25,8 +25,6 @@ TeamT = TypeVar('TeamT', bound=Team)
 class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
     """Units of execution wrangled by a bascenev1.Session.
 
-    Category: Gameplay Classes
-
     Examples of Activities include games, score-screens, cutscenes, etc.
     A bascenev1.Session has one 'current' Activity at any time, though
     their existence can overlap during transitions.

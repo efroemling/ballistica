@@ -66,8 +66,6 @@ static PyMethodDef PyTimeDef = {
     "\n"
     "Return the current scene time in seconds.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Scene time maps to local simulation time in bascenev1.Activity or\n"
     "bascenev1.Session Contexts. This means that it may progress slower\n"
     "in slow-motion play modes, stop when the game is paused, etc.\n"
@@ -114,8 +112,6 @@ static PyMethodDef PyTimerDef = {
     " -> None\n"
     "\n"
     "Schedule a call to run at a later point in time.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "This function adds a scene-time timer to the current babase.Context.\n"
     "This timer cannot be canceled or modified once created. If you\n"
@@ -175,8 +171,6 @@ static PyMethodDef PyBaseTimeDef = {
     "\n"
     "Return the base-time in seconds for the current scene-v1 context.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Base-time is a time value that progresses at a constant rate for a "
     "scene,\n"
     "even when the scene is sped up, slowed down, or paused. It may, however,\n"
@@ -227,8 +221,6 @@ static PyMethodDef PyBaseTimerDef = {
     " even when the scene is sped up, slowed down, or paused. It may,\n"
     " however, speed up or slow down due to replay speed adjustments or may\n"
     " slow down if the cpu is overloaded.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "This function adds a timer to the current scene context.\n"
     "This timer cannot be canceled or modified once created. If you\n"
@@ -291,8 +283,6 @@ static PyMethodDef PyGetSessionDef = {
     METH_VARARGS | METH_KEYWORDS,  // flags
 
     "getsession(doraise: bool = True) -> <varies>\n"
-    "\n"
-    "Category: **Gameplay Functions**\n"
     "\n"
     "Returns the current bascenev1.Session instance.\n"
     "Note that this is based on context_ref; thus code being run in the UI\n"
@@ -567,8 +557,6 @@ static PyMethodDef PyNewActivityDef = {
     "\n"
     "Instantiates a bascenev1.Activity given a type object.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Activities require special setup and thus cannot be directly\n"
     "instantiated; you must go through this function.",
 };
@@ -612,8 +600,6 @@ static PyMethodDef PyGetActivityDef = {
     "getactivity(doraise: bool = True) -> <varies>\n"
     "\n"
     "Return the current bascenev1.Activity instance.\n"
-    "\n"
-    "Category: **Gameplay Functions**\n"
     "\n"
     "Note that this is based on context_ref; thus code run in a timer\n"
     "generated in Activity 'foo' will properly return 'foo' here, even if\n"
@@ -785,8 +771,6 @@ static PyMethodDef PyBroadcastMessageDef = {
     "\n"
     "Broadcast a screen-message to clients in the current session.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "If 'top' is True, the message will go to the top message area.\n"
     "For 'top' messages, 'image' must be a dict containing 'texture'\n"
     "and 'tint_texture' textures and 'tint_color' and 'tint2_color'\n"
@@ -823,8 +807,6 @@ static PyMethodDef PyNewNodeDef = {
     "  delegate: Any = None) -> bascenev1.Node\n"
     "\n"
     "Add a node of the given type to the game.\n"
-    "\n"
-    "Category: **Gameplay Functions**\n"
     "\n"
     "If a dict is provided for 'attributes', the node's initial attributes\n"
     "will be set based on them.\n"
@@ -876,9 +858,7 @@ static PyMethodDef PyPrintNodesDef = {
 
     "printnodes() -> None\n"
     "\n"
-    "Print various info about existing nodes; useful for debugging.\n"
-    "\n"
-    "Category: **Gameplay Functions**",
+    "Print various info about existing nodes; useful for debugging.",
 };
 
 // -------------------------------- getnodes -----------------------------------
@@ -906,9 +886,7 @@ static PyMethodDef PyGetNodesDef = {
 
     "getnodes() -> list\n"
     "\n"
-    "Return all nodes in the current bascenev1.Context.\n"
-    "\n"
-    "Category: **Gameplay Functions**",
+    "Return all nodes in the current bascenev1.Context.",
 };
 
 // -------------------------- get_collision_info -------------------------------
@@ -1029,8 +1007,6 @@ static PyMethodDef PyGetCollisionInfoDef = {
     "\n"
     "Return collision related values\n"
     "\n"
-    "Category: **Gameplay Functions**\n"
-    "\n"
     "Returns a single collision value or tuple of values such as location,\n"
     "depth, nodes involved, etc. Only call this in the handler of a\n"
     "collision-triggered callback or message",
@@ -1079,8 +1055,6 @@ static PyMethodDef PyCameraShakeDef = {
     "camerashake(intensity: float = 1.0) -> None\n"
     "\n"
     "Shake the camera.\n"
-    "\n"
-    "Category: **Gameplay Functions**\n"
     "\n"
     "Note that some cameras and/or platforms (such as VR) may not display\n"
     "camera-shake, so do not rely on this always being visible to the\n"
@@ -1222,8 +1196,6 @@ static PyMethodDef PyEmitFxDef = {
     "  tendril_type: str = 'smoke') -> None\n"
     "\n"
     "Emit particles, smoke, etc. into the fx sim layer.\n"
-    "\n"
-    "Category: **Gameplay Functions**\n"
     "\n"
     "The fx sim layer is a secondary dynamics simulation that runs in\n"
     "the background and just looks pretty; it does not affect gameplay.\n"
@@ -1670,8 +1642,6 @@ static PyMethodDef PyLsObjectsDef = {
     "\n"
     "Log debugging info about C++ level objects.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "This call only functions in debug builds of the game.\n"
     "It prints various info about the current object count, etc.",
 };
@@ -1694,8 +1664,6 @@ static PyMethodDef PyLsInputDevicesDef = {
     "ls_input_devices() -> None\n"
     "\n"
     "Print debugging info about game objects.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "This call only functions in debug builds of the game.\n"
     "It prints various info about the current object count, etc.",

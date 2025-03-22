@@ -23,8 +23,6 @@ void PythonClassSceneTimer::SetupType(PyTypeObject* cls) {
       "\n"
       "Timers are used to run code at later points in time.\n"
       "\n"
-      "Category: **General Utility Classes**\n"
-      "\n"
       "This class encapsulates a scene-time timer in the current\n"
       "bascenev1.Context. The underlying timer will be destroyed when either\n"
       "this object is no longer referenced or when its Context (Activity,\n"

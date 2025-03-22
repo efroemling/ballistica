@@ -18,8 +18,6 @@ if TYPE_CHECKING:
 class FlagFactory:
     """Wraps up media and other resources used by `Flag`s.
 
-    Category: **Gameplay Classes**
-
     A single instance of this is shared between all flags
     and can be retrieved via FlagFactory.get().
     """
@@ -122,10 +120,7 @@ class FlagFactory:
 
 @dataclass
 class FlagPickedUpMessage:
-    """A message saying a `Flag` has been picked up.
-
-    Category: **Message Classes**
-    """
+    """A message saying a `Flag` has been picked up."""
 
     flag: Flag
     """The `Flag` that has been picked up."""
@@ -136,10 +131,7 @@ class FlagPickedUpMessage:
 
 @dataclass
 class FlagDiedMessage:
-    """A message saying a `Flag` has died.
-
-    Category: **Message Classes**
-    """
+    """A message saying a `Flag` has died."""
 
     flag: Flag
     """The `Flag` that died."""
@@ -150,10 +142,7 @@ class FlagDiedMessage:
 
 @dataclass
 class FlagDroppedMessage:
-    """A message saying a `Flag` has been dropped.
-
-    Category: **Message Classes**
-    """
+    """A message saying a `Flag` has been dropped."""
 
     flag: Flag
     """The `Flag` that was dropped."""
@@ -164,8 +153,6 @@ class FlagDroppedMessage:
 
 class Flag(bs.Actor):
     """A flag; used in games such as capture-the-flag or king-of-the-hill.
-
-    Category: **Gameplay Classes**
 
     Can be stationary or carry-able by players.
     """

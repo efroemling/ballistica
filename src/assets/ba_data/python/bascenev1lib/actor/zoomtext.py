@@ -17,8 +17,6 @@ if TYPE_CHECKING:
 class ZoomText(bs.Actor):
     """Big Zooming Text.
 
-    Category: Gameplay Classes
-
     Used for things such as the 'BOB WINS' victory messages.
     """
 

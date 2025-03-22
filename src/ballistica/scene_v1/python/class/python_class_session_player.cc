@@ -56,8 +56,6 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a player in the bascenev1.Session.\n"
       "\n"
-      "Category: **Gameplay Classes**\n"
-      "\n"
       "These are created and managed internally and\n"
       "provided to your bascenev1.Session/bascenev1.Activity instances.\n"
       "Be aware that, like `ba.Node`s, bascenev1.SessionPlayer objects are\n"

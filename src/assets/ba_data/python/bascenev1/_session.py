@@ -42,8 +42,6 @@ def set_max_players_override(max_players: int | None) -> None:
 class Session:
     """Defines a high level series of bascenev1.Activity-es.
 
-    Category: **Gameplay Classes**
-
     Examples of sessions are bascenev1.FreeForAllSession,
     bascenev1.DualTeamSession, and bascenev1.CoopSession.
 

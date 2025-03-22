@@ -16,10 +16,7 @@ if TYPE_CHECKING:
 
 
 class FreeForAllSession(MultiTeamSession):
-    """bascenev1.Session type for free-for-all mode games.
-
-    Category: **Gameplay Classes**
-    """
+    """bascenev1.Session type for free-for-all mode games."""
 
     use_teams = False
     use_team_colors = False

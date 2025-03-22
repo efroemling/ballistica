@@ -8,7 +8,7 @@ import dataclasses
 import typing
 import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, get_args, TypeVar, Generic
+from typing import TYPE_CHECKING, get_args, TypeVar, Generic, override
 
 # noinspection PyProtectedMember
 from typing import _AnnotatedAlias  # type: ignore
@@ -197,7 +197,10 @@ class IOAttrs:
     # A sentinel object to detect if a parameter is supplied or not. Use
     # a class to give it a better repr.
     class _MissingType:
-        pass
+
+        @override
+        def __repr__(self) -> str:
+            return '<MISSING>'
 
     MISSING = _MissingType()
 

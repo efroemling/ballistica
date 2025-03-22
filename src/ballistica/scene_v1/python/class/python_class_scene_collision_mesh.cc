@@ -34,8 +34,6 @@ void PythonClassSceneCollisionMesh::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a collision-mesh.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
       "Use bascenev1.getcollisionmesh() to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;

@@ -17,9 +17,8 @@ if TYPE_CHECKING:
 class AccountV1Subsystem:
     """Subsystem for legacy account handling in the app.
 
-    Category: **App Classes**
-
-    Access the single instance of this class at 'ba.app.classic.accounts'.
+    Access the single instance of this class at
+    'ba.app.classic.accounts'.
     """
 
     def __init__(self) -> None:

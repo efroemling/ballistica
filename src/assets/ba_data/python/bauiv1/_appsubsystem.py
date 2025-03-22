@@ -32,8 +32,6 @@ if TYPE_CHECKING:
 class UIV1AppSubsystem(babase.AppSubsystem):
     """Consolidated UI functionality for the app.
 
-    Category: **App Classes**
-
     To use this class, access the single instance of it at 'ba.app.ui'.
     """
 

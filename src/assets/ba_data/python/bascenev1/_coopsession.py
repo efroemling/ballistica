@@ -22,8 +22,6 @@ TEAM_NAMES = ['Good Guys']
 class CoopSession(Session):
     """A bascenev1.Session which runs cooperative-mode games.
 
-    Category: **Gameplay Classes**
-
     These generally consist of 1-4 players against
     the computer and include functionality such as
     high score lists.

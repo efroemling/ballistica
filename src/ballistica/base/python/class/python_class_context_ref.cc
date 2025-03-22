@@ -21,8 +21,6 @@ void PythonClassContextRef::SetupType(PyTypeObject* cls) {
       "\n"
       "Store or use a ballistica context.\n"
       "\n"
-      "Category: **General Utility Classes**\n"
-      "\n"
       "Many operations such as bascenev1.newnode() or bascenev1.gettexture()\n"
       "operate implicitly on a current 'context'. A context is some sort of\n"
       "state that functionality can implicitly use. Context determines, for\n"

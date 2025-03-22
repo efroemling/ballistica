@@ -15,102 +15,62 @@ if TYPE_CHECKING:
 class ContextError(Exception):
     """Exception raised when a call is made in an invalid context.
 
-    Category: **Exception Classes**
-
-    Examples of this include calling UI functions within an Activity context
-    or calling scene manipulation functions outside of a game context.
+    Examples of this include calling UI functions within an Activity
+    context or calling scene manipulation functions outside of a game
+    context.
     """
 
 
 class NotFoundError(Exception):
-    """Exception raised when a referenced object does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when a referenced object does not exist."""
 
 
 class PlayerNotFoundError(NotFoundError):
-    """Exception raised when an expected player does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected player does not exist."""
 
 
 class SessionPlayerNotFoundError(NotFoundError):
-    """Exception raised when an expected session-player does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected session-player does not exist."""
 
 
 class TeamNotFoundError(NotFoundError):
-    """Exception raised when an expected bascenev1.Team does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected bascenev1.Team does not exist."""
 
 
 class MapNotFoundError(NotFoundError):
-    """Exception raised when an expected bascenev1.Map does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected bascenev1.Map does not exist."""
 
 
 class DelegateNotFoundError(NotFoundError):
-    """Exception raised when an expected delegate object does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected delegate object does not exist."""
 
 
 class SessionTeamNotFoundError(NotFoundError):
-    """Exception raised when an expected session-team does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected session-team does not exist."""
 
 
 class NodeNotFoundError(NotFoundError):
-    """Exception raised when an expected Node does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected Node does not exist."""
 
 
 class ActorNotFoundError(NotFoundError):
-    """Exception raised when an expected actor does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected actor does not exist."""
 
 
 class ActivityNotFoundError(NotFoundError):
-    """Exception raised when an expected bascenev1.Activity does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected bascenev1.Activity does not exist."""
 
 
 class SessionNotFoundError(NotFoundError):
-    """Exception raised when an expected session does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected session does not exist."""
 
 
 class InputDeviceNotFoundError(NotFoundError):
-    """Exception raised when an expected input-device does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected input-device does not exist."""
 
 
 class WidgetNotFoundError(NotFoundError):
-    """Exception raised when an expected widget does not exist.
-
-    Category: **Exception Classes**
-    """
+    """Exception raised when an expected widget does not exist."""
 
 
 # TODO: Should integrate some sort of context printing into our
@@ -120,8 +80,6 @@ class WidgetNotFoundError(NotFoundError):
 
 def print_exception(*args: Any, **keywds: Any) -> None:
     """Print info about an exception along with pertinent context state.
-
-    Category: **General Utility Functions**
 
     Prints all arguments provided along with various info about the
     current context and the outstanding exception.
@@ -161,8 +119,6 @@ def print_exception(*args: Any, **keywds: Any) -> None:
 
 def print_error(err_str: str, once: bool = False) -> None:
     """Print info about an error along with pertinent context state.
-
-    Category: **General Utility Functions**
 
     Prints all positional arguments provided along with various info about the
     current context.

@@ -16,8 +16,6 @@ if TYPE_CHECKING:
 class MusicType(Enum):
     """Types of music available to play in-game.
 
-    Category: **Enums**
-
     These do not correspond to specific pieces of music, but rather to
     'situations'. The actual music played for each type can be overridden
     by the game or by the user.

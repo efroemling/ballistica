@@ -14,8 +14,6 @@ if TYPE_CHECKING:
 class AppSubsystem:
     """Base class for an app subsystem.
 
-    Category: **App Classes**
-
     An app 'subsystem' is a bit of a vague term, as pieces of the app
     can technically be any class and are not required to use this, but
     building one out of this base class provides conveniences such as

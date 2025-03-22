@@ -60,10 +60,12 @@ release = str(settings.buildnum)
 # -- General configuration ---------------------------------------------------
 
 # Prepend to pages.
-rst_prolog = f"""
-.. image:: {settings.logo_large}
-    :target: index.html
-    :alt: Ballistica Logo
+# rst_prolog = f"""
+# .. image:: {settings.logo_large}
+#     :target: index.html
+#     :alt: Ballistica Logo
+# """
+rst_prolog = """
 """
 
 # Append to pages.

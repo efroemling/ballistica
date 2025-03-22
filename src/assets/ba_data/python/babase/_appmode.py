@@ -11,10 +11,7 @@ if TYPE_CHECKING:
 
 
 class AppMode:
-    """A high level mode for the app.
-
-    Category: **App Classes**
-    """
+    """A high level mode for the app."""
 
     @classmethod
     def get_app_experience(cls) -> AppExperience:

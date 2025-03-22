@@ -28,12 +28,10 @@ void PythonClassNode::SetupType(PyTypeObject* cls) {
   PythonClass::SetupType(cls);
   cls->tp_repr = (reprfunc)tp_repr;
   // Fully qualified type path we will be exposed as:
-  cls->tp_name = "babase.Node";
+  cls->tp_name = "bascenev1.Node";
   cls->tp_basicsize = sizeof(PythonClassNode);
   cls->tp_doc =
       "Reference to a Node; the low level building block of a game.\n"
-      "\n"
-      "Category: **Gameplay Classes**\n"
       "\n"
       "At its core, a game is nothing more than a scene of Nodes\n"
       "with attributes getting interconnected or set over time.\n"
@@ -44,7 +42,8 @@ void PythonClassNode::SetupType(PyTypeObject* cls) {
       "to it exist. To explicitly add a new node to the game, use\n"
       "bascenev1.newnode(), and to explicitly delete one,\n"
       " use bascenev1.Node.delete().\n"
-      "babase.Node.exists() can be used to determine if a Node still points\n"
+      "bascenev1.Node.exists() can be used to determine if a Node still "
+      "points\n"
       "to a live node in the game.\n"
       "\n"
       "You can use `ba.Node(None)` to instantiate an invalid\n"
@@ -426,7 +425,7 @@ PyMethodDef PythonClassNode::tp_methods[] = {
      "\n"
      "If the node has no delegate or it is not an instance of the passed\n"
      "type, then None will be returned. If 'doraise' is True, then an\n"
-     "babase.DelegateNotFoundError will be raised instead."},
+     "bascenev1.DelegateNotFoundError will be raised instead."},
     {"delete", (PyCFunction)Delete, METH_VARARGS | METH_KEYWORDS,
      "delete(ignore_missing: bool = True) -> None\n"
      "\n"

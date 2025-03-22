@@ -19,11 +19,9 @@ if TYPE_CHECKING:
 class SessionTeam:
     """A team of one or more bascenev1.SessionPlayers.
 
-    Category: **Gameplay Classes**
-
-    Note that a SessionPlayer *always* has a SessionTeam;
-    in some cases, such as free-for-all bascenev1.Sessions,
-    each SessionTeam consists of just one SessionPlayer.
+    Note that a SessionPlayer *always* has a SessionTeam; in some cases,
+    such as free-for-all bascenev1.Sessions, each SessionTeam consists
+    of just one SessionPlayer.
     """
 
     # Annotate our attr types at the class level so they're introspectable.
@@ -76,10 +74,9 @@ PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
 class Team(Generic[PlayerT]):
     """A team in a specific bascenev1.Activity.
 
-    Category: **Gameplay Classes**
-
     These correspond to bascenev1.SessionTeam objects, but are created
-    per activity so that the activity can use its own custom team subclass.
+    per activity so that the activity can use its own custom team
+    subclass.
     """
 
     # Defining these types at the class level instead of in __init__ so
@@ -194,18 +191,16 @@ class Team(Generic[PlayerT]):
 
 
 class EmptyTeam(Team['bascenev1.EmptyPlayer']):
-    """An empty player for use by Activities that don't need to define one.
+    """An empty player for use by Activities that don't define one.
 
-    Category: **Gameplay Classes**
-
-    bascenev1.Player and bascenev1.Team are 'Generic' types, and so passing
-    those top level classes as type arguments when defining a
+    bascenev1.Player and bascenev1.Team are 'Generic' types, and so
+    passing those top level classes as type arguments when defining a
     bascenev1.Activity reduces type safety. For example,
     activity.teams[0].player will have type 'Any' in that case. For that
     reason, it is better to pass EmptyPlayer and EmptyTeam when defining
     a bascenev1.Activity that does not need custom types of its own.
 
-    Note that EmptyPlayer defines its team type as EmptyTeam and vice versa,
-    so if you want to define your own class for one of them you should do so
-    for both.
+    Note that EmptyPlayer defines its team type as EmptyTeam and vice
+    versa, so if you want to define your own class for one of them you
+    should do so for both.
     """

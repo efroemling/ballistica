@@ -24,8 +24,6 @@ void PythonClassAppTimer::SetupType(PyTypeObject* cls) {
       "\n"
       "Timers are used to run code at later points in time.\n"
       "\n"
-      "Category: **General Utility Classes**\n"
-      "\n"
       "This class encapsulates a timer based on app-time.\n"
       "The underlying timer will be destroyed when this object is no longer\n"
       "referenced. If you do not want to worry about keeping a reference to\n"
