@@ -97,7 +97,6 @@ from batools.pcommands import (
     efrocache_update,
     efrocache_get,
     warm_start_asset_build,
-    gen_docs_pdoc,
     gen_docs_sphinx,
     checkenv,
     prefab_platform,

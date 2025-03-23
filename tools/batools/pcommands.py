@@ -9,8 +9,6 @@ import sys
 
 from efrotools import pcommand
 
-# pylint: disable=too-many-lines
-
 
 def prune_includes() -> None:
     """Check for unnecessary includes in C++ files.
@@ -525,22 +523,11 @@ def warm_start_asset_build() -> None:
         )
 
 
-def gen_docs_pdoc() -> None:
-    """Generate pdoc documentation."""
-    from efro.terminal import Clr
-    import batools.docs
-
-    pcommand.disallow_in_batch()
-
-    print(f'{Clr.BLU}Generating documentation...{Clr.RST}')
-    batools.docs.generate_pdoc(projroot=str(pcommand.PROJROOT))
-
-
 def gen_docs_sphinx() -> None:
     """Generate sphinx documentation."""
     import batools.docs
 
-    batools.docs.generate_sphinxdoc()
+    batools.docs.generate_sphinx_docs()
 
 
 def checkenv() -> None:

@@ -2,12 +2,9 @@
 #
 """Documentation generation functionality."""
 
-# pyright: reportPrivateImportUsage=false
-
 from __future__ import annotations
 
 import os
-import sys
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -84,146 +81,6 @@ def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
     return docs
 
 
-def generate_pdoc(projroot: str) -> None:
-    """Generate a set of pdoc documentation."""
-    del projroot  # Unused.
-
-    if bool(False):
-        _run_pdoc_in_engine()
-    else:
-        _run_pdoc_with_dummy_modules()
-
-
-def _run_pdoc_in_engine() -> None:
-    """Generate docs from within the running engine.
-
-    The upside of this way is we have all built-in native modules
-    available. The downside is that we don't have typing information
-    for those modules aside from what's embedded in their docstrings
-    (which is not parsed by pdoc). So we get lots of ugly 'unknown'
-    arg types in docs/etc.
-
-    The ideal solution might be to start writing .pyi files for
-    our native modules to provide their type information instead
-    of or in addition to our dummy-module approach. Just need to
-    see how that works with our pipeline.
-    """
-    from batools import apprun
-
-    # Assemble and launch an app and do our docs generation from there.
-    # Note: we set EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES because pdoc
-    # spits out lots of "UserWarning: cannot determine where FOO was
-    # taken from" warnings if not. Haven't actually seen what difference
-    # it makes in the output though. Basically the canonical names stuff
-    # makes things like bascenev1._actor.Actor show up as
-    # bascenev1.Actor instead.
-
-    # Grab names from live objects so things don't break if names
-    # change.
-    pycmd = f'import {__name__}; {__name__}.{_run_pdoc.__name__}()'
-    apprun.python_command(
-        pycmd,
-        purpose='pdocs generation',
-        include_project_tools=True,
-        env=dict(os.environ, EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES='1'),
-    )
-
-
-def _run_pdoc_with_dummy_modules() -> None:
-    """Generate docs outside of the engine using our dummy modules.
-
-    Dummy modules stand in for native engine modules, and should be just
-    intact enough for us to spit out docs from.
-
-    The upside is that dummy modules have full typing information about
-    arguments/etc. so some docs will be more complete than if we talk to
-    the live engine.
-
-    The downside is that we have to hack the engine a bit to be able to
-    spin itself up this way and there may be bits missing that would
-    otherwise not be when running in a live engine.
-    """
-
-    # Not that this is likely to happen, but we muck with sys paths and
-    # whatnot here so let's make sure we only do this once.
-    global _g_genned_pdoc_with_dummy_modules  # pylint: disable=global-statement
-    if _g_genned_pdoc_with_dummy_modules:
-        raise RuntimeError(
-            'Can only run this once; it mucks with the environment.'
-        )
-    _g_genned_pdoc_with_dummy_modules = True
-
-    # Make sure dummy-modules are up to date and make them discoverable
-    # to Python.
-    subprocess.run(['make', 'dummymodules'], check=True)
-    sys.path.append('build/dummymodules')
-
-    # Turn off canonical module name muckery (see longer note above).
-    os.environ['EFRO_SUPPRESS_SET_CANONICAL_MODULE_NAMES'] = '1'
-
-    # Short circuits a few things in our Python code allowing this to
-    # work.
-    os.environ['BA_RUNNING_WITH_DUMMY_MODULES'] = '1'
-
-    # Use raw sources for our other stuff.
-    sys.path.append('src/assets/ba_data/python')
-
-    # We're using raw source dirs in this case, and we don't want Python
-    # dumping .pyc files there as it causes various small headaches with
-    # build pipeline stuff.
-    sys.dont_write_bytecode = True
-
-    _run_pdoc()
-
-
-def _run_pdoc() -> None:
-    """Do the actual docs generation with pdoc."""
-    import time
-
-    import pdoc
-
-    from batools.version import get_current_version
-
-    starttime = time.monotonic()
-
-    # Tell pdoc to go through all the modules in ba_data/python.
-    modulenames = [
-        n.removesuffix('.py')
-        for n in os.listdir('src/assets/ba_data/python')
-        if not n.startswith('.')
-    ]
-    assert modulenames
-
-    # Also add in a few common ones from tools.
-    for mname in ['efro', 'bacommon']:
-        assert mname not in modulenames
-        modulenames.append(mname)
-
-    modulenames.sort()  # Just in case it matters.
-
-    templatesdir = Path('src/assets/pdoc/templates')
-    assert templatesdir.is_dir()
-
-    version, buildnum = get_current_version()
-
-    pdoc.render.env.globals['ba_version'] = version
-    pdoc.render.env.globals['ba_build'] = buildnum
-    pdoc.render.configure(
-        search=True,
-        show_source=True,
-        template_directory=Path('src/assets/pdoc/templates'),
-    )
-    pdoc.pdoc(*modulenames, output_directory=Path('build/docs_pdoc_html'))
-
-    duration = time.monotonic() - starttime
-    print(f'{Clr.GRN}Generated pdoc documentation in {duration:.1f}s.{Clr.RST}')
-
-
-def generate_sphinxdoc() -> None:
-    """Generate a set of pdoc documentation."""
-    _run_sphinx()
-
-
 @dataclass
 class SphinxSettings:
     """Our settings for sphinx stuff."""
@@ -259,76 +116,8 @@ def get_sphinx_settings(projroot: str) -> SphinxSettings:
     )
 
 
-def _sphinx_pre_filter_file(path: str) -> None:
-    from typing import override
-
-    import libcst as cst
-    from libcst import CSTTransformer, Name, Index, Subscript
-
-    filename = path
-    filenameout = path
-
-    class RemoveAnnotatedTransformer(CSTTransformer):
-        """Replaces `Annotated[FOO, ...]` with just `FOO`"""
-
-        @override
-        def leave_Subscript(
-            self, original_node: BaseExpression, updated_node: BaseExpression
-        ) -> BaseExpression:
-            if (
-                isinstance(updated_node, Subscript)
-                and isinstance(updated_node.value, Name)
-                and updated_node.value.value == 'Annotated'
-                and isinstance(updated_node.slice[0].slice, Index)
-            ):
-                return updated_node.slice[0].slice.value
-            return updated_node
-
-    with open(filename, 'r', encoding='utf-8') as f:
-        source_code: str = f.read()
-
-    tree: cst.Module = cst.parse_module(source_code)
-    modified_tree: cst.Module = tree.visit(RemoveAnnotatedTransformer())
-
-    final_code = modified_tree.code
-
-    # It seems there's a good amount of stuff that sphinx can't create
-    # links for because we don't actually import it at runtime; it is
-    # just forward-declared under a 'if TYPE_CHECKING' block. We want to
-    # actually import that stuff so that sphinx can find it. However we
-    # can't simply run the code in the 'if TYPE_CHECKING' block because
-    # we get cyclical reference errors (modules importing other ones
-    # before they are finished being built). For now let's just
-    # hard-code some common harmless imports at the end of filtered
-    # files. Perhaps the ideal solution would be to run 'if
-    # TYPE_CHECKING' blocks in the context of each module but only after
-    # everything had been initially imported. Sounds tricky but could
-    # work I think.
-    if bool(False):
-        final_code = final_code.replace(
-            '\nif TYPE_CHECKING:\n',
-            (
-                '\nTYPE_CHECKING = True  # Docs-generation hack\n'
-                'if TYPE_CHECKING:\n'
-            ),
-        )
-    if bool(True):
-        final_code = final_code + (
-            '\n\n# Docs-generation hack; import some stuff that we'
-            ' likely only forward-declared\n'
-            '# in our actual source code so that docs tools can find it.\n'
-            'from typing import (Coroutine, Any, Literal, Callable,\n'
-            '  Generator, Awaitable, Sequence, Self)\n'
-            'import asyncio\n'
-            'from concurrent.futures import Future'
-        )
-
-    with open(filenameout, 'w', encoding='utf-8') as f:
-        f.write(final_code)
-
-
-def _run_sphinx() -> None:
-    """Do the actual docs generation with sphinx."""
+def generate_sphinx_docs() -> None:
+    """Run docs generation with sphinx."""
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
 
@@ -338,6 +127,9 @@ def _run_sphinx() -> None:
     from concurrent.futures import ProcessPoolExecutor
 
     from jinja2 import Environment, FileSystemLoader
+
+    # Make sure dummy-modules are up to date.
+    subprocess.run(['make', 'dummymodules'], check=True)
 
     settings = get_sphinx_settings('.')
 
@@ -580,3 +372,71 @@ def _run_sphinx() -> None:
 
     duration = time.monotonic() - starttime
     print(f'Generated sphinx documentation in {duration:.1f}s.')
+
+
+def _sphinx_pre_filter_file(path: str) -> None:
+    from typing import override
+
+    import libcst as cst
+    from libcst import CSTTransformer, Name, Index, Subscript
+
+    filename = path
+    filenameout = path
+
+    class RemoveAnnotatedTransformer(CSTTransformer):
+        """Replaces `Annotated[FOO, ...]` with just `FOO`"""
+
+        @override
+        def leave_Subscript(
+            self, original_node: BaseExpression, updated_node: BaseExpression
+        ) -> BaseExpression:
+            if (
+                isinstance(updated_node, Subscript)
+                and isinstance(updated_node.value, Name)
+                and updated_node.value.value == 'Annotated'
+                and isinstance(updated_node.slice[0].slice, Index)
+            ):
+                return updated_node.slice[0].slice.value
+            return updated_node
+
+    with open(filename, 'r', encoding='utf-8') as f:
+        source_code: str = f.read()
+
+    tree: cst.Module = cst.parse_module(source_code)
+    modified_tree: cst.Module = tree.visit(RemoveAnnotatedTransformer())
+
+    final_code = modified_tree.code
+
+    # It seems there's a good amount of stuff that sphinx can't create
+    # links for because we don't actually import it at runtime; it is
+    # just forward-declared under a 'if TYPE_CHECKING' block. We want to
+    # actually import that stuff so that sphinx can find it. However we
+    # can't simply run the code in the 'if TYPE_CHECKING' block because
+    # we get cyclical reference errors (modules importing other ones
+    # before they are finished being built). For now let's just
+    # hard-code some common harmless imports at the end of filtered
+    # files. Perhaps the ideal solution would be to run 'if
+    # TYPE_CHECKING' blocks in the context of each module but only after
+    # everything had been initially imported. Sounds tricky but could
+    # work I think.
+    if bool(False):
+        final_code = final_code.replace(
+            '\nif TYPE_CHECKING:\n',
+            (
+                '\nTYPE_CHECKING = True  # Docs-generation hack\n'
+                'if TYPE_CHECKING:\n'
+            ),
+        )
+    if bool(True):
+        final_code = final_code + (
+            '\n\n# Docs-generation hack; import some stuff that we'
+            ' likely only forward-declared\n'
+            '# in our actual source code so that docs tools can find it.\n'
+            'from typing import (Coroutine, Any, Literal, Callable,\n'
+            '  Generator, Awaitable, Sequence, Self)\n'
+            'import asyncio\n'
+            'from concurrent.futures import Future'
+        )
+
+    with open(filenameout, 'w', encoding='utf-8') as f:
+        f.write(final_code)

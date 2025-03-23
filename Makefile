@@ -190,16 +190,9 @@ venv-clean:
 # IMPORTANT: Docs generation targets may themselves run builds, so they should
 #  be run alone serially and never in parallel alongside other builds.
 docs: env
-	$(MAKE) docs-sphinx
-
-docs-pdoc: env
-	@$(PCOMMAND) gen_docs_pdoc
-
-docs-sphinx: env
-	$(MAKE) dummymodules
 	@$(PCOMMAND) gen_docs_sphinx
 
-docs-sphinx-clean:
+docs-clean:
 	rm -rf .cache/sphinx
 	rm -rf build/sphinx
 
@@ -211,7 +204,7 @@ pcommandbatch_speed_test: env
         assets-cmake-scripts assets-windows assets-windows-Win32							\
         assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
         resources resources-clean meta meta-clean clean clean-list						\
-        dummymodules venv venv-clean docs docs-pdoc pcommandbatch_speed_test
+        dummymodules venv venv-clean docs docs-clean pcommandbatch_speed_test
 
 
 ################################################################################
