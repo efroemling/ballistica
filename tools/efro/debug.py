@@ -46,11 +46,15 @@ def getobjs(
 ) -> list[Any]:
     """Return all garbage-collected objects matching criteria.
 
-    'type' can be an actual type or a string in which case objects
-    whose types contain that string will be returned.
+    Args:
 
-    If 'contains' is provided, objects will be filtered to those
-    containing that in their str() representations.
+      type:
+        Can be an actual type or a string in which case objects
+        whose types contain that string will be returned.
+
+      contains:
+        If provided, objects will be filtered to those
+        containing that in their str() representations.
     """
 
     # Don't wanna return stuff waiting to be garbage-collected.
@@ -181,12 +185,19 @@ def printrefs(
 ) -> None:
     """Print human readable list of objects referring to an object.
 
-    'max_level' specifies how many levels of recursion are printed.
-    'exclude_objs' can be a list of exact objects to skip if found in the
-      referrers list. This can be useful to avoid printing the local context
-      where the object was passed in from (locals(), etc).
-    'expand_ids' can be a list of object ids; if that particular object is
-      found, it will always be expanded even if max_level has been reached.
+    Args:
+
+      max_level:
+        Specifies how many levels of recursion are printed.
+
+      exclude_objs:
+        Can be a list of exact objects to skip if found in the
+        referrers list. This can be useful to avoid printing the local context
+        where the object was passed in from (locals(), etc).
+
+      expand_ids:
+        Can be a list of object ids; if that particular object is
+        found, it will always be expanded even if max_level has been reached.
     """
     _printrefs(
         obj,

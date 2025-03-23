@@ -1,4 +1,4 @@
-### 1.7.39 (build 22324, api 9, 2025-03-22)
+### 1.7.39 (build 22325, api 9, 2025-03-22)
 - Tidied up the sphinx documentation generation a bit. Docs are now generated
   for both runtime and tools packages.
   

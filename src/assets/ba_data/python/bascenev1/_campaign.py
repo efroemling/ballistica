@@ -19,7 +19,7 @@ def register_campaign(campaign: bascenev1.Campaign) -> None:
 
 
 class Campaign:
-    """Represents a unique set or series of :class:`bascenev1.Level`s."""
+    """Represents a unique set or series of :class:`bascenev1.Level`."""
 
     def __init__(
         self,

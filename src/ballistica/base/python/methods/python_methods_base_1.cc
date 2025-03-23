@@ -395,12 +395,15 @@ static PyMethodDef PyAppTimerDef = {
     "        exists, so you may want to look into concepts such as\n"
     "        babase.WeakCall if that is not desired.\n"
     "\n"
-    "Example: Print some stuff through time:\n"
-    "  >>> babase.screenmessage('hello from now!')\n"
-    "  >>> babase.apptimer(1.0, babase.Call(babase.screenmessage,\n"
-    "  ...                 'hello from the future!'))\n"
-    "  >>> babase.apptimer(2.0, babase.Call(babase.screenmessage,\n"
-    "  ...                 'hello from the future 2!'))\n",
+    "Example: Print some stuff through time::\n"
+    "\n"
+    "   import babase\n"
+    "\n"
+    "   babase.screenmessage('hello from now!')\n"
+    "   babase.apptimer(1.0, babase.Call(babase.screenmessage,\n"
+    "                   'hello from the future!'))\n"
+    "   babase.apptimer(2.0, babase.Call(babase.screenmessage,\n"
+    "                   'hello from the future 2!'))\n",
 };
 
 // --------------------------- displaytime -------------------------------------

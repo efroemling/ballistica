@@ -700,25 +700,26 @@ def _compact_id(num: int, chars: str) -> str:
 def human_readable_compact_id(num: int) -> str:
     """Given a positive int, return a compact string representation for it.
 
-    Handy for visualizing unique numeric ids using as few as possible chars.
-    This representation uses only lowercase letters and numbers (minus the
-    following letters for readability):
-     's' is excluded due to similarity to '5'.
-     'l' is excluded due to similarity to '1'.
-     'i' is excluded due to similarity to '1'.
-     'o' is excluded due to similarity to '0'.
-     'z' is excluded due to similarity to '2'.
+    Handy for visualizing unique numeric ids using as few as possible
+    chars. This representation uses only lowercase letters and numbers
+    (minus the following letters for readability):
+
+    - 's' is excluded due to similarity to '5'.
+    - 'l' is excluded due to similarity to '1'.
+    - 'i' is excluded due to similarity to '1'.
+    - 'o' is excluded due to similarity to '0'.
+    - 'z' is excluded due to similarity to '2'.
 
     Therefore for n chars this can store values of 21^n.
 
-    When reading human input consisting of these IDs, it may be desirable
-    to map the disallowed chars to their corresponding allowed ones
-    ('o' -> '0', etc).
+    When reading human input consisting of these IDs, it may be
+    desirable to map the disallowed chars to their corresponding allowed
+    ones ('o' -> '0', etc).
 
     Sort order for these ids is the same as the original numbers.
 
-    If more compactness is desired at the expense of readability,
-    use compact_id() instead.
+    If more compactness is desired at the expense of readability, use
+    compact_id() instead.
     """
     return _compact_id(num, '0123456789abcdefghjkmnpqrtuvwxy')
 
@@ -831,10 +832,12 @@ def timedelta_str(
     """Return a simple human readable time string for a length of time.
 
     Time can be given as a timedelta or a float representing seconds.
+
     Example output:
-      "23d 1h 2m 32s" (with maxparts == 4)
-      "23d 1h" (with maxparts == 2)
-      "23d 1.08h" (with maxparts == 2 and decimals == 2)
+
+    - ``"23d 1h 2m 32s"`` (with maxparts == 4)
+    - ``"23d 1h"`` (with maxparts == 2)
+    - ``"23d 1.08h"`` (with maxparts == 2 and decimals == 2)
 
     Note that this is hard-coded in English and probably not especially
     performant.

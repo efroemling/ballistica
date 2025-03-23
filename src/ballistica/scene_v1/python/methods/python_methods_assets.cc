@@ -219,7 +219,7 @@ static PyMethodDef PyGetMeshDef = {
     "\n"
     "Note that this function returns immediately even if the asset has yet\n"
     "to be loaded. To avoid hitches, instantiate your asset objects in\n"
-    "advance of when you will be using them, allowing time for them to\n "
+    "advance of when you will be using them, allowing time for them to\n"
     "load in the background if necessary."};
 
 // ---------------------------- get_package_mesh -------------------------------

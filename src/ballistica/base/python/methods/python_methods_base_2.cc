@@ -203,8 +203,8 @@ static PyMethodDef PyScreenMessageDef = {
     "Print a message to the local client's screen, in a given color.\n"
     "\n"
     "Note that this version of the function is purely for local display.\n"
-    "To broadcast screen messages in network play, look for methods such as\n"
-    "broadcastmessage() provided by the scene-version packages.",
+    "To broadcast screen messages during gameplay, look for methods such as\n"
+    ":meth:`bascenev1.broadcastmessage()`.",
 };
 
 // -------------------------- get_camera_position ------------------------------

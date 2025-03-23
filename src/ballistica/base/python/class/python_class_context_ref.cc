@@ -19,7 +19,7 @@ void PythonClassContextRef::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "ContextRef()\n"
       "\n"
-      "Store or use a ballistica context.\n"
+      "Store or use a Ballistica context.\n"
       "\n"
       "Many operations such as bascenev1.newnode() or bascenev1.gettexture()\n"
       "operate implicitly on a current 'context'. A context is some sort of\n"

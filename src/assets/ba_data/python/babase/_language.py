@@ -505,33 +505,33 @@ class Lstr:
     Examples
     --------
 
-    **Example 1: Specify a String from a Resource Path**::
+    **Example 1: Resource path** ::
 
         mynode.text = babase.Lstr(resource='audioSettingsWindow.titleText')
 
-    **Example 2: Specify a Translated String via a Category and English Value**
+    **Example 2: Translated string via a category and English value**
 
-    If a translated value is available, it will be used; otherwise, the
+    If a translated value is available, it will be used; otherwise the
     English value will be. To see available translation categories, look
-    under the ``translations`` resource section::
+    under the ``translations`` resource section. ::
 
         mynode.text = babase.Lstr(translate=('gameDescriptions',
                                              'Defeat all enemies'))
 
-    **Example 3: Specify a Raw Value with Substitutions**
+    **Example 3: Raw value with substitutions**
 
     Substitutions can be used with ``resource`` and ``translate`` modes
-    as well::
+    as well. ::
 
         mynode.text = babase.Lstr(value='${A} / ${B}',
                                   subs=[('${A}', str(score)),
                                         ('${B}', str(total))])
 
-    **Example 4: Nesting**
+    **Example 4: Nested Lstrs**
 
     :class:`~babase.Lstr` instances can be nested. This example would display
     the resource at ``res_a`` but replace ``${NAME}`` with the value of
-    the resource at ``res_b``::
+    the resource at ``res_b``. ::
 
         mytextnode.text = babase.Lstr(
             resource='res_a',
@@ -589,9 +589,9 @@ class Lstr:
         if args:
             raise TypeError('Lstr accepts only keyword arguments')
 
-        # Basically just store the exact args they passed. However if
-        # they passed any Lstr values for subs, replace them with that
-        # Lstr's dict.
+        #: Basically just stores the exact args passed. However if Lstr
+        #: values were passed for subs, they are replaced with that
+        #: Lstr's dict.
         self.args = keywds
         our_type = type(self)
 

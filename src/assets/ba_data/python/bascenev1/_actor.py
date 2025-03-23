@@ -125,16 +125,17 @@ class Actor:
         return self
 
     def on_expire(self) -> None:
-        """Called for remaining `bascenev1.Actor`s when their activity dies.
+        """Called for remaining actors when their activity dies.
 
         Actors can use this opportunity to clear callbacks or other
-        references which have the potential of keeping the bascenev1.Activity
-        alive inadvertently (Activities can not exit cleanly while
-        any Python references to them remain.)
+        references which have the potential of keeping the
+        :class:`bascenev1.Activity` alive inadvertently (Activities can
+        not exit cleanly while any Python references to them remain.)
 
-        Once an actor is expired (see bascenev1.Actor.is_expired()) it should
-        no longer perform any game-affecting operations (creating, modifying,
-        or deleting nodes, media, timers, etc.) Attempts to do so will
+        Once an actor is expired (see
+        :meth:`bascenev1.Actor.is_expired()`) it should no longer
+        perform any game-affecting operations (creating, modifying, or
+        deleting nodes, media, timers, etc.) Attempts to do so will
         likely result in errors.
         """
 
