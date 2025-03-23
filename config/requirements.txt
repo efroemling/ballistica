@@ -6,7 +6,6 @@ furo==2024.8.6
 libcst==1.7.0
 mypy==1.15.0
 pbxproj==4.2.1
-pdoc==15.0.1
 pur==7.3.3
 pylint==3.3.6
 pylsp-mypy==0.7.0

@@ -190,7 +190,7 @@ venv-clean:
 # IMPORTANT: Docs generation targets may themselves run builds, so they should
 #  be run alone serially and never in parallel alongside other builds.
 docs: env
-	$(MAKE) docs-pdoc
+	$(MAKE) docs-sphinx
 
 docs-pdoc: env
 	@$(PCOMMAND) gen_docs_pdoc
