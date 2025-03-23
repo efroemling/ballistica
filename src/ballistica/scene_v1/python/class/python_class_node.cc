@@ -460,11 +460,11 @@ PyMethodDef PythonClassNode::tp_methods[] = {
      "setting the target attribute to any value or connecting another\n"
      "node attribute to it.\n"
      "\n"
-     "##### Example\n"
-     "Create a locator and attach a light to it:\n"
-     ">>> light = bascenev1.newnode('light')\n"
-     "... loc = bascenev1.newnode('locator', attrs={'position': (0, 10, 0)})\n"
-     "... loc.connectattr('position', light, 'position')\n"},
+     "Example: Create a locator and attach a light to it::\n"
+     "\n"
+     "    light = bascenev1.newnode('light')\n"
+     "    loc = bascenev1.newnode('locator', attrs={'position': (0, 10, 0)})\n"
+     "    loc.connectattr('position', light, 'position')\n"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};

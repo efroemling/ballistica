@@ -221,30 +221,36 @@ class PluginSubsystem(AppSubsystem):
 
 
 class PluginSpec:
-    """Represents a plugin the engine knows about.
-
-    The 'enabled' attr represents whether this plugin is set to load.
-    Getting or setting that attr affects the corresponding app-config
-    key. Remember to commit the app-config after making any changes.
-
-    The 'attempted_load' attr will be True if the engine has attempted
-    to load the plugin. If 'attempted_load' is True for a PluginSpec but
-    the 'plugin' attr is None, it means there was an error loading the
-    plugin. If a plugin's api-version does not match the running app, if
-    a new plugin is detected with auto-enable-plugins disabled, or if
-    the user has explicitly disabled a plugin, the engine will not even
-    attempt to load it.
-    """
+    """Represents a plugin the engine knows about."""
 
     def __init__(self, class_path: str, loadable: bool):
+
+        #: Fully qualified class path for the plugin.
         self.class_path = class_path
+
+        #: Can we attempt to load the plugin?
         self.loadable = loadable
+
+        #: Whether the engine has attempted to load the plugin. If this
+        #: is True but the value of :attr:`plugin` is None, it means
+        #: there was an error loading the plugin. If a plugin's
+        #: api-version does not match the running app, if a new plugin is
+        #: detected with auto-enable-plugins disabled, or if the user has
+        #: explicitly disabled a plugin, the engine will not even attempt
+        #: to load it.
         self.attempted_load = False
+
+        #: The associated :class:`~babase.Plugin`, if any.
         self.plugin: Plugin | None = None
 
     @property
     def enabled(self) -> bool:
-        """Whether the user wants this plugin to load."""
+        """Whether this plugin is set to load.
+
+        Getting or setting this attr affects the corresponding
+        app-config key. Remember to commit the app-config after making any
+        changes.
+        """
         plugstates: dict[str, dict] = _babase.app.config.get('Plugins', {})
         assert isinstance(plugstates, dict)
         val = plugstates.get(self.class_path, {}).get('enabled', False) is True

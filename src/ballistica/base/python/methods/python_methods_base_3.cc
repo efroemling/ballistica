@@ -1353,11 +1353,11 @@ static PyMethodDef PyDoOnceDef = {
     "The call is made from.  Returns True if this location has not been\n"
     "registered already, and False if it has.\n"
     "\n"
-    "##### Example\n"
-    "This print will only fire for the first loop iteration:\n"
-    ">>> for i in range(10):\n"
-    "... if babase.do_once():\n"
-    "...     print('HelloWorld once from loop!')",
+    "Example: This print will only fire for the first loop iteration::\n"
+    "\n"
+    "    for i in range(10):\n"
+    "        if babase.do_once():\n"
+    "            print('HelloWorld once from loop!')",
 };
 
 // ------------------------------- getapp --------------------------------------
