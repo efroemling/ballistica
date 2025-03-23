@@ -20,9 +20,9 @@ class AppModeSelector:
     """
 
     def app_mode_for_intent(self, intent: AppIntent) -> type[AppMode] | None:
-        """Given an AppIntent, return the AppMode that should handle it.
+        """Given an app-intent, return the app-mode that should handle it.
 
-        If None is returned, the AppIntent will be ignored.
+        If None is returned, the intent will be ignored.
 
         This may be called in a background thread, so avoid any calls
         limited to logic thread use/etc.

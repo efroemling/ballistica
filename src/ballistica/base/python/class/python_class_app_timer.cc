@@ -55,10 +55,10 @@ void PythonClassAppTimer::SetupType(PyTypeObject* cls) {
       "        g_timer = None\n"
       "        babase.screenmessage('MUSHROOM MUSHROOM!')\n"
       "\n"
-      "    # Create our timer; it will run as long as we hold its ref.\n"
+      "    # Create our timer; it will run as long as we keep its ref alive.\n"
       "    g_timer = babase.AppTimer(0.3, say_it, repeat=True)\n"
       "\n"
-      "    # Now fire off a one-shot timer to kill it.\n"
+      "    # Now fire off a one-shot timer to kill the ref.\n"
       "    babase.apptimer(3.89, stop_saying_it)\n";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;

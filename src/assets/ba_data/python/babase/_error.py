@@ -34,11 +34,11 @@ class SessionPlayerNotFoundError(NotFoundError):
 
 
 class TeamNotFoundError(NotFoundError):
-    """Exception raised when an expected bascenev1.Team does not exist."""
+    """Exception raised when an expected team does not exist."""
 
 
 class MapNotFoundError(NotFoundError):
-    """Exception raised when an expected bascenev1.Map does not exist."""
+    """Exception raised when an expected map does not exist."""
 
 
 class DelegateNotFoundError(NotFoundError):
@@ -50,7 +50,7 @@ class SessionTeamNotFoundError(NotFoundError):
 
 
 class NodeNotFoundError(NotFoundError):
-    """Exception raised when an expected Node does not exist."""
+    """Exception raised when an expected node does not exist."""
 
 
 class ActorNotFoundError(NotFoundError):
@@ -58,7 +58,7 @@ class ActorNotFoundError(NotFoundError):
 
 
 class ActivityNotFoundError(NotFoundError):
-    """Exception raised when an expected bascenev1.Activity does not exist."""
+    """Exception raised when an expected activity does not exist."""
 
 
 class SessionNotFoundError(NotFoundError):

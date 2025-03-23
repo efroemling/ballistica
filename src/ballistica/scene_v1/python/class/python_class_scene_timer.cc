@@ -66,7 +66,7 @@ void PythonClassSceneTimer::SetupType(PyTypeObject* cls) {
       "    # Create our timer; it will run as long as we hold its ref.\n"
       "    g_timer = bs.Timer(0.3, say_it, repeat=True)\n"
       "\n"
-      "    # Now fire off a one-shot timer to kill it.\n"
+      "    # Now fire off a one-shot timer to kill the ref.\n"
       "    bs.timer(3.89, stop_saying_it)\n";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;

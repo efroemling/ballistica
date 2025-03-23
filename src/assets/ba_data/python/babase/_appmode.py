@@ -22,10 +22,10 @@ class AppMode:
     def can_handle_intent(cls, intent: AppIntent) -> bool:
         """Return whether this mode can handle the provided intent.
 
-        For this to return True, the AppMode must claim to support the
+        For this to return True, the app-mode must claim to support the
         provided intent (via its _can_handle_intent() method) AND the
-        AppExperience associated with the AppMode must be supported by
-        the current app and runtime environment.
+        :class:`bacommon.app.AppExperience` associated with the app-mode
+        must be supported by the current app and runtime environment.
         """
         # TODO: check AppExperience against current environment.
         return cls._can_handle_intent(intent)
@@ -63,7 +63,7 @@ class AppMode:
     def on_app_active_changed(self) -> None:
         """Called when app active state changes while in this app-mode.
 
-        This corresponds to :attr:`babase.App.active`. App-active state
+        This corresponds to :attr:`~babase.App.active`. App-active state
         becomes false when the app is hidden, minimized, backgrounded,
         etc. The app-mode may want to take action such as pausing a
         running game or saving state when this occurs.

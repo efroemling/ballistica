@@ -467,12 +467,12 @@ class Session:
         delay: float,
         force: bool,
     ) -> None:
-        """Commence shutdown of a bascenev1.Activity (if not already occurring).
+        """Commence shutdown of an activity (if not already occurring).
 
-        'delay' is the time delay before the Activity actually ends
-        (in seconds). Further calls to end() will be ignored up until
-        this time, unless 'force' is True, in which case the new results
-        will replace the old.
+        'delay' is the time delay before the activity actually ends (in
+        seconds). Further calls to end the activity will be ignored up
+        until this time, unless 'force' is True, in which case the new
+        results will replace the old.
         """
         # Only pay attention if this is coming from our current activity.
         if activity is not self._activity_retained:

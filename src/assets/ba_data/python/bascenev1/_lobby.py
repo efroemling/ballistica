@@ -178,7 +178,7 @@ class ChangeMessage:
 
 
 class Chooser:
-    """A character/team selector for a bascenev1.Player."""
+    """A character/team selector for a player."""
 
     def __del__(self) -> None:
         # Just kill off our base node; the rest should go down with it.

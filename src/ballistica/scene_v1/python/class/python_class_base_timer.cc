@@ -61,11 +61,10 @@ void PythonClassBaseTimer::SetupType(PyTypeObject* cls) {
       "        g_timer = None\n"
       "        bs.screenmessage('MUSHROOM MUSHROOM!')\n"
       "\n"
-      "    # Create our timer; it will run as long as we hold the g_timer "
-      "ref.\n"
+      "    # Create our timer; it will run as long as we keep its ref alive.\n"
       "    g_timer = bs.BaseTimer(0.3, say_it, repeat=True)\n"
       "\n"
-      "    # Now fire off a one-shot timer to kill the ref (and the timer).\n"
+      "    # Now fire off a one-shot timer to kill the ref.\n"
       "    bs.basetimer(3.89, stop_saying_it)\n";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;

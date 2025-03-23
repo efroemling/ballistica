@@ -87,8 +87,8 @@ class App:
         #: to shut down while backgrounded. In this state, all event
         #: loops are suspended and all graphics and audio must cease
         #: completely. Be aware that the suspended state can be entered
-        #: from any other state including NATIVE_BOOTSTRAPPING and
-        #: SHUTTING_DOWN.
+        #: from any other state including :attr:`NATIVE_BOOTSTRAPPING` and
+        #: :attr:`SHUTTING_DOWN`.
         SUSPENDED = 5
 
         #: The app is shutting down. This process may involve sending
@@ -246,9 +246,9 @@ class App:
         self._subsystem_property_data: dict[str, AppSubsystem | bool] = {}
 
     def postinit(self) -> None:
-        """Called after we've been inited and assigned to babase.app.
+        """Called after we've been inited and assigned to ``babase.app``.
 
-        Anything that accesses babase.app as part of its init process
+        Anything that accesses ``babase.app`` as part of its init process
         must go here instead of __init__.
         """
 
@@ -280,24 +280,25 @@ class App:
     def asyncio_loop(self) -> asyncio.AbstractEventLoop:
         """The logic thread's asyncio event loop.
 
-        This allow async tasks to be run in the logic thread.
+        This allows async tasks to be run in the logic thread.
 
-        Generally you should call App.create_async_task() to schedule
-        async code to run instead of using this directly. That will
-        handle retaining the task and logging errors automatically.
-        Only schedule tasks onto asyncio_loop yourself when you intend
-        to hold on to the returned task and await its results. Releasing
+        Generally you should call
+        :meth:`~babase.App.create_async_task()` to schedule async code
+        to run instead of using this directly. That will handle
+        retaining the task and logging errors automatically. Only
+        schedule tasks onto asyncio_loop yourself when you intend to
+        hold on to the returned task and await its results. Releasing
         the task reference can lead to subtle bugs such as unreported
         errors and garbage-collected tasks disappearing before their
         work is done.
 
-        Note that, at this time, the asyncio loop is encapsulated
-        and explicitly stepped by the engine's logic thread loop and
-        thus things like asyncio.get_running_loop() will unintuitively
-        *not* return this loop from most places in the logic thread;
-        only from within a task explicitly created in this loop.
-        Hopefully this situation will be improved in the future with a
-        unified event loop.
+        Note that, at this time, the asyncio loop is encapsulated and
+        explicitly stepped by the engine's logic thread loop and thus
+        things like :meth:`asyncio.get_running_loop()` will
+        unintuitively *not* return this loop from most places in the
+        logic thread; only from within a task explicitly created in this
+        loop. Hopefully this situation will be improved in the future
+        with a unified event loop.
         """
         assert _babase.in_logic_thread()
         assert self._asyncio_loop is not None
@@ -464,7 +465,10 @@ class App:
     # __FEATURESET_APP_SUBSYSTEM_PROPERTIES_END__
 
     def register_subsystem(self, subsystem: AppSubsystem) -> None:
-        """Called by the AppSubsystem class. Do not use directly."""
+        """Called by the AppSubsystem class. Do not use directly.
+
+        :meta private:
+        """
 
         # We only allow registering new subsystems if we've not yet
         # reached the 'running' state. This ensures that all subsystems
@@ -522,7 +526,10 @@ class App:
         self.threadpool.submit_no_wait(self._set_intent, intent)
 
     def push_apply_app_config(self) -> None:
-        """Internal. Use app.config.apply() to apply app config changes."""
+        """Internal. Use app.config.apply() to apply app config changes.
+
+        :meta private:
+        """
         # To be safe, let's run this by itself in the event loop.
         # This avoids potential trouble if this gets called mid-draw or
         # something like that.
@@ -616,8 +623,9 @@ class App:
     def set_ui_scale(self, scale: babase.UIScale) -> None:
         """Change ui-scale on the fly.
 
-        Currently this is mainly for debugging and will not be called as
-        part of normal app operation.
+        Currently this is mainly for testing/debugging and will not be
+        called as part of normal app operation, though this may change
+        in the future.
         """
         assert _babase.in_logic_thread()
 

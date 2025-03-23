@@ -63,7 +63,7 @@ void PythonClassDisplayTimer::SetupType(PyTypeObject* cls) {
       "        g_timer = None\n"
       "        babase.screenmessage('MUSHROOM MUSHROOM!')\n"
       "\n"
-      "    # Create our timer; it will run as long as we hold its ref.\n"
+      "    # Create our timer; it will run as long as we keep its ref alive.\n"
       "    g_timer = babase.DisplayTimer(0.3, say_it, repeat=True)\n"
       "\n"
       "    # Now fire off a one-shot timer to kill the ref.\n"

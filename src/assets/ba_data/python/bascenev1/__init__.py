@@ -18,6 +18,7 @@ import logging
 
 from efro.util import set_canonical_module_names
 from babase import (
+    ActivityNotFoundError,
     add_clean_frame_callback,
     app,
     App,
@@ -248,6 +249,7 @@ from bascenev1._teamgame import TeamGameActivity
 __all__ = [
     'Activity',
     'ActivityData',
+    'ActivityNotFoundError',
     'Actor',
     'animate',
     'animate_array',

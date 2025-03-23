@@ -27,7 +27,7 @@ ActorT = TypeVar('ActorT', bound='Actor')
 
 
 class Actor:
-    """High level logical entities in a bascenev1.Activity.
+    """High level logical entities in an :class:`~bascenev1.Activity`.
 
     Actors act as controllers, combining some number of
     :class:`~bascenev1.Node`, :class:`~bascenev1.Texture`,
@@ -39,32 +39,30 @@ class Actor:
     :class:`~bascenev1lib.actor.spaz.Spaz`, classes that live in the
     :mod:`bascenev1lib.actor` package.
 
-    One key feature of Actors is that they generally 'die' (killing off
+    One key feature of actors is that they generally 'die' (killing off
     or transitioning out their nodes) when the last Python reference to
-    them disappears, so you can use logic such as:
+    them disappears, so you can use logic such as::
 
-    Example::
-
-        # Create a flag Actor in our game activity (self):
+        # Create a flag actor in our game activity (self):
         from bascenev1lib.actor.flag import Flag
 
         self.flag = Flag(position=(0, 10, 0))
 
-        # Later, destroy the flag.
-        # (provided nothing else is holding a reference to it)
-        # We could also just assign a new flag to this value.
-        # Either way, the old flag disappears.
+        # Later, destroy the flag (provided nothing else is holding a
+        # reference to it). We could also just assign a new flag to this
+        # value. Either way, the old flag should disappear.
         self.flag = None
 
     This is in contrast to the behavior of the more low level
-    :class:`bascenev1.Node`, which is always explicitly created and destroyed
-    and doesn't care how many Python references to it exist.
+    :class:`~bascenev1.Node` class, which is always explicitly created
+    and destroyed and doesn't care how many Python references to it
+    exist.
 
-    Note, however, that you can use the :meth:`bascenev1.Actor.autoretain()`
+    Note, however, that you can use the :meth:`~bascenev1.Actor.autoretain()`
     method if you want an actor to stick around until explicitly killed
     regardless of references.
 
-    Another key feature of :class:`~bascenev1.Actor` is its
+    Another key feature of actors is their
     :meth:`~bascenev1.Actor.handlemessage()` method, which takes a single
     arbitrary object as an argument. This provides a safe way to communicate
     between :class:`~bascenev1.Actor`, :class:`~bascenev1.Activity`,
@@ -140,7 +138,7 @@ class Actor:
         :class:`~bascenev1.Activity` alive inadvertently (activities can
         not exit cleanly while any Python references to them remain.)
 
-        Once an actor is expired (see :attr:`bascenev1.Actor.expired`)
+        Once an actor is expired (see :attr:`~bascenev1.Actor.expired`)
         it should no longer perform any game-affecting operations
         (creating, modifying, or deleting nodes, media, timers, etc.)
         Attempts to do so will likely result in errors.
@@ -150,7 +148,7 @@ class Actor:
     def expired(self) -> bool:
         """Whether the actor is expired.
 
-        (see :meth:`bascenev1.Actor.on_expire()`)
+        (see :meth:`~bascenev1.Actor.on_expire()`)
         """
         activity = self.getactivity(doraise=False)
         return True if activity is None else activity.expired
@@ -160,7 +158,7 @@ class Actor:
 
         Note that a dying character should still return True here as long as
         their corpse is visible; this is about presence, not being 'alive'
-        (see :meth:`bascenev1.Actor.is_alive()` for that).
+        (see :meth:`~bascenev1.Actor.is_alive()` for that).
 
         If this returns False, it is assumed the actor can be completely
         deleted without affecting the game; this call is often used when
