@@ -18,12 +18,12 @@ jobs:
       - name: Setup project environment
         run: make env
       - name: Build documentation
-        run: make docs-sphinx 
+        run: make docs
       - name: Upload the build
         uses: actions/upload-pages-artifact@v3
         with:
-          name: sphinx_html_docs
-          path: build/sphinx
+          name: html_docs
+          path: build/docs
 
   deploy:
     # Add a dependency to the build job
@@ -46,4 +46,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
         with:
-          artifact_name: sphinx_html_docs
+          artifact_name: html_docs

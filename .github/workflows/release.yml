@@ -242,7 +242,7 @@ jobs:
         docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}
         docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}
 
-  release_sphinx_docs:
+  release_docs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -253,12 +253,12 @@ jobs:
     - name: Setup project environment
       run: make env
     - name: Make the build
-      run: make docs-sphinx
+      run: make docs
     - name: Compress the build
-      run: tar -cf "sphinx_html_docs.tar" build/sphinx/
+      run: tar -cf "html_docs.tar" build/docs/
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
         allowUpdates: true
-        artifacts: sphinx_html_docs.tar
+        artifacts: html_docs.tar
