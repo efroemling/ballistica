@@ -10,7 +10,7 @@ steps:
       - make env
       - cd ..
       - cp -r -v $CI_REPO_NAME build_prefabs
-      - cp -r -v $CI_REPO_NAME build_sphinx_docs
+      - cp -r -v $CI_REPO_NAME build_docs
       - cd $CI_REPO_NAME
   - name: build-prefabs
     image: codeberg.org/3ra/ballistica-dev:latest
@@ -80,13 +80,13 @@ steps:
       password:
         from_secret: ACCESS_TOKEN
     depends_on: [parallel-prepare]
-  - name: build-sphinx-docs
+  - name: build-docs
     image: codeberg.org/3ra/ballistica-dev:latest
     commands:
-      - cd ../build_sphinx_docs
-      - make docs-sphinx
-      - mv -v build/sphinx build/ballistica_sphinx_docs
-      - tar cvfC ballistica_sphinx_docs.tar build ballistica_sphinx_docs
+      - cd ../build_docs
+      - make docs
+      - mv -v build/docs build/ballistica_docs
+      - tar cvfC ballistica_docs.tar build ballistica_docs
     depends_on: [parallel-prepare]
   - name: release
     image: woodpeckerci/plugin-release
@@ -102,7 +102,7 @@ steps:
         - '../build_prefabs/ballisticakit_linux_x86_64_server.tar.gz'
         - '../build_prefabs/ballisticakit_mac_server.tar.gz'
         - '../build_prefabs/ballisticakit_windows_server.zip'
-        - '../build_sphinx_docs/ballistica_sphinx_docs.tar'
+        - '../build_docs/ballistica_docs.tar'
       note: 'These are debug prefab builds; use them for testing purposes only. Docker versions of this release also exist at https://codeberg.org/3ra/-/packages/container/ballistica. Check out https://ballistica.net/downloads for official/blessed release builds.'
       title: ${CI_COMMIT_TAG}
-    depends_on: [build-prefabs, build-sphinx-docs]
+    depends_on: [build-prefabs, build-docs]

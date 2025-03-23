@@ -194,7 +194,7 @@ docs: env
 
 docs-clean:
 	rm -rf .cache/sphinx
-	rm -rf build/sphinx
+	rm -rf build/docs
 
 pcommandbatch_speed_test: env
 	@$(PCOMMAND) pcommandbatch_speed_test $(PCOMMANDBATCHBIN)

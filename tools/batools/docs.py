@@ -135,7 +135,7 @@ def generate_sphinx_docs() -> None:
 
     cache_dir = Path('.cache/sphinx')
     sphinx_src_dir = Path('src/assets/sphinx')
-    build_dir = Path('build/sphinx')
+    build_dir = Path('build/docs')
     template_dir = Path(sphinx_src_dir, 'template')
     static_dir = Path(sphinx_src_dir, 'static')
 
