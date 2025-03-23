@@ -495,34 +495,47 @@ class Lstr:
 
     These should be used whenever possible in place of hard-coded
     strings so that in-game or UI elements show up correctly on all
-    clients in their currently-active language.
+    clients in their currently active language.
 
-    To see available resource keys, look at any of the bs_language_*.py
-    files in the game or the translations pages at
-    legacy.ballistica.net/translate.
+    To see available resource keys, look at any of the
+    ``bs_language_*.py`` files in the game or the translations pages at
+    `legacy.ballistica.net/translate
+    <https://legacy.ballistica.net/translate>`.
 
-    ##### Examples
-    EXAMPLE 1: specify a string from a resource path
-    >>> mynode.text = babase.Lstr(resource='audioSettingsWindow.titleText')
+    Examples
+    --------
 
-    EXAMPLE 2: specify a translated string via a category and english
-    value; if a translated value is available, it will be used; otherwise
-    the english value will be. To see available translation categories,
-    look under the 'translations' resource section.
-    >>> mynode.text = babase.Lstr(translate=('gameDescriptions',
-    ...                                  'Defeat all enemies'))
+    **Example 1: Specify a String from a Resource Path**::
 
-    EXAMPLE 3: specify a raw value and some substitutions. Substitutions
-    can be used with resource and translate modes as well.
-    >>> mynode.text = babase.Lstr(value='${A} / ${B}',
-    ...               subs=[('${A}', str(score)), ('${B}', str(total))])
+        mynode.text = babase.Lstr(resource='audioSettingsWindow.titleText')
 
-    EXAMPLE 4: babase.Lstr's can be nested. This example would display the
-    resource at res_a but replace ${NAME} with the value of the
-    resource at res_b
-    >>> mytextnode.text = babase.Lstr(
-    ...     resource='res_a',
-    ...     subs=[('${NAME}', babase.Lstr(resource='res_b'))])
+    **Example 2: Specify a Translated String via a Category and English Value**
+
+    If a translated value is available, it will be used; otherwise, the
+    English value will be. To see available translation categories, look
+    under the ``translations`` resource section::
+
+        mynode.text = babase.Lstr(translate=('gameDescriptions',
+                                             'Defeat all enemies'))
+
+    **Example 3: Specify a Raw Value with Substitutions**
+
+    Substitutions can be used with ``resource`` and ``translate`` modes
+    as well::
+
+        mynode.text = babase.Lstr(value='${A} / ${B}',
+                                  subs=[('${A}', str(score)),
+                                        ('${B}', str(total))])
+
+    **Example 4: Nesting**
+
+    :class:`~babase.Lstr` instances can be nested. This example would display
+    the resource at ``res_a`` but replace ``${NAME}`` with the value of
+    the resource at ``res_b``::
+
+        mytextnode.text = babase.Lstr(
+            resource='res_a',
+            subs=[('${NAME}', babase.Lstr(resource='res_b'))])
     """
 
     # This class is used a lot in UI stuff and doesn't need to be
@@ -576,9 +589,9 @@ class Lstr:
         if args:
             raise TypeError('Lstr accepts only keyword arguments')
 
-        # Basically just store the exact args they passed.
-        # However if they passed any Lstr values for subs,
-        # replace them with that Lstr's dict.
+        # Basically just store the exact args they passed. However if
+        # they passed any Lstr values for subs, replace them with that
+        # Lstr's dict.
         self.args = keywds
         our_type = type(self)
 
@@ -596,8 +609,8 @@ class Lstr:
                         subs_filtered.append((key, value))
             self.args['subs'] = subs_filtered
 
-        # As of protocol 31 we support compact key names
-        # ('t' instead of 'translate', etc). Convert as needed.
+        # As of protocol 31 we support compact key names ('t' instead of
+        # 'translate', etc). Convert as needed.
         if 'translate' in keywds:
             keywds['t'] = keywds['translate']
             del keywds['translate']
