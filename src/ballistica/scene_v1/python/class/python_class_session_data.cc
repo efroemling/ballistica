@@ -27,7 +27,10 @@ void PythonClassSessionData::SetupType(PyTypeObject* cls) {
   // Fully qualified type path we will be exposed as:
   cls->tp_name = "bascenev1.SessionData";
   cls->tp_basicsize = sizeof(PythonClassSessionData);
-  cls->tp_doc = "(internal)";
+  cls->tp_doc =
+      "Internal; holds native data for the session.\n"
+      "\n"
+      ":meta private:";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
   cls->tp_repr = (reprfunc)tp_repr;

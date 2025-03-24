@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 class ContextError(Exception):
     """Exception raised when a call is made in an invalid context.
 
-    Examples of this include calling UI functions within an Activity
-    context or calling scene manipulation functions outside of a game
+    Examples of this include calling UI functions within an activity
+    context or calling scene manipulation functions outside of a scene
     context.
     """
 

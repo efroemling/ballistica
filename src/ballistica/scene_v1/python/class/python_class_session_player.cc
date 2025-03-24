@@ -68,20 +68,21 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
     "\n"
     "Attributes:\n"
     "    " ATTR_ID " (int):\n"
-    "        The unique numeric ID of the Player.\n"
+    "        The unique numeric id of the player.\n"
     "\n"
     "        Note that you can also use the boolean operator for this same\n"
-    "        functionality, so a statement such as \"if player\" will do\n"
-    "        the right thing both for Player objects and values of None.\n"
+    "        functionality, so a statement such as ``if player:`` will do\n"
+    "        the right thing both for :class:`~bascenev1.SessionPlayer`\n"
+    "        objects as well as values of ``None``.\n"
     "\n"
     "    " ATTR_IN_GAME " (bool):\n"
     "        This bool value will be True once the Player has completed\n"
     "        any lobby character/team selection.\n"
     "\n"
     "    " ATTR_SESSIONTEAM " (bascenev1.SessionTeam):\n"
-    "        The bascenev1.SessionTeam this Player is on. If the\n"
-    "        SessionPlayer is still in its lobby selecting a team/etc.\n"
-    "        then a bascenev1.SessionTeamNotFoundError will be raised.\n"
+    "        The session-team this session-player is on. If the player is\n"
+    "        still in its lobby selecting a team/etc. then a\n"
+    "        :class:`~bascenev1.SessionTeamNotFoundError` will be raised.\n"
     "\n"
     "    " ATTR_INPUT_DEVICE " (bascenev1.InputDevice):\n"
     "        The input device associated with the player.\n"
@@ -702,7 +703,7 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
     {"getname", (PyCFunction)GetName, METH_VARARGS | METH_KEYWORDS,
      "getname(full: bool = False, icon: bool = True) -> str\n"
      "\n"
-     "Returns the player's name. If icon is True, the long version of the\n"
+     "Returns the player's name. If ``icon`` is True, the long version of the\n"
      "name may include an icon."},
     {"setname", (PyCFunction)SetName, METH_VARARGS | METH_KEYWORDS,
      "setname(name: str, full_name: str | None = None, real: bool = True)\n"
@@ -732,7 +733,7 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      METH_VARARGS | METH_KEYWORDS,
      "get_v1_account_id() -> str\n"
      "\n"
-     "Return the V1 Account ID this player is signed in under, if\n"
+     "Return the V1 account id this player is signed in under, if\n"
      "there is one and it can be determined with relative certainty.\n"
      "Returns None otherwise. Note that this may require an active\n"
      "internet connection (especially for network-connected players)\n"
@@ -747,15 +748,21 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "set_icon_info(texture: str, tint_texture: str,\n"
      "  tint_color: Sequence[float], tint2_color: Sequence[float]) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"setactivity", (PyCFunction)SetActivity, METH_VARARGS | METH_KEYWORDS,
      "setactivity(activity: bascenev1.Activity | None) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"setnode", (PyCFunction)SetNode, METH_VARARGS | METH_KEYWORDS,
      "setnode(node: bascenev1.Node | None) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"get_icon", (PyCFunction)GetIcon, METH_NOARGS,
      "get_icon() -> dict[str, Any]\n"
      "\n"
@@ -764,9 +771,11 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
     {"get_icon_info", (PyCFunction)GetIconInfo, METH_NOARGS,
      "get_icon_info() -> dict[str, Any]\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
-     "allows inclusion of our custom attrs in standard python dir()"},
+     "Allows inclusion of our custom attrs in standard python dir()."},
     {nullptr}};
 
 #pragma clang diagnostic pop

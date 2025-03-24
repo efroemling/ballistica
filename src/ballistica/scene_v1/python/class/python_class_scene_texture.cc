@@ -31,7 +31,7 @@ void PythonClassSceneTexture::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a texture.\n"
       "\n"
-      "Use bascenev1.gettexture() to instantiate one.";
+      "Use :meth:`bascenev1.gettexture()` to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;

@@ -23,7 +23,7 @@ void PythonClassSceneSound::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a sound.\n"
       "\n"
-      "Use bascenev1.getsound() to instantiate one.";
+      "Use :meth:`bascenev1.getsound()` to instantiate one.";
   cls->tp_methods = tp_methods;
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;

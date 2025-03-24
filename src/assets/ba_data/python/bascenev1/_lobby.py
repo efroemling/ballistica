@@ -361,7 +361,7 @@ class Chooser:
 
     @property
     def sessionplayer(self) -> bascenev1.SessionPlayer:
-        """The bascenev1.SessionPlayer associated with this chooser."""
+        """The session-player associated with this chooser."""
         return self._sessionplayer
 
     @property
@@ -370,11 +370,17 @@ class Chooser:
         return self._ready
 
     def set_vpos(self, vpos: float) -> None:
-        """(internal)"""
+        """(internal)
+
+        :meta private:
+        """
         self._vpos = vpos
 
     def set_dead(self, val: bool) -> None:
-        """(internal)"""
+        """(internal)
+
+        :meta private:
+        """
         self._dead = val
 
     @property
@@ -384,7 +390,7 @@ class Chooser:
 
     @property
     def lobby(self) -> bascenev1.Lobby:
-        """The chooser's baclassic.Lobby."""
+        """The chooser's lobby."""
         lobby = self._lobby()
         if lobby is None:
             raise babase.NotFoundError('Lobby does not exist.')

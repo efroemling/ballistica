@@ -36,12 +36,12 @@ class Campaign:
 
     @property
     def name(self) -> str:
-        """The name of the Campaign."""
+        """The name of the campaign."""
         return self._name
 
     @property
     def sequential(self) -> bool:
-        """Whether this Campaign's levels must be played in sequence."""
+        """Whether this campaign's levels must be played in sequence."""
         return self._sequential
 
     def addlevel(

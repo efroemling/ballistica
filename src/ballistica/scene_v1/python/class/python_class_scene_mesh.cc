@@ -31,7 +31,7 @@ void PythonClassSceneMesh::SetupType(PyTypeObject* cls) {
       "A reference to a mesh.\n"
       "\n"
       "Meshes are used for drawing.\n"
-      "Use bascenev1.getmesh() to instantiate one.";
+      "Use :meth:`bascenev1.getmesh()` to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
