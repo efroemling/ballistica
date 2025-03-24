@@ -167,7 +167,7 @@ from bascenev1._dependency import (
 from bascenev1._dualteamsession import DualTeamSession
 from bascenev1._freeforallsession import FreeForAllSession
 from bascenev1._gameactivity import GameActivity
-from bascenev1._gameresults import GameResults
+from bascenev1._gameresults import GameResults, WinnerGroup
 from bascenev1._gameutils import (
     animate,
     animate_array,
@@ -468,6 +468,7 @@ __all__ = [
     'unlock_all_input',
     'Vec3',
     'WeakCall',
+    'WinnerGroup',
 ]
 
 # We want stuff here to show up as bascenev1.Foo instead of

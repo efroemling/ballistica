@@ -39,12 +39,11 @@ def utc_now_cloud() -> datetime.datetime:
 def is_browser_likely_available() -> bool:
     """Return whether a browser likely exists on the current device.
 
-    category: General Utility Functions
-
-    If this returns False you may want to avoid calling babase.open_url()
-    with any lengthy addresses. (babase.open_url() will display an address
-    as a string in a window if unable to bring up a browser, but that
-    is only useful for simple URLs.)
+    If this returns False you may want to avoid calling
+    :meth:`babase.open_url()` with any lengthy addresses.
+    (:meth:`babase.open_url()` will display an address as a string in a
+    window if unable to bring up a browser, but that is only useful for
+    simple URLs.)
     """
     app = _babase.app
 
@@ -226,11 +225,9 @@ def garbage_collect_session_end() -> None:
 def garbage_collect() -> None:
     """Run an explicit pass of garbage collection.
 
-    category: General Utility Functions
-
     May also print warnings/etc. if collection takes too long or if
     uncollectible objects are found (so use this instead of simply
-    gc.collect().
+    :meth":`gc.collect()`.
     """
     gc.collect()
 

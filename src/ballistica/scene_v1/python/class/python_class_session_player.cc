@@ -54,7 +54,7 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
   // clang-format off
 
   cls->tp_doc =
-    "A reference to a player in the :class:`~bascenev1.Session`.\n"
+    "A reference to a player in a :class:`~bascenev1.Session`.\n"
     "\n"
     "These are created and managed internally and provided to your\n"
     ":class:`~bascenev1.Session`/:class:`~bascenev1.Activity`\n"
@@ -76,7 +76,7 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
     "        objects as well as values of ``None``.\n"
     "\n"
     "    " ATTR_IN_GAME " (bool):\n"
-    "        This bool value will be True once the Player has completed\n"
+    "        This bool value will be True once the player has completed\n"
     "        any lobby character/team selection.\n"
     "\n"
     "    " ATTR_SESSIONTEAM " (bascenev1.SessionTeam):\n"
@@ -88,8 +88,8 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
     "        The input device associated with the player.\n"
     "\n"
     "    " ATTR_COLOR " (Sequence[float]):\n"
-    "        The base color for this Player.\n"
-    "        In team games this will match the bascenev1.SessionTeam's\n"
+    "        The base color for this player.\n"
+    "        In team games this will match the team's\n"
     "        color.\n"
     "\n"
     "    " ATTR_HIGHLIGHT " (Sequence[float]):\n"
@@ -766,7 +766,7 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
     {"get_icon", (PyCFunction)GetIcon, METH_NOARGS,
      "get_icon() -> dict[str, Any]\n"
      "\n"
-     "Returns the character's icon (images, colors, etc contained\n"
+     "Return the character's icon (images, colors, etc contained\n"
      "in a dict."},
     {"get_icon_info", (PyCFunction)GetIconInfo, METH_NOARGS,
      "get_icon_info() -> dict[str, Any]\n"

@@ -288,14 +288,9 @@ static PyMethodDef PyGetSessionDef = {
 
     "getsession(doraise: bool = True) -> <varies>\n"
     "\n"
-    "Returns the current bascenev1.Session instance.\n"
-    "Note that this is based on context_ref; thus code being run in the UI\n"
-    "context will return the UI context_ref here even if a game Session "
-    "also\n"
-    "exists, etc. If there is no current Session, an Exception is raised, "
-    "or\n"
-    "if doraise is False then None is returned instead.",
-};
+    "Return the session associated with the current context. If there is\n"
+    "none, a :class:`~bascenev1.SessionNotFoundError` is raised (unless\n"
+    "``doraise`` is False, in which case ``None`` is returned instead)."};
 
 // --------------------------- new_host_session --------------------------------
 
@@ -890,7 +885,7 @@ static PyMethodDef PyGetNodesDef = {
 
     "getnodes() -> list\n"
     "\n"
-    "Return all nodes in the current bascenev1.Context.",
+    "Return all nodes in the current scene context.",
 };
 
 // -------------------------- get_collision_info -------------------------------

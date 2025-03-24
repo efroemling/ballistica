@@ -44,9 +44,10 @@ static PyMethodDef PyGetTextureDef = {
     "Return a texture, loading it if necessary.\n"
     "\n"
     "Note that this function returns immediately even if the asset has yet\n"
-    "to be loaded. To avoid hitches, instantiate your asset objects in\n"
-    "advance of when you will be using them, allowing time for them to\n"
-    "load in the background if necessary."};
+    "to be loaded. Loading will happen in the background or on-demand. To\n"
+    "avoid hitches, try to instantiate asset objects a bit earlier than\n"
+    "they are actually needed, giving them time to load gracefully\n"
+    "in the background."};
 
 // -------------------------- get_package_texture ------------------------------
 
@@ -102,9 +103,10 @@ static PyMethodDef PyGetSoundDef = {
     "Return a sound, loading it if necessary.\n"
     "\n"
     "Note that this function returns immediately even if the asset has yet\n"
-    "to be loaded. To avoid hitches, instantiate your asset objects in\n"
-    "advance of when you will be using them, allowing time for them to\n"
-    "load in the background if necessary."};
+    "to be loaded. Loading will happen in the background or on-demand. To\n"
+    "avoid hitches, try to instantiate asset objects a bit earlier than\n"
+    "they are actually needed, giving them time to load gracefully\n"
+    "in the background."};
 
 // --------------------------- get_package_sound -------------------------------
 
@@ -160,9 +162,10 @@ static PyMethodDef PyGetDataDef = {
     "Return a data, loading it if necessary.\n"
     "\n"
     "Note that this function returns immediately even if the asset has yet\n"
-    "to be loaded. To avoid hitches, instantiate your asset objects in\n"
-    "advance of when you will be using them, allowing time for them to\n"
-    "load in the background if necessary."};
+    "to be loaded. Loading will happen in the background or on-demand. To\n"
+    "avoid hitches, try to instantiate asset objects a bit earlier than\n"
+    "they are actually needed, giving them time to load gracefully\n"
+    "in the background."};
 
 // --------------------------- get_package_data --------------------------------
 
@@ -218,9 +221,10 @@ static PyMethodDef PyGetMeshDef = {
     "Return a mesh, loading it if necessary.\n"
     "\n"
     "Note that this function returns immediately even if the asset has yet\n"
-    "to be loaded. To avoid hitches, instantiate your asset objects in\n"
-    "advance of when you will be using them, allowing time for them to\n"
-    "load in the background if necessary."};
+    "to be loaded. Loading will happen in the background or on-demand. To\n"
+    "avoid hitches, try to instantiate asset objects a bit earlier than\n"
+    "they are actually needed, giving them time to load gracefully\n"
+    "in the background."};
 
 // ---------------------------- get_package_mesh -------------------------------
 
@@ -280,9 +284,10 @@ static PyMethodDef PyGetCollisionMeshDef = {
     "terrain.\n"
     "\n"
     "Note that this function returns immediately even if the asset has yet\n"
-    "to be loaded. To avoid hitches, instantiate your asset objects in\n"
-    "advance of when you will be using them, allowing time for them to\n"
-    "load in the background if necessary."};
+    "to be loaded. Loading will happen in the background or on-demand. To\n"
+    "avoid hitches, try to instantiate asset objects a bit earlier than\n"
+    "they are actually needed, giving them time to load gracefully\n"
+    "in the background."};
 
 // ------------------------ get_package_collision_mesh -------------------------
 

@@ -72,9 +72,9 @@ static PyMethodDef PyHaveTouchScreenInputDef = {
 
     "have_touchscreen_input() -> bool\n"
     "\n"
-    "(internal)\n"
+    "Internal; Return whether or not a touch-screen input is present.\n"
     "\n"
-    "Returns whether or not a touch-screen input is present",
+    ":meta private:",
 };
 
 // ------------------------- set_touchscreen_editing ---------------------------

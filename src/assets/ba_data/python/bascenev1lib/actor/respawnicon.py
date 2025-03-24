@@ -12,9 +12,7 @@ import bascenev1 as bs
 class RespawnIcon:
     """An icon with a countdown that appears alongside the screen.
 
-    category: Gameplay Classes
-
-    This is used to indicate that a bascenev1.Player is waiting to respawn.
+    This is used to indicate that a player is waiting to respawn.
     """
 
     _MASKTEXSTORENAME = bs.storagename('masktex')

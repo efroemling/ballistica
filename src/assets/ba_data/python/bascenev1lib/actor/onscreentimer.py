@@ -15,8 +15,6 @@ if TYPE_CHECKING:
 class OnScreenTimer(bs.Actor):
     """A handy on-screen timer.
 
-    category: Gameplay Classes
-
     Useful for time-based games where time increases.
     """
 

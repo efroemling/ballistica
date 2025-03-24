@@ -752,7 +752,9 @@ static PyMethodDef PyHostScanCycleDef = {
 
     "host_scan_cycle() -> list\n"
     "\n"
-    "(internal)",
+    "(internal)\n"
+    "\n"
+    ":meta private:",
 };
 
 // ---------------------------- end_host_scanning ------------------------------
@@ -796,7 +798,9 @@ static PyMethodDef PyHaveConnectedClientsDef = {
 
     "have_connected_clients() -> bool\n"
     "\n"
-    "(internal)",
+    "(internal)\n"
+    "\n"
+    ":meta private:",
 };
 
 // ------------------------------ chatmessage ----------------------------------
