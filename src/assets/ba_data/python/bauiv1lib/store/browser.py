@@ -1309,6 +1309,6 @@ def _check_merch_availability_in_bg_thread() -> None:
 # be kicking off work at module import time.
 if (
     os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') != '1'
-    and bui.app.state is not bui.app.State.NOT_STARTED
+    and bui.app.state is not bui.AppState.NOT_STARTED
 ):
     Thread(target=_check_merch_availability_in_bg_thread, daemon=True).start()

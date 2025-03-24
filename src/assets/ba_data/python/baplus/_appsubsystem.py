@@ -21,10 +21,10 @@ if TYPE_CHECKING:
 class PlusAppSubsystem(AppSubsystem):
     """Subsystem for plus functionality in the app.
 
-    The single shared instance of this app can be accessed at
-    babase.app.plus. Note that it is possible for this to be None if the
-    plus package is not present, and code should handle that case
-    gracefully.
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.plus` attr on the :class:`~babase.App` class.
+    Note that it is possible for this to be ``None`` if the plus package
+    is not present, so code should handle that case gracefully.
     """
 
     # pylint: disable=too-many-public-methods

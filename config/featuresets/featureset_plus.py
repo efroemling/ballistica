@@ -24,5 +24,5 @@ fset.has_python_app_subsystem = True
 
 # We want things to work without us. Note that this will cause our
 # subsystem's type annotation to be PlusAppSubsystem | None instead of
-# the default PlusAppSystem.
+# the default PlusAppSubsystem.
 fset.allow_as_soft_requirement = True

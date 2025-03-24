@@ -1,6 +1,11 @@
-### 1.7.39 (build 22330, api 9, 2025-03-23)
-- Tidied up the sphinx documentation generation a bit. Docs are now generated
-  for both runtime and tools packages.
+### 1.7.39 (build 22331, api 9, 2025-03-24)
+- Lots of work on sphinx documentation. Docs are now generated for both runtime
+  and tools packages. Removed the old pdoc docs generation path since sphinx is
+  working quite well and gives us lots of room to grow, and also since we can't
+  really support both (docstrings need to be formatted to play nice with one or
+  the other). Big thanks to Dliwk though for the old pdoc setup which got us to
+  this point though.
+- The `babase.App.State` class is now `babase.AppState`.
   
 ### 1.7.38 (build 22318, api 9, 2025-03-20)
 - Added animations for reducing chest wait times or gaining tickets or tokens

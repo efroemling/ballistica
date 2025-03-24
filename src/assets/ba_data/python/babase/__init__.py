@@ -123,7 +123,7 @@ from _babase import (
 )
 
 from babase._accountv2 import AccountV2Handle, AccountV2Subsystem
-from babase._app import App
+from babase._app import App, AppState
 from babase._appconfig import commit_app_config
 from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
 from babase._appmode import AppMode
@@ -213,6 +213,7 @@ __all__ = [
     'AppIntentDefault',
     'AppIntentExec',
     'AppMode',
+    'AppState',
     'app_instance_uuid',
     'applog',
     'appname',
