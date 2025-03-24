@@ -3,41 +3,47 @@
 """Provides AppMode functionality."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, final
 
 if TYPE_CHECKING:
     from bacommon.app import AppExperience
-    from babase._appintent import AppIntent
+    from babase import AppIntent
 
 
 class AppMode:
-    """A high level mode for the app."""
+    """A low level mode the app can be in.
+
+    App-modes fundamentally change app behavior related to input
+    handling, networking, graphics, and more. In a way, different
+    app-modes can almost be considered different apps.
+    """
 
     @classmethod
     def get_app_experience(cls) -> AppExperience:
         """Return the overall experience provided by this mode."""
         raise NotImplementedError('AppMode subclasses must override this.')
 
+    @final
     @classmethod
     def can_handle_intent(cls, intent: AppIntent) -> bool:
         """Return whether this mode can handle the provided intent.
 
         For this to return True, the app-mode must claim to support the
-        provided intent (via its _can_handle_intent() method) AND the
-        :class:`bacommon.app.AppExperience` associated with the app-mode
-        must be supported by the current app and runtime environment.
+        provided intent (via its :meth:`can_handle_intent_impl()`
+        method) *AND* the :class:`~bacommon.app.AppExperience` associated
+        with the app-mode must be supported by the current app and
+        runtime environment.
         """
         # TODO: check AppExperience against current environment.
-        return cls._can_handle_intent(intent)
+        return cls.can_handle_intent_impl(intent)
 
     @classmethod
-    def _can_handle_intent(cls, intent: AppIntent) -> bool:
-        """Return whether our mode can handle the provided intent.
+    def can_handle_intent_impl(cls, intent: AppIntent) -> bool:
+        """Override this to define indent handling for an app-mode.
 
-        AppModes should override this to communicate what they can
-        handle. Note that AppExperience does not have to be considered
-        here; that is handled automatically by the can_handle_intent()
-        call.
+        Note that :class:`~bacommon.app.AppExperience` does not have to
+        be considered here; that is handled automatically by the
+        :meth:`can_handle_intent()` call.
         """
         raise NotImplementedError('AppMode subclasses must override this.')
 
@@ -56,17 +62,18 @@ class AppMode:
 
         To best cover both mobile and desktop style platforms, actions
         such as saving state should generally happen in response to both
-        on_deactivate() and on_app_active_changed() (when active is
-        False).
+        :meth:`on_deactivate()` and :meth:`on_app_active_changed()`
+        (when active is False).
         """
 
     def on_app_active_changed(self) -> None:
-        """Called when app active state changes while in this app-mode.
+        """Called when the app's active state changes while in this app-mode.
 
-        This corresponds to :attr:`~babase.App.active`. App-active state
-        becomes false when the app is hidden, minimized, backgrounded,
-        etc. The app-mode may want to take action such as pausing a
-        running game or saving state when this occurs.
+        This corresponds to the app's :attr:`~babase.App.active` attr.
+        App-active state becomes false when the app is hidden,
+        minimized, backgrounded, etc. The app-mode may want to take
+        action such as pausing a running game or saving state when this
+        occurs.
 
         On platforms such as mobile where apps get suspended and later
         silently terminated by the OS, this is likely to be the last
@@ -74,8 +81,8 @@ class AppMode:
 
         To best cover both mobile and desktop style platforms, actions
         such as saving state should generally happen in response to both
-        on_deactivate() and on_app_active_changed() (when active is
-        False).
+        :meth:`on_deactivate()` and :meth:`on_app_active_changed()`
+        (when active is False).
         """
 
     def on_purchase_process_begin(
@@ -86,6 +93,8 @@ class AppMode:
         This call happens after a purchase has been completed locally
         but before its receipt/info is sent to the master-server to
         apply to the account.
+
+        :meta private:
         """
         # pylint: disable=cyclic-import
         import babase
@@ -110,11 +119,13 @@ class AppMode:
     ) -> None:
         """Called when in-app-purchase processing completes.
 
-        Each call to on_purchase_process_begin will be followed up by a
-        call to this method. If the purchase was found to be valid and
-        was applied to the account, applied will be True. In the case of
-        redundant or invalid purchases or communication failures it will
-        be False.
+        Each call to :meth:`on_purchase_process_begin()` will be
+        followed up by a call to this method. If the purchase was found
+        to be valid and was applied to the account, applied will be
+        True. In the case of redundant or invalid purchases or
+        communication failures it will be False.
+
+        :meta private:
         """
         # pylint: disable=cyclic-import
         import babase

@@ -50,6 +50,9 @@ void Python::SetPythonException(const Exception& exc) {
     case PyExcType::kIndex:
       pytype = PyExc_IndexError;
       break;
+    case PyExcType::kKey:
+      pytype = PyExc_KeyError;
+      break;
     case PyExcType::kValue:
       pytype = PyExc_ValueError;
       break;

@@ -420,7 +420,7 @@ def test_depset() -> None:
 
 
 class DependencyError(Exception):
-    """Exception raised when bascenev1.Dependency items are missing.
+    """:class:`Exception` raised when bascenev1.Dependency items are missing.
 
     (this will generally be missing assets).
     """

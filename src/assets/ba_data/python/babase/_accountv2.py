@@ -83,7 +83,7 @@ class AccountV2Subsystem:
 
         Note that this does not mean these credentials have been checked
         for validity; only that they exist. If/when credentials are
-        validated, the 'primary' account handle will be set.
+        validated, the :attr:`primary` account handle will be set.
         """
         raise NotImplementedError()
 
@@ -307,7 +307,12 @@ class AccountV2Subsystem:
         raise NotImplementedError()
 
     def set_primary_credentials(self, credentials: str | None) -> None:
-        """Set credentials for the primary app account."""
+        """Set credentials for the primary app account.
+
+        Once credentials are set, they will be verified in the cloud
+        asynchronously. If verification is successful, the
+        :attr:`primary` attr will be set to the resulting account.
+        """
         raise NotImplementedError()
 
     def _update_auto_sign_in(self) -> None:
@@ -460,14 +465,23 @@ class AccountV2Subsystem:
 class AccountV2Handle:
     """Handle for interacting with a V2 account.
 
-    This class supports the 'with' statement, which is how it is
+    This class supports the ``with`` statement, which is how it is
     used with some operations such as cloud messaging.
     """
 
+    #: The id of this account.
     accountid: str
+
+    #: The last known tag for this account.
     tag: str
+
+    #: The name of the workspace being synced to this client.
     workspacename: str | None
+
+    #: The id of the workspace being synced to this client, if any.
     workspaceid: str | None
+
+    #: Info about last known logins associated with this account.
     logins: dict[LoginType, LoginInfo]
 
     def __enter__(self) -> None:

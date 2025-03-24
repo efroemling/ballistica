@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class AppIntent:
-    """A high level directive given to the app."""
+    """Base class for high level directives given to the app."""
 
 
 class AppIntentDefault(AppIntent):

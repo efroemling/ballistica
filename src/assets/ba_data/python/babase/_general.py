@@ -47,13 +47,13 @@ T = TypeVar('T')
 def existing(obj: ExistableT | None) -> ExistableT | None:
     """Convert invalid references to None for any babase.Existable object.
 
-    To best support type checking, it is important that invalid references
-    not be passed around and instead get converted to values of None.
-    That way the type checker can properly flag attempts to pass possibly-dead
-    objects (FooType | None) into functions expecting only live ones
-    (FooType), etc. This call can be used on any 'existable' object
-    (one with an exists() method) and will convert it to a None value
-    if it does not exist.
+    To best support type checking, it is important that invalid
+    references not be passed around and instead get converted to values
+    of None. That way the type checker can properly flag attempts to
+    pass possibly-dead objects (``FooType | None``) into functions
+    expecting only live ones (``FooType``), etc. This call can be used
+    on any 'existable' object (one with an ``exists()`` method) and will
+    convert it to a ``None`` value if it does not exist.
 
     For more info, see notes on 'existables' here:
     https://ballistica.net/wiki/Coding-Style-Guide
@@ -65,10 +65,11 @@ def existing(obj: ExistableT | None) -> ExistableT | None:
 def getclass(
     name: str, subclassof: type[T], check_sdlib_modulename_clash: bool = False
 ) -> type[T]:
-    """Given a full class name such as foo.bar.MyClass, return the class.
+    """Given a full class name such as ``foo.bar.MyClass``, return the class.
 
-    The class will be checked to make sure it is a subclass of the provided
-    'subclassof' class, and a TypeError will be raised if not.
+    The class will be checked to make sure it is a subclass of the
+    provided 'subclassof' class, and a :class:`TypeError` will be raised
+    if not.
     """
     import importlib
 
@@ -85,25 +86,9 @@ def getclass(
     return cls
 
 
-def utf8_all(data: Any) -> Any:
-    """Convert any unicode data in provided sequence(s) to utf8 bytes."""
-    if isinstance(data, dict):
-        return dict(
-            (utf8_all(key), utf8_all(value))
-            for key, value in list(data.items())
-        )
-    if isinstance(data, list):
-        return [utf8_all(element) for element in data]
-    if isinstance(data, tuple):
-        return tuple(utf8_all(element) for element in data)
-    if isinstance(data, str):
-        return data.encode('utf-8', errors='ignore')
-    return data
-
-
 def get_type_name(cls: type) -> str:
-    """Return a full type name including module for a class."""
-    return f'{cls.__module__}.{cls.__name__}'
+    """Return a fully qualified type name for a class."""
+    return f'{cls.__module__}.{cls.__qualname__}'
 
 
 class _WeakCall:
@@ -112,22 +97,23 @@ class _WeakCall:
     When passed a bound method as the callable, the instance portion of
     it is weak-referenced, meaning the underlying instance is free to
     die if all other references to it go away. Should this occur,
-    calling the WeakCall is simply a no-op.
+    calling the weak-call is simply a no-op.
 
     Think of this as a handy way to tell an object to do something at
     some point in the future if it happens to still exist.
 
-    **EXAMPLE A:** This code will create a FooClass instance and call
-    its bar() method 5 seconds later; it will be kept alive even though
-    we overwrite its variable with None because the bound method we pass
-    as a timer callback (foo.bar) strong-references it::
+    **EXAMPLE A:** This code will create a ``FooClass`` instance and
+    call its ``bar()`` method 5 seconds later; it will be kept alive
+    even though we overwrite its variable with None because the bound
+    method we pass as a timer callback (``foo.bar``) strong-references
+    it::
 
         foo = FooClass()
         babase.apptimer(5.0, foo.bar)
         foo = None
 
     **EXAMPLE B:** This code will *not* keep our object alive; it will
-    die when we overwrite it with None and the timer will be a no-op
+    die when we overwrite it with ``None`` and the timer will be a no-op
     when it fires::
 
         foo = FooClass()
@@ -145,7 +131,7 @@ class _WeakCall:
         # (provided my_obj still exists; this will do nothing otherwise).
         myweakcall()
 
-    Note: additional args and keywords you provide to the WeakCall()
+    Note: additional args and keywords you provide to the weak-call
     constructor are stored as regular strong-references; you'll need to
     wrap them in weakrefs manually if desired.
     """
@@ -348,6 +334,7 @@ def storagename(suffix: str | None = None) -> str:
             # passed.
             def __init__(self, activity):
                 activity.customdata[self._STORENAME] = {}
+
     """
     frame = inspect.currentframe()
     if frame is None:

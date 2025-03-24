@@ -39,7 +39,7 @@ void PythonClassBaseTimer::SetupType(PyTypeObject* cls) {
       "  call:\n"
       "    A callable Python object. Remember that the timer will retain a\n"
       "    strong reference to the callable for as long as it exists, so you\n"
-      "    may want to look into concepts such as :class:`babase.WeakCall`\n"
+      "    may want to look into concepts such as :class:`~babase.WeakCall`\n"
       "    if that is not desired.\n"
       "\n"
       "  repeat:\n"

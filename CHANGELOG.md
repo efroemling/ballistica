@@ -1,4 +1,4 @@
-### 1.7.39 (build 22331, api 9, 2025-03-24)
+### 1.7.39 (build 22332, api 9, 2025-03-24)
 - Lots of work on sphinx documentation. Docs are now generated for both runtime
   and tools packages. Removed the old pdoc docs generation path since sphinx is
   working quite well and gives us lots of room to grow, and also since we can't
@@ -6,6 +6,10 @@
   the other). Big thanks to Dliwk though for the old pdoc setup which got us to
   this point though.
 - The `babase.App.State` class is now `babase.AppState`.
+- Removed `babase.print_exception()`. This has been mostly unused for a long
+  time. Anything still using it should use `logging.exception()` instead.
+- Removed `babase.print_error()`. This has also largely been unused for a long
+  time. Anything still using it should use `logging.error()` instead.
   
 ### 1.7.38 (build 22318, api 9, 2025-03-20)
 - Added animations for reducing chest wait times or gaining tickets or tokens

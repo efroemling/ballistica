@@ -56,7 +56,7 @@ class ClassicAppMode(babase.AppMode):
 
     @override
     @classmethod
-    def _can_handle_intent(cls, intent: babase.AppIntent) -> bool:
+    def can_handle_intent_impl(cls, intent: babase.AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(
             intent, babase.AppIntentExec | babase.AppIntentDefault

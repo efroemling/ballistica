@@ -48,8 +48,8 @@ class ScanResults:
 class MetadataSubsystem:
     """Subsystem for working with script metadata in the app.
 
-    Access the single shared instance of this class at
-    'babase.app.meta'.
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.meta` attr on the :class:`~babase.App` class.
     """
 
     def __init__(self) -> None:
@@ -67,8 +67,10 @@ class MetadataSubsystem:
         """Begin the overall scan.
 
         This will start scanning built in directories (which for vanilla
-        installs should be the vast majority of the work). This should only
-        be called once.
+        installs should be the vast majority of the work). This should
+        only be called once.
+
+        :meta private:
         """
         assert self._scan_complete_cb is None
         assert self._scan is None
@@ -94,6 +96,8 @@ class MetadataSubsystem:
         This is for parts of the scan that must be delayed until
         workspace sync completion or other such events. This must be
         called exactly once.
+
+        :meta private:
         """
         assert self._scan is not None
         self._scan.set_extras(self.extra_scan_dirs)
@@ -112,7 +116,7 @@ class MetadataSubsystem:
         to messaged to the user in some way but the callback will be called
         regardless.
         To run the completion callback directly in the bg thread where the
-        loading work happens, pass completion_cb_in_bg_thread=True.
+        loading work happens, pass ``completion_cb_in_bg_thread=True``.
         """
         Thread(
             target=partial(

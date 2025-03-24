@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
+from babase._logging import balog
 
 if TYPE_CHECKING:
     from typing import Any
@@ -18,29 +19,36 @@ if TYPE_CHECKING:
 
 
 class PluginSubsystem(AppSubsystem):
-    """Subsystem for plugin handling in the app.
+    """Subsystem for wrangling plugins.
 
-    Access the single shared instance of this class at `ba.app.plugins`.
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.plugins` attr on the :class:`~babase.App` class.
     """
 
+    #: :meta private:
     AUTO_ENABLE_NEW_PLUGINS_CONFIG_KEY = 'Auto Enable New Plugins'
+
+    #: :meta private:
     AUTO_ENABLE_NEW_PLUGINS_DEFAULT = True
 
     def __init__(self) -> None:
         super().__init__()
 
-        # Info about plugins that we are aware of. This may include
-        # plugins discovered through meta-scanning as well as plugins
-        # registered in the app-config. This may include plugins that
-        # cannot be loaded for various reasons or that have been
-        # intentionally disabled.
+        #: Info about plugins that we are aware of. This may include
+        #: plugins discovered through meta-scanning as well as plugins
+        #: registered in the app-config. This may include plugins that
+        #: cannot be loaded for various reasons or that have been
+        #: intentionally disabled.
         self.plugin_specs: dict[str, babase.PluginSpec] = {}
 
-        # The set of live active plugin objects.
+        #: The set of live active plugin instances.
         self.active_plugins: list[babase.Plugin] = []
 
     def on_meta_scan_complete(self) -> None:
-        """Called when meta-scanning is complete."""
+        """Called when meta-scanning is complete.
+
+        :meta private:
+        """
         from babase._language import Lstr
 
         config_changed = False
@@ -158,6 +166,7 @@ class PluginSubsystem(AppSubsystem):
 
     @override
     def on_app_running(self) -> None:
+        """:meta private:"""
         # Load up our plugins and go ahead and call their on_app_running
         # calls.
         self._load_plugins()
@@ -165,51 +174,43 @@ class PluginSubsystem(AppSubsystem):
             try:
                 plugin.on_app_running()
             except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_running()')
+                balog.exception('Error in plugin on_app_running().')
 
     @override
     def on_app_suspend(self) -> None:
+        """:meta private:"""
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_suspend()
             except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_suspend()')
+                balog.exception('Error in plugin on_app_suspend().')
 
     @override
     def on_app_unsuspend(self) -> None:
+        """:meta private:"""
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_unsuspend()
             except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_unsuspend()')
+                balog.exception('Error in plugin on_app_unsuspend().')
 
     @override
     def on_app_shutdown(self) -> None:
+        """:meta private:"""
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_shutdown()
             except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_shutdown()')
+                balog.exception('Error in plugin on_app_shutdown().')
 
     @override
     def on_app_shutdown_complete(self) -> None:
+        """:meta private:"""
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_shutdown_complete()
             except Exception:
-                from babase import _error
-
-                _error.print_exception(
-                    'Error in plugin on_app_shutdown_complete()'
-                )
+                balog.exception('Error in plugin on_app_shutdown_complete().')
 
     def _load_plugins(self) -> None:
 
@@ -322,10 +323,10 @@ class PluginSpec:
 class Plugin:
     """A plugin to alter app behavior in some way.
 
-    Plugins are discoverable by the meta-tag system
-    and the user can select which ones they want to enable.
-    Enabled plugins are then called at specific times as the
-    app is running in order to modify its behavior in some way.
+    Plugins are discoverable by the :class:`~babase.MetadataSubsystem`
+    system and the user can select which ones they want to enable.
+    Enabled plugins are then called at specific times as the app is
+    running in order to modify its behavior in some way.
     """
 
     def on_app_running(self) -> None:

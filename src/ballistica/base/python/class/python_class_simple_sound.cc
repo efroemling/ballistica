@@ -23,7 +23,9 @@ void PythonClassSimpleSound::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A simple sound wrapper for internal use.\n"
       "\n"
-      "Do not use for gameplay code as it will only play locally.";
+      "Do not use for gameplay code as it will only play locally.\n"
+      "\n"
+      ":meta private:";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
   cls->tp_repr = (reprfunc)tp_repr;

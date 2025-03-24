@@ -98,17 +98,18 @@ enum class InputType : uint8_t {
 };
 
 // BA_EXPORT_PYTHON_ENUM
-/// Types of input a controller can send to the game.
+/// Types of quit behavior that can be requested from the app.
 ///
 /// 'soft' may hide/reset the app but keep the process running, depending
-///    on the platform.
+///    on the platform (generally a thing on mobile).
 ///
 /// 'back' is a variant of 'soft' which may give 'back-button-pressed'
 ///    behavior depending on the platform. (returning to some previous
 ///    activity instead of dumping to the home screen, etc.)
 ///
 /// 'hard' leads to the process exiting. This generally should be avoided
-///    on platforms such as mobile.
+///    on platforms such as mobile where apps are expected to keep running
+///    until killed by the OS.
 enum class QuitType : uint8_t {
   kSoft,
   kBack,
@@ -261,6 +262,7 @@ enum class PyExcType : uint8_t {
   kAttribute,
   kIndex,
   kType,
+  kKey,
   kValue,
   kReference,
   kContext,

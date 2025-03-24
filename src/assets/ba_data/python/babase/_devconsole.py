@@ -15,10 +15,13 @@ if TYPE_CHECKING:
 
 
 class DevConsoleTab:
-    """Defines behavior for a tab in the dev-console."""
+    """Base class for a :class:`~babase.DevConsoleSubsystem` tab."""
 
     def refresh(self) -> None:
-        """Called when the tab should refresh itself."""
+        """Called when the tab should refresh itself.
+
+        Overridden by subclasses to implement tab behavior.
+        """
 
     def request_refresh(self) -> None:
         """The tab can call this to request that it be refreshed."""
@@ -91,22 +94,23 @@ class DevConsoleTab:
 
     @property
     def width(self) -> float:
-        """Return the current tab width. Only call during refreshes."""
+        """The current tab width. Only valid during refreshes."""
         assert _babase.app.devconsole.is_refreshing
         return _babase.dev_console_tab_width()
 
     @property
     def height(self) -> float:
-        """Return the current tab height. Only call during refreshes."""
+        """The current tab height. Only valid during refreshes."""
         assert _babase.app.devconsole.is_refreshing
         return _babase.dev_console_tab_height()
 
     @property
     def base_scale(self) -> float:
-        """A scale value set depending on the app's UI scale.
+        """A scale value based on the app's current :class:`~babase.UIScale`.
 
-        Dev-console tabs can incorporate this into their UI sizes and
-        positions if they desire. This must be done manually however.
+        Dev-console tabs can manually incorporate this into their UI
+        sizes and positions if they desire. By default, dev-console tabs
+        are uniform across all ui-scales.
         """
         assert _babase.app.devconsole.is_refreshing
         return _babase.dev_console_base_scale()
@@ -114,20 +118,21 @@ class DevConsoleTab:
 
 @dataclass
 class DevConsoleTabEntry:
-    """Represents a distinct tab in the dev-console."""
+    """Represents a distinct tab in the :class:`~babase.DevConsoleSubsystem`."""
 
     name: str
     factory: Callable[[], DevConsoleTab]
 
 
 class DevConsoleSubsystem:
-    """Subsystem for wrangling the dev console.
+    """Subsystem for wrangling the dev-console.
 
-    The single instance of this class can be found at
-    babase.app.devconsole. The dev-console is a simple always-available
-    UI intended for use by developers; not end users. Traditionally it
-    is available by typing a backtick (`) key on a keyboard, but now can
-    be accessed via an on-screen button (see settings/advanced to enable
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.devconsole` attr on the :class:`~babase.App`
+    class. The dev-console is a simple always-available UI intended for
+    use by developers; not end users. Traditionally it is available by
+    typing a backtick (`) key on a keyboard, but can also be accessed
+    via an on-screen button (see settings/advanced/dev-tools to enable
     said button).
     """
 
@@ -141,8 +146,8 @@ class DevConsoleSubsystem:
             DevConsoleTabTest,
         )
 
-        # All tabs in the dev-console. Add your own stuff here via
-        # plugins or whatnot.
+        #: All tabs in the dev-console. Add your own stuff here via
+        #: plugins or whatnot to customize the console.
         self.tabs: list[DevConsoleTabEntry] = [
             DevConsoleTabEntry('Python', DevConsoleTabPython),
             DevConsoleTabEntry('AppModes', DevConsoleTabAppModes),
@@ -155,7 +160,10 @@ class DevConsoleSubsystem:
         self._tab_instances: dict[str, DevConsoleTab] = {}
 
     def do_refresh_tab(self, tabname: str) -> None:
-        """Called by the C++ layer when a tab should be filled out."""
+        """Called by the C++ layer when a tab should be filled out.
+
+        :meta private:
+        """
         assert _babase.in_logic_thread()
 
         # Make noise if we have repeating tab names, as that breaks our
