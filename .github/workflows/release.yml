@@ -346,6 +346,10 @@ jobs:
             --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64 \
             --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
           docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:${{ github.ref_name }}
+          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:latest \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64 \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
+          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:latest
 
   upload_docker_x86_64_gui_release_image:
     runs-on: ubuntu-latest
@@ -430,6 +434,10 @@ jobs:
             --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64 \
             --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
           docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:${{ github.ref_name }}
+          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:latest \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64 \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
+          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:latest
 
 ################################################################################
 #                                                                              #
