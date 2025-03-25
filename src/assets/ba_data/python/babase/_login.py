@@ -22,7 +22,7 @@ logger = logging.getLogger('ba.loginadapter')
 
 @dataclass
 class LoginInfo:
-    """Basic info about a login available in the app.plus.accounts section."""
+    """Info for a login used by :class:`~babase.AccountV2Handle`."""
 
     name: str
 
@@ -70,7 +70,10 @@ class LoginAdapter:
         self._last_sign_in_desc: str | None = None
 
     def on_app_loading(self) -> None:
-        """Should be called for each adapter in on_app_loading."""
+        """Should be called for each adapter in on_app_loading.
+
+        :meta private:
+        """
 
         assert not self._on_app_loading_called
         self._on_app_loading_called = True
@@ -122,6 +125,8 @@ class LoginAdapter:
         to the currently-in-use account.
         Note that the logins dict passed in should be immutable as
         only a reference to it is stored, not a copy.
+
+        :meta private:
         """
         assert _babase.in_logic_thread()
         logger.debug(
@@ -136,12 +141,12 @@ class LoginAdapter:
     def on_back_end_active_change(self, active: bool) -> None:
         """Called when active state for the back-end is (possibly) changing.
 
-        Meant to be overridden by subclasses.
-        Being active means that the implicit login provided by the back-end
-        is actually being used by the app. It should therefore register
-        unlocked achievements, leaderboard scores, allow viewing native
-        UIs, etc. When not active it should ignore everything and behave
-        as if signed out, even if it technically is still signed in.
+        Meant to be overridden by subclasses. Being active means that
+        the implicit login provided by the back-end is actually being
+        used by the app. It should therefore register unlocked
+        achievements, leaderboard scores, allow viewing native UIs, etc.
+        When not active it should ignore everything and behave as if
+        signed out, even if it technically is still signed in.
         """
         assert _babase.in_logic_thread()
         del active  # Unused.
@@ -156,7 +161,7 @@ class LoginAdapter:
 
         This can be called even if the back-end is not implicitly signed in;
         the adapter will attempt to sign in if possible. An exception will
-        be returned if the sign-in attempt fails.
+        be passed to the callback if the sign-in attempt fails.
         """
 
         assert _babase.in_logic_thread()
@@ -275,11 +280,12 @@ class LoginAdapter:
     ) -> None:
         """Get a sign-in token from the adapter back end.
 
-        This token is then passed to the master-server to complete the
-        sign-in process. The adapter can use this opportunity to bring
-        up account creation UI, call its internal sign_in function, etc.
-        as needed. The provided completion_cb should then be called with
-        either a token or None if sign in failed or was cancelled.
+        This token is then passed to the cloud to complete the sign-in
+        process. The adapter can use this opportunity to bring up
+        account creation UI, call its internal sign-in function, etc. as
+        needed. The provided ``completion_cb`` should then be called
+        with either a token or with ``None`` if sign in failed or was
+        cancelled.
         """
 
         # Default implementation simply fails immediately.

@@ -5,12 +5,12 @@ from __future__ import annotations
 
 import os
 import json
-import logging
 from functools import partial
 from typing import TYPE_CHECKING, overload, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
+from babase._logging import applog
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -35,16 +35,16 @@ class LanguageSubsystem(AppSubsystem):
 
     @property
     def locale(self) -> str:
-        """Raw country/language code detected by the game (such as 'en_US').
+        """Raw country/language code detected by the game (such as "en_US").
 
         Generally for language-specific code you should look at
-        babase.App.language, which is the language the game is using
-        (which may differ from locale if the user sets a language, etc.)
+        :attr:`language`, which is the language the game is using (which
+        may differ from locale if the user sets a language, etc.)
         """
         env = _babase.env()
         locale = env.get('locale')
         if not isinstance(locale, str):
-            logging.warning(
+            applog.warning(
                 'Seem to be running in a dummy env; returning en_US locale.'
             )
             locale = 'en_US'
@@ -81,18 +81,17 @@ class LanguageSubsystem(AppSubsystem):
             )
             names = [n.replace('.json', '').capitalize() for n in names]
 
-            # FIXME: our simple capitalization fails on multi-word names;
-            # should handle this in a better way...
+            # FIXME: our simple capitalization fails on multi-word
+            # names; should handle this in a better way...
             for i, name in enumerate(names):
                 if name == 'Chinesetraditional':
                     names[i] = 'ChineseTraditional'
                 elif name == 'Piratespeak':
                     names[i] = 'PirateSpeak'
         except Exception:
-            from babase import _error
-
-            _error.print_exception()
+            applog.exception('Error building available language list.')
             names = []
+
         for name in names:
             if self._can_display_language(name):
                 langs.add(name)
@@ -203,7 +202,7 @@ class LanguageSubsystem(AppSubsystem):
                     with open(lmodfile, encoding='utf-8') as infile:
                         lmodvalues = json.loads(infile.read())
             except Exception:
-                logging.exception("Error importing language '%s'.", language)
+                applog.exception("Error importing language '%s'.", language)
                 _babase.screenmessage(
                     f"Error setting language to '{language}';"
                     f' see log for details.',
@@ -273,6 +272,7 @@ class LanguageSubsystem(AppSubsystem):
 
     @override
     def do_apply_app_config(self) -> None:
+        """:meta private:"""
         assert _babase.in_logic_thread()
         assert isinstance(_babase.app.config, dict)
         lang = _babase.app.config.get('Lang', self.default_language)
@@ -287,7 +287,11 @@ class LanguageSubsystem(AppSubsystem):
     ) -> Any:
         """Return a translation resource by name.
 
-        DEPRECATED; use babase.Lstr functionality for these purposes.
+        .. warning::
+
+          Use :class:`~babase.Lstr` instead of this function whenever
+          possible, as it will gracefully handle displaying correctly
+          across multiple clients in multiple languages simultaneously.
         """
         try:
             # If we have no language set, try and set it to english.
@@ -295,7 +299,7 @@ class LanguageSubsystem(AppSubsystem):
             if self._language_merged is None:
                 try:
                     if _babase.do_once():
-                        logging.warning(
+                        applog.warning(
                             'get_resource() called before language'
                             ' set; falling back to english.'
                         )
@@ -303,9 +307,7 @@ class LanguageSubsystem(AppSubsystem):
                         'English', print_change=False, store_to_config=False
                     )
                 except Exception:
-                    logging.exception(
-                        'Error setting fallback english language.'
-                    )
+                    applog.exception('Error setting fallback english language.')
                     raise
 
             # If they provided a fallback_resource value, try the
@@ -380,7 +382,11 @@ class LanguageSubsystem(AppSubsystem):
     ) -> str:
         """Translate a value (or return the value if no translation available)
 
-        DEPRECATED; use babase.Lstr functionality for these purposes.
+        .. warning::
+
+          Use :class:`~babase.Lstr` instead of this function whenever
+          possible, as it will gracefully handle displaying correctly
+          across multiple clients in multiple languages simultaneously.
         """
         try:
             translated = self.get_resource('translations')[category][strval]
@@ -498,18 +504,44 @@ class Lstr:
     clients in their currently active language.
 
     To see available resource keys, look at any of the
-    ``bs_language_*.py`` files in the game or the translations pages at
-    `legacy.ballistica.net/translate
-    <https://legacy.ballistica.net/translate>`.
+    ``ba_data/data/languages/*.json`` files in the game or the
+    translations pages at `legacy.ballistica.net/translate
+    <https://legacy.ballistica.net/translate>`_.
 
-    Examples
-    --------
+    Args:
+
+      resource:
+        Pass a string to look up a translation by resource key.
+
+      translate:
+        Pass a tuple consisting of a translation category and
+        untranslated value. Any matching translation found in that
+        category will be used. Otherwise the untranslated value will
+        be.
+
+      value:
+        Pass a regular string value to be used as-is.
+
+      subs:
+        A sequence of 2-member tuples consisting of values and
+        replacements. Replacements can be regular strings or other ``Lstr``
+        values.
+
+      fallback_resource:
+        A resource key that will be used if the main one is not present for
+        the current language instead of falling back to the english value
+        ('resource' mode only).
+
+      fallback_value:
+        A regular string that will be used if neither the resource nor the
+        fallback resource is found ('resource' mode only).
+
 
     **Example 1: Resource path** ::
 
         mynode.text = babase.Lstr(resource='audioSettingsWindow.titleText')
 
-    **Example 2: Translated string via a category and English value**
+    **Example 2: Translation**
 
     If a translated value is available, it will be used; otherwise the
     English value will be. To see available translation categories, look
@@ -518,20 +550,20 @@ class Lstr:
         mynode.text = babase.Lstr(translate=('gameDescriptions',
                                              'Defeat all enemies'))
 
-    **Example 3: Raw value with substitutions**
+    **Example 3: Substitutions**
 
     Substitutions can be used with ``resource`` and ``translate`` modes
-    as well. ::
+    as well as the ``value`` shown here. ::
 
         mynode.text = babase.Lstr(value='${A} / ${B}',
                                   subs=[('${A}', str(score)),
                                         ('${B}', str(total))])
 
-    **Example 4: Nested Lstrs**
+    **Example 4: Nesting**
 
-    :class:`~babase.Lstr` instances can be nested. This example would display
-    the resource at ``res_a`` but replace ``${NAME}`` with the value of
-    the resource at ``res_b``. ::
+    ``Lstr`` instances can be nested. This example would display
+    the translated resource at ``'res_a'`` but replace any instances of
+    ``'${NAME}'`` it contains with the translated resource at ``'res_b'``. ::
 
         mytextnode.text = babase.Lstr(
             resource='res_a',
@@ -572,19 +604,6 @@ class Lstr:
         """Create an Lstr from a raw string value."""
 
     def __init__(self, *args: Any, **keywds: Any) -> None:
-        """Instantiate a Lstr.
-
-        Pass a value for either 'resource', 'translate',
-        or 'value'. (see Lstr help for examples).
-        'subs' can be a sequence of 2-member sequences consisting of values
-        and replacements.
-        'fallback_resource' can be a resource key that will be used if the
-        main one is not present for
-        the current language in place of falling back to the english value
-        ('resource' mode only).
-        'fallback_value' can be a literal string that will be used if neither
-        the resource nor the fallback resource is found ('resource' mode only).
-        """
         # pylint: disable=too-many-branches
         if args:
             raise TypeError('Lstr accepts only keyword arguments')
@@ -621,13 +640,11 @@ class Lstr:
             keywds['v'] = keywds['value']
             del keywds['value']
         if 'fallback' in keywds:
-            from babase import _error
-
-            _error.print_error(
-                'deprecated "fallback" arg passed to Lstr(); use '
-                'either "fallback_resource" or "fallback_value"',
-                once=True,
-            )
+            if _babase.do_once():
+                applog.error(
+                    'Deprecated "fallback" arg passed to Lstr(); use '
+                    'either "fallback_resource" or "fallback_value".'
+                )
             keywds['f'] = keywds['fallback']
             del keywds['fallback']
         if 'fallback_resource' in keywds:
@@ -641,15 +658,15 @@ class Lstr:
             del keywds['fallback_value']
 
     def evaluate(self) -> str:
-        """Evaluate the Lstr and returns a flat string in the current language.
+        """Evaluate to a flat string in the current language.
 
         You should avoid doing this as much as possible and instead pass
-        and store Lstr values.
+        and store ``Lstr`` values.
         """
         return _babase.evaluate_lstr(self._get_json())
 
     def is_flat_value(self) -> bool:
-        """Return whether the Lstr is a 'flat' value.
+        """Return whether this instance represents a 'flat' value.
 
         This is defined as a simple string value incorporating no
         translations, resources, or substitutions. In this case it may
@@ -664,20 +681,23 @@ class Lstr:
         except Exception:
             from babase import _error
 
-            _error.print_exception('_get_json failed for', self.args)
+            applog.exception('_get_json failed for %s.', self.args)
             return 'JSON_ERR'
 
     @override
     def __str__(self) -> str:
-        return '<ba.Lstr: ' + self._get_json() + '>'
+        return f'<ba.Lstr: {self._get_json()}>'
 
     @override
     def __repr__(self) -> str:
-        return '<ba.Lstr: ' + self._get_json() + '>'
+        return f'<ba.Lstr: {self._get_json()}>'
 
     @staticmethod
     def from_json(json_string: str) -> babase.Lstr:
-        """Given a json string, returns a babase.Lstr. Does no validation."""
+        """Given a json string, returns a ``Lstr``.
+
+        Does no validation.
+        """
         lstr = Lstr(value='')
         lstr.args = json.loads(json_string)
         return lstr

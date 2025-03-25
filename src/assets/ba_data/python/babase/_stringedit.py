@@ -22,7 +22,12 @@ if TYPE_CHECKING:
 
 
 class StringEditSubsystem:
-    """Full string-edit state for the app."""
+    """Full string-edit state for the app.
+
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.stringedit` attr on the :class:`~babase.App`
+    class.
+    """
 
     def __init__(self) -> None:
         self.active_adapter = empty_weakref(StringEditAdapter)
@@ -35,11 +40,11 @@ class StringEditAdapter:
     subclass this to make their contents editable on all platforms.
 
     There can only be one string-edit at a time for the app. New
-    StringEdits will attempt to register themselves as the globally
-    active one in their constructor, but this may not succeed. When
-    creating a StringEditAdapter, always check its 'is_valid()' value after
-    creating it. If this is False, it was not able to set itself as
-    the global active one and should be discarded.
+    string-edits will attempt to register themselves as the globally
+    active one in their constructor, but this may not succeed. If
+    :meth:`can_be_replaced()` returns ``True`` for an adapter
+    immediately after creating it, that means it was not able to set
+    itself as the global one.
     """
 
     def __init__(
@@ -72,8 +77,8 @@ class StringEditAdapter:
         """Return whether this adapter can be replaced by a new one.
 
         This is mainly a safeguard to allow adapters whose drivers have
-        gone away without calling apply or cancel to time out and be
-        replaced with new ones.
+        gone away without calling :meth:`apply` or :meth:`cancel` to
+        time out and be replaced with new ones.
         """
         if not _babase.in_logic_thread():
             raise RuntimeError('This must be called from the logic thread.')
@@ -104,7 +109,7 @@ class StringEditAdapter:
         """Should be called by the owner when editing is complete.
 
         Note that in some cases this call may be a no-op (such as if
-        this StringEditAdapter is no longer the globally active one).
+        this adapter is no longer the globally active one).
         """
         if not _babase.in_logic_thread():
             raise RuntimeError('This must be called from the logic thread.')

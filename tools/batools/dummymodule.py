@@ -278,6 +278,8 @@ def _writefuncs(
                 returnstr = 'return _uninferrable()'
             elif returns == 'tuple[float, float]':
                 returnstr = 'return (0.0, 0.0)'
+            elif returns == 'tuple[float, float, float]':
+                returnstr = 'return (0.0, 0.0, 0.0)'
             elif returns == 'str | None':
                 returnstr = "return ''"
             elif returns == 'int | None':
@@ -342,7 +344,7 @@ def _writefuncs(
                 returnstr = 'return ' + returns + '()'
             else:
                 raise RuntimeError(
-                    f'unknown returns value: {returns} for {funcname}'
+                    f'Unknown returns value: {returns} for {funcname}'
                 )
             returnstr = (
                 f'# This is a dummy stub;'

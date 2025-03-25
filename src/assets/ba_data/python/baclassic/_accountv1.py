@@ -201,7 +201,7 @@ class AccountV1Subsystem:
 
         # If the short version of our account name currently cant be
         # displayed by the game, cancel.
-        if not babase.have_chars(
+        if not babase.can_display_chars(
             plus.get_v1_account_display_string(full=False)
         ):
             return

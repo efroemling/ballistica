@@ -38,10 +38,10 @@ void PythonClassVec3::SetupType(PyTypeObject* cls) {
       "A vector of 3 floats.\n"
       "\n"
       "These can be created the following ways (checked in this order):\n"
-      "- with no args, all values are set to 0\n"
-      "- with a single numeric arg, all values are set to that value\n"
-      "- with a single three-member sequence arg, sequence values are copied\n"
-      "- otherwise assumes individual x/y/z args (positional or keywords)"
+      " - With no args, all values are set to 0.\n"
+      " - With a single numeric arg, all values are set to that value.\n"
+      " - With a three-member sequence arg, sequence values are copied.\n"
+      " - Otherwise assumes individual x/y/z args (positional or keywords)."
       "\n"
       "Attributes:\n"
       "   x (float):\n"
@@ -75,8 +75,8 @@ void PythonClassVec3::SetupType(PyTypeObject* cls) {
   as_number_.nb_negative = (unaryfunc)nb_negative;
   cls->tp_as_number = &as_number_;
 
-  // Note: we could fill out the in-place versions of these
-  // if we're not going for immutability..
+  // Note: We could fill out the in-place versions of these if we're not
+  // going for immutability.
 }
 
 auto PythonClassVec3::Create(const Vector3f& val) -> PyObject* {

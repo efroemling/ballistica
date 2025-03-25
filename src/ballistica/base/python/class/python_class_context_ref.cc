@@ -27,7 +27,7 @@ void PythonClassContextRef::SetupType(PyTypeObject* cls) {
       "implicitly use. Context determines, for example, which scene new nodes\n"
       "or textures get added to without having to specify that explicitly in\n"
       "the newnode()/gettexture() call. Contexts can also affect object\n"
-      "lifecycles; for example a a :class:`babase.ContextCall` will instantly\n"
+      "lifecycles; for example a :class:`~babase.ContextCall` will instantly\n"
       "become a no-op and release any references it is holding when the "
       "context it belongs to is destroyed.\n"
       "\n"
@@ -55,13 +55,18 @@ void PythonClassContextRef::SetupType(PyTypeObject* cls) {
       "sets the context they point to as current on entry and resets it to\n"
       "the previous value on exit.\n"
       "\n"
-      "Example: Explicitly create a few UI bits with no context set\n"
-      "(UI stuff may complain if called within a context)::\n"
+      "Example: Explicitly clear context while working with UI code from\n"
+      "gameplay (UI stuff may complain if called within a context)::\n"
       "\n"
       "    import bauiv1 as bui\n"
       "\n"
-      "    with bui.ContextRef.empty():\n"
-      "        my_container = bui.containerwidget()\n";
+      "    def _callback_called_from_gameplay():\n"
+      "\n"
+      "        # We are probably called with a game context as current, but\n"
+      "        # this makes UI stuff unhappy. So we clear the context while\n"
+      "        # doing our thing.\n"
+      "        with bui.ContextRef.empty():\n"
+      "            my_container = bui.containerwidget()\n";
 
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
@@ -231,7 +236,9 @@ PyMethodDef PythonClassContextRef::tp_methods[] = {
     {"is_expired", (PyCFunction)IsExpired, METH_NOARGS,
      "is_expired() -> bool\n"
      "\n"
-     "Whether the context has expired."},
+     "Whether the context has expired.\n"
+     "\n"
+     "Returns False for refs created as empty."},
     {nullptr}};
 
 }  // namespace ballistica::base

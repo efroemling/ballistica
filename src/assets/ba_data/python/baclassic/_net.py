@@ -96,7 +96,7 @@ class MasterServerV1CallThread(threading.Thread):
         try:
             classic = babase.app.classic
             assert classic is not None
-            self._data = babase.utf8_all(self._data)
+            self._data = _utf8_all(self._data)
             babase.set_thread_name('BA_ServerCallThread')
             if self._request_type == 'get':
                 msaddr = plus.get_master_server_address()
@@ -164,3 +164,19 @@ class MasterServerV1CallThread(threading.Thread):
                 babase.Call(self._run_callback, response_data),
                 from_other_thread=True,
             )
+
+
+def _utf8_all(data: Any) -> Any:
+    """Convert any unicode data in provided sequence(s) to utf8 bytes."""
+    if isinstance(data, dict):
+        return dict(
+            (_utf8_all(key), _utf8_all(value))
+            for key, value in list(data.items())
+        )
+    if isinstance(data, list):
+        return [_utf8_all(element) for element in data]
+    if isinstance(data, tuple):
+        return tuple(_utf8_all(element) for element in data)
+    if isinstance(data, str):
+        return data.encode('utf-8', errors='ignore')
+    return data
