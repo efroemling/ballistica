@@ -690,6 +690,11 @@ def compose_docker_arm64_gui_release() -> None:
 
     batools.docker.docker_compose(headless_build=False, platform='linux/arm64')
 
+def compose_docker_arm64_gui_debug() -> None:
+    """Build the docker image with bombsquad cmake for arm64."""
+    import batools.docker
+
+    batools.docker.docker_compose(headless_build=False, platform='linux/arm64', build_type='Debug')
 
 def compose_docker_arm64_server_release() -> None:
     """Build the docker image with bombsquad cmake server for arm64."""
@@ -697,6 +702,11 @@ def compose_docker_arm64_server_release() -> None:
 
     batools.docker.docker_compose(platform='linux/arm64')
 
+def compose_docker_arm64_server_debug() -> None:
+    """Build the docker image with bombsquad cmake server for arm64."""
+    import batools.docker
+
+    batools.docker.docker_compose(platform='linux/arm64', build_type='Debug')
 
 def save_docker_images() -> None:
     """Saves bombsquad images loaded into docker."""
