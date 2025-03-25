@@ -3,7 +3,8 @@ on:
     # Run everyday at 5:30 UTC
     schedule:
       - cron: '30 5 * * *'
-  
+    workflow_dispatch:
+
 jobs:
     make_docker_gui_debug_image:
         runs-on: ubuntu-latest
