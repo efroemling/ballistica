@@ -227,8 +227,8 @@ jobs:
         artifacts: bombsquad_docker_gui_debug.tar.zip
     - name: Push to github image repository
       run: |
-        docker tag bombsquad_gui_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_${{ github.ref_name }}
-        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_${{ github.ref_name }}
+        docker tag bombsquad_gui_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_${{ github.ref_name }}_x86_64
+        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_${{ github.ref_name }}_x86_64
 
   release_docker_server_debug_image:
     runs-on: ubuntu-latest
@@ -260,8 +260,8 @@ jobs:
         artifacts: bombsquad_docker_server_debug.tar.zip
     - name: Push to github image repository
       run: |
-        docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}
-        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}
+        docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}_x86_64
+        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}_x86_64
 
   upload_docker_x86_64_server_release_image:
     runs-on: ubuntu-latest
