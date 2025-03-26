@@ -7,9 +7,17 @@
 # pylint: disable=invalid-name, redefined-builtin
 # pylint: disable=missing-module-docstring
 
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
 from batools.docs import get_sphinx_settings
+
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
+    from typing import Any
+
 
 settings = get_sphinx_settings(projroot=os.environ['BALLISTICA_ROOT'])
 
@@ -89,3 +97,37 @@ toc_object_entries_show_parents = 'hide'
 # directories to ignore when looking for source files. This pattern also
 # affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+
+
+_g_obj_ids: set[int] = set()
+
+
+def skip_duplicate(
+    app: Sphinx, what: str, name: str, obj: Any, skip: bool, options: dict
+) -> bool | None:
+    """Skip duplicates."""
+    # pylint: disable=too-many-positional-arguments
+
+    del what, app, skip, options  # Unused.
+
+    if name == 'NodeNotFoundError':
+        objid = id(obj)
+        if objid in _g_obj_ids:
+            print('ALREADY HAVE', obj)
+            # return True  # Skip!
+        else:
+            print('ADDING')
+            _g_obj_ids.add(id(obj))
+
+    #     print('FOUND', what, name, obj)
+    #     return True
+
+    if bool(False):
+        return False
+
+    return None
+
+
+def setup(app: Sphinx) -> None:
+    """Do the thing."""
+    app.connect('autodoc-skip-member', skip_duplicate)

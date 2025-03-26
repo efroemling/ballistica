@@ -25,7 +25,7 @@ class Collision:
     def sourcenode(self) -> bascenev1.Node:
         """The node containing the material triggering the current callback.
 
-        Throws a :class:`~bascenev1.NodeNotFoundError` if the node does
+        Throws a :class:`~babase.NodeNotFoundError` if the node does
         not exist, though the node should always exist (at least at the
         start of the collision callback).
         """
@@ -39,7 +39,7 @@ class Collision:
     def opposingnode(self) -> bascenev1.Node:
         """The node the current callback material node is hitting.
 
-        Throws a :class:`~bascenev1.NodeNotFoundError` if the node does
+        Throws a :class:`~babase.NodeNotFoundError` if the node does
         not exist. This can be expected in some cases such as in
         'disconnect' callbacks triggered by deleting a
         currently-colliding node.
