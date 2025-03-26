@@ -1211,9 +1211,17 @@ docker-server-debug: assets-cmake
 docker-arm64-gui-release: assets-cmake
 	$(PCOMMAND) compose_docker_arm64_gui_release
 
+# Build the gui debug docker image for arm64
+docker-arm64-gui-debug: assets-cmake
+	$(PCOMMAND) compose_docker_arm64_gui_debug
+
 # Build the server release docker image for arm64
 docker-arm64-server-release: assets-cmake
 	$(PCOMMAND) compose_docker_arm64_server_release 
+
+# Build the server debug docker image for arm64
+docker-arm64-server-debug: assets-cmake
+	$(PCOMMAND) compose_docker_arm64_server_debug
 
 # Save the bombsquad_server docker image to build/docker/bombsquad_server_docker.tar
 docker-save:

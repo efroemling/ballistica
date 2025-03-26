@@ -3,7 +3,8 @@ on:
     # Run everyday at 5:30 UTC
     schedule:
       - cron: '30 5 * * *'
-  
+    workflow_dispatch:
+
 jobs:
     make_docker_gui_debug_image:
         runs-on: ubuntu-latest
@@ -32,8 +33,8 @@ jobs:
             path: build/docker/bombsquad_gui_debug_docker.tar
         - name: Push to github image repository
           run: |
-            docker tag bombsquad_gui_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_nightly
-            docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_nightly
+            docker tag bombsquad_gui_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_nightly_x86_64
+            docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_nightly_x86_64
 
     make_docker_server_debug_image:
         runs-on: ubuntu-latest
@@ -62,8 +63,8 @@ jobs:
             path: build/docker/bombsquad_server_debug_docker.tar
         - name: Push to github image repository
           run: |
-            docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_nightly
-            docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_nightly
+            docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_nightly_x86_64
+            docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_nightly_x86_64
             
     make_docs:
         runs-on: ubuntu-latest
