@@ -13,8 +13,8 @@ services:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-0} # why not just remove BS_HEADLESS_BUILD?
       labels:
-        - bombsquad_version=${BS_VERSION:-unknown}
-        - bombsquad_build=${BS_BUILD_NUMBER:-unknown}
+        - BOMBSQUAD_VERSION=${BS_VERSION:-unknown}
+        - BOMBSQUAD_BUILD=${BS_BUILD_NUMBER:-unknown}
     image: ${BS_IMAGE_NAME:-bombsquad_gui_release}
     platform: ${PLATFORM}
     ports:
@@ -39,8 +39,8 @@ services:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-1}
       labels:
-        - bombsquad_version=${BS_VERSION:-unknown}
-        - bombsquad_build=${BS_BUILD_NUMBER:-unknown}
+        - BOMBSQUAD_VERSION=${BS_VERSION:-unknown}
+        - BOMBSQUAD_BUILD=${BS_BUILD_NUMBER:-unknown}
     image: ${BS_IMAGE_NAME:-bombsquad_server_release}
     platform: ${PLATFORM}
     ports:
