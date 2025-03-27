@@ -20,7 +20,7 @@ class ContextError(Exception):
 
 
 class NotFoundError(Exception):
-    """:Raised when a referenced object does not exist."""
+    """Raised when a referenced object does not exist."""
 
 
 class PlayerNotFoundError(NotFoundError):

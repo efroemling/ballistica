@@ -429,7 +429,7 @@ PyMethodDef PythonClassNode::tp_methods[] = {
      "delete(ignore_missing: bool = True) -> None\n"
      "\n"
      "Delete the node. Ignores already-deleted nodes if `ignore_missing`\n"
-     "is True; otherwise a :class:`bascenev1.NodeNotFoundError` is thrown."},
+     "is True; otherwise a :class:`babase.NodeNotFoundError` is thrown."},
     {"handlemessage", (PyCFunction)HandleMessage, METH_VARARGS,
      "handlemessage(*args: Any) -> None\n"
      "\n"

@@ -355,6 +355,8 @@ def generate_sphinx_docs() -> None:
         check=True,
     )
 
+    # raise RuntimeError('SO FAR SO GOOD')
+
     _printstatus('Running sphinx-build...')
     subprocess.run(
         [
