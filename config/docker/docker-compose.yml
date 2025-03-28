@@ -12,13 +12,14 @@ services:
       args:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-0} # why not just remove BS_HEADLESS_BUILD?
+      labels:
+        - BOMBSQUAD_VERSION=${BS_VERSION:-unknown}
+        - BOMBSQUAD_BUILD=${BS_BUILD_NUMBER:-unknown}
     image: ${BS_IMAGE_NAME:-bombsquad_gui_release}
     platform: ${PLATFORM}
     ports:
       - "${BS_PORT:-43210}:${BS_PORT:-43210}" # need to make this change according to config
-    labels:
-      - bombsquad_version=${BS_VERSION:-unknown}
-      - bombsquad_build=${BS_BUILD_NUMBER:-unknown}
+    
     environment:
       - DISPLAY=${DISPLAY}
       - PULSE_SERVER=unix:/run/user/1000/pulse/native
@@ -37,13 +38,14 @@ services:
       args:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-1}
+      labels:
+        - BOMBSQUAD_VERSION=${BS_VERSION:-unknown}
+        - BOMBSQUAD_BUILD=${BS_BUILD_NUMBER:-unknown}
     image: ${BS_IMAGE_NAME:-bombsquad_server_release}
     platform: ${PLATFORM}
     ports:
       - "${BS_PORT:-43210}:${BS_PORT:-43210}" # need to make this change according to config
-    labels:
-      - bombsquad_version=${BS_VERSION:-unknown}
-      - bombsquad_build=${BS_BUILD_NUMBER:-unknown}
+    
     # volumes:
     #   - ${BS_CONFIG_PATH:-./config}:/path/in/container/config
     #   - ${BS_MODS_PATH:-./mods}:/path/in/container/mods
