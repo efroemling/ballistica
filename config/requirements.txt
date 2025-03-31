@@ -18,6 +18,6 @@ Sphinx==8.2.3
 tomlkit==0.13.2
 types-certifi==2021.10.8.3
 types-filelock==3.2.7
-types-requests==2.32.0.20250306
-typing_extensions==4.12.2
+types-requests==2.32.0.20250328
+typing_extensions==4.13.0
 urllib3==2.3.0

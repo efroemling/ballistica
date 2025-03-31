@@ -67,7 +67,6 @@ class Graphics;
 
 // BA_EXPORT_PYTHON_ENUM
 /// Types of input a controller can send to the game.
-///
 enum class InputType : uint8_t {
   kUpDown = 2,
   kLeftRight,

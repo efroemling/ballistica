@@ -106,9 +106,9 @@ def check_utc(value: datetime.datetime) -> None:
 def utc_now() -> datetime.datetime:
     """Get timezone-aware current utc time.
 
-    Just a shortcut for datetime.datetime.now(datetime.UTC).
-    Avoid datetime.datetime.utcnow() which is deprecated and gives naive
-    times.
+    Simply a shortcut for ``datetime.datetime.now(datetime.UTC)``. One
+    should avoid :meth:`datetime.datetime.utcnow()` which is deprecated
+    and gives naive times.
     """
     return datetime.datetime.now(datetime.UTC)
 
@@ -116,9 +116,9 @@ def utc_now() -> datetime.datetime:
 def utc_now_naive() -> datetime.datetime:
     """Get naive utc time.
 
-    This can be used to replace datetime.utcnow(), which is now deprecated.
-    Most all code should migrate to use timezone-aware times instead of
-    relying on this.
+    This can be used to replace :meth:`datetime.datetime.utcnow()`,
+    which is now deprecated. Most all code should migrate to use
+    timezone-aware times instead of relying on this.
     """
     return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
@@ -126,7 +126,8 @@ def utc_now_naive() -> datetime.datetime:
 def utc_from_timestamp_naive(timestamp: float) -> datetime.datetime:
     """Get a naive utc time from a timestamp.
 
-    This can be used to replace datetime.utcfromtimestamp(), which is now
+    This can be used to replace
+    :meth:`datetime.datetime.utcfromtimestamp()`, which is now
     deprecated. Most all code should migrate to use timezone-aware times
     instead of relying on this.
     """
@@ -964,7 +965,7 @@ def extract_arg(
     """Given a list of args and an arg name, returns a value.
 
     The arg flag and value are removed from the arg list.
-    raises CleanErrors on any problems.
+    raises a :class:`~efro.error.CleanError` on any problems.
     """
     from efro.error import CleanError
 

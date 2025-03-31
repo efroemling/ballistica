@@ -109,7 +109,7 @@ class ConfigNumberEdit:
         self._callback = callback
         try:
             self._value = bui.app.config.resolve(configkey)
-        except ValueError:
+        except KeyError:
             self._value = bui.app.config.get(configkey, fallback_value)
         self._value = (
             self._minval

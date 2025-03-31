@@ -99,35 +99,35 @@ toc_object_entries_show_parents = 'hide'
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
-_g_obj_ids: set[int] = set()
+# _g_obj_ids: set[int] = set()
 
 
-def skip_duplicate(
-    app: Sphinx, what: str, name: str, obj: Any, skip: bool, options: dict
-) -> bool | None:
-    """Skip duplicates."""
-    # pylint: disable=too-many-positional-arguments
+# def skip_duplicate(
+#     app: Sphinx, what: str, name: str, obj: Any, skip: bool, options: dict
+# ) -> bool | None:
+#     """Skip duplicates."""
+#     # pylint: disable=too-many-positional-arguments
 
-    del what, app, skip, options  # Unused.
+#     del what, app, skip, options  # Unused.
 
-    if name == 'NodeNotFoundError':
-        objid = id(obj)
-        if objid in _g_obj_ids:
-            print('ALREADY HAVE', obj)
-            # return True  # Skip!
-        else:
-            print('ADDING')
-            _g_obj_ids.add(id(obj))
+#     if name == 'NodeNotFoundError':
+#         objid = id(obj)
+#         if objid in _g_obj_ids:
+#             print('ALREADY HAVE', obj)
+#             # return True  # Skip!
+#         else:
+#             print('ADDING')
+#             _g_obj_ids.add(id(obj))
 
-    #     print('FOUND', what, name, obj)
-    #     return True
+#     #     print('FOUND', what, name, obj)
+#     #     return True
 
-    if bool(False):
-        return False
+#     if bool(False):
+#         return False
 
-    return None
+#     return None
 
 
-def setup(app: Sphinx) -> None:
-    """Do the thing."""
-    app.connect('autodoc-skip-member', skip_duplicate)
+# def setup(app: Sphinx) -> None:
+#     """Do the thing."""
+#     app.connect('autodoc-skip-member', skip_duplicate)
