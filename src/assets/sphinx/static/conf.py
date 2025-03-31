@@ -1,3 +1,5 @@
+# Released under the MIT License. See LICENSE for details.
+#
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -10,13 +12,19 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, override
+
+from efro.terminal import Clr
 
 from batools.docs import get_sphinx_settings
+from sphinx.util.logging import WarningStreamHandler
 
 if TYPE_CHECKING:
-    from sphinx.application import Sphinx
+    from docutils import nodes
     from typing import Any
+
+    from sphinx.application import Sphinx
 
 
 settings = get_sphinx_settings(projroot=os.environ['BALLISTICA_ROOT'])
@@ -99,35 +107,87 @@ toc_object_entries_show_parents = 'hide'
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 
-# _g_obj_ids: set[int] = set()
+def _wrangle_logging() -> None:
+    """Modify sphinx's warning handler to ignore very specific warnings
+    (we don't want to ignore entire categories).
+    """
+    logger = logging.getLogger('sphinx')
+    assert len(logger.handlers) == 3
+    warning_handler = logger.handlers[1]
+    assert isinstance(warning_handler, WarningStreamHandler)
+
+    class _EfroCustomSphinxFilter(logging.Filter):
+
+        _cross_ref_ignores_noted = set[str]()
+
+        @override
+        def filter(self, record: logging.LogRecord) -> bool:
+
+            # Getting lots of warnings such as:
+            # /Users/ericf/LocalDocs/ballistica-internal/
+            # .cache/sphinxfiltered/ba_data/babase/__init__.py:docstring
+            # of babase._error.ActivityNotFoundError:1: WARNING:
+            # duplicate object description of
+            # babase._error.ActivityNotFoundError, other instance in
+            # bascenev1, use :no-index: for one of them
+            #
+            # These seem harmless and I assume are related to the fact
+            # that we're re-exposing various classes through our various
+            # high level package classes (babase, bauiv1, bascenev1,
+            # etc.). So Just ignoring as long as one of our modules is
+            # mentioned.
+            if record.msg == (
+                'duplicate object description of %s,'
+                ' other instance in %s, use :no-index: for one of them'
+            ):
+                assert isinstance(record.args, tuple) and isinstance(
+                    record.args[0], str
+                )
+                if any(
+                    record.args[0].startswith(p)
+                    for p in ['babase.', '_babase.']
+                ):
+                    return False  # Ignore.
+
+            # Am seeing a fair number of 'more than one target found'
+            # warnings for annotations with common type names such as
+            # 'State'. In some of these cases such as nested dataclasses
+            # we can't actually use fully qualified types, and Sphinx
+            # seems to be linking to the correct places, so just
+            # ignoring these.
+            if (
+                record.msg
+                == 'more than one target found for cross-reference %r: %s'
+            ):
+                assert isinstance(record.args, tuple)
+                classname = record.args[0]
+                assert isinstance(classname, str)
+                if classname not in self._cross_ref_ignores_noted:
+                    print(
+                        f'{Clr.BLD}efro-note:{Clr.RST}'
+                        f' ignoring more-than-one-target warning for'
+                        f' "{classname}"'
+                    )
+                    self._cross_ref_ignores_noted.add(classname)
+                return False  # Ignore.
+
+            return True  # Don't ignore.
+
+    # Explicitly insert our filter *before* sphinx's built in ones so we
+    # can prevent sphinx from failing on warnings that we want to
+    # ignore.
+    warning_handler.filters.insert(0, _EfroCustomSphinxFilter())
 
 
-# def skip_duplicate(
-#     app: Sphinx, what: str, name: str, obj: Any, skip: bool, options: dict
-# ) -> bool | None:
-#     """Skip duplicates."""
-#     # pylint: disable=too-many-positional-arguments
+_wrangle_logging()
 
-#     del what, app, skip, options  # Unused.
+# def _cb(app: Sphinx, *args: Any) -> None:
+#     logger = logging.getLogger('sphinx')  # Get the root logger
+#     handlers = logger.handlers  # Get the list of handlers
+#     print(f'HELLO; Current logging handlers2: {handlers}', flush=True)
 
-#     if name == 'NodeNotFoundError':
-#         objid = id(obj)
-#         if objid in _g_obj_ids:
-#             print('ALREADY HAVE', obj)
-#             # return True  # Skip!
-#         else:
-#             print('ADDING')
-#             _g_obj_ids.add(id(obj))
-
-#     #     print('FOUND', what, name, obj)
-#     #     return True
-
-#     if bool(False):
-#         return False
-
-#     return None
-
-
+# _cb(None)
 # def setup(app: Sphinx) -> None:
 #     """Do the thing."""
-#     app.connect('autodoc-skip-member', skip_duplicate)
+#     # app.connect('autodoc-skip-member', skip_duplicate)
+#     app.connect('config-inited', _cb)

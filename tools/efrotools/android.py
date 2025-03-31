@@ -20,7 +20,7 @@ class GradleFilterSection:
 
 
 def filter_gradle_file(buildfilename: str, enabled_tags: set[str]) -> None:
-    """Filter 'EFRO_IF' sections in a gradle file."""
+    """Filter ``EFRO_IF`` sections in a gradle file."""
 
     sections: list[GradleFilterSection] = []
 

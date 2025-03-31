@@ -231,7 +231,7 @@ def generate_sphinx_docs() -> None:
 
     starttime = time.monotonic()
 
-    apidoc_cmd = [
+    sphinx_apidoc_cmd = [
         'sphinx-apidoc',
         '--doc-author',
         settings.project_author,
@@ -283,7 +283,7 @@ def generate_sphinx_docs() -> None:
 
     _printstatus('Generating runtimemodules...')
     subprocess.run(
-        apidoc_cmd
+        sphinx_apidoc_cmd
         + [
             '--doc-project',
             'Runtime',
@@ -319,7 +319,7 @@ def generate_sphinx_docs() -> None:
 
     _printstatus('Generating toolsmodules...')
     subprocess.run(
-        apidoc_cmd
+        sphinx_apidoc_cmd
         + [
             '--doc-project',
             'Tools',
@@ -338,7 +338,7 @@ def generate_sphinx_docs() -> None:
 
     _printstatus('Generating commonmodules...')
     subprocess.run(
-        apidoc_cmd
+        sphinx_apidoc_cmd
         + [
             '--doc-project',
             'Common',
@@ -361,6 +361,7 @@ def generate_sphinx_docs() -> None:
     subprocess.run(
         [
             'sphinx-build',
+            '--fail-on-warning',
             '--conf-dir',
             static_dir,
             '--doctree-dir',
