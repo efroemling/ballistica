@@ -98,7 +98,16 @@ def build_openal(arch: str, mode: str) -> None:
         ],
         check=True,
     )
-    subprocess.run(['git', 'checkout', '1.9.3'], check=True, cwd=builddir_oboe)
+    subprocess.run(
+        [
+            'git',
+            'checkout',
+            '1.9.3',
+            # '2968fff97730ede42d522ad5afe8b82468a7d1d8',  # Early 1.9.4
+        ],
+        check=True,
+        cwd=builddir_oboe,
+    )
 
     if bool(True):
         oboepath = f'{builddir}/alc/backends/oboe.cpp'
@@ -311,6 +320,8 @@ def build_openal(arch: str, mode: str) -> None:
             '-DCMAKE_TOOLCHAIN_FILE='
             f'{ndk_path}/build/cmake/android.toolchain.cmake',
             f'-DANDROID_PLATFORM={android_platform}',
+            # Currently fails to compile on new cmakes without this:
+            '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
         ],
         cwd=builddir_oboe,
         check=True,
@@ -332,6 +343,8 @@ def build_openal(arch: str, mode: str) -> None:
             f'{ndk_path}/build/cmake/android.toolchain.cmake',
             f'-DOBOE_SOURCE={os.path.abspath(builddir_oboe)}',
             f'-DANDROID_PLATFORM={android_platform}',
+            # Currently fails to compile on new cmakes without this:
+            '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
         ],
         cwd=builddir,
         check=True,

@@ -52,6 +52,7 @@ def _source_file_feature_set_namespace_check(
     self: ProjectUpdater, fname: str, lines: list[str]
 ) -> None:
     """Make sure C++ code uses correct namespaces based on its location."""
+    # pylint: disable=too-many-branches
 
     # Extensions we know we're skipping.
     if any(fname.endswith(x) for x in ['.c', '.swift']):
@@ -104,12 +105,20 @@ def _source_file_feature_set_namespace_check(
         if line.startswith('namespace '):
             namespace, predecs_only = _get_namespace_info(lines, i)
             if namespace != f'ballistica::{toplevelname}' and not predecs_only:
-                raise CleanError(
-                    f'Invalid line "{line}" at {fname} line {i+1}.\n'
-                    f"This file is associated with the '{toplevelname}'"
-                    ' FeatureSet so should be using the'
-                    f" 'ballistica::{toplevelname}' namespace."
-                )
+
+                # Special case - allow our 'from_swift' namespace.
+                if line == 'namespace from_swift {' and (
+                    fname.endswith('/from_swift.h')
+                    or fname.endswith('/from_swift.cc')
+                ):
+                    pass
+                else:
+                    raise CleanError(
+                        f'Invalid line "{line}" at {fname} line {i+1}.\n'
+                        f"This file is associated with the '{toplevelname}'"
+                        ' FeatureSet so should be using the'
+                        f" 'ballistica::{toplevelname}' namespace."
+                    )
 
 
 def _get_namespace_info(lines: list[str], index: int) -> tuple[str, bool]:

@@ -1,4 +1,4 @@
-### 1.7.39 (build 22341, api 9, 2025-03-31)
+### 1.7.39 (build 22347, api 9, 2025-04-02)
 - Lots of work on sphinx documentation. Docs are now generated for both runtime
   and tools packages. Removed the old pdoc docs generation path since sphinx is
   working quite well and gives us lots of room to grow, and also since we can't
@@ -10,6 +10,9 @@
   time. Anything still using it should use `logging.exception()` instead.
 - Removed `babase.print_error()`. This has also largely been unused for a long
   time. Anything still using it should use `logging.error()` instead.
+- (build 22346) Hardened against some potential malformed-packet attacks. If you
+  find someone is still able to crash your server by sending invalid data,
+  please let me know.
   
 ### 1.7.38 (build 22318, api 9, 2025-03-20)
 - Added animations for reducing chest wait times or gaining tickets or tokens

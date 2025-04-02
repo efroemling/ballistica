@@ -1,4 +1,4 @@
-cpplint==2.0.0
+cpplint==2.0.1
 cryptography==44.0.2
 dmgbuild==1.6.5
 filelock==3.18.0
