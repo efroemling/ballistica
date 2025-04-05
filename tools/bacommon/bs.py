@@ -95,7 +95,9 @@ class ClassicAccountLiveData:
             ClassicChestAppearance,
             IOAttrs('a', enum_fallback=ClassicChestAppearance.UNKNOWN),
         ]
+        create_time: Annotated[datetime.datetime, IOAttrs('c')]
         unlock_time: Annotated[datetime.datetime, IOAttrs('t')]
+        unlock_tokens: Annotated[int, IOAttrs('k')]
         ad_allow_time: Annotated[datetime.datetime | None, IOAttrs('at')]
 
     class LeagueType(Enum):
@@ -125,6 +127,7 @@ class ClassicAccountLiveData:
 
     inbox_count: Annotated[int, IOAttrs('ibc')]
     inbox_count_is_max: Annotated[bool, IOAttrs('ibcm')]
+    inbox_contains_prize: Annotated[bool, IOAttrs('icp')]
 
     chests: Annotated[dict[str, Chest], IOAttrs('c')]
 

@@ -243,6 +243,8 @@ void AppConfig::SetupEntries() {
       BoolEntry("Show Demos When Idle", false);
   bool_entries_[BoolID::kShowDeprecatedLoginTypes] =
       BoolEntry("Show Deprecated Login Types", false);
+  bool_entries_[BoolID::kHighlightPotentialTokenPurchases] =
+      BoolEntry("Highlight Potential Token Purchases", true);
 
   // Now add everything to our name map and make sure all is kosher.
   CompleteMap(float_entries_);

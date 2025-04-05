@@ -169,13 +169,21 @@ void ClassicAppMode::Reset_() {
       root_widget->SetAchievementPercentText(root_ui_achievement_percent_text_);
       root_widget->SetLevelText(root_ui_level_text_);
       root_widget->SetXPText(root_ui_xp_text_);
-      root_widget->SetInboxCount(root_ui_inbox_count_,
-                                 root_ui_inbox_count_is_max_);
+      root_widget->SetInboxState(root_ui_inbox_count_,
+                                 root_ui_inbox_count_is_max_,
+                                 root_ui_inbox_announce_text_);
+      root_widget->set_highlight_potential_token_purchases(
+          root_ui_highlight_potential_token_purchases_);
+
       root_widget->SetChests(
           root_ui_chest_0_appearance_, root_ui_chest_1_appearance_,
           root_ui_chest_2_appearance_, root_ui_chest_3_appearance_,
+          root_ui_chest_0_create_time_, root_ui_chest_1_create_time_,
+          root_ui_chest_2_create_time_, root_ui_chest_3_create_time_,
           root_ui_chest_0_unlock_time_, root_ui_chest_1_unlock_time_,
           root_ui_chest_2_unlock_time_, root_ui_chest_3_unlock_time_,
+          root_ui_chest_0_unlock_tokens_, root_ui_chest_1_unlock_tokens_,
+          root_ui_chest_2_unlock_tokens_, root_ui_chest_3_unlock_tokens_,
           root_ui_chest_0_ad_allow_time_, root_ui_chest_1_ad_allow_time_,
           root_ui_chest_2_ad_allow_time_, root_ui_chest_3_ad_allow_time_);
       root_widget->SetHaveLiveValues(root_ui_have_live_values_);
@@ -1267,6 +1275,17 @@ void ClassicAppMode::DoApplyAppConfig() {
 
   idle_exit_minutes_ = g_base->app_config->Resolve(
       base::AppConfig::OptionalFloatID::kIdleExitMinutes);
+
+  // Whether to highlight chests that *could* be opened with tokens.
+  root_ui_highlight_potential_token_purchases_ = g_base->app_config->Resolve(
+      base::AppConfig::BoolID::kHighlightPotentialTokenPurchases);
+  // Apply to any running ui.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->set_highlight_potential_token_purchases(
+          root_ui_highlight_potential_token_purchases_);
+    }
+  }
 }
 
 void ClassicAppMode::PruneSessions_() {
@@ -1730,7 +1749,8 @@ void ClassicAppMode::SetRootUIXPText(const std::string text) {
   }
 }
 
-void ClassicAppMode::SetRootUIInboxCount(int count, bool is_max) {
+void ClassicAppMode::SetRootUIInboxState(int count, bool is_max,
+                                         const std::string& announce_text) {
   assert(g_base->InLogicThread());
   if (count == root_ui_inbox_count_ && is_max == root_ui_inbox_count_is_max_) {
     return;
@@ -1739,12 +1759,14 @@ void ClassicAppMode::SetRootUIInboxCount(int count, bool is_max) {
   // Store the value.
   root_ui_inbox_count_ = count;
   root_ui_inbox_count_is_max_ = is_max;
+  root_ui_inbox_announce_text_ = announce_text;
 
   // Apply it to any existing UI.
   if (uiv1_) {
     if (auto* root_widget = uiv1_->root_widget()) {
-      root_widget->SetInboxCount(root_ui_inbox_count_,
-                                 root_ui_inbox_count_is_max_);
+      root_widget->SetInboxState(root_ui_inbox_count_,
+                                 root_ui_inbox_count_is_max_,
+                                 root_ui_inbox_announce_text_);
     }
   }
 }
@@ -1787,9 +1809,13 @@ void ClassicAppMode::SetRootUIChests(
     const std::string& chest_0_appearance,
     const std::string& chest_1_appearance,
     const std::string& chest_2_appearance,
-    const std::string& chest_3_appearance, seconds_t chest_0_unlock_time,
+    const std::string& chest_3_appearance, seconds_t chest_0_create_time,
+    seconds_t chest_1_create_time, seconds_t chest_2_create_time,
+    seconds_t chest_3_create_time, seconds_t chest_0_unlock_time,
     seconds_t chest_1_unlock_time, seconds_t chest_2_unlock_time,
-    seconds_t chest_3_unlock_time, seconds_t chest_0_ad_allow_time,
+    seconds_t chest_3_unlock_time, int chest_0_unlock_tokens,
+    int chest_1_unlock_tokens, int chest_2_unlock_tokens,
+    int chest_3_unlock_tokens, seconds_t chest_0_ad_allow_time,
     seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
     seconds_t chest_3_ad_allow_time) {
   assert(g_base->InLogicThread());
@@ -1797,6 +1823,10 @@ void ClassicAppMode::SetRootUIChests(
       && chest_1_appearance == root_ui_chest_1_appearance_
       && chest_2_appearance == root_ui_chest_2_appearance_
       && chest_3_appearance == root_ui_chest_3_appearance_
+      && chest_0_create_time == root_ui_chest_0_create_time_
+      && chest_1_create_time == root_ui_chest_1_create_time_
+      && chest_2_create_time == root_ui_chest_2_create_time_
+      && chest_3_create_time == root_ui_chest_3_create_time_
       && chest_0_unlock_time == root_ui_chest_0_unlock_time_
       && chest_1_unlock_time == root_ui_chest_1_unlock_time_
       && chest_2_unlock_time == root_ui_chest_2_unlock_time_
@@ -1813,10 +1843,18 @@ void ClassicAppMode::SetRootUIChests(
   root_ui_chest_1_appearance_ = chest_1_appearance;
   root_ui_chest_2_appearance_ = chest_2_appearance;
   root_ui_chest_3_appearance_ = chest_3_appearance;
+  root_ui_chest_0_create_time_ = chest_0_create_time;
+  root_ui_chest_1_create_time_ = chest_1_create_time;
+  root_ui_chest_2_create_time_ = chest_2_create_time;
+  root_ui_chest_3_create_time_ = chest_3_create_time;
   root_ui_chest_0_unlock_time_ = chest_0_unlock_time;
   root_ui_chest_1_unlock_time_ = chest_1_unlock_time;
   root_ui_chest_2_unlock_time_ = chest_2_unlock_time;
   root_ui_chest_3_unlock_time_ = chest_3_unlock_time;
+  root_ui_chest_0_unlock_tokens_ = chest_0_unlock_tokens;
+  root_ui_chest_1_unlock_tokens_ = chest_1_unlock_tokens;
+  root_ui_chest_2_unlock_tokens_ = chest_2_unlock_tokens;
+  root_ui_chest_3_unlock_tokens_ = chest_3_unlock_tokens;
   root_ui_chest_0_ad_allow_time_ = chest_0_ad_allow_time;
   root_ui_chest_1_ad_allow_time_ = chest_1_ad_allow_time;
   root_ui_chest_2_ad_allow_time_ = chest_2_ad_allow_time;
@@ -1828,8 +1866,12 @@ void ClassicAppMode::SetRootUIChests(
       root_widget->SetChests(
           root_ui_chest_0_appearance_, root_ui_chest_1_appearance_,
           root_ui_chest_2_appearance_, root_ui_chest_3_appearance_,
+          root_ui_chest_0_create_time_, root_ui_chest_1_create_time_,
+          root_ui_chest_2_create_time_, root_ui_chest_3_create_time_,
           root_ui_chest_0_unlock_time_, root_ui_chest_1_unlock_time_,
           root_ui_chest_2_unlock_time_, root_ui_chest_3_unlock_time_,
+          root_ui_chest_0_unlock_tokens_, root_ui_chest_1_unlock_tokens_,
+          root_ui_chest_2_unlock_tokens_, root_ui_chest_3_unlock_tokens_,
           root_ui_chest_0_ad_allow_time_, root_ui_chest_1_ad_allow_time_,
           root_ui_chest_2_ad_allow_time_, root_ui_chest_3_ad_allow_time_);
     }

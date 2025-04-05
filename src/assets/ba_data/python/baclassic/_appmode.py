@@ -377,15 +377,24 @@ class ClassicAppMode(babase.AppMode):
                 xp_text='',
                 inbox_count=-1,
                 inbox_count_is_max=False,
+                inbox_announce_text='',
                 gold_pass=False,
                 chest_0_appearance='',
                 chest_1_appearance='',
                 chest_2_appearance='',
                 chest_3_appearance='',
+                chest_0_create_time=-1.0,
+                chest_1_create_time=-1.0,
+                chest_2_create_time=-1.0,
+                chest_3_create_time=-1.0,
                 chest_0_unlock_time=-1.0,
                 chest_1_unlock_time=-1.0,
                 chest_2_unlock_time=-1.0,
                 chest_3_unlock_time=-1.0,
+                chest_0_unlock_tokens=-1,
+                chest_1_unlock_tokens=-1,
+                chest_2_unlock_tokens=-1,
+                chest_3_unlock_tokens=-1,
                 chest_0_ad_allow_time=-1.0,
                 chest_1_ad_allow_time=-1.0,
                 chest_2_ad_allow_time=-1.0,
@@ -461,6 +470,11 @@ class ClassicAppMode(babase.AppMode):
             xp_text=f'{val.xp}/{val.xpmax}',
             inbox_count=val.inbox_count,
             inbox_count_is_max=val.inbox_count_is_max,
+            inbox_announce_text=(
+                babase.Lstr(resource='unclaimedPrizesText').evaluate()
+                if val.inbox_contains_prize
+                else ''
+            ),
             gold_pass=val.gold_pass,
             chest_0_appearance=(
                 '' if chest0 is None else chest0.appearance.value
@@ -474,6 +488,18 @@ class ClassicAppMode(babase.AppMode):
             chest_3_appearance=(
                 '' if chest3 is None else chest3.appearance.value
             ),
+            chest_0_create_time=(
+                -1.0 if chest0 is None else chest0.create_time.timestamp()
+            ),
+            chest_1_create_time=(
+                -1.0 if chest1 is None else chest1.create_time.timestamp()
+            ),
+            chest_2_create_time=(
+                -1.0 if chest2 is None else chest2.create_time.timestamp()
+            ),
+            chest_3_create_time=(
+                -1.0 if chest3 is None else chest3.create_time.timestamp()
+            ),
             chest_0_unlock_time=(
                 -1.0 if chest0 is None else chest0.unlock_time.timestamp()
             ),
@@ -485,6 +511,18 @@ class ClassicAppMode(babase.AppMode):
             ),
             chest_3_unlock_time=(
                 -1.0 if chest3 is None else chest3.unlock_time.timestamp()
+            ),
+            chest_0_unlock_tokens=(
+                -1 if chest0 is None else chest0.unlock_tokens
+            ),
+            chest_1_unlock_tokens=(
+                -1 if chest1 is None else chest1.unlock_tokens
+            ),
+            chest_2_unlock_tokens=(
+                -1 if chest2 is None else chest2.unlock_tokens
+            ),
+            chest_3_unlock_tokens=(
+                -1 if chest3 is None else chest3.unlock_tokens
             ),
             chest_0_ad_allow_time=(
                 -1.0

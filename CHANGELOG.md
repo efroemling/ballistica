@@ -1,4 +1,4 @@
-### 1.7.39 (build 22347, api 9, 2025-04-02)
+### 1.7.39 (build 22350, api 9, 2025-04-04)
 - Lots of work on sphinx documentation. Docs are now generated for both runtime
   and tools packages. Removed the old pdoc docs generation path since sphinx is
   working quite well and gives us lots of room to grow, and also since we can't
@@ -13,6 +13,8 @@
 - (build 22346) Hardened against some potential malformed-packet attacks. If you
   find someone is still able to crash your server by sending invalid data,
   please let me know.
+- Added highlights to show players when they have unclaimed chests in their
+  inbox or chests that can be opened.
   
 ### 1.7.38 (build 22318, api 9, 2025-03-20)
 - Added animations for reducing chest wait times or gaining tickets or tokens

@@ -27,6 +27,7 @@
 #include "ballistica/ui_v1/widget/button_widget.h"
 #include "ballistica/ui_v1/widget/image_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
+#include "ballistica/ui_v1/widget/text_widget.h"
 
 namespace ballistica::ui_v1 {
 
@@ -38,9 +39,17 @@ static const float kMeterColorR{0.4f};
 static const float kMeterColorG{0.38f};
 static const float kMeterColorB{0.5f};
 
-static const float kChestTextColorR{0.6f};
-static const float kChestTextColorG{1.0f};
-static const float kChestTextColorB{0.6f};
+static const float kChestTextColorR{0.62f};
+static const float kChestTextColorG{0.74f};
+static const float kChestTextColorB{0.62f};
+
+static const float kChestCanPayTextColorR{0.0f};
+static const float kChestCanPayTextColorG{1.0f};
+static const float kChestCanPayTextColorB{0.7f};
+
+static const float kChestReadyTextColorR{0.0f};
+static const float kChestReadyTextColorG{1.0f};
+static const float kChestReadyTextColorB{0.0f};
 
 static const bool kDebugPrint{false};
 
@@ -57,15 +66,19 @@ struct RootWidget::ChestSlot_ {
   Image_* lock_icon{};
   Image_* tv_icon{};
   Text_* text{};
+  double create_time{-1.0};
   double unlock_time{-1.0};
   double vis_unlock_time{-1.0};
   double ad_allow_time{-1.0};
-  bool unlock_time_animating{};
   double unlock_time_animation_start_time{};
   double unlock_time_animation_end_time{};
   double unlock_time_animation_start_val{};
   double unlock_time_animation_end_val{};
+  int unlock_tokens{};
   bool live_display_dirty{};
+  bool unlock_time_animating{};
+  bool show_token_unlockable{};
+  bool needs_faster_refresh{};
 };
 
 // For defining toolbar buttons.
@@ -143,6 +156,8 @@ struct RootWidget::TextDef_ {
   float flatness{0.5f};
   float shadow{0.5f};
   std::string text;
+  TextWidget::HAlign h_align{TextWidget::HAlign::kCenter};
+  TextWidget::VAlign v_align{TextWidget::VAlign::kCenter};
 };
 
 struct RootWidget::Text_ {
@@ -725,145 +740,6 @@ void RootWidget::Setup() {
   AddMeter_(MeterType_::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "");
   AddMeter_(MeterType_::kTickets, 1.0f, 1.0f, 1.0f, 1.0f, false, "");
 
-  // Inbox button.
-  {
-    ButtonDef_ b;
-    b.h_align = 0.0f;
-    b.v_align = VAlign_::kBottom;
-    b.width = b.height = 60.0f;
-    // b.x = bx;
-    b.y = b.height * 0.5f + 2.0f;
-    b.color_r = kBotLeftColorR;
-    b.color_g = kBotLeftColorG;
-    b.color_b = kBotLeftColorB;
-    b.img = "logIcon";
-    b.call = UIV1Python::ObjID::kRootUIInboxButtonPressCall;
-    b.visibility_mask =
-        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    b.pre_buffer = 20.0f;
-    b.allow_in_game = false;
-    inbox_button_ = AddButton_(b);
-
-    bottom_left_buttons_.push_back(inbox_button_);
-
-    // Inbox count circle backing.
-    {
-      ImageDef_ imgd;
-      imgd.button = inbox_button_;
-      imgd.x = 18.0f;
-      imgd.y = 24.0f;
-      imgd.width = 32.0f;
-      imgd.height = 32.0f;
-      imgd.img = "circle";
-      imgd.depth_min = 0.3f;
-      imgd.color_r = 1.0f;
-      imgd.color_g = 0.0f;
-      imgd.color_b = 0.0f;
-      auto* img = AddImage_(imgd);
-      inbox_count_backing_ = img;
-    }
-    // Inbox count number.
-    {
-      TextDef_ td;
-      td.button = inbox_button_;
-      td.width = 24.0f;
-      td.text = "2";
-      td.x = 17.0f;
-      td.y = 24.0f;
-      td.scale = 0.8f;
-      td.flatness = 1.0f;
-      td.shadow = 0.0f;
-      td.depth_min = 0.3f;
-      td.color_r = 1.0f;
-      td.color_g = 1.0f;
-      td.color_b = 1.0f;
-      inbox_count_text_ = AddText_(td);
-    }
-  }
-
-  // Achievements button.
-  if (explicit_bool(true)) {
-    ButtonDef_ b;
-    b.h_align = 0.0f;
-    b.v_align = VAlign_::kBottom;
-    b.width = b.height = 60.0f;
-    b.y = b.height * 0.5f + 2.0f;
-    b.color_r = kBotLeftColorR;
-    b.color_g = kBotLeftColorG;
-    b.color_b = kBotLeftColorB;
-    b.img = "achievementsIcon";
-    b.call = UIV1Python::ObjID::kRootUIAchievementsButtonPressCall;
-    b.visibility_mask =
-        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    b.pre_buffer = 20.0f;
-    b.allow_in_game = false;
-    achievements_button_ = AddButton_(b);
-    bottom_left_buttons_.push_back(achievements_button_);
-
-    auto centerx = -1.5f;
-    auto centery = 8.0f;
-    {
-      TextDef_ td;
-      td.button = achievements_button_;
-      td.width = 26.0f;
-      td.text = "";
-      td.x = centerx;
-      td.y = centery;
-      td.scale = 0.6f;
-      td.flatness = 1.0f;
-      td.shadow = 0.0f;
-      td.depth_min = 0.3f;
-      td.color_r = 0.8f;
-      td.color_g = 0.75f;
-      td.color_b = 0.9f;
-      achievement_percent_text_ = AddText_(td);
-    }
-  }
-
-  // Leaderboards button.
-  if (explicit_bool(false)) {
-    ButtonDef_ b;
-    b.h_align = 0.0f;
-    b.v_align = VAlign_::kBottom;
-    b.width = b.height = 60.0f;
-    b.y = b.height * 0.5f + 2.0f;
-    b.color_r = kBotLeftColorR;
-    b.color_g = kBotLeftColorG;
-    b.color_b = kBotLeftColorB;
-    b.img = "leaderboardsIcon";
-    b.visibility_mask =
-        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
-    AddButton_(b);
-  }
-
-  // Settings button.
-  {
-    ButtonDef_ b;
-    b.h_align = 0.0f;
-    b.v_align = VAlign_::kBottom;
-    b.width = b.height = 60.0f;
-    b.y = b.height * 0.58f - 2.0f;
-    b.color_r = kBotLeftColorR;
-    b.color_g = kBotLeftColorG;
-    b.color_b = kBotLeftColorB;
-    b.img = "settingsIcon";
-    b.call = UIV1Python::ObjID::kRootUISettingsButtonPressCall;
-    b.visibility_mask =
-        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot)
-         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuInGame));
-    b.pre_buffer = 20.0f;
-    settings_button_ = AddButton_(b);
-    bottom_left_buttons_.push_back(settings_button_);
-  }
-
   // Chest slots.
   {
     // Bar backing.
@@ -1008,6 +884,163 @@ void RootWidget::Setup() {
     }
   }
 
+  // Inbox button.
+  {
+    ButtonDef_ b;
+    b.h_align = 0.0f;
+    b.v_align = VAlign_::kBottom;
+    b.width = b.height = 60.0f;
+    b.y = b.height * 0.5f + 2.0f;
+    b.color_r = kBotLeftColorR;
+    b.color_g = kBotLeftColorG;
+    b.color_b = kBotLeftColorB;
+    b.img = "logIcon";
+    b.call = UIV1Python::ObjID::kRootUIInboxButtonPressCall;
+    b.visibility_mask =
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
+    b.pre_buffer = 20.0f;
+    b.allow_in_game = false;
+    inbox_button_ = AddButton_(b);
+
+    bottom_left_buttons_.push_back(inbox_button_);
+
+    // Inbox count circle backing.
+    {
+      ImageDef_ imgd;
+      imgd.button = inbox_button_;
+      imgd.x = 18.0f;
+      imgd.y = 24.0f;
+      imgd.width = 32.0f;
+      imgd.height = 32.0f;
+      imgd.img = "circle";
+      imgd.depth_min = 0.3f;
+      imgd.color_r = 1.0f;
+      imgd.color_g = 0.0f;
+      imgd.color_b = 0.0f;
+      auto* img = AddImage_(imgd);
+      inbox_count_backing_ = img;
+    }
+    // Inbox count number.
+    {
+      TextDef_ td;
+      td.button = inbox_button_;
+      td.width = 24.0f;
+      td.text = "2";
+      td.x = 17.0f;
+      td.y = 24.0f;
+      td.scale = 0.8f;
+      td.flatness = 1.0f;
+      td.shadow = 0.0f;
+      td.depth_min = 0.3f;
+      td.color_r = 1.0f;
+      td.color_g = 1.0f;
+      td.color_b = 1.0f;
+      inbox_count_text_ = AddText_(td);
+    }
+    // Inbox announce text.
+    {
+      TextDef_ td;
+      td.button = inbox_button_;
+      td.width = 400;
+      td.text = "You have unclaimed prizes!";
+      td.x = -30.0f;
+      td.y = 40.0f;
+      td.scale = 0.8f;
+      td.flatness = 1.0f;
+      td.shadow = 1.0f;
+      td.depth_min = 0.3f;
+      td.color_r = 1.0f;
+      td.color_g = 1.0f;
+      td.color_b = 1.0f;
+      td.h_align = TextWidget::HAlign::kLeft;
+      td.v_align = TextWidget::VAlign::kBottom;
+      inbox_announce_text_ = AddText_(td);
+    }
+  }
+
+  // Achievements button.
+  if (explicit_bool(true)) {
+    ButtonDef_ b;
+    b.h_align = 0.0f;
+    b.v_align = VAlign_::kBottom;
+    b.width = b.height = 60.0f;
+    b.y = b.height * 0.5f + 2.0f;
+    b.color_r = kBotLeftColorR;
+    b.color_g = kBotLeftColorG;
+    b.color_b = kBotLeftColorB;
+    b.img = "achievementsIcon";
+    b.call = UIV1Python::ObjID::kRootUIAchievementsButtonPressCall;
+    b.visibility_mask =
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
+    b.pre_buffer = 20.0f;
+    b.allow_in_game = false;
+    achievements_button_ = AddButton_(b);
+    bottom_left_buttons_.push_back(achievements_button_);
+
+    auto centerx = -1.5f;
+    auto centery = 8.0f;
+    {
+      TextDef_ td;
+      td.button = achievements_button_;
+      td.width = 26.0f;
+      td.text = "";
+      td.x = centerx;
+      td.y = centery;
+      td.scale = 0.6f;
+      td.flatness = 1.0f;
+      td.shadow = 0.0f;
+      td.depth_min = 0.3f;
+      td.color_r = 0.8f;
+      td.color_g = 0.75f;
+      td.color_b = 0.9f;
+      achievement_percent_text_ = AddText_(td);
+    }
+  }
+
+  // Leaderboards button.
+  if (explicit_bool(false)) {
+    ButtonDef_ b;
+    b.h_align = 0.0f;
+    b.v_align = VAlign_::kBottom;
+    b.width = b.height = 60.0f;
+    b.y = b.height * 0.5f + 2.0f;
+    b.color_r = kBotLeftColorR;
+    b.color_g = kBotLeftColorG;
+    b.color_b = kBotLeftColorB;
+    b.img = "leaderboardsIcon";
+    b.visibility_mask =
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
+    AddButton_(b);
+  }
+
+  // Settings button.
+  {
+    ButtonDef_ b;
+    b.h_align = 0.0f;
+    b.v_align = VAlign_::kBottom;
+    b.width = b.height = 60.0f;
+    b.y = b.height * 0.58f - 2.0f;
+    b.color_r = kBotLeftColorR;
+    b.color_g = kBotLeftColorG;
+    b.color_b = kBotLeftColorB;
+    b.img = "settingsIcon";
+    b.call = UIV1Python::ObjID::kRootUISettingsButtonPressCall;
+    b.visibility_mask =
+        (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot)
+         | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuInGame));
+    b.pre_buffer = 20.0f;
+    settings_button_ = AddButton_(b);
+    bottom_left_buttons_.push_back(settings_button_);
+  }
+
   // Inventory button.
   {
     ButtonDef_ b;
@@ -1058,42 +1091,66 @@ void RootWidget::Setup() {
 }
 
 void RootWidget::StepInbox_(base::RenderPass* renderpass, seconds_t dt) {
-  // We only do work here during animations.
+  // Quick-out: we only do work while we're animating.
   if (!inbox_animating_) {
     return;
   }
 
   assert(inbox_button_);
+  assert(inbox_announce_text_);
   auto* widget{inbox_button_->widget.get()};
   assert(widget);
 
-  if (renderpass->frame_def()->display_time() > inbox_anim_flash_time_) {
+  // Stop animating once our anim time has passed (AND we're not announcing
+  // anything; we animate indefinitely while announcements are up).
+  if (renderpass->frame_def()->display_time() > inbox_anim_flash_time_
+      && inbox_announce_text_str_.empty()) {
     inbox_animating_ = false;
     widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
     return;
   } else {
+    // Flash faster if we're doing a 'flash' and slower otherwise (when announce
+    // text is showing).
+    float freq_mult;
+    if (renderpass->frame_def()->display_time() <= inbox_anim_flash_time_) {
+      freq_mult = 4.0f;
+    } else {
+      freq_mult = 1.0f;
+    }
+
     auto sinput =
         3.141592f
         * static_cast<float>(inbox_anim_flash_time_
                              - renderpass->frame_def()->display_time());
     float mult{1.0f
                + fabs(2.0f
-                      * sinf(4.0f * 3.1415f
+                      * sinf(freq_mult * 3.1415f
                              * (inbox_anim_flash_time_
                                 - renderpass->frame_def()->display_time())))};
     widget->set_color(kBotLeftColorR * mult, kBotLeftColorG * mult,
                       kBotLeftColorB * mult);
+    inbox_announce_text_->widget->set_color(
+        kBotLeftColorR * mult, kBotLeftColorG * mult * 0.5f, 0.0f, 1.0f);
   }
 }
 
 void RootWidget::StepChests_(base::RenderPass* renderpass, seconds_t dt) {
   auto current_display_time = renderpass->frame_def()->display_time();
-  auto current_seconds_since_epoch{g_base->TimeSinceEpochCloudSeconds()};
+  // auto current_seconds_since_epoch{g_base->TimeSinceEpochCloudSeconds()};
 
   bool should_update{};
 
+  // Aim to run at least once per second so time strings stay up to date.
+  seconds_t update_increment = 1.0;
+
   for (auto&& chest_id : chest_ids) {
     auto&& slot{chest_slots_[chest_id]};
+
+    // If a slot is ready to open, refresh fast enough for our text color
+    // modulation to look smooth.
+    if (slot.needs_faster_refresh) {
+      update_increment = 0.05;
+    }
 
     // If the slot needs a regular update (and is not currently animating
     // and updates are not currently paused) give it an opportunity to do
@@ -1140,8 +1197,7 @@ void RootWidget::StepChests_(base::RenderPass* renderpass, seconds_t dt) {
     }
   }
 
-  // Aim to run at least once per second so time strings stay up to date.
-  if (current_display_time - last_chests_step_time_ >= 1.0) {
+  if (current_display_time - last_chests_step_time_ >= update_increment) {
     should_update = true;
   }
   if (!should_update) {
@@ -1451,8 +1507,8 @@ auto RootWidget::AddText_(const TextDef_& def) -> RootWidget::Text_* {
   t.widget = Object::New<TextWidget>();
   t.widget->SetWidth(0.0f);
   t.widget->SetHeight(0.0f);
-  t.widget->SetHAlign(TextWidget::HAlign::kCenter);
-  t.widget->SetVAlign(TextWidget::VAlign::kCenter);
+  t.widget->SetHAlign(def.h_align);
+  t.widget->SetVAlign(def.v_align);
   t.widget->SetText(def.text);
   t.widget->set_max_width(def.width);
   t.widget->set_center_scale(def.scale);
@@ -1558,8 +1614,8 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
 
     // Same for inbox.
     if (&b == inbox_button_ && !prev_enabled && enable_button) {
-      inbox_display_timer_ = base::AppTimer::New(
-          1.0f, false, [this] { UpdateInboxCountDisplay_(); });
+      inbox_display_timer_ =
+          base::AppTimer::New(1.0f, false, [this] { UpdateInboxDisplay_(); });
     }
   }
 
@@ -1958,7 +2014,7 @@ void RootWidget::RestoreAccountDisplayState(const std::string& league_type,
   trophy_meter_display_timer_ =
       base::AppTimer::New(1.0f, false, [this] { UpdateLeagueRankDisplay_(); });
   inbox_display_timer_ =
-      base::AppTimer::New(1.0f, false, [this] { UpdateInboxCountDisplay_(); });
+      base::AppTimer::New(1.0f, false, [this] { UpdateInboxDisplay_(); });
 }
 
 void RootWidget::SetInboxCountValue_(int count, bool is_max) {
@@ -1989,7 +2045,7 @@ void RootWidget::SetInboxCountValue_(int count, bool is_max) {
   }
 }
 
-void RootWidget::UpdateInboxCountDisplay_() {
+void RootWidget::UpdateInboxDisplay_() {
   assert(inbox_count_text_);
 
   // If we're offscreen AND are displaying some values already, we're
@@ -2118,11 +2174,24 @@ void RootWidget::SetLeagueRankValues(const std::string& league_type,
   UpdateLeagueRankDisplay_();
 }
 
-void RootWidget::SetInboxCount(int val, bool is_max) {
+void RootWidget::SetInboxState(int val, bool is_max,
+                               const std::string& announce_text) {
   // Store latest values and then (possibly) apply them to our display.
   inbox_count_value_ = val;
   inbox_count_is_max_value_ = is_max;
-  UpdateInboxCountDisplay_();
+  inbox_announce_text_str_ = announce_text;
+
+  // We update announce text immediately.
+  assert(inbox_announce_text_);
+  inbox_announce_text_->widget->SetText(inbox_announce_text_str_);
+
+  // Setting a non-empty announce value flips us into animation mode so
+  // we continually update flashing/etc.
+  if (!inbox_announce_text_str_.empty()) {
+    inbox_animating_ = true;
+  }
+
+  UpdateInboxDisplay_();
 }
 
 void RootWidget::SetAchievementPercentText(const std::string& val) {
@@ -2236,34 +2305,58 @@ void RootWidget::SetChests(
     const std::string& chest_0_appearance,
     const std::string& chest_1_appearance,
     const std::string& chest_2_appearance,
-    const std::string& chest_3_appearance, seconds_t chest_0_unlock_time,
+    const std::string& chest_3_appearance, seconds_t chest_0_create_time,
+    seconds_t chest_1_create_time, seconds_t chest_2_create_time,
+    seconds_t chest_3_create_time, seconds_t chest_0_unlock_time,
     seconds_t chest_1_unlock_time, seconds_t chest_2_unlock_time,
-    seconds_t chest_3_unlock_time, seconds_t chest_0_ad_allow_time,
+    seconds_t chest_3_unlock_time, int chest_0_unlock_tokens,
+    int chest_1_unlock_tokens, int chest_2_unlock_tokens,
+    int chest_3_unlock_tokens, seconds_t chest_0_ad_allow_time,
     seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
     seconds_t chest_3_ad_allow_time) {
   auto& chest0{chest_slots_["0"]};
   chest0.appearance = chest_0_appearance;
+  chest0.create_time = chest_0_create_time;
   chest0.unlock_time = chest_0_unlock_time;
+  chest0.unlock_tokens = chest_0_unlock_tokens;
   chest0.ad_allow_time = chest_0_ad_allow_time;
   chest0.live_display_dirty = true;
+  // Assume no for the following until we calc otherwise.
+  chest0.show_token_unlockable = false;
+  chest0.needs_faster_refresh = false;
 
   auto& chest1{chest_slots_["1"]};
   chest1.appearance = chest_1_appearance;
+  chest1.create_time = chest_1_create_time;
   chest1.unlock_time = chest_1_unlock_time;
+  chest1.unlock_tokens = chest_1_unlock_tokens;
   chest1.ad_allow_time = chest_1_ad_allow_time;
   chest1.live_display_dirty = true;
+  // Assume no for the following until we calc otherwise.
+  chest1.show_token_unlockable = false;
+  chest1.needs_faster_refresh = false;
 
   auto& chest2{chest_slots_["2"]};
   chest2.appearance = chest_2_appearance;
+  chest2.create_time = chest_2_create_time;
   chest2.unlock_time = chest_2_unlock_time;
+  chest2.unlock_tokens = chest_2_unlock_tokens;
   chest2.ad_allow_time = chest_2_ad_allow_time;
   chest2.live_display_dirty = true;
+  // Assume no for the following until we calc otherwise.
+  chest2.show_token_unlockable = false;
+  chest2.needs_faster_refresh = false;
 
   auto& chest3{chest_slots_["3"]};
   chest3.appearance = chest_3_appearance;
+  chest3.create_time = chest_3_create_time;
   chest3.unlock_time = chest_3_unlock_time;
+  chest3.unlock_tokens = chest_3_unlock_tokens;
   chest3.ad_allow_time = chest_3_ad_allow_time;
   chest3.live_display_dirty = true;
+  // Assume no for the following until we calc otherwise.
+  chest3.show_token_unlockable = false;
+  chest3.needs_faster_refresh = false;
 }
 
 void RootWidget::OnLanguageChange() {
@@ -2282,6 +2375,8 @@ void RootWidget::UpdateChests_() {
         R"({"r":"timeSuffixMinutesText"})");
     time_suffix_seconds_ = g_base->assets->CompileResourceString(
         R"({"r":"timeSuffixSecondsText"})");
+    open_me_text_ =
+        g_base->assets->CompileResourceString(R"({"r":"openMeText"})");
     translations_dirty_ = false;
   }
 
@@ -2290,7 +2385,7 @@ void RootWidget::UpdateChests_() {
 
   for (auto&& chest_id : chest_ids) {
     const auto& slot{chest_slots_[chest_id]};
-    if (slot.appearance != "") {
+    if (!slot.appearance.empty()) {
       have_chests = true;
       break;
     }
@@ -2298,14 +2393,36 @@ void RootWidget::UpdateChests_() {
 
   auto now{g_base->TimeSinceEpochCloudSeconds()};
 
+  // auto current_seconds_since_epoch{g_base->TimeSinceEpochCloudSeconds()};
+
   for (auto&& chest_id : chest_ids) {
     auto&& slot{chest_slots_[chest_id]};
+
+    // For each slot we keep track of whether we could pay to unlock it
+    // at this very moment.
+    slot.show_token_unlockable = false;
+    if (highlight_potential_token_purchases_ && !gold_pass_
+        && !slot.appearance.empty() && slot.unlock_time > slot.create_time) {
+      // How far along in timed unlock this chest is.
+      float amt = std::max(
+          0.0f,
+          std::min(1.0f, 1.0f
+                             - static_cast<float>(
+                                 (now - slot.create_time)
+                                 / (slot.unlock_time - slot.create_time))));
+      // If we have a valid tokens value and that seems to be higher than
+      // what the unlock should cost right now, assume we can unlock.
+      if (tokens_meter_value_ >= 0
+          && tokens_meter_value_ > ceil(slot.unlock_tokens * amt)) {
+        slot.show_token_unlockable = true;
+      }
+    }
 
     // Make our live unlock time visible *unless* we've got live updates
     // paused or are in the middle of an animation.
     if (!update_pause_count_ && !slot.unlock_time_animating) {
       slot.vis_unlock_time = slot.unlock_time;
-      // We're updating from live values here.
+      // We're updating from live values here; can mark clean.
       slot.live_display_dirty = false;
     }
 
@@ -2328,6 +2445,8 @@ void RootWidget::UpdateChests_() {
       slot.button->widget->SetTintTexture(nullptr);
       slot.button->widget->set_tint_color(1.0f, 1.0f, 1.0f);
       slot.button->widget->set_tint2_color(1.0f, 1.0f, 1.0f);
+
+      slot.needs_faster_refresh = false;
 
     } else {
       Object::Ref<base::TextureAsset> textint;
@@ -2365,33 +2484,70 @@ void RootWidget::UpdateChests_() {
       slot.button->widget->set_tint2_color(chest_tint2.x, chest_tint2.y,
                                            chest_tint2.z);
 
-      auto to_unlock{
+      auto seconds_to_unlock{
           gold_pass_ ? 0
                      : static_cast<int>(std::ceil(slot.vis_unlock_time - now))};
 
-      if (to_unlock > 0) {
+      // We flash when chests are showing 'open me' so need faster
+      // refreshes.
+      slot.needs_faster_refresh =
+          (seconds_to_unlock <= 0 || slot.show_token_unlockable);
+
+      // Set text contents and widget vis depending on whether we're
+      // counting down or ready to open.
+      if (seconds_to_unlock > 0) {
         // Show the ad-available tag IF the ad provides an allow-ad time
         // AND that time has passed AND we've got an ad ready to go.
         auto allow_ad{slot.ad_allow_time > 0.0 && slot.ad_allow_time <= now
                       && g_core->have_incentivized_ad};
 
         slot.lock_icon->visible = true;
-        slot.text->visible = true;
+        // slot.text->visible = true;
         slot.tv_icon->visible = allow_ad;
-        slot.text->widget->SetText(
-            GetTimeStr_(to_unlock, slot.unlock_time_animating));
-        if (slot.unlock_time_animating) {
-          float mult{
-              1.2f + (0.5f * sinf(8.0f * 3.1415f * (last_chests_step_time_)))};
-          slot.text->widget->set_color(0.2 * mult, 1.0 * mult, 0.2 * mult, 1.0);
+
+        // Special case - flash 'open me' if we have enough tokens to
+        // unlock.
+        if (!slot.unlock_time_animating && slot.show_token_unlockable
+            && std::fmod(last_draw_display_time_, 4.0) < 2.0) {
+          slot.text->widget->SetText("*" + open_me_text_);
         } else {
-          slot.text->widget->set_color(kChestTextColorR, kChestTextColorG,
-                                       kChestTextColorB, 1.0);
+          slot.text->widget->SetText(
+              GetTimeStr_(seconds_to_unlock, slot.unlock_time_animating));
         }
+
       } else {
         slot.lock_icon->visible = false;
         slot.tv_icon->visible = false;
-        slot.text->visible = false;
+        slot.text->widget->SetText(open_me_text_);
+      }
+
+      // Set text color based on whether we're animating, whether we can pay
+      // to unlock right now, etc.
+      slot.text->visible = true;
+      if (slot.unlock_time_animating) {
+        float mult{1.2f
+                   + (0.5f * sinf(8.0f * 3.1415f * (last_chests_step_time_)))};
+        slot.text->widget->set_color(0.2 * mult, 1.0 * mult, 0.2 * mult, 1.0);
+      } else {
+        float mult{1.0f};
+
+        // Draw text in a teal color if we can pay to unlock and green
+        // otherwise.
+        if (seconds_to_unlock <= 0) {
+          mult = 0.8 + 0.2 * std::abs(sin(last_draw_display_time_ * 6.0));
+          slot.text->widget->set_color(kChestReadyTextColorR * mult,
+                                       kChestReadyTextColorG * mult,
+                                       kChestReadyTextColorB * mult, 1.0f);
+        } else if (slot.show_token_unlockable) {
+          mult = 0.8 + 0.2 * std::abs(sin(last_draw_display_time_ * 6.0));
+          slot.text->widget->set_color(kChestCanPayTextColorR * mult,
+                                       kChestCanPayTextColorG * mult,
+                                       kChestCanPayTextColorB * mult, 1.0f);
+        } else {
+          slot.text->widget->set_color(kChestTextColorR * mult,
+                                       kChestTextColorG * mult,
+                                       kChestTextColorB * mult, 1.0f);
+        }
       }
     }
     slot.button->widget->SetTexture(tex.get());

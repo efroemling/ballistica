@@ -338,10 +338,19 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
   const char* chest_1_appearance;
   const char* chest_2_appearance;
   const char* chest_3_appearance;
+  const char* inbox_announce_text;
+  double chest_0_create_time;
+  double chest_1_create_time;
+  double chest_2_create_time;
+  double chest_3_create_time;
   double chest_0_unlock_time;
   double chest_1_unlock_time;
   double chest_2_unlock_time;
   double chest_3_unlock_time;
+  int chest_0_unlock_tokens;
+  int chest_1_unlock_tokens;
+  int chest_2_unlock_tokens;
+  int chest_3_unlock_tokens;
   double chest_0_ad_allow_time;
   double chest_1_ad_allow_time;
   double chest_2_ad_allow_time;
@@ -358,28 +367,41 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
                                  "xp_text",
                                  "inbox_count",
                                  "inbox_count_is_max",
+                                 "inbox_announce_text",
                                  "gold_pass",
                                  "chest_0_appearance",
                                  "chest_1_appearance",
                                  "chest_2_appearance",
                                  "chest_3_appearance",
+                                 "chest_0_create_time",
+                                 "chest_1_create_time",
+                                 "chest_2_create_time",
+                                 "chest_3_create_time",
                                  "chest_0_unlock_time",
                                  "chest_1_unlock_time",
                                  "chest_2_unlock_time",
                                  "chest_3_unlock_time",
+                                 "chest_0_unlock_tokens",
+                                 "chest_1_unlock_tokens",
+                                 "chest_2_unlock_tokens",
+                                 "chest_3_unlock_tokens",
                                  "chest_0_ad_allow_time",
                                  "chest_1_ad_allow_time",
                                  "chest_2_ad_allow_time",
                                  "chest_3_ad_allow_time",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "iisiisssippssssdddddddd", const_cast<char**>(kwlist),
-          &tickets, &tokens, &league_type, &league_number, &league_rank,
-          &achievements_percent_text, &level_text, &xp_text, &inbox_count,
-          &inbox_count_is_max, &gold_pass, &chest_0_appearance,
-          &chest_1_appearance, &chest_2_appearance, &chest_3_appearance,
+          args, keywds, "iisiisssipspssssddddddddiiiidddd",
+          const_cast<char**>(kwlist), &tickets, &tokens, &league_type,
+          &league_number, &league_rank, &achievements_percent_text, &level_text,
+          &xp_text, &inbox_count, &inbox_count_is_max, &inbox_announce_text,
+          &gold_pass, &chest_0_appearance, &chest_1_appearance,
+          &chest_2_appearance, &chest_3_appearance, &chest_0_create_time,
+          &chest_1_create_time, &chest_2_create_time, &chest_3_create_time,
           &chest_0_unlock_time, &chest_1_unlock_time, &chest_2_unlock_time,
-          &chest_3_unlock_time, &chest_0_ad_allow_time, &chest_1_ad_allow_time,
+          &chest_3_unlock_time, &chest_0_unlock_tokens, &chest_1_unlock_tokens,
+          &chest_2_unlock_tokens, &chest_3_unlock_tokens,
+          &chest_0_ad_allow_time, &chest_1_ad_allow_time,
           &chest_2_ad_allow_time, &chest_3_ad_allow_time)) {
     return nullptr;
   }
@@ -388,20 +410,24 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
   auto* appmode = ClassicAppMode::GetActiveOrThrow();
 
   // Pass these all along to the app-mode which will store them and forward
-  // them to any current and future UIs.
+  // them to any current and future UI instances.
   appmode->SetRootUITicketsMeterValue(tickets);
   appmode->SetRootUITokensMeterValue(tokens);
   appmode->SetRootUILeagueValues(league_type, league_number, league_rank);
   appmode->SetRootUIAchievementsPercentText(achievements_percent_text);
   appmode->SetRootUILevelText(level_text);
   appmode->SetRootUIXPText(xp_text);
-  appmode->SetRootUIInboxCount(inbox_count, inbox_count_is_max);
+  appmode->SetRootUIInboxState(inbox_count, inbox_count_is_max,
+                               inbox_announce_text);
   appmode->SetRootUIGoldPass(gold_pass);
   appmode->SetRootUIChests(
       chest_0_appearance, chest_1_appearance, chest_2_appearance,
-      chest_3_appearance, chest_0_unlock_time, chest_1_unlock_time,
-      chest_2_unlock_time, chest_3_unlock_time, chest_0_ad_allow_time,
-      chest_1_ad_allow_time, chest_2_ad_allow_time, chest_3_ad_allow_time);
+      chest_3_appearance, chest_0_create_time, chest_1_create_time,
+      chest_2_create_time, chest_3_create_time, chest_0_unlock_time,
+      chest_1_unlock_time, chest_2_unlock_time, chest_3_unlock_time,
+      chest_0_unlock_tokens, chest_1_unlock_tokens, chest_2_unlock_tokens,
+      chest_3_unlock_tokens, chest_0_ad_allow_time, chest_1_ad_allow_time,
+      chest_2_ad_allow_time, chest_3_ad_allow_time);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -423,15 +449,24 @@ static PyMethodDef PySetRootUIAccountValuesDef = {
     "      xp_text: str,\n"
     "      inbox_count: int,\n"
     "      inbox_count_is_max: bool,\n"
+    "      inbox_announce_text: str,\n"
     "      gold_pass: bool,\n"
     "      chest_0_appearance: str,\n"
     "      chest_1_appearance: str,\n"
     "      chest_2_appearance: str,\n"
     "      chest_3_appearance: str,\n"
+    "      chest_0_create_time: float,\n"
+    "      chest_1_create_time: float,\n"
+    "      chest_2_create_time: float,\n"
+    "      chest_3_create_time: float,\n"
     "      chest_0_unlock_time: float,\n"
     "      chest_1_unlock_time: float,\n"
     "      chest_2_unlock_time: float,\n"
     "      chest_3_unlock_time: float,\n"
+    "      chest_0_unlock_tokens: int,\n"
+    "      chest_1_unlock_tokens: int,\n"
+    "      chest_2_unlock_tokens: int,\n"
+    "      chest_3_unlock_tokens: int,\n"
     "      chest_0_ad_allow_time: float,\n"
     "      chest_1_ad_allow_time: float,\n"
     "      chest_2_ad_allow_time: float,\n"

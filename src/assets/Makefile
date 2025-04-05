@@ -5932,6 +5932,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/powerupSpeed.dds \
   $(BUILD_DIR)/ba_data/textures/powerupStickyBombs.dds \
   $(BUILD_DIR)/ba_data/textures/puckColor.dds \
+  $(BUILD_DIR)/ba_data/textures/quoteBubble.dds \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor.dds \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor2.dds \
   $(BUILD_DIR)/ba_data/textures/rampageLevelColor.dds \
@@ -6359,6 +6360,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/powerupSpeed.pvr \
   $(BUILD_DIR)/ba_data/textures/powerupStickyBombs.pvr \
   $(BUILD_DIR)/ba_data/textures/puckColor.pvr \
+  $(BUILD_DIR)/ba_data/textures/quoteBubble.pvr \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor.pvr \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor2.pvr \
   $(BUILD_DIR)/ba_data/textures/rampageLevelColor.pvr \
@@ -6786,6 +6788,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/powerupSpeed.ktx \
   $(BUILD_DIR)/ba_data/textures/powerupStickyBombs.ktx \
   $(BUILD_DIR)/ba_data/textures/puckColor.ktx \
+  $(BUILD_DIR)/ba_data/textures/quoteBubble.ktx \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor.ktx \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor2.ktx \
   $(BUILD_DIR)/ba_data/textures/rampageLevelColor.ktx \
@@ -7213,6 +7216,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/powerupSpeed_preview.png \
   $(BUILD_DIR)/ba_data/textures/powerupStickyBombs_preview.png \
   $(BUILD_DIR)/ba_data/textures/puckColor_preview.png \
+  $(BUILD_DIR)/ba_data/textures/quoteBubble_preview.png \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor2_preview.png \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/rampageLevelColor_preview.png \

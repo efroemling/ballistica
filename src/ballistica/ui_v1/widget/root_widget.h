@@ -48,13 +48,17 @@ class RootWidget : public ContainerWidget {
   void SetAchievementPercentText(const std::string& val);
   void SetLevelText(const std::string& val);
   void SetXPText(const std::string& val);
-  void SetInboxCount(int val, bool is_max);
+  void SetInboxState(int val, bool is_max, const std::string& announce_text);
   void SetChests(const std::string& chest_0_appearance,
                  const std::string& chest_1_appearance,
                  const std::string& chest_2_appearance,
                  const std::string& chest_3_appearance,
+                 seconds_t chest_0_create_time, seconds_t chest_1_create_time,
+                 seconds_t chest_2_create_time, seconds_t chest_3_create_time,
                  seconds_t chest_0_unlock_time, seconds_t chest_1_unlock_time,
                  seconds_t chest_2_unlock_time, seconds_t chest_3_unlock_time,
+                 int chest_0_unlock_tokens, int chest_1_unlock_tokens,
+                 int chest_2_unlock_tokens, int chest_3_unlock_tokens,
                  seconds_t chest_0_ad_allow_time,
                  seconds_t chest_1_ad_allow_time,
                  seconds_t chest_2_ad_allow_time,
@@ -89,6 +93,10 @@ class RootWidget : public ContainerWidget {
   void AnimateTickets(seconds_t duration, int startvalue, int endvalue);
   void AnimateTokens(seconds_t duration, int startvalue, int endvalue);
 
+  void set_highlight_potential_token_purchases(bool val) {
+    highlight_potential_token_purchases_ = val;
+  }
+
  private:
   struct ButtonDef_;
   struct Button_;
@@ -120,7 +128,7 @@ class RootWidget : public ContainerWidget {
                                   const Vector3f& color);
   void HideTrophyMeterAnnotation_();
   void UpdateLeagueRankDisplay_();
-  void UpdateInboxCountDisplay_();
+  void UpdateInboxDisplay_();
   auto ColorForLeagueValue_(const std::string& value) -> Vector3f;
   void SetInboxCountValue_(int count, bool is_max);
   void Update_(base::RenderPass* pass);
@@ -135,6 +143,8 @@ class RootWidget : public ContainerWidget {
   std::string time_suffix_seconds_;
   std::string league_type_vis_value_;
   std::string league_type_value_;
+  std::string inbox_announce_text_str_;
+  std::string open_me_text_;
   std::list<Button_> buttons_;
   std::list<Text_> texts_;
   std::list<Image_> images_;
@@ -172,6 +182,7 @@ class RootWidget : public ContainerWidget {
   Text_* level_text_{};
   Text_* xp_text_{};
   Text_* inbox_count_text_{};
+  Text_* inbox_announce_text_{};
   Text_* trophy_meter_annotation_text_{};
   seconds_t update_pause_total_time_{};
   seconds_t last_chests_step_time_{-1.0f};
@@ -219,6 +230,7 @@ class RootWidget : public ContainerWidget {
   bool tokens_meter_live_display_dirty_{};
   bool tickets_meter_animating_{};
   bool tokens_meter_animating_{};
+  bool highlight_potential_token_purchases_{};
 
   static int update_pause_count_;
 };

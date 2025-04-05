@@ -425,6 +425,9 @@ class InboxWindow(bui.MainWindow):
             simple_culling_v=200,
             claims_left_right=True,
             claims_up_down=True,
+            # Centering messages vertically looks natural with
+            # fullscreen backing but weird in a window.
+            center_small_content=uiscale is bui.UIScale.SMALL,
             center_small_content_horizontally=True,
             border_opacity=0.4,
         )

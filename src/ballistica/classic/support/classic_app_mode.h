@@ -227,15 +227,20 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUIAchievementsPercentText(const std::string text);
   void SetRootUILevelText(const std::string text);
   void SetRootUIXPText(const std::string text);
-  void SetRootUIInboxCount(int count, bool is_max);
+  void SetRootUIInboxState(int count, bool is_max,
+                           const std::string& announce_text);
   void SetRootUIGoldPass(bool enabled);
   void SetRootUIChests(
       const std::string& chest_0_appearance,
       const std::string& chest_1_appearance,
       const std::string& chest_2_appearance,
-      const std::string& chest_3_appearance, seconds_t chest_0_unlock_time,
+      const std::string& chest_3_appearance, seconds_t chest_0_create_time,
+      seconds_t chest_1_create_time, seconds_t chest_2_create_time,
+      seconds_t chest_3_create_time, seconds_t chest_0_unlock_time,
       seconds_t chest_1_unlock_time, seconds_t chest_2_unlock_time,
-      seconds_t chest_3_unlock_time, seconds_t chest_0_ad_allow_time,
+      seconds_t chest_3_unlock_time, int chest_0_unlock_tokens,
+      int chest_1_unlock_tokens, int chest_2_unlock_tokens,
+      int chest_3_unlock_tokens, seconds_t chest_0_ad_allow_time,
       seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
       seconds_t chest_3_ad_allow_time);
   void SetHaveLiveAccountValues(bool val);
@@ -267,6 +272,10 @@ class ClassicAppMode : public base::AppMode {
   std::string root_ui_chest_1_appearance_;
   std::string root_ui_chest_2_appearance_;
   std::string root_ui_chest_3_appearance_;
+  seconds_t root_ui_chest_0_create_time_;
+  seconds_t root_ui_chest_1_create_time_;
+  seconds_t root_ui_chest_2_create_time_;
+  seconds_t root_ui_chest_3_create_time_;
   seconds_t root_ui_chest_0_unlock_time_;
   seconds_t root_ui_chest_1_unlock_time_;
   seconds_t root_ui_chest_2_unlock_time_;
@@ -299,6 +308,7 @@ class ClassicAppMode : public base::AppMode {
   bool replay_paused_{};
   bool root_ui_gold_pass_{};
   bool root_ui_have_live_values_{};
+  bool root_ui_highlight_potential_token_purchases_{};
 
   ui_v1::UIV1FeatureSet* uiv1_{};
   cJSON* game_roster_{};
@@ -332,6 +342,10 @@ class ClassicAppMode : public base::AppMode {
   int root_ui_league_rank_{-1};
   int root_ui_league_number_{-1};
   int root_ui_inbox_count_{-1};
+  int root_ui_chest_0_unlock_tokens_;
+  int root_ui_chest_1_unlock_tokens_;
+  int root_ui_chest_2_unlock_tokens_;
+  int root_ui_chest_3_unlock_tokens_;
   float debug_speed_mult_{1.0f};
   float replay_speed_mult_{1.0f};
   std::set<std::string> admin_public_ids_;
@@ -343,6 +357,7 @@ class ClassicAppMode : public base::AppMode {
   std::string root_ui_achievement_percent_text_;
   std::string root_ui_level_text_;
   std::string root_ui_xp_text_;
+  std::string root_ui_inbox_announce_text_;
   std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};
