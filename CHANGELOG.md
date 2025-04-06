@@ -1,4 +1,4 @@
-### 1.7.39 (build 22350, api 9, 2025-04-04)
+### 1.7.39 (build 22352, api 9, 2025-04-06)
 - Lots of work on sphinx documentation. Docs are now generated for both runtime
   and tools packages. Removed the old pdoc docs generation path since sphinx is
   working quite well and gives us lots of room to grow, and also since we can't

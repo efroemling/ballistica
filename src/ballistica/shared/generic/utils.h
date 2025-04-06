@@ -376,7 +376,6 @@ class Utils {
   static float precalc_rands_1_[];
   static float precalc_rands_2_[];
   static float precalc_rands_3_[];
-  // std::unique_ptr<Huffman> huffman_;
 };
 
 }  // namespace ballistica

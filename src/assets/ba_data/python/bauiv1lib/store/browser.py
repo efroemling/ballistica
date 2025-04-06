@@ -1021,12 +1021,15 @@ class StoreBrowserWindow(bui.MainWindow):
                         if section['title'] != '':
                             bui.textwidget(
                                 parent=cnt2,
-                                position=(60, v - title_spacing * 0.8),
+                                position=(
+                                    self._width * 0.5,
+                                    v - title_spacing * 0.8,
+                                ),
                                 size=(0, 0),
                                 scale=1.0,
                                 transition_delay=delay,
                                 color=(0.7, 0.9, 0.7, 1),
-                                h_align='left',
+                                h_align='center',
                                 v_align='center',
                                 text=bui.Lstr(resource=section['title']),
                                 maxwidth=self._width * 0.7,
@@ -1133,8 +1136,9 @@ class StoreBrowserWindow(bui.MainWindow):
 
                         v -= button_border
 
-                    # Set a timer to update these buttons periodically as long
-                    # as we're alive (so if we buy one it will grey out, etc).
+                    # Set a timer to update these buttons periodically
+                    # as long as we're alive (so if we buy one it will
+                    # grey out, etc).
                     self._store_window.update_buttons_timer = bui.AppTimer(
                         0.5,
                         bui.WeakCall(self._store_window.update_buttons),

@@ -108,27 +108,19 @@ class AudioServer {
   // this function.
   void AddSoundRefDelete(const Object::Ref<SoundAsset>* c);
 
-  // Note: should use unique_ptr for this, but build fails on raspberry pi
-  // (gcc 8.3.0). Works on Ubuntu 9.3 so should try again later.
   std::unique_ptr<Impl_> impl_{};
-  // Impl* impl_{};
-
   EventLoop* event_loop_{};
   Timer* process_timer_{};
   float sound_volume_{1.0f};
   float sound_pitch_{1.0f};
   float music_volume_{1.0f};
   float app_active_volume_{1.0f};
-
   bool have_pending_loads_{};
   bool app_active_{true};
   bool suspended_{};
   bool shutdown_completed_{};
   bool shutting_down_{};
   bool shipped_reconnect_logs_{};
-  // bool report_reset_results_{};
-  // int reset_result_reports_remaining_{3};
-  // int reconnect_fail_count_{};
   int al_source_count_{};
   seconds_t last_connected_time_{};
   seconds_t last_reset_attempt_time_{-999.0};

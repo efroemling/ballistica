@@ -19,20 +19,20 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
                         float resolution_scale) {
   text_ = text;
 
-  // In order to *actually* draw big, all our letters
-  // must be available in the big font.
+  // In order to *actually* draw big, all our letters must be available in
+  // the big font.
   big_ = (big && TextGraphics::HaveBigChars(text));
 
-  // If we had an OS texture for custom drawing, release it.
-  // It should stick around for a while; we'll be able to re-grab
-  // the same one if we havn't changed.
+  // If we had an OS texture for custom drawing, release it. It should stick
+  // around for a while; we'll be able to re-grab the same one if we havn't
+  // changed.
   os_texture_.Clear();
 
   // If we're drawing big we always just need 1 font page (the big one).
   if (big_) {
     // Now create entries for each page we use.
     entries_.clear();
-    std::unique_ptr<TextMeshEntry> entry(new TextMeshEntry());
+    auto entry{std::make_unique<TextMeshEntry>()};
     entry->u_scale = entry->v_scale = 1.5f;
     entry->can_color = true;
     entry->max_flatness = 1.0f;
@@ -48,20 +48,20 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
     std::set<int> font_pages;
     g_base->text_graphics->GetFontPagesForText(text, &font_pages);
 
-    // Now create entries for each page we use.
-    // (we iterate this in reverse so that our custom pages draw first;
-    // we want that stuff to show up underneath normal text since we
-    // sometimes use it as backing elements,etc)
+    // Now create entries for each page we use. We iterate this in reverse
+    // so that our custom pages draw first; we want that stuff to show up
+    // underneath normal text since we sometimes use it as backing elements,
+    // etc.
     entries_.clear();
     for (auto i = font_pages.rbegin(); i != font_pages.rend(); i++) {
       uint32_t min, max;
       g_base->text_graphics->GetFontPageCharRange(*i, &min, &max);
-      std::unique_ptr<TextMeshEntry> entry(new TextMeshEntry());
+      auto entry{std::make_unique<TextMeshEntry>()};
 
-      // Our custom font page IDs start at value 9990 (kExtras1);
-      // make sure for all private-use unicode chars (U+E000–U+F8FF)
-      // that we only use these font pages and not OS rendering or other
-      // pages (even if those technically support that range)
+      // Our custom font page IDs start at value 9990 (kExtras1); make sure
+      // for all private-use unicode chars (U+E000–U+F8FF) that we only use
+      // these font pages and not OS rendering or other pages (even if those
+      // technically support that range).
       if (*i >= static_cast<int>(TextGraphics::FontPage::kExtras1)) {
         entry->type = TextMeshEntryType::kExtras;
         entry->u_scale = entry->v_scale = 3.0f;
@@ -69,12 +69,10 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
       } else if (*i == static_cast<int>(TextGraphics::FontPage::kOSRendered)) {
         entry->type = TextMeshEntryType::kOSRendered;
 
-        // Let's allow partial flattening of OS text (keeps emojis somewhat
-        // recognizable but allows us to set it apart from our icons and
-        // whatnot which are always full color)
-        // entry->max_flatness = 0.65f;
-
-        // UPDATE: scratch that; washed out emojis just look crappy.
+        // Disallow flattening of OS text (otherwise emojis get wrecked).
+        // Perhaps we could be smarter about limiting this to emojis and not
+        // other text, but we'd have to do something smarter about breaking
+        // emojis and non-emojis into separate pages.
         entry->max_flatness = 0.0f;
 
         // We'll set uv_scale for this guy below; we don't know what it is
@@ -120,8 +118,8 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
           os_texture_ = g_base->assets->GetTexture(packer.get());
         }
 
-        // We also need to know what uv-scales to use for shadows/etc.
-        // This should be proportional to the font-scale over the texture
+        // We also need to know what uv-scales to use for shadows/etc. This
+        // should be proportional to the font-scale over the texture
         // dimension so that its always visually similar.
         float t_scale = packer->text_scale() * 500.0f;
         entry->u_scale = t_scale / static_cast<float>(packer->texture_width());
@@ -255,8 +253,8 @@ void TextGroup::GetCaratPts(const std::string& text_in,
           line_length = 0;
           const char* c;
 
-          // If this was the first char, include it in this line tally
-          // if it was a newline, don't.
+          // If this was the first char, include it in this line tally if it
+          // was a newline, don't.
           if (first_char) {
             c = tv_prev;
           } else {
@@ -274,15 +272,16 @@ void TextGroup::GetCaratPts(const std::string& text_in,
               val = Utils::GetUTF8Value(c);
               Utils::AdvanceUTF8(&c);
 
-              // Special case: if we're already doing an OS-span, tack certain
-              // chars onto it instead of switching back to glyph mode.
-              // (to reduce the number of times we switch back and forth)
+              // Special case: if we're already doing an OS-span, tack
+              // certain chars onto it instead of switching back to glyph
+              // mode. (to reduce the number of times we switch back and
+              // forth)
               if (TextGraphics::Glyph* g =
                       g_base->text_graphics->GetGlyph(val, big_)) {
                 line_length += char_width * g->advance;
               } else {
-                // TODO(ericf): add non-glyph chars into spans and ask
-                //  the OS for their length
+                // TODO(ericf): add non-glyph chars into spans and ask the
+                //  OS for their length.
               }
             }
           }
