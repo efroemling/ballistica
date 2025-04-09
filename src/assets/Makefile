@@ -356,6 +356,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/confirm.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/connect.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/connectivity.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/browser.py \
@@ -640,6 +641,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/colorpicker.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/config.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/confirm.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/connect.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/connectivity.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/browser.cpython-312.opt-1.pyc \
