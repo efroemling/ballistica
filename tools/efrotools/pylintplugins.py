@@ -136,13 +136,21 @@ def func_annotations_filter(node: nc.NodeNG) -> nc.NodeNG:
     """Filter annotated function args/retvals.
 
     This accounts for deferred evaluation available in in Python 3.7+
-    via 'from __future__ import annotations'. In this case we don't
-    want Pylint to complain about missing symbols in annotations when
-    they aren't actually needed at runtime.
+    via 'from __future__ import annotations'. In this case we don't want
+    Pylint to complain about missing symbols in annotations when they
+    aren't actually needed at runtime. And we strip out stuff under
+    TYPE_CHECKING blocks which means they'd often be seen as missing.
     """
     # Only do this if deferred annotations are on.
     if not using_future_annotations(node):
         return node
+
+    # If this function has type-params, clear them and remove them from
+    # our locals.
+    if node.type_params:
+        for typevar in node.type_params:
+            del node.locals[typevar.name.name]
+        node.type_params.clear()
 
     # Wipe out argument annotations.
 

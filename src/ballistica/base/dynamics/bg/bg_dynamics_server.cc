@@ -96,7 +96,7 @@ class BGDynamicsServer::Terrain {
     if (collision_mesh_) {
       Object::Ref<CollisionMeshAsset>* ref = collision_mesh_;
       g_base->logic->event_loop()->PushCall([ref] {
-        (**ref).set_last_used_time(g_core->GetAppTimeMillisecs());
+        (**ref).set_last_used_time(g_core->AppTimeMillisecs());
         delete ref;
       });
       collision_mesh_ = nullptr;

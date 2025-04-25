@@ -217,7 +217,7 @@ def generate_app_module(
 
     contents += 'return None\n'
 
-    indent = '            '
+    indent = '        '
     out = replace_section(
         out,
         f'{indent}# __DEFAULT_APP_MODE_SELECTION_BEGIN__\n',

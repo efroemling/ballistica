@@ -31,21 +31,43 @@ class NetTestingWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
     ):
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 820
-        self._height = 500 if uiscale is bui.UIScale.SMALL else 500
-        yoffs = -50 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1200 if uiscale is bui.UIScale.SMALL else 820
+        self._height = (
+            800
+            if uiscale is bui.UIScale.SMALL
+            else 550 if uiscale is bui.UIScale.MEDIUM else 650
+        )
 
         self._printed_lines: list[str] = []
         assert bui.app.classic is not None
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.75
+            if uiscale is bui.UIScale.SMALL
+            else 1.0 if uiscale is bui.UIScale.MEDIUM else 0.75
+        )
+
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 90, screensize[0] / scale)
+        target_height = min(self._height - 90, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        scroll_width = target_width
+        scroll_height = target_height - 52
+        scroll_bottom = yoffs - 82 - scroll_height
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                scale=(
-                    1.75
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.2 if uiscale is bui.UIScale.MEDIUM else 0.8
-                ),
-                stack_offset=(0, -4 if uiscale is bui.UIScale.SMALL else 0.0),
+                scale=scale,
                 toolbar_visibility=(
                     'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
@@ -54,17 +76,19 @@ class NetTestingWindow(bui.MainWindow):
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
-        self._done_button: bui.Widget | None
+        self._back_button: bui.Widget | None
         if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
-            self._done_button = None
+            self._back_button = None
         else:
-            self._done_button = bui.buttonwidget(
+            self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(46, self._height - 77 + yoffs),
+                position=(46, yoffs - 77),
                 size=(60, 60),
                 scale=0.9,
                 label=bui.charstr(bui.SpecialChar.BACK),
@@ -73,15 +97,19 @@ class NetTestingWindow(bui.MainWindow):
                 on_activate_call=self.main_window_back,
             )
             bui.containerwidget(
-                edit=self._root_widget, cancel_button=self._done_button
+                edit=self._root_widget, cancel_button=self._back_button
             )
 
         # Avoid squads button on small mode.
-        xinset = -50 if uiscale is bui.UIScale.SMALL else 0
+        # xinset = -50 if uiscale is bui.UIScale.SMALL else 0
 
+        xextra = -80 if uiscale is bui.UIScale.SMALL else 0
         self._copy_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - 200 + xinset, self._height - 77 + yoffs),
+            position=(
+                self._width * 0.5 + scroll_width * 0.5 - 210 + 80 + xextra,
+                yoffs - 79,
+            ),
             size=(100, 60),
             scale=0.8,
             autoselect=True,
@@ -91,7 +119,10 @@ class NetTestingWindow(bui.MainWindow):
 
         self._settings_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - 100 + xinset, self._height - 77 + yoffs),
+            position=(
+                self._width * 0.5 + scroll_width * 0.5 - 110 + 80 + xextra,
+                yoffs - 77,
+            ),
             size=(60, 60),
             scale=0.8,
             autoselect=True,
@@ -99,30 +130,24 @@ class NetTestingWindow(bui.MainWindow):
             on_activate_call=self._show_val_testing,
         )
 
-        twidth = self._width - 540
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 55 + yoffs),
+            position=(self._width * 0.5, yoffs - 55),
             size=(0, 0),
             text=bui.Lstr(resource='settingsWindowAdvanced.netTestingText'),
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='center',
             v_align='center',
-            maxwidth=twidth,
+            maxwidth=250,
         )
 
         self._scroll = bui.scrollwidget(
             parent=self._root_widget,
-            position=(
-                50,
-                (140 if uiscale is bui.UIScale.SMALL else 50) + yoffs,
-            ),
-            size=(
-                self._width - 100,
-                self._height - (220 if uiscale is bui.UIScale.SMALL else 140),
-            ),
+            size=(scroll_width, scroll_height),
+            position=(self._width * 0.5 - scroll_width * 0.5, scroll_bottom),
             capture_arrows=True,
             autoselect=True,
+            border_opacity=0.4,
         )
         self._rows = bui.columnwidget(parent=self._scroll)
 

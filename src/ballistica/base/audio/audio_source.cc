@@ -73,11 +73,10 @@ auto AudioSource::Play(SoundAsset* ptr_in) -> uint32_t {
   assert(g_base->audio_server);
   assert(client_queue_size_ > 0);
 
-  // allocate a new reference to this guy and pass it along
-  // to the thread... (these refs can't be created or destroyed
-  // or have their ref-counts changed outside the main thread...)
-  // the thread will then send back this allocated ptr when it's done
-  // with it for the main thread to destroy.
+  // Allocate a new reference to this guy and pass it along to the thread
+  // (these refs can't be created or destroyed or have their ref-counts
+  // changed outside the main thread). The thread will then send back this
+  // allocated ptr when it's done with it for the main thread to destroy.
 
   ptr_in->UpdatePlayTime();
   auto ptr = new Object::Ref<SoundAsset>(ptr_in);
@@ -103,7 +102,7 @@ void AudioSource::Lock(int debug_id) {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
   mutex_.lock();
 #if BA_DEBUG_BUILD
-  last_lock_time_ = g_core->GetAppTimeMillisecs();
+  last_lock_time_ = g_core->AppTimeMillisecs();
   lock_debug_id_ = debug_id;
   locked_ = true;
 #endif
@@ -115,7 +114,7 @@ auto AudioSource::TryLock(int debug_id) -> bool {
 #if (BA_DEBUG_BUILD || BA_TEST_BUILD)
   if (locked) {
     locked_ = true;
-    last_lock_time_ = g_core->GetAppTimeMillisecs();
+    last_lock_time_ = g_core->AppTimeMillisecs();
     lock_debug_id_ = debug_id;
   }
 #endif

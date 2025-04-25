@@ -212,9 +212,8 @@ void AudioServer::OpenALSoftLogCallback(const std::string& msg) {
   std::scoped_lock lock(openalsoft_android_log_mutex_);
 
   if (openalsoft_android_log_.size() < log_cap) {
-    openalsoft_android_log_ += "openal-log("
-                               + std::to_string(g_core->GetAppTimeSeconds())
-                               + "s): " + msg;
+    openalsoft_android_log_ +=
+        "openal-log(" + std::to_string(g_core->AppTimeSeconds()) + "s): " + msg;
     if (openalsoft_android_log_.size() >= log_cap) {
       openalsoft_android_log_ +=
           "\n<max openalsoft log storage size reached>\n";
@@ -477,7 +476,7 @@ void AudioServer::OnAppStartInThread_() {
   // Now make available any stopped sources (should be all of them).
   UpdateAvailableSources_();
 
-  last_started_playing_time_ = g_core->GetAppTimeSeconds();
+  last_started_playing_time_ = g_core->AppTimeSeconds();
 #endif  // BA_ENABLE_AUDIO
 }
 
@@ -487,7 +486,7 @@ void AudioServer::Shutdown() {
     return;
   }
   shutting_down_ = true;
-  shutdown_start_time_ = g_core->GetAppTimeSeconds();
+  shutdown_start_time_ = g_core->AppTimeSeconds();
 
   // Stop all playing sounds and note the time. We'll then give everything a
   // moment to come to a halt before we tear down the audio context to
@@ -538,8 +537,8 @@ struct AudioServer::SoundFadeNode_ {
   bool out;
   SoundFadeNode_(uint32_t play_id_in, millisecs_t duration_in, bool out_in)
       : play_id(play_id_in),
-        starttime(g_core->GetAppTimeMillisecs()),
-        endtime(g_core->GetAppTimeMillisecs() + duration_in),
+        starttime(g_core->AppTimeMillisecs()),
+        endtime(g_core->AppTimeMillisecs() + duration_in),
         out(out_in) {}
 };
 
@@ -566,16 +565,16 @@ void AudioServer::SetSuspended_(bool suspend) {
       try {
         g_core->platform->LowLevelDebugLog(
             "Calling alcDevicePauseSOFT at "
-            + std::to_string(g_core->GetAppTimeSeconds()));
+            + std::to_string(g_core->AppTimeSeconds()));
         alcDevicePauseSOFT(device);
       } catch (const std::exception& e) {
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                    "Error in alcDevicePauseSOFT at time "
-                        + std::to_string(g_core->GetAppTimeSeconds())
-                        + "( playing since "
-                        + std::to_string(last_started_playing_time_) + "): "
-                        + g_core->platform->DemangleCXXSymbol(typeid(e).name())
-                        + " " + e.what());
+        g_core->Log(
+            LogName::kBaAudio, LogLevel::kError,
+            "Error in alcDevicePauseSOFT at time "
+                + std::to_string(g_core->AppTimeSeconds()) + "( playing since "
+                + std::to_string(last_started_playing_time_)
+                + "): " + g_core->platform->DemangleCXXSymbol(typeid(e).name())
+                + " " + e.what());
       } catch (...) {
         g_core->Log(LogName::kBaAudio, LogLevel::kError,
                     "Unknown error in alcDevicePauseSOFT");
@@ -609,12 +608,12 @@ void AudioServer::SetSuspended_(bool suspend) {
       try {
         g_core->platform->LowLevelDebugLog(
             "Calling alcDeviceResumeSOFT at "
-            + std::to_string(g_core->GetAppTimeSeconds()));
+            + std::to_string(g_core->AppTimeSeconds()));
         alcDeviceResumeSOFT(device);
       } catch (const std::exception& e) {
         g_core->Log(LogName::kBaAudio, LogLevel::kError,
                     "Error in alcDeviceResumeSOFT at time "
-                        + std::to_string(g_core->GetAppTimeSeconds()) + ": "
+                        + std::to_string(g_core->AppTimeSeconds()) + ": "
                         + g_core->platform->DemangleCXXSymbol(typeid(e).name())
                         + " " + e.what());
       } catch (...) {
@@ -622,7 +621,7 @@ void AudioServer::SetSuspended_(bool suspend) {
                     "Unknown error in alcDeviceResumeSOFT");
       }
 #endif
-      last_started_playing_time_ = g_core->GetAppTimeSeconds();
+      last_started_playing_time_ = g_core->AppTimeSeconds();
       suspended_ = false;
 #if BA_ENABLE_AUDIO
       CHECK_AL_ERROR;
@@ -774,7 +773,7 @@ void AudioServer::UpdateAvailableSources_() {
 // and see how many are in use, how many are currently locked by the client,
 // etc.
 #if (BA_DEBUG_BUILD || BA_TEST_BUILD)
-  millisecs_t t = g_core->GetAppTimeMillisecs();
+  millisecs_t t = g_core->AppTimeMillisecs();
   if (t - last_sanity_check_time_ > 5000) {
     last_sanity_check_time_ = t;
 
@@ -1033,7 +1032,7 @@ void AudioServer::OnDeviceDisconnected() {
 
 void AudioServer::Process_() {
   assert(g_base->InAudioThread());
-  seconds_t real_time_seconds = g_core->GetAppTimeSeconds();
+  seconds_t real_time_seconds = g_core->AppTimeSeconds();
   millisecs_t real_time_millisecs = real_time_seconds * 1000;
 
   // Only do real work if we're in normal running mode.
@@ -1085,7 +1084,7 @@ void AudioServer::Process_() {
   // for the mixer to spit out some silence so we don't hear sudden cut-offs
   // in one or both ears.
   if (shutting_down_ && !shutdown_completed_) {
-    if (g_core->GetAppTimeSeconds() - shutdown_start_time_ > 0.2) {
+    if (g_core->AppTimeSeconds() - shutdown_start_time_ > 0.2) {
       CompleteShutdown_();
     }
   }
@@ -1125,13 +1124,13 @@ void AudioServer::ProcessSoundFades_() {
 
     AudioServer::ThreadSource_* s = GetPlayingSound_(i->second.play_id);
     if (s) {
-      if (g_core->GetAppTimeMillisecs() > i->second.endtime) {
+      if (g_core->AppTimeMillisecs() > i->second.endtime) {
         StopSound(i->second.play_id);
         sound_fade_nodes_.erase(i);
       } else {
         float fade_val =
             1
-            - (static_cast<float>(g_core->GetAppTimeMillisecs()
+            - (static_cast<float>(g_core->AppTimeMillisecs()
                                   - i->second.starttime)
                / static_cast<float>(i->second.endtime - i->second.starttime));
         s->SetFade(fade_val);
@@ -1639,12 +1638,12 @@ void AudioServer::ClearSoundRefDeleteList() {
 //   g_base->audio_server->PushSetSuspendedCall(true);
 
 //   // Wait a reasonable amount of time for the thread to act on it.
-//   millisecs_t t = g_core->GetAppTimeMillisecs();
+//   millisecs_t t = g_core->AppTimeMillisecs();
 //   while (true) {
 //     if (g_base->audio_server->suspended()) {
 //       break;
 //     }
-//     if (g_core->GetAppTimeMillisecs() - t > 1000) {
+//     if (g_core->AppTimeMillisecs() - t > 1000) {
 //       Log(LogLevel::kError, "Timed out waiting for audio suspend.");
 //       break;
 //     }
@@ -1657,12 +1656,12 @@ void AudioServer::ClearSoundRefDeleteList() {
 //   g_base->audio_server->PushSetSuspendedCall(false);
 
 //   // Wait a reasonable amount of time for the thread to act on it.
-//   millisecs_t t = g_core->GetAppTimeMillisecs();
+//   millisecs_t t = g_core->AppTimeMillisecs();
 //   while (true) {
 //     if (!g_base->audio_server->suspended()) {
 //       break;
 //     }
-//     if (g_core->GetAppTimeMillisecs() - t > 1000) {
+//     if (g_core->AppTimeMillisecs() - t > 1000) {
 //       Log(LogLevel::kError, "Timed out waiting for audio unsuspend.");
 //       break;
 //     }

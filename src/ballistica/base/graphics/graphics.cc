@@ -253,13 +253,13 @@ auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
 void Graphics::SetGyroEnabled(bool enable) {
   // If we're turning back on, suppress gyro updates for a bit.
   if (enable && !gyro_enabled_) {
-    last_suppress_gyro_time_ = g_core->GetAppTimeMicrosecs();
+    last_suppress_gyro_time_ = g_core->AppTimeMicrosecs();
   }
   gyro_enabled_ = enable;
 }
 
 void Graphics::UpdateProgressBarProgress(float target) {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
   float p = target;
   if (p < 0) {
     p = 0;
@@ -274,7 +274,7 @@ void Graphics::UpdateProgressBarProgress(float target) {
 }
 
 void Graphics::DrawProgressBar(RenderPass* pass, float opacity) {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
   float amount = progress_bar_progress_;
   if (amount < 0) {
     amount = 0;
@@ -361,9 +361,9 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
   assert(g_base && g_base->InLogicThread());
 
   // Every now and then, update our stats.
-  while (g_core->GetAppTimeMillisecs() >= next_stat_update_time_) {
-    if (g_core->GetAppTimeMillisecs() - next_stat_update_time_ > 1000) {
-      next_stat_update_time_ = g_core->GetAppTimeMillisecs() + 1000;
+  while (g_core->AppTimeMillisecs() >= next_stat_update_time_) {
+    if (g_core->AppTimeMillisecs() - next_stat_update_time_ > 1000) {
+      next_stat_update_time_ = g_core->AppTimeMillisecs() + 1000;
     } else {
       next_stat_update_time_ += 1000;
     }
@@ -482,7 +482,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
   // Draw any debug graphs.
   {
     float debug_graph_y = 50.0;
-    auto now = g_core->GetAppTimeMillisecs();
+    auto now = g_core->AppTimeMillisecs();
     for (auto it = debug_graphs_.begin(); it != debug_graphs_.end();) {
       assert(it->second.exists());
       if (now - it->second->LastUsedTime() > 1000) {
@@ -508,7 +508,7 @@ auto Graphics::GetDebugGraph(const std::string& name, bool smoothed)
     debug_graphs_[name]->SetLabel(name);
     debug_graphs_[name]->SetSmoothed(smoothed);
   }
-  debug_graphs_[name]->SetLastUsedTime(g_core->GetAppTimeMillisecs());
+  debug_graphs_[name]->SetLastUsedTime(g_core->AppTimeMillisecs());
   return debug_graphs_[name].get();
 }
 
@@ -748,8 +748,8 @@ void Graphics::DrawUI(FrameDef* frame_def) {
   // Special variants like GraphicsVR may do fancier stuff here.
   g_base->ui->Draw(frame_def);
 
-  // We may want to see the bounds of our virtual screen.
-  DrawUIBounds(frame_def->overlay_pass());
+  // We may want to see the virtual screen safe area.
+  DrawVirtualSafeAreaBounds(frame_def->overlay_pass());
 }
 
 void Graphics::DrawDevUI(FrameDef* frame_def) {
@@ -770,7 +770,7 @@ void Graphics::BuildAndPushFrameDef() {
   assert(!building_frame_def_);
   building_frame_def_ = true;
 
-  microsecs_t app_time_microsecs = g_core->GetAppTimeMicrosecs();
+  microsecs_t app_time_microsecs = g_core->AppTimeMicrosecs();
 
   // Store how much time this frame_def represents.
   auto display_time_microsecs = g_base->logic->display_time_microsecs();
@@ -1222,7 +1222,7 @@ void Graphics::EnableProgressBar(bool fade_in) {
   if (progress_bar_loads_ > 0) {
     progress_bar_ = true;
     progress_bar_fade_in_ = fade_in;
-    last_progress_bar_draw_time_ = g_core->GetAppTimeMillisecs();
+    last_progress_bar_draw_time_ = g_core->AppTimeMillisecs();
     last_progress_bar_start_time_ = last_progress_bar_draw_time_;
     progress_bar_progress_ = 0.0f;
   }
@@ -1527,13 +1527,13 @@ void Graphics::GetBaseVirtualRes(float* x, float* y) {
   assert(y);
   float base_virtual_res_x;
   float base_virtual_res_y;
-  if (g_base->ui->scale() == UIScale::kSmall) {
-    base_virtual_res_x = kBaseVirtualResSmallX;
-    base_virtual_res_y = kBaseVirtualResSmallY;
-  } else {
-    base_virtual_res_x = kBaseVirtualResX;
-    base_virtual_res_y = kBaseVirtualResY;
-  }
+  // if (g_base->ui->scale() == UIScale::kSmall) {
+  //   base_virtual_res_x = kBaseVirtualResSmallX;
+  //   base_virtual_res_y = kBaseVirtualResSmallY;
+  // } else {
+  base_virtual_res_x = kBaseVirtualResX;
+  base_virtual_res_y = kBaseVirtualResY;
+  // }
   *x = base_virtual_res_x;
   *y = base_virtual_res_y;
 }
@@ -1760,9 +1760,9 @@ void Graphics::UpdatePlaceholderSettings() {
       settings()->texture_quality, client_context()->auto_texture_quality);
 }
 
-void Graphics::DrawUIBounds(RenderPass* pass) {
+void Graphics::DrawVirtualSafeAreaBounds(RenderPass* pass) {
   // We can optionally draw a guide to show the edges of the overlay pass
-  if (draw_ui_bounds_) {
+  if (draw_virtual_safe_area_bounds_) {
     SimpleComponent c(pass);
     c.SetColor(1, 0, 0);
     {

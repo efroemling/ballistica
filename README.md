@@ -6,7 +6,7 @@ height="50" alt="logo">
 
 ***-ica***: collection of things relating to a specific theme.
 
-[![](https://github.com/efroemling/ballistica/actions/workflows/ci.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/ci.yml) [![](https://github.com/efroemling/ballistica/actions/workflows/cd.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/cd.yml)
+[![](https://github.com/efroemling/ballistica/actions/workflows/ci.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/ci.yml) [![](https://github.com/efroemling/ballistica/actions/workflows/cd.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/cd.yml) [![](https://github.com/efroemling/ballistica/actions/workflows/nightly.yml/badge.svg)](https://github.com/efroemling/ballistica/actions/workflows/nightly.yml) [![status-badge](https://ci.codeberg.org/api/badges/14102/status.svg)](https://ci.codeberg.org/repos/14102)
 
 The Ballistica project is the foundation for
 [BombSquad](https://www.froemling.net/apps/bombsquad) and potentially other
@@ -87,3 +87,17 @@ PlayStation / My toaster??**
   Downloads](https://ballistica.net/downloads) page for early test builds on
   some platforms.
 
+### Cloning And Contributing
+
+This repository can be cloned and accepts issues and pull requests from the
+following sources
+
+* **GitHub**
+  * Link: https://github.com/efroemling/ballistica
+  * Cloning via [git](https://git-scm.com):
+  `git clone https://github.com/efroemling/ballistica.git`
+
+* **Codeberg**:
+  * Link: https://codeberg.org/3ra/ballistica
+  * Cloning via [git](https://git-scm.com):
+  `git clone https://codeberg.org/3ra/ballistica.git`

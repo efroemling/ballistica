@@ -40,7 +40,7 @@ void Scene::SetMapBounds(float xmin, float ymin, float zmin, float xmax,
 Scene::Scene(millisecs_t start_time)
     : time_(start_time),
       stepnum_(start_time / kGameStepMilliseconds),
-      last_step_real_time_(g_core->GetAppTimeMillisecs()) {
+      last_step_real_time_(g_core->AppTimeMillisecs()) {
   dynamics_ = Object::New<Dynamics>(this);
 
   // Reset world bounds to default.
@@ -145,7 +145,7 @@ void Scene::Step() {
   // Step all our nodes.
   {
     in_step_ = true;
-    last_step_real_time_ = g_core->GetAppTimeMillisecs();
+    last_step_real_time_ = g_core->AppTimeMillisecs();
     for (auto&& i : nodes_) {
       Node* node = i.get();
       node->Step();

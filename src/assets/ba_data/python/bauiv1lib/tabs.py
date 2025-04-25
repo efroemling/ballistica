@@ -72,12 +72,12 @@ class TabRow(Generic[T]):
                 bui.buttonwidget(
                     edit=tab.button,
                     color=(0.5, 0.4, 0.93),
-                    textcolor=(0.85, 0.75, 0.95),
+                    textcolor=(0.82, 0.72, 0.92),
                 )  # lit
             else:
                 bui.buttonwidget(
                     edit=tab.button,
-                    color=(0.52, 0.48, 0.63),
+                    color=(0.50, 0.44, 0.63),
                     textcolor=(0.65, 0.6, 0.7),
                 )  # unlit
 

@@ -7,7 +7,7 @@ from __future__ import annotations
 import time
 import random
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 import bascenev1 as bs
@@ -324,7 +324,9 @@ class PartyQueueWindow(bui.Window):
         )
         self.update()
 
+    @override
     def __del__(self) -> None:
+        super().__del__()
         try:
             plus = bui.app.plus
             assert plus is not None
@@ -579,6 +581,10 @@ class PartyQueueWindow(bui.Window):
 
         if plus.get_v1_account_ticket_count() < self._boost_tickets:
             bui.getsound('error').play()
+            bui.screenmessage(
+                bui.Lstr(resource='notEnoughTicketsText'),
+                color=(1, 0, 0),
+            )
             # gettickets.show_get_tickets_prompt()
             return
 

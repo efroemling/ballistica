@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 class TemplateFsAppSubsystem:
     """Subsystem for TemplateFs functionality in the app.
 
-    The single shared instance of this class can be accessed at
-    ba*.app.templatefs. Note that it is possible for ba*.app.templatefs
-    to be None if the TemplateFs feature-set is not enabled, and code
-    should handle that case gracefully.
+    If :attr:`~batools.featureset.FeatureSet.has_python_app_subsystem`
+    is enabled for our feature-set, the single shared instance of this
+    class can be accessed as `template_fs` on the :class:`~babase.App`
+    instance.
     """

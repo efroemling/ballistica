@@ -52,7 +52,7 @@ void ClientSessionNet::OnCommandBufferUnderrun() {
   // We currently don't do anything here; we want to just power
   // through hitches and keep aiming for our target time.
   // (though perhaps we could take note here for analytics purposes).
-  // printf("Underrun at %d\n", GetAppTimeMillisecs());
+  // printf("Underrun at %d\n", AppTimeMillisecs());
   // fflush(stdout);
 }
 
@@ -100,7 +100,7 @@ void ClientSessionNet::UpdateBuffering() {
           + (1.0f - smoothing)
                 * static_cast<float>(bucket.max_delay_from_projection);
     }
-    auto now = g_core->GetAppTimeMillisecs();
+    auto now = g_core->AppTimeMillisecs();
 
     // We want target-base-time to wind up at our projected time minus some
     // safety offset to account for buffering fluctuations.
@@ -160,7 +160,7 @@ void ClientSessionNet::OnReset(bool rewind) {
 }
 
 void ClientSessionNet::OnBaseTimeStepAdded(int step) {
-  auto now = g_core->GetAppTimeMillisecs();
+  auto now = g_core->AppTimeMillisecs();
 
   millisecs_t new_base_time_received = base_time_received_ + step;
 

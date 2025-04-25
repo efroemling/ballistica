@@ -47,7 +47,27 @@ static PyMethodDef PyAppNameDef = {
 
     "appname() -> str\n"
     "\n"
-    "(internal)\n",
+    "Return current app name (all lowercase).\n",
+};
+
+// -------------------------------- appnameupper -------------------------------
+
+static auto PyAppNameUpper(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  // This will get subbed out by standard filtering.
+  return PyUnicode_FromString("BallisticaKit");
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAppNameUpperDef = {
+    "appnameupper",               // name
+    (PyCFunction)PyAppNameUpper,  // method
+    METH_NOARGS,                  // flags
+
+    "appnameupper() -> str\n"
+    "\n"
+    "Return current app name with capitalized characters.",
 };
 
 // ------------------------------ app_is_active --------------------------------
@@ -73,7 +93,7 @@ static PyMethodDef PyAppIsActiveDef = {
 
     "app_is_active() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 // --------------------------------- run_app -----------------------------------
 
@@ -122,30 +142,6 @@ static PyMethodDef PyCompleteShutdownDef = {
     "Complete the shutdown process, triggering the app to exit.\n",
 };
 
-// -------------------------------- appnameupper -------------------------------
-
-static auto PyAppNameUpper(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-
-  // This will get subbed out by standard filtering.
-  return PyUnicode_FromString("BallisticaKit");
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyAppNameUpperDef = {
-    "appnameupper",               // name
-    (PyCFunction)PyAppNameUpper,  // method
-    METH_NOARGS,                  // flags
-
-    "appnameupper() -> str\n"
-    "\n"
-    "(internal)\n"
-    "\n"
-    "Return whether this build of the game can display full unicode such "
-    "as\n"
-    "Emoji, Asian languages, etc.",
-};
-
 // ---------------------------- is_xcode_build ---------------------------------
 
 static auto PyIsXCodeBuild(PyObject* self) -> PyObject* {
@@ -164,7 +160,7 @@ static PyMethodDef PyIsXCodeBuildDef = {
 
     "is_xcode_build() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // -------------------------- app_instance_uuid --------------------------------
@@ -188,7 +184,7 @@ static PyMethodDef PyAppInstanceUUIDDef = {
 
     "app_instance_uuid() -> str\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------------- user_ran_commands -------------------------------
@@ -213,7 +209,7 @@ static PyMethodDef PyUserRanCommandsDef = {
 
     "user_ran_commands() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------------------- pushcall ----------------------------------
@@ -305,20 +301,17 @@ static PyMethodDef PyPushCallDef = {
     "     other_thread_use_fg_context: bool = False,\n"
     "     raw: bool = False) -> None\n"
     "\n"
-    "Push a call to the logic event-loop.\n"
-    "Category: **General Utility Functions**\n"
+    "Push a call to the logic-thread's event loop.\n"
     "\n"
-    "This call expects to be used in the logic thread, and will "
-    "automatically\n"
-    "save and restore the babase.Context to behave seamlessly.\n"
+    "This function expects to be called from the logic thread, and will "
+    "automatically save and restore the context to behave seamlessly.\n"
     "\n"
-    "If you want to push a call from outside of the logic thread,\n"
-    "however, you can pass 'from_other_thread' as True. In this case\n"
-    "the call will always run in the UI context_ref on the logic thread\n"
-    "or whichever context_ref is in the foreground if\n"
-    "other_thread_use_fg_context is True.\n"
-    "Passing raw=True will disable thread checks and context_ref"
-    " sets/restores."};
+    "To push a call from outside of the logic thread, pass\n"
+    "``from_other_thread=True``. In that case the call will run with no\n"
+    "context set. To instead run in whichever context is currently active\n"
+    "on the logic thread, pass ``other_thread_use_fg_context=True``.\n"
+    "Passing ``raw=True`` will skip thread checks and context\n"
+    "saves/restores altogether."};
 
 // ------------------------------ apptime --------------------------------------
 
@@ -330,8 +323,8 @@ static auto PyAppTime(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  return PyFloat_FromDouble(
-      0.001 * static_cast<double>(g_core->GetAppTimeMillisecs()));
+  return PyFloat_FromDouble(0.001
+                            * static_cast<double>(g_core->AppTimeMillisecs()));
   BA_PYTHON_CATCH;
 }
 
@@ -343,8 +336,6 @@ static PyMethodDef PyAppTimeDef = {
     "apptime() -> babase.AppTime\n"
     "\n"
     "Return the current app-time in seconds.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "App-time is a monotonic time value; it starts at 0.0 when the app\n"
     "launches and will never jump by large amounts or go backwards, even if\n"
@@ -389,29 +380,28 @@ static PyMethodDef PyAppTimerDef = {
     "\n"
     "Schedule a callable object to run based on app-time.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "This function creates a one-off timer which cannot be canceled or\n"
     "modified once created. If you require the ability to do so, or need\n"
     "a repeating timer, use the babase.AppTimer class instead.\n"
     "\n"
-    "##### Arguments\n"
-    "###### time (float)\n"
-    "> Length of time in seconds that the timer will wait before firing.\n"
+    "Args:\n"
+    "    time: Length of time in seconds that the timer will wait before\n"
+    "        firing.\n"
     "\n"
-    "###### call (Callable[[], Any])\n"
-    "> A callable Python object. Note that the timer will retain a\n"
-    "strong reference to the callable for as long as the timer exists, so you\n"
-    "may want to look into concepts such as babase.WeakCall if that is not\n"
-    "desired.\n"
+    "    call: A callable Python object. Note that the timer will retain a\n"
+    "        strong reference to the callable for as long as the timer\n"
+    "        exists, so you may want to look into concepts such as\n"
+    "        :class:`~babase.WeakCall` if that is not desired.\n"
     "\n"
-    "##### Examples\n"
-    "Print some stuff through time:\n"
-    ">>> babase.screenmessage('hello from now!')\n"
-    ">>> babase.apptimer(1.0, babase.Call(babase.screenmessage,\n"
-    "                          'hello from the future!'))\n"
-    ">>> babase.apptimer(2.0, babase.Call(babase.screenmessage,\n"
-    "...                       'hello from the future 2!'))\n",
+    "Example: Print some stuff through time::\n"
+    "\n"
+    "   import babase\n"
+    "\n"
+    "   babase.screenmessage('hello from now!')\n"
+    "   babase.apptimer(1.0, babase.Call(babase.screenmessage,\n"
+    "                   'hello from the future!'))\n"
+    "   babase.apptimer(2.0, babase.Call(babase.screenmessage,\n"
+    "                   'hello from the future 2!'))\n",
 };
 
 // --------------------------- displaytime -------------------------------------
@@ -437,11 +427,9 @@ static PyMethodDef PyDisplayTimeDef = {
     "\n"
     "Return the current display-time in seconds.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Display-time is a time value intended to be used for animation and other\n"
     "visual purposes. It will generally increment by a consistent amount each\n"
-    "frame. It will pass at an overall similar rate to AppTime, but trades\n"
+    "frame. It will pass at an overall similar rate to app-time, but trades\n"
     "accuracy for smoothness.\n"
     "\n"
     "Note that the value returned here is simply a float; it just has a\n"
@@ -482,34 +470,33 @@ static PyMethodDef PyDisplayTimerDef = {
     "\n"
     "Schedule a callable object to run based on display-time.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "This function creates a one-off timer which cannot be canceled or\n"
     "modified once created. If you require the ability to do so, or need\n"
-    "a repeating timer, use the babase.DisplayTimer class instead.\n"
+    "a repeating timer, use the :class:`~babase.DisplayTimer` class instead.\n"
     "\n"
     "Display-time is a time value intended to be used for animation and other\n"
     "visual purposes. It will generally increment by a consistent amount each\n"
-    "frame. It will pass at an overall similar rate to AppTime, but trades\n"
+    "frame. It will pass at an overall similar rate to app-time, but trades\n"
     "accuracy for smoothness.\n"
     "\n"
-    "##### Arguments\n"
-    "###### time (float)\n"
-    "> Length of time in seconds that the timer will wait before firing.\n"
+    "Args:\n"
     "\n"
-    "###### call (Callable[[], Any])\n"
-    "> A callable Python object. Note that the timer will retain a\n"
-    "strong reference to the callable for as long as the timer exists, so you\n"
-    "may want to look into concepts such as babase.WeakCall if that is not\n"
-    "desired.\n"
+    "  time:\n"
+    "    Length of time in seconds that the timer will wait before firing.\n"
     "\n"
-    "##### Examples\n"
-    "Print some stuff through time:\n"
-    ">>> babase.screenmessage('hello from now!')\n"
-    ">>> babase.displaytimer(1.0, babase.Call(babase.screenmessage,\n"
-    "...                       'hello from the future!'))\n"
-    ">>> babase.displaytimer(2.0, babase.Call(babase.screenmessage,\n"
-    "...                       'hello from the future 2!'))\n",
+    "  call:\n"
+    "    A callable Python object. Note that the timer will retain a\n"
+    "    strong reference to the callable for as long as the timer exists, so\n"
+    "    you may want to look into concepts such as :class:`~babase.WeakCall`\n"
+    "    if that is not desired.\n"
+    "\n"
+    "Example: Print some stuff through time::\n"
+    "\n"
+    "    babase.screenmessage('hello from now!')\n"
+    "    babase.displaytimer(1.0, babase.Call(babase.screenmessage,\n"
+    "                        'hello from the future!'))\n"
+    "    babase.displaytimer(2.0, babase.Call(babase.screenmessage,\n"
+    "                        'hello from the future 2!'))\n",
 };
 
 // ----------------------------------- quit ------------------------------------
@@ -548,12 +535,10 @@ static PyMethodDef PyQuitDef = {
     "\n"
     "Quit the app.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
-    "If 'confirm' is True, a confirm dialog will be presented if conditions\n"
+    "If ``confirm`` is True, a confirm dialog will be presented if conditions\n"
     "allow; otherwise the quit will still be immediate.\n"
-    "See docs for babase.QuitType for explanations of the optional\n"
-    "'quit_type' arg."};
+    "See docs for :class:`~babase.QuitType` for explanations of the optional\n"
+    "``quit_type`` arg."};
 
 // ----------------------------- apply_config ----------------------------------
 
@@ -574,7 +559,7 @@ static PyMethodDef PyDoApplyAppConfigDef = {
 
     "do_apply_app_config() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ----------------------------- commit_config ---------------------------------
@@ -650,7 +635,7 @@ static PyMethodDef PyCommitConfigDef = {
 
     "commit_config(config: str) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------------- pre_env -------------------------------------
@@ -687,13 +672,11 @@ static PyMethodDef PyPreEnvDef = {
 
     "pre_env() -> dict\n"
     "\n"
-    "(internal)\n"
+    "Return a dict containing general env info.\n"
     "\n"
-    "Returns a dict containing general info about the operating "
-    "environment\n"
-    "such as version, platform, etc.\n"
-    "This info is now exposed through babase.App; refer to those docs for\n"
-    "info on specific elements."};
+    "This has been superseded by :class:`~babase.Env` for most purposes.\n"
+    "\n"
+    ":meta private:"};
 
 // --------------------------------- env ---------------------------------------
 
@@ -769,13 +752,11 @@ static PyMethodDef PyEnvDef = {
 
     "env() -> dict\n"
     "\n"
-    "(internal)\n"
+    "Return a dict containing general env info.\n"
     "\n"
-    "Returns a dict containing general info about the operating "
-    "environment\n"
-    "such as version, platform, etc.\n"
-    "This info is now exposed through babase.App; refer to those docs for\n"
-    "info on specific elements."};
+    "This has been superseded by :class:`~babase.Env` for most purposes.\n"
+    "\n"
+    ":meta private:"};
 
 // -------------------------------- emit_log -----------------------------------
 
@@ -825,40 +806,14 @@ static PyMethodDef PyEmitLogDef = {
     "emit_log(name: str, level: str, timestamp: float, message: str)"
     " -> None\n"
     "\n"
-    "(internal)\n"
+    "Sends a log message to the in-app console/etc.\n"
     "\n"
-    "Sends a log message to the in-app console and any per-platform\n"
-    "log destinations (Android log, etc.). This generally is not called\n"
-    "directly and should instead be fed Python logging output.",
+    "This also includes any per-platform log destinations (Android log,\n"
+    "etc.). This generally is not called directly and should instead be\n"
+    "fed Python logging output."
+    "\n"
+    ":meta private:",
 };
-
-// ------------------------------ lifecyclelog ---------------------------------
-
-// static auto PyLifecycleLog(PyObject* self, PyObject* args, PyObject* keywds)
-//     -> PyObject* {
-//   BA_PYTHON_TRY;
-//   static const char* kwlist[] = {"message", nullptr};
-//   const char* message;
-//   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-//                                    const_cast<char**>(kwlist), &message)) {
-//     return nullptr;
-//   }
-
-//   g_core->LifecycleLog(message);
-
-//   Py_RETURN_NONE;
-//   BA_PYTHON_CATCH;
-// }
-
-// static PyMethodDef PyLifecycleLogDef = {
-//     "lifecyclelog",                // name
-//     (PyCFunction)PyLifecycleLog,   // method
-//     METH_VARARGS | METH_KEYWORDS,  // flags
-
-//     "lifecyclelog(message: str) -> None\n"
-//     "\n"
-//     "(internal)",
-// };
 
 // ----------------------------- v1_cloud_log ----------------------------------
 
@@ -884,9 +839,9 @@ static PyMethodDef PyV1CloudLogDef = {
 
     "v1_cloud_log(message: str) -> None\n"
     "\n"
-    "(internal)\n"
+    "Push messages to the old v1 cloud log.\n"
     "\n"
-    "Push messages to the old v1 cloud log.",
+    ":meta private:",
 };
 
 // --------------------------- music_player_stop -------------------------------
@@ -911,9 +866,9 @@ static PyMethodDef PyMusicPlayerStopDef = {
 
     "music_player_stop() -> None\n"
     "\n"
-    "(internal)\n"
+    "Stops internal music file playback.\n"
     "\n"
-    "Stops internal music file playback (for internal use)"};
+    ":meta private:"};
 
 // ---------------------------- music_player_play ------------------------------
 
@@ -938,9 +893,9 @@ static PyMethodDef PyMusicPlayerPlayDef = {
 
     "music_player_play(files: Any) -> None\n"
     "\n"
-    "(internal)\n"
+    "Start internal music file playback.\n"
     "\n"
-    "Starts internal music file playback (for internal use)",
+    ":meta private:",
 };
 
 // ----------------------- music_player_set_volume -----------------------------
@@ -966,9 +921,9 @@ static PyMethodDef PyMusicPlayerSetVolumeDef = {
 
     "music_player_set_volume(volume: float) -> None\n"
     "\n"
-    "(internal)\n"
+    "Set internal music player volume.\n"
     "\n"
-    "Sets internal music player volume (for internal use)",
+    ":meta private:",
 };
 
 // ------------------------- music_player_shutdown -----------------------------
@@ -993,9 +948,9 @@ static PyMethodDef PyMusicPlayerShutdownDef = {
 
     "music_player_shutdown() -> None\n"
     "\n"
-    "(internal)\n"
+    "Finalize internal music file playback.\n"
     "\n"
-    "Finalizes internal music file playback (for internal use)",
+    ":meta private:",
 };
 
 // ----------------------------- reload_media ----------------------------------
@@ -1015,10 +970,11 @@ static PyMethodDef PyReloadMediaDef = {
 
     "reload_media() -> None\n"
     "\n"
-    "(internal)\n"
+    "Reload all currently loaded game media.\n"
     "\n"
-    "Reload all currently loaded game media; useful for\n"
-    "development/debugging.",
+    "Mainly for development/debugging.\n"
+    "\n"
+    ":meta private:",
 };
 
 // --------------------------- mac_music_app_init ------------------------------
@@ -1038,7 +994,7 @@ static PyMethodDef PyMacMusicAppInitDef = {
 
     "mac_music_app_init() -> None\n"
     "\n"
-    "(internal)"};
+    ":meta private:"};
 
 // ------------------------- mac_music_app_get_volume --------------------------
 
@@ -1056,7 +1012,7 @@ static PyMethodDef PyMacMusicAppGetVolumeDef = {
 
     "mac_music_app_get_volume() -> int\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------- mac_music_app_set_volume --------------------------
@@ -1082,7 +1038,7 @@ static PyMethodDef PyMacMusicAppSetVolumeDef = {
 
     "mac_music_app_set_volume(volume: int) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------------- mac_music_app_stop ------------------------------
@@ -1102,7 +1058,7 @@ static PyMethodDef PyMacMusicAppStopDef = {
 
     "mac_music_app_stop() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ----------------------- mac_music_app_play_playlist -------------------------
@@ -1133,7 +1089,7 @@ static PyMethodDef PyMacMusicAppPlayPlaylistDef = {
 
     "mac_music_app_play_playlist(playlist: str) -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------- mac_music_app_get_playlists --------------------------
@@ -1160,7 +1116,7 @@ static PyMethodDef PyMacMusicAppGetPlaylistsDef = {
 
     "mac_music_app_get_playlists() -> list[str]\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------------- is_os_playing_music ------------------------------
@@ -1183,11 +1139,11 @@ static PyMethodDef PyIsOSPlayingMusicDef = {
 
     "is_os_playing_music() -> bool\n"
     "\n"
-    "(internal)\n"
+    "Return whether the OS is currently playing music of some sort.\n"
     "\n"
-    "Tells whether the OS is currently playing music of some sort.\n"
+    "Used to determine whether the app should avoid playing its own.\n"
     "\n"
-    "(Used to determine whether the app should avoid playing its own)",
+    ":meta private:",
 };
 
 // -------------------------------- exec_arg -----------------------------------
@@ -1209,7 +1165,7 @@ static PyMethodDef PyExecArgDef = {
 
     "exec_arg() -> str | None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------------- on_app_running --------------------------------
@@ -1229,7 +1185,7 @@ static PyMethodDef PyOnAppRunningDef = {
 
     "on_app_running() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ------------------------ on_initial_app_mode_set ----------------------------
@@ -1249,7 +1205,7 @@ static PyMethodDef PyOnInitialAppModeSetDef = {
 
     "on_initial_app_mode_set() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ------------------------- reached_end_of_babase -----------------------------
@@ -1290,7 +1246,7 @@ static PyMethodDef PyUserAgentStringDef = {
 
     "user_agent_string() -> str\n"
     "\n"
-    "(internal)\n",
+    ":meta private:",
 };
 
 // --------------------- empty_app_mode_activate ----------------------------
@@ -1310,7 +1266,7 @@ static PyMethodDef PyOnEmptyAppModeActivateDef = {
 
     "empty_app_mode_activate() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:",
 };
 
 // --------------------- empty_app_mode_deactivate --------------------------
@@ -1330,7 +1286,7 @@ static PyMethodDef PyOnEmptyAppModeDeactivateDef = {
 
     "empty_app_mode_deactivate() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:",
 };
 
 // --------------- empty_app_mode_handle_app_intent_default --------------------
@@ -1349,7 +1305,7 @@ static PyMethodDef PyEmptyAppModeHandleAppIntentDefaultDef = {
 
     "empty_app_mode_handle_app_intent_default() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ---------------- empty_app_mode_handle_app_intent_exec ----------------------
@@ -1385,7 +1341,7 @@ static PyMethodDef PyEmptyAppModeHandleAppIntentExecDef = {
 
     "empty_app_mode_handle_app_intent_exec(command: str) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------- get_immediate_return_code ----------------------------
@@ -1408,7 +1364,7 @@ static PyMethodDef PyGetImmediateReturnCodeDef = {
 
     "get_immediate_return_code() -> int | None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------- shutdown_suppress_begin -----------------------------
@@ -1432,7 +1388,7 @@ static PyMethodDef PyShutdownSuppressBeginDef = {
 
     "shutdown_suppress_begin() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ------------------------ shutdown_suppress_end ------------------------------
@@ -1452,7 +1408,7 @@ static PyMethodDef PyShutdownSuppressEndDef = {
 
     "shutdown_suppress_end() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------- shutdown_suppress_count -----------------------------
@@ -1472,7 +1428,7 @@ static PyMethodDef PyShutdownSuppressCountDef = {
 
     "shutdown_suppress_count() -> int\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // --------------------- get_dev_console_input_text ----------------------------
@@ -1493,7 +1449,7 @@ static PyMethodDef PyGetDevConsoleInputTextDef = {
 
     "get_dev_console_input_text() -> str\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // --------------------- set_dev_console_input_text ----------------------------
@@ -1523,7 +1479,7 @@ static PyMethodDef PySetDevConsoleInputTextDef = {
 
     "set_dev_console_input_text(val: str) -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ------------------ dev_console_input_adapter_finish -------------------------
@@ -1545,7 +1501,7 @@ static PyMethodDef PyDevConsoleInputAdapterFinishDef = {
 
     "dev_console_input_adapter_finish() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // -------------------------- audio_shutdown_begin -----------------------------
@@ -1568,7 +1524,7 @@ static PyMethodDef PyAudioShutdownBeginDef = {
 
     "audio_shutdown_begin() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------- audio_shutdown_is_complete --------------------------
@@ -1591,7 +1547,7 @@ static PyMethodDef PyAudioShutdownIsCompleteDef = {
 
     "audio_shutdown_is_complete() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------- graphics_shutdown_begin -----------------------------
@@ -1614,7 +1570,7 @@ static PyMethodDef PyGraphicsShutdownBeginDef = {
 
     "graphics_shutdown_begin() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // -------------------- graphics_shutdown_is_complete --------------------------
@@ -1637,7 +1593,7 @@ static PyMethodDef PyGraphicsShutdownIsCompleteDef = {
 
     "graphics_shutdown_is_complete() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // --------------------------- invoke_main_menu --------------------------------
@@ -1663,7 +1619,10 @@ static PyMethodDef PyInvokeMainMenuDef = {
     "\n"
     "High level call to bring up the main menu if it is not present.\n"
     "\n"
-    "This is essentially the same as pressing the menu button on a controller.",
+    "This is essentially the same as pressing the menu button on a\n"
+    "controller.\n"
+    "\n"
+    ":meta private:",
 };
 // -----------------------------------------------------------------------------
 

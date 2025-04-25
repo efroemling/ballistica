@@ -764,6 +764,8 @@
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\row_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\scroll_widget.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\scroll_widget.h" />
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\spinner_widget.cc" />
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\spinner_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\stack_widget.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\stack_widget.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\text_widget.cc" />

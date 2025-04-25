@@ -43,7 +43,7 @@
 // FIXME: Turn these into C++ classes.
 #if BA_DEBUG_BUILD
 #define BA_DEBUG_FUNCTION_TIMER_BEGIN() \
-  millisecs_t _dfts = g_core->platform->GetTicks()
+  millisecs_t _dfts = g_core->platform->TimeSinceLaunchMillisecs()
 #define BA_DEBUG_FUNCTION_TIMER_END(time) \
   ::ballistica::MacroFunctionTimerEnd(g_core, _dfts, time, __PRETTY_FUNCTION__)
 #define BA_DEBUG_FUNCTION_TIMER_END_THREAD(time)                 \
@@ -55,7 +55,7 @@
   ::ballistica::MacroFunctionTimerEndThreadEx(g_core, _dfts, time, \
                                               __PRETTY_FUNCTION__, what)
 #define BA_DEBUG_TIME_CHECK_BEGIN(name) \
-  millisecs_t name##_ts = g_core->platform->GetTicks()
+  millisecs_t name##_ts = g_core->platform->TimeSinceLaunchMillisecs()
 #define BA_DEBUG_TIME_CHECK_END(name, time)                                 \
   ::ballistica::MacroTimeCheckEnd(g_core, name##_ts, time, #name, __FILE__, \
                                   __LINE__)

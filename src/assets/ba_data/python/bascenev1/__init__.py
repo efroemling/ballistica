@@ -18,12 +18,15 @@ import logging
 
 from efro.util import set_canonical_module_names
 from babase import (
+    ActivityNotFoundError,
     add_clean_frame_callback,
     app,
+    App,
     AppIntent,
     AppIntentDefault,
     AppIntentExec,
     AppMode,
+    AppState,
     apptime,
     AppTime,
     apptimer,
@@ -52,6 +55,7 @@ from babase import (
     safecolor,
     screenmessage,
     set_analytics_screen,
+    SessionNotFoundError,
     storagename,
     timestring,
     UIScale,
@@ -164,7 +168,7 @@ from bascenev1._dependency import (
 from bascenev1._dualteamsession import DualTeamSession
 from bascenev1._freeforallsession import FreeForAllSession
 from bascenev1._gameactivity import GameActivity
-from bascenev1._gameresults import GameResults
+from bascenev1._gameresults import GameResults, WinnerGroup
 from bascenev1._gameutils import (
     animate,
     animate_array,
@@ -246,15 +250,18 @@ from bascenev1._teamgame import TeamGameActivity
 __all__ = [
     'Activity',
     'ActivityData',
+    'ActivityNotFoundError',
     'Actor',
     'animate',
     'animate_array',
     'add_clean_frame_callback',
     'app',
+    'App',
     'AppIntent',
     'AppIntentDefault',
     'AppIntentExec',
     'AppMode',
+    'AppState',
     'AppTime',
     'apptime',
     'apptimer',
@@ -414,6 +421,7 @@ __all__ = [
     'ScoreConfig',
     'ScoreScreenActivity',
     'ScoreType',
+    'SessionNotFoundError',
     'broadcastmessage',
     'Session',
     'SessionData',
@@ -462,6 +470,7 @@ __all__ = [
     'unlock_all_input',
     'Vec3',
     'WeakCall',
+    'WinnerGroup',
 ]
 
 # We want stuff here to show up as bascenev1.Foo instead of

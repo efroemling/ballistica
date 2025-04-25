@@ -525,22 +525,11 @@ def warm_start_asset_build() -> None:
         )
 
 
-def gen_docs_pdoc() -> None:
-    """Generate pdoc documentation."""
-    from efro.terminal import Clr
-    import batools.docs
-
-    pcommand.disallow_in_batch()
-
-    print(f'{Clr.BLU}Generating documentation...{Clr.RST}')
-    batools.docs.generate_pdoc(projroot=str(pcommand.PROJROOT))
-
-
 def gen_docs_sphinx() -> None:
     """Generate sphinx documentation."""
     import batools.docs
 
-    batools.docs.generate_sphinxdoc()
+    batools.docs.generate_sphinx_docs()
 
 
 def checkenv() -> None:
@@ -669,46 +658,62 @@ def prefab_binary_path() -> None:
     )
 
 
-def build_docker_gui_release() -> None:
+def compose_docker_gui_release() -> None:
     """Build the docker image with bombsquad cmake gui."""
     import batools.docker
 
-    batools.docker.docker_build(headless_build=False)
+    batools.docker.docker_compose(headless_build=False)
 
 
-def build_docker_gui_debug() -> None:
+def compose_docker_gui_debug() -> None:
     """Build the docker image with bombsquad debug cmake gui."""
     import batools.docker
 
-    batools.docker.docker_build(headless_build=False, build_type='Debug')
+    batools.docker.docker_compose(headless_build=False, build_type='Debug')
 
 
-def build_docker_server_release() -> None:
+def compose_docker_server_release() -> None:
     """Build the docker image with bombsquad cmake server."""
     import batools.docker
 
-    batools.docker.docker_build()
+    batools.docker.docker_compose()
 
 
-def build_docker_server_debug() -> None:
+def compose_docker_server_debug() -> None:
     """Build the docker image with bombsquad debug cmake server."""
     import batools.docker
 
-    batools.docker.docker_build(build_type='Debug')
+    batools.docker.docker_compose(build_type='Debug')
 
 
-def build_docker_arm64_gui_release() -> None:
+def compose_docker_arm64_gui_release() -> None:
     """Build the docker image with bombsquad cmake for arm64."""
     import batools.docker
 
-    batools.docker.docker_build(headless_build=False, platform='linux/arm64')
+    batools.docker.docker_compose(headless_build=False, platform='linux/arm64')
 
 
-def build_docker_arm64_server_release() -> None:
+def compose_docker_arm64_gui_debug() -> None:
+    """Build the docker image with bombsquad cmake for arm64."""
+    import batools.docker
+
+    batools.docker.docker_compose(
+        headless_build=False, platform='linux/arm64', build_type='Debug'
+    )
+
+
+def compose_docker_arm64_server_release() -> None:
     """Build the docker image with bombsquad cmake server for arm64."""
     import batools.docker
 
-    batools.docker.docker_build(platform='linux/arm64')
+    batools.docker.docker_compose(platform='linux/arm64')
+
+
+def compose_docker_arm64_server_debug() -> None:
+    """Build the docker image with bombsquad cmake server for arm64."""
+    import batools.docker
+
+    batools.docker.docker_compose(platform='linux/arm64', build_type='Debug')
 
 
 def save_docker_images() -> None:
@@ -788,17 +793,15 @@ def logcat() -> None:
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args')
     adb = sys.argv[2]
-    plat = sys.argv[3]
+    _plat = sys.argv[3]
 
     # My amazon tablet chokes on the color format.
-    if plat == 'amazon':
-        format_args = ''
-    else:
-        format_args = '-v color '
+    # if plat == 'amazon':
+    #     format_args = ''
+    # else:
+    format_args = '-v color '
     cmd = (
-        f'{adb} logcat {format_args}SDL:V BallisticaKit:V VrLib:V'
-        ' VrApi:V VrApp:V TimeWarp:V EyeBuf:V GlUtils:V DirectRender:V'
-        ' HmdInfo:V IabHelper:V CrashAnrDetector:V DEBUG:V \'*:S\''
+        f'{adb} logcat {format_args}BallisticaKit:D CrashAnrDetector:V \'*:S\''
     )
     print(f'{Clr.BLU}Running logcat command: {Clr.BLD}{cmd}{Clr.RST}')
     subprocess.run(cmd, shell=True, check=True)

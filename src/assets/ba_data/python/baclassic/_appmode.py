@@ -9,6 +9,7 @@ from functools import partial
 from typing import TYPE_CHECKING, override
 
 from bacommon.app import AppExperience
+import bacommon.bs
 import babase
 import bauiv1
 from bauiv1lib.connectivity import wait_for_connectivity
@@ -28,6 +29,8 @@ if TYPE_CHECKING:
 class ClassicAppMode(babase.AppMode):
     """AppMode for the classic BombSquad experience."""
 
+    _LEAGUE_VIS_VALS_CONFIG_KEY = 'ClassicLeagueVisVals'
+
     def __init__(self) -> None:
         self._on_primary_account_changed_callback: (
             CallbackRegistration | None
@@ -40,6 +43,11 @@ class ClassicAppMode(babase.AppMode):
 
         self._have_account_values = False
         self._have_connectivity = False
+        self._current_account_id: str | None = None
+        self._should_restore_account_display_state = False
+
+        self._purchase_ui_pause: bauiv1.RootUIUpdatePause | None = None
+        self._last_tokens_value = 0
 
     @override
     @classmethod
@@ -48,7 +56,7 @@ class ClassicAppMode(babase.AppMode):
 
     @override
     @classmethod
-    def _can_handle_intent(cls, intent: babase.AppIntent) -> bool:
+    def can_handle_intent_impl(cls, intent: babase.AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(
             intent, babase.AppIntentExec | babase.AppIntentDefault
@@ -148,8 +156,14 @@ class ClassicAppMode(babase.AppMode):
 
         classic = babase.app.classic
 
+        # Store latest league vis vals for any active account.
+        self._save_account_display_state()
+
         # Stop being informed of account changes.
         self._on_primary_account_changed_callback = None
+
+        # Cancel any ui-pause we may have had going.
+        self._purchase_ui_pause = None
 
         # Remove anything following any current account.
         self._update_for_primary_account(None)
@@ -163,10 +177,150 @@ class ClassicAppMode(babase.AppMode):
 
     @override
     def on_app_active_changed(self) -> None:
-        # If we've gone inactive, bring up the main menu, which has the
-        # side effect of pausing the action (when possible).
         if not babase.app.active:
+            # If we've gone inactive, bring up the main menu, which has the
+            # side effect of pausing the action (when possible).
             babase.invoke_main_menu()
+
+            # Also store any league vis state for the active account.
+            # this may be our last chance to do this on mobile.
+            self._save_account_display_state()
+
+    @override
+    def on_purchase_process_begin(
+        self, item_id: str, user_initiated: bool
+    ) -> None:
+
+        # Do the default thing (announces 'updating account...')
+        super().on_purchase_process_begin(
+            item_id=item_id, user_initiated=user_initiated
+        )
+
+        # Pause the root ui so stuff like token counts don't change
+        # automatically, allowing us to animate them. Note that we
+        # need to explicitly kill this pause if we are deactivated since
+        # we wouldn't get the on_purchase_process_end() call; the next
+        # app-mode would.
+        self._purchase_ui_pause = bauiv1.RootUIUpdatePause()
+
+        # Also grab our last known token count here to plug into animations.
+        # We need to do this here before the purchase gets submitted so that
+        # we know we're seeing the old value.
+        assert babase.app.classic is not None
+        self._last_tokens_value = babase.app.classic.tokens
+
+    @override
+    def on_purchase_process_end(
+        self, item_id: str, user_initiated: bool, applied: bool
+    ) -> None:
+
+        # Let the UI auto-update again after any animations we may apply
+        # here.
+        self._purchase_ui_pause = None
+
+        # Ignore user_initiated; we want to announce newly applied stuff
+        # even if it was from a different launch or client or whatever.
+        del user_initiated
+
+        # If the purchase wasn't applied, do nothing. This likely means it
+        # was redundant or something else harmless.
+        if not applied:
+            return
+
+        if item_id.startswith('tokens'):
+            if item_id == 'tokens1':
+                tokens = bacommon.bs.TOKENS1_COUNT
+                tokens_str = str(tokens)
+                anim_time = 2.0
+            elif item_id == 'tokens2':
+                tokens = bacommon.bs.TOKENS2_COUNT
+                tokens_str = str(tokens)
+                anim_time = 2.5
+            elif item_id == 'tokens3':
+                tokens = bacommon.bs.TOKENS3_COUNT
+                tokens_str = str(tokens)
+                anim_time = 3.0
+            elif item_id == 'tokens4':
+                tokens = bacommon.bs.TOKENS4_COUNT
+                tokens_str = str(tokens)
+                anim_time = 3.5
+            else:
+                tokens = 0
+                tokens_str = '???'
+                anim_time = 2.5
+                logging.warning(
+                    'Unhandled item_id in on_purchase_process_end: %s', item_id
+                )
+
+            assert babase.app.classic is not None
+            effects: list[bacommon.bs.ClientEffect] = [
+                bacommon.bs.ClientEffectTokensAnimation(
+                    duration=anim_time,
+                    startvalue=self._last_tokens_value,
+                    endvalue=self._last_tokens_value + tokens,
+                ),
+                bacommon.bs.ClientEffectDelay(anim_time),
+                bacommon.bs.ClientEffectScreenMessage(
+                    message='You got ${COUNT} tokens!',
+                    subs=['${COUNT}', tokens_str],
+                    color=(0, 1, 0),
+                ),
+                bacommon.bs.ClientEffectSound(
+                    sound=bacommon.bs.ClientEffectSound.Sound.CASH_REGISTER
+                ),
+            ]
+            babase.app.classic.run_bs_client_effects(effects)
+
+        elif item_id.startswith('gold_pass'):
+            babase.screenmessage(
+                babase.Lstr(
+                    translate=('serverResponses', 'You got a ${ITEM}!'),
+                    subs=[
+                        (
+                            '${ITEM}',
+                            babase.Lstr(resource='goldPass.goldPassText'),
+                        )
+                    ],
+                ),
+                color=(0, 1, 0),
+            )
+            if babase.asset_loads_allowed():
+                babase.getsimplesound('cashRegister').play()
+
+        else:
+
+            # Fallback: simply announce item id.
+            logging.warning(
+                'on_purchase_process_end got unexpected item_id: %s.', item_id
+            )
+            babase.screenmessage(
+                babase.Lstr(
+                    translate=('serverResponses', 'You got a ${ITEM}!'),
+                    subs=[('${ITEM}', item_id)],
+                ),
+                color=(0, 1, 0),
+            )
+            if babase.asset_loads_allowed():
+                babase.getsimplesound('cashRegister').play()
+
+    def on_engine_will_reset(self) -> None:
+        """Called just before classic resets the engine.
+
+        This happens at various times such as session switches.
+        """
+
+        self._save_account_display_state()
+
+    def on_engine_did_reset(self) -> None:
+        """Called just after classic resets the engine.
+
+        This happens at various times such as session switches.
+        """
+
+        # Restore any old league vis state we had; this allows the user
+        # to see animations for league improvements or other changes
+        # that have occurred since the last time we were visible.
+        self._restore_account_display_state()
 
     def _update_for_primary_account(
         self, account: babase.AccountV2Handle | None
@@ -177,10 +331,22 @@ class ClassicAppMode(babase.AppMode):
 
         assert plus is not None
 
+        classic = babase.app.classic
+        assert classic is not None
+
         if account is not None:
+            self._current_account_id = account.accountid
             babase.set_ui_account_state(True, account.tag)
+            self._should_restore_account_display_state = True
         else:
+            # If we had an account, save any existing league vis state
+            # so we'll properly animate to new values the next time we
+            # sign in.
+            self._save_account_display_state()
+
+            self._current_account_id = None
             babase.set_ui_account_state(False)
+            self._should_restore_account_display_state = False
 
         # For testing subscription functionality.
         if os.environ.get('BA_SUBSCRIPTION_TEST') == '1':
@@ -195,25 +361,40 @@ class ClassicAppMode(babase.AppMode):
             self._test_sub = None
 
         if account is None:
+            classic.gold_pass = False
+            classic.tokens = 0
+            classic.chest_dock_full = False
+            classic.remove_ads = False
             self._account_data_sub = None
             _baclassic.set_root_ui_account_values(
-                tickets_text='',
-                tokens_text='',
-                league_rank_text='',
+                tickets=-1,
+                tokens=-1,
                 league_type='',
+                league_number=-1,
+                league_rank=-1,
                 achievements_percent_text='',
                 level_text='',
                 xp_text='',
-                inbox_count_text='',
+                inbox_count=-1,
+                inbox_count_is_max=False,
+                inbox_announce_text='',
                 gold_pass=False,
                 chest_0_appearance='',
                 chest_1_appearance='',
                 chest_2_appearance='',
                 chest_3_appearance='',
+                chest_0_create_time=-1.0,
+                chest_1_create_time=-1.0,
+                chest_2_create_time=-1.0,
+                chest_3_create_time=-1.0,
                 chest_0_unlock_time=-1.0,
                 chest_1_unlock_time=-1.0,
                 chest_2_unlock_time=-1.0,
                 chest_3_unlock_time=-1.0,
+                chest_0_unlock_tokens=-1,
+                chest_1_unlock_tokens=-1,
+                chest_2_unlock_tokens=-1,
+                chest_3_unlock_tokens=-1,
                 chest_0_ad_allow_time=-1.0,
                 chest_1_ad_allow_time=-1.0,
                 chest_2_ad_allow_time=-1.0,
@@ -242,7 +423,7 @@ class ClassicAppMode(babase.AppMode):
         # connectivity state here we get UI stuff un-fading a moment or
         # two before values appear (since the subscriptions have not
         # sent us any values yet) which looks odd.
-        _baclassic.set_root_ui_have_live_values(
+        _baclassic.set_have_live_account_values(
             self._have_connectivity and self._have_account_values
         )
 
@@ -250,32 +431,50 @@ class ClassicAppMode(babase.AppMode):
         print(f'GOT SUB TEST UPDATE: {val}')
 
     def _on_classic_account_data_change(
-        self, val: bacommon.cloud.BSClassicAccountLiveData
+        self, val: bacommon.bs.ClassicAccountLiveData
     ) -> None:
-        # print('ACCOUNT CHANGED:', val)
         achp = round(val.achievements / max(val.achievements_total, 1) * 100.0)
-        ibc = str(val.inbox_count)
-        if val.inbox_count_is_max:
-            ibc += '+'
+        # ibc = str(val.inbox_count)
+        # if val.inbox_count_is_max:
+        #     ibc += '+'
 
         chest0 = val.chests.get('0')
         chest1 = val.chests.get('1')
         chest2 = val.chests.get('2')
         chest3 = val.chests.get('3')
 
+        # Keep a few handy values on classic updated with the latest
+        # data.
+        classic = babase.app.classic
+        assert classic is not None
+        classic.remove_ads = val.remove_ads
+        classic.gold_pass = val.gold_pass
+        classic.tokens = val.tokens
+        classic.chest_dock_full = (
+            chest0 is not None
+            and chest1 is not None
+            and chest2 is not None
+            and chest3 is not None
+        )
+
         _baclassic.set_root_ui_account_values(
-            tickets_text=str(val.tickets),
-            tokens_text=str(val.tokens),
-            league_rank_text=(
-                '-' if val.league_rank is None else f'#{val.league_rank}'
-            ),
+            tickets=val.tickets,
+            tokens=val.tokens,
             league_type=(
                 '' if val.league_type is None else val.league_type.value
             ),
+            league_number=(-1 if val.league_num is None else val.league_num),
+            league_rank=(-1 if val.league_rank is None else val.league_rank),
             achievements_percent_text=f'{achp}%',
             level_text=str(val.level),
             xp_text=f'{val.xp}/{val.xpmax}',
-            inbox_count_text=ibc,
+            inbox_count=val.inbox_count,
+            inbox_count_is_max=val.inbox_count_is_max,
+            inbox_announce_text=(
+                babase.Lstr(resource='unclaimedPrizesText').evaluate()
+                if val.inbox_contains_prize
+                else ''
+            ),
             gold_pass=val.gold_pass,
             chest_0_appearance=(
                 '' if chest0 is None else chest0.appearance.value
@@ -289,21 +488,71 @@ class ClassicAppMode(babase.AppMode):
             chest_3_appearance=(
                 '' if chest3 is None else chest3.appearance.value
             ),
+            chest_0_create_time=(
+                -1.0 if chest0 is None else chest0.create_time.timestamp()
+            ),
+            chest_1_create_time=(
+                -1.0 if chest1 is None else chest1.create_time.timestamp()
+            ),
+            chest_2_create_time=(
+                -1.0 if chest2 is None else chest2.create_time.timestamp()
+            ),
+            chest_3_create_time=(
+                -1.0 if chest3 is None else chest3.create_time.timestamp()
+            ),
             chest_0_unlock_time=(
                 -1.0 if chest0 is None else chest0.unlock_time.timestamp()
             ),
-            chest_1_unlock_time=-1.0,
-            chest_2_unlock_time=-1.0,
-            chest_3_unlock_time=-1.0,
+            chest_1_unlock_time=(
+                -1.0 if chest1 is None else chest1.unlock_time.timestamp()
+            ),
+            chest_2_unlock_time=(
+                -1.0 if chest2 is None else chest2.unlock_time.timestamp()
+            ),
+            chest_3_unlock_time=(
+                -1.0 if chest3 is None else chest3.unlock_time.timestamp()
+            ),
+            chest_0_unlock_tokens=(
+                -1 if chest0 is None else chest0.unlock_tokens
+            ),
+            chest_1_unlock_tokens=(
+                -1 if chest1 is None else chest1.unlock_tokens
+            ),
+            chest_2_unlock_tokens=(
+                -1 if chest2 is None else chest2.unlock_tokens
+            ),
+            chest_3_unlock_tokens=(
+                -1 if chest3 is None else chest3.unlock_tokens
+            ),
             chest_0_ad_allow_time=(
                 -1.0
                 if chest0 is None or chest0.ad_allow_time is None
                 else chest0.ad_allow_time.timestamp()
             ),
-            chest_1_ad_allow_time=-1.0,
-            chest_2_ad_allow_time=-1.0,
-            chest_3_ad_allow_time=-1.0,
+            chest_1_ad_allow_time=(
+                -1.0
+                if chest1 is None or chest1.ad_allow_time is None
+                else chest1.ad_allow_time.timestamp()
+            ),
+            chest_2_ad_allow_time=(
+                -1.0
+                if chest2 is None or chest2.ad_allow_time is None
+                else chest2.ad_allow_time.timestamp()
+            ),
+            chest_3_ad_allow_time=(
+                -1.0
+                if chest3 is None or chest3.ad_allow_time is None
+                else chest3.ad_allow_time.timestamp()
+            ),
         )
+        if self._should_restore_account_display_state:
+            # If we have a previous display-state for this account,
+            # restore it. This will cause us to animate or otherwise
+            # display league changes that have occurred since we were
+            # last visible. Note we need to do this *after* setting real
+            # vals so there is a current state to animate to.
+            self._restore_account_display_state()
+            self._should_restore_account_display_state = False
 
         # Note that we have values and updated faded state accordingly.
         self._have_account_values = True
@@ -621,3 +870,38 @@ class ClassicAppMode(babase.AppMode):
                 ),
             )
         )
+
+    def _save_account_display_state(self) -> None:
+
+        # If we currently have an account, save the state of what we're
+        # currently displaying for it in the root ui/etc. We'll then
+        # restore that state as a starting point the next time we are
+        # active. This allows things like league rank changes to be
+        # properly animated even if they occurred while we were offline
+        # or while the UI was hidden.
+
+        if self._current_account_id is not None:
+            vals = _baclassic.get_account_display_state()
+            if vals is not None:
+                # Stuff our account id in there and save it to our
+                # config.
+                assert 'a' not in vals
+                vals['a'] = self._current_account_id
+                cfg = babase.app.config
+                cfg[self._LEAGUE_VIS_VALS_CONFIG_KEY] = vals
+                cfg.commit()
+
+    def _restore_account_display_state(self) -> None:
+
+        # If we currently have an account and it matches the
+        # display-state we have stored in the config, restore the state.
+        if self._current_account_id is not None:
+            cfg = babase.app.config
+            vals = cfg.get(self._LEAGUE_VIS_VALS_CONFIG_KEY)
+            if isinstance(vals, dict):
+                valsaccount = vals.get('a')
+                if (
+                    isinstance(valsaccount, str)
+                    and valsaccount == self._current_account_id
+                ):
+                    _baclassic.set_account_display_state(vals)

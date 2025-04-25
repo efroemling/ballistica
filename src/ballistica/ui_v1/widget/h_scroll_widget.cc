@@ -252,11 +252,13 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           break;
         }
         float child_w = (**i).GetWidth();
-        float sRight = width() - border_width_;
-        float sLeft = border_width_;
-        float rate =
-            (child_w - (sRight - sLeft))
-            / ((1.0f - ((sRight - sLeft) / child_w)) * (sRight - sLeft));
+        float s_right = width() - border_width_;
+        float s_left = border_width_;
+        // Note: need a max on denominator here or we can get nan due to
+        // divide-by-zero.
+        float rate = (child_w - (s_right - s_left))
+                     / std::max(1.0f, ((1.0f - ((s_right - s_left) / child_w))
+                                       * (s_right - s_left)));
         child_offset_h_ = thumb_click_start_child_offset_h_
                           - rate * (x - thumb_click_start_h_);
 
@@ -725,7 +727,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             c.ScopedScissor({l + border_width_, b + border_height_ + 1,
                              l + (width()), b + (height() * 0.995f)});
         auto xf = c.ScopedTransform();
-        c.Translate(thumb_center_x_, thumb_center_y_, 0.8f);
+        c.Translate(thumb_center_x_, thumb_center_y_, 0.75f);
         c.Scale(-thumb_width_, thumb_height_, 0.1f);
         c.FlipCullFace();
         c.Rotate(-90, 0, 0, 1);
@@ -778,9 +780,10 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   if (draw_transparent && IsHierarchySelected()
       && g_base->ui->ShouldHighlightWidgets() && highlight_
       && border_opacity_ > 0.0f) {
-    float m = 0.8f
-              + std::abs(sinf(static_cast<float>(current_time_ms) * 0.006467f))
-                    * 0.2f * border_opacity_;
+    float m = (0.8f
+               + std::abs(sinf(static_cast<float>(current_time_ms) * 0.006467f))
+                     * 0.2f)
+              * border_opacity_;
 
     if (glow_dirty_) {
       float r2 = l + width();

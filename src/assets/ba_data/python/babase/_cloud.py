@@ -14,8 +14,8 @@ if TYPE_CHECKING:
 class CloudSubscription:
     """User handle to a subscription to some cloud data.
 
-    Do not instantiate these directly; use the subscribe methods
-    in *.app.plus.cloud to create them.
+    Do not instantiate these directly; use the subscribe methods in
+    :class:`~baplus.CloudSubsystem` to create them.
     """
 
     def __init__(self, subscription_id: int) -> None:

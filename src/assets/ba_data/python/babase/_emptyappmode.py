@@ -17,7 +17,10 @@ if TYPE_CHECKING:
 
 # ba_meta export babase.AppMode
 class EmptyAppMode(AppMode):
-    """An AppMode that does not do much at all."""
+    """An AppMode that does not do much at all.
+
+    :meta private:
+    """
 
     @override
     @classmethod
@@ -26,7 +29,7 @@ class EmptyAppMode(AppMode):
 
     @override
     @classmethod
-    def _can_handle_intent(cls, intent: AppIntent) -> bool:
+    def can_handle_intent_impl(cls, intent: AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(intent, AppIntentExec | AppIntentDefault)
 

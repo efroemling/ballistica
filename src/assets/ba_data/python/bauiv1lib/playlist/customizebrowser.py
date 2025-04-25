@@ -7,14 +7,12 @@ from __future__ import annotations
 import copy
 import time
 
-# import logging
 from typing import TYPE_CHECKING, override
 
-# import bascenev1 as bs
 import bauiv1 as bui
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable
 
     import bascenev1 as bs
 
@@ -31,7 +29,6 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         select_playlist: str | None = None,
     ):
-        # Yes this needs tidying.
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
@@ -43,34 +40,58 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         self._r = 'gameListWindow'
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 970.0 if uiscale is bui.UIScale.SMALL else 650.0
-        x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
-        yoffs = -51 if uiscale is bui.UIScale.SMALL else 0.0
+        self._width = 1200.0 if uiscale is bui.UIScale.SMALL else 650.0
         self._height = (
-            440.0
+            800.0
             if uiscale is bui.UIScale.SMALL
             else 420.0 if uiscale is bui.UIScale.MEDIUM else 500.0
         )
 
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.8
+            if uiscale is bui.UIScale.SMALL
+            else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 70, screensize[0] / scale)
+        target_height = min(self._height - 40, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = (
+            0.5 * self._height
+            + 0.5 * target_height
+            + (30.0 if uiscale is bui.UIScale.SMALL else 50)
+        )
+
+        self._button_width = 90
+        self._x_inset = 10
+        self._scroll_width = (
+            target_width - self._button_width - 2.0 * self._x_inset
+        )
+        self._scroll_height = target_height - 75
+        self._scroll_bottom = yoffs - 98 - self._scroll_height
+        self._button_height = self._scroll_height / 6.0
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                scale=(
-                    1.8
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
+                scale=scale,
                 toolbar_visibility=(
                     'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
                     else 'menu_full'
                 ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         self._back_button: bui.Widget | None
@@ -82,29 +103,18 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(43 + x_inset, self._height - 60 + yoffs),
-                size=(160, 68),
+                position=(43, yoffs - 87),
+                size=(60, 60),
                 scale=0.77,
                 autoselect=True,
                 text_scale=1.3,
-                label=bui.Lstr(resource='backText'),
-                button_type='back',
-            )
-            bui.buttonwidget(
-                edit=self._back_button,
-                button_type='backSmall',
-                size=(60, 60),
                 label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
             )
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(
-                0,
-                self._height
-                - (47 if uiscale is bui.UIScale.SMALL else 47)
-                + yoffs,
-            ),
+            position=(0, yoffs - (77 if uiscale is bui.UIScale.SMALL else 77)),
             size=(self._width, 25),
             text=bui.Lstr(
                 resource=f'{self._r}.titleText',
@@ -116,164 +126,88 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             v_align='center',
         )
 
-        v = self._height - 59.0 + yoffs
-        h = 41 + x_inset
+        h = self._width * 0.5 - (self._scroll_width + self._button_width) * 0.5
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
         self._lock_images: list[bui.Widget] = []
-        lock_tex = bui.gettexture('lock')
+        xmargin = 0.06
+        ymargin = 0.05
 
-        scl = (
-            1.1
-            if uiscale is bui.UIScale.SMALL
-            else 1.27 if uiscale is bui.UIScale.MEDIUM else 1.57
-        )
-        scl *= 0.63
-        v -= 65.0 * scl
-        new_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(h, v),
-            size=(90, 58.0 * scl),
-            on_activate_call=self._new_playlist,
-            color=b_color,
-            autoselect=True,
-            button_type='square',
-            textcolor=b_textcolor,
-            text_scale=0.7,
-            label=bui.Lstr(
+        def _make_button(
+            i: int, label: bui.Lstr, call: Callable[[], None]
+        ) -> bui.Widget:
+            v = self._scroll_bottom + self._button_height * i
+            return bui.buttonwidget(
+                parent=self._root_widget,
+                position=(
+                    h + xmargin * self._button_width,
+                    v + ymargin * self._button_height,
+                ),
+                size=(
+                    self._button_width * (1.0 - 2.0 * xmargin),
+                    self._button_height * (1.0 - 2.0 * ymargin),
+                ),
+                on_activate_call=call,
+                color=b_color,
+                autoselect=True,
+                button_type='square',
+                textcolor=b_textcolor,
+                text_scale=0.7,
+                label=label,
+            )
+
+        new_button = _make_button(
+            5,
+            bui.Lstr(
                 resource='newText', fallback_resource=f'{self._r}.newText'
             ),
+            self._new_playlist,
         )
-        self._lock_images.append(
-            bui.imagewidget(
-                parent=self._root_widget,
-                size=(30, 30),
-                draw_controller=btn,
-                position=(h - 10, v + 58.0 * scl - 28),
-                texture=lock_tex,
-            )
-        )
-
-        v -= 65.0 * scl
-        self._edit_button = edit_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(h, v),
-            size=(90, 58.0 * scl),
-            on_activate_call=self._edit_playlist,
-            color=b_color,
-            autoselect=True,
-            textcolor=b_textcolor,
-            button_type='square',
-            text_scale=0.7,
-            label=bui.Lstr(
-                resource='editText', fallback_resource=f'{self._r}.editText'
+        self._edit_button = _make_button(
+            4,
+            bui.Lstr(
+                resource='editText',
+                fallback_resource=f'{self._r}.editText',
             ),
-        )
-        self._lock_images.append(
-            bui.imagewidget(
-                parent=self._root_widget,
-                size=(30, 30),
-                draw_controller=btn,
-                position=(h - 10, v + 58.0 * scl - 28),
-                texture=lock_tex,
-            )
+            self._edit_playlist,
         )
 
-        v -= 65.0 * scl
-        duplicate_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(h, v),
-            size=(90, 58.0 * scl),
-            on_activate_call=self._duplicate_playlist,
-            color=b_color,
-            autoselect=True,
-            textcolor=b_textcolor,
-            button_type='square',
-            text_scale=0.7,
-            label=bui.Lstr(
+        duplicate_button = _make_button(
+            3,
+            bui.Lstr(
                 resource='duplicateText',
                 fallback_resource=f'{self._r}.duplicateText',
             ),
-        )
-        self._lock_images.append(
-            bui.imagewidget(
-                parent=self._root_widget,
-                size=(30, 30),
-                draw_controller=btn,
-                position=(h - 10, v + 58.0 * scl - 28),
-                texture=lock_tex,
-            )
+            self._duplicate_playlist,
         )
 
-        v -= 65.0 * scl
-        delete_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(h, v),
-            size=(90, 58.0 * scl),
-            on_activate_call=self._delete_playlist,
-            color=b_color,
-            autoselect=True,
-            textcolor=b_textcolor,
-            button_type='square',
-            text_scale=0.7,
-            label=bui.Lstr(
+        delete_button = _make_button(
+            2,
+            bui.Lstr(
                 resource='deleteText', fallback_resource=f'{self._r}.deleteText'
             ),
-        )
-        self._lock_images.append(
-            bui.imagewidget(
-                parent=self._root_widget,
-                size=(30, 30),
-                draw_controller=btn,
-                position=(h - 10, v + 58.0 * scl - 28),
-                texture=lock_tex,
-            )
-        )
-        v -= 65.0 * scl
-        self._import_button = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(h, v),
-            size=(90, 58.0 * scl),
-            on_activate_call=self._import_playlist,
-            color=b_color,
-            autoselect=True,
-            textcolor=b_textcolor,
-            button_type='square',
-            text_scale=0.7,
-            label=bui.Lstr(resource='importText'),
-        )
-        v -= 65.0 * scl
-        btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(h, v),
-            size=(90, 58.0 * scl),
-            on_activate_call=self._share_playlist,
-            color=b_color,
-            autoselect=True,
-            textcolor=b_textcolor,
-            button_type='square',
-            text_scale=0.7,
-            label=bui.Lstr(resource='shareText'),
-        )
-        self._lock_images.append(
-            bui.imagewidget(
-                parent=self._root_widget,
-                size=(30, 30),
-                draw_controller=btn,
-                position=(h - 10, v + 58.0 * scl - 28),
-                texture=lock_tex,
-            )
+            self._delete_playlist,
         )
 
-        v = self._height - 75 + yoffs
-        self._scroll_height = self._height - (
-            180 if uiscale is bui.UIScale.SMALL else 119
+        self._import_button = _make_button(
+            1, bui.Lstr(resource='importText'), self._import_playlist
         )
+
+        share_button = _make_button(
+            0, bui.Lstr(resource='shareText'), self._share_playlist
+        )
+
         scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            position=(140 + x_inset, v - self._scroll_height),
-            size=(self._width - (180 + 2 * x_inset), self._scroll_height + 10),
+            size=(self._scroll_width, self._scroll_height),
+            position=(
+                self._width * 0.5
+                - (self._scroll_width + self._button_width) * 0.5
+                + self._button_width,
+                self._scroll_bottom,
+            ),
             highlight=False,
+            border_opacity=0.4,
         )
         if self._back_button is not None:
             bui.widget(edit=self._back_button, right_widget=scrollwidget)
@@ -290,7 +224,14 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         h += 210
 
-        for btn in [new_button, delete_button, edit_button, duplicate_button]:
+        for btn in [
+            new_button,
+            delete_button,
+            self._edit_button,
+            duplicate_button,
+            self._import_button,
+            share_button,
+        ]:
             bui.widget(edit=btn, right_widget=scrollwidget)
         bui.widget(
             edit=scrollwidget,

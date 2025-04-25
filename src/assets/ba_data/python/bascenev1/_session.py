@@ -40,58 +40,59 @@ def set_max_players_override(max_players: int | None) -> None:
 
 
 class Session:
-    """Defines a high level series of bascenev1.Activity-es.
+    """Wrangles a series of :class:`~bascenev1.Activity` instances.
 
-    Category: **Gameplay Classes**
+    Examples of sessions are :class:`bascenev1.FreeForAllSession`,
+    :class:`bascenev1.DualTeamSession`, and
+    :class:`bascenev1.CoopSession`.
 
-    Examples of sessions are bascenev1.FreeForAllSession,
-    bascenev1.DualTeamSession, and bascenev1.CoopSession.
-
-    A Session is responsible for wrangling and transitioning between various
-    bascenev1.Activity instances such as mini-games and score-screens, and for
-    maintaining state between them (players, teams, score tallies, etc).
+    A session is responsible for wrangling and transitioning between
+    various activity instances such as mini-games and score-screens, and
+    for maintaining state between them (players, teams, score tallies,
+    etc).
     """
 
+    #: Whether this session groups players into an explicit set of teams.
+    #: If this is off, a unique team is generated for each player that
+    #: joins.
     use_teams: bool = False
-    """Whether this session groups players into an explicit set of
-       teams. If this is off, a unique team is generated for each
-       player that joins."""
 
+    #: Whether players on a team should all adopt the colors of that team
+    #: instead of their own profile colors. This only applies if
+    #: :attr:`use_teams` is enabled.
     use_team_colors: bool = True
-    """Whether players on a team should all adopt the colors of that
-       team instead of their own profile colors. This only applies if
-       use_teams is enabled."""
 
-    # Note: even though these are instance vars, we annotate and document them
-    # at the class level so that looks better and nobody get lost while
-    # reading large __init__
+    # Note: even though these are instance vars, we annotate and
+    # document them at the class level so that looks better and nobody
+    # get lost while reading large __init__
 
+    #: The lobby instance where new players go to select a
+    #: profile/team/etc. before being added to games. Be aware this value
+    #: may be None if a session does not allow any such selection.
     lobby: bascenev1.Lobby
-    """The baclassic.Lobby instance where new bascenev1.Player-s go to select
-       a Profile/Team/etc. before being added to games.
-       Be aware this value may be None if a Session does not allow
-       any such selection."""
 
+    #: The maximum number of players allowed in the Session.
     max_players: int
-    """The maximum number of players allowed in the Session."""
 
+    #: The minimum number of players who must be present for the Session
+    #: to proceed past the initial joining screen
     min_players: int
-    """The minimum number of players who must be present for the Session
-       to proceed past the initial joining screen"""
 
+    #: All players in the session. Note that most things should use the
+    #: list of :class:`~bascenev1.Player` instances found in the
+    #: :class:`~bascenev1.Activity`; not this. Some players, such as
+    #: those who have not yet selected a character, will only be found on
+    #: this list.
     sessionplayers: list[bascenev1.SessionPlayer]
-    """All bascenev1.SessionPlayers in the Session. Most things should use
-       the list of bascenev1.Player-s in bascenev1.Activity; not this. Some
-       players, such as those who have not yet selected a character, will
-       only be found on this list."""
 
+    #: A shared dictionary for objects to use as storage on this session.
+    #: Ensure that keys here are unique to avoid collisions.
     customdata: dict
-    """A shared dictionary for objects to use as storage on this session.
-       Ensure that keys here are unique to avoid collisions."""
 
+    #: All the teams in the session. Most things will operate on the list
+    #: of :class:`~bascenev1.Team` instances found in an
+    #: :class:`~bascenev1.Activity`; not this.
     sessionteams: list[bascenev1.SessionTeam]
-    """All the bascenev1.SessionTeams in the Session. Most things should
-       use the list of bascenev1.Team-s in bascenev1.Activity; not this."""
 
     def __init__(
         self,
@@ -243,7 +244,7 @@ class Session:
 
     @property
     def sessionglobalsnode(self) -> bascenev1.Node:
-        """The sessionglobals bascenev1.Node for the session."""
+        """The sessionglobals node for the session."""
         node = self._sessionglobalsnode
         if not node:
             raise babase.NodeNotFoundError()
@@ -254,15 +255,15 @@ class Session:
     ) -> bool:
         """Ask ourself if we should allow joins during an Activity.
 
-        Note that for a join to be allowed, both the Session and Activity
-        have to be ok with it (via this function and the
-        Activity.allow_mid_activity_joins property.
+        Note that for a join to be allowed, both the session and
+        activity have to be ok with it (via this function and the
+        :attr:`bascenev1.Activity.allow_mid_activity_joins` property.
         """
         del activity  # Unused.
         return True
 
     def on_player_request(self, player: bascenev1.SessionPlayer) -> bool:
-        """Called when a new bascenev1.Player wants to join the Session.
+        """Called when a new player wants to join the session.
 
         This should return True or False to accept/reject.
         """
@@ -426,10 +427,10 @@ class Session:
                 )
 
     def end(self) -> None:
-        """Initiates an end to the session and a return to the main menu.
+        """Initiate an end to the session and a return to the main menu.
 
-        Note that this happens asynchronously, allowing the
-        session and its activities to shut down gracefully.
+        Note that this happens asynchronously, allowing the session and
+        its activities to shut down gracefully.
         """
         self._wants_to_end = True
         if self._next_activity is None:
@@ -457,10 +458,10 @@ class Session:
             self._ending = True  # Prevent further actions.
 
     def on_team_join(self, team: bascenev1.SessionTeam) -> None:
-        """Called when a new bascenev1.Team joins the session."""
+        """Called when a new team joins the session."""
 
     def on_team_leave(self, team: bascenev1.SessionTeam) -> None:
-        """Called when a bascenev1.Team is leaving the session."""
+        """Called when a team is leaving the session."""
 
     def end_activity(
         self,
@@ -469,12 +470,12 @@ class Session:
         delay: float,
         force: bool,
     ) -> None:
-        """Commence shutdown of a bascenev1.Activity (if not already occurring).
+        """Commence shutdown of an activity (if not already occurring).
 
-        'delay' is the time delay before the Activity actually ends
-        (in seconds). Further calls to end() will be ignored up until
-        this time, unless 'force' is True, in which case the new results
-        will replace the old.
+        'delay' is the time delay before the activity actually ends (in
+        seconds). Further calls to end the activity will be ignored up
+        until this time, unless 'force' is True, in which case the new
+        results will replace the old.
         """
         # Only pay attention if this is coming from our current activity.
         if activity is not self._activity_retained:
@@ -530,13 +531,13 @@ class Session:
             self._session._in_set_activity = False
 
     def setactivity(self, activity: bascenev1.Activity) -> None:
-        """Assign a new current bascenev1.Activity for the session.
+        """Assign a new current activity for the session.
 
         Note that this will not change the current context to the new
-        Activity's. Code must be run in the new activity's methods
-        (on_transition_in, etc) to get it. (so you can't do
-        session.setactivity(foo) and then bascenev1.newnode() to add a node
-        to foo)
+        activity's. Code must be run in the new activity's methods
+        (:meth:`~bascenev1.Activity.on_transition_in()`, etc) to get it.
+        (so you can't do ``session.setactivity(foo)`` and then
+        ``bascenev1.newnode()`` to add a node to foo).
         """
 
         # Make sure we don't get called recursively.
@@ -656,16 +657,16 @@ class Session:
     def on_activity_end(
         self, activity: bascenev1.Activity, results: Any
     ) -> None:
-        """Called when the current bascenev1.Activity has ended.
+        """Called when the current activity has ended.
 
-        The bascenev1.Session should look at the results and start
-        another bascenev1.Activity.
+        The session should look at the results and start another
+        activity.
         """
 
     def begin_next_activity(self) -> None:
         """Called once the previous activity has been totally torn down.
 
-        This means we're ready to begin the next one
+        This means we're ready to begin the next one.
         """
         if self._next_activity is None:
             # Should this ever happen?
@@ -742,7 +743,10 @@ class Session:
     def transitioning_out_activity_was_freed(
         self, can_show_ad_on_death: bool
     ) -> None:
-        """(internal)"""
+        """(internal)
+
+        :meta private:
+        """
         # pylint: disable=cyclic-import
 
         # Since things should be generally still right now, it's a good time

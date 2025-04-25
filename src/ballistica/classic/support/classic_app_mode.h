@@ -21,7 +21,7 @@
 
 namespace ballistica::classic {
 
-const int kMaxPartyNameCombinedSize = 25;
+const int kMaxPartyNameCombinedSize{25};
 
 /// Defines high level app behavior when we're active.
 class ClassicAppMode : public base::AppMode {
@@ -215,20 +215,41 @@ class ClassicAppMode : public base::AppMode {
     public_party_public_address_ipv6_ = val;
   }
 
-  void SetRootUITicketsMeterText(const std::string text);
-  void SetRootUITokensMeterText(const std::string text);
-  void SetRootUILeagueRankText(const std::string text);
-  void SetRootUILeagueType(const std::string text);
+  void AnimateRootUIChestUnlockTime(const std::string& chestid,
+                                    seconds_t duration, seconds_t startvalue,
+                                    seconds_t endvalue);
+  void AnimateRootUITickets(seconds_t duration, int startvalue, int endvalue);
+  void AnimateRootUITokens(seconds_t duration, int startvalue, int endvalue);
+  void SetRootUITicketsMeterValue(int value);
+  void SetRootUITokensMeterValue(int value);
+  void SetRootUILeagueValues(const std::string league_type, int league_number,
+                             int rank);
   void SetRootUIAchievementsPercentText(const std::string text);
   void SetRootUILevelText(const std::string text);
   void SetRootUIXPText(const std::string text);
-  void SetRootUIInboxCountText(const std::string text);
+  void SetRootUIInboxState(int count, bool is_max,
+                           const std::string& announce_text);
   void SetRootUIGoldPass(bool enabled);
-  void SetRootUIChests(const std::string& chest_0_appearance,
-                       const std::string& chest_1_appearance,
-                       const std::string& chest_2_appearance,
-                       const std::string& chest_3_appearance);
-  void SetRootUIHaveLiveValues(bool val);
+  void SetRootUIChests(
+      const std::string& chest_0_appearance,
+      const std::string& chest_1_appearance,
+      const std::string& chest_2_appearance,
+      const std::string& chest_3_appearance, seconds_t chest_0_create_time,
+      seconds_t chest_1_create_time, seconds_t chest_2_create_time,
+      seconds_t chest_3_create_time, seconds_t chest_0_unlock_time,
+      seconds_t chest_1_unlock_time, seconds_t chest_2_unlock_time,
+      seconds_t chest_3_unlock_time, int chest_0_unlock_tokens,
+      int chest_1_unlock_tokens, int chest_2_unlock_tokens,
+      int chest_3_unlock_tokens, seconds_t chest_0_ad_allow_time,
+      seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
+      seconds_t chest_3_ad_allow_time);
+  void SetHaveLiveAccountValues(bool val);
+  void GetAccountDisplayState(std::string* league_type, int* league_number,
+                              int* league_rank, int* inbox_count,
+                              bool* inbox_count_is_max);
+  void SetAccountDisplayState(const std::string& league_type, int league_number,
+                              int league_rank, int inbox_count,
+                              bool inbox_count_is_max);
 
  private:
   ClassicAppMode();
@@ -246,10 +267,24 @@ class ClassicAppMode : public base::AppMode {
   // forward declarations of their template params.
   std::map<std::string, ScanResultsEntryPriv_> scan_results_;
   std::mutex scan_results_mutex_;
+
   std::string root_ui_chest_0_appearance_;
   std::string root_ui_chest_1_appearance_;
   std::string root_ui_chest_2_appearance_;
   std::string root_ui_chest_3_appearance_;
+  seconds_t root_ui_chest_0_create_time_;
+  seconds_t root_ui_chest_1_create_time_;
+  seconds_t root_ui_chest_2_create_time_;
+  seconds_t root_ui_chest_3_create_time_;
+  seconds_t root_ui_chest_0_unlock_time_;
+  seconds_t root_ui_chest_1_unlock_time_;
+  seconds_t root_ui_chest_2_unlock_time_;
+  seconds_t root_ui_chest_3_unlock_time_;
+  seconds_t root_ui_chest_0_ad_allow_time_;
+  seconds_t root_ui_chest_1_ad_allow_time_;
+  seconds_t root_ui_chest_2_ad_allow_time_;
+  seconds_t root_ui_chest_3_ad_allow_time_;
+
   uint32_t next_scan_query_id_{};
   int scan_socket_{-1};
   int host_protocol_version_{-1};
@@ -273,6 +308,7 @@ class ClassicAppMode : public base::AppMode {
   bool replay_paused_{};
   bool root_ui_gold_pass_{};
   bool root_ui_have_live_values_{};
+  bool root_ui_highlight_potential_token_purchases_{};
 
   ui_v1::UIV1FeatureSet* uiv1_{};
   cJSON* game_roster_{};
@@ -301,6 +337,15 @@ class ClassicAppMode : public base::AppMode {
   int public_party_max_size_{8};
   int public_party_player_count_{0};
   int public_party_max_player_count_{8};
+  int root_ui_tickets_meter_value_{-1};
+  int root_ui_tokens_meter_value_{-1};
+  int root_ui_league_rank_{-1};
+  int root_ui_league_number_{-1};
+  int root_ui_inbox_count_{-1};
+  int root_ui_chest_0_unlock_tokens_;
+  int root_ui_chest_1_unlock_tokens_;
+  int root_ui_chest_2_unlock_tokens_;
+  int root_ui_chest_3_unlock_tokens_;
   float debug_speed_mult_{1.0f};
   float replay_speed_mult_{1.0f};
   std::set<std::string> admin_public_ids_;
@@ -308,19 +353,17 @@ class ClassicAppMode : public base::AppMode {
   std::string public_party_name_;
   std::string public_party_min_league_;
   std::string public_party_stats_url_;
-  std::string root_ui_tickets_meter_text_;
-  std::string root_ui_tokens_meter_text_;
-  std::string root_ui_league_rank_text_;
   std::string root_ui_league_type_;
   std::string root_ui_achievement_percent_text_;
   std::string root_ui_level_text_;
   std::string root_ui_xp_text_;
-  std::string root_ui_inbox_count_text_;
+  std::string root_ui_inbox_announce_text_;
   std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};
   std::optional<std::string> public_party_public_address_ipv4_{};
   std::optional<std::string> public_party_public_address_ipv6_{};
+  bool root_ui_inbox_count_is_max_{};
 };
 
 }  // namespace ballistica::classic

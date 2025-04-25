@@ -93,7 +93,7 @@ TouchInput::TouchInput() {
 TouchInput::~TouchInput() = default;
 
 void TouchInput::UpdateButtons(bool new_touch) {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
   float spread_scaled_actions =
       kButtonSpread * base_controls_scale_ * controls_scale_actions_;
   float width = g_base->graphics->screen_virtual_width();
@@ -134,7 +134,7 @@ void TouchInput::UpdateButtons(bool new_touch) {
     closest_to_bomb = true;
   }
   if (buttons_touch_) {
-    last_buttons_touch_time_ = g_core->GetAppTimeMillisecs();
+    last_buttons_touch_time_ = g_core->AppTimeMillisecs();
   }
 
   // Handle swipe mode.

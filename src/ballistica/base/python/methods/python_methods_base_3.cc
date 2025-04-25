@@ -58,7 +58,7 @@ static PyMethodDef PyGetSimpleSoundDef = {
 
     "getsimplesound(name: str) -> SimpleSound\n"
     "\n"
-    "(internal).",
+    ":meta private:",
 };
 
 // -------------------------- set_ui_input_device ------------------------------
@@ -76,8 +76,7 @@ static auto PySetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
   }
   InputDevice* device{};
   if (input_device_id_obj != Py_None) {
-    device =
-        g_base->input->GetInputDevice(Python::GetPyInt(input_device_id_obj));
+    device = g_base->input->GetInputDevice(Python::GetInt(input_device_id_obj));
     if (!device) {
       throw Exception("Invalid input-device id.");
     }
@@ -96,9 +95,9 @@ static PyMethodDef PySetUIInputDeviceDef = {
     "set_ui_input_device(input_device_id: int | None)"
     " -> None\n"
     "\n"
-    "(internal)\n"
+    "Sets the input-device that currently owns the user interface.\n"
     "\n"
-    "Sets the input-device that currently owns the user interface.",
+    ":meta private:",
 };
 
 // ------------------------------ set_ui_scale ---------------------------------
@@ -141,7 +140,7 @@ static PyMethodDef PySetUIScaleDef = {
     "set_ui_scale(scale: str)"
     " -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:",
 };
 // ------------------------------ set_ui_scale ---------------------------------
 
@@ -180,7 +179,7 @@ static PyMethodDef PyGetUIScaleDef = {
     "get_ui_scale()"
     " -> str\n"
     "\n"
-    "(internal)\n",
+    ":meta private:",
 };
 
 // ----------------------------- hastouchscreen --------------------------------
@@ -209,9 +208,9 @@ static PyMethodDef PyHasTouchScreenDef = {
 
     "hastouchscreen() -> bool\n"
     "\n"
-    "(internal)\n"
+    "Return whether a touchscreen is present on the current device.\n"
     "\n"
-    "Return whether a touchscreen is present on the current device.",
+    ":meta private:",
 };
 
 // ------------------------- clipboard_is_supported ----------------------------
@@ -233,8 +232,6 @@ static PyMethodDef PyClipboardIsSupportedDef = {
     "clipboard_is_supported() -> bool\n"
     "\n"
     "Return whether this platform supports clipboard operations at all.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "If this returns False, UIs should not show 'copy to clipboard'\n"
     "buttons, etc.",
@@ -260,10 +257,8 @@ static PyMethodDef PyClipboardHasTextDef = {
     "\n"
     "Return whether there is currently text on the clipboard.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "This will return False if no system clipboard is available; no need\n"
-    " to call babase.clipboard_is_supported() separately.",
+    " to call :meth:`~babase.clipboard_is_supported()` separately.",
 };
 
 // --------------------------- clipboard_set_text ------------------------------
@@ -291,10 +286,8 @@ static PyMethodDef PyClipboardSetTextDef = {
     "\n"
     "Copy a string to the system clipboard.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
-    "Ensure that babase.clipboard_is_supported() returns True before adding\n"
-    " buttons/etc. that make use of this functionality.",
+    "Ensure that :meth:`~babase.clipboard_is_supported()` returns True before\n"
+    "adding buttons/etc. that make use of this functionality.",
 };
 
 // --------------------------- clipboard_get_text ------------------------------
@@ -315,10 +308,8 @@ static PyMethodDef PyClipboardGetTextDef = {
     "\n"
     "Return text currently on the system clipboard.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
-    "Ensure that babase.clipboard_has_text() returns True before calling\n"
-    " this function.",
+    "Ensure that :meth:`~babase.clipboard_has_text()` returns True before\n"
+    "calling this function.",
 };
 
 // ------------------------------ setup_sigint ---------------------------------
@@ -342,7 +333,7 @@ static PyMethodDef PySetUpSigIntDef = {
 
     "setup_sigint() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------------- have_permission --------------------------------
@@ -375,7 +366,7 @@ static PyMethodDef PyHavePermissionDef = {
 
     "have_permission(permission: babase.Permission) -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------------- request_permission ------------------------------
@@ -406,7 +397,7 @@ static PyMethodDef PyRequestPermissionDef = {
 
     "request_permission(permission: babase.Permission) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ----------------------------- in_logic_thread -------------------------------
@@ -433,9 +424,10 @@ static PyMethodDef PyInLogicThreadDef = {
 
     "in_logic_thread() -> bool\n"
     "\n"
-    "(internal)\n"
+    "Return whether the current thread is the logic thread.\n"
     "\n"
-    "Returns whether or not the current thread is the logic thread.",
+    "The logic thread is where a large amount of app code runs, and\n"
+    "various functionality expects to only be used from there.",
 };
 
 // ------------------------------ in_main_menu ---------------------------------
@@ -463,10 +455,9 @@ static PyMethodDef PyInMainMenuDef = {
 
     "in_main_menu() -> bool\n"
     "\n"
-    "(internal)\n"
+    "Are we currently in a main-menu (as opposed to gameplay)?\n"
     "\n"
-    "Returns whether or not the app-mode is currently in a main menu\n"
-    "situation (as opposed to gameplay).",
+    ":meta private:",
 };
 
 // ----------------------------- set_thread_name -------------------------------
@@ -492,14 +483,14 @@ static PyMethodDef PySetThreadNameDef = {
 
     "set_thread_name(name: str) -> None\n"
     "\n"
-    "(internal)\n"
+    "Set the name of the current thread (on platforms where available).\n"
     "\n"
-    "Sets the name of the current thread (on platforms where this is\n"
-    "available). EventLoop names are only for debugging and should\n"
-    "not be used in logic, as naming behavior can vary across platforms.\n",
-};
+    "Thread names are only for debugging and should not be used in logic,\n"
+    "as naming behavior can vary across platforms.\n"
+    "\n"
+    ":meta private:"};
 
-// ------------------------------ get_thread_name ------------------------------
+// ---------------------------- get_thread_name ------------------------------
 
 static auto PyGetThreadName(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
@@ -520,14 +511,15 @@ static PyMethodDef PyGetThreadNameDef = {
 
     "get_thread_name() -> str\n"
     "\n"
-    "(internal)\n"
+    "Return the name of the current thread.\n"
     "\n"
-    "Returns the name of the current thread.\n"
     "This may vary depending on platform and should not be used in logic;\n"
-    "only for debugging.",
+    "only for debugging.\n"
+    "\n"
+    ":meta private:",
 };
 
-// --------------------------------- ehv ---------------------------------------
+// -------------------------------- ehv ----------------------------------------
 
 // Returns an extra hash value that can be incorporated into security
 // checks; this contains things like whether console commands have been run,
@@ -554,7 +546,7 @@ static PyMethodDef PyExtraHashValueDef = {
 
     "ehv() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ----------------------------- get_idle_time ---------------------------------
@@ -572,9 +564,9 @@ static PyMethodDef PyGetIdleTimeDef = {
     METH_VARARGS,     // flags
     "get_idle_time() -> int\n"
     "\n"
-    "(internal)\n"
+    "Returns the amount of time since any game input has been received.\n"
     "\n"
-    "Returns the amount of time since any game input has been received.",
+    ":meta private:",
 };
 
 // ------------------------- has_user_run_commands -----------------------------
@@ -594,7 +586,7 @@ static PyMethodDef PyHasUserRunCommandsDef = {
     METH_VARARGS,             // flags
     "has_user_run_commands() -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------------- workspaces_in_use ------------------------------
@@ -614,11 +606,9 @@ static PyMethodDef PyWorkspacesInUseDef = {
     METH_VARARGS,         // flags
     "workspaces_in_use() -> bool\n"
     "\n"
-    "(internal)\n"
+    "Return whether workspace functionality was ever enabled this run.\n"
     "\n"
-    "Returns whether workspaces functionality has been enabled at\n"
-    "any point this run.",
-};
+    ":meta private:"};
 
 // ------------------------- contains_python_dist ------------------------------
 
@@ -637,7 +627,7 @@ static PyMethodDef PyContainsPythonDistDef = {
     METH_VARARGS,            // flags
     "contains_python_dist() -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------- debug_print_py_err --------------------------------
@@ -660,9 +650,9 @@ static PyMethodDef PyDebugPrintPyErrDef = {
 
     "debug_print_py_err() -> None\n"
     "\n"
-    "(internal)\n"
+    "Debugging func for tracking leaked Python errors in the C++ layer.\n"
     "\n"
-    "Debugging func for tracking leaked Python errors in the C++ layer.",
+    ":meta private:",
 };
 
 // ----------------------------- print_context ---------------------------------
@@ -687,9 +677,9 @@ static PyMethodDef PyPrintContextDef = {
 
     "print_context() -> None\n"
     "\n"
-    "(internal)\n"
+    "Prints info about the current context state; for debugging.\n"
     "\n"
-    "Prints info about the current context_ref state; for debugging.\n",
+    ":meta private:",
 };
 
 // --------------------------- print_load_info ---------------------------------
@@ -709,9 +699,7 @@ static PyMethodDef PyPrintLoadInfoDef = {
 
     "print_load_info() -> None\n"
     "\n"
-    "(internal)\n"
-    "\n"
-    "Category: **General Utility Functions**",
+    ":meta private:",
 };
 
 // -------------------------- get_replays_dir ----------------------------------
@@ -735,7 +723,7 @@ static PyMethodDef PyGetReplaysDirDef = {
 
     "get_replays_dir() -> str\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------- get_appconfig_default_value ---------------------------
@@ -780,7 +768,7 @@ static PyMethodDef PyGetAppConfigDefaultValueDef = {
 
     "get_appconfig_default_value(key: str) -> Any\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------- get_appconfig_builtin_keys ---------------------------
@@ -808,7 +796,7 @@ static PyMethodDef PyAppConfigGetBuiltinKeysDef = {
 
     "get_appconfig_builtin_keys() -> list[str]\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------- resolve_appconfig_value ------------------------------
@@ -825,8 +813,8 @@ static auto PyResolveAppConfigValue(PyObject* self, PyObject* args,
   }
   auto entry = g_base->app_config->GetEntry(key);
   if (entry == nullptr) {
-    throw Exception("Invalid config value '" + std::string(key) + "'.",
-                    PyExcType::kValue);
+    throw Exception("Invalid config key '" + std::string(key) + "'.",
+                    PyExcType::kKey);
   }
   switch (entry->GetType()) {
     case AppConfig::Entry::Type::kString:
@@ -854,7 +842,7 @@ static PyMethodDef PyResolveAppConfigValueDef = {
 
     "resolve_appconfig_value(key: str) -> Any\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------- get_low_level_config_value ----------------------------
@@ -880,7 +868,7 @@ static PyMethodDef PyGetLowLevelConfigValueDef = {
 
     "get_low_level_config_value(key: str, default_value: int) -> int\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------- set_low_level_config_value ----------------------------
@@ -906,7 +894,7 @@ static PyMethodDef PySetLowLevelConfigValueDef = {
 
     "set_low_level_config_value(key: str, value: int) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------- set_platform_misc_read_vals ---------------------------
@@ -933,7 +921,7 @@ static PyMethodDef PySetPlatformMiscReadValsDef = {
 
     "set_platform_misc_read_vals(mode: str) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------- get_v1_cloud_log_file_path ----------------------------
@@ -953,9 +941,9 @@ static PyMethodDef PyGetLogFilePathDef = {
 
     "get_v1_cloud_log_file_path() -> str\n"
     "\n"
-    "(internal)\n"
+    "Return the path to the app log file.\n"
     "\n"
-    "Return the path to the app log file.",
+    ":meta private:",
 };
 
 // --------------------- get_volatile_data_directory ---------------------------
@@ -975,11 +963,12 @@ static PyMethodDef PyGetVolatileDataDirectoryDef = {
 
     "get_volatile_data_directory() -> str\n"
     "\n"
-    "(internal)\n"
-    "\n"
     "Return the path to the app volatile data directory.\n"
+    "\n"
     "This directory is for data generated by the app that does not\n"
-    "need to be backed up and can be recreated if necessary.",
+    "need to be backed up and can be recreated if necessary.\n"
+    "\n"
+    ":meta private:",
 };
 
 // ----------------------------- is_log_full -----------------------------------
@@ -999,7 +988,7 @@ static PyMethodDef PyIsLogFullDef = {
 
     "is_log_full() -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------------- get_v1_cloud_log ---------------------------------
@@ -1026,7 +1015,7 @@ static PyMethodDef PyGetV1CloudLogDef = {
 
     "get_v1_cloud_log() -> str\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------------- mark_log_sent ----------------------------------
@@ -1047,7 +1036,7 @@ static PyMethodDef PyMarkLogSentDef = {
 
     "mark_log_sent() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------- increment_analytics_count -----------------------------
@@ -1072,7 +1061,7 @@ static PyMethodDef PyIncrementAnalyticsCountDef = {
 
     "increment_analytics_count(name: str, increment: int = 1) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------- increment_analytics_count_raw --------------------------
@@ -1097,7 +1086,7 @@ static PyMethodDef PyIncrementAnalyticsCountRawDef = {
 
     "increment_analytics_counts_raw(name: str, increment: int = 1) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------- increment_analytics_count_raw_2 -------------------------
@@ -1129,7 +1118,7 @@ static PyMethodDef PyIncrementAnalyticsCountRaw2Def = {
     "increment_analytics_count_raw_2(name: str,\n"
     "  uses_increment: bool = True, increment: int = 1) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------- submit_analytics_counts ------------------------------
@@ -1149,7 +1138,7 @@ static PyMethodDef PySubmitAnalyticsCountsDef = {
 
     "submit_analytics_counts() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------- set_analytics_screen ------------------------------
@@ -1177,11 +1166,11 @@ static PyMethodDef PySetAnalyticsScreenDef = {
     "\n"
     "Used for analytics to see where in the app players spend their time.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Generally called when opening a new window or entering some UI.\n"
     "'screen' should be a string description of an app location\n"
-    "('Main Menu', etc.)",
+    "('Main Menu', etc.)\n"
+    "\n"
+    ":meta private:",
 };
 
 // ------------------ login_adapter_get_sign_in_token --------------------------
@@ -1210,7 +1199,7 @@ static PyMethodDef PyLoginAdapterGetSignInTokenDef = {
     "login_adapter_get_sign_in_token(login_type: str, attempt_id: int)"
     " -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ----------------- login_adapter_back_end_active_change ----------------------
@@ -1239,7 +1228,7 @@ static PyMethodDef PyLoginAdapterBackEndActiveChangeDef = {
     "login_adapter_back_end_active_change(login_type: str, active: bool)"
     " -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------- set_internal_language_keys ---------------------------
@@ -1293,7 +1282,7 @@ static PyMethodDef PySetInternalLanguageKeysDef = {
     "set_internal_language_keys(listobj: list[tuple[str, str]],\n"
     "  random_names_list: list[tuple[str, str]]) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------- android_get_external_files_dir -------------------------
@@ -1331,11 +1320,9 @@ static PyMethodDef PyAndroidGetExternalFilesDirDef = {
 
     "android_get_external_files_dir() -> str\n"
     "\n"
-    "(internal)\n"
+    "Return the android external storage path, or None if there is none.\n"
     "\n"
-    "Returns the android external storage path, or None if there is none "
-    "on\n"
-    "this device",
+    ":meta private:",
 };
 
 #pragma clang diagnostic pop
@@ -1361,18 +1348,16 @@ static PyMethodDef PyDoOnceDef = {
     "\n"
     "Return whether this is the first time running a line of code.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
-    "This is used by 'print_once()' type calls to keep from overflowing\n"
+    "This is used by ``print_once()`` type calls to keep from overflowing\n"
     "logs. The call functions by registering the filename and line where\n"
     "The call is made from.  Returns True if this location has not been\n"
     "registered already, and False if it has.\n"
     "\n"
-    "##### Example\n"
-    "This print will only fire for the first loop iteration:\n"
-    ">>> for i in range(10):\n"
-    "... if babase.do_once():\n"
-    "...     print('HelloWorld once from loop!')",
+    "Example: This print will only fire for the first loop iteration::\n"
+    "\n"
+    "    for i in range(10):\n"
+    "        if babase.do_once():\n"
+    "            print('HelloWorld once from loop!')",
 };
 
 // ------------------------------- getapp --------------------------------------
@@ -1397,7 +1382,7 @@ static PyMethodDef PyGetAppDef = {
 
     "getapp() -> babase.App\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------------ lock_all_input -------------------------------
@@ -1418,10 +1403,9 @@ static PyMethodDef PyLockAllInputDef = {
 
     "lock_all_input() -> None\n"
     "\n"
-    "(internal)\n"
+    "Prevent all keyboard, mouse, and gamepad events from being processed.\n"
     "\n"
-    "Prevents all keyboard, mouse, and gamepad events from being "
-    "processed.",
+    ":meta private:",
 };
 
 // ---------------------------- unlock_all_input -------------------------------
@@ -1442,9 +1426,9 @@ static PyMethodDef PyUnlockAllInputDef = {
 
     "unlock_all_input() -> None\n"
     "\n"
-    "(internal)\n"
+    "Resume normal keyboard, mouse, and gamepad event processing.\n"
     "\n"
-    "Resumes normal keyboard, mouse, and gamepad event processing.",
+    ":meta private:",
 };
 
 // --------------------------- native_stack_trace ------------------------------
@@ -1472,8 +1456,6 @@ static PyMethodDef PyNativeStackTraceDef = {
     "\n"
     "Return a native stack trace as a string, or None if not available.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Stack traces contain different data and formatting across platforms.\n"
     "Only use them for debugging.",
 };
@@ -1497,10 +1479,11 @@ static PyMethodDef PySupportsOpenDirExternallyDef = {
 
     "supports_open_dir_externally() -> bool\n"
     "\n"
-    "(internal)\n"
+    "Return whether current app/platform supports opening dirs externally.\n"
     "\n"
-    "Return whether the current app/platform supports opening dirs externally\n"
-    "(in the Mac Finder, Windows Explorer, etc.).",
+    "(Via the Mac Finder, Windows Explorer, etc.)\n"
+    "\n"
+    ":meta private:",
 };
 
 // -------------------------- open_dir_externally ------------------------------
@@ -1526,9 +1509,9 @@ static PyMethodDef PyOpenDirExternallyDef = {
 
     "open_dir_externally(path: str) -> None\n"
     "\n"
-    "(internal)\n"
+    "Open the provided dir in the default external app.\n"
     "\n"
-    "Open the provided dir in the default external app.",
+    ":meta private:",
 };
 
 // ----------------------------- fatal_error -----------------------------------
@@ -1557,8 +1540,8 @@ static PyMethodDef PyFatalErrorDef = {
     "Trigger a fatal error. Use this in situations where it is not possible\n"
     "for the engine to continue on in a useful way. This can sometimes\n"
     "help provide more clear information at the exact source of a problem\n"
-    "as compared to raising an Exception. In the vast majority of cases,\n"
-    "however, Exceptions should be preferred.",
+    "as compared to raising an :class:`Exception`. In the vast majority of\n"
+    "cases, however, exceptions should be preferred.",
 };
 
 // ------------------------- dev_console_add_button ----------------------------
@@ -1610,7 +1593,7 @@ static PyMethodDef PyDevConsoleAddButtonDef = {
     "  disabled: bool,\n"
     ") -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------- dev_console_add_text ------------------------------
@@ -1652,7 +1635,7 @@ static PyMethodDef PyDevConsoleAddTextDef = {
     "  scale: float,\n"
     ") -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------- dev_console_add_python_terminal ------------------------
@@ -1679,7 +1662,7 @@ static PyMethodDef PyDevConsoleAddPythonTerminalDef = {
 
     "dev_console_add_python_terminal() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------ dev_console_tab_width ------------------------------
@@ -1701,7 +1684,7 @@ static PyMethodDef PyDevConsoleTabWidthDef = {
 
     "dev_console_tab_width() -> float\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------ dev_console_tab_height -----------------------------
@@ -1723,7 +1706,7 @@ static PyMethodDef PyDevConsoleTabHeightDef = {
 
     "dev_console_tab_height() -> float\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ----------------------- dev_console_base_scale ------------------------------
@@ -1745,7 +1728,7 @@ static PyMethodDef PyDevConsoleBaseScaleDef = {
 
     "dev_console_base_scale() -> float\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------- dev_console_request_refresh ----------------------------
@@ -1768,7 +1751,7 @@ static PyMethodDef PyDevConsoleRequestRefreshDef = {
 
     "dev_console_request_refresh() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------------- asset_loads_allowed ------------------------------
@@ -1789,7 +1772,7 @@ static PyMethodDef PyAssetLoadsAllowedDef = {
 
     "asset_loads_allowed() -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------- using_google_play_game_services ------------------------
@@ -1810,7 +1793,7 @@ static PyMethodDef PyUsingGooglePlayGameServicesDef = {
 
     "using_google_play_game_services() -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------------- using_game_center ------------------------------
@@ -1831,7 +1814,7 @@ static PyMethodDef PyUsingGameCenterDef = {
 
     "using_game_center() -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------- native_review_request_supported -----------------------
@@ -1852,7 +1835,7 @@ static PyMethodDef PyNativeReviewRequestSupportedDef = {
 
     "native_review_request_supported() -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------------- native_review_request ----------------------------
@@ -1871,7 +1854,7 @@ static PyMethodDef PyNativeReviewRequestDef = {
 
     "native_review_request() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------------- temp_testing --------------------------------
@@ -1896,7 +1879,7 @@ static PyMethodDef PyTempTestingDef = {
 
     "temp_testing() -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------- open_file_externally ------------------------------
@@ -1923,9 +1906,9 @@ static PyMethodDef PyOpenFileExternallyDef = {
 
     "open_file_externally(path: str) -> None\n"
     "\n"
-    "(internal)\n"
+    "Open the provided file in the default external app.\n"
     "\n"
-    "Open the provided file in the default external app.",
+    ":meta private:",
 };
 
 // --------------------------- get_input_idle_time -----------------------------
@@ -1946,16 +1929,18 @@ static PyMethodDef PyGetInputIdleTimeDef = {
 
     "get_input_idle_time() -> float\n"
     "\n"
-    "Return seconds since any local input occurred (touch, keypress, etc.).",
+    "Return seconds since any local input occurred (touch, keypress, etc.).\n"
+    "\n"
+    ":meta private:",
 };
 
-// --------------------------- get_draw_ui_bounds -----------------------------
+// ------------------ get_draw_virtual_safe_area_bounds ------------------------
 
-static auto PyGetDrawUIBounds(PyObject* self) -> PyObject* {
+static auto PyGetDrawVirtualSafeAreaBounds(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
-  if (g_base->graphics->draw_ui_bounds()) {
+  if (g_base->graphics->draw_virtual_safe_area_bounds()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -1963,14 +1948,14 @@ static auto PyGetDrawUIBounds(PyObject* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyGetDrawUIBoundsDef = {
-    "get_draw_ui_bounds",            // name
-    (PyCFunction)PyGetDrawUIBounds,  // method
-    METH_NOARGS,                     // flags
+static PyMethodDef PyGetDrawVirtualSafeAreaBoundsDef = {
+    "get_draw_virtual_safe_area_bounds",          // name
+    (PyCFunction)PyGetDrawVirtualSafeAreaBounds,  // method
+    METH_NOARGS,                                  // flags
 
-    "get_draw_ui_bounds() -> bool\n"
+    "get_draw_virtual_safe_area_bounds() -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------------- get_initial_app_config ---------------------------
@@ -1990,13 +1975,13 @@ static PyMethodDef PyGetInitialAppConfigDef = {
 
     "get_initial_app_config() -> dict\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
-// --------------------------- set_draw_ui_bounds -----------------------------
+// ------------------ set_draw_virtual_safe_area_bounds ------------------------
 
-static auto PySetDrawUIBounds(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PySetDrawVirtualSafeAreaBounds(PyObject* self, PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -2008,20 +1993,20 @@ static auto PySetDrawUIBounds(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
 
-  g_base->graphics->set_draw_ui_bounds(value);
+  g_base->graphics->set_draw_virtual_safe_area_bounds(value);
   Py_RETURN_NONE;
 
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PySetDrawUIBoundsDef = {
-    "set_draw_ui_bounds",            // name
-    (PyCFunction)PySetDrawUIBounds,  // method
-    METH_VARARGS | METH_KEYWORDS,    // flags
+static PyMethodDef PySetDrawVirtualSafeAreaBoundsDef = {
+    "set_draw_virtual_safe_area_bounds",          // name
+    (PyCFunction)PySetDrawVirtualSafeAreaBounds,  // method
+    METH_VARARGS | METH_KEYWORDS,                 // flags
 
-    "set_draw_ui_bounds(value: bool) -> None\n"
+    "set_draw_virtual_safe_area_bounds(value: bool) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ----------------------------- push_back_press -------------------------------
@@ -2040,7 +2025,7 @@ static PyMethodDef PyPushBackPressDef = {
 
     "push_back_press() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------------- set_app_config ---------------------------------
@@ -2064,7 +2049,7 @@ static PyMethodDef PySetAppConfigDef = {
 
     "set_app_config(config: dict) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------- update_internal_logger_levels -------------------------
@@ -2089,7 +2074,9 @@ static PyMethodDef PyUpdateInternalLoggerLevelsDef = {
     "avoid making Python log calls for disabled logger levels. If any\n"
     "logger levels are changed at runtime, call this method after to\n"
     "instruct the native layer to regenerate its cache so the change\n"
-    "is properly reflected in logs originating from the native layer."};
+    "is properly reflected in logs originating from the native layer.\n"
+    "\n"
+    ":meta private:"};
 // -----------------------------------------------------------------------------
 
 auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
@@ -2163,8 +2150,8 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyOpenFileExternallyDef,
       PyGetInputIdleTimeDef,
       PyPushBackPressDef,
-      PyGetDrawUIBoundsDef,
-      PySetDrawUIBoundsDef,
+      PyGetDrawVirtualSafeAreaBoundsDef,
+      PySetDrawVirtualSafeAreaBoundsDef,
       PyGetInitialAppConfigDef,
       PySetAppConfigDef,
       PyUpdateInternalLoggerLevelsDef,

@@ -59,10 +59,8 @@ static PyMethodDef PyOpenURLDef = {
     "\n"
     "Open the provided URL.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Attempts to open the provided url in a web-browser. If that is not\n"
-    "possible (or force_fallback is True), instead displays the url as\n"
+    "possible (or ``force_fallback`` is True), instead displays the url as\n"
     "a string and/or qrcode."};
 
 // --------------------- overlay_web_browser_is_supported ----------------------
@@ -87,11 +85,11 @@ static PyMethodDef PyOverlayWebBrowserIsSupportedDef = {
     "\n"
     "Return whether an overlay web browser is supported here.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "An overlay web browser is a small dialog that pops up over the top\n"
     "of the main engine window. It can be used for performing simple\n"
-    "tasks such as sign-ins."};
+    "tasks such as sign-ins.\n"
+    "\n"
+    ":meta private:"};
 
 // --------------------- overlay_web_browser_open_url --------------------------
 
@@ -117,13 +115,13 @@ static PyMethodDef PyOverlayWebBrowserOpenURLDef = {
 
     "overlay_web_browser_open_url(address: str) -> None\n"
     "\n"
-    "Open the provided URL in an overlayw web browser.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
+    "Open the provided URL in an overlay web browser.\n"
     "\n"
     "An overlay web browser is a small dialog that pops up over the top\n"
     "of the main engine window. It can be used for performing simple\n"
-    "tasks such as sign-ins."};
+    "tasks such as sign-ins.\n"
+    "\n"
+    ":meta private:"};
 
 // --------------------- overlay_web_browser_is_open ----------------------
 
@@ -147,7 +145,7 @@ static PyMethodDef PyOverlayWebBrowserIsOpenDef = {
     "\n"
     "Return whether an overlay web browser is open currently.\n"
     "\n"
-    "Category: **General Utility Functions**"};
+    ":meta private:"};
 
 // ------------------------ overlay_web_browser_close --------------------------
 
@@ -168,7 +166,7 @@ static PyMethodDef PyOverlayWebBrowserCloseDef = {
     "\n"
     "Close any open overlay web browser.\n"
     "\n"
-    "Category: **General Utility Functions**\n"};
+    ":meta private:"};
 // ---------------------------- screenmessage ----------------------------------
 
 static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
@@ -210,13 +208,11 @@ static PyMethodDef PyScreenMessageDef = {
     "  log: bool = False)\n"
     " -> None\n"
     "\n"
-    "Print a message to the local client's screen, in a given color.\n"
+    "Print a message to the local client's screen in a given color.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
-    "Note that this version of the function is purely for local display.\n"
-    "To broadcast screen messages in network play, look for methods such as\n"
-    "broadcastmessage() provided by the scene-version packages.",
+    "Note that this function is purely for local display. To broadcast\n"
+    "screen-messages during gameplay, look for methods such as\n"
+    ":meth:`bascenev1.broadcastmessage()`.",
 };
 
 // -------------------------- get_camera_position ------------------------------
@@ -238,13 +234,15 @@ static PyMethodDef PyGetCameraPositionDef = {
     (PyCFunction)PyGetCameraPosition,  // method
     METH_VARARGS | METH_KEYWORDS,      // flags
 
-    "get_camera_position() -> tuple[float, ...]\n"
+    "get_camera_position() -> tuple[float, float, float]\n"
     "\n"
-    "(internal)\n"
+    "Return current camera position.\n"
     "\n"
     "WARNING: these camera controls will not apply to network clients\n"
     "and may behave unpredictably in other ways. Use them only for\n"
-    "tinkering.",
+    "tinkering.\n"
+    "\n"
+    ":meta private:",
 };
 
 // --------------------------- get_camera_target -------------------------------
@@ -266,13 +264,15 @@ static PyMethodDef PyGetCameraTargetDef = {
     (PyCFunction)PyGetCameraTarget,  // method
     METH_VARARGS | METH_KEYWORDS,    // flags
 
-    "get_camera_target() -> tuple[float, ...]\n"
+    "get_camera_target() -> tuple[float, float, float]\n"
     "\n"
-    "(internal)\n"
+    "Return the current camera target point.\n"
     "\n"
     "WARNING: these camera controls will not apply to network clients\n"
     "and may behave unpredictably in other ways. Use them only for\n"
-    "tinkering.",
+    "tinkering.\n"
+    "\n"
+    ":meta private:",
 };
 
 // --------------------------- set_camera_position -----------------------------
@@ -301,11 +301,13 @@ static PyMethodDef PySetCameraPositionDef = {
 
     "set_camera_position(x: float, y: float, z: float) -> None\n"
     "\n"
-    "(internal)\n"
+    "Set camera position.\n"
     "\n"
     "WARNING: these camera controls will not apply to network clients\n"
     "and may behave unpredictably in other ways. Use them only for\n"
-    "tinkering.",
+    "tinkering.\n"
+    "\n"
+    ":meta private:",
 };
 
 // ---------------------------- set_camera_target ------------------------------
@@ -334,11 +336,13 @@ static PyMethodDef PySetCameraTargetDef = {
 
     "set_camera_target(x: float, y: float, z: float) -> None\n"
     "\n"
-    "(internal)\n"
+    "Set the camera target.\n"
     "\n"
     "WARNING: these camera controls will not apply to network clients\n"
     "and may behave unpredictably in other ways. Use them only for\n"
-    "tinkering.",
+    "tinkering.\n"
+    "\n"
+    ":meta private:",
 };
 
 // ---------------------------- set_camera_manual ------------------------------
@@ -365,11 +369,13 @@ static PyMethodDef PySetCameraManualDef = {
 
     "set_camera_manual(value: bool) -> None\n"
     "\n"
-    "(internal)\n"
+    "Set camera manual mode on or off.\n"
     "\n"
     "WARNING: these camera controls will not apply to network clients\n"
     "and may behave unpredictably in other ways. Use them only for\n"
-    "tinkering.",
+    "tinkering.\n"
+    "\n"
+    ":meta private:",
 };
 
 // -------------------------------- charstr ------------------------------------
@@ -397,15 +403,13 @@ static PyMethodDef PyCharStrDef = {
 
     "charstr(char_id: babase.SpecialChar) -> str\n"
     "\n"
-    "Get a unicode string representing a special character.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
+    "Return a unicode string representing a special character.\n"
     "\n"
     "Note that these utilize the private-use block of unicode characters\n"
     "(U+E000-U+F8FF) and are specific to the game; exporting or rendering\n"
     "them elsewhere will be meaningless.\n"
     "\n"
-    "See babase.SpecialChar for the list of available characters.",
+    "See :class:`~babase.SpecialChar` for the list of available characters.",
 };
 
 // ------------------------------- safecolor -----------------------------------
@@ -434,15 +438,15 @@ static auto PySafeColor(PyObject* self, PyObject* args, PyObject* keywds)
   PythonRef red_obj(PySequence_GetItem(color_obj, 0), PythonRef::kSteal);
   PythonRef green_obj(PySequence_GetItem(color_obj, 1), PythonRef::kSteal);
   PythonRef blue_obj(PySequence_GetItem(color_obj, 2), PythonRef::kSteal);
-  red = Python::GetPyFloat(red_obj.get());
-  green = Python::GetPyFloat(green_obj.get());
-  blue = Python::GetPyFloat(blue_obj.get());
+  red = Python::GetFloat(red_obj.get());
+  green = Python::GetFloat(green_obj.get());
+  blue = Python::GetFloat(blue_obj.get());
   Graphics::GetSafeColor(&red, &green, &blue, target_intensity);
   if (len == 3) {
     return Py_BuildValue("(fff)", red, green, blue);
   } else {
     PythonRef alpha_obj(PySequence_GetItem(color_obj, 3), PythonRef::kSteal);
-    float alpha = Python::GetPyFloat(alpha_obj.get());
+    float alpha = Python::GetFloat(alpha_obj.get());
     return Py_BuildValue("(ffff)", red, green, blue, alpha);
   }
   BA_PYTHON_CATCH;
@@ -457,8 +461,6 @@ static PyMethodDef PySafeColorDef = {
     "  -> tuple[float, ...]\n"
     "\n"
     "Given a color tuple, return a color safe to display as text.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "Accepts tuples of length 3 or 4. This will slightly brighten very\n"
     "dark colors, etc.",
@@ -480,9 +482,9 @@ static PyMethodDef PyGetMaxGraphicsQualityDef = {
 
     "get_max_graphics_quality() -> str\n"
     "\n"
-    "(internal)\n"
+    "Return the max graphics-quality supported on the current hardware.\n"
     "\n"
-    "Return the max graphics-quality supported on the current hardware.",
+    ":meta private:",
 };
 
 // ------------------------------ evaluate_lstr --------------------------------
@@ -497,7 +499,7 @@ static auto PyEvaluateLstr(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   return PyUnicode_FromString(
-      g_base->assets->CompileResourceString(value, "evaluate_lstr").c_str());
+      g_base->assets->CompileResourceString(value).c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -508,7 +510,7 @@ static PyMethodDef PyEvaluateLstrDef = {
 
     "evaluate_lstr(value: str) -> str\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------------- get_string_height -------------------------------
@@ -533,9 +535,9 @@ static auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
   }
   s = g_base->python->GetPyLString(s_obj);
 #if BA_DEBUG_BUILD
-  if (g_base->assets->CompileResourceString(s, "get_string_height test") != s) {
+  if (g_base->assets->CompileResourceString(s) != s) {
     BA_LOG_PYTHON_TRACE(
-        "resource-string passed to get_string_height; this should be avoided");
+        "Resource-string passed to get_string_height; this should be avoided.");
   }
 #endif
   assert(g_base->graphics);
@@ -551,10 +553,9 @@ static PyMethodDef PyGetStringHeightDef = {
     "get_string_height(string: str, suppress_warning: bool = False) -> "
     "float\n"
     "\n"
-    "(internal)\n"
+    "Given a string, returns its height with the standard small app font.\n"
     "\n"
-    "Given a string, returns its height using the standard small app\n"
-    "font.",
+    ":meta private:",
 };
 
 // ---------------------------- get_string_width -------------------------------
@@ -579,8 +580,7 @@ static auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
   }
   s = g_base->python->GetPyLString(s_obj);
 #if BA_DEBUG_BUILD
-  if (g_base->assets->CompileResourceString(s, "get_string_width debug test")
-      != s) {
+  if (g_base->assets->CompileResourceString(s) != s) {
     BA_LOG_PYTHON_TRACE(
         "resource-string passed to get_string_width; this should be avoided");
   }
@@ -598,15 +598,14 @@ static PyMethodDef PyGetStringWidthDef = {
     "get_string_width(string: str, suppress_warning: bool = False) -> "
     "float\n"
     "\n"
-    "(internal)\n"
+    "Given a string, returns its width in the standard small app font.\n"
     "\n"
-    "Given a string, returns its width using the standard small app\n"
-    "font.",
+    ":meta private:",
 };
 
-// ------------------------------ have_chars -----------------------------------
+// --------------------------- can_display_chars -------------------------------
 
-static auto PyHaveChars(PyObject* self, PyObject* args, PyObject* keywds)
+static auto PyCanDisplayChars(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   std::string text;
@@ -625,14 +624,16 @@ static auto PyHaveChars(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyHaveCharsDef = {
-    "have_chars",                  // name
-    (PyCFunction)PyHaveChars,      // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
+static PyMethodDef PyCanDisplayCharsDef = {
+    "can_display_chars",             // name
+    (PyCFunction)PyCanDisplayChars,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
 
-    "have_chars(text: str) -> bool\n"
+    "can_display_chars(text: str) -> bool\n"
     "\n"
-    "(internal)",
+    "Is this build able to display all chars in the provided string?\n"
+    "\n"
+    "See also: :meth:`~babase.supports_unicode_display()`.",
 };
 
 // ----------------------------- fade_screen -----------------------------------
@@ -665,14 +666,14 @@ static PyMethodDef PyFadeScreenDef = {
     "fade_screen(to: int = 0, time: float = 0.25,\n"
     "  endcall: Callable[[], None] | None = None) -> None\n"
     "\n"
-    "(internal)\n"
+    "Fade the screen in or out.\n"
     "\n"
     "Fade the local game screen in our out from black over a duration of\n"
-    "time. if \"to\" is 0, the screen will fade out to black.  Otherwise "
-    "it\n"
-    "will fade in from black. If endcall is provided, it will be run after "
-    "a\n"
-    "completely faded frame is drawn.",
+    "time. if \"to\" is 0, the screen will fade out to black.  Otherwise\n"
+    "it will fade in from black. If endcall is provided, it will be run after\n"
+    "a completely faded frame is drawn.\n"
+    "\n"
+    ":meta private:",
 };
 
 // ---------------------- add_clean_frame_callback -----------------------------
@@ -699,12 +700,12 @@ static PyMethodDef PyAddCleanFrameCallbackDef = {
 
     "add_clean_frame_callback(call: Callable) -> None\n"
     "\n"
-    "(internal)\n"
+    "Run code once the next non-progress-bar frame draws.\n"
     "\n"
-    "Provide an object to be called once the next non-progress-bar-frame "
-    "has\n"
-    "been rendered. Useful for queueing things to load in the background\n"
-    "without elongating any current progress-bar-load.",
+    "Useful for queueing things to load in the background without elongating\n"
+    "any current progress-bar-load.\n"
+    "\n"
+    ":meta private:",
 };
 
 // ------------------------- get_display_resolution ----------------------------
@@ -729,10 +730,11 @@ static PyMethodDef PyGetDisplayResolutionDef = {
 
     "get_display_resolution() -> tuple[int, int] | None\n"
     "\n"
-    "(internal)\n"
+    "Return currently selected display resolution for fullscreen display.\n"
     "\n"
-    "Return the currently selected display resolution for fullscreen\n"
-    "display. Returns None if resolutions cannot be directly set.",
+    "Returns None if resolutions cannot be directly set.\n"
+    "\n"
+    ":meta private:",
 };
 
 // ---------------------- fullscreen_control_available -------------------------
@@ -755,7 +757,7 @@ static PyMethodDef PyFullscreenControlAvailableDef = {
 
     "fullscreen_control_available() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // --------------------- fullscreen_control_key_shortcut -----------------------
@@ -781,7 +783,7 @@ static PyMethodDef PyFullscreenControlKeyShortcutDef = {
 
     "fullscreen_control_key_shortcut() -> str | None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:",
 };
 
 // ------------------------ fullscreen_control_get -----------------------------
@@ -804,7 +806,7 @@ static PyMethodDef PyFullscreenControlGetDef = {
 
     "fullscreen_control_get() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:",
 };
 
 // ------------------------ fullscreen_control_set -----------------------------
@@ -835,7 +837,7 @@ static PyMethodDef PyFullscreenControlSetDef = {
 
     "fullscreen_control_set(val: bool) -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // -------------------------- allows_ticket_sales ------------------------------
@@ -858,7 +860,7 @@ static PyMethodDef PyAllowsTicketSalesDef = {
 
     "allows_ticket_sales() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------------- supports_vsync --------------------------------
@@ -880,7 +882,7 @@ static PyMethodDef PySupportsVSyncDef = {
 
     "supports_vsync() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // --------------------------- supports_max_fps --------------------------------
@@ -902,7 +904,7 @@ static PyMethodDef PySupportsMaxFPSDef = {
 
     "supports_max_fps() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ---------------------- supports_unicode_display -----------------------------
@@ -945,9 +947,7 @@ static PyMethodDef PyShowProgressBarDef = {
 
     "show_progress_bar() -> None\n"
     "\n"
-    "(internal)\n"
-    "\n"
-    "Category: **General Utility Functions**",
+    ":meta private:",
 };
 
 // ------------------------- set_ui_account_state ------------------------------
@@ -968,7 +968,7 @@ static auto PySetUIAccountState(PyObject* self, PyObject* args,
   }
 
   if (signed_in) {
-    auto name = Python::GetPyString(name_obj);
+    auto name = Python::GetString(name_obj);
     g_base->ui->SetAccountState(true, name);
   } else {
     g_base->ui->SetAccountState(false, "");
@@ -985,8 +985,53 @@ static PyMethodDef PySetUIAccountStateDef = {
 
     "set_ui_account_state(signed_in: bool, name: str | None = None) -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
+
+// ------------------------ get_virtual_screen_size ----------------------------
+
+static auto PyGetVirtualScreenSize(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  float x{g_base->graphics->screen_virtual_width()};
+  float y{g_base->graphics->screen_virtual_height()};
+  return Py_BuildValue("(ff)", x, y);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetVirtualScreenSizeDef = {
+    "get_virtual_screen_size",            // name
+    (PyCFunction)PyGetVirtualScreenSize,  // method
+    METH_NOARGS,                          // flags
+
+    "get_virtual_screen_size() -> tuple[float, float]\n"
+    "\n"
+    "Return the current virtual size of the display.",
+};
+
+// ----------------------- get_virtual_safe_area_size --------------------------
+
+static auto PyGetVirtualSafeAreaSize(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  float x, y;
+  g_base->graphics->GetBaseVirtualRes(&x, &y);
+  return Py_BuildValue("(ff)", x, y);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetVirtualSafeAreaSizeDef = {
+    "get_virtual_safe_area_size",           // name
+    (PyCFunction)PyGetVirtualSafeAreaSize,  // method
+    METH_NOARGS,                            // flags
+
+    "get_virtual_safe_area_size() -> tuple[float, float]\n"
+    "\n"
+    "Return the size of the area on screen that will always be visible.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
@@ -1003,7 +1048,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PySetCameraTargetDef,
       PySetCameraManualDef,
       PyAddCleanFrameCallbackDef,
-      PyHaveCharsDef,
+      PyCanDisplayCharsDef,
       PyFadeScreenDef,
       PyScreenMessageDef,
       PyGetStringWidthDef,
@@ -1022,6 +1067,8 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyFullscreenControlGetDef,
       PyFullscreenControlSetDef,
       PySetUIAccountStateDef,
+      PyGetVirtualScreenSizeDef,
+      PyGetVirtualSafeAreaSizeDef,
   };
 }
 

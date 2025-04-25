@@ -1,0 +1,51 @@
+name: bombsquad
+
+# ENV variables that affect build 
+# BS_CMAKE_BUILD_TYPE (defaults to Release)
+# BS_IMAGE_NAME (defaults to bombsquad_gui_release)
+
+services:
+  bombsquad_gui:
+    build:
+      context: ../..
+      dockerfile: config/docker/Dockerfile
+      args:
+        - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
+        - headless_build=${BS_HEADLESS_BUILD:-0} # why not just remove BS_HEADLESS_BUILD?
+      labels:
+        - BOMBSQUAD_VERSION=${BS_VERSION:-unknown}
+        - BOMBSQUAD_BUILD=${BS_BUILD_NUMBER:-unknown}
+    image: ${BS_IMAGE_NAME:-bombsquad_gui_release}
+    platform: ${PLATFORM}
+    ports:
+      - "${BS_PORT:-43210}:${BS_PORT:-43210}" # need to make this change according to config
+    
+    environment:
+      - DISPLAY=${DISPLAY}
+      - PULSE_SERVER=unix:/run/user/1000/pulse/native
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/user/1000/pulse:/run/user/1000/pulse
+      - ${HOME}/.ballisticakit:/root/.ballisticakit
+    devices:
+      - /dev/snd:/dev/snd
+    privileged: true
+
+  bombsquad_server: # need to add volume to access config.yaml and mods folder
+    build:
+      context: ../..
+      dockerfile: config/docker/Dockerfile
+      args:
+        - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
+        - headless_build=${BS_HEADLESS_BUILD:-1}
+      labels:
+        - BOMBSQUAD_VERSION=${BS_VERSION:-unknown}
+        - BOMBSQUAD_BUILD=${BS_BUILD_NUMBER:-unknown}
+    image: ${BS_IMAGE_NAME:-bombsquad_server_release}
+    platform: ${PLATFORM}
+    ports:
+      - "${BS_PORT:-43210}:${BS_PORT:-43210}" # need to make this change according to config
+    
+    # volumes:
+    #   - ${BS_CONFIG_PATH:-./config}:/path/in/container/config
+    #   - ${BS_MODS_PATH:-./mods}:/path/in/container/mods

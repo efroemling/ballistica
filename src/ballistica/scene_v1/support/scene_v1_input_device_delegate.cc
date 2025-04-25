@@ -201,7 +201,7 @@ void SceneV1InputDeviceDelegate::ShipBufferIfFull() {
   ConnectionToHost* hc = remote_player_.get();
 
   // Ship the buffer once it gets big enough or once enough time has passed.
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   size_t size = remote_input_commands_buffer_.size();
   if (size > 2
@@ -244,10 +244,10 @@ void SceneV1InputDeviceDelegate::InvalidateConnectionToHost() {
 auto SceneV1InputDeviceDelegate::GetPublicV1AccountID() const -> std::string {
   assert(g_base->InLogicThread());
 
-  // This default implementation assumes the device is local
-  // so just returns the locally signed in account's public id.
+  // This default implementation assumes the device is local so just returns
+  // the locally signed in account's public id.
 
-  return g_base->plus()->GetPublicV1AccountID();
+  return g_base->Plus()->GetPublicV1AccountID();
 }
 
 auto SceneV1InputDeviceDelegate::GetPlayerProfiles() const -> PyObject* {

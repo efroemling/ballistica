@@ -60,7 +60,7 @@ class ProfileBrowserWindow(bui.MainWindow):
                     else 'menu_full'
                 ),
                 scale=(
-                    2.0
+                    2.5
                     if uiscale is bui.UIScale.SMALL
                     else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
@@ -227,10 +227,6 @@ class ProfileBrowserWindow(bui.MainWindow):
         if not self.main_window_has_control():
             return
 
-        # no-op if our underlying widget is dead or on its way out.
-        # if not self._root_widget or self._root_widget.transitioning_out:
-        #     return
-
         plus = bui.app.plus
         assert plus is not None
 
@@ -239,7 +235,8 @@ class ProfileBrowserWindow(bui.MainWindow):
         assert self._profiles is not None
         assert bui.app.classic is not None
         if (
-            not bui.app.classic.accounts.have_pro_options()
+            bool(False)  # Phasing out pro.
+            and not bui.app.classic.accounts.have_pro_options()
             and len(self._profiles) >= max_non_pro_profiles
         ):
             PurchaseWindow(
@@ -314,7 +311,7 @@ class ProfileBrowserWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
-        # no-op if we're not in control.
+        # No-op if we're not in control.
         if not self.main_window_has_control():
             return
 

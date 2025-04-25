@@ -36,8 +36,8 @@ auto AssertNotNull(T* ptr) -> T* {
 template <typename OUT_TYPE, typename IN_TYPE>
 auto check_static_cast_fit(IN_TYPE in) -> bool {
   // Make sure we don't try to use this when casting to or from floats or
-  // doubles. We don't expect to always get the same value back
-  // on casting back in that case.
+  // doubles. We don't expect to always get the same value back on casting
+  // back in that case.
   static_assert(!std::is_same<IN_TYPE, float>::value
                     && !std::is_same<IN_TYPE, double>::value
                     && !std::is_same<IN_TYPE, const float>::value
@@ -50,9 +50,9 @@ auto check_static_cast_fit(IN_TYPE in) -> bool {
   return static_cast<IN_TYPE>(static_cast<OUT_TYPE>(in)) == in;
 }
 
-/// Simply a static_cast, but in debug builds casts the results back to ensure
-/// the value fits into the receiver unchanged. Handy as a sanity check when
-/// stuffing a 32 bit value into a 16 bit container, etc.
+/// Simply a static_cast, but in debug builds casts the results back to
+/// ensure the value fits into the receiver unchanged. Handy as a sanity
+/// check when stuffing a 32 bit value into a 16 bit container, etc.
 template <typename OUT_TYPE, typename IN_TYPE>
 auto static_cast_check_fit(IN_TYPE in) -> OUT_TYPE {
   assert(check_static_cast_fit<OUT_TYPE>(in));

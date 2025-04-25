@@ -16,10 +16,7 @@ if TYPE_CHECKING:
 
 
 class Level:
-    """An entry in a bascenev1.Campaign.
-
-    Category: **Gameplay Classes**
-    """
+    """An entry in a :class:`~bascenev1.Campaign`."""
 
     def __init__(
         self,
@@ -46,7 +43,7 @@ class Level:
 
     @property
     def name(self) -> str:
-        """The unique name for this Level."""
+        """The unique name for this level."""
         return self._name
 
     def get_settings(self) -> dict[str, Any]:
@@ -60,16 +57,12 @@ class Level:
 
     @property
     def preview_texture_name(self) -> str:
-        """The preview texture name for this Level."""
+        """The preview texture name for this level."""
         return self._preview_texture_name
-
-    # def get_preview_texture(self) -> bauiv1.Texture:
-    #     """Load/return the preview Texture for this Level."""
-    #     return _bauiv1.gettexture(self._preview_texture_name)
 
     @property
     def displayname(self) -> bascenev1.Lstr:
-        """The localized name for this Level."""
+        """The localized name for this level."""
         return babase.Lstr(
             translate=(
                 'coopLevelNames',
@@ -86,20 +79,20 @@ class Level:
 
     @property
     def gametype(self) -> type[bascenev1.GameActivity]:
-        """The type of game used for this Level."""
+        """The type of game used for this level."""
         return self._gametype
 
     @property
     def campaign(self) -> bascenev1.Campaign | None:
-        """The baclassic.Campaign this Level is associated with, or None."""
+        """The campaign this level is associated with, or None."""
         return None if self._campaign is None else self._campaign()
 
     @property
     def index(self) -> int:
-        """The zero-based index of this Level in its baclassic.Campaign.
+        """The zero-based index of this level in its campaign.
 
-        Access results in a RuntimeError if the Level is  not assigned to a
-        Campaign.
+        Access results in a RuntimeError if the level is not assigned to
+        a campaign.
         """
         if self._index is None:
             raise RuntimeError('Level is not part of a Campaign')
@@ -107,7 +100,7 @@ class Level:
 
     @property
     def complete(self) -> bool:
-        """Whether this Level has been completed."""
+        """Whether this level has been completed."""
         config = self._get_config_dict()
         val = config.get('Complete', False)
         assert isinstance(val, bool)
@@ -123,7 +116,7 @@ class Level:
             config['Complete'] = val
 
     def get_high_scores(self) -> dict:
-        """Return the current high scores for this Level."""
+        """Return the current high scores for this level."""
         config = self._get_config_dict()
         high_scores_key = 'High Scores' + self.get_score_version_string()
         if high_scores_key not in config:
@@ -137,10 +130,11 @@ class Level:
         config[high_scores_key] = high_scores
 
     def get_score_version_string(self) -> str:
-        """Return the score version string for this Level.
+        """Return the score version string for this level.
 
-        If a Level's gameplay changes significantly, its version string
-        can be changed to separate its new high score lists/etc. from the old.
+        If a level's gameplay changes significantly, its version string
+        can be changed to separate its new high score lists/etc. from
+        the old.
         """
         if self._score_version_string is None:
             scorever = self._gametype.getscoreconfig().version
@@ -152,13 +146,13 @@ class Level:
 
     @property
     def rating(self) -> float:
-        """The current rating for this Level."""
+        """The current rating for this level."""
         val = self._get_config_dict().get('Rating', 0.0)
         assert isinstance(val, float)
         return val
 
     def set_rating(self, rating: float) -> None:
-        """Set a rating for this Level, replacing the old ONLY IF higher."""
+        """Set a rating for this level, replacing the old ONLY IF higher."""
         old_rating = self.rating
         config = self._get_config_dict()
         config['Rating'] = max(old_rating, rating)
@@ -166,8 +160,9 @@ class Level:
     def _get_config_dict(self) -> dict[str, Any]:
         """Return/create the persistent state dict for this level.
 
-        The referenced dict exists under the game's config dict and
-        can be modified in place."""
+        The referenced dict exists under the game's config dict and can
+        be modified in place.
+        """
         campaign = self.campaign
         if campaign is None:
             raise RuntimeError('Level is not in a campaign.')
@@ -179,8 +174,9 @@ class Level:
         return val
 
     def set_campaign(self, campaign: bascenev1.Campaign, index: int) -> None:
-        """For use by baclassic.Campaign when adding levels to itself.
+        """Internal: Used by campaign when adding levels to itself.
 
-        (internal)"""
+        :meta private:
+        """
         self._campaign = weakref.ref(campaign)
         self._index = index

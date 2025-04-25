@@ -179,10 +179,6 @@ void UIV1FeatureSet::OnActivate() {
   rw->Setup();
   rw->SetOverlayWidget(ow.get());
 
-  // Plug in all values we're storing.
-  // rw->SetSquadSizeLabel(party_icon_number_);
-  // rw->SetAccountState(account_signed_in_, account_name_);
-
   sw->GlobalSelect();
 }
 
@@ -223,7 +219,7 @@ void UIV1FeatureSet::OnScreenSizeChange() {
   }
 }
 
-void UIV1FeatureSet::OnScreenChange() {
+void UIV1FeatureSet::OnUIScaleChange() {
   // This gets called by the Python layer when UIScale or window size
   // changes.
   assert(g_base->InLogicThread());
@@ -278,7 +274,6 @@ void UIV1FeatureSet::ConfirmQuit(QuitType quit_type) {
 }
 
 UIV1FeatureSet::UILock::UILock(bool write) {
-  assert(g_base->ui);
   assert(g_base->InLogicThread());
 
   if (write && g_ui_v1->ui_lock_count_ != 0) {

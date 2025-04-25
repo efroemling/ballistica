@@ -206,6 +206,10 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_appmode.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_chest.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_clienteffect.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_displayitem.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_hooks.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_input.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_music.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_net.py \
@@ -352,6 +356,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/confirm.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/connect.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/connectivity.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/browser.py \
@@ -486,6 +491,10 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appmode.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_appsubsystem.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_benchmark.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_chest.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_clienteffect.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_displayitem.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_hooks.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_input.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_music.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/baclassic/__pycache__/_net.cpython-312.opt-1.pyc \
@@ -632,6 +641,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/colorpicker.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/config.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/confirm.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/connect.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__pycache__/connectivity.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/__init__.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__pycache__/browser.cpython-312.opt-1.pyc \
@@ -738,12 +748,15 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/app.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assets.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/bs.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloud.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/locale.py \
   $(BUILD_DIR)/ba_data/python/bacommon/loggercontrol.py \
   $(BUILD_DIR)/ba_data/python/bacommon/logging.py \
   $(BUILD_DIR)/ba_data/python/bacommon/login.py \
   $(BUILD_DIR)/ba_data/python/bacommon/net.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/securedata.py \
   $(BUILD_DIR)/ba_data/python/bacommon/servermanager.py \
   $(BUILD_DIR)/ba_data/python/bacommon/transfer.py \
   $(BUILD_DIR)/ba_data/python/bacommon/workspace/__init__.py \
@@ -759,6 +772,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/_pathcapture.py \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/_prep.py \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/extras.py \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/templatemultitype.py \
   $(BUILD_DIR)/ba_data/python/efro/debug.py \
   $(BUILD_DIR)/ba_data/python/efro/error.py \
   $(BUILD_DIR)/ba_data/python/efro/logging.py \
@@ -778,12 +792,15 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/app.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/assets.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/bacloud.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/bs.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/build.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/cloud.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/locale.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/loggercontrol.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/logging.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/login.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/net.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/securedata.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/servermanager.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/__pycache__/transfer.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/bacommon/workspace/__pycache__/__init__.cpython-312.opt-1.pyc \
@@ -799,6 +816,7 @@ SCRIPT_TARGETS_PYC_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_pathcapture.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/_prep.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/extras.cpython-312.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/efro/dataclassio/__pycache__/templatemultitype.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/debug.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/error.cpython-312.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/efro/__pycache__/logging.cpython-312.opt-1.pyc \
@@ -5259,6 +5277,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/assassinFall.ogg \
   $(BUILD_DIR)/ba_data/audio/assassinHit1.ogg \
   $(BUILD_DIR)/ba_data/audio/assassinHit2.ogg \
+  $(BUILD_DIR)/ba_data/audio/aww.ogg \
   $(BUILD_DIR)/ba_data/audio/bear1.ogg \
   $(BUILD_DIR)/ba_data/audio/bear2.ogg \
   $(BUILD_DIR)/ba_data/audio/bear3.ogg \
@@ -5301,6 +5320,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/cheer.ogg \
   $(BUILD_DIR)/ba_data/audio/click01.ogg \
   $(BUILD_DIR)/ba_data/audio/corkPop.ogg \
+  $(BUILD_DIR)/ba_data/audio/corkPop2.ogg \
   $(BUILD_DIR)/ba_data/audio/cowboy1.ogg \
   $(BUILD_DIR)/ba_data/audio/cowboy2.ogg \
   $(BUILD_DIR)/ba_data/audio/cowboy3.ogg \
@@ -5327,6 +5347,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/dingSmallHigh.ogg \
   $(BUILD_DIR)/ba_data/audio/dripity.ogg \
   $(BUILD_DIR)/ba_data/audio/drumRoll.ogg \
+  $(BUILD_DIR)/ba_data/audio/drumRollShort.ogg \
   $(BUILD_DIR)/ba_data/audio/error.ogg \
   $(BUILD_DIR)/ba_data/audio/explosion01.ogg \
   $(BUILD_DIR)/ba_data/audio/explosion02.ogg \
@@ -5353,6 +5374,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/frostyHit02.ogg \
   $(BUILD_DIR)/ba_data/audio/frostyHit03.ogg \
   $(BUILD_DIR)/ba_data/audio/fuse01.ogg \
+  $(BUILD_DIR)/ba_data/audio/gasp.ogg \
   $(BUILD_DIR)/ba_data/audio/gladiator1.ogg \
   $(BUILD_DIR)/ba_data/audio/gladiator2.ogg \
   $(BUILD_DIR)/ba_data/audio/gladiator3.ogg \
@@ -5424,6 +5446,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/menuMusic.ogg \
   $(BUILD_DIR)/ba_data/audio/metalHit.ogg \
   $(BUILD_DIR)/ba_data/audio/metalSkid.ogg \
+  $(BUILD_DIR)/ba_data/audio/nice.ogg \
   $(BUILD_DIR)/ba_data/audio/ninjaAttack1.ogg \
   $(BUILD_DIR)/ba_data/audio/ninjaAttack2.ogg \
   $(BUILD_DIR)/ba_data/audio/ninjaAttack3.ogg \
@@ -5493,6 +5516,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/raceBeep1.ogg \
   $(BUILD_DIR)/ba_data/audio/raceBeep2.ogg \
   $(BUILD_DIR)/ba_data/audio/refWhistle.ogg \
+  $(BUILD_DIR)/ba_data/audio/revUp.ogg \
   $(BUILD_DIR)/ba_data/audio/robot1.ogg \
   $(BUILD_DIR)/ba_data/audio/robot2.ogg \
   $(BUILD_DIR)/ba_data/audio/robot3.ogg \
@@ -5601,7 +5625,11 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/wizardFall.ogg \
   $(BUILD_DIR)/ba_data/audio/wizardHit1.ogg \
   $(BUILD_DIR)/ba_data/audio/wizardHit2.ogg \
+  $(BUILD_DIR)/ba_data/audio/woo.ogg \
+  $(BUILD_DIR)/ba_data/audio/woo2.ogg \
+  $(BUILD_DIR)/ba_data/audio/woo3.ogg \
   $(BUILD_DIR)/ba_data/audio/woodDebrisFall.ogg \
+  $(BUILD_DIR)/ba_data/audio/wow.ogg \
   $(BUILD_DIR)/ba_data/audio/wrestler1.ogg \
   $(BUILD_DIR)/ba_data/audio/wrestler2.ogg \
   $(BUILD_DIR)/ba_data/audio/wrestler3.ogg \
@@ -5610,6 +5638,7 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/wrestlerFall.ogg \
   $(BUILD_DIR)/ba_data/audio/wrestlerHit1.ogg \
   $(BUILD_DIR)/ba_data/audio/wrestlerHit2.ogg \
+  $(BUILD_DIR)/ba_data/audio/yeah.ogg \
   $(BUILD_DIR)/ba_data/audio/zoeAttack01.ogg \
   $(BUILD_DIR)/ba_data/audio/zoeAttack02.ogg \
   $(BUILD_DIR)/ba_data/audio/zoeAttack03.ogg \
@@ -5723,7 +5752,9 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/chestIcon.dds \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty.dds \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti.dds \
+  $(BUILD_DIR)/ba_data/textures/chestIconTint.dds \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon.dds \
+  $(BUILD_DIR)/ba_data/textures/chestOpenIconTint.dds \
   $(BUILD_DIR)/ba_data/textures/circle.dds \
   $(BUILD_DIR)/ba_data/textures/circleNoAlpha.dds \
   $(BUILD_DIR)/ba_data/textures/circleOutline.dds \
@@ -5903,6 +5934,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/powerupSpeed.dds \
   $(BUILD_DIR)/ba_data/textures/powerupStickyBombs.dds \
   $(BUILD_DIR)/ba_data/textures/puckColor.dds \
+  $(BUILD_DIR)/ba_data/textures/quoteBubble.dds \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor.dds \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor2.dds \
   $(BUILD_DIR)/ba_data/textures/rampageLevelColor.dds \
@@ -5972,6 +6004,19 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRect2.dds \
   $(BUILD_DIR)/ba_data/textures/softRectVertical.dds \
   $(BUILD_DIR)/ba_data/textures/sparks.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner0.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner1.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner10.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner11.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner2.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner3.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner4.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner5.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner6.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner7.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner8.dds \
+  $(BUILD_DIR)/ba_data/textures/spinner9.dds \
   $(BUILD_DIR)/ba_data/textures/star.dds \
   $(BUILD_DIR)/ba_data/textures/startButton.dds \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.dds \
@@ -6135,7 +6180,9 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/chestIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty.pvr \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti.pvr \
+  $(BUILD_DIR)/ba_data/textures/chestIconTint.pvr \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon.pvr \
+  $(BUILD_DIR)/ba_data/textures/chestOpenIconTint.pvr \
   $(BUILD_DIR)/ba_data/textures/circle.pvr \
   $(BUILD_DIR)/ba_data/textures/circleNoAlpha.pvr \
   $(BUILD_DIR)/ba_data/textures/circleOutline.pvr \
@@ -6315,6 +6362,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/powerupSpeed.pvr \
   $(BUILD_DIR)/ba_data/textures/powerupStickyBombs.pvr \
   $(BUILD_DIR)/ba_data/textures/puckColor.pvr \
+  $(BUILD_DIR)/ba_data/textures/quoteBubble.pvr \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor.pvr \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor2.pvr \
   $(BUILD_DIR)/ba_data/textures/rampageLevelColor.pvr \
@@ -6384,6 +6432,19 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRect2.pvr \
   $(BUILD_DIR)/ba_data/textures/softRectVertical.pvr \
   $(BUILD_DIR)/ba_data/textures/sparks.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner0.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner1.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner10.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner11.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner2.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner3.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner4.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner5.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner6.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner7.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner8.pvr \
+  $(BUILD_DIR)/ba_data/textures/spinner9.pvr \
   $(BUILD_DIR)/ba_data/textures/star.pvr \
   $(BUILD_DIR)/ba_data/textures/startButton.pvr \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.pvr \
@@ -6547,7 +6608,9 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/chestIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty.ktx \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti.ktx \
+  $(BUILD_DIR)/ba_data/textures/chestIconTint.ktx \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon.ktx \
+  $(BUILD_DIR)/ba_data/textures/chestOpenIconTint.ktx \
   $(BUILD_DIR)/ba_data/textures/circle.ktx \
   $(BUILD_DIR)/ba_data/textures/circleNoAlpha.ktx \
   $(BUILD_DIR)/ba_data/textures/circleOutline.ktx \
@@ -6727,6 +6790,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/powerupSpeed.ktx \
   $(BUILD_DIR)/ba_data/textures/powerupStickyBombs.ktx \
   $(BUILD_DIR)/ba_data/textures/puckColor.ktx \
+  $(BUILD_DIR)/ba_data/textures/quoteBubble.ktx \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor.ktx \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor2.ktx \
   $(BUILD_DIR)/ba_data/textures/rampageLevelColor.ktx \
@@ -6796,6 +6860,19 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRect2.ktx \
   $(BUILD_DIR)/ba_data/textures/softRectVertical.ktx \
   $(BUILD_DIR)/ba_data/textures/sparks.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner0.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner1.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner10.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner11.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner2.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner3.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner4.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner5.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner6.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner7.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner8.ktx \
+  $(BUILD_DIR)/ba_data/textures/spinner9.ktx \
   $(BUILD_DIR)/ba_data/textures/star.ktx \
   $(BUILD_DIR)/ba_data/textures/startButton.ktx \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.ktx \
@@ -6958,7 +7035,9 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/characterIconMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti_preview.png \
+  $(BUILD_DIR)/ba_data/textures/chestIconTint_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestIcon_preview.png \
+  $(BUILD_DIR)/ba_data/textures/chestOpenIconTint_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/circleNoAlpha_preview.png \
   $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha_preview.png \
@@ -7139,6 +7218,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/powerupSpeed_preview.png \
   $(BUILD_DIR)/ba_data/textures/powerupStickyBombs_preview.png \
   $(BUILD_DIR)/ba_data/textures/puckColor_preview.png \
+  $(BUILD_DIR)/ba_data/textures/quoteBubble_preview.png \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor2_preview.png \
   $(BUILD_DIR)/ba_data/textures/rampageBGColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/rampageLevelColor_preview.png \
@@ -7208,6 +7288,19 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/softRectVertical_preview.png \
   $(BUILD_DIR)/ba_data/textures/softRect_preview.png \
   $(BUILD_DIR)/ba_data/textures/sparks_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner0_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner10_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner11_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner1_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner2_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner3_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner4_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner5_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner6_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner7_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner8_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner9_preview.png \
+  $(BUILD_DIR)/ba_data/textures/spinner_preview.png \
   $(BUILD_DIR)/ba_data/textures/star_preview.png \
   $(BUILD_DIR)/ba_data/textures/startButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor_preview.png \
@@ -7354,7 +7447,6 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/SDL2.dll \
   $(BUILD_DIR)/windows/Win32/libvorbis.dll \
   $(BUILD_DIR)/windows/Win32/libvorbisfile.dll \
-  $(BUILD_DIR)/windows/Win32/msvcp140d.dll \
   $(BUILD_DIR)/windows/Win32/ogg.dll \
   $(BUILD_DIR)/windows/Win32/python.exe \
   $(BUILD_DIR)/windows/Win32/python312.dll \
@@ -7362,9 +7454,7 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/python_d.exe \
   $(BUILD_DIR)/windows/Win32/pythonw.exe \
   $(BUILD_DIR)/windows/Win32/pythonw_d.exe \
-  $(BUILD_DIR)/windows/Win32/ucrtbased.dll \
-  $(BUILD_DIR)/windows/Win32/vc_redist.x86.exe \
-  $(BUILD_DIR)/windows/Win32/vcruntime140d.dll
+  $(BUILD_DIR)/windows/Win32/vc_redist.x86.exe
 
 # Rule to copy src extras to build.
 $(EXTRAS_TARGETS_WIN_WIN32) : ../../.efrocachemap
@@ -7449,7 +7539,6 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/SDL2.dll \
   $(BUILD_DIR)/windows/x64/libvorbis.dll \
   $(BUILD_DIR)/windows/x64/libvorbisfile.dll \
-  $(BUILD_DIR)/windows/x64/msvcp140d.dll \
   $(BUILD_DIR)/windows/x64/ogg.dll \
   $(BUILD_DIR)/windows/x64/python.exe \
   $(BUILD_DIR)/windows/x64/python312.dll \
@@ -7457,10 +7546,7 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/python_d.exe \
   $(BUILD_DIR)/windows/x64/pythonw.exe \
   $(BUILD_DIR)/windows/x64/pythonw_d.exe \
-  $(BUILD_DIR)/windows/x64/ucrtbased.dll \
-  $(BUILD_DIR)/windows/x64/vc_redist.x64.exe \
-  $(BUILD_DIR)/windows/x64/vcruntime140_1d.dll \
-  $(BUILD_DIR)/windows/x64/vcruntime140d.dll
+  $(BUILD_DIR)/windows/x64/vc_redist.x64.exe
 
 # Rule to copy src extras to build.
 $(EXTRAS_TARGETS_WIN_X64) : ../../.efrocachemap

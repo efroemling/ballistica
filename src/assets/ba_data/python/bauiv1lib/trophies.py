@@ -32,8 +32,8 @@ class TrophiesWindow(popup.PopupWindow):
                 else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             )
         self._transitioning_out = False
-        self._width = 300
-        self._height = 300
+        self._width = 310
+        self._height = 310
         bg_color = (0.5, 0.4, 0.6)
 
         super().__init__(
@@ -65,7 +65,8 @@ class TrophiesWindow(popup.PopupWindow):
             scale=0.6,
             text=bui.Lstr(resource='trophiesText'),
             maxwidth=200,
-            color=(1, 1, 1, 0.4),
+            # color=(1, 1, 1, 0.4),
+            color=bui.app.ui_v1.title_color,
         )
 
         self._scrollwidget = bui.scrollwidget(
@@ -73,6 +74,7 @@ class TrophiesWindow(popup.PopupWindow):
             size=(self._width - 60, self._height - 70),
             position=(30, 30),
             capture_arrows=True,
+            border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
 

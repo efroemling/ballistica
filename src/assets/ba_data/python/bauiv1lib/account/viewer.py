@@ -88,7 +88,7 @@ class AccountViewerWindow(PopupWindow):
             scale=0.6,
             text=bui.Lstr(resource='playerInfoText'),
             maxwidth=200,
-            color=(0.7, 0.7, 0.7, 0.7),
+            color=bui.app.ui_v1.title_color,
         )
 
         self._scrollwidget = bui.scrollwidget(
@@ -97,19 +97,25 @@ class AccountViewerWindow(PopupWindow):
             position=(30, 30),
             capture_arrows=True,
             simple_culling_v=10,
+            border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
 
+        # Note to self: Make sure to always update loading text and
+        # spinner visibility together.
         self._loading_text = bui.textwidget(
             parent=self._scrollwidget,
             scale=0.5,
-            text=bui.Lstr(
-                value='${A}...',
-                subs=[('${A}', bui.Lstr(resource='loadingText'))],
-            ),
+            text='',
             size=(self._width - 60, 100),
             h_align='center',
             v_align='center',
+        )
+        self._loading_spinner = bui.spinnerwidget(
+            parent=self.root_widget,
+            position=(self._width * 0.5, self._height * 0.5),
+            style='bomb',
+            size=48,
         )
 
         # In cases where the user most likely has a browser/email, lets
@@ -227,9 +233,11 @@ class AccountViewerWindow(PopupWindow):
                 edit=self._loading_text,
                 text=bui.Lstr(resource='internal.unavailableNoConnectionText'),
             )
+            bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         else:
             try:
                 self._loading_text.delete()
+                self._loading_spinner.delete()
                 trophystr = ''
                 try:
                     trophystr = data['trophies']

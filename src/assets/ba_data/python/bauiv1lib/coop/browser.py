@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, override
 
+
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -28,6 +29,7 @@ class CoopBrowserWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
 
         plus = bui.app.plus
@@ -74,10 +76,9 @@ class CoopBrowserWindow(bui.MainWindow):
         self._campaign_percent_text: bui.Widget | None = None
 
         uiscale = app.ui_v1.uiscale
-        self._width = 1520 if uiscale is bui.UIScale.SMALL else 1120
-        self._x_inset = x_inset = 200 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1600 if uiscale is bui.UIScale.SMALL else 1120
         self._height = (
-            600
+            1200
             if uiscale is bui.UIScale.SMALL
             else 730 if uiscale is bui.UIScale.MEDIUM else 800
         )
@@ -104,23 +105,38 @@ class CoopBrowserWindow(bui.MainWindow):
             )
             self._campaign_difficulty = 'easy'
 
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.5
+            if uiscale is bui.UIScale.SMALL
+            else 0.8 if uiscale is bui.UIScale.MEDIUM else 0.75
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 120, screensize[0] / scale)
+        target_height = min(self._height - 120, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 40
+        self._scroll_bottom = yoffs - 70 - self._scroll_height
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
                 toolbar_visibility='menu_full',
-                stack_offset=(
-                    (0, -8)
-                    if uiscale is bui.UIScale.SMALL
-                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
-                ),
-                scale=(
-                    1.28
-                    if uiscale is bui.UIScale.SMALL
-                    else 0.8 if uiscale is bui.UIScale.MEDIUM else 0.75
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         if uiscale is bui.UIScale.SMALL:
@@ -131,91 +147,17 @@ class CoopBrowserWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(75 + x_inset, self._height - 87),
-                size=(120, 60),
+                position=(75, yoffs - 48.0),
+                size=(60, 50),
                 scale=1.2,
                 autoselect=True,
-                label=bui.Lstr(resource='backText'),
-                button_type='back',
-                on_activate_call=self.main_window_back,
-            )
-            bui.buttonwidget(
-                edit=self._back_button,
-                button_type='backSmall',
-                size=(60, 50),
-                position=(
-                    75 + x_inset,
-                    self._height - 87 + 6,
-                ),
                 label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
             )
-
-        # self._league_rank_button: LeagueRankButton | None
-        # self._store_button: StoreButton | None
-        # self._store_button_widget: bui.Widget | None
-        # self._league_rank_button_widget: bui.Widget | None
-
-        # if not app.ui_v1.use_toolbars:
-        #     prb = self._league_rank_button = LeagueRankButton(
-        #         parent=self._root_widget,
-        #         position=(
-        #             self._width - (282 + x_inset),
-        #             self._height
-        #             - 85
-        #             - (4 if uiscale is bui.UIScale.SMALL else 0),
-        #         ),
-        #         size=(100, 60),
-        #         color=(0.4, 0.4, 0.9),
-        #         textcolor=(0.9, 0.9, 2.0),
-        #         scale=1.05,
-        #         on_activate_call=bui.WeakCall(
-        # self._switch_to_league_rankings),
-        #     )
-        #     self._league_rank_button_widget = prb.get_button()
-
-        #     sbtn = self._store_button = StoreButton(
-        #         parent=self._root_widget,
-        #         position=(
-        #             self._width - (170 + x_inset),
-        #             self._height
-        #             - 85
-        #             - (4 if uiscale is bui.UIScale.SMALL else 0),
-        #         ),
-        #         size=(100, 60),
-        #         color=(0.6, 0.4, 0.7),
-        #         show_tickets=True,
-        #         button_type='square',
-        #         sale_scale=0.85,
-        #         textcolor=(0.9, 0.7, 1.0),
-        #         scale=1.05,
-        #         on_activate_call=bui.WeakCall(self._switch_to_score, None),
-        #     )
-        #     self._store_button_widget = sbtn.get_button()
-        #     assert self._back_button is not None
-        #     bui.widget(
-        #         edit=self._back_button,
-        #         right_widget=self._league_rank_button_widget,
-        #     )
-        #     bui.widget(
-        #         edit=self._league_rank_button_widget,
-        #         left_widget=self._back_button,
-        #     )
-        # else:
-        # self._league_rank_button = None
-        # self._store_button = None
-        # self._store_button_widget = None
-        # self._league_rank_button_widget = None
-
-        # Move our corner buttons dynamically to keep them out of the way of
-        # the party icon :-(
-        # self._update_corner_button_positions()
-        # self._update_corner_button_positions_timer = bui.AppTimer(
-        #     1.0, bui.WeakCall(
-        # self._update_corner_button_positions), repeat=True
-        # )
 
         self._last_tournament_query_time: float | None = None
         self._last_tournament_query_response_time: float | None = None
@@ -228,14 +170,18 @@ class CoopBrowserWindow(bui.MainWindow):
             'Selected Coop Custom Level', None
         )
 
+        if uiscale is bui.UIScale.SMALL:
+            tmaxw = 130 if bui.get_virtual_screen_size()[0] < 1320 else 175
+        else:
+            tmaxw = 300
+
         # Don't want initial construction affecting our last-selected.
         self._do_selection_callbacks = False
-        v = self._height - 95
-        txt = bui.textwidget(
+        bui.textwidget(
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                v + 40 - (0 if uiscale is bui.UIScale.SMALL else 0),
+                yoffs - (50 if uiscale is bui.UIScale.SMALL else 24),
             ),
             size=(0, 0),
             text=bui.Lstr(
@@ -244,20 +190,12 @@ class CoopBrowserWindow(bui.MainWindow):
             ),
             h_align='center',
             color=app.ui_v1.title_color,
-            scale=1.5,
-            maxwidth=500,
+            scale=0.85 if uiscale is bui.UIScale.SMALL else 1.5,
+            maxwidth=tmaxw,
             v_align='center',
         )
 
-        if uiscale is bui.UIScale.SMALL:
-            bui.textwidget(edit=txt, text='')
-
         self._selected_row = cfg.get('Selected Coop Row', None)
-
-        self._scroll_width = self._width - (130 + 2 * x_inset)
-        self._scroll_height = self._height - (
-            219 if uiscale is bui.UIScale.SMALL else 160
-        )
 
         self._subcontainerwidth = 800.0
         self._subcontainerheight = 1400.0
@@ -265,16 +203,53 @@ class CoopBrowserWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            position=(
-                (65 + x_inset, 120)
-                if uiscale is bui.UIScale.SMALL
-                else (65 + x_inset, 70)
-            ),
             size=(self._scroll_width, self._scroll_height),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                self._scroll_bottom,
+            ),
             simple_culling_v=10.0,
             claims_left_right=True,
             selection_loops_to_parent=True,
+            border_opacity=0.4,
         )
+
+        if uiscale is bui.UIScale.SMALL:
+            blotchwidth = 500.0
+            blotchheight = 200.0
+            bimg = bui.imagewidget(
+                parent=self._root_widget,
+                texture=bui.gettexture('uiAtlas'),
+                mesh_transparent=bui.getmesh('windowBGBlotch'),
+                position=(
+                    self._width * 0.5
+                    - self._scroll_width * 0.5
+                    + 60.0
+                    - blotchwidth * 0.5,
+                    self._scroll_bottom - blotchheight * 0.5,
+                ),
+                size=(blotchwidth, blotchheight),
+                color=(0.4, 0.37, 0.49),
+                # color=(1, 0, 0),
+            )
+            bui.widget(edit=bimg, depth_range=(0.9, 1.0))
+            bimg = bui.imagewidget(
+                parent=self._root_widget,
+                texture=bui.gettexture('uiAtlas'),
+                mesh_transparent=bui.getmesh('windowBGBlotch'),
+                position=(
+                    self._width * 0.5
+                    + self._scroll_width * 0.5
+                    - 60.0
+                    - blotchwidth * 0.5,
+                    self._scroll_bottom - blotchheight * 0.5,
+                ),
+                size=(blotchwidth, blotchheight),
+                color=(0.4, 0.37, 0.49),
+                # color=(1, 0, 0),
+            )
+            bui.widget(edit=bimg, depth_range=(0.9, 1.0))
+
         self._subcontainer: bui.Widget | None = None
 
         # Take note of our account state; we'll refresh later if this changes.
@@ -365,8 +340,10 @@ class CoopBrowserWindow(bui.MainWindow):
         ):
             self._tourney_data_up_to_date = False
 
-        # If our account state has changed, do a full request.
+        # If our account login state has changed, do a
+        # full request.
         account_state_num = plus.get_v1_account_state_num()
+
         if account_state_num != self._account_state_num:
             self._account_state_num = account_state_num
             self._save_state()
@@ -444,6 +421,7 @@ class CoopBrowserWindow(bui.MainWindow):
             logging.exception('Error updating campaign lock.')
 
     def _update_for_data(self, data: list[dict[str, Any]] | None) -> None:
+
         # If the number of tournaments or challenges in the data differs
         # from our current arrangement, refresh with the new number.
         if (data is None and self._tournament_button_count != 0) or (
@@ -640,8 +618,6 @@ class CoopBrowserWindow(bui.MainWindow):
 
         bui.widget(edit=campaign_buttons[0], left_widget=self._easy_button)
 
-        # bui.widget(edit=self._easy_button)
-        # if self._back_button is not None:
         bui.widget(
             edit=self._easy_button,
             left_widget=self._back_button,
@@ -744,7 +720,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         h_scroll = bui.hscrollwidget(
             parent=w_parent,
-            size=(self._scroll_width - 10, 205),
+            size=(self._scroll_width, 205),
             position=(-5, v),
             simple_culling_h=70,
             highlight=False,
@@ -838,7 +814,7 @@ class CoopBrowserWindow(bui.MainWindow):
             for i in range(self._tournament_button_count):
                 tournament_h_scroll = h_scroll = bui.hscrollwidget(
                     parent=w_parent,
-                    size=(self._scroll_width - 10, 205),
+                    size=(self._scroll_width, 205),
                     position=(-5, v),
                     highlight=False,
                     border_opacity=0.0,
@@ -920,7 +896,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._custom_h_scroll = custom_h_scroll = h_scroll = bui.hscrollwidget(
             parent=w_parent,
-            size=(self._scroll_width - 10, 205),
+            size=(self._scroll_width, 205),
             position=(-5, v),
             highlight=False,
             border_opacity=0.0,
@@ -1024,9 +1000,34 @@ class CoopBrowserWindow(bui.MainWindow):
         """Return whether our tourney data is up to date."""
         return self._tourney_data_up_to_date
 
-    def run_game(self, game: str) -> None:
+    def run_game(
+        self, game: str, origin_widget: bui.Widget | None = None
+    ) -> None:
         """Run the provided game."""
-        # pylint: disable=too-many-branches
+        from efro.util import strict_partial
+        from bauiv1lib.confirm import ConfirmWindow
+
+        classic = bui.app.classic
+        assert classic is not None
+
+        if classic.chest_dock_full:
+            ConfirmWindow(
+                bui.Lstr(resource='chests.slotsFullWarningText'),
+                width=550,
+                height=140,
+                ok_text=bui.Lstr(resource='continueText'),
+                origin_widget=origin_widget,
+                action=strict_partial(
+                    self._run_game, game=game, origin_widget=origin_widget
+                ),
+            )
+        else:
+            self._run_game(game=game, origin_widget=origin_widget)
+
+    def _run_game(
+        self, game: str, origin_widget: bui.Widget | None = None
+    ) -> None:
+        """Run the provided game."""
         # pylint: disable=cyclic-import
         from bauiv1lib.confirm import ConfirmWindow
         from bauiv1lib.purchase import PurchaseWindow
@@ -1051,51 +1052,18 @@ class CoopBrowserWindow(bui.MainWindow):
             )
             return
 
-        # Infinite onslaught/runaround require pro; bring up a store link
-        # if need be.
-        if (
-            game
-            in (
-                'Challenges:Infinite Runaround',
-                'Challenges:Infinite Onslaught',
-            )
-            and not bui.app.classic.accounts.have_pro()
-        ):
-            if plus.get_v1_account_state() != 'signed_in':
-                show_sign_in_prompt()
-            else:
-                PurchaseWindow(items=['pro'])
-            return
+        required_purchases = bui.app.classic.required_purchases_for_game(game)
 
-        required_purchase: str | None
-        if game in ['Challenges:Meteor Shower']:
-            required_purchase = 'games.meteor_shower'
-        elif game in [
-            'Challenges:Target Practice',
-            'Challenges:Target Practice B',
-        ]:
-            required_purchase = 'games.target_practice'
-        elif game in ['Challenges:Ninja Fight']:
-            required_purchase = 'games.ninja_fight'
-        elif game in ['Challenges:Pro Ninja Fight']:
-            required_purchase = 'games.ninja_fight'
-        elif game in [
-            'Challenges:Easter Egg Hunt',
-            'Challenges:Pro Easter Egg Hunt',
-        ]:
-            required_purchase = 'games.easter_egg_hunt'
-        else:
-            required_purchase = None
-
-        if (
-            required_purchase is not None
-            and not plus.get_v1_account_product_purchased(required_purchase)
-        ):
-            if plus.get_v1_account_state() != 'signed_in':
-                show_sign_in_prompt()
-            else:
-                PurchaseWindow(items=[required_purchase])
-            return
+        # Show pop-up to allow purchasing any required stuff we don't have.
+        for purchase in required_purchases:
+            if not plus.get_v1_account_product_purchased(purchase):
+                if plus.get_v1_account_state() != 'signed_in':
+                    show_sign_in_prompt()
+                else:
+                    PurchaseWindow(
+                        items=[purchase], origin_widget=origin_widget
+                    )
+                return
 
         self._save_state()
 
@@ -1104,11 +1072,17 @@ class CoopBrowserWindow(bui.MainWindow):
 
     def run_tournament(self, tournament_button: TournamentButton) -> None:
         """Run the provided tournament game."""
+        # pylint: disable=too-many-return-statements
+
+        from bauiv1lib.purchase import PurchaseWindow
         from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.tournamententry import TournamentEntryWindow
 
         plus = bui.app.plus
         assert plus is not None
+
+        classic = bui.app.classic
+        assert classic is not None
 
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
@@ -1159,6 +1133,38 @@ class CoopBrowserWindow(bui.MainWindow):
             bui.getsound('error').play()
             return
 
+        if tournament_button.game is not None and not classic.is_game_unlocked(
+            tournament_button.game
+        ):
+            required_purchases = classic.required_purchases_for_game(
+                tournament_button.game
+            )
+            # We gotta be missing *something* if its locked.
+            assert required_purchases
+
+            for purchase in required_purchases:
+                if not plus.get_v1_account_product_purchased(purchase):
+                    if plus.get_v1_account_state() != 'signed_in':
+                        show_sign_in_prompt()
+                    else:
+                        PurchaseWindow(
+                            items=[purchase],
+                            origin_widget=tournament_button.button,
+                        )
+                    return
+
+            # assert required_purchases
+            # if plus.get_v1_account_state() != 'signed_in':
+            #     show_sign_in_prompt()
+            # else:
+            #     # Hmm; just show the first requirement. They can come
+            #     # back to see more after they purchase the first.
+            #     PurchaseWindow(
+            #         items=[required_purchases[0]],
+            #         origin_widget=tournament_button.button,
+            #     )
+            # return
+
         if tournament_button.time_remaining <= 0:
             bui.screenmessage(
                 bui.Lstr(resource='tournamentEndedText'), color=(1, 0, 0)
@@ -1180,10 +1186,6 @@ class CoopBrowserWindow(bui.MainWindow):
             sel = self._root_widget.get_selected_child()
             if sel == self._back_button:
                 sel_name = 'Back'
-            # elif sel == self._store_button_widget:
-            #     sel_name = 'Store'
-            # elif sel == self._league_rank_button_widget:
-            #     sel_name = 'PowerRanking'
             elif sel == self._scrollwidget:
                 sel_name = 'Scroll'
             else:
@@ -1208,10 +1210,6 @@ class CoopBrowserWindow(bui.MainWindow):
                 sel = self._back_button
             elif sel_name == 'Scroll':
                 sel = self._scrollwidget
-            # elif sel_name == 'PowerRanking':
-            #     sel = self._league_rank_button_widget
-            # elif sel_name == 'Store':
-            #     sel = self._store_button_widget
             else:
                 sel = self._scrollwidget
             bui.containerwidget(edit=self._root_widget, selected_child=sel)

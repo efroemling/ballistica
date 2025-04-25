@@ -123,24 +123,19 @@ class DevConsoleTabUI(DevConsoleTab):
         xoffs = -375
 
         self.text(
-            'Make sure all interactive UI fits in the'
-            ' virtual bounds at all UI-scales (not counting things'
-            ' that follow screen edges).\n'
-            'Note that some elements may not reflect UI-scale changes'
-            ' until recreated.',
+            'Make sure all UIs either fit in the virtual safe area'
+            ' or dynamically respond to screen size changes.',
             scale=0.6,
             pos=(xoffs + 15, 70),
-            # h_anchor='left',
             h_align='left',
             v_align='center',
         )
 
-        ui_overlay = _babase.get_draw_ui_bounds()
+        ui_overlay = _babase.get_draw_virtual_safe_area_bounds()
         self.button(
-            'Virtual Bounds ON' if ui_overlay else 'Virtual Bounds OFF',
+            'Virtual Safe Area ON' if ui_overlay else 'Virtual Safe Area OFF',
             pos=(xoffs + 10, 10),
             size=(200, 30),
-            # h_anchor='left',
             label_scale=0.6,
             call=self.toggle_ui_overlay,
             style='bright' if ui_overlay else 'normal',
@@ -149,7 +144,6 @@ class DevConsoleTabUI(DevConsoleTab):
         self.text(
             'UI-Scale',
             pos=(xoffs + x - 5, 15),
-            # h_anchor='left',
             h_align='right',
             v_align='none',
             scale=0.6,
@@ -161,7 +155,6 @@ class DevConsoleTabUI(DevConsoleTab):
                 scale.name.capitalize(),
                 pos=(xoffs + x, 10),
                 size=(bwidth, 30),
-                # h_anchor='left',
                 label_scale=0.6,
                 call=partial(_babase.app.set_ui_scale, scale),
                 style=(
@@ -174,7 +167,9 @@ class DevConsoleTabUI(DevConsoleTab):
 
     def toggle_ui_overlay(self) -> None:
         """Toggle UI overlay drawing."""
-        _babase.set_draw_ui_bounds(not _babase.get_draw_ui_bounds())
+        _babase.set_draw_virtual_safe_area_bounds(
+            not _babase.get_draw_virtual_safe_area_bounds()
+        )
         self.request_refresh()
 
 

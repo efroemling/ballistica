@@ -47,7 +47,8 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
   // Dynamically allocate this since Python needs to keep it around.
   auto* docsptr = new std::string(
       "Unchanging values for the current running app instance.\n"
-      "Access the single shared instance of this class at `babase.app.env`.\n"
+      "Access the single shared instance of this class through the\n"
+      ":attr:`~babase.App.env` attr on the :class:`~babase.App` class.\n"
       "\n"
       "Attributes:\n");
   auto& docs{*docsptr};
@@ -116,11 +117,11 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
       "The app's api version.\n"
       "\n"
       "Only Python modules and packages associated with the current API\n"
-      "version number will be detected by the game (see the ba_meta tag).\n"
-      "This value will change whenever substantial backward-incompatible\n"
-      "changes are introduced to Ballistica APIs. When that happens,\n"
-      "modules/packages should be updated accordingly and set to target\n"
-      "the newer API version number.");
+      "version number will be detected by the game (see the\n"
+      ":class:`babase.MetadataSubsystem`). This value will change whenever\n"
+      "substantial backward-incompatible changes are introduced to\n"
+      "Ballistica APIs. When that happens, modules/packages should be updated\n"
+      "accordingly and set to target the newer API version number.");
 
   std::optional<std::string> user_py_dir = g_core->GetUserPythonDirectory();
   envs["python_directory_user"] = OptionalStrEntry_(

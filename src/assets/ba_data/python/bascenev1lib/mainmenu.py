@@ -15,6 +15,8 @@ import bauiv1 as bui
 if TYPE_CHECKING:
     from typing import Any
 
+    import bacommon.bs
+
 
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
     """Activity showing the rotating main menu bg stuff."""
@@ -86,7 +88,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
         if env.test:
-            pos = (230, -5)
+            pos = (230, 35)
             self.beta_info = bs.NodeActor(
                 bs.newnode(
                     'text',
@@ -247,7 +249,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         lang = app.lang.language
         if lang != self._language:
             self._language = lang
-            y = -15
+            y = 20
             base_scale = 1.1
             self._word_actors = []
             base_delay = 0.8
@@ -341,7 +343,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     self._make_word(
                         'B',
                         x - 50,
-                        y - 14 + 0.8 * y_extra,
+                        y - 23 + 0.8 * y_extra,
                         scale=1.3 * base_scale,
                         delay=delay,
                         vr_depth_offset=3,
@@ -373,7 +375,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     self._make_word(
                         'S',
                         x,
-                        y - 15 + 0.8 * y_extra,
+                        y - 25 + 0.8 * y_extra,
                         scale=1.35 * base_scale,
                         delay=delay,
                         vr_depth_offset=14,

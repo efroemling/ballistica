@@ -76,7 +76,7 @@ def instantiate_store_item_display(
     tint_color = None
     tint2_color = None
     tex_name: str | None = None
-    desc: str | None = None
+    desc: bui.Lstr | None = None
     modes: bui.Lstr | None = None
 
     if item_name.startswith('characters.'):
@@ -149,6 +149,30 @@ def instantiate_store_item_display(
         desc = gametype.get_description_display_string(bs.CoopSession)
         tex_name = item_info['previewTex']
         base_text_scale = 0.8
+        title_v = 0.48
+        price_v = 0.17
+    elif item_name == 'upgrades.infinite_runaround':
+        base_text_scale = 0.8
+        desc = bui.Lstr(
+            translate=(
+                'gameDescriptions',
+                'Prevent enemies from reaching the exit.',
+            )
+        )
+        modes = bui.Lstr(resource='playModes.coopText')
+        tex_name = 'towerDPreview'
+        title_v = 0.48
+        price_v = 0.17
+    elif item_name == 'upgrades.infinite_onslaught':
+        base_text_scale = 0.8
+        desc = bui.Lstr(
+            translate=(
+                'gameDescriptions',
+                'Defeat all enemies.',
+            )
+        )
+        modes = bui.Lstr(resource='playModes.coopText')
+        tex_name = 'doomShroomPreview'
         title_v = 0.48
         price_v = 0.17
 
@@ -512,7 +536,10 @@ def instantiate_store_item_display(
             texture=bui.gettexture(tex_name),
         )
 
-    if item_name.startswith('games.'):
+    if item_name.startswith('games.') or item_name in (
+        'upgrades.infinite_runaround',
+        'upgrades.infinite_onslaught',
+    ):
         frame_size = b_width * 0.8
         im_dim = frame_size * (100.0 / 113.0)
         im_pos = (

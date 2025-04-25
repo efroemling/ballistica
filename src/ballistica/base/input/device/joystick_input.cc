@@ -37,7 +37,7 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
       calibration_break_threshold_(kJoystickCalibrationBreakThreshold),
       custom_device_name_(custom_device_name),
       can_configure_(can_configure),
-      creation_time_(g_core->GetAppTimeMillisecs()),
+      creation_time_(g_core->AppTimeMillisecs()),
       calibrate_(calibrate) {
   // This is the default calibration for 'non-full' analog calibration.
   for (float& analog_calibration_val : analog_calibration_vals_) {
@@ -374,7 +374,7 @@ void JoystickInput::Update() {
   // Let's take this opportunity to update our calibration
   // (should probably have a specific place to do that but this works)
   if (calibrate_) {
-    millisecs_t time = g_core->GetAppTimeMillisecs();
+    millisecs_t time = g_core->AppTimeMillisecs();
 
     // If we're doing 'aggressive' auto-recalibration we expand extents outward
     // but suck them inward a tiny bit too to account for jitter or random fluke
@@ -545,7 +545,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
     return;
   }
 
-  millisecs_t time = g_core->GetAppTimeMillisecs();
+  millisecs_t time = g_core->AppTimeMillisecs();
   SDL_Event e2;
 
   // Ignore analog-stick input while we're holding a hat switch or d-pad
@@ -959,7 +959,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
         && (e->jbutton.button != hold_position_button_)
         && (e->jbutton.button != back_button_)) {
       if (ui_only_ || e->jbutton.button == remote_enter_button_) {
-        millisecs_t current_time = g_core->GetAppTimeMillisecs();
+        millisecs_t current_time = g_core->AppTimeMillisecs();
         if (current_time - last_ui_only_print_time_ > 5000) {
           g_base->python->objs()
               .Get(BasePython::ObjID::kUIRemotePressCall)

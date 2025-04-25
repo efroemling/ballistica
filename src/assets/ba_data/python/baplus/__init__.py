@@ -3,10 +3,10 @@
 """Closed-source bits of ballistica.
 
 This code concerns sensitive things like accounts and master-server
-communication so the native C++ parts of it remain closed. Native
+communication, so the native C++ parts of it remain closed. Native
 precompiled static libraries of this portion are provided for those who
-want to compile the rest of the engine, or a fully open-source app
-can also be built by removing this feature-set.
+want to compile the rest of the engine, or a fully open-source app can
+also be built by removing this feature-set.
 """
 
 from __future__ import annotations

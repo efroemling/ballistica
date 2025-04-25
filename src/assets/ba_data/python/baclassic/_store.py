@@ -26,6 +26,7 @@ class StoreSubsystem:
     def get_store_item_name_translated(self, item_name: str) -> babase.Lstr:
         """Return a babase.Lstr for a store item name."""
         # pylint: disable=cyclic-import
+        # pylint: disable=too-many-return-statements
         item_info = self.get_store_item(item_name)
         if item_name.startswith('characters.'):
             return babase.Lstr(
@@ -46,6 +47,14 @@ class StoreSubsystem:
             return gametype.get_display_string()
         if item_name.startswith('icons.'):
             return babase.Lstr(resource='editProfileWindow.iconText')
+        if item_name == 'upgrades.infinite_runaround':
+            return babase.Lstr(
+                translate=('coopLevelNames', 'Infinite Runaround')
+            )
+        if item_name == 'upgrades.infinite_onslaught':
+            return babase.Lstr(
+                translate=('coopLevelNames', 'Infinite Onslaught')
+            )
         raise ValueError('unrecognized item: ' + item_name)
 
     def get_store_item_display_size(
@@ -81,14 +90,17 @@ class StoreSubsystem:
         assert babase.app.classic is not None
 
         if babase.app.classic.store_items is None:
-            from bascenev1lib.game import ninjafight
-            from bascenev1lib.game import meteorshower
-            from bascenev1lib.game import targetpractice
-            from bascenev1lib.game import easteregghunt
+            from bascenev1lib.game.race import RaceGame
+            from bascenev1lib.game.ninjafight import NinjaFightGame
+            from bascenev1lib.game.meteorshower import MeteorShowerGame
+            from bascenev1lib.game.targetpractice import TargetPracticeGame
+            from bascenev1lib.game.easteregghunt import EasterEggHuntGame
 
             # IMPORTANT - need to keep this synced with the master server.
             # (doing so manually for now)
             babase.app.classic.store_items = {
+                'upgrades.infinite_runaround': {},
+                'upgrades.infinite_onslaught': {},
                 'characters.kronk': {'character': 'Kronk'},
                 'characters.zoe': {'character': 'Zoe'},
                 'characters.jackmorgan': {'character': 'Jack Morgan'},
@@ -111,20 +123,28 @@ class StoreSubsystem:
                 'merch': {},
                 'pro': {},
                 'maps.lake_frigid': {'map_type': maps.LakeFrigid},
+                'games.race': {
+                    'gametype': RaceGame,
+                    'previewTex': 'bigGPreview',
+                },
                 'games.ninja_fight': {
-                    'gametype': ninjafight.NinjaFightGame,
+                    'gametype': NinjaFightGame,
                     'previewTex': 'courtyardPreview',
                 },
                 'games.meteor_shower': {
-                    'gametype': meteorshower.MeteorShowerGame,
+                    'gametype': MeteorShowerGame,
+                    'previewTex': 'rampagePreview',
+                },
+                'games.infinite_onslaught': {
+                    'gametype': MeteorShowerGame,
                     'previewTex': 'rampagePreview',
                 },
                 'games.target_practice': {
-                    'gametype': targetpractice.TargetPracticeGame,
+                    'gametype': TargetPracticeGame,
                     'previewTex': 'doomShroomPreview',
                 },
                 'games.easter_egg_hunt': {
-                    'gametype': easteregghunt.EasterEggHuntGame,
+                    'gametype': EasterEggHuntGame,
                     'previewTex': 'towerDPreview',
                 },
                 'icons.flag_us': {
@@ -365,9 +385,12 @@ class StoreSubsystem:
         store_layout['minigames'] = [
             {
                 'items': [
+                    'games.race',
                     'games.ninja_fight',
                     'games.meteor_shower',
                     'games.target_practice',
+                    'upgrades.infinite_onslaught',
+                    'upgrades.infinite_runaround',
                 ]
             }
         ]
@@ -542,10 +565,7 @@ class StoreSubsystem:
             return None
 
     def get_unowned_maps(self) -> list[str]:
-        """Return the list of local maps not owned by the current account.
-
-        Category: **Asset Functions**
-        """
+        """Return the list of local maps not owned by the current account."""
         plus = babase.app.plus
         unowned_maps: set[str] = set()
         if babase.app.env.gui:
@@ -567,6 +587,10 @@ class StoreSubsystem:
             if babase.app.env.gui:
                 for section in self.get_store_layout()['minigames']:
                     for mname in section['items']:
+                        if mname.startswith('upgrades.'):
+                            # Ignore things like infinite onslaught which
+                            # aren't actually game types.
+                            continue
                         if (
                             plus is None
                             or not plus.get_v1_account_product_purchased(mname)

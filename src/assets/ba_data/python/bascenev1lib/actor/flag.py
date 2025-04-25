@@ -16,38 +16,31 @@ if TYPE_CHECKING:
 
 
 class FlagFactory:
-    """Wraps up media and other resources used by `Flag`s.
+    """Wraps up media and resources used by :class:`Flag`.
 
-    Category: **Gameplay Classes**
-
-    A single instance of this is shared between all flags
-    and can be retrieved via FlagFactory.get().
+    A single instance of this is shared between all flags and can be
+    retrieved via :meth:`FlagFactory.get()`.
     """
 
+    #: The material applied to all flags.
     flagmaterial: bs.Material
-    """The bs.Material applied to all `Flag`s."""
 
+    #: The sound used when a flag hits the ground.
     impact_sound: bs.Sound
-    """The bs.Sound used when a `Flag` hits the ground."""
 
+    #: The sound used when a flag skids along the ground.
     skid_sound: bs.Sound
-    """The bs.Sound used when a `Flag` skids along the ground."""
 
+    #: A material that prevents contact with most objects.
+    #: This gets applied to 'non-touchable' flags.
     no_hit_material: bs.Material
-    """A bs.Material that prevents contact with most objects;
-       applied to 'non-touchable' flags."""
 
     flag_texture: bs.Texture
-    """The bs.Texture for flags."""
+    """The texture for flags."""
 
     _STORENAME = bs.storagename()
 
     def __init__(self) -> None:
-        """Instantiate a `FlagFactory`.
-
-        You shouldn't need to do this; call FlagFactory.get() to
-        get a shared instance.
-        """
         shared = SharedObjects.get()
         self.flagmaterial = bs.Material()
         self.flagmaterial.add_actions(
@@ -110,7 +103,7 @@ class FlagFactory:
 
     @classmethod
     def get(cls) -> FlagFactory:
-        """Get/create a shared `FlagFactory` instance."""
+        """Get/create a shared flag-factory instance."""
         activity = bs.getactivity()
         factory = activity.customdata.get(cls._STORENAME)
         if factory is None:
@@ -122,47 +115,39 @@ class FlagFactory:
 
 @dataclass
 class FlagPickedUpMessage:
-    """A message saying a `Flag` has been picked up.
+    """A message saying a flag has been picked up."""
 
-    Category: **Message Classes**
-    """
-
+    #: The flag that has been picked up.
     flag: Flag
-    """The `Flag` that has been picked up."""
 
+    #: The bs.Node doing the picking up.
     node: bs.Node
-    """The bs.Node doing the picking up."""
 
 
 @dataclass
 class FlagDiedMessage:
-    """A message saying a `Flag` has died.
+    """A message saying a `Flag` has died."""
 
-    Category: **Message Classes**
-    """
-
+    #: The flag that died.
     flag: Flag
-    """The `Flag` that died."""
+
+    #: Whether the flag killed itself.
+    self_kill: bool = False
 
 
 @dataclass
 class FlagDroppedMessage:
-    """A message saying a `Flag` has been dropped.
+    """A message saying a `Flag` has been dropped."""
 
-    Category: **Message Classes**
-    """
-
+    #: The flag that was dropped.
     flag: Flag
-    """The `Flag` that was dropped."""
 
+    #: The node that was holding the flag.
     node: bs.Node
-    """The bs.Node that was holding it."""
 
 
 class Flag(bs.Actor):
     """A flag; used in games such as capture-the-flag or king-of-the-hill.
-
-    Category: **Gameplay Classes**
 
     Can be stationary or carry-able by players.
     """
@@ -283,7 +268,9 @@ class Flag(bs.Actor):
                     )
                     self._counter.text = str(self._count)
                     if self._count < 1:
-                        self.handlemessage(bs.DieMessage())
+                        self.handlemessage(
+                            bs.DieMessage(how=bs.DeathType.LEFT_GAME)
+                        )
                 else:
                     assert self._counter
                     self._counter.text = ''
@@ -337,7 +324,11 @@ class Flag(bs.Actor):
             if self.node:
                 self.node.delete()
                 if not msg.immediate:
-                    self.activity.handlemessage(FlagDiedMessage(self))
+                    self.activity.handlemessage(
+                        FlagDiedMessage(
+                            self, (msg.how is bs.DeathType.LEFT_GAME)
+                        )
+                    )
         elif isinstance(msg, bs.HitMessage):
             assert self.node
             assert msg.force_direction is not None
@@ -373,7 +364,7 @@ class Flag(bs.Actor):
 
     @staticmethod
     def project_stand(pos: Sequence[float]) -> None:
-        """Project a flag-stand onto the ground at the given position.
+        """Project a flag-stand onto the ground from a position.
 
         Useful for games such as capture-the-flag to show where a
         movable flag originated from.

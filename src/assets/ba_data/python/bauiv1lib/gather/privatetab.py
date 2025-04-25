@@ -62,7 +62,7 @@ class PrivateGatherTab(GatherTab):
         self._state: State = State()
         self._last_datacode_refresh_time: float | None = None
         self._hostingstate = PrivateHostingState()
-        self._v2state: bacommon.cloud.BSPrivatePartyResponse | None = None
+        self._v2state: bacommon.bs.PrivatePartyResponse | None = None
         self._join_sub_tab_text: bui.Widget | None = None
         self._host_sub_tab_text: bui.Widget | None = None
         self._update_timer: bui.AppTimer | None = None
@@ -339,7 +339,7 @@ class PrivateGatherTab(GatherTab):
                     if plus.accounts.primary is not None:
                         with plus.accounts.primary:
                             plus.cloud.send_message_cb(
-                                bacommon.cloud.BSPrivatePartyMessage(
+                                bacommon.bs.PrivatePartyMessage(
                                     need_datacode=(
                                         self._last_datacode_refresh_time is None
                                         or time.monotonic()
@@ -355,7 +355,7 @@ class PrivateGatherTab(GatherTab):
                     self._last_v2_state_query_time = now
 
     def _on_private_party_query_response(
-        self, response: bacommon.cloud.BSPrivatePartyResponse | Exception
+        self, response: bacommon.bs.PrivatePartyResponse | Exception
     ) -> None:
         if isinstance(response, Exception):
             self._debug_server_comm('got pp v2 state response (err)')
@@ -542,7 +542,7 @@ class PrivateGatherTab(GatherTab):
         btn = bui.buttonwidget(
             parent=self._container,
             size=(300, 70),
-            label=bui.Lstr(resource='gatherWindow.' 'manualConnectText'),
+            label=bui.Lstr(resource='gatherWindow.manualConnectText'),
             position=(self._c_width * 0.5 - 150, self._c_height - 350),
             on_activate_call=self._join_connect_press,
             autoselect=True,
@@ -550,14 +550,6 @@ class PrivateGatherTab(GatherTab):
         bui.textwidget(
             edit=self._join_party_code_text, on_return_press_call=btn.activate
         )
-
-    # def _on_get_tokens_press(self) -> None:
-    #     if self._waiting_for_start_stop_response:
-    #         return
-
-    #     # Bring up get-tickets window and then kill ourself (we're on
-    #     # the overlay layer so we'd show up above it).
-    #     GetTokensWindow(origin_widget=self._get_tokens_button)
 
     def _build_host_tab(self) -> None:
         # pylint: disable=too-many-branches
@@ -948,8 +940,8 @@ class PrivateGatherTab(GatherTab):
             )
 
     def _connect_to_party_code(self, code: str) -> None:
-        # Ignore attempted followup sends for a few seconds. (this will
-        # reset if we get a response)
+        # Ignore attempted followup sends for a few seconds (this will
+        # reset if we get a response).
         plus = bui.app.plus
         assert plus is not None
 

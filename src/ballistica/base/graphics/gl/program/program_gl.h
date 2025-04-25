@@ -28,16 +28,18 @@ class RendererGL::ShaderGL : public Object {
     shader_ = glCreateShader(type_);
     BA_DEBUG_CHECK_GL_ERROR;
     BA_PRECONDITION(shader_);
-#if !BA_OPENGL_IS_ES
+
     std::string src_fin = src_in;
     if (type_ == GL_FRAGMENT_SHADER) {
-      // gl_FragColor is no more. Define our equivalent.
-      src_fin = "out vec4 " BA_GLSL_FRAGCOLOR ";\n" + src_fin;
+      src_fin = "out " BA_GLSL_HIGHP "vec4 " BA_GLSL_FRAGCOLOR ";\n" + src_fin;
     }
-    src_fin = "#version 150 core\n" + src_fin;
+
+#if BA_OPENGL_IS_ES
+    src_fin = "#version 300 es\n" + src_fin;
 #else
-    std::string src_fin = src_in;
+    src_fin = "#version 150 core\n" + src_fin;
 #endif
+
     const char* s = src_fin.c_str();
     glShaderSource(shader_, 1, &s, nullptr);
     glCompileShader(shader_);

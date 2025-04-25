@@ -476,7 +476,20 @@ enum class SysTextureID : uint8_t {
   kFontExtras4,
   kCharacterIconMask,
   kBlack,
-  kWings
+  kWings,
+  kSpinner,
+  kSpinner0,
+  kSpinner1,
+  kSpinner2,
+  kSpinner3,
+  kSpinner4,
+  kSpinner5,
+  kSpinner6,
+  kSpinner7,
+  kSpinner8,
+  kSpinner9,
+  kSpinner10,
+  kSpinner11,
 };
 
 enum class SysCubeMapTextureID : uint8_t {
@@ -504,7 +517,11 @@ enum class SysSoundID {
   kTickingCrazy,
   kSparkle,
   kSparkle2,
-  kSparkle3
+  kSparkle3,
+  kScoreIncrease,
+  kCashRegister,
+  kPowerDown,
+  kDing,
 };
 
 enum class SystemDataID : uint8_t {};
@@ -673,9 +690,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   auto HavePlus() -> bool;
 
   /// Access the plus feature-set. Will throw an exception if not present.
-  auto plus() -> PlusSoftInterface*;
+  auto Plus() -> PlusSoftInterface*;
 
-  void set_plus(PlusSoftInterface* plus);
+  void SetPlus(PlusSoftInterface* plus);
 
   /// Try to load the classic feature-set and return whether it is available.
   auto HaveClassic() -> bool;
@@ -761,8 +778,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   void PushMainThreadRunnable(Runnable* runnable) override;
 
-  /// Return the currently signed in V2 account id as
-  /// reported by the Python layer.
+  /// Return the currently signed in V2 account id as reported by the Python
+  /// layer.
   auto GetV2AccountID() -> std::optional<std::string>;
 
   /// Return whether clipboard operations are supported at all. This gets
@@ -783,6 +800,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   /// Set overall ui scale for the app.
   void SetUIScale(UIScale scale);
+
+  /// Time since epoch on the master-server. Tries to
+  /// be correct even if local time is set wrong.
+  auto TimeSinceEpochCloudSeconds() -> seconds_t;
 
   // Const subsystems.
   AppAdapter* const app_adapter;
@@ -822,8 +843,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   auto app_active() -> bool const { return app_active_; }
 
-  /// Reset the engine to a default state. App-modes generally call this
-  /// when activating.
+  /// Reset the engine to a default state. Should only be called by the
+  /// active app-mode. App-modes generally call this when first activating,
+  /// but may opt to call it at other times.
   void Reset();
 
  private:

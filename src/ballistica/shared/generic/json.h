@@ -33,6 +33,7 @@
 // - Removed CJSON_CDECL, CJSON_PUBLIC, and other visibility controls.
 // - In general, just treating this like our other internal C++ source.
 // - Also added a few simple C++ wrappers (see bottom of this file)
+// - Edited cJSON_GetNumberValue() to not return NAN (see notes in func).
 
 namespace ballistica {
 

@@ -78,7 +78,8 @@ def build_openal(arch: str, mode: str) -> None:
             # '1.23.1',
             # '1381a951bea78c67281a2e844e6db1dedbd5ed7c',
             # 'bc83c874ff15b29fdab9b6c0bf40b268345b3026',
-            '59c466077fd6f16af64afcc6260bb61aa4e632dc',
+            # '59c466077fd6f16af64afcc6260bb61aa4e632dc',
+            '1.24.2',
         ],
         check=True,
         cwd=builddir,
@@ -97,7 +98,16 @@ def build_openal(arch: str, mode: str) -> None:
         ],
         check=True,
     )
-    subprocess.run(['git', 'checkout', '1.8.0'], check=True, cwd=builddir_oboe)
+    subprocess.run(
+        [
+            'git',
+            'checkout',
+            '1.9.3',
+            # '2968fff97730ede42d522ad5afe8b82468a7d1d8',  # Early 1.9.4
+        ],
+        check=True,
+        cwd=builddir_oboe,
+    )
 
     if bool(True):
         oboepath = f'{builddir}/alc/backends/oboe.cpp'
@@ -118,7 +128,7 @@ def build_openal(arch: str, mode: str) -> None:
                 '        ->openManagedStream(stream)};\n'
                 '    if(result != oboe::Result::OK)\n'
                 '        throw al::backend_exception{al::backend_error::'
-                'DeviceError, "Failed to create stream: %s",\n'
+                'DeviceError, "Failed to create stream: {}",\n'
                 '            oboe::convertToText(result)};\n'
             ),
             (
@@ -133,7 +143,7 @@ def build_openal(arch: str, mode: str) -> None:
                 ' //       ->openManagedStream(stream)};\n'
                 ' //   if(result != oboe::Result::OK)\n'
                 ' //       throw al::backend_exception{al::backend_error::'
-                'DeviceError, "Failed to create stream: %s",\n'
+                'DeviceError, "Failed to create stream: {}",\n'
                 ' //           oboe::convertToText(result)};\n'
             ),
         )
@@ -186,13 +196,17 @@ def build_openal(arch: str, mode: str) -> None:
 
         logcall = (
             '__android_log_print(android_severity(level),'
-            ' "openal", "%s", str);'
+            ' "openal", "%.*s%s", al::sizei(prefix),'
+            ' prefix.data(), msg.c_str());'
+            # '__android_log_print(android_severity(level),'
+            #             ' "openal", "%s", str);'
         )
         condition = 'gLogLevel >= level' if reduce_logs else 'true'
         if reroute_logs:
             logcall = (
                 'if (alcCustomAndroidLogger) {\n'
-                '    alcCustomAndroidLogger(android_severity(level), str);\n'
+                '    alcCustomAndroidLogger(android_severity(level),'
+                ' msg.c_str());\n'
                 '} else {\n'
                 f'  {logcall}\n'
                 '}'
@@ -201,7 +215,10 @@ def build_openal(arch: str, mode: str) -> None:
             txt,
             (
                 '    __android_log_print(android_severity(level),'
-                ' "openal", "%s", str);'
+                ' "openal", "%.*s%s", al::sizei(prefix),\n'
+                '        prefix.data(), msg.c_str());'
+                # '    __android_log_print(android_severity(level),'
+                # ' "openal", "%s", str);'
             ),
             (
                 '    // ericf tweak; only send logs that meet some condition.\n'
@@ -275,19 +292,22 @@ def build_openal(arch: str, mode: str) -> None:
     # Let's modify the try/catch around api calls so that we can catch
     # and inspect exceptions thrown by them instead of it just resulting
     # in an insta-terminate.
-    fpath = f'{builddir}/core/except.h'
-    with open(fpath, encoding='utf-8') as infile:
-        txt = infile.read()
-    txt = replace_exact(
-        txt,
-        '#define END_API_FUNC catch(...) { std::terminate(); }\n',
-        '#define END_API_FUNC\n',
-    )
-    txt = replace_exact(
-        txt, '#define START_API_FUNC try\n', '#define START_API_FUNC\n'
-    )
-    with open(fpath, 'w', encoding='utf-8') as outfile:
-        outfile.write(txt)
+    #
+    # UPDATE: This seems to be gone in latest release.
+    if bool(False):
+        fpath = f'{builddir}/core/except.h'
+        with open(fpath, encoding='utf-8') as infile:
+            txt = infile.read()
+        txt = replace_exact(
+            txt,
+            '#define END_API_FUNC catch(...) { std::terminate(); }\n',
+            '#define END_API_FUNC\n',
+        )
+        txt = replace_exact(
+            txt, '#define START_API_FUNC try\n', '#define START_API_FUNC\n'
+        )
+        with open(fpath, 'w', encoding='utf-8') as outfile:
+            outfile.write(txt)
 
     android_platform = 23
 
@@ -300,6 +320,8 @@ def build_openal(arch: str, mode: str) -> None:
             '-DCMAKE_TOOLCHAIN_FILE='
             f'{ndk_path}/build/cmake/android.toolchain.cmake',
             f'-DANDROID_PLATFORM={android_platform}',
+            # Currently fails to compile on new cmakes without this:
+            '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
         ],
         cwd=builddir_oboe,
         check=True,
@@ -321,6 +343,8 @@ def build_openal(arch: str, mode: str) -> None:
             f'{ndk_path}/build/cmake/android.toolchain.cmake',
             f'-DOBOE_SOURCE={os.path.abspath(builddir_oboe)}',
             f'-DANDROID_PLATFORM={android_platform}',
+            # Currently fails to compile on new cmakes without this:
+            '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
         ],
         cwd=builddir,
         check=True,

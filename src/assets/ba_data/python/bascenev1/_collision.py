@@ -14,10 +14,7 @@ if TYPE_CHECKING:
 
 
 class Collision:
-    """A class providing info about occurring collisions.
-
-    Category: **Gameplay Classes**
-    """
+    """A class providing info about occurring collisions."""
 
     @property
     def position(self) -> bascenev1.Vec3:
@@ -28,9 +25,9 @@ class Collision:
     def sourcenode(self) -> bascenev1.Node:
         """The node containing the material triggering the current callback.
 
-        Throws a bascenev1.NodeNotFoundError if the node does not exist,
-        though the node should always exist (at least at the start of the
-        collision callback).
+        Throws a :class:`~babase.NodeNotFoundError` if the node does
+        not exist, though the node should always exist (at least at the
+        start of the collision callback).
         """
         node = _bascenev1.get_collision_info('sourcenode')
         assert isinstance(node, (_bascenev1.Node, type(None)))
@@ -42,9 +39,10 @@ class Collision:
     def opposingnode(self) -> bascenev1.Node:
         """The node the current callback material node is hitting.
 
-        Throws a bascenev1.NodeNotFoundError if the node does not exist.
-        This can be expected in some cases such as in 'disconnect'
-        callbacks triggered by deleting a currently-colliding node.
+        Throws a :class:`~babase.NodeNotFoundError` if the node does
+        not exist. This can be expected in some cases such as in
+        'disconnect' callbacks triggered by deleting a
+        currently-colliding node.
         """
         node = _bascenev1.get_collision_info('opposingnode')
         assert isinstance(node, (_bascenev1.Node, type(None)))
@@ -65,8 +63,5 @@ _collision = Collision()
 
 
 def getcollision() -> Collision:
-    """Return the in-progress collision.
-
-    Category: **Gameplay Functions**
-    """
+    """Return the in-progress collision."""
     return _collision

@@ -1797,7 +1797,7 @@ void SpazNode::DoFlyPress() {
 
     // Keep from doing too many sparkles.
     static millisecs_t last_sparkle_time = 0;
-    millisecs_t t = g_core->GetAppTimeMillisecs();
+    millisecs_t t = g_core->AppTimeMillisecs();
     if (t - last_sparkle_time > 200) {
       last_sparkle_time = t;
       auto* s = g_base->audio->SourceBeginNew();

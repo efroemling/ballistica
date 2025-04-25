@@ -178,10 +178,7 @@ class ChangeMessage:
 
 
 class Chooser:
-    """A character/team selector for a bascenev1.Player.
-
-    Category: Gameplay Classes
-    """
+    """A character/team selector for a player."""
 
     def __del__(self) -> None:
         # Just kill off our base node; the rest should go down with it.
@@ -364,7 +361,7 @@ class Chooser:
 
     @property
     def sessionplayer(self) -> bascenev1.SessionPlayer:
-        """The bascenev1.SessionPlayer associated with this chooser."""
+        """The session-player associated with this chooser."""
         return self._sessionplayer
 
     @property
@@ -373,11 +370,17 @@ class Chooser:
         return self._ready
 
     def set_vpos(self, vpos: float) -> None:
-        """(internal)"""
+        """(internal)
+
+        :meta private:
+        """
         self._vpos = vpos
 
     def set_dead(self, val: bool) -> None:
-        """(internal)"""
+        """(internal)
+
+        :meta private:
+        """
         self._dead = val
 
     @property
@@ -387,7 +390,7 @@ class Chooser:
 
     @property
     def lobby(self) -> bascenev1.Lobby:
-        """The chooser's baclassic.Lobby."""
+        """The chooser's lobby."""
         lobby = self._lobby()
         if lobby is None:
             raise babase.NotFoundError('Lobby does not exist.')
@@ -940,10 +943,7 @@ class Chooser:
 
 
 class Lobby:
-    """Container for baclassic.Choosers.
-
-    Category: Gameplay Classes
-    """
+    """Environment where players can selecting characters, etc."""
 
     def __del__(self) -> None:
         # Reset any players that still have a chooser in us.
@@ -987,7 +987,7 @@ class Lobby:
 
     @property
     def use_team_colors(self) -> bool:
-        """A bool for whether this lobby is using team colors.
+        """Whether this lobby is using team colors.
 
         If False, inidividual player colors are used instead.
         """
@@ -995,7 +995,7 @@ class Lobby:
 
     @property
     def sessionteams(self) -> list[bascenev1.SessionTeam]:
-        """bascenev1.SessionTeams available in this lobby."""
+        """The teams available in this lobby."""
         allteams = []
         for tref in self._sessionteams:
             team = tref()
@@ -1004,7 +1004,7 @@ class Lobby:
         return allteams
 
     def get_choosers(self) -> list[Chooser]:
-        """Return the lobby's current choosers."""
+        """The current choosers present."""
         return self.choosers
 
     def create_join_info(self) -> JoinInfo:
@@ -1070,8 +1070,8 @@ class Lobby:
                 found = True
 
                 # Mark it as dead since there could be more
-                # change-commands/etc coming in still for it;
-                # want to avoid duplicate player-adds/etc.
+                # change-commands/etc coming in still for it; want to
+                # avoid duplicate player-adds/etc.
                 chooser.set_dead(True)
                 self.choosers.remove(chooser)
                 break

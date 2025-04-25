@@ -21,10 +21,8 @@ class AudioSettingsWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
-        from bauiv1lib.popup import PopupMenu
         from bauiv1lib.config import ConfigNumberEdit
 
         assert bui.app.classic is not None
@@ -33,62 +31,76 @@ class AudioSettingsWindow(bui.MainWindow):
         self._r = 'audioSettingsWindow'
 
         spacing = 50.0
-        width = 460.0
-        height = 210.0
+        uiscale = bui.app.ui_v1.uiscale
 
-        # Update: hard-coding head-relative audio to true now,
-        # so not showing options.
-        # show_vr_head_relative_audio = True if bui.app.vr_mode else False
-        show_vr_head_relative_audio = False
-
-        if show_vr_head_relative_audio:
-            height += 70
+        width = 1200.0 if uiscale is bui.UIScale.SMALL else 500.0
+        height = 800.0 if uiscale is bui.UIScale.SMALL else 350.0
 
         show_soundtracks = False
         if music.have_music_player():
             show_soundtracks = True
-            height += spacing * 2.0
 
-        uiscale = bui.app.ui_v1.uiscale
-        base_scale = (
-            2.05
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            2.2
             if uiscale is bui.UIScale.SMALL
-            else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
-        popup_menu_scale = base_scale * 1.2
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        # target_width = min(width - 60, screensize[0] / scale)
+        target_height = min(height - 70, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * height + 0.5 * target_height + 30.0
 
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
-                scale=base_scale,
-                stack_offset=(
-                    (0, -20) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
+                scale=scale,
                 toolbar_visibility=(
-                    None if uiscale is bui.UIScale.SMALL else 'menu_full'
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
-        self._back_button = back_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(35, height - 55),
-            size=(120, 60),
-            scale=0.8,
-            text_scale=1.2,
-            label=bui.Lstr(resource='backText'),
-            button_type='back',
-            on_activate_call=self.main_window_back,
-            autoselect=True,
-        )
-        bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-        v = height - 60
-        v -= spacing * 1.0
+        if uiscale is bui.UIScale.SMALL:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
+            self._back_button = None
+        else:
+            self._back_button = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(35, yoffs - 55),
+                size=(60, 60),
+                scale=0.8,
+                text_scale=1.2,
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
+                autoselect=True,
+            )
+            bui.containerwidget(
+                edit=self._root_widget, cancel_button=self._back_button
+            )
+
         bui.textwidget(
             parent=self._root_widget,
-            position=(width * 0.5, height - 32),
+            position=(
+                width * 0.5,
+                yoffs - (48 if uiscale is bui.UIScale.SMALL else 32),
+            ),
             size=(0, 0),
             text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
@@ -97,16 +109,14 @@ class AudioSettingsWindow(bui.MainWindow):
             v_align='center',
         )
 
-        bui.buttonwidget(
-            edit=self._back_button,
-            button_type='backSmall',
-            size=(60, 60),
-            label=bui.charstr(bui.SpecialChar.BACK),
-        )
+        # Roughly center everything else in our window.
+        x = width * 0.5 - 160
+        y = height * 0.5 + (100 if show_soundtracks else 70)
+        y -= spacing * 1.0
 
         self._sound_volume_numedit = svne = ConfigNumberEdit(
             parent=self._root_widget,
-            position=(40, v),
+            position=(x, y),
             xoffset=10,
             configkey='Sound Volume',
             displayname=bui.Lstr(resource=f'{self._r}.soundVolumeText'),
@@ -119,10 +129,10 @@ class AudioSettingsWindow(bui.MainWindow):
             edit=svne.plusbutton,
             right_widget=bui.get_special_widget('squad_button'),
         )
-        v -= spacing
+        y -= spacing
         self._music_volume_numedit = ConfigNumberEdit(
             parent=self._root_widget,
-            position=(40, v),
+            position=(x, y),
             xoffset=10,
             configkey='Music Volume',
             displayname=bui.Lstr(resource=f'{self._r}.musicVolumeText'),
@@ -134,87 +144,43 @@ class AudioSettingsWindow(bui.MainWindow):
             as_percent=True,
         )
 
-        v -= 0.5 * spacing
-
-        self._vr_head_relative_audio_button: bui.Widget | None
-        if show_vr_head_relative_audio:
-            v -= 40
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(40, v + 24),
-                size=(0, 0),
-                text=bui.Lstr(resource=f'{self._r}.headRelativeVRAudioText'),
-                color=(0.8, 0.8, 0.8),
-                maxwidth=230,
-                h_align='left',
-                v_align='center',
-            )
-
-            popup = PopupMenu(
-                parent=self._root_widget,
-                position=(290, v),
-                width=120,
-                button_size=(135, 50),
-                scale=popup_menu_scale,
-                choices=['Auto', 'On', 'Off'],
-                choices_display=[
-                    bui.Lstr(resource='autoText'),
-                    bui.Lstr(resource='onText'),
-                    bui.Lstr(resource='offText'),
-                ],
-                current_choice=bui.app.config.resolve('VR Head Relative Audio'),
-                on_value_change_call=self._set_vr_head_relative_audio,
-            )
-            self._vr_head_relative_audio_button = popup.get_button()
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(width * 0.5, v - 11),
-                size=(0, 0),
-                text=bui.Lstr(
-                    resource=f'{self._r}.headRelativeVRAudioInfoText'
-                ),
-                scale=0.5,
-                color=(0.7, 0.8, 0.7),
-                maxwidth=400,
-                flatness=1.0,
-                h_align='center',
-                v_align='center',
-            )
-            v -= 30
-        else:
-            self._vr_head_relative_audio_button = None
+        y -= 0.5 * spacing
 
         self._soundtrack_button: bui.Widget | None
         if show_soundtracks:
-            v -= 1.2 * spacing
+            y -= 1.2 * spacing
             self._soundtrack_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=((width - 310) / 2, v),
+                position=(width * 0.5 - 155, y),
                 size=(310, 50),
                 autoselect=True,
                 label=bui.Lstr(resource=f'{self._r}.soundtrackButtonText'),
                 on_activate_call=self._do_soundtracks,
             )
-            v -= spacing * 0.5
+            y -= spacing * 0.3
             bui.textwidget(
                 parent=self._root_widget,
-                position=(0, v),
-                size=(width, 20),
+                position=(0.5 * width, y),
+                size=(0.0, 0.0),
                 text=bui.Lstr(resource=f'{self._r}.soundtrackDescriptionText'),
                 flatness=1.0,
                 h_align='center',
+                v_align='center',
+                maxwidth=400,
                 scale=0.5,
                 color=(0.7, 0.8, 0.7, 1.0),
-                maxwidth=400,
             )
         else:
             self._soundtrack_button = None
 
         # Tweak a few navigation bits.
-        try:
-            bui.widget(edit=back_button, down_widget=svne.minusbutton)
-        except Exception:
-            logging.exception('Error wiring AudioSettingsWindow.')
+        if self._back_button is not None:
+            bui.widget(edit=self._back_button, down_widget=svne.minusbutton)
+        else:
+            spback = bui.get_special_widget('back_button')
+            bui.widget(
+                edit=svne.minusbutton, up_widget=spback, left_widget=spback
+            )
 
         self._restore_state()
 
@@ -231,11 +197,6 @@ class AudioSettingsWindow(bui.MainWindow):
     @override
     def on_main_window_close(self) -> None:
         self._save_state()
-
-    def _set_vr_head_relative_audio(self, val: str) -> None:
-        cfg = bui.app.config
-        cfg['VR Head Relative Audio'] = val
-        cfg.apply_and_commit()
 
     def _do_soundtracks(self) -> None:
         # pylint: disable=cyclic-import
@@ -277,8 +238,6 @@ class AudioSettingsWindow(bui.MainWindow):
                 sel_name = 'Soundtrack'
             elif sel == self._back_button:
                 sel_name = 'Back'
-            elif sel == self._vr_head_relative_audio_button:
-                sel_name = 'VRHeadRelative'
             else:
                 raise ValueError(f'unrecognized selection \'{sel}\'')
             assert bui.app.classic is not None
@@ -299,8 +258,6 @@ class AudioSettingsWindow(bui.MainWindow):
                 sel = self._music_volume_numedit.minusbutton
             elif sel_name == 'MusicPlus':
                 sel = self._music_volume_numedit.plusbutton
-            elif sel_name == 'VRHeadRelative':
-                sel = self._vr_head_relative_audio_button
             elif sel_name == 'Soundtrack':
                 sel = self._soundtrack_button
             elif sel_name == 'Back':

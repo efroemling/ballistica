@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
     from efro.message import Message, Response
     import bacommon.cloud
+    import bacommon.bs
 
 
 # TODO: Should make it possible to define a protocol in bacommon.cloud and
@@ -23,7 +24,12 @@ if TYPE_CHECKING:
 
 
 class CloudSubsystem(babase.AppSubsystem):
-    """Manages communication with cloud components."""
+    """Manages communication with cloud components.
+
+    Access the shared single instance of this class via the
+    :attr:`~baplus.PlusAppSubsystem.cloud` attr on the
+    :class:`~baplus.PlusAppSubsystem` class.
+    """
 
     def __init__(self) -> None:
         super().__init__()
@@ -33,19 +39,25 @@ class CloudSubsystem(babase.AppSubsystem):
 
     @property
     def connected(self) -> bool:
-        """Property equivalent of CloudSubsystem.is_connected()."""
-        return self.is_connected()
-
-    def is_connected(self) -> bool:
-        """Return whether a connection to the cloud is present.
+        """Whether a connection to the cloud is present.
 
         This is a good indicator (though not for certain) that sending
         messages will succeed.
         """
-        return False  # Needs to be overridden
+        return self.is_connected()
+
+    def is_connected(self) -> bool:
+        """Implementation for connected attr.
+
+        :meta private:
+        """
+        raise NotImplementedError()
 
     def on_connectivity_changed(self, connected: bool) -> None:
-        """Called when cloud connectivity state changes."""
+        """Called when cloud connectivity state changes.
+
+        :meta private:
+        """
         babase.balog.debug('Connectivity is now %s.', connected)
 
         plus = babase.app.plus
@@ -120,45 +132,72 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.cloud.BSPrivatePartyMessage,
+        msg: bacommon.bs.PrivatePartyMessage,
         on_response: Callable[
-            [bacommon.cloud.BSPrivatePartyResponse | Exception], None
+            [bacommon.bs.PrivatePartyResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.cloud.BSInboxRequestMessage,
+        msg: bacommon.bs.InboxRequestMessage,
         on_response: Callable[
-            [bacommon.cloud.BSInboxRequestResponse | Exception], None
+            [bacommon.bs.InboxRequestResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.cloud.BSInboxEntryProcessMessage,
+        msg: bacommon.bs.ClientUIActionMessage,
         on_response: Callable[
-            [bacommon.cloud.BSInboxEntryProcessResponse | Exception], None
+            [bacommon.bs.ClientUIActionResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.cloud.BSChestInfoMessage,
+        msg: bacommon.bs.ChestInfoMessage,
         on_response: Callable[
-            [bacommon.cloud.BSChestInfoResponse | Exception], None
+            [bacommon.bs.ChestInfoResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.cloud.BSChestActionMessage,
+        msg: bacommon.bs.ChestActionMessage,
         on_response: Callable[
-            [bacommon.cloud.BSChestActionResponse | Exception], None
+            [bacommon.bs.ChestActionResponse | Exception], None
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.bs.ScoreSubmitMessage,
+        on_response: Callable[
+            [bacommon.bs.ScoreSubmitResponse | Exception], None
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.SecureDataCheckMessage,
+        on_response: Callable[
+            [bacommon.cloud.SecureDataCheckResponse | Exception], None
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.SecureDataCheckerRequest,
+        on_response: Callable[
+            [bacommon.cloud.SecureDataCheckerResponse | Exception], None
         ],
     ) -> None: ...
 
@@ -169,7 +208,7 @@ class CloudSubsystem(babase.AppSubsystem):
     ) -> None:
         """Asynchronously send a message to the cloud from the logic thread.
 
-        The provided on_response call will be run in the logic thread
+        The provided ``on_response`` call will be run in the logic thread
         and passed either the response or the error that occurred.
         """
         raise NotImplementedError(
@@ -211,7 +250,7 @@ class CloudSubsystem(babase.AppSubsystem):
     ) -> bacommon.cloud.TestResponse: ...
 
     async def send_message_async(self, msg: Message) -> Response | None:
-        """Synchronously send a message to the cloud.
+        """Asynchronously send a message to the cloud.
 
         Must be called from the logic thread.
         """
@@ -222,14 +261,17 @@ class CloudSubsystem(babase.AppSubsystem):
     def subscribe_test(
         self, updatecall: Callable[[int | None], None]
     ) -> babase.CloudSubscription:
-        """Subscribe to some test data."""
+        """Subscribe to some test data.
+
+        :meta private:
+        """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
         )
 
     def subscribe_classic_account_data(
         self,
-        updatecall: Callable[[bacommon.cloud.BSClassicAccountLiveData], None],
+        updatecall: Callable[[bacommon.bs.ClassicAccountLiveData], None],
     ) -> babase.CloudSubscription:
         """Subscribe to classic account data."""
         raise NotImplementedError(
@@ -240,6 +282,8 @@ class CloudSubsystem(babase.AppSubsystem):
         """Unsubscribe from some subscription.
 
         Do not call this manually; it is called by CloudSubscription.
+
+        :meta private:
         """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'

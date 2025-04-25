@@ -20,6 +20,7 @@ from efro.dataclassio._base import (
     Codec,
     _parse_annotated,
     EXTRA_ATTRS_ATTR,
+    LOSSY_ATTR,
     _is_valid_for_codec,
     _get_origin,
     SIMPLE_TYPES,
@@ -46,6 +47,7 @@ class _Inputter:
         coerce_to_float: bool,
         allow_unknown_attrs: bool = True,
         discard_unknown_attrs: bool = False,
+        lossy: bool = False,
     ):
         self._cls = cls
         self._codec = codec
@@ -53,6 +55,7 @@ class _Inputter:
         self._allow_unknown_attrs = allow_unknown_attrs
         self._discard_unknown_attrs = discard_unknown_attrs
         self._soft_default_validator: _Outputter | None = None
+        self._lossy = lossy
 
         if not allow_unknown_attrs and discard_unknown_attrs:
             raise ValueError(
@@ -66,11 +69,12 @@ class _Inputter:
         outcls: type[Any]
 
         # If we're dealing with a multi-type subclass which is NOT a
-        # dataclass, we must rely on its stored type to figure out
-        # what type of dataclass we're going to. If we are a dataclass
-        # then we already know what type we're going to so we can
-        # survive without this, which is often necessary when reading
-        # old data that doesn't have a type id attr yet.
+        # dataclass (generally a custom multitype base class), then we
+        # must rely on its stored type enum to figure out what type of
+        # dataclass we're going to create. If we *are* dealing with a
+        # dataclass then we already know what type we're going to so we
+        # can survive without this, which is often necessary when
+        # reading old data that doesn't have a type id attr yet.
         if issubclass(self._cls, IOMultiType) and not dataclasses.is_dataclass(
             self._cls
         ):
@@ -81,7 +85,40 @@ class _Inputter:
                     f' {values}.'
                 )
             type_id_enum = self._cls.get_type_id_type()
-            enum_val = type_id_enum(type_id_val)
+            try:
+                enum_val = type_id_enum(type_id_val)
+            except ValueError as exc:
+
+                # Check the fallback even if not in lossy mode, as we
+                # inform the user of its existence in errors in that
+                # case.
+                fallback = self._cls.get_unknown_type_fallback()
+
+                # Sanity check that fallback is correct type.
+                assert isinstance(fallback, self._cls | None)
+
+                # If we're in lossy mode, provide the fallback value.
+                if self._lossy:
+                    if fallback is not None:
+                        # Ok; they provided a fallback. Flag it as lossy
+                        # to prevent it from being written back out by
+                        # default, and return it.
+                        setattr(fallback, LOSSY_ATTR, True)
+                        return fallback
+                else:
+                    # If we're *not* in lossy mode, inform the user if
+                    # we *would* have succeeded if we were. This is
+                    # useful for debugging these sorts of situations.
+                    if fallback is not None:
+                        raise ValueError(
+                            'Failed loading unrecognized multitype object.'
+                            ' Note that the multitype provides a fallback'
+                            ' and thus would succeed in lossy mode.'
+                        ) from exc
+
+                # Otherwise the error stands as-is.
+                raise
+
             outcls = self._cls.get_type(enum_val)
         else:
             outcls = self._cls
@@ -99,6 +136,17 @@ class _Inputter:
 
         if is_ext:
             out.did_input()
+
+        # If we're running in lossy mode, flag the object as such so we
+        # don't allow writing it back out and potentially accidentally
+        # losing data.
+        #
+        # FIXME - We are currently only flagging this at the top level,
+        # but this will not prevent sub-objects from being written out.
+        # Is that worth worrying about? Though perfect is the enemy of
+        # good I suppose.
+        if self._lossy:
+            setattr(out, LOSSY_ATTR, True)
 
         return out
 
@@ -183,22 +231,28 @@ class _Inputter:
         # dataclass (all dataclasses inheriting from the multi-type
         # should just be processed as dataclasses).
         if issubclass(origin, IOMultiType):
-            return self._dataclass_from_input(
-                _get_multitype_type(anntype, fieldpath, value),
-                fieldpath,
-                value,
-            )
+            return self._multitype_obj(anntype, fieldpath, value)
 
         if issubclass(origin, Enum):
             try:
                 return origin(value)
-            except ValueError:
-                # If a fallback enum was provided in ioattrs, return
-                # that for unrecognized values.
+            except ValueError as exc:
+                # If a fallback enum was provided in ioattrs AND we're
+                # in lossy mode, return that for unrecognized values. If
+                # one was provided but we're *not* in lossy mode, note
+                # that we could have loaded it if lossy mode was
+                # enabled.
                 if ioattrs is not None and ioattrs.enum_fallback is not None:
+                    # Sanity check; make sure fallback is valid.
                     assert type(ioattrs.enum_fallback) is origin
-                    return ioattrs.enum_fallback
-                # Otherwise the error stands.
+                    if self._lossy:
+                        return ioattrs.enum_fallback
+                    raise ValueError(
+                        'Failed to load Enum.  Note that it has a fallback'
+                        ' value and thus would succeed in lossy mode.'
+                    ) from exc
+
+                # Otherwise the error stands as-is.
                 raise
 
         if issubclass(origin, datetime.datetime):
@@ -243,16 +297,17 @@ class _Inputter:
         """Given a dict, instantiates a dataclass of the given type.
 
         The dict must be in the json-friendly format as emitted from
-        dataclass_to_dict. This means that sequence values such as tuples or
-        sets should be passed as lists, enums should be passed as their
-        associated values, and nested dataclasses should be passed as dicts.
+        dataclass_to_dict. This means that sequence values such as
+        tuples or sets should be passed as lists, enums should be passed
+        as their associated values, and nested dataclasses should be
+        passed as dicts.
         """
         try:
             return self._do_dataclass_from_input(cls, fieldpath, values)
         except Exception as exc:
-            # Extended data types can choose to sub default data in case
-            # of failures (generally not a good idea but occasionally
-            # useful).
+            # Extended data types can choose to substitute default data
+            # in case of failures (generally not a good idea but
+            # occasionally useful).
             if issubclass(cls, IOExtendedData):
                 fallback = cls.handle_input_error(exc)
                 if fallback is None:
@@ -304,8 +359,8 @@ class _Inputter:
             # However we do want to make sure the class we're loading
             # doesn't itself use this same name, as this could lead to
             # tricky breakage. We can't verify this for types at prep
-            # time because IOMultiTypes are lazy-loaded, so this is
-            # the best we can do.
+            # time because IOMultiTypes are lazy-loaded, so this is the
+            # best we can do.
             if type_id_store_name in fields_by_name:
                 raise RuntimeError(
                     f"{cls} contains a '{type_id_store_name}' field"
@@ -574,18 +629,28 @@ class _Inputter:
         # values to determine which type to load for each element.
         if issubclass(childanntype, IOMultiType):
             return seqtype(
-                self._dataclass_from_input(
-                    _get_multitype_type(childanntype, fieldpath, i),
-                    fieldpath,
-                    i,
-                )
-                for i in value
+                self._multitype_obj(childanntype, fieldpath, i) for i in value
             )
 
         return seqtype(
             self._value_from_input(cls, fieldpath, childanntype, i, ioattrs)
             for i in value
         )
+
+    def _multitype_obj(self, anntype: Any, fieldpath: str, value: Any) -> Any:
+        try:
+            mttype = _get_multitype_type(anntype, fieldpath, value)
+        except ValueError:
+            if self._lossy:
+                out = anntype.get_unknown_type_fallback()
+                if out is not None:
+                    # Ok; they provided a fallback. Make sure its of our
+                    # expected type and return it.
+                    assert isinstance(out, anntype)
+                    return out
+            raise
+
+        return self._dataclass_from_input(mttype, fieldpath, value)
 
     def _tuple_from_input(
         self,

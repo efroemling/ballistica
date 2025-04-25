@@ -1,0 +1,16 @@
+when:
+  - event: push
+    branch: main
+
+steps:
+  - name: build
+    image: codeberg.org/3ra/ballistica-dev:latest
+    pull: true
+    commands:
+      - make docs
+  - name: deploy
+    image: codeberg.org/xfix/plugin-codeberg-pages-deploy:1
+    settings:
+      folder: build/docs
+      ssh_key:
+        from_secret: SSH_KEY

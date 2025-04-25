@@ -24,12 +24,10 @@ auto PythonClassInputDevice::type_name() -> const char* {
 void PythonClassInputDevice::SetupType(PyTypeObject* cls) {
   PythonClass::SetupType(cls);
   // Fully qualified type path we will be exposed as:
-  cls->tp_name = "babase.InputDevice";
+  cls->tp_name = "bascenev1.InputDevice";
   cls->tp_basicsize = sizeof(PythonClassInputDevice);
   cls->tp_doc =
       "An input-device such as a gamepad, touchscreen, or keyboard.\n"
-      "\n"
-      "Category: **Gameplay Classes**\n"
       "\n"
       "Attributes:\n"
       "\n"
@@ -103,7 +101,7 @@ auto PythonClassInputDevice::Create(SceneV1InputDeviceDelegate* input_device)
   auto* py_input_device = reinterpret_cast<PythonClassInputDevice*>(
       PyObject_CallObject(reinterpret_cast<PyObject*>(&type_obj), nullptr));
   if (!py_input_device) {
-    throw Exception("babase.InputDevice creation failed.");
+    throw Exception("bascenev1.InputDevice creation failed.");
   }
   *py_input_device->input_device_delegate_ = input_device;
   return reinterpret_cast<PyObject*>(py_input_device);

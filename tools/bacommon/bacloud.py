@@ -51,44 +51,7 @@ class RequestData:
 @ioprepped
 @dataclass
 class ResponseData:
-    """Response sent from the bacloud server to the client.
-
-    Attributes:
-      message: If present, client should print this message before any other
-        response processing (including error handling) occurs.
-      message_end: end arg for message print() call.
-      error: If present, client should abort with this error message.
-      delay_seconds: How long to wait before proceeding with remaining
-        response (can be useful when waiting for server progress in a loop).
-      login: If present, a token that should be stored client-side and passed
-        with subsequent commands.
-      logout: If True, any existing client-side token should be discarded.
-      dir_manifest: If present, client should generate a manifest of this dir.
-        It should be added to end_command args as 'manifest'.
-      uploads: If present, client should upload the requested files (arg1)
-        individually to a server command (arg2) with provided args (arg3).
-      uploads_inline: If present, a list of pathnames that should be gzipped
-        and uploaded to an 'uploads_inline' bytes dict in end_command args.
-        This should be limited to relatively small files.
-      deletes: If present, file paths that should be deleted on the client.
-      downloads: If present, describes files the client should individually
-        request from the server if not already present on the client.
-      downloads_inline: If present, pathnames mapped to gzipped data to
-        be written to the client. This should only be used for relatively
-        small files as they are all included inline as part of the response.
-      dir_prune_empty: If present, all empty dirs under this one should be
-        removed.
-      open_url: If present, url to display to the user.
-      input_prompt: If present, a line of input is read and placed into
-        end_command args as 'input'. The first value is the prompt printed
-        before reading and the second is whether it should be read as a
-        password (without echoing to the terminal).
-      end_message: If present, a message that should be printed after all other
-        response processing is done.
-      end_message_end: end arg for end_message print() call.
-      end_command: If present, this command is run with these args at the end
-        of response processing.
-    """
+    """Response sent from the bacloud server to the client."""
 
     @ioprepped
     @dataclass
@@ -101,62 +64,114 @@ class ResponseData:
             """Individual download."""
 
             path: Annotated[str, IOAttrs('p')]
-            # Args include with this particular request (combined with
-            # baseargs).
+
+            #: Args include with this particular request (combined with
+            #: baseargs).
             args: Annotated[dict[str, str], IOAttrs('a')]
+
             # TODO: could add a hash here if we want the client to
             # verify hashes.
 
-        # If present, will be prepended to all entry paths via os.path.join.
+        #: If present, will be prepended to all entry paths via os.path.join.
         basepath: Annotated[str | None, IOAttrs('p')]
 
-        # Server command that should be called for each download. The
-        # server command is expected to respond with a downloads_inline
-        # containing a single 'default' entry. In the future this may
-        # be expanded to a more streaming-friendly process.
+        #: Server command that should be called for each download. The
+        #: server command is expected to respond with a downloads_inline
+        #: containing a single 'default' entry. In the future this may
+        #: be expanded to a more streaming-friendly process.
         cmd: Annotated[str, IOAttrs('c')]
 
-        # Args that should be included with all download requests.
+        #: Args that should be included with all download requests.
         baseargs: Annotated[dict[str, str], IOAttrs('a')]
 
-        # Everything that should be downloaded.
+        #: Everything that should be downloaded.
         entries: Annotated[list[Entry], IOAttrs('e')]
 
+    #: If present, client should print this message before any other
+    #: response processing (including error handling) occurs.
     message: Annotated[str | None, IOAttrs('m', store_default=False)] = None
+
+    #: End arg for message print() call.
     message_end: Annotated[str, IOAttrs('m_end', store_default=False)] = '\n'
+
+    #: If present, client should abort with this error message.
     error: Annotated[str | None, IOAttrs('e', store_default=False)] = None
+
+    #: How long to wait before proceeding with remaining response (can
+    #: be useful when waiting for server progress in a loop).
     delay_seconds: Annotated[float, IOAttrs('d', store_default=False)] = 0.0
+
+    #: If present, a token that should be stored client-side and passed
+    #: with subsequent commands.
     login: Annotated[str | None, IOAttrs('l', store_default=False)] = None
+
+    #: If True, any existing client-side token should be discarded.
     logout: Annotated[bool, IOAttrs('lo', store_default=False)] = False
+
+    #: If present, client should generate a manifest of this dir.
+    #: It should be added to end_command args as 'manifest'.
     dir_manifest: Annotated[str | None, IOAttrs('man', store_default=False)] = (
         None
     )
+
+    #: If present, client should upload the requested files (arg1)
+    #: individually to a server command (arg2) with provided args (arg3).
     uploads: Annotated[
         tuple[list[str], str, dict] | None, IOAttrs('u', store_default=False)
     ] = None
+
+    #: If present, a list of pathnames that should be gzipped
+    #: and uploaded to an 'uploads_inline' bytes dict in end_command args.
+    #: This should be limited to relatively small files.
     uploads_inline: Annotated[
         list[str] | None, IOAttrs('uinl', store_default=False)
     ] = None
+
+    #: If present, file paths that should be deleted on the client.
     deletes: Annotated[
         list[str] | None, IOAttrs('dlt', store_default=False)
     ] = None
+
+    #: If present, describes files the client should individually
+    #: request from the server if not already present on the client.
     downloads: Annotated[
         Downloads | None, IOAttrs('dl', store_default=False)
     ] = None
+
+    #: If present, pathnames mapped to gzipped data to
+    #: be written to the client. This should only be used for relatively
+    #: small files as they are all included inline as part of the response.
     downloads_inline: Annotated[
         dict[str, bytes] | None, IOAttrs('dinl', store_default=False)
     ] = None
+
+    #: If present, all empty dirs under this one should be removed.
     dir_prune_empty: Annotated[
         str | None, IOAttrs('dpe', store_default=False)
     ] = None
+
+    #: If present, url to display to the user.
     open_url: Annotated[str | None, IOAttrs('url', store_default=False)] = None
+
+    #: If present, a line of input is read and placed into
+    #: end_command args as 'input'. The first value is the prompt printed
+    #: before reading and the second is whether it should be read as a
+    #: password (without echoing to the terminal).
     input_prompt: Annotated[
         tuple[str, bool] | None, IOAttrs('inp', store_default=False)
     ] = None
+
+    #: If present, a message that should be printed after all other
+    #: response processing is done.
     end_message: Annotated[str | None, IOAttrs('em', store_default=False)] = (
         None
     )
+
+    #: End arg for end_message print() call.
     end_message_end: Annotated[str, IOAttrs('eme', store_default=False)] = '\n'
+
+    #: If present, this command is run with these args at the end
+    #: of response processing.
     end_command: Annotated[
         tuple[str, dict] | None, IOAttrs('ec', store_default=False)
     ] = None

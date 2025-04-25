@@ -221,7 +221,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
       RemoteAppClient* client = clients_ + joystick_id;
 
       // Take note that we heard from them.
-      client->last_contact_time = g_core->GetAppTimeMillisecs();
+      client->last_contact_time = g_core->AppTimeMillisecs();
 
       // Ok now iterate.
       uint8_t* val = buffer + 4;
@@ -389,7 +389,7 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
   }
 
   // Don't reuse a slot for 5 seconds (if its been heard from since this time).
-  millisecs_t cooldown_time = g_core->GetAppTimeMillisecs() - 5000;
+  millisecs_t cooldown_time = g_core->AppTimeMillisecs() - 5000;
 
   // Ok, not there already.. now look for a non-taken one and return that.
   for (int i = 0; i < kMaxRemoteAppClients; i++) {
@@ -412,7 +412,7 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
       strcpy(clients_[i].display_name, clients_[i].name);  // NOLINT
       char* c = strchr(clients_[i].display_name, '#');
       if (c) *c = 0;
-      clients_[i].last_contact_time = g_core->GetAppTimeMillisecs();
+      clients_[i].last_contact_time = g_core->AppTimeMillisecs();
       clients_[i].request_id = request_id;
       char m[256];
 

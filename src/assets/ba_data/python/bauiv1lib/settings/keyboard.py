@@ -466,7 +466,9 @@ class AwaitKeyboardInputWindow(bui.Window):
         )
         bs.capture_keyboard_input(bui.WeakCall(self._button_callback))
 
+    @override
     def __del__(self) -> None:
+        super().__del__()
         bs.release_keyboard_input()
 
     def _die(self) -> None:

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import os
 
 import _babase
+from babase._logging import applog
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -95,14 +96,11 @@ def show_user_scripts() -> None:
                 with open(file_name, 'w', encoding='utf-8') as outfile:
                     outfile.write(
                         'You can drop files in here to mod the game.'
-                        '  See settings/advanced'
-                        ' in the game for more info.'
+                        '  See settings/advanced in the game for more info.'
                     )
 
         except Exception:
-            from babase import _error
-
-            _error.print_exception('error writing about_this_folder stuff')
+            applog.exception('Error writing about_this_folder stuff.')
 
     # On platforms that support it, open the dir in the UI.
     if _babase.supports_open_dir_externally():

@@ -59,8 +59,6 @@ void PythonClassMaterial::SetupType(PyTypeObject* cls) {
       "\n"
       "An entity applied to game objects to modify collision behavior.\n"
       "\n"
-      "Category: **Gameplay Classes**\n"
-      "\n"
       "A material can affect physical characteristics, generate sounds,\n"
       "or trigger callback functions when collisions occur.\n"
       "\n"
@@ -73,8 +71,8 @@ void PythonClassMaterial::SetupType(PyTypeObject* cls) {
       "to the various parts it creates.\n"
       "\n"
       "Use bascenev1.Material to instantiate a blank material, and then use\n"
-      "its babase.Material.add_actions() method to define what the material\n"
-      "does.\n"
+      "its :meth:`bascenev1.Material.add_actions()` method to define what the\n"
+      "material does.\n"
       "\n"
       "Attributes:\n"
       "\n"
@@ -123,7 +121,7 @@ auto PythonClassMaterial::tp_new(PyTypeObject* type, PyObject* args,
       return nullptr;
     }
     if (name_obj != Py_None) {
-      name = Python::GetPyString(name_obj);
+      name = Python::GetString(name_obj);
     } else {
       name = Python::GetPythonFileLocation();
     }
@@ -294,150 +292,174 @@ PyMethodDef PythonClassMaterial::tp_methods[] = {
      "\n"
      "Add one or more actions to the material, optionally with conditions.\n"
      "\n"
-     "##### Conditions\n"
-     "Conditions are provided as tuples which can be combined\n"
-     "to form boolean logic. A single condition might look like\n"
-     "`('condition_name', cond_arg)`, or a more complex nested one\n"
-     "might look like `(('some_condition', cond_arg), 'or',\n"
-     "('another_condition', cond2_arg))`.\n"
+     "Conditions\n"
+     "==========\n"
      "\n"
-     "`'and'`, `'or'`, and `'xor'` are available to chain\n"
-     "together 2 conditions, as seen above.\n"
+     "Conditions are provided as tuples which can be combined to form\n"
+     "boolean logic. A single condition might look like:\n"
      "\n"
-     "##### Available Conditions\n"
-     "###### `('they_have_material', material)`\n"
-     "> Does the part we\'re hitting have a given bascenev1.Material?\n"
+     "``('condition_name', cond_arg)``\n"
      "\n"
-     "###### `('they_dont_have_material', material)`\n"
-     "> Does the part we\'re hitting not have a given bascenev1.Material?\n"
+     "Or a more complex nested one might look like:\n"
      "\n"
-     "###### `('eval_colliding')`\n"
-     "> Is `'collide'` true at this point\n"
-     "in material evaluation? (see the `modify_part_collision` action)\n"
+     "``(('condition1', cond_arg), 'or', ('condition2', cond2_arg))``\n"
      "\n"
-     "###### `('eval_not_colliding')`\n"
-     "> Is 'collide' false at this point\n"
-     "in material evaluation? (see the `modify_part_collision` action)\n"
+     "The strings ``'and'``, ``'or'``, and ``'xor'`` can chain together\n"
+     "two conditions, as seen above.\n"
      "\n"
-     "###### `('we_are_younger_than', age)`\n"
-     "> Is our part younger than `age` (in milliseconds)?\n"
+     "Available Conditions\n"
+     "--------------------\n"
+     "``('they_have_material', material)``\n"
+     "  Does the part we're hitting have a given\n"
+     "  :class:`bascenev1.Material`?\n"
      "\n"
-     "###### `('we_are_older_than', age)`\n"
-     "> Is our part older than `age` (in milliseconds)?\n"
+     "``('they_dont_have_material', material)``\n"
+     "  Does the part we\'re hitting not have a given\n"
+     "  :class:`bascenev1.Material`?\n"
      "\n"
-     "###### `('they_are_younger_than', age)`\n"
-     "> Is the part we're hitting younger than `age` (in milliseconds)?\n"
+     "``('eval_colliding')``\n"
+     "  Is ``'collide'`` true at this point\n"
+     "  in material evaluation? (see the ``modify_part_collision`` action)\n"
      "\n"
-     "###### `('they_are_older_than', age)`\n"
-     "> Is the part we're hitting older than `age` (in milliseconds)?\n"
+     "``('eval_not_colliding')``\n"
+     "  Is ``collide`` false at this point\n"
+     "  in material evaluation? (see the ``modify_part_collision`` action)\n"
      "\n"
-     "###### `('they_are_same_node_as_us')`\n"
-     "> Does the part we're hitting belong to the same bascenev1.Node as us?\n"
+     "``('we_are_younger_than', age)``\n"
+     "  Is our part younger than ``age`` (in milliseconds)?\n"
      "\n"
-     "###### `('they_are_different_node_than_us')`\n"
-     "> Does the part we're hitting belong to a different bascenev1.Node?\n"
+     "``('we_are_older_than', age)``\n"
+     "  Is our part older than ``age`` (in milliseconds)?\n"
      "\n"
-     "##### Actions\n"
-     "In a similar manner, actions are specified as tuples.\n"
-     "Multiple actions can be specified by providing a tuple\n"
-     "of tuples.\n"
+     "``('they_are_younger_than', age)``\n"
+     "  Is the part we're hitting younger than ``age`` (in milliseconds)?\n"
      "\n"
-     "##### Available Actions\n"
-     "###### `('call', when, callable)`\n"
-     "> Calls the provided callable;\n"
-     "`when` can be either `'at_connect'` or `'at_disconnect'`.\n"
-     "`'at_connect'` means to fire\n"
-     "when the two parts first come in contact; `'at_disconnect'`\n"
-     "means to fire once they cease being in contact.\n"
+     "``('they_are_older_than', age)``\n"
+     "  Is the part we're hitting older than ``age`` (in milliseconds)?\n"
      "\n"
-     "###### `('message', who, when, message_obj)`\n"
-     "> Sends a message object;\n"
-     "`who` can be either `'our_node'` or `'their_node'`, `when` can be\n"
-     "`'at_connect'` or `'at_disconnect'`, and `message_obj` is the message\n"
-     "object to send.\n"
-     "This has the same effect as calling the node's\n"
-     "babase.Node.handlemessage() method.\n"
+     "``('they_are_same_node_as_us')``\n"
+     "  Does the part we're hitting belong to the same\n"
+     "  :class:`bascenev1.Node`\n"
+     "  as us?\n"
      "\n"
-     "###### `('modify_part_collision', attr, value)`\n"
-     "> Changes some\n"
-     "characteristic of the physical collision that will occur between\n"
-     "our part and their part. This change will remain in effect as\n"
-     "long as the two parts remain overlapping. This means if you have a\n"
-     "part with a material that turns `'collide'` off against parts\n"
-     "younger than 100ms, and it touches another part that is 50ms old,\n"
-     "it will continue to not collide with that part until they separate,\n"
-     "even if the 100ms threshold is passed. Options for attr/value are:\n"
-     "`'physical'` (boolean value; whether a *physical* response will\n"
-     "occur at all), `'friction'` (float value; how friction-y the\n"
-     "physical response will be), `'collide'` (boolean value;\n"
-     "whether *any* collision will occur at all, including non-physical\n"
-     "stuff like callbacks), `'use_node_collide'`\n"
-     "(boolean value; whether to honor modify_node_collision\n"
-     "overrides for this collision), `'stiffness'` (float value,\n"
-     "how springy the physical response is), `'damping'` (float\n"
-     "value, how damped the physical response is), `'bounce'` (float\n"
-     "value; how bouncy the physical response is).\n"
+     "``('they_are_different_node_than_us')``\n"
+     "  Does the part we're hitting belong to a different\n"
+     "  :class:`bascenev1.Node`?\n"
      "\n"
-     "###### `('modify_node_collision', attr, value)`\n"
-     "> Similar to\n"
-     "`modify_part_collision`, but operates at a node-level.\n"
-     "collision attributes set here will remain in effect as long as\n"
-     "*anything* from our part's node and their part's node overlap.\n"
-     "A key use of this functionality is to prevent new nodes from\n"
-     "colliding with each other if they appear overlapped;\n"
-     "if `modify_part_collision` is used, only the individual\n"
-     "parts that were overlapping would avoid contact, but other parts\n"
-     "could still contact leaving the two nodes 'tangled up'. Using\n"
-     "`modify_node_collision` ensures that the nodes must completely\n"
-     "separate before they can start colliding. Currently the only attr\n"
-     "available here is `'collide'` (a boolean value).\n"
+     "Actions\n"
+     "=======\n"
      "\n"
-     "###### `('sound', sound, volume)`\n"
-     "> Plays a bascenev1.Sound when a collision\n"
-     "occurs, at a given volume, regardless of the collision speed/etc.\n"
+     "In a similar manner, actions are specified as tuples. Multiple\n"
+     "actions can be specified by providing a tuple of tuples.\n"
      "\n"
-     "###### `('impact_sound', sound, targetImpulse, volume)`\n"
-     "> Plays a sound\n"
-     "when a collision occurs, based on the speed of impact.\n"
-     "Provide a bascenev1.Sound, a target-impulse, and a volume.\n"
+     "Available Actions\n"
+     "-----------------\n"
      "\n"
-     "###### `('skid_sound', sound, targetImpulse, volume)`\n"
-     "> Plays a sound\n"
-     "during a collision when parts are 'scraping' against each other.\n"
-     "Provide a bascenev1.Sound, a target-impulse, and a volume.\n"
+     "``('call', when, callable)``\n"
+     "  Calls the provided callable;\n"
+     "  ``when`` can be either ``'at_connect'`` or ``'at_disconnect'``.\n"
+     "  ``'at_connect'`` means to fire when the two parts first come in\n"
+     "  contact; ``'at_disconnect'`` means to fire once they cease being\n"
+     "  in contact.\n"
      "\n"
-     "###### `('roll_sound', sound, targetImpulse, volume)`\n"
-     "> Plays a sound\n"
-     "during a collision when parts are 'rolling' against each other.\n"
-     "Provide a bascenev1.Sound, a target-impulse, and a volume.\n"
+     "``('message', who, when, message_obj)``\n"
+     "  Sends a message object; ``who`` can be either ``'our_node'`` or\n"
+     "  ``'their_node'``, ``when`` can be ``'at_connect'`` or\n"
+     "  ``'at_disconnect'``, and ``message_obj`` is the message object to\n"
+     "  send. This has the same effect as calling the node's\n"
+     "  :meth:`bascenev1.Node.handlemessage()` method.\n"
      "\n"
-     "##### Examples\n"
-     "**Example 1:** create a material that lets us ignore\n"
+     "``('modify_part_collision', attr, value)``\n"
+     "  Changes some characteristic of the physical collision that will\n"
+     "  occur between our part and their part. This change will remain in\n"
+     "  effect as long as the two parts remain overlapping. This means if\n"
+     "  you have a part with a material that turns ``'collide'`` off\n"
+     "  against parts younger than 100ms, and it touches another part that\n"
+     "  is 50ms old, it will continue to not collide with that part until\n"
+     "  they separate, even if the 100ms threshold is passed. Options for\n"
+     "  attr/value are:\n"
+     "  ``'physical'`` (boolean value; whether a *physical* response will\n"
+     "  occur at all), ``'friction'`` (float value; how friction-y the\n"
+     "  physical response will be), ``'collide'`` (boolean value;\n"
+     "  whether *any* collision will occur at all, including non-physical\n"
+     "  stuff like callbacks), ``'use_node_collide'``\n"
+     "  (boolean value; whether to honor modify_node_collision\n"
+     "  overrides for this collision), ``'stiffness'`` (float value,\n"
+     "  how springy the physical response is), ``'damping'`` (float\n"
+     "  value, how damped the physical response is), ``'bounce'`` (float\n"
+     "  value; how bouncy the physical response is).\n"
+     "\n"
+     "``('modify_node_collision', attr, value)``\n"
+     "  Similar to ``modify_part_collision``, but operates at a\n"
+     "  node-level. Collision attributes set here will remain in effect\n"
+     "  as long as *anything* from our part's node and their part's node\n"
+     "  overlap. A key use of this functionality is to prevent new nodes\n"
+     "  from colliding with each other if they appear overlapped;\n"
+     "  if ``modify_part_collision`` is used, only the individual\n"
+     "  parts that were overlapping would avoid contact, but other parts\n"
+     "  could still contact leaving the two nodes 'tangled up'. Using\n"
+     "  ``modify_node_collision`` ensures that the nodes must completely\n"
+     "  separate before they can start colliding. Currently the only attr\n"
+     "  available here is ``'collide'`` (a boolean value).\n"
+     "\n"
+     "``('sound', sound, volume)``\n"
+     "  Plays a :class:`bascenev1.Sound` when a collision occurs, at a\n"
+     "  given volume, regardless of the collision speed/etc.\n"
+     "\n"
+     "``('impact_sound', sound, target_impulse, volume)``\n"
+     "  Plays a sound when a collision occurs, based on the speed of\n"
+     "  impact. Provide a :class:`bascenev1.Sound`, a target-impulse,\n"
+     "  and a volume.\n"
+     "\n"
+     "``('skid_sound', sound, target_impulse, volume)``\n"
+     "  Plays a sound during a collision when parts are 'scraping'\n"
+     "  against each other. Provide a :class:`bascenev1.Sound`,\n"
+     "  a target-impulse, and a volume.\n"
+     "\n"
+     "``('roll_sound', sound, targetImpulse, volume)``\n"
+     "  Plays a sound during a collision when parts are 'rolling'\n"
+     "  against each other.\n"
+     "  Provide a :class:`bascenev1.Sound`, a target-impulse, and a\n"
+     "  volume.\n"
+     "\n"
+     "Examples\n"
+     "========\n"
+     "\n"
+     "**Example 1:** Create a material that lets us ignore\n"
      "collisions against any nodes we touch in the first\n"
      "100 ms of our existence; handy for preventing us from\n"
-     "exploding outward if we spawn on top of another object:\n"
-     ">>> m = bascenev1.Material()\n"
-     "... m.add_actions(\n"
-     "...     conditions=(('we_are_younger_than', 100),\n"
-     "...                 'or', ('they_are_younger_than', 100)),\n"
-     "...     actions=('modify_node_collision', 'collide', False))\n"
+     "exploding outward if we spawn on top of another object::\n"
      "\n"
-     "**Example 2:** send a bascenev1.DieMessage to anything we touch, but\n"
-     "cause no physical response. This should cause any bascenev1.Actor to\n"
-     "drop dead:\n"
-     ">>> m = bascenev1.Material()\n"
-     "... m.add_actions(\n"
-     "...     actions=(('modify_part_collision', 'physical', False),\n"
-     "...              ('message', 'their_node', 'at_connect',\n"
-     "...                  bascenev1.DieMessage())))\n"
+     "  m = bascenev1.Material()\n"
+     "  m.add_actions(\n"
+     "       conditions=(('we_are_younger_than', 100),\n"
+     "                   'or', ('they_are_younger_than', 100)),\n"
+     "       actions=('modify_node_collision', 'collide', False))\n"
      "\n"
-     "**Example 3:** play some sounds when we're contacting the ground:\n"
-     ">>> m = bascenev1.Material()\n"
-     "... m.add_actions(\n"
-     "...     conditions=('they_have_material', shared.footing_material),\n"
-     "...     actions=(\n"
-     "          ('impact_sound', bascenev1.getsound('metalHit'), 2, 5),\n"
-     "          ('skid_sound', bascenev1.getsound('metalSkid'), 2, 5)))\n"},
+     "**Example 2:** Send a :class:`bascenev1.DieMessage` to anything we\n"
+     "touch, but cause no physical response. This should cause any\n"
+     ":class:`bascenev1.Actor` to drop dead::\n"
+     "\n"
+     "   m = bascenev1.Material()\n"
+     "   m.add_actions(\n"
+     "    actions=(\n"
+     "      ('modify_part_collision', 'physical', False),\n"
+     "      ('message', 'their_node', 'at_connect', bascenev1.DieMessage())\n"
+     "    )\n"
+     "   )\n"
+     "\n"
+     "**Example 3:** Play some sounds when we're contacting the\n"
+     "ground::\n"
+     "\n"
+     "  m = bascenev1.Material()\n"
+     "  m.add_actions(\n"
+     "    conditions=('they_have_material' shared.footing_material),\n"
+     "    actions=(\n"
+     "      ('impact_sound', bascenev1.getsound('metalHit'), 2, 5),\n"
+     "      ('skid_sound', bascenev1.getsound('metalSkid'), 2, 5)\n"
+     "    )\n"
+     "  )\n"
+     "\n"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
 
@@ -550,7 +572,7 @@ void DoAddConditions(PyObject* cond_obj,
 
         // Pull a string from between to set up our opmode with.
         std::string opmode_str =
-            Python::GetPyString(PyTuple_GET_ITEM(cond_obj, i + 1));
+            Python::GetString(PyTuple_GET_ITEM(cond_obj, i + 1));
         const char* opmode = opmode_str.c_str();
         if (!strcmp(opmode, "&&") || !strcmp(opmode, "and")) {
           c2->opmode = MaterialConditionNode::OpMode::AND_OPERATOR;
@@ -582,13 +604,13 @@ void DoAddAction(PyObject* actions_obj,
   Py_ssize_t size = PyTuple_GET_SIZE(actions_obj);
   assert(size > 0);
   PyObject* obj = PyTuple_GET_ITEM(actions_obj, 0);
-  std::string type = Python::GetPyString(obj);
+  std::string type = Python::GetString(obj);
   if (type == "call") {
     if (size != 3) {
       throw Exception("Expected 3 values for command action tuple.",
                       PyExcType::kValue);
     }
-    std::string when = Python::GetPyString(PyTuple_GET_ITEM(actions_obj, 1));
+    std::string when = Python::GetString(PyTuple_GET_ITEM(actions_obj, 1));
     bool at_disconnect;
     if (when == "at_connect") {
       at_disconnect = false;
@@ -606,7 +628,7 @@ void DoAddAction(PyObject* actions_obj,
       throw Exception("Expected >= 4 values for message action tuple.",
                       PyExcType::kValue);
     }
-    std::string target = Python::GetPyString(PyTuple_GET_ITEM(actions_obj, 1));
+    std::string target = Python::GetString(PyTuple_GET_ITEM(actions_obj, 1));
     bool target_other_val;
     if (target == "our_node") {
       target_other_val = false;
@@ -616,7 +638,7 @@ void DoAddAction(PyObject* actions_obj,
       throw Exception("Invalid message target: '" + target + "'.",
                       PyExcType::kValue);
     }
-    std::string when = Python::GetPyString(PyTuple_GET_ITEM(actions_obj, 2));
+    std::string when = Python::GetString(PyTuple_GET_ITEM(actions_obj, 2));
     bool at_disconnect;
     if (when == "at_connect") {
       at_disconnect = false;
@@ -646,7 +668,7 @@ void DoAddAction(PyObject* actions_obj,
           "Expected 3 values for modify_node_collision action tuple.",
           PyExcType::kValue);
     }
-    std::string attr = Python::GetPyString(PyTuple_GET_ITEM(actions_obj, 1));
+    std::string attr = Python::GetString(PyTuple_GET_ITEM(actions_obj, 1));
     NodeCollideAttr attr_type;
     if (attr == "collide") {
       attr_type = NodeCollideAttr::kCollideNode;
@@ -656,7 +678,7 @@ void DoAddAction(PyObject* actions_obj,
     }
 
     // Pull value.
-    float val = Python::GetPyFloat(PyTuple_GET_ITEM(actions_obj, 2));
+    float val = Python::GetFloat(PyTuple_GET_ITEM(actions_obj, 2));
     (*actions).push_back(
         Object::New<MaterialAction, NodeModMaterialAction>(attr_type, val));
   } else if (type == "modify_part_collision") {
@@ -666,7 +688,7 @@ void DoAddAction(PyObject* actions_obj,
           PyExcType::kValue);
     }
     PartCollideAttr attr_type;
-    std::string attr = Python::GetPyString(PyTuple_GET_ITEM(actions_obj, 1));
+    std::string attr = Python::GetString(PyTuple_GET_ITEM(actions_obj, 1));
     if (attr == "physical") {
       attr_type = PartCollideAttr::kPhysical;
     } else if (attr == "friction") {
@@ -685,7 +707,7 @@ void DoAddAction(PyObject* actions_obj,
       throw Exception("Invalid part mod attr: '" + attr + "'.",
                       PyExcType::kValue);
     }
-    float val = Python::GetPyFloat(PyTuple_GET_ITEM(actions_obj, 2));
+    float val = Python::GetFloat(PyTuple_GET_ITEM(actions_obj, 2));
     (*actions).push_back(
         Object::New<MaterialAction, PartModMaterialAction>(attr_type, val));
   } else if (type == "sound") {
@@ -695,7 +717,7 @@ void DoAddAction(PyObject* actions_obj,
     }
     SceneSound* sound =
         SceneV1Python::GetPySceneSound(PyTuple_GET_ITEM(actions_obj, 1));
-    float volume = Python::GetPyFloat(PyTuple_GET_ITEM(actions_obj, 2));
+    float volume = Python::GetFloat(PyTuple_GET_ITEM(actions_obj, 2));
     (*actions).push_back(
         Object::New<MaterialAction, SoundMaterialAction>(sound, volume));
   } else if (type == "impact_sound") {
@@ -719,8 +741,8 @@ void DoAddAction(PyObject* actions_obj,
       throw Exception("One or more invalid sound refs passed.",
                       PyExcType::kValue);
     }
-    float target_impulse = Python::GetPyFloat(PyTuple_GET_ITEM(actions_obj, 2));
-    float volume = Python::GetPyFloat(PyTuple_GET_ITEM(actions_obj, 3));
+    float target_impulse = Python::GetFloat(PyTuple_GET_ITEM(actions_obj, 2));
+    float volume = Python::GetFloat(PyTuple_GET_ITEM(actions_obj, 3));
     (*actions).push_back(Object::New<MaterialAction, ImpactSoundMaterialAction>(
         sounds, target_impulse, volume));
   } else if (type == "skid_sound") {
@@ -730,8 +752,8 @@ void DoAddAction(PyObject* actions_obj,
     }
     SceneSound* sound =
         SceneV1Python::GetPySceneSound(PyTuple_GET_ITEM(actions_obj, 1));
-    float target_impulse = Python::GetPyFloat(PyTuple_GET_ITEM(actions_obj, 2));
-    float volume = Python::GetPyFloat(PyTuple_GET_ITEM(actions_obj, 3));
+    float target_impulse = Python::GetFloat(PyTuple_GET_ITEM(actions_obj, 2));
+    float volume = Python::GetFloat(PyTuple_GET_ITEM(actions_obj, 3));
     (*actions).push_back(Object::New<MaterialAction, SkidSoundMaterialAction>(
         sound, target_impulse, volume));
   } else if (type == "roll_sound") {
@@ -741,8 +763,8 @@ void DoAddAction(PyObject* actions_obj,
     }
     SceneSound* sound =
         SceneV1Python::GetPySceneSound(PyTuple_GET_ITEM(actions_obj, 1));
-    float target_impulse = Python::GetPyFloat(PyTuple_GET_ITEM(actions_obj, 2));
-    float volume = Python::GetPyFloat(PyTuple_GET_ITEM(actions_obj, 3));
+    float target_impulse = Python::GetFloat(PyTuple_GET_ITEM(actions_obj, 2));
+    float volume = Python::GetFloat(PyTuple_GET_ITEM(actions_obj, 3));
     (*actions).push_back(Object::New<MaterialAction, RollSoundMaterialAction>(
         sound, target_impulse, volume));
   } else {

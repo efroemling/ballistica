@@ -21,42 +21,52 @@ class PluginSettingsWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        width = 750.0 if uiscale is bui.UIScale.SMALL else 470.0
-        height = 400.0 if uiscale is bui.UIScale.SMALL else 300.0
-        yoffs = -20 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1200.0 if uiscale is bui.UIScale.SMALL else 470.0
+        self._height = 900.0 if uiscale is bui.UIScale.SMALL else 360.0
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            2.06
+            if uiscale is bui.UIScale.SMALL
+            else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        # target_width = min(self._width - 60, screensize[0] / scale)
+        target_height = min(self._height - 100, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        self._yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(width, height),
+                size=(self._width, self._height),
                 toolbar_visibility=(
                     'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
                     else 'menu_full'
                 ),
-                scale=(
-                    2.06
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         if uiscale is bui.UIScale.SMALL:
-            xoffs = 135
             self._back_button = bui.get_special_widget('back_button')
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
         else:
-            xoffs = 0
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(53, height - 60 + yoffs),
+                position=(55, self._yoffs - 33),
                 size=(60, 60),
                 scale=0.8,
                 autoselect=True,
@@ -71,20 +81,24 @@ class PluginSettingsWindow(bui.MainWindow):
         self._title_text = bui.textwidget(
             parent=self._root_widget,
             position=(
-                width * 0.5,
-                height - (55 if uiscale is bui.UIScale.SMALL else 35) + yoffs,
+                self._width * 0.5,
+                self._yoffs - (55 if uiscale is bui.UIScale.SMALL else 10),
             ),
             size=(0, 0),
             text=bui.Lstr(resource='pluginSettingsText'),
+            maxwidth=230,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
         )
 
-        self._y_position = height - 140 + yoffs
+        # Roughly center our few bits of content.
+        x = self._width * 0.5 - 175
+        y = self._height * 0.5 + 30
+
         self._enable_plugins_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(xoffs + 65, self._y_position + yoffs),
+            position=(x, y),
             size=(350, 60),
             autoselect=True,
             label=bui.Lstr(resource='pluginsEnableAllText'),
@@ -94,10 +108,10 @@ class PluginSettingsWindow(bui.MainWindow):
             ),
         )
 
-        self._y_position -= 70
+        y -= 70
         self._disable_plugins_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(xoffs + 65, self._y_position + yoffs),
+            position=(x, y),
             size=(350, 60),
             autoselect=True,
             label=bui.Lstr(resource='pluginsDisableAllText'),
@@ -107,10 +121,10 @@ class PluginSettingsWindow(bui.MainWindow):
             ),
         )
 
-        self._y_position -= 70
+        y -= 70
         self._enable_new_plugins_check_box = bui.checkboxwidget(
             parent=self._root_widget,
-            position=(xoffs + 65, self._y_position + yoffs),
+            position=(x, y),
             size=(350, 60),
             value=bui.app.config.get(
                 bui.app.plugins.AUTO_ENABLE_NEW_PLUGINS_CONFIG_KEY,

@@ -158,7 +158,7 @@ void Input::AnnounceConnects_() {
 
   // For the first announcement just say "X controllers detected" and don't
   // have a sound.
-  if (first_print && g_core->GetAppTimeSeconds() < 3.0) {
+  if (first_print && g_core->AppTimeSeconds() < 3.0) {
     first_print = false;
 
     // If there's been several connected, just give a number.
@@ -225,7 +225,7 @@ void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
   // On Android we never show messages for initial input-devices; we often
   // get large numbers of strange virtual devices that aren't actually
   // controllers so this is more confusing than helpful.
-  if (g_buildconfig.ostype_android() && g_core->GetAppTimeSeconds() < 3.0) {
+  if (g_buildconfig.ostype_android() && g_core->AppTimeSeconds() < 3.0) {
     return;
   }
 
@@ -554,7 +554,7 @@ void Input::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
 void Input::StepDisplayTime() {
   assert(g_base->InLogicThread());
 
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   // If input has been locked an excessively long amount of time, unlock it.
   if (input_lock_count_temp_) {
@@ -622,13 +622,13 @@ void Input::LockAllInput(bool permanent, const std::string& label) {
   } else {
     input_lock_count_temp_++;
     if (input_lock_count_temp_ == 1) {
-      last_input_temp_lock_time_ = g_core->GetAppTimeMillisecs();
+      last_input_temp_lock_time_ = g_core->AppTimeMillisecs();
     }
     input_lock_temp_labels_.push_back(label);
 
     recent_input_locks_unlocks_.push_back(
         "temp lock: " + label + " time "
-        + std::to_string(g_core->GetAppTimeMillisecs()));
+        + std::to_string(g_core->AppTimeMillisecs()));
     while (recent_input_locks_unlocks_.size() > 10) {
       recent_input_locks_unlocks_.pop_front();
     }
@@ -641,7 +641,7 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
   recent_input_locks_unlocks_.push_back(
       permanent ? "permanent unlock: "
                 : "temp unlock: " + label + " time "
-                      + std::to_string(g_core->GetAppTimeMillisecs()));
+                      + std::to_string(g_core->AppTimeMillisecs()));
   while (recent_input_locks_unlocks_.size() > 10) {
     recent_input_locks_unlocks_.pop_front();
   }
@@ -667,7 +667,7 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
     if (input_lock_count_temp_ < 0) {
       g_core->Log(LogName::kBaInput, LogLevel::kWarning,
                   "temp input unlock at time "
-                      + std::to_string(g_core->GetAppTimeMillisecs())
+                      + std::to_string(g_core->AppTimeMillisecs())
                       + " with no active lock: '" + label + "'");
       // This is to be expected since we can reset this to 0.
       input_lock_count_temp_ = 0;
@@ -684,7 +684,7 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
 
 void Input::PrintLockLabels_() {
   std::string s = "INPUT LOCK REPORT (time="
-                  + std::to_string(g_core->GetAppTimeMillisecs()) + "):";
+                  + std::to_string(g_core->AppTimeMillisecs()) + "):";
   int num;
 
   s += "\n " + std::to_string(input_lock_temp_labels_.size()) + " TEMP LOCKS:";
@@ -926,7 +926,7 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     // fluke repeat key press event due to funky OS circumstances.
     static int count{};
     static seconds_t last_count_reset_time{};
-    auto now = g_core->GetAppTimeSeconds();
+    auto now = g_core->AppTimeSeconds();
     if (now - last_count_reset_time > 2.0) {
       count = 0;
       last_count_reset_time = now;
@@ -1238,7 +1238,7 @@ void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
       WidgetMessage(WidgetMessage::Type::kMouseWheelVelocityH, nullptr,
                     cursor_pos_x_, cursor_pos_y_, velocity.x, momentum));
 
-  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
+  last_mouse_move_time_ = g_core->AppTimeSeconds();
   mouse_move_count_++;
 
   Camera* camera = g_base->graphics->camera();
@@ -1282,7 +1282,7 @@ void Input::HandleMouseMotion_(const Vector2f& position) {
   cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
       position.y * g_base->graphics->screen_pixel_height());
 
-  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
+  last_mouse_move_time_ = g_core->AppTimeSeconds();
   mouse_move_count_++;
 
   // If we have a touch-input in editing mode, pass along events to it. (it
@@ -1324,7 +1324,7 @@ void Input::HandleMouseDown_(int button, const Vector2f& position) {
     return;
   }
 
-  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
+  last_mouse_move_time_ = g_core->AppTimeSeconds();
   mouse_move_count_++;
 
   // Convert normalized view coords to our virtual ones.
@@ -1333,7 +1333,7 @@ void Input::HandleMouseDown_(int button, const Vector2f& position) {
   cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
       position.y * g_base->graphics->screen_pixel_height());
 
-  millisecs_t click_time = g_core->GetAppTimeMillisecs();
+  millisecs_t click_time = g_core->AppTimeMillisecs();
   bool double_click = (click_time - last_click_time_ <= double_click_time_);
   last_click_time_ = click_time;
 
@@ -1528,7 +1528,7 @@ auto Input::IsCursorVisible() const -> bool {
   bool val;
 
   // Show our cursor only if its been moved recently.
-  val = (g_core->GetAppTimeSeconds() - last_mouse_move_time_ < 2.071);
+  val = (g_core->AppTimeSeconds() - last_mouse_move_time_ < 2.071);
 
   return val;
 }

@@ -124,7 +124,7 @@ static auto PySetPublicPartyStatsURL(PyObject* self, PyObject* args,
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // The call expects an empty string for the no-url option.
-  std::string url = (url_obj == Py_None) ? "" : Python::GetPyString(url_obj);
+  std::string url = (url_obj == Py_None) ? "" : Python::GetString(url_obj);
   appmode->SetPublicPartyStatsURL(url);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -237,7 +237,7 @@ static auto PySetPublicPartyPublicAddressIPV4(PyObject* self, PyObject* args,
 
   std::optional<std::string> address{};
   if (address_obj != Py_None) {
-    address = Python::GetPyString(address_obj);
+    address = Python::GetString(address_obj);
   }
   appmode->set_public_party_public_address_ipv4(address);
   Py_RETURN_NONE;
@@ -271,7 +271,7 @@ static auto PySetPublicPartyPublicAddressIPV6(PyObject* self, PyObject* args,
 
   std::optional<std::string> address{};
   if (address_obj != Py_None) {
-    address = Python::GetPyString(address_obj);
+    address = Python::GetString(address_obj);
   }
   appmode->set_public_party_public_address_ipv6(address);
   Py_RETURN_NONE;
@@ -404,7 +404,7 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
   // Error if we're not in our app-mode.
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
-  address = Python::GetPyString(address_obj);
+  address = Python::GetString(address_obj);
 
   // Disallow in headless build (people were using this for spam-bots).
 
@@ -587,9 +587,7 @@ static PyMethodDef PyDisconnectFromHostDef = {
 
     "disconnect_from_host() -> None\n"
     "\n"
-    "(internal)\n"
-    "\n"
-    "Category: General Utility Functions",
+    "(internal)",
 };
 
 // --------------------------- disconnect_client -------------------------------
@@ -668,8 +666,6 @@ static PyMethodDef PyGetClientPublicDeviceUUIDDef = {
     "get_client_public_device_uuid(client_id: int) -> str | None\n"
     "\n"
     "(internal)\n"
-    "\n"
-    "Category: General Utility Functions\n"
     "\n"
     "Return a public device UUID for a client. If the client does not\n"
     "exist or is running a version older than 1.6.10, returns None.\n"
@@ -756,7 +752,9 @@ static PyMethodDef PyHostScanCycleDef = {
 
     "host_scan_cycle() -> list\n"
     "\n"
-    "(internal)",
+    "(internal)\n"
+    "\n"
+    ":meta private:",
 };
 
 // ---------------------------- end_host_scanning ------------------------------
@@ -777,9 +775,7 @@ static PyMethodDef PyEndHostScanningDef = {
 
     "end_host_scanning() -> None\n"
     "\n"
-    "(internal)\n"
-    "\n"
-    "Category: General Utility Functions",
+    "(internal)",
 };
 
 // ------------------------- have_connected_clients ----------------------------
@@ -804,7 +800,7 @@ static PyMethodDef PyHaveConnectedClientsDef = {
     "\n"
     "(internal)\n"
     "\n"
-    "Category: General Utility Functions",
+    ":meta private:",
 };
 
 // ------------------------------ chatmessage ----------------------------------
@@ -838,7 +834,7 @@ static auto PyChatMessage(PyObject* self, PyObject* args, PyObject* keywds)
   }
 
   if (clients_obj != Py_None) {
-    clients = Python::GetPyInts(clients_obj);
+    clients = Python::GetInts(clients_obj);
     clients_p = &clients;
   }
   appmode->connections()->SendChatMessage(message, clients_p,

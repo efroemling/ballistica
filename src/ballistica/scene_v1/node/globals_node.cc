@@ -27,7 +27,7 @@ class GlobalsNodeType : public NodeType {
  public:
 #define BA_NODE_TYPE_CLASS GlobalsNode
   BA_NODE_CREATE_CALL(CreateGlobals);
-  BA_INT64_ATTR_READONLY(real_time, GetAppTimeMillisecs);
+  BA_INT64_ATTR_READONLY(real_time, AppTimeMillisecs);
   BA_INT64_ATTR_READONLY(time, GetTime);
   BA_INT64_ATTR_READONLY(step, GetStep);
   BA_FLOAT_ATTR(debris_friction, debris_friction, SetDebrisFriction);
@@ -206,7 +206,7 @@ auto GlobalsNode::IsCurrentGlobals() const -> bool {
           && scene->globals_node() == this);
 }
 
-auto GlobalsNode::GetAppTimeMillisecs() -> millisecs_t {
+auto GlobalsNode::AppTimeMillisecs() -> millisecs_t {
   // Pull this from our scene so we return consistent values throughout a step.
   return scene()->last_step_real_time();
 }

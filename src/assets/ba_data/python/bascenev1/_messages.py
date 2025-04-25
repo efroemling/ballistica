@@ -28,17 +28,11 @@ UNHANDLED = _UnhandledType()
 
 @dataclass
 class OutOfBoundsMessage:
-    """A message telling an object that it is out of bounds.
-
-    Category: Message Classes
-    """
+    """A message telling an object that it is out of bounds."""
 
 
 class DeathType(Enum):
-    """A reason for a death.
-
-    Category: Enums
-    """
+    """A reason for a death."""
 
     GENERIC = 'generic'
     OUT_OF_BOUNDS = 'out_of_bounds'
@@ -52,29 +46,24 @@ class DeathType(Enum):
 class DieMessage:
     """A message telling an object to die.
 
-    Category: **Message Classes**
-
     Most bascenev1.Actor-s respond to this.
     """
 
+    #: If this is set to True, the actor should disappear immediately.
+    #: This is for 'removing' stuff from the game more so than 'killing'
+    #: it. If False, the actor should die a 'normal' death and can take
+    #: its time with lingering corpses, sound effects, etc.
     immediate: bool = False
-    """If this is set to True, the actor should disappear immediately.
-       This is for 'removing' stuff from the game more so than 'killing'
-       it. If False, the actor should die a 'normal' death and can take
-       its time with lingering corpses, sound effects, etc."""
 
+    #: The particular reason for death.
     how: DeathType = DeathType.GENERIC
-    """The particular reason for death."""
 
 
 PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
 
 
 class PlayerDiedMessage:
-    """A message saying a bascenev1.Player has died.
-
-    Category: **Message Classes**
-    """
+    """A message saying a bascenev1.Player has died."""
 
     killed: bool
     """If True, the player was killed;
@@ -129,8 +118,6 @@ class PlayerDiedMessage:
 class StandMessage:
     """A message telling an object to move to a position in space.
 
-    Category: **Message Classes**
-
     Used when teleporting players to home base, etc.
     """
 
@@ -143,10 +130,7 @@ class StandMessage:
 
 @dataclass
 class PickUpMessage:
-    """Tells an object that it has picked something up.
-
-    Category: **Message Classes**
-    """
+    """Tells an object that it has picked something up."""
 
     node: bascenev1.Node
     """The bascenev1.Node that is getting picked up."""
@@ -154,18 +138,12 @@ class PickUpMessage:
 
 @dataclass
 class DropMessage:
-    """Tells an object that it has dropped what it was holding.
-
-    Category: **Message Classes**
-    """
+    """Tells an object that it has dropped what it was holding."""
 
 
 @dataclass
 class PickedUpMessage:
-    """Tells an object that it has been picked up by something.
-
-    Category: **Message Classes**
-    """
+    """Tells an object that it has been picked up by something."""
 
     node: bascenev1.Node
     """The bascenev1.Node doing the picking up."""
@@ -173,10 +151,7 @@ class PickedUpMessage:
 
 @dataclass
 class DroppedMessage:
-    """Tells an object that it has been dropped.
-
-    Category: **Message Classes**
-    """
+    """Tells an object that it has been dropped."""
 
     node: bascenev1.Node
     """The bascenev1.Node doing the dropping."""
@@ -184,18 +159,12 @@ class DroppedMessage:
 
 @dataclass
 class ShouldShatterMessage:
-    """Tells an object that it should shatter.
-
-    Category: **Message Classes**
-    """
+    """Tells an object that it should shatter."""
 
 
 @dataclass
 class ImpactDamageMessage:
-    """Tells an object that it has been jarred violently.
-
-    Category: **Message Classes**
-    """
+    """Tells an object that it has been jarred violently."""
 
     intensity: float
     """The intensity of the impact."""
@@ -205,26 +174,21 @@ class ImpactDamageMessage:
 class FreezeMessage:
     """Tells an object to become frozen.
 
-    Category: **Message Classes**
-
     As seen in the effects of an ice bascenev1.Bomb.
     """
+
+    time: float = 5.0
+    """The amount of time the object will be frozen."""
 
 
 @dataclass
 class ThawMessage:
-    """Tells an object to stop being frozen.
-
-    Category: **Message Classes**
-    """
+    """Tells an object to stop being frozen."""
 
 
 @dataclass
 class CelebrateMessage:
-    """Tells an object to celebrate.
-
-    Category: **Message Classes**
-    """
+    """Tells an object to celebrate."""
 
     duration: float = 10.0
     """Amount of time to celebrate in seconds."""
@@ -233,10 +197,8 @@ class CelebrateMessage:
 class HitMessage:
     """Tells an object it has been hit in some way.
 
-    Category: **Message Classes**
-
-    This is used by punches, explosions, etc to convey
-    their effect to a target.
+    This is used by punches, explosions, etc to convey their effect to a
+    target.
     """
 
     def __init__(

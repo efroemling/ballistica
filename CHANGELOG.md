@@ -1,8 +1,34 @@
-### 1.7.37 (build 22155, api 9, 2024-12-31)
+### 1.7.39 (build 22352, api 9, 2025-04-06)
+- Lots of work on sphinx documentation. Docs are now generated for both runtime
+  and tools packages. Removed the old pdoc docs generation path since sphinx is
+  working quite well and gives us lots of room to grow, and also since we can't
+  really support both (docstrings need to be formatted to play nice with one or
+  the other). Big thanks to Dliwk though for the old pdoc setup which got us to
+  this point though.
+- The `babase.App.State` class is now `babase.AppState`.
+- Removed `babase.print_exception()`. This has been mostly unused for a long
+  time. Anything still using it should use `logging.exception()` instead.
+- Removed `babase.print_error()`. This has also largely been unused for a long
+  time. Anything still using it should use `logging.error()` instead.
+- (build 22346) Hardened against some potential malformed-packet attacks. If you
+  find someone is still able to crash your server by sending invalid data,
+  please let me know.
+- Added highlights to show players when they have unclaimed chests in their
+  inbox or chests that can be opened.
+  
+### 1.7.38 (build 22318, api 9, 2025-03-20)
+- Added animations for reducing chest wait times or gaining tickets or tokens
+- Made MainWindow auto-recreate smarter. If something such as text input or a
+  popup window is suppressing main-window-auto-recreate, it'll now do a single
+  recreate once the suppression ends.
+- (build 22313) Fixed a possible client crash due to uninitialized memory when
+  handling `BA_MESSAGE_HOST_INFO` data.
+  
+### 1.7.37 (build 22304, api 9, 2025-03-10)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
   touch UI stuff at all you can simply bump your api version and call it a day.
-  I'm hopeful that api version won't need to be bumped again for along time (if
+  I'm hopeful that api version won't need to be bumped again for a long time (if
   ever).
 - I am pleased to announce that after years of hard work from many members of
   the community, PirateSpeak is now complete and available as a language choice.
@@ -78,7 +104,7 @@
   back-button handling are more automatic and windows don't have to hard-code
   where their back button goes to. There are also other benefits such as better
   state saving/restoring. When writing a MainWindow, pretty much all navigation
-  should only need too use methods: `main_window_has_control()`,
+  should only need to use methods: `main_window_has_control()`,
   `main_window_back()`, and `main_window_replace()`.
 - Finally got things updated so language testing works again, and made it a bit
   spiffier while at it. You now simply point the game at your test language and
@@ -176,6 +202,62 @@
   should use arrow keys for navigation. To update any old UI code, search for
   and remove any 'claims_tab' arguments to UI calls since that argument no
   longer exists.
+- Added a `get_unknown_type_fallback()` method to `dataclassio.IOMultiType`.
+  This be defined to allow multi-type data to be loadable even in the presence
+  of new types it doesn't recognize.
+- Added a `lossy` arg to `dataclassio.dataclass_from_dict()` and
+  `dataclassio.dataclass_from_json()`. Enum value fallbacks and the new
+  multitype fallbacks are now only applied when `lossy` is True. This also flags
+  the returned dataclass to prevent it from being serialized back out. Fallbacks
+  are useful for forward compatibility, but they are also dangerous in that they
+  can silently modify/destroy data, so this mechanism will hopefully help keep
+  them used safely.
+- Added a spinner widget (creatable via `bauiv1.spinnerwidget()`). This should
+  help things look more alive than the static 'loading...' text I've been using
+  in various places.
+- Tournament now award chests instead of tickets.
+- Tournaments are now free to enter if you are running this build or newer.
+- (build 22225) Added `babase.get_virtual_screen_size()` and to get the current
+  virtual screen size, `babase.get_virtual_safe_area_size()` to get the size of
+  the area where things are guaranteed to be visible no matter how the window is
+  resized, and added a `refresh_on_screen_size_changes` arg to the `MainWindow`
+  class to automatically recreate the window when the screen is resized. This
+  combined functionality can be used to custom fit UI elements to the exact
+  screen size, which is especially useful at the small ui-scale with its limited
+  screen real-estate. Generally medium and large ui-scale windows don't fill the
+  entire screen and can simply stay within the virtual safe area and thus don't
+  need to refresh.
+- (build 22237) Reverted the change from earlier in this release where small
+  ui-scale would have its own distinct widescreen virtual-safe-area. The virtual
+  safe area is now always 1280x720 (16:9). I came to realize there were
+  significant downsides to having safe-area be inconsistent; for instance
+  onscreen elements designed for one safe area might be out of frame for players
+  using the other, and things would effectively need to be limited to the
+  intersection of the two safe areas to work everywhere. Since it is now
+  possible to take advantage of the full screen area using the
+  `get_virtual_screen_size()` and whatnot mentioned above, it makes sense to
+  return to a single consistent safe area.
+- (build 22258) Updated the Windows redist installers to the latest versions. If
+  anyone is getting release builds of the game silently failing to launch,
+  install the bundled redist libs and try again.
+- (build 22258) Removed Windows debug redist libs such as `ucrtbased.dll` and
+  `vcruntime140d.dll`. Technically these are not supposed to be bundled with
+  software anyway and should instead be installed by installing Visual Studio. I
+  was shipping outdated versions which was causing extra problems, so I've
+  decided that I should follow the rules here and remove them. This means that
+  if you want to run debug builds on Windows you'll need to install Visual
+  Studio. Most people should be fine with release builds and don't need to worry
+  about this.
+- Added `docker-compose.yml` which can now be used with `docker compose` command
+- Changed Docker make targets to use `docker compose` instead of `docker build`
+- (build 22285) Window auto-recreation due to screen resizing is now disabled
+  while onscreen-keyboards are present. This works around an issue where text
+  editing on Android could break due to on-screen-keyboards causing screen
+  resizes which kill the text-widgets they target.
+- (build 22300) There is now a 'Secure V1 Connections' option in account
+  settings on ballistica.net which should prevent V1 account spoofing attacks
+  when enabled. The downside is that clients older than build 22300 will no
+  longer be able to access the account while that setting is enabled.
 
 ### 1.7.36 (build 21944, api 8, 2024-07-26)
 - Wired up Tokens, BombSquad's new purchasable currency. The first thing these

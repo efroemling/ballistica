@@ -31,9 +31,7 @@ void PythonClassSceneDataAsset::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a data object.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
-      "Use bascenev1.getdata() to instantiate one.";
+      "Use :meth:`bascenev1.getdata()` to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
@@ -115,7 +113,7 @@ auto PythonClassSceneDataAsset::GetValue(PythonClassSceneDataAsset* self)
   // haha really need to rename this class.
   base::DataAsset* datadata = data->data_data();
   datadata->Load();
-  datadata->set_last_used_time(g_core->GetAppTimeMillisecs());
+  datadata->set_last_used_time(g_core->AppTimeMillisecs());
   PyObject* obj = datadata->object().get();
   assert(obj);
   Py_INCREF(obj);

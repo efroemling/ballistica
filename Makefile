@@ -190,18 +190,11 @@ venv-clean:
 # IMPORTANT: Docs generation targets may themselves run builds, so they should
 #  be run alone serially and never in parallel alongside other builds.
 docs: env
-	$(MAKE) docs-pdoc
-
-docs-pdoc: env
-	@$(PCOMMAND) gen_docs_pdoc
-
-docs-sphinx: env
-	$(MAKE) dummymodules
 	@$(PCOMMAND) gen_docs_sphinx
 
-docs-sphinx-clean:
+docs-clean:
 	rm -rf .cache/sphinx
-	rm -rf build/sphinx
+	rm -rf build/docs
 
 pcommandbatch_speed_test: env
 	@$(PCOMMAND) pcommandbatch_speed_test $(PCOMMANDBATCHBIN)
@@ -211,7 +204,7 @@ pcommandbatch_speed_test: env
         assets-cmake-scripts assets-windows assets-windows-Win32							\
         assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
         resources resources-clean meta meta-clean clean clean-list						\
-        dummymodules venv venv-clean docs docs-pdoc pcommandbatch_speed_test
+        dummymodules venv venv-clean docs docs-clean pcommandbatch_speed_test
 
 
 ################################################################################
@@ -1200,27 +1193,35 @@ clion-staging: assets-cmake resources meta
 
 # Build the gui release docker image
 docker-gui-release: assets-cmake
-	$(PCOMMAND) build_docker_gui_release
+	$(PCOMMAND) compose_docker_gui_release
 
 # Build the gui debug docker image 
 docker-gui-debug: assets-cmake
-	$(PCOMMAND) build_docker_gui_debug
+	$(PCOMMAND) compose_docker_gui_debug
 
 # Build the server release docker image
 docker-server-release: assets-cmake
-	$(PCOMMAND) build_docker_server_release
+	$(PCOMMAND) compose_docker_server_release
 
 # Build the server debug docker image
 docker-server-debug: assets-cmake
-	$(PCOMMAND) build_docker_server_debug
+	$(PCOMMAND) compose_docker_server_debug
 
 # Build the gui release docker image for arm64
 docker-arm64-gui-release: assets-cmake
-	$(PCOMMAND) build_docker_arm64_gui_release
+	$(PCOMMAND) compose_docker_arm64_gui_release
+
+# Build the gui debug docker image for arm64
+docker-arm64-gui-debug: assets-cmake
+	$(PCOMMAND) compose_docker_arm64_gui_debug
 
 # Build the server release docker image for arm64
 docker-arm64-server-release: assets-cmake
-	$(PCOMMAND) build_docker_arm64_server_release 
+	$(PCOMMAND) compose_docker_arm64_server_release 
+
+# Build the server debug docker image for arm64
+docker-arm64-server-debug: assets-cmake
+	$(PCOMMAND) compose_docker_arm64_server_debug
 
 # Save the bombsquad_server docker image to build/docker/bombsquad_server_docker.tar
 docker-save:
@@ -1336,7 +1337,7 @@ VENV_PYTHON ?= python3.12
 # Increment this to force all downstream venvs to fully rebuild. Useful after
 # removing requirements since upgrading venvs in place will never uninstall
 # stuff.
-VENV_STATE = 1
+VENV_STATE = 2
 
 # Update our virtual environment whenever reqs changes, Python version
 # changes, our venv's Python symlink breaks (can happen for minor Python
@@ -1450,6 +1451,9 @@ _windows-wsl-rebuild: env
    -property:Platform=$(WINPLT) \
    $(VISUAL_STUDIO_VERSION)
 	@$(PCOMMAND) echo BLU BLD Built build/windows/BallisticaKit$(WINPRJ).exe.
+
+_windows-update-dlls: env
+	@$(PCOMMAND) windows_update_dlls
 
 # Tell make which of these targets don't represent files.
 .PHONY: _windows-wsl-build _windows-wsl-rebuild

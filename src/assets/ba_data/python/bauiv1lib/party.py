@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import math
 import logging
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
 import bauiv1 as bui
 import bascenev1 as bs
@@ -21,8 +21,10 @@ if TYPE_CHECKING:
 class PartyWindow(bui.Window):
     """Party list/chat window."""
 
+    @override
     def __del__(self) -> None:
         bui.set_party_window_open(False)
+        super().__del__()
 
     def __init__(self, origin: Sequence[float] = (0, 0)):
         bui.set_party_window_open(True)
@@ -48,7 +50,7 @@ class PartyWindow(bui.Window):
                 on_outside_click_call=self.close_with_sound,
                 scale_origin_stack_offset=origin,
                 scale=(
-                    1.6
+                    1.8
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 0.9
                 ),
@@ -59,7 +61,10 @@ class PartyWindow(bui.Window):
                         (260, 0) if uiscale is bui.UIScale.MEDIUM else (370, 60)
                     )
                 ),
-            )
+            ),
+            # We exist in the overlay stack so main-windows being
+            # recreated doesn't affect us.
+            prevent_main_window_auto_recreate=False,
         )
 
         self._cancel_button = bui.buttonwidget(
@@ -112,9 +117,22 @@ class PartyWindow(bui.Window):
 
         self._empty_str = bui.textwidget(
             parent=self._root_widget,
-            scale=0.75,
+            scale=0.6,
             size=(0, 0),
-            position=(self._width * 0.5, self._height - 65),
+            # color=(0.5, 1.0, 0.5),
+            shadow=0.3,
+            position=(self._width * 0.5, self._height - 57),
+            maxwidth=self._width * 0.85,
+            h_align='center',
+            v_align='center',
+        )
+        self._empty_str_2 = bui.textwidget(
+            parent=self._root_widget,
+            scale=0.5,
+            size=(0, 0),
+            color=(0.5, 1.0, 0.5),
+            shadow=0.1,
+            position=(self._width * 0.5, self._height - 75),
             maxwidth=self._width * 0.85,
             h_align='center',
             v_align='center',
@@ -126,6 +144,7 @@ class PartyWindow(bui.Window):
             size=(self._scroll_width, self._height - 200),
             position=(30, 80),
             color=(0.4, 0.6, 0.3),
+            border_opacity=0.6,
         )
         self._columnwidget = bui.columnwidget(
             parent=self._scrollwidget, border=2, left_border=-200, margin=0
@@ -296,6 +315,10 @@ class PartyWindow(bui.Window):
                     edit=self._empty_str,
                     text=bui.Lstr(resource=f'{self._r}.emptyText'),
                 )
+                bui.textwidget(
+                    edit=self._empty_str_2,
+                    text=bui.Lstr(resource='gatherWindow.descriptionShortText'),
+                )
                 bui.scrollwidget(
                     edit=self._scrollwidget,
                     size=(
@@ -436,6 +459,7 @@ class PartyWindow(bui.Window):
                                     )
                                 )
                 bui.textwidget(edit=self._empty_str, text='')
+                bui.textwidget(edit=self._empty_str_2, text='')
                 bui.scrollwidget(
                     edit=self._scrollwidget,
                     size=(

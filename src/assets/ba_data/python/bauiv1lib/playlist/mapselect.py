@@ -63,7 +63,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(width, height),
                 scale=(
-                    1.95
+                    2.3
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
@@ -111,6 +111,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(40 + x_inset, v - self._scroll_height),
             size=(self._scroll_width, self._scroll_height),
+            border_opacity=0.4,
         )
         bui.containerwidget(
             edit=self._root_widget, selected_child=self._scrollwidget

@@ -26,9 +26,8 @@ if TYPE_CHECKING:
 class WorkspaceSubsystem:
     """Subsystem for workspace handling in the app.
 
-    Category: **App Classes**
-
-    Access the single shared instance of this class at `ba.app.workspaces`.
+    Access the single shared instance of this class at
+    `ba.app.workspaces`.
     """
 
     def __init__(self) -> None:

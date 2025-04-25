@@ -16,8 +16,6 @@ if TYPE_CHECKING:
 class SpazFactory:
     """Wraps up media and other resources used by bs.Spaz instances.
 
-    Category: **Gameplay Classes**
-
     Generally one of these is created per bascenev1.Activity and shared
     between all spaz instances. Use bs.Spaz.get_factory() to return
     the shared factory for the current activity.

@@ -45,36 +45,49 @@ class WatchWindow(bui.MainWindow):
         self._r = 'watchWindow'
         uiscale = bui.app.ui_v1.uiscale
         self._width = 1440 if uiscale is bui.UIScale.SMALL else 1040
-        x_inset = 200 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            570
+            900
             if uiscale is bui.UIScale.SMALL
             else 670 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._current_tab: WatchWindow.TabID | None = None
-        extra_top = 20 if uiscale is bui.UIScale.SMALL else 0
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.5
+            if uiscale is bui.UIScale.SMALL
+            else 0.85 if uiscale is bui.UIScale.MEDIUM else 0.65
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 120, screensize[0] / scale)
+        target_height = min(self._height - 120, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        self.yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 55
+        self._scroll_y = self.yoffs - 85 - self._scroll_height
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + extra_top),
+                size=(self._width, self._height),
                 toolbar_visibility=(
                     'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
                     else 'menu_full'
                 ),
-                scale=(
-                    1.32
-                    if uiscale is bui.UIScale.SMALL
-                    else 0.85 if uiscale is bui.UIScale.MEDIUM else 0.65
-                ),
-                stack_offset=(
-                    (0, 30)
-                    if uiscale is bui.UIScale.SMALL
-                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         if uiscale is bui.UIScale.SMALL:
@@ -86,7 +99,7 @@ class WatchWindow(bui.MainWindow):
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,
-                position=(70 + x_inset, self._height - 74),
+                position=(70, self.yoffs - 50),
                 size=(60, 60),
                 scale=1.1,
                 label=bui.charstr(bui.SpecialChar.BACK),
@@ -98,20 +111,23 @@ class WatchWindow(bui.MainWindow):
         bui.textwidget(
             parent=self._root_widget,
             position=(
-                self._width * 0.5,
-                self._height - (65 if uiscale is bui.UIScale.SMALL else 38),
+                (
+                    self._width * 0.5
+                    + (
+                        (self._scroll_width * -0.5 + 93)
+                        if uiscale is bui.UIScale.SMALL
+                        else 0
+                    )
+                ),
+                self.yoffs - (63 if uiscale is bui.UIScale.SMALL else 10),
             ),
             size=(0, 0),
             color=bui.app.ui_v1.title_color,
-            scale=0.7 if uiscale is bui.UIScale.SMALL else 1.5,
-            h_align='center',
+            scale=1.3 if uiscale is bui.UIScale.SMALL else 1.5,
+            h_align='left' if uiscale is bui.UIScale.SMALL else 'center',
             v_align='center',
-            text=(
-                ''
-                if uiscale is bui.UIScale.SMALL
-                else bui.Lstr(resource=f'{self._r}.titleText')
-            ),
-            maxwidth=400,
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            maxwidth=200,
         )
 
         tabdefs = [
@@ -119,17 +135,19 @@ class WatchWindow(bui.MainWindow):
                 self.TabID.MY_REPLAYS,
                 bui.Lstr(resource=f'{self._r}.myReplaysText'),
             ),
-            # (self.TabID.TEST_TAB, bui.Lstr(value='Testing')),
         ]
 
-        scroll_buffer_h = 130 + 2 * x_inset
-        tab_buffer_h = 750 + 2 * x_inset
+        tab_bar_width = 200.0 * len(tabdefs)
+        tab_bar_inset = (self._scroll_width - tab_bar_width) * 0.5
 
         self._tab_row = TabRow(
             self._root_widget,
             tabdefs,
-            pos=(tab_buffer_h * 0.5, self._height - 130),
-            size=(self._width - tab_buffer_h, 50),
+            pos=(
+                self._width * 0.5 - self._scroll_width * 0.5 + tab_bar_inset,
+                self._scroll_y + self._scroll_height - 4.0,
+            ),
+            size=(self._scroll_width - 2.0 * tab_bar_inset, 50),
             on_select_call=self._set_tab,
         )
 
@@ -143,23 +161,17 @@ class WatchWindow(bui.MainWindow):
             bbtn = bui.get_special_widget('back_button')
             bui.widget(edit=first_tab.button, up_widget=bbtn, left_widget=bbtn)
 
-        self._scroll_width = self._width - scroll_buffer_h
-        self._scroll_height = self._height - 180
-
         # Not actually using a scroll widget anymore; just an image.
-        scroll_left = (self._width - self._scroll_width) * 0.5
-        scroll_bottom = self._height - self._scroll_height - 79 - 48
-        buffer_h = 10
-        buffer_v = 4
         bui.imagewidget(
             parent=self._root_widget,
-            position=(scroll_left - buffer_h, scroll_bottom - buffer_v),
-            size=(
-                self._scroll_width + 2 * buffer_h,
-                self._scroll_height + 2 * buffer_v,
+            size=(self._scroll_width, self._scroll_height),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                self._scroll_y,
             ),
             texture=bui.gettexture('scrollWidget'),
             mesh_transparent=bui.getmesh('softEdgeOutside'),
+            opacity=0.4,
         )
         self._tab_container: bui.Widget | None = None
 
@@ -198,7 +210,7 @@ class WatchWindow(bui.MainWindow):
         if self._tab_container:
             self._tab_container.delete()
         scroll_left = (self._width - self._scroll_width) * 0.5
-        scroll_bottom = self._height - self._scroll_height - 79 - 48
+        scroll_bottom = self._scroll_y
 
         # A place where tabs can store data to get cleared when
         # switching to a different tab
@@ -248,9 +260,9 @@ class WatchWindow(bui.MainWindow):
 
             b_width = 140 if uiscale is bui.UIScale.SMALL else 178
             b_height = (
-                107
+                110
                 if uiscale is bui.UIScale.SMALL
-                else 142 if uiscale is bui.UIScale.MEDIUM else 190
+                else 142 if uiscale is bui.UIScale.MEDIUM else 180
             )
             b_space_extra = (
                 0
@@ -263,14 +275,18 @@ class WatchWindow(bui.MainWindow):
             btnv = (
                 c_height
                 - (
-                    48
+                    40
                     if uiscale is bui.UIScale.SMALL
-                    else 45 if uiscale is bui.UIScale.MEDIUM else 40
+                    else 40 if uiscale is bui.UIScale.MEDIUM else 40
                 )
                 - b_height
             )
-            btnh = 40 if uiscale is bui.UIScale.SMALL else 40
-            smlh = 190 if uiscale is bui.UIScale.SMALL else 225
+            # Roughly center buttons and scroll-widget in the middle.
+            xextra = (
+                self._scroll_width - (sub_scroll_width + b_width)
+            ) * 0.5 - 50.0
+            btnh = (40 if uiscale is bui.UIScale.SMALL else 40) + xextra
+            smlh = (190 if uiscale is bui.UIScale.SMALL else 225) + xextra
             tscl = 1.0 if uiscale is bui.UIScale.SMALL else 1.2
             self._my_replays_watch_replay_button = btn1 = bui.buttonwidget(
                 parent=cnt,
@@ -396,6 +412,7 @@ class WatchWindow(bui.MainWindow):
             ),
             size=(c_width, c_height),
             transition='in_scale',
+            parent=bui.get_special_widget('overlay_stack'),
         )
         dname = self._get_replay_display_name(self._my_replay_selected)
         bui.textwidget(

@@ -2,18 +2,11 @@
 #
 """Components for the classic BombSquad experience.
 
-This package is used as a dumping ground for functionality that is
-necessary to keep classic BombSquad working, but which may no longer be
-the best way to do things going forward.
-
-New code should try to avoid using code from here when possible.
-
-Functionality in this package should be exposed through the
-ClassicAppSubsystem. This allows type-checked code to go through the
-babase.app.classic singleton which forces it to explicitly handle the
-possibility of babase.app.classic being None. When code instead imports
-classic submodules directly, it is much harder to make it cleanly handle
-classic not being present.
+This package/feature-set contains functionality related to the classic
+BombSquad experience. Note that much legacy BombSquad code is still a
+bit tangled and thus this feature-set is largely inseperable from
+:mod:`bascenev1` and :mod:`bauiv1`. Future feature-sets will be
+designed in a more modular way.
 """
 
 # ba_meta require api 9
@@ -29,12 +22,22 @@ from efro.util import set_canonical_module_names
 from baclassic._appmode import ClassicAppMode
 from baclassic._appsubsystem import ClassicAppSubsystem
 from baclassic._achievement import Achievement, AchievementSubsystem
+from baclassic._chest import (
+    ChestAppearanceDisplayInfo,
+    CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
+    CHEST_APPEARANCE_DISPLAY_INFOS,
+)
+from baclassic._displayitem import show_display_item
 
 __all__ = [
+    'ChestAppearanceDisplayInfo',
+    'CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT',
+    'CHEST_APPEARANCE_DISPLAY_INFOS',
     'ClassicAppMode',
     'ClassicAppSubsystem',
     'Achievement',
     'AchievementSubsystem',
+    'show_display_item',
 ]
 
 # We want stuff here to show up as packagename.Foo instead of

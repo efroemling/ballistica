@@ -65,8 +65,8 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
     // Delete old ones.
     if (!screen_messages_.empty()) {
       millisecs_t cutoff;
-      if (g_core->GetAppTimeMillisecs() > 5000) {
-        cutoff = g_core->GetAppTimeMillisecs() - 5000;
+      if (g_core->AppTimeMillisecs() > 5000) {
+        cutoff = g_core->AppTimeMillisecs() - 5000;
         for (auto i = screen_messages_.begin(); i != screen_messages_.end();) {
           if (i->creation_time < cutoff) {
             auto next = i;
@@ -128,7 +128,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
           // which is calculated as part of it.
           i->GetText();
 
-          millisecs_t age = g_core->GetAppTimeMillisecs() - i->creation_time;
+          millisecs_t age = g_core->AppTimeMillisecs() - i->creation_time;
           youngest_age = std::min(youngest_age, age);
           float s_extra = 1.0f;
           if (age < 100) {
@@ -244,7 +244,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
 
         for (auto i = screen_messages_.rbegin(); i != screen_messages_.rend();
              i++) {
-          millisecs_t age = g_core->GetAppTimeMillisecs() - i->creation_time;
+          millisecs_t age = g_core->AppTimeMillisecs() - i->creation_time;
           youngest_age = std::min(youngest_age, age);
           float s_extra = 1.0f;
           if (age < 100) {
@@ -315,8 +315,8 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
     // Delete old ones.
     if (!screen_messages_top_.empty()) {
       millisecs_t cutoff;
-      if (g_core->GetAppTimeMillisecs() > 5000) {
-        cutoff = g_core->GetAppTimeMillisecs() - 5000;
+      if (g_core->AppTimeMillisecs() > 5000) {
+        cutoff = g_core->AppTimeMillisecs() - 5000;
         for (auto i = screen_messages_top_.begin();
              i != screen_messages_top_.end();) {
           if (i->creation_time < cutoff) {
@@ -354,7 +354,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
         // Update the translation if need be.
         i->UpdateTranslation();
 
-        millisecs_t age = g_core->GetAppTimeMillisecs() - i->creation_time;
+        millisecs_t age = g_core->AppTimeMillisecs() - i->creation_time;
         float s_extra = 1.0f;
         if (age < 100) {
           s_extra = std::min(1.1f, 1.1f * (static_cast<float>(age) / 100.0f));
@@ -466,13 +466,13 @@ void ScreenMessages::AddScreenMessage(const std::string& msg,
           start_v,
           std::max(-100.0f, screen_messages_top_.back().v_smoothed - 25.0f));
     }
-    screen_messages_top_.emplace_back(m, true, g_core->GetAppTimeMillisecs(),
+    screen_messages_top_.emplace_back(m, true, g_core->AppTimeMillisecs(),
                                       color, texture, tint_texture, tint,
                                       tint2);
     screen_messages_top_.back().v_smoothed = start_v;
   } else {
-    screen_messages_.emplace_back(m, false, g_core->GetAppTimeMillisecs(),
-                                  color, texture, tint_texture, tint, tint2);
+    screen_messages_.emplace_back(m, false, g_core->AppTimeMillisecs(), color,
+                                  texture, tint_texture, tint, tint2);
   }
 }
 
@@ -534,8 +534,7 @@ auto ScreenMessages::ScreenMessageEntry::GetText() -> TextGroup& {
 
 void ScreenMessages::ScreenMessageEntry::UpdateTranslation() {
   if (translation_dirty) {
-    s_translated = g_base->assets->CompileResourceString(
-        s_raw, "Graphics::ScreenMessageEntry::UpdateTranslation");
+    s_translated = g_base->assets->CompileResourceString(s_raw);
     translation_dirty = false;
     mesh_dirty = true;
   }

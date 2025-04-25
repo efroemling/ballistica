@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Common high level values/functionality related to apps."""
+"""Common high level values/functionality related to Ballistica apps."""
 
 from __future__ import annotations
 
@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Annotated
 
 from efro.dataclassio import ioprepped, IOAttrs
 
+from bacommon.locale import Locale
+
 if TYPE_CHECKING:
     pass
 
@@ -17,19 +19,41 @@ if TYPE_CHECKING:
 class AppInterfaceIdiom(Enum):
     """A general form-factor or method of experiencing a Ballistica app.
 
-    Note that it is possible for a running app to switch idioms (for
+    Note that it may be possible for a running app to switch idioms (for
     instance if a mobile device or computer is connected to a TV).
     """
 
-    PHONE = 'phone'
-    TABLET = 'tablet'
-    DESKTOP = 'desktop'
+    #: Small screen; assumed to have touch as primary input.
+    PHONE = 'phn'
+
+    #: Medium size screen; assumed to have touch as primary input.
+    TABLET = 'tab'
+
+    #: Medium size screen; assumed to have game controller as primary
+    #: input.
+    HANDHELD = 'hnd'
+
+    #: Large screen with high amount of detail visible; assumed to have
+    #: keyboard/mouse as primary input.
+    DESKTOP = 'dsk'
+
+    #: Large screen with medium amount of detail visible; assumed to have
+    #: game controller as primary input.
     TV = 'tv'
-    XR = 'xr'
+
+    #: Displayed over or in place of of the real world on a headset;
+    #: assumed to have hand tracking or spacial controllers as primary
+    #: input.
+    XR_HEADSET = 'xrh'
+
+    #: Displayed over or instead of the real world on a screen; assumed
+    #: to have device movement augmented by physical or touchscreen
+    #: controls as primary input.
+    XR_SCREEN = 'xrs'
 
 
 class AppExperience(Enum):
-    """A particular experience that can be provided by a Ballistica app.
+    """A particular experience provided by a Ballistica app.
 
     This is one metric used to isolate different playerbases from each
     other where there might be no technical barriers doing so. For
@@ -44,36 +68,36 @@ class AppExperience(Enum):
     support multiple experiences, or there may be multiple apps
     targeting one experience. Cloud components such as leagues are
     generally associated with an AppExperience so that they are only
-    visible to client apps designed for that play style.
+    visible to client apps designed for that play style, and the same is
+    true for games joinable over the local network, bluetooth, etc.
     """
 
-    # An experience that is supported everywhere. Used for the default
-    # empty AppMode when starting the app, etc.
-    EMPTY = 'empty'
+    #: An experience that is supported everywhere. Used for the default
+    #: empty AppMode when starting the app, etc.
+    EMPTY = 'empt'
 
-    # The traditional BombSquad experience: multiple players using
-    # traditional game controllers (or touch screen equivalents) in a
-    # single arena small enough for all action to be viewed on a single
-    # screen.
-    MELEE = 'melee'
+    #: The traditional BombSquad experience - multiple players using
+    #: game controllers (or touch screen equivalents) in a single arena
+    #: small enough for all action to be viewed on a single screen.
+    MELEE = 'mlee'
 
-    # The traditional BombSquad Remote experience; buttons on a
-    # touch-screen allowing a mobile device to be used as a game
-    # controller.
-    REMOTE = 'remote'
+    #: The traditional BombSquad Remote experience; buttons on a
+    #: touch-screen allowing a mobile device to be used as a game
+    #: controller.
+    REMOTE = 'rmt'
 
 
 class AppArchitecture(Enum):
-    """Processor architecture the App is running on."""
+    """Processor architecture an app can be running on."""
 
     ARM = 'arm'
     ARM64 = 'arm64'
     X86 = 'x86'
-    X86_64 = 'x86_64'
+    X86_64 = 'x64'
 
 
 class AppPlatform(Enum):
-    """Overall platform a Ballistica build is targeting.
+    """Overall platform a build can target.
 
     Each distinct flavor of an app has a unique combination of
     AppPlatform and AppVariant. Generally platform describes a set of
@@ -82,9 +106,9 @@ class AppPlatform(Enum):
     """
 
     MAC = 'mac'
-    WINDOWS = 'windows'
-    LINUX = 'linux'
-    ANDROID = 'android'
+    WINDOWS = 'win'
+    LINUX = 'lin'
+    ANDROID = 'andr'
     IOS = 'ios'
     TVOS = 'tvos'
 
@@ -98,43 +122,58 @@ class AppVariant(Enum):
     build.
     """
 
-    # Default builds.
-    GENERIC = 'generic'
+    #: Default builds.
+    GENERIC = 'gen'
 
-    # Builds intended for public testing (may have some extra checks
-    # or logging enabled).
-    TEST = 'test'
+    #: Builds intended for public testing (may have some extra checks
+    #: or logging enabled).
+    TEST = 'tst'
 
     # Various stores.
-    AMAZON_APPSTORE = 'amazon_appstore'
-    GOOGLE_PLAY = 'google_play'
-    APP_STORE = 'app_store'
-    WINDOWS_STORE = 'windows_store'
-    STEAM = 'steam'
+    AMAZON_APPSTORE = 'amzn'
+    GOOGLE_PLAY = 'gpl'
+    APPLE_APP_STORE = 'appl'
+    WINDOWS_STORE = 'wins'
+    STEAM = 'stm'
     META = 'meta'
-    EPIC_GAMES_STORE = 'epic_games_store'
+    EPIC_GAMES_STORE = 'epic'
 
     # Other.
-    ARCADE = 'arcade'
+    ARCADE = 'arcd'
     DEMO = 'demo'
+
+
+class AppName(Enum):
+    """A predefined Ballistica app name.
+
+    This encompasses official or well-known apps. Other app projects
+    should set this to CUSTOM and provide a 'name_custom' value.
+    """
+
+    BOMBSQUAD = 'bs'
+    CUSTOM = 'c'
 
 
 @ioprepped
 @dataclass
 class AppInstanceInfo:
-    """General info about an individual running app."""
+    """General info about an individual running ballistica app."""
 
-    name = Annotated[str, IOAttrs('n')]
+    name: Annotated[str, IOAttrs('name')]
+    name_custom: Annotated[
+        str | None, IOAttrs('namc', soft_default=None, store_default=False)
+    ]
 
-    engine_version = Annotated[str, IOAttrs('ev')]
-    engine_build = Annotated[int, IOAttrs('eb')]
+    engine_version: Annotated[str, IOAttrs('evrs')]
+    engine_build: Annotated[int, IOAttrs('ebld')]
 
-    platform = Annotated[AppPlatform, IOAttrs('p')]
-    variant = Annotated[AppVariant, IOAttrs('va')]
-    architecture = Annotated[AppArchitecture, IOAttrs('a')]
-    os_version = Annotated[str | None, IOAttrs('o')]
+    platform: Annotated[AppPlatform, IOAttrs('plat')]
+    variant: Annotated[AppVariant, IOAttrs('vrnt')]
+    architecture: Annotated[AppArchitecture, IOAttrs('arch')]
+    os_version: Annotated[str | None, IOAttrs('osvr')]
 
-    interface_idiom: Annotated[AppInterfaceIdiom, IOAttrs('i')]
-    locale: Annotated[str, IOAttrs('l')]
+    interface_idiom: Annotated[AppInterfaceIdiom, IOAttrs('intf')]
+    locale: Annotated[Locale, IOAttrs('loc')]
 
-    device: Annotated[str | None, IOAttrs('d')]
+    #: OS-specific string describing the device running the app.
+    device: Annotated[str | None, IOAttrs('devc')]

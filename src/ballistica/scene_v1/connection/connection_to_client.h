@@ -9,6 +9,7 @@
 
 #include "ballistica/scene_v1/connection/connection.h"
 #include "ballistica/scene_v1/scene_v1.h"
+#include "ballistica/shared/python/python_ref.h"
 
 namespace ballistica::scene_v1 {
 

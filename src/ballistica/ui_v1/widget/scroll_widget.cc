@@ -201,7 +201,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           avg_scroll_speed_v_ =
               smoothing * avg_scroll_speed_v_ + (1.0f - smoothing) * 0.0f;
         }
-        last_sub_widget_h_scroll_claim_time_ = g_core->GetAppTimeMillisecs();
+        last_sub_widget_h_scroll_claim_time_ = g_core->AppTimeMillisecs();
       }
       pass = false;
       break;
@@ -227,7 +227,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       // ignore vertical scrolling (should probably make this less fuzzy).
       bool ignore_regular_scrolling = false;
       bool child_claimed_h_scroll_recently =
-          (g_core->GetAppTimeMillisecs() - last_sub_widget_h_scroll_claim_time_
+          (g_core->AppTimeMillisecs() - last_sub_widget_h_scroll_claim_time_
            < 100);
       if (child_claimed_h_scroll_recently
           && std::abs(avg_scroll_speed_h_) > std::abs(avg_scroll_speed_v_))
@@ -476,9 +476,11 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         float child_h = (**i).GetHeight();
         float s_top = height() - border_height_;
         float s_bottom = border_height_;
-        float rate =
-            (child_h - (s_top - s_bottom))
-            / ((1.0f - ((s_top - s_bottom) / child_h)) * (s_top - s_bottom));
+        // Note: need a max on denominator here or we can get nan due to
+        // divide-by-zero.
+        float rate = (child_h - (s_top - s_bottom))
+                     / std::max(1.0f, ((1.0f - ((s_top - s_bottom) / child_h))
+                                       * (s_top - s_bottom)));
         child_offset_v_ = thumb_click_start_child_offset_v_
                           - rate * (y - thumb_click_start_v_);
         ClampThumb_(false, true);
@@ -569,9 +571,21 @@ void ScrollWidget::UpdateLayout() {
     amount_visible_ = 0;
     return;
   }
-  float child_h = (**i).GetHeight();
-  child_max_offset_ = child_h - (height() - 2 * (border_height_ + V_MARGIN));
-  amount_visible_ = (height() - 2 * (border_height_ + V_MARGIN)) / child_h;
+
+  float extra_border_x{4.0};  // Whee arbitrary hard coded values.
+  float xoffs;
+  if (center_small_content_horizontally_) {
+    float our_width{width()};
+    float child_width = (**i).GetWidth();
+    xoffs = (our_width - child_width) * 0.5 - border_width_ - extra_border_x;
+  } else {
+    xoffs = extra_border_x + border_width_;
+  }
+
+  float child_height = (**i).GetHeight();
+  child_max_offset_ =
+      child_height - (height() - 2 * (border_height_ + V_MARGIN));
+  amount_visible_ = (height() - 2 * (border_height_ + V_MARGIN)) / child_height;
   if (amount_visible_ > 1) {
     amount_visible_ = 1;
     if (center_small_content_) {
@@ -585,8 +599,9 @@ void ScrollWidget::UpdateLayout() {
 
   if (mouse_held_thumb_) {
     if (child_offset_v_
-        > child_h - (height() - 2 * (border_height_ + V_MARGIN))) {
-      child_offset_v_ = child_h - (height() - 2 * (border_height_ + V_MARGIN));
+        > child_height - (height() - 2 * (border_height_ + V_MARGIN))) {
+      child_offset_v_ =
+          child_height - (height() - 2 * (border_height_ + V_MARGIN));
       inertia_scroll_rate_ = 0;
     }
     if (child_offset_v_ < 0) {
@@ -594,9 +609,9 @@ void ScrollWidget::UpdateLayout() {
       inertia_scroll_rate_ = 0;
     }
   }
-  (**i).set_translate(4 + border_width_, height() - (border_height_ + V_MARGIN)
-                                             + child_offset_v_smoothed_
-                                             - child_h + center_offset_y_);
+  (**i).set_translate(xoffs, height() - (border_height_ + V_MARGIN)
+                                 + child_offset_v_smoothed_ - child_height
+                                 + center_offset_y_);
   thumb_dirty_ = true;
 }
 
@@ -670,50 +685,52 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     base::EmptyComponent c(pass);
     c.SetTransparent(draw_transparent);
     auto scissor = c.ScopedScissor({l + border_width_, b + border_height_ + 1,
-                                    l + (width() - border_width_ - 0),
+                                    l + (width() - border_width_),
                                     b + (height() - border_height_) - 1});
     c.Submit();  // Get out of the way for children drawing.
 
     set_simple_culling_bottom(b + border_height_ + 1);
     set_simple_culling_top(b + (height() - border_height_) - 1);
 
+    // Scroll trough (depth 0.05 to 0.15).
+    if (explicit_bool(true)) {
+      if (draw_transparent) {
+        if (trough_dirty_) {
+          float r2 = l + width();
+          float l2 = r2 - scroll_bar_width_;
+          float b2;
+          float t2;
+          b2 = b + (border_height_);
+          t2 = t - (border_height_);
+          float l_border, r_border, b_border, t_border;
+          l_border = 3;
+          r_border = 0;
+          b_border = height() * 0.006f;
+          t_border = height() * 0.002f;
+          trough_width_ = r2 - l2 + l_border + r_border;
+          trough_height_ = t2 - b2 + b_border + t_border;
+          trough_center_x_ = l2 - l_border + trough_width_ * 0.5f;
+          trough_center_y_ = b2 - b_border + trough_height_ * 0.5f;
+          trough_dirty_ = false;
+        }
+        base::SimpleComponent c(pass);
+        c.SetTransparent(true);
+        c.SetColor(1.0f, 1.0f, 1.0f, border_opacity_);
+        c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
+        {
+          auto xf = c.ScopedTransform();
+          c.Translate(trough_center_x_, trough_center_y_, 0.05f);
+          c.Scale(trough_width_, trough_height_, 0.1f);
+          c.DrawMeshAsset(g_base->assets->SysMesh(
+              base::SysMeshID::kScrollBarTroughTransparent));
+        }
+        c.Submit();
+      }
+    }
+
     // Draw all our widgets at our z level.
     DrawChildren(pass, draw_transparent, l + extra_offs_x, b + extra_offs_y,
                  1.0f);
-  }
-
-  // Scroll trough (depth 0.7 to 0.8).
-  if (draw_transparent) {
-    if (trough_dirty_) {
-      float r2 = l + width();
-      float l2 = r2 - scroll_bar_width_;
-      float b2;
-      float t2;
-      b2 = b + (border_height_);
-      t2 = t - (border_height_);
-      float l_border, r_border, b_border, t_border;
-      l_border = 3;
-      r_border = 0;
-      b_border = height() * 0.006f;
-      t_border = height() * 0.002f;
-      trough_width_ = r2 - l2 + l_border + r_border;
-      trough_height_ = t2 - b2 + b_border + t_border;
-      trough_center_x_ = l2 - l_border + trough_width_ * 0.5f;
-      trough_center_y_ = b2 - b_border + trough_height_ * 0.5f;
-      trough_dirty_ = false;
-    }
-    base::SimpleComponent c(pass);
-    c.SetTransparent(true);
-    c.SetColor(1, 1, 1, border_opacity_);
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
-    {
-      auto xf = c.ScopedTransform();
-      c.Translate(trough_center_x_, trough_center_y_, 0.7f);
-      c.Scale(trough_width_, trough_height_, 0.1f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(
-          base::SysMeshID::kScrollBarTroughTransparent));
-    }
-    c.Submit();
   }
 
   // Scroll bars.
@@ -821,9 +838,10 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // If selected, do glow at depth 0.9 - 1.0.
   if (draw_transparent && IsHierarchySelected()
       && g_base->ui->ShouldHighlightWidgets() && highlight_) {
-    float m = 0.8f
-              + std::abs(sinf(static_cast<float>(current_time) * 0.006467f))
-                    * 0.2f * border_opacity_;
+    float m =
+        (0.8f
+         + std::abs(sinf(static_cast<float>(current_time) * 0.006467f)) * 0.2f)
+        * border_opacity_;
     if (glow_dirty_) {
       float r2 = l + width();
       float l2 = l;

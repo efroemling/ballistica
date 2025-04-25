@@ -56,15 +56,21 @@ class Image(bs.Actor):
         # pylint: disable=too-many-locals
         super().__init__()
 
-        # If they provided a dict as texture, assume its an icon.
-        # otherwise its just a texture value itself.
+        # If they provided a dict as texture, use it to wire up extended
+        # stuff like tints and masks.
         mask_texture: bs.Texture | None
         if isinstance(texture, dict):
             tint_color = texture['tint_color']
             tint2_color = texture['tint2_color']
             tint_texture = texture['tint_texture']
+
+            # Assume we're dealing with a character icon but allow
+            # overriding.
+            mask_tex_name = texture.get('mask_texture', 'characterIconMask')
+            mask_texture = (
+                None if mask_tex_name is None else bs.gettexture(mask_tex_name)
+            )
             texture = texture['texture']
-            mask_texture = bs.gettexture('characterIconMask')
         else:
             tint_color = (1, 1, 1)
             tint2_color = None

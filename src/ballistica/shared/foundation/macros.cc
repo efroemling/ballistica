@@ -25,7 +25,7 @@ void MacroFunctionTimerEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
     return;
   }
   assert(corefs);
-  millisecs_t endtime = corefs->platform->GetTicks();
+  millisecs_t endtime = corefs->platform->TimeSinceLaunchMillisecs();
   if (endtime - starttime > time) {
     core::g_core->Log(LogName::kBa, LogLevel::kWarning,
                       std::to_string(endtime - starttime)
@@ -42,7 +42,7 @@ void MacroFunctionTimerEndThread(core::CoreFeatureSet* corefs,
     return;
   }
   assert(corefs);
-  millisecs_t endtime = corefs->platform->GetTicks();
+  millisecs_t endtime = corefs->platform->TimeSinceLaunchMillisecs();
   if (endtime - starttime > time) {
     g_core->Log(LogName::kBa, LogLevel::kWarning,
                 std::to_string(endtime - starttime) + " milliseconds spent by "
@@ -60,7 +60,7 @@ void MacroFunctionTimerEndEx(core::CoreFeatureSet* corefs,
     return;
   }
   assert(corefs);
-  millisecs_t endtime = corefs->platform->GetTicks();
+  millisecs_t endtime = corefs->platform->TimeSinceLaunchMillisecs();
   if (endtime - starttime > time) {
     g_core->Log(LogName::kBa, LogLevel::kWarning,
                 std::to_string(endtime - starttime) + " milliseconds spent in "
@@ -78,7 +78,7 @@ void MacroFunctionTimerEndThreadEx(core::CoreFeatureSet* corefs,
     return;
   }
   assert(corefs);
-  millisecs_t endtime = corefs->platform->GetTicks();
+  millisecs_t endtime = corefs->platform->TimeSinceLaunchMillisecs();
   if (endtime - starttime > time) {
     g_core->Log(LogName::kBa, LogLevel::kWarning,
                 std::to_string(endtime - starttime) + " milliseconds spent by "
@@ -96,7 +96,7 @@ void MacroTimeCheckEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
     return;
   }
   assert(corefs);
-  millisecs_t e = corefs->platform->GetTicks();
+  millisecs_t e = corefs->platform->TimeSinceLaunchMillisecs();
   if (e - starttime > time) {
     g_core->Log(LogName::kBa, LogLevel::kWarning,
                 std::string(name) + " took " + std::to_string(e - starttime)

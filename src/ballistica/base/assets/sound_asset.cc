@@ -179,7 +179,7 @@ static void LoadCachedOgg(const char* file_name, std::vector<char>* buffer,
 
   // If we have a cache file and it matches the mod time on the ogg, attempt to
   // load it.
-  struct BA_STAT stat_ogg{};
+  struct BA_STAT stat_ogg {};
   time_t ogg_mod_time = 0;
   if (g_core->platform->Stat(file_name, &stat_ogg) == 0) {
     ogg_mod_time = stat_ogg.st_mtime;
@@ -324,7 +324,7 @@ void SoundAsset::DoUnload() {
 }
 
 void SoundAsset::UpdatePlayTime() {
-  last_play_time_ = g_core->GetAppTimeMillisecs();
+  last_play_time_ = g_core->AppTimeMillisecs();
 }
 
 }  // namespace ballistica::base

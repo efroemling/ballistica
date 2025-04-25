@@ -14,8 +14,6 @@ if TYPE_CHECKING:
 class AppSubsystem:
     """Base class for an app subsystem.
 
-    Category: **App Classes**
-
     An app 'subsystem' is a bit of a vague term, as pieces of the app
     can technically be any class and are not required to use this, but
     building one out of this base class provides conveniences such as
@@ -37,29 +35,38 @@ class AppSubsystem:
         """
 
     def on_app_running(self) -> None:
-        """Called when the app reaches the running state."""
+        """Called when app enters :attr:`~AppState.RUNNING` state."""
 
     def on_app_suspend(self) -> None:
-        """Called when the app enters the suspended state."""
+        """Called when app enters :attr:`~AppState.SUSPENDED` state."""
 
     def on_app_unsuspend(self) -> None:
-        """Called when the app exits the suspended state."""
+        """Called when app exits :attr:`~AppState.SUSPENDED` state."""
 
     def on_app_shutdown(self) -> None:
-        """Called when the app begins shutting down."""
+        """Called when app enters :attr:`~AppState.SHUTTING_DOWN` state."""
 
     def on_app_shutdown_complete(self) -> None:
-        """Called when the app completes shutting down."""
+        """Called when app enters :attr:`~AppState.SHUTDOWN_COMPLETE` state."""
 
     def do_apply_app_config(self) -> None:
         """Called when the app config should be applied."""
 
-    def on_screen_change(self) -> None:
-        """Called when screen dimensions or ui-scale changes."""
+    def on_ui_scale_change(self) -> None:
+        """Called when screen ui-scale changes.
+
+        Will not be called for the initial ui scale.
+        """
+
+    def on_screen_size_change(self) -> None:
+        """Called when the screen size changes.
+
+        Will not be called for the initial screen size.
+        """
 
     def reset(self) -> None:
         """Reset the subsystem to a default state.
 
-        This is called when switching app modes, but may be called
-        at other times too.
+        This is called when switching app modes, but may be called at
+        other times too.
         """

@@ -34,7 +34,7 @@ const int kPingMeasureInterval = 2000;
 
 Connection::Connection() {
   // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
-  creation_time_ = last_average_update_time_ = g_core->GetAppTimeMillisecs();
+  creation_time_ = last_average_update_time_ = g_core->AppTimeMillisecs();
 }
 
 void Connection::ProcessWaitingMessages() {
@@ -156,12 +156,17 @@ void Connection::HandleGamePacketCompressed(const std::vector<uint8_t>& data) {
   try {
     data_decompressed = g_base->huffman->decompress(data);
   } catch (const std::exception& e) {
-    g_core->Log(
+    // Allow a few of these through just in case it is a fluke, but kill the
+    // connection after that to stop attacks based on this.
+    BA_LOG_ONCE(
         LogName::kBaNetworking, LogLevel::kError,
         std::string("Error in huffman decompression for packet: ") + e.what());
-
-    // Hmmm i guess lets just ignore this packet and keep on trucking?.. or
-    // should we kill the connection?
+    huffman_error_count_ += 1;
+    if (huffman_error_count_ > 5) {
+      BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                  "Closing connection due to excessive huffman errors.");
+      Error("");
+    }
     return;
   }
   bytes_in_compressed_ += data.size();
@@ -181,13 +186,13 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
                     "Error: got invalid BA_SCENEPACKET_KEEPALIVE packet.");
         return;
       }
-      millisecs_t real_time = g_core->GetAppTimeMillisecs();
+      millisecs_t real_time = g_core->AppTimeMillisecs();
       HandleResends(real_time, data, 1);
       break;
     }
 
     case BA_SCENEPACKET_MESSAGE: {
-      millisecs_t real_time = g_core->GetAppTimeMillisecs();
+      millisecs_t real_time = g_core->AppTimeMillisecs();
 
       // Expect 1 byte type, 2 byte num, 3 byte acks, at least 1 byte payload.
       if (data.size() < 7) {
@@ -211,7 +216,7 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
       ReliableMessageIn& msg(in_messages_[num]);
       msg.data.resize(data.size() - 6);
       memcpy(&(msg.data[0]), &(data[6]), msg.data.size());
-      msg.arrival_time = g_core->GetAppTimeMillisecs();
+      msg.arrival_time = g_core->AppTimeMillisecs();
 
       // Now run all in-order packets we've got.
       ProcessWaitingMessages();
@@ -308,7 +313,7 @@ void Connection::SendReliableMessage(const std::vector<uint8_t>& data) {
   assert(out_messages_.find(num) == out_messages_.end());
   ReliableMessageOut& msg(out_messages_[num]);
 
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   msg.data = data;
   msg.first_send_time = msg.last_send_time = real_time;
@@ -341,7 +346,7 @@ void Connection::SendUnreliableMessage(const std::vector<uint8_t>& data) {
   }
 
   uint16_t num = next_out_unreliable_message_num_++;
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   // Add our header/acks and go ahead and send this one out.
   // 1 byte for type, 2 for packet-num, 2 for unreliable packet-num, 3 for acks.
@@ -367,7 +372,7 @@ void Connection::SendJMessage(cJSON* val) {
 }
 
 void Connection::Update() {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   // Update our averages once per second.
   while (real_time - last_average_update_time_ > 1000) {

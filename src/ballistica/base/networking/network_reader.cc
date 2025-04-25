@@ -189,7 +189,8 @@ auto NetworkReader::RunThread_() -> int {
     remote_server_ = std::make_unique<RemoteAppServer>();
   }
 
-  // Do this whole thing in a loop. If we get put to sleep we just start over.
+  // Do this whole thing in a loop. If we get put to sleep we just start
+  // over.
   while (true) {
     // Sleep until we're unpaused.
     if (paused_) {
@@ -211,8 +212,8 @@ auto NetworkReader::RunThread_() -> int {
       // A bit of history here: Had been using select() to wait for input
       // here, but recently I've started seeing newer versions of android
       // crashing due to file descriptor counts going over the standard set
-      // limit size of ~1000 or whatnot. So switching to poll() instead which
-      // sounds like it
+      // limit size of ~1000 or whatnot. So switching to poll() instead
+      // which should not have such limitations.
       if (explicit_bool(true)) {
         DoPoll_(&can_read_4, &can_read_6);
       } else {
@@ -252,8 +253,7 @@ auto NetworkReader::RunThread_() -> int {
           // This needs to be locked during any sd changes/writes.
           std::scoped_lock lock(sd_mutex_);
 
-          // If either of our sockets goes down lets close *both* of
-          // them.
+          // If either of our sockets goes down lets close *both* of them.
           if (sd4_ != -1) {
             g_core->platform->CloseSocket(sd4_);
             sd4_ = -1;
@@ -265,8 +265,8 @@ auto NetworkReader::RunThread_() -> int {
         } else {
           assert(from_size >= 0);
           auto rresult2{static_cast<size_t>(rresult)};
-          // If we get *any* data while paused, kill both our
-          // sockets (we ping ourself for this purpose).
+          // If we get *any* data while paused, kill both our sockets (we
+          // ping ourself for this purpose).
           if (paused_) {
             // This needs to be locked during any sd changes/writes.
             std::scoped_lock lock(sd_mutex_);
@@ -357,7 +357,7 @@ auto NetworkReader::RunThread_() -> int {
             case BA_PACKET_CLIENT_GAMEPACKET_COMPRESSED:
             case BA_PACKET_HOST_GAMEPACKET_COMPRESSED: {
               // These messages are associated with udp host/client
-              // connections.. pass them to the logic thread to wrangle.
+              // connections; pass them to the logic thread to wrangle.
               std::vector<uint8_t> msg_buffer(rresult2);
               memcpy(msg_buffer.data(), buffer, rresult2);
               PushIncomingUDPPacketCall_(msg_buffer, SockAddr(from));

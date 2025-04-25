@@ -19,7 +19,7 @@ namespace ballistica::scene_v1 {
 
 Player::Player(int id_in, HostSession* host_session)
     : id_(id_in),
-      creation_time_(g_core->GetAppTimeMillisecs()),
+      creation_time_(g_core->AppTimeMillisecs()),
       host_session_(host_session) {
   assert(host_session);
   assert(g_base->InLogicThread());
@@ -40,7 +40,7 @@ Player::~Player() {
 }
 
 auto Player::GetAge() const -> millisecs_t {
-  return g_core->GetAppTimeMillisecs() - creation_time_;
+  return g_core->AppTimeMillisecs() - creation_time_;
 }
 
 auto Player::GetName(bool full, bool icon) const -> std::string {

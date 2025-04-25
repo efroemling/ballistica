@@ -31,10 +31,7 @@ TeamT = TypeVar('TeamT', bound='bascenev1.Team')
 
 
 class GameActivity(Activity[PlayerT, TeamT]):
-    """Common base class for all game bascenev1.Activities.
-
-    Category: **Gameplay Classes**
-    """
+    """Common base class for all game bascenev1.Activities."""
 
     # pylint: disable=too-many-public-methods
 
@@ -198,7 +195,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
     def supports_session_type(
         cls, sessiontype: type[bascenev1.Session]
     ) -> bool:
-        """Return whether this game supports the provided Session type."""
+        """Return whether this game supports the provided session type."""
         from bascenev1._multiteamsession import MultiTeamSession
 
         # By default, games support any versus mode
@@ -208,8 +205,8 @@ class GameActivity(Activity[PlayerT, TeamT]):
         """Instantiate the Activity."""
         super().__init__(settings)
 
-        # Holds some flattened info about the player set at the point
-        # when on_begin() is called.
+        #: Holds some flattened info about the player set at the point
+        #: when :meth:`on_begin()` is called.
         self.initialplayerinfos: list[bascenev1.PlayerInfo] | None = None
 
         # Go ahead and get our map loading.
@@ -794,9 +791,10 @@ class GameActivity(Activity[PlayerT, TeamT]):
             self.spawn_player(player)
 
     def spawn_player(self, player: PlayerT) -> bascenev1.Actor:
-        """Spawn *something* for the provided bascenev1.Player.
+        """Spawn *something* for the provided player.
 
-        The default implementation simply calls spawn_player_spaz().
+        The default implementation simply calls
+        :meth:`spawn_player_spaz()`.
         """
         assert player  # Dead references should never be passed as args.
 
@@ -808,7 +806,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         position: Sequence[float] = (0, 0, 0),
         angle: float | None = None,
     ) -> PlayerSpaz:
-        """Create and wire up a bascenev1.PlayerSpaz for the provided Player."""
+        """Create and wire up a player-spaz for the provided player."""
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from bascenev1._gameutils import animate

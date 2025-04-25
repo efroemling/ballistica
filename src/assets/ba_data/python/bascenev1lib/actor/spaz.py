@@ -46,8 +46,6 @@ class Spaz(bs.Actor):
     """
     Base class for various Spazzes.
 
-    Category: **Gameplay Classes**
-
     A Spaz is the standard little humanoid character in the game.
     It can be controlled by a player or by AI, and can have
     various different appearances.  The name 'Spaz' is not to be
@@ -886,7 +884,9 @@ class Spaz(bs.Actor):
             if not self.frozen:
                 self.frozen = True
                 self.node.frozen = True
-                bs.timer(5.0, bs.WeakCall(self.handlemessage, bs.ThawMessage()))
+                bs.timer(
+                    msg.time, bs.WeakCall(self.handlemessage, bs.ThawMessage())
+                )
                 # Instantly shatter if we're already dead.
                 # (otherwise its hard to tell we're dead).
                 if self.hitpoints <= 0:

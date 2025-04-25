@@ -24,10 +24,7 @@ TeamT = TypeVar('TeamT', bound='bascenev1.Team')
 
 @dataclass
 class PlayerInfo:
-    """Holds basic info about a player.
-
-    Category: Gameplay Classes
-    """
+    """Holds basic info about a player."""
 
     name: str
     character: str
@@ -35,10 +32,7 @@ class PlayerInfo:
 
 @dataclass
 class StandLocation:
-    """Describes a point in space and an angle to face.
-
-    Category: Gameplay Classes
-    """
+    """Describes a point in space and an angle to face."""
 
     position: babase.Vec3
     angle: float | None = None
@@ -46,8 +40,6 @@ class StandLocation:
 
 class Player(Generic[TeamT]):
     """A player in a specific bascenev1.Activity.
-
-    Category: Gameplay Classes
 
     These correspond to bascenev1.SessionPlayer objects, but are associated
     with a single bascenev1.Activity instance. This allows activities to
@@ -282,8 +274,6 @@ class Player(Generic[TeamT]):
 class EmptyPlayer(Player['bascenev1.EmptyTeam']):
     """An empty player for use by Activities that don't need to define one.
 
-    Category: Gameplay Classes
-
     bascenev1.Player and bascenev1.Team are 'Generic' types, and so passing
     those top level classes as type arguments when defining a
     bascenev1.Activity reduces type safety. For example,
@@ -306,8 +296,6 @@ class EmptyPlayer(Player['bascenev1.EmptyTeam']):
 def playercast(totype: type[PlayerT], player: bascenev1.Player) -> PlayerT:
     """Cast a bascenev1.Player to a specific bascenev1.Player subclass.
 
-    Category: Gameplay Functions
-
     When writing type-checked code, sometimes code will deal with raw
     bascenev1.Player objects which need to be cast back to a game's actual
     player type so that access can be properly type-checked. This function
@@ -324,9 +312,6 @@ def playercast(totype: type[PlayerT], player: bascenev1.Player) -> PlayerT:
 def playercast_o(
     totype: type[PlayerT], player: bascenev1.Player | None
 ) -> PlayerT | None:
-    """A variant of bascenev1.playercast() for use with optional Player values.
-
-    Category: Gameplay Functions
-    """
+    """A variant of bascenev1.playercast() for optional Player values."""
     assert isinstance(player, (totype, type(None)))
     return player

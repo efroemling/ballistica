@@ -16,17 +16,12 @@ if TYPE_CHECKING:
 class Spawner:
     """Utility for delayed spawning of objects.
 
-    Category: **Gameplay Classes**
-
-    Creates a light flash and sends a Spawner.SpawnMessage
-    to the current activity after a delay.
+    Creates a light flash and sends a Spawner.SpawnMessage to the
+    current activity after a delay.
     """
 
     class SpawnMessage:
-        """Spawn message sent by a Spawner after its delay has passed.
-
-        Category: **Message Classes**
-        """
+        """Spawn message sent by a Spawner after its delay has passed."""
 
         spawner: Spawner
         """The bascenev1.Spawner we came from."""

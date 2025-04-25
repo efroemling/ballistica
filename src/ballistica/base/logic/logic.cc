@@ -70,7 +70,7 @@ void Logic::OnAppStart() {
   g_base->ui->OnAppStart();
   g_base->app_mode()->OnAppStart();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppStart();
+    g_base->Plus()->OnAppStart();
   }
   g_base->python->OnAppStart();
 
@@ -191,7 +191,7 @@ void Logic::OnAppSuspend() {
   // Note: keep these in opposite order of OnAppStart.
   g_base->python->OnAppSuspend();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppSuspend();
+    g_base->Plus()->OnAppSuspend();
   }
   g_base->app_mode()->OnAppSuspend();
   g_base->ui->OnAppSuspend();
@@ -215,7 +215,7 @@ void Logic::OnAppUnsuspend() {
   g_base->ui->OnAppUnsuspend();
   g_base->app_mode()->OnAppUnsuspend();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppUnsuspend();
+    g_base->Plus()->OnAppUnsuspend();
   }
   g_base->python->OnAppUnsuspend();
 }
@@ -236,7 +236,7 @@ void Logic::OnAppShutdown() {
   assert(shutting_down_);
 
   // Nuke the app from orbit if we get stuck while shutting down.
-  g_core->StartSuicideTimer("shutdown", 10000);
+  g_core->StartSuicideTimer("shutdown", 15000);
 
   // Tell base to disallow shutdown-suppressors from here on out.
   g_base->ShutdownSuppressDisallow();
@@ -247,7 +247,7 @@ void Logic::OnAppShutdown() {
   // should be registered as shutdown-tasks
   g_base->python->OnAppShutdown();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppShutdown();
+    g_base->Plus()->OnAppShutdown();
   }
   g_base->app_mode()->OnAppShutdown();
   g_base->ui->OnAppShutdown();
@@ -280,7 +280,7 @@ void Logic::OnAppShutdownComplete() {
   // should be registered as shutdown-tasks.
   g_base->python->OnAppShutdownComplete();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppShutdownComplete();
+    g_base->Plus()->OnAppShutdownComplete();
   }
   g_base->app_mode()->OnAppShutdownComplete();
   g_base->ui->OnAppShutdownComplete();
@@ -307,7 +307,7 @@ void Logic::DoApplyAppConfig() {
   g_base->ui->DoApplyAppConfig();
   g_base->app_mode()->DoApplyAppConfig();
   if (g_base->HavePlus()) {
-    g_base->plus()->DoApplyAppConfig();
+    g_base->Plus()->DoApplyAppConfig();
   }
   g_base->python->DoApplyAppConfig();
 
@@ -323,6 +323,7 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
   assert(g_base->InLogicThread());
 
   // Inform all subsystems.
+  //
   // Note: keep these in the same order as OnAppStart.
   g_base->app_adapter->OnScreenSizeChange();
   g_base->platform->OnScreenSizeChange();
@@ -333,7 +334,7 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
   g_core->platform->OnScreenSizeChange();
   g_base->app_mode()->OnScreenSizeChange();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnScreenSizeChange();
+    g_base->Plus()->OnScreenSizeChange();
   }
   g_base->python->OnScreenSizeChange();
 }
@@ -363,7 +364,7 @@ void Logic::StepDisplayTime_() {
   g_core->platform->StepDisplayTime();
   g_base->app_mode()->StepDisplayTime();
   if (g_base->HavePlus()) {
-    g_base->plus()->StepDisplayTime();
+    g_base->Plus()->StepDisplayTime();
   }
   g_base->python->StepDisplayTime();
 
@@ -402,7 +403,7 @@ void Logic::UpdateDisplayTimeForHeadlessMode_() {
   // scheduled (or at least close enough so we can fudge it and tell them
   // its that exact time).
 
-  auto app_time_microsecs = g_core->GetAppTimeMicrosecs();
+  auto app_time_microsecs = g_core->AppTimeMicrosecs();
 
   // Set our int based time vals so we can exactly hit timers.
   auto old_display_time_microsecs = display_time_microsecs_;
@@ -438,7 +439,7 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
       [headless_display_step_microsecs] {
         auto sleepsecs =
             static_cast<double>(headless_display_step_microsecs) / 1000000.0;
-        auto apptimesecs = g_core->GetAppTimeSeconds();
+        auto apptimesecs = g_core->AppTimeSeconds();
         char buffer[256];
         snprintf(buffer, sizeof(buffer),
                  "will try to sleep for %.4f at app-time %.4f (until %.4f)",
@@ -467,7 +468,7 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
   // - 'current' should mostly show '(avg)'; rarely '(sample)'.
   // - these can vary briefly during load spikes/etc. but should quickly
   //   reconverge to stability. If not, this may need further calibration.
-  auto current_app_time = g_core->GetAppTimeSeconds();
+  auto current_app_time = g_core->AppTimeSeconds();
 
   // We handle the first measurement specially.
   if (last_display_time_update_app_time_ < 0) {
@@ -722,6 +723,8 @@ void Logic::OnAppActiveChanged() {
     // For now just informing Python (which informs Python level app-mode).
     // Can expand this to inform everyone else if needed.
     g_base->python->OnAppActiveChanged();
+
+    app_active_applied_ = app_active;
   }
 }
 

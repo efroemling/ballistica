@@ -278,6 +278,8 @@ def _writefuncs(
                 returnstr = 'return _uninferrable()'
             elif returns == 'tuple[float, float]':
                 returnstr = 'return (0.0, 0.0)'
+            elif returns == 'tuple[float, float, float]':
+                returnstr = 'return (0.0, 0.0, 0.0)'
             elif returns == 'str | None':
                 returnstr = "return ''"
             elif returns == 'int | None':
@@ -342,8 +344,13 @@ def _writefuncs(
                 returnstr = 'return ' + returns + '()'
             else:
                 raise RuntimeError(
-                    f'unknown returns value: {returns} for {funcname}'
+                    f'Unknown returns value: {returns} for {funcname}'
                 )
+            returnstr = (
+                f'# This is a dummy stub;'
+                f' the actual implementation is native code.\n{returnstr}'
+            )
+
         returnspc = indstr + '    '
         returnstr = ('\n' + returnspc).join(returnstr.strip().splitlines())
         docstr_out = _formatdoc(
@@ -500,32 +507,50 @@ def _special_class_cases(classname: str) -> str:
             '    bomb_pressed: bool = False\n'
             '    fly_pressed: bool = False\n'
             '    hold_position_pressed: bool = False\n'
+            '    #: Available on spaz node.\n'
             '    knockout: float = 0.0\n'
             '    invincible: bool = False\n'
             '    stick_to_owner: bool = False\n'
             '    damage: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    run: float = 0.0\n'
+            '    #: Available on spaz node.\n'
             '    move_up_down: float = 0.0\n'
+            '    #: Available on spaz node.\n'
             '    move_left_right: float = 0.0\n'
             '    curse_death_time: int = 0\n'
             '    boxing_gloves: bool = False\n'
             '    hockey: bool = False\n'
             '    use_fixed_vr_overlay: bool = False\n'
+            '    #: Available on globals node.\n'
             '    allow_kick_idle_players: bool = False\n'
             '    music_continuous: bool = False\n'
             '    music_count: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    hurt: float = 0.0\n'
+            '    #: On shield node.\n'
             '    always_show_health_bar: bool = False\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_1_texture: bascenev1.Texture | None = None\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_1_start_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_1_end_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_2_texture: bascenev1.Texture | None = None\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_2_start_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_2_end_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_3_texture: bascenev1.Texture | None = None\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_3_start_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_3_end_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    boxing_gloves_flashing: bool = False\n'
+            '    #: Available on spaz node.\n'
             '    dead: bool = False\n'
             '    floor_reflection: bool = False\n'
             '    debris_friction: float = 0.0\n'
@@ -544,9 +569,13 @@ def _special_class_cases(classname: str) -> str:
             '    shadow_range: Sequence[float] = (0, 0, 0, 0)\n'
             "    counter_text: str = ''\n"
             '    counter_texture: bascenev1.Texture | None = None\n'
+            '    #: Available on spaz node.\n'
             '    shattered: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    billboard_texture: bascenev1.Texture | None = None\n'
+            '    #: Available on spaz node.\n'
             '    billboard_cross_out: bool = False\n'
+            '    #: Available on spaz node.\n'
             '    billboard_opacity: float = 0.0\n'
             '    slow_motion: bool = False\n'
             "    music: str = ''\n"
@@ -611,10 +640,13 @@ def _filterdoc(docstr: str, funcname: str | None = None) -> str:
         and docslines[0]
         and docslines[0].startswith(funcname)
     ):
-        # Remove this signature from python docstring
-        # as not to repeat ourselves.
-        _, docstr = docstr.split('\n\n', maxsplit=1)
-        docslines = docstr.splitlines()
+        if '\n' in docstr:
+            # Remove this signature from python docstring
+            # as not to repeat ourselves.
+            _, docstr = docstr.split('\n\n', maxsplit=1)
+            docslines = docstr.splitlines()
+        else:
+            docstr = ''
 
     # Assuming that each line between 'Attributes:' and '\n\n' belongs to
     # attrs descriptions.

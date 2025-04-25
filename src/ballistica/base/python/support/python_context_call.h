@@ -11,7 +11,7 @@
 
 namespace ballistica::base {
 
-// A callable and ballistica context-state wrapped up in a convenient
+// A callable and Ballistica context-state wrapped up in a convenient
 // package. Handy for use with user-submitted callbacks, as it restores
 // context state from when it was created and prints various useful bits of
 // context info on exceptions.

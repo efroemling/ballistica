@@ -46,11 +46,15 @@ def getobjs(
 ) -> list[Any]:
     """Return all garbage-collected objects matching criteria.
 
-    'type' can be an actual type or a string in which case objects
-    whose types contain that string will be returned.
+    Args:
 
-    If 'contains' is provided, objects will be filtered to those
-    containing that in their str() representations.
+      type:
+        Can be an actual type or a string in which case objects
+        whose types contain that string will be returned.
+
+      contains:
+        If provided, objects will be filtered to those
+        containing that in their str() representations.
     """
 
     # Don't wanna return stuff waiting to be garbage-collected.
@@ -181,12 +185,19 @@ def printrefs(
 ) -> None:
     """Print human readable list of objects referring to an object.
 
-    'max_level' specifies how many levels of recursion are printed.
-    'exclude_objs' can be a list of exact objects to skip if found in the
-      referrers list. This can be useful to avoid printing the local context
-      where the object was passed in from (locals(), etc).
-    'expand_ids' can be a list of object ids; if that particular object is
-      found, it will always be expanded even if max_level has been reached.
+    Args:
+
+      max_level:
+        Specifies how many levels of recursion are printed.
+
+      exclude_objs:
+        Can be a list of exact objects to skip if found in the
+        referrers list. This can be useful to avoid printing the local context
+        where the object was passed in from (locals(), etc).
+
+      expand_ids:
+        Can be a list of object ids; if that particular object is
+        found, it will always be expanded even if max_level has been reached.
     """
     _printrefs(
         obj,
@@ -264,10 +275,8 @@ def printsizes(
 
 def _desctype(obj: Any) -> str:
     cls = type(obj)
-    # noinspection PyPep8
     if cls is types.ModuleType:
         return f'{type(obj).__name__} {obj.__name__}'
-    # noinspection PyPep8
     if cls is types.MethodType:
         bnd = 'bound' if hasattr(obj, '__self__') else 'unbound'
         return f'{bnd} {type(obj).__name__} {obj.__name__}'
@@ -287,8 +296,8 @@ def _desc(obj: Any) -> str:
         )
         extra = f' (len {len(obj)}{tpss})'
     elif isinstance(obj, dict):
-        # If it seems to be the vars() for a type or module,
-        # try to identify what.
+        # If it seems to be the vars() for a type or module, try to
+        # identify what.
         for ref in getrefs(obj):
             if hasattr(ref, '__dict__') and vars(ref) is obj:
                 extra = f' (vars for {_desctype(ref)} @ {id(ref)})'
@@ -325,9 +334,9 @@ def _printrefs(
     if level < max_level or (id(obj) in expand_ids and level < ABS_MAX_LEVEL):
         refs = getrefs(obj)
         for ref in refs:
-            # It seems we tend to get a transient cell object with contents
-            # set to obj. Would be nice to understand why that happens
-            # but just ignoring it for now.
+            # It seems we tend to get a transient cell object with
+            # contents set to obj. Would be nice to understand why that
+            # happens but just ignoring it for now.
             if isinstance(ref, types.CellType) and ref.cell_contents is obj:
                 continue
 
@@ -341,7 +350,8 @@ def _printrefs(
                 continue
 
             # The 'refs' list we just made will be listed as a referrer
-            # of this obj, so explicitly exclude it from the obj's listing.
+            # of this obj, so explicitly exclude it from the obj's
+            # listing.
             _printrefs(
                 ref,
                 level=level + 1,

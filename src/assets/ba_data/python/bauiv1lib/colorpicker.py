@@ -248,7 +248,6 @@ class ColorPickerExact(PopupWindow):
             editable=True,
             maxwidth=70,
             allow_clear_button=False,
-            force_internal_editing=True,
             glow_type='uniform',
         )
 

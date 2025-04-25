@@ -155,7 +155,35 @@ void BasePython::OnAppShutdownComplete() {
 
 void BasePython::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
 
-void BasePython::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
+void BasePython::OnScreenSizeChange() {
+  assert(g_base->InLogicThread());
+
+  float screen_res_x{g_base->graphics->screen_virtual_width()};
+  float screen_res_y{g_base->graphics->screen_virtual_height()};
+
+  // This call runs for all screen sizes including the initial one. However
+  // we only want to inform the Python layer of *changes*, so we only store
+  // the initial one and don't pass it on.
+  if (last_screen_res_x_ < 0.0) {
+    last_screen_res_x_ = screen_res_x;
+    last_screen_res_y_ = g_base->graphics->screen_virtual_height();
+    return;
+  }
+
+  // Ignore any redundant values that might come through.
+  if (last_screen_res_x_ == screen_res_x
+      && last_screen_res_y_ == screen_res_y) {
+    return;
+  }
+
+  // Aight; we got a fresh, non-initial value. Store it and inform Python.
+  last_screen_res_x_ = screen_res_x;
+  last_screen_res_y_ = screen_res_y;
+
+  g_base->python->objs()
+      .Get(BasePython::ObjID::kAppOnScreenSizeChangeCall)
+      .Call();
+}
 
 void BasePython::StepDisplayTime() { assert(g_base->InLogicThread()); }
 
@@ -265,10 +293,9 @@ auto BasePython::CanGetPyVector3f(PyObject* o) -> bool {
   if (PySequence_Fast_GET_SIZE(sequence.get()) != 3) {
     return false;
   }
-  return (
-      Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.get(), 0))
-      && Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.get(), 1))
-      && Python::CanGetPyDouble(PySequence_Fast_GET_ITEM(sequence.get(), 2)));
+  return (Python::IsNumber(PySequence_Fast_GET_ITEM(sequence.get(), 0))
+          && Python::IsNumber(PySequence_Fast_GET_ITEM(sequence.get(), 1))
+          && Python::IsNumber(PySequence_Fast_GET_ITEM(sequence.get(), 2)));
 }
 
 auto BasePython::GetPyVector3f(PyObject* o) -> Vector3f {
@@ -287,9 +314,9 @@ auto BasePython::GetPyVector3f(PyObject* o) -> Vector3f {
   if (PySequence_Fast_GET_SIZE(sequence.get()) != 3) {
     throw Exception("Sequence is not of size 3.", PyExcType::kValue);
   }
-  return {Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.get(), 0)),
-          Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.get(), 1)),
-          Python::GetPyFloat(PySequence_Fast_GET_ITEM(sequence.get(), 2))};
+  return {Python::GetFloat(PySequence_Fast_GET_ITEM(sequence.get(), 0)),
+          Python::GetFloat(PySequence_Fast_GET_ITEM(sequence.get(), 1)),
+          Python::GetFloat(PySequence_Fast_GET_ITEM(sequence.get(), 2))};
 }
 
 void BasePython::StoreEnv(PyObject* obj) { objs_.Store(ObjID::kEnv, obj); }
@@ -339,7 +366,7 @@ auto BasePython::GetRawConfigValue(const char* name, float default_value)
     return default_value;
   }
   try {
-    return Python::GetPyFloat(value);
+    return Python::GetFloat(value);
   } catch (const std::exception&) {
     g_core->Log(
         LogName::kBa, LogLevel::kError,
@@ -362,7 +389,7 @@ auto BasePython::GetRawConfigValue(const char* name,
     if (value == Py_None) {
       return {};
     }
-    return Python::GetPyFloat(value);
+    return Python::GetFloat(value);
   } catch (const std::exception&) {
     g_core->Log(
         LogName::kBa, LogLevel::kError,
@@ -380,7 +407,7 @@ auto BasePython::GetRawConfigValue(const char* name, int default_value) -> int {
     return default_value;
   }
   try {
-    return static_cast_check_fit<int>(Python::GetPyInt64(value));
+    return static_cast_check_fit<int>(Python::GetInt64(value));
   } catch (const std::exception&) {
     g_core->Log(
         LogName::kBa, LogLevel::kError,
@@ -399,7 +426,7 @@ auto BasePython::GetRawConfigValue(const char* name, bool default_value)
     return default_value;
   }
   try {
-    return Python::GetPyBool(value);
+    return Python::GetBool(value);
   } catch (const std::exception&) {
     g_core->Log(
         LogName::kBa, LogLevel::kError,

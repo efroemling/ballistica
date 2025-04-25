@@ -370,7 +370,7 @@ void UI::SetUIInputDevice(InputDevice* input_device) {
   ui_input_device_ = input_device;
 
   // So they dont get stolen from immediately.
-  last_input_device_use_time_ = g_core->GetAppTimeMillisecs();
+  last_input_device_use_time_ = g_core->AppTimeMillisecs();
 }
 
 void UI::Reset() {
@@ -432,7 +432,7 @@ auto UI::GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget* {
     return nullptr;
   }
 
-  millisecs_t time = g_core->GetAppTimeMillisecs();
+  millisecs_t time = g_core->AppTimeMillisecs();
 
   bool print_menu_owner{};
   ui_v1::Widget* ret_val;

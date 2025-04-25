@@ -4,18 +4,10 @@
 #define BALLISTICA_SHARED_PYTHON_PYTHON_H_
 
 #include <list>
-#include <map>
-#include <mutex>
-#include <optional>
-#include <set>
 #include <string>
 #include <vector>
 
-#include "ballistica/shared/ballistica.h"
-#include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/generic/runnable.h"
 #include "ballistica/shared/math/point2d.h"
-#include "ballistica/shared/python/python_object_set.h"
 #include "ballistica/shared/python/python_ref.h"
 
 namespace ballistica {
@@ -79,7 +71,7 @@ class Python {
   static void PrintStackTrace();
 
   /// Pass any PyObject* (including nullptr) to get a readable string
-  /// (basically equivalent of str(foo)).
+  /// (basically equivalent of str(obj)).
   static auto ObjToString(PyObject* obj) -> std::string;
 
   /// Pass any PyObject* (including nullptr) to get a readable string
@@ -101,27 +93,6 @@ class Python {
   /// is useful as an object identifier/etc.
   static auto GetPythonFileLocation(bool pretty = true) -> std::string;
 
-  // For checking and pulling values out of Python objects.
-  // These will all throw Exceptions on errors.
-
-  static auto GetPyString(PyObject* o) -> std::string;
-  /// Get string with Lstr objs converted to json.
-  static auto GetPyInt64(PyObject* o) -> int64_t;
-  static auto GetPyInt(PyObject* o) -> int;
-  static auto IsPyString(PyObject* o) -> bool;
-  static auto GetPyBool(PyObject* o) -> bool;
-  static auto CanGetPyDouble(PyObject* o) -> bool;
-  static auto GetPyFloat(PyObject* o) -> float {
-    return static_cast<float>(GetPyDouble(o));
-  }
-  static auto GetPyDouble(PyObject* o) -> double;
-  static auto GetPyFloats(PyObject* o) -> std::vector<float>;
-  static auto GetPyInts64(PyObject* o) -> std::vector<int64_t>;
-  static auto GetPyInts(PyObject* o) -> std::vector<int>;
-  static auto GetPyUInts64(PyObject* o) -> std::vector<uint64_t>;
-  static auto GetPyPoint2D(PyObject* o) -> Point2D;
-  static auto GetPyStringSequence(PyObject* o) -> std::list<std::string>;
-
   /// Set Python exception from C++ Exception.
   static void SetPythonException(const Exception& exc);
 
@@ -132,6 +103,58 @@ class Python {
   static auto SingleMemberTuple(const PythonRef& member) -> PythonRef;
 
   static void MarkReachedEndOfModule(PyObject* module);
+
+  // --------------------------------------------------------------------------
+  // The following calls are for checking and pulling values out of Python
+  // objects. Get calls will throw Exceptions if invalid types are passed.
+  // Note that these all gracefully handle being passed nullptr.
+
+  /// Is the provide PyObject a number? Basically a wrapper around
+  /// PyNumber_Check with nullptr handling and extra safety asserts.
+  static auto IsNumber(PyObject* o) -> bool;
+
+  /// Is the provided PyObject a unicode string? Basically a wrapper around
+  /// PyUnicode_Check with nullptr handling and extra safety asserts.
+  static auto IsString(PyObject* o) -> bool;
+
+  /// Return a utf-8 string from a Python string.
+  static auto GetString(PyObject* o) -> std::string;
+
+  /// Return utf-8 strings from a Python sequence of strings.
+  static auto GetStrings(PyObject* o) -> std::vector<std::string>;
+
+  /// Return an int from any numeric PyObject.
+  static auto GetInt(PyObject* o) -> int;
+
+  /// Return an int64_t from any numeric PyObject.
+  static auto GetInt64(PyObject* o) -> int64_t;
+
+  /// Return a bool from any numeric PyObject.
+  static auto GetBool(PyObject* o) -> bool;
+
+  /// Return a double from any Python numeric type.
+  static auto GetDouble(PyObject* o) -> double;
+
+  /// Return a float from any Python numeric type.
+  static auto GetFloat(PyObject* o) -> float {
+    return static_cast<float>(GetDouble(o));
+  }
+
+  /// Return float values any Python sequence of numeric objects.
+  static auto GetFloats(PyObject* o) -> std::vector<float>;
+
+  /// Return 64 bit int values from a Python sequence of numeric objects.
+  static auto GetInts64(PyObject* o) -> std::vector<int64_t>;
+
+  /// Return int values from a Python sequence of numeric objects.
+  static auto GetInts(PyObject* o) -> std::vector<int>;
+
+  /// Return unsigned 64 bit int values from a Python sequence of numeric
+  /// objects.
+  static auto GetPyUInts64(PyObject* o) -> std::vector<uint64_t>;
+
+  /// Return a Point2D from supported Python values.
+  static auto GetPoint2D(PyObject* o) -> Point2D;
 };
 
 }  // namespace ballistica

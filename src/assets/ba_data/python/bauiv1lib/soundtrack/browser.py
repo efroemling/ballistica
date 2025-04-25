@@ -30,17 +30,26 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         self._r = 'editSoundtrackWindow'
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 800 if uiscale is bui.UIScale.SMALL else 600
-        x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
-        yoffs = -30 if uiscale is bui.UIScale.SMALL else 0
-        self._height = (
-            400
+        self._width = 1200 if uiscale is bui.UIScale.SMALL else 650
+        self._height = 800 if uiscale is bui.UIScale.SMALL else 400
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            2.1
             if uiscale is bui.UIScale.SMALL
-            else 370 if uiscale is bui.UIScale.MEDIUM else 440
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
-        spacing = 40.0
-        v = self._height - 40.0 + yoffs
-        v -= spacing * 1.0
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        # target_width = min(self._width - 60, screensize[0] / scale)
+        target_height = min(self._height - 70, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -50,17 +59,12 @@ class SoundtrackBrowserWindow(bui.MainWindow):
                     if uiscale is bui.UIScale.SMALL
                     else 'menu_full'
                 ),
-                scale=(
-                    2.1
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         assert bui.app.classic is not None
@@ -69,26 +73,18 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(45 + x_inset, self._height - 60 + yoffs),
-                size=(120, 60),
-                scale=0.8,
-                label=bui.Lstr(resource='backText'),
-                button_type='back',
-                autoselect=True,
-            )
-            bui.buttonwidget(
-                edit=self._back_button,
-                button_type='backSmall',
+                position=(50, yoffs - 60),
                 size=(60, 60),
+                scale=0.8,
                 label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                autoselect=True,
             )
         bui.textwidget(
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                self._height
-                - (46 if uiscale is bui.UIScale.SMALL else 35)
-                + yoffs,
+                yoffs - (55 if uiscale is bui.UIScale.SMALL else 35),
             ),
             size=(0, 0),
             maxwidth=300,
@@ -98,18 +94,17 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             v_align='center',
         )
 
+        # Generally center all other content
+        x_inset = self._width * 0.5 - 320
+        vbase = v = self._height * 0.5 + 130
+
         h = 43 + x_inset
-        v = self._height - 60 + yoffs
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
         lock_tex = bui.gettexture('lock')
         self._lock_images: list[bui.Widget] = []
 
-        scl = (
-            1.0
-            if uiscale is bui.UIScale.SMALL
-            else 1.13 if uiscale is bui.UIScale.MEDIUM else 1.4
-        )
+        scl = 1.2
         v -= 60.0 * scl
         self._new_button = btn = bui.buttonwidget(
             parent=self._root_widget,
@@ -229,16 +224,15 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         )
         self._update()
 
-        v = self._height - 65 + yoffs
-        scroll_height = self._height - (
-            160 if uiscale is bui.UIScale.SMALL else 105
-        )
+        v = vbase - 6
+        scroll_height = 280
         v -= scroll_height
         self._scrollwidget = scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             position=(152 + x_inset, v),
             highlight=False,
-            size=(self._width - (205 + 2 * x_inset), scroll_height),
+            size=(450, scroll_height),
+            border_opacity=0.4,
         )
         bui.widget(
             edit=self._scrollwidget,

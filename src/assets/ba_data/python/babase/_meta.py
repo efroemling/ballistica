@@ -48,9 +48,8 @@ class ScanResults:
 class MetadataSubsystem:
     """Subsystem for working with script metadata in the app.
 
-    Category: **App Classes**
-
-    Access the single shared instance of this class at 'babase.app.meta'.
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.meta` attr on the :class:`~babase.App` class.
     """
 
     def __init__(self) -> None:
@@ -68,8 +67,10 @@ class MetadataSubsystem:
         """Begin the overall scan.
 
         This will start scanning built in directories (which for vanilla
-        installs should be the vast majority of the work). This should only
-        be called once.
+        installs should be the vast majority of the work). This should
+        only be called once.
+
+        :meta private:
         """
         assert self._scan_complete_cb is None
         assert self._scan is None
@@ -95,6 +96,8 @@ class MetadataSubsystem:
         This is for parts of the scan that must be delayed until
         workspace sync completion or other such events. This must be
         called exactly once.
+
+        :meta private:
         """
         assert self._scan is not None
         self._scan.set_extras(self.extra_scan_dirs)
@@ -113,7 +116,7 @@ class MetadataSubsystem:
         to messaged to the user in some way but the callback will be called
         regardless.
         To run the completion callback directly in the bg thread where the
-        loading work happens, pass completion_cb_in_bg_thread=True.
+        loading work happens, pass ``completion_cb_in_bg_thread=True``.
         """
         Thread(
             target=partial(
@@ -327,7 +330,11 @@ class DirectoryScan:
         meta_lines = {
             lnum: l[1:].split()
             for lnum, l in enumerate(flines)
-            if '# ba_meta ' in l
+            # Do a simple 'in' check for speed but then make sure its
+            # also at the beginning of the line. This allows disabling
+            # meta-lines and avoids false positives from code that
+            # wrangles them.
+            if ('# ba_meta' in l and l.strip().startswith('# ba_meta '))
         }
         is_top_level = len(subpath.parts) <= 1
         required_api = self._get_api_requirement(

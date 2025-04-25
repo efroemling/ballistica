@@ -15,18 +15,18 @@ def timestring(
     timeval: float | int,
     centi: bool = True,
 ) -> babase.Lstr:
-    """Generate a babase.Lstr for displaying a time value.
+    """Generate a localized string for displaying a time value.
 
-    Category: **General Utility Functions**
-
-    Given a time value, returns a babase.Lstr with:
+    Given a time value, returns a localized string with:
     (hours if > 0 ) : minutes : seconds : (centiseconds if centi=True).
 
-    WARNING: the underlying Lstr value is somewhat large so don't use this
-    to rapidly update Node text values for an onscreen timer or you may
-    consume significant network bandwidth.  For that purpose you should
-    use a 'timedisplay' Node and attribute connections.
+    .. warning::
 
+      the underlying localized-string value is somewhat large, so don't
+      use this to rapidly update text values for an in-game timer or you
+      may consume significant network bandwidth. For that sort of thing
+      you should use things like 'timedisplay' nodes and attribute
+      connections.
     """
     from babase._language import Lstr
 

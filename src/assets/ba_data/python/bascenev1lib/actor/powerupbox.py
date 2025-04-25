@@ -24,8 +24,6 @@ class _TouchedMessage:
 class PowerupBoxFactory:
     """A collection of media and other resources used by bs.Powerups.
 
-    Category: **Gameplay Classes**
-
     A single instance of this is shared between all powerups
     and can be retrieved via bs.Powerup.get_factory().
     """
@@ -190,19 +188,18 @@ class PowerupBoxFactory:
 class PowerupBox(bs.Actor):
     """A box that grants a powerup.
 
-    category: Gameplay Classes
-
-    This will deliver a bs.PowerupMessage to anything that touches it
-    which has the bs.PowerupBoxFactory.powerup_accept_material applied.
+    This will deliver a :class:`~bascenev1.PowerupMessage` to anything
+    that touches it which has the
+    :class:`~PowerupBoxFactory.powerup_accept_material` applied.
     """
 
+    #: The string powerup type. This can be 'triple_bombs', 'punch',
+    #: 'ice_bombs', 'impact_bombs', 'land_mines', 'sticky_bombs',
+    #: 'shield', 'health', or 'curse'.
     poweruptype: str
-    """The string powerup type.  This can be 'triple_bombs', 'punch',
-       'ice_bombs', 'impact_bombs', 'land_mines', 'sticky_bombs', 'shield',
-       'health', or 'curse'."""
 
     node: bs.Node
-    """The 'prop' bs.Node representing this box."""
+    """The 'prop' node representing this box."""
 
     def __init__(
         self,

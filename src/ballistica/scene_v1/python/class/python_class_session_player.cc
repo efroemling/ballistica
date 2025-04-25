@@ -54,55 +54,55 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
   // clang-format off
 
   cls->tp_doc =
-      "A reference to a player in the bascenev1.Session.\n"
-      "\n"
-      "Category: **Gameplay Classes**\n"
-      "\n"
-      "These are created and managed internally and\n"
-      "provided to your bascenev1.Session/bascenev1.Activity instances.\n"
-      "Be aware that, like `ba.Node`s, bascenev1.SessionPlayer objects are\n"
-      "'weak' references under-the-hood; a player can leave the game at\n"
-      " any point. For this reason, you should make judicious use of the\n"
-      "babase.SessionPlayer.exists() method (or boolean operator) to ensure\n"
-      "that a SessionPlayer is still present if retaining references to one\n"
-      "for any length of time.\n"
-      "\n"
-      "Attributes:\n"
-      "    " ATTR_ID " (int):\n"
-      "        The unique numeric ID of the Player.\n"
-      "\n"
-      "        Note that you can also use the boolean operator for this same\n"
-      "        functionality, so a statement such as \"if player\" will do\n"
-      "        the right thing both for Player objects and values of None.\n"
-      "\n"
-      "    " ATTR_IN_GAME " (bool):\n"
-      "        This bool value will be True once the Player has completed\n"
-      "        any lobby character/team selection.\n"
-      "\n"
-      "    " ATTR_SESSIONTEAM " (bascenev1.SessionTeam):\n"
-      "        The bascenev1.SessionTeam this Player is on. If the\n"
-      "        SessionPlayer is still in its lobby selecting a team/etc.\n"
-      "        then a bascenev1.SessionTeamNotFoundError will be raised.\n"
-      "\n"
-      "    " ATTR_INPUT_DEVICE " (bascenev1.InputDevice):\n"
-      "        The input device associated with the player.\n"
-      "\n"
-      "    " ATTR_COLOR " (Sequence[float]):\n"
-      "        The base color for this Player.\n"
-      "        In team games this will match the bascenev1.SessionTeam's\n"
-      "        color.\n"
-      "\n"
-      "    " ATTR_HIGHLIGHT " (Sequence[float]):\n"
-      "        A secondary color for this player.\n"
-      "        This is used for minor highlights and accents\n"
-      "        to allow a player to stand apart from his teammates\n"
-      "        who may all share the same team (primary) color.\n"
-      "\n"
-      "    " ATTR_CHARACTER " (str):\n"
-      "        The character this player has selected in their profile.\n"
-      "\n"
-      "    " ATTR_ACTIVITYPLAYER " (bascenev1.Player | None):\n"
-      "        The current game-specific instance for this player.\n";
+    "A reference to a player in a :class:`~bascenev1.Session`.\n"
+    "\n"
+    "These are created and managed internally and provided to your\n"
+    ":class:`~bascenev1.Session`/:class:`~bascenev1.Activity`\n"
+    "instances. Be aware that, like :class:`~bascenev1.Node` objects,\n"
+    ":class:`~bascenev1.SessionPlayer` objects are effectively 'weak'\n"
+    "references under-the-hood; a player can leave the game at any point.\n"
+    "For this reason, you should make judicious use of the\n"
+    ":meth:`bascenev1.SessionPlayer.exists()` method (or boolean operator) to\n"
+    "ensure that a :class:`SessionPlayer` is still present if retaining\n"
+    "references to one for any length of time.\n"
+    "\n"
+    "Attributes:\n"
+    "    " ATTR_ID " (int):\n"
+    "        The unique numeric id of the player.\n"
+    "\n"
+    "        Note that you can also use the boolean operator for this same\n"
+    "        functionality, so a statement such as ``if player:`` will do\n"
+    "        the right thing both for :class:`~bascenev1.SessionPlayer`\n"
+    "        objects as well as values of ``None``.\n"
+    "\n"
+    "    " ATTR_IN_GAME " (bool):\n"
+    "        This bool value will be True once the player has completed\n"
+    "        any lobby character/team selection.\n"
+    "\n"
+    "    " ATTR_SESSIONTEAM " (bascenev1.SessionTeam):\n"
+    "        The session-team this session-player is on. If the player is\n"
+    "        still in its lobby selecting a team/etc. then a\n"
+    "        :class:`~bascenev1.SessionTeamNotFoundError` will be raised.\n"
+    "\n"
+    "    " ATTR_INPUT_DEVICE " (bascenev1.InputDevice):\n"
+    "        The input device associated with the player.\n"
+    "\n"
+    "    " ATTR_COLOR " (Sequence[float]):\n"
+    "        The base color for this player.\n"
+    "        In team games this will match the team's\n"
+    "        color.\n"
+    "\n"
+    "    " ATTR_HIGHLIGHT " (Sequence[float]):\n"
+    "        A secondary color for this player.\n"
+    "        This is used for minor highlights and accents\n"
+    "        to allow a player to stand apart from his teammates\n"
+    "        who may all share the same team (primary) color.\n"
+    "\n"
+    "    " ATTR_CHARACTER " (str):\n"
+    "        The character this player has selected in their profile.\n"
+    "\n"
+    "    " ATTR_ACTIVITYPLAYER " (bascenev1.Player | None):\n"
+    "        The current game-specific instance for this player.\n";
 
   // clang-format on
 
@@ -587,13 +587,13 @@ auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  std::string texture_name = Python::GetPyString(texture_name_obj);
-  std::string tint_texture_name = Python::GetPyString(tint_texture_name_obj);
-  std::vector<float> tint_color = Python::GetPyFloats(tint_color_obj);
+  std::string texture_name = Python::GetString(texture_name_obj);
+  std::string tint_texture_name = Python::GetString(tint_texture_name_obj);
+  std::vector<float> tint_color = Python::GetFloats(tint_color_obj);
   if (tint_color.size() != 3) {
     throw Exception("Expected 3 floats for tint-color.", PyExcType::kValue);
   }
-  std::vector<float> tint2_color = Python::GetPyFloats(tint2_color_obj);
+  std::vector<float> tint2_color = Python::GetFloats(tint2_color_obj);
   if (tint2_color.size() != 3) {
     throw Exception("Expected 3 floats for tint-color.", PyExcType::kValue);
   }
@@ -703,7 +703,7 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
     {"getname", (PyCFunction)GetName, METH_VARARGS | METH_KEYWORDS,
      "getname(full: bool = False, icon: bool = True) -> str\n"
      "\n"
-     "Returns the player's name. If icon is True, the long version of the\n"
+     "Returns the player's name. If ``icon`` is True, the long version of the\n"
      "name may include an icon."},
     {"setname", (PyCFunction)SetName, METH_VARARGS | METH_KEYWORDS,
      "setname(name: str, full_name: str | None = None, real: bool = True)\n"
@@ -733,7 +733,7 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      METH_VARARGS | METH_KEYWORDS,
      "get_v1_account_id() -> str\n"
      "\n"
-     "Return the V1 Account ID this player is signed in under, if\n"
+     "Return the V1 account id this player is signed in under, if\n"
      "there is one and it can be determined with relative certainty.\n"
      "Returns None otherwise. Note that this may require an active\n"
      "internet connection (especially for network-connected players)\n"
@@ -748,26 +748,34 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "set_icon_info(texture: str, tint_texture: str,\n"
      "  tint_color: Sequence[float], tint2_color: Sequence[float]) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"setactivity", (PyCFunction)SetActivity, METH_VARARGS | METH_KEYWORDS,
      "setactivity(activity: bascenev1.Activity | None) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"setnode", (PyCFunction)SetNode, METH_VARARGS | METH_KEYWORDS,
      "setnode(node: bascenev1.Node | None) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"get_icon", (PyCFunction)GetIcon, METH_NOARGS,
      "get_icon() -> dict[str, Any]\n"
      "\n"
-     "Returns the character's icon (images, colors, etc contained\n"
+     "Return the character's icon (images, colors, etc contained\n"
      "in a dict."},
     {"get_icon_info", (PyCFunction)GetIconInfo, METH_NOARGS,
      "get_icon_info() -> dict[str, Any]\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
-     "allows inclusion of our custom attrs in standard python dir()"},
+     "Allows inclusion of our custom attrs in standard python dir()."},
     {nullptr}};
 
 #pragma clang diagnostic pop

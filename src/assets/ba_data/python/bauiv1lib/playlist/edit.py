@@ -45,7 +45,7 @@ class PlaylistEditWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 scale=(
-                    1.76
+                    2.0
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
@@ -232,6 +232,7 @@ class PlaylistEditWindow(bui.MainWindow):
             highlight=False,
             on_select_call=bui.Call(self._set_ui_selection, 'gameList'),
             size=(self._scroll_width, (scroll_height - 15)),
+            border_opacity=0.4,
         )
         bui.widget(
             edit=scrollwidget,

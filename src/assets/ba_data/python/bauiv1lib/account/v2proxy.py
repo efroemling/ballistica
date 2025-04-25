@@ -41,6 +41,12 @@ class V2ProxySignInWindow(bui.Window):
             )
         )
 
+        self._loading_spinner = bui.spinnerwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height * 0.5),
+            size=60,
+            style='bomb',
+        )
         self._state_text = bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.6),
@@ -49,10 +55,11 @@ class V2ProxySignInWindow(bui.Window):
             size=(0, 0),
             scale=1.4,
             maxwidth=0.9 * self._width,
-            text=bui.Lstr(
-                value='${A}...',
-                subs=[('${A}', bui.Lstr(resource='loadingText'))],
-            ),
+            # text=bui.Lstr(
+            #     value='${A}...',
+            #     subs=[('${A}', bui.Lstr(resource='loadingText'))],
+            # ),
+            text='',
             color=(1, 1, 1),
         )
         self._sub_state_text = bui.textwidget(
@@ -141,6 +148,7 @@ class V2ProxySignInWindow(bui.Window):
     def _set_error_state(self, error_location: str) -> None:
         msaddress = self._get_server_address()
         addr = msaddress.removeprefix('https://')
+        bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         bui.textwidget(
             edit=self._state_text,
             text=f'Unable to connect to {addr}.',
@@ -190,6 +198,7 @@ class V2ProxySignInWindow(bui.Window):
         self._complete = True
 
         # Clear out stuff we use to show progress/errors.
+        self._loading_spinner.delete()
         self._sub_state_text.delete()
         self._sub_state_text2.delete()
 

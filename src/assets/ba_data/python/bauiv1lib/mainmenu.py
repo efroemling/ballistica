@@ -30,6 +30,8 @@ class MainMenuWindow(bui.MainWindow):
         bui.set_analytics_screen('Main Menu')
         self._show_remote_app_info_on_first_launch()
 
+        uiscale = bui.app.ui_v1.uiscale
+
         # Make a vanilla container; we'll modify it to our needs in
         # refresh.
         super().__init__(
@@ -38,6 +40,8 @@ class MainMenuWindow(bui.MainWindow):
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         # Grab this stuff in case it changes.
@@ -213,7 +217,12 @@ class MainMenuWindow(bui.MainWindow):
         side_button_2_scale = 0.5
 
         if uiscale is bui.UIScale.SMALL:
-            root_widget_scale = 1.3
+            # We're a generally widescreen shaped window, so bump our
+            # overall scale up a bit when screen width is wider than safe
+            # bounds to take advantage of the extra space.
+            screensize = bui.get_virtual_screen_size()
+            safesize = bui.get_virtual_safe_area_size()
+            root_widget_scale = min(1.55, 1.3 * screensize[0] / safesize[0])
             button_y_offs = -20.0
             self._button_height *= 1.3
         elif uiscale is bui.UIScale.MEDIUM:
@@ -244,7 +253,7 @@ class MainMenuWindow(bui.MainWindow):
             text=(
                 f'{app.env.engine_version}'
                 f' build {app.env.engine_build_number}.'
-                f' Copyright 2024 Eric Froemling.'
+                f' Copyright 2025 Eric Froemling.'
             ),
             h_align='center',
             v_align='center',
@@ -431,7 +440,6 @@ class MainMenuWindow(bui.MainWindow):
         )
 
         # Credits button.
-        # self._tdelay += self._t_delay_inc
         thistdelay = self._tdelay + td5 * self._t_delay_inc
 
         h += side_button_width * side_button_scale * 0.5 + hspace2
@@ -454,15 +462,16 @@ class MainMenuWindow(bui.MainWindow):
             transition_delay=thistdelay,
             on_activate_call=self._credits,
         )
-        # self._tdelay += self._t_delay_inc
 
         self._quit_button: bui.Widget | None
         if self._have_quit_button:
             v -= 1.1 * side_button_2_height * side_button_2_scale
+            # Nudge this a tiny bit right so we can press right from the
+            # credits button to get to it.
             self._quit_button = quit_button = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=self._use_autoselect,
-                position=(h, v),
+                position=(h + 4.0, v),
                 size=(side_button_2_width, side_button_2_height),
                 scale=side_button_2_scale,
                 label=bui.Lstr(

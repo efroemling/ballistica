@@ -17,7 +17,7 @@ APPLE_NEW = False
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.12'
-PY_VER_EXACT_ANDROID = '3.12.4'
+PY_VER_EXACT_ANDROID = '3.12.9'
 PY_VER_APPLE = '3.12'
 PY_VER_EXACT_APPLE = '3.12.4' if APPLE_NEW else '3.12.0'
 
@@ -41,7 +41,7 @@ VERSION_MIN_TVOS = '12.0' if APPLE_NEW else '9.0'
 #
 # For now will try to ride out this 3.0 LTS version as long as possible.
 OPENSSL_VER_APPLE = '3.0.12-1'
-OPENSSL_VER_ANDROID = '3.0.14'
+OPENSSL_VER_ANDROID = '3.0.16'
 
 LIBFFI_VER_APPLE = '3.4.6-1' if APPLE_NEW else '3.4.4-1'
 BZIP2_VER_APPLE = '1.0.8-1'
@@ -51,12 +51,12 @@ XZ_VER_APPLE = '5.4.7-1' if APPLE_NEW else '5.4.4-1'
 # bumping various versions to keep things up to date.
 ANDROID_API_VER = 23
 ZLIB_VER_ANDROID = '1.3.1'
-XZ_VER_ANDROID = '5.6.2'
+XZ_VER_ANDROID = '5.6.4'
 BZIP2_VER_ANDROID = '1.0.8'
-GDBM_VER_ANDROID = '1.23'
-LIBFFI_VER_ANDROID = '3.4.6'
-LIBUUID_VER_ANDROID = ('2.39', '2.39.3')
-NCURSES_VER_ANDROID = '6.4'
+GDBM_VER_ANDROID = '1.24'
+LIBFFI_VER_ANDROID = '3.4.7'
+LIBUUID_VER_ANDROID = ('2.41', '2.41')
+NCURSES_VER_ANDROID = '6.5'
 READLINE_VER_ANDROID = '8.2'
 SQLITE_VER_ANDROID = ('2024', '3460000')
 
@@ -369,7 +369,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific OpenSSL version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://www.openssl.org/source/openssl-3.0.12.tar.gz'",
+        "source = 'https://www.openssl.org/source/openssl-3.4.0.tar.gz'",
         f"source = 'https://www.openssl.org/"
         f"source/openssl-{OPENSSL_VER_ANDROID}.tar.gz'",
         count=1,
@@ -386,7 +386,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific XZ version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://tukaani.org/xz/xz-5.6.2.tar.xz'",
+        "source = 'https://tukaani.org/xz/xz-5.6.4.tar.xz'",
         f"source = 'https://tukaani.org/xz/xz-{XZ_VER_ANDROID}.tar.xz'",
         count=1,
     )
@@ -403,7 +403,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     # Set specific GDBM version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://ftp.gnu.org/gnu/gdbm/gdbm-1.23.tar.gz'",
+        "source = 'https://ftp.gnu.org/gnu/gdbm/gdbm-1.24.tar.gz'",
         "source = 'https://ftp.gnu.org/"
         f"gnu/gdbm/gdbm-{GDBM_VER_ANDROID}.tar.gz'",
         count=1,
@@ -413,7 +413,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     ftxt = replace_exact(
         ftxt,
         "source = 'https://github.com/libffi/libffi/releases/"
-        "download/v3.4.4/libffi-3.4.4.tar.gz'",
+        "download/v3.4.7/libffi-3.4.7.tar.gz'",
         "source = 'https://github.com/libffi/libffi/releases/"
         f"download/v{LIBFFI_VER_ANDROID}/libffi-{LIBFFI_VER_ANDROID}.tar.gz'",
     )
@@ -422,17 +422,33 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     ftxt = replace_exact(
         ftxt,
         "source = 'https://mirrors.edge.kernel.org/pub/linux/utils/"
-        "util-linux/v2.39/util-linux-2.39.2.tar.xz'",
+        "util-linux/v2.40/util-linux-2.40.4.tar.xz'",
         "source = 'https://mirrors.edge.kernel.org/pub/linux/utils/"
         f'util-linux/v{LIBUUID_VER_ANDROID[0]}/'
         f"util-linux-{LIBUUID_VER_ANDROID[1]}.tar.xz'",
         count=1,
     )
 
+    # Seems we need to explicitly tell 32 bit libuuid builds to be ok
+    # with 32 bit timestamps. Should check this again once NDK 29 comes
+    # around.
+    if arch in {'arm', 'x86'}:
+        ftxt = replace_exact(
+            ftxt,
+            (
+                "    configure_args = ['--disable-all-programs',"
+                " '--enable-libuuid']"
+            ),
+            (
+                "    configure_args = ['--disable-all-programs',"
+                " '--disable-year2038', '--enable-libuuid']"
+            ),
+        )
+
     # Set specific NCurses version.
     ftxt = replace_exact(
         ftxt,
-        "source = 'https://ftp.gnu.org/gnu/ncurses/ncurses-6.4.tar.gz'",
+        "source = 'https://ftp.gnu.org/gnu/ncurses/ncurses-6.5.tar.gz'",
         "source = 'https://ftp.gnu.org/gnu/ncurses/"
         f"ncurses-{NCURSES_VER_ANDROID}.tar.gz'",
         count=1,
@@ -484,6 +500,8 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     ftxt = readfile('build.sh')
 
     # Repo has gone 30+, but we currently want our own which is lower.
+    # timestampfix = '--disable-year2038 ' if arch == 'arm' else ''
+
     ftxt = replace_exact(
         ftxt,
         'COMMON_ARGS="--arch ${ARCH:-arm} --api ${ANDROID_API:-30}"',
@@ -491,7 +509,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         + str(ANDROID_API_VER)
         + '}"',
     )
-    ftxt = replace_exact(ftxt, 'PYVER=3.12.4', f'PYVER={PY_VER_EXACT_ANDROID}')
+    ftxt = replace_exact(ftxt, 'PYVER=3.13.0', f'PYVER={PY_VER_EXACT_ANDROID}')
     ftxt = replace_exact(
         ftxt,
         '    popd\n',

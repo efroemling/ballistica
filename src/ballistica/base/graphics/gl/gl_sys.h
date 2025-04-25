@@ -200,15 +200,16 @@ inline void glDepthRange(double min, double max) {
 #define BA_GLSL_HIGHP
 #endif  // BA_OPENGL_IS_ES
 
-// Our old GLSL source uses 'attribute' and our newer uses 'in'
+// Note: these are the same these days for GLSL regular and ES, so can get
+// rid of these defines.
 #if BA_OPENGL_IS_ES
-#define BA_GLSL_VERTEX_IN "attribute"
-#define BA_GLSL_VERTEX_OUT "varying"
-#define BA_GLSL_FRAG_IN "varying"
-#define BA_GLSL_FRAGCOLOR "gl_FragColor"
-#define BA_GLSL_TEXTURE2D "texture2D"
-#define BA_GLSL_TEXTURE2DPROJ "texture2DProj"
-#define BA_GLSL_TEXTURECUBE "textureCube"
+#define BA_GLSL_VERTEX_IN "in"
+#define BA_GLSL_VERTEX_OUT "out"
+#define BA_GLSL_FRAG_IN "in"
+#define BA_GLSL_FRAGCOLOR "fragColor"
+#define BA_GLSL_TEXTURE2D "texture"
+#define BA_GLSL_TEXTURE2DPROJ "textureProj"
+#define BA_GLSL_TEXTURECUBE "texture"
 #else
 #define BA_GLSL_VERTEX_IN "in"
 #define BA_GLSL_VERTEX_OUT "out"

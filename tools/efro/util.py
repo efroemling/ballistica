@@ -1,11 +1,13 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Small handy bits of functionality."""
 
 from __future__ import annotations
 
 import os
 import time
+import random
 import weakref
 import functools
 import datetime
@@ -14,7 +16,7 @@ from typing import TYPE_CHECKING, cast, TypeVar, Generic, overload, ParamSpec
 
 if TYPE_CHECKING:
     import asyncio
-    from typing import Any, Callable, Literal
+    from typing import Any, Callable, Literal, Sequence
 
 T = TypeVar('T')
 ValT = TypeVar('ValT')
@@ -75,8 +77,6 @@ def explicit_bool(val: bool) -> bool:
     # pylint: disable=no-else-return
     if TYPE_CHECKING:
         # infer this! <boom>
-        import random
-
         return random.random() < 0.5
     else:
         return val
@@ -106,9 +106,9 @@ def check_utc(value: datetime.datetime) -> None:
 def utc_now() -> datetime.datetime:
     """Get timezone-aware current utc time.
 
-    Just a shortcut for datetime.datetime.now(datetime.UTC).
-    Avoid datetime.datetime.utcnow() which is deprecated and gives naive
-    times.
+    Simply a shortcut for ``datetime.datetime.now(datetime.UTC)``. One
+    should avoid :meth:`datetime.datetime.utcnow()` which is deprecated
+    and gives naive times.
     """
     return datetime.datetime.now(datetime.UTC)
 
@@ -116,9 +116,9 @@ def utc_now() -> datetime.datetime:
 def utc_now_naive() -> datetime.datetime:
     """Get naive utc time.
 
-    This can be used to replace datetime.utcnow(), which is now deprecated.
-    Most all code should migrate to use timezone-aware times instead of
-    relying on this.
+    This can be used to replace :meth:`datetime.datetime.utcnow()`,
+    which is now deprecated. Most all code should migrate to use
+    timezone-aware times instead of relying on this.
     """
     return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
@@ -126,7 +126,8 @@ def utc_now_naive() -> datetime.datetime:
 def utc_from_timestamp_naive(timestamp: float) -> datetime.datetime:
     """Get a naive utc time from a timestamp.
 
-    This can be used to replace datetime.utcfromtimestamp(), which is now
+    This can be used to replace
+    :meth:`datetime.datetime.utcfromtimestamp()`, which is now
     deprecated. Most all code should migrate to use timezone-aware times
     instead of relying on this.
     """
@@ -336,7 +337,7 @@ class DispatchMethodWrapper(Generic[ArgT, RetT]):
 
     @staticmethod
     def register(
-        func: Callable[[Any, Any], RetT]
+        func: Callable[[Any, Any], RetT],
     ) -> Callable[[Any, Any], RetT]:
         """Register a new dispatch handler for this dispatch-method."""
         raise RuntimeError('Should not get here')
@@ -346,7 +347,7 @@ class DispatchMethodWrapper(Generic[ArgT, RetT]):
 
 # noinspection PyProtectedMember,PyTypeHints
 def dispatchmethod(
-    func: Callable[[Any, ArgT], RetT]
+    func: Callable[[Any, ArgT], RetT],
 ) -> DispatchMethodWrapper[ArgT, RetT]:
     """A variation of functools.singledispatch for methods.
 
@@ -430,7 +431,7 @@ class ValueDispatcher(Generic[ValT, RetT]):
 
 
 def valuedispatch1arg(
-    call: Callable[[ValT, ArgT], RetT]
+    call: Callable[[ValT, ArgT], RetT],
 ) -> ValueDispatcher1Arg[ValT, ArgT, RetT]:
     """Like valuedispatch but for functions taking an extra argument."""
     return ValueDispatcher1Arg(call)
@@ -481,7 +482,7 @@ if TYPE_CHECKING:
 
 
 def valuedispatchmethod(
-    call: Callable[[SelfT, ValT], RetT]
+    call: Callable[[SelfT, ValT], RetT],
 ) -> ValueDispatcherMethod[ValT, RetT]:
     """Like valuedispatch but works with methods instead of functions."""
 
@@ -700,25 +701,26 @@ def _compact_id(num: int, chars: str) -> str:
 def human_readable_compact_id(num: int) -> str:
     """Given a positive int, return a compact string representation for it.
 
-    Handy for visualizing unique numeric ids using as few as possible chars.
-    This representation uses only lowercase letters and numbers (minus the
-    following letters for readability):
-     's' is excluded due to similarity to '5'.
-     'l' is excluded due to similarity to '1'.
-     'i' is excluded due to similarity to '1'.
-     'o' is excluded due to similarity to '0'.
-     'z' is excluded due to similarity to '2'.
+    Handy for visualizing unique numeric ids using as few as possible
+    chars. This representation uses only lowercase letters and numbers
+    (minus the following letters for readability):
+
+    - 's' is excluded due to similarity to '5'.
+    - 'l' is excluded due to similarity to '1'.
+    - 'i' is excluded due to similarity to '1'.
+    - 'o' is excluded due to similarity to '0'.
+    - 'z' is excluded due to similarity to '2'.
 
     Therefore for n chars this can store values of 21^n.
 
-    When reading human input consisting of these IDs, it may be desirable
-    to map the disallowed chars to their corresponding allowed ones
-    ('o' -> '0', etc).
+    When reading human input consisting of these IDs, it may be
+    desirable to map the disallowed chars to their corresponding allowed
+    ones ('o' -> '0', etc).
 
     Sort order for these ids is the same as the original numbers.
 
-    If more compactness is desired at the expense of readability,
-    use compact_id() instead.
+    If more compactness is desired at the expense of readability, use
+    compact_id() instead.
     """
     return _compact_id(num, '0123456789abcdefghjkmnpqrtuvwxy')
 
@@ -831,10 +833,12 @@ def timedelta_str(
     """Return a simple human readable time string for a length of time.
 
     Time can be given as a timedelta or a float representing seconds.
+
     Example output:
-      "23d 1h 2m 32s" (with maxparts == 4)
-      "23d 1h" (with maxparts == 2)
-      "23d 1.08h" (with maxparts == 2 and decimals == 2)
+
+    - ``"23d 1h 2m 32s"`` (with maxparts == 4)
+    - ``"23d 1h"`` (with maxparts == 2)
+    - ``"23d 1.08h"`` (with maxparts == 2 and decimals == 2)
 
     Note that this is hard-coded in English and probably not especially
     performant.
@@ -961,7 +965,7 @@ def extract_arg(
     """Given a list of args and an arg name, returns a value.
 
     The arg flag and value are removed from the arg list.
-    raises CleanErrors on any problems.
+    raises a :class:`~efro.error.CleanError` on any problems.
     """
     from efro.error import CleanError
 
@@ -982,3 +986,30 @@ def extract_arg(
     del args[argindex : argindex + 2]
 
     return val
+
+
+def pairs_to_flat(pairs: Sequence[tuple[T, T]]) -> list[T]:
+    """Given a sequence of same-typed pairs, flattens to a list."""
+    return [item for pair in pairs for item in pair]
+
+
+def pairs_from_flat(flat: Sequence[T]) -> list[tuple[T, T]]:
+    """Given a flat even numbered sequence, returns pairs."""
+    if len(flat) % 2 != 0:
+        raise ValueError('Provided sequence has an odd number of elements.')
+    out: list[tuple[T, T]] = []
+    for i in range(0, len(flat) - 1, 2):
+        out.append((flat[i], flat[i + 1]))
+    return out
+
+
+def weighted_choice(*args: tuple[T, float]) -> T:
+    """Given object/weight pairs as args, returns a random object.
+
+    Intended as a shorthand way to call random.choices on a few explicit
+    options.
+    """
+    items: tuple[T]
+    weights: tuple[float]
+    items, weights = zip(*args)
+    return random.choices(items, weights=weights)[0]

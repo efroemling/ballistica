@@ -21,20 +21,17 @@ if TYPE_CHECKING:
 
 @dataclass
 class WinnerGroup:
-    """Entry for a winning team or teams calculated by game-results."""
+    """Winning team or teams as calculated by a :class:`GameResults`."""
 
     score: int | None
-    teams: Sequence[bascenev1.SessionTeam]
+    teams: list[bascenev1.SessionTeam]
 
 
 class GameResults:
-    """
-    Results for a completed game.
+    """Results for a completed game.
 
-    Category: **Gameplay Classes**
-
-    Upon completion, a game should fill one of these out and pass it to its
-    bascenev1.Activity.end call.
+    Upon completion, a game should fill one of these out and pass it to
+    its :meth:`~bascenev1.Activity.end()` call.
     """
 
     def __init__(self) -> None:
@@ -69,8 +66,8 @@ class GameResults:
     def set_team_score(self, team: bascenev1.Team, score: int | None) -> None:
         """Set the score for a given team.
 
-        This can be a number or None.
-        (see the none_is_winner arg in the constructor)
+        This can be a number or None (see the ``none_is_winner`` arg in
+        the constructor).
         """
         assert isinstance(team, Team)
         sessionteam = team.sessionteam
@@ -79,7 +76,7 @@ class GameResults:
     def get_sessionteam_score(
         self, sessionteam: bascenev1.SessionTeam
     ) -> int | None:
-        """Return the score for a given bascenev1.SessionTeam."""
+        """Return the score for a given team."""
         assert isinstance(sessionteam, SessionTeam)
         for score in list(self._scores.values()):
             if score[0]() is sessionteam:
@@ -90,7 +87,7 @@ class GameResults:
 
     @property
     def sessionteams(self) -> list[bascenev1.SessionTeam]:
-        """Return all bascenev1.SessionTeams in the results."""
+        """Return all teams in the results."""
         if not self._game_set:
             raise RuntimeError("Can't get teams until game is set.")
         teams = []
@@ -104,13 +101,13 @@ class GameResults:
     def has_score_for_sessionteam(
         self, sessionteam: bascenev1.SessionTeam
     ) -> bool:
-        """Return whether there is a score for a given session-team."""
+        """Return whether there is a score for a given team."""
         return any(s[0]() is sessionteam for s in self._scores.values())
 
     def get_sessionteam_score_str(
         self, sessionteam: bascenev1.SessionTeam
     ) -> babase.Lstr:
-        """Return the score for the given session-team as an Lstr.
+        """Return the score for the given team as an :class:`~bascenev1.Lstr`.
 
         (properly formatted for the score type.)
         """
@@ -163,7 +160,7 @@ class GameResults:
 
     @property
     def winning_sessionteam(self) -> bascenev1.SessionTeam | None:
-        """The winning SessionTeam if there is exactly one, or else None."""
+        """The winning team if there is exactly one, or else None."""
         if not self._game_set:
             raise RuntimeError("Can't get winners until game is set.")
         winners = self.winnergroups
@@ -173,7 +170,7 @@ class GameResults:
 
     @property
     def winnergroups(self) -> list[WinnerGroup]:
-        """Get an ordered list of winner groups."""
+        """The ordered list of winner-groups."""
         if not self._game_set:
             raise RuntimeError("Can't get winners until game is set.")
 

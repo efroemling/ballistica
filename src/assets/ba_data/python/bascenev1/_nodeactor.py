@@ -18,8 +18,6 @@ if TYPE_CHECKING:
 class NodeActor(Actor):
     """A simple bascenev1.Actor type that wraps a single bascenev1.Node.
 
-    Category: **Gameplay Classes**
-
     This Actor will delete its Node when told to die, and it's
     exists() call will return whether the Node still exists or not.
     """

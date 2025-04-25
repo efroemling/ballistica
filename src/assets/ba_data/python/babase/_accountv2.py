@@ -25,9 +25,9 @@ logger = logging.getLogger('ba.accountv2')
 class AccountV2Subsystem:
     """Subsystem for modern account handling in the app.
 
-    Category: **App Classes**
-
-    Access the single shared instance of this class at 'ba.app.plus.accounts'.
+    Access the single shared instance of this class via the
+    :attr:`~baplus.PlusAppSubsystem.accounts` attr on the
+    :class:`~baplus.PlusAppSubsystem` class.
     """
 
     def __init__(self) -> None:
@@ -71,8 +71,10 @@ class AccountV2Subsystem:
             self.login_adapters[adapter.login_type] = adapter
 
     def on_app_loading(self) -> None:
-        """Should be called at standard on_app_loading time."""
+        """Internal; Called at standard on_app_loading time.
 
+        :meta private:
+        """
         for adapter in self.login_adapters.values():
             adapter.on_app_loading()
 
@@ -81,7 +83,7 @@ class AccountV2Subsystem:
 
         Note that this does not mean these credentials have been checked
         for validity; only that they exist. If/when credentials are
-        validated, the 'primary' account handle will be set.
+        validated, the :attr:`primary` account handle will be set.
         """
         raise NotImplementedError()
 
@@ -97,6 +99,8 @@ class AccountV2Subsystem:
 
         Will be called with None on log-outs and when new credentials
         are set but have not yet been verified.
+
+        :meta private:
         """
         assert _babase.in_logic_thread()
 
@@ -144,15 +148,20 @@ class AccountV2Subsystem:
             _babase.app.on_initial_sign_in_complete()
 
     def on_active_logins_changed(self, logins: dict[LoginType, str]) -> None:
-        """Should be called when logins for the active account change."""
+        """Called when logins for the active account change.
 
+        :meta private:
+        """
         for adapter in self.login_adapters.values():
             adapter.set_active_logins(logins)
 
     def on_implicit_sign_in(
         self, login_type: LoginType, login_id: str, display_name: str
     ) -> None:
-        """An implicit sign-in happened (called by native layer)."""
+        """An implicit sign-in happened (called by native layer).
+
+        :meta private:
+        """
         from babase._login import LoginAdapter
 
         assert _babase.in_logic_thread()
@@ -165,17 +174,22 @@ class AccountV2Subsystem:
             )
 
     def on_implicit_sign_out(self, login_type: LoginType) -> None:
-        """An implicit sign-out happened (called by native layer)."""
+        """An implicit sign-out happened (called by native layer).
+
+        :meta private:
+        """
         assert _babase.in_logic_thread()
         with _babase.ContextRef.empty():
             self.login_adapters[login_type].set_implicit_login_state(None)
 
     def on_no_initial_primary_account(self) -> None:
-        """Callback run if the app has no primary account after launch.
+        """Internal; run if the app has no primary account after launch.
 
-        Either this callback or on_primary_account_changed will be called
-        within a few seconds of app launch; the app can move forward
-        with the startup sequence at that point.
+        Either this callback or on_primary_account_changed will be
+        called within a few seconds of app launch; the app can move
+        forward with the startup sequence at that point.
+
+        :meta private:
         """
         if not self._initial_sign_in_completed:
             self._initial_sign_in_completed = True
@@ -192,13 +206,15 @@ class AccountV2Subsystem:
         login_type: LoginType,
         state: LoginAdapter.ImplicitLoginState | None,
     ) -> None:
-        """Called when implicit login state changes.
+        """Internal; Called when implicit login state changes.
 
         Login systems that tend to sign themselves in/out in the
         background are considered implicit. We may choose to honor or
         ignore their states, allowing the user to opt for other login
         types even if the default implicit one can't be explicitly
         logged out or otherwise controlled.
+
+        :meta private:
         """
         from babase._language import Lstr
 
@@ -284,11 +300,19 @@ class AccountV2Subsystem:
         self._update_auto_sign_in()
 
     def do_get_primary(self) -> AccountV2Handle | None:
-        """Internal - should be overridden by subclass."""
+        """Internal; should be overridden by subclass.
+
+        :meta private:
+        """
         raise NotImplementedError()
 
     def set_primary_credentials(self, credentials: str | None) -> None:
-        """Set credentials for the primary app account."""
+        """Set credentials for the primary app account.
+
+        Once credentials are set, they will be verified in the cloud
+        asynchronously. If verification is successful, the
+        :attr:`primary` attr will be set to the resulting account.
+        """
         raise NotImplementedError()
 
     def _update_auto_sign_in(self) -> None:
@@ -441,14 +465,23 @@ class AccountV2Subsystem:
 class AccountV2Handle:
     """Handle for interacting with a V2 account.
 
-    This class supports the 'with' statement, which is how it is
+    This class supports the ``with`` statement, which is how it is
     used with some operations such as cloud messaging.
     """
 
+    #: The id of this account.
     accountid: str
+
+    #: The last known tag for this account.
     tag: str
+
+    #: The name of the workspace being synced to this client.
     workspacename: str | None
+
+    #: The id of the workspace being synced to this client, if any.
     workspaceid: str | None
+
+    #: Info about last known logins associated with this account.
     logins: dict[LoginType, LoginInfo]
 
     def __enter__(self) -> None:

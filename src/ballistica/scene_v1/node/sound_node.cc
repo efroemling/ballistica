@@ -142,7 +142,7 @@ void SoundNode::Step() {
     }
   }
   if (positional_ && position_dirty_ && playing_) {
-    millisecs_t t = g_core->GetAppTimeMillisecs();
+    millisecs_t t = g_core->AppTimeMillisecs();
     if (t - last_position_update_time_ > 100) {
       base::AudioSource* s = g_base->audio->SourceBeginExisting(play_id_, 107);
       if (s) {

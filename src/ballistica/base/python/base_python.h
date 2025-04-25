@@ -118,6 +118,7 @@ class BasePython {
     kGetV2AccountIdCall,
     kAppOnNativeActiveChangedCall,
     kCopyDevConsoleHistoryCall,
+    kAppOnScreenSizeChangeCall,
     kLast  // Sentinel; must be at end.
   };
 
@@ -183,6 +184,8 @@ class BasePython {
  private:
   std::set<std::string> do_once_locations_;
   PythonObjectSet<ObjID> objs_;
+  float last_screen_res_x_{-1.0f};
+  float last_screen_res_y_{-1.0f};
 };
 
 }  // namespace ballistica::base

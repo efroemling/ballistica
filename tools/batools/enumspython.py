@@ -48,7 +48,7 @@ def _gen_enums(infilename: str) -> str:
         if len(doclines) > 1:
             out += '\n    """\n\n'
         else:
-            out += '"""\n'
+            out += '"""\n\n'
 
         lnumend = _find_enum_end(lines, lnum)
         out = _parse_values(lines, lnum, lnumend, out)

@@ -17,9 +17,8 @@ if TYPE_CHECKING:
 class AccountV1Subsystem:
     """Subsystem for legacy account handling in the app.
 
-    Category: **App Classes**
-
-    Access the single instance of this class at 'ba.app.classic.accounts'.
+    Access the single instance of this class at
+    'ba.app.classic.accounts'.
     """
 
     def __init__(self) -> None:
@@ -125,7 +124,11 @@ class AccountV1Subsystem:
         if subset is not None:
             raise ValueError('invalid subset value: ' + str(subset))
 
-        if data['p']:
+        # We used to give this bonus for pro, but on recent versions of
+        # the game give it for everyone (since we are phasing out Pro).
+
+        # if data['p']:
+        if bool(True):
             if babase.app.plus is None:
                 pro_mult = 1.0
             else:
@@ -198,7 +201,7 @@ class AccountV1Subsystem:
 
         # If the short version of our account name currently cant be
         # displayed by the game, cancel.
-        if not babase.have_chars(
+        if not babase.can_display_chars(
             plus.get_v1_account_display_string(full=False)
         ):
             return
@@ -208,7 +211,6 @@ class AccountV1Subsystem:
             'Player Profiles' not in config
             or '__account__' not in config['Player Profiles']
         ):
-            print('CREATING INITIAL')
             # Create a spaz with a nice default purply color.
             plus.add_v1_account_transaction(
                 {
@@ -249,10 +251,9 @@ class AccountV1Subsystem:
         if plus is None:
             return False
 
-        # We expose pro options if the server tells us to
-        # (which is generally just when we own pro),
-        # or also if we've been grandfathered in
-        # or are using ballistica-core builds.
+        # We expose pro options if the server tells us to (which is
+        # generally just when we own pro), or also if we've been
+        # grandfathered in.
         return self.have_pro() or bool(
             plus.get_v1_account_misc_read_val_2('proOptionsUnlocked', False)
             or babase.app.config.get('lc14292', 0) > 1

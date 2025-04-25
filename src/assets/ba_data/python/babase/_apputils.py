@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import gc
 import os
-import logging
 from threading import Thread
 from functools import partial
 from dataclasses import dataclass
@@ -17,6 +16,7 @@ from efro.dataclassio import ioprepped, dataclass_to_json, dataclass_from_json
 
 import _babase
 from babase._appsubsystem import AppSubsystem
+from babase._logging import balog
 
 if TYPE_CHECKING:
     import datetime
@@ -30,24 +30,25 @@ def utc_now_cloud() -> datetime.datetime:
 
     Applies offsets pulled from server communication/etc.
     """
-    # FIXME - do something smart here.
+    # TODO: wire this up. Just using local time for now. Make sure that
+    # BaseFeatureSet::TimeSinceEpochCloudSeconds() and this are synced
+    # up.
     return utc_now()
 
 
 def is_browser_likely_available() -> bool:
     """Return whether a browser likely exists on the current device.
 
-    category: General Utility Functions
-
-    If this returns False you may want to avoid calling babase.show_url()
-    with any lengthy addresses. (ba.show_url() will display an address
-    as a string in a window if unable to bring up a browser, but that
-    is only useful for simple URLs.)
+    If this returns False, you may want to avoid calling
+    :meth:`~babase.open_url()` with any lengthy addresses.
+    (:meth:`~babase.open_url()` will display an address as a
+    string/qr-code in a window if unable to bring up a browser, but that
+    is only reasonable for small-ish URLs.)
     """
     app = _babase.app
 
     if app.classic is None:
-        logging.warning(
+        balog.warning(
             'is_browser_likely_available() needs to be updated'
             ' to work without classic.'
         )
@@ -68,14 +69,14 @@ def is_browser_likely_available() -> bool:
 
 
 def get_remote_app_name() -> babase.Lstr:
-    """(internal)"""
+    """:meta private:"""
     from babase import _language
 
     return _language.Lstr(resource='remote_app.app_name')
 
 
 def should_submit_debug_info() -> bool:
-    """(internal)"""
+    """:meta private:"""
     val = _babase.app.config.get('Submit Debug Info', True)
     assert isinstance(val, bool)
     return val
@@ -94,7 +95,7 @@ def handle_v1_cloud_log() -> None:
 
     if classic is None or plus is None:
         if _babase.do_once():
-            logging.warning(
+            balog.warning(
                 'handle_v1_cloud_log should not be getting called'
                 ' without classic and plus present.'
             )
@@ -131,9 +132,8 @@ def handle_v1_cloud_log() -> None:
 
             def response(data: Any) -> None:
                 assert classic is not None
-                # A non-None response means success; lets
-                # take note that we don't need to report further
-                # log info this run
+                # A non-None response means success; lets take note that
+                # we don't need to report further log info this run
                 if data is not None:
                     classic.log_have_new = False
                     _babase.mark_log_sent()
@@ -142,8 +142,8 @@ def handle_v1_cloud_log() -> None:
 
         classic.log_upload_timer_started = True
 
-        # Delay our log upload slightly in case other
-        # pertinent info gets printed between now and then.
+        # Delay our log upload slightly in case other pertinent info
+        # gets printed between now and then.
         with _babase.ContextRef.empty():
             _babase.apptimer(3.0, _put_log)
 
@@ -160,7 +160,10 @@ def handle_v1_cloud_log() -> None:
 
 
 def handle_leftover_v1_cloud_log_file() -> None:
-    """Handle an un-uploaded v1-cloud-log from a previous run."""
+    """Handle an un-uploaded v1-cloud-log from a previous run.
+
+    :meta private:
+    """
 
     # Only applies with classic present.
     if _babase.app.classic is None:
@@ -178,8 +181,8 @@ def handle_leftover_v1_cloud_log_file() -> None:
             if do_send:
 
                 def response(data: Any) -> None:
-                    # Non-None response means we were successful;
-                    # lets kill it.
+                    # Non-None response means we were successful; lets
+                    # kill it.
                     if data is not None:
                         try:
                             os.remove(_babase.get_v1_cloud_log_file_path())
@@ -195,10 +198,9 @@ def handle_leftover_v1_cloud_log_file() -> None:
             else:
                 # If they don't want logs uploaded just kill it.
                 os.remove(_babase.get_v1_cloud_log_file_path())
-    except Exception:
-        from babase import _error
 
-        _error.print_exception('Error handling leftover log file.')
+    except Exception:
+        balog.exception('Error handling leftover log file.')
 
 
 def garbage_collect_session_end() -> None:
@@ -217,6 +219,7 @@ def garbage_collect_session_end() -> None:
     # running them with an explicit flag passed, but we should never
     # run them by default because gc.get_objects() can mess up the app.
     # See notes at top of efro.debug.
+
     # if bool(False):
     #     print_live_object_warnings('after session shutdown')
 
@@ -224,11 +227,11 @@ def garbage_collect_session_end() -> None:
 def garbage_collect() -> None:
     """Run an explicit pass of garbage collection.
 
-    category: General Utility Functions
-
     May also print warnings/etc. if collection takes too long or if
     uncollectible objects are found (so use this instead of simply
-    gc.collect().
+    :meth:`gc.collect()`.
+
+    :meta private:
     """
     gc.collect()
 
@@ -307,7 +310,7 @@ def dump_app_state(
             )
     except Exception:
         # Abandon whole dump if we can't write metadata.
-        logging.exception('Error writing app state dump metadata.')
+        balog.exception('Error writing app state dump metadata.')
         return
 
     tbpath = os.path.join(
@@ -381,13 +384,18 @@ def log_dumped_app_state(from_previous_run: bool = False) -> None:
                 with open(tbpath, 'r', encoding='utf-8') as infile:
                     out += '\nPython tracebacks:\n' + infile.read()
                 os.unlink(tbpath)
-            logging.log(metadata.log_level.python_logging_level, out)
+            balog.log(metadata.log_level.python_logging_level, out)
     except Exception:
-        logging.exception('Error logging dumped app state.')
+        balog.exception('Error logging dumped app state.')
 
 
-class AppHealthMonitor(AppSubsystem):
-    """Logs things like app-not-responding issues."""
+class AppHealthSubsystem(AppSubsystem):
+    """Subsystem for monitoring app health; logs not-responding issues, etc.
+
+    The single shared instance of this class can be found on the
+    :attr:`~babase.App.health` attr on the :class:`~babase.App`
+    class.
+    """
 
     def __init__(self) -> None:
         assert _babase.in_logic_thread()
@@ -400,15 +408,28 @@ class AppHealthMonitor(AppSubsystem):
 
     @override
     def on_app_loading(self) -> None:
+        """:meta private:"""
         # If any traceback dumps happened last run, log and clear them.
         log_dumped_app_state(from_previous_run=True)
+
+    @override
+    def on_app_suspend(self) -> None:
+        """:meta private:"""
+        assert _babase.in_logic_thread()
+        self._running = False
+
+    @override
+    def on_app_unsuspend(self) -> None:
+        """:meta private:"""
+        assert _babase.in_logic_thread()
+        self._running = True
 
     def _app_monitor_thread_main(self) -> None:
         _babase.set_thread_name('ballistica app-monitor')
         try:
             self._monitor_app()
         except Exception:
-            logging.exception('Error in AppHealthMonitor thread.')
+            balog.exception('Error in AppHealthSubsystem thread.')
 
     def _set_response(self) -> None:
         assert _babase.in_logic_thread()
@@ -461,13 +482,3 @@ class AppHealthMonitor(AppSubsystem):
                 time.sleep(1.042)
 
             self._first_check = False
-
-    @override
-    def on_app_suspend(self) -> None:
-        assert _babase.in_logic_thread()
-        self._running = False
-
-    @override
-    def on_app_unsuspend(self) -> None:
-        assert _babase.in_logic_thread()
-        self._running = True

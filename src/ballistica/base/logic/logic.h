@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_LOGIC_LOGIC_H_
 #define BALLISTICA_BASE_LOGIC_LOGIC_H_
 
+#include <atomic>
 #include <memory>
 
 #include "ballistica/shared/generic/runnable.h"
@@ -118,6 +119,7 @@ class Logic {
   auto shutdown_completed() const { return shutdown_completed_; }
   auto graphics_ready() const { return graphics_ready_; }
   auto app_active() const { return app_active_; }
+  auto app_active_applied() -> bool const { return app_active_applied_; }
 
  private:
   void UpdateDisplayTimeForFrameDraw_();
@@ -144,6 +146,12 @@ class Logic {
   /// The logic thread maintains its own app-active state which is
   /// driven by the app-thread's state in g_base.
   bool app_active_{true};
+
+  /// We maintain an app-active value that gets changed once we're done
+  /// calling the Python layer's app-active-changed callback. App suspension
+  /// looks at this to try to ensure that said Python callbacks complete
+  /// before the app gets fully suspended.
+  std::atomic_bool app_active_applied_{true};
   bool app_bootstrapping_complete_{};
   bool have_pending_loads_{};
   bool applied_app_config_{};
