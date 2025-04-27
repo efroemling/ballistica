@@ -84,12 +84,8 @@ class EditProfileWindow(
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
                 scale=self._base_scale,
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
-                toolbar_visibility=(
-                    None if uiscale is bui.UIScale.SMALL else 'menu_full'
-                ),
+                stack_offset=(0, 0),
+                toolbar_visibility=None,
             ),
             transition=transition,
             origin_widget=origin_widget,
