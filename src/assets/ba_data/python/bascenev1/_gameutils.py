@@ -173,6 +173,7 @@ def show_damage_count(
     dead: bool = False,
 ) -> None:
     """Pop up a damage count at a position in space."""
+    # pylint: disable=too-many-locals
     lifespan = 1.0
     app = babase.app
 
