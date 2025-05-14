@@ -139,6 +139,7 @@ nitpick_ignore = [
     ('py:class', '_MissingType'),
     #
     # Stdlib stuff for whatever reason coming up as having no docs.
+    ('py:class', '_thread.lock'),
     ('py:meth', 'asyncio.get_running_loop'),
     ('py:class', 'asyncio.events.AbstractEventLoop'),
     ('py:class', 'asyncio.streams.StreamReader'),
