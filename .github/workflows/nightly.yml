@@ -13,7 +13,7 @@ jobs:
         - name: Set up Python
           uses: actions/setup-python@v5
           with:
-            python-version: '3.12'
+            python-version: '3.13'
         - name: Setup project environment
           run: make env
         - name: Docker login
@@ -43,7 +43,7 @@ jobs:
         - name: Set up Python
           uses: actions/setup-python@v5
           with:
-            python-version: '3.12'
+            python-version: '3.13'
         - name: Setup project environment
           run: make env
         - name: Docker login
@@ -73,7 +73,7 @@ jobs:
         - name: Set up Python
           uses: actions/setup-python@v5
           with:
-            python-version: '3.12'
+            python-version: '3.13'
         - name: Setup project environment
           run: make env
         - name: Make the build

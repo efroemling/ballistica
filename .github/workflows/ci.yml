@@ -20,7 +20,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     - name: Install dependencies
       run: make env
     - name: Run checks
@@ -34,7 +34,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     - name: Install dependencies
       run: make env
     - name: Assemble monolithic server build
@@ -52,7 +52,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     - name: Install dependencies
       run: make env
     - name: Build spinoff project with only core featureset
@@ -70,7 +70,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     - name: Install dependencies
       run: make env
     - name: Create poo feature-set
@@ -94,7 +94,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     - name: Create tools/pcommand
       run: |
         $env:PYTHONPATH = "tools"
