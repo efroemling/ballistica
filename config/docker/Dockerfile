@@ -29,6 +29,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     --mount=type=cache,target=/root/.cache/pip \
     --mount=type=cache,target=/root/.cache/venv \
+    apt-get install -y software-properties-common &&\
+    add-apt-repository ppa:deadsnakes/ppa &&\
     apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
@@ -82,6 +84,8 @@ LABEL BOMBSQUAD_BUILD_TYPE=${cmake_build_type}
 # Install runtime dependencies
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get install -y software-properties-common &&\
+    add-apt-repository ppa:deadsnakes/ppa &&\
     apt-get update && \
     apt-get install -y \
         python3.13-dev && \
