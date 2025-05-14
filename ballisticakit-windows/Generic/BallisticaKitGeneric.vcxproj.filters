@@ -1426,10 +1426,10 @@
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_common.h">
       <Filter>ballistica\shared\buildconfig</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_generic.h">
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_headless.h">
       <Filter>ballistica\shared\buildconfig</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_headless.h">
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_testbuild.h">
       <Filter>ballistica\shared\buildconfig</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\shared\foundation\event_loop.cc">

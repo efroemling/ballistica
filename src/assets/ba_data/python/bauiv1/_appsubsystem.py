@@ -136,36 +136,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
     def on_app_loading(self) -> None:
         from bauiv1._uitypes import ui_upkeep
 
-        # IMPORTANT: If tweaking UI stuff, make sure it behaves for
-        # small, medium, and large UI modes. (doesn't run off screen,
-        # etc). The overrides below can be used to test with different
-        # sizes. Generally small is used on phones, medium is used on
-        # tablets/tvs, and large is on desktop computers or perhaps
-        # large tablets. When possible, run in windowed mode and resize
-        # the window to assure this holds true at all aspect ratios.
-
-        # UPDATE: A better way to test this is now by setting the
-        # environment variable BA_UI_SCALE to "small", "medium", or
-        # "large". This will affect system UIs not covered by the values
-        # below such as screen-messages. The below values remain
-        # functional, however, for cases such as Android where
-        # environment variables can't be set easily.
-
-        if bool(False):  # force-test ui scale
-            self._uiscale = babase.UIScale.SMALL
-            with babase.ContextRef.empty():
-                babase.pushcall(
-                    lambda: babase.screenmessage(
-                        f'FORCING UISCALE {self._uiscale.name} FOR TESTING',
-                        color=(1, 0, 1),
-                        log=True,
-                    )
-                )
-
         # Kick off our periodic UI upkeep.
-
-        # FIXME: Can probably kill this if we do immediate UI death
-        # checks.
         self.upkeeptimer = babase.AppTimer(2.6543, ui_upkeep, repeat=True)
 
     def get_main_window(self) -> bauiv1.MainWindow | None:

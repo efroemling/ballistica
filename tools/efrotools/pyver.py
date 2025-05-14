@@ -5,11 +5,13 @@
 Tools that need to do some work or regenerate files when this changes can
 add this submodule file as a dependency.
 """
+from __future__ import annotations
+
 from pathlib import Path
 
 # import subprocess
 
-PYVER = '3.12'
+PYVER = '3.13'
 PYVERNODOT = PYVER.replace('.', '')
 
 _checked_valid_sys_executable = False  # pylint: disable=invalid-name

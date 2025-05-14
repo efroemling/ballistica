@@ -107,6 +107,8 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def on_player_leave(self, player: Player) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # Augment default behavior.
         super().on_player_leave(player)
 
@@ -116,6 +118,8 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
     # overriding the default character spawning..
     @override
     def spawn_player(self, player: Player) -> bs.Actor:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         spaz = self.spawn_player_spaz(player)
 
         # Let's reconnect this player's controls to this
@@ -131,6 +135,7 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
     # Various high-level game events come through this method.
     @override
     def handlemessage(self, msg: Any) -> Any:
+        """Handle a message."""
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
@@ -227,6 +232,7 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         cur_time = bs.time()
         assert self._timer is not None
         start_time = self._timer.getstarttime()

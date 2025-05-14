@@ -42,8 +42,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libvorbis-dev \
         make \
         python3-pip \
-        python3.12-dev \
-        python3.12-venv \
+        python3.13-dev \
+        python3.13-venv \
         rsync
 
 # Copy source code
@@ -84,7 +84,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
     apt-get install -y \
-        python3.12-dev && \
+        python3.13-dev && \
     if [ "$HEADLESS_BUILD" = "0" ]; then \
         apt-get install -y \
             libsdl2-dev \
@@ -94,7 +94,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
             libopenal-dev; \
     fi && \
     apt-get clean && \
-    python3.12 -c "import uuid; print(uuid.uuid4())" > /etc/machine-id
+    python3.13 -c "import uuid; print(uuid.uuid4())" > /etc/machine-id
 
 # Copy the compiled application from the builder stage
 COPY --from=builder /ballistica_cmake \

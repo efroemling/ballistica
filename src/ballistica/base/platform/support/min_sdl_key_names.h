@@ -370,7 +370,7 @@ auto MinSDL_GetKeyName(int keycode) -> std::string {
   char* end;
 
   // Handle a few specially per platform.
-  if (g_buildconfig.ostype_macos()) {
+  if (g_buildconfig.platform_macos()) {
     switch (key) {
       case SDLK_LGUI:
         return "Left Command";

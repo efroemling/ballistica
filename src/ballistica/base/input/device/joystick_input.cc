@@ -103,7 +103,7 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
 auto JoystickInput::GetAxisName(int index) -> std::string {
   // On android, lets return some popular axis names.
 
-  if (g_buildconfig.ostype_android()) {
+  if (g_buildconfig.platform_android()) {
     // Due to our stupid 1-based values we have to subtract 1 from our value to
     // get the android motion-event constant.
     // FIXME: should just make a call to android to get these values..
@@ -147,7 +147,7 @@ auto JoystickInput::HasMeaningfulButtonNames() -> bool {
   if (is_mfi_controller_) {
     return true;
   }
-  return g_buildconfig.ostype_android();
+  return g_buildconfig.platform_android();
 }
 
 void JoystickInput::SetButtonName(int button, const std::string& name) {
@@ -178,7 +178,7 @@ auto JoystickInput::GetButtonName(int index) -> std::string {
     }
   }
 
-  if (g_buildconfig.ostype_android()) {
+  if (g_buildconfig.platform_android()) {
     // Special case: if this is a samsung controller, return the dice
     // button icons.
     if (strstr(GetDeviceName().c_str(), "Samsung Game Pad EI")) {

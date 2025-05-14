@@ -94,6 +94,14 @@ WIN32 is still required for the locale module.
 #endif
 #endif /* Py_BUILD_CORE || Py_BUILD_CORE_BUILTIN || Py_BUILD_CORE_MODULE */
 
+/* Define to 1 if you want to disable the GIL */
+/* Uncomment the definition for free-threaded builds, or define it manually
+ * when compiling extension modules. Note that we test with #ifdef, so
+ * defining as 0 will still disable the GIL. */
+#ifndef Py_GIL_DISABLED
+/* #define Py_GIL_DISABLED 1 */
+#endif
+
 /* Compiler specific defines */
 
 /* ------------------------------------------------------------------------*/
@@ -161,9 +169,9 @@ WIN32 is still required for the locale module.
 #endif /* MS_WIN64 */
 
 /* set the version macros for the windows headers */
-/* Python 3.9+ requires Windows 8 or greater */
-#define Py_WINVER 0x0602 /* _WIN32_WINNT_WIN8 */
-#define Py_NTDDI NTDDI_WIN8
+/* Python 3.12+ requires Windows 8.1 or greater */
+#define Py_WINVER 0x0603 /* _WIN32_WINNT_WINBLUE (8.1) */
+#define Py_NTDDI NTDDI_WINBLUE
 
 /* We only set these values when building Python - we don't want to force
    these values on extensions, as that will affect the prototypes and
@@ -305,15 +313,24 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
                 /* not building the core - must be an ext */
 #               if defined(_MSC_VER)
                         /* So MSVC users need not specify the .lib
-                        file in their Makefile (other compilers are
-                        generally taken care of by distutils.) */
+                        file in their Makefile */
+#                       if defined(Py_GIL_DISABLED)
 #                       if defined(_DEBUG)
-#                               pragma comment(lib,"python312_d.lib")
+#                               pragma comment(lib,"python313t_d.lib")
+#                       elif defined(Py_LIMITED_API)
+#                               pragma comment(lib,"python3t.lib")
+#                       else
+#                               pragma comment(lib,"python313t.lib")
+#                       endif /* _DEBUG */
+#                       else /* Py_GIL_DISABLED */
+#                       if defined(_DEBUG)
+#                               pragma comment(lib,"python313_d.lib")
 #                       elif defined(Py_LIMITED_API)
 #                               pragma comment(lib,"python3.lib")
 #                       else
-#                               pragma comment(lib,"python312.lib")
+#                               pragma comment(lib,"python313.lib")
 #                       endif /* _DEBUG */
+#                       endif /* Py_GIL_DISABLED */
 #               endif /* _MSC_VER */
 #       endif /* Py_BUILD_CORE */
 #endif /* MS_COREDLL */
@@ -511,6 +528,9 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 /* Use Python's own small-block memory-allocator. */
 #define WITH_PYMALLOC 1
 
+/* Define if you want to compile in mimalloc memory allocator. */
+#define WITH_MIMALLOC 1
+
 /* Define if you want to compile in object freelists optimization */
 #define WITH_FREELISTS 1
 
@@ -674,9 +694,6 @@ Py_NO_ENABLE_SHARED to find out.  Also support MS_NO_COREDLL for b/w compat */
 
 /* Define if you have the mpc library (-lmpc).  */
 /* #undef HAVE_LIBMPC */
-
-/* Define if you have the nsl library (-lnsl).  */
-#define HAVE_LIBNSL 1
 
 /* Define if you have the seq library (-lseq).  */
 /* #undef HAVE_LIBSEQ */

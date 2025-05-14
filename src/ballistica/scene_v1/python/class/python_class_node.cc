@@ -212,20 +212,22 @@ auto PythonClassNode::GetDelegate(PythonClassNode* self, PyObject* args,
   if (!PyType_Check(tp_obj)) {
     throw Exception("Passed type arg is not a type.", PyExcType::kType);
   }
-  if (PyObject* obj = node->GetDelegate()) {
-    int isinst = PyObject_IsInstance(obj, tp_obj);
+  // GetDelegate() returns a new ref or nullptr.
+  auto obj{PythonRef::StolenSoft(node->GetDelegate())};
+  if (obj.exists()) {
+    // if (PyObject* obj = node->GetDelegateOld()) {
+    int isinst = PyObject_IsInstance(obj.get(), tp_obj);
     if (isinst == -1) {
       return nullptr;
     }
     if (isinst) {
-      Py_INCREF(obj);
-      return obj;
+      return obj.NewRef();
     } else {
       if (doraise) {
         throw Exception("Requested delegate type not found on '"
                             + node->type()->name()
                             + "' node. (type=" + Python::ObjToString(tp_obj)
-                            + ", delegate=" + Python::ObjToString(obj) + ")",
+                            + ", delegate=" + obj.Str() + ")",
                         PyExcType::kDelegateNotFound);
       }
     }

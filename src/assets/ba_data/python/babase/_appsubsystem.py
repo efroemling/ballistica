@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import _babase
 
 if TYPE_CHECKING:
     from babase import UIScale
@@ -19,15 +18,13 @@ class AppSubsystem:
     building one out of this base class provides conveniences such as
     predefined callbacks during app state changes.
 
-    Subsystems must be registered with the app before it completes its
-    transition to the 'running' state.
+    Subsystems should be registered with the app using
+    :meth:`~babase.App.register_subsystem()`.
     """
 
-    def __init__(self) -> None:
-        _babase.app.register_subsystem(self)
-
     def on_app_loading(self) -> None:
-        """Called when the app reaches the loading state.
+        """Called when the app reaches the
+        :attr:`~babase.AppState.LOADING` state.
 
         Note that subsystems created after the app switches to the
         loading state will not receive this callback. Subsystems created
@@ -35,19 +32,29 @@ class AppSubsystem:
         """
 
     def on_app_running(self) -> None:
-        """Called when app enters :attr:`~AppState.RUNNING` state."""
+        """Called when the app enters the
+        :attr:`~babase.AppState.RUNNING` state.
+        """
 
     def on_app_suspend(self) -> None:
-        """Called when app enters :attr:`~AppState.SUSPENDED` state."""
+        """Called when the app enters the
+        :attr:`~babase.AppState.SUSPENDED` state.
+        """
 
     def on_app_unsuspend(self) -> None:
-        """Called when app exits :attr:`~AppState.SUSPENDED` state."""
+        """Called when the app exits the
+        :attr:`~babase.AppState.SUSPENDED` state.
+        """
 
     def on_app_shutdown(self) -> None:
-        """Called when app enters :attr:`~AppState.SHUTTING_DOWN` state."""
+        """Called when the app enters the
+        :attr:`~babase.AppState.SHUTTING_DOWN` state.
+        """
 
     def on_app_shutdown_complete(self) -> None:
-        """Called when app enters :attr:`~AppState.SHUTDOWN_COMPLETE` state."""
+        """Called when the app enters the
+        :attr:`~AppState.SHUTDOWN_COMPLETE` state.
+        """
 
     def do_apply_app_config(self) -> None:
         """Called when the app config should be applied."""

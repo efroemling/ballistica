@@ -5,4 +5,4 @@
 
 #pragma once
 
-#include "ballistica/shared/buildconfig/buildconfig_windows_generic.h"
+#include "ballistica/shared/buildconfig/buildconfig_windows_testbuild.h"

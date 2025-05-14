@@ -2,7 +2,7 @@
 
 #ifndef BALLISTICA_BASE_PLATFORM_LINUX_BASE_PLATFORM_LINUX_H_
 #define BALLISTICA_BASE_PLATFORM_LINUX_BASE_PLATFORM_LINUX_H_
-#if BA_OSTYPE_LINUX
+#if BA_PLATFORM_LINUX
 
 #include <string>
 
@@ -21,5 +21,5 @@ class BasePlatformLinux : public BasePlatform {
 
 }  // namespace ballistica::base
 
-#endif  // BA_OSTYPE_LINUX
+#endif  // BA_PLATFORM_LINUX
 #endif  // BALLISTICA_BASE_PLATFORM_LINUX_BASE_PLATFORM_LINUX_H_

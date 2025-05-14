@@ -7,8 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "ballistica/base/input/input.h"
-#include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/scene_v1/node/node.h"
+#include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/math/vector3f.h"
 
@@ -51,6 +51,7 @@ class Player : public Object {
     node_ = node;
   }
 
+  /// Returns a NEW ref or nullptr.
   auto GetPyTeam() -> PyObject*;  // Returns a borrowed ref.
   void SetPyTeam(PyObject* team);
 

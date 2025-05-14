@@ -652,8 +652,12 @@ def check_misc(self: ProjectUpdater) -> None:
         'DUMMYVAL',
     )
 
-    # Our XCode project should refer to the current Python lib serveral times.
-    if not self.public:
+    # Our XCode project should refer to the current Python lib several
+    # times.
+    #
+    # UPDATE: We are now using xcframework; would need to update this
+    # but just disabling for now.
+    if not self.public and bool(False):
         contents = readfile(
             os.path.join(
                 self.projroot,

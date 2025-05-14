@@ -66,18 +66,20 @@ auto Player::GetHostActivity() const -> HostActivity* {
 void Player::SetHostActivity(HostActivity* a) {
   assert(g_base->InLogicThread());
 
-  // Make sure we get pulled out of one activity before being added to another.
+  // Make sure we get pulled out of one activity before being added to
+  // another.
   if (a && in_activity_) {
     std::string old_name =
         host_activity_.exists()
-            ? PythonRef(host_activity_->GetPyActivity(), PythonRef::kAcquire)
-                  .Str()
+            ? PythonRef::StolenSoft(host_activity_->GetPyActivity()).Str()
             : "<nullptr>";
-    std::string new_name =
-        PythonRef(a->GetPyActivity(), PythonRef::kAcquire).Str();
+
+    // GetPyActivity returns a new ref or nullptr.
+    auto py_activity{PythonRef::StolenSoft(a->GetPyActivity())};
+
     BA_LOG_PYTHON_TRACE_ONCE(
         "Player::SetHostActivity() called when already in an activity (old="
-        + old_name + ", new=" + new_name + ")");
+        + old_name + ", new=" + py_activity.Str() + ")");
   } else if (!a && !in_activity_) {
     BA_LOG_PYTHON_TRACE_ONCE(
         "Player::SetHostActivity() called with nullptr when not in an "
@@ -112,11 +114,23 @@ void Player::SetPyTeam(PyObject* team) {
 }
 
 auto Player::GetPyTeam() -> PyObject* {
-  PyObject* obj = py_team_weak_ref_.get();
-  if (!obj) {
-    return Py_None;
+  auto* ref_obj{py_team_weak_ref_.get()};
+  if (!ref_obj) {
+    return nullptr;
   }
-  return PyWeakref_GetObject(obj);
+  PyObject* obj{};
+  int result = PyWeakref_GetRef(ref_obj, &obj);
+  // Return new obj ref (result 1) or nullptr for dead objs (result 0).
+  if (result == 0 || result == 1) {
+    return obj;
+  }
+  // Something went wrong and an exception is set. We don't expect this to
+  // ever happen so currently just providing a simple error msg.
+  assert(result == -1);
+  PyErr_Clear();
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "Player::GetPyTeam(): error getting weakref obj.");
+  return nullptr;
 }
 
 void Player::SetPyCharacter(PyObject* character) {

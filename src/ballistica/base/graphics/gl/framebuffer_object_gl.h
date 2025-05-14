@@ -31,13 +31,13 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
         msaa_(msaa_in),
         alpha_(alpha_in) {
     // Desktop stuff is always high-quality.
-#if BA_OSTYPE_MACOS || BA_OSTYPE_LINUX || BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_MACOS || BA_PLATFORM_LINUX || BA_PLATFORM_WINDOWS
     high_quality_ = true;
 #endif
 
     // Things are finally getting to the point where we can default to
     // desktop quality on some mobile stuff.
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
     if (renderer_->is_tegra_k1_) {
       high_quality_ = true;
     }
@@ -87,7 +87,7 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
 
       // On android/ios lets go with 16 bit unless they explicitly request
       // high quality.
-#if BA_OSTYPE_ANDROID || BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_ANDROID || BA_PLATFORM_IOS_TVOS
       GLenum format;
       if (alpha_) {
         format = do_high_quality ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_4_4_4_4;
@@ -109,10 +109,10 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
     } else {
       // Regular renderbuffer.
       assert(!alpha_);  // fixme
-#if BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_IOS_TVOS
       GLenum format =
           GL_RGB565;  // FIXME; need to pull ES3 headers in for GL_RGB8
-#elif BA_OSTYPE_ANDROID
+#elif BA_PLATFORM_ANDROID
       GLenum format = do_high_quality ? GL_RGB8 : GL_RGB565;
 #else
       GLenum format = GL_RGB8;
@@ -122,7 +122,7 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
       glBindRenderbuffer(GL_RENDERBUFFER, render_buffer_);
       BA_DEBUG_CHECK_GL_ERROR;
       if (samples > 0) {
-#if BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_IOS_TVOS
         throw Exception();
 #else
         glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, format,
@@ -148,15 +148,15 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         BA_DEBUG_CHECK_GL_ERROR;
         // FIXME: need to pull in ES3 stuff for iOS to get GL_DEPTH_COMPONENT24.
-        // #if BA_OSTYPE_IOS_TVOS
+        // #if BA_PLATFORM_IOS_TVOS
         //         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width_,
         //         height_, 0,
         //                      GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, nullptr);
         // #else
         if (do_high_quality) {
-          // #if BA_OSTYPE_ANDROID
+          // #if BA_PLATFORM_ANDROID
           //           assert(g_running_es3);
-          // #endif  // BA_OSTYPE_ANDROID
+          // #endif  // BA_PLATFORM_ANDROID
           glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width_, height_,
                        0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, nullptr);
         } else {
@@ -166,7 +166,7 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
               width_, height_, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT,
               nullptr);
         }
-        // #endif  // BA_OSTYPE_IOS_TVOS
+        // #endif  // BA_PLATFORM_IOS_TVOS
 
         BA_DEBUG_CHECK_GL_ERROR;
 
@@ -183,12 +183,12 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
         BA_DEBUG_CHECK_GL_ERROR;
 
         if (samples > 0) {
-          // #if BA_OSTYPE_IOS_TVOS
+          // #if BA_PLATFORM_IOS_TVOS
           //           throw Exception();
           // #else
           // (GL_DEPTH_COMPONENT24 not available in ES2 it looks like)
           bool do24;
-          // #if BA_OSTYPE_ANDROID
+          // #if BA_PLATFORM_ANDROID
           //           do24 = (do_high_quality && g_running_es3);
           // #else
           do24 = do_high_quality;
@@ -205,7 +205,7 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
         } else {
           // FIXME - need to pull in es3 headers to get GL_DEPTH_COMPONENT24 on
           //  iOS
-          // #if BA_OSTYPE_IOS_TVOS
+          // #if BA_PLATFORM_IOS_TVOS
           //           GLenum format = GL_DEPTH_COMPONENT16;
           // #else
           // GL_DEPTH_COMPONENT24 not available in ES2 it looks like.

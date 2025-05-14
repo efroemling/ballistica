@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.12
+#!/usr/bin/env python3.13
 # Released under the MIT License. See LICENSE for details.
 #
 # pylint: disable=too-many-lines
@@ -34,9 +34,13 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-VERSION_STR = '1.3.3'
+VERSION_STR = '1.3.4'
 
 # Version history:
+#
+# 1.3.4
+#
+#  - Updated to use Python 3.13.
 #
 # 1.3.3
 #

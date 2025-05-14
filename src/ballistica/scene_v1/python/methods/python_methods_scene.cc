@@ -10,6 +10,7 @@
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
@@ -28,6 +29,7 @@
 #include "ballistica/scene_v1/support/client_session_replay.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/json.h"
@@ -577,17 +579,26 @@ static auto PyGetActivity(PyObject* self, PyObject* args, PyObject* keywds)
     Py_RETURN_NONE;
   }
 
+  PyObject* ret_obj{};
+
   if (HostActivity* hostactivity =
           ContextRefSceneV1::FromCurrent().GetHostActivity()) {
-    PyObject* obj = hostactivity->GetPyActivity();
-    Py_INCREF(obj);
-    return obj;
-  } else {
-    if (raise) {
-      throw Exception(PyExcType::kActivityNotFound);
+    // GetPyActivity() returns a new ref or nullptr.
+    auto obj{PythonRef::StolenSoft(hostactivity->GetPyActivity())};
+    if (obj.exists()) {
+      ret_obj = obj.NewRef();
     }
   }
+
+  if (ret_obj) {
+    return ret_obj;
+  }
+
+  if (raise) {
+    throw Exception(PyExcType::kActivityNotFound);
+  }
   Py_RETURN_NONE;
+
   BA_PYTHON_CATCH;
 }
 
@@ -1254,9 +1265,9 @@ static auto PyGetForegroundHostActivity(PyObject* self, PyObject* args,
           ? ContextRefSceneV1::FromAppForegroundContext().GetHostActivity()
           : nullptr;
   if (h != nullptr) {
-    PyObject* obj = h->GetPyActivity();
-    Py_INCREF(obj);
-    return obj;
+    // GetPyActivity returns a new ref or nullptr.
+    auto obj{PythonRef::StolenSoft(h->GetPyActivity())};
+    return obj.NewRef();
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

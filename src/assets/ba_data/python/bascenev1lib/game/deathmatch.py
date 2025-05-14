@@ -99,6 +99,8 @@ class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
     @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         assert bs.app.classic is not None
         return bs.app.classic.getmaps('melee')
 
@@ -122,14 +124,20 @@ class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def get_instance_description(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         return 'Crush ${ARG1} of your enemies.', self._score_to_win
 
     @override
     def get_instance_description_short(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         return 'kill ${ARG1} enemies', self._score_to_win
 
     @override
     def on_team_join(self, team: Team) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if self.has_begun():
             self._update_scoreboard()
 
@@ -147,6 +155,8 @@ class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
@@ -208,6 +218,8 @@ class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         results = bs.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.score)

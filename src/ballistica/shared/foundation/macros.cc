@@ -21,7 +21,7 @@ void MacroFunctionTimerEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
                            millisecs_t time, const char* funcname) {
   // Currently disabling this for test builds; not really useful for
   // the general public.
-  if (g_buildconfig.test_build()) {
+  if (g_buildconfig.variant_test_build()) {
     return;
   }
   assert(corefs);
@@ -38,7 +38,7 @@ void MacroFunctionTimerEndThread(core::CoreFeatureSet* corefs,
                                  const char* funcname) {
   // Currently disabling this for test builds; not really useful for
   // the general public.
-  if (g_buildconfig.test_build()) {
+  if (g_buildconfig.variant_test_build()) {
     return;
   }
   assert(corefs);
@@ -56,7 +56,7 @@ void MacroFunctionTimerEndEx(core::CoreFeatureSet* corefs,
                              const char* funcname, const std::string& what) {
   // Currently disabling this for test builds; not really useful for
   // the general public.
-  if (g_buildconfig.test_build()) {
+  if (g_buildconfig.variant_test_build()) {
     return;
   }
   assert(corefs);
@@ -74,7 +74,7 @@ void MacroFunctionTimerEndThreadEx(core::CoreFeatureSet* corefs,
                                    const std::string& what) {
   // Currently disabling this for test builds; not really useful for
   // the general public.
-  if (g_buildconfig.test_build()) {
+  if (g_buildconfig.variant_test_build()) {
     return;
   }
   assert(corefs);
@@ -92,7 +92,7 @@ void MacroTimeCheckEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
                        int line) {
   // Currently disabling this for test builds; not really useful for
   // the general public.
-  if (g_buildconfig.test_build()) {
+  if (g_buildconfig.variant_test_build()) {
     return;
   }
   assert(corefs);

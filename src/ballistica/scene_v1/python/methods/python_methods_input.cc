@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "ballistica/base/input/device/touch_input.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"

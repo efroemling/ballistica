@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import weakref
-from typing import Generic, TypeVar, TYPE_CHECKING, override
+from typing import TYPE_CHECKING, override
 
 import babase
 
@@ -16,10 +16,8 @@ if TYPE_CHECKING:
 
     import bascenev1
 
-T = TypeVar('T', bound='DependencyComponent')
 
-
-class Dependency(Generic[T]):
+class Dependency[T: DependencyComponent]:
     """A dependency on a DependencyComponent (with an optional config).
 
     This class is used to request and access functionality provided
@@ -122,7 +120,7 @@ class DependencyComponent:
         return []
 
 
-class DependencyEntry:
+class DependencyEntry[T: DependencyComponent]:
     """Data associated with a dep/config pair in bascenev1.DependencySet."""
 
     # def __del__(self) -> None:
@@ -165,7 +163,7 @@ class DependencyEntry:
         return component
 
 
-class DependencySet(Generic[T]):
+class DependencySet[T: DependencyComponent]:
     """Set of resolved dependencies and their associated data.
 
     To use DependencyComponents, a set must be created, resolved, and then

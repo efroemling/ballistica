@@ -7,7 +7,9 @@
 #include <list>
 #include <string>
 
-#if !BA_OSTYPE_WINDOWS
+#include "ballistica/shared/buildconfig/buildconfig_common.h"
+
+#if !BA_PLATFORM_WINDOWS
 #include <fcntl.h>
 #include <poll.h>
 #endif
@@ -87,7 +89,7 @@ void BasePlatform::Purchase(const std::string& item) {
   // we originally used entitlements. We are all consumables now though
   // so we can purchase for different accounts.
   std::string item_filtered{item};
-  if (g_buildconfig.amazon_build()) {
+  if (g_buildconfig.variant_amazon_appstore()) {
     if (item == "bundle_bones" || item == "bundle_bernard"
         || item == "bundle_frosty" || item == "bundle_santa" || item == "pro"
         || item == "pro_sale") {
@@ -186,7 +188,7 @@ void BasePlatform::DoOverlayWebBrowserClose() {
               "DoOverlayWebBrowserClose unimplemented");
 }
 
-#if !BA_OSTYPE_WINDOWS
+#if !BA_PLATFORM_WINDOWS
 static void HandleSIGINT(int s) {
   if (g_base && g_base->logic->event_loop()) {
     g_base->logic->event_loop()->PushCall(
@@ -211,7 +213,7 @@ static void HandleSIGTERM(int s) {
 
 void BasePlatform::SetupInterruptHandling() {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   {
@@ -299,7 +301,7 @@ void BasePlatform::OpenFileExternally(const std::string& path) {
 }
 
 auto BasePlatform::SafeStdinFGetS(char* s, int n, FILE* iop) -> char* {
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   // Use plain old vanilla fgets on Windows since blocking stdin reads
   // don't seem to prevent the app from exiting there.
   return fgets(s, n, iop);
@@ -322,11 +324,11 @@ auto BasePlatform::SafeStdinFGetS(char* s, int n, FILE* iop) -> char* {
 
   *cs = '\0';
   return (c == EOF && cs == s) ? NULL : s;
-#endif  // BA_OSTYPE_WINDOWS
+#endif  // BA_PLATFORM_WINDOWS
 }
 
 int BasePlatform::SmartGetC_(FILE* stream) {
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   return -1;
 #else
   // Refill our buffer if needed.
@@ -387,7 +389,81 @@ int BasePlatform::SmartGetC_(FILE* stream) {
   auto out = stdin_buffer_.front();
   stdin_buffer_.pop_front();
   return out;
-#endif  // BA_OSTYPE_WINDOWS
+#endif  // BA_PLATFORM_WINDOWS
+}
+
+auto BasePlatform::GetPyAppArchitecture() -> PyObject* {
+  auto&& objs{g_base->python->objs()};
+  const auto* arch{g_buildconfig.arch()};
+  if (!strcmp(arch, "arm")) {
+    return *objs.Get(BasePython::ObjID::kAppArchitectureArm);
+  } else if (!strcmp(arch, "arm64")) {
+    return *objs.Get(BasePython::ObjID::kAppArchitectureArm64);
+  } else if (!strcmp(arch, "x86")) {
+    return *objs.Get(BasePython::ObjID::kAppArchitectureX86);
+  } else if (!strcmp(arch, "x86_64")) {
+    return *objs.Get(BasePython::ObjID::kAppArchitectureX8664);
+  } else {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kCritical,
+                std::string("Invalid BA_ARCH: '") + arch + "'");
+    return *objs.Get(BasePython::ObjID::kAppArchitectureUnknown);
+  }
+}
+
+auto BasePlatform::GetPyAppVariant() -> PyObject* {
+  auto&& objs{g_base->python->objs()};
+  const auto* variant{g_buildconfig.variant()};
+  if (!strcmp(variant, "generic")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantGeneric);
+  } else if (!strcmp(variant, "test_build")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantTestBuild);
+  } else if (!strcmp(variant, "amazon_appstore")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantAmazonAppstore);
+  } else if (!strcmp(variant, "google_play")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantGooglePlay);
+  } else if (!strcmp(variant, "apple_app_store")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantAppleAppStore);
+  } else if (!strcmp(variant, "windows_store")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantWindowsStore);
+  } else if (!strcmp(variant, "steam")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantSteam);
+  } else if (!strcmp(variant, "meta")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantMeta);
+  } else if (!strcmp(variant, "epic_games_store")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantEpicGamesStore);
+  } else if (!strcmp(variant, "arcade")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantArcade);
+  } else if (!strcmp(variant, "demo")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantDemo);
+  } else if (!strcmp(variant, "cardboard")) {
+    return *objs.Get(BasePython::ObjID::kAppVariantCardboard);
+  } else {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kCritical,
+                std::string("Invalid BA_VARIANT: '") + variant + "'");
+    return *objs.Get(BasePython::ObjID::kAppArchitectureUnknown);
+  }
+}
+
+auto BasePlatform::GetPyAppPlatform() -> PyObject* {
+  auto&& objs{g_base->python->objs()};
+  const auto* platform{g_buildconfig.platform()};
+  if (!strcmp(platform, "macos")) {
+    return *objs.Get(BasePython::ObjID::kAppPlatformMacOS);
+  } else if (!strcmp(platform, "windows")) {
+    return *objs.Get(BasePython::ObjID::kAppPlatformWindows);
+  } else if (!strcmp(platform, "linux")) {
+    return *objs.Get(BasePython::ObjID::kAppPlatformLinux);
+  } else if (!strcmp(platform, "android")) {
+    return *objs.Get(BasePython::ObjID::kAppPlatformAndroid);
+  } else if (!strcmp(platform, "ios")) {
+    return *objs.Get(BasePython::ObjID::kAppPlatformIOS);
+  } else if (!strcmp(platform, "tvos")) {
+    return *objs.Get(BasePython::ObjID::kAppPlatformTVOS);
+  } else {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kCritical,
+                std::string("Invalid BA_PLATFORM: '") + platform + "'");
+    return *objs.Get(BasePython::ObjID::kAppPlatformUnknown);
+  }
 }
 
 }  // namespace ballistica::base

@@ -36,7 +36,7 @@ TextWidget::TextWidget() {
   // have a touchscreen (android-tv type situations).
   //
   // FIXME - should generalize this to any controller-only situation.
-  if (g_buildconfig.ostype_android()) {
+  if (g_buildconfig.platform_android()) {
     if (g_base->input->touch_input() == nullptr) {
       implicit_clear_button_ = false;
     }
@@ -717,7 +717,8 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         return false;
       case SDLK_RETURN:
       case SDLK_KP_ENTER:
-        if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
+        if (g_buildconfig.platform_ios_tvos()
+            || g_buildconfig.platform_android()) {
           // On mobile, return currently just deselects us.
           g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish);
           parent_widget()->SelectWidget(nullptr);

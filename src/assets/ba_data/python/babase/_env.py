@@ -144,6 +144,10 @@ def on_main_thread_start_app() -> None:
         # situations.
         __main__.__builtins__.help = _CustomHelper()
 
+    # UPDATE: As of May 2025 I'm no longer seeing the below issue, so
+    # disabling this workaround for now and will remove it soon if no
+    # issues arise.
+
     # On Windows I'm seeing the following error creating asyncio loops
     # in background threads with the default proactor setup:
 
@@ -155,7 +159,7 @@ def on_main_thread_start_app() -> None:
     # thread; previously the various asyncio bg thread loops were
     # working fine (maybe something caused them to default to selector
     # in that case?..
-    if sys.platform == 'win32':
+    if sys.platform == 'win32' and bool(False):
         import asyncio
 
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

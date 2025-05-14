@@ -145,6 +145,8 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
     @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         assert bs.app.classic is not None
         return bs.app.classic.getmaps('race')
 
@@ -187,6 +189,8 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def get_instance_description(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if (
             isinstance(self.session, bs.DualTeamSession)
             and self._entire_team_must_finish
@@ -201,6 +205,8 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def get_instance_description_short(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if self._laps > 1:
             return 'run ${ARG1} laps', self._laps
         return 'run 1 lap'
@@ -390,10 +396,14 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def on_team_join(self, team: Team) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         self._update_scoreboard()
 
     @override
     def on_player_leave(self, player: Player) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         super().on_player_leave(player)
 
         # A player leaving disqualifies the team if 'Entire Team Must Finish'
@@ -684,6 +694,8 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def spawn_player(self, player: Player) -> bs.Actor:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if player.team.finished:
             # FIXME: This is not type-safe!
             #   This call is expected to always return an Actor!
@@ -773,6 +785,8 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # Stop updating our time text, and set it to show the exact last
         # finish time if we have one. (so users don't get upset if their
         # final time differs from what they see onscreen by a tiny amount)
@@ -805,6 +819,8 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment default behavior.
             super().handlemessage(msg)

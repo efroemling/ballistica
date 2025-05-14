@@ -26,8 +26,9 @@ if TYPE_CHECKING:
 class WorkspaceSubsystem:
     """Subsystem for workspace handling in the app.
 
-    Access the single shared instance of this class at
-    `ba.app.workspaces`.
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.workspaces` attr on the :class:`~babase.App`
+    class.
     """
 
     def __init__(self) -> None:
@@ -40,7 +41,10 @@ class WorkspaceSubsystem:
         workspacename: str,
         on_completed: Callable[[], None],
     ) -> None:
-        """(internal)"""
+        """(internal)
+
+        :meta private:
+        """
 
         # Do our work in a background thread so we don't destroy
         # interactivity.

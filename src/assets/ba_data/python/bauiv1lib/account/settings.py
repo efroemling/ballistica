@@ -57,6 +57,9 @@ class AccountSettingsWindow(bui.MainWindow):
         )
 
         self._can_reset_achievements = False
+        self._recreate_suppress: bui.MainWindowAutoRecreateSuppress | None = (
+            None
+        )
 
         app = bui.app
         assert app.classic is not None
@@ -1487,9 +1490,19 @@ class AccountSettingsWindow(bui.MainWindow):
         bui.apptimer(0.1, bui.WeakCall(self._update))
 
     def _sign_in_press(self, login_type: str | LoginType) -> None:
-        # If we're still waiting for our master-server connection,
-        # keep the user informed of this instead of rushing in and
-        # failing immediately.
+
+        # Any time we initiate a sign in, turn off auto-recreates for
+        # the remainder of our existence. We want to make sure we stick
+        # around to handle the entire sign-in flow, and things like
+        # system sign-in dialogs could potentially cause toolbars to
+        # show/hide or other things that could affect window dimensions
+        # and thus trigger window recreates which could interrupt our
+        # process.
+        self._recreate_suppress = bui.MainWindowAutoRecreateSuppress()
+
+        # If we're still waiting for our master-server connection, keep
+        # the user informed of this instead of rushing in and failing
+        # immediately.
         wait_for_connectivity(on_connected=lambda: self._sign_in(login_type))
 
     def _sign_in(self, login_type: str | LoginType) -> None:
@@ -1580,6 +1593,16 @@ class AccountSettingsWindow(bui.MainWindow):
         bui.apptimer(0.1, bui.WeakCall(self._update))
 
     def _v2_proxy_sign_in_press(self) -> None:
+
+        # Any time we initiate a sign in, turn off auto-recreates for
+        # the remainder of our existence. We want to make sure we stick
+        # around to handle the entire sign-in flow, and things like
+        # system sign-in dialogs could potentially cause toolbars to
+        # show/hide or other things that could affect window dimensions
+        # and thus trigger window recreates which could interrupt our
+        # process.
+        self._recreate_suppress = bui.MainWindowAutoRecreateSuppress()
+
         # If we're still waiting for our master-server connection, keep
         # the user informed of this instead of rushing in and failing
         # immediately.

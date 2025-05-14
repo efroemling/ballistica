@@ -34,17 +34,15 @@ DisplayTime = NewType('DisplayTime', float)
 
 
 class Existable(Protocol):
-    """A Protocol for objects supporting an exists() method."""
+    """A Protocol for objects supporting an ``exists()`` method."""
 
     def exists(self) -> bool:
         """Whether this object exists."""
 
 
-ExistableT = TypeVar('ExistableT', bound=Existable)
-T = TypeVar('T')
-
-
-def existing(obj: ExistableT | None) -> ExistableT | None:
+def existing[ExistableT: Existable](
+    obj: ExistableT | None,
+) -> ExistableT | None:
     """Convert invalid references to None for any babase.Existable object.
 
     To best support type checking, it is important that invalid
@@ -62,7 +60,7 @@ def existing(obj: ExistableT | None) -> ExistableT | None:
     return obj if obj is not None and obj.exists() else None
 
 
-def getclass(
+def getclass[T](
     name: str, subclassof: type[T], check_sdlib_modulename_clash: bool = False
 ) -> type[T]:
     """Given a full class name such as ``foo.bar.MyClass``, return the class.

@@ -13,7 +13,7 @@
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 
 // Ew fixme.
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
 #include <android/log.h>
 #endif
 
@@ -56,7 +56,7 @@ const int kAudioProcessIntervalNormal{500 * 1000};
 const int kAudioProcessIntervalFade{50 * 1000};
 const int kAudioProcessIntervalPendingLoad{1 * 1000};
 
-#if BA_DEBUG_BUILD || BA_TEST_BUILD
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
 const bool kShowInUseSounds{};
 #endif
 
@@ -188,7 +188,7 @@ static void ALEventCallback_(ALenum eventType, ALuint object, ALuint param,
 
 // FIXME: Should convert this to a generalized OpenALSoft log handler since
 // we might want to wire it up on other platforms too.
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
 static void ALCustomAndroidLogCallback_(int severity, const char* msg) {
   // Let's log everything directly that is a warning or worse and store
   // everything else (up to some size limit). We can then explicitly ship
@@ -198,7 +198,7 @@ static void ALCustomAndroidLogCallback_(int severity, const char* msg) {
   }
   g_base->audio_server->OpenALSoftLogCallback(msg);
 }
-#endif  // BA_OSTYPE_ANDROID
+#endif  // BA_PLATFORM_ANDROID
 
 void ALCustomLogCallback_(void* userptr, char level, const char* message,
                           int length) noexcept {
@@ -292,14 +292,14 @@ void AudioServer::OnAppStartInThread_() {
 #endif  // BA_RIFT_BUILD
 
     // Wire up our custom log callback where applicable.
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
     // alsoft_set_log_callback(ALCustomLogCallback_, nullptr);
     alcSetCustomAndroidLogger(ALCustomAndroidLogCallback_);
 #endif
 
     auto* device = alcOpenDevice(al_device_name);
     if (!device) {
-      if (g_buildconfig.ostype_android()) {
+      if (g_buildconfig.platform_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
         g_core->Log(LogName::kBaAudio, LogLevel::kError,
             "------------------------"
@@ -317,7 +317,7 @@ void AudioServer::OnAppStartInThread_() {
     impl_->alc_context = alcCreateContext(device, nullptr);
 
     // Android special case: if we fail, try again after a few seconds.
-    if (!impl_->alc_context && g_buildconfig.ostype_android()) {
+    if (!impl_->alc_context && g_buildconfig.platform_android()) {
       g_core->Log(LogName::kBaAudio, LogLevel::kError,
                   "Failed creating AL context; waiting and trying again.");
       {
@@ -355,7 +355,7 @@ void AudioServer::OnAppStartInThread_() {
     }
 
     // Android special case: if we fail, try OpenSL back-end.
-    if (!impl_->alc_context && g_buildconfig.ostype_android()) {
+    if (!impl_->alc_context && g_buildconfig.platform_android()) {
       g_core->Log(
           LogName::kBaAudio, LogLevel::kError,
           "Failed second time creating AL context; trying OpenSL backend.");
@@ -394,7 +394,7 @@ void AudioServer::OnAppStartInThread_() {
 
     // Fail at this point if we've got nothing.
     if (!impl_->alc_context) {
-      if (g_buildconfig.ostype_android()) {
+      if (g_buildconfig.platform_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
         g_core->Log(LogName::kBaAudio, LogLevel::kError,
             "------------------------"
@@ -548,7 +548,7 @@ void AudioServer::SetSuspended_(bool suspend) {
       g_core->Log(LogName::kBaAudio, LogLevel::kError,
                   "Got audio unsuspend request when already unsuspended.");
     } else {
-#if BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_IOS_TVOS
       // apple recommends this during audio-interruptions..
       // http://developer.apple.com/library/ios/#documentation/Audio/Conceptual/AudioSessionProgrammingGuide/Cookbook/
       // Cookbook.html#//apple_ref/doc/uid/TP40007875-CH6-SW38
@@ -589,7 +589,7 @@ void AudioServer::SetSuspended_(bool suspend) {
       g_core->Log(LogName::kBaAudio, LogLevel::kError,
                   "Got audio suspend request when already suspended.");
     } else {
-#if BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_IOS_TVOS
       // Apple recommends this during audio-interruptions.
       // http://developer.apple.com/library/ios/#documentation/Audio/
       // Conceptual/AudioSessionProgrammingGuide/Cookbook/
@@ -772,7 +772,7 @@ void AudioServer::UpdateAvailableSources_() {
 // Some sanity checking. Occasionally lets go through our sources
 // and see how many are in use, how many are currently locked by the client,
 // etc.
-#if (BA_DEBUG_BUILD || BA_TEST_BUILD)
+#if (BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD)
   millisecs_t t = g_core->AppTimeMillisecs();
   if (t - last_sanity_check_time_ > 5000) {
     last_sanity_check_time_ = t;
@@ -942,7 +942,7 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
       && real_time_seconds - last_reset_attempt_time_ >= retry_interval) {
     g_core->Log(LogName::kBaAudio, LogLevel::kInfo,
                 "OpenAL device disconnected; resetting...");
-    if (g_buildconfig.ostype_android()) {
+    if (g_buildconfig.platform_android()) {
       std::scoped_lock lock(openalsoft_android_log_mutex_);
       openalsoft_android_log_ +=
           "DEVICE DISCONNECT DETECTED; ATTEMPTING RESET\n";
@@ -966,12 +966,12 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
     // will result in 10 seconds of silence.
     if (result == ALC_TRUE) {
       // last_reset_attempt_time_ = -999.0;
-      if (g_buildconfig.ostype_android()) {
+      if (g_buildconfig.platform_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
         openalsoft_android_log_ += "DEVICE RESET CALL SUCCESSFUL\n";
       }
     } else {
-      if (g_buildconfig.ostype_android()) {
+      if (g_buildconfig.platform_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
         openalsoft_android_log_ += "DEVICE RESET CALL FAILED\n";
       }
@@ -991,7 +991,7 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
     //     Log(LogLevel::kError, "alcResetDeviceSOFT failed to reconnect
     //     device.");
     //   }
-    //   if (g_buildconfig.ostype_android()) {
+    //   if (g_buildconfig.platform_android()) {
     //     std::scoped_lock lock(openalsoft_android_log_mutex_);
     //     Log(LogLevel::kWarning,
     //         "------------------------"
@@ -1008,7 +1008,7 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
   if (real_time_seconds - last_connected_time_ > 20.0
       && !shipped_reconnect_logs_) {
     shipped_reconnect_logs_ = true;
-    if (g_buildconfig.ostype_android()) {
+    if (g_buildconfig.platform_android()) {
       std::scoped_lock lock(openalsoft_android_log_mutex_);
       g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
             "Have been disconnected for a while; dumping OpenAL log.\n"

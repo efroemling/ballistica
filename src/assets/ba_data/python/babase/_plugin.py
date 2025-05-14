@@ -74,7 +74,7 @@ class PluginSubsystem(AppSubsystem):
 
         # Create a plugin-spec for each plugin class we found in the
         # meta-scan.
-        for class_path in results.exports_of_class(Plugin):
+        for class_path in results.exports_by_name('babase.Plugin'):
             assert class_path not in self.plugin_specs
             plugspec = self.plugin_specs[class_path] = PluginSpec(
                 class_path=class_path, loadable=True

@@ -3,8 +3,6 @@
 #ifndef BALLISTICA_SHARED_PYTHON_PYTHON_OBJECT_SET_H_
 #define BALLISTICA_SHARED_PYTHON_PYTHON_OBJECT_SET_H_
 
-#include <Python.h>
-
 #include <string>
 #include <vector>
 

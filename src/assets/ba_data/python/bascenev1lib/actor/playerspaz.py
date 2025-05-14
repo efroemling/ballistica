@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, overload, override
+from typing import TYPE_CHECKING, overload, override
 
 import bascenev1 as bs
 
@@ -12,8 +12,6 @@ from bascenev1lib.actor.spaz import Spaz
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Literal
-
-PlayerT = TypeVar('PlayerT', bound=bs.Player)
 
 
 class PlayerSpazHurtMessage:
@@ -72,16 +70,16 @@ class PlayerSpaz(Spaz):
     # Overloads to tell the type system our return type based on doraise val.
 
     @overload
-    def getplayer(
+    def getplayer[PlayerT: bs.Player](
         self, playertype: type[PlayerT], doraise: Literal[False] = False
     ) -> PlayerT | None: ...
 
     @overload
-    def getplayer(
+    def getplayer[PlayerT: bs.Player](
         self, playertype: type[PlayerT], doraise: Literal[True]
     ) -> PlayerT: ...
 
-    def getplayer(
+    def getplayer[PlayerT: bs.Player](
         self, playertype: type[PlayerT], doraise: bool = False
     ) -> PlayerT | None:
         """Get the bascenev1.Player associated with this Spaz.

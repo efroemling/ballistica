@@ -28,7 +28,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
 
     Bind();
 
-#if BA_CARDBOARD_BUILD
+#if BA_VARIANT_CARDBOARD
     int x, y;
     // Viewport offsets only apply to the screen render-target.
     if (type_ == Type::kScreen) {

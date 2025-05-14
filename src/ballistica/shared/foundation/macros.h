@@ -26,7 +26,7 @@
 #define BA_BUILD_COMMAND_FILENAME \
   "<string: " __FILE__ " line " BA_TOSTRING(__LINE__) ">"
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #define BA_DIRSLASH "\\"
 #else
 #define BA_DIRSLASH "/"

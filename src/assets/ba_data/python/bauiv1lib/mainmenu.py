@@ -306,7 +306,7 @@ class MainMenuWindow(bui.MainWindow):
         v = button_y_offs + side_button_y_offs
 
         thistdelay = self._tdelay + td2 * self._t_delay_inc
-        self._gather_button = btn = bui.buttonwidget(
+        self._gather_button = bui.buttonwidget(
             parent=self._root_widget,
             position=(h - side_button_width * side_button_scale * 0.5, v),
             size=(side_button_width, side_button_height),
@@ -323,7 +323,7 @@ class MainMenuWindow(bui.MainWindow):
             size=(0, 0),
             scale=0.75,
             transition_delay=thistdelay,
-            draw_controller=btn,
+            draw_controller=self._gather_button,
             color=(0.75, 1.0, 0.7),
             maxwidth=side_button_width * side_button_scale * 0.8,
             text=bui.Lstr(resource='gatherWindow.titleText'),
@@ -334,7 +334,7 @@ class MainMenuWindow(bui.MainWindow):
         bui.imagewidget(
             parent=self._root_widget,
             size=(icon_size, icon_size),
-            draw_controller=btn,
+            draw_controller=self._gather_button,
             transition_delay=thistdelay,
             position=(
                 h - 0.5 * icon_size,
@@ -353,7 +353,7 @@ class MainMenuWindow(bui.MainWindow):
         )
         v = button_y_offs + side_button_2_y_offs
 
-        btn = bui.buttonwidget(
+        self._how_to_play_button = bui.buttonwidget(
             parent=self._root_widget,
             id='howtoplay',
             position=(h, v),
@@ -365,7 +365,10 @@ class MainMenuWindow(bui.MainWindow):
             transition_delay=thistdelay,
             on_activate_call=self._howtoplay,
         )
-        self._how_to_play_button = btn
+        bui.widget(
+            edit=self._how_to_play_button,
+            left_widget=bui.get_special_widget('settings_button'),
+        )
 
         # Play button.
         h = self._width * 0.5
@@ -400,7 +403,7 @@ class MainMenuWindow(bui.MainWindow):
         )
         v = button_y_offs + side_button_y_offs
         thistdelay = self._tdelay + td4 * self._t_delay_inc
-        self._watch_button = btn = bui.buttonwidget(
+        self._watch_button = bui.buttonwidget(
             parent=self._root_widget,
             position=(h - side_button_width * side_button_scale * 0.5, v),
             size=(side_button_width, side_button_height),
@@ -418,7 +421,7 @@ class MainMenuWindow(bui.MainWindow):
             scale=0.75,
             transition_delay=thistdelay,
             color=(0.75, 1.0, 0.7),
-            draw_controller=btn,
+            draw_controller=self._watch_button,
             maxwidth=side_button_width * side_button_scale * 0.8,
             text=bui.Lstr(resource='watchWindow.titleText'),
             h_align='center',
@@ -428,7 +431,7 @@ class MainMenuWindow(bui.MainWindow):
         bui.imagewidget(
             parent=self._root_widget,
             size=(icon_size, icon_size),
-            draw_controller=btn,
+            draw_controller=self._watch_button,
             transition_delay=thistdelay,
             position=(
                 h - 0.5 * icon_size,
@@ -490,7 +493,9 @@ class MainMenuWindow(bui.MainWindow):
                 edit=self._root_widget, cancel_button=quit_button
             )
             # self._tdelay += self._t_delay_inc
+            rightmost_button = quit_button
         else:
+            rightmost_button = self._credits_button
             self._quit_button = None
 
             # If we're not in-game, have no quit button, and this is
@@ -503,6 +508,10 @@ class MainMenuWindow(bui.MainWindow):
                 bui.containerwidget(
                     edit=self._root_widget, on_cancel_call=_do_quit
                 )
+        bui.widget(
+            edit=rightmost_button,
+            right_widget=bui.get_special_widget('store_button'),
+        )
 
     def _quit(self) -> None:
         # pylint: disable=cyclic-import

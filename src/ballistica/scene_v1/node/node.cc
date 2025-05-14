@@ -236,11 +236,24 @@ auto Node::GetPyRef(bool new_ref) -> PyObject* {
 }
 
 auto Node::GetDelegate() -> PyObject* {
-  PyObject* ref = delegate_.get();
-  if (!ref) {
+  PyObject* delegate = delegate_.get();
+  if (!delegate) {
     return nullptr;
   }
-  return PyWeakref_GetObject(ref);
+  PyObject* obj{};
+  int result = PyWeakref_GetRef(delegate, &obj);
+
+  // The object is valid (1) or has since died (0).
+  if (result == 1 || result == 0) {
+    return obj;
+  }
+  // Something went wrong and an exception is set. We don't expect this to
+  // ever happen so currently just providing a simple error msg.
+  assert(result == -1);
+  PyErr_Clear();
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "Node::GetDelegate(): error getting weakref obj.");
+  return nullptr;
 }
 
 void Node::DispatchNodeMessage(const char* buffer) {
@@ -380,16 +393,18 @@ void Node::DispatchUserMessage(PyObject* obj, const char* label) {
   }
 
   base::ScopedSetContext ssc(context_ref());
-  PyObject* delegate = GetDelegate();
-  if (delegate && delegate != Py_None) {
+
+  // GetDelegate() returns a new ref or nullptr.
+  auto delegate{PythonRef::StolenSoft(GetDelegate())};
+  if (delegate.exists() && delegate.get() != Py_None) {
     try {
       PyObject* handlemessage_obj =
-          PyObject_GetAttrString(delegate, "handlemessage");
+          PyObject_GetAttrString(delegate.get(), "handlemessage");
       if (!handlemessage_obj) {
         PyErr_Clear();
         throw Exception("No 'handlemessage' found on delegate object for '"
                         + type()->name() + "' node ("
-                        + Python::ObjToString(delegate) + ")");
+                        + Python::ObjToString(delegate.get()) + ")");
       }
       PythonRef c(handlemessage_obj, PythonRef::kSteal);
       {

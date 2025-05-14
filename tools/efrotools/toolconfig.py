@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    pass
 
 
 def install_tool_config(projroot: Path, src: Path, dst: Path) -> None:
@@ -121,12 +121,12 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
     # Stick project-root wherever they want.
     cfg = cfg.replace('__EFRO_PROJECT_ROOT__', str(projroot))
 
-    # Project Python version; '3.12', etc.
+    # Project Python version; '3.13', etc.
     name = '__EFRO_PY_VER__'
     if name in cfg:
         cfg = cfg.replace(name, PYVER)
 
-    # Project Python version as a binary name; 'python3.12', etc.
+    # Project Python version as a binary name; 'python3.13', etc.
     name = '__EFRO_PY_BIN__'
     if name in cfg:
         cfg = cfg.replace(name, str(Path(projroot, '.venv', 'bin', 'python')))

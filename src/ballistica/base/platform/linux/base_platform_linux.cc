@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#if BA_OSTYPE_LINUX
+#if BA_PLATFORM_LINUX
 #include "ballistica/base/platform/linux/base_platform_linux.h"
 
 #include <stdlib.h>
@@ -41,4 +41,4 @@ void BasePlatformLinux::OpenFileExternally(const std::string& path) {
 
 }  // namespace ballistica::base
 
-#endif  // BA_OSTYPE_LINUX
+#endif  // BA_PLATFORM_LINUX

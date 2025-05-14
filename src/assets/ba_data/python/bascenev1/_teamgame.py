@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, TypeVar, override
+from typing import TYPE_CHECKING, override
 
 import babase
 
@@ -22,11 +22,16 @@ if TYPE_CHECKING:
 
     import bascenev1
 
-PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
-TeamT = TypeVar('TeamT', bound='bascenev1.Team')
+
+# Note: Need to suppress an undefined variable here because our pylint
+# plugin clears type-arg declarations (which we don't require to be
+# present at runtime) but keeps parent type-args (which we sometimes use
+# at runtime).
 
 
-class TeamGameActivity(GameActivity[PlayerT, TeamT]):
+class TeamGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
+    GameActivity[PlayerT, TeamT]  # pylint: disable=undefined-variable
+):
     """Base class for teams and free-for-all mode games.
 
     (Free-for-all is essentially just a special case where every player

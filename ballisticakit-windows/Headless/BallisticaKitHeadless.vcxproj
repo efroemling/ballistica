@@ -659,8 +659,8 @@
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_cmake.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_common.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_common.h" />
-    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_generic.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_headless.h" />
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_testbuild.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\event_loop.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\foundation\event_loop.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\exception.cc" />

@@ -108,7 +108,7 @@ void StdioConsole::StartInMainThread_() {
 
 void StdioConsole::Clear_() {
   int retval{-1};
-  if (g_buildconfig.ostype_macos() || g_buildconfig.ostype_linux()) {
+  if (g_buildconfig.platform_macos() || g_buildconfig.platform_linux()) {
     // Attempt to run actual clear command on unix-y systems to plop
     // our prompt back at the top of the screen.
     retval = core::CorePlatform::System("clear");

@@ -5,13 +5,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 from enum import Enum
 
 import babase
 
 if TYPE_CHECKING:
+    # pylint: disable=cyclic-import
     from typing import Sequence, Any
+
+    # from _bascenev1 import Node
+    # from bascenev1._player import Player
 
     import bascenev1
 
@@ -59,9 +63,6 @@ class DieMessage:
     how: DeathType = DeathType.GENERIC
 
 
-PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
-
-
 class PlayerDiedMessage:
     """A message saying a bascenev1.Player has died."""
 
@@ -91,7 +92,9 @@ class PlayerDiedMessage:
         self.killed = was_killed
         self.how = how
 
-    def getkillerplayer(self, playertype: type[PlayerT]) -> PlayerT | None:
+    def getkillerplayer[PlayerT: bascenev1.Player](
+        self, playertype: type[PlayerT]
+    ) -> PlayerT | None:
         """Return the bascenev1.Player responsible for the killing, if any.
 
         Pass the Player type being used by the current game.
@@ -99,7 +102,9 @@ class PlayerDiedMessage:
         assert isinstance(self._killerplayer, (playertype, type(None)))
         return self._killerplayer
 
-    def getplayer(self, playertype: type[PlayerT]) -> PlayerT:
+    def getplayer[PlayerT: bascenev1.Player](
+        self, playertype: type[PlayerT]
+    ) -> PlayerT:
         """Return the bascenev1.Player that died.
 
         The type of player for the current activity should be passed so that
@@ -237,7 +242,9 @@ class HitMessage:
             force_direction if force_direction is not None else velocity
         )
 
-    def get_source_player(self, playertype: type[PlayerT]) -> PlayerT | None:
+    def get_source_player[PlayerT: bascenev1.Player](
+        self, playertype: type[PlayerT]
+    ) -> PlayerT | None:
         """Return the source-player if one exists and is the provided type."""
         player: Any = self._source_player
 

@@ -5,7 +5,7 @@
 
 // Include everything needed for standard sockets api usage.
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 // (need includes to stay in this order to disabling formatting)
 // clang-format off
 #include <ws2tcpip.h>
@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
 // NOTE TO SELF: Apparently once we target API 24, ifaddrs.h is available.
 #include "ballistica/core/platform/android/ifaddrs_android_ext.h"
 #else

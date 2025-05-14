@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "ballistica/base/input/device/keyboard_input.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_context_ref.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
@@ -35,6 +36,7 @@
 #include "ballistica/scene_v1/python/methods/python_methods_input.h"
 #include "ballistica/scene_v1/python/methods/python_methods_networking.h"
 #include "ballistica/scene_v1/python/methods/python_methods_scene.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/utils.h"

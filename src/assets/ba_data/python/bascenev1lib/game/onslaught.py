@@ -225,6 +225,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def on_transition_in(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         super().on_transition_in()
         customdata = bs.getsession().customdata
 
@@ -1522,6 +1524,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, PlayerSpazHurtMessage):
             msg.spaz.getplayer(Player, True).has_been_hurt = True
             self._a_player_has_been_hurt = True
@@ -1635,6 +1639,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # Tell our bots to celebrate just to rub it in.
         assert self._bots is not None
         self._bots.final_celebrate()

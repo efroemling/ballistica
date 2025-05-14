@@ -6,15 +6,13 @@ from __future__ import annotations
 
 import weakref
 import threading
-from typing import TYPE_CHECKING, TypeVar, Generic
-
-T = TypeVar('T')
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Callable
 
 
-class CallbackSet(Generic[T]):
+class CallbackSet[T]:
     """A simple way to manage a set of callbacks.
 
     Any number of calls can be registered with a callback set. Each
@@ -80,7 +78,7 @@ class CallbackSet(Generic[T]):
         self._entries = newentries
 
 
-class CallbackRegistration(Generic[T]):
+class CallbackRegistration[T]:
     """An entry for a callback set."""
 
     def __init__(self, call: T, callbackset: CallbackSet[T]) -> None:

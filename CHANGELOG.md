@@ -1,10 +1,39 @@
-### 1.7.39 (build 22352, api 9, 2025-04-06)
+### 1.7.40 (build 22368, api 9, 2025-05-13)
+- Upgraded from Python 3.12 to 3.13. See python.org for what fun new goodies
+  this gets us.
+- Apple builds (namely Mac for now) are now using a more 'vanilla' version of the
+  Python library instead of the custom-built version I've been using for years.
+  For one, this means that Python and its various modules and library
+  dependencies now exist as separate shared libraries on disk instead of all
+  being statically compiled into a single binary. This increases app size and
+  complexity a bit but will make it way easier to update Python going forward
+  and reduces the chances of things breaking due to nonstandard customizations.
+  At some point in the future I may make the same change for the Android
+  version, though the custom statically linked build is a bit easier to maintain
+  there so its less of a priority.
+- Fixed an issue on Android where in some cases viewing an Ad to reduce chest
+  open time would have no effect. Please holler if you ever watch an ad and
+  don't see the resulting time reduction.
+- Querying exported classes via the meta subsystem now accepts fully qualified
+  path strings such as `babase.Plugin` instead of type objects. This is because
+  I have disabled the class-name prettifying that was happening before
+  (`set_canonical_module_names()`), so the *actual* class paths we'd pull from
+  passed type objects now could be something ugly/internal like
+  `babase._plugin.Plugin` and I'd rather not use private paths in our `# ba_meta
+  export` comments. By explicitly providing string paths we can keep using clean
+  public aliased paths like `babase.Plugin`.
+- Sphinx documentation generation is now set to 'nitpicky' so it will complain
+  if anything is referenced in comments that cannot be found (classes, methods,
+  etc.) This should help avoid broken or out of date docstrings. Specific
+  exceptions to this can be added in `conf.py` if needed.
+
+### 1.7.39 (build 22353, api 9, 2025-04-08)
 - Lots of work on sphinx documentation. Docs are now generated for both runtime
-  and tools packages. Removed the old pdoc docs generation path since sphinx is
-  working quite well and gives us lots of room to grow, and also since we can't
-  really support both (docstrings need to be formatted to play nice with one or
-  the other). Big thanks to Dliwk though for the old pdoc setup which got us to
-  this point though.
+  and tools packages. Removed the old pdoc docs generation option since sphinx
+  is working quite well and gives us lots of room to grow, and also since we
+  can't really support both (docstrings need to be formatted to play nice with
+  one or the other). Big thanks to Dliwk though for the old pdoc setup which got
+  us to this point.
 - The `babase.App.State` class is now `babase.AppState`.
 - Removed `babase.print_exception()`. This has been mostly unused for a long
   time. Anything still using it should use `logging.exception()` instead.

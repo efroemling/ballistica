@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#if !BA_OSTYPE_WINDOWS
+#if !BA_PLATFORM_WINDOWS
 #include <dirent.h>
 #endif
 #include <fcntl.h>
@@ -16,14 +16,14 @@
 // Trying to avoid platform-specific headers here except for
 // a few mostly-cross-platform bits where its worth the mess.
 #if BA_ENABLE_EXECINFO_BACKTRACES
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
 #include "ballistica/core/platform/android/execinfo.h"
 #else
 #include <execinfo.h>
-#endif  // BA_OSTYPE_ANDROID
+#endif  // BA_PLATFORM_ANDROID
 #endif  // BA_ENABLE_EXECINFO_BACKTRACES
 
-#if !BA_OSTYPE_WINDOWS
+#if !BA_PLATFORM_WINDOWS
 #include <cxxabi.h>
 #include <unistd.h>
 #endif
@@ -43,55 +43,55 @@
 
 // Android ---------------------------------------------------------------------
 
-#if BA_OSTYPE_ANDROID
-#if BA_GOOGLE_BUILD
+#if BA_PLATFORM_ANDROID
+#if BA_VARIANT_GOOGLE_PLAY
 #include "ballistica/core/platform/android/google/core_plat_andr_google.h"
-#define BA_PLATFORM_CLASS CorePlatformAndroidGoogle
-#elif BA_AMAZON_BUILD
+#define BA_CORE_PLATFORM_CLASS CorePlatformAndroidGoogle
+#elif BA_VARIANT_AMAZON_APPSTORE
 #include "ballistica/core/platform/android/amazon/core_plat_andr_amazon.h"
-#define BA_PLATFORM_CLASS CorePlatformAndroidAmazon
-#elif BA_CARDBOARD_BUILD
+#define BA_CORE_PLATFORM_CLASS CorePlatformAndroidAmazon
+#elif BA_VARIANT_CARDBOARD
 #include "ballistica/core/platform/android/cardboard/core_pl_an_cardboard.h"
-#define BA_PLATFORM_CLASS CorePlatformAndroidCardboard
+#define BA_CORE_PLATFORM_CLASS CorePlatformAndroidCardboard
 #else  // Generic android.
 #include "ballistica/core/platform/android/core_platform_android.h"
-#define BA_PLATFORM_CLASS CorePlatformAndroid
+#define BA_CORE_PLATFORM_CLASS CorePlatformAndroid
 #endif  // (Android subplatform)
 
 // Apple -----------------------------------------------------------------------
 
-#elif BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS
+#elif BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS
 #include "ballistica/core/platform/apple/core_platform_apple.h"
-#define BA_PLATFORM_CLASS CorePlatformApple
+#define BA_CORE_PLATFORM_CLASS CorePlatformApple
 
 // Windows ---------------------------------------------------------------------
 
-#elif BA_OSTYPE_WINDOWS
+#elif BA_PLATFORM_WINDOWS
 #if BA_RIFT_BUILD
 #include "ballistica/core/platform/windows/core_platform_windows_oculus.h"
-#define BA_PLATFORM_CLASS CorePlatformWindowsOculus
+#define BA_CORE_PLATFORM_CLASS CorePlatformWindowsOculus
 #else  // generic windows
 #include "ballistica/core/platform/windows/core_platform_windows.h"
-#define BA_PLATFORM_CLASS CorePlatformWindows
+#define BA_CORE_PLATFORM_CLASS CorePlatformWindows
 #endif  // windows subtype
 
 // Linux -----------------------------------------------------------------------
 
-#elif BA_OSTYPE_LINUX
+#elif BA_PLATFORM_LINUX
 #include "ballistica/core/platform/linux/core_platform_linux.h"
-#define BA_PLATFORM_CLASS CorePlatformLinux
+#define BA_CORE_PLATFORM_CLASS CorePlatformLinux
 #else
 
 // Generic ---------------------------------------------------------------------
 
-#define BA_PLATFORM_CLASS CorePlatform
+#define BA_CORE_PLATFORM_CLASS CorePlatform
 
 #endif
 
 // ----------------------- END PLATFORM SELECTION ------------------------------
 
-#ifndef BA_PLATFORM_CLASS
-#error no BA_PLATFORM_CLASS defined for this platform
+#ifndef BA_CORE_PLATFORM_CLASS
+#error no BA_CORE_PLATFORM_CLASS defined for this platform
 #endif
 
 // A call that can be used by custom built native libraries (Python, etc.)
@@ -107,7 +107,7 @@ void BallisticaLowLevelDebugLog(const char* msg) {}
 namespace ballistica::core {
 
 auto CorePlatform::Create() -> CorePlatform* {
-  auto platform = new BA_PLATFORM_CLASS();
+  auto platform = new BA_CORE_PLATFORM_CLASS();
   platform->PostInit();
   assert(platform->ran_base_post_init_);
   return platform;
@@ -150,9 +150,9 @@ auto CorePlatform::GetLegacyDeviceUUID() -> const std::string& {
     }
 
     // Keep demo/arcade uuids unique.
-    if (g_buildconfig.demo_build()) {
+    if (g_buildconfig.variant_demo()) {
       legacy_device_uuid_ += "_d";
-    } else if (g_buildconfig.arcade_build()) {
+    } else if (g_buildconfig.variant_arcade()) {
       legacy_device_uuid_ += "_a";
     }
 
@@ -288,7 +288,7 @@ auto CorePlatform::GetReplaysDir() -> std::string {
 // rename() supporting UTF8 strings.
 auto CorePlatform::Rename(const char* oldname, const char* newname) -> int {
   // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   return rename(oldname, newname);
@@ -297,7 +297,7 @@ auto CorePlatform::Rename(const char* oldname, const char* newname) -> int {
 
 auto CorePlatform::Remove(const char* path) -> int {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   return remove(path);
@@ -307,7 +307,7 @@ auto CorePlatform::Remove(const char* path) -> int {
 // stat() supporting UTF8 strings.
 auto CorePlatform::Stat(const char* path, struct BA_STAT* buffer) -> int {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   return stat(path, buffer);
@@ -317,7 +317,7 @@ auto CorePlatform::Stat(const char* path, struct BA_STAT* buffer) -> int {
 // fopen() supporting UTF8 strings.
 auto CorePlatform::FOpen(const char* path, const char* mode) -> FILE* {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   return fopen(path, mode);
@@ -341,9 +341,9 @@ auto CorePlatform::GetSocketError() -> int {
 
 auto CorePlatform::GetErrnoString() -> std::string {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
-#elif BA_OSTYPE_LINUX
+#elif BA_PLATFORM_LINUX
   // We seem to be getting a gnu-specific version on linux
   // which returns a char pointer that doesn't always point
   // to the provided buffer.  Sounds like there's a way to
@@ -412,7 +412,7 @@ auto CorePlatform::DoGetUserPythonDirectoryMonolithicDefault()
 
 void CorePlatform::DoMakeDir(const std::string& dir, bool quiet) {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   int result = mkdir(dir.c_str(),
@@ -558,7 +558,7 @@ auto CorePlatform::DoGetDataDirectoryMonolithicDefault() -> std::string {
 
 void CorePlatform::SetEnv(const std::string& name, const std::string& value) {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   auto result = setenv(name.c_str(), value.c_str(), true);
@@ -572,7 +572,7 @@ void CorePlatform::SetEnv(const std::string& name, const std::string& value) {
 auto CorePlatform::GetEnv(const std::string& name)
     -> std::optional<std::string> {
   // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   std::optional<std::string> out{};
@@ -585,14 +585,14 @@ auto CorePlatform::GetEnv(const std::string& name)
 
 auto CorePlatform::GetIsStdinATerminal() -> bool {
 // This covers non-windows cases.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   return static_cast<bool>(isatty(fileno(stdin)));
 #endif
 }
 
-auto CorePlatform::GetOSVersionString() -> std::string { return ""; }
+auto CorePlatform::GetOSVersionString() -> std::string { return "unknown"; }
 
 auto CorePlatform::GetLegacyUserAgentString() -> std::string {
   std::string device = GetDeviceDescription();
@@ -605,27 +605,27 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
   std::string subplatform;
   if (g_buildconfig.headless_build()) {
     subplatform = "HdlS";
-  } else if (g_buildconfig.cardboard_build()) {
+  } else if (g_buildconfig.variant_cardboard()) {
     subplatform = "GpCb";
   } else if (g_buildconfig.gearvr_build()) {
     subplatform = "OcGVRSt";
   } else if (g_buildconfig.rift_build()) {
     subplatform = "OcRftSt";
-  } else if (g_buildconfig.amazon_build()) {
+  } else if (g_buildconfig.variant_amazon_appstore()) {
     subplatform = "AmSt";
-  } else if (g_buildconfig.google_build()) {
+  } else if (g_buildconfig.variant_google_play()) {
     subplatform = "GpSt";
-  } else if (g_buildconfig.use_store_kit() && g_buildconfig.ostype_macos()) {
+  } else if (g_buildconfig.use_store_kit() && g_buildconfig.platform_macos()) {
     subplatform = "McApSt";
-  } else if (g_buildconfig.use_store_kit() && g_buildconfig.ostype_ios()) {
+  } else if (g_buildconfig.use_store_kit() && g_buildconfig.platform_ios()) {
     subplatform = "IosApSt";
-  } else if (g_buildconfig.use_store_kit() && g_buildconfig.ostype_tvos()) {
+  } else if (g_buildconfig.use_store_kit() && g_buildconfig.platform_tvos()) {
     subplatform = "TvsApSt";
-  } else if (g_buildconfig.demo_build()) {
+  } else if (g_buildconfig.variant_demo()) {
     subplatform = "DeMo";
-  } else if (g_buildconfig.arcade_build()) {
+  } else if (g_buildconfig.variant_arcade()) {
     subplatform = "ArCd";
-  } else if (g_buildconfig.test_build()) {
+  } else if (g_buildconfig.variant_test_build()) {
     subplatform = "TstB";
   }
 
@@ -638,8 +638,8 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
 
   std::string out{std::string("BallisticaKit ") + kEngineVersion + " ("
                   + std::to_string(kEngineBuildNumber) + ")" + subplatform
-                  + " (" + g_buildconfig.platform_string() + version + "; "
-                  + device + "; " + GetLocale() + ")"};
+                  + " (" + g_buildconfig.platform() + " " + g_buildconfig.arch()
+                  + version + "; " + device + "; " + GetLocale() + ")"};
 
   // This gets shipped to various places which might choke on fancy unicode
   // characters, so let's limit to simple ascii.
@@ -650,7 +650,7 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
 
 auto CorePlatform::GetCWD() -> std::string {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   char buffer[PATH_MAX];
@@ -729,7 +729,7 @@ auto CorePlatform::GetDeviceV1AccountID() -> std::string {
 auto CorePlatform::DemangleCXXSymbol(const std::string& s) -> std::string {
   // Do __cxa_demangle on platforms that support it.
   // FIXME; I believe there's an equivalent call for windows; should research.
-#if !BA_OSTYPE_WINDOWS
+#if !BA_PLATFORM_WINDOWS
   int demangle_status;
 
   // If we pass null for buffers, this mallocs one for us that we have to free.
@@ -856,16 +856,16 @@ void CorePlatform::SetCurrentThreadName(const std::string& name) {
   // We should never be doing this for the main thread.
   BA_PRECONDITION_FATAL(!g_core->InMainThread());
 
-#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS
   pthread_setname_np(name.c_str());
-#elif BA_OSTYPE_LINUX || BA_OSTYPE_ANDROID
+#elif BA_PLATFORM_LINUX || BA_PLATFORM_ANDROID
   pthread_setname_np(pthread_self(), name.c_str());
 #endif
 }
 
 void CorePlatform::Unlink(const char* path) {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   unlink(path);
@@ -884,7 +884,7 @@ auto CorePlatform::AbsPath(const std::string& path, std::string* outpath)
 auto CorePlatform::DoAbsPath(const std::string& path, std::string* outpath)
     -> bool {
   // This covers all but windows.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   char buffer[PATH_MAX + 1];
@@ -905,7 +905,7 @@ auto CorePlatform::GetDisplayResolution(int* x, int* y) -> bool {
 
 void CorePlatform::CloseSocket(int socket) {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   close(socket);
@@ -914,7 +914,7 @@ void CorePlatform::CloseSocket(int socket) {
 
 auto CorePlatform::GetBroadcastAddrs() -> std::vector<uint32_t> {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   std::vector<uint32_t> addrs;
@@ -948,7 +948,7 @@ auto CorePlatform::GetBroadcastAddrs() -> std::vector<uint32_t> {
 
 auto CorePlatform::SetSocketNonBlocking(int sd) -> bool {
 // This default implementation covers non-windows platforms.
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
   throw Exception();
 #else
   int result = fcntl(sd, F_SETFL, O_NONBLOCK);
@@ -966,11 +966,11 @@ auto CorePlatform::TimeSinceLaunchMillisecs() const -> millisecs_t {
   return TimeMonotonicMillisecs() - start_time_millisecs_;
 }
 
-auto CorePlatform::GetPlatformName() -> std::string {
+auto CorePlatform::GetLegacyPlatformName() -> std::string {
   throw Exception("UNIMPLEMENTED");
 }
 
-auto CorePlatform::GetSubplatformName() -> std::string {
+auto CorePlatform::GetLegacySubplatformName() -> std::string {
   // This doesnt always have to be set.
   return "";
 }
@@ -1013,7 +1013,7 @@ class NativeStackTraceExecInfo : public NativeStackTrace {
         // Special case for Android: there's usually a horrific mess of a
         // pathname leading up to libmain.so, which we should never really
         // care about, so let's strip that out if possible.
-        if (g_buildconfig.ostype_android()) {
+        if (g_buildconfig.platform_android()) {
           if (const char* s2 = strstr(symbol, "/libmain.so")) {
             symbol = s2 + 1;
           }
@@ -1106,7 +1106,7 @@ auto CorePlatform::System(const char* cmd) -> int {
   // sandboxed platforms (iOS and equivalent). Actually should check
   // sandboxed Mac version; not sure if this succeeds there (though it
   // should compile at least).
-#if BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_IOS_TVOS
   throw Exception("system() call is not supported on this OS.");
 #else
   return system(cmd);

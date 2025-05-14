@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from bacommon.app import AppExperience
+# from bacommon.app import AppExperience
 
 import _babase
 from babase._appmode import AppMode
@@ -24,12 +24,7 @@ class EmptyAppMode(AppMode):
 
     @override
     @classmethod
-    def get_app_experience(cls) -> AppExperience:
-        return AppExperience.EMPTY
-
-    @override
-    @classmethod
-    def can_handle_intent_impl(cls, intent: AppIntent) -> bool:
+    def can_handle_intent(cls, intent: AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(intent, AppIntentExec | AppIntentDefault)
 

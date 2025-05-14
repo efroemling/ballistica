@@ -166,7 +166,7 @@ auto Widget::GetDrawBrightness(millisecs_t current_time) const -> float {
 }
 
 void Widget::ScreenPointToWidget(float* x, float* y) const {
-#if BA_DEBUG_BUILD || BA_TEST_BUILD
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   float x_old = *x;
   float y_old = *y;
 #endif
@@ -188,7 +188,7 @@ void Widget::ScreenPointToWidget(float* x, float* y) const {
   }
 
   // Sanity test: do the reverse and make sure it comes out the same.
-#if BA_DEBUG_BUILD || BA_TEST_BUILD
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   float x_test = *x;
   float y_test = *y;
   WidgetPointToScreen(&x_test, &y_test);
@@ -199,7 +199,7 @@ void Widget::ScreenPointToWidget(float* x, float* y) const {
                     + ") got (" + std::to_string(x_test) + ","
                     + std::to_string(y_test) + ")");
   }
-#endif  // BA_DEBUG_BUILD || BA_TEST_BUILD
+#endif  // BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
 }
 
 auto Widget::GetPyWidget_(bool new_ref) -> PyObject* {

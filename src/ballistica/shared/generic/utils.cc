@@ -22,7 +22,7 @@ using core::g_core;
 
 #define USE_BAKED_RANDS 1
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #endif
 
 #if USE_BAKED_RANDS

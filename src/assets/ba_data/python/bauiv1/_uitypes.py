@@ -44,19 +44,15 @@ class Window:
         # on screen-resizes and whatnot. This avoids things like
         # temporary popup windows getting stuck under auto-re-created
         # main-windows.
-        self._prevent_main_window_auto_recreate = (
-            prevent_main_window_auto_recreate
+        self._window_main_window_auto_recreate_suppress = (
+            MainWindowAutoRecreateSuppress()
+            if prevent_main_window_auto_recreate
+            else None
         )
-        if prevent_main_window_auto_recreate:
-            babase.app.ui_v1.window_auto_recreate_suppress_count += 1
 
         # Generally we complain if we outlive our root widget.
         if cleanupcheck:
             uicleanupcheck(self, root_widget)
-
-    def __del__(self) -> None:
-        if self._prevent_main_window_auto_recreate:
-            babase.app.ui_v1.window_auto_recreate_suppress_count -= 1
 
     def get_root_widget(self) -> bauiv1.Widget:
         """Return the root widget."""
@@ -312,6 +308,23 @@ class BasicMainWindowState(MainWindowState):
         origin_widget: bauiv1.Widget | None = None,
     ) -> bauiv1.MainWindow:
         return self.create_call(transition, origin_widget)
+
+
+class MainWindowAutoRecreateSuppress:
+    """Suppresses main-window auto-recreate while in existence.
+
+    Can be instantiated and held by windows or processes within windows
+    for the purpose of preventing the main-window auto-recreate
+    mechanism from firing. This mechanism normally fires when the screen
+    is resized or the ui-scale is changed, allowing windows to be
+    recreated to adapt to the new configuration.
+    """
+
+    def __init__(self) -> None:
+        babase.app.ui_v1.window_auto_recreate_suppress_count += 1
+
+    def __del__(self) -> None:
+        babase.app.ui_v1.window_auto_recreate_suppress_count -= 1
 
 
 @dataclass

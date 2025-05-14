@@ -3,44 +3,109 @@
 #include "ballistica/base/python/class/python_class_env.h"
 
 #include <map>
+#include <memory>
 #include <string>
+#include <utility>
 
 #include "ballistica/base/base.h"
+#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::base {
 
-struct EnvEntry_ {
-  PyObject* obj;
+// Define a virtual base class we can make a map of.
+//
+// NOTE: We assume typestr and docs are statically allocated here so we
+// only store pointers. Need to switch to std::string if this ever isn't
+// true.
+struct EnvEntryBase_ {
+  virtual ~EnvEntryBase_() = default;
+  virtual auto call() -> PyObject* = 0;
+  EnvEntryBase_(const char* typestr, const char* docs)
+      : typestr{typestr}, docs{docs} {}
   const char* typestr;
   const char* docs;
 };
 
-static std::map<std::string, EnvEntry_>* g_entries_{};
+static std::map<std::string, std::unique_ptr<EnvEntryBase_>>* g_entries_{};
+
+// Define a template subclass we can use to create our various entries.
+template <typename L>
+struct EnvEntry_ : EnvEntryBase_ {
+  L getter;
+  auto call() -> PyObject* override { return getter(); }
+  EnvEntry_(L getter, const char* typestr, const char* docs)
+      : EnvEntryBase_(typestr, docs), getter{std::move(getter)} {}
+};
 
 auto PythonClassEnv::type_name() -> const char* { return "Env"; }
 
-static auto BoolEntry_(bool val, const char* docs) -> EnvEntry_ {
-  PyObject* pyval = val ? Py_True : Py_False;
-  Py_INCREF(pyval);
-  return {pyval, "bool", docs};
+static auto BoolEntry_(bool val, const char* docs)
+    -> std::unique_ptr<EnvEntryBase_> {
+  return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
+      [val] {
+        PyObject* pyval = val ? Py_True : Py_False;
+        Py_INCREF(pyval);
+        return pyval;
+      },
+      "bool", docs));
 }
 
-static auto StrEntry_(const char* val, const char* docs) -> EnvEntry_ {
-  return {PyUnicode_FromString(val), "str", docs};
+static auto StrEntry_(const std::string& val, const char* docs)
+    -> std::unique_ptr<EnvEntryBase_> {
+  return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
+      [val] { return PyUnicode_FromString(val.c_str()); }, "str", docs));
 }
 
-static auto OptionalStrEntry_(const char* val, const char* docs) -> EnvEntry_ {
-  if (val) {
-    return {PyUnicode_FromString(val), "str | None", docs};
-  } else {
-    Py_INCREF(Py_None);
-    return {Py_None, "str | None", docs};
-  }
+static auto OptionalStrEntry_(const std::optional<std::string>& val,
+                              const char* docs)
+    -> std::unique_ptr<EnvEntryBase_> {
+  return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
+      [val] {
+        if (val.has_value()) {
+          return PyUnicode_FromString(val->c_str());
+        } else {
+          Py_INCREF(Py_None);
+          return Py_None;
+        }
+      },
+      "str | None", docs));
 }
 
-static auto IntEntry_(int val, const char* docs) -> EnvEntry_ {
-  return {PyLong_FromLong(val), "int", docs};
+static auto IntEntry_(int val, const char* docs)
+    -> std::unique_ptr<EnvEntryBase_> {
+  return std::unique_ptr<EnvEntryBase_>(
+      new EnvEntry_([val] { return PyLong_FromLong(val); }, "int", docs));
+}
+
+static auto AppArchitectureEntry_() -> std::unique_ptr<EnvEntryBase_> {
+  return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
+      [] {
+        auto* val{g_base->platform->GetPyAppArchitecture()};
+        Py_INCREF(val);
+        return val;
+      },
+      "bacommon.app.AppArchitecture", "Architecture we are running on."));
+}
+
+static auto AppVariantEntry_() -> std::unique_ptr<EnvEntryBase_> {
+  return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
+      [] {
+        auto* val{g_base->platform->GetPyAppVariant()};
+        Py_INCREF(val);
+        return val;
+      },
+      "bacommon.app.AppVariant", "App variant we are running."));
+}
+
+static auto AppPlatformEntry_() -> std::unique_ptr<EnvEntryBase_> {
+  return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
+      [] {
+        auto* val{g_base->platform->GetPyAppPlatform()};
+        Py_INCREF(val);
+        return val;
+      },
+      "bacommon.app.AppPlatform", "Platform we are running on."));
 }
 
 void PythonClassEnv::SetupType(PyTypeObject* cls) {
@@ -57,10 +122,10 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
   // from that so we don't have to manually keep doc strings in sync.
   assert(!g_entries_);
   assert(Python::HaveGIL());
-  g_entries_ = new std::map<std::string, EnvEntry_>();
+  g_entries_ = new std::map<std::string, std::unique_ptr<EnvEntryBase_>>();
   auto& envs{*g_entries_};
 
-  envs["android"] = BoolEntry_(g_buildconfig.ostype_android(),
+  envs["android"] = BoolEntry_(g_buildconfig.platform_android(),
                                "Is this build targeting an Android based OS?");
 
   envs["engine_build_number"] = IntEntry_(
@@ -70,20 +135,21 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
       "This value increases by at least 1 with each release of the engine.\n"
       "It is independent of the human readable `version` string.");
 
-  envs["engine_version"] = StrEntry_(
-      kEngineVersion,
-      "Human-readable version string for the engine; something like '1.3.24'.\n"
-      "\n"
-      "This should not be interpreted as a number; it may contain\n"
-      "string elements such as 'alpha', 'beta', 'test', etc.\n"
-      "If a numeric version is needed, use `build_number`.");
+  envs["engine_version"] =
+      StrEntry_(kEngineVersion,
+                "Human-readable version string for the engine; something "
+                "like '1.3.24'.\n"
+                "\n"
+                "This should not be interpreted as a number; it may contain\n"
+                "string elements such as 'alpha', 'beta', 'test', etc.\n"
+                "If a numeric version is needed, use `build_number`.");
 
   envs["device_name"] =
-      StrEntry_(g_core->platform->GetDeviceName().c_str(),
+      StrEntry_(g_core->platform->GetDeviceName(),
                 "Human readable name of the device running this app.");
 
   envs["supports_soft_quit"] = BoolEntry_(
-      g_buildconfig.ostype_android() || g_buildconfig.ostype_ios_tvos(),
+      g_buildconfig.platform_android() || g_buildconfig.platform_ios_tvos(),
       "Whether the running app supports 'soft' quit options.\n"
       "\n"
       "This generally applies to mobile derived OSs, where an act of\n"
@@ -99,18 +165,25 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
       "checks being run.");
 
   envs["test"] = BoolEntry_(
-      g_buildconfig.test_build(),
+      g_buildconfig.variant_test_build(),
       "Whether the app is running in test mode.\n"
       "\n"
       "Test mode enables extra checks and features that are useful for\n"
       "release testing but which do not slow the game down significantly.");
 
   envs["config_file_path"] =
-      StrEntry_(g_core->platform->GetConfigFilePath().c_str(),
+      StrEntry_(g_core->platform->GetConfigFilePath(),
                 "Where the app's config file is stored on disk.");
 
-  envs["data_directory"] = StrEntry_(g_core->GetDataDirectory().c_str(),
+  envs["data_directory"] = StrEntry_(g_core->GetDataDirectory(),
                                      "Where bundled static app data lives.");
+
+  envs["os_version"] = StrEntry_(
+      g_core->platform->GetOSVersionString(),
+      "Platform-specific os version string provided by the native layer.\n"
+      "\n"
+      "Note that more detailed OS information may be available through\n"
+      "the Python 'platform' module.");
 
   envs["api_version"] = IntEntry_(
       kEngineApiVersion,
@@ -120,33 +193,31 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
       "version number will be detected by the game (see the\n"
       ":class:`babase.MetadataSubsystem`). This value will change whenever\n"
       "substantial backward-incompatible changes are introduced to\n"
-      "Ballistica APIs. When that happens, modules/packages should be updated\n"
+      "Ballistica APIs. When that happens, modules/packages should be "
+      "updated\n"
       "accordingly and set to target the newer API version number.");
 
-  std::optional<std::string> user_py_dir = g_core->GetUserPythonDirectory();
   envs["python_directory_user"] = OptionalStrEntry_(
-      user_py_dir ? user_py_dir->c_str() : nullptr,
+      g_core->GetUserPythonDirectory(),
       "Path where the app expects its user scripts (mods) to live.\n"
       "\n"
-      "Be aware that this value may be None if Ballistica is running in\n"
+      "Be aware that this value may be ``None`` if Ballistica is running in\n"
       "a non-standard environment, and that python-path modifications may\n"
       "cause modules to be loaded from other locations.");
 
-  std::optional<std::string> app_py_dir = g_core->GetAppPythonDirectory();
   envs["python_directory_app"] = OptionalStrEntry_(
-      app_py_dir ? app_py_dir->c_str() : nullptr,
-      "Path where the app expects its bundled modules to live.\n"
+      g_core->GetAppPythonDirectory(),
+      "Path where the app expects its own bundled modules to live.\n"
       "\n"
-      "Be aware that this value may be None if Ballistica is running in\n"
+      "Be aware that this value may be ``None`` if Ballistica is running in\n"
       "a non-standard environment, and that python-path modifications may\n"
       "cause modules to be loaded from other locations.");
 
-  std::optional<std::string> site_py_dir = g_core->GetSitePythonDirectory();
   envs["python_directory_app_site"] = OptionalStrEntry_(
-      site_py_dir ? site_py_dir->c_str() : nullptr,
-      "Path where the app expects its bundled pip modules to live.\n"
+      g_core->GetSitePythonDirectory(),
+      "Path where the app expects its bundled third party modules to live.\n"
       "\n"
-      "Be aware that this value may be None if Ballistica is running in\n"
+      "Be aware that this value may be ``None`` if Ballistica is running in\n"
       "a non-standard environment, and that python-path modifications may\n"
       "cause modules to be loaded from other locations.");
 
@@ -158,7 +229,7 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
                           "Whether the app is currently running in VR.");
 
   envs["arcade"] =
-      BoolEntry_(g_buildconfig.arcade_build(),
+      BoolEntry_(g_buildconfig.variant_arcade(),
                  "Whether the app is targeting an arcade-centric experience.");
 
   envs["headless"] =
@@ -172,16 +243,19 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
                            "\n"
                            "This is the opposite of `headless`.");
 
-  envs["demo"] = BoolEntry_(g_buildconfig.demo_build(),
+  envs["demo"] = BoolEntry_(g_buildconfig.variant_demo(),
                             "Whether the app is targeting a demo experience.");
+  envs["arch"] = AppArchitectureEntry_();
+  envs["variant"] = AppVariantEntry_();
+  envs["platform"] = AppPlatformEntry_();
 
   bool first = true;
   for (auto&& entry : envs) {
     if (!first) {
       docs += "\n";
     }
-    docs += "   " + entry.first + " (" + entry.second.typestr + "):\n      "
-            + entry.second.docs + "\n";
+    docs += "   " + entry.first + " (" + entry.second->typestr + "):\n      "
+            + entry.second->docs + "\n";
     first = false;
   }
 
@@ -228,8 +302,7 @@ auto PythonClassEnv::tp_getattro(PythonClassEnv* self, PyObject* attr)
 
   auto&& entry = (*g_entries_).find(PyUnicode_AsUTF8(attr));
   if (entry != g_entries_->end()) {
-    Py_INCREF(entry->second.obj);
-    return entry->second.obj;
+    return entry->second->call();
   } else {
     return PyObject_GenericGetAttr(reinterpret_cast<PyObject*>(self), attr);
   }

@@ -175,6 +175,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
 
         # Get actual games loading in the bg.
         bui.app.meta.load_exported_classes(
+            'bascenev1.GameActivity',
             bs.GameActivity,
             self._on_game_types_loaded,
             completion_cb_in_bg_thread=True,

@@ -125,18 +125,26 @@ class ChosenOneGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def get_instance_description(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         return 'There can be only one.'
 
     @override
     def create_team(self, sessionteam: bs.SessionTeam) -> Team:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         return Team(time_remaining=self._chosen_one_time)
 
     @override
     def on_team_join(self, team: Team) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         self._update_scoreboard()
 
     @override
     def on_player_leave(self, player: Player) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         super().on_player_leave(player)
         if self._get_chosen_one_player() is player:
             self._set_chosen_one_player(None)
@@ -260,6 +268,8 @@ class ChosenOneGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         results = bs.GameResults()
         for team in self.teams:
             results.set_team_score(
@@ -345,6 +355,8 @@ class ChosenOneGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior.
             super().handlemessage(msg)

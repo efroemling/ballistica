@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import weakref
 import logging
-from typing import TYPE_CHECKING, TypeVar, overload
+from typing import TYPE_CHECKING, overload
 
 import babase
 
@@ -19,11 +19,9 @@ from bascenev1._messages import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Literal
+    from typing import Any, Literal, Self
 
     import bascenev1
-
-ActorT = TypeVar('ActorT', bound='Actor')
 
 
 class Actor:
@@ -111,7 +109,7 @@ class Actor:
 
         return UNHANDLED
 
-    def autoretain(self: ActorT) -> ActorT:
+    def autoretain(self) -> Self:
         """Keep this actor alive without needing to hold a reference to it.
 
         This keeps the actor in existence by storing a reference to it

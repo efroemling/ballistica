@@ -137,7 +137,7 @@ void NetworkReader::DoSelect_(bool* can_read_4, bool* can_read_6) {
   FD_ZERO(&readset);
 
   if (sd4_ != -1) {
-    if (!g_buildconfig.ostype_windows()) {
+    if (!g_buildconfig.platform_windows()) {
       // Try to get a clean error instead of a crash if we exceed our
       // open file descriptor limit (except on windows where FD_SETSIZE
       // is apparently a dummy value).
@@ -151,7 +151,7 @@ void NetworkReader::DoSelect_(bool* can_read_4, bool* can_read_6) {
   }
 
   if (sd6_ != -1) {
-    if (!g_buildconfig.ostype_windows()) {
+    if (!g_buildconfig.platform_windows()) {
       // Try to get a clean error instead of a crash if we exceed our
       // open file descriptor limit (except on windows where FD_SETSIZE
       // is apparently a dummy value).

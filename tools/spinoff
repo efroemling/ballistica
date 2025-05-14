@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.12
+#!/usr/bin/env python3.13
 # Released under the MIT License. See LICENSE for details.
 #
 """Command line wrapper for the spinoff system."""
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         src_proj_root = os.path.abspath(
             os.path.join(os.path.dirname(src_spinoff_path), '..')
         )
-        src_proj_python = os.path.join(src_proj_root, '.venv/bin/python3.12')
+        src_proj_python = os.path.join(src_proj_root, '.venv/bin/python3.13')
 
         cmd = [src_proj_python, 'tools/spinoff'] + sys.argv[1:]
 

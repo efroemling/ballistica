@@ -93,6 +93,8 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
     @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         assert bs.app.classic is not None
         return bs.app.classic.getmaps('king_of_the_hill')
 
@@ -149,14 +151,20 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def get_instance_description(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         return 'Secure the flag for ${ARG1} seconds.', self._hold_time
 
     @override
     def get_instance_description_short(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         return 'secure the flag for ${ARG1} seconds', self._hold_time
 
     @override
     def create_team(self, sessionteam: bs.SessionTeam) -> Team:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         return Team(time_remaining=self._hold_time)
 
     @override
@@ -232,6 +240,8 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         results = bs.GameResults()
         for team in self.teams:
             results.set_team_score(team, self._hold_time - team.time_remaining)
@@ -293,6 +303,8 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, bs.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment default.
 

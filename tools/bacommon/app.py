@@ -5,15 +5,15 @@
 from __future__ import annotations
 
 from enum import Enum
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, Annotated
-
-from efro.dataclassio import ioprepped, IOAttrs
-
-from bacommon.locale import Locale
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     pass
+
+# NOTE TO SELF - These are used on various server components, so be sure
+# to update ALL servers before running any clients that might be using
+# newly defined values. Alterntely we could set up fallback values but I
+# don't think that will be necessary and could mask problems.
 
 
 class AppInterfaceIdiom(Enum):
@@ -24,76 +24,77 @@ class AppInterfaceIdiom(Enum):
     """
 
     #: Small screen; assumed to have touch as primary input.
-    PHONE = 'phn'
+    PHONE = 'phone'
 
     #: Medium size screen; assumed to have touch as primary input.
-    TABLET = 'tab'
+    TABLET = 'tablet'
 
-    #: Medium size screen; assumed to have game controller as primary
-    #: input.
-    HANDHELD = 'hnd'
+    #: Screen with medium amount of detail visible; assumed to have game
+    #: controller(s) as primary input. Note that this covers handheld or
+    #: arcade cabinet scenarios in addition to tv-connected consoles.
+    CONSOLE = 'console'
 
-    #: Large screen with high amount of detail visible; assumed to have
+    #: Screen with high amount of detail visible; assumed to have
     #: keyboard/mouse as primary input.
-    DESKTOP = 'dsk'
-
-    #: Large screen with medium amount of detail visible; assumed to have
-    #: game controller as primary input.
-    TV = 'tv'
+    DESKTOP = 'desktop'
 
     #: Displayed over or in place of of the real world on a headset;
-    #: assumed to have hand tracking or spacial controllers as primary
+    #: assumed to have hand tracking or spatial controllers as primary
     #: input.
-    XR_HEADSET = 'xrh'
+    XR_HEADSET = 'xr_headset'
 
-    #: Displayed over or instead of the real world on a screen; assumed
-    #: to have device movement augmented by physical or touchscreen
-    #: controls as primary input.
-    XR_SCREEN = 'xrs'
+    #: Displayed over or instead of the real world on a small screen;
+    #: assumed to have device movement augmented by physical or
+    #: touchscreen controls as primary input.
+    XR_PHONE = 'xr_phone'
+
+    #: Displayed over or instead of the real world on a medium size
+    #: screen; assumed to have device movement augmented by physical or
+    #: touchscreen controls as primary input.
+    XR_TABLET = 'xr_tablet'
+
+    #: The app has no interface (generally is acting as a server).
+    HEADLESS = 'headless'
 
 
-class AppExperience(Enum):
-    """A particular experience provided by a Ballistica app.
+# UPDATE: Don't think this will be necessary. Will keep it around for a
+# moment in case I change my mind. Current plan is to just have AppModes
+# check for compatible AppInterfaceIdioms or whatever else as part of
+# their can_handle_intent() call.
 
-    This is one metric used to isolate different playerbases from each
-    other where there might be no technical barriers doing so. For
-    example, a casual one-hand-playable phone game and an augmented
-    reality tabletop game may both use the same scene-versions and
-    networking-protocols and whatnot, but it would make no sense to
-    allow players of one to join servers of the other. AppExperience can
-    be used to keep these player bases separate.
+# class AppExperience(Enum):
+#     """A type of experience provided by a Ballistica app.
 
-    Generally a single Ballistica app targets a single AppExperience.
-    This is not a technical requirement, however. A single app may
-    support multiple experiences, or there may be multiple apps
-    targeting one experience. Cloud components such as leagues are
-    generally associated with an AppExperience so that they are only
-    visible to client apps designed for that play style, and the same is
-    true for games joinable over the local network, bluetooth, etc.
-    """
+#     This metric is used to ensure that an :class:`~babase.AppMode` can
+#     be properly presented by a running app. Requirements for supporting
+#     an experience can include things like running in a particular
+#     :class:`AppInterfaceIdiom` or having particular features or input
+#     device(s) present.
+#     """
 
-    #: An experience that is supported everywhere. Used for the default
-    #: empty AppMode when starting the app, etc.
-    EMPTY = 'empt'
+#     #: A special experience that is supported everywhere. Used for the
+#     #: default empty AppMode when starting the app, etc.
+#     EMPTY = 'empty'
 
-    #: The traditional BombSquad experience - multiple players using
-    #: game controllers (or touch screen equivalents) in a single arena
-    #: small enough for all action to be viewed on a single screen.
-    MELEE = 'mlee'
+#     #: The traditional BombSquad experience - multiple players using
+#     #: game controllers (or touch screen equivalents) in a single arena
+#     #: small enough for all action to be viewed on a single screen.
+#     MELEE = 'melee'
 
-    #: The traditional BombSquad Remote experience; buttons on a
-    #: touch-screen allowing a mobile device to be used as a game
-    #: controller.
-    REMOTE = 'rmt'
+#     #: The traditional BombSquad Remote experience; buttons on a
+#     #: touch-screen allowing a mobile device to be used as a game
+#     #: controller.
+#     REMOTE = 'remote'
 
 
 class AppArchitecture(Enum):
     """Processor architecture an app can be running on."""
 
+    UNKNOWN = 'unknown'
     ARM = 'arm'
     ARM64 = 'arm64'
     X86 = 'x86'
-    X86_64 = 'x64'
+    X86_64 = 'x86_64'
 
 
 class AppPlatform(Enum):
@@ -105,10 +106,11 @@ class AppPlatform(Enum):
     build.
     """
 
-    MAC = 'mac'
-    WINDOWS = 'win'
-    LINUX = 'lin'
-    ANDROID = 'andr'
+    UNKNOWN = 'unknown'
+    MACOS = 'macos'
+    WINDOWS = 'windows'
+    LINUX = 'linux'
+    ANDROID = 'android'
     IOS = 'ios'
     TVOS = 'tvos'
 
@@ -123,57 +125,22 @@ class AppVariant(Enum):
     """
 
     #: Default builds.
-    GENERIC = 'gen'
+    GENERIC = 'generic'
 
-    #: Builds intended for public testing (may have some extra checks
-    #: or logging enabled).
-    TEST = 'tst'
+    #: Particular builds intended for public testing (may have some extra
+    #: checks or logging enabled).
+    TEST_BUILD = 'test_build'
 
     # Various stores.
-    AMAZON_APPSTORE = 'amzn'
-    GOOGLE_PLAY = 'gpl'
-    APPLE_APP_STORE = 'appl'
-    WINDOWS_STORE = 'wins'
-    STEAM = 'stm'
+    AMAZON_APPSTORE = 'amazon_appstore'
+    GOOGLE_PLAY = 'google_play'
+    APPLE_APP_STORE = 'apple_app_store'
+    WINDOWS_STORE = 'windows_store'
+    STEAM = 'steam'
     META = 'meta'
-    EPIC_GAMES_STORE = 'epic'
+    EPIC_GAMES_STORE = 'epic_games_store'
 
     # Other.
-    ARCADE = 'arcd'
+    ARCADE = 'arcade'
     DEMO = 'demo'
-
-
-class AppName(Enum):
-    """A predefined Ballistica app name.
-
-    This encompasses official or well-known apps. Other app projects
-    should set this to CUSTOM and provide a 'name_custom' value.
-    """
-
-    BOMBSQUAD = 'bs'
-    CUSTOM = 'c'
-
-
-@ioprepped
-@dataclass
-class AppInstanceInfo:
-    """General info about an individual running ballistica app."""
-
-    name: Annotated[str, IOAttrs('name')]
-    name_custom: Annotated[
-        str | None, IOAttrs('namc', soft_default=None, store_default=False)
-    ]
-
-    engine_version: Annotated[str, IOAttrs('evrs')]
-    engine_build: Annotated[int, IOAttrs('ebld')]
-
-    platform: Annotated[AppPlatform, IOAttrs('plat')]
-    variant: Annotated[AppVariant, IOAttrs('vrnt')]
-    architecture: Annotated[AppArchitecture, IOAttrs('arch')]
-    os_version: Annotated[str | None, IOAttrs('osvr')]
-
-    interface_idiom: Annotated[AppInterfaceIdiom, IOAttrs('intf')]
-    locale: Annotated[Locale, IOAttrs('loc')]
-
-    #: OS-specific string describing the device running the app.
-    device: Annotated[str | None, IOAttrs('devc')]
+    CARDBOARD = 'cardboard'

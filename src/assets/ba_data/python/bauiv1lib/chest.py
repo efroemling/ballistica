@@ -62,8 +62,13 @@ class ChestWindow(bui.MainWindow):
         self._chestdisplayinfo: baclassic.ChestAppearanceDisplayInfo | None = (
             None
         )
+        self._suppressing_window_auto_recreates = False
 
         self._chest_action_ui_pause: bui.RootUIUpdatePause | None = None
+
+        self._recreate_suppress: bui.MainWindowAutoRecreateSuppress | None = (
+            None
+        )
 
         # The set of widgets we keep when doing a clear.
         self._core_widgets: list[bui.Widget] = []
@@ -400,6 +405,9 @@ class ChestWindow(bui.MainWindow):
                 self._open_press, user_tokens, chest.unlock_tokens
             ),
             enable_sound=False,
+        )
+        bui.containerwidget(
+            edit=self._root_widget, selected_child=self._open_now_button
         )
         self._open_now_images = []
         self._open_now_texts = []
@@ -858,6 +866,14 @@ class ChestWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
 
+        # If we watch an ad, suppress window auto-recreates until our
+        # window goes away. It is possible for ad viewing to do things
+        # like show/hide system toolbars which can cause our app window
+        # to resize, and we don't want that to result in our chest
+        # window being recreated which effectively cancels the ad view
+        # flow.
+        self._recreate_suppress = bui.MainWindowAutoRecreateSuppress()
+
         self._action_in_flight = True
         bui.app.classic.ads.show_ad_2(
             'reduce_chest_wait',
@@ -1181,7 +1197,9 @@ class ChestWindow(bui.MainWindow):
             autoselect=True,
             on_activate_call=self.main_window_back,
         )
-        bui.containerwidget(edit=self._root_widget, start_button=btn)
+        bui.containerwidget(
+            edit=self._root_widget, selected_child=btn, start_button=btn
+        )
 
 
 # Slight hack: we define window different classes for our different

@@ -677,7 +677,7 @@ void UI::OnAssetsAvailable() {
   assert(g_base->InLogicThread());
 
   // Spin up the dev console.
-  if (!g_core->HeadlessMode() && !g_buildconfig.demo_build()) {
+  if (!g_core->HeadlessMode() && !g_buildconfig.variant_demo()) {
     assert(dev_console_ == nullptr);
     dev_console_ = new DevConsole();
 

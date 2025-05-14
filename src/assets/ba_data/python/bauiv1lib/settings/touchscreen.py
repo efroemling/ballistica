@@ -12,9 +12,7 @@ import bascenev1 as bs
 class TouchscreenSettingsWindow(bui.MainWindow):
     """Settings window for touchscreens."""
 
-    @override
     def __del__(self) -> None:
-        super().__del__()
         bs.set_touchscreen_editing(False)
 
     def __init__(

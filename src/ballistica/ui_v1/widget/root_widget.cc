@@ -51,8 +51,6 @@ static const float kChestReadyTextColorR{0.0f};
 static const float kChestReadyTextColorG{1.0f};
 static const float kChestReadyTextColorB{0.0f};
 
-static const bool kDebugPrint{false};
-
 constexpr std::array<const char*, 4> chest_ids{"0", "1", "2", "3"};
 
 int RootWidget::update_pause_count_;
@@ -1117,11 +1115,6 @@ void RootWidget::StepInbox_(base::RenderPass* renderpass, seconds_t dt) {
     } else {
       freq_mult = 1.0f;
     }
-
-    auto sinput =
-        3.141592f
-        * static_cast<float>(inbox_anim_flash_time_
-                             - renderpass->frame_def()->display_time());
     float mult{1.0f
                + fabs(2.0f
                       * sinf(freq_mult * 3.1415f
@@ -1398,7 +1391,6 @@ void RootWidget::Draw(base::RenderPass* renderpass, bool transparent) {
   // Opaque pass gets drawn first; use that as an opportunity to step up our
   // motion.
   if (!transparent) {
-    seconds_t current_time = renderpass->frame_def()->display_time();
     Update_(renderpass);
   }
   ContainerWidget::Draw(renderpass, transparent);

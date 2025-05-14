@@ -127,7 +127,7 @@ class RendererGL : public Renderer {
   auto GetAutoGraphicsQuality() -> GraphicsQuality override;
   auto GetAutoTextureQuality() -> TextureQuality override;
 
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
   std::string GetAutoAndroidRes() override;
 #endif
 
@@ -330,7 +330,7 @@ class RendererGL : public Renderer {
   ProgramPostProcessGL* postprocess_distort_prog_{};
   static bool funky_depth_issue_set_;
   static bool funky_depth_issue_;
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
   bool is_speedy_android_device_{};
 #endif
   ProgramGL* current_program_{};

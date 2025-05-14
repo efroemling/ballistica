@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #include "ballistica/base/platform/windows/base_platform_windows.h"
 
 #include <direct.h>
@@ -95,4 +95,4 @@ void BasePlatformWindows::OpenFileExternally(const std::string& path) {
 
 }  // namespace ballistica::base
 
-#endif  // BA_OSTYPE_WINDOWS
+#endif  // BA_PLATFORM_WINDOWS

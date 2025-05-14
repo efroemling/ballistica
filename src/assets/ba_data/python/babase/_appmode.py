@@ -3,10 +3,9 @@
 """Provides AppMode functionality."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from bacommon.app import AppExperience
     from babase import AppIntent
 
 
@@ -19,32 +18,8 @@ class AppMode:
     """
 
     @classmethod
-    def get_app_experience(cls) -> AppExperience:
-        """Return the overall experience provided by this mode."""
-        raise NotImplementedError('AppMode subclasses must override this.')
-
-    @final
-    @classmethod
     def can_handle_intent(cls, intent: AppIntent) -> bool:
-        """Return whether this mode can handle the provided intent.
-
-        For this to return True, the app-mode must claim to support the
-        provided intent (via its :meth:`can_handle_intent_impl()`
-        method) *AND* the :class:`~bacommon.app.AppExperience` associated
-        with the app-mode must be supported by the current app and
-        runtime environment.
-        """
-        # TODO: check AppExperience against current environment.
-        return cls.can_handle_intent_impl(intent)
-
-    @classmethod
-    def can_handle_intent_impl(cls, intent: AppIntent) -> bool:
-        """Override this to define indent handling for an app-mode.
-
-        Note that :class:`~bacommon.app.AppExperience` does not have to
-        be considered here; that is handled automatically by the
-        :meth:`can_handle_intent()` call.
-        """
+        """Override this to define indent handling for an app-mode."""
         raise NotImplementedError('AppMode subclasses must override this.')
 
     def handle_intent(self, intent: AppIntent) -> None:

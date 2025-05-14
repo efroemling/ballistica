@@ -24,7 +24,8 @@ from efro.terminal import Clr
 
 if TYPE_CHECKING:
     from types import ModuleType
-    from typing import Sequence, Any
+    from typing import Sequence, Any, Literal
+
     from batools.docs import AttributeInfo
 
 
@@ -41,13 +42,13 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
         sig = (
             '# Show that ur return type varies based on "doraise" value:\n'
             '@overload\n'
-            'def getdelegate(self, type: type[_T],'
-            ' doraise: Literal[False] = False) -> _T | None:\n'
+            'def getdelegate[T](self, type: type[T],'
+            ' doraise: Literal[False] = False) -> T | None:\n'
             '    ...\n'
             '\n'
             '@overload\n'
-            'def getdelegate(self, type: type[_T],'
-            ' doraise: Literal[True]) -> _T:\n'
+            'def getdelegate[T](self, type: type[T],'
+            ' doraise: Literal[True]) -> T:\n'
             '    ...\n'
             '\n'
             'def getdelegate(self, type: Any,'
@@ -354,7 +355,7 @@ def _writefuncs(
         returnspc = indstr + '    '
         returnstr = ('\n' + returnspc).join(returnstr.strip().splitlines())
         docstr_out = _formatdoc(
-            _filterdoc(docstr, funcname=funcname), indent + 4
+            _filterdoc(docstr, funcname=funcname), indent + 4, form='str'
         )
         out += spcstr + defslines + docstr_out + f'{returnspc}{returnstr}\n'
     return out
@@ -678,27 +679,37 @@ def _filterdoc(docstr: str, funcname: str | None = None) -> str:
 def _formatdoc(
     docstr: str,
     indent: int,
-    no_end_newline: bool = False,
-    inner_indent: int = 0,
+    form: Literal['str', 'comment'],
+    # *,
+    # no_end_newline: bool = False,
+    # inner_indent: int = 0,
 ) -> str:
     out = ''
     indentstr = indent * ' '
-    inner_indent_str = inner_indent * ' '
+    # inner_indent_str = inner_indent * ' '
+    # inner_indent_str = ''
     docslines = docstr.splitlines()
 
-    if len(docslines) == 1:
+    if len(docslines) == 1 and form == 'str':
         out += indentstr + '"""' + docslines[0] + '"""\n'
     else:
         for i, line in enumerate(docslines):
-            if i != 0 and line != '':
-                docslines[i] = indentstr + inner_indent_str + line
-        out += (
-            indentstr
-            + '"""'
-            + '\n'.join(docslines)
-            + ('' if no_end_newline else '\n' + indentstr)
-            + '"""\n'
-        )
+            if form == 'comment':
+                docslines[i] = indentstr + '#: ' + line
+            else:
+                if i != 0 and line != '':
+                    docslines[i] = indentstr + line
+        if form == 'comment':
+            out += '\n'.join(docslines) + '\n'
+        else:
+            out += (
+                indentstr
+                + '"""'
+                + '\n'.join(docslines)
+                + '\n'
+                + indentstr
+                + '"""\n'
+            )
     return out
 
 
@@ -729,7 +740,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
 
         docstr = cls.__doc__
         # classname is constructor name
-        out += _formatdoc(_filterdoc(docstr, funcname=classname), 4)
+        out += _formatdoc(_filterdoc(docstr, funcname=classname), 4, form='str')
 
         # Create a public constructor if it has one.
         # If the first docs line appears to be a function signature
@@ -767,15 +778,12 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
         if attrs:
             for attr in attrs:
                 if attr.attr_type is not None:
-                    out += f'    {attr.name}: {attr.attr_type}\n'
                     if attr.docs:
-                        out += _formatdoc(
-                            _filterdoc(attr.docs),
-                            indent=4,
-                            inner_indent=3,
-                            no_end_newline=True,
-                        )
                         out += '\n'
+                        out += _formatdoc(
+                            _filterdoc(attr.docs), indent=4, form='comment'
+                        )
+                    out += f'    {attr.name}: {attr.attr_type}\n'
                 else:
                     raise RuntimeError(
                         f'Found untyped attr in'
@@ -849,12 +857,12 @@ class Generator:
         funcnames.sort()
         classnames.sort()
         typing_imports = (
-            'TYPE_CHECKING, overload, override, Sequence, TypeVar'
+            'TYPE_CHECKING, overload, override, Sequence'
             if self.mname == '_babase'
             else (
-                'TYPE_CHECKING, overload, override, TypeVar'
+                'TYPE_CHECKING, overload, override'
                 if self.mname == '_bascenev1'
-                else 'TYPE_CHECKING, override, TypeVar'
+                else 'TYPE_CHECKING, override'
             )
         )
         typing_imports_tc = (
@@ -873,7 +881,9 @@ class Generator:
         tc_import_lines_extra = ''
         if self.mname == '_babase':
             tc_import_lines_extra += (
-                '    from babase import App\n    import babase\n'
+                '    import bacommon.app\n'
+                '    from babase import App\n'
+                '    import babase\n'  # hold
             )
         elif self.mname == '_bascenev1':
             tc_import_lines_extra += '    import babase\n    import bascenev1\n'
@@ -936,8 +946,8 @@ class Generator:
             f'    from typing import {typing_imports_tc}\n'
             f'{tc_import_lines_extra}'
             '\n'
-            '\n'
-            "_T = TypeVar('_T')\n"
+            # '\n'
+            # "_T = TypeVar('_T')\n"
             '\n'
             f'{app_declare_lines}'
             'def _uninferrable() -> Any:\n'

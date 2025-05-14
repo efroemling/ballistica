@@ -224,11 +224,11 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
 
+    // GetPyTeam returns a new ref or nullptr.
+    auto team{PythonRef::StolenSoft(p->GetPyTeam())};
     // We get placed on a team as soon as we finish in the lobby
     // so lets use that as whether we're in-game or not.
-    PyObject* team = p->GetPyTeam();
-    assert(team != nullptr);
-    if (team == Py_None) {
+    if (!team.exists()) {
       Py_RETURN_FALSE;
     } else {
       Py_RETURN_TRUE;
@@ -254,9 +254,9 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
     if (!p) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
-    PyObject* team = p->GetPyTeam();
-    assert(team != nullptr);
-    if (team == Py_None) {
+    // GetPyTeam returns a new ref or nullptr.
+    auto team{PythonRef::StolenSoft(p->GetPyTeam())};
+    if (!team.exists()) {
       PyErr_SetString(
           g_base->python->objs()
               .Get(base::BasePython::ObjID::kSessionTeamNotFoundError)
@@ -264,8 +264,7 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
           "SessionTeam does not exist.");
       return nullptr;
     }
-    Py_INCREF(team);
-    return team;
+    return team.NewRef();
   } else if (!strcmp(s, ATTR_CHARACTER)) {
     Player* p = self->player_->get();
     if (!p) {
@@ -497,9 +496,9 @@ auto PythonClassSessionPlayer::GetTeam(PythonClassSessionPlayer* self)
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  PyObject* team = p->GetPyTeam();
-  Py_INCREF(team);
-  return team;
+  // GetPyTeam() returns a new ref or nullptr.
+  auto team{PythonRef::StolenSoft(p->GetPyTeam())};
+  return team.NewRef();
   BA_PYTHON_CATCH;
 }
 

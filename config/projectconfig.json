@@ -28,6 +28,7 @@
   "pylint_ignored_untracked_deps": [
     "__main__",
     "astroid.modutils",
+    "astroid.nodes",
     "astroid",
     "pylint.lint",
     "pytest",
@@ -40,6 +41,9 @@
     "Cocoa",
     "pdoc",
     "certifi",
+    "libcst.metadata",
+    "docutils.nodes",
+    "sphinx.application",
     "psutil",
     "pbxproj.XcodeProject",
     "pbxproj.pbxextensions",
@@ -49,9 +53,11 @@
     "jinja2.Environment",
     "tomlkit",
     "urllib3.exceptions",
+    "urllib3.response",
     "cryptography.exceptions",
     "cryptography.hazmat.primitives.asymmetric.ed25519",
-    "sphinx.util.logging"
+    "sphinx.util.logging",
+    "pylint.checkers"
   ],
   "python_paths": [
     "src/assets/ba_data/python",

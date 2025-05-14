@@ -601,7 +601,7 @@ static auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
       // On windows, rename doesn't overwrite existing files.. need to kill
       // the old explicitly.
       // (hmm; should we just do this everywhere for consistency?)
-      if (g_buildconfig.ostype_windows()) {
+      if (g_buildconfig.platform_windows()) {
         if (g_core->platform->FilePathExists(path_prev)) {
           int result2 = g_core->platform->Remove(path_prev.c_str());
           if (result2 != 0) {
@@ -657,7 +657,7 @@ static auto PyPreEnv(PyObject* self) -> PyObject* {
         "}",
         "build_number", kEngineBuildNumber,
         "debug_build", g_buildconfig.debug_build() ? Py_True : Py_False,
-        "test_build", g_buildconfig.test_build() ? Py_True : Py_False);
+        "test_build", g_buildconfig.variant_test_build() ? Py_True : Py_False);
     // clang-format on
     g_base->python->StorePreEnv(env);
   }
@@ -720,17 +720,17 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "legacy_user_agent_string", g_core->legacy_user_agent_string().c_str(),
         "version", kEngineVersion,
         "debug_build", g_buildconfig.debug_build() ? Py_True : Py_False,
-        "test_build", g_buildconfig.test_build() ? Py_True : Py_False,
+        "test_build", g_buildconfig.variant_test_build() ? Py_True : Py_False,
         "python_directory_user",
           user_py_dir ? *PythonRef::FromString(*user_py_dir) : Py_None,
         "python_directory_app",
           app_py_dir ? *PythonRef::FromString(*app_py_dir) : Py_None,
-        "platform", g_core->platform->GetPlatformName().c_str(),
-        "subplatform", g_core->platform->GetSubplatformName().c_str(),
+        "platform", g_core->platform->GetLegacyPlatformName().c_str(),
+        "subplatform", g_core->platform->GetLegacySubplatformName().c_str(),
         "on_tv", g_core->platform->IsRunningOnTV() ? Py_True : Py_False,
         "vr_mode", g_core->vr_mode() ? Py_True : Py_False,
-        "demo_mode", g_buildconfig.demo_build() ? Py_True : Py_False,
-        "arcade_mode", g_buildconfig.arcade_build() ? Py_True : Py_False,
+        "demo_mode", g_buildconfig.variant_demo() ? Py_True : Py_False,
+        "arcade_mode", g_buildconfig.variant_arcade() ? Py_True : Py_False,
         "headless_mode", g_core->HeadlessMode() ? Py_True : Py_False,
         "python_directory_app_site",
           site_py_dir ? *PythonRef::FromString(*site_py_dir) : Py_None,

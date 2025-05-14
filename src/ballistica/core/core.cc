@@ -72,8 +72,6 @@ auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
 }
 
 void CoreFeatureSet::DoImport_(const CoreConfig& config) {
-  millisecs_t start_millisecs = CorePlatform::TimeMonotonicMillisecs();
-
   assert(g_core == nullptr);
   g_core = new CoreFeatureSet(config);
   g_core->PostInit_();
@@ -301,25 +299,6 @@ auto CoreFeatureSet::SoftImportBase() -> BaseSoftInterface* {
   return g_base_soft;
 }
 
-// void CoreFeatureSet::LifecycleLog(const char* msg, double offset_seconds) {
-//   // Early out to avoid work if we won't show anyway.
-//   if (!LogLevelEnabled(LogName::kBaLifecycle, LogLevel::kDebug)) {
-//     return;
-//   }
-
-//   // We're now showing relative timestamps in more places so trying without
-//   // adding that to the message...
-//   if (explicit_bool(false)) {
-//     // We include time-since-start as part of the message here.
-//     char buffer[128];
-//     snprintf(buffer, sizeof(buffer), "%s @ %.3fs.", msg,
-//              g_core->AppTimeSeconds() + offset_seconds);
-//     Log(LogName::kBaLifecycle, LogLevel::kDebug, buffer);
-//   } else {
-//     Log(LogName::kBaLifecycle, LogLevel::kDebug, msg);
-//   }
-// }
-
 void CoreFeatureSet::Log(LogName name, LogLevel level, char* msg) {
   // Avoid touching the Python layer if the log will get ignored there
   // anyway.
@@ -449,7 +428,7 @@ auto CoreFeatureSet::CurrentThreadName() -> std::string {
 
   // Ask pthread for the thread name if we don't have one.
   // FIXME - move this to platform.
-#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
+#if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS || BA_PLATFORM_LINUX
   std::string name = "unknown (sys-name=";
   char buffer[256];
   int result = pthread_getname_np(pthread_self(), buffer, sizeof(buffer));

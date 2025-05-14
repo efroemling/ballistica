@@ -225,7 +225,7 @@ void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
   // On Android we never show messages for initial input-devices; we often
   // get large numbers of strange virtual devices that aren't actually
   // controllers so this is more confusing than helpful.
-  if (g_buildconfig.ostype_android() && g_core->AppTimeSeconds() < 3.0) {
+  if (g_buildconfig.platform_android() && g_core->AppTimeSeconds() < 3.0) {
     return;
   }
 
@@ -957,7 +957,8 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   UpdateModKeyStates_(&keysym, true);
 
   // Mobile-specific stuff.
-  //  if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
+  //  if (g_buildconfig.platform_ios_tvos() || g_buildconfig.platform_android())
+  //  {
   //    switch (keysym.sym) {
   //      // FIXME: See if this stuff is still necessary. Was this perhaps
   //      //  specifically to support the console?
@@ -1432,7 +1433,7 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     return;
   }
 
-  if (g_buildconfig.ostype_ios_tvos()) {
+  if (g_buildconfig.platform_ios_tvos()) {
     printf("FIXME: update touch handling\n");
   }
 

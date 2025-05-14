@@ -167,7 +167,7 @@ class RendererGL::MeshDataGL : public MeshRendererData {
 
       // Hmmm didnt think we had to have vao bound here but causes problems
       // on qualcomm if not.
-      // #if BA_OSTYPE_ANDROID
+      // #if BA_PLATFORM_ANDROID
       //       if (g_vao_support && renderer_->is_adreno_) {
       //         renderer_->BindVertexArray(vao_);
       //       }

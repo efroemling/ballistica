@@ -16,8 +16,8 @@ from efrotools.util import readfile, writefile, replace_exact
 APPLE_NEW = False
 
 # Python version we build here (not necessarily same as we use in repo).
-PY_VER_ANDROID = '3.12'
-PY_VER_EXACT_ANDROID = '3.12.9'
+PY_VER_ANDROID = '3.13'
+PY_VER_EXACT_ANDROID = '3.13.3'
 PY_VER_APPLE = '3.12'
 PY_VER_EXACT_APPLE = '3.12.4' if APPLE_NEW else '3.12.0'
 
@@ -79,6 +79,7 @@ PRUNE_LIB_NAMES = [
     'turtle.py',
     'turtledemo',
     'test',
+    '_pyrepl/mypy.ini',
     'sqlite3/test',
     'unittest',
     'dbm',
@@ -99,6 +100,10 @@ def build_apple(arch: str, debug: bool = False) -> None:
     # pylint: disable=too-many-branches
     import platform
     from efro.error import CleanError
+
+    if bool(True):
+        print('PY-BUILD-APPLE DISABLED (USING XCFRAMEWORK NOW)')
+        return
 
     # IMPORTANT; seems we currently wind up building against /usr/local
     # gettext stuff. Hopefully the maintainer fixes this, but for now I
@@ -594,7 +599,7 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
         ('_codecs_kr', 1),
         ('_codecs_tw', 1),
         ('_contextvars', 1),
-        ('_crypt', 1),
+        # ('_crypt', 1),
         ('_csv', 1),
         ('_ctypes_test', 1),
         ('_curses_panel', 1),
@@ -627,15 +632,17 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
         ('_testcapi', 1),
         ('_testimportmultiple', 1),
         ('_testinternalcapi', 1),
-        ('_testmultiphase', 2),
+        ('_testmultiphase', 1),
+        ('_testsinglephase', 1),
+        ('_testexternalinspection', 1),
         ('_testclinic', 1),
         ('_uuid', 1),
-        ('_xxsubinterpreters', 1),
+        # ('_xxsubinterpreters', 1),
         ('_xxtestfuzz', 1),
-        ('spwd', 1),
+        # ('spwd', 1),
         ('_zoneinfo', 1),
         ('array', 1),
-        ('audioop', 1),
+        # ('audioop', 1),
         ('binascii', 1),
         ('cmath', 1),
         ('fcntl', 1),
@@ -643,11 +650,11 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
         ('math', 1),
         ('_tkinter', 1),
         ('mmap', 1),
-        ('ossaudiodev', 1),
+        # ('ossaudiodev', 1),
         ('pyexpat', 1),
         ('resource', 1),
         ('select', 1),
-        ('nis', 1),
+        # ('nis', 1),
         ('syslog', 1),
         ('termios', 1),
         ('unicodedata', 1),
@@ -675,6 +682,7 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
         '_json',
         '_ctypes',
         '_statistics',
+        '_opcode',
         'unicodedata',
         'fcntl',
         'select',
@@ -776,6 +784,24 @@ def android_patch() -> None:
     _patch_py_wreadlink_test()
 
     # _patch_py_ssl()
+
+    _patch_android_ctypes()
+
+
+def _patch_android_ctypes() -> None:
+
+    # ctypes seems hard-coded to load python from a .so for android
+    # builds, which fails because we are statically compiling Python
+    # into our main.so. It seems that the fallback default does the
+    # right thing in our case?..
+    fname = 'Lib/ctypes/__init__.py'
+    txt = readfile(fname)
+    txt = replace_exact(
+        txt,
+        'elif _sys.platform == "android":\n',
+        'elif _sys.platform == "android" and False: # efro tweak\n',
+    )
+    writefile(fname, txt)
 
 
 def android_patch_ssl() -> None:
@@ -1361,7 +1387,8 @@ def gather(do_android: bool, do_apple: bool) -> None:
                     bases['android_arm64'] + f'/usr/lib/python{PY_VER_ANDROID}/'
                     f'_sysconfigdata_{debug_d}'
                     # f'_linux_aarch64-linux-android.py'
-                    f'_linux_.py'
+                    f'_android_aarch64-linux-android.py'
+                    # f'_linux_.py'
                 ],
                 libs=_android_libs('android_arm64'),
                 libinst='android_arm64-v8a',
@@ -1377,7 +1404,8 @@ def gather(do_android: bool, do_apple: bool) -> None:
                     bases['android_arm']
                     + f'/usr/lib/python{PY_VER_ANDROID}/'
                     # f'_sysconfigdata_{debug_d}_linux_arm-linux-androideabi.py'
-                    f'_sysconfigdata_{debug_d}_linux_.py'
+                    f'_sysconfigdata_{debug_d}_android_arm-linux-androideabi.py'
+                    # f'_sysconfigdata_{debug_d}_linux_.py'
                 ],
                 libs=_android_libs('android_arm'),
                 libinst='android_armeabi-v7a',
@@ -1394,7 +1422,8 @@ def gather(do_android: bool, do_apple: bool) -> None:
                     + f'/usr/lib/python{PY_VER_ANDROID}/'
                     f'_sysconfigdata_{debug_d}'
                     # f'_linux_x86_64-linux-android.py'
-                    f'_linux_.py'
+                    f'_android_x86_64-linux-android.py'
+                    # f'_linux_.py'
                 ],
                 libs=_android_libs('android_x86_64'),
                 libinst='android_x86_64',
@@ -1410,7 +1439,8 @@ def gather(do_android: bool, do_apple: bool) -> None:
                     bases['android_x86'] + f'/usr/lib/python{PY_VER_ANDROID}/'
                     f'_sysconfigdata_{debug_d}'
                     # f'_linux_i686-linux-android.py'
-                    f'_linux_.py'
+                    f'_android_i686-linux-android.py'
+                    # f'_linux_.py'
                 ],
                 libs=_android_libs('android_x86'),
                 libinst='android_x86',
@@ -1485,20 +1515,20 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 f'#include <TargetConditionals.h>\n'
                 f'#endif\n'
                 f'\n'
-                f'#if BA_OSTYPE_MACOS and defined(__aarch64__)\n'
+                f'#if BA_PLATFORM_MACOS and defined(__aarch64__)\n'
                 f'#include "pyconfig_{CompileArch.MAC_ARM64.value}.h"\n'
                 f'\n'
-                f'#elif BA_OSTYPE_MACOS and defined(__x86_64__)\n'
+                f'#elif BA_PLATFORM_MACOS and defined(__x86_64__)\n'
                 f'#include "pyconfig_{CompileArch.MAC_X86_64.value}.h"\n'
                 f'\n'
-                f'#elif BA_OSTYPE_IOS and defined(__aarch64__)\n'
+                f'#elif BA_PLATFORM_IOS and defined(__aarch64__)\n'
                 f'#if TARGET_OS_SIMULATOR\n'
                 f'#include "pyconfig_{CompileArch.IOS_SIM_ARM64.value}.h"\n'
                 f'#else\n'
                 f'#include "pyconfig_{CompileArch.IOS_ARM64.value}.h"\n'
                 f'#endif  // TARGET_OS_SIMULATOR\n'
                 f'\n'
-                f'#elif BA_OSTYPE_IOS and defined(__x86_64__)\n'
+                f'#elif BA_PLATFORM_IOS and defined(__x86_64__)\n'
                 f'#if TARGET_OS_SIMULATOR\n'
                 f'#error x86 simulator no longer supported here.\n'
                 # f'#include "pyconfig_{CompileArch.IOS_SIM_X86_64.value}.h"\n'
@@ -1506,14 +1536,14 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 f'#error this platform combo should not be possible\n'
                 f'#endif  // TARGET_OS_SIMULATOR\n'
                 f'\n'
-                f'#elif BA_OSTYPE_TVOS and defined(__aarch64__)\n'
+                f'#elif BA_PLATFORM_TVOS and defined(__aarch64__)\n'
                 f'#if TARGET_OS_SIMULATOR\n'
                 f'#include "pyconfig_{CompileArch.TVOS_SIM_ARM64.value}.h"\n'
                 f'#else\n'
                 f'#include "pyconfig_{CompileArch.TVOS_ARM64.value}.h"\n'
                 f'#endif  // TARGET_OS_SIMULATOR\n'
                 f'\n'
-                f'#elif BA_OSTYPE_TVOS and defined(__x86_64__)\n'
+                f'#elif BA_PLATFORM_TVOS and defined(__x86_64__)\n'
                 f'#if TARGET_OS_SIMULATOR\n'
                 f'#error x86 simulator no longer supported here.\n'
                 # f'#include "pyconfig_{CompileArch.TVOS_SIM_X86_64.value}.h"\n'
@@ -1521,16 +1551,16 @@ def gather(do_android: bool, do_apple: bool) -> None:
                 f'#error this platform combo should not be possible\n'
                 f'#endif  // TARGET_OS_SIMULATOR\n'
                 f'\n'
-                f'#elif BA_OSTYPE_ANDROID and defined(__arm__)\n'
+                f'#elif BA_PLATFORM_ANDROID and defined(__arm__)\n'
                 f'#include "pyconfig_{CompileArch.ANDROID_ARM.value}.h"\n'
                 f'\n'
-                f'#elif BA_OSTYPE_ANDROID and defined(__aarch64__)\n'
+                f'#elif BA_PLATFORM_ANDROID and defined(__aarch64__)\n'
                 f'#include "pyconfig_{CompileArch.ANDROID_ARM64.value}.h"\n'
                 f'\n'
-                f'#elif BA_OSTYPE_ANDROID and defined(__i386__)\n'
+                f'#elif BA_PLATFORM_ANDROID and defined(__i386__)\n'
                 f'#include "pyconfig_{CompileArch.ANDROID_X86.value}.h"\n'
                 f'\n'
-                f'#elif BA_OSTYPE_ANDROID and defined(__x86_64__)\n'
+                f'#elif BA_PLATFORM_ANDROID and defined(__x86_64__)\n'
                 f'#include "pyconfig_{CompileArch.ANDROID_X86_64.value}.h"\n'
                 f'\n'
                 f'#else\n'

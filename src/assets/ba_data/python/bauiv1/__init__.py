@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import logging
 
-from efro.util import set_canonical_module_names
+# from efro.util import set_canonical_module_names
 from babase import (
     add_clean_frame_callback,
     allows_ticket_sales,
@@ -140,6 +140,7 @@ from bauiv1._uitypes import (
     uicleanupcheck,
     MainWindow,
     RootUIUpdatePause,
+    MainWindowAutoRecreateSuppress,
 )
 from bauiv1._appsubsystem import UIV1AppSubsystem
 
@@ -214,6 +215,7 @@ __all__ = [
     'LoginInfo',
     'Lstr',
     'MainWindow',
+    'MainWindowAutoRecreateSuppress',
     'MainWindowState',
     'Mesh',
     'native_review_request',
@@ -266,7 +268,9 @@ __all__ = [
 ]
 
 # We want stuff to show up as bauiv1.Foo instead of bauiv1._sub.Foo.
-set_canonical_module_names(globals())
+# UPDATE: Trying without this for now. Seems like this might cause more
+# harm than good. Can flip it back on if it is missed.
+# set_canonical_module_names(globals())
 
 # Sanity check: we want to keep ballistica's dependencies and
 # bootstrapping order clearly defined; let's check a few particular

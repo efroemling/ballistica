@@ -20,6 +20,7 @@
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/player.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/utils.h"
@@ -300,9 +301,10 @@ void HostActivity::HandleOutOfBoundsNodes() {
       Node* n = i.get();
       if (n) {
         std::string dstr;
-        PyObject* delegate = n->GetDelegate();
-        if (delegate) {
-          dstr = PythonRef(delegate, PythonRef::kAcquire).Str();
+        // GetDelegate() returns a new ref or nullptr.
+        auto delegate{PythonRef::StolenSoft(n->GetDelegate())};
+        if (delegate.exists()) {
+          dstr = delegate.Str();
         }
         g_core->Log(LogName::kBa, LogLevel::kWarning,
                     "   node #" + std::to_string(j) + ": type='"
@@ -332,11 +334,23 @@ void HostActivity::RegisterPyActivity(PyObject* pyActivityObj) {
 }
 
 auto HostActivity::GetPyActivity() const -> PyObject* {
-  PyObject* obj = py_activity_weak_ref_.get();
-  if (!obj) {
-    return Py_None;
+  auto* ref_obj{py_activity_weak_ref_.get()};
+  if (!ref_obj) {
+    return nullptr;
   }
-  return PyWeakref_GetObject(obj);
+  PyObject* obj{};
+  int result = PyWeakref_GetRef(ref_obj, &obj);
+  // Return new obj ref (result 1) or nullptr for dead objs (result 0).
+  if (result == 0 || result == 1) {
+    return obj;
+  }
+  // Something went wrong and an exception is set. We don't expect this to
+  // ever happen so currently just providing a simple error msg.
+  assert(result == -1);
+  PyErr_Clear();
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              "HostActivity::GetPyActivity(): error getting weakref obj.");
+  return nullptr;
 }
 
 auto HostActivity::GetHostSession() -> HostSession* {

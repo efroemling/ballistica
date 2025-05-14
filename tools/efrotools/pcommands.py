@@ -613,7 +613,7 @@ def compile_python_file() -> None:
 
 def copy_python_file() -> None:
     """Copy Python files for packaging."""
-    _simple_file_copy('Copying script', make_unwritable=True)
+    _simple_file_copy('Copying python file', make_unwritable=True)
 
 
 def _simple_file_copy(msg: str, make_unwritable: bool = False) -> None:

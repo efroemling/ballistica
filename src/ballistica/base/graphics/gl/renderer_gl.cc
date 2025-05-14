@@ -260,7 +260,7 @@ void RendererGL::CheckGLCapabilities_() {
 
   // On Android, look at the GL version and try to get gl3 funcs to
   // determine if we're running ES3 or not.
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
 
   BA_DEBUG_CHECK_GL_ERROR;
 
@@ -273,7 +273,7 @@ void RendererGL::CheckGLCapabilities_() {
 
   is_adreno_ = (strstr(renderer, "Adreno") != nullptr);
 
-#endif  // BA_OSTYPE_ANDROID
+#endif  // BA_PLATFORM_ANDROID
 
   std::list<TextureCompressionType> c_types;
   assert(g_base->graphics);
@@ -282,7 +282,7 @@ void RendererGL::CheckGLCapabilities_() {
   }
 
   // Limiting pvr support to iOS for the moment.
-  if (!g_buildconfig.ostype_android()) {
+  if (!g_buildconfig.platform_android()) {
     if (CheckGLExtension(extensions, "texture_compression_pvrtc")) {
       c_types.push_back(TextureCompressionType::kPVR);
     }
@@ -292,7 +292,7 @@ void RendererGL::CheckGLCapabilities_() {
   if (CheckGLExtension(extensions, "compressed_ETC1_RGB8_texture")) {
     c_types.push_back(TextureCompressionType::kETC1);
   } else {
-    if (g_buildconfig.ostype_android()) {
+    if (g_buildconfig.platform_android()) {
       g_core->Log(LogName::kBaGraphics, LogLevel::kError,
                   "Android device missing ETC1 support.");
     }
@@ -398,7 +398,7 @@ void RendererGL::CheckGLCapabilities_() {
 }
 
 auto RendererGL::GetMSAASamplesForFramebuffer_(int width, int height) -> int {
-  if (g_buildconfig.ostype_android()) {
+  if (g_buildconfig.platform_android()) {
     // We currently aim for 4 up to 800 height and 2 beyond that.
     if (height > 800) {
       return 2;
@@ -411,7 +411,7 @@ auto RendererGL::GetMSAASamplesForFramebuffer_(int width, int height) -> int {
 }
 
 void RendererGL::UpdateMSAAEnabled_() {
-  if (g_buildconfig.ostype_macos()) {
+  if (g_buildconfig.platform_macos()) {
     // Let's go ahead and flip this on for Apple Silicon Macs.
 #if __aarch64__
     enable_msaa_ = true;
@@ -424,7 +424,7 @@ void RendererGL::UpdateMSAAEnabled_() {
     } else {
       enable_msaa_ = false;
     }
-  } else if (g_buildconfig.ostype_android()) {
+  } else if (g_buildconfig.platform_android()) {
     // lets allow full 1080p msaa with newer stuff..
     int max_msaa_res = is_tegra_k1_ ? 1200 : 800;
 
@@ -783,7 +783,7 @@ void RendererGL::SyncGLState_() {
   // overwritten. could probably enable this everywhere but I don't know if
   // it's supported on all hardware or slower.
   if (g_core->vr_mode()) {
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
     if (glBlendFuncSeparate == nullptr) {
       FatalError(
           "VR mode is not supported by your GPU (no glBlendFuncSeparate); Try "
@@ -2117,7 +2117,7 @@ void RendererGL::BlitBuffer(RenderTarget* src_in, RenderTarget* dst_in,
   }
   // Use glBlitFramebuffer when its available.
   // FIXME: This should be available in ES3.
-  // #if !BA_OSTYPE_IOS_TVOS
+  // #if !BA_PLATFORM_IOS_TVOS
   if (!force_shader_mode) {
     do_shader_blit = false;
     BA_DEBUG_CHECK_GL_ERROR;
@@ -2453,7 +2453,7 @@ auto RendererGL::GetFunkyDepthIssue_() -> bool {
   return funky_depth_issue_;
 }
 
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
 std::string RendererGL::GetAutoAndroidRes() {
   assert(g_base->app_adapter->InGraphicsContext());
 
@@ -2464,14 +2464,14 @@ std::string RendererGL::GetAutoAndroidRes() {
   }
   return "720p";
 }
-#endif  // BA_OSTYPE_ANDROID
+#endif  // BA_PLATFORM_ANDROID
 
 auto RendererGL::GetAutoTextureQuality() -> TextureQuality {
   assert(g_base->app_adapter->InGraphicsContext());
 
   TextureQuality qual{TextureQuality::kHigh};
 
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
   {
     // Lets be cheaper in VR mode since we have to draw twice.
     if (g_core->vr_mode()) {
@@ -2480,12 +2480,12 @@ auto RendererGL::GetAutoTextureQuality() -> TextureQuality {
       qual = TextureQuality::kHigh;
     }
   }
-#else  // BA_OSTYPE_ANDROID
+#else  // BA_PLATFORM_ANDROID
 
   // On other platforms (iOS, mac, pc, etc) just default to high.
   qual = TextureQuality::kHigh;
 
-#endif  // BA_OSTYPE_ANDROID
+#endif  // BA_PLATFORM_ANDROID
 
   return qual;
 }
@@ -2493,7 +2493,7 @@ auto RendererGL::GetAutoTextureQuality() -> TextureQuality {
 auto RendererGL::GetAutoGraphicsQuality() -> GraphicsQuality {
   assert(g_base->app_adapter->InGraphicsContext());
   GraphicsQuality q{GraphicsQuality::kMedium};
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
   // lets be cheaper in VR mode since we draw twice..
   if (g_core->vr_mode()) {
     q = GraphicsQuality::kMedium;
@@ -2737,7 +2737,7 @@ void RendererGL::PostLoad() {
   // before we render, (in cases such as graphics settings switches) ...and
   // it seems they can screw up our VAOs if we leave them bound. So lets be
   // defensive.
-#if BA_CARDBOARD_BUILD
+#if BA_VARIANT_CARDBOARD
   SyncGLState_();
 #endif
 }
@@ -3174,12 +3174,12 @@ void RendererGL::VRSyncRenderStates() {
 
 void RendererGL::RenderFrameDefEnd() {
   // Need to set some states to keep cardboard happy.
-#if BA_CARDBOARD_BUILD
+#if BA_VARIANT_CARDBOARD
   if (g_core->vr_mode()) {
     SyncGLState_();
     glEnable(GL_SCISSOR_TEST);
   }
-#endif  // BA_CARDBOARD_BUILD
+#endif  // BA_VARIANT_CARDBOARD
 }
 
 }  // namespace ballistica::base

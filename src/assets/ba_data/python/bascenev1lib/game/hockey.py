@@ -162,6 +162,7 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
     @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         assert bs.app.classic is not None
         return bs.app.classic.getmaps('hockey')
 
@@ -237,12 +238,14 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def get_instance_description(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         if self._score_to_win == 1:
             return 'Score a goal.'
         return 'Score ${ARG1} goals.', self._score_to_win
 
     @override
     def get_instance_description_short(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         if self._score_to_win == 1:
             return 'score a goal'
         return 'score ${ARG1} goals', self._score_to_win
@@ -290,6 +293,7 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def on_team_join(self, team: Team) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         self._update_scoreboard()
 
     def _handle_puck_player_collide(self) -> None:
@@ -374,6 +378,7 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         results = bs.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.score)
@@ -386,6 +391,7 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        """Handle arbitrary message."""
         # Respawn dead players if they're still in the game.
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior...

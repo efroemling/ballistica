@@ -61,7 +61,7 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   }
 
   // We may or may not want xinput on windows.
-  if (g_buildconfig.ostype_windows()) {
+  if (g_buildconfig.platform_windows()) {
     if (!g_core->platform->GetLowLevelConfigValue("enablexinput", 1)) {
       SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
     }
@@ -464,7 +464,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
         }
 
         case SDL_WINDOWEVENT_MAXIMIZED: {
-          if (g_buildconfig.ostype_macos() && !fullscreen_) {
+          if (g_buildconfig.platform_macos() && !fullscreen_) {
             // Special case: on Mac, we wind up here if someone fullscreens
             // our window via the window widget. This *basically* is the
             // same thing as setting fullscreen through sdl, so we want to
@@ -486,7 +486,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
         }
 
         case SDL_WINDOWEVENT_RESTORED:
-          if (g_buildconfig.ostype_macos() && fullscreen_) {
+          if (g_buildconfig.platform_macos() && fullscreen_) {
             // See note above about Mac fullscreen.
             fullscreen_ = false;
             g_base->logic->event_loop()->PushCall([] {
@@ -685,7 +685,7 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
     }
 
     int context_flags{};
-    if (g_buildconfig.ostype_macos()) {
+    if (g_buildconfig.platform_macos()) {
       // On Mac we ask for a GL 4.1 Core profile. This is supported by all
       // hardware that we officially support and is also the last version of
       // GL supported on Apple hardware. So we have a nice fixed target to

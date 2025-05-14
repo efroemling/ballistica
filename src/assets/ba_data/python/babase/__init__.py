@@ -17,7 +17,7 @@ functionality from here and reexpose it in a more focused way.
 # dependency loops. The exception is TYPE_CHECKING blocks and
 # annotations since those aren't evaluated at runtime.
 
-from efro.util import set_canonical_module_names
+# from efro.util import set_canonical_module_names
 
 import _babase
 from _babase import (
@@ -124,6 +124,7 @@ from _babase import (
 
 from babase._accountv2 import AccountV2Handle, AccountV2Subsystem
 from babase._app import App, AppState
+from babase._appcomponent import AppComponentSubsystem
 from babase._appconfig import commit_app_config
 from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
 from babase._appmode import AppMode
@@ -194,9 +195,9 @@ from babase._net import (
 from babase._plugin import PluginSpec, Plugin, PluginSubsystem
 from babase._stringedit import StringEditAdapter, StringEditSubsystem
 from babase._text import timestring
+from babase._workspace import WorkspaceSubsystem
 
 _babase.app = app = App()
-app.postinit()
 
 __all__ = [
     'AccountV2Handle',
@@ -208,6 +209,7 @@ __all__ = [
     'android_get_external_files_dir',
     'app',
     'App',
+    'AppComponentSubsystem',
     'AppConfig',
     'AppHealthSubsystem',
     'AppIntent',
@@ -372,11 +374,14 @@ __all__ = [
     'WeakCall',
     'WidgetNotFoundError',
     'workspaces_in_use',
+    'WorkspaceSubsystem',
     'DEFAULT_REQUEST_TIMEOUT_SECONDS',
 ]
 
 # We want stuff to show up as babase.Foo instead of babase._sub.Foo.
-set_canonical_module_names(globals())
+# UPDATE: Trying without this for now. Seems like this might cause more
+# harm than good. Can flip it back on if it is missed.
+# set_canonical_module_names(globals())
 
 # Allow the native layer to wrap a few things up.
 _babase.reached_end_of_babase()

@@ -27,12 +27,12 @@ if (APPLE)
   # to load a 3.X library from within it which doesn't exist. So we need
   # to be a bit more explicit telling it where to look. Note: this was last
   # tested with 3.7; should revisit sometime to make sure still applies.
-  execute_process(COMMAND "python3.12-config" "--prefix"
+  execute_process(COMMAND "python3.13-config" "--prefix"
     OUTPUT_VARIABLE Python_ROOT_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 endif ()
-find_package (Python 3.12 REQUIRED EXACT COMPONENTS Development)
+find_package (Python 3.13 REQUIRED EXACT COMPONENTS Development)
   
 
 if (HEADLESS)
@@ -65,7 +65,7 @@ if (HEADLESS)
 endif ()
 
 if (TEST_BUILD)
-  add_definitions(-DBA_TEST_BUILD=1)
+  add_definitions(-DBA_VARIANT_TEST_BUILD=1)
 endif ()
 
 # Currently seeing warnings about parameter order changing in GCC 7.1
@@ -672,8 +672,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_cmake.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_common.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_common.h
-  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_generic.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_headless.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_testbuild.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/event_loop.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/event_loop.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/exception.cc

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import math
 import logging
-from typing import TYPE_CHECKING, cast, override
+from typing import TYPE_CHECKING, cast
 
 import bauiv1 as bui
 import bascenev1 as bs
@@ -21,10 +21,8 @@ if TYPE_CHECKING:
 class PartyWindow(bui.Window):
     """Party list/chat window."""
 
-    @override
     def __del__(self) -> None:
         bui.set_party_window_open(False)
-        super().__del__()
 
     def __init__(self, origin: Sequence[float] = (0, 0)):
         bui.set_party_window_open(True)

@@ -8,7 +8,7 @@ import logging
 from functools import partial
 from typing import TYPE_CHECKING, override
 
-from bacommon.app import AppExperience
+# from bacommon.app import AppExperience
 import bacommon.bs
 import babase
 import bauiv1
@@ -51,12 +51,7 @@ class ClassicAppMode(babase.AppMode):
 
     @override
     @classmethod
-    def get_app_experience(cls) -> AppExperience:
-        return AppExperience.MELEE
-
-    @override
-    @classmethod
-    def can_handle_intent_impl(cls, intent: babase.AppIntent) -> bool:
+    def can_handle_intent(cls, intent: babase.AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(
             intent, babase.AppIntentExec | babase.AppIntentDefault

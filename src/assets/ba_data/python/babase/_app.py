@@ -8,7 +8,7 @@ import os
 import logging
 from enum import Enum
 from functools import partial
-from typing import TYPE_CHECKING, TypeVar, override
+from typing import TYPE_CHECKING, override
 from threading import RLock
 
 from efro.threadpool import ThreadPoolExecutorEx
@@ -45,8 +45,6 @@ if TYPE_CHECKING:
 
     # __FEATURESET_APP_SUBSYSTEM_IMPORTS_END__
 
-T = TypeVar('T')
-
 
 class App:
     """High level Ballistica app functionality and state.
@@ -61,12 +59,6 @@ class App:
     # A few things defined as non-optional values but not actually
     # available until the app starts (so we need to predeclare them
     # here).
-
-    #: Subsystem for wrangling plugins.
-    plugins: PluginSubsystem
-
-    #: Language subsystem.
-    lang: LanguageSubsystem
 
     #: Subsystem for keeping tabs on app health.
     health: AppHealthSubsystem
@@ -90,6 +82,9 @@ class App:
         if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
             return
 
+        self._subsystems: list[AppSubsystem] = []
+        self._subsystem_registration_ended = False
+
         #: Config values for the app.
         self.config: AppConfig = AppConfig(_babase.get_initial_app_config())
         _babase.set_app_config(self.config)
@@ -107,6 +102,16 @@ class App:
         self.threadpool: ThreadPoolExecutorEx = ThreadPoolExecutorEx(
             thread_name_prefix='baworker',
             initializer=self._thread_pool_thread_init,
+        )
+
+        #: Language related functionality.
+        self.lang: LanguageSubsystem = self.register_subsystem(
+            LanguageSubsystem()
+        )
+
+        #: Subsystem for wrangling plugins.
+        self.plugins: PluginSubsystem = self.register_subsystem(
+            PluginSubsystem()
         )
 
         #: Subsystem for wrangling metadata.
@@ -132,7 +137,6 @@ class App:
         #: way to determine if network data should be refreshed/etc.
         self.fg_state: int = 0
 
-        self._subsystems: list[AppSubsystem] = []
         self._native_bootstrapping_completed = False
         self._init_completed = False
         self._meta_scan_completed = False
@@ -144,7 +148,6 @@ class App:
         self._called_on_initing = False
         self._called_on_loading = False
         self._called_on_running = False
-        self._subsystem_registration_ended = False
         self._pending_apply_app_config = False
         self._asyncio_loop: asyncio.AbstractEventLoop | None = None
         self._asyncio_tasks: set[asyncio.Task] = set()
@@ -168,22 +171,6 @@ class App:
         # subsystems.
         self._subsystem_property_lock = RLock()
         self._subsystem_property_data: dict[str, AppSubsystem | bool] = {}
-
-    def postinit(self) -> None:
-        """Called after we've been inited and assigned to ``babase.app``.
-
-        Anything that accesses ``babase.app`` as part of its init process
-        must go here instead of __init__.
-        """
-
-        # Hack for docs-generation: We can be imported with dummy
-        # modules instead of our actual binary ones, but we don't
-        # function.
-        if os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') == '1':
-            return
-
-        self.lang = LanguageSubsystem()
-        self.plugins = PluginSubsystem()
 
     @property
     def active(self) -> bool:
@@ -228,7 +215,7 @@ class App:
         assert self._asyncio_loop is not None
         return self._asyncio_loop
 
-    def create_async_task(
+    def create_async_task[T](
         self, coro: Coroutine[Any, Any, T], *, name: str | None = None
     ) -> None:
         """Create a fully managed :mod:`asyncio` task.
@@ -323,7 +310,7 @@ class App:
             # Do our one attempt to create the singleton.
             val = create_call()
             self._subsystem_property_data[ssname] = (
-                False if val is None else val
+                False if val is None else self.register_subsystem(val)
             )
 
         return val
@@ -388,10 +375,16 @@ class App:
 
     # __FEATURESET_APP_SUBSYSTEM_PROPERTIES_END__
 
-    def register_subsystem(self, subsystem: AppSubsystem) -> None:
-        """Called by the AppSubsystem class. Do not use directly.
+    def register_subsystem[T: AppSubsystem](self, subsystem: T) -> T:
+        """Register an :class:`~babase.AppSubsystem` instance with the app.
 
-        :meta private:
+        Facilitates the subsystem receiving state callbacks, etc.
+
+        Note that subsystems can only be registered before the app
+        completes its transition to the :attr:`~AppState.RUNNING` state.
+
+        Returns the passed object for convenience in assigning it to an
+        attr/etc.
         """
 
         # We only allow registering new subsystems if we've not yet
@@ -403,7 +396,9 @@ class App:
             raise RuntimeError(
                 'Subsystems can no longer be registered at this point.'
             )
+        assert not any(s is subsystem for s in self._subsystems)
         self._subsystems.append(subsystem)
+        return subsystem
 
     def add_shutdown_task(self, coro: Coroutine[None, None, None]) -> None:
         """Add a task to be run on app shutdown.
@@ -450,12 +445,12 @@ class App:
         self.threadpool.submit_no_wait(self._set_intent, intent)
 
     def push_apply_app_config(self) -> None:
-        """Internal. Use app.config.apply() to apply app config changes.
+        """Internal. Use :meth:`babase.AppConfig.apply()`.
 
         :meta private:
         """
-        # To be safe, let's run this by itself in the event loop.
-        # This avoids potential trouble if this gets called mid-draw or
+        # To be safe, let's run this by itself in the event loop. This
+        # avoids potential trouble if this gets called mid-draw or
         # something like that.
         self._pending_apply_app_config = True
         _babase.pushcall(self._apply_app_config, raw=True)
@@ -748,7 +743,7 @@ class App:
         _env.on_app_state_initing()
 
         self._asyncio_loop = _asyncio.setup_asyncio()
-        self.health = AppHealthSubsystem()
+        self.health = self.register_subsystem(AppHealthSubsystem())
 
         # __FEATURESET_APP_SUBSYSTEM_CREATE_BEGIN__
         # This section generated by batools.appmodule; do not edit.

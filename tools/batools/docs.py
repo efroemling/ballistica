@@ -438,7 +438,9 @@ def _sphinx_pre_filter_file(path: str) -> None:
             'from typing import (Coroutine, Any, Literal, Callable,\n'
             '  Generator, Awaitable, Sequence, Self)\n'
             'import asyncio\n'
-            'from concurrent.futures import Future'
+            'from concurrent.futures import Future\n'
+            'from pathlib import Path\n'
+            'from enum import Enum\n'
         )
 
     with open(filenameout, 'w', encoding='utf-8') as f:

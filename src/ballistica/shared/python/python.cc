@@ -17,7 +17,7 @@
 // TODO(ericf): could also verify this at runtime by checking for existence
 //  of sys.gettotalrefcount() (is that still valid in 3.8?).
 
-#if BA_XCODE_BUILD || BA_OSTYPE_ANDROID || BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_ANDROID || BA_PLATFORM_WINDOWS
 #if BA_DEBUG_BUILD
 #ifndef Py_DEBUG
 #error Expected Py_DEBUG to be defined for this build.
@@ -27,7 +27,7 @@
 #error Expected Py_DEBUG to NOT be defined for this build.
 #endif  // Py_DEBUG
 #endif  // BA_DEBUG_BUILD
-#endif  // BA_XCODE_BUILD || BA_OSTYPE_ANDROID || BA_OSTYPE_WINDOWS
+#endif  // BA_XCODE_BUILD || BA_PLATFORM_ANDROID || BA_PLATFORM_WINDOWS
 
 namespace ballistica {
 

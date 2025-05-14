@@ -194,6 +194,7 @@ docs: env
 
 docs-clean:
 	rm -rf .cache/sphinx
+	rm -rf .cache/sphinxfiltered
 	rm -rf build/docs
 
 pcommandbatch_speed_test: env
@@ -1332,12 +1333,12 @@ tools/bacloud: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 # Set this to 1 to skip environment checks.
 SKIP_ENV_CHECKS ?= 0
 
-VENV_PYTHON ?= python3.12
+VENV_PYTHON ?= python3.13
 
 # Increment this to force all downstream venvs to fully rebuild. Useful after
 # removing requirements since upgrading venvs in place will never uninstall
 # stuff.
-VENV_STATE = 2
+VENV_STATE = 3
 
 # Update our virtual environment whenever reqs changes, Python version
 # changes, our venv's Python symlink breaks (can happen for minor Python

@@ -1141,10 +1141,10 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
       prefix1 = "textures/";
       prefix2 = "textures2/";
 
-#if BA_OSTYPE_ANDROID && !BA_ANDROID_DDS_BUILD
+#if BA_PLATFORM_ANDROID && !BA_ANDROID_DDS_BUILD
       // On most android builds we go for .ktx, which contains etc2 and etc1.
       ext = ".ktx";
-#elif BA_OSTYPE_IOS_TVOS
+#elif BA_PLATFORM_IOS_TVOS
       // On iOS we use pvr.
       ext = ".pvr";
 #else

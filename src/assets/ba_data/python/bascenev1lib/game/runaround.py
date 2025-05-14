@@ -198,6 +198,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def on_transition_in(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         super().on_transition_in()
         self._scoreboard = Scoreboard(
             label=bs.Lstr(resource='scoreText'), score_split=0.5
@@ -615,6 +617,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def spawn_player(self, player: Player) -> bs.Actor:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         pos = (
             self._spawn_center[0] + random.uniform(-1.5, 1.5),
             self._spawn_center[1],
@@ -692,6 +696,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         bs.pushcall(bs.Call(self.do_end, 'defeat'))
         bs.setmusic(None)
         self._player_death_sound.play()
@@ -1325,6 +1331,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, bs.PlayerScoredMessage):
             self._score += msg.score
             self._update_scores()

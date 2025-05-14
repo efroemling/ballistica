@@ -7,7 +7,7 @@ import math
 import random
 import logging
 from functools import partial
-from typing import TYPE_CHECKING, override, TypeVar, Generic
+from typing import TYPE_CHECKING, override
 
 import _babase
 
@@ -18,8 +18,6 @@ if TYPE_CHECKING:
 
     from bacommon.loggercontrol import LoggerControlConfig
     from babase import AppMode
-
-T = TypeVar('T')
 
 
 class DevConsoleTabPython(DevConsoleTab):
@@ -56,7 +54,7 @@ class DevConsoleTabAppModes(DevConsoleTab):
         # Kick off a load if applicable.
         if self._app_modes is None and not self._app_modes_loading:
             _babase.app.meta.load_exported_classes(
-                AppMode, self._on_app_modes_loaded
+                'babase.AppMode', AppMode, self._on_app_modes_loaded
             )
 
         # Just say 'loading' if we don't have app-modes yet.
@@ -66,7 +64,7 @@ class DevConsoleTabAppModes(DevConsoleTab):
             )
             return
 
-        bwidth = 260
+        bwidth = 300
         bpadding = 5
 
         xoffs = -0.5 * bwidth * len(self._app_modes)
@@ -173,7 +171,7 @@ class DevConsoleTabUI(DevConsoleTab):
         self.request_refresh()
 
 
-class Table(Generic[T]):
+class Table[T]:
     """Used to show controls for arbitrarily large data in a grid form."""
 
     def __init__(

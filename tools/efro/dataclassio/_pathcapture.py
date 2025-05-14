@@ -7,13 +7,11 @@ from __future__ import annotations
 import dataclasses
 from typing import TYPE_CHECKING
 
-from efro.dataclassio._base import _parse_annotated, _get_origin
+from efro.dataclassio._base import parse_annotated, _get_origin
 from efro.dataclassio._prep import PrepSession
 
 if TYPE_CHECKING:
     from typing import Any, Callable
-
-# T = TypeVar('T')
 
 
 class _PathCapture:
@@ -42,7 +40,7 @@ class _PathCapture:
             anntype = prep.annotations[name]
         except KeyError as exc:
             raise AttributeError(f'{type(self)} has no {name} field.') from exc
-        anntype, ioattrs = _parse_annotated(anntype)
+        anntype, ioattrs = parse_annotated(anntype)
         storagename = (
             name
             if (ioattrs is None or ioattrs.storagename is None)

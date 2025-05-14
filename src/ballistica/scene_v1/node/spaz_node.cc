@@ -27,6 +27,7 @@
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
 #include "ode/ode_collision_util.h"
@@ -4518,7 +4519,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     UpdateForGraphicsQuality(graphics_quality_);
   }
 
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   if (g_base->graphics_server->renderer()->debug_draw_mode()) {
     base::SimpleComponent c(frame_def->overlay_3d_pass());
     c.SetTransparent(true);
@@ -4643,7 +4644,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
 
     c.Submit();
   }
-#endif  // BA_OSTYPE_MACOS
+#endif  // BA_PLATFORM_MACOS
 
   millisecs_t scenetime = scene()->time();
   int64_t render_frame_count = frame_def->frame_number_filtered();

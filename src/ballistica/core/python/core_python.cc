@@ -15,10 +15,12 @@
 
 namespace ballistica::core {
 
+#ifdef PY_HAVE_BALLISTICA_LOW_LEVEL_DEBUG_LOG
 static void PythonLowLevelDebugLog_(const char* msg) {
   assert(g_core);
   g_core->platform->LowLevelDebugLog(msg);
 }
+#endif
 
 static void CheckPyInitStatus(const char* where, const PyStatus& status) {
   if (PyStatus_Exception(status)) {
@@ -73,7 +75,7 @@ void CorePython::InitPython() {
   // In cases where we bundle Python, set up all paths explicitly.
   // https://docs.python.org/3/c-api/init_config.html#path-configuration
   if (g_buildconfig.contains_python_dist()) {
-    std::string root = g_buildconfig.ostype_windows() ? "C:\\" : "/";
+    std::string root = g_buildconfig.platform_windows() ? "C:\\" : "/";
 
     // In our embedded case, none of these paths are really meaningful, but
     // we want to explicitly provide them so Python doesn't try to calc its
@@ -115,7 +117,7 @@ void CorePython::InitPython() {
     // wind up in sys.path as absolute paths (unlike entries we add to
     // sys.path *after* things are up and running). Though nowadays we want
     // to use abs paths anyway to avoid needing chdir so its a moot point.
-    if (g_buildconfig.ostype_windows()) {
+    if (g_buildconfig.platform_windows()) {
       // On most platforms we stuff abs paths in here so things can work
       // from wherever. However on Windows we need to be running from where
       // this stuff lives so we pick up various .dlls that live there/etc.
@@ -153,6 +155,16 @@ void CorePython::InitPython() {
       PyWideStringList_Append(&config.module_search_paths,
                               Py_DecodeLocale(pylibpath.c_str(), nullptr));
     }
+
+    // Some platforms need to be able to load binary modules from
+    // pylib/lib-dynload.
+    if (g_buildconfig.xcode_build()) {
+      auto pylibpath = g_core->platform->GetDataDirectoryMonolithicDefault()
+                       + BA_DIRSLASH + "pylib" + BA_DIRSLASH + "lib-dynload";
+      PyWideStringList_Append(&config.module_search_paths,
+                              Py_DecodeLocale(pylibpath.c_str(), nullptr));
+    }
+
     config.module_search_paths_set = 1;
   }
 
@@ -326,8 +338,8 @@ void CorePython::SoftImportBase() {
 void CorePython::VerifyPythonEnvironment() {
   // Make sure we're running the Python version we require.
   const char* ver = Py_GetVersion();
-  if (strncmp(ver, "3.12", 4) != 0) {
-    FatalError("We require Python 3.12.x; instead found " + std::string(ver));
+  if (strncmp(ver, "3.13", 4) != 0) {
+    FatalError("We require Python 3.13.x; instead found " + std::string(ver));
   }
 }
 

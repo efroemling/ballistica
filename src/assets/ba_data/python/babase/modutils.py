@@ -47,9 +47,6 @@ def get_human_readable_user_scripts_path() -> str:
 def _request_storage_permission() -> bool:
     """If needed, requests storage permission from the user (& return true)."""
     from babase._language import Lstr
-
-    # noinspection PyProtectedMember
-    # (PyCharm inspection bug?)
     from babase._mgen.enums import Permission
 
     if not _babase.have_permission(Permission.STORAGE):

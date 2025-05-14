@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #include "ballistica/core/platform/windows/core_platform_windows.h"
 
 #include <direct.h>
@@ -28,9 +28,9 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #if BA_DEBUG_BUILD
-#pragma comment(lib, "python312_d.lib")
+#pragma comment(lib, "python313_d.lib")
 #else
-#pragma comment(lib, "python312.lib")
+#pragma comment(lib, "python313.lib")
 #endif
 #pragma comment(lib, "DbgHelp.lib")
 
@@ -1051,10 +1051,10 @@ bool CorePlatformWindows::SetSocketNonBlocking(int sd) {
   return true;
 }
 
-std::string CorePlatformWindows::GetPlatformName() { return "windows"; }
+std::string CorePlatformWindows::GetLegacyPlatformName() { return "windows"; }
 
-std::string CorePlatformWindows::GetSubplatformName() {
-#if BA_TEST_BUILD
+std::string CorePlatformWindows::GetLegacySubplatformName() {
+#if BA_VARIANT_TEST_BUILD
   return "test";
 #else
   return "";
@@ -1063,4 +1063,4 @@ std::string CorePlatformWindows::GetSubplatformName() {
 
 }  // namespace ballistica::core
 
-#endif  // BA_OSTYPE_WINDOWS
+#endif  // BA_PLATFORM_WINDOWS

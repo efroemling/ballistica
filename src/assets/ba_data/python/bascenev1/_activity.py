@@ -5,24 +5,22 @@ from __future__ import annotations
 
 import weakref
 import logging
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING
 
 import babase
 import _bascenev1
 from bascenev1._dependency import DependencyComponent
-from bascenev1._team import Team
 from bascenev1._messages import UNHANDLED
-from bascenev1._player import Player
+
 
 if TYPE_CHECKING:
     from typing import Any
     import bascenev1
 
-PlayerT = TypeVar('PlayerT', bound=Player)
-TeamT = TypeVar('TeamT', bound=Team)
 
-
-class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
+class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
+    DependencyComponent
+):
     """Units of execution wrangled by a :class:`bascenev1.Session`.
 
     Examples of activities include games, score-screens, cutscenes, etc.
@@ -689,9 +687,11 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         sessionplayer.setactivity(None)
         sessionplayer.activityplayer = None
 
-    # noinspection PyUnresolvedReferences
     def _setup_player_and_team_types(self) -> None:
         """Pull player and team types from our typing.Generic params."""
+
+        from bascenev1._player import Player
+        from bascenev1._team import Team
 
         # TODO: There are proper calls for pulling these in Python 3.8;
         # should update this code when we adopt that.

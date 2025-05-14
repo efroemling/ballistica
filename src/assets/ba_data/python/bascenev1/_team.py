@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import weakref
 import logging
-from typing import TYPE_CHECKING, TypeVar, Generic
+from typing import TYPE_CHECKING
 
 import babase
 
@@ -20,7 +20,7 @@ class SessionTeam:
     """A team of one or more :class:`~bascenev1.SessionPlayer`.
 
     Note that a player will *always* have a team. in some cases, such as
-    free-for-all :class:`~bascenev1.Sessions`, each team consists of
+    free-for-all :class:`~bascenev1.Session`, each team consists of
     just one player.
     """
 
@@ -65,10 +65,7 @@ class SessionTeam:
         self.customdata = {}
 
 
-PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
-
-
-class Team(Generic[PlayerT]):
+class Team[PlayerT: bascenev1.Player]:
     """A team in a specific :class:`~bascenev1.Activity`.
 
     These correspond to :class:`~bascenev1.SessionTeam` objects, but are

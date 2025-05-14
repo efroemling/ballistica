@@ -380,7 +380,7 @@ class LanguageSubsystem(AppSubsystem):
         raise_exceptions: bool = False,
         print_errors: bool = False,
     ) -> str:
-        """Translate a value (or return the value if no translation available)
+        """Translate a value (or return the value if no translation available).
 
         .. warning::
 

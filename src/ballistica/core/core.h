@@ -96,9 +96,6 @@ class CoreFeatureSet {
     return std::this_thread::get_id() == main_thread_id();
   }
 
-  /// Log a boot-related message (only if core_config.lifecycle_log is true).
-  // void LifecycleLog(const char* msg, double offset_seconds = 0.0);
-
   /// Base path of build src dir so we can attempt to remove it from any
   /// source file paths we print.
   auto build_src_dir() const { return build_src_dir_; }
@@ -207,7 +204,13 @@ class CoreFeatureSet {
 
   auto ba_env_launch_timestamp() {
     // Make sure we set this before accessing it.
-    assert(ba_env_launch_timestamp_ > 0.0);
+    //
+    // UPDATE: Early fatal errors may access this before it gets set; we'd
+    // rather not mask those by dying here. We can just watch out for -1
+    // values in logs.
+    //
+    // assert(ba_env_launch_timestamp_ > 0.0);
+
     return ba_env_launch_timestamp_;
   }
 
@@ -253,8 +256,8 @@ class CoreFeatureSet {
   microsecs_t app_time_microsecs_{};
   microsecs_t last_app_time_measure_microsecs_;
   std::mutex app_time_mutex_;
-  std::string legacy_user_agent_string_{
-      "BA_USER_AGENT_UNSET (" BA_PLATFORM_STRING ")"};
+  std::string legacy_user_agent_string_{"BA_USER_AGENT_UNSET (" BA_PLATFORM
+                                        " " BA_ARCH ")"};
   std::optional<std::string> ba_env_app_python_dir_;
   std::string ba_env_config_dir_;
   std::optional<std::string> ba_env_user_python_dir_;

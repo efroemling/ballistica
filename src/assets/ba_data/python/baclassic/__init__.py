@@ -17,7 +17,7 @@ designed in a more modular way.
 # (ba*.app.classic being None).
 import logging
 
-from efro.util import set_canonical_module_names
+# from efro.util import set_canonical_module_names
 
 from baclassic._appmode import ClassicAppMode
 from baclassic._appsubsystem import ClassicAppSubsystem
@@ -28,6 +28,7 @@ from baclassic._chest import (
     CHEST_APPEARANCE_DISPLAY_INFOS,
 )
 from baclassic._displayitem import show_display_item
+from baclassic._music import MusicPlayer
 
 __all__ = [
     'ChestAppearanceDisplayInfo',
@@ -38,11 +39,14 @@ __all__ = [
     'Achievement',
     'AchievementSubsystem',
     'show_display_item',
+    'MusicPlayer',
 ]
 
 # We want stuff here to show up as packagename.Foo instead of
 # packagename._submodule.Foo.
-set_canonical_module_names(globals())
+# UPDATE: Trying without this for now. Seems like this might cause more
+# harm than good. Can flip it back on if it is missed.
+# set_canonical_module_names(globals())
 
 # Sanity check: we want to keep ballistica's dependencies and
 # bootstrapping order clearly defined; let's check a few particular

@@ -78,7 +78,7 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
         // to get custom stack sizes; std::thread stupidly doesn't support it.
 
         // FIXME - move this to platform.
-#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
+#if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS || BA_PLATFORM_LINUX
       pthread_attr_t attr;
       BA_PRECONDITION(pthread_attr_init(&attr) == 0);
       BA_PRECONDITION(pthread_attr_setstacksize(&attr, 1024 * 1024) == 0);

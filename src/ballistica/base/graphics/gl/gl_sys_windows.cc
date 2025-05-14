@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#if BA_ENABLE_OPENGL && BA_OSTYPE_WINDOWS
+#if BA_ENABLE_OPENGL && BA_PLATFORM_WINDOWS
 #include "ballistica/base/graphics/gl/gl_sys_windows.h"
 
 #include <string>
@@ -175,4 +175,4 @@ void SysGLInit(RendererGL* renderer) {
 
 }  // namespace ballistica::base
 
-#endif  // BA_ENABLE_OPENGL && BA_OSTYPE_WINDOWS
+#endif  // BA_ENABLE_OPENGL && BA_PLATFORM_WINDOWS

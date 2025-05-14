@@ -8,7 +8,7 @@ import dataclasses
 import typing
 import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, get_args, TypeVar, Generic, override
+from typing import TYPE_CHECKING, get_args, override
 
 # noinspection PyProtectedMember
 from typing import _AnnotatedAlias  # type: ignore
@@ -33,7 +33,7 @@ LOSSY_ATTR = '_DCIOLOSSY'
 class Codec(Enum):
     """Specifies expected data format exported to or imported from."""
 
-    #: Use only types that will translate cleanly to/from json: lists,
+    #: Use only types that will translate cleanly to/from json - lists,
     #: dicts with str keys, bools, ints, floats, and None.
     JSON = 'json'
 
@@ -90,10 +90,7 @@ class IOExtendedData:
     # pylint: enable=useless-return
 
 
-EnumT = TypeVar('EnumT', bound=Enum)
-
-
-class IOMultiType(Generic[EnumT]):
+class IOMultiType[EnumT: Enum]:
     """A base class for types that can map to multiple dataclass types.
 
     This enables usage of high level base classes (for example a
@@ -192,6 +189,10 @@ class IOAttrs:
         can allow newer data to remain loadable in older environments.
         Note that 'lossy' must be enabled in the top level load call for
         this to apply, since it can fundamentally modify data.
+
+    :param multiline: If provided for a string, specifies whether multi
+        line values are allowed/expected. Can be referenced when creating
+        UI for editing the value.
     """
 
     # A sentinel object to detect if a parameter is supplied or not. Use
@@ -212,6 +213,7 @@ class IOAttrs:
     soft_default: Any = MISSING
     soft_default_factory: Callable[[], Any] | _MissingType = MISSING
     enum_fallback: Enum | None = None
+    multiline: bool | None = None
 
     def __init__(
         self,
@@ -224,6 +226,7 @@ class IOAttrs:
         soft_default: Any = MISSING,
         soft_default_factory: Callable[[], Any] | _MissingType = MISSING,
         enum_fallback: Enum | None = None,
+        multiline: bool | None = None,
     ):
         # Only store values that differ from class defaults to keep
         # our instances nice and lean.
@@ -255,6 +258,8 @@ class IOAttrs:
                 )
         if enum_fallback is not cls.enum_fallback:
             self.enum_fallback = enum_fallback
+        if multiline is not cls.multiline:
+            self.multiline = multiline
 
     def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs is ok to use with provided field."""
@@ -368,8 +373,9 @@ def _get_origin(anntype: Any) -> Any:
     return anntype if origin is None else origin
 
 
-def _parse_annotated(anntype: Any) -> tuple[Any, IOAttrs | None]:
+def parse_annotated(anntype: Any) -> tuple[Any, IOAttrs | None]:
     """Parse Annotated() constructs, returning annotated type & IOAttrs."""
+
     # If we get an Annotated[foo, bar, eep] we take foo as the actual
     # type, and we look for IOAttrs instances in bar/eep to affect our
     # behavior.

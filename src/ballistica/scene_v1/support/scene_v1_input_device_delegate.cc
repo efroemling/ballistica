@@ -16,6 +16,7 @@
 #include "ballistica/scene_v1/support/client_session_net.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {

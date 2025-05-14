@@ -34,6 +34,7 @@ from bascenev1lib.actor.spazbot import (
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
+
     from bascenev1lib.actor.spazbot import SpazBot
 
 
@@ -112,6 +113,8 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def on_transition_in(self) -> None:
+        # (Pylint bug?) pylint: disable=missing-function-docstring
+
         super().on_transition_in()
         bs.timer(1.3, self._new_wave_sound.play)
         self._scoreboard = Scoreboard(
@@ -134,6 +137,8 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def spawn_player(self, player: Player) -> bs.Actor:
+        # (Pylint bug?) pylint: disable=missing-function-docstring
+
         pos = (
             self._spawn_center[0] + random.uniform(-1.5, 1.5),
             self._spawn_center[1],
@@ -296,6 +301,8 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, bs.PlayerDiedMessage):
             player = msg.getplayer(Player)
             self.stats.player_was_killed(player)
@@ -334,6 +341,8 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint bug?) pylint: disable=missing-function-docstring
+
         # Tell our bots to celebrate just to rub it in.
         self._bots.final_celebrate()
         bs.setmusic(None)

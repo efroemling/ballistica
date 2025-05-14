@@ -18,6 +18,7 @@
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/support/host_activity.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
@@ -405,16 +406,17 @@ auto HostSession::NewHostActivity(PyObject* activity_type_obj,
     throw Exception("HostActivity creation failed");
   }
 
-  // If all went well, the python activity constructor should have called
-  // register_activity(), so we should be able to get at the same python
+  // If all went well, the Python activity constructor should have called
+  // register_activity(), so we should be able to get at the same Python
   // activity we just instantiated through the c++ class.
-  if (activity->GetPyActivity() != result.get()) {
+
+  // GetPyActivity returns a new ref or nullptr.
+  auto py_activity{PythonRef::StolenSoft(activity->GetPyActivity())};
+  if (!py_activity.exists() || py_activity.get() != result.get()) {
     throw Exception("Error on HostActivity construction");
   }
 
-  PyObject* obj = result.get();
-  Py_INCREF(obj);
-  return obj;
+  return result.NewRef();
 }
 
 auto HostSession::RegisterPyActivity(PyObject* activity_obj) -> HostActivity* {

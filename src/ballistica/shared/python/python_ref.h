@@ -170,8 +170,8 @@ class PythonRef {
 
   auto ValueIsNone() const -> bool;
 
-  /// For string and babase.Lstr types, returns a utf8 string.
-  /// Throws an exception for other types.
+  /// For string and babase.Lstr types, returns a utf8 string. Throws an
+  /// exception for other types.
   auto ValueAsLString() const -> std::string;
 
   auto ValueIsString() const -> bool;

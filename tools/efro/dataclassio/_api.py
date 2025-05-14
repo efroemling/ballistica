@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 from enum import Enum
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 from efro.dataclassio._outputter import _Outputter
 from efro.dataclassio._inputter import _Inputter
@@ -20,8 +20,6 @@ from efro.dataclassio._base import Codec
 
 if TYPE_CHECKING:
     from typing import Any
-
-T = TypeVar('T')
 
 
 class JsonStyle(Enum):
@@ -96,7 +94,7 @@ def dataclass_to_json(
     return json.dumps(jdict, separators=(',', ':'), sort_keys=sort_keys)
 
 
-def dataclass_from_dict(
+def dataclass_from_dict[T](
     cls: type[T],
     values: dict,
     *,
@@ -151,7 +149,7 @@ def dataclass_from_dict(
     return val
 
 
-def dataclass_from_json(
+def dataclass_from_json[T](
     cls: type[T],
     json_str: str,
     *,

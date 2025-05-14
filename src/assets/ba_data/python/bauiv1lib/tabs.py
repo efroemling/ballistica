@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, TypeVar, Generic
+from typing import TYPE_CHECKING
 
 import bauiv1 as bui
 
@@ -22,10 +22,7 @@ class Tab:
     size: tuple[float, float]
 
 
-T = TypeVar('T')
-
-
-class TabRow(Generic[T]):
+class TabRow[T]:
     """Encapsulates a row of tab-styled buttons.
 
     Tabs are indexed by id which is an arbitrary user-provided type.

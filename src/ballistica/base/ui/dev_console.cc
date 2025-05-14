@@ -597,7 +597,7 @@ DevConsole::DevConsole() {
   if (g_buildconfig.debug_build()) {
     title += " (debug)";
   }
-  if (g_buildconfig.test_build()) {
+  if (g_buildconfig.variant_test_build()) {
     title += " (test)";
   }
   title_text_group_.SetText(title);

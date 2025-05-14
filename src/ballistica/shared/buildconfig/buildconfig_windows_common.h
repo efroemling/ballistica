@@ -7,9 +7,6 @@
 #define BA_DEBUG_BUILD 1
 #endif
 
-// will need to turn this off eventually..
-#define BA_TEST_BUILD 1
-
 #ifndef M_PI
 #define M_PI (3.1415926536f)
 #endif
@@ -32,17 +29,19 @@
 
 #define WIN32_LEAN_AND_MEAN  // Exclude rarely-used stuff from Windows headers
 
+#define BA_PLATFORM "windows"
+
 #if defined(_M_ARM64)
-#define BA_PLATFORM_STRING "windows arm64"
+#define BA_ARCH "arm64"
 #elif defined(_M_IX86)
-#define BA_PLATFORM_STRING "windows x86"
+#define BA_ARCH "x86"
 #elif defined(_M_X64)
-#define BA_PLATFORM_STRING "windows x86_64"
+#define BA_ARCH "x86_64"
 #else
 #error unknown cpu architecture
 #endif
 
-#define BA_OSTYPE_WINDOWS 1
+#define BA_PLATFORM_WINDOWS 1
 
 #define BA_SOCKET_SEND_DATA_TYPE char
 #define BA_SOCKET_SEND_LENGTH_TYPE int

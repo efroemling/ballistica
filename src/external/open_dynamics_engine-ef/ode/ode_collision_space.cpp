@@ -39,7 +39,7 @@ spaces
 
 // in my current setup, ldexp seems to be messed up
 // when we compile with hardware floats..
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
 #define ldexp __builtin_ldexpf
 #endif
 

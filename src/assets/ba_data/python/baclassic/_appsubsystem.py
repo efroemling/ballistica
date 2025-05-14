@@ -475,7 +475,10 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         callback: MasterServerCallback | None = None,
         response_type: MasterServerResponseType = MasterServerResponseType.JSON,
     ) -> None:
-        """Make a call to the master server via a http GET."""
+        """Make a call to the master server via a http GET.
+
+        :meta private:
+        """
 
         MasterServerV1CallThread(
             request, 'get', data, callback, response_type
@@ -488,7 +491,10 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         callback: MasterServerCallback | None = None,
         response_type: MasterServerResponseType = MasterServerResponseType.JSON,
     ) -> None:
-        """Make a call to the master server via a http POST."""
+        """Make a call to the master server via a http POST.
+
+        :meta private:
+        """
         MasterServerV1CallThread(
             request, 'post', data, callback, response_type
         ).start()

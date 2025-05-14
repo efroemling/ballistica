@@ -444,10 +444,10 @@ def color_to_hex(r: float, g: float, b: float, a: float | None = 1.0) -> str:
     """Converts an rgb1 tuple to a HEX color code.
 
     Args:
-        r (float): Red.
-        g (float): Green.
-        b (float): Blue.
-        a (float, optional): Alpha. Defaults to 1.0.
+        r: Red.
+        g: Green.
+        b: Blue.
+        a: Alpha. Defaults to 1.0.
 
     Returns:
         str: The hexified rgba values.
@@ -467,14 +467,14 @@ def color_to_hex(r: float, g: float, b: float, a: float | None = 1.0) -> str:
 
 def color_overlay_func(
     r: float, g: float, b: float, a: float | None = None
-) -> tuple:
+) -> tuple[float, ...]:
     """I could NOT come up with a better function name.
 
     Args:
-        r (float): Red.
-        g (float): Green.
-        b (float): Blue.
-        a (float | None, optional): Alpha. Defaults to None.
+        r: Red.
+        g: Green.
+        b: Blue.
+        a: Alpha. Defaults to None.
 
     Returns:
         tuple: A brighter color if the provided one is dark,

@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 from efro.util import check_utc
 from efro.dataclassio._base import (
     Codec,
-    _parse_annotated,
+    parse_annotated,
     EXTRA_ATTRS_ATTR,
     LOSSY_ATTR,
     _is_valid_for_codec,
@@ -32,6 +32,7 @@ from efro.dataclassio._base import (
 from efro.dataclassio._prep import PrepSession
 
 if TYPE_CHECKING:
+
     from typing import Any
 
     from efro.dataclassio._base import IOAttrs
@@ -347,7 +348,7 @@ class _Inputter:
         # Preprocess all fields to convert Annotated[] to contained
         # types and IOAttrs.
         parsed_field_annotations = {
-            f.name: _parse_annotated(prep.annotations[f.name]) for f in fields
+            f.name: parse_annotated(prep.annotations[f.name]) for f in fields
         }
 
         # Special case: if this is a multi-type class it probably has a
@@ -627,7 +628,11 @@ class _Inputter:
 
         # If our annotation type inherits from IOMultiType, use type-id
         # values to determine which type to load for each element.
-        if issubclass(childanntype, IOMultiType):
+        # Make sure we only pass actual types to issubclass; it will error
+        # if we give it something like typing.Any.
+        if isinstance(childanntype, type) and issubclass(
+            childanntype, IOMultiType
+        ):
             return seqtype(
                 self._multitype_obj(childanntype, fieldpath, i) for i in value
             )

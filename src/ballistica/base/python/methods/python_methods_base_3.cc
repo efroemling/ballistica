@@ -1298,7 +1298,7 @@ static auto PyAndroidGetExternalFilesDir(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  if (g_buildconfig.ostype_android()) {
+  if (g_buildconfig.platform_android()) {
     std::string path = g_core->platform->AndroidGetExternalFilesDir();
     if (path.empty()) {
       Py_RETURN_NONE;

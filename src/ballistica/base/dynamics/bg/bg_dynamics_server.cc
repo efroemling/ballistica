@@ -1050,14 +1050,14 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
 // (higher-quality)
 
 // On k1 android let's ramp things up even more.
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
     if (g_core->platform->is_tegra_k1()) {
       chunk_max = static_cast<int>(static_cast<float>(chunk_max) * 1.5f);
       emit_count = static_cast<int>(static_cast<float>(emit_count) * 1.5f);
       tendril_thin_max =
           static_cast<int>(static_cast<float>(tendril_thin_max) * 1.25f);
     }
-#endif  // BA_OSTYPE_ANDROID
+#endif  // BA_PLATFORM_ANDROID
 
 #if BA_RIFT_BUILD
     // rift build is gonna be running on beefy hardware; let's go crazy
@@ -1067,7 +1067,7 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
     tendril_thin_max *= 2.5f;
 #endif
 
-#if BA_DEMO_BUILD
+#if BA_VARIANT_DEMO
     // lets beef up our demo kiosk build too.. what the heck.
     chunk_max *= 2.5f;
     emit_count *= 2.5f;

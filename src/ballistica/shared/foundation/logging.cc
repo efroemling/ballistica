@@ -34,7 +34,10 @@ void Logging::EmitLog(const std::string& name, LogLevel level, double timestamp,
     // Print stdout/stderr entries with no extra info.
     g_base_soft->PushDevConsolePrintCall(msg, 1.0f, kVector4f1);
   } else {
-    auto rel_time{timestamp - g_core->ba_env_launch_timestamp()};
+    auto elt{g_core->ba_env_launch_timestamp()};
+
+    // Show -1 for time if we don't have a launch timestamp yet.
+    auto rel_time{elt > 0.0 ? (timestamp - elt) : -1.0};
 
     if (g_base_soft) {
       Vector4f logcolor;

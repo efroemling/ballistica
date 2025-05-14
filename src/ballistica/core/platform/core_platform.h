@@ -87,10 +87,10 @@ class CorePlatform {
 #pragma mark ENVIRONMENT -------------------------------------------------------
 
   /// Return a simple name for the platform: 'mac', 'windows', 'linux', etc.
-  virtual auto GetPlatformName() -> std::string;
+  virtual auto GetLegacyPlatformName() -> std::string;
 
   /// Return a simple name for the subplatform: 'amazon', 'google', etc.
-  virtual auto GetSubplatformName() -> std::string;
+  virtual auto GetLegacySubplatformName() -> std::string;
 
   /// Return the interface type based on the environment (phone, tablet,
   /// etc).

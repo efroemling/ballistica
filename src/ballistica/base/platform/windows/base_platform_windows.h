@@ -2,7 +2,7 @@
 
 #ifndef BALLISTICA_BASE_PLATFORM_WINDOWS_BASE_PLATFORM_WINDOWS_H_
 #define BALLISTICA_BASE_PLATFORM_WINDOWS_BASE_PLATFORM_WINDOWS_H_
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 
 #include <string>
 #include <vector>
@@ -23,5 +23,5 @@ class BasePlatformWindows : public BasePlatform {
 
 }  // namespace ballistica::base
 
-#endif  // BA_OSTYPE_WINDOWS
+#endif  // BA_PLATFORM_WINDOWS
 #endif  // BALLISTICA_BASE_PLATFORM_WINDOWS_BASE_PLATFORM_WINDOWS_H_

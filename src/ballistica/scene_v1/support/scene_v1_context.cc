@@ -44,8 +44,10 @@ auto ContextRefSceneV1::GetMutableScene() const -> Scene* {
 auto SceneV1Context::GetContextDescription() -> std::string {
   if (HostActivity* ha = GetAsHostActivity()) {
     // Return our Python activity class description if possible.
-    PythonRef ha_obj(ha->GetPyActivity(), PythonRef::kAcquire);
-    if (ha_obj.get() != Py_None) {
+
+    // GetPyActivity returns a new ref or nullptr.
+    auto ha_obj{PythonRef::StolenSoft(ha->GetPyActivity())};
+    if (ha_obj.exists() && ha_obj.get() != Py_None) {
       return ha_obj.Str();
     }
   }

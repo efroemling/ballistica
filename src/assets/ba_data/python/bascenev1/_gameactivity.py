@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import random
 import logging
-from typing import TYPE_CHECKING, TypeVar, override
+from typing import TYPE_CHECKING, override
 
 import babase
 
@@ -24,14 +24,20 @@ if TYPE_CHECKING:
 
     from bascenev1lib.actor.playerspaz import PlayerSpaz
     from bascenev1lib.actor.bomb import TNTSpawner
+
     import bascenev1
 
-PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
-TeamT = TypeVar('TeamT', bound='bascenev1.Team')
+
+# Note: Need to suppress an undefined variable here because our pylint
+# plugin clears type-arg declarations (which we don't require to be
+# present at runtime) but keeps parent type-args (which we sometimes use
+# at runtime).
 
 
-class GameActivity(Activity[PlayerT, TeamT]):
-    """Common base class for all game bascenev1.Activities."""
+class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
+    Activity[PlayerT, TeamT]  # pylint: disable=undefined-variable
+):
+    """Common base class for all game activities."""
 
     # pylint: disable=too-many-public-methods
 

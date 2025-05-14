@@ -88,6 +88,69 @@ rst_prolog = """
 rst_epilog = """
 """
 
+# We want to be warned of refs to missing things. We should either fix
+# broken refs or add them to the ignore list here.
+nitpicky = True
+nitpick_ignore = [
+    #
+    # Stuff that seems like we could fix (presumably issues due to not
+    # importing things at runtime (only if TYPE_CHECKING), etc.)
+    ('py:class', 'Enum'),
+    ('py:class', 'Path'),
+    ('py:class', 'bui.Widget'),
+    ('py:class', 'bui.MainWindow'),
+    ('py:class', 'bui.Lstr'),
+    ('py:class', 'bs.Session'),
+    ('py:class', 'bs.Activity'),
+    ('py:class', 'bs.GameActivity'),
+    ('py:class', 'bs.GameTip'),
+    ('py:class', 'bs.Lstr'),
+    ('py:class', 'bs.Texture'),
+    ('py:class', 'bs.Mesh'),
+    ('py:class', 'bascenev1.Time'),
+    ('py:class', 'babase.SimpleSound'),
+    ('py:meth', 'spawn_player_spaz'),
+    ('py:class', 'Logger'),
+    ('py:class', 'PlaylistType'),
+    ('py:class', 'ValueDispatcherMethod'),
+    #
+    # 'Fake' classes declared with typing.NewType() so don't have
+    # doctrings.
+    ('py:class', 'babase.AppTime'),
+    ('py:class', 'babase.DisplayTime'),
+    ('py:class', 'bascenev1.BaseTime'),
+    #
+    # 3rd party stuff we don't gen docs for (could look into intersphinx).
+    ('py:class', 'astroid.nodes.node_ng.NodeNG'),
+    ('py:class', 'astroid.Manager'),
+    #
+    # TypeVars have no docs.
+    ('py:class', 'T'),
+    ('py:class', 'EnumT'),
+    ('py:class', 'RetT'),
+    ('py:class', 'ValT'),
+    ('py:class', 'SelfT'),
+    ('py:class', 'ArgT'),
+    ('py:class', 'ExistableT'),
+    ('py:class', 'PlayerT'),
+    ('py:class', 'TeamT'),
+    #
+    # Unexposed internal types (should possibly just make these public?).
+    ('py:class', '_MissingType'),
+    #
+    # Stdlib stuff for whatever reason coming up as having no docs.
+    ('py:meth', 'asyncio.get_running_loop'),
+    ('py:class', 'asyncio.events.AbstractEventLoop'),
+    ('py:class', 'asyncio.streams.StreamReader'),
+    ('py:class', 'asyncio.streams.StreamWriter'),
+    ('py:class', 'concurrent.futures.thread.ThreadPoolExecutor'),
+    ('py:class', 'urllib3.response.BaseHTTPResponse'),
+    ('py:class', 'socket.AddressFamily'),
+    ('py:attr', 'socket.AF_INET'),
+    ('py:attr', 'socket.AF_INET6'),
+    ('py:class', 'weakref.ReferenceType'),
+]
+
 # Gives us links to common Python types.
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
@@ -165,7 +228,8 @@ def _wrangle_logging() -> None:
                 if classname not in self._cross_ref_ignores_noted:
                     print(
                         f'{Clr.BLD}efro-note:{Clr.RST}'
-                        f' ignoring more-than-one-target warning for'
+                        f' ignoring (most likely) harmless'
+                        f' more-than-one-target warning for'
                         f' "{classname}"'
                     )
                     self._cross_ref_ignores_noted.add(classname)
