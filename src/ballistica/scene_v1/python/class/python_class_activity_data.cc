@@ -2,18 +2,19 @@
 
 #include "ballistica/scene_v1/python/class/python_class_activity_data.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/class/python_class_context_ref.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
 
 auto PythonClassActivityData::nb_bool(PythonClassActivityData* self) -> int {
-  return self->host_activity_->Exists();
+  return self->host_activity_->exists();
 }
 
 PyNumberMethods PythonClassActivityData::as_number_;
@@ -27,7 +28,10 @@ void PythonClassActivityData::SetupType(PyTypeObject* cls) {
   // Fully qualified type path we will be exposed as:
   cls->tp_name = "bascenev1.ActivityData";
   cls->tp_basicsize = sizeof(PythonClassActivityData);
-  cls->tp_doc = "(internal)";
+  cls->tp_doc =
+      "Internal; holds native data for the activity.\n"
+      "\n"
+      ":meta private:";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
   cls->tp_repr = (reprfunc)tp_repr;
@@ -49,7 +53,7 @@ auto PythonClassActivityData::Create(HostActivity* host_activity) -> PyObject* {
 }
 
 auto PythonClassActivityData::GetHostActivity() const -> HostActivity* {
-  HostActivity* host_activity = host_activity_->Get();
+  HostActivity* host_activity = host_activity_->get();
   if (!host_activity)
     throw Exception(
         "Invalid ActivityData; this activity has probably been expired and "
@@ -62,7 +66,7 @@ auto PythonClassActivityData::tp_repr(PythonClassActivityData* self)
   BA_PYTHON_TRY;
   return Py_BuildValue(
       "s", (std::string("<Ballistica ActivityData ")
-            + Utils::PtrToString(self->host_activity_->Get()) + " >")
+            + Utils::PtrToString(self->host_activity_->get()) + " >")
                .c_str());
   BA_PYTHON_CATCH;
 }
@@ -105,7 +109,7 @@ auto PythonClassActivityData::Exists(PythonClassActivityData* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
-  HostActivity* host_activity = self->host_activity_->Get();
+  HostActivity* host_activity = self->host_activity_->get();
   if (host_activity) {
     Py_RETURN_TRUE;
   } else {
@@ -119,7 +123,7 @@ auto PythonClassActivityData::MakeForeground(PythonClassActivityData* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
-  HostActivity* a = self->host_activity_->Get();
+  HostActivity* a = self->host_activity_->get();
   if (!a) {
     throw Exception("Invalid activity.", PyExcType::kActivityNotFound);
   }
@@ -139,7 +143,7 @@ auto PythonClassActivityData::Start(PythonClassActivityData* self)
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
 
-  HostActivity* a = self->host_activity_->Get();
+  HostActivity* a = self->host_activity_->get();
   if (!a) {
     throw Exception("Invalid activity data.", PyExcType::kActivityNotFound);
   }
@@ -153,7 +157,7 @@ auto PythonClassActivityData::Expire(PythonClassActivityData* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
-  HostActivity* a = self->host_activity_->Get();
+  HostActivity* a = self->host_activity_->get();
 
   // The Python side may have stuck around after our c++ side was
   // torn down; that's ok.
@@ -173,7 +177,7 @@ auto PythonClassActivityData::Context(PythonClassActivityData* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
-  HostActivity* a = self->host_activity_->Get();
+  HostActivity* a = self->host_activity_->get();
   if (!a) {
     throw Exception("Activity is not valid.");
   }
@@ -187,7 +191,7 @@ PyMethodDef PythonClassActivityData::tp_methods[] = {
     {"exists", (PyCFunction)Exists, METH_NOARGS,
      "exists() -> bool\n"
      "\n"
-     "Returns whether the ActivityData still exists.\n"
+     "Returns whether the activity-data still exists.\n"
      "Most functionality will fail on a nonexistent instance."},
     {"make_foreground", (PyCFunction)MakeForeground, METH_NOARGS,
      "make_foreground() -> None\n"

@@ -14,7 +14,7 @@ def get_appearances(include_locked: bool = False) -> list[str]:
     assert plus is not None
 
     assert bs.app.classic is not None
-    get_purchased = plus.get_purchased
+    get_purchased = plus.get_v1_account_product_purchased
     disallowed = []
     if not include_locked:
         # Hmm yeah this'll be tough to hack...

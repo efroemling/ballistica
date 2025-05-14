@@ -4,9 +4,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 
 import _bascenev1
@@ -19,15 +18,17 @@ if TYPE_CHECKING:
 
     import bascenev1
 
-PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
-TeamT = TypeVar('TeamT', bound='bascenev1.Team')
+
+# Note: Need to suppress an undefined variable here because our pylint
+# plugin clears type-arg declarations (which we don't require to be
+# present at runtime) but keeps parent type-args (which we sometimes use
+# at runtime).
 
 
-class CoopGameActivity(GameActivity[PlayerT, TeamT]):
-    """Base class for cooperative-mode games.
-
-    Category: **Gameplay Classes**
-    """
+class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
+    GameActivity[PlayerT, TeamT]  # pylint: disable=undefined-variable
+):
+    """Base class for cooperative-mode games."""
 
     # We can assume our session is a CoopSession.
     session: bascenev1.CoopSession

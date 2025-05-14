@@ -2,29 +2,31 @@
 
 #include "ballistica/base/logic/logic.h"
 
+#include <Python.h>
+
+#include <algorithm>
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/context.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::base {
 
-Logic::Logic() : display_timers_(new TimerList()) {
-  // Enable display-time debug logs via env var.
-  auto val = g_core->platform->GetEnv("BA_DEBUG_LOG_DISPLAY_TIME");
-  if (val && *val == "1") {
-    debug_log_display_time_ = true;
-  }
-}
+Logic::Logic() : display_timers_(new TimerList()) {}
 
 void Logic::OnMainThreadStartApp() {
   // Spin up our logic thread and sit and wait for it to init.
@@ -35,7 +37,8 @@ void Logic::OnMainThreadStartApp() {
 
 void Logic::OnAppStart() {
   assert(g_base->InLogicThread());
-  g_core->LifecycleLog("on-app-start begin (logic thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "on-app-start begin (logic thread)");
 
   // Our thread should not be holding the GIL here at the start (and
   // probably will not have any Python state at all). So here we set both
@@ -67,11 +70,12 @@ void Logic::OnAppStart() {
   g_base->ui->OnAppStart();
   g_base->app_mode()->OnAppStart();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppStart();
+    g_base->Plus()->OnAppStart();
   }
   g_base->python->OnAppStart();
 
-  g_core->LifecycleLog("on-app-start end (logic thread)");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "on-app-start end (logic thread)");
 }
 
 void Logic::OnGraphicsReady() {
@@ -100,7 +104,7 @@ void Logic::OnGraphicsReady() {
     // variety of rates anyway. NOTE: This length is currently milliseconds.
     headless_display_time_step_timer_ = event_loop()->NewTimer(
         kHeadlessMinDisplayTimeStep, true,
-        NewLambdaRunnable([this] { StepDisplayTime_(); }).Get());
+        NewLambdaRunnable([this] { StepDisplayTime_(); }).get());
   } else {
     // In gui mode, push an initial frame to the graphics server. From this
     // point it will be self-sustaining, sending us a frame request each
@@ -116,7 +120,8 @@ void Logic::CompleteAppBootstrapping_() {
   assert(!app_bootstrapping_complete_);
   app_bootstrapping_complete_ = true;
 
-  g_core->LifecycleLog("app native bootstrapping complete");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+              "app native bootstrapping complete");
 
   // Let the assets system know it can start loading stuff now that
   // we have a screen and thus know texture formats/etc.
@@ -133,7 +138,7 @@ void Logic::CompleteAppBootstrapping_() {
 
   // Set up our timers.
   process_pending_work_timer_ = event_loop()->NewTimer(
-      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }).Get());
+      0, true, NewLambdaRunnable([this] { ProcessPendingWork_(); }).get());
   // asset_prune_timer_ = event_loop()->NewTimer(
   //     2345 * 1000, true, NewLambdaRunnable([] { g_base->assets->Prune();
   //     }).Get());
@@ -186,7 +191,7 @@ void Logic::OnAppSuspend() {
   // Note: keep these in opposite order of OnAppStart.
   g_base->python->OnAppSuspend();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppSuspend();
+    g_base->Plus()->OnAppSuspend();
   }
   g_base->app_mode()->OnAppSuspend();
   g_base->ui->OnAppSuspend();
@@ -210,7 +215,7 @@ void Logic::OnAppUnsuspend() {
   g_base->ui->OnAppUnsuspend();
   g_base->app_mode()->OnAppUnsuspend();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppUnsuspend();
+    g_base->Plus()->OnAppUnsuspend();
   }
   g_base->python->OnAppUnsuspend();
 }
@@ -231,7 +236,7 @@ void Logic::OnAppShutdown() {
   assert(shutting_down_);
 
   // Nuke the app from orbit if we get stuck while shutting down.
-  g_core->StartSuicideTimer("shutdown", 10000);
+  g_core->StartSuicideTimer("shutdown", 15000);
 
   // Tell base to disallow shutdown-suppressors from here on out.
   g_base->ShutdownSuppressDisallow();
@@ -242,7 +247,7 @@ void Logic::OnAppShutdown() {
   // should be registered as shutdown-tasks
   g_base->python->OnAppShutdown();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppShutdown();
+    g_base->Plus()->OnAppShutdown();
   }
   g_base->app_mode()->OnAppShutdown();
   g_base->ui->OnAppShutdown();
@@ -275,7 +280,7 @@ void Logic::OnAppShutdownComplete() {
   // should be registered as shutdown-tasks.
   g_base->python->OnAppShutdownComplete();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnAppShutdownComplete();
+    g_base->Plus()->OnAppShutdownComplete();
   }
   g_base->app_mode()->OnAppShutdownComplete();
   g_base->ui->OnAppShutdownComplete();
@@ -302,7 +307,7 @@ void Logic::DoApplyAppConfig() {
   g_base->ui->DoApplyAppConfig();
   g_base->app_mode()->DoApplyAppConfig();
   if (g_base->HavePlus()) {
-    g_base->plus()->DoApplyAppConfig();
+    g_base->Plus()->DoApplyAppConfig();
   }
   g_base->python->DoApplyAppConfig();
 
@@ -318,6 +323,7 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
   assert(g_base->InLogicThread());
 
   // Inform all subsystems.
+  //
   // Note: keep these in the same order as OnAppStart.
   g_base->app_adapter->OnScreenSizeChange();
   g_base->platform->OnScreenSizeChange();
@@ -328,7 +334,7 @@ void Logic::OnScreenSizeChange(float virtual_width, float virtual_height,
   g_core->platform->OnScreenSizeChange();
   g_base->app_mode()->OnScreenSizeChange();
   if (g_base->HavePlus()) {
-    g_base->plus()->OnScreenSizeChange();
+    g_base->Plus()->OnScreenSizeChange();
   }
   g_base->python->OnScreenSizeChange();
 }
@@ -358,7 +364,7 @@ void Logic::StepDisplayTime_() {
   g_core->platform->StepDisplayTime();
   g_base->app_mode()->StepDisplayTime();
   if (g_base->HavePlus()) {
-    g_base->plus()->StepDisplayTime();
+    g_base->Plus()->StepDisplayTime();
   }
   g_base->python->StepDisplayTime();
 
@@ -377,8 +383,9 @@ void Logic::OnAppModeChanged() {
   // Kick our headless stepping into high gear; this will snap us out of any
   // long sleep we're currently in the middle of.
   if (g_core->HeadlessMode()) {
-    if (debug_log_display_time_) {
-      Log(LogLevel::kDebug,
+    if (g_core->LogLevelEnabled(LogName::kBaDisplayTime, LogLevel::kDebug)) {
+      g_core->Log(
+          LogName::kBaDisplayTime, LogLevel::kDebug,
           "Resetting headless display step timer due to app-mode change.");
     }
     assert(headless_display_time_step_timer_);
@@ -392,11 +399,11 @@ void Logic::UpdateDisplayTimeForHeadlessMode_() {
   // don't care about keeping the increments smooth or consistent.
 
   // The one thing we *do* try to do, however, is keep our timer length
-  // updated so that we fire exactly when the next app-mode event is
+  // updated so that we'll fire exactly when the next app-mode event is
   // scheduled (or at least close enough so we can fudge it and tell them
   // its that exact time).
 
-  auto app_time_microsecs = g_core->GetAppTimeMicrosecs();
+  auto app_time_microsecs = g_core->AppTimeMicrosecs();
 
   // Set our int based time vals so we can exactly hit timers.
   auto old_display_time_microsecs = display_time_microsecs_;
@@ -409,12 +416,12 @@ void Logic::UpdateDisplayTimeForHeadlessMode_() {
   display_time_increment_ =
       static_cast<double>(display_time_increment_microsecs_) / 1000000.0;
 
-  if (debug_log_display_time_) {
+  g_core->Log(LogName::kBaDisplayTime, LogLevel::kDebug, [app_time_microsecs] {
     char buffer[256];
     snprintf(buffer, sizeof(buffer), "stepping display-time at app-time %.4f",
              static_cast<double>(app_time_microsecs) / 1000000.0);
-    Log(LogLevel::kDebug, buffer);
-  }
+    return std::string(buffer);
+  });
 }
 
 void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
@@ -427,16 +434,18 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
                         kHeadlessMaxDisplayTimeStep),
                kHeadlessMinDisplayTimeStep);
 
-  if (debug_log_display_time_) {
-    auto sleepsecs =
-        static_cast<double>(headless_display_step_microsecs) / 1000000.0;
-    auto apptimesecs = g_core->GetAppTimeSeconds();
-    char buffer[256];
-    snprintf(buffer, sizeof(buffer),
-             "will try to sleep for %.4f at app-time %.4f (until %.4f)",
-             sleepsecs, apptimesecs, apptimesecs + sleepsecs);
-    Log(LogLevel::kDebug, buffer);
-  }
+  g_core->Log(
+      LogName::kBaDisplayTime, LogLevel::kDebug,
+      [headless_display_step_microsecs] {
+        auto sleepsecs =
+            static_cast<double>(headless_display_step_microsecs) / 1000000.0;
+        auto apptimesecs = g_core->AppTimeSeconds();
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer),
+                 "will try to sleep for %.4f at app-time %.4f (until %.4f)",
+                 sleepsecs, apptimesecs, apptimesecs + sleepsecs);
+        return std::string(buffer);
+      });
 
   auto sleep_microsecs = headless_display_step_microsecs;
   headless_display_time_step_timer_->SetLength(sleep_microsecs);
@@ -459,7 +468,7 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
   // - 'current' should mostly show '(avg)'; rarely '(sample)'.
   // - these can vary briefly during load spikes/etc. but should quickly
   //   reconverge to stability. If not, this may need further calibration.
-  auto current_app_time = g_core->GetAppTimeSeconds();
+  auto current_app_time = g_core->AppTimeSeconds();
 
   // We handle the first measurement specially.
   if (last_display_time_update_app_time_ < 0) {
@@ -537,24 +546,33 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
     if (trailing_dist > trail_buffer) {
       auto offs =
           (trailing_dist - trail_buffer) * (trailing_diff > 0.0 ? 1.0 : -1.0);
-      if (debug_log_display_time_) {
-        char buffer[256];
-        snprintf(buffer, sizeof(buffer),
-                 "trailing_dist %.6f > trail_buffer %.6f; will offset %.6f).",
-                 trailing_dist, trail_buffer, offs);
-        Log(LogLevel::kDebug, buffer);
-      }
+      g_core->Log(
+          LogName::kBaDisplayTime, LogLevel::kDebug,
+          [trailing_dist, trail_buffer, offs] {
+            char buffer[256];
+            snprintf(
+                buffer, sizeof(buffer),
+                "trailing_dist %.6f > trail_buffer %.6f; will offset %.6f).",
+                trailing_dist, trail_buffer, offs);
+            return std::string(buffer);
+          });
       display_time_increment_ = display_time_increment_ + offs;
     }
 
-    if (debug_log_display_time_) {
-      char buffer[256];
-      snprintf(buffer, sizeof(buffer),
-               "final %.5f current(%s) %.5f sample %.5f chaos %.5f",
-               display_time_increment_, use_avg ? "avg" : "sample", used,
-               this_increment, chaos);
-      Log(LogLevel::kDebug, buffer);
-    }
+    // After all is said and done, clamp our increment size to some sane
+    // amount. Trying to push too much through in a single instant can
+    // overflow thread message lists and whatnot.
+    display_time_increment_ = std::min(display_time_increment_, 0.25);
+
+    g_core->Log(LogName::kBaDisplayTime, LogLevel::kDebug,
+                [this, use_avg, this_increment, chaos, used] {
+                  char buffer[256];
+                  snprintf(buffer, sizeof(buffer),
+                           "final %.5f current(%s) %.5f sample %.5f chaos %.5f",
+                           display_time_increment_, use_avg ? "avg" : "sample",
+                           used, this_increment, chaos);
+                  return std::string(buffer);
+                });
   }
 
   // Lastly, apply our updated increment value to our time.
@@ -634,8 +652,8 @@ void Logic::NotifyOfPendingAssetLoads() {
   UpdatePendingWorkTimer_();
 }
 
-auto Logic::NewAppTimer(microsecs_t length, bool repeat,
-                        Runnable* runnable) -> int {
+auto Logic::NewAppTimer(microsecs_t length, bool repeat, Runnable* runnable)
+    -> int {
   // App-Timers simply get injected into our loop and run alongside our own
   // stuff.
   assert(g_base->InLogicThread());
@@ -654,13 +672,13 @@ void Logic::SetAppTimerLength(int timer_id, microsecs_t length) {
   if (t) {
     t->SetLength(length);
   } else {
-    Log(LogLevel::kError,
-        "Logic::SetAppTimerLength() called on nonexistent timer.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Logic::SetAppTimerLength() called on nonexistent timer.");
   }
 }
 
-auto Logic::NewDisplayTimer(microsecs_t length, bool repeat,
-                            Runnable* runnable) -> int {
+auto Logic::NewDisplayTimer(microsecs_t length, bool repeat, Runnable* runnable)
+    -> int {
   // Display-Timers go into a timer-list that we exec explicitly when we
   // step display-time.
   assert(g_base->InLogicThread());
@@ -681,8 +699,8 @@ void Logic::SetDisplayTimerLength(int timer_id, microsecs_t length) {
   if (t) {
     t->SetLength(length);
   } else {
-    Log(LogLevel::kError,
-        "Logic::SetDisplayTimerLength() called on nonexistent timer.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Logic::SetDisplayTimerLength() called on nonexistent timer.");
   }
 }
 
@@ -705,6 +723,8 @@ void Logic::OnAppActiveChanged() {
     // For now just informing Python (which informs Python level app-mode).
     // Can expand this to inform everyone else if needed.
     g_base->python->OnAppActiveChanged();
+
+    app_active_applied_ = app_active;
   }
 }
 

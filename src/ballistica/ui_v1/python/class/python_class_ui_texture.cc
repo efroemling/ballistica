@@ -2,6 +2,8 @@
 
 #include "ballistica/ui_v1/python/class/python_class_ui_texture.h"
 
+#include <string>
+
 #include "ballistica/base/assets/texture_asset.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -16,10 +18,7 @@ void PythonClassUITexture::SetupType(PyTypeObject* cls) {
   // Fully qualified type path we will be exposed as:
   cls->tp_name = "babase.Texture";
   cls->tp_basicsize = sizeof(PythonClassUITexture);
-  cls->tp_doc =
-      "Texture asset for local user interface purposes.\n"
-      "\n"
-      "Category: **User Interface Classes**";
+  cls->tp_doc = "Texture asset for local user interface purposes.";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
   cls->tp_repr = (reprfunc)tp_repr;
@@ -41,7 +40,7 @@ auto PythonClassUITexture::Create(
 
 auto PythonClassUITexture::tp_repr(PythonClassUITexture* self) -> PyObject* {
   BA_PYTHON_TRY;
-  base::TextureAsset* s = self->texture_->Get();
+  base::TextureAsset* s = self->texture_->get();
   return Py_BuildValue(
       "s", (std::string("<bauiv1.Texture '") + (s->GetName()) + "'>").c_str());
   BA_PYTHON_CATCH;

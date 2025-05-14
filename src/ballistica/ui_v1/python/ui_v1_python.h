@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_UI_V1_PYTHON_UI_V1_PYTHON_H_
 #define BALLISTICA_UI_V1_PYTHON_UI_V1_PYTHON_H_
 
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/shared/python/python_object_set.h"
 #include "ballistica/ui_v1/ui_v1.h"
@@ -27,14 +29,25 @@ class UIV1Python {
   /// Specific Python objects we hold in objs_.
   enum class ObjID {
     kOnScreenKeyboardClass,
-    kTicketIconPressCall,
-    kTrophyIconPressCall,
-    kLevelIconPressCall,
-    kCoinIconPressCall,
+    kRootUITicketIconPressCall,
+    kRootUIGetTokensButtonPressCall,
+    kRootUIAccountButtonPressCall,
+    kRootUIInboxButtonPressCall,
+    kRootUISettingsButtonPressCall,
+    kRootUIAchievementsButtonPressCall,
+    kRootUIStoreButtonPressCall,
+    kRootUIChestSlot0PressCall,
+    kRootUIChestSlot1PressCall,
+    kRootUIChestSlot2PressCall,
+    kRootUIChestSlot3PressCall,
+    kRootUIInventoryButtonPressCall,
+    kRootUITrophyMeterPressCall,
+    kRootUILevelIconPressCall,
+    kRootUITokensMeterPressCall,
     kEmptyCall,
-    kBackButtonPressCall,
-    kFriendsButtonPressCall,
-    kPartyIconActivateCall,
+    kRootUIMenuButtonPressCall,
+    kRootUIBackButtonPressCall,
+    kRootUISquadButtonPressCall,
     kQuitWindowCall,
     kDeviceMenuPressCall,
     kShowURLWindowCall,

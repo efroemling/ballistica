@@ -2,12 +2,16 @@
 
 #include "ballistica/shared/foundation/event_loop.h"
 
+#include <Python.h>
+
+#include <list>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include "ballistica/core/platform/core_platform.h"
-#include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/fatal_error.h"
-#include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica {
 
@@ -74,7 +78,7 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
         // to get custom stack sizes; std::thread stupidly doesn't support it.
 
         // FIXME - move this to platform.
-#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
+#if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS || BA_PLATFORM_LINUX
       pthread_attr_t attr;
       BA_PRECONDITION(pthread_attr_init(&attr) == 0);
       BA_PRECONDITION(pthread_attr_setstacksize(&attr, 1024 * 1024) == 0);
@@ -202,7 +206,7 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
   // If we've got active timers, wait for messages with a timeout so we can
   // run the next timer payload.
   if (!suspended_ && timers_.ActiveTimerCount() > 0) {
-    microsecs_t apptime = g_core->GetAppTimeMicrosecs();
+    microsecs_t apptime = g_core->AppTimeMicrosecs();
     microsecs_t wait_time = timers_.TimeToNextExpire(apptime);
     if (wait_time > 0) {
       std::unique_lock<std::mutex> lock(thread_message_mutex_);
@@ -302,7 +306,7 @@ void EventLoop::Run_(bool single_cycle) {
     }
 
     if (!suspended_) {
-      timers_.Run(g_core->GetAppTimeMicrosecs());
+      timers_.Run(g_core->AppTimeMicrosecs());
       RunPendingRunnables_();
     }
 
@@ -328,7 +332,6 @@ void EventLoop::BootstrapThread_() {
   assert(!bootstrapped_);
   assert(g_core);
   thread_id_ = std::this_thread::get_id();
-  const char* id_string;
 
   switch (identifier_) {
     case EventLoopID::kLogic:
@@ -542,7 +545,7 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
 
   // Now log anything we accumulated safely outside of the locked section.
   for (auto&& log_entry : log_entries) {
-    Log(log_entry.first, log_entry.second);
+    g_core->Log(LogName::kBa, log_entry.first, log_entry.second);
   }
 }
 
@@ -576,12 +579,12 @@ auto EventLoop::AreEventLoopsSuspended() -> bool {
   return g_core->event_loops_suspended();
 }
 
-auto EventLoop::NewTimer(microsecs_t length, bool repeat,
-                         Runnable* runnable) -> Timer* {
+auto EventLoop::NewTimer(microsecs_t length, bool repeat, Runnable* runnable)
+    -> Timer* {
   assert(g_core);
   assert(ThreadIsCurrent());
   assert(Object::IsValidManagedObject(runnable));
-  return timers_.NewTimer(g_core->GetAppTimeMicrosecs(), length, 0,
+  return timers_.NewTimer(g_core->AppTimeMicrosecs(), length, 0,
                           repeat ? -1 : 0, runnable);
 }
 
@@ -715,7 +718,7 @@ void EventLoop::AcquireGIL_() {
   assert(g_base_soft && g_base_soft->InLogicThread());
   auto debug_timing{g_core->core_config().debug_timing};
   millisecs_t startmillisecs{
-      debug_timing ? core::CorePlatform::GetCurrentMillisecs() : 0};
+      debug_timing ? core::CorePlatform::TimeMonotonicMillisecs() : 0};
 
   if (py_thread_state_) {
     PyEval_RestoreThread(py_thread_state_);
@@ -723,10 +726,12 @@ void EventLoop::AcquireGIL_() {
   }
 
   if (debug_timing) {
-    auto duration{core::CorePlatform::GetCurrentMillisecs() - startmillisecs};
+    auto duration{core::CorePlatform::TimeMonotonicMillisecs()
+                  - startmillisecs};
     if (duration > (1000 / 120)) {
-      Log(LogLevel::kInfo, "GIL acquire took too long ("
-                               + std::to_string(duration) + " millisecs).");
+      g_core->Log(LogName::kBa, LogLevel::kInfo,
+                  "GIL acquire took too long (" + std::to_string(duration)
+                      + " millisecs).");
     }
   }
 }

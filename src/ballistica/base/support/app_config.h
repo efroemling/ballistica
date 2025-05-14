@@ -4,10 +4,8 @@
 #define BALLISTICA_BASE_SUPPORT_APP_CONFIG_H_
 
 #include <map>
-#include <memory>
 #include <optional>
 #include <string>
-#include <vector>
 
 // FIXME: this system is old and dumb. It was built to make C++ stuff
 //  type-safe but does not handle the Python side at all. We should come up
@@ -64,6 +62,7 @@ class AppConfig {
     kFullscreen,
     kKickIdlePlayers,
     kAlwaysUseInternalKeyboard,
+    kUseInsecureConnections,
     kShowFPS,
     kShowPing,
     kShowDevConsoleButton,
@@ -75,6 +74,8 @@ class AppConfig {
     kDisableCameraShake,
     kDisableCameraGyro,
     kShowDemosWhenIdle,
+    kShowDeprecatedLoginTypes,
+    kHighlightPotentialTokenPurchases,
     kLast  // Sentinel.
   };
 

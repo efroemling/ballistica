@@ -4,9 +4,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
@@ -88,6 +87,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             extrascale: float,
             flash: bool = False,
         ) -> Text:
+            # pylint: disable=too-many-positional-arguments
             return Text(
                 text,
                 position=(

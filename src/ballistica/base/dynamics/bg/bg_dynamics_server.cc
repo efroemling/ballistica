@@ -2,6 +2,11 @@
 
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 
+#include <algorithm>
+#include <list>
+#include <memory>
+#include <vector>
+
 #include "ballistica/base/assets/collision_mesh_asset.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_draw_snapshot.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_fuse_data.h"
@@ -9,8 +14,9 @@
 #include "ballistica/base/dynamics/bg/bg_dynamics_shadow_data.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_volume_light_data.h"
 #include "ballistica/base/dynamics/collision_cache.h"
-#include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -79,7 +85,7 @@ class BGDynamicsServer::Terrain {
   }
 
   auto GetCollisionMesh() const -> CollisionMeshAsset* {
-    return collision_mesh_->Get();
+    return collision_mesh_->get();
   }
 
   ~Terrain() {
@@ -90,7 +96,7 @@ class BGDynamicsServer::Terrain {
     if (collision_mesh_) {
       Object::Ref<CollisionMeshAsset>* ref = collision_mesh_;
       g_base->logic->event_loop()->PushCall([ref] {
-        (**ref).set_last_used_time(g_core->GetAppTimeMillisecs());
+        (**ref).set_last_used_time(g_core->AppTimeMillisecs());
         delete ref;
       });
       collision_mesh_ = nullptr;
@@ -1044,14 +1050,14 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
 // (higher-quality)
 
 // On k1 android let's ramp things up even more.
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
     if (g_core->platform->is_tegra_k1()) {
       chunk_max = static_cast<int>(static_cast<float>(chunk_max) * 1.5f);
       emit_count = static_cast<int>(static_cast<float>(emit_count) * 1.5f);
       tendril_thin_max =
           static_cast<int>(static_cast<float>(tendril_thin_max) * 1.25f);
     }
-#endif  // BA_OSTYPE_ANDROID
+#endif  // BA_PLATFORM_ANDROID
 
 #if BA_RIFT_BUILD
     // rift build is gonna be running on beefy hardware; let's go crazy
@@ -1061,7 +1067,7 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
     tendril_thin_max *= 2.5f;
 #endif
 
-#if BA_DEMO_BUILD
+#if BA_VARIANT_DEMO
     // lets beef up our demo kiosk build too.. what the heck.
     chunk_max *= 2.5f;
     emit_count *= 2.5f;
@@ -1367,7 +1373,7 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
     }
     default: {
       int t = static_cast<int>(def.emit_type);
-      BA_LOG_ONCE(LogLevel::kError,
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                   "Invalid bg-dynamics emit type: " + std::to_string(t));
       break;
     }
@@ -2356,9 +2362,9 @@ void BGDynamicsServer::Step(StepData* step_data) {
 
   // Math sanity check.
   if (step_count_ < 0) {
-    BA_LOG_ONCE(LogLevel::kWarning, "BGDynamics step_count too low ("
-                                        + std::to_string(step_count_)
-                                        + "); should not happen.");
+    BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
+                "BGDynamics step_count too low (" + std::to_string(step_count_)
+                    + "); should not happen.");
   }
 }
 
@@ -2371,9 +2377,9 @@ void BGDynamicsServer::PushStep(StepData* data) {
 
   // Client thread should stop feeding us if we get clogged up.
   if (step_count_ > 5) {
-    BA_LOG_ONCE(LogLevel::kWarning, "BGDynamics step_count too high ("
-                                        + std::to_string(step_count_)
-                                        + "); should not happen.");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
+                "BGDynamics step_count too high (" + std::to_string(step_count_)
+                    + "); should not happen.");
   }
 
   event_loop()->PushCall([this, data] { Step(data); });

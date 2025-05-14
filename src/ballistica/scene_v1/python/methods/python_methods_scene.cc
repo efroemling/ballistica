@@ -2,23 +2,26 @@
 
 #include "ballistica/scene_v1/python/methods/python_methods_scene.h"
 
+#include <cstdio>
 #include <list>
+#include <string>
+#include <vector>
 
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/python/core_python.h"
-#include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/dynamics/collision.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
-#include "ballistica/scene_v1/dynamics/material/material_action.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/python/class/python_class_activity_data.h"
 #include "ballistica/scene_v1/python/class/python_class_session_data.h"
@@ -26,12 +29,11 @@
 #include "ballistica/scene_v1/support/client_session_replay.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python_command.h"
 
 namespace ballistica::scene_v1 {
 
@@ -41,8 +43,8 @@ namespace ballistica::scene_v1 {
 
 // --------------------------------- time --------------------------------------
 
-static auto PyTime(PyObject* self, PyObject* args,
-                   PyObject* keywds) -> PyObject* {
+static auto PyTime(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   static const char* kwlist[] = {nullptr};
@@ -66,8 +68,6 @@ static PyMethodDef PyTimeDef = {
     "\n"
     "Return the current scene time in seconds.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Scene time maps to local simulation time in bascenev1.Activity or\n"
     "bascenev1.Session Contexts. This means that it may progress slower\n"
     "in slow-motion play modes, stop when the game is paused, etc.\n"
@@ -79,8 +79,8 @@ static PyMethodDef PyTimeDef = {
 
 // --------------------------------- timer -------------------------------------
 
-static auto PyTimer(PyObject* self, PyObject* args,
-                    PyObject* keywds) -> PyObject* {
+static auto PyTimer(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
 
@@ -99,7 +99,7 @@ static auto PyTimer(PyObject* self, PyObject* args,
   SceneV1Context::Current().NewTimer(
       TimeType::kSim, static_cast<millisecs_t>(length * 1000.0),
       static_cast<bool>(repeat),
-      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).Get());
+      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).get());
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -115,45 +115,46 @@ static PyMethodDef PyTimerDef = {
     "\n"
     "Schedule a call to run at a later point in time.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
+    "This function adds a scene-time timer to the current\n"
+    ":class:`bascenev1.ContextRef`. This timer cannot be canceled or modified\n"
+    "once created. If you require the ability to do so, use the\n"
+    ":class:`bascenev1.Timer` class instead.\n"
     "\n"
-    "This function adds a scene-time timer to the current babase.Context.\n"
-    "This timer cannot be canceled or modified once created. If you\n"
-    " require the ability to do so, use the babase.Timer class instead.\n"
+    "Scene time maps to local simulation time in :class:`bascenev1.Activity`\n"
+    "or :class:`bascenev1.Session` Contexts. This means that it may progress\n"
+    "slower in slow-motion play modes, stop when the game is paused, etc.\n"
     "\n"
-    "Scene time maps to local simulation time in bascenev1.Activity or\n"
-    "bascenev1.Session Contexts. This means that it may progress slower\n"
-    "in slow-motion play modes, stop when the game is paused, etc.\n"
+    "Args:\n"
     "\n"
-    "##### Arguments\n"
-    "###### time (float)\n"
-    "> Length of scene time in seconds that the timer will wait\n"
-    "before firing.\n"
+    "  time:\n"
+    "    Length of scene time in seconds that the timer will wait\n"
+    "    before firing.\n"
     "\n"
-    "###### call (Callable[[], Any])\n"
-    "> A callable Python object. Note that the timer will retain a\n"
-    "strong reference to the callable for as long as it exists, so you\n"
-    "may want to look into concepts such as babase.WeakCall if that is not\n"
-    "desired.\n"
+    "  call:\n"
+    "    A callable Python object. Note that the timer will retain a\n"
+    "    strong reference to the callable for as long as it exists, so you\n"
+    "    may want to look into concepts such as :class:`bascenev1.WeakCall`\n"
+    "    if that is not desired.\n"
     "\n"
-    "###### repeat (bool)\n"
-    "> If True, the timer will fire repeatedly, with each successive\n"
-    "firing having the same delay as the first.\n"
+    "  repeat:\n"
+    "    If True, the timer will fire repeatedly, with each successive\n"
+    "    firing having the same delay as the first.\n"
     "\n"
-    "##### Examples\n"
-    "Print some stuff through time:\n"
-    ">>> import bascenev1 as bs\n"
-    ">>> bs.screenmessage('hello from now!')\n"
-    ">>> bs.timer(1.0, bs.Call(bs.screenmessage, 'hello from the "
-    "future!'))\n"
-    ">>> bs.timer(2.0, bs.Call(bs.screenmessage,\n"
-    "...                       'hello from the future 2!'))\n",
+    "Examples\n"
+    "========\n"
+    "\n"
+    "Print some stuff through time::\n"
+    "\n"
+    "  import bascenev1 as bs\n"
+    "  bs.screenmessage('hello from now!')\n"
+    "  bs.timer(1.0, bs.Call(bs.screenmessage, 'hello from the future!'))\n"
+    "  bs.timer(2.0, bs.Call(bs.screenmessage, 'hello from the future 2!'))\n",
 };
 
 // ----------------------------- basetime -----------------------------------
 
-static auto PyBaseTime(PyObject* self, PyObject* args,
-                       PyObject* keywds) -> PyObject* {
+static auto PyBaseTime(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   static const char* kwlist[] = {nullptr};
@@ -175,8 +176,6 @@ static PyMethodDef PyBaseTimeDef = {
     "\n"
     "Return the base-time in seconds for the current scene-v1 context.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Base-time is a time value that progresses at a constant rate for a "
     "scene,\n"
     "even when the scene is sped up, slowed down, or paused. It may, however,\n"
@@ -190,8 +189,8 @@ static PyMethodDef PyBaseTimeDef = {
 
 // --------------------------------- timer -------------------------------------
 
-static auto PyBaseTimer(PyObject* self, PyObject* args,
-                        PyObject* keywds) -> PyObject* {
+static auto PyBaseTimer(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
 
@@ -208,7 +207,7 @@ static auto PyBaseTimer(PyObject* self, PyObject* args,
   SceneV1Context::Current().NewTimer(
       TimeType::kBase, static_cast<millisecs_t>(length * 1000.0),
       static_cast<bool>(repeat),
-      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).Get());
+      Object::New<Runnable, base::PythonContextCallRunnable>(call_obj).get());
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -224,45 +223,44 @@ static PyMethodDef PyBaseTimerDef = {
     "\n"
     "Schedule a call to run at a later point in scene base-time.\n"
     "Base-time is a value that progresses at a constant rate for a scene,\n"
-    " even when the scene is sped up, slowed down, or paused. It may,\n"
-    " however, speed up or slow down due to replay speed adjustments or may\n"
-    " slow down if the cpu is overloaded.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
+    "even when the scene is sped up, slowed down, or paused. It may,\n"
+    "however, speed up or slow down due to replay speed adjustments or may\n"
+    "slow down if the cpu is overloaded.\n"
     "\n"
     "This function adds a timer to the current scene context.\n"
     "This timer cannot be canceled or modified once created. If you\n"
-    " require the ability to do so, use the bascenev1.BaseTimer class\n "
+    "require the ability to do so, use the bascenev1.BaseTimer class\n"
     "instead.\n"
     "\n"
-    "##### Arguments\n"
-    "###### time (float)\n"
-    "> Length of time in seconds that the timer will wait before firing.\n"
+    "Args:\n"
+    "  time:\n"
+    "    Length of time in seconds that the timer will wait before firing.\n"
     "\n"
-    "###### call (Callable[[], Any])\n"
-    "> A callable Python object. Remember that the timer will retain a\n"
-    "strong reference to the callable for the duration of the timer, so you\n"
-    "may want to look into concepts such as babase.WeakCall if that is not\n"
-    "desired.\n"
+    "  call:\n"
+    "    A callable Python object. Remember that the timer will retain a\n"
+    "    strong reference to the callable for the duration of the timer, so\n"
+    "    you may want to look into concepts such as :class:`~babase.WeakCall`\n"
+    "    if that is not desired.\n"
     "\n"
-    "###### repeat (bool)\n"
-    "> If True, the timer will fire repeatedly, with each successive\n"
-    "firing having the same delay as the first.\n"
+    "  repeat:\n"
+    "    If True, the timer will fire repeatedly, with each successive\n"
+    "    firing having the same delay as the first.\n"
     "\n"
-    "##### Examples\n"
-    "Print some stuff through time:\n"
-    ">>> import bascenev1 as bs\n"
-    ">>> bs.screenmessage('hello from now!')\n"
-    ">>> bs.basetimer(1.0, bs.Call(bs.screenmessage, 'hello from the "
-    "future!'))\n"
-    ">>> bs.basetimer(2.0, bs.Call(bs.screenmessage,\n"
-    "...                       'hello from the future 2!'))\n",
+    "Example: Print some stuff through time::\n"
+    "\n"
+    "   import bascenev1 as bs\n"
+    "\n"
+    "   bs.screenmessage('hello from now!')\n"
+    "   bs.basetimer(1.0, bs.Call(bs.screenmessage,\n"
+    "                'hello from the future!'))\n"
+    "   bs.basetimer(2.0, bs.Call(bs.screenmessage,\n"
+    "                'hello from the future 2!'))\n",
 };
 
 // ------------------------------- getsession ----------------------------------
 
-static auto PyGetSession(PyObject* self, PyObject* args,
-                         PyObject* keywds) -> PyObject* {
+static auto PyGetSession(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   int raise = true;
   static const char* kwlist[] = {"doraise", nullptr};
@@ -292,21 +290,14 @@ static PyMethodDef PyGetSessionDef = {
 
     "getsession(doraise: bool = True) -> <varies>\n"
     "\n"
-    "Category: **Gameplay Functions**\n"
-    "\n"
-    "Returns the current bascenev1.Session instance.\n"
-    "Note that this is based on context_ref; thus code being run in the UI\n"
-    "context will return the UI context_ref here even if a game Session "
-    "also\n"
-    "exists, etc. If there is no current Session, an Exception is raised, "
-    "or\n"
-    "if doraise is False then None is returned instead.",
-};
+    "Return the session associated with the current context. If there is\n"
+    "none, a :class:`~bascenev1.SessionNotFoundError` is raised (unless\n"
+    "``doraise`` is False, in which case ``None`` is returned instead)."};
 
 // --------------------------- new_host_session --------------------------------
 
-static auto PyNewHostSession(PyObject* self, PyObject* args,
-                             PyObject* keywds) -> PyObject* {
+static auto PyNewHostSession(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* benchmark_type_str = nullptr;
   static const char* kwlist[] = {"sessiontype", "benchmark_type", nullptr};
@@ -316,7 +307,7 @@ static auto PyNewHostSession(PyObject* self, PyObject* args,
                                    &benchmark_type_str)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   base::BenchmarkType benchmark_type = base::BenchmarkType::kNone;
   if (benchmark_type_str != nullptr) {
     if (!strcmp(benchmark_type_str, "cpu")) {
@@ -347,8 +338,8 @@ static PyMethodDef PyNewHostSessionDef = {
 
 // -------------------------- new_replay_session -------------------------------
 
-static auto PyNewReplaySession(PyObject* self, PyObject* args,
-                               PyObject* keywds) -> PyObject* {
+static auto PyNewReplaySession(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   std::string file_name;
   PyObject* file_name_obj;
@@ -357,9 +348,9 @@ static auto PyNewReplaySession(PyObject* self, PyObject* args,
           args, keywds, "O", const_cast<char**>(kwlist), &file_name_obj)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
-  file_name = Python::GetPyString(file_name_obj);
+  file_name = Python::GetString(file_name_obj);
   appmode->LaunchReplaySession(file_name);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -377,8 +368,8 @@ static PyMethodDef PyNewReplaySessionDef = {
 
 // ------------------------------ is_in_replay ---------------------------------
 
-static auto PyIsInReplay(PyObject* self, PyObject* args,
-                         PyObject* keywds) -> PyObject* {
+static auto PyIsInReplay(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   static const char* kwlist[] = {nullptr};
@@ -386,7 +377,7 @@ static auto PyIsInReplay(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActive();
+  auto* appmode = classic::ClassicAppMode::GetActive();
   if (appmode
       && dynamic_cast<ClientSessionReplay*>(appmode->GetForegroundSession())) {
     Py_RETURN_TRUE;
@@ -408,8 +399,8 @@ static PyMethodDef PyIsInReplayDef = {
 
 // -------------------------- register_session-------- -------------------------
 
-static auto PyRegisterSession(PyObject* self, PyObject* args,
-                              PyObject* keywds) -> PyObject* {
+static auto PyRegisterSession(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* session_obj;
@@ -443,8 +434,8 @@ static PyMethodDef PyRegisterSessionDef = {
 
 // --------------------------- register_activity -------------------------------
 
-static auto PyRegisterActivity(PyObject* self, PyObject* args,
-                               PyObject* keywds) -> PyObject* {
+static auto PyRegisterActivity(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* activity_obj;
@@ -516,8 +507,8 @@ static PyMethodDef PyGetForegroundHostSessionDef = {
 
 // ----------------------------- newactivity -----------------------------------
 
-static auto PyNewActivity(PyObject* self, PyObject* args,
-                          PyObject* keywds) -> PyObject* {
+static auto PyNewActivity(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   static const char* kwlist[] = {"activity_type", "settings", nullptr};
@@ -541,7 +532,7 @@ static auto PyNewActivity(PyObject* self, PyObject* args,
     settings = g_core->python->objs()
                    .Get(core::CorePython::ObjID::kShallowCopyCall)
                    .Call(args2);
-    if (!settings.Exists()) {
+    if (!settings.exists()) {
       throw Exception("Unable to shallow-copy settings.");
     }
   } else {
@@ -552,7 +543,7 @@ static auto PyNewActivity(PyObject* self, PyObject* args,
   if (!hs) {
     throw Exception("No HostSession found.", PyExcType::kContext);
   }
-  return hs->NewHostActivity(activity_type_obj, settings.Get());
+  return hs->NewHostActivity(activity_type_obj, settings.get());
 
   BA_PYTHON_CATCH;
 }
@@ -567,16 +558,14 @@ static PyMethodDef PyNewActivityDef = {
     "\n"
     "Instantiates a bascenev1.Activity given a type object.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Activities require special setup and thus cannot be directly\n"
     "instantiated; you must go through this function.",
 };
 
 // ----------------------------- getactivity -----------------------------------
 
-static auto PyGetActivity(PyObject* self, PyObject* args,
-                          PyObject* keywds) -> PyObject* {
+static auto PyGetActivity(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   int raise = true;
   static const char* kwlist[] = {"doraise", nullptr};
@@ -590,17 +579,26 @@ static auto PyGetActivity(PyObject* self, PyObject* args,
     Py_RETURN_NONE;
   }
 
+  PyObject* ret_obj{};
+
   if (HostActivity* hostactivity =
           ContextRefSceneV1::FromCurrent().GetHostActivity()) {
-    PyObject* obj = hostactivity->GetPyActivity();
-    Py_INCREF(obj);
-    return obj;
-  } else {
-    if (raise) {
-      throw Exception(PyExcType::kActivityNotFound);
+    // GetPyActivity() returns a new ref or nullptr.
+    auto obj{PythonRef::StolenSoft(hostactivity->GetPyActivity())};
+    if (obj.exists()) {
+      ret_obj = obj.NewRef();
     }
   }
+
+  if (ret_obj) {
+    return ret_obj;
+  }
+
+  if (raise) {
+    throw Exception(PyExcType::kActivityNotFound);
+  }
   Py_RETURN_NONE;
+
   BA_PYTHON_CATCH;
 }
 
@@ -613,8 +611,6 @@ static PyMethodDef PyGetActivityDef = {
     "\n"
     "Return the current bascenev1.Activity instance.\n"
     "\n"
-    "Category: **Gameplay Functions**\n"
-    "\n"
     "Note that this is based on context_ref; thus code run in a timer\n"
     "generated in Activity 'foo' will properly return 'foo' here, even if\n"
     "another Activity has since been created or is transitioning in.\n"
@@ -624,8 +620,8 @@ static PyMethodDef PyGetActivityDef = {
 
 // -------------------------- broadcastmessage ---------------------------------
 
-static auto PyBroadcastMessage(PyObject* self, PyObject* args,
-                               PyObject* keywds) -> PyObject* {
+static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* message = nullptr;
   PyObject* color_obj = Py_None;
@@ -653,7 +649,7 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args,
     return nullptr;
   }
   if (log) {
-    Log(LogLevel::kInfo, message);
+    g_core->Log(LogName::kBaNetworking, LogLevel::kInfo, message);
   }
 
   // Transient messages get sent to clients as high-level messages instead of
@@ -673,9 +669,9 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args,
           PyExcType::kValue);
     }
     std::vector<int32_t> client_ids;
-    if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       if (clients_obj != Py_None) {
-        std::vector<int> client_ids2 = Python::GetPyInts(clients_obj);
+        std::vector<int> client_ids2 = Python::GetInts(clients_obj);
         appmode->connections()->SendScreenMessageToSpecificClients(
             message, color.x, color.y, color.z, client_ids2);
       } else {
@@ -751,7 +747,8 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args,
             tint_color.x, tint_color.y, tint_color.z, tint2_color.x,
             tint2_color.y, tint2_color.z);
       } else {
-        Log(LogLevel::kError, "Unhandled screenmessage output_stream case.");
+        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                    "Unhandled screenmessage output_stream case.");
       }
     }
 
@@ -784,8 +781,6 @@ static PyMethodDef PyBroadcastMessageDef = {
     "\n"
     "Broadcast a screen-message to clients in the current session.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "If 'top' is True, the message will go to the top message area.\n"
     "For 'top' messages, 'image' must be a dict containing 'texture'\n"
     "and 'tint_texture' textures and 'tint_color' and 'tint2_color'\n"
@@ -800,8 +795,8 @@ static PyMethodDef PyBroadcastMessageDef = {
 
 // ------------------------------- newnode -------------------------------------
 
-static auto PyNewNode(PyObject* self, PyObject* args,
-                      PyObject* keywds) -> PyObject* {
+static auto PyNewNode(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   Node* n = SceneV1Python::DoNewNode(args, keywds);
   if (!n) {
@@ -822,8 +817,6 @@ static PyMethodDef PyNewNodeDef = {
     "  delegate: Any = None) -> bascenev1.Node\n"
     "\n"
     "Add a node of the given type to the game.\n"
-    "\n"
-    "Category: **Gameplay Functions**\n"
     "\n"
     "If a dict is provided for 'attributes', the node's initial attributes\n"
     "will be set based on them.\n"
@@ -861,7 +854,7 @@ static auto PyPrintNodes(PyObject* self, PyObject* args) -> PyObject* {
     snprintf(buffer, sizeof(buffer), "#%d:   type: %-14s desc: %s", count,
              i->type()->name().c_str(), i->label().c_str());
     s += buffer;
-    Log(LogLevel::kInfo, buffer);
+    g_core->Log(LogName::kBa, LogLevel::kInfo, buffer);
     count++;
   }
   Py_RETURN_NONE;
@@ -875,9 +868,7 @@ static PyMethodDef PyPrintNodesDef = {
 
     "printnodes() -> None\n"
     "\n"
-    "Print various info about existing nodes; useful for debugging.\n"
-    "\n"
-    "Category: **Gameplay Functions**",
+    "Print various info about existing nodes; useful for debugging.",
 };
 
 // -------------------------------- getnodes -----------------------------------
@@ -905,9 +896,7 @@ static PyMethodDef PyGetNodesDef = {
 
     "getnodes() -> list\n"
     "\n"
-    "Return all nodes in the current bascenev1.Context.\n"
-    "\n"
-    "Category: **Gameplay Functions**",
+    "Return all nodes in the current scene context.",
 };
 
 // -------------------------- get_collision_info -------------------------------
@@ -1028,8 +1017,6 @@ static PyMethodDef PyGetCollisionInfoDef = {
     "\n"
     "Return collision related values\n"
     "\n"
-    "Category: **Gameplay Functions**\n"
-    "\n"
     "Returns a single collision value or tuple of values such as location,\n"
     "depth, nodes involved, etc. Only call this in the handler of a\n"
     "collision-triggered callback or message",
@@ -1037,8 +1024,8 @@ static PyMethodDef PyGetCollisionInfoDef = {
 
 // ------------------------------ camerashake ----------------------------------
 
-static auto PyCameraShake(PyObject* self, PyObject* args,
-                          PyObject* keywds) -> PyObject* {
+static auto PyCameraShake(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   float intensity = 1.0f;
@@ -1050,7 +1037,8 @@ static auto PyCameraShake(PyObject* self, PyObject* args,
 
   if (Scene* scene = ContextRefSceneV1::FromCurrent().GetMutableScene()) {
     // Send to clients/replays (IF we're servering protocol 35+).
-    if (SceneV1AppMode::GetSingleton()->host_protocol_version() >= 35) {
+    if (classic::ClassicAppMode::GetSingleton()->host_protocol_version()
+        >= 35) {
       if (SessionStream* output_stream = scene->GetSceneStream()) {
         output_stream->EmitCameraShake(intensity);
       }
@@ -1078,8 +1066,6 @@ static PyMethodDef PyCameraShakeDef = {
     "\n"
     "Shake the camera.\n"
     "\n"
-    "Category: **Gameplay Functions**\n"
-    "\n"
     "Note that some cameras and/or platforms (such as VR) may not display\n"
     "camera-shake, so do not rely on this always being visible to the\n"
     "player as a gameplay cue.",
@@ -1087,8 +1073,8 @@ static PyMethodDef PyCameraShakeDef = {
 
 // -------------------------------- emitfx -------------------------------------
 
-static auto PyEmitFx(PyObject* self, PyObject* args,
-                     PyObject* keywds) -> PyObject* {
+static auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {"position",  "velocity",     "count",
                                  "scale",     "spread",       "chunk_type",
@@ -1111,7 +1097,7 @@ static auto PyEmitFx(PyObject* self, PyObject* args,
   float x, y, z;
   assert(pos_obj);
   {
-    std::vector<float> vals = Python::GetPyFloats(pos_obj);
+    std::vector<float> vals = Python::GetFloats(pos_obj);
     if (vals.size() != 3) {
       throw Exception("Expected 3 floats for position.", PyExcType::kValue);
     }
@@ -1123,7 +1109,7 @@ static auto PyEmitFx(PyObject* self, PyObject* args,
   float vy = 0.0f;
   float vz = 0.0f;
   if (vel_obj != Py_None) {
-    std::vector<float> vals = Python::GetPyFloats(vel_obj);
+    std::vector<float> vals = Python::GetFloats(vel_obj);
     if (vals.size() != 3) {
       throw Exception("Expected 3 floats for velocity.", PyExcType::kValue);
     }
@@ -1221,8 +1207,6 @@ static PyMethodDef PyEmitFxDef = {
     "\n"
     "Emit particles, smoke, etc. into the fx sim layer.\n"
     "\n"
-    "Category: **Gameplay Functions**\n"
-    "\n"
     "The fx sim layer is a secondary dynamics simulation that runs in\n"
     "the background and just looks pretty; it does not affect gameplay.\n"
     "Note that the actual amount emitted may vary depending on graphics\n"
@@ -1281,9 +1265,9 @@ static auto PyGetForegroundHostActivity(PyObject* self, PyObject* args,
           ? ContextRefSceneV1::FromAppForegroundContext().GetHostActivity()
           : nullptr;
   if (h != nullptr) {
-    PyObject* obj = h->GetPyActivity();
-    Py_INCREF(obj);
-    return obj;
+    // GetPyActivity returns a new ref or nullptr.
+    auto obj{PythonRef::StolenSoft(h->GetPyActivity())};
+    return obj.NewRef();
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1303,8 +1287,8 @@ static PyMethodDef PyGetForegroundHostActivityDef = {
 
 // --------------------------- get_game_roster ---------------------------------
 
-static auto PyGetGameRoster(PyObject* self, PyObject* args,
-                            PyObject* keywds) -> PyObject* {
+static auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   static const char* kwlist[] = {nullptr};
@@ -1314,7 +1298,7 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args,
   }
   PythonRef py_client_list(PyList_New(0), PythonRef::kSteal);
 
-  cJSON* party = SceneV1AppMode::GetSingleton()->game_roster();
+  cJSON* party = classic::ClassicAppMode::GetSingleton()->game_roster();
   assert(party);
   int len = cJSON_GetArraySize(party);
   for (int i = 0; i < len; i++) {
@@ -1345,7 +1329,7 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args,
                     "id", id_val),
                 PythonRef::kSteal);
             // This increments ref.
-            PyList_Append(py_player_list.Get(), py_player.Get());
+            PyList_Append(py_player_list.get(), py_player.get());
           }
         }
       }
@@ -1365,9 +1349,9 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args,
     // Let's also include a public account-id if we have one.
     std::string account_id;
     if (clientid == -1) {
-      account_id = g_base->plus()->GetPublicV1AccountID();
+      account_id = g_base->Plus()->GetPublicV1AccountID();
     } else {
-      if (auto* appmode = SceneV1AppMode::GetActiveOrWarn()) {
+      if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
         auto client2 =
             appmode->connections()->connections_to_clients().find(clientid);
         if (client2 != appmode->connections()->connections_to_clients().end()) {
@@ -1391,11 +1375,11 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args,
                 ? PlayerSpec(spec->valuestring).GetDisplayString().c_str()
                 : "",
             "spec_string", (spec && spec->valuestring) ? spec->valuestring : "",
-            "players", py_player_list.Get(), "client_id", client_id_ref.Get(),
-            "account_id", account_id_ref.Get()),
+            "players", py_player_list.get(), "client_id", client_id_ref.get(),
+            "account_id", account_id_ref.get()),
         PythonRef::kSteal);
-    PyList_Append(py_client_list.Get(),
-                  py_client.Get());  // this increments ref
+    PyList_Append(py_client_list.get(),
+                  py_client.get());  // this increments ref
   }
   return py_client_list.NewRef();
   BA_PYTHON_CATCH;
@@ -1413,14 +1397,14 @@ static PyMethodDef PyGetGameRosterDef = {
 
 // ----------------------- set_debug_speed_exponent ----------------------------
 
-static auto PySetDebugSpeedExponent(PyObject* self,
-                                    PyObject* args) -> PyObject* {
+static auto PySetDebugSpeedExponent(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   int speed;
   if (!PyArg_ParseTuple(args, "i", &speed)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   HostActivity* host_activity =
       ContextRefSceneV1::FromCurrent().GetHostActivity();
@@ -1452,10 +1436,10 @@ static PyMethodDef PySetDebugSpeedExponentDef = {
 
 // ----------------------- get_replay_speed_exponent ---------------------------
 
-static auto PyGetReplaySpeedExponent(PyObject* self,
-                                     PyObject* args) -> PyObject* {
+static auto PyGetReplaySpeedExponent(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   return PyLong_FromLong(appmode->replay_speed_exponent());
   BA_PYTHON_CATCH;
 }
@@ -1475,14 +1459,14 @@ static PyMethodDef PyGetReplaySpeedExponentDef = {
 
 // ------------------------ set_replay_speed_exponent --------------------------
 
-static auto PySetReplaySpeedExponent(PyObject* self,
-                                     PyObject* args) -> PyObject* {
+static auto PySetReplaySpeedExponent(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   int speed;
   if (!PyArg_ParseTuple(args, "i", &speed)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->SetReplaySpeedExponent(speed);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1504,7 +1488,7 @@ static PyMethodDef PySetReplaySpeedExponentDef = {
 
 static auto PyIsReplayPaused(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   if (appmode->is_replay_paused()) {
     Py_RETURN_TRUE;
   } else {
@@ -1528,7 +1512,7 @@ static PyMethodDef PyIsReplayPausedDef = {
 
 static auto PyPauseReplay(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->PauseReplay();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1550,7 +1534,7 @@ static PyMethodDef PyPauseReplayDef = {
 
 static auto PyResumeReplay(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   appmode->ResumeReplay();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1566,6 +1550,39 @@ static PyMethodDef PyResumeReplayDef = {
     "(internal)\n"
     "\n"
     "Resumes replay.",
+};
+
+// -------------------------- seek_replay --------------------------------------
+
+static auto PySeekReplay(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  auto* session =
+      dynamic_cast<ClientSessionReplay*>(appmode->GetForegroundSession());
+  if (session == nullptr) {
+    throw Exception(
+        "Attempting to seek a replay not in replay session context.");
+  }
+  float delta;
+  if (!PyArg_ParseTuple(args, "f", &delta)) {
+    return nullptr;
+  }
+  session->SeekTo(session->base_time()
+                  + static_cast<millisecs_t>(delta * 1'000));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySeekReplayDef = {
+    "seek_replay",  // name
+    PySeekReplay,   // method
+    METH_VARARGS,   // flags
+
+    "seek_replay(delta: float) -> None\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    "Rewind or fast-forward replay.",
 };
 
 // ----------------------- reset_random_player_names ---------------------------
@@ -1618,8 +1635,8 @@ static PyMethodDef PyGetRandomNamesDef = {
 
 // -------------------------------- ls_objects ---------------------------------
 
-static auto PyLsObjects(PyObject* self, PyObject* args,
-                        PyObject* keywds) -> PyObject* {
+static auto PyLsObjects(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   Object::LsObjects();
   Py_RETURN_NONE;
@@ -1635,16 +1652,14 @@ static PyMethodDef PyLsObjectsDef = {
     "\n"
     "Log debugging info about C++ level objects.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "This call only functions in debug builds of the game.\n"
     "It prints various info about the current object count, etc.",
 };
 
 // --------------------------- ls_input_devices --------------------------------
 
-static auto PyLsInputDevices(PyObject* self, PyObject* args,
-                             PyObject* keywds) -> PyObject* {
+static auto PyLsInputDevices(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   g_base->input->LsInputDevices();
   Py_RETURN_NONE;
@@ -1660,16 +1675,14 @@ static PyMethodDef PyLsInputDevicesDef = {
     "\n"
     "Print debugging info about game objects.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "This call only functions in debug builds of the game.\n"
     "It prints various info about the current object count, etc.",
 };
 
 // -------------------------- set_internal_music -------------------------------
 
-static auto PySetInternalMusic(PyObject* self, PyObject* args,
-                               PyObject* keywds) -> PyObject* {
+static auto PySetInternalMusic(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   PyObject* music_obj;
@@ -1681,7 +1694,7 @@ static auto PySetInternalMusic(PyObject* self, PyObject* args,
                                    &volume, &loop)) {
     return nullptr;
   }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   if (music_obj == Py_None) {
     appmode->SetInternalMusic(nullptr);
@@ -1704,116 +1717,13 @@ static PyMethodDef PySetInternalMusicDef = {
     "(internal).",
 };
 
-// -------------------------- on_app_mode_activate -----------------------------
-
-static auto PyOnAppModeActivate(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
-  g_base->set_app_mode(SceneV1AppMode::GetSingleton());
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyOnAppModeActivateDef = {
-    "on_app_mode_activate",            // name
-    (PyCFunction)PyOnAppModeActivate,  // method
-    METH_NOARGS,                       // flags
-
-    "on_app_mode_activate() -> None\n"
-    "\n"
-    "(internal)\n",
-};
-
-// ------------------------- on_app_mode_deactivate ----------------------------
-
-static auto PyOnAppModeDeactivate(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
-  // Currently doing nothing.
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyOnAppModeDeactivateDef = {
-    "on_app_mode_deactivate",            // name
-    (PyCFunction)PyOnAppModeDeactivate,  // method
-    METH_NOARGS,                         // flags
-
-    "on_app_mode_deactivate() -> None\n"
-    "\n"
-    "(internal)\n",
-};
-
-// ----------------------- handle_app_intent_default ---------------------------
-
-static auto PyHandleAppIntentDefault(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
-  appmode->RunMainMenu();
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyHandleAppIntentDefaultDef = {
-    "handle_app_intent_default",            // name
-    (PyCFunction)PyHandleAppIntentDefault,  // method
-    METH_NOARGS,                            // flags
-
-    "handle_app_intent_default() -> None\n"
-    "\n"
-    "(internal)\n",
-};
-
-// ------------------------ handle_app_intent_exec -----------------------------
-
-static auto PyHandleAppIntentExec(PyObject* self, PyObject* args,
-                                  PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* command;
-  static const char* kwlist[] = {"command", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &command)) {
-    return nullptr;
-  }
-  auto* appmode = SceneV1AppMode::GetActiveOrThrow();
-
-  // Run the command.
-  if (g_core->core_config().exec_command.has_value()) {
-    bool success = PythonCommand(*g_core->core_config().exec_command,
-                                 BA_BUILD_COMMAND_FILENAME)
-                       .Exec(true, nullptr, nullptr);
-    if (!success) {
-      // TODO(ericf): what should we do in this case?
-      //  Obviously if we add return/success values for intents we should set
-      //  that here.
-    }
-  }
-  //  If the stuff we just ran didn't result in a session, create a default
-  //  one.
-  if (!appmode->GetForegroundSession()) {
-    appmode->RunMainMenu();
-  }
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyHandleAppIntentExecDef = {
-    "handle_app_intent_exec",            // name
-    (PyCFunction)PyHandleAppIntentExec,  // method
-    METH_VARARGS | METH_KEYWORDS,        // flags
-
-    "handle_app_intent_exec(command: str) -> None\n"
-    "\n"
-    "(internal)",
-};
-
-// ----------------------- handle_app_intent_default ---------------------------
+// ---------------------------- protocol_version -------------------------------
 
 static auto PyProtocolVersion(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
+
   return PyLong_FromLong(
-      SceneV1AppMode::GetSingleton()->host_protocol_version());
+      classic::ClassicAppMode::GetActiveOrThrow()->host_protocol_version());
   BA_PYTHON_CATCH;
 }
 
@@ -1846,6 +1756,7 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PySetReplaySpeedExponentDef,
       PyGetReplaySpeedExponentDef,
       PyIsReplayPausedDef,
+      PySeekReplayDef,
       PyPauseReplayDef,
       PyResumeReplayDef,
       PySetDebugSpeedExponentDef,
@@ -1865,10 +1776,6 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyBaseTimeDef,
       PyBaseTimerDef,
       PyLsInputDevicesDef,
-      PyOnAppModeActivateDef,
-      PyOnAppModeDeactivateDef,
-      PyHandleAppIntentDefaultDef,
-      PyHandleAppIntentExecDef,
       PyProtocolVersionDef,
   };
 }

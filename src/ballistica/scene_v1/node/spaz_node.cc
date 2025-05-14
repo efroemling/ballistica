@@ -2,6 +2,11 @@
 
 #include "ballistica/scene_v1/node/spaz_node.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_shadow.h"
@@ -9,10 +14,10 @@
 #include "ballistica/base/graphics/component/post_process_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
-#include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -20,12 +25,11 @@
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/dynamics/collision.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
-#include "ballistica/scene_v1/dynamics/material/material_action.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
-#include "ballistica/shared/python/python.h"
 #include "ode/ode_collision_util.h"
 
 namespace ballistica::scene_v1 {
@@ -34,7 +38,7 @@ namespace ballistica::scene_v1 {
 template <class T>
 auto GetRandomMedia(const std::vector<Object::Ref<T> >& list) -> T* {
   if (list.empty()) return nullptr;
-  return list[rand() % list.size()].Get();  // NOLINT yes I know; rand bad.
+  return list[rand() % list.size()].get();  // NOLINT yes I know; rand bad.
 }
 
 const float kSantaEyeScale = 0.9f;
@@ -146,8 +150,8 @@ enum SpazBodyType {
   kHairPonyTailBottomBodyID
 };
 
-static auto AngleBetween2DVectors(dReal x1, dReal y1, dReal x2,
-                                  dReal y2) -> dReal {
+static auto AngleBetween2DVectors(dReal x1, dReal y1, dReal x2, dReal y2)
+    -> dReal {
   dReal x1_norm, y1_norm, x2_norm, y2_norm;
   dReal len1, len2;
   len1 = sqrtf(x1 * x1 + y1 * y1);
@@ -184,9 +188,9 @@ static auto AngleBetween2DVectors(dReal x1, dReal y1, dReal x2,
 static void RotationFrom2Axes(dMatrix3 r, dReal x_forward, dReal y_forward,
                               dReal z_forward, dReal x_up, dReal y_up,
                               dReal z_up) {
-  Vector3f forward(x_forward, y_forward, z_forward);
+  Vector3f fwd(x_forward, y_forward, z_forward);
   Vector3f up = Vector3f(x_up, y_up, z_up).Normalized();
-  Vector3f side = Vector3f(Vector3f::Cross(forward, up)).Normalized();
+  Vector3f side = Vector3f(Vector3f::Cross(fwd, up)).Normalized();
   Vector3f forward2 = Vector3f::Cross(up, side);
   r[0] = forward2.x;
   r[4] = forward2.y;
@@ -729,7 +733,7 @@ SpazNode::SpazNode(Scene* scene)
   Stand(0, 0, 0, 0);
 
   // Attach head to torso.
-  neck_joint_ = CreateFixedJoint(body_head_.Get(), body_torso_.Get(), 1000, 1,
+  neck_joint_ = CreateFixedJoint(body_head_.get(), body_torso_.get(), 1000, 1,
                                  20.0f, 0.3f);
 
   // Drop the y angular stiffness/damping on our neck so our head can whip
@@ -738,7 +742,7 @@ SpazNode::SpazNode(Scene* scene)
   neck_joint_->anchor2[1] += 0.2f;
 
   // Attach torso to pelvis.
-  pelvis_joint_ = CreateFixedJoint(body_pelvis_.Get(), body_torso_.Get(), 0,
+  pelvis_joint_ = CreateFixedJoint(body_pelvis_.get(), body_torso_.get(), 0,
                                    0,      // lin stiff/damp
                                    0, 0);  // ang stiff/damp
 
@@ -751,7 +755,7 @@ SpazNode::SpazNode(Scene* scene)
 
   // Attach upper right arm to torso.
   upper_right_arm_joint_ = CreateFixedJoint(
-      body_torso_.Get(), upper_right_arm_body_.Get(), 0, 0, 0, 0);
+      body_torso_.get(), upper_right_arm_body_.get(), 0, 0, 0, 0);
 
   // Move anchor to top of arm.
   upper_right_arm_joint_->anchor2[2] = -0.1f;
@@ -761,13 +765,13 @@ SpazNode::SpazNode(Scene* scene)
 
   // Attach lower right arm to upper right arm.
   lower_right_arm_joint_ = CreateFixedJoint(
-      upper_right_arm_body_.Get(), lower_right_arm_body_.Get(), 0, 0, 0, 0);
+      upper_right_arm_body_.get(), lower_right_arm_body_.get(), 0, 0, 0, 0);
 
   lower_right_arm_joint_->anchor2[2] = -0.08f;
 
   // Attach upper left arm to torso.
   upper_left_arm_joint_ = CreateFixedJoint(
-      body_torso_.Get(), upper_left_arm_body_.Get(), 0, 0, 0, 0);
+      body_torso_.get(), upper_left_arm_body_.get(), 0, 0, 0, 0);
 
   // Move anchor to top of arm.
   upper_left_arm_joint_->anchor2[2] = -0.1f;
@@ -777,25 +781,25 @@ SpazNode::SpazNode(Scene* scene)
 
   // Attach lower arm to upper arm.
   lower_left_arm_joint_ = CreateFixedJoint(
-      upper_left_arm_body_.Get(), lower_left_arm_body_.Get(), 0, 0, 0, 0);
+      upper_left_arm_body_.get(), lower_left_arm_body_.get(), 0, 0, 0, 0);
 
   lower_left_arm_joint_->anchor2[2] = -0.08f;
 
   // Attach upper right leg to leg-mass.
   upper_right_leg_joint_ = CreateFixedJoint(
-      body_pelvis_.Get(), upper_right_leg_body_.Get(), 0, 0, 0, 0);
+      body_pelvis_.get(), upper_right_leg_body_.get(), 0, 0, 0, 0);
 
   upper_right_leg_joint_->anchor2[2] = -0.05f;
 
   // Attach lower right leg to upper right leg.
   lower_right_leg_joint_ = CreateFixedJoint(
-      upper_right_leg_body_.Get(), lower_right_leg_body_.Get(), 0, 0, 0, 0);
+      upper_right_leg_body_.get(), lower_right_leg_body_.get(), 0, 0, 0, 0);
 
   lower_right_leg_joint_->anchor2[2] = -0.05f;
 
   // Attach bottom of lower leg to pelvis.
   right_leg_ik_joint_ = CreateFixedJoint(
-      body_pelvis_.Get(), lower_right_leg_body_.Get(), 0.3f, 0.001f, 0, 0);
+      body_pelvis_.get(), lower_right_leg_body_.get(), 0.3f, 0.001f, 0, 0);
   dQFromAxisAndAngle(right_leg_ik_joint_->qrel, 1, 0, 0, 1.0f);
 
   // Move the anchor to the tip of our leg.
@@ -806,16 +810,16 @@ SpazNode::SpazNode(Scene* scene)
   right_leg_ik_joint_->anchor1[2] = 0.0f;
 
   // Attach toes to lower right foot.
-  right_toes_joint_ = CreateFixedJoint(lower_right_leg_body_.Get(),
-                                       right_toes_body_.Get(), 0, 0, 0, 0);
+  right_toes_joint_ = CreateFixedJoint(lower_right_leg_body_.get(),
+                                       right_toes_body_.get(), 0, 0, 0, 0);
 
   right_toes_joint_->anchor1[1] += -0.0f;
   right_toes_joint_->anchor2[1] += -0.04f;
 
   // And an anchor off to the side to make it hinge-like.
   right_toes_joint_2_ = nullptr;
-  right_toes_joint_2_ = CreateFixedJoint(lower_right_leg_body_.Get(),
-                                         right_toes_body_.Get(), 0, 0, 0, 0);
+  right_toes_joint_2_ = CreateFixedJoint(lower_right_leg_body_.get(),
+                                         right_toes_body_.get(), 0, 0, 0, 0);
 
   right_toes_joint_2_->anchor1[1] += -0.0f;
   right_toes_joint_2_->anchor2[1] += -0.04f;
@@ -825,19 +829,19 @@ SpazNode::SpazNode(Scene* scene)
 
   // Attach upper left leg to leg-mass.
   upper_left_leg_joint_ = CreateFixedJoint(
-      body_pelvis_.Get(), upper_left_leg_body_.Get(), 0, 0, 0, 0);
+      body_pelvis_.get(), upper_left_leg_body_.get(), 0, 0, 0, 0);
 
   upper_left_leg_joint_->anchor2[2] = -0.05f;
 
   // Attach lower left leg to upper left leg.
   lower_left_leg_joint_ = CreateFixedJoint(
-      upper_left_leg_body_.Get(), lower_left_leg_body_.Get(), 0, 0, 0, 0);
+      upper_left_leg_body_.get(), lower_left_leg_body_.get(), 0, 0, 0, 0);
 
   lower_left_leg_joint_->anchor2[2] = -0.05f;
 
   // Attach bottom of lower leg to pelvis.
   left_leg_ik_joint_ = CreateFixedJoint(
-      body_pelvis_.Get(), lower_left_leg_body_.Get(), 0.3f, 0.001f, 0, 0);
+      body_pelvis_.get(), lower_left_leg_body_.get(), 0.3f, 0.001f, 0, 0);
 
   dQFromAxisAndAngle(left_leg_ik_joint_->qrel, 1, 0, 0, 1.0f);
 
@@ -849,16 +853,16 @@ SpazNode::SpazNode(Scene* scene)
   left_leg_ik_joint_->anchor1[2] = 0.0f;
 
   // Attach toes to lower left foot.
-  left_toes_joint_ = CreateFixedJoint(lower_left_leg_body_.Get(),
-                                      left_toes_body_.Get(), 0, 0, 0, 0);
+  left_toes_joint_ = CreateFixedJoint(lower_left_leg_body_.get(),
+                                      left_toes_body_.get(), 0, 0, 0, 0);
 
   right_toes_joint_->anchor1[1] += -0.0f;
   left_toes_joint_->anchor2[1] += -0.04f;
 
   // And an anchor off to the side to make it hinge-like.
   left_toes_joint_2_ = nullptr;
-  left_toes_joint_2_ = CreateFixedJoint(lower_left_leg_body_.Get(),
-                                        left_toes_body_.Get(), 0, 0, 0, 0);
+  left_toes_joint_2_ = CreateFixedJoint(lower_left_leg_body_.get(),
+                                        left_toes_body_.get(), 0, 0, 0, 0);
 
   left_toes_joint_2_->anchor1[1] += -0.0f;
   left_toes_joint_2_->anchor2[1] += -0.04f;
@@ -867,22 +871,22 @@ SpazNode::SpazNode(Scene* scene)
 
   // Attach end of right arm to torso.
   right_arm_ik_joint_ =
-      CreateFixedJoint(body_torso_.Get(), lower_right_arm_body_.Get(), 0.0f,
+      CreateFixedJoint(body_torso_.get(), lower_right_arm_body_.get(), 0.0f,
                        0.0f, 0, 0, -0.2f, -0.2f, 0.1f, 0, 0, 0.07f, false);
 
   left_arm_ik_joint_ =
-      CreateFixedJoint(body_torso_.Get(), lower_left_arm_body_.Get(), 0.0f,
+      CreateFixedJoint(body_torso_.get(), lower_left_arm_body_.get(), 0.0f,
                        0.0f, 0, 0, 0.2f, -0.2f, 0.1f, 0.0f, 0.0f, 0.07f, false);
 
   // Roller ball joint.
-  roller_ball_joint_ = CreateFixedJoint(body_torso_.Get(), body_roller_.Get(),
+  roller_ball_joint_ = CreateFixedJoint(body_torso_.get(), body_roller_.get(),
                                         kRollerBallLinearStiffness,
                                         kRollerBallLinearDamping, 0, 0);
   base_pelvis_roller_anchor_offset_ = roller_ball_joint_->anchor1[1];
 
   // Stand joint on our torso.
   stand_joint_ =
-      CreateFixedJoint(body_torso_.Get(), stand_body_.Get(), 100, 1, 200, 10);
+      CreateFixedJoint(body_torso_.get(), stand_body_.get(), 100, 1, 200, 10);
 
   // Roller motor.
   a_motor_roller_ = dJointCreateAMotor(scene->dynamics()->ode_world(), nullptr);
@@ -1794,7 +1798,7 @@ void SpazNode::DoFlyPress() {
 
     // Keep from doing too many sparkles.
     static millisecs_t last_sparkle_time = 0;
-    millisecs_t t = g_core->GetAppTimeMillisecs();
+    millisecs_t t = g_core->AppTimeMillisecs();
     if (t - last_sparkle_time > 200) {
       last_sparkle_time = t;
       auto* s = g_base->audio->SourceBeginNew();
@@ -1845,7 +1849,7 @@ void SpazNode::Step() {
 
     // for (Object::Ref<RigidBody>** body = bodies; *body != nullptr; body++) {
     for (auto* body : bodies) {
-      if (RigidBody* bodyptr = body->Get()) {
+      if (RigidBody* bodyptr = body->get()) {
         bodyptr->UpdateBlending();
       }
     }
@@ -1863,7 +1867,7 @@ void SpazNode::Step() {
 
   // FIXME: this should simply be an attr connection established on the
   // Python layer.
-  if (source_player_.Exists()) {
+  if (source_player_.exists()) {
     source_player_->SetPosition(Vector3f(p_torso));
   }
 
@@ -2248,7 +2252,7 @@ void SpazNode::Step() {
           &hair_ponytail_top_body_, &hair_ponytail_bottom_body_, nullptr};
       float drag = 0.94f;
       for (Object::Ref<RigidBody>** body = bodies2; *body != nullptr; body++) {
-        if ((**body).Exists()) {
+        if ((**body).exists()) {
           dBodyID b = (**body)->body();
           const dReal* lVel = dBodyGetLinearVel(b);
           dBodySetLinearVel(b, lVel[0] * drag, lVel[1] * drag, lVel[2] * drag);
@@ -2547,7 +2551,7 @@ void SpazNode::Step() {
           z *= 1.4f * run_gas_ + (1.0f - run_gas_) * 1.0f;
           dBodyGetRelPointPos(stand_body_->body(), step_separation, y, z,
                               p_world);
-          assert(body_pelvis_.Exists());
+          assert(body_pelvis_.exists());
           dBodyGetPosRelPoint(body_pelvis_->body(), p_world[0], p_world[1],
                               p_world[2], p_pelvis);
           left_leg_ik_joint_->anchor1[0] = p_pelvis[0];
@@ -2568,7 +2572,7 @@ void SpazNode::Step() {
           z *= 1.3f * run_gas_ + (1.0f - run_gas_) * 1.0f;
           dBodyGetRelPointPos(stand_body_->body(), -step_separation, y, z,
                               p_world);
-          assert(body_pelvis_.Exists());
+          assert(body_pelvis_.exists());
           dBodyGetPosRelPoint(body_pelvis_->body(), p_world[0], p_world[1],
                               p_world[2], p_pelvis);
           right_leg_ik_joint_->anchor1[0] = p_pelvis[0];
@@ -2691,8 +2695,8 @@ void SpazNode::Step() {
           left_arm_ik_joint_->angularDamping = 0;
         } else {
           bool haveHeldThing = false;
-          if (holding_something_ && hold_node_.Exists()) {
-            Node* a = hold_node_.Get();
+          if (holding_something_ && hold_node_.exists()) {
+            Node* a = hold_node_.get();
             RigidBody* b = a->GetRigidBody(hold_body_);
             if (b) {
               haveHeldThing = true;
@@ -2714,7 +2718,7 @@ void SpazNode::Step() {
               dBodyGetRelPointPos(heldBody, hold_hand_offset_right_[0],
                                   hold_hand_offset_right_[1],
                                   hold_hand_offset_right_[2], p_world);
-              assert(body_torso_.Exists());
+              assert(body_torso_.exists());
               dBodyGetPosRelPoint(body_torso_->body(), p_world[0], p_world[1],
                                   p_world[2], p_torso2);
               jf->anchor1[0] = p_torso2[0];
@@ -2724,7 +2728,7 @@ void SpazNode::Step() {
               dBodyGetRelPointPos(heldBody, hold_hand_offset_left_[0],
                                   hold_hand_offset_left_[1],
                                   hold_hand_offset_left_[2], p_world);
-              assert(body_torso_.Exists());
+              assert(body_torso_.exists());
               dBodyGetPosRelPoint(body_torso_->body(), p_world[0], p_world[1],
                                   p_world[2], p_torso2);
               jf->anchor1[0] = p_torso2[0];
@@ -2787,7 +2791,7 @@ void SpazNode::Step() {
                 p_world[1] += 0.13f;
 
                 // Now translate back to torso space for setting our anchor.
-                assert(body_torso_.Exists());
+                assert(body_torso_.exists());
                 dBodyGetPosRelPoint(body_torso_->body(), p_world[0], p_world[1],
                                     p_world[2], p_torso2);
 
@@ -3267,7 +3271,7 @@ void SpazNode::Step() {
     // also add some force to what we're holding so popping out a bomb doesnt
     // send us spiraling down to death
     if (holding_something_) {
-      Node* a = hold_node_.Get();
+      Node* a = hold_node_.get();
       if (a) {
         float scale = 0.2f;
         RigidBody* b = a->GetRigidBody(hold_body_);
@@ -3662,7 +3666,7 @@ void SpazNode::Step() {
   }
 
   if (punch_ > 0) {
-    if (!body_punch_.Exists() && since_last_punch > 80 && !knockout_) {
+    if (!body_punch_.exists() && since_last_punch > 80 && !knockout_) {
       body_punch_ = Object::New<RigidBody>(
           kPunchBodyID, &punch_part_, RigidBody::Type::kGeomOnly,
           RigidBody::Shape::kSphere, RigidBody::kCollideRegion,
@@ -3670,7 +3674,7 @@ void SpazNode::Step() {
       body_punch_->SetDimensions(0.25f);
     }
 
-    if (body_punch_.Exists()) {
+    if (body_punch_.exists()) {
       // Move the punch body to the end of our punching arm.
       dBodyID fist_body = punch_right_ ? lower_right_arm_body_->body()
                                        : lower_left_arm_body_->body();
@@ -3685,7 +3689,7 @@ void SpazNode::Step() {
     }
 
   } else {
-    if (body_punch_.Exists()) {
+    if (body_punch_.exists()) {
       body_punch_.Clear();
     }
   }
@@ -3750,7 +3754,7 @@ void SpazNode::Step() {
   // ( we need to check have_thrown_ because otherwise we'll always think
   //   we're throwing at game-time 0 since throw_start_ inits to that.)
   if (have_thrown_ && scene()->time() - throw_start_ < 50) {
-    Node* a = hold_node_.Get();
+    Node* a = hold_node_.get();
     if (a) {
       RigidBody* b = a->GetRigidBody(hold_body_);
       if (b) {
@@ -3828,11 +3832,11 @@ void SpazNode::Step() {
   } else {
     // If we're no longer holding something and our throw is over, clear any ref
     // we might have.
-    if (!holding_something_ && hold_node_.Exists()) hold_node_.Clear();
+    if (!holding_something_ && hold_node_.exists()) hold_node_.Clear();
   }
 
   if (pickup_ == kPickupCooldown - 4) {
-    if (!body_pickup_.Exists()) {
+    if (!body_pickup_.exists()) {
       body_pickup_ = Object::New<RigidBody>(
           kPickupBodyID, &pickup_part_, RigidBody::Type::kGeomOnly,
           RigidBody::Shape::kSphere, RigidBody::kCollideRegion,
@@ -3840,12 +3844,12 @@ void SpazNode::Step() {
       body_pickup_->SetDimensions(0.7f);
     }
   } else {
-    if (body_pickup_.Exists()) {
+    if (body_pickup_.exists()) {
       body_pickup_.Clear();
     }
   }
 
-  if (body_pickup_.Exists()) {
+  if (body_pickup_.exists()) {
     // A unit vector forward.
     dVector3 f;
     float z = 0.3f;
@@ -4101,9 +4105,9 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
                              float* add_color) {
   // Set up shading.
   if (shading) {
-    c->SetTexture(color_texture_.Exists() ? color_texture_->texture_data()
+    c->SetTexture(color_texture_.exists() ? color_texture_->texture_data()
                                           : nullptr);
-    c->SetColorizeTexture(color_mask_texture_.Exists()
+    c->SetColorizeTexture(color_mask_texture_.exists()
                               ? color_mask_texture_->texture_data()
                               : nullptr);
     c->SetColorizeColor(color_[0], color_[1], color_[2]);
@@ -4146,13 +4150,13 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (head_mesh_.Exists()) {
+    if (head_mesh_.exists()) {
       c->DrawMeshAsset(head_mesh_->mesh_data());
     }
   }
 
   // Hair tuft 1.
-  if (hair_front_right_body_.Exists()) {
+  if (hair_front_right_body_.exists()) {
     {
       auto xf = c->ScopedTransform();
       hair_front_right_body_->ApplyToRenderComponent(c);
@@ -4179,7 +4183,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   }
 
   // Hair tuft 2.
-  if (hair_front_left_body_.Exists()) {
+  if (hair_front_left_body_.exists()) {
     {
       auto xf = c->ScopedTransform();
       hair_front_left_body_->ApplyToRenderComponent(c);
@@ -4189,7 +4193,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   }
 
   // Hair tuft 3.
-  if (hair_ponytail_top_body_.Exists()) {
+  if (hair_ponytail_top_body_.exists()) {
     {
       auto xf = c->ScopedTransform();
       hair_ponytail_top_body_->ApplyToRenderComponent(c);
@@ -4201,7 +4205,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
   }
 
   // Hair tuft 4.
-  if (hair_ponytail_bottom_body_.Exists()) {
+  if (hair_ponytail_bottom_body_.exists()) {
     {
       auto xf = c->ScopedTransform();
       hair_ponytail_bottom_body_->ApplyToRenderComponent(c);
@@ -4219,7 +4223,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (torso_mesh_.Exists()) {
+    if (torso_mesh_.exists()) {
       c->DrawMeshAsset(torso_mesh_->mesh_data());
     }
   }
@@ -4231,7 +4235,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (pelvis_mesh_.Exists()) {
+    if (pelvis_mesh_.exists()) {
       c->DrawMeshAsset(pelvis_mesh_->mesh_data());
     }
   }
@@ -4273,7 +4277,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (upper_arm_mesh_.Exists()) {
+    if (upper_arm_mesh_.exists()) {
       c->DrawMeshAsset(upper_arm_mesh_->mesh_data());
     }
   }
@@ -4291,7 +4295,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (forearm_mesh_.Exists() && !flippers_) {
+      if (forearm_mesh_.exists() && !flippers_) {
         c->DrawMeshAsset(forearm_mesh_->mesh_data());
       }
     }
@@ -4305,7 +4309,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (hand_mesh_.Exists() && !flippers_) {
+      if (hand_mesh_.exists() && !flippers_) {
         c->DrawMeshAsset(hand_mesh_->mesh_data());
       }
     }
@@ -4335,7 +4339,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (upper_leg_mesh_.Exists()) {
+    if (upper_leg_mesh_.exists()) {
       c->DrawMeshAsset(upper_leg_mesh_->mesh_data());
     }
   }
@@ -4347,7 +4351,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (lower_leg_mesh_.Exists()) {
+    if (lower_leg_mesh_.exists()) {
       c->DrawMeshAsset(lower_leg_mesh_->mesh_data());
     }
   }
@@ -4358,7 +4362,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (toes_mesh_.Exists()) {
+    if (toes_mesh_.exists()) {
       c->DrawMeshAsset(toes_mesh_->mesh_data());
     }
   }
@@ -4399,7 +4403,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
     }
-    if (upper_arm_mesh_.Exists()) {
+    if (upper_arm_mesh_.exists()) {
       c->DrawMeshAsset(upper_arm_mesh_->mesh_data());
     }
   }
@@ -4418,7 +4422,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
       }
-      if (forearm_mesh_.Exists() && !flippers_) {
+      if (forearm_mesh_.exists() && !flippers_) {
         c->DrawMeshAsset(forearm_mesh_->mesh_data());
       }
     }
@@ -4432,7 +4436,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      if (hand_mesh_.Exists() && !flippers_) {
+      if (hand_mesh_.exists() && !flippers_) {
         c->DrawMeshAsset(hand_mesh_->mesh_data());
       }
     }
@@ -4462,7 +4466,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     }
     if (death_scale != 1.0f)
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
-    if (upper_leg_mesh_.Exists())
+    if (upper_leg_mesh_.exists())
       c->DrawMeshAsset(upper_leg_mesh_->mesh_data());
   }
 
@@ -4473,7 +4477,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     c->Scale(-1.0f, 1.0f, 1.0f);
     if (death_scale != 1.0f)
       c->Scale(death_scale, death_scale, 0.5f + death_scale * 0.5f);
-    if (lower_leg_mesh_.Exists()) {
+    if (lower_leg_mesh_.exists()) {
       c->DrawMeshAsset(lower_leg_mesh_->mesh_data());
     }
   }
@@ -4487,7 +4491,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
     if (death_scale != 1.0f) {
       c->Scale(death_scale, death_scale, death_scale);
     }
-    if (toes_mesh_.Exists()) {
+    if (toes_mesh_.exists()) {
       c->DrawMeshAsset(toes_mesh_->mesh_data());
     }
   }
@@ -4515,7 +4519,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     UpdateForGraphicsQuality(graphics_quality_);
   }
 
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   if (g_base->graphics_server->renderer()->debug_draw_mode()) {
     base::SimpleComponent c(frame_def->overlay_3d_pass());
     c.SetTransparent(true);
@@ -4640,7 +4644,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
 
     c.Submit();
   }
-#endif  // BA_OSTYPE_MACOS
+#endif  // BA_PLATFORM_MACOS
 
   millisecs_t scenetime = scene()->time();
   int64_t render_frame_count = frame_def->frame_number_filtered();
@@ -4829,7 +4833,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       bool flash = (scenetime - mini_billboard_1_start_time_ < 200
                     && render_frame_count % 6 < 3);
       if (!flash) {
-        c.SetTexture(mini_billboard_1_texture_.Exists()
+        c.SetTexture(mini_billboard_1_texture_.exists()
                          ? mini_billboard_1_texture_->texture_data()
                          : nullptr);
       }
@@ -4855,7 +4859,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       bool flash = (scenetime - mini_billboard_2_start_time_ < 200
                     && render_frame_count % 6 < 3);
       if (!flash) {
-        c.SetTexture(mini_billboard_2_texture_.Exists()
+        c.SetTexture(mini_billboard_2_texture_.exists()
                          ? mini_billboard_2_texture_->texture_data()
                          : nullptr);
       }
@@ -4880,7 +4884,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       bool flash = (scenetime - mini_billboard_3_start_time_ < 200
                     && render_frame_count % 6 < 3);
       if (!flash) {
-        c.SetTexture(mini_billboard_3_texture_.Exists()
+        c.SetTexture(mini_billboard_3_texture_.exists()
                          ? mini_billboard_3_texture_->texture_data()
                          : nullptr);
       }
@@ -4900,7 +4904,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     {  // Icon
       base::SimpleComponent c(frame_def->overlay_3d_pass());
       c.SetTransparent(true);
-      c.SetTexture(counter_texture_.Exists() ? counter_texture_->texture_data()
+      c.SetTexture(counter_texture_.exists() ? counter_texture_->texture_data()
                                              : nullptr);
       {
         auto xf = c.ScopedTransform();
@@ -5009,7 +5013,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     base::SimpleComponent c(frame_def->overlay_3d_pass());
     c.SetTransparent(true);
     c.SetColor(1, 1, 1, o);
-    c.SetTexture(billboard_texture_.Exists()
+    c.SetTexture(billboard_texture_.exists()
                      ? billboard_texture_->texture_data()
                      : nullptr);
     {
@@ -5326,7 +5330,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
 
     // Update and draw shadows.
     if (!g_core->HeadlessMode()) {
-      if (FullShadowSet* full_shadows = full_shadow_set_.Get()) {
+      if (FullShadowSet* full_shadows = full_shadow_set_.get()) {
         full_shadows->torso_shadow_.SetPosition(
             Vector3f(dBodyGetPosition(body_torso_->body())));
         full_shadows->head_shadow_.SetPosition(
@@ -5376,7 +5380,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
                    0.3f, sc);
         DrawShadow(full_shadows->upper_right_arm_shadow_, 0.08f * death_scale,
                    0.5f, sc);
-      } else if (SimpleShadowSet* simple_shadows = simple_shadow_set_.Get()) {
+      } else if (SimpleShadowSet* simple_shadows = simple_shadow_set_.get()) {
         simple_shadows->shadow_.SetPosition(
             Vector3f(dBodyGetPosition(body_pelvis_->body())));
         DrawShadow(simple_shadows->shadow_, 0.2f * death_scale, 2.0f, sc);
@@ -5578,8 +5582,8 @@ auto SpazNode::CollideCallback(dContact* c, int count,
 
   if (colliding_body->part() == &limbs_part_lower_) {
     // Drop friction if lower arms are hitting upper legs.
-    if ((colliding_body == lower_left_arm_body_.Get()
-         || colliding_body == lower_right_arm_body_.Get())
+    if ((colliding_body == lower_left_arm_body_.get()
+         || colliding_body == lower_right_arm_body_.get())
         && !shattered_) {
       for (int i = 0; i < count; i++) {
         c[i].surface.mu = 0.0f;
@@ -5590,8 +5594,8 @@ auto SpazNode::CollideCallback(dContact* c, int count,
     float stiffness = 10.0f;
     float damping = 1.0f;
 
-    if (colliding_body == left_toes_body_.Get()
-        || colliding_body == right_toes_body_.Get()) {
+    if (colliding_body == left_toes_body_.get()
+        || colliding_body == right_toes_body_.get()) {
       stiffness *= kToesCollideStiffness;
       damping *= kToesCollideDamping;
 
@@ -5600,8 +5604,8 @@ auto SpazNode::CollideCallback(dContact* c, int count,
         c[i].surface.mu *= 0.1f;
       }
     }
-    if (colliding_body == lower_right_leg_body_.Get()
-        || colliding_body == lower_left_leg_body_.Get()) {
+    if (colliding_body == lower_right_leg_body_.get()
+        || colliding_body == lower_left_leg_body_.get()) {
       stiffness *= kLowerLegCollideStiffness;
       damping *= kLowerLegCollideDamping;
     }
@@ -5621,8 +5625,8 @@ auto SpazNode::CollideCallback(dContact* c, int count,
     // If we're punching, lets crank up stiffness on our punching hand
     // so it looks like its responding to stuff its hitting.
     if (punch_ && !dead_) {
-      if ((colliding_body == lower_right_arm_body_.Get() && punch_right_)
-          || (colliding_body == lower_left_arm_body_.Get() && !punch_right_)) {
+      if ((colliding_body == lower_right_arm_body_.get() && punch_right_)
+          || (colliding_body == lower_left_arm_body_.get() && !punch_right_)) {
         stiffness *= 200.0f;
         damping *= 20.0f;
       }
@@ -5638,8 +5642,8 @@ auto SpazNode::CollideCallback(dContact* c, int count,
     float stiffness = 10;
     float damping = 1;
     float erp, cfm;
-    if (colliding_body == upper_right_leg_body_.Get()
-        || colliding_body == upper_left_leg_body_.Get()) {
+    if (colliding_body == upper_right_leg_body_.get()
+        || colliding_body == upper_left_leg_body_.get()) {
       stiffness *= kUpperLegCollideStiffness;
       damping *= kUpperLegCollideDamping;
     }
@@ -5733,7 +5737,7 @@ auto SpazNode::CollideCallback(dContact* c, int count,
 
   // Keep track of when stuff is hitting our head, so we know when to calc
   // damage from head whiplash.
-  if (colliding_body == body_head_.Get()
+  if (colliding_body == body_head_.get()
       && opposing_body->part()->node() != this
       && opposing_body->can_cause_impact_damage()) {
     last_head_collide_time_ = scene()->time();
@@ -5911,71 +5915,71 @@ auto SpazNode::GetRigidBody(int id) -> RigidBody* {
   // Ewwww this should be automatic.
   switch (id) {
     case kHeadBodyID:
-      return body_head_.Get();
+      return body_head_.get();
       break;
     case kTorsoBodyID:
-      return body_torso_.Get();
+      return body_torso_.get();
       break;
     case kPunchBodyID:
-      return body_punch_.Get();
+      return body_punch_.get();
       break;
     case kPickupBodyID:
-      return body_pickup_.Get();
+      return body_pickup_.get();
       break;
     case kPelvisBodyID:
-      return body_pelvis_.Get();
+      return body_pelvis_.get();
       break;
     case kRollerBodyID:
-      return body_roller_.Get();
+      return body_roller_.get();
       break;
     case kStandBodyID:
-      return stand_body_.Get();
+      return stand_body_.get();
       break;
     case kUpperRightArmBodyID:
-      return upper_right_arm_body_.Get();
+      return upper_right_arm_body_.get();
       break;
     case kLowerRightArmBodyID:
-      return lower_right_arm_body_.Get();
+      return lower_right_arm_body_.get();
       break;
     case kUpperLeftArmBodyID:
-      return upper_left_arm_body_.Get();
+      return upper_left_arm_body_.get();
       break;
     case kLowerLeftArmBodyID:
-      return lower_left_arm_body_.Get();
+      return lower_left_arm_body_.get();
       break;
     case kUpperRightLegBodyID:
-      return upper_right_leg_body_.Get();
+      return upper_right_leg_body_.get();
       break;
     case kLowerRightLegBodyID:
-      return lower_right_leg_body_.Get();
+      return lower_right_leg_body_.get();
       break;
     case kUpperLeftLegBodyID:
-      return upper_left_leg_body_.Get();
+      return upper_left_leg_body_.get();
       break;
     case kLowerLeftLegBodyID:
-      return lower_left_leg_body_.Get();
+      return lower_left_leg_body_.get();
       break;
     case kLeftToesBodyID:
-      return left_toes_body_.Get();
+      return left_toes_body_.get();
       break;
     case kRightToesBodyID:
-      return right_toes_body_.Get();
+      return right_toes_body_.get();
       break;
     case kHairFrontRightBodyID:
-      return hair_front_right_body_.Get();
+      return hair_front_right_body_.get();
       break;
     case kHairFrontLeftBodyID:
-      return hair_front_left_body_.Get();
+      return hair_front_left_body_.get();
       break;
     case kHairPonyTailTopBodyID:
-      return hair_ponytail_top_body_.Get();
+      return hair_ponytail_top_body_.get();
       break;
     case kHairPonyTailBottomBodyID:
-      return hair_ponytail_bottom_body_.Get();
+      return hair_ponytail_bottom_body_.get();
       break;
     default:
-      Log(LogLevel::kError,
-          "Request for unknown spaz body: " + std::to_string(id));
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "Request for unknown spaz body: " + std::to_string(id));
       break;
   }
 
@@ -6001,7 +6005,7 @@ void SpazNode::GetRigidBodyPickupLocations(int id, float* obj, float* character,
 }
 void SpazNode::DropHeldObject() {
   if (holding_something_) {
-    if (hold_node_.Exists()) {
+    if (hold_node_.exists()) {
       assert(pickup_joint_.IsAlive());
       pickup_joint_.Kill();
     }
@@ -6011,7 +6015,7 @@ void SpazNode::DropHeldObject() {
     hold_body_ = 0;
 
     // Dispatch user messages last now that all is in place.
-    if (hold_node_.Exists()) {
+    if (hold_node_.exists()) {
       hold_node_->DispatchDroppedMessage(this);
     }
     DispatchDropMessage();
@@ -6020,7 +6024,7 @@ void SpazNode::DropHeldObject() {
 
 void SpazNode::CreateHair() {
   // Assume all already exists in this case.
-  if (hair_front_right_body_.Exists()) return;
+  if (hair_front_right_body_.exists()) return;
 
   // Front right tuft.
   hair_front_right_body_ =
@@ -6031,7 +6035,7 @@ void SpazNode::CreateHair() {
   hair_front_right_body_->SetDimensions(0.07f, 0.13f, 0, 0, 0, 0, 0.01f);
 
   hair_front_right_joint_ =
-      CreateFixedJoint(body_head_.Get(), hair_front_right_body_.Get(), 0, 0, 0,
+      CreateFixedJoint(body_head_.get(), hair_front_right_body_.get(), 0, 0, 0,
                        0, -0.17f, 0.19f, 0.18f, 0, -0.08f, -0.12f);
 
   // Rotate it right a bit.
@@ -6046,7 +6050,7 @@ void SpazNode::CreateHair() {
   hair_front_left_body_->SetDimensions(0.04f, 0.13f, 0, 0.07f, 0.13f, 0, 0.01f);
 
   hair_front_left_joint_ =
-      CreateFixedJoint(body_head_.Get(), hair_front_left_body_.Get(), 0, 0, 0,
+      CreateFixedJoint(body_head_.get(), hair_front_left_body_.get(), 0, 0, 0,
                        0, 0.13f, 0.11f, 0.13f, 0, -0.08f, -0.12f);
 
   // Rotate it left a bit.
@@ -6061,7 +6065,7 @@ void SpazNode::CreateHair() {
   hair_ponytail_top_body_->SetDimensions(0.09f, 0.1f, 0, 0, 0, 0, 0.01f);
 
   hair_ponytail_top_joint_ =
-      CreateFixedJoint(body_head_.Get(), hair_ponytail_top_body_.Get(), 0, 0, 0,
+      CreateFixedJoint(body_head_.get(), hair_ponytail_top_body_.get(), 0, 0, 0,
                        0, 0, 0.3f, -0.21f, 0, -0.01f, 0.1f);
   // rotate it up a bit..
   dQFromAxisAndAngle(hair_ponytail_top_joint_->qrel, 1, 0, 0, 1.1f);
@@ -6075,7 +6079,7 @@ void SpazNode::CreateHair() {
   hair_ponytail_bottom_body_->SetDimensions(0.09f, 0.13f, 0, 0, 0, 0, 0.01f);
 
   hair_ponytail_bottom_joint_ = CreateFixedJoint(
-      hair_ponytail_top_body_.Get(), hair_ponytail_bottom_body_.Get(), 0, 0, 0,
+      hair_ponytail_top_body_.get(), hair_ponytail_bottom_body_.get(), 0, 0, 0,
       0, 0, 0.01f, -0.1f, 0, -0.01f, 0.12f);
 
   // Set joint values.
@@ -6565,7 +6569,8 @@ void SpazNode::SetStyle(const std::string& val) {
     shoulder_offset_y_ = -0.05f;
     reflection_scale_ = 0.02f;
   } else {
-    BA_LOG_ONCE(LogLevel::kError, "Unrecognized spaz style: '" + style_ + "'");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "Unrecognized spaz style: '" + style_ + "'");
   }
   UpdateBodiesForStyle();
 }
@@ -6609,7 +6614,7 @@ auto SpazNode::GetPositionCenter() const -> std::vector<float> {
 }
 
 auto SpazNode::GetPunchPosition() const -> std::vector<float> {
-  if (!body_punch_.Exists()) {
+  if (!body_punch_.exists()) {
     BA_LOG_PYTHON_TRACE_ONCE(
         "WARNING: querying spaz punch_position without punch body");
     return {0.0f, 0.0f, 0.0f};
@@ -6623,7 +6628,7 @@ auto SpazNode::GetPunchPosition() const -> std::vector<float> {
 }
 
 auto SpazNode::GetPunchVelocity() const -> std::vector<float> {
-  if (!body_punch_.Exists()) {
+  if (!body_punch_.exists()) {
     BA_LOG_PYTHON_TRACE_ONCE(
         "WARNING: querying spaz punch_velocity without punch body");
     return {0.0f, 0.0f, 0.0f};
@@ -6641,7 +6646,7 @@ auto SpazNode::GetPunchVelocity() const -> std::vector<float> {
 }
 
 auto SpazNode::GetPunchMomentumLinear() const -> std::vector<float> {
-  if (!body_punch_.Exists()) {
+  if (!body_punch_.exists()) {
     BA_LOG_PYTHON_TRACE_ONCE(
         "WARNING: querying spaz punch_velocity without punch body");
     return {0.0f, 0.0f, 0.0f};
@@ -6694,25 +6699,30 @@ void SpazNode::SetHoldNode(Node* val) {
         assert(dynamics);
         Collision* c = dynamics->active_collision();
         if (c) {
-          Log(LogLevel::kError,
+          g_core->Log(
+              LogName::kBa, LogLevel::kError,
               "SRC NODE: " + ObjToString(dynamics->GetActiveCollideSrcNode()));
-          Log(LogLevel::kError,
+          g_core->Log(
+              LogName::kBa, LogLevel::kError,
               "OPP NODE: " + ObjToString(dynamics->GetActiveCollideDstNode()));
-          Log(LogLevel::kError,
+          g_core->Log(
+              LogName::kBa, LogLevel::kError,
               "SRC BODY "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()
                                        ? c->body_id_1
                                        : c->body_id_2));
-          Log(LogLevel::kError,
+          g_core->Log(
+              LogName::kBa, LogLevel::kError,
               "OPP BODY "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()
                                        ? c->body_id_2
                                        : c->body_id_1));
-          Log(LogLevel::kError,
+          g_core->Log(
+              LogName::kBa, LogLevel::kError,
               "REVERSE "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()));
         } else {
-          Log(LogLevel::kError, "<NO ACTIVE COLLISION>");
+          g_core->Log(LogName::kBa, LogLevel::kError, "<NO ACTIVE COLLISION>");
         }
       }
       throw Exception("specified hold_body (" + std::to_string(hold_body_)
@@ -6785,7 +6795,7 @@ void SpazNode::SetHoldNode(Node* val) {
           dJointCreateFixed(scene()->dynamics()->ode_world(), nullptr));
       pickup_joint_.SetJoint(j, scene());
 
-      pickup_joint_.AttachToBodies(body_torso_.Get(), b);
+      pickup_joint_.AttachToBodies(body_torso_.get(), b);
       dJointSetFixed(j);
       dJointSetFixedSpringMode(j, 1, 1, true);
       dJointSetFixedAnchor(j, 0, hold_height, hold_forward, false);

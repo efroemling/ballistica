@@ -3,7 +3,6 @@
 #ifndef BALLISTICA_CORE_CORE_H_
 #define BALLISTICA_CORE_CORE_H_
 
-#include <list>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -74,21 +73,21 @@ class CoreFeatureSet {
   /// App-time is basically the total time that the engine has been actively
   /// running. (The 'App' here is a slight misnomer). It will stop
   /// progressing while the app is suspended and will never go backwards.
-  auto GetAppTimeMillisecs() -> millisecs_t;
+  auto AppTimeMillisecs() -> millisecs_t;
 
   /// Return current app-time in microseconds.
   ///
   /// App-time is basically the total time that the engine has been actively
   /// running. (The 'App' here is a slight misnomer). It will stop
   /// progressing while the app is suspended and will never go backwards.
-  auto GetAppTimeMicrosecs() -> microsecs_t;
+  auto AppTimeMicrosecs() -> microsecs_t;
 
   /// Return current app-time in seconds.
   ///
   /// App-time is basically the total time that the engine has been actively
   /// running. (The 'App' here is a slight misnomer). It will stop
   /// progressing while the app is suspended and will never go backwards.
-  auto GetAppTimeSeconds() -> seconds_t;
+  auto AppTimeSeconds() -> seconds_t;
 
   /// Are we in the 'main' thread? The thread that first inited Core is
   /// considered the 'main' thread; on most platforms it is the one where
@@ -96,9 +95,6 @@ class CoreFeatureSet {
   auto InMainThread() -> bool {
     return std::this_thread::get_id() == main_thread_id();
   }
-
-  /// Log a boot-related message (only if core_config.lifecycle_log is true).
-  void LifecycleLog(const char* msg, double offset_seconds = 0.0);
 
   /// Base path of build src dir so we can attempt to remove it from any
   /// source file paths we print.
@@ -150,6 +146,13 @@ class CoreFeatureSet {
   /// Should be called by a thread before it exits.
   void UnregisterThread();
 
+  /// A bool set just before returning from main or calling exit() or
+  /// whatever is intended to be the last gasp of life for the binary. This
+  /// can be polled periodically by background threads that may otherwise
+  /// keep the process from exiting.
+  auto engine_done() const { return engine_done_; }
+  void set_engine_done() { engine_done_ = true; }
+
   // Subsystems.
   CorePython* const python;
   CorePlatform* const platform;
@@ -179,13 +182,61 @@ class CoreFeatureSet {
   void set_event_loops_suspended(bool val) { event_loops_suspended_ = val; }
   static auto CurrentThreadName() -> std::string;
 
+  auto HandOverInitialAppConfig() -> PyObject*;
+
+  /// Grab current Python logging levels for all logs we use internally. If
+  /// any changes are made at runtime to Python logging levels that we use,
+  /// this should be called after.
+  void UpdateInternalLoggerLevels();
+
+  /// Check whether a certain log name/level combo will be shown. It is much
+  /// more efficient to gate log calls using this (especially frequent or
+  /// debug ones) rather than letting the Python layer do the gating. Be
+  /// aware, however, that UpdateInternalLoggerLevels() must be called after
+  /// making any changes to Python logger levels to keep this internal
+  /// system up to date.
+  auto LogLevelEnabled(LogName name, LogLevel level) -> bool {
+    return log_levels_[static_cast<int>(name)] <= level;
+  }
+  auto GetLogLevel(LogName name) -> int {
+    return static_cast<int>(log_levels_[static_cast<int>(name)]);
+  }
+
+  auto ba_env_launch_timestamp() {
+    // Make sure we set this before accessing it.
+    //
+    // UPDATE: Early fatal errors may access this before it gets set; we'd
+    // rather not mask those by dying here. We can just watch out for -1
+    // values in logs.
+    //
+    // assert(ba_env_launch_timestamp_ > 0.0);
+
+    return ba_env_launch_timestamp_;
+  }
+
+  void Log(LogName name, LogLevel level, const std::string& msg);
+  void Log(LogName name, LogLevel level, const char* msg);
+  void Log(LogName name, LogLevel level, char* msg);
+
+  /// Log call variant taking a call returning a string instead of a string
+  /// directly. This can be useful for log strings requiring significant
+  /// effort to construct, as the call will be skipped if the log level is
+  /// not currently visible.
+  template <typename C>
+  void Log(LogName name, LogLevel level, C getmsgcall) {
+    if (!LogLevelEnabled(name, level)) {
+      return;
+    }
+    Log(name, level, getmsgcall());
+  }
+
  private:
   explicit CoreFeatureSet(CoreConfig config);
-  static void DoImport(const CoreConfig& config);
-  static auto CalcBuildSrcDir() -> std::string;
-  void RunSanityChecks();
-  void UpdateAppTime();
-  void PostInit();
+  static void DoImport_(const CoreConfig& config);
+  auto CalcBuildSrcDir_() -> std::string;
+  void RunSanityChecks_();
+  void UpdateAppTime_();
+  void PostInit_();
 
   // Note to self: don't use single bits for these as they may be owned by
   // different threads.
@@ -195,20 +246,24 @@ class CoreFeatureSet {
   bool have_ba_env_vals_{};
   bool vr_mode_{};
   bool using_custom_app_python_dir_{};
+  bool engine_done_{};
+  LogLevel log_levels_[static_cast<int>(LogName::kLast)]{};
 
+  PyObject* initial_app_config_{};
   std::thread::id main_thread_id_{};
   CoreConfig core_config_;
   std::string build_src_dir_;
   microsecs_t app_time_microsecs_{};
   microsecs_t last_app_time_measure_microsecs_;
   std::mutex app_time_mutex_;
-  std::string legacy_user_agent_string_{
-      "BA_USER_AGENT_UNSET (" BA_PLATFORM_STRING ")"};
+  std::string legacy_user_agent_string_{"BA_USER_AGENT_UNSET (" BA_PLATFORM
+                                        " " BA_ARCH ")"};
   std::optional<std::string> ba_env_app_python_dir_;
   std::string ba_env_config_dir_;
   std::optional<std::string> ba_env_user_python_dir_;
   std::optional<std::string> ba_env_site_python_dir_;
   std::string ba_env_data_dir_;
+  double ba_env_launch_timestamp_{-1.0};
   std::mutex thread_info_map_mutex_;
   std::unordered_map<std::thread::id, std::string> thread_info_map_;
 };

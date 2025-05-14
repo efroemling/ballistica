@@ -7,9 +7,13 @@ from __future__ import annotations
 import weakref
 import logging
 from enum import Enum
+from typing import override, TYPE_CHECKING
 
 from bauiv1lib.tabs import TabRow
 import bauiv1 as bui
+
+if TYPE_CHECKING:
+    from bauiv1lib.play import PlaylistSelectContext
 
 
 class GatherTab:
@@ -40,6 +44,7 @@ class GatherTab:
         The tab should create and return a container widget covering the
         specified region.
         """
+        # pylint: disable=too-many-positional-arguments
         raise RuntimeError('Should not get here.')
 
     def on_deactivate(self) -> None:
@@ -52,7 +57,7 @@ class GatherTab:
         """Called when the parent window is restoring state."""
 
 
-class GatherWindow(bui.Window):
+class GatherWindow(bui.MainWindow):
     """Window for joining/inviting friends."""
 
     class TabID(Enum):
@@ -69,7 +74,6 @@ class GatherWindow(bui.Window):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from bauiv1lib.gather.abouttab import AboutGatherTab
@@ -82,125 +86,130 @@ class GatherWindow(bui.Window):
         assert plus is not None
 
         bui.set_analytics_screen('Gather Window')
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_location('Gather')
-        bui.set_party_icon_always_visible(True)
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1440 if uiscale is bui.UIScale.SMALL else 1040
-        x_offs = 200 if uiscale is bui.UIScale.SMALL else 0
-        self._height = (
-            582
+        self._width = (
+            1640
             if uiscale is bui.UIScale.SMALL
-            else 680 if uiscale is bui.UIScale.MEDIUM else 800
+            else 1100 if uiscale is bui.UIScale.MEDIUM else 1200
+        )
+        self._height = (
+            1000
+            if uiscale is bui.UIScale.SMALL
+            else 730 if uiscale is bui.UIScale.MEDIUM else 900
         )
         self._current_tab: GatherWindow.TabID | None = None
-        extra_top = 20 if uiscale is bui.UIScale.SMALL else 0
         self._r = 'gatherWindow'
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.4
+            if uiscale is bui.UIScale.SMALL
+            else 0.88 if uiscale is bui.UIScale.MEDIUM else 0.66
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 130, screensize[0] / scale)
+        target_height = min(self._height - 130, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 65
+        self._scroll_bottom = yoffs - 93 - self._scroll_height
+        self._scroll_left = (self._width - self._scroll_width) * 0.5
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + extra_top),
-                transition=transition,
-                toolbar_visibility='menu_minimal',
-                scale_origin_stack_offset=scale_origin,
-                scale=(
-                    1.3
+                size=(self._width, self._height),
+                toolbar_visibility=(
+                    'menu_tokens'
                     if uiscale is bui.UIScale.SMALL
-                    else 0.97 if uiscale is bui.UIScale.MEDIUM else 0.8
+                    else 'menu_full'
                 ),
-                stack_offset=(
-                    (0, -11)
-                    if uiscale is bui.UIScale.SMALL
-                    else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
-                ),
-            )
+                scale=scale,
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
-        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
+        if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._back
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
             self._back_button = None
         else:
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(70 + x_offs, self._height - 74),
-                size=(140, 60),
+                position=(70, yoffs - 43),
+                size=(60, 60),
                 scale=1.1,
                 autoselect=True,
-                label=bui.Lstr(resource='backText'),
-                button_type='back',
-                on_activate_call=self._back,
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-            bui.buttonwidget(
-                edit=btn,
-                button_type='backSmall',
-                position=(70 + x_offs, self._height - 78),
-                size=(60, 60),
-                label=bui.charstr(bui.SpecialChar.BACK),
-            )
 
-        condensed = uiscale is not bui.UIScale.LARGE
-        t_offs_y = (
-            0 if not condensed else 25 if uiscale is bui.UIScale.MEDIUM else 17
-        )
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 42 + t_offs_y),
+            position=(
+                (
+                    self._width * 0.5
+                    + (
+                        (self._scroll_width * -0.5 + 170.0 - 70.0)
+                        if uiscale is bui.UIScale.SMALL
+                        else 0.0
+                    )
+                ),
+                yoffs - (64 if uiscale is bui.UIScale.SMALL else 4),
+            ),
             size=(0, 0),
             color=bui.app.ui_v1.title_color,
-            scale=(
-                1.5
-                if not condensed
-                else 1.0 if uiscale is bui.UIScale.MEDIUM else 0.6
-            ),
-            h_align='center',
+            scale=1.3 if uiscale is bui.UIScale.SMALL else 1.0,
+            h_align='left' if uiscale is bui.UIScale.SMALL else 'center',
             v_align='center',
-            text=bui.Lstr(resource=self._r + '.titleText'),
-            maxwidth=550,
+            text=(bui.Lstr(resource=f'{self._r}.titleText')),
+            maxwidth=135 if uiscale is bui.UIScale.SMALL else 320,
         )
-
-        scroll_buffer_h = 130 + 2 * x_offs
-        tab_buffer_h = (320 if condensed else 250) + 2 * x_offs
 
         # Build up the set of tabs we want.
         tabdefs: list[tuple[GatherWindow.TabID, bui.Lstr]] = [
-            (self.TabID.ABOUT, bui.Lstr(resource=self._r + '.aboutText'))
+            (self.TabID.ABOUT, bui.Lstr(resource=f'{self._r}.aboutText'))
         ]
         if plus.get_v1_account_misc_read_val('enablePublicParties', True):
             tabdefs.append(
                 (
                     self.TabID.INTERNET,
-                    bui.Lstr(resource=self._r + '.publicText'),
+                    bui.Lstr(resource=f'{self._r}.publicText'),
                 )
             )
         tabdefs.append(
-            (self.TabID.PRIVATE, bui.Lstr(resource=self._r + '.privateText'))
+            (self.TabID.PRIVATE, bui.Lstr(resource=f'{self._r}.privateText'))
         )
         tabdefs.append(
-            (self.TabID.NEARBY, bui.Lstr(resource=self._r + '.nearbyText'))
+            (self.TabID.NEARBY, bui.Lstr(resource=f'{self._r}.nearbyText'))
         )
         tabdefs.append(
-            (self.TabID.MANUAL, bui.Lstr(resource=self._r + '.manualText'))
+            (self.TabID.MANUAL, bui.Lstr(resource=f'{self._r}.manualText'))
         )
 
-        # On small UI, push our tabs up closer to the top of the screen to
-        # save a bit of space.
-        tabs_top_extra = 42 if condensed else 0
+        tab_inset = 250.0 if uiscale is bui.UIScale.SMALL else 100.0
+
         self._tab_row = TabRow(
             self._root_widget,
             tabdefs,
-            pos=(tab_buffer_h * 0.5, self._height - 130 + tabs_top_extra),
-            size=(self._width - tab_buffer_h, 50),
+            size=(self._scroll_width - 2.0 * tab_inset, 50),
+            pos=(
+                self._scroll_left + tab_inset,
+                self._scroll_bottom + self._scroll_height - 4.0,
+            ),
             on_select_call=bui.WeakCall(self._set_tab),
         )
 
@@ -218,64 +227,70 @@ class GatherWindow(bui.Window):
             if tabtype is not None:
                 self._tabs[tab_id] = tabtype(self)
 
-        if bui.app.ui_v1.use_toolbars:
-            bui.widget(
-                edit=self._tab_row.tabs[tabdefs[-1][0]].button,
-                right_widget=bui.get_special_widget('party_button'),
-            )
-            if uiscale is bui.UIScale.SMALL:
-                bui.widget(
-                    edit=self._tab_row.tabs[tabdefs[0][0]].button,
-                    left_widget=bui.get_special_widget('back_button'),
-                )
-
-        self._scroll_width = self._width - scroll_buffer_h
-        self._scroll_height = self._height - 180.0 + tabs_top_extra
-
-        self._scroll_left = (self._width - self._scroll_width) * 0.5
-        self._scroll_bottom = (
-            self._height - self._scroll_height - 79 - 48 + tabs_top_extra
+        # Eww; tokens meter may or may not be here; should be smarter
+        # about this.
+        bui.widget(
+            edit=self._tab_row.tabs[tabdefs[-1][0]].button,
+            right_widget=bui.get_special_widget('tokens_meter'),
         )
-        buffer_h = 10
-        buffer_v = 4
+        if uiscale is bui.UIScale.SMALL:
+            bui.widget(
+                edit=self._tab_row.tabs[tabdefs[0][0]].button,
+                left_widget=bui.get_special_widget('back_button'),
+                up_widget=bui.get_special_widget('back_button'),
+            )
 
         # Not actually using a scroll widget anymore; just an image.
         bui.imagewidget(
             parent=self._root_widget,
+            size=(self._scroll_width, self._scroll_height),
             position=(
-                self._scroll_left - buffer_h,
-                self._scroll_bottom - buffer_v,
-            ),
-            size=(
-                self._scroll_width + 2 * buffer_h,
-                self._scroll_height + 2 * buffer_v,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                self._scroll_bottom,
             ),
             texture=bui.gettexture('scrollWidget'),
             mesh_transparent=bui.getmesh('softEdgeOutside'),
+            opacity=0.4,
         )
         self._tab_container: bui.Widget | None = None
 
         self._restore_state()
 
-    def __del__(self) -> None:
-        bui.set_party_icon_always_visible(False)
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
 
-    def playlist_select(self, origin_widget: bui.Widget) -> None:
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
+    def playlist_select(
+        self,
+        origin_widget: bui.Widget,
+        context: PlaylistSelectContext,
+    ) -> None:
         """Called by the private-hosting tab to select a playlist."""
         from bauiv1lib.play import PlayWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # Avoid redundant window spawns.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.selecting_private_party_playlist = True
-        bui.app.ui_v1.set_main_menu_window(
-            PlayWindow(origin_widget=origin_widget).get_root_widget(),
-            from_window=self._root_widget,
+        playwindow = PlayWindow(
+            origin_widget=origin_widget, playlist_select_context=context
         )
+        self.main_window_replace(playwindow)
+
+        # Grab the newly-set main-window's back-state; that will lead us
+        # back here once we're done going down our main-window
+        # rabbit-hole for playlist selection.
+        context.back_state = playwindow.main_window_back_state
 
     def _set_tab(self, tab_id: TabID) -> None:
         if self._current_tab is tab_id:
@@ -340,8 +355,6 @@ class GatherWindow(bui.Window):
             logging.exception('Error saving state for %s.', self)
 
     def _restore_state(self) -> None:
-        from efro.util import enum_by_value
-
         try:
             for tab in self._tabs.values():
                 tab.restore_state()
@@ -354,7 +367,7 @@ class GatherWindow(bui.Window):
             current_tab = self.TabID.ABOUT
             gather_tab_val = bui.app.config.get('Gather Tab')
             try:
-                stored_tab = enum_by_value(self.TabID, gather_tab_val)
+                stored_tab = self.TabID(gather_tab_val)
                 if stored_tab in self._tab_row.tabs:
                     current_tab = stored_tab
             except ValueError:
@@ -366,9 +379,7 @@ class GatherWindow(bui.Window):
                 sel = self._tab_container
             elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
                 try:
-                    sel_tab_id = enum_by_value(
-                        self.TabID, sel_name.split(':')[-1]
-                    )
+                    sel_tab_id = self.TabID(sel_name.split(':')[-1])
                 except ValueError:
                     sel_tab_id = self.TabID.ABOUT
                 sel = self._tab_row.tabs[sel_tab_id].button
@@ -378,20 +389,3 @@ class GatherWindow(bui.Window):
 
         except Exception:
             logging.exception('Error restoring state for %s.', self)
-
-    def _back(self) -> None:
-        from bauiv1lib.mainmenu import MainMenuWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            MainMenuWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )

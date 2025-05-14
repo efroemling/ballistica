@@ -4,9 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from typing_extensions import override
+from typing import TYPE_CHECKING, override
 
 from bascenev1._messages import DieMessage
 from bascenev1._actor import Actor
@@ -19,8 +17,6 @@ if TYPE_CHECKING:
 
 class NodeActor(Actor):
     """A simple bascenev1.Actor type that wraps a single bascenev1.Node.
-
-    Category: **Gameplay Classes**
 
     This Actor will delete its Node when told to die, and it's
     exists() call will return whether the Node still exists or not.

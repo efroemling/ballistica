@@ -4,7 +4,8 @@
 
 from __future__ import annotations
 
-from typing_extensions import override
+from typing import override
+
 import bascenev1 as bs
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
@@ -144,6 +145,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         kill_delay: float,
         shiftdelay: float,
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
         del kill_delay  # Unused arg.
         ZoomText(
             str(sessionteam.customdata['score']),

@@ -7,7 +7,6 @@ namespace ballistica::ui_v1 {
 ColumnWidget::ColumnWidget() {
   set_background(false);  // Influences default event handling; ew.
   set_claims_left_right(false);
-  set_claims_tab(false);
   set_draggable(false);
   set_selection_loops(false);
 }

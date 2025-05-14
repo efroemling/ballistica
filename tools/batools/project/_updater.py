@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
-from efrotools import getprojectconfig, getlocalconfig
+from efrotools.project import getprojectconfig, getlocalconfig
 from efro.error import CleanError
 from efro.terminal import Clr
 
@@ -40,11 +40,12 @@ class _LineChange:
 
 
 class ProjectUpdater:
-    """Context for an project-updater run."""
+    """Context for a project-updater run."""
 
     def __init__(
         self,
         projroot: str,
+        *,
         check: bool,
         fix: bool,
         empty: bool = False,
@@ -426,8 +427,7 @@ class ProjectUpdater:
         # from batools.xcode import update_xcode_project
 
         for projpath in [
-            # 'ballisticakit-ios.xcodeproj/project.pbxproj',
-            'ballisticakit-xcode/BallisticaKit.xcodeproj/project.pbxproj',
+            'ballisticakit-xcode/BallisticaKit.xcodeproj/project.pbxproj'
         ]:
             # These currently aren't bundled in public.
             if self.public:

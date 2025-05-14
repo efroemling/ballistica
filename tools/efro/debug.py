@@ -46,11 +46,15 @@ def getobjs(
 ) -> list[Any]:
     """Return all garbage-collected objects matching criteria.
 
-    'type' can be an actual type or a string in which case objects
-    whose types contain that string will be returned.
+    Args:
 
-    If 'contains' is provided, objects will be filtered to those
-    containing that in their str() representations.
+      type:
+        Can be an actual type or a string in which case objects
+        whose types contain that string will be returned.
+
+      contains:
+        If provided, objects will be filtered to those
+        containing that in their str() representations.
     """
 
     # Don't wanna return stuff waiting to be garbage-collected.
@@ -181,12 +185,19 @@ def printrefs(
 ) -> None:
     """Print human readable list of objects referring to an object.
 
-    'max_level' specifies how many levels of recursion are printed.
-    'exclude_objs' can be a list of exact objects to skip if found in the
-      referrers list. This can be useful to avoid printing the local context
-      where the object was passed in from (locals(), etc).
-    'expand_ids' can be a list of object ids; if that particular object is
-      found, it will always be expanded even if max_level has been reached.
+    Args:
+
+      max_level:
+        Specifies how many levels of recursion are printed.
+
+      exclude_objs:
+        Can be a list of exact objects to skip if found in the
+        referrers list. This can be useful to avoid printing the local context
+        where the object was passed in from (locals(), etc).
+
+      expand_ids:
+        Can be a list of object ids; if that particular object is
+        found, it will always be expanded even if max_level has been reached.
     """
     _printrefs(
         obj,
@@ -264,10 +275,8 @@ def printsizes(
 
 def _desctype(obj: Any) -> str:
     cls = type(obj)
-    # noinspection PyPep8
     if cls is types.ModuleType:
         return f'{type(obj).__name__} {obj.__name__}'
-    # noinspection PyPep8
     if cls is types.MethodType:
         bnd = 'bound' if hasattr(obj, '__self__') else 'unbound'
         return f'{bnd} {type(obj).__name__} {obj.__name__}'
@@ -287,8 +296,8 @@ def _desc(obj: Any) -> str:
         )
         extra = f' (len {len(obj)}{tpss})'
     elif isinstance(obj, dict):
-        # If it seems to be the vars() for a type or module,
-        # try to identify what.
+        # If it seems to be the vars() for a type or module, try to
+        # identify what.
         for ref in getrefs(obj):
             if hasattr(ref, '__dict__') and vars(ref) is obj:
                 extra = f' (vars for {_desctype(ref)} @ {id(ref)})'
@@ -312,6 +321,7 @@ def _desc(obj: Any) -> str:
 
 def _printrefs(
     obj: Any,
+    *,
     level: int,
     max_level: int,
     exclude_objs: list,
@@ -324,9 +334,9 @@ def _printrefs(
     if level < max_level or (id(obj) in expand_ids and level < ABS_MAX_LEVEL):
         refs = getrefs(obj)
         for ref in refs:
-            # It seems we tend to get a transient cell object with contents
-            # set to obj. Would be nice to understand why that happens
-            # but just ignoring it for now.
+            # It seems we tend to get a transient cell object with
+            # contents set to obj. Would be nice to understand why that
+            # happens but just ignoring it for now.
             if isinstance(ref, types.CellType) and ref.cell_contents is obj:
                 continue
 
@@ -340,7 +350,8 @@ def _printrefs(
                 continue
 
             # The 'refs' list we just made will be listed as a referrer
-            # of this obj, so explicitly exclude it from the obj's listing.
+            # of this obj, so explicitly exclude it from the obj's
+            # listing.
             _printrefs(
                 ref,
                 level=level + 1,
@@ -399,8 +410,8 @@ class DeadlockWatcher:
 
     Use the enable_deadlock_watchers() to enable this system.
 
-    Next, create these in contexts where they will be torn down after
-    some operation completes. If any is not torn down within the
+    Next, use these wrapped in a with statement around some operation
+    that may deadlock. If the with statement does not complete within the
     timeout period, a traceback of all threads will be dumped.
 
     Note that the checker thread runs a cycle every ~5 seconds, so
@@ -417,6 +428,8 @@ class DeadlockWatcher:
         logger: Logger | None = None,
         logextra: dict | None = None,
     ) -> None:
+        from efro.util import caller_source_location
+
         # pylint: disable=not-context-manager
         cls = type(self)
         if cls.watchers_lock is None or cls.watchers is None:
@@ -433,9 +446,45 @@ class DeadlockWatcher:
         self.noted_expire = False
         self.logger = logger
         self.logextra = logextra
+        self.caller_source_loc = caller_source_location()
+        curthread = threading.current_thread()
+        self.thread_id = (
+            '<unknown>'
+            if curthread.ident is None
+            else hex(curthread.ident).removeprefix('0x')
+        )
+        self.active = False
 
         with cls.watchers_lock:
             cls.watchers.append(weakref.ref(self))
+
+    # Support the with statement.
+    def __enter__(self) -> Any:
+        self.active = True
+        return self
+
+    def __exit__(self, exc_type: Any, exc_value: Any, exc_tb: Any) -> None:
+        self.active = False
+
+        # Print if we lived past our deadline. This is just an extra
+        # data point. The watcher thread should be doing the actual
+        # stack dumps/etc.
+        if self.logger is None or self.logextra is None:
+            return
+
+        duration = time.monotonic() - self.create_time
+        if duration > self.timeout:
+            self.logger.error(
+                'DeadlockWatcher %s at %s in thread %s lived %.2fs,'
+                ' past timeout %.2fs. This should have triggered'
+                ' a deadlock dump.',
+                id(self),
+                self.caller_source_loc,
+                self.thread_id,
+                duration,
+                self.timeout,
+                extra=self.logextra,
+            )
 
     @classmethod
     def enable_deadlock_watchers(cls) -> None:
@@ -477,7 +526,7 @@ class DeadlockWatcher:
 
             found_fresh_expired = False
 
-            # If any watcher is still alive but expired, sleep past the
+            # If any watcher is still active and expired, sleep past the
             # timeout to force the dumper to do its thing.
             with cls.watchers_lock:
 
@@ -487,13 +536,18 @@ class DeadlockWatcher:
                         w is not None
                         and now - w.create_time > w.timeout
                         and not w.noted_expire
+                        and w.active
                     ):
                         # If they supplied a logger, let them know they
                         # should check stderr for a dump.
                         if w.logger is not None:
                             w.logger.error(
-                                'DeadlockWatcher with time %.2f expired;'
+                                'DeadlockWatcher %s at %s in thread %s'
+                                ' with time %.2f expired;'
                                 ' check stderr for stack traces.',
+                                id(w),
+                                w.caller_source_loc,
+                                w.thread_id,
                                 w.timeout,
                                 extra=w.logextra,
                             )

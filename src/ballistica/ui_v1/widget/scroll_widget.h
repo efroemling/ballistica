@@ -32,6 +32,10 @@ class ScrollWidget : public ContainerWidget {
     center_small_content_ = val;
     MarkForUpdate();
   }
+  auto set_center_small_content_horizontally(bool val) {
+    center_small_content_horizontally_ = val;
+    MarkForUpdate();
+  }
   void OnTouchDelayTimerExpired();
   auto set_color(float r, float g, float b) {
     color_red_ = r;
@@ -47,37 +51,33 @@ class ScrollWidget : public ContainerWidget {
   void UpdateLayout() override;
 
  private:
-  void ClampThumb(bool velocity_clamp, bool position_clamp);
-  bool touch_mode_{};
+  void ClampThumb_(bool velocity_clamp, bool position_clamp);
+
+  Object::Ref<base::AppTimer> touch_delay_timer_;
+  millisecs_t last_sub_widget_h_scroll_claim_time_{};
+  millisecs_t last_velocity_event_time_millisecs_{};
+  millisecs_t inertia_scroll_update_time_{};
+  int touch_held_click_count_{};
   float color_red_{0.55f};
   float color_green_{0.47f};
   float color_blue_{0.67f};
-  bool has_momentum_{true};
-  bool trough_dirty_{true};
-  bool shadow_dirty_{true};
-  bool glow_dirty_{true};
-  bool thumb_dirty_{true};
-  millisecs_t last_sub_widget_h_scroll_claim_time_{};
-  millisecs_t last_velocity_event_time_millisecs_{};
   float avg_scroll_speed_h_{};
   float avg_scroll_speed_v_{};
-  bool center_small_content_{};
   float center_offset_y_{};
-  bool touch_held_{};
-  int touch_held_click_count_{};
   float touch_down_y_{};
   float touch_x_{};
   float touch_y_{};
   float touch_start_x_{};
   float touch_start_y_{};
-  bool touch_is_scrolling_{};
-  bool touch_down_sent_{};
-  bool touch_up_sent_{};
-  float trough_width_{}, trough_height_{}, trough_center_x_{},
-      trough_center_y_{};
-  float thumb_width_{}, thumb_height_{}, thumb_center_x_{}, thumb_center_y_{};
+  float trough_width_{};
+  float trough_height_{};
+  float trough_center_x_{};
+  float trough_center_y_{};
+  float thumb_width_{};
+  float thumb_height_{};
+  float thumb_center_x_{};
+  float thumb_center_y_{};
   float smoothing_amount_{1.0f};
-  bool highlight_{true};
   float glow_width_{};
   float glow_height_{};
   float glow_center_x_{};
@@ -87,15 +87,8 @@ class ScrollWidget : public ContainerWidget {
   float outline_center_x_{};
   float outline_center_y_{};
   float border_opacity_{1.0f};
-  bool capture_arrows_{false};
-  bool mouse_held_scroll_down_{};
-  bool mouse_held_scroll_up_{};
-  bool mouse_held_thumb_{};
   float thumb_click_start_v_{};
   float thumb_click_start_child_offset_v_{};
-  bool mouse_held_page_down_{};
-  bool mouse_held_page_up_{};
-  bool mouse_over_thumb_{};
   float scroll_bar_width_{10.0f};
   float border_width_{2.0f};
   float border_height_{2.0f};
@@ -103,13 +96,31 @@ class ScrollWidget : public ContainerWidget {
   float child_offset_v_smoothed_{};
   float child_max_offset_{};
   float amount_visible_{};
+  float inertia_scroll_rate_{};
+  bool mouse_held_page_down_{};
+  bool mouse_held_page_up_{};
+  bool mouse_over_thumb_{};
+  bool touch_is_scrolling_{};
+  bool touch_down_sent_{};
+  bool touch_up_sent_{};
+  bool touch_mode_{};
+  bool has_momentum_{true};
+  bool trough_dirty_{true};
+  bool shadow_dirty_{true};
+  bool glow_dirty_{true};
+  bool thumb_dirty_{true};
+  bool center_small_content_{};
+  bool center_small_content_horizontally_{};
+  bool touch_held_{};
+  bool highlight_{true};
+  bool capture_arrows_{false};
+  bool mouse_held_scroll_down_{};
+  bool mouse_held_scroll_up_{};
+  bool mouse_held_thumb_{};
   bool have_drawn_{};
   bool touch_down_passed_{};
   bool child_is_scrolling_{};
   bool child_disowned_scroll_{};
-  millisecs_t inertia_scroll_update_time_{};
-  float inertia_scroll_rate_{};
-  Object::Ref<base::AppTimer> touch_delay_timer_;
 };
 
 }  // namespace ballistica::ui_v1

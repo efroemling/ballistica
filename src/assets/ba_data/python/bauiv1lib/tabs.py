@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, TypeVar, Generic
+from typing import TYPE_CHECKING
 
 import bauiv1 as bui
 
@@ -22,10 +22,7 @@ class Tab:
     size: tuple[float, float]
 
 
-T = TypeVar('T')
-
-
-class TabRow(Generic[T]):
+class TabRow[T]:
     """Encapsulates a row of tab-styled buttons.
 
     Tabs are indexed by id which is an arbitrary user-provided type.
@@ -37,6 +34,7 @@ class TabRow(Generic[T]):
         tabdefs: list[tuple[T, bui.Lstr]],
         pos: tuple[float, float],
         size: tuple[float, float],
+        *,
         on_select_call: Callable[[T], None] | None = None,
     ) -> None:
         if not tabdefs:
@@ -71,12 +69,12 @@ class TabRow(Generic[T]):
                 bui.buttonwidget(
                     edit=tab.button,
                     color=(0.5, 0.4, 0.93),
-                    textcolor=(0.85, 0.75, 0.95),
+                    textcolor=(0.82, 0.72, 0.92),
                 )  # lit
             else:
                 bui.buttonwidget(
                     edit=tab.button,
-                    color=(0.52, 0.48, 0.63),
+                    color=(0.50, 0.44, 0.63),
                     textcolor=(0.65, 0.6, 0.7),
                 )  # unlit
 

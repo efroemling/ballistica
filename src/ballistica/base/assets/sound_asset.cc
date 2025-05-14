@@ -2,7 +2,10 @@
 
 #include "ballistica/base/assets/sound_asset.h"
 
+#include <cstdio>
 #include <cstring>
+#include <string>
+#include <vector>
 
 #if BA_ENABLE_AUDIO
 #if BA_USE_TREMOR_VORBIS
@@ -16,7 +19,7 @@
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
-#include "ballistica/shared/python/python.h"
+#include "ballistica/core/platform/core_platform.h"
 
 // Need to move away from OpenAL on Apple stuff.
 #if __clang__
@@ -33,8 +36,8 @@ static auto CallbackRead(void* ptr, size_t size, size_t nmemb,
                          void* data_source) -> size_t {
   return fread(ptr, size, nmemb, static_cast<FILE*>(data_source));
 }
-static auto CallbackSeek(void* data_source, ogg_int64_t offset,
-                         int whence) -> int {
+static auto CallbackSeek(void* data_source, ogg_int64_t offset, int whence)
+    -> int {
   return fseek(static_cast<FILE*>(data_source),
                static_cast_check_fit<long>(offset), whence);  // NOLINT
 }
@@ -60,8 +63,9 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
   f = g_core->platform->FOpen(file_name, "rb");
   if (f == nullptr) {
     fallback = true;
-    Log(LogLevel::kError, std::string("Can't open sound file '") + file_name
-                              + "' for reading...");
+    g_core->Log(LogName::kBaAudio, LogLevel::kError,
+                std::string("Can't open sound file '") + file_name
+                    + "' for reading...");
 
     // Attempt a fallback standin; if that doesn't work, throw in the towel.
     file_name = "data/global/audio/blank.ogg";
@@ -81,8 +85,8 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
 
   // Try opening the given file
   if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0) {
-    Log(LogLevel::kError,
-        std::string("Error decoding sound file '") + file_name + "'");
+    g_core->Log(LogName::kBaAudio, LogLevel::kError,
+                std::string("Error decoding sound file '") + file_name + "'");
 
     fclose(f);
 
@@ -205,9 +209,9 @@ static void LoadCachedOgg(const char* file_name, std::vector<char>* buffer,
       // with invalid formats of 0 once. Report and ignore if we see
       // something like that.
       if (*format != AL_FORMAT_MONO16 && *format != AL_FORMAT_STEREO16) {
-        Log(LogLevel::kError, std::string("Ignoring invalid audio cache of ")
-                                  + file_name + " with format "
-                                  + std::to_string(*format));
+        g_core->Log(LogName::kBaAudio, LogLevel::kError,
+                    std::string("Ignoring invalid audio cache of ") + file_name
+                        + " with format " + std::to_string(*format));
       } else {
         return;  // SUCCESS!!!!
       }
@@ -257,11 +261,7 @@ SoundAsset::SoundAsset(const std::string& file_name_in)
 auto SoundAsset::GetAssetType() const -> AssetType { return AssetType::kSound; }
 
 auto SoundAsset::GetName() const -> std::string {
-  if (!file_name_full_.empty()) {
-    return file_name_full_;
-  } else {
-    return "invalid sound";
-  }
+  return (!file_name_.empty()) ? file_name_ : "invalid sound";
 }
 
 void SoundAsset::DoPreload() {
@@ -324,7 +324,7 @@ void SoundAsset::DoUnload() {
 }
 
 void SoundAsset::UpdatePlayTime() {
-  last_play_time_ = g_core->GetAppTimeMillisecs();
+  last_play_time_ = g_core->AppTimeMillisecs();
 }
 
 }  // namespace ballistica::base

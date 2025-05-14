@@ -151,7 +151,6 @@ ctx.project_file_suffixes = {
 ctx.filter_dirs = {
     'ballisticakit-cmake',
     'ballisticakit-xcode/BallisticaKit.xcodeproj',
-    'ballisticakit-ios.xcodeproj',
     'config',
     'src/assets/pdoc',
 }
@@ -170,6 +169,7 @@ ctx.no_filter_dirs = {
 ctx.filter_file_names = {
     'Makefile',
     '.gitignore',
+    '.dockerignore',
     '.gitattributes',
     'README',
     'README.md',
@@ -195,10 +195,20 @@ ctx.filter_file_names = {
     '.editorconfig',
     'ci.yml',
     'cd.yml',
+    'deploy_docs.yml',
+    'nightly.yml',
+    'release.yml',
+    'ballistica_dev_dockerfile',
+    'ballistica_dev_image.yaml',
+    'ci.yaml',
+    'ci_build_and_test_windows.yaml',
+    'cd.yaml',
+    'deploy_docs.yaml',
+    'release.yaml',
     'LICENSE',
     'cloudtool',
     'bacloud',
-    'config_template.yaml',
+    'config_template.toml',
     '.efrocachemap',
 }
 
@@ -278,7 +288,7 @@ ctx.filter_file_extensions = {
     '.xcsettings',
     '.xcstrings',
     '.filters',
-    '.rst',
+    '.rst_t',
 }
 
 # ELSE files with these extensions will NOT be filtered.

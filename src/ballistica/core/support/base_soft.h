@@ -3,8 +3,9 @@
 #ifndef BALLISTICA_CORE_SUPPORT_BASE_SOFT_H_
 #define BALLISTICA_CORE_SUPPORT_BASE_SOFT_H_
 
-#include "ballistica/core/core.h"
-#include "ballistica/shared/ballistica.h"
+#include <string>
+
+#include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::core {
 
@@ -32,7 +33,8 @@ class BaseSoftInterface {
   virtual auto FeatureSetFromData(PyObject* obj)
       -> FeatureSetNativeComponent* = 0;
   virtual void DoV1CloudLog(const std::string& msg) = 0;
-  virtual void PushDevConsolePrintCall(const std::string& msg) = 0;
+  virtual void PushDevConsolePrintCall(const std::string& msg, float scale,
+                                       Vector4f color) = 0;
   virtual auto GetPyExceptionType(PyExcType exctype) -> PyObject* = 0;
   virtual auto PrintPythonStackTrace() -> bool = 0;
   virtual auto GetPyLString(PyObject* obj) -> std::string = 0;

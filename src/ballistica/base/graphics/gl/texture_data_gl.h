@@ -5,6 +5,8 @@
 
 #if BA_ENABLE_OPENGL
 
+#include <algorithm>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/texture_asset_preload_data.h"
 #include "ballistica/base/assets/texture_asset_renderer_data.h"
@@ -25,7 +27,8 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
 
   ~TextureDataGL() override {
     if (!g_base->app_adapter->InGraphicsContext()) {
-      Log(LogLevel::kError, "TextureDataGL dying outside of graphics thread.");
+      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
+                  "TextureDataGL dying outside of graphics thread.");
     } else {
       // If we're currently bound as anything, clear that out (otherwise a
       // new texture with that same ID won't be bindable).

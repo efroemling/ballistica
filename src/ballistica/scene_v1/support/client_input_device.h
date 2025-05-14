@@ -24,7 +24,7 @@ class ClientInputDevice : public base::InputDevice {
     InputCommand(type, value);
   }
   auto connection_to_client() const -> ConnectionToClient* {
-    return connection_to_client_.Get();
+    return connection_to_client_.get();
   }
   auto remote_device_id() const { return remote_device_id_; }
 

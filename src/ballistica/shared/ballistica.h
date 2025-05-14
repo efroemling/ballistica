@@ -13,9 +13,9 @@
 #endif
 
 // Minimum functionality we want available everywhere we are included.
-#include "ballistica/shared/foundation/exception.h"
-#include "ballistica/shared/foundation/inline.h"
-#include "ballistica/shared/foundation/macros.h"
+#include "ballistica/shared/foundation/exception.h"  // IWYU pragma: keep.
+#include "ballistica/shared/foundation/inline.h"     // IWYU pragma: keep.
+#include "ballistica/shared/foundation/macros.h"     // IWYU pragma: keep.
 #include "ballistica/shared/foundation/types.h"
 
 // There are one or two places where we include this from regular C or
@@ -41,10 +41,16 @@ const int kMaxPacketSize = 700;
 const int kMessagePacketHeaderSize = 6;
 
 // The screen, no matter what size/aspect, will always fit this virtual
-// rectangle, so placing UI elements within these coords is always safe. (we
-// currently match the screen ratio of an iPhone 5).
-const int kBaseVirtualResX = 1207;
-const int kBaseVirtualResY = 680;
+// rectangle, so placing UI elements within these coords is always safe.
+
+// Our standard virtual res (16:9 aspect ratio).
+const int kBaseVirtualResX = 1280;
+const int kBaseVirtualResY = 720;
+
+// Our 'small' res which is used for 'small' ui mode only. This matches
+// the 19.5:9 aspect ratio common on modern smartphones (as of 2024).
+// const int kBaseVirtualResSmallX = 1300;
+// const int kBaseVirtualResSmallY = 600;
 
 // Magic numbers at the start of our file types.
 const int kBrpFileID = 83749;
@@ -81,9 +87,6 @@ void ScreenMessage(const std::string& msg, const Vector3f& color);
 
 /// Return a human-readable name for the current thread.
 auto CurrentThreadName() -> std::string;
-
-/// Convenient access to Logging::Log.
-void Log(LogLevel level, const std::string& msg);
 
 /// Log a fatal error and kill the app. Can be called from any thread at any
 /// time. Provided message will be shown to the user if possible. This will

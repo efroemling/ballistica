@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/connection/connection.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/base.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/huffman.h"
@@ -9,7 +12,6 @@
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/generic/json.h"
-#include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::scene_v1 {
@@ -32,7 +34,7 @@ const int kPingMeasureInterval = 2000;
 
 Connection::Connection() {
   // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
-  creation_time_ = last_average_update_time_ = g_core->GetAppTimeMillisecs();
+  creation_time_ = last_average_update_time_ = g_core->AppTimeMillisecs();
 }
 
 void Connection::ProcessWaitingMessages() {
@@ -154,11 +156,17 @@ void Connection::HandleGamePacketCompressed(const std::vector<uint8_t>& data) {
   try {
     data_decompressed = g_base->huffman->decompress(data);
   } catch (const std::exception& e) {
-    Log(LogLevel::kError,
+    // Allow a few of these through just in case it is a fluke, but kill the
+    // connection after that to stop attacks based on this.
+    BA_LOG_ONCE(
+        LogName::kBaNetworking, LogLevel::kError,
         std::string("Error in huffman decompression for packet: ") + e.what());
-
-    // Hmmm i guess lets just ignore this packet and keep on trucking?.. or
-    // should we kill the connection?
+    huffman_error_count_ += 1;
+    if (huffman_error_count_ > 5) {
+      BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                  "Closing connection due to excessive huffman errors.");
+      Error("");
+    }
     return;
   }
   bytes_in_compressed_ += data.size();
@@ -174,21 +182,22 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
   switch (data[0]) {
     case BA_SCENEPACKET_KEEPALIVE: {
       if (data.size() != 4) {
-        BA_LOG_ONCE(LogLevel::kError,
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                     "Error: got invalid BA_SCENEPACKET_KEEPALIVE packet.");
         return;
       }
-      millisecs_t real_time = g_core->GetAppTimeMillisecs();
+      millisecs_t real_time = g_core->AppTimeMillisecs();
       HandleResends(real_time, data, 1);
       break;
     }
 
     case BA_SCENEPACKET_MESSAGE: {
-      millisecs_t real_time = g_core->GetAppTimeMillisecs();
+      millisecs_t real_time = g_core->AppTimeMillisecs();
 
       // Expect 1 byte type, 2 byte num, 3 byte acks, at least 1 byte payload.
       if (data.size() < 7) {
-        Log(LogLevel::kError, "Got invalid BA_PACKET_STATE packet.");
+        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                    "Got invalid BA_PACKET_STATE packet.");
         return;
       }
       uint16_t num;
@@ -207,7 +216,7 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
       ReliableMessageIn& msg(in_messages_[num]);
       msg.data.resize(data.size() - 6);
       memcpy(&(msg.data[0]), &(data[6]), msg.data.size());
-      msg.arrival_time = g_core->GetAppTimeMillisecs();
+      msg.arrival_time = g_core->AppTimeMillisecs();
 
       // Now run all in-order packets we've got.
       ProcessWaitingMessages();
@@ -219,7 +228,8 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
       // Expect 1 byte type, 2 byte num, 2 byte unreliable-num, 3 byte acks,
       // at least 1 byte payload.
       if (data.size() < 9) {
-        Log(LogLevel::kError, "Got invalid BA_PACKET_STATE_UNRELIABLE packet.");
+        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                    "Got invalid BA_PACKET_STATE_UNRELIABLE packet.");
         return;
       }
       uint16_t num, num_unreliable;
@@ -240,8 +250,9 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
     }
 
     default:
-      Log(LogLevel::kError, "Connection got unknown packet type: "
-                                + std::to_string(static_cast<int>(data[0])));
+      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                  "Connection got unknown packet type: "
+                      + std::to_string(static_cast<int>(data[0])));
       break;
   }
 }
@@ -302,7 +313,7 @@ void Connection::SendReliableMessage(const std::vector<uint8_t>& data) {
   assert(out_messages_.find(num) == out_messages_.end());
   ReliableMessageOut& msg(out_messages_[num]);
 
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   msg.data = data;
   msg.first_send_time = msg.last_send_time = real_time;
@@ -323,7 +334,7 @@ void Connection::SendReliableMessage(const std::vector<uint8_t>& data) {
 void Connection::SendUnreliableMessage(const std::vector<uint8_t>& data) {
   // For now we just silently drop anything bigger than our max packet size.
   if (data.size() + 8 > kMaxPacketSize) {
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                 "Error: Dropping outgoing unreliable packet of size "
                     + std::to_string(data.size()) + ".");
     return;
@@ -335,7 +346,7 @@ void Connection::SendUnreliableMessage(const std::vector<uint8_t>& data) {
   }
 
   uint16_t num = next_out_unreliable_message_num_++;
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   // Add our header/acks and go ahead and send this one out.
   // 1 byte for type, 2 for packet-num, 2 for unreliable packet-num, 3 for acks.
@@ -361,7 +372,7 @@ void Connection::SendJMessage(cJSON* val) {
 }
 
 void Connection::Update() {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   // Update our averages once per second.
   while (real_time - last_average_update_time_ > 1000) {
@@ -436,11 +447,12 @@ void Connection::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         multipart_buffer_.resize(old_size + (buffer.size() - 1));
         memcpy(&(multipart_buffer_[old_size]), &(buffer[1]), buffer.size() - 1);
       } else {
-        Log(LogLevel::kError, "got invalid BA_MESSAGE_MULTIPART");
+        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
+                    "got invalid BA_MESSAGE_MULTIPART");
       }
       if (buffer[0] == BA_MESSAGE_MULTIPART_END) {
         if (multipart_buffer_[0] == BA_MESSAGE_MULTIPART) {
-          BA_LOG_ONCE(LogLevel::kError,
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                       "nested multipart message detected; kicking");
           Error("");
         }
@@ -485,7 +497,7 @@ void Connection::SendGamePacket(const std::vector<uint8_t>& data) {
       && data[0] != BA_SCENEPACKET_HANDSHAKE_RESPONSE) {
     if (explicit_bool(false)) {
       BA_LOG_ONCE(
-          LogLevel::kError,
+          LogName::kBaNetworking, LogLevel::kError,
           "SendGamePacket() called before can_communicate set ("
               + g_core->platform->DemangleCXXSymbol(typeid(*this).name())
               + " ptype " + std::to_string(static_cast<int>(data[0])) + ")");

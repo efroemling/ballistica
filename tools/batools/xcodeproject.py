@@ -35,38 +35,19 @@ def update_xcode_project(
     force: bool = False,
 ) -> str:
     """Given an xcode project, update it for the current set of files."""
+    # pylint: disable=too-many-positional-arguments
 
-    pbasename = os.path.basename(path)
-    if pbasename.endswith('-mac.xcodeproj') or pbasename.endswith(
-        '-ios.xcodeproj'
-    ):
-        suffixes = ['.cc', '.h', '.m', '.mm']
-        updater = Updater(
-            projroot,
-            path,
-            existing_data,
-            sorted(
-                p
-                for p in all_source_files
-                if os.path.splitext(p)[1] in suffixes
-            ),
-            # has_app_delegate_mm=True,
-            projname=projname,
-        )
-    else:
-        suffixes = ['.cc', '.h', '.m', '.mm', '.swift']
-        updater = Updater(
-            projroot,
-            path,
-            existing_data,
-            sorted(
-                p
-                for p in all_source_files
-                if os.path.splitext(p)[1] in suffixes
-            ),
-            # has_app_delegate_mm=True,
-            projname=projname,
-        )
+    suffixes = ['.cc', '.h', '.m', '.mm', '.swift']
+    updater = Updater(
+        projroot,
+        path,
+        existing_data,
+        sorted(
+            p for p in all_source_files if os.path.splitext(p)[1] in suffixes
+        ),
+        # has_app_delegate_mm=True,
+        projname=projname,
+    )
 
     return updater.run(force=force)
 
@@ -83,8 +64,8 @@ class Updater:
         existing_data: str,
         sources: list[str],
         projname: str,
-        # has_app_delegate_mm: bool = False,
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
         if not path.endswith('.xcodeproj'):
             raise RuntimeError(f"Path does not end in .xcodeproj: '{path}'.")
 
@@ -93,7 +74,6 @@ class Updater:
         self.existing_data = existing_data
         self.sources = sources
         self.project = None
-        # self.has_app_delegate_mm = has_app_delegate_mm
 
         # Project name variations.
         self.pnameu = projname

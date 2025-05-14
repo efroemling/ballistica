@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import random
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
+from efro.util import strict_partial
+import bacommon.bs
 from bacommon.login import LoginType
 import bascenev1 as bs
 import bauiv1 as bui
@@ -19,9 +20,6 @@ from bascenev1lib.actor.zoomtext import ZoomText
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
-
-    from bauiv1lib.store.button import StoreButton
-    from bauiv1lib.league.rankbutton import LeagueRankButton
 
 
 class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
@@ -106,10 +104,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         # Ui bits.
         self._corner_button_offs: tuple[float, float] | None = None
-        self._league_rank_button: LeagueRankButton | None = None
-        self._store_button_instance: StoreButton | None = None
         self._restart_button: bui.Widget | None = None
-        self._update_corner_button_positions_timer: bui.AppTimer | None = None
         self._next_level_error: bs.Actor | None = None
 
         # Score/gameplay bits.
@@ -125,6 +120,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         self._tournament_time_remaining: float | None = None
         self._tournament_time_remaining_text: Text | None = None
         self._tournament_time_remaining_text_timer: bs.BaseTimer | None = None
+        self._submit_score = self.session.submit_score
 
         # Stuff for activity skip by pressing button
         self._birth_time = bs.time()
@@ -207,20 +203,12 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         )
 
     def _ui_menu(self) -> None:
-        from bauiv1lib import specialoffer
-
-        if specialoffer.show_offer():
-            return
         bui.containerwidget(edit=self._root_ui, transition='out_left')
         with self.context:
             bs.timer(0.1, bs.Call(bs.WeakCall(self.session.end)))
 
     def _ui_restart(self) -> None:
         from bauiv1lib.tournamententry import TournamentEntryWindow
-        from bauiv1lib import specialoffer
-
-        if specialoffer.show_offer():
-            return
 
         # If we're in a tournament and it looks like there's no time left,
         # disallow.
@@ -268,10 +256,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 self.end({'outcome': 'restart'})
 
     def _ui_next(self) -> None:
-        from bauiv1lib.specialoffer import show_offer
-
-        if show_offer():
-            return
 
         # If we didn't just complete this level but are choosing to play the
         # next one, set it as current (this won't happen otherwise).
@@ -331,23 +315,30 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             )
 
     def _should_show_worlds_best_button(self) -> bool:
+
+        # Old high score lists webpage for tourneys seems broken
+        # (looking at meteor shower at least).
+        if self.session.tournament_id is not None:
+            return False
+
         # Link is too complicated to display with no browser.
         return bui.is_browser_likely_available()
 
     def request_ui(self) -> None:
         """Set up a callback to show our UI at the next opportune time."""
-        assert bui.app.classic is not None
+        classic = bui.app.classic
+        assert classic is not None
         # We don't want to just show our UI in case the user already has the
         # main menu up, so instead we add a callback for when the menu
         # closes; if we're still alive, we'll come up then.
         # If there's no main menu this gets called immediately.
-        bui.app.ui_v1.add_main_menu_close_callback(bui.WeakCall(self.show_ui))
+        classic.add_main_menu_close_callback(bui.WeakCall(self.show_ui))
 
     def show_ui(self) -> None:
         """Show the UI for restarting, playing the next Level, etc."""
         # pylint: disable=too-many-locals
-        from bauiv1lib.store.button import StoreButton
-        from bauiv1lib.league.rankbutton import LeagueRankButton
+        # pylint: disable=too-many-statements
+        # pylint: disable=too-many-branches
 
         assert bui.app.classic is not None
 
@@ -361,11 +352,14 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             return
 
         rootc = self._root_ui = bui.containerwidget(
-            size=(0, 0), transition='in_right'
+            size=(0, 0),
+            transition='in_right',
+            toolbar_visibility='no_menu_minimal',
         )
 
         h_offs = 7.0
         v_offs = -280.0
+        v_offs2 = -236.0
 
         # We wanna prevent controllers users from popping up browsers
         # or game-center widgets in cases where they can't easily get back
@@ -393,7 +387,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             bui.buttonwidget(
                 parent=rootc,
                 color=(0.45, 0.4, 0.5),
-                position=(160, v_offs + 480),
+                position=(240, v_offs2 + 439),
                 size=(350, 62),
                 label=(
                     bui.Lstr(resource='tournamentStandingsText')
@@ -415,40 +409,85 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         show_next_button = self._is_more_levels and not (env.demo or env.arcade)
 
         if not show_next_button:
-            h_offs += 70
+            h_offs += 60
 
-        menu_button = bui.buttonwidget(
-            parent=rootc,
-            autoselect=True,
-            position=(h_offs - 130 - 60, v_offs),
-            size=(110, 85),
-            label='',
-            on_activate_call=bui.WeakCall(self._ui_menu),
-        )
-        bui.imagewidget(
-            parent=rootc,
-            draw_controller=menu_button,
-            position=(h_offs - 130 - 60 + 22, v_offs + 14),
-            size=(60, 60),
-            texture=self._menu_icon_texture,
-            opacity=0.8,
-        )
-        self._restart_button = restart_button = bui.buttonwidget(
-            parent=rootc,
-            autoselect=True,
-            position=(h_offs - 60, v_offs),
-            size=(110, 85),
-            label='',
-            on_activate_call=bui.WeakCall(self._ui_restart),
-        )
-        bui.imagewidget(
-            parent=rootc,
-            draw_controller=restart_button,
-            position=(h_offs - 60 + 19, v_offs + 7),
-            size=(70, 70),
-            texture=self._replay_icon_texture,
-            opacity=0.8,
-        )
+        # Due to virtual-bounds changes, have to squish buttons a bit to
+        # avoid overlapping with tips at bottom. Could look nicer to
+        # rework things in the middle to get more space, but would
+        # rather not touch this old code more than necessary.
+        small_buttons = False
+
+        if small_buttons:
+            menu_button = bui.buttonwidget(
+                parent=rootc,
+                autoselect=True,
+                position=(h_offs - 130 - 45, v_offs + 40),
+                size=(100, 50),
+                label='',
+                button_type='square',
+                on_activate_call=bui.WeakCall(self._ui_menu),
+            )
+            bui.imagewidget(
+                parent=rootc,
+                draw_controller=menu_button,
+                position=(h_offs - 130 - 60 + 43, v_offs + 43),
+                size=(45, 45),
+                texture=self._menu_icon_texture,
+                opacity=0.8,
+            )
+        else:
+            menu_button = bui.buttonwidget(
+                parent=rootc,
+                autoselect=True,
+                position=(h_offs - 130 - 60, v_offs),
+                size=(110, 85),
+                label='',
+                on_activate_call=bui.WeakCall(self._ui_menu),
+            )
+            bui.imagewidget(
+                parent=rootc,
+                draw_controller=menu_button,
+                position=(h_offs - 130 - 60 + 22, v_offs + 14),
+                size=(60, 60),
+                texture=self._menu_icon_texture,
+                opacity=0.8,
+            )
+
+        if small_buttons:
+            self._restart_button = restart_button = bui.buttonwidget(
+                parent=rootc,
+                autoselect=True,
+                position=(h_offs - 60, v_offs + 40),
+                size=(100, 50),
+                label='',
+                button_type='square',
+                on_activate_call=bui.WeakCall(self._ui_restart),
+            )
+            bui.imagewidget(
+                parent=rootc,
+                draw_controller=restart_button,
+                position=(h_offs - 60 + 25, v_offs + 42),
+                size=(47, 47),
+                texture=self._replay_icon_texture,
+                opacity=0.8,
+            )
+        else:
+            self._restart_button = restart_button = bui.buttonwidget(
+                parent=rootc,
+                autoselect=True,
+                position=(h_offs - 60, v_offs),
+                size=(110, 85),
+                label='',
+                on_activate_call=bui.WeakCall(self._ui_restart),
+            )
+            bui.imagewidget(
+                parent=rootc,
+                draw_controller=restart_button,
+                position=(h_offs - 60 + 19, v_offs + 7),
+                size=(70, 70),
+                texture=self._replay_icon_texture,
+                opacity=0.8,
+            )
 
         next_button: bui.Widget | None = None
 
@@ -465,57 +504,52 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 button_sound = False
                 image_opacity = 0.2
                 color = (0.3, 0.3, 0.3)
-            next_button = bui.buttonwidget(
-                parent=rootc,
-                autoselect=True,
-                position=(h_offs + 130 - 60, v_offs),
-                size=(110, 85),
-                label='',
-                on_activate_call=call,
-                color=color,
-                enable_sound=button_sound,
-            )
-            bui.imagewidget(
-                parent=rootc,
-                draw_controller=next_button,
-                position=(h_offs + 130 - 60 + 12, v_offs + 5),
-                size=(80, 80),
-                texture=self._next_level_icon_texture,
-                opacity=image_opacity,
-            )
+
+            if small_buttons:
+                next_button = bui.buttonwidget(
+                    parent=rootc,
+                    autoselect=True,
+                    position=(h_offs + 130 - 75, v_offs + 40),
+                    size=(100, 50),
+                    label='',
+                    button_type='square',
+                    on_activate_call=call,
+                    color=color,
+                    enable_sound=button_sound,
+                )
+                bui.imagewidget(
+                    parent=rootc,
+                    draw_controller=next_button,
+                    position=(h_offs + 130 - 60 + 12, v_offs + 40),
+                    size=(50, 50),
+                    texture=self._next_level_icon_texture,
+                    opacity=image_opacity,
+                )
+            else:
+                next_button = bui.buttonwidget(
+                    parent=rootc,
+                    autoselect=True,
+                    position=(h_offs + 130 - 60, v_offs),
+                    size=(110, 85),
+                    label='',
+                    on_activate_call=call,
+                    color=color,
+                    enable_sound=button_sound,
+                )
+                bui.imagewidget(
+                    parent=rootc,
+                    draw_controller=next_button,
+                    position=(h_offs + 130 - 60 + 12, v_offs + 5),
+                    size=(80, 80),
+                    texture=self._next_level_icon_texture,
+                    opacity=image_opacity,
+                )
 
         x_offs_extra = 0 if show_next_button else -100
         self._corner_button_offs = (
-            h_offs + 300.0 + 100.0 + x_offs_extra,
-            v_offs + 560.0,
+            h_offs + 300.0 + x_offs_extra,
+            v_offs + 519.0,
         )
-
-        if env.demo or env.arcade:
-            self._league_rank_button = None
-            self._store_button_instance = None
-        else:
-            self._league_rank_button = LeagueRankButton(
-                parent=rootc,
-                position=(h_offs + 300 + 100 + x_offs_extra, v_offs + 560),
-                size=(100, 60),
-                scale=0.9,
-                color=(0.4, 0.4, 0.9),
-                textcolor=(0.9, 0.9, 2.0),
-                transition_delay=0.0,
-                smooth_update_delay=5.0,
-            )
-            self._store_button_instance = StoreButton(
-                parent=rootc,
-                position=(h_offs + 400 + 100 + x_offs_extra, v_offs + 560),
-                show_tickets=True,
-                sale_scale=0.85,
-                size=(100, 60),
-                scale=0.9,
-                button_type='square',
-                color=(0.35, 0.25, 0.45),
-                textcolor=(0.9, 0.7, 1.0),
-                transition_delay=0.0,
-            )
 
         bui.containerwidget(
             edit=rootc,
@@ -527,26 +561,12 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             on_cancel_call=menu_button.activate,
         )
 
-        self._update_corner_button_positions()
-        self._update_corner_button_positions_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update_corner_button_positions), repeat=True
-        )
-
-    def _update_corner_button_positions(self) -> None:
-        offs = -55 if bui.is_party_icon_visible() else 0
-        assert self._corner_button_offs is not None
-        pos_x = self._corner_button_offs[0] + offs
-        pos_y = self._corner_button_offs[1]
-        if self._league_rank_button is not None:
-            self._league_rank_button.set_position((pos_x, pos_y))
-        if self._store_button_instance is not None:
-            self._store_button_instance.set_position((pos_x + 100, pos_y))
-
     def _player_press(self) -> None:
         # (Only for headless builds).
 
-        # If this activity is a good 'end point', ask server-mode just once if
-        # it wants to do anything special like switch sessions or kill the app.
+        # If this activity is a good 'end point', ask server-mode just
+        # once if it wants to do anything special like switch sessions
+        # or kill the app.
         if (
             self._allow_server_transition
             and bs.app.classic is not None
@@ -597,7 +617,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
     @override
     def on_begin(self) -> None:
-        # FIXME: Clean this up.
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
@@ -789,7 +808,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             transition_delay=2.0,
         )
 
-        if self._score is not None:
+        if self._score is not None and self._submit_score:
             bs.timer(0.4, bs.WeakCall(self._play_drumroll))
 
         # Add us to high scores, filter, and store.
@@ -865,7 +884,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         # If we're not doing the world's-best button, just show a title
         # instead.
         ts_height = 300
-        ts_h_offs = 210
+        ts_h_offs = 290
         v_offs = 40
         txt = Text(
             (
@@ -939,7 +958,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 if display_scores[i][1] is None:
                     name_str = '-'
                 else:
-                    # noinspection PyUnresolvedReferences
                     name_str = ', '.join(
                         [p['name'] for p in display_scores[i][1]['players']]
                     )
@@ -1008,9 +1026,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         ts_h_offs = -480
         v_offs = 40
 
-        # Only make this if we don't have the button
-        # (never want clients to see it so no need for client-only
-        # version, etc).
+        # Only make this if we don't have the button (never want clients
+        # to see it so no need for client-only version, etc).
         if self._have_achievements:
             if not self._account_has_achievements:
                 Text(
@@ -1052,7 +1069,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         ).autoretain()
 
     def _got_friend_score_results(self, results: list[Any] | None) -> None:
-        # FIXME: tidy this up
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
@@ -1187,35 +1203,77 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 transition_delay=tdelay2,
             ).autoretain()
 
+    def _on_v2_score_results(
+        self, response: bacommon.bs.ScoreSubmitResponse | Exception
+    ) -> None:
+
+        if isinstance(response, Exception):
+            logging.debug('Got error score-submit response: %s', response)
+            return
+
+        assert isinstance(response, bacommon.bs.ScoreSubmitResponse)
+
+        # Aim to have these effects run shortly after the final rating
+        # hit happens.
+        with self.context:
+            assert self._begin_time is not None
+            delay = max(0, 5.5 - (bs.time() - self._begin_time))
+
+            assert bui.app.classic is not None
+            bs.timer(
+                delay,
+                strict_partial(
+                    bui.app.classic.run_bs_client_effects, response.effects
+                ),
+            )
+
     def _got_score_results(self, results: dict[str, Any] | None) -> None:
-        # FIXME: tidy this up
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
 
         plus = bs.app.plus
         assert plus is not None
+        classic = bs.app.classic
+        assert classic is not None
 
         # We need to manually run this in the context of our activity
         # and only if we aren't shutting down.
         # (really should make the submit_score call handle that stuff itself)
         if self.expired:
             return
+
         with self.context:
             # Delay a bit if results come in too fast.
             assert self._begin_time is not None
             base_delay = max(0, 2.7 - (bs.time() - self._begin_time))
-            v_offs = 20
+            # v_offs = 20
+            v_offs = 64
             if results is None:
                 self._score_loading_status = Text(
                     bs.Lstr(resource='worldScoresUnavailableText'),
-                    position=(230, 150 + v_offs),
+                    position=(280, 130 + v_offs),
                     color=(1, 1, 1, 0.4),
                     transition=Text.Transition.FADE_IN,
                     transition_delay=base_delay + 0.3,
                     scale=0.7,
                 )
             else:
+
+                # If there's a score-uuid bundled, ship it along to the
+                # v2 master server to ask about any rewards from that
+                # end.
+                score_token = results.get('token')
+                if (
+                    isinstance(score_token, str)
+                    and plus.accounts.primary is not None
+                ):
+                    with plus.accounts.primary:
+                        plus.cloud.send_message_cb(
+                            bacommon.bs.ScoreSubmitMessage(score_token),
+                            on_response=bui.WeakCall(self._on_v2_score_results),
+                        )
+
                 self._score_link = results['link']
                 assert self._score_link is not None
                 # Prepend our master-server addr if its a relative addr.
@@ -1254,7 +1312,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     (1.5 + base_delay),
                     bs.WeakCall(self._show_world_rank, offs_x),
                 )
-            ts_h_offs = 200
+            ts_h_offs = 280
             ts_height = 300
 
             # Show world tops.
@@ -1274,7 +1332,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         ),
                         position=(
                             ts_h_offs - 35 + 95,
-                            ts_height / 2 + 6 + v_offs,
+                            ts_height / 2 + 6 + v_offs - 41,
                         ),
                         color=(0.4, 0.4, 0.4, 1.0),
                         scale=0.7,
@@ -1282,7 +1340,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         transition_delay=base_delay + 0.3,
                     ).autoretain()
                 else:
-                    v_offs += 20
+                    v_offs += 40
 
                 h_offs_extra = 0
                 v_offs_names = 0
@@ -1309,6 +1367,37 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         random.randrange(0, len(times) + 1),
                         (base_delay + i * 0.05, base_delay + 0.4 + i * 0.05),
                     )
+
+                # Conundrum: We want to place line numbers to the
+                # left of our score column based on the largest
+                # score width. However scores may use Lstrs and thus
+                # may have different widths in different languages.
+                # We don't want to bake down the Lstrs we display
+                # because then clients can't view scores in their
+                # own language. So as a compromise lets measure
+                # max-width based on baked down Lstrs but then
+                # display regular Lstrs with max-width set based on
+                # that. Hopefully that'll look reasonable for most
+                # languages.
+                max_score_width = 10.0
+                for tval in self._show_info['tops']:
+                    score = int(tval[0])
+                    name_str = tval[1]
+                    if name_str != '-':
+                        max_score_width = max(
+                            max_score_width,
+                            bui.get_string_width(
+                                (
+                                    str(score)
+                                    if self._score_type == 'points'
+                                    else bs.timestring(
+                                        (score * 10) / 1000.0
+                                    ).evaluate()
+                                ),
+                                suppress_warning=True,
+                            ),
+                        )
+
                 for i, tval in enumerate(self._show_info['tops']):
                     score = int(tval[0])
                     name_str = tval[1]
@@ -1330,19 +1419,45 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         tdelay2 = times[i][1]
 
                     if name_str != '-':
+                        sstr = (
+                            str(score)
+                            if self._score_type == 'points'
+                            else bs.timestring((score * 10) / 1000.0)
+                        )
+
+                        # Line number.
                         Text(
-                            (
-                                str(score)
-                                if self._score_type == 'points'
-                                else bs.timestring((score * 10) / 1000.0)
+                            str(i + 1),
+                            position=(
+                                ts_h_offs
+                                + 20
+                                + h_offs_extra
+                                - max_score_width
+                                - 8.0,
+                                ts_height / 2
+                                + -ts_height * (i + 1) / 10
+                                + v_offs
+                                - 30.0,
                             ),
+                            scale=0.5,
+                            h_align=Text.HAlign.RIGHT,
+                            v_align=Text.VAlign.CENTER,
+                            color=(0.3, 0.3, 0.3),
+                            transition=Text.Transition.IN_LEFT,
+                            transition_delay=tdelay1,
+                        ).autoretain()
+
+                        # Score.
+                        Text(
+                            sstr,
                             position=(
                                 ts_h_offs + 20 + h_offs_extra,
                                 ts_height / 2
                                 + -ts_height * (i + 1) / 10
                                 + v_offs
-                                + 11.0,
+                                - 30.0,
                             ),
+                            maxwidth=max_score_width,
                             h_align=Text.HAlign.RIGHT,
                             v_align=Text.VAlign.CENTER,
                             color=color0,
@@ -1350,6 +1465,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                             transition=Text.Transition.IN_LEFT,
                             transition_delay=tdelay1,
                         ).autoretain()
+                    # Player name.
                     Text(
                         bs.Lstr(value=name_str),
                         position=(
@@ -1358,7 +1474,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                             + -ts_height * (i + 1) / 10
                             + v_offs_names
                             + v_offs
-                            + 11.0,
+                            - 30.0,
                         ),
                         maxwidth=80.0 + 100.0 * len(self._playerinfos),
                         v_align=Text.VAlign.CENTER,
@@ -1396,7 +1512,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         assert self._show_info is not None
         available = self._show_info['results'] is not None
 
-        if available:
+        if available and self._submit_score:
             error = (
                 self._show_info['results']['error']
                 if 'error' in self._show_info['results']
@@ -1453,16 +1569,12 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     ]
                     # pylint: disable=useless-suppression
                     # pylint: disable=unbalanced-tuple-unpacking
-                    (
-                        pr1,
-                        pv1,
-                        pr2,
-                        pv2,
-                        pr3,
-                        pv3,
-                    ) = bs.app.classic.get_tournament_prize_strings(
-                        tourney_info
+                    (pr1, pv1, pr2, pv2, pr3, pv3) = (
+                        bs.app.classic.get_tournament_prize_strings(
+                            tourney_info, include_tickets=False
+                        )
                     )
+
                     # pylint: enable=unbalanced-tuple-unpacking
                     # pylint: enable=useless-suppression
 
@@ -1478,10 +1590,14 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         transition_delay=2.0,
                     ).autoretain()
                     vval = -107 + 70
-                    for rng, val in ((pr1, pv1), (pr2, pv2), (pr3, pv3)):
+                    for i, rng, val in (
+                        (0, pr1, pv1),
+                        (1, pr2, pv2),
+                        (2, pr3, pv3),
+                    ):
                         Text(
                             rng,
-                            position=(-410 + 10, vval),
+                            position=(-430 + 10, vval),
                             color=(1, 1, 1, 0.7),
                             h_align=Text.HAlign.RIGHT,
                             v_align=Text.VAlign.CENTER,
@@ -1492,7 +1608,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         ).autoretain()
                         Text(
                             val,
-                            position=(-390 + 10, vval),
+                            position=(-410 + 10, vval),
                             color=(0.7, 0.7, 0.7, 1.0),
                             h_align=Text.HAlign.LEFT,
                             v_align=Text.VAlign.CENTER,
@@ -1501,6 +1617,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                             maxwidth=300,
                             transition_delay=2.0,
                         ).autoretain()
+                        bs.app.classic.create_in_game_tournament_prize_image(
+                            tourney_info, i, (-410 + 70, vval)
+                        )
                         vval -= 35
         except Exception:
             logging.exception('Error showing prize ranges.')
@@ -1529,7 +1648,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     maxwidth=400,
                     transition_delay=1.0,
                 ).autoretain()
-            else:
+            elif self._submit_score:
                 ZoomText(
                     (
                         ('#' + str(player_rank))
@@ -1573,6 +1692,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         transition_delay=1.0,
                     ).autoretain()
         else:
+            assert rating is not None
             ZoomText(
                 (
                     f'{rating:.1f}'
@@ -1752,9 +1872,10 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 transition_delay=0,
             ).autoretain()
 
-        bs.timer(0.35, self._score_display_sound.play)
-        if not error:
-            bs.timer(0.35, self.cymbal_sound.play)
+        if self._submit_score:
+            bs.timer(0.35, self._score_display_sound.play)
+            if not error:
+                bs.timer(0.35, self.cymbal_sound.play)
 
     def _show_fail(self) -> None:
         ZoomText(

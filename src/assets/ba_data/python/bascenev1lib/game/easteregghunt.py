@@ -2,15 +2,14 @@
 #
 """Provides an easter egg hunt game."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.bomb import Bomb
@@ -99,6 +98,7 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def on_team_join(self, team: Team) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         if self.has_begun():
             self._update_scoreboard()
 
@@ -126,6 +126,7 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
     # Overriding the default character spawning.
     @override
     def spawn_player(self, player: Player) -> bs.Actor:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         spaz = self.spawn_player_spaz(player)
         spaz.connect_controls_to_player()
         return spaz
@@ -200,6 +201,8 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
     # Various high-level game events come through this method.
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # Respawn dead players.
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior.
@@ -241,6 +244,7 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        """End the game."""
         results = bs.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.score)

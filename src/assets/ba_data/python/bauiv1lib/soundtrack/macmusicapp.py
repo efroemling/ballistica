@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
 
-class MacMusicAppPlaylistSelectWindow(bui.Window):
+class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
     """Window for selecting an iTunes playlist."""
 
     def __init__(
@@ -21,6 +21,9 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
         callback: Callable[[Any], Any],
         existing_playlist: str | None,
         existing_entry: Any,
+        *,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
         from baclassic.macmusicapp import MacMusicAppMusicPlayer
 
@@ -34,9 +37,9 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
         v = self._height - 90.0
         v -= self._spacing * 1.0
         super().__init__(
-            root_widget=bui.containerwidget(
-                size=(self._width, self._height), transition='in_right'
-            )
+            root_widget=bui.containerwidget(size=(self._width, self._height)),
+            transition=transition,
+            origin_widget=origin_widget,
         )
         btn = bui.buttonwidget(
             parent=self._root_widget,
@@ -52,7 +55,7 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
             parent=self._root_widget,
             position=(20, self._height - 54),
             size=(self._width, 25),
-            text=bui.Lstr(resource=self._r + '.selectAPlaylistText'),
+            text=bui.Lstr(resource=f'{self._r}.selectAPlaylistText'),
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -62,20 +65,18 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
             parent=self._root_widget,
             position=(40, v - 340),
             size=(self._width - 80, 400),
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
         self._column = bui.columnwidget(
             parent=self._scrollwidget,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 
         bui.textwidget(
             parent=self._column,
             size=(self._width - 80, 22),
-            text=bui.Lstr(resource=self._r + '.fetchingITunesText'),
+            text=bui.Lstr(resource=f'{self._r}.fetchingITunesText'),
             color=(0.6, 0.9, 0.6, 1.0),
             scale=0.8,
         )
@@ -85,6 +86,27 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
         musicplayer.get_playlists(self._playlists_cb)
         bui.containerwidget(
             edit=self._root_widget, selected_child=self._scrollwidget
+        )
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull stuff out of self here; if we do it in the lambda we wind
+        # up keeping self alive which we don't want.
+        callback = self._callback
+        existing_playlist = self._existing_playlist
+        existing_entry = self._existing_entry
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                callback=callback,
+                existing_playlist=existing_playlist,
+                existing_entry=existing_entry,
+                transition=transition,
+                origin_widget=origin_widget,
+            )
         )
 
     def _playlists_cb(self, playlists: list[str]) -> None:
@@ -112,9 +134,12 @@ class MacMusicAppPlaylistSelectWindow(bui.Window):
 
     def _sel(self, selection: str) -> None:
         if self._root_widget:
-            bui.containerwidget(edit=self._root_widget, transition='out_right')
+            # bui.containerwidget(
+            # edit=self._root_widget, transition='out_right')
             self._callback({'type': 'iTunesPlaylist', 'name': selection})
+            self.main_window_back()
 
     def _back(self) -> None:
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
+        # bui.containerwidget(edit=self._root_widget, transition='out_right')
+        self.main_window_back()
         self._callback(self._existing_entry)

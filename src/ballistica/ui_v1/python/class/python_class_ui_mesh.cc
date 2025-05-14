@@ -2,6 +2,8 @@
 
 #include "ballistica/ui_v1/python/class/python_class_ui_mesh.h"
 
+#include <string>
+
 #include "ballistica/base/assets/mesh_asset.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -16,10 +18,7 @@ void PythonClassUIMesh::SetupType(PyTypeObject* cls) {
   // Fully qualified type path we will be exposed as:
   cls->tp_name = "babase.Mesh";
   cls->tp_basicsize = sizeof(PythonClassUIMesh);
-  cls->tp_doc =
-      "Mesh asset for local user interface purposes.\n"
-      "\n"
-      "Category: **User Interface Classes**";
+  cls->tp_doc = "Mesh asset for local user interface purposes.";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
   cls->tp_repr = (reprfunc)tp_repr;
@@ -41,7 +40,7 @@ auto PythonClassUIMesh::Create(const Object::Ref<base::MeshAsset>& mesh)
 
 auto PythonClassUIMesh::tp_repr(PythonClassUIMesh* self) -> PyObject* {
   BA_PYTHON_TRY;
-  base::MeshAsset* s = self->mesh_->Get();
+  base::MeshAsset* s = self->mesh_->get();
   return Py_BuildValue(
       "s", (std::string("<bauiv1.Mesh '") + (s->GetName()) + "'>").c_str());
   BA_PYTHON_CATCH;

@@ -252,7 +252,9 @@ class OnScreenKeyboardWindow(Window):
                     # Show change instructions only if we have more than one
                     # keyboard option.
                     keyboards = (
-                        babase.app.meta.scanresults.exports_of_class(Keyboard)
+                        babase.app.meta.scanresults.exports_by_name(
+                            'bauiv1.Keyboard'
+                        )
                         if babase.app.meta.scanresults is not None
                         else []
                     )
@@ -284,9 +286,9 @@ class OnScreenKeyboardWindow(Window):
 
     def _get_keyboard(self) -> bui.Keyboard:
         assert babase.app.meta.scanresults is not None
-        classname = babase.app.meta.scanresults.exports_of_class(Keyboard)[
-            self._keyboard_index
-        ]
+        classname = babase.app.meta.scanresults.exports_by_name(
+            'bauiv1.Keyboard'
+        )[self._keyboard_index]
         kbclass = babase.getclass(classname, Keyboard)
         return kbclass()
 
@@ -384,7 +386,9 @@ class OnScreenKeyboardWindow(Window):
 
     def _next_keyboard(self) -> None:
         assert babase.app.meta.scanresults is not None
-        kbexports = babase.app.meta.scanresults.exports_of_class(Keyboard)
+        kbexports = babase.app.meta.scanresults.exports_by_name(
+            'bauiv1.Keyboard'
+        )
         self._keyboard_index = (self._keyboard_index + 1) % len(kbexports)
 
         self._load_keyboard()

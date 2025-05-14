@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 
@@ -13,83 +13,120 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
 
-class TestingWindow(bui.Window):
+class TestingWindow(bui.MainWindow):
     """Window for conveniently testing various settings."""
 
     def __init__(
         self,
         title: bui.Lstr,
         entries: list[dict[str, Any]],
-        transition: str = 'in_right',
-        back_call: Callable[[], bui.Window] | None = None,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
+        # pylint: disable=too-many-locals
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 600
-        self._height = 324 if uiscale is bui.UIScale.SMALL else 400
+        self._width = 1200 if uiscale is bui.UIScale.SMALL else 600
+        self._height = 800 if uiscale is bui.UIScale.SMALL else 400
+        self._entries_orig = copy.deepcopy(entries)
         self._entries = copy.deepcopy(entries)
-        self._back_call = back_call
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            2.27
+            if uiscale is bui.UIScale.SMALL
+            else 1.2 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 60, screensize[0] / scale)
+        target_height = min(self._height - 70, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 47
+        self._scroll_bottom = yoffs - 78 - self._scroll_height
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                transition=transition,
-                scale=(
-                    2.5
+                scale=scale,
+                toolbar_visibility=(
+                    'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
-                    else 1.2 if uiscale is bui.UIScale.MEDIUM else 1.0
+                    else 'menu_full'
                 ),
-                stack_offset=(
-                    (0, -28) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
+        )
+
+        if uiscale is bui.UIScale.SMALL:
+            self._back_button = bui.get_special_widget('back_button')
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
-        )
-        self._back_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            autoselect=True,
-            position=(65, self._height - 59),
-            size=(130, 60),
-            scale=0.8,
-            text_scale=1.2,
-            label=bui.Lstr(resource='backText'),
-            button_type='back',
-            on_activate_call=self._do_back,
-        )
+        else:
+            self._back_button = btn = bui.buttonwidget(
+                parent=self._root_widget,
+                autoselect=True,
+                position=(35, yoffs - 59),
+                size=(60, 60),
+                scale=0.8,
+                text_scale=1.2,
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
+            )
+            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
+
+        self.title = title
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 35),
+            position=(
+                self._width * 0.5,
+                yoffs - (43 if uiscale is bui.UIScale.SMALL else 35),
+            ),
             size=(0, 0),
+            scale=0.7 if uiscale is bui.UIScale.SMALL else 1.0,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
             maxwidth=245,
-            text=title,
-        )
-
-        bui.buttonwidget(
-            edit=self._back_button,
-            button_type='backSmall',
-            size=(60, 60),
-            label=bui.charstr(bui.SpecialChar.BACK),
+            text=self.title,
         )
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 75),
+            position=(
+                self._width * 0.5,
+                yoffs - 65,
+            ),
             size=(0, 0),
+            scale=0.5,
             color=bui.app.ui_v1.infotextcolor,
             h_align='center',
             v_align='center',
-            maxwidth=self._width * 0.75,
+            maxwidth=self._scroll_width * 0.75,
             text=bui.Lstr(resource='settingsWindowAdvanced.forTestingText'),
         )
-        bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-        self._scroll_width = self._width - 130
-        self._scroll_height = self._height - 140
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             size=(self._scroll_width, self._scroll_height),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                self._scroll_bottom,
+            ),
             highlight=False,
-            position=((self._width - self._scroll_width) * 0.5, 40),
+            border_opacity=0.4,
         )
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
 
@@ -109,8 +146,8 @@ class TestingWindow(bui.Window):
         for i, entry in enumerate(self._entries):
             entry_name = entry['name']
 
-            # If we haven't yet, record the default value for this name so
-            # we can reset if we want..
+            # If we haven't yet, record the default value for this name
+            # so we can reset if we want..
             if entry_name not in bui.app.classic.value_test_defaults:
                 bui.app.classic.value_test_defaults[entry_name] = (
                     bui.app.classic.value_test(entry_name)
@@ -138,7 +175,6 @@ class TestingWindow(bui.Window):
             )
             if i == 0:
                 bui.widget(edit=btn, up_widget=self._back_button)
-            # pylint: disable=consider-using-f-string
             entry['widget'] = bui.textwidget(
                 parent=self._subcontainer,
                 position=(h + 100, v),
@@ -146,7 +182,7 @@ class TestingWindow(bui.Window):
                 h_align='center',
                 v_align='center',
                 maxwidth=60,
-                text='%.4g' % bui.app.classic.value_test(entry_name),
+                text=f'{bui.app.classic.value_test(entry_name):.4g}',
             )
             btn = bui.buttonwidget(
                 parent=self._subcontainer,
@@ -185,10 +221,9 @@ class TestingWindow(bui.Window):
                 entry['name'],
                 absolute=bui.app.classic.value_test_defaults[entry['name']],
             )
-            # pylint: disable=consider-using-f-string
             bui.textwidget(
                 edit=entry['widget'],
-                text='%.4g' % bui.app.classic.value_test(entry['name']),
+                text=f'{bui.app.classic.value_test(entry['name']):.4g}',
             )
 
     def _on_minus_press(self, entry_name: str) -> None:
@@ -211,21 +246,21 @@ class TestingWindow(bui.Window):
             text='%.4g' % bui.app.classic.value_test(entry['name']),
         )
 
-    def _do_back(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.settings.advanced import AdvancedSettingsWindow
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
+        # Pull values from self here; if we do it in the lambda we'll
+        # keep self alive which we don't want.
+        title = self.title
+        entries = self._entries_orig
 
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        backwin = (
-            self._back_call()
-            if self._back_call is not None
-            else AdvancedSettingsWindow(transition='in_left')
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            backwin.get_root_widget(), from_window=self._root_widget
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                title=title,
+                entries=entries,
+                transition=transition,
+                origin_widget=origin_widget,
+            )
         )

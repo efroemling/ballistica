@@ -50,7 +50,7 @@ void NodeUserMessageMaterialAction::Execute(Node* node1, Node* node2,
 
   base::ScopedSetContext ssc(target_node->context_ref());
   scene->dynamics()->set_collide_message_state(true, target_other);
-  target_node->DispatchUserMessage(user_message_obj.Get(),
+  target_node->DispatchUserMessage(user_message_obj.get(),
                                    "Material User-Message dispatch");
   scene->dynamics()->set_collide_message_state(false);
 }

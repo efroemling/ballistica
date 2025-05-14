@@ -5,7 +5,7 @@
 
 // System GL bits for windows.
 
-#if BA_ENABLE_OPENGL && BA_OSTYPE_WINDOWS
+#if BA_ENABLE_OPENGL && BA_PLATFORM_WINDOWS
 
 // We don't *actually* need this because gl_sys.h includes it before
 // it includes us, but this keeps things from erroring if we look at
@@ -89,6 +89,6 @@ extern PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
 extern PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
 extern PFNGLGETSTRINGIPROC glGetStringi;
 
-#endif  // BA_ENABLE_OPENGL && BA_OSTYPE_WINDOWS
+#endif  // BA_ENABLE_OPENGL && BA_PLATFORM_WINDOWS
 
 #endif  // BALLISTICA_BASE_GRAPHICS_GL_GL_SYS_WINDOWS_H_

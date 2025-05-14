@@ -99,7 +99,7 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
         '\n'
         "// Grab the 'values' list that the binding code created.\n"
         'auto bindvals = ctx.DictGetItem("values");\n'
-        'if (!bindvals.Exists() || !PyList_Check(*bindvals)) {\n'
+        'if (!bindvals.exists() || !PyList_Check(*bindvals)) {\n'
         '  FatalError("Error binding required Python objects.");\n'
         '}\n'
         '\n'
@@ -115,7 +115,7 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
         )
         ccode += (
             f'{storecmd}(ObjID::{entry[1]},'
-            f' PyList_GET_ITEM(bindvals.Get(), {i}));\n'
+            f' PyList_GET_ITEM(bindvals.get(), {i}));\n'
         )
 
     ccode += '}\n'

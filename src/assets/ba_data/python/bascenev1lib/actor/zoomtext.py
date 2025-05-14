@@ -6,9 +6,8 @@ from __future__ import annotations
 
 import random
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -18,8 +17,6 @@ if TYPE_CHECKING:
 class ZoomText(bs.Actor):
     """Big Zooming Text.
 
-    Category: Gameplay Classes
-
     Used for things such as the 'BOB WINS' victory messages.
     """
 
@@ -27,6 +24,7 @@ class ZoomText(bs.Actor):
         self,
         text: str | bs.Lstr,
         position: tuple[float, float] = (0.0, 0.0),
+        *,
         shiftposition: tuple[float, float] | None = None,
         shiftdelay: float | None = None,
         lifespan: float | None = None,

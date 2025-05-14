@@ -74,7 +74,6 @@ class NodeType {
   std::unordered_map<std::string, NodeAttributeUnbound*> attributes_by_name_;
   std::vector<NodeAttributeUnbound*> attributes_by_index_;
   friend class NodeAttributeUnbound;
-  friend class Node;
 };
 
 }  // namespace ballistica::scene_v1

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 import bauiv1 as bui
@@ -13,55 +13,78 @@ if TYPE_CHECKING:
     from bauiv1lib.playlist.editcontroller import PlaylistEditController
 
 
-class PlaylistAddGameWindow(bui.Window):
+class PlaylistAddGameWindow(bui.MainWindow):
     """Window for selecting a game type to add to a playlist."""
 
     def __init__(
         self,
         editcontroller: PlaylistEditController,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
         self._editcontroller = editcontroller
         self._r = 'addGameWindow'
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 750 if uiscale is bui.UIScale.SMALL else 650
-        x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 900 if uiscale is bui.UIScale.SMALL else 650
+
         self._height = (
-            346
+            1200.0
             if uiscale is bui.UIScale.SMALL
-            else 380 if uiscale is bui.UIScale.MEDIUM else 440
+            else 450.0 if uiscale is bui.UIScale.MEDIUM else 500.0
         )
-        top_extra = 30 if uiscale is bui.UIScale.SMALL else 20
         self._scroll_width = 210
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            2.4
+            if uiscale is bui.UIScale.SMALL
+            else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 50, screensize[0] / scale)
+        target_height = min(self._height - 70, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 5.0
+        x_inset = 0.5 * self._width - 0.5 * target_width
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + top_extra),
-                transition=transition,
-                scale=(
-                    2.17
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
-                stack_offset=(0, 1) if uiscale is bui.UIScale.SMALL else (0, 0),
-            )
+                size=(self._width, self._height),
+                scale=scale,
+                toolbar_visibility='menu_minimal',
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
-        self._back_button = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(58 + x_inset, self._height - 53),
-            size=(165, 70),
-            scale=0.75,
-            text_scale=1.2,
-            label=bui.Lstr(resource='backText'),
-            autoselect=True,
-            button_type='back',
-            on_activate_call=self._back,
-        )
+        if uiscale is bui.UIScale.SMALL:
+            self._back_button = bui.get_special_widget('back_button')
+        else:
+            self._back_button = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(58 + x_inset, yoffs - 53),
+                size=(60, 48),
+                label=bui.charstr(bui.SpecialChar.BACK),
+                autoselect=True,
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
+            )
+
         self._select_button = select_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - (172 + x_inset), self._height - 50),
+            position=(
+                x_inset + target_width - 172,
+                yoffs - 50,
+            ),
             autoselect=True,
             size=(160, 60),
             scale=0.75,
@@ -70,24 +93,23 @@ class PlaylistAddGameWindow(bui.Window):
             on_activate_call=self._add,
         )
 
-        if bui.app.ui_v1.use_toolbars:
-            bui.widget(
-                edit=select_button,
-                right_widget=bui.get_special_widget('party_button'),
-            )
+        bui.widget(
+            edit=select_button,
+            right_widget=bui.get_special_widget('squad_button'),
+        )
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 28),
+            position=(self._width * 0.5, yoffs - 28),
             size=(0, 0),
             scale=1.0,
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             h_align='center',
             color=bui.app.ui_v1.title_color,
             maxwidth=250,
             v_align='center',
         )
-        v = self._height - 64
+        v = yoffs - 64
 
         self._selected_title_text = bui.textwidget(
             parent=self._root_widget,
@@ -111,15 +133,16 @@ class PlaylistAddGameWindow(bui.Window):
             h_align='left',
         )
 
-        scroll_height = self._height - 100
+        scroll_height = target_height - 60
 
-        v = self._height - 60
+        v = yoffs - 60
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             position=(x_inset + 61, v - scroll_height),
             size=(self._scroll_width, scroll_height),
             highlight=False,
+            border_opacity=0.4,
         )
         bui.widget(
             edit=self._scrollwidget,
@@ -130,11 +153,18 @@ class PlaylistAddGameWindow(bui.Window):
         self._column: bui.Widget | None = None
 
         v -= 35
-        bui.containerwidget(
-            edit=self._root_widget,
-            cancel_button=self._back_button,
-            start_button=select_button,
-        )
+
+        if uiscale is bui.UIScale.SMALL:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
+        else:
+            bui.containerwidget(
+                edit=self._root_widget,
+                cancel_button=self._back_button,
+            )
+        bui.containerwidget(edit=self._root_widget, start_button=select_button)
+
         self._selected_game_type: type[bs.GameActivity] | None = None
 
         bui.containerwidget(
@@ -145,6 +175,7 @@ class PlaylistAddGameWindow(bui.Window):
 
         # Get actual games loading in the bg.
         bui.app.meta.load_exported_classes(
+            'bascenev1.GameActivity',
             bs.GameActivity,
             self._on_game_types_loaded,
             completion_cb_in_bg_thread=True,
@@ -153,6 +184,23 @@ class PlaylistAddGameWindow(bui.Window):
         # Refresh with our initial empty list. We'll refresh again once
         # game loading is complete.
         self._refresh()
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Avoid dereferencing self from the lambda or we'll keep
+        # ourself alive indefinitely.
+        editcontroller = self._editcontroller
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                editcontroller=editcontroller,
+            )
+        )
 
     def _on_game_types_loaded(
         self, gametypes: list[type[bs.GameActivity]]
@@ -211,7 +259,7 @@ class PlaylistAddGameWindow(bui.Window):
         self._get_more_games_button = bui.buttonwidget(
             parent=self._column,
             autoselect=True,
-            label=bui.Lstr(resource=self._r + '.getMoreGamesText'),
+            label=bui.Lstr(resource=f'{self._r}.getMoreGamesText'),
             color=(0.54, 0.52, 0.67),
             textcolor=(0.7, 0.65, 0.7),
             on_activate_call=self._on_get_more_games_press,
@@ -225,8 +273,12 @@ class PlaylistAddGameWindow(bui.Window):
             )
 
     def _on_get_more_games_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.store.browser import StoreBrowserWindow
+
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
+            return
 
         plus = bui.app.plus
         assert plus is not None
@@ -234,21 +286,22 @@ class PlaylistAddGameWindow(bui.Window):
         if plus.get_v1_account_state() != 'signed_in':
             show_sign_in_prompt()
             return
-        StoreBrowserWindow(
-            modal=True,
-            show_tab=StoreBrowserWindow.TabID.MINIGAMES,
-            on_close_call=self._on_store_close,
-            origin_widget=self._get_more_games_button,
-        )
 
-    def _on_store_close(self) -> None:
-        self._refresh(select_get_more_games_button=True)
+        self.main_window_replace(
+            StoreBrowserWindow(
+                show_tab=StoreBrowserWindow.TabID.MINIGAMES,
+                origin_widget=self._get_more_games_button,
+                minimal_toolbars=True,
+            )
+        )
 
     def _add(self) -> None:
         bui.lock_all_input()  # Make sure no more commands happen.
         bui.apptimer(0.1, bui.unlock_all_input)
         assert self._selected_game_type is not None
-        self._editcontroller.add_game_type_selected(self._selected_game_type)
+        self._editcontroller.add_game_type_selected(
+            self._selected_game_type, from_window=self
+        )
 
     def _set_selected_game_type(self, gametype: type[bs.GameActivity]) -> None:
         self._selected_game_type = gametype
@@ -261,6 +314,3 @@ class PlaylistAddGameWindow(bui.Window):
                 self._editcontroller.get_session_type()
             ),
         )
-
-    def _back(self) -> None:
-        self._editcontroller.add_game_cancelled()

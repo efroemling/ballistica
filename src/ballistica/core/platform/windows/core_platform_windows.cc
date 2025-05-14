@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #include "ballistica/core/platform/windows/core_platform_windows.h"
 
 #include <direct.h>
@@ -19,13 +19,18 @@
 #include <dbghelp.h>
 /* clang-format on */
 
+#include <cstdio>
+#include <list>
+#include <string>
+#include <vector>
+
 #pragma comment(lib, "Rpcrt4.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #if BA_DEBUG_BUILD
-#pragma comment(lib, "python311_d.lib")
+#pragma comment(lib, "python313_d.lib")
 #else
-#pragma comment(lib, "python311.lib")
+#pragma comment(lib, "python313.lib")
 #endif
 #pragma comment(lib, "DbgHelp.lib")
 
@@ -342,13 +347,13 @@ auto CorePlatformWindows::Remove(const char* path) -> int {
   return _wremove(UTF8Decode(path).c_str());
 }
 
-auto CorePlatformWindows::Stat(const char* path,
-                               struct BA_STAT* buffer) -> int {
+auto CorePlatformWindows::Stat(const char* path, struct BA_STAT* buffer)
+    -> int {
   return _wstat(UTF8Decode(path).c_str(), buffer);
 }
 
-auto CorePlatformWindows::Rename(const char* oldname,
-                                 const char* newname) -> int {
+auto CorePlatformWindows::Rename(const char* oldname, const char* newname)
+    -> int {
   // Unlike other platforms, windows will error if the target file already
   // exists instead of simply overwriting it. So let's attempt to blow away
   // anything there first.
@@ -914,7 +919,8 @@ auto CorePlatformWindows::GetEnv(const std::string& name)
 
   // This should always succeed at this point; make noise if not.
   if (result == 0 || result > big_buffer.size()) {
-    Log(LogLevel::kError, "GetEnv to allocated buffer failed; unexpected.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "GetEnv to allocated buffer failed; unexpected.");
     return {};
   }
   return UTF8Encode(big_buffer.data());
@@ -992,14 +998,16 @@ std::vector<uint32_t> CorePlatformWindows::GetBroadcastAddrs() {
       pIPAddrTable = static_cast<MIB_IPADDRTABLE*>(MALLOC(dwSize));
     }
     if (pIPAddrTable == nullptr) {
-      Log(LogLevel::kError, "Memory allocation failed for GetIpAddrTable\n");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "Memory allocation failed for GetIpAddrTable\n");
       err = true;
     }
 
     if (!err) {
       // Make a second call to GetIpAddrTable to get the actual data we want
       if ((dwRetVal = GetIpAddrTable(pIPAddrTable, &dwSize, 0)) != NO_ERROR) {
-        Log(LogLevel::kError,
+        g_core->Log(
+            LogName::kBa, LogLevel::kError,
             "GetIpAddrTable failed with error " + std::to_string(dwRetVal));
         err = true;
       }
@@ -1035,17 +1043,18 @@ bool CorePlatformWindows::SetSocketNonBlocking(int sd) {
   unsigned long dataval = 1;  // NOLINT (func signature wants long)
   int result = ioctlsocket(sd, FIONBIO, &dataval);
   if (result != 0) {
-    Log(LogLevel::kError, "Error setting non-blocking socket: "
-                              + g_core->platform->GetSocketErrorString());
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error setting non-blocking socket: "
+                    + g_core->platform->GetSocketErrorString());
     return false;
   }
   return true;
 }
 
-std::string CorePlatformWindows::GetPlatformName() { return "windows"; }
+std::string CorePlatformWindows::GetLegacyPlatformName() { return "windows"; }
 
-std::string CorePlatformWindows::GetSubplatformName() {
-#if BA_TEST_BUILD
+std::string CorePlatformWindows::GetLegacySubplatformName() {
+#if BA_VARIANT_TEST_BUILD
   return "test";
 #else
   return "";
@@ -1054,4 +1063,4 @@ std::string CorePlatformWindows::GetSubplatformName() {
 
 }  // namespace ballistica::core
 
-#endif  // BA_OSTYPE_WINDOWS
+#endif  // BA_PLATFORM_WINDOWS

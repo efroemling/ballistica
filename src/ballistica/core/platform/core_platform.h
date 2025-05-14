@@ -5,12 +5,13 @@
 
 #include <sys/stat.h>
 
+#include <cstdio>
 #include <list>
 #include <optional>
 #include <string>
 #include <vector>
 
-#include "ballistica/shared/ballistica.h"
+#include "ballistica/shared/foundation/types.h"
 
 namespace ballistica::core {
 
@@ -86,10 +87,10 @@ class CorePlatform {
 #pragma mark ENVIRONMENT -------------------------------------------------------
 
   /// Return a simple name for the platform: 'mac', 'windows', 'linux', etc.
-  virtual auto GetPlatformName() -> std::string;
+  virtual auto GetLegacyPlatformName() -> std::string;
 
   /// Return a simple name for the subplatform: 'amazon', 'google', etc.
-  virtual auto GetSubplatformName() -> std::string;
+  virtual auto GetLegacySubplatformName() -> std::string;
 
   /// Return the interface type based on the environment (phone, tablet,
   /// etc).
@@ -229,8 +230,8 @@ class CorePlatform {
   virtual auto CreateTextTexture(int width, int height,
                                  const std::vector<std::string>& strings,
                                  const std::vector<float>& positions,
-                                 const std::vector<float>& widths,
-                                 float scale) -> void*;
+                                 const std::vector<float>& widths, float scale)
+      -> void*;
   virtual auto GetTextTextureData(void* tex) -> uint8_t*;
 
 #pragma mark ACCOUNTS ----------------------------------------------------------
@@ -249,8 +250,8 @@ class CorePlatform {
 
 #pragma mark MUSIC PLAYBACK ----------------------------------------------------
 
-  // FIXME: currently these are wired up on Android; need to generalize
-  //  to support mac/itunes or other music player types.
+  // FIXME: currently these are wired up on Android; need to generalize to
+  //  support mac/itunes or other music player types.
   virtual void MusicPlayerPlay(PyObject* target);
   virtual void MusicPlayerStop();
   virtual void MusicPlayerShutdown();
@@ -263,8 +264,8 @@ class CorePlatform {
   // Return whether we have the ability to show *any* ads.
   virtual auto GetHasAds() -> bool;
 
-  // Return whether we have the ability to show longer-form video ads (suitable
-  // for rewards).
+  // Return whether we have the ability to show longer-form video ads
+  // (suitable for rewards).
   virtual auto GetHasVideoAds() -> bool;
 
 #pragma mark GAME SERVICES -----------------------------------------------------
@@ -294,10 +295,10 @@ class CorePlatform {
 
 #pragma mark ERRORS & DEBUGGING ------------------------------------------------
 
-  /// Should return a subclass of NativeStackTrace allocated via new. It
-  /// is up to the caller to call delete on the returned trace when done
-  /// with it. Platforms with no meaningful stack trace functionality can
-  /// return nullptr.
+  /// Should return a subclass of NativeStackTrace allocated via new. It is
+  /// up to the caller to call delete on the returned trace when done with
+  /// it. Platforms with no meaningful stack trace functionality can return
+  /// nullptr.
   virtual auto GetNativeStackTrace() -> NativeStackTrace*;
 
   /// Optionally override fatal error reporting. If true is returned, default
@@ -333,9 +334,10 @@ class CorePlatform {
 
   /// Print a log message to be included in crash logs or other debug
   /// mechanisms (example: Crashlytics). V1-cloud-log messages get forwarded
-  /// to here as well. It can be useful to call this directly to report extra
-  /// details that may help in debugging, as these calls are not considered
-  /// 'noteworthy' or presented to the user as standard Log() calls are.
+  /// to here as well. It can be useful to call this directly to report
+  /// extra details that may help in debugging, as these calls are not
+  /// considered 'noteworthy' or presented to the user as standard Log()
+  /// calls are.
   void LowLevelDebugLog(const std::string& msg);
 
 #pragma mark MISC --------------------------------------------------------------
@@ -344,28 +346,31 @@ class CorePlatform {
   /// monotonic. For most purposes, AppTime values are preferable since
   /// their progression pauses during app suspension and they are 100%
   /// guaranteed to not go backwards.
-  auto GetTicks() const -> millisecs_t;
+  auto TimeSinceLaunchMillisecs() const -> millisecs_t;
 
   /// Return a raw current milliseconds value. It *should* be monotonic. It
   /// is relative to an undefined start point; only use it for time
   /// differences. Generally the AppTime values are preferable since their
   /// progression pauses during app suspension and they are 100% guaranteed
   /// to not go backwards.
-  static auto GetCurrentMillisecs() -> millisecs_t;
+  static auto TimeMonotonicMillisecs() -> millisecs_t;
 
   /// Return a raw current microseconds value. It *should* be monotonic. It
   /// is relative to an undefined start point; only use it for time
   /// differences. Generally the AppTime values are preferable since their
   /// progression pauses during app suspension and they are 100% guaranteed
   /// to not go backwards.
-  static auto GetCurrentMicrosecs() -> microsecs_t;
+  static auto TimeMonotonicMicrosecs() -> microsecs_t;
 
   /// Return a raw current seconds integer value. It *should* be monotonic.
   /// It is relative to an undefined start point; only use it for time
   /// differences. Generally the AppTime values are preferable since their
   /// progression pauses during app suspension and they are 100% guaranteed
   /// to not go backwards.
-  static auto GetCurrentWholeSeconds() -> int64_t;
+  static auto TimeMonotonicWholeSeconds() -> int64_t;
+
+  /// Return seconds since the epoch; same as Python's time.time().
+  static auto TimeSinceEpochSeconds() -> double;
 
   static void SleepSeconds(seconds_t duration);
   static void SleepMillisecs(millisecs_t duration);
@@ -468,7 +473,7 @@ class CorePlatform {
   std::string volatile_data_dir_;
   std::string replays_dir_;
 
-  // temp.
+  // Temp; should be able to remove this once Swift 5.10 is out.
   std::list<std::string> mac_music_app_playlists_;
 };
 

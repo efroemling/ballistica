@@ -4,6 +4,7 @@
 
 # Note: We do lots of comparing of exact types here which is normally
 # frowned upon (stuff like isinstance() is usually encouraged).
+#
 # pylint: disable=unidiomatic-typecheck
 
 from __future__ import annotations
@@ -14,11 +15,11 @@ import dataclasses
 import typing
 import types
 import datetime
-from typing import TYPE_CHECKING, TypeVar, get_type_hints
+from typing import TYPE_CHECKING, get_type_hints
 
 # noinspection PyProtectedMember
 from efro.dataclassio._base import (
-    _parse_annotated,
+    parse_annotated,
     _get_origin,
     SIMPLE_TYPES,
     IOMultiType,
@@ -28,10 +29,9 @@ if TYPE_CHECKING:
     from typing import Any
     from efro.dataclassio._base import IOAttrs
 
-T = TypeVar('T')
 
-# How deep we go when prepping nested types
-# (basically for detecting recursive types)
+# How deep we go when prepping nested types (basically for detecting
+# recursive types)
 MAX_RECURSION = 10
 
 # Attr name for data we store on dataclass types that have been prepped.
@@ -67,7 +67,7 @@ def ioprep(cls: type, globalns: dict | None = None) -> None:
     )
 
 
-def ioprepped(cls: type[T]) -> type[T]:
+def ioprepped[T](cls: type[T]) -> type[T]:
     """Class decorator for easily prepping a dataclass at definition time.
 
     Note that in some cases it may not be possible to prep a dataclass
@@ -80,7 +80,7 @@ def ioprepped(cls: type[T]) -> type[T]:
     return cls
 
 
-def will_ioprep(cls: type[T]) -> type[T]:
+def will_ioprep[T](cls: type[T]) -> type[T]:
     """Class decorator hinting that we will prep a class later.
 
     In some cases (such as recursive types) we cannot use the @ioprepped
@@ -142,8 +142,10 @@ class PrepSession:
             return existing_data
 
         # Sanity check.
-        # Note that we now support recursive types via the PREP_SESSION_ATTR,
-        # so we theoretically shouldn't run into this this.
+        #
+        # Note that we now support recursive types via the
+        # PREP_SESSION_ATTR, so we theoretically shouldn't run into this
+        # this.
         if recursion_level > MAX_RECURSION:
             raise RuntimeError('Max recursion exceeded.')
 
@@ -152,20 +154,21 @@ class PrepSession:
         if not isinstance(cls_any, type) or not dataclasses.is_dataclass(cls):
             raise TypeError(f'Passed arg {cls} is not a dataclass type.')
 
-        # Add a pointer to the prep-session while doing the prep.
-        # This way we can ignore types that we're already in the process
-        # of prepping and can support recursive types.
+        # Add a pointer to the prep-session while doing the prep. This
+        # way we can ignore types that we're already in the process of
+        # prepping and can support recursive types.
         existing_prep = getattr(cls, PREP_SESSION_ATTR, None)
         if existing_prep is not None:
             if existing_prep is self:
                 return None
-            # We shouldn't need to support failed preps
-            # or preps from multiple threads at once.
+            # We shouldn't need to support failed preps or preps from
+            # multiple threads at once.
             raise RuntimeError('Found existing in-progress prep.')
         setattr(cls, PREP_SESSION_ATTR, self)
 
         # Generate a warning on non-explicit preps; we prefer prep to
-        # happen explicitly at runtime so errors can be detected early on.
+        # happen explicitly at runtime so errors can be detected early
+        # on.
         if not self.explicit:
             logging.warning(
                 'efro.dataclassio: implicitly prepping dataclass: %s.'
@@ -181,7 +184,7 @@ class PrepSession:
             # which allows us to pick up nested classes, etc.
             resolved_annotations = get_type_hints(
                 cls,
-                localns=vars(cls),  # type: ignore[arg-type]
+                localns=vars(cls),
                 globalns=self.globalns,
                 include_extras=True,
             )
@@ -201,11 +204,11 @@ class PrepSession:
         all_storage_names: set[str] = set()
         storage_names_to_attr_names: dict[str, str] = {}
 
-        # Ok; we've resolved actual types for this dataclass.
-        # now recurse through them, verifying that we support all contained
+        # Ok; we've resolved actual types for this dataclass. now
+        # recurse through them, verifying that we support all contained
         # types and prepping any contained dataclass types.
         for attrname, anntype in resolved_annotations.items():
-            anntype, ioattrs = _parse_annotated(anntype)
+            anntype, ioattrs = parse_annotated(anntype)
 
             # If we found attached IOAttrs data, make sure it contains
             # valid values for the field it is attached to.
@@ -235,7 +238,8 @@ class PrepSession:
                 recursion_level=recursion_level + 1,
             )
 
-        # Success! Store our resolved stuff with the class and we're done.
+        # Success! Store our resolved stuff with the class and we're
+        # done.
         prepdata = PrepData(
             annotations=resolved_annotations,
             storage_names_to_attr_names=storage_names_to_attr_names,
@@ -256,6 +260,7 @@ class PrepSession:
         recursion_level: int,
     ) -> None:
         """Run prep on a dataclass."""
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
@@ -282,8 +287,8 @@ class PrepSession:
         if anntype is typing.Any:
             return
 
-        # Everything below this point assumes the annotation type resolves
-        # to a concrete type.
+        # Everything below this point assumes the annotation type
+        # resolves to a concrete type.
         if not isinstance(origin, type):
             raise TypeError(
                 f'Unsupported type found for \'{attrname}\' on {cls}:'
@@ -292,8 +297,8 @@ class PrepSession:
 
         # If a soft_default value/factory was passed, we do some basic
         # type checking on the top-level value here. We also run full
-        # recursive validation on values later during inputting, but this
-        # should catch at least some errors early on, which can be
+        # recursive validation on values later during inputting, but
+        # this should catch at least some errors early on, which can be
         # useful since soft_defaults are not static type checked.
         if ioattrs is not None:
             have_soft_default = False
@@ -319,11 +324,13 @@ class PrepSession:
         if origin in SIMPLE_TYPES:
             return
 
-        # For sets and lists, check out their single contained type (if any).
+        # For sets and lists, check out their single contained type (if
+        # any).
         if origin in (list, set):
             childtypes = typing.get_args(anntype)
             if len(childtypes) == 0:
-                # This is equivalent to Any; nothing else needs checking.
+                # This is equivalent to Any; nothing else needs
+                # checking.
                 return
             if len(childtypes) > 1:
                 raise TypeError(
@@ -346,14 +353,15 @@ class PrepSession:
             # For key types we support Any, str, int,
             # and Enums with uniform str/int values.
             if not childtypes or childtypes[0] is typing.Any:
-                # 'Any' needs no further checks (just checked per-instance).
+                # 'Any' needs no further checks (just checked
+                # per-instance).
                 pass
             elif childtypes[0] in (str, int):
                 # str and int are all good as keys.
                 pass
             elif issubclass(childtypes[0], Enum):
                 # Allow our usual str or int enum types as keys.
-                self.prep_enum(childtypes[0])
+                self.prep_enum(childtypes[0], ioattrs=None)
             else:
                 raise TypeError(
                     f'Dict key type {childtypes[0]} for \'{attrname}\''
@@ -362,7 +370,8 @@ class PrepSession:
 
             # For value types we support any of our normal types.
             if not childtypes or _get_origin(childtypes[1]) is typing.Any:
-                # 'Any' needs no further checks (just checked per-instance).
+                # 'Any' needs no further checks (just checked
+                # per-instance).
                 pass
             else:
                 self.prep_type(
@@ -374,9 +383,9 @@ class PrepSession:
                 )
             return
 
-        # For Tuples, simply check individual member types.
-        # (and, for now, explicitly disallow zero member types or usage
-        # of ellipsis)
+        # For Tuples, simply check individual member types. (and, for
+        # now, explicitly disallow zero member types or usage of
+        # ellipsis)
         if origin is tuple:
             childtypes = typing.get_args(anntype)
             if not childtypes:
@@ -402,12 +411,17 @@ class PrepSession:
             return
 
         if issubclass(origin, Enum):
-            self.prep_enum(origin)
+            self.prep_enum(origin, ioattrs=ioattrs)
             return
 
-        # We allow datetime objects (and google's extended subclass of them
-        # used in firestore, which is why we don't look for exact type here).
+        # We allow datetime objects (and google's extended subclass of
+        # them used in firestore, which is why we don't look for exact
+        # type here).
         if issubclass(origin, datetime.datetime):
+            return
+
+        # We support datetime.timedelta.
+        if issubclass(origin, datetime.timedelta):
             return
 
         if dataclasses.is_dataclass(origin):
@@ -447,7 +461,11 @@ class PrepSession:
                 recursion_level=recursion_level + 1,
             )
 
-    def prep_enum(self, enumtype: type[Enum]) -> None:
+    def prep_enum(
+        self,
+        enumtype: type[Enum],
+        ioattrs: IOAttrs | None,
+    ) -> None:
         """Run prep on an enum type."""
 
         valtype: Any = None
@@ -469,4 +487,14 @@ class PrepSession:
                         f'Enum type {enumtype} has multiple'
                         f' value types; dataclassio requires'
                         f' them to be uniform.'
+                    )
+
+        if ioattrs is not None:
+            # If they provided a fallback enum value, make sure it
+            # is the correct type.
+            if ioattrs.enum_fallback is not None:
+                if type(ioattrs.enum_fallback) is not enumtype:
+                    raise TypeError(
+                        f'enum_fallback {ioattrs.enum_fallback} does not'
+                        f' match the field type ({enumtype}.'
                     )

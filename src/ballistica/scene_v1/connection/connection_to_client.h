@@ -9,6 +9,7 @@
 
 #include "ballistica/scene_v1/connection/connection.h"
 #include "ballistica/scene_v1/scene_v1.h"
+#include "ballistica/shared/python/python_ref.h"
 
 namespace ballistica::scene_v1 {
 
@@ -25,7 +26,7 @@ class ConnectionToClient : public Connection {
   // More efficient than dynamic_cast (hmm do we still want this?).
   virtual auto GetAsUDP() -> ConnectionToClientUDP*;
   void SetController(ClientControllerInterface* c);
-  auto GetPlayerProfiles() const -> PyObject* { return player_profiles_.Get(); }
+  auto GetPlayerProfiles() const -> PyObject* { return player_profiles_.get(); }
   auto build_number() const -> int { return build_number_; }
   void SendScreenMessage(const std::string& s, float r = 1.0f, float g = 1.0f,
                          float b = 1.0f);

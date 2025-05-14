@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import ssl
+import socket
 import threading
+import ipaddress
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    import socket
+    pass
 
 # Timeout for standard functions talking to the master-server/etc.
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 60
@@ -18,6 +20,10 @@ class NetworkSubsystem:
     """Network related app subsystem."""
 
     def __init__(self) -> None:
+        # Our shared SSL context. Creating these can be expensive so we
+        # create it here once and recycle for our various connections.
+        self.sslcontext = ssl.create_default_context()
+
         # Anyone accessing/modifying zone_pings should hold this lock,
         # as it is updated by a background thread.
         self.zone_pings_lock = threading.Lock()
@@ -27,49 +33,22 @@ class NetworkSubsystem:
         # that a nearby server has been pinged.
         self.zone_pings: dict[str, float] = {}
 
-        self._sslcontext: ssl.SSLContext | None = None
-
-        # For debugging.
+        # For debugging/progress.
         self.v1_test_log: str = ''
         self.v1_ctest_results: dict[int, str] = {}
+        self.connectivity_state = 'uninited'
+        self.transport_state = 'uninited'
         self.server_time_offset_hours: float | None = None
-
-    @property
-    def sslcontext(self) -> ssl.SSLContext:
-        """Create/return our shared SSLContext.
-
-        This can be reused for all standard urllib requests/etc.
-        """
-        # Note: I've run into older Android devices taking upwards of 1 second
-        # to put together a default SSLContext, so recycling one can definitely
-        # be a worthwhile optimization. This was suggested to me in this
-        # thread by one of Python's SSL maintainers:
-        # https://github.com/python/cpython/issues/94637
-        if self._sslcontext is None:
-            self._sslcontext = ssl.create_default_context()
-        return self._sslcontext
 
 
 def get_ip_address_type(addr: str) -> socket.AddressFamily:
-    """Return socket.AF_INET6 or socket.AF_INET4 for the provided address."""
-    import socket
+    """Return an address-type given an address.
 
-    socket_type = None
+    Can be :attr:`socket.AF_INET` or :attr:`socket.AF_INET6`.
+    """
 
-    # First try it as an ipv4 address.
-    try:
-        socket.inet_pton(socket.AF_INET, addr)
-        socket_type = socket.AF_INET
-    except OSError:
-        pass
-
-    # Hmm apparently not ipv4; try ipv6.
-    if socket_type is None:
-        try:
-            socket.inet_pton(socket.AF_INET6, addr)
-            socket_type = socket.AF_INET6
-        except OSError:
-            pass
-    if socket_type is None:
-        raise ValueError(f'addr seems to be neither v4 or v6: {addr}')
-    return socket_type
+    version = ipaddress.ip_address(addr).version
+    if version == 4:
+        return socket.AF_INET
+    assert version == 6
+    return socket.AF_INET6

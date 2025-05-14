@@ -2,6 +2,10 @@
 
 #include "ballistica/shared/foundation/fatal_error.h"
 
+#include <cstdio>
+#include <string>
+
+#include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/logging.h"
@@ -116,7 +120,9 @@ void FatalError::ReportFatalError(const std::string& message,
   // momentarily, and also go to platform-specific logging and good ol'
   // stderr.
   Logging::V1CloudLog(logmsg);
-  Logging::EmitLog("root", LogLevel::kCritical, logmsg);
+
+  Logging::EmitLog("root", LogLevel::kCritical,
+                   core::CorePlatform::TimeSinceEpochSeconds(), logmsg);
   fprintf(stderr, "%s\n", logmsg.c_str());
 
   std::string prefix = "FATAL-ERROR-LOG:";
@@ -176,9 +182,9 @@ void FatalError::DoBlockingFatalErrorDialog(const std::string& message) {
     // There's a chance that it can't (if threads are suspended, if it is
     // blocked on a synchronous call to another thread, etc.) so if we don't
     // see something happening soon, just give up on showing a dialog.
-    auto starttime = core::CorePlatform::GetCurrentMillisecs();
+    auto starttime = core::CorePlatform::TimeMonotonicMillisecs();
     while (!started) {
-      if (core::CorePlatform::GetCurrentMillisecs() - starttime > 3000) {
+      if (core::CorePlatform::TimeMonotonicMillisecs() - starttime > 3000) {
         return;
       }
       core::CorePlatform::SleepMillisecs(10);
@@ -204,10 +210,21 @@ auto FatalError::HandleFatalError(bool exit_cleanly,
   // bring the app down ourself.
   if (!in_top_level_exception_handler) {
     if (exit_cleanly) {
-      Logging::EmitLog("root", LogLevel::kCritical, "Calling exit(1)...");
+      Logging::EmitLog("root", LogLevel::kCritical,
+                       core::CorePlatform::TimeSinceEpochSeconds(),
+                       "Calling exit(1)...");
+
+      // Inform anyone who cares that the engine is going down NOW.
+      // This value can be polled by threads that may otherwise block us
+      // from exiting cleanly. As an example, I've seen recent linux builds
+      // hang on exit because a bg thread is blocked in a read of stdin.
+      g_core->set_engine_done();
+
       exit(1);
     } else {
-      Logging::EmitLog("root", LogLevel::kCritical, "Calling abort()...");
+      Logging::EmitLog("root", LogLevel::kCritical,
+                       core::CorePlatform::TimeSinceEpochSeconds(),
+                       "Calling abort()...");
       abort();
     }
   }

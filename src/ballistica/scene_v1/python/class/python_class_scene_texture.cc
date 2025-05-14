@@ -2,10 +2,11 @@
 
 #include "ballistica/scene_v1/python/class/python_class_scene_texture.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
 
@@ -15,7 +16,7 @@ auto PythonClassSceneTexture::tp_repr(PythonClassSceneTexture* self)
   auto&& t = *(self->texture_);
   return Py_BuildValue(
       "s", (std::string("<bascenev1.Texture ")
-            + (t.Exists() ? ("\"" + t->name() + "\"") : "(empty ref)") + ">")
+            + (t.exists() ? ("\"" + t->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
 }
@@ -25,14 +26,12 @@ auto PythonClassSceneTexture::type_name() -> const char* { return "Texture"; }
 void PythonClassSceneTexture::SetupType(PyTypeObject* cls) {
   PythonClass::SetupType(cls);
   // Fully qualified type path we will be exposed as:
-  cls->tp_name = "babase.Texture";
+  cls->tp_name = "bascenev1.Texture";
   cls->tp_basicsize = sizeof(PythonClassSceneTexture);
   cls->tp_doc =
       "A reference to a texture.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
-      "Use bascenev1.gettexture() to instantiate one.";
+      "Use :meth:`bascenev1.gettexture()` to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
@@ -57,7 +56,7 @@ auto PythonClassSceneTexture::Create(SceneTexture* texture) -> PyObject* {
 }
 
 auto PythonClassSceneTexture::GetTexture(bool doraise) const -> SceneTexture* {
-  SceneTexture* texture = texture_->Get();
+  SceneTexture* texture = texture_->get();
   if (!texture && doraise) {
     throw Exception("Invalid Texture.", PyExcType::kNotFound);
   }

@@ -11,7 +11,7 @@
 // On most platforms we directly link against GL and want all the functions
 // defined in the header for us. On Windows we have to define/load newer
 // stuff manually though, so we don't want that.
-#if !BA_OSTYPE_WINDOWS
+#if !BA_PLATFORM_WINDOWS
 #define GL_GLEXT_PROTOTYPES
 #endif
 
@@ -37,7 +37,7 @@
 // means we can count on GL ES 3.1 libs/headers always being available. Note
 // that hardware may still be limited to older versions so we need to check
 // for that and set a limit in our manifest.
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
 #include <GLES3/gl31.h>
 #include <GLES3/gl3ext.h>
 #endif
@@ -74,12 +74,12 @@ inline void glDepthRange(double min, double max) {
 }
 #endif
 
-// #if BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
+// #if BA_PLATFORM_IOS_TVOS || BA_PLATFORM_ANDROID
 
 // #if BA_USE_ES3_INCLUDES
 // #include <GLES3/gl3.h>
 // #include <GLES3/gl3ext.h>
-// #elif BA_OSTYPE_IOS_TVOS
+// #elif BA_PLATFORM_IOS_TVOS
 // #include <OpenGLES/ES2/gl.h>
 // #include <OpenGLES/ES2/glext.h>
 // #else
@@ -111,7 +111,7 @@ inline void glDepthRange(double min, double max) {
 // #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
 // #endif
 
-// #if BA_OSTYPE_IOS_TVOS
+// #if BA_PLATFORM_IOS_TVOS
 // extern void (*glInvalidateFramebuffer)(GLenum target, GLsizei
 // num_attachments,
 //                                        const GLenum* attachments);
@@ -120,9 +120,9 @@ inline void glDepthRange(double min, double max) {
 // #define glDeleteVertexArrays glDeleteVertexArraysOES
 // #define glBindVertexArray glBindVertexArrayOES
 // #define glClearDepth glClearDepthf
-// #endif  // BA_OSTYPE_IOS_TVOS
+// #endif  // BA_PLATFORM_IOS_TVOS
 
-// #else  // BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
+// #else  // BA_PLATFORM_IOS_TVOS || BA_PLATFORM_ANDROID
 
 // SDL Desktop builds.
 // #if BA_SDL2_BUILD
@@ -132,17 +132,17 @@ inline void glDepthRange(double min, double max) {
 // #include <SDL_opengl.h>
 // #endif  // BA_SDL2_BUILD
 
-// #if BA_OSTYPE_MACOS
+// #if BA_PLATFORM_MACOS
 // #include <OpenGL/CGLContext.h>
 // (NO LONGER APPLIES IN CORE PROFILE)
 // #define glGenVertexArrays glGenVertexArraysAPPLE
 // #define glDeleteVertexArrays glDeleteVertexArraysAPPLE
 // #define glBindVertexArray glBindVertexArrayAPPLE
-// #endif  // BA_OSTYPE_MACOS
+// #endif  // BA_PLATFORM_MACOS
 
-// #endif  // BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
+// #endif  // BA_PLATFORM_IOS_TVOS || BA_PLATFORM_ANDROID
 
-// #if BA_OSTYPE_ANDROID
+// #if BA_PLATFORM_ANDROID
 // #include <EGL/egl.h>
 // #include <android/log.h>
 // #if !BA_USE_ES3_INCLUDES
@@ -157,13 +157,13 @@ inline void glDepthRange(double min, double max) {
 // #define GL_DRAW_FRAMEBUFFER 0x8CA9
 // #define GL_READ_FRAMEBUFFER_BINDING 0x8CAA
 // #define glClearDepth glClearDepthf
-// #endif  // BA_OSTYPE_ANDROID
+// #endif  // BA_PLATFORM_ANDROID
 
-// #if BA_OSTYPE_ANDROID
+// #if BA_PLATFORM_ANDROID
 // extern PFNGLDISCARDFRAMEBUFFEREXTPROC _glDiscardFramebufferEXT;
 // #endif
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #include "ballistica/base/graphics/gl/gl_sys_windows.h"
 #endif
 
@@ -178,7 +178,7 @@ inline void glDepthRange(double min, double max) {
 // #endif
 
 // Support for GL object debug labeling.
-#if BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_IOS_TVOS
 #define BA_GL_LABEL_OBJECT(type, obj, label) \
   glLabelObjectEXT(type, obj, 0, label)
 #define BA_GL_PUSH_GROUP_MARKER(label) glPushGroupMarkerEXT(0, label)
@@ -200,15 +200,16 @@ inline void glDepthRange(double min, double max) {
 #define BA_GLSL_HIGHP
 #endif  // BA_OPENGL_IS_ES
 
-// Our old GLSL source uses 'attribute' and our newer uses 'in'
+// Note: these are the same these days for GLSL regular and ES, so can get
+// rid of these defines.
 #if BA_OPENGL_IS_ES
-#define BA_GLSL_VERTEX_IN "attribute"
-#define BA_GLSL_VERTEX_OUT "varying"
-#define BA_GLSL_FRAG_IN "varying"
-#define BA_GLSL_FRAGCOLOR "gl_FragColor"
-#define BA_GLSL_TEXTURE2D "texture2D"
-#define BA_GLSL_TEXTURE2DPROJ "texture2DProj"
-#define BA_GLSL_TEXTURECUBE "textureCube"
+#define BA_GLSL_VERTEX_IN "in"
+#define BA_GLSL_VERTEX_OUT "out"
+#define BA_GLSL_FRAG_IN "in"
+#define BA_GLSL_FRAGCOLOR "fragColor"
+#define BA_GLSL_TEXTURE2D "texture"
+#define BA_GLSL_TEXTURE2DPROJ "textureProj"
+#define BA_GLSL_TEXTURECUBE "texture"
 #else
 #define BA_GLSL_VERTEX_IN "in"
 #define BA_GLSL_VERTEX_OUT "out"

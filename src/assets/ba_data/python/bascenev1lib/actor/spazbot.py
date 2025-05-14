@@ -8,9 +8,8 @@ from __future__ import annotations
 import random
 import weakref
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 from bascenev1lib.actor.spaz import Spaz
 
@@ -27,10 +26,7 @@ PRO_BOT_HIGHLIGHT = (0.6, 0.1, 0.05)
 
 
 class SpazBotPunchedMessage:
-    """A message saying a bs.SpazBot got punched.
-
-    Category: **Message Classes**
-    """
+    """A message saying a bs.SpazBot got punched."""
 
     spazbot: SpazBot
     """The bs.SpazBot that got punched."""
@@ -45,10 +41,7 @@ class SpazBotPunchedMessage:
 
 
 class SpazBotDiedMessage:
-    """A message saying a bs.SpazBot has died.
-
-    Category: **Message Classes**
-    """
+    """A message saying a bs.SpazBot has died."""
 
     spazbot: SpazBot
     """The SpazBot that was killed."""
@@ -73,8 +66,6 @@ class SpazBotDiedMessage:
 
 class SpazBot(Spaz):
     """A really dumb AI version of bs.Spaz.
-
-    Category: **Bot Classes**
 
     Add these to a bs.BotSet to use them.
 
@@ -776,7 +767,6 @@ class ChargerBotPro(ChargerBot):
 
     color = PRO_BOT_COLOR
     highlight = PRO_BOT_HIGHLIGHT
-    default_shields = True
     default_boxing_gloves = True
     points_mult = 3
 
@@ -949,9 +939,9 @@ class SpazBotSet:
         on_spawn_call: Callable[[SpazBot], Any] | None = None,
     ) -> None:
         """Spawn a bot from this set."""
-        from bascenev1lib.actor import spawner
+        from bascenev1lib.actor.spawner import Spawner
 
-        spawner.Spawner(
+        Spawner(
             pt=pos,
             spawn_time=spawn_time,
             send_spawn_message=False,

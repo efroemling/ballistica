@@ -5,9 +5,8 @@
 from __future__ import annotations
 
 import weakref
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bauiv1 as bui
 import bascenev1 as bs
 
@@ -54,6 +53,11 @@ class NetScanner:
         self._last_selected_host = host
 
     def _on_activate(self, host: dict[str, Any]) -> None:
+
+        # Store UI location to return to when done.
+        if bs.app.classic is not None:
+            bs.app.classic.save_ui_state()
+
         bs.connect_to_party(host['address'])
 
     def update(self) -> None:
@@ -116,6 +120,7 @@ class NearbyGatherTab(GatherTab):
         region_left: float,
         region_bottom: float,
     ) -> bui.Widget:
+        # pylint: disable=too-many-positional-arguments
         c_width = region_width
         c_height = region_height - 20
         sub_scroll_height = c_height - 85

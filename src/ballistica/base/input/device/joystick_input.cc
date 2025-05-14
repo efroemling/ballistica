@@ -2,19 +2,19 @@
 
 #include "ballistica/base/input/device/joystick_input.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
-#include "ballistica/base/app_mode/app_mode.h"
-#include "ballistica/base/audio/audio.h"
-#include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
-#include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_command.h"
+#include "ballistica/shared/foundation/macros.h"
 
 namespace ballistica::base {
 
@@ -37,7 +37,7 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
       calibration_break_threshold_(kJoystickCalibrationBreakThreshold),
       custom_device_name_(custom_device_name),
       can_configure_(can_configure),
-      creation_time_(g_core->GetAppTimeMillisecs()),
+      creation_time_(g_core->AppTimeMillisecs()),
       calibrate_(calibrate) {
   // This is the default calibration for 'non-full' analog calibration.
   for (float& analog_calibration_val : analog_calibration_vals_) {
@@ -54,7 +54,13 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
     assert(g_core->InMainThread());
 
     sdl_joystick_ = SDL_JoystickOpen(sdl_joystick_id);
-    assert(sdl_joystick_);
+    if (sdl_joystick_ == nullptr) {
+      auto* err = SDL_GetError();
+      if (!err) {
+        err = "Unknown SDL error.";
+      }
+      throw Exception(std::string("Error in SDL_JoystickOpen: ") + err + ".");
+    }
 
     // In SDL2 we're passed a device-id but that's only used to open the
     // joystick; events and most everything else use an instance ID, so we store
@@ -97,7 +103,7 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
 auto JoystickInput::GetAxisName(int index) -> std::string {
   // On android, lets return some popular axis names.
 
-  if (g_buildconfig.ostype_android()) {
+  if (g_buildconfig.platform_android()) {
     // Due to our stupid 1-based values we have to subtract 1 from our value to
     // get the android motion-event constant.
     // FIXME: should just make a call to android to get these values..
@@ -141,7 +147,7 @@ auto JoystickInput::HasMeaningfulButtonNames() -> bool {
   if (is_mfi_controller_) {
     return true;
   }
-  return g_buildconfig.ostype_android();
+  return g_buildconfig.platform_android();
 }
 
 void JoystickInput::SetButtonName(int button, const std::string& name) {
@@ -172,7 +178,7 @@ auto JoystickInput::GetButtonName(int index) -> std::string {
     }
   }
 
-  if (g_buildconfig.ostype_android()) {
+  if (g_buildconfig.platform_android()) {
     // Special case: if this is a samsung controller, return the dice
     // button icons.
     if (strstr(GetDeviceName().c_str(), "Samsung Game Pad EI")) {
@@ -283,7 +289,8 @@ auto JoystickInput::GetButtonName(int index) -> std::string {
 
 JoystickInput::~JoystickInput() {
   if (!g_base->InLogicThread()) {
-    Log(LogLevel::kError, "Joystick dying in wrong thread.");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "Joystick dying in wrong thread.");
   }
 
   // Kill our child if need be.
@@ -305,8 +312,8 @@ JoystickInput::~JoystickInput() {
         [joystick] { SDL_JoystickClose(joystick); });
     sdl_joystick_ = nullptr;
 #else
-    Log(LogLevel::kError,
-        "sdl_joystick_ set in non-sdl-joystick build destructor.");
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "sdl_joystick_ set in non-sdl-joystick build destructor.");
 #endif  // BA_ENABLE_SDL_JOYSTICKS
   }
 }
@@ -331,8 +338,8 @@ auto JoystickInput::ShouldBeHiddenFromUser() -> bool {
   }
 }
 
-auto JoystickInput::GetCalibratedValue(float raw,
-                                       float neutral) const -> int32_t {
+auto JoystickInput::GetCalibratedValue(float raw, float neutral) const
+    -> int32_t {
   int32_t val;
   float dead_zone = 0.5f;
   float mag, target;
@@ -367,7 +374,7 @@ void JoystickInput::Update() {
   // Let's take this opportunity to update our calibration
   // (should probably have a specific place to do that but this works)
   if (calibrate_) {
-    millisecs_t time = g_core->GetAppTimeMillisecs();
+    millisecs_t time = g_core->AppTimeMillisecs();
 
     // If we're doing 'aggressive' auto-recalibration we expand extents outward
     // but suck them inward a tiny bit too to account for jitter or random fluke
@@ -538,7 +545,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
     return;
   }
 
-  millisecs_t time = g_core->GetAppTimeMillisecs();
+  millisecs_t time = g_core->AppTimeMillisecs();
   SDL_Event e2;
 
   // Ignore analog-stick input while we're holding a hat switch or d-pad
@@ -648,7 +655,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
         hat_held_ = true;
         break;
       default:
-        BA_LOG_ONCE(LogLevel::kError,
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
                     "Invalid hat value: "
                         + std::to_string(static_cast<int>(e->jhat.value)));
         break;
@@ -952,7 +959,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
         && (e->jbutton.button != hold_position_button_)
         && (e->jbutton.button != back_button_)) {
       if (ui_only_ || e->jbutton.button == remote_enter_button_) {
-        millisecs_t current_time = g_core->GetAppTimeMillisecs();
+        millisecs_t current_time = g_core->AppTimeMillisecs();
         if (current_time - last_ui_only_print_time_ > 5000) {
           g_base->python->objs()
               .Get(BasePython::ObjID::kUIRemotePressCall)
@@ -1225,8 +1232,8 @@ void JoystickInput::UpdateMapping() {
   auto* cl{g_base->HaveClassic() ? g_base->classic() : nullptr};
 
   if (!cl) {
-    Log(LogLevel::kWarning,
-        "Classic not present; can't config joystick mapping.");
+    g_core->Log(LogName::kBaInput, LogLevel::kWarning,
+                "Classic not present; can't config joystick mapping.");
   }
 
   // If we're a child, use our parent's id to search for config values and just

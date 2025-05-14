@@ -9,7 +9,6 @@
 
 #include "ballistica/scene_v1/support/player_spec.h"
 #include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/python/python_ref.h"
 
 namespace ballistica::scene_v1 {
 
@@ -103,6 +102,9 @@ class Connection : public Object {
     bool acked;
   };
 
+  PlayerSpec peer_spec_;  // Name of the account/device on the other end.
+  std::unordered_map<uint16_t, ReliableMessageIn> in_messages_;
+  std::unordered_map<uint16_t, ReliableMessageOut> out_messages_;
   // Leaf classes should set this when they start dying.
   // This prevents any SendGamePacketCompressed() calls from happening.
   bool connection_dying_{};
@@ -125,19 +127,17 @@ class Connection : public Object {
   int64_t packet_count_in_{};
   millisecs_t last_average_update_time_{};
   millisecs_t creation_time_{};
-  PlayerSpec peer_spec_;  // Name of the account/device on the other end.
-  std::unordered_map<uint16_t, ReliableMessageIn> in_messages_;
-  std::unordered_map<uint16_t, ReliableMessageOut> out_messages_;
-  bool can_communicate_{};
-  bool errored_{};
   millisecs_t last_prune_time_{};
   millisecs_t last_ack_send_time_{};
   millisecs_t last_ping_measure_time_{};
+  int huffman_error_count_{};
   // These are explicitly 16 bit values.
   uint16_t next_out_message_num_ = kFirstConnectionStateNum;
   uint16_t next_out_unreliable_message_num_{};
   uint16_t next_in_message_num_ = kFirstConnectionStateNum;
   uint16_t next_in_unreliable_message_num_{};
+  bool can_communicate_{};
+  bool errored_{};
 };
 
 }  // namespace ballistica::scene_v1

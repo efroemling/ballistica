@@ -22,10 +22,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class PlayerScoredMessage:
-    """Informs something that a bascenev1.Player scored.
-
-    Category: **Message Classes**
-    """
+    """Informs something that a bascenev1.Player scored."""
 
     score: int
     """The score value."""
@@ -33,8 +30,6 @@ class PlayerScoredMessage:
 
 class PlayerRecord:
     """Stats for an individual player in a bascenev1.Stats object.
-
-    Category: **Gameplay Classes**
 
     This does not necessarily correspond to a bascenev1.Player that is
     still present (stats may be retained for players that leave
@@ -196,6 +191,7 @@ class PlayerRecord:
             scale2: float,
             sound2: bascenev1.Sound | None,
         ) -> None:
+            # pylint: disable=too-many-positional-arguments
             from bascenev1lib.actor.popuptext import PopupText
 
             # Only award this if they're still alive and we can get
@@ -252,10 +248,7 @@ class PlayerRecord:
 
 
 class Stats:
-    """Manages scores and statistics for a bascenev1.Session.
-
-    Category: **Gameplay Classes**
-    """
+    """Manages scores and statistics for a bascenev1.Session."""
 
     def __init__(self) -> None:
         self._activity: weakref.ref[bascenev1.Activity] | None = None
@@ -341,6 +334,7 @@ class Stats:
         self,
         player: bascenev1.Player,
         base_points: int = 1,
+        *,
         target: Sequence[float] | None = None,
         kill: bool = False,
         victim_player: bascenev1.Player | None = None,

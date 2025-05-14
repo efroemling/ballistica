@@ -2,6 +2,10 @@
 
 #include "ballistica/template_fs/python/class/python_class_hello.h"
 
+#include "ballistica/core/core.h"
+
+using ballistica::core::g_core;
+
 namespace ballistica::template_fs {
 
 auto PythonClassHello::type_name() -> const char* { return "Hello"; }
@@ -50,11 +54,13 @@ void PythonClassHello::tp_dealloc(PythonClassHello* self) {
 }
 
 PythonClassHello::PythonClassHello() {
-  Log(LogLevel::kInfo, "Hello from PythonClassHello constructor!!!");
+  core::g_core->Log(LogName::kBa, LogLevel::kInfo,
+                    "Hello from PythonClassHello constructor!!!");
 }
 
 PythonClassHello::~PythonClassHello() {
-  Log(LogLevel::kInfo, "Goodbye from PythonClassHello destructor!!!");
+  g_core->Log(LogName::kBa, LogLevel::kInfo,
+              "Goodbye from PythonClassHello destructor!!!");
 }
 
 auto PythonClassHello::TestMethod(PythonClassHello* self, PyObject* args,
@@ -66,8 +72,9 @@ auto PythonClassHello::TestMethod(PythonClassHello* self, PyObject* args,
                                    const_cast<char**>(kwlist), &val)) {
     return nullptr;
   }
-  Log(LogLevel::kInfo, "Hello from PythonClassHello.test_method!!! (val="
-                           + std::to_string(val) + ")");
+  g_core->Log(LogName::kBa, LogLevel::kInfo,
+              "Hello from PythonClassHello.test_method!!! (val="
+                  + std::to_string(val) + ")");
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

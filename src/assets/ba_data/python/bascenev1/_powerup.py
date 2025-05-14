@@ -17,9 +17,8 @@ if TYPE_CHECKING:
 class PowerupMessage:
     """A message telling an object to accept a powerup.
 
-    Category: **Message Classes**
-
-    This message is normally received by touching a bascenev1.PowerupBox.
+    This message is normally received by touching a
+    bascenev1.PowerupBox.
     """
 
     poweruptype: str
@@ -38,10 +37,8 @@ class PowerupMessage:
 class PowerupAcceptMessage:
     """A message informing a bascenev1.Powerup that it was accepted.
 
-    Category: **Message Classes**
-
-    This is generally sent in response to a bascenev1.PowerupMessage
-    to inform the box (or whoever granted it) that it can go away.
+    This is generally sent in response to a bascenev1.PowerupMessage to
+    inform the box (or whoever granted it) that it can go away.
     """
 
 

@@ -2,8 +2,11 @@
 
 #include "ballistica/shared/foundation/object.h"
 
+#include <algorithm>
 #include <mutex>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
@@ -21,7 +24,7 @@ Object::Object() {
 #if BA_DEBUG_BUILD
   // Mark when we were born.
   assert(g_core);
-  object_birth_time_ = g_core->GetAppTimeMillisecs();
+  object_birth_time_ = g_core->AppTimeMillisecs();
 
   // Add ourself to the global object list.
   {
@@ -82,6 +85,14 @@ Object::~Object() {
   }
 }
 
+void Object::ObjectPostInit() {
+#if BA_DEBUG_BUILD
+  // Flag this here in the top level post-init so we can ensure that classes
+  // are properly calling parent class post-inits.
+  object_is_post_inited_ = true;
+#endif
+}
+
 auto Object::GetObjectTypeName() const -> std::string {
   // Default implementation just returns type name.
   if (g_core) {
@@ -115,7 +126,7 @@ void Object::LsObjects() {
   {
     std::scoped_lock lock(g_core->object_list_mutex);
     s = std::to_string(g_core->object_count) + " Objects at time "
-        + std::to_string(g_core->GetAppTimeMillisecs()) + ";";
+        + std::to_string(g_core->AppTimeMillisecs()) + ";";
 
     if (explicit_bool(true)) {
       std::unordered_map<std::string, int> obj_map;
@@ -152,9 +163,10 @@ void Object::LsObjects() {
       assert(count == g_core->object_count);
     }
   }
-  Log(LogLevel::kInfo, s);
+  g_core->Log(LogName::kBa, LogLevel::kInfo, s);
 #else
-  Log(LogLevel::kInfo, "LsObjects() only functions in debug builds.");
+  g_core->Log(LogName::kBa, LogLevel::kInfo,
+              "LsObjects() only functions in debug builds.");
 #endif  // BA_DEBUG_BUILD
 }
 

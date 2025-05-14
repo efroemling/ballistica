@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 
+#include <string>
+
 #include "ballistica/scene_v1/python/class/python_class_scene_data_asset.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/session_stream.h"
@@ -21,7 +23,7 @@ SceneDataAsset::SceneDataAsset(const std::string& name, Scene* scene)
     base::Assets::AssetListLock lock;
     data_data_ = g_base->assets->GetDataAsset(name);
   }
-  assert(data_data_.Exists());
+  assert(data_data_.exists());
 }
 
 SceneDataAsset::~SceneDataAsset() { MarkDead(); }

@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_APP_MODE_APP_MODE_H_
 #define BALLISTICA_BASE_APP_MODE_APP_MODE_H_
 
+#include <string>
 #include <vector>
 
 #include "ballistica/base/base.h"
@@ -68,8 +69,8 @@ class AppMode {
   /// Called when language changes.
   virtual void LanguageChanged();
 
-  /// Are we currently in a classic 'main menu' session?
-  virtual auto InClassicMainMenuSession() const -> bool;
+  /// Are we currently in a 'main menu' situation (as opposed to gameplay)?
+  virtual auto IsInMainMenu() const -> bool;
 
   /// Get current party size (for legacy parties).
   virtual auto GetPartySize() const -> int;
@@ -103,6 +104,11 @@ class AppMode {
 
   /// Get a string for current ping display.
   virtual auto GetDisplayPing() -> std::optional<float>;
+
+  /// Return the offset used when drawing elements such as fps counters at
+  /// the bottom left of the screen. Should be used to avoid overlap with
+  /// icons or toolbars placed there by the app-mode.
+  virtual auto GetBottomLeftEdgeHeight() -> float;
 };
 
 }  // namespace ballistica::base

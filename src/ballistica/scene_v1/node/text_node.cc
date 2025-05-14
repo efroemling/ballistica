@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/node/text_node.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
@@ -113,14 +117,14 @@ void TextNode::SetText(const std::string& val) {
 
     if (do_format_check) {
       bool valid;
-      g_base->assets->CompileResourceString(val, "setText format check",
-                                            &valid);
+      g_base->assets->CompileResourceString(val, &valid);
       if (!valid) {
-        BA_LOG_ONCE(LogLevel::kError, "Invalid resource string: '" + val
-                                          + "' on node '" + label() + "'");
+        BA_LOG_ONCE(
+            LogName::kBa, LogLevel::kError,
+            "Invalid resource string: '" + val + "' on node '" + label() + "'");
         Python::PrintStackTrace();
       } else if (print_false_positives) {
-        BA_LOG_ONCE(LogLevel::kError,
+        BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                     "Got false positive for json check on '" + val + "'");
         Python::PrintStackTrace();
       }
@@ -349,8 +353,7 @@ void TextNode::Draw(base::FrameDef* frame_def) {
 
   // Apply subs/resources to get our actual text if need be.
   if (text_translation_dirty_) {
-    text_translated_ =
-        g_base->assets->CompileResourceString(text_raw_, "TextNode::OnDraw");
+    text_translated_ = g_base->assets->CompileResourceString(text_raw_);
     text_translation_dirty_ = false;
     text_group_dirty_ = true;
     text_width_dirty_ = true;

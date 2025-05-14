@@ -2,6 +2,9 @@
 
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 
+#include <string>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_mesh.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/session_stream.h"
@@ -21,7 +24,7 @@ SceneMesh::SceneMesh(const std::string& name, Scene* scene)
     base::Assets::AssetListLock lock;
     mesh_data_ = g_base->assets->GetMesh(name);
   }
-  assert(mesh_data_.Exists());
+  assert(mesh_data_.exists());
 }
 
 SceneMesh::~SceneMesh() { MarkDead(); }

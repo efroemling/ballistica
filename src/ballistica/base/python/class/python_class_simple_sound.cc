@@ -2,6 +2,8 @@
 
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 
+#include <string>
+
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/logic/logic.h"
@@ -21,7 +23,9 @@ void PythonClassSimpleSound::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A simple sound wrapper for internal use.\n"
       "\n"
-      "Do not use for gameplay code as it will only play locally.";
+      "Do not use for gameplay code as it will only play locally.\n"
+      "\n"
+      ":meta private:";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
   cls->tp_repr = (reprfunc)tp_repr;
@@ -44,7 +48,7 @@ auto PythonClassSimpleSound::Create(const Object::Ref<SoundAsset>& sound)
 auto PythonClassSimpleSound::tp_repr(PythonClassSimpleSound* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  SoundAsset* s = self->sound_->Get();
+  SoundAsset* s = self->sound_->get();
   return Py_BuildValue(
       "s", (std::string("<Ballistica SimpleSound '") + (s->GetName()) + "'>")
                .c_str());
@@ -92,7 +96,7 @@ auto PythonClassSimpleSound::Play(PythonClassSimpleSound* self, PyObject* args,
                                    const_cast<char**>(kwlist), &volume)) {
     return nullptr;
   }
-  SoundAsset* s = self->sound_->Get();
+  SoundAsset* s = self->sound_->get();
   g_base->audio->PlaySound(s, volume);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

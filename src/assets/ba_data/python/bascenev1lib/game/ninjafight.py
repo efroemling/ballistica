@@ -2,15 +2,14 @@
 #
 """Provides Ninja Fight mini-game."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.spazbot import (
@@ -130,6 +129,8 @@ class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
     # Called for each spawning player.
     @override
     def spawn_player(self, player: Player) -> bs.Actor:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # Let's spawn close to the center.
         spawn_center = (0, 3, -2)
         pos = (
@@ -152,6 +153,8 @@ class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
     # Called for miscellaneous messages.
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # A player has died.
         if isinstance(msg, bs.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment standard behavior.
@@ -175,6 +178,8 @@ class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
     # to a tournament ending or other external reason).
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # Stop our on-screen timer so players can see what they got.
         assert self._timer is not None
         self._timer.stop()

@@ -11,10 +11,13 @@ import subprocess
 from functools import partial
 from typing import TYPE_CHECKING
 
-from efrotools import PYVER, extract_arg, extract_flag
+from efro.terminal import Clr
+from efro.util import extract_arg, extract_flag
+from efrotools.util import is_wsl_windows_build_path
+from efrotools.pyver import PYVER, PYVERNODOT
 
 if TYPE_CHECKING:
-    pass
+    from concurrent.futures import Future
 
 # Suffix for the pyc files we include in stagings. We're using
 # deterministic opt pyc files; see PEP 552.
@@ -31,18 +34,20 @@ def stage_build(projroot: str, args: list[str] | None = None) -> None:
     if args is None:
         args = sys.argv
 
-    AssetStager(projroot).run(args)
+    BuildStager(projroot).run(args)
 
 
-class AssetStager:
+class BuildStager:
     """Context for a run of the tool."""
 
     def __init__(self, projroot: str) -> None:
         self.projroot = projroot
+        self.desc = 'unknown'
         # We always calc src relative to this script.
         self.src = f'{self.projroot}/build/assets'
         self.dst: str | None = None
         self.serverdst: str | None = None
+        self.asset_package_flavor: str | None = None
         self.win_extras_src: str | None = None
         self.win_platform: str | None = None
         self.win_type: str | None = None
@@ -59,24 +64,42 @@ class AssetStager:
         self.include_pylib = False
         self.include_binary_executable = False
         self.executable_name: str | None = None
-        self.pylib_src_name: str | None = None
+        self.pylib_src_path: str | None = None
         self.include_payload_file = False
         self.tex_suffix: str | None = None
         self.is_payload_full = False
         self.debug: bool | None = None
         self.builddir: str | None = None
         self.dist_mode: bool = False
+        self.wsl_chmod_workaround = False
 
     def run(self, args: list[str]) -> None:
         """Do the thing."""
         self._parse_args(args)
 
-        # Ok, now for every top level dir in src, come up with a nice single
-        # command to sync the needed subset of it to dst.
+        print(
+            f'{Clr.BLU}Staging for {Clr.MAG}{Clr.BLD}{self.desc}{Clr.RST}'
+            f'{Clr.BLU} at {Clr.MAG}{Clr.BLD}{self.dst}'
+            f'{Clr.RST}{Clr.BLU}...{Clr.RST}',
+            flush=True,
+        )
 
-        # We can now use simple speedy timestamp based updates since we no
-        # longer have to try to preserve timestamps to get .pyc files to
-        # behave (hooray!).
+        # Do our janky wsl permissions workaround if need be.
+        if self.wsl_chmod_workaround and self.dst is not None:
+            cmd = ['chmod', '-R', 'u+w', self.dst]
+            print(
+                f'{Clr.CYN}'
+                f'Running WSL permissions workaround: {cmd}'
+                f'{Clr.RST}...'
+            )
+            subprocess.run(cmd, check=True)
+
+        # Ok, now for every top level dir in src, come up with a nice
+        # single command to sync the needed subset of it to dst.
+
+        # We can now use simple speedy timestamp based updates since we
+        # no longer have to try to preserve timestamps to get .pyc files
+        # to behave (hooray!).
 
         # Do our stripped down pylib dir for platforms that use that.
         if self.include_pylib:
@@ -89,13 +112,26 @@ class AssetStager:
         if self.serverdst is not None:
             self._sync_server_files()
 
-        # On windows we need to pull in some dlls and this and that (we also
-        # include a non-stripped-down set of Python libs).
+        # On windows we need to pull in some dlls and this and that (we
+        # also include a non-stripped-down set of Python libs).
         if self.win_extras_src is not None:
             self._sync_windows_extras()
 
-        # Standard stuff in ba_data.
-        self._sync_ba_data()
+        # Legacy assets going into ba_data.
+        self._sync_ba_data_legacy()
+
+        # New asset-package stuff going into ba_data.
+        if self.asset_package_flavor is not None:
+            self._sync_ba_data_new()
+
+        if self.include_binary_executable:
+            self._sync_binary_executable()
+
+        if self.include_python_dylib:
+            self._sync_python_dylib()
+
+        if self.include_shell_executable:
+            self._sync_shell_executable()
 
         # On Android we need to build a payload file so it knows what to
         # pull out of the apk.
@@ -119,8 +155,8 @@ class AssetStager:
         self.builddir = extract_arg(args, '-builddir')
 
         # In some cases we behave differently when building a 'dist'
-        # version compared to a regular version; copying files in instead
-        # of symlinking them/etc.
+        # version compared to a regular version; copying files in
+        # instead of symlinking them/etc.
         self.dist_mode = extract_flag(args, '-dist')
 
         # Require either -debug or -release in args.
@@ -140,22 +176,30 @@ class AssetStager:
             )
 
         if platform_arg == '-android':
+            self.desc = 'android'
             self._parse_android_args(args)
         elif platform_arg.startswith('-win'):
+            self.desc = 'windows'
+            self.asset_package_flavor = 'gui_desktop_v2dev1'
             self._parse_win_args(platform_arg, args)
         elif platform_arg == '-cmake':
+            self.desc = 'cmake'
             self.dst = args[-1]
             self.tex_suffix = '.dds'
+            self.asset_package_flavor = 'gui_desktop_v2dev1'
             # Link/copy in a binary *if* builddir is provided.
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit'
         elif platform_arg == '-cmakemodular':
+            self.desc = 'cmake modular'
             self.dst = args[-1]
             self.tex_suffix = '.dds'
+            self.asset_package_flavor = 'gui_desktop_v2dev1'
             self.include_python_dylib = True
             self.include_shell_executable = True
             self.executable_name = 'ballisticakit'
         elif platform_arg == '-cmakeserver':
+            self.desc = 'cmake server'
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
             self.include_textures = False
@@ -165,6 +209,7 @@ class AssetStager:
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit_headless'
         elif platform_arg == '-cmakemodularserver':
+            self.desc = 'cmake modular server'
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
             self.include_textures = False
@@ -173,8 +218,8 @@ class AssetStager:
             self.include_python_dylib = True
             self.include_shell_executable = True
             self.executable_name = 'ballisticakit_headless'
-
         elif platform_arg == '-xcode-mac':
+            self.desc = 'xcode mac'
             self.src = os.environ['SOURCE_ROOT'] + '/../build/assets'
             self.dst = (
                 os.environ['TARGET_BUILD_DIR']
@@ -182,37 +227,38 @@ class AssetStager:
                 + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
             )
             self.include_pylib = True
-            self.pylib_src_name = 'pylib-apple'
-            self.tex_suffix = '.dds'
-        elif platform_arg == '-xcode-mac-old':
-            self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
-            self.dst = (
-                os.environ['TARGET_BUILD_DIR']
-                + '/'
-                + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
-            )
-            self.include_pylib = True
-            self.pylib_src_name = 'pylib-apple'
+            self.pylib_src_path = 'python-apple/macos/pylib'
             self.tex_suffix = '.dds'
         elif platform_arg == '-xcode-ios':
+            self.desc = 'xcode ios'
             self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
             self.dst = (
                 os.environ['TARGET_BUILD_DIR']
                 + '/'
                 + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
             )
-            self.include_pylib = True
-            self.pylib_src_name = 'pylib-apple'
+            self.include_pylib = False
+            # self.pylib_src_path = 'pylib-apple'
             self.tex_suffix = '.pvr'
         else:
             raise RuntimeError('No valid platform arg provided.')
+
+        # Special case: running rsync to a windows drive via WSL fails
+        # to overwrite non-writable files.
+        #
+        # See: https://github.com/microsoft/WSL/issues/5087
+        #
+        # As a janky workaround, make everything in our dst dir writable
+        # by us before we do our work.
+        if is_wsl_windows_build_path(self.projroot):
+            self.wsl_chmod_workaround = True
 
     def _parse_android_args(self, args: list[str]) -> None:
         # On Android we get nitpicky with exactly what we want to copy
         # in since we can speed up iterations by installing stripped
         # down apks.
         self.dst = 'assets/ballistica_files'
-        self.pylib_src_name = 'pylib-android'
+        self.pylib_src_path = 'pylib-android'
         self.include_payload_file = True
         self.tex_suffix = '.ktx'
         self.include_audio = False
@@ -291,9 +337,10 @@ class AssetStager:
 
         # Ok, lets do full syncs on each subdir we find so we properly
         # delete anything in dst that disappeared from src. Lastly we'll
-        # sync over the remaining top level files. Note: technically it'll
-        # be possible to leave orphaned top level files in dst, so when
-        # building packages/etc. we should always start from scratch.
+        # sync over the remaining top level files. Note: technically
+        # it'll be possible to leave orphaned top level files in dst, so
+        # when building packages/etc. we should always start from
+        # scratch.
         assert self.dst is not None
         assert self.debug is not None
         pyd_rules: list[str]
@@ -303,10 +350,10 @@ class AssetStager:
             pyd_rules = ['--exclude', '*_d.pyd', '--include', '*.pyd']
 
         for dirname in ('DLLs', 'Lib'):
-            # EWW: seems Windows Python currently sets its path to ./lib but
-            # it comes with Lib. Windows is normally case-insensitive but
-            # this messes it up when running under WSL. Let's install it as
-            # lib for now.
+            # EWW: seems Windows Python currently sets its path to ./lib
+            # but it comes with Lib. Windows is normally
+            # case-insensitive but this messes it up when running under
+            # WSL. Let's install it as lib for now.
             dstdirname = 'lib' if dirname == 'Lib' else dirname
             os.makedirs(f'{self.dst}/{dstdirname}', exist_ok=True)
             cmd: list[str] = (
@@ -341,12 +388,11 @@ class AssetStager:
             subprocess.run(cmd, check=True)
 
         # Now sync the top level individual files that we want. We could
-        # technically copy everything over but this keeps staging dirs a bit
-        # tidier.
+        # technically copy everything over but this keeps staging dirs a
+        # bit tidier.
         dbgsfx = '_d' if self.debug else ''
 
-        # Note: Needs updating when Python version changes (currently 3.11).
-        toplevelfiles: list[str] = [f'python311{dbgsfx}.dll']
+        toplevelfiles: list[str] = [f'python{PYVERNODOT}{dbgsfx}.dll']
 
         if self.win_type == 'win':
             toplevelfiles += [
@@ -360,7 +406,11 @@ class AssetStager:
             toplevelfiles += [f'python{dbgsfx}.exe']
 
         # Include debug dlls so folks without msvc can run them.
-        if self.debug:
+        #
+        # UPDATE: No longer doing this as of build 22258. If people need
+        # to run debug builds they should do things the 'right' way and
+        # install VS.
+        if self.debug and bool(False):
             if self.win_platform == 'x64':
                 toplevelfiles += [
                     'msvcp140d.dll',
@@ -391,13 +441,14 @@ class AssetStager:
         )
         subprocess.run(cmd2, check=True)
 
-        # If we're running under WSL we won't be able to launch these .exe
-        # files unless they're marked executable, so do that here. Update:
-        # gonna try simply setting this flag on the source side.
+        # If we're running under WSL we won't be able to launch these
+        # .exe files unless they're marked executable, so do that here.
+        # Update: gonna try simply setting this flag on the source side.
         # _run(f'chmod +x {self.dst}/*.exe')
 
     def _sync_pylib(self) -> None:
-        assert self.pylib_src_name is not None
+        assert self.pylib_src_path is not None
+        assert not self.pylib_src_path.endswith('/')
         assert self.dst is not None
         os.makedirs(f'{self.dst}/pylib', exist_ok=True)
         cmd: list[str] = [
@@ -412,16 +463,17 @@ class AssetStager:
             '--include',
             f'*.{OPT_PYC_SUFFIX}',
             '--include',
-            '*/',
+            '*.so',
+            '--include',
+            '*/',  # Note to self: is this necessary?
             '--exclude',
             '*',
-            f'{self.src}/{self.pylib_src_name}/',
+            f'{self.src}/{self.pylib_src_path}/',
             f'{self.dst}/pylib/',
         ]
         subprocess.run(cmd, check=True)
 
-    def _sync_ba_data(self) -> None:
-        # pylint: disable=too-many-branches
+    def _sync_ba_data_legacy(self) -> None:
         assert self.dst is not None
         os.makedirs(f'{self.dst}/ba_data', exist_ok=True)
         cmd: list[str] = [
@@ -432,15 +484,16 @@ class AssetStager:
             '--prune-empty-dirs',
         ]
 
-        # Normally we use --delete-excluded so that we can do sparse
-        # syncs for quick iteration on android apks/etc. However for our
-        # modular builds we need to avoid that flag because we do a
-        # second pass after to sync in our python-dylib stuff and with
-        # that flag it all gets blown on the first pass.
-        if not self.include_python_dylib:
+        # Traditionally we used --delete-excluded so that we could do
+        # sparse syncs for quick iteration on android apks/etc. However
+        # for our modular builds (and now for asset-package assets) we
+        # need to avoid that flag because we do further passes after to
+        # sync in python-dylib stuff or asset-package stuff and with
+        # that flag it all gets blown away on the first pass.
+        if not self.include_python_dylib and self.asset_package_flavor is None:
             cmd.append('--delete-excluded')
         else:
-            # Shouldn't be trying to do sparse stuff.
+            # Shouldn't be trying to do sparse stuff in server builds.
             if self.serverdst is not None:
                 assert self.include_json and self.include_collision_meshes
             else:
@@ -452,8 +505,9 @@ class AssetStager:
                     and self.include_meshes
                     and self.include_collision_meshes
                 )
-            # Keep rsync from trying to prune this as an 'empty' dir.
+            # Keep rsync from deleting the other stuff we're overlaying.
             cmd += ['--exclude', '/python-dylib']
+            cmd += ['--exclude', '/textures2']
 
         if self.include_scripts:
             cmd += [
@@ -495,14 +549,146 @@ class AssetStager:
         ]
         subprocess.run(cmd, check=True)
 
-        if self.include_binary_executable:
-            self._sync_binary_executable()
+    def _sync_ba_data_new(self) -> None:
+        # pylint: disable=too-many-locals
+        import json
+        import stat
+        import shutil
+        from threading import Lock
+        from concurrent.futures import ThreadPoolExecutor
 
-        if self.include_python_dylib:
-            self._sync_python_dylib()
+        from bacommon.bacloud import asset_file_cache_path
 
-        if self.include_shell_executable:
-            self._sync_shell_executable()
+        assert self.asset_package_flavor is not None
+        assert self.dst is not None
+
+        # Just going with raw json here instead of dataclassio to
+        # maximize speed; we'll be going over lots of files here.
+        with open(
+            f'{self.projroot}/.cache/assetmanifests/'
+            f'{self.asset_package_flavor}',
+            encoding='utf-8',
+        ) as infile:
+            manifest = json.loads(infile.read())
+
+        filehashes: dict[str, str] = manifest['h']
+
+        mkdirlock = Lock()
+
+        def _prep_syncdir(syncdir: str) -> None:
+            # First, take a pass through and delete all files not found
+            # in our manifest.
+            assert self.dst is not None
+            dstdir = os.path.join(self.dst, syncdir)
+            os.makedirs(dstdir, exist_ok=True)
+            for entry in os.scandir(dstdir):
+                if entry.is_file():
+                    path = os.path.join(syncdir, entry.name)
+                    if path not in filehashes:
+                        os.unlink(os.path.join(self.dst, path))
+
+        def _sync_path(src: str, dst: str) -> None:
+            # Quick-out: if there's a file already at dst and its
+            # modtime and size *exactly* match src, we're done. Note
+            # that this is a bit different than Makefile logic where
+            # things update when src is newer than dst. In our case, a
+            # manifest change could cause src to point to a cache file
+            # with an *older* modtime than the previous one (cache file
+            # modtimes are static and arbitrary) so such logic doesn't
+            # work. However if we look for an *exact* modtime match as
+            # well as size match we can be reasonably sure that the file
+            # is still the same. We'll see how this goes...
+            srcstat = os.stat(src)
+            try:
+                dststat = os.stat(dst)
+            except FileNotFoundError:
+                dststat = None
+            if (
+                dststat is not None
+                and srcstat.st_size == dststat.st_size
+                and srcstat.st_mtime == dststat.st_mtime
+            ):
+                return
+
+            # If dst is a directory, blow it away (use the stat we
+            # already fetched to save a bit of time).
+            if dststat is not None and stat.S_ISDIR(dststat.st_mode):
+                shutil.rmtree(dst)
+
+            # Hold a lock while creating any parent directories just in
+            # case multiple files are trying to create the same
+            # directory simultaneously (not sure if that could cause
+            # problems but might as well be extra safe).
+            with mkdirlock:
+                os.makedirs(os.path.dirname(dst), exist_ok=True)
+
+            # Ok, dst doesn't exist or modtimes don't line up. Copy it
+            # and try to copy its modtime.
+            shutil.copyfile(src, dst)
+            shutil.copystat(src, dst)
+
+        def _cleanup_syncdir(syncdir: str) -> None:
+            """Handle pruning empty directories."""
+            # Walk the tree bottom-up so we can properly kill recursive
+            # empty dirs.
+            assert self.dst is not None
+            dstdir = os.path.join(self.dst, syncdir)
+            for basename, dirnames, filenames in os.walk(dstdir, topdown=False):
+                # It seems that child dirs we kill during the walk are
+                # still listed when the parent dir is visited, so lets
+                # make sure to only acknowledge still-existing ones.
+                dirnames = [
+                    d
+                    for d in dirnames
+                    if os.path.exists(os.path.join(basename, d))
+                ]
+                if not dirnames and not filenames and basename != dstdir:
+                    os.rmdir(basename)
+
+        syncdirs: list[str] = ['ba_data/textures2']
+
+        futures: list[Future]
+        with ThreadPoolExecutor(max_workers=4) as executor:
+
+            # First, prep each of our sync dirs (make sure they exist,
+            # blow away files not in our manifest, etc.)
+            futures = []
+            for syncdir in syncdirs:
+                futures.append(executor.submit(_prep_syncdir, syncdir=syncdir))
+            # Await all results to get any exceptions.
+            for future in futures:
+                _result = future.result()
+
+            # Now go through all our manifest paths, syncing any files
+            # destined for any of our syncdirs.
+            futures = []
+            for path, hashval in filehashes.items():
+                for syncdir in syncdirs:
+                    if path.startswith(syncdir):
+                        futures.append(
+                            executor.submit(
+                                _sync_path,
+                                src=(
+                                    f'{self.projroot}/.cache/assetdata/'
+                                    f'{asset_file_cache_path(hashval)}'
+                                ),
+                                dst=os.path.join(self.dst, path),
+                            )
+                        )
+            # Await all results to get any exceptions.
+            for future in futures:
+                _result = future.result()
+
+            # Lastly, run a cleanup pass on all our sync dirs (blow away
+            # empty dirs, etc.)
+            futures = []
+            for syncdir in syncdirs:
+                futures.append(
+                    executor.submit(_cleanup_syncdir, syncdir=syncdir)
+                )
+            # Await all results to get any exceptions.
+            for future in futures:
+                _result = future.result()
 
     def _sync_shell_executable(self) -> None:
         if self.executable_name is None:
@@ -510,8 +696,8 @@ class AssetStager:
 
         path = f'{self.dst}/{self.executable_name}'
 
-        # For now this is so simple we just do an ad-hoc write each time;
-        # not worth setting up files and syncs.
+        # For now this is so simple we just do an ad-hoc write each
+        # time; not worth setting up files and syncs.
         if self.debug:
             optstuff = 'export PYTHONDEVMODE=1\nexport PYTHONOPTIMIZE=0\n'
         else:
@@ -536,7 +722,7 @@ class AssetStager:
                 '# Basically this will do:\n'
                 '#   import baenv; baenv.configure();'
                 ' import babase; babase.app.run().\n'
-                'exec python3.11 ba_data/python/baenv.py "$@"\n'
+                'exec python3.13 ba_data/python/baenv.py "$@"\n'
             )
         subprocess.run(['chmod', '+x', path], check=True)
 
@@ -662,8 +848,8 @@ class AssetStager:
             projroot=self.projroot,
             mode=modeval,
             infilename=f'{self.projroot}/src/assets/server_package/'
-            'config_template.yaml',
-            outfilename=os.path.join(self.serverdst, 'config_template.yaml'),
+            'config_template.toml',
+            outfilename=os.path.join(self.serverdst, 'config_template.toml'),
         )
         if self.win_type is not None:
             fname = 'launch_ballisticakit_server.bat'
@@ -743,7 +929,7 @@ def _stage_server_file(
 ) -> None:
     """Stage files for the server environment with some filtering."""
     import batools.build
-    from efrotools import replace_exact
+    from efrotools.util import replace_exact
 
     if mode not in ('debug', 'release'):
         raise RuntimeError(
@@ -756,11 +942,11 @@ def _stage_server_file(
     os.makedirs(os.path.dirname(outfilename), exist_ok=True)
 
     basename = os.path.basename(infilename)
-    if basename == 'config_template.yaml':
+    if basename == 'config_template.toml':
         # Inject all available config values into the config file.
         _write_if_changed(
             outfilename,
-            batools.build.filter_server_config(str(projroot), infilename),
+            batools.build.filter_server_config_toml(str(projroot), infilename),
         )
 
     elif basename == 'ballisticakit_server.py':

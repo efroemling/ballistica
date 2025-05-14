@@ -18,8 +18,6 @@ if TYPE_CHECKING:
 class AdsSubsystem:
     """Subsystem for ads functionality in the app.
 
-    Category: **App Classes**
-
     Access the single shared instance of this class at 'ba.app.ads'.
     """
 
@@ -48,19 +46,7 @@ class AdsSubsystem:
                     1.0,
                     lambda: babase.screenmessage(
                         babase.Lstr(
-                            resource='removeInGameAdsText',
-                            subs=[
-                                (
-                                    '${PRO}',
-                                    babase.Lstr(
-                                        resource='store.bombSquadProNameText'
-                                    ),
-                                ),
-                                (
-                                    '${APP_NAME}',
-                                    babase.Lstr(resource='titleText'),
-                                ),
-                            ],
+                            resource='removeInGameAdsTokenPurchaseText'
                         ),
                         color=(1, 1, 0),
                     ),
@@ -100,8 +86,14 @@ class AdsSubsystem:
         # No ads without net-connections, etc.
         if not plus.can_show_ad():
             show = False
-        if classic.accounts.have_pro():
-            show = False  # Pro disables interstitials.
+
+        # Pro or other upgrades disable interstitials.
+        if (
+            classic.accounts.have_pro()
+            or classic.gold_pass
+            or classic.remove_ads
+        ):
+            show = False
         try:
             session = bascenev1.get_foreground_host_session()
             assert session is not None

@@ -1,13 +1,17 @@
 // Released under the MIT License. See LICENSE for details.
 
-#if BA_OSTYPE_LINUX
+#if BA_PLATFORM_LINUX
 #include "ballistica/core/platform/linux/core_platform_linux.h"
 
 #include <sys/utsname.h>
 
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <list>
 #include <string>
+
+#include "ballistica/shared/ballistica.h"
 
 namespace ballistica::core {
 
@@ -100,10 +104,10 @@ auto CorePlatformLinux::GetDeviceUUIDInputs() -> std::list<std::string> {
 
 bool CorePlatformLinux::DoHasTouchScreen() { return false; }
 
-std::string CorePlatformLinux::GetPlatformName() { return "linux"; }
+std::string CorePlatformLinux::GetLegacyPlatformName() { return "linux"; }
 
-std::string CorePlatformLinux::GetSubplatformName() {
-#if BA_TEST_BUILD
+std::string CorePlatformLinux::GetLegacySubplatformName() {
+#if BA_VARIANT_TEST_BUILD
   return "test";
 #else
   return "";
@@ -112,4 +116,4 @@ std::string CorePlatformLinux::GetSubplatformName() {
 
 }  // namespace ballistica::core
 
-#endif  // BA_OSTYPE_LINUX
+#endif  // BA_PLATFORM_LINUX

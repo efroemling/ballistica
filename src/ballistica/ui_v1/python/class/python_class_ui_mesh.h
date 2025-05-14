@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_UI_V1_PYTHON_CLASS_PYTHON_CLASS_UI_MESH_H_
 #define BALLISTICA_UI_V1_PYTHON_CLASS_PYTHON_CLASS_UI_MESH_H_
 
+#include <string>
+
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/python/python.h"
@@ -39,8 +41,8 @@ class PythonClassUIMesh : public PythonClass {
  private:
   static PyMethodDef tp_methods[];
   static auto tp_repr(PythonClassUIMesh* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassUIMesh* self);
   Object::Ref<base::MeshAsset>* mesh_;
 };

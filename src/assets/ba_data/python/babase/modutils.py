@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import os
 
 import _babase
+from babase._logging import applog
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -46,9 +47,6 @@ def get_human_readable_user_scripts_path() -> str:
 def _request_storage_permission() -> bool:
     """If needed, requests storage permission from the user (& return true)."""
     from babase._language import Lstr
-
-    # noinspection PyProtectedMember
-    # (PyCharm inspection bug?)
     from babase._mgen.enums import Permission
 
     if not _babase.have_permission(Permission.STORAGE):
@@ -95,14 +93,11 @@ def show_user_scripts() -> None:
                 with open(file_name, 'w', encoding='utf-8') as outfile:
                     outfile.write(
                         'You can drop files in here to mod the game.'
-                        '  See settings/advanced'
-                        ' in the game for more info.'
+                        '  See settings/advanced in the game for more info.'
                     )
 
         except Exception:
-            from babase import _error
-
-            _error.print_exception('error writing about_this_folder stuff')
+            applog.exception('Error writing about_this_folder stuff.')
 
     # On platforms that support it, open the dir in the UI.
     if _babase.supports_open_dir_externally():
@@ -133,11 +128,17 @@ def create_user_system_scripts() -> None:
     if env.python_directory_app is None:
         raise RuntimeError('app python dir unset')
 
-    path = f'{env.python_directory_user}/sys/{env.version}'
+    path = (
+        f'{env.python_directory_user}/sys/'
+        f'{env.engine_version}_{env.engine_build_number}'
+    )
     pathtmp = path + '_tmp'
     if os.path.exists(path):
-        print('Delete Existing User Scripts and try again.')
-        _babase.screenmessage('Delete Existing User Scripts and try again.')
+        print('Delete Existing User Scripts first!')
+        _babase.screenmessage(
+            'Delete Existing User Scripts first!',
+            color=(1, 0, 0),
+        )
         return
     if os.path.exists(pathtmp):
         shutil.rmtree(pathtmp)
@@ -161,7 +162,7 @@ def create_user_system_scripts() -> None:
         f"'\nRestart {_babase.appname()} to use them."
         f' (use babase.quit() to exit the game)'
     )
-    _babase.screenmessage('Created User System Scripts')
+    _babase.screenmessage('Created User System Scripts', color=(0, 1, 0))
     if app.classic is not None and app.classic.platform == 'android':
         print(
             'Note: the new files may not be visible via '
@@ -178,17 +179,21 @@ def delete_user_system_scripts() -> None:
     if env.python_directory_user is None:
         raise RuntimeError('user python dir unset')
 
-    path = f'{env.python_directory_user}/sys/{env.version}'
+    path = (
+        f'{env.python_directory_user}/sys/'
+        f'{env.engine_version}_{env.engine_build_number}'
+    )
     if os.path.exists(path):
         shutil.rmtree(path)
-        print(
-            f'User system scripts deleted.\n'
-            f'Restart {_babase.appname()} to use internal'
-            f' scripts. (use babase.quit() to exit the game)'
+        print('User system scripts deleted.')
+        _babase.screenmessage('Deleted User System Scripts', color=(0, 1, 0))
+        _babase.screenmessage(
+            f'Closing {_babase.appname()} to make changes.', color=(0, 1, 0)
         )
-        _babase.screenmessage('Deleted User System Scripts')
+        _babase.apptimer(2.0, _babase.quit)
     else:
         print(f"User system scripts not found at '{path}'.")
+        _babase.screenmessage('User Scripts Not Found', color=(1, 0, 0))
 
     # If the sys path is empty, kill it.
     dpath = env.python_directory_user + '/sys'

@@ -9,9 +9,9 @@ import sys
 import logging
 from pathlib import Path
 from threading import Thread
+from functools import partial
 from typing import TYPE_CHECKING
 
-from efro.call import tpartial
 from efro.error import CleanError
 import _babase
 import bacommon.cloud
@@ -26,9 +26,9 @@ if TYPE_CHECKING:
 class WorkspaceSubsystem:
     """Subsystem for workspace handling in the app.
 
-    Category: **App Classes**
-
-    Access the single shared instance of this class at `ba.app.workspaces`.
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.workspaces` attr on the :class:`~babase.App`
+    class.
     """
 
     def __init__(self) -> None:
@@ -41,7 +41,10 @@ class WorkspaceSubsystem:
         workspacename: str,
         on_completed: Callable[[], None],
     ) -> None:
-        """(internal)"""
+        """(internal)
+
+        :meta private:
+        """
 
         # Do our work in a background thread so we don't destroy
         # interactivity.
@@ -118,7 +121,7 @@ class WorkspaceSubsystem:
                 state.iteration += 1
 
             _babase.pushcall(
-                tpartial(
+                partial(
                     self._successmsg,
                     Lstr(
                         resource='activatedText',
@@ -130,7 +133,7 @@ class WorkspaceSubsystem:
 
         except _SkipSyncError:
             _babase.pushcall(
-                tpartial(
+                partial(
                     self._errmsg,
                     Lstr(
                         resource='workspaceSyncReuseText',
@@ -145,7 +148,7 @@ class WorkspaceSubsystem:
             # be in wonky state.
             set_path = False
             _babase.pushcall(
-                tpartial(self._errmsg, Lstr(value=str(exc))),
+                partial(self._errmsg, Lstr(value=str(exc))),
                 from_other_thread=True,
             )
         except Exception:
@@ -153,7 +156,7 @@ class WorkspaceSubsystem:
             set_path = False
             logging.exception("Error syncing workspace '%s'.", workspacename)
             _babase.pushcall(
-                tpartial(
+                partial(
                     self._errmsg,
                     Lstr(
                         resource='workspaceSyncErrorText',

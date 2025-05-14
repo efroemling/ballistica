@@ -2,10 +2,11 @@
 
 #include "ballistica/scene_v1/python/class/python_class_scene_data_asset.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
 
@@ -15,7 +16,7 @@ auto PythonClassSceneDataAsset::tp_repr(PythonClassSceneDataAsset* self)
   auto&& m = *self->data_;
   return Py_BuildValue(
       "s", (std::string("<ba.Data ")
-            + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
+            + (m.exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
 }
@@ -30,9 +31,7 @@ void PythonClassSceneDataAsset::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a data object.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
-      "Use bascenev1.getdata() to instantiate one.";
+      "Use :meth:`bascenev1.getdata()` to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
@@ -53,7 +52,7 @@ auto PythonClassSceneDataAsset::Create(SceneDataAsset* data) -> PyObject* {
 }
 
 auto PythonClassSceneDataAsset::GetData(bool doraise) const -> SceneDataAsset* {
-  SceneDataAsset* data = data_->Get();
+  SceneDataAsset* data = data_->get();
   if (!data && doraise) {
     throw Exception("Invalid Data.", PyExcType::kNotFound);
   }
@@ -107,15 +106,15 @@ void PythonClassSceneDataAsset::tp_dealloc(PythonClassSceneDataAsset* self) {
 auto PythonClassSceneDataAsset::GetValue(PythonClassSceneDataAsset* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  SceneDataAsset* data = self->data_->Get();
+  SceneDataAsset* data = self->data_->get();
   if (data == nullptr) {
     throw Exception("Invalid data object.", PyExcType::kNotFound);
   }
   // haha really need to rename this class.
   base::DataAsset* datadata = data->data_data();
   datadata->Load();
-  datadata->set_last_used_time(g_core->GetAppTimeMillisecs());
-  PyObject* obj = datadata->object().Get();
+  datadata->set_last_used_time(g_core->AppTimeMillisecs());
+  PyObject* obj = datadata->object().get();
   assert(obj);
   Py_INCREF(obj);
   return obj;

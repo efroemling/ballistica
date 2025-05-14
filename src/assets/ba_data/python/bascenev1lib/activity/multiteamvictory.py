@@ -4,10 +4,14 @@
 
 from __future__ import annotations
 
-from typing_extensions import override
+from typing import override, TYPE_CHECKING
+
 import bascenev1 as bs
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
@@ -23,6 +27,8 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         self._allow_server_transition = True
         self._tips_text = None
         self._default_show_tips = False
+        self._ffa_top_player_info: list[Any] | None = None
+        self._ffa_top_player_rec: bs.PlayerRecord | None = None
 
     @override
     def on_begin(self) -> None:
@@ -69,6 +75,16 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                         )
                     )
             player_entries.sort(reverse=True, key=lambda x: x[0])
+            if len(player_entries) > 0:
+                # Store some info for the top ffa player so we can
+                # show winner info even if they leave.
+                self._ffa_top_player_info = list(player_entries[0])
+                self._ffa_top_player_info[1] = self._ffa_top_player_info[
+                    2
+                ].getname()
+                self._ffa_top_player_info[2] = self._ffa_top_player_info[
+                    2
+                ].get_icon()
         else:
             for _pkey, prec in self.stats.get_records().items():
                 player_entries.append((prec.score, prec.name_full, prec))
@@ -307,7 +323,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_killed = entry[2].killed_count
         if mkp is not None:
             Text(
-                bs.Lstr(resource='mostViolatedPlayerText'),
+                bs.Lstr(resource='mostDestroyedPlayerText'),
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -432,25 +448,42 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 maxwidth=250,
             ).autoretain()
         else:
-            offs_v = -80.0
+            offs_v = -80
+            assert isinstance(self.session, bs.MultiTeamSession)
+            series_length = self.session.get_ffa_series_length()
+            icon: dict | None
+            # Pull live player info if they're still around.
             if len(team.players) == 1:
+                icon = team.players[0].get_icon()
+                player_name = team.players[0].getname(full=True, icon=False)
+            # Otherwise use the special info we stored when we came in.
+            elif (
+                self._ffa_top_player_info is not None
+                and self._ffa_top_player_info[0] >= series_length
+            ):
+                icon = self._ffa_top_player_info[2]
+                player_name = self._ffa_top_player_info[1]
+            else:
+                icon = None
+                player_name = 'Player Not Found'
+
+            if icon is not None:
                 i = Image(
-                    team.players[0].get_icon(),
+                    icon,
                     position=(0, 143),
                     scale=(100, 100),
                 ).autoretain()
                 assert i.node
                 bs.animate(i.node, 'opacity', {0.0: 0.0, 0.25: 1.0})
-                ZoomText(
-                    bs.Lstr(
-                        value=team.players[0].getname(full=True, icon=False)
-                    ),
-                    position=(0, 97 + offs_v),
-                    color=team.color,
-                    scale=1.15,
-                    jitter=1.0,
-                    maxwidth=250,
-                ).autoretain()
+
+            ZoomText(
+                bs.Lstr(value=player_name),
+                position=(0, 97 + offs_v + (0 if icon is not None else 60)),
+                color=team.color,
+                scale=1.15,
+                jitter=1.0,
+                maxwidth=250,
+            ).autoretain()
 
         s_extra = 1.0 if self._is_ffa else 1.0
 

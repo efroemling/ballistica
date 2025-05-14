@@ -4,6 +4,7 @@
 #define BALLISTICA_BASE_INPUT_DEVICE_INPUT_DEVICE_DELEGATE_H_
 
 #include <optional>
+#include <string>
 
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
@@ -45,11 +46,11 @@ class InputDeviceDelegate : public Object {
   /// our accessor returns a reference to show this does not need
   /// to be checked.
   auto input_device() const -> InputDevice& {
-    BA_PRECONDITION_FATAL(input_device_.Exists());
+    BA_PRECONDITION_FATAL(input_device_.exists());
     return *input_device_;
   }
   void set_input_device(InputDevice* device);
-  auto InputDeviceExists() const -> bool { return input_device_.Exists(); }
+  auto InputDeviceExists() const -> bool { return input_device_.exists(); }
 
  private:
   Object::WeakRef<InputDevice> input_device_;

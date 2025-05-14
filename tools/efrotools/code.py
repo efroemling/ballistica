@@ -34,41 +34,31 @@ def format_cpp_str(
     Note that some cpp formatting keys off the filename, so a fake one can
     be optionally provided.
     """
-
-    # Note: previously was explicitly passing the config path from
-    # toolconfigsrc so we didn't require running from the project root
-    # dir, but this doesn't work on older clang-format versions. So now
-    # just parsing and passing the values itself which should do the
-    # same thing. Once most people have newer clang-format we can go
-    # back to just passing the path.
-    use_built_config = True
-
     cfconfig = os.path.join(projroot, '.clang-format')
 
     if not os.path.isfile(cfconfig):
         raise CleanError(
             f".clang-format file not found in '{projroot}';"
-            " do 'make prereqs' to generate it."
+            " do 'make env' to generate it."
         )
 
     with tempfile.TemporaryDirectory() as tempdir:
-        filename = os.path.join(tempdir, filename)
-        with open(filename, 'w', encoding='utf-8') as outfile:
+        tfilename = os.path.join(tempdir, filename)
+        with open(tfilename, 'w', encoding='utf-8') as outfile:
             outfile.write(text)
-        if use_built_config:
-            import yaml
-            import json
 
-            # clang-format uses yaml but seems passing our raw yaml
-            # config contents doesn't work; converting to json seems to
-            # work though.
-            with open(cfconfig, encoding='utf-8') as infile:
-                cfconfigdata = json.dumps(yaml.safe_load(infile.read()))
-            style_arg = f'--style={cfconfigdata}'
-        else:
-            style_arg = f'--style=file:{cfconfig}'
-        subprocess.run(['clang-format', style_arg, '-i', filename], check=True)
-        with open(filename, encoding='utf-8') as infile:
+        # Note: clang-format allows '--style=file:<path>' in version 14
+        # or newer, but older versions are still common, so the easiest
+        # way to work everywhere is to just copy our config file into
+        # the temp dir.
+        with open(cfconfig, 'rb') as infileb:
+            with open(os.path.join(tempdir, '.clang-format'), 'wb') as outfileb:
+                outfileb.write(infileb.read())
+
+        subprocess.run(
+            ['clang-format', '--style=file', '-i', tfilename], check=True
+        )
+        with open(tfilename, encoding='utf-8') as infile:
             return infile.read()
 
 
@@ -77,7 +67,7 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
     import concurrent.futures
     from multiprocessing import cpu_count
 
-    from efrotools import get_files_hash
+    from efrotools.util import get_files_hash
 
     if os.path.abspath(projroot) != os.getcwd():
         raise RuntimeError('We expect to be running from project root.')
@@ -91,7 +81,7 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
     if not os.path.isfile(cfconfig):
         raise CleanError(
             f".clang-format file not found in '{os.getcwd()}';"
-            " do 'make prereqs' to generate it."
+            " do 'make env' to generate it."
         )
 
     # Exclude generated files or else we could mess up dependencies
@@ -105,8 +95,6 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
     def format_file(filename: str) -> dict[str, Any]:
         start_time = time.monotonic()
 
-        # Note: seems os.system does not unlock the gil;
-        # make sure to use subprocess.
         result = subprocess.call(['clang-format', '-i', filename])
         if result != 0:
             raise RuntimeError(f'Formatting failed for {filename}')
@@ -137,7 +125,7 @@ def check_cpplint(projroot: Path, full: bool) -> None:
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
 
-    from efrotools import getprojectconfig, PYVER
+    from efrotools.project import getprojectconfig
     from efro.terminal import Clr
 
     os.chdir(projroot)
@@ -173,21 +161,25 @@ def check_cpplint(projroot: Path, full: bool) -> None:
         )
 
     disabled_filters: list[str] = [
-        'build/include_what_you_use',
-        'build/c++11',
+        # 'build/include_what_you_use',
+        # 'build/c++11',
+        'build/c++17',
         'readability/nolint',
         'legal/copyright',
+        # As of cpplint 2.0 (Oct 2024), seeing a bunch of false positives
+        # for this based on how clang-format formats things.
+        'whitespace/indent_namespace',
     ]
     filterstr = ','.join(f'-{x}' for x in disabled_filters)
 
     def lint_file(filename: str) -> None:
         result = subprocess.call(
             [
-                f'python{PYVER}',
+                sys.executable,
                 # Currently (May 2023) seeing a bunch of warnings
                 # about 'sre_compile deprecated'. Ignoring them.
-                '-W',
-                'ignore::DeprecationWarning',
+                # '-W',
+                # 'ignore::DeprecationWarning',
                 '-m',
                 'cpplint',
                 '--root=src',
@@ -221,7 +213,7 @@ def get_code_filenames(projroot: Path, include_generated: bool) -> list[str]:
     could cause dirty generated files to not get updated properly when
     their sources change).
     """
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
 
     exts = ('.h', '.c', '.cc', '.cpp', '.cxx', '.m', '.mm')
     places = getprojectconfig(projroot).get('code_source_dirs', None)
@@ -250,16 +242,16 @@ def get_code_filenames(projroot: Path, include_generated: bool) -> list[str]:
     return out
 
 
-def black_base_args() -> list[str]:
+def black_base_args(projroot: Path) -> list[str]:
     """Build base args for running black Python formatting."""
-    from efrotools import PYVER
+    from efrotools.pyver import PYVER, get_project_python_executable
 
     pyver = 'py' + PYVER.replace('.', '')
     if len(pyver) != 5:
         raise RuntimeError('Py version filtering err.')
 
     return [
-        f'python{PYVER}',
+        get_project_python_executable(projroot),
         '-m',
         'black',
         '--target-version',
@@ -272,7 +264,7 @@ def black_base_args() -> list[str]:
 
 def format_project_python_files(projroot: Path, full: bool) -> None:
     """Runs formatting on all of our Python code."""
-    from efrotools import get_string_hash
+    from efrotools.util import get_string_hash
 
     os.chdir(projroot)
     cachepath = Path(projroot, '.cache/format_project_python_files')
@@ -283,14 +275,14 @@ def format_project_python_files(projroot: Path, full: bool) -> None:
     filenames = get_script_filenames(projroot)
 
     # Calc a config hash so we redo formatting after it changes.
-    confighash = get_string_hash(' '.join(black_base_args()))
+    confighash = get_string_hash(' '.join(black_base_args(projroot)))
     cache.update(filenames, confighash)
 
     dirtyfiles = cache.get_dirty_files()
 
     if dirtyfiles:
         # Run a single black command to batch everything.
-        cmd = black_base_args() + list(dirtyfiles)
+        cmd = black_base_args(projroot) + list(dirtyfiles)
         if subprocess.run(cmd, check=False).returncode != 0:
             raise CleanError(
                 f'Black formatting failed for {len(dirtyfiles)} files.'
@@ -307,14 +299,20 @@ def format_project_python_files(projroot: Path, full: bool) -> None:
     )
 
 
-def format_python_str(code: str) -> str:
+def format_python_str(projroot: Path | str, code: str) -> str:
     """Run our Python formatting on the provided inline code."""
+    if isinstance(projroot, str):
+        projroot = Path(projroot)
 
-    return subprocess.run(
-        black_base_args() + ['--code', code],
-        capture_output=True,
-        check=True,
-    ).stdout.decode()
+    cmd = black_base_args(projroot) + ['--code', code]
+    results = subprocess.run(cmd, capture_output=True, check=False)
+    if results.returncode == 0:
+        return results.stdout.decode()
+
+    cmdprint = cmd[:-1] + ['<input text>']
+    raise RuntimeError(
+        f'Black command failed: {cmdprint}. stderr: {results.stderr.decode()}'
+    )
 
 
 def _should_include_script(fnamefull: str) -> bool:
@@ -338,7 +336,7 @@ def _should_include_script(fnamefull: str) -> bool:
 
 def get_script_filenames(projroot: Path) -> list[str]:
     """Return the Python filenames to lint-check or auto-format."""
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
 
     proot = f'{projroot}/'
 
@@ -386,7 +384,7 @@ def runpylint(projroot: Path, filenames: list[str]) -> None:
 
 def pylint(projroot: Path, full: bool, fast: bool) -> None:
     """Run Pylint on all scripts in our project (with smart dep tracking)."""
-    from efrotools import get_files_hash
+    from efrotools.util import get_files_hash
     from efro.terminal import Clr
 
     pylintrc = Path(projroot, '.pylintrc')
@@ -457,6 +455,7 @@ def _dirty_dep_check(
             return curstate
 
         # Ok; there's no current state for this file.
+        #
         # First lets immediately mark it as clean so if a dependency of ours
         # queries it we won't loop infinitely.  (If we're actually dirty that
         # will be reflected properly once we're done).
@@ -496,7 +495,8 @@ def _dirty_dep_check(
                         dirty = True
                         break
 
-    # Cache and return our dirty state..
+    # Cache and return our dirty state.
+    #
     # Note: for fast mode we limit to recursion==0 so we only write when
     # the file itself is being directly visited.
     if recursion == 0:
@@ -528,9 +528,9 @@ def _run_pylint(
         if result != 0:
             raise CleanError(f'Pylint failed for {result} file(s).')
 
-        # Sanity check: when the linter fails we should always be failing too.
-        # If not, it means we're probably missing something and incorrectly
-        # marking a failed file as clean.
+        # Sanity check: when the linter fails we should always be
+        # failing too. If not, it means we're probably missing something
+        # and incorrectly marking a failed file as clean.
         if run.linter.msg_status != 0 and result == 0:
             raise RuntimeError(
                 'Pylint linter returned non-zero result'
@@ -562,10 +562,10 @@ def _apply_pylint_run_to_cache(
 
     from astroid import modutils
 
-    from efrotools import getprojectconfig
+    from efrotools.project import getprojectconfig
 
-    # First off, build a map of dirtyfiles to module names
-    # (and the corresponding reverse map).
+    # First off, build a map of dirtyfiles to module names (and the
+    # corresponding reverse map).
     paths_to_names: dict[str, str] = {}
     names_to_paths: dict[str, str] = {}
     for fname in allfiles:
@@ -583,17 +583,19 @@ def _apply_pylint_run_to_cache(
         names_to_paths[val] = key
 
     # If there's any cyclic-import errors, just mark all deps as dirty;
-    # don't want to add the logic to figure out which ones the cycles cover
-    # since they all seems to appear as errors for the last file in the list.
+    # don't want to add the logic to figure out which ones the cycles
+    # cover since they all seems to appear as errors for the last file
+    # in the list.
     cycles: int = run.linter.stats.by_msg.get('cyclic-import', 0)
     have_dep_cycles: bool = cycles > 0
     if have_dep_cycles:
         print(f'Found {cycles} cycle-errors; keeping all dirty files dirty.')
 
     # Update dependencies for what we just ran.
-    # A run leaves us with a map of modules to a list of the modules that
-    # imports them. We want the opposite though: for each of our modules
-    # we want a list of the modules it imports.
+    #
+    # A run leaves us with a map of modules to a list of the modules
+    # that imports them. We want the opposite though: for each of our
+    # modules we want a list of the modules it imports.
     reversedeps = {}
 
     # Make sure these are all proper module names; no foo.bar.__init__ stuff.
@@ -616,10 +618,10 @@ def _apply_pylint_run_to_cache(
     # Add a few that this package itself triggers.
     ignored_untracked_deps |= {'pylint.lint', 'astroid.modutils', 'astroid'}
 
-    # EW; as of Python 3.9, suddenly I'm seeing system modules showing up
-    # here where I wasn't before. I wonder what changed. Anyway, explicitly
-    # suppressing them here but should come up with a more robust system
-    # as I feel this will get annoying fast.
+    # EW; as of Python 3.9, suddenly I'm seeing system modules showing
+    # up here where I wasn't before. I wonder what changed. Anyway,
+    # explicitly suppressing them here but should come up with a more
+    # robust system as I feel this will get annoying fast.
     ignored_untracked_deps |= {
         're',
         'importlib',
@@ -684,6 +686,7 @@ def _apply_pylint_run_to_cache(
     }
 
     # Special case:
+    #
     # Ignore generated dummy-modules (we don't directly check those anymore
     # so they'll be listed as external).
     if os.path.exists('build/dummymodules'):
@@ -721,17 +724,17 @@ def _apply_pylint_run_to_cache(
             depsval = [names_to_paths[dep] for dep in deps[fmod]]
         cache.entries[fname]['deps'] = depsval
 
-    # Let's print a list of modules with no detected deps so we can make sure
-    # this is behaving.
+    # Let's print a list of modules with no detected deps so we can make
+    # sure this is behaving.
     if no_deps_modules:
         if bool(False):
             print(
                 'NOTE: no dependencies found for:', ', '.join(no_deps_modules)
             )
 
-    # Ok, now go through all dirtyfiles involved in this run.
-    # Mark them as either errored or clean depending on whether there's
-    # error info for them in the run stats.
+    # Ok, now go through all dirtyfiles involved in this run. Mark them
+    # as either errored or clean depending on whether there's error info
+    # for them in the run stats.
 
     # Once again need to convert any foo.bar.__init__ to foo.bar.
     stats_by_module: dict[str, Any] = {
@@ -888,6 +891,7 @@ def _run_idea_inspections(
 
     Throw an Exception if anything is found or goes wrong.
     """
+    # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-locals
     # pylint: disable=consider-using-with
 
@@ -963,6 +967,7 @@ def _run_idea_inspections_cached(
     inspectdir: Path | None = None,
 ) -> None:
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-positional-arguments
     import hashlib
     import json
 

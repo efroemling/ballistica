@@ -4,9 +4,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, overload
+from typing import TYPE_CHECKING, overload, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.spaz import Spaz
@@ -14,14 +13,9 @@ from bascenev1lib.actor.spaz import Spaz
 if TYPE_CHECKING:
     from typing import Any, Sequence, Literal
 
-PlayerT = TypeVar('PlayerT', bound=bs.Player)
-
 
 class PlayerSpazHurtMessage:
-    """A message saying a PlayerSpaz was hurt.
-
-    Category: **Message Classes**
-    """
+    """A message saying a PlayerSpaz was hurt."""
 
     spaz: PlayerSpaz
     """The PlayerSpaz that was hurt"""
@@ -34,8 +28,6 @@ class PlayerSpazHurtMessage:
 class PlayerSpaz(Spaz):
     """A Spaz subclass meant to be controlled by a bascenev1.Player.
 
-    Category: **Gameplay Classes**
-
     When a PlayerSpaz dies, it delivers a bascenev1.PlayerDiedMessage
     to the current bascenev1.Activity. (unless the death was the result
     of the player leaving the game, in which case no message is sent)
@@ -47,6 +39,7 @@ class PlayerSpaz(Spaz):
     def __init__(
         self,
         player: bs.Player,
+        *,
         color: Sequence[float] = (1.0, 1.0, 1.0),
         highlight: Sequence[float] = (0.5, 0.5, 0.5),
         character: str = 'Spaz',
@@ -77,16 +70,16 @@ class PlayerSpaz(Spaz):
     # Overloads to tell the type system our return type based on doraise val.
 
     @overload
-    def getplayer(
+    def getplayer[PlayerT: bs.Player](
         self, playertype: type[PlayerT], doraise: Literal[False] = False
     ) -> PlayerT | None: ...
 
     @overload
-    def getplayer(
+    def getplayer[PlayerT: bs.Player](
         self, playertype: type[PlayerT], doraise: Literal[True]
     ) -> PlayerT: ...
 
-    def getplayer(
+    def getplayer[PlayerT: bs.Player](
         self, playertype: type[PlayerT], doraise: bool = False
     ) -> PlayerT | None:
         """Get the bascenev1.Player associated with this Spaz.
@@ -103,6 +96,7 @@ class PlayerSpaz(Spaz):
 
     def connect_controls_to_player(
         self,
+        *,
         enable_jump: bool = True,
         enable_punch: bool = True,
         enable_pickup: bool = True,
@@ -223,10 +217,20 @@ class PlayerSpaz(Spaz):
         elif isinstance(msg, bs.DieMessage):
             # Report player deaths to the game.
             if not self._dead:
-                # Immediate-mode or left-game deaths don't count as 'kills'.
-                killed = (
-                    not msg.immediate and msg.how is not bs.DeathType.LEFT_GAME
+                # Was this player killed while being held?
+                was_held = self.held_count > 0 and self.last_player_held_by
+                # Was this player attacked before death?
+                was_attacked_recently = (
+                    self.last_player_attacked_by
+                    and bs.time() - self.last_attacked_time < 4.0
                 )
+                # Leaving the game doesn't count as a kill *unless*
+                # someone does it intentionally while being attacked.
+                left_game_cleanly = msg.how is bs.DeathType.LEFT_GAME and not (
+                    was_held or was_attacked_recently
+                )
+
+                killed = not (msg.immediate or left_game_cleanly)
 
                 activity = self._activity()
 
@@ -236,7 +240,7 @@ class PlayerSpaz(Spaz):
                 else:
                     # If this player was being held at the time of death,
                     # the holder is the killer.
-                    if self.held_count > 0 and self.last_player_held_by:
+                    if was_held:
                         killerplayer = self.last_player_held_by
                     else:
                         # Otherwise, if they were attacked by someone in the
@@ -246,10 +250,7 @@ class PlayerSpaz(Spaz):
                         #  all bot kills would register as suicides; need to
                         #  change this from last_player_attacked_by to
                         #  something like last_actor_attacked_by to fix that.
-                        if (
-                            self.last_player_attacked_by
-                            and bs.time() - self.last_attacked_time < 4.0
-                        ):
+                        if was_attacked_recently:
                             killerplayer = self.last_player_attacked_by
                         else:
                             # ok, call it a suicide unless we're in co-op

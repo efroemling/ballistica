@@ -2,23 +2,27 @@
 
 #include "ballistica/shared/generic/utils.h"
 
+#include <cstdio>
 #include <fstream>
+#include <list>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/generic/json.h"
-#include "ballistica/shared/generic/runnable.h"
 #include "ballistica/shared/generic/utf8.h"
 #include "ballistica/shared/math/random.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica {
 
+using core::g_core;
+
 #define USE_BAKED_RANDS 1
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #endif
 
 #if USE_BAKED_RANDS
@@ -221,9 +225,9 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
         }
       }
       logged_count++;
-      Log(LogLevel::kError, "GOT INVALID UTF8 SEQUENCE: (" + log_str
-                                + "); RETURNING '" + to + "'; LOC '" + loc
-                                + "'");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "GOT INVALID UTF8 SEQUENCE: (" + log_str + "); RETURNING '"
+                      + to + "'; LOC '" + loc + "'");
     }
 
   } else {
@@ -332,8 +336,8 @@ auto Utils::UTF8FromUnicode(std::vector<uint32_t> unichars) -> std::string {
   return buffer.data();
 }
 
-auto Utils::UnicodeFromUTF8(const std::string& s_in,
-                            const char* loc) -> std::vector<uint32_t> {
+auto Utils::UnicodeFromUTF8(const std::string& s_in, const char* loc)
+    -> std::vector<uint32_t> {
   std::string s = GetValidUTF8(s_in.c_str(), loc);
   // worst case every char is a character (plus trailing 0)
   std::vector<uint32_t> vals(s.size() + 1);

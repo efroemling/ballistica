@@ -6,35 +6,47 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
-from efro.call import tpartial
 from efro.error import CommunicationError
+from efro.call import CallbackSet
 from bacommon.login import LoginType
 import _babase
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable
 
     from babase._login import LoginAdapter, LoginInfo
 
-
-DEBUG_LOG = False
+logger = logging.getLogger('ba.accountv2')
 
 
 class AccountV2Subsystem:
     """Subsystem for modern account handling in the app.
 
-    Category: **App Classes**
-
-    Access the single shared instance of this class at 'ba.app.plus.accounts'.
+    Access the single shared instance of this class via the
+    :attr:`~baplus.PlusAppSubsystem.accounts` attr on the
+    :class:`~baplus.PlusAppSubsystem` class.
     """
 
     def __init__(self) -> None:
+        assert _babase.in_logic_thread()
+
         from babase._login import LoginAdapterGPGS, LoginAdapterGameCenter
 
-        # Whether or not everything related to an initial login
-        # (or lack thereof) has completed. This includes things like
+        # Register to be informed when connectivity changes.
+        plus = _babase.app.plus
+        self._connectivity_changed_cb = (
+            None
+            if plus is None
+            else plus.cloud.on_connectivity_changed_callbacks.register(
+                self._on_cloud_connectivity_changed
+            )
+        )
+
+        # Whether or not everything related to an initial sign in (or
+        # lack thereof) has completed. This includes things like
         # workspace syncing. Completion of this is what flips the app
         # into 'running' state.
         self._initial_sign_in_completed = False
@@ -46,6 +58,9 @@ class AccountV2Subsystem:
         self._implicit_signed_in_adapter: LoginAdapter | None = None
         self._implicit_state_changed = False
         self._can_do_auto_sign_in = True
+        self.on_primary_account_changed_callbacks: CallbackSet[
+            Callable[[AccountV2Handle | None], None]
+        ] = CallbackSet()
 
         adapter: LoginAdapter
         if _babase.using_google_play_game_services():
@@ -56,19 +71,21 @@ class AccountV2Subsystem:
             self.login_adapters[adapter.login_type] = adapter
 
     def on_app_loading(self) -> None:
-        """Should be called at standard on_app_loading time."""
+        """Internal; Called at standard on_app_loading time.
 
+        :meta private:
+        """
         for adapter in self.login_adapters.values():
             adapter.on_app_loading()
 
     def have_primary_credentials(self) -> bool:
         """Are credentials currently set for the primary app account?
 
-        Note that this does not mean these credentials are currently valid;
-        only that they exist. If/when credentials are validated, the 'primary'
-        account handle will be set.
+        Note that this does not mean these credentials have been checked
+        for validity; only that they exist. If/when credentials are
+        validated, the :attr:`primary` account handle will be set.
         """
-        raise NotImplementedError('This should be overridden.')
+        raise NotImplementedError()
 
     @property
     def primary(self) -> AccountV2Handle | None:
@@ -82,8 +99,17 @@ class AccountV2Subsystem:
 
         Will be called with None on log-outs and when new credentials
         are set but have not yet been verified.
+
+        :meta private:
         """
         assert _babase.in_logic_thread()
+
+        # Fire any registered callbacks.
+        for call in self.on_primary_account_changed_callbacks.getcalls():
+            try:
+                call(account)
+            except Exception:
+                logging.exception('Error in primary-account-changed callback.')
 
         # Currently don't do anything special on sign-outs.
         if account is None:
@@ -105,9 +131,9 @@ class AccountV2Subsystem:
                     on_completed=self._on_set_active_workspace_completed,
                 )
             else:
-                # Don't activate workspaces if we've already told the game
-                # that initial-log-in is done or if we've already kicked
-                # off a workspace load.
+                # Don't activate workspaces if we've already told the
+                # game that initial-log-in is done or if we've already
+                # kicked off a workspace load.
                 _babase.screenmessage(
                     f'\'{account.workspacename}\''
                     f' will be activated at next app launch.',
@@ -122,15 +148,20 @@ class AccountV2Subsystem:
             _babase.app.on_initial_sign_in_complete()
 
     def on_active_logins_changed(self, logins: dict[LoginType, str]) -> None:
-        """Should be called when logins for the active account change."""
+        """Called when logins for the active account change.
 
+        :meta private:
+        """
         for adapter in self.login_adapters.values():
             adapter.set_active_logins(logins)
 
     def on_implicit_sign_in(
         self, login_type: LoginType, login_id: str, display_name: str
     ) -> None:
-        """An implicit sign-in happened (called by native layer)."""
+        """An implicit sign-in happened (called by native layer).
+
+        :meta private:
+        """
         from babase._login import LoginAdapter
 
         assert _babase.in_logic_thread()
@@ -143,17 +174,22 @@ class AccountV2Subsystem:
             )
 
     def on_implicit_sign_out(self, login_type: LoginType) -> None:
-        """An implicit sign-out happened (called by native layer)."""
+        """An implicit sign-out happened (called by native layer).
+
+        :meta private:
+        """
         assert _babase.in_logic_thread()
         with _babase.ContextRef.empty():
             self.login_adapters[login_type].set_implicit_login_state(None)
 
     def on_no_initial_primary_account(self) -> None:
-        """Callback run if the app has no primary account after launch.
+        """Internal; run if the app has no primary account after launch.
 
-        Either this callback or on_primary_account_changed will be called
-        within a few seconds of app launch; the app can move forward
-        with the startup sequence at that point.
+        Either this callback or on_primary_account_changed will be
+        called within a few seconds of app launch; the app can move
+        forward with the startup sequence at that point.
+
+        :meta private:
         """
         if not self._initial_sign_in_completed:
             self._initial_sign_in_completed = True
@@ -170,13 +206,15 @@ class AccountV2Subsystem:
         login_type: LoginType,
         state: LoginAdapter.ImplicitLoginState | None,
     ) -> None:
-        """Called when implicit login state changes.
+        """Internal; Called when implicit login state changes.
 
         Login systems that tend to sign themselves in/out in the
         background are considered implicit. We may choose to honor or
         ignore their states, allowing the user to opt for other login
         types even if the default implicit one can't be explicitly
         logged out or otherwise controlled.
+
+        :meta private:
         """
         from babase._language import Lstr
 
@@ -223,7 +261,7 @@ class AccountV2Subsystem:
                 if service_str is not None:
                     _babase.apptimer(
                         2.0,
-                        tpartial(
+                        partial(
                             _babase.screenmessage,
                             Lstr(
                                 resource='notUsingAccountText',
@@ -242,19 +280,18 @@ class AccountV2Subsystem:
         # generally this means the user has explicitly signed in/out or
         # switched accounts within that back-end.
         if prev_state != new_state:
-            if DEBUG_LOG:
-                logging.debug(
-                    'AccountV2: Implicit state changed (%s -> %s);'
-                    ' will update app sign-in state accordingly.',
-                    prev_state,
-                    new_state,
-                )
+            logger.debug(
+                'Implicit state changed (%s -> %s);'
+                ' will update app sign-in state accordingly.',
+                prev_state,
+                new_state,
+            )
             self._implicit_state_changed = True
 
         # We may want to auto-sign-in based on this new state.
         self._update_auto_sign_in()
 
-    def on_cloud_connectivity_changed(self, connected: bool) -> None:
+    def _on_cloud_connectivity_changed(self, connected: bool) -> None:
         """Should be called with cloud connectivity changes."""
         del connected  # Unused.
         assert _babase.in_logic_thread()
@@ -263,12 +300,20 @@ class AccountV2Subsystem:
         self._update_auto_sign_in()
 
     def do_get_primary(self) -> AccountV2Handle | None:
-        """Internal - should be overridden by subclass."""
-        raise NotImplementedError('This should be overridden.')
+        """Internal; should be overridden by subclass.
+
+        :meta private:
+        """
+        raise NotImplementedError()
 
     def set_primary_credentials(self, credentials: str | None) -> None:
-        """Set credentials for the primary app account."""
-        raise NotImplementedError('This should be overridden.')
+        """Set credentials for the primary app account.
+
+        Once credentials are set, they will be verified in the cloud
+        asynchronously. If verification is successful, the
+        :attr:`primary` attr will be set to the resulting account.
+        """
+        raise NotImplementedError()
 
     def _update_auto_sign_in(self) -> None:
         plus = _babase.app.plus
@@ -279,11 +324,9 @@ class AccountV2Subsystem:
             if self._implicit_signed_in_adapter is None:
                 # If implicit back-end has signed out, we follow suit
                 # immediately; no need to wait for network connectivity.
-                if DEBUG_LOG:
-                    logging.debug(
-                        'AccountV2: Signing out as result'
-                        ' of implicit state change...',
-                    )
+                logger.debug(
+                    'Signing out as result of implicit state change...',
+                )
                 plus.accounts.set_primary_credentials(None)
                 self._implicit_state_changed = False
 
@@ -300,11 +343,9 @@ class AccountV2Subsystem:
                 # switching accounts via the back-end). NOTE: should
                 # test case where we don't have connectivity here.
                 if plus.cloud.is_connected():
-                    if DEBUG_LOG:
-                        logging.debug(
-                            'AccountV2: Signing in as result'
-                            ' of implicit state change...',
-                        )
+                    logger.debug(
+                        'Signing in as result of implicit state change...',
+                    )
                     self._implicit_signed_in_adapter.sign_in(
                         self._on_explicit_sign_in_completed,
                         description='implicit state change',
@@ -335,10 +376,9 @@ class AccountV2Subsystem:
             and not signed_in_v2
             and self._implicit_signed_in_adapter is not None
         ):
-            if DEBUG_LOG:
-                logging.debug(
-                    'AccountV2: Signing in due to on-launch-auto-sign-in...',
-                )
+            logger.debug(
+                'Signing in due to on-launch-auto-sign-in...',
+            )
             self._can_do_auto_sign_in = False  # Only ATTEMPT once
             self._implicit_signed_in_adapter.sign_in(
                 self._on_implicit_sign_in_completed, description='auto-sign-in'
@@ -425,14 +465,23 @@ class AccountV2Subsystem:
 class AccountV2Handle:
     """Handle for interacting with a V2 account.
 
-    This class supports the 'with' statement, which is how it is
+    This class supports the ``with`` statement, which is how it is
     used with some operations such as cloud messaging.
     """
 
+    #: The id of this account.
     accountid: str
+
+    #: The last known tag for this account.
     tag: str
+
+    #: The name of the workspace being synced to this client.
     workspacename: str | None
+
+    #: The id of the workspace being synced to this client, if any.
     workspaceid: str | None
+
+    #: Info about last known logins associated with this account.
     logins: dict[LoginType, LoginInfo]
 
     def __enter__(self) -> None:

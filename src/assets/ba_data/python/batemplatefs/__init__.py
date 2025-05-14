@@ -2,14 +2,14 @@
 #
 """Ballistica Template Feature Set - just an example."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 
 # Package up various private bits (including stuff from our native
 # module) into a nice clean public API.
 from _batemplatefs import hello_again_world
-from batemplatefs._subsystem import TemplateFsSubsystem
+from batemplatefs._appsubsystem import TemplateFsAppSubsystem
 
 __all__ = [
-    'TemplateFsSubsystem',
+    'TemplateFsAppSubsystem',
     'hello_again_world',
 ]

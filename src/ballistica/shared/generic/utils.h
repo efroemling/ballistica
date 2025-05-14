@@ -11,7 +11,7 @@
 
 // Need platform-specific headers here so we can inline calls to htonl/etc.
 // (perhaps should move those functions to their own file?)
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #include <winsock2.h>
 #else
 #include <netinet/in.h>
@@ -48,8 +48,8 @@ class Utils {
   /// control characters).
   static auto StripNonAsciiFromUTF8(const std::string& s) -> std::string;
 
-  static auto UnicodeFromUTF8(const std::string& s,
-                              const char* loc) -> std::vector<uint32_t>;
+  static auto UnicodeFromUTF8(const std::string& s, const char* loc)
+      -> std::vector<uint32_t>;
   static auto UTF8FromUnicode(std::vector<uint32_t> unichars) -> std::string;
   static auto UTF8FromUnicodeChar(uint32_t c) -> std::string;
   static auto UTF8StringLength(const char* val) -> int;
@@ -376,7 +376,6 @@ class Utils {
   static float precalc_rands_1_[];
   static float precalc_rands_2_[];
   static float precalc_rands_3_[];
-  // std::unique_ptr<Huffman> huffman_;
 };
 
 }  // namespace ballistica

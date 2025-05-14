@@ -7,7 +7,7 @@ from __future__ import annotations
 import copy
 import random
 import logging
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
 
-class PlaylistEditGameWindow(bui.Window):
+class PlaylistEditGameWindow(bui.MainWindow):
     """Window for editing a game config."""
 
     def __init__(
@@ -24,12 +24,14 @@ class PlaylistEditGameWindow(bui.Window):
         gametype: type[bs.GameActivity],
         sessiontype: type[bs.Session],
         config: dict[str, Any] | None,
-        completion_call: Callable[[dict[str, Any] | None], Any],
+        completion_call: Callable[[dict[str, Any] | None, bui.MainWindow], Any],
         default_selection: str | None = None,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
         edit_info: dict[str, Any] | None = None,
     ):
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         from bascenev1 import (
@@ -64,6 +66,7 @@ class PlaylistEditGameWindow(bui.Window):
             bui.screenmessage(bui.Lstr(resource='noValidMapsErrorText'))
             raise RuntimeError('No valid maps found.')
 
+        self._config = config
         self._settings_defs = gametype.get_available_settings(sessiontype)
         self._completion_call = completion_call
 
@@ -106,13 +109,14 @@ class PlaylistEditGameWindow(bui.Window):
         width = 820 if uiscale is bui.UIScale.SMALL else 620
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         height = (
-            365
+            400
             if uiscale is bui.UIScale.SMALL
             else 460 if uiscale is bui.UIScale.MEDIUM else 550
         )
         spacing = 52
         y_extra = 15
         y_extra2 = 21
+        yoffs = -30 if uiscale is bui.UIScale.SMALL else 0
 
         map_tex_name = get_map_class(self._map).get_preview_texture_name()
         if map_tex_name is None:
@@ -123,30 +127,31 @@ class PlaylistEditGameWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
-                transition=transition,
                 scale=(
-                    2.19
+                    2.3
                     if uiscale is bui.UIScale.SMALL
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -17) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(45 + x_inset, height - 82 + y_extra2),
-            size=(180, 70) if is_add else (180, 65),
+            position=(45 + x_inset, height - 82 + y_extra2 + yoffs),
+            size=(60, 48) if is_add else (180, 65),
             label=(
-                bui.Lstr(resource='backText')
+                bui.charstr(bui.SpecialChar.BACK)
                 if is_add
                 else bui.Lstr(resource='cancelText')
             ),
-            button_type='back' if is_add else None,
+            button_type='backSmall' if is_add else None,
             autoselect=True,
-            scale=0.75,
+            scale=1.0 if is_add else 0.75,
             text_scale=1.3,
             on_activate_call=bui.Call(self._cancel),
         )
@@ -154,24 +159,23 @@ class PlaylistEditGameWindow(bui.Window):
 
         add_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(width - (193 + x_inset), height - 82 + y_extra2),
+            position=(width - (193 + x_inset), height - 82 + y_extra2 + yoffs),
             size=(200, 65),
             scale=0.75,
             text_scale=1.3,
             label=(
-                bui.Lstr(resource=self._r + '.addGameText')
+                bui.Lstr(resource=f'{self._r}.addGameText')
                 if is_add
-                else bui.Lstr(resource='doneText')
+                else bui.Lstr(resource='applyText')
             ),
         )
 
-        if bui.app.ui_v1.use_toolbars:
-            pbtn = bui.get_special_widget('party_button')
-            bui.widget(edit=add_button, right_widget=pbtn, up_widget=pbtn)
+        pbtn = bui.get_special_widget('squad_button')
+        bui.widget(edit=add_button, right_widget=pbtn, up_widget=pbtn)
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(-8, height - 70 + y_extra2),
+            position=(-8, height - 70 + y_extra2 + yoffs),
             size=(width, 25),
             text=gametype.get_display_string(),
             color=bui.app.ui_v1.title_color,
@@ -191,19 +195,24 @@ class PlaylistEditGameWindow(bui.Window):
         scroll_width = width - (86 + 2 * x_inset)
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            position=(44 + x_inset, 35 + y_extra),
-            size=(scroll_width, height - 116),
+            position=(
+                44 + x_inset,
+                (80 if uiscale is bui.UIScale.SMALL else 35) + y_extra + yoffs,
+            ),
+            size=(
+                scroll_width,
+                height - (166 if uiscale is bui.UIScale.SMALL else 116),
+            ),
             highlight=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
+            border_opacity=0.4,
         )
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
             size=(scroll_width, scroll_height),
             background=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 
@@ -483,11 +492,11 @@ class PlaylistEditGameWindow(bui.Window):
                 if prev_widgets is not None:
                     # Wire our rightmost to their rightmost.
                     bui.widget(edit=prev_widgets[-1], down_widget=cwdg[-1])
-                    bui.widget(cwdg[-1], up_widget=prev_widgets[-1])
+                    bui.widget(edit=cwdg[-1], up_widget=prev_widgets[-1])
 
                     # Wire our leftmost to their leftmost.
                     bui.widget(edit=prev_widgets[0], down_widget=cwdg[0])
-                    bui.widget(cwdg[0], up_widget=prev_widgets[0])
+                    bui.widget(edit=cwdg[0], up_widget=prev_widgets[0])
                 prev_widgets = cwdg
         except Exception:
             logging.exception(
@@ -509,6 +518,29 @@ class PlaylistEditGameWindow(bui.Window):
                 edit=self._subcontainer, selected_child=map_button
             )
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull things out of self here so we don't refer to self in the
+        # lambda below which would keep us alive.
+        gametype = self._gametype
+        sessiontype = self._sessiontype
+        config = self._config
+        completion_call = self._completion_call
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                gametype=gametype,
+                sessiontype=sessiontype,
+                config=config,
+                completion_call=completion_call,
+            )
+        )
+
     def _get_localized_setting_name(self, name: str) -> bui.Lstr:
         return bui.Lstr(translate=('settingNames', name))
 
@@ -516,22 +548,21 @@ class PlaylistEditGameWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.mapselect import PlaylistMapSelectWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
+        self._config = self._getconfig()
+
         # Replace ourself with the map-select UI.
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
+        self.main_window_replace(
             PlaylistMapSelectWindow(
                 self._gametype,
                 self._sessiontype,
-                copy.deepcopy(self._getconfig()),
+                self._config,
                 self._edit_info,
                 self._completion_call,
-            ).get_root_widget(),
-            from_window=self._root_widget,
+            )
         )
 
     def _choice_inc(
@@ -561,7 +592,7 @@ class PlaylistEditGameWindow(bui.Window):
         ][1]
 
     def _cancel(self) -> None:
-        self._completion_call(None)
+        self._completion_call(None, self)
 
     def _check_value_change(
         self, setting_name: str, widget: bui.Widget, value: int
@@ -582,7 +613,7 @@ class PlaylistEditGameWindow(bui.Window):
         return {'settings': settings}
 
     def _add(self) -> None:
-        self._completion_call(copy.deepcopy(self._getconfig()))
+        self._completion_call(self._getconfig(), self)
 
     def _inc(
         self,
@@ -593,6 +624,7 @@ class PlaylistEditGameWindow(bui.Window):
         setting_type: type,
         setting_name: str,
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
         if setting_type == float:
             val = float(cast(str, bui.textwidget(query=ctrl)))
         else:

@@ -1,4 +1,5 @@
 {
+  "assets": "a-0.bastdassets.5",
   "code_source_dirs": [
     "src/ballistica"
   ],
@@ -9,7 +10,6 @@
     "src/ballistica/base/graphics/texture/dds.h",
     "src/ballistica/base/graphics/texture/ktx.cc",
     "src/ballistica/core/platform/android/android_gl3.h",
-    "src/ballistica/base/platform/apple/app_delegate.h",
     "src/ballistica/base/platform/apple/MacMusicApp.h",
     "src/ballistica/base/platform/apple/MacMusicAppScriptingBridge.h",
     "src/ballistica/core/platform/android/utf8/checked.h",
@@ -19,7 +19,7 @@
     "src/ballistica/core/platform/android/android_gl3.c"
   ],
   "default_app_modes": [
-    "bascenev1.SceneV1AppMode",
+    "baclassic.ClassicAppMode",
     "babase.EmptyAppMode"
   ],
   "efrocache_repository_url": "https://files.ballistica.net/cache/ba1",
@@ -28,24 +28,36 @@
   "pylint_ignored_untracked_deps": [
     "__main__",
     "astroid.modutils",
+    "astroid.nodes",
     "astroid",
     "pylint.lint",
     "pytest",
-    "pytz",
-    "yaml",
     "requests",
     "typing_extensions",
     "cpplint",
+    "libcst",
     "ansiwrap",
     "filelock",
     "Cocoa",
     "pdoc",
     "certifi",
+    "libcst.metadata",
+    "docutils.nodes",
+    "sphinx.application",
     "psutil",
     "pbxproj.XcodeProject",
     "pbxproj.pbxextensions",
     "openstep_parser",
-    "daemon"
+    "daemon",
+    "jinja2",
+    "jinja2.Environment",
+    "tomlkit",
+    "urllib3.exceptions",
+    "urllib3.response",
+    "cryptography.exceptions",
+    "cryptography.hazmat.primitives.asymmetric.ed25519",
+    "sphinx.util.logging",
+    "pylint.checkers"
   ],
   "python_paths": [
     "src/assets/ba_data/python",
@@ -57,6 +69,7 @@
     "src/assets/ba_data/python",
     "src/assets/server_package",
     "src/assets/workspace",
+    "src/assets/sphinx/static",
     "src/meta",
     "tools",
     "tests",

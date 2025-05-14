@@ -6,7 +6,7 @@ Supports static typing for message types and possible return types.
 
 from __future__ import annotations
 
-from efro.util import set_canonical_module_names
+# from efro.util import set_canonical_module_names
 from efro.message._protocol import MessageProtocol
 from efro.message._sender import MessageSender, BoundMessageSender
 from efro.message._receiver import MessageReceiver, BoundMessageReceiver
@@ -42,4 +42,6 @@ __all__ = [
 
 # Have these things present themselves cleanly as 'thismodule.SomeClass'
 # instead of 'thismodule._internalmodule.SomeClass'
-set_canonical_module_names(globals())
+# UPDATE: Trying without this for now. Seems like this might cause more
+# harm than good. Can flip it back on if it is missed.
+# set_canonical_module_names(globals())

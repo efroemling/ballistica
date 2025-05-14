@@ -2,6 +2,8 @@
 
 #include "ballistica/ui_v1/python/class/python_class_ui_sound.h"
 
+#include <string>
+
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/logic/logic.h"
@@ -17,10 +19,7 @@ void PythonClassUISound::SetupType(PyTypeObject* cls) {
   // Fully qualified type path we will be exposed as:
   cls->tp_name = "babase.Sound";
   cls->tp_basicsize = sizeof(PythonClassUISound);
-  cls->tp_doc =
-      "Sound asset for local user interface purposes.\n"
-      "\n"
-      "Category: **User Interface Classes**";
+  cls->tp_doc = "Sound asset for local user interface purposes.";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
   cls->tp_repr = (reprfunc)tp_repr;
@@ -42,7 +41,7 @@ auto PythonClassUISound::Create(const Object::Ref<base::SoundAsset>& sound)
 
 auto PythonClassUISound::tp_repr(PythonClassUISound* self) -> PyObject* {
   BA_PYTHON_TRY;
-  base::SoundAsset* s = self->sound_->Get();
+  base::SoundAsset* s = self->sound_->get();
   return Py_BuildValue(
       "s", (std::string("<bauiv1.Sound '") + (s->GetName()) + "'>").c_str());
   BA_PYTHON_CATCH;
@@ -89,7 +88,7 @@ auto PythonClassUISound::Play(PythonClassUISound* self, PyObject* args,
                                    const_cast<char**>(kwlist), &volume)) {
     return nullptr;
   }
-  base::SoundAsset* s = self->sound_->Get();
+  base::SoundAsset* s = self->sound_->get();
   auto play_id = g_base->audio->PlaySound(s, volume);
   if (play_id) {
     self->playing_ = true;
@@ -122,7 +121,7 @@ PyTypeObject PythonClassUISound::type_obj;
 PyMethodDef PythonClassUISound::tp_methods[] = {
     {"play", (PyCFunction)PythonClassUISound::Play,
      METH_VARARGS | METH_KEYWORDS,
-     "play() -> None\n"
+     "play(volume: float = 1.0) -> None\n"
      "\n"
      "Play the sound locally.\n"
      ""},

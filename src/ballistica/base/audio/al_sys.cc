@@ -2,6 +2,8 @@
 
 #include "ballistica/base/audio/al_sys.h"
 
+#include <cstdio>
+
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -16,14 +18,15 @@ namespace ballistica::base {
 
 void _check_al_error(const char* file, int line) {
   if (g_base->audio_server->paused()) {
-    Log(LogLevel::kError, Utils::BaseName(file) + ":" + std::to_string(line)
-                              + ": Checking OpenAL error while paused.");
+    g_core->Log(LogName::kBaAudio, LogLevel::kError,
+                Utils::BaseName(file) + ":" + std::to_string(line)
+                    + ": Checking OpenAL error while paused.");
   }
   ALenum al_err = alGetError();
   if (al_err != AL_NO_ERROR) {
-    Log(LogLevel::kError, Utils::BaseName(file) + ":" + std::to_string(line)
-                              + ": OpenAL Error: " + GetALErrorString(al_err)
-                              + ";");
+    g_core->Log(LogName::kBaAudio, LogLevel::kError,
+                Utils::BaseName(file) + ":" + std::to_string(line)
+                    + ": OpenAL Error: " + GetALErrorString(al_err) + ";");
   }
 }
 

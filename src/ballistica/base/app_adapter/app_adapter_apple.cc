@@ -3,11 +3,13 @@
 
 #include "ballistica/base/app_adapter/app_adapter_apple.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/apple/apple_utils.h"
 #include "ballistica/base/platform/apple/from_swift.h"
 #include "ballistica/base/platform/support/min_sdl_key_names.h"
 #include "ballistica/base/support/app_config.h"
@@ -136,7 +138,7 @@ auto AppAdapterApple::TryRender() -> bool {
 
     // Keep on drawing until the drawn window size
     // matches what we have (or until we try for too long or fail at drawing).
-    seconds_t start_time = g_core->GetAppTimeSeconds();
+    seconds_t start_time = g_core->AppTimeSeconds();
     for (int i = 0; i < 5; ++i) {
       bool size_differs =
           ((std::abs(resize_target_resolution_.x
@@ -145,7 +147,7 @@ auto AppAdapterApple::TryRender() -> bool {
            || (std::abs(resize_target_resolution_.y
                         - g_base->graphics_server->screen_pixel_height())
                > 0.01f));
-      if (size_differs && g_core->GetAppTimeSeconds() - start_time < 0.1
+      if (size_differs && g_core->AppTimeSeconds() - start_time < 0.1
           && result) {
         result = g_base->graphics_server->TryRender();
       }
@@ -167,14 +169,14 @@ auto AppAdapterApple::InGraphicsContext() -> bool {
 void AppAdapterApple::DoPushGraphicsContextRunnable(Runnable* runnable) {
   auto lock = std::scoped_lock(graphics_calls_mutex_);
   if (graphics_calls_.size() > 1000) {
-    BA_LOG_ONCE(LogLevel::kError, "graphics_calls_ got too big.");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError, "graphics_calls_ got too big.");
   }
   graphics_calls_.push_back(runnable);
 }
 
 auto AppAdapterApple::ShouldUseCursor() -> bool {
   // On Mac of course we want our nice custom hardware cursor.
-  if (g_buildconfig.ostype_macos()) {
+  if (g_buildconfig.platform_macos()) {
     return true;
   }
 
@@ -187,23 +189,23 @@ auto AppAdapterApple::ShouldUseCursor() -> bool {
 
 auto AppAdapterApple::HasHardwareCursor() -> bool {
   // Mac should be only build getting called here (see ShouldUseCursor).
-  assert(g_buildconfig.ostype_macos());
+  assert(g_buildconfig.platform_macos());
 
   return true;
 }
 
 void AppAdapterApple::SetHardwareCursorVisible(bool visible) {
   // (mac should be only build getting called here)
-  assert(g_buildconfig.ostype_macos());
+  assert(g_buildconfig.platform_macos());
   assert(g_core->InMainThread());
 
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::setCursorVisible(visible);
 #endif
 }
 
 void AppAdapterApple::TerminateApp() {
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::terminateApp();
 #else
   AppAdapter::TerminateApp();
@@ -213,14 +215,14 @@ void AppAdapterApple::TerminateApp() {
 auto AppAdapterApple::FullscreenControlAvailable() const -> bool {
   // Currently Mac only. Any window-management stuff elsewhere such as
   // iPadOS is out of our hands.
-  if (g_buildconfig.ostype_macos()) {
+  if (g_buildconfig.platform_macos()) {
     return true;
   }
   return false;
 }
 
 auto AppAdapterApple::FullscreenControlGet() const -> bool {
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::getMainWindowIsFullscreen();
 #else
   return false;
@@ -228,7 +230,7 @@ auto AppAdapterApple::FullscreenControlGet() const -> bool {
 }
 
 void AppAdapterApple::FullscreenControlSet(bool fullscreen) {
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::setMainWindowFullscreen(fullscreen);
 #endif
 }
@@ -241,7 +243,7 @@ auto AppAdapterApple::FullscreenControlKeyShortcut() const
 auto AppAdapterApple::HasDirectKeyboardInput() -> bool { return true; };
 
 auto AppAdapterApple::GetKeyRepeatDelay() -> float {
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::getKeyRepeatDelay();
 #else
   return AppAdapter::GetKeyRepeatDelay();
@@ -249,7 +251,7 @@ auto AppAdapterApple::GetKeyRepeatDelay() -> float {
 }
 
 auto AppAdapterApple::GetKeyRepeatInterval() -> float {
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::getKeyRepeatInterval();
 #else
   return AppAdapter::GetKeyRepeatDelay();
@@ -257,7 +259,7 @@ auto AppAdapterApple::GetKeyRepeatInterval() -> float {
 }
 
 auto AppAdapterApple::DoClipboardIsSupported() -> bool {
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::clipboardIsSupported();
 #else
   return AppAdapter::DoClipboardIsSupported();
@@ -265,7 +267,7 @@ auto AppAdapterApple::DoClipboardIsSupported() -> bool {
 }
 
 auto AppAdapterApple::DoClipboardHasText() -> bool {
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::clipboardHasText();
 #else
   return AppAdapter::DoClipboardHasText();
@@ -273,7 +275,7 @@ auto AppAdapterApple::DoClipboardHasText() -> bool {
 }
 
 void AppAdapterApple::DoClipboardSetText(const std::string& text) {
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::clipboardSetText(text);
 #else
   AppAdapter::DoClipboardSetText(text);
@@ -281,7 +283,7 @@ void AppAdapterApple::DoClipboardSetText(const std::string& text) {
 }
 
 auto AppAdapterApple::DoClipboardGetText() -> std::string {
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   auto contents = BallisticaKit::CocoaFromCpp::clipboardGetText();
   if (contents) {
     return std::string(contents.get());
@@ -299,14 +301,14 @@ auto AppAdapterApple::GetKeyName(int keycode) -> std::string {
 auto AppAdapterApple::NativeReviewRequestSupported() -> bool {
   // StoreKit currently supports this everywhere except tvOS.
   if (g_buildconfig.xcode_build() && g_buildconfig.use_store_kit()
-      && !g_buildconfig.ostype_tvos()) {
+      && !g_buildconfig.platform_tvos()) {
     return true;
   }
   return false;
 }
 
 void AppAdapterApple::DoNativeReviewRequest() {
-#if BA_XCODE_BUILD && BA_USE_STORE_KIT && !BA_OSTYPE_TVOS
+#if BA_XCODE_BUILD && BA_USE_STORE_KIT && !BA_PLATFORM_TVOS
   BallisticaKit::StoreKitContext::requestReview();
 #else
   FatalError("This should not be getting called.");

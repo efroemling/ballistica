@@ -5,7 +5,7 @@
 # We wear the cone of shame.
 # pylint: disable=too-many-lines
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
@@ -14,9 +14,8 @@ import random
 import logging
 from enum import Enum
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast, Sequence, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.popuptext import PopupText
@@ -45,7 +44,7 @@ from bascenev1lib.actor.spazbot import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any
 
 
 class Preset(Enum):
@@ -199,6 +198,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def on_transition_in(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         super().on_transition_in()
         self._scoreboard = Scoreboard(
             label=bs.Lstr(resource='scoreText'), score_split=0.5
@@ -488,9 +489,9 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         assert bs.app.classic is not None
         uiscale = bs.app.ui_v1.uiscale
         l_offs = (
-            -80
+            -120
             if uiscale is bs.UIScale.SMALL
-            else -40 if uiscale is bs.UIScale.MEDIUM else 0
+            else -60 if uiscale is bs.UIScale.MEDIUM else -30
         )
 
         self._lives_bg = bs.NodeActor(
@@ -551,15 +552,13 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             self._lives -= 1
             if self._lives == 0:
                 self._bots.stop_moving()
-                self.continue_or_end_game()
+                self.end_game()
 
             # Heartbeat behavior
             if self._lives < 5:
                 hbtime = 0.39 + (0.21 * self._lives)
                 self._lives_hbtime = bs.Timer(
-                    hbtime,
-                    lambda: self.heart_dyin(True, hbtime),
-                    repeat=True
+                    hbtime, lambda: self.heart_dyin(True, hbtime), repeat=True
                 )
                 self.heart_dyin(True)
             else:
@@ -617,15 +616,9 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             )
 
     @override
-    def on_continue(self) -> None:
-        self._lives = 3
-        assert self._lives_text is not None
-        assert self._lives_text.node
-        self._lives_text.node.text = str(self._lives)
-        self._bots.start_moving()
-
-    @override
     def spawn_player(self, player: Player) -> bs.Actor:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         pos = (
             self._spawn_center[0] + random.uniform(-1.5, 1.5),
             self._spawn_center[1],
@@ -703,6 +696,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         bs.pushcall(bs.Call(self.do_end, 'defeat'))
         bs.setmusic(None)
         self._player_death_sound.play()
@@ -1336,6 +1331,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, bs.PlayerScoredMessage):
             self._score += msg.score
             self._update_scores()
@@ -1408,10 +1405,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
     def _set_can_end_wave(self) -> None:
         self._can_end_wave = True
 
-    def heart_dyin(self,
-                   status: bool,
-                   time: float = 1.22) -> None:
-        """ Makes the UI heart beat at low health. """
+    def heart_dyin(self, status: bool, time: float = 1.22) -> None:
+        """Makes the UI heart beat at low health."""
         assert self._lives_bg is not None
         if self._lives_bg.node.exists():
             return
@@ -1419,19 +1414,33 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
         # Make the heart beat intensely!
         if status:
-            bs.animate_array(heart, 'scale', 2, {
-                0:(90,90),
-                time*0.1:(105,105),
-                time*0.21:(88,88),
-                time*0.42:(90,90),
-                time*0.52:(105,105),
-                time*0.63:(88,88),
-                time:(90,90),
-            })
+            bs.animate_array(
+                heart,
+                'scale',
+                2,
+                {
+                    0: (90, 90),
+                    time * 0.1: (105, 105),
+                    time * 0.21: (88, 88),
+                    time * 0.42: (90, 90),
+                    time * 0.52: (105, 105),
+                    time * 0.63: (88, 88),
+                    time: (90, 90),
+                },
+            )
 
         # Neutralize heartbeat (Done did when dead.)
         else:
-            bs.animate_array(heart, 'scale', 2, {
-                0.0: list(heart.scale),
-                time: (90,90),
-            })
+            # Ew; janky old scenev1 has a single 'Node' Python type so
+            # it thinks heart.scale could be a few different things
+            # (float, Sequence[float], etc.). So we have to force the
+            # issue with a cast(). This should go away with scenev2/etc.
+            bs.animate_array(
+                heart,
+                'scale',
+                2,
+                {
+                    0.0: cast(Sequence[float], heart.scale),
+                    time: (90, 90),
+                },
+            )

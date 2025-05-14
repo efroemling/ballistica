@@ -2,15 +2,14 @@
 #
 """Provides the Conquest game."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.flag import Flag
@@ -118,6 +117,8 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
     @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         assert bs.app.classic is not None
         return bs.app.classic.getmaps('conquest')
 
@@ -149,19 +150,27 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def get_instance_description(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         return 'Secure all ${ARG1} flags.', len(self.map.flag_points)
 
     @override
     def get_instance_description_short(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         return 'secure all ${ARG1} flags', len(self.map.flag_points)
 
     @override
     def on_team_join(self, team: Team) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if self.has_begun():
             self._update_scores()
 
     @override
     def on_player_join(self, player: Player) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         player.respawn_timer = None
 
         # Only spawn if this player's team has a flag currently.
@@ -232,6 +241,8 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         results = bs.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.flags_held)
@@ -284,6 +295,8 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, bs.PlayerDiedMessage):
             # Augment standard behavior.
             super().handlemessage(msg)
@@ -300,6 +313,8 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def spawn_player(self, player: Player) -> bs.Actor:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # We spawn players at different places based on what flags are held.
         return self.spawn_player_spaz(
             player, self._get_player_spawn_position(player)

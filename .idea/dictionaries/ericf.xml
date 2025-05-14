@@ -679,7 +679,6 @@
       <w>cval</w>
       <w>cwdg</w>
       <w>cxxabi</w>
-      <w>cyaml</w>
       <w>cycledelay</w>
       <w>cygwinccompiler</w>
       <w>dandroid</w>
@@ -1233,7 +1232,7 @@
       <w>getcollisionmesh</w>
       <w>getconf</w>
       <w>getconfig</w>
-      <w>getcurrency</w>
+      <w>gettickets</w>
       <w>getcwd</w>
       <w>getdata</w>
       <w>getenv</w>
@@ -2019,7 +2018,6 @@
       <w>objset</w>
       <w>objsizes</w>
       <w>objt</w>
-      <w>objtoyaml</w>
       <w>objtype</w>
       <w>objtypes</w>
       <w>obval</w>
@@ -2425,7 +2423,7 @@
       <w>pythondevmode</w>
       <w>pythondirs</w>
       <w>pythondontwritebytecode</w>
-      <w>pythonenumsmodule</w>
+      <w>enumspython</w>
       <w>pythonhashseed</w>
       <w>pythonoptimize</w>
       <w>pythonpath</w>
@@ -3084,7 +3082,6 @@
       <w>tournamentbutton</w>
       <w>tournamententry</w>
       <w>tournamentscores</w>
-      <w>tpartial</w>
       <w>tpath</w>
       <w>tpathsegs</w>
       <w>tpexl</w>

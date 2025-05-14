@@ -2,6 +2,8 @@
 
 #include "ballistica/base/input/device/keyboard_input.h"
 
+#include <string>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/repeater.h"
@@ -55,11 +57,11 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
       if (down) {
         switch (keysym->sym) {
           case SDLK_TAB:
-            if (keysym->mod & KMOD_SHIFT) {  // NOLINT (signed bitwise)
-              c = WidgetMessage::Type::kTabPrev;
-            } else {
-              c = WidgetMessage::Type::kTabNext;
-            }
+            // if (keysym->mod & KMOD_SHIFT) {  // NOLINT (signed bitwise)
+            //   c = WidgetMessage::Type::kTabPrev;
+            // } else {
+            //   c = WidgetMessage::Type::kTabNext;
+            // }
             pass = true;
             break;
           case SDLK_LEFT:

@@ -62,16 +62,9 @@ def ask_for_rating() -> bui.Widget | None:
     )
 
     def do_rating() -> None:
-        if platform == 'android':
-            appname = bui.appname()
-            if subplatform == 'google':
-                url = f'market://details?id=net.froemling.{appname}'
-            else:
-                url = f'market://details?id=net.froemling.{appname}cb'
-        else:
-            url = 'macappstore://itunes.apple.com/app/id416482767?ls=1&mt=12'
-
-        bui.open_url(url)
+        # This is not currently in use anywhere.
+        bui.screenmessage(bui.Lstr(resource='error'))
+        # bui.open_url(url)
         bui.containerwidget(edit=dlg, transition='out_left')
 
     bui.buttonwidget(

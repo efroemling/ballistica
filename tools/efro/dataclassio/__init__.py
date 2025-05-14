@@ -10,13 +10,14 @@ data formats in a nondestructive manner.
 
 from __future__ import annotations
 
-from efro.util import set_canonical_module_names
+# from efro.util import set_canonical_module_names
 from efro.dataclassio._base import (
     Codec,
     IOAttrs,
     IOExtendedData,
     IOMultiType,
     EXTRA_ATTRS_ATTR,
+    parse_annotated,
 )
 from efro.dataclassio._prep import (
     ioprep,
@@ -32,6 +33,7 @@ from efro.dataclassio._api import (
     dataclass_from_dict,
     dataclass_from_json,
     dataclass_validate,
+    dataclass_hash,
 )
 
 __all__ = [
@@ -47,12 +49,16 @@ __all__ = [
     'dataclass_to_dict',
     'dataclass_to_json',
     'dataclass_validate',
+    'dataclass_hash',
     'ioprep',
     'ioprepped',
     'is_ioprepped_dataclass',
+    'parse_annotated',
     'will_ioprep',
 ]
 
 # Have these things present themselves cleanly as 'thismodule.SomeClass'
 # instead of 'thismodule._internalmodule.SomeClass'
-set_canonical_module_names(globals())
+# UPDATE: Trying without this for now. Seems like this might cause more
+# harm than good. Can flip it back on if it is missed.
+# set_canonical_module_names(globals())

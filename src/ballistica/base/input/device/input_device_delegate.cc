@@ -2,6 +2,8 @@
 
 #include "ballistica/base/input/device/input_device_delegate.h"
 
+#include <string>
+
 #include "ballistica/base/input/device/input_device.h"
 #include "ballistica/shared/math/vector3f.h"
 

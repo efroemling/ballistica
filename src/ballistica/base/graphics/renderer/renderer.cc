@@ -2,11 +2,16 @@
 
 #include "ballistica/base/graphics/renderer/renderer.h"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
-#include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/core/core.h"
 
 #if BA_VR_BUILD
+#include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/graphics_vr.h"
 #endif
 
@@ -56,7 +61,7 @@ void Renderer::PreprocessFrameDef(FrameDef* frame_def) {
   UpdateSizesQualitiesAndColors(frame_def);
 
   // Handle a weird gamma reset issue on our legacy mac build (SDL 1.2).
-  // #if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
+  // #if BA_PLATFORM_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
   //   HandleFunkyMacGammaIssue(frame_def);
   // #endif
 
@@ -99,9 +104,9 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   // If preprocess decided not to render this.
   if (!frame_def->rendering()) return;
 
-    // Set camera/hand/etc positioning with latest VR data if applicable.
-    // (we do this here at render time as opposed to frame construction time
-    // so we have the most up-to-date data possible).
+  // Set camera/hand/etc positioning with latest VR data if applicable.
+  // (we do this here at render time as opposed to frame construction time
+  // so we have the most up-to-date data possible).
 #if BA_VR_BUILD
   VRUpdateForEyeRender(frame_def);
 #endif  // BA_VR_BUILD
@@ -109,7 +114,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   // In higher-quality modes we draw the world into the camera buffer
   // which we'll later render into the backing buffer with depth-of-field
   // and other stuff added.
-  if (camera_render_target_.Exists()) {
+  if (camera_render_target_.exists()) {
     DrawWorldToCameraBuffer(frame_def);
   }
 
@@ -119,14 +124,14 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   SetDepthWriting(true);
   SetDepthTesting(true);
   RenderTarget* backing;
-  if (backing_render_target_.Exists()) {
+  if (backing_render_target_.exists()) {
     backing = backing_render_target();
   } else {
     backing = screen_render_target();
   }
 
   bool backing_needs_clear = frame_def->needs_clear();
-#if BA_CARDBOARD_BUILD
+#if BA_VARIANT_CARDBOARD
   // On cardboard, our two eyes are drawn into the same FBO,
   // so we can't invalidate the buffer when drawing our second eye
   // (since that could wipe out the first eye which has already been drawn)
@@ -158,7 +163,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
     frame_def->overlay_pass()->Render(backing, false);
     frame_def->overlay_fixed_pass()->Render(backing, false);
   }
-  if (camera_render_target_.Exists()) {
+  if (camera_render_target_.exists()) {
     UpdateDOFParams(frame_def);
     // We've already drawn the world.
     // Now just draw our blit shapes (opaque shapes which blit portions of the
@@ -182,7 +187,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   SetDrawAtEqualDepth(true);
 
   // Now draw transparent stuff back to front.
-  if (camera_render_target_.Exists()) {
+  if (camera_render_target_.exists()) {
     // When copying camera buffer to the backing there's nothing transparent
     // to draw.
   } else {
@@ -214,7 +219,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   PopGroupMarker();
 
   // If we've been drawing to a backing buffer, blit it to the screen.
-  if (backing_render_target_.Exists()) {
+  if (backing_render_target_.exists()) {
     // FIXME - should we just be discarding both depth and color
     //  after the blit?.. (of course, this code path shouldn't be used on
     //  mobile/slow-stuff so maybe it doesn't matter)
@@ -250,7 +255,7 @@ void Renderer::VRPreprocess(FrameDef* frame_def) {
   }
 
   // if we're in VR mode, make sure we've got our VR overlay target
-  if (!vr_overlay_flat_render_target_.Exists()) {
+  if (!vr_overlay_flat_render_target_.exists()) {
     // find this res to be ideal on current gen equipment
     // (2017-ish, 1st gen rift/gear-vr/etc)
     // ..can revisit once higher-res stuff is commonplace
@@ -461,8 +466,8 @@ void Renderer::UpdateSizesQualitiesAndColors(FrameDef* frame_def) {
 }
 
 void Renderer::UpdateLightAndShadowBuffers(FrameDef* frame_def) {
-  if (!light_render_target_.Exists() || !light_shadow_render_target_.Exists()) {
-    assert(screen_render_target_.Exists());
+  if (!light_render_target_.exists() || !light_shadow_render_target_.exists()) {
+    assert(screen_render_target_.exists());
 
     // Base shadow res on quality.
     if (frame_def->quality() >= GraphicsQuality::kHigher) {
@@ -530,7 +535,7 @@ void Renderer::UpdateCameraRenderTargets(FrameDef* frame_def) {
   // In higher-quality modes we render the world into a buffer
   // so we can do depth-of-field filtering and whatnot.
   if (frame_def->quality() >= GraphicsQuality::kHigh) {
-    if (!camera_render_target_.Exists()) {
+    if (!camera_render_target_.exists()) {
       float pixel_scale_fin = std::min(1.0f, std::max(0.1f, pixel_scale_));
       int w = static_cast<int>(screen_render_target_->physical_width()
                                * pixel_scale_fin);
@@ -617,7 +622,7 @@ void Renderer::UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def) {
   // We need our backing buffer for non-1.0 pixel-scales.
   if (pixel_scale_requested_ != 1.0f) {
     if (pixel_scale_requested_ != pixel_scale_
-        || !backing_render_target_.Exists()) {
+        || !backing_render_target_.exists()) {
       float pixel_scale_fin =
           std::min(1.0f, std::max(0.1f, pixel_scale_requested_));
       int w = static_cast<int>(screen_render_target_->physical_width()
@@ -637,7 +642,7 @@ void Renderer::UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def) {
     }
   } else {
     // Otherwise we don't need backing buffer. Kill it if it exists.
-    if (backing_render_target_.Exists()) {
+    if (backing_render_target_.exists()) {
       backing_render_target_.Clear();
     }
   }
@@ -645,9 +650,9 @@ void Renderer::UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def) {
 }
 
 void Renderer::LoadMedia(FrameDef* frame_def) {
-  millisecs_t t = g_core->GetAppTimeMillisecs();
+  millisecs_t t = g_core->AppTimeMillisecs();
   for (auto&& i : frame_def->media_components()) {
-    Asset* mc = i.Get();
+    Asset* mc = i.get();
     assert(mc);
     mc->Load();
 
@@ -656,13 +661,13 @@ void Renderer::LoadMedia(FrameDef* frame_def) {
   }
 }
 
-// #if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
+// #if BA_PLATFORM_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
 // void Renderer::HandleFunkyMacGammaIssue(FrameDef* frame_def) {
 //   // FIXME - for some reason, on mac, gamma is getting switched back to
 //   //  default about 1 second after a res change, etc...
 //   //  so if we're using a non-1.0 gamma, lets keep setting it periodically
 //   //  to force the issue
-//   millisecs_t t = g_core->GetAppTimeMillisecs();
+//   millisecs_t t = g_core->AppTimeMillisecs();
 //   if (screen_gamma_requested_ != screen_gamma_
 //       || (t - last_screen_gamma_update_time_ > 300 && screen_gamma_ != 1.0f))
 //       {
@@ -674,7 +679,7 @@ void Renderer::LoadMedia(FrameDef* frame_def) {
 // #endif
 
 void Renderer::DrawWorldToCameraBuffer(FrameDef* frame_def) {
-#if BA_CARDBOARD_BUILD
+#if BA_VARIANT_CARDBOARD
   // On cardboard theres a scissor setup enabled when we come in;
   // we need to turn that off while drawing to our other framebuffer since it
   // screws things up there.
@@ -712,7 +717,7 @@ void Renderer::DrawWorldToCameraBuffer(FrameDef* frame_def) {
   GenerateCameraBufferBlurPasses();
   PopGroupMarker();
 
-#if BA_CARDBOARD_BUILD
+#if BA_VARIANT_CARDBOARD
   CardboardEnableScissor();
 #endif
 }

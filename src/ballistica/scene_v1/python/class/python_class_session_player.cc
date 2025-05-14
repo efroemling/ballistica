@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/python/class/python_class_session_player.h"
 
+#include <string>
+#include <vector>
+
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/host_session.h"
@@ -17,7 +21,7 @@ namespace ballistica::scene_v1 {
 #pragma ide diagnostic ignored "RedundantCast"
 
 auto PythonClassSessionPlayer::nb_bool(PythonClassSessionPlayer* self) -> int {
-  return self->player_->Exists();
+  return self->player_->exists();
 }
 
 PyNumberMethods PythonClassSessionPlayer::as_number_;
@@ -50,55 +54,55 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
   // clang-format off
 
   cls->tp_doc =
-      "A reference to a player in the bascenev1.Session.\n"
-      "\n"
-      "Category: **Gameplay Classes**\n"
-      "\n"
-      "These are created and managed internally and\n"
-      "provided to your bascenev1.Session/bascenev1.Activity instances.\n"
-      "Be aware that, like `ba.Node`s, bascenev1.SessionPlayer objects are\n"
-      "'weak' references under-the-hood; a player can leave the game at\n"
-      " any point. For this reason, you should make judicious use of the\n"
-      "babase.SessionPlayer.exists() method (or boolean operator) to ensure\n"
-      "that a SessionPlayer is still present if retaining references to one\n"
-      "for any length of time.\n"
-      "\n"
-      "Attributes:\n"
-      "    " ATTR_ID " (int):\n"
-      "        The unique numeric ID of the Player.\n"
-      "\n"
-      "        Note that you can also use the boolean operator for this same\n"
-      "        functionality, so a statement such as \"if player\" will do\n"
-      "        the right thing both for Player objects and values of None.\n"
-      "\n"
-      "    " ATTR_IN_GAME " (bool):\n"
-      "        This bool value will be True once the Player has completed\n"
-      "        any lobby character/team selection.\n"
-      "\n"
-      "    " ATTR_SESSIONTEAM " (bascenev1.SessionTeam):\n"
-      "        The bascenev1.SessionTeam this Player is on. If the\n"
-      "        SessionPlayer is still in its lobby selecting a team/etc.\n"
-      "        then a bascenev1.SessionTeamNotFoundError will be raised.\n"
-      "\n"
-      "    " ATTR_INPUT_DEVICE " (bascenev1.InputDevice):\n"
-      "        The input device associated with the player.\n"
-      "\n"
-      "    " ATTR_COLOR " (Sequence[float]):\n"
-      "        The base color for this Player.\n"
-      "        In team games this will match the bascenev1.SessionTeam's\n"
-      "        color.\n"
-      "\n"
-      "    " ATTR_HIGHLIGHT " (Sequence[float]):\n"
-      "        A secondary color for this player.\n"
-      "        This is used for minor highlights and accents\n"
-      "        to allow a player to stand apart from his teammates\n"
-      "        who may all share the same team (primary) color.\n"
-      "\n"
-      "    " ATTR_CHARACTER " (str):\n"
-      "        The character this player has selected in their profile.\n"
-      "\n"
-      "    " ATTR_ACTIVITYPLAYER " (bascenev1.Player | None):\n"
-      "        The current game-specific instance for this player.\n";
+    "A reference to a player in a :class:`~bascenev1.Session`.\n"
+    "\n"
+    "These are created and managed internally and provided to your\n"
+    ":class:`~bascenev1.Session`/:class:`~bascenev1.Activity`\n"
+    "instances. Be aware that, like :class:`~bascenev1.Node` objects,\n"
+    ":class:`~bascenev1.SessionPlayer` objects are effectively 'weak'\n"
+    "references under-the-hood; a player can leave the game at any point.\n"
+    "For this reason, you should make judicious use of the\n"
+    ":meth:`bascenev1.SessionPlayer.exists()` method (or boolean operator) to\n"
+    "ensure that a :class:`SessionPlayer` is still present if retaining\n"
+    "references to one for any length of time.\n"
+    "\n"
+    "Attributes:\n"
+    "    " ATTR_ID " (int):\n"
+    "        The unique numeric id of the player.\n"
+    "\n"
+    "        Note that you can also use the boolean operator for this same\n"
+    "        functionality, so a statement such as ``if player:`` will do\n"
+    "        the right thing both for :class:`~bascenev1.SessionPlayer`\n"
+    "        objects as well as values of ``None``.\n"
+    "\n"
+    "    " ATTR_IN_GAME " (bool):\n"
+    "        This bool value will be True once the player has completed\n"
+    "        any lobby character/team selection.\n"
+    "\n"
+    "    " ATTR_SESSIONTEAM " (bascenev1.SessionTeam):\n"
+    "        The session-team this session-player is on. If the player is\n"
+    "        still in its lobby selecting a team/etc. then a\n"
+    "        :class:`~bascenev1.SessionTeamNotFoundError` will be raised.\n"
+    "\n"
+    "    " ATTR_INPUT_DEVICE " (bascenev1.InputDevice):\n"
+    "        The input device associated with the player.\n"
+    "\n"
+    "    " ATTR_COLOR " (Sequence[float]):\n"
+    "        The base color for this player.\n"
+    "        In team games this will match the team's\n"
+    "        color.\n"
+    "\n"
+    "    " ATTR_HIGHLIGHT " (Sequence[float]):\n"
+    "        A secondary color for this player.\n"
+    "        This is used for minor highlights and accents\n"
+    "        to allow a player to stand apart from his teammates\n"
+    "        who may all share the same team (primary) color.\n"
+    "\n"
+    "    " ATTR_CHARACTER " (str):\n"
+    "        The character this player has selected in their profile.\n"
+    "\n"
+    "    " ATTR_ACTIVITYPLAYER " (bascenev1.Player | None):\n"
+    "        The current game-specific instance for this player.\n";
 
   // clang-format on
 
@@ -118,7 +122,7 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
 auto PythonClassSessionPlayer::Create(Player* player) -> PyObject* {
   // Make sure we only have one python ref per material.
   if (player) {
-    assert(!player->has_py_ref());
+    assert(!player->HasPyRef());
   }
   s_create_empty_ = true;  // Prevent class from erroring on create.
   assert(TypeIsSetUp(&type_obj));
@@ -134,7 +138,7 @@ auto PythonClassSessionPlayer::Create(Player* player) -> PyObject* {
 }
 
 auto PythonClassSessionPlayer::GetPlayer(bool doraise) const -> Player* {
-  Player* player = player_->Get();
+  Player* player = player_->get();
   if ((!player) && doraise) {
     throw Exception("Invalid SessionPlayer.",
                     PyExcType::kSessionPlayerNotFound);
@@ -145,7 +149,7 @@ auto PythonClassSessionPlayer::GetPlayer(bool doraise) const -> Player* {
 auto PythonClassSessionPlayer::tp_repr(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   int player_id = p ? p->id() : -1;
   std::string p_name = p ? p->GetName() : "invalid";
   return Py_BuildValue("s",
@@ -215,28 +219,28 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
 
   const char* s = PyUnicode_AsUTF8(attr);
   if (!strcmp(s, ATTR_IN_GAME)) {
-    Player* p = self->player_->Get();
+    Player* p = self->player_->get();
     if (!p) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
 
+    // GetPyTeam returns a new ref or nullptr.
+    auto team{PythonRef::StolenSoft(p->GetPyTeam())};
     // We get placed on a team as soon as we finish in the lobby
     // so lets use that as whether we're in-game or not.
-    PyObject* team = p->GetPyTeam();
-    assert(team != nullptr);
-    if (team == Py_None) {
+    if (!team.exists()) {
       Py_RETURN_FALSE;
     } else {
       Py_RETURN_TRUE;
     }
   } else if (!strcmp(s, ATTR_ID)) {
-    Player* p = self->player_->Get();
+    Player* p = self->player_->get();
     if (!p) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     return PyLong_FromLong(p->id());
   } else if (!strcmp(s, ATTR_INPUT_DEVICE)) {
-    Player* player = self->player_->Get();
+    Player* player = self->player_->get();
     if (!player) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
@@ -246,70 +250,69 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
     }
     throw Exception(PyExcType::kInputDeviceNotFound);
   } else if (!strcmp(s, ATTR_SESSIONTEAM)) {
-    Player* p = self->player_->Get();
+    Player* p = self->player_->get();
     if (!p) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
-    PyObject* team = p->GetPyTeam();
-    assert(team != nullptr);
-    if (team == Py_None) {
+    // GetPyTeam returns a new ref or nullptr.
+    auto team{PythonRef::StolenSoft(p->GetPyTeam())};
+    if (!team.exists()) {
       PyErr_SetString(
           g_base->python->objs()
               .Get(base::BasePython::ObjID::kSessionTeamNotFoundError)
-              .Get(),
+              .get(),
           "SessionTeam does not exist.");
       return nullptr;
     }
-    Py_INCREF(team);
-    return team;
+    return team.NewRef();
   } else if (!strcmp(s, ATTR_CHARACTER)) {
-    Player* p = self->player_->Get();
+    Player* p = self->player_->get();
     if (!p) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
-                                        + std::string(s)
-                                        + "' without data set.");
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                  "Calling getAttr for player attr '" + std::string(s)
+                      + "' without data set.");
     }
     PyObject* obj = p->GetPyCharacter();
     Py_INCREF(obj);
     return obj;
   } else if (!strcmp(s, ATTR_COLOR)) {
-    Player* p = self->player_->Get();
+    Player* p = self->player_->get();
     if (!p) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
-                                        + std::string(s)
-                                        + "' without data set.");
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                  "Calling getAttr for player attr '" + std::string(s)
+                      + "' without data set.");
     }
     PyObject* obj = p->GetPyColor();
     Py_INCREF(obj);
     return obj;
   } else if (!strcmp(s, ATTR_HIGHLIGHT)) {
-    Player* p = self->player_->Get();
+    Player* p = self->player_->get();
     if (!p) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
-                                        + std::string(s)
-                                        + "' without data set.");
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                  "Calling getAttr for player attr '" + std::string(s)
+                      + "' without data set.");
     }
     PyObject* obj = p->GetPyHighlight();
     Py_INCREF(obj);
     return obj;
   } else if (!strcmp(s, ATTR_ACTIVITYPLAYER)) {
-    Player* p = self->player_->Get();
+    Player* p = self->player_->get();
     if (!p) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
     if (!p->has_py_data()) {
-      BA_LOG_ONCE(LogLevel::kError, "Calling getAttr for player attr '"
-                                        + std::string(s)
-                                        + "' without data set.");
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                  "Calling getAttr for player attr '" + std::string(s)
+                      + "' without data set.");
     }
     PyObject* obj = p->GetPyActivityPlayer();
     Py_INCREF(obj);
@@ -324,8 +327,8 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
 }
 
 auto PythonClassSessionPlayer::tp_setattro(PythonClassSessionPlayer* self,
-                                           PyObject* attr,
-                                           PyObject* val) -> int {
+                                           PyObject* attr, PyObject* val)
+    -> int {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -335,7 +338,7 @@ auto PythonClassSessionPlayer::tp_setattro(PythonClassSessionPlayer* self,
   const char* s = PyUnicode_AsUTF8(attr);
 
   if (!strcmp(s, ATTR_ACTIVITYPLAYER)) {
-    Player* p = self->player_->Get();
+    Player* p = self->player_->get();
     if (!p) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
@@ -351,8 +354,8 @@ auto PythonClassSessionPlayer::tp_setattro(PythonClassSessionPlayer* self,
 }
 
 auto PythonClassSessionPlayer::GetName(PythonClassSessionPlayer* self,
-                                       PyObject* args,
-                                       PyObject* keywds) -> PyObject* {
+                                       PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   int full = false;
@@ -362,7 +365,7 @@ auto PythonClassSessionPlayer::GetName(PythonClassSessionPlayer* self,
                                    const_cast<char**>(kwlist), &full, &icon)) {
     return nullptr;
   }
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
@@ -375,7 +378,7 @@ auto PythonClassSessionPlayer::Exists(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
-  if (self->player_->Exists()) {
+  if (self->player_->exists()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -383,8 +386,8 @@ auto PythonClassSessionPlayer::Exists(PythonClassSessionPlayer* self)
 }
 
 auto PythonClassSessionPlayer::SetName(PythonClassSessionPlayer* self,
-                                       PyObject* args,
-                                       PyObject* keywds) -> PyObject* {
+                                       PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* name_obj;
@@ -402,7 +405,7 @@ auto PythonClassSessionPlayer::SetName(PythonClassSessionPlayer* self,
   std::string full_name = (full_name_obj == Py_None)
                               ? name
                               : g_base->python->GetPyLString(full_name_obj);
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
@@ -415,7 +418,7 @@ auto PythonClassSessionPlayer::ResetInput(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
@@ -425,8 +428,8 @@ auto PythonClassSessionPlayer::ResetInput(PythonClassSessionPlayer* self)
 }
 
 auto PythonClassSessionPlayer::AssignInputCall(PythonClassSessionPlayer* self,
-                                               PyObject* args,
-                                               PyObject* keywds) -> PyObject* {
+                                               PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* input_type_obj;
@@ -437,7 +440,7 @@ auto PythonClassSessionPlayer::AssignInputCall(PythonClassSessionPlayer* self,
                                    &call_obj)) {
     return nullptr;
   }
-  Player* player = self->player_->Get();
+  Player* player = self->player_->get();
   if (!player) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
@@ -470,7 +473,7 @@ auto PythonClassSessionPlayer::RemoveFromGame(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
-  Player* player = self->player_->Get();
+  Player* player = self->player_->get();
   if (!player) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   } else {
@@ -489,13 +492,13 @@ auto PythonClassSessionPlayer::GetTeam(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  PyObject* team = p->GetPyTeam();
-  Py_INCREF(team);
-  return team;
+  // GetPyTeam() returns a new ref or nullptr.
+  auto team{PythonRef::StolenSoft(p->GetPyTeam())};
+  return team.NewRef();
   BA_PYTHON_CATCH;
 }
 
@@ -505,7 +508,7 @@ auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
@@ -518,8 +521,8 @@ auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
 }
 
 auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
-                                       PyObject* args,
-                                       PyObject* keywds) -> PyObject* {
+                                       PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* team_obj;
@@ -533,7 +536,7 @@ auto PythonClassSessionPlayer::SetData(PythonClassSessionPlayer* self,
           &character_obj, &color_obj, &highlight_obj)) {
     return nullptr;
   }
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
@@ -550,7 +553,7 @@ auto PythonClassSessionPlayer::GetIconInfo(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
@@ -564,8 +567,8 @@ auto PythonClassSessionPlayer::GetIconInfo(PythonClassSessionPlayer* self)
 }
 
 auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
-                                           PyObject* args,
-                                           PyObject* keywds) -> PyObject* {
+                                           PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* texture_name_obj;
@@ -579,17 +582,17 @@ auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
           &tint_texture_name_obj, &tint_color_obj, &tint2_color_obj)) {
     return nullptr;
   }
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  std::string texture_name = Python::GetPyString(texture_name_obj);
-  std::string tint_texture_name = Python::GetPyString(tint_texture_name_obj);
-  std::vector<float> tint_color = Python::GetPyFloats(tint_color_obj);
+  std::string texture_name = Python::GetString(texture_name_obj);
+  std::string tint_texture_name = Python::GetString(tint_texture_name_obj);
+  std::vector<float> tint_color = Python::GetFloats(tint_color_obj);
   if (tint_color.size() != 3) {
     throw Exception("Expected 3 floats for tint-color.", PyExcType::kValue);
   }
-  std::vector<float> tint2_color = Python::GetPyFloats(tint2_color_obj);
+  std::vector<float> tint2_color = Python::GetFloats(tint2_color_obj);
   if (tint2_color.size() != 3) {
     throw Exception("Expected 3 floats for tint-color.", PyExcType::kValue);
   }
@@ -599,8 +602,8 @@ auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
 }
 
 auto PythonClassSessionPlayer::SetActivity(PythonClassSessionPlayer* self,
-                                           PyObject* args,
-                                           PyObject* keywds) -> PyObject* {
+                                           PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* activity_obj;
@@ -609,7 +612,7 @@ auto PythonClassSessionPlayer::SetActivity(PythonClassSessionPlayer* self,
                                    const_cast<char**>(kwlist), &activity_obj)) {
     return nullptr;
   }
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
@@ -625,8 +628,8 @@ auto PythonClassSessionPlayer::SetActivity(PythonClassSessionPlayer* self,
 }
 
 auto PythonClassSessionPlayer::SetNode(PythonClassSessionPlayer* self,
-                                       PyObject* args,
-                                       PyObject* keywds) -> PyObject* {
+                                       PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* node_obj;
@@ -635,7 +638,7 @@ auto PythonClassSessionPlayer::SetNode(PythonClassSessionPlayer* self,
                                    const_cast<char**>(kwlist), &node_obj)) {
     return nullptr;
   }
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
@@ -655,7 +658,7 @@ auto PythonClassSessionPlayer::GetIcon(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
-  Player* p = self->player_->Get();
+  Player* p = self->player_->get();
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
@@ -685,7 +688,7 @@ auto PythonClassSessionPlayer::Dir(PythonClassSessionPlayer* self)
   for (const char** name = extra_dir_attrs; *name != nullptr; name++) {
     PyList_Append(
         dir_list,
-        PythonRef(PyUnicode_FromString(*name), PythonRef::kSteal).Get());
+        PythonRef(PyUnicode_FromString(*name), PythonRef::kSteal).get());
   }
   PyList_Sort(dir_list);
   return dir_list;
@@ -699,7 +702,7 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
     {"getname", (PyCFunction)GetName, METH_VARARGS | METH_KEYWORDS,
      "getname(full: bool = False, icon: bool = True) -> str\n"
      "\n"
-     "Returns the player's name. If icon is True, the long version of the\n"
+     "Returns the player's name. If ``icon`` is True, the long version of the\n"
      "name may include an icon."},
     {"setname", (PyCFunction)SetName, METH_VARARGS | METH_KEYWORDS,
      "setname(name: str, full_name: str | None = None, real: bool = True)\n"
@@ -729,7 +732,7 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      METH_VARARGS | METH_KEYWORDS,
      "get_v1_account_id() -> str\n"
      "\n"
-     "Return the V1 Account ID this player is signed in under, if\n"
+     "Return the V1 account id this player is signed in under, if\n"
      "there is one and it can be determined with relative certainty.\n"
      "Returns None otherwise. Note that this may require an active\n"
      "internet connection (especially for network-connected players)\n"
@@ -744,26 +747,34 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "set_icon_info(texture: str, tint_texture: str,\n"
      "  tint_color: Sequence[float], tint2_color: Sequence[float]) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"setactivity", (PyCFunction)SetActivity, METH_VARARGS | METH_KEYWORDS,
      "setactivity(activity: bascenev1.Activity | None) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"setnode", (PyCFunction)SetNode, METH_VARARGS | METH_KEYWORDS,
      "setnode(node: bascenev1.Node | None) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"get_icon", (PyCFunction)GetIcon, METH_NOARGS,
      "get_icon() -> dict[str, Any]\n"
      "\n"
-     "Returns the character's icon (images, colors, etc contained\n"
+     "Return the character's icon (images, colors, etc contained\n"
      "in a dict."},
     {"get_icon_info", (PyCFunction)GetIconInfo, METH_NOARGS,
      "get_icon_info() -> dict[str, Any]\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
-     "allows inclusion of our custom attrs in standard python dir()"},
+     "Allows inclusion of our custom attrs in standard python dir()."},
     {nullptr}};
 
 #pragma clang diagnostic pop

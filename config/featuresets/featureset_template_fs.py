@@ -12,4 +12,8 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we're defining here.
 fset = FeatureSet.get_active()
 
+# Other feature-sets we can't exist without.
 fset.requirements = {'core', 'base'}
+
+# Uncomment to create a TemplateFsAppSubsystem at 'ba*.app.template_fs':
+# fset.has_python_app_subsystem = True

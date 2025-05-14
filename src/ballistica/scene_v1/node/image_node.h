@@ -48,16 +48,16 @@ class ImageNode : public Node {
   void set_premultiplied(bool val) { premultiplied_ = val; }
   auto GetAttach() const -> std::string;
   void SetAttach(const std::string& val);
-  auto texture() const -> SceneTexture* { return texture_.Get(); }
+  auto texture() const -> SceneTexture* { return texture_.get(); }
   void set_texture(SceneTexture* t) { texture_ = t; }
-  auto tint_texture() const -> SceneTexture* { return tint_texture_.Get(); }
+  auto tint_texture() const -> SceneTexture* { return tint_texture_.get(); }
   void set_tint_texture(SceneTexture* t) { tint_texture_ = t; }
-  auto mask_texture() const -> SceneTexture* { return mask_texture_.Get(); }
+  auto mask_texture() const -> SceneTexture* { return mask_texture_.get(); }
   void set_mask_texture(SceneTexture* t) { mask_texture_ = t; }
-  auto mesh_opaque() const -> SceneMesh* { return mesh_opaque_.Get(); }
+  auto mesh_opaque() const -> SceneMesh* { return mesh_opaque_.get(); }
   void set_mesh_opaque(SceneMesh* m) { mesh_opaque_ = m; }
   auto mesh_transparent() const -> SceneMesh* {
-    return mesh_transparent_.Get();
+    return mesh_transparent_.get();
   }
   void set_mesh_transparent(SceneMesh* m) {
     mesh_transparent_ = m;

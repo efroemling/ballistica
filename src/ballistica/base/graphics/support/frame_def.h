@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "ballistica/base/assets/asset.h"
+#include "ballistica/base/graphics/support/graphics_settings.h"
 #include "ballistica/shared/generic/snapshot.h"
 #include "ballistica/shared/math/matrix44f.h"
 #include "ballistica/shared/math/vector2f.h"
@@ -216,8 +217,8 @@ class FrameDef {
   // auto pixel_scale() const { return pixel_scale_; }
 
   auto* settings() const {
-    assert(settings_snapshot_.Exists());
-    return settings_snapshot_->Get();
+    assert(settings_snapshot_.exists());
+    return settings_snapshot_->get();
   }
 
  private:

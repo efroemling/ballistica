@@ -37,10 +37,10 @@
     <ClInclude Include="..\..\src\ballistica\base\app_mode\app_mode.h">
       <Filter>ballistica\base\app_mode</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\app_mode\app_mode_empty.cc">
+    <ClCompile Include="..\..\src\ballistica\base\app_mode\empty_app_mode.cc">
       <Filter>ballistica\base\app_mode</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\app_mode\app_mode_empty.h">
+    <ClInclude Include="..\..\src\ballistica\base\app_mode\empty_app_mode.h">
       <Filter>ballistica\base\app_mode</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\assets\asset.cc">
@@ -688,22 +688,22 @@
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_vec3.h">
       <Filter>ballistica\base\python\class</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_app.cc">
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_base_1.cc">
       <Filter>ballistica\base\python\methods</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_app.h">
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_base_1.h">
       <Filter>ballistica\base\python\methods</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_graphics.cc">
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_base_2.cc">
       <Filter>ballistica\base\python\methods</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_graphics.h">
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_base_2.h">
       <Filter>ballistica\base\python\methods</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_misc.cc">
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_base_3.cc">
       <Filter>ballistica\base\python\methods</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_misc.h">
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_base_3.h">
       <Filter>ballistica\base\python\methods</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\python\support\python_context_call.cc">
@@ -798,6 +798,12 @@
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\classic\python\methods\python_methods_classic.h">
       <Filter>ballistica\classic\python\methods</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\classic\support\classic_app_mode.cc">
+      <Filter>ballistica\classic\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\classic\support\classic_app_mode.h">
+      <Filter>ballistica\classic\support</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\classic\support\stress_test.cc">
       <Filter>ballistica\classic\support</Filter>
@@ -1381,12 +1387,6 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\scene.h">
       <Filter>ballistica\scene_v1\support</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene_v1_app_mode.cc">
-      <Filter>ballistica\scene_v1\support</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\scene_v1\support\scene_v1_app_mode.h">
-      <Filter>ballistica\scene_v1\support</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene_v1_context.cc">
       <Filter>ballistica\scene_v1\support</Filter>
     </ClCompile>
@@ -1426,10 +1426,10 @@
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_common.h">
       <Filter>ballistica\shared\buildconfig</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_generic.h">
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_headless.h">
       <Filter>ballistica\shared\buildconfig</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_headless.h">
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_testbuild.h">
       <Filter>ballistica\shared\buildconfig</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\shared\foundation\event_loop.cc">
@@ -1666,12 +1666,6 @@
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\ui_v1_python.h">
       <Filter>ballistica\ui_v1\python</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\ui_v1\support\root_ui.cc">
-      <Filter>ballistica\ui_v1\support</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\ui_v1\support\root_ui.h">
-      <Filter>ballistica\ui_v1\support</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\ui_v1\ui_v1.cc">
       <Filter>ballistica\ui_v1</Filter>
     </ClCompile>
@@ -1730,6 +1724,12 @@
       <Filter>ballistica\ui_v1\widget</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\ui_v1\widget\scroll_widget.h">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\ui_v1\widget\spinner_widget.cc">
+      <Filter>ballistica\ui_v1\widget</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\ui_v1\widget\spinner_widget.h">
       <Filter>ballistica\ui_v1\widget</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\ui_v1\widget\stack_widget.cc">
@@ -2054,7 +2054,6 @@
     <Filter Include="ballistica\ui_v1\python" />
     <Filter Include="ballistica\ui_v1\python\class" />
     <Filter Include="ballistica\ui_v1\python\methods" />
-    <Filter Include="ballistica\ui_v1\support" />
     <Filter Include="ballistica\ui_v1\widget" />
     <Filter Include="external" />
     <Filter Include="external\open_dynamics_engine-ef" />

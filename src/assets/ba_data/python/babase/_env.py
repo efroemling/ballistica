@@ -7,14 +7,13 @@ import sys
 import signal
 import logging
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
-from efro.log import LogLevel
+from efro.logging import LogLevel
 
 if TYPE_CHECKING:
     from typing import Any
-    from efro.log import LogEntry, LogHandler
+    from efro.logging import LogEntry, LogHandler
 
 _g_babase_imported = False  # pylint: disable=invalid-name
 _g_babase_app_started = False  # pylint: disable=invalid-name
@@ -145,6 +144,10 @@ def on_main_thread_start_app() -> None:
         # situations.
         __main__.__builtins__.help = _CustomHelper()
 
+    # UPDATE: As of May 2025 I'm no longer seeing the below issue, so
+    # disabling this workaround for now and will remove it soon if no
+    # issues arise.
+
     # On Windows I'm seeing the following error creating asyncio loops
     # in background threads with the default proactor setup:
 
@@ -156,7 +159,7 @@ def on_main_thread_start_app() -> None:
     # thread; previously the various asyncio bg thread loops were
     # working fine (maybe something caused them to default to selector
     # in that case?..
-    if sys.platform == 'win32':
+    if sys.platform == 'win32' and bool(False):
         import asyncio
 
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -187,7 +190,10 @@ def _feed_logs_to_babase(log_handler: LogHandler) -> None:
         # Forward this along to the engine to display in the in-app
         # console, in the Android log, etc.
         _babase.emit_log(
-            name=entry.name, level=entry.level.name, message=entry.message
+            name=entry.name,
+            level=entry.level.name,
+            timestamp=entry.time.timestamp(),
+            message=entry.message,
         )
 
         # We also want to feed some logs to the old v1-cloud-log system.

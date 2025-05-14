@@ -2,23 +2,29 @@
 
 #include "ballistica/scene_v1/support/scene.h"
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
-#include "ballistica/scene_v1/node/bomb_node.h"
+#include "ballistica/scene_v1/dynamics/part.h"
+#include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_attribute_connection.h"
+#include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/node/player_node.h"
-#include "ballistica/scene_v1/node/text_node.h"
-#include "ballistica/scene_v1/support/scene_v1_app_mode.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 
 namespace ballistica::scene_v1 {
 
 auto Scene::GetSceneStream() const -> SessionStream* {
-  return output_stream_.Get();
+  return output_stream_.get();
 }
 
 void Scene::SetMapBounds(float xmin, float ymin, float zmin, float xmax,
@@ -34,7 +40,7 @@ void Scene::SetMapBounds(float xmin, float ymin, float zmin, float xmax,
 Scene::Scene(millisecs_t start_time)
     : time_(start_time),
       stepnum_(start_time / kGameStepMilliseconds),
-      last_step_real_time_(g_core->GetAppTimeMillisecs()) {
+      last_step_real_time_(g_core->AppTimeMillisecs()) {
   dynamics_ = Object::New<Dynamics>(this);
 
   // Reset world bounds to default.
@@ -58,21 +64,21 @@ Scene::~Scene() {
   dynamics_.Clear();
 
   // If we were associated with an output-stream, inform it of our demise.
-  if (output_stream_.Exists()) {
+  if (output_stream_.exists()) {
     output_stream_->RemoveScene(this);
   }
 }
 
 void Scene::PlaySoundAtPosition(SceneSound* sound, float volume, float x,
                                 float y, float z, bool host_only) {
-  if (output_stream_.Exists() && !host_only) {
+  if (output_stream_.exists() && !host_only) {
     output_stream_->PlaySoundAtPosition(sound, volume, x, y, z);
   }
   g_base->audio->PlaySoundAtPosition(sound->GetSoundData(), volume, x, y, z);
 }
 
 void Scene::PlaySound(SceneSound* sound, float volume, bool host_only) {
-  if (output_stream_.Exists() && !host_only) {
+  if (output_stream_.exists() && !host_only) {
     output_stream_->PlaySound(sound, volume);
   }
   g_base->audio->PlaySound(sound->GetSoundData(), volume);
@@ -81,7 +87,8 @@ void Scene::PlaySound(SceneSound* sound, float volume, bool host_only) {
 auto Scene::IsOutOfBounds(float x, float y, float z) -> bool {
   if (std::isnan(x) || std::isnan(y) || std::isnan(z) || std::isinf(x)
       || std::isinf(y) || std::isinf(z))
-    BA_LOG_ONCE(LogLevel::kError, "Got INF/NAN value on IsOutOfBounds() check");
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "Got INF/NAN value on IsOutOfBounds() check");
 
   return ((x < bounds_min_[0]) || (x > bounds_max_[0]) || (y < bounds_min_[1])
           || (y > bounds_max_[1]) || (z < bounds_min_[2])
@@ -125,7 +132,7 @@ void Scene::SetPlayerNode(int id, PlayerNode* n) { player_nodes_[id] = n; }
 auto Scene::GetPlayerNode(int id) -> PlayerNode* {
   auto i = player_nodes_.find(id);
   if (i != player_nodes_.end()) {
-    return i->second.Get();
+    return i->second.get();
   }
   return nullptr;
 }
@@ -133,14 +140,14 @@ auto Scene::GetPlayerNode(int id) -> PlayerNode* {
 void Scene::Step() {
   out_of_bounds_nodes_.clear();
 
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   // Step all our nodes.
   {
     in_step_ = true;
-    last_step_real_time_ = g_core->GetAppTimeMillisecs();
+    last_step_real_time_ = g_core->AppTimeMillisecs();
     for (auto&& i : nodes_) {
-      Node* node = i.Get();
+      Node* node = i.get();
       node->Step();
 
       // Now that it's stepped, pump new values to any nodes it's connected to.
@@ -151,7 +158,7 @@ void Scene::Step() {
   bool is_foreground = (appmode->GetForegroundScene() == this);
 
   // Add a step command to the output stream.
-  if (output_stream_.Exists()) {
+  if (output_stream_.exists()) {
     output_stream_->StepScene(this);
   }
 
@@ -196,7 +203,7 @@ void Scene::DeleteNode(Node* node) {
   // Sanity test to make sure it dies when we ask.
 #if BA_DEBUG_BUILD
   Object::WeakRef<Node> temp_weak_ref(node);
-  BA_PRECONDITION(temp_weak_ref.Exists());
+  BA_PRECONDITION(temp_weak_ref.exists());
 #endif
 
   // Copy a strong ref to this node to keep it alive until we've wiped it from
@@ -208,8 +215,9 @@ void Scene::DeleteNode(Node* node) {
 
   // Sanity test: at this point the node should be dead.
 #if BA_DEBUG_BUILD
-  if (temp_weak_ref.Exists()) {
-    Log(LogLevel::kError, "Node still exists after ref release!!");
+  if (temp_weak_ref.exists()) {
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Node still exists after ref release!!");
   }
 #endif  // BA_DEBUG_BUILD
 
@@ -219,7 +227,7 @@ void Scene::DeleteNode(Node* node) {
       i->Run();
     }
     for (auto&& i : dependent_nodes) {
-      Node* node2 = i.Get();
+      Node* node2 = i.get();
       if (node2) {
         node2->scene()->DeleteNode(node2);
       }
@@ -272,16 +280,16 @@ auto Scene::NewNode(const std::string& type_string, const std::string& name,
     throw Exception("Invalid node type: '" + type_string + "'");
   }
   auto node = Object::CompleteDeferred<Node>(i->second->Create(this));
-  assert(node.Exists());
+  assert(node.exists());
   node->AddToScene(this);
   node->set_label(name);
   node->SetDelegate(delegate);
-  return node.Get();  // NOLINT
+  return node.get();  // NOLINT
 }
 
 void Scene::Dump(SessionStream* stream) {
   assert(g_base->InLogicThread());
-  auto* appmode = SceneV1AppMode::GetActiveOrFatal();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
   stream->AddScene(this);
 
   // If we're the foreground one, communicate that fact as well.
@@ -298,7 +306,7 @@ void Scene::DumpNodes(SessionStream* out) {
   // We have to do this all at once before setting attrs since any node
   // can refer to any other in an attr set.
   for (auto&& i : nodes_) {
-    Node* node = i.Get();
+    Node* node = i.get();
     assert(node);
 
     // Add the node.
@@ -309,7 +317,7 @@ void Scene::DumpNodes(SessionStream* out) {
 
   // Now go through and set *most* node attr values.
   for (auto&& i1 : nodes_) {
-    Node* node = i1.Get();
+    Node* node = i1.get();
     assert(node);
 
     // Now we need to set *all* of its attrs in order.
@@ -393,9 +401,9 @@ void Scene::DumpNodes(SessionStream* out) {
             break;
           }
           default:
-            Log(LogLevel::kError,
-                "Invalid attr type for Scene::DumpNodes() attr set: "
-                    + std::to_string(static_cast<int>(attr.type())));
+            g_core->Log(LogName::kBa, LogLevel::kError,
+                        "Invalid attr type for Scene::DumpNodes() attr set: "
+                            + std::to_string(static_cast<int>(attr.type())));
             break;
         }
       }
@@ -405,7 +413,7 @@ void Scene::DumpNodes(SessionStream* out) {
   // Now run through all nodes once more and add an OnCreate() call
   // so they can do any post-create setup they need to.
   for (auto&& i : nodes_) {
-    Node* node = i.Get();
+    Node* node = i.get();
     assert(node);
     out->NodeOnCreate(node);
   }
@@ -417,13 +425,13 @@ void Scene::DumpNodes(SessionStream* out) {
 
   // And lastly re-establish node attribute-connections.
   for (auto&& i : nodes_) {
-    Node* node = i.Get();
+    Node* node = i.get();
     assert(node);
     for (auto&& j : node->attribute_connections()) {
-      assert(j.Exists());
-      Node* src_node = j->src_node.Get();
+      assert(j.exists());
+      Node* src_node = j->src_node.get();
       assert(src_node);
-      Node* dst_node = j->dst_node.Get();
+      Node* dst_node = j->dst_node.get();
       assert(dst_node);
       NodeAttributeUnbound* src_attr =
           src_node->type()->GetAttribute(j->src_attr_index);
@@ -449,7 +457,7 @@ auto Scene::GetCorrectionMessage(bool blended) -> std::vector<uint8_t> {
   std::vector<RigidBody*> dynamic_bodies;
 
   for (auto&& i : nodes_) {
-    Node* n = i.Get();
+    Node* n = i.get();
     assert(n);
     if (n && !n->parts().empty()) {
       dynamic_bodies.clear();

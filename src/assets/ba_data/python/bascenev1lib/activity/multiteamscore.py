@@ -3,7 +3,8 @@
 """Functionality related to teams mode score screen."""
 from __future__ import annotations
 
-from typing_extensions import override
+from typing import override
+
 import bascenev1 as bs
 
 from bascenev1lib.actor.text import Text
@@ -56,6 +57,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
     def show_player_scores(
         self,
+        *,
         delay: float = 2.5,
         results: bs.GameResults | None = None,
         scale: float = 1.0,
@@ -133,6 +135,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
             xoffs: float,
             yoffs: float,
             text: bs.Lstr,
+            *,
             h_align: Text.HAlign = Text.HAlign.RIGHT,
             extrascale: float = 1.0,
             maxwidth: float | None = 120.0,

@@ -2,6 +2,8 @@
 
 #include "ballistica/base/python/support/python_context_call.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/python/core_python.h"
@@ -86,11 +88,11 @@ void PythonContextCall::Run(PyObject* args) {
   current_call_ = this;
   assert(Python::HaveGIL());
   PyObject* o =
-      PyObject_Call(object_.Get(),
+      PyObject_Call(object_.get(),
                     args ? args
                          : g_core->python->objs()
                                .Get(core::CorePython::ObjID::kEmptyTuple)
-                               .Get(),
+                               .get(),
                     nullptr);
   current_call_ = prev_call;
 
@@ -127,7 +129,7 @@ void PythonContextCall::Schedule() {
 
   assert(base::g_base);
   base::g_base->logic->event_loop()->PushCall([ref] {
-    assert(ref.Exists());
+    assert(ref.exists());
     ref->Run();
   });
 }
@@ -138,7 +140,7 @@ void PythonContextCall::Schedule(const PythonRef& args) {
   Object::Ref<PythonContextCall> ref(this);
   assert(base::g_base);
   base::g_base->logic->event_loop()->PushCall([ref, args] {
-    assert(ref.Exists());
+    assert(ref.exists());
     ref->Run(args);
   });
 }
@@ -149,7 +151,7 @@ void PythonContextCall::ScheduleWeak() {
   Object::WeakRef<PythonContextCall> ref(this);
   assert(base::g_base);
   base::g_base->logic->event_loop()->PushCall([ref] {
-    if (auto* call = ref.Get()) {
+    if (auto* call = ref.get()) {
       call->Run();
     }
   });
@@ -161,7 +163,7 @@ void PythonContextCall::ScheduleWeak(const PythonRef& args) {
   Object::WeakRef<PythonContextCall> ref(this);
   assert(base::g_base);
   base::g_base->logic->event_loop()->PushCall([ref, args] {
-    if (auto* call = ref.Get()) {
+    if (auto* call = ref.get()) {
       call->Run(args);
     }
   });
@@ -174,7 +176,7 @@ void PythonContextCall::ScheduleInUIOperation() {
   assert(base::g_base);
 
   g_base->ui->PushUIOperationRunnable(NewLambdaRunnableUnmanaged([ref] {
-    assert(ref.Exists());
+    assert(ref.exists());
     ref->Run();
   }));
 }
@@ -186,7 +188,7 @@ void PythonContextCall::ScheduleInUIOperation(const PythonRef& args) {
   assert(base::g_base);
 
   g_base->ui->PushUIOperationRunnable(NewLambdaRunnableUnmanaged([ref, args] {
-    assert(ref.Exists());
+    assert(ref.exists());
     ref->Run(args);
   }));
 }

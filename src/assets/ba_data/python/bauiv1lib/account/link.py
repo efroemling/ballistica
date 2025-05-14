@@ -105,13 +105,13 @@ class AccountLinkWindow(bui.Window):
         )
 
     def _generate_press(self) -> None:
-        from bauiv1lib import account
+        from bauiv1lib.account.signin import show_sign_in_prompt
 
         plus = bui.app.plus
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
         bui.screenmessage(
             bui.Lstr(resource='gatherWindow.requestingAPromoCodeText'),
@@ -126,10 +126,12 @@ class AccountLinkWindow(bui.Window):
         plus.run_v1_account_transactions()
 
     def _enter_code_press(self) -> None:
-        from bauiv1lib import promocode
+        from bauiv1lib.sendinfo import SendInfoWindow
 
-        promocode.PromoCodeWindow(
-            modal=True, origin_widget=self._enter_code_button
+        SendInfoWindow(
+            modal=True,
+            legacy_code_mode=True,
+            origin_widget=self._enter_code_button,
         )
         bui.containerwidget(
             edit=self._root_widget, transition=self._transition_out

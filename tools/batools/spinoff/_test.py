@@ -19,10 +19,11 @@ def spinoff_test(args: list[str]) -> None:
     import os
     import subprocess
 
-    from batools.featureset import FeatureSet
-    from efrotools import extract_flag, getprojectconfig
+    from efro.util import extract_flag
     from efro.terminal import Clr
     from efro.error import CleanError
+    from batools.featureset import FeatureSet
+    from efrotools.project import getprojectconfig
 
     submodule_parent = extract_flag(args, '--submodule-parent')
     shared_test_parent = extract_flag(args, '--shared-test-parent')
@@ -47,6 +48,7 @@ def spinoff_test(args: list[str]) -> None:
     featuresets = {fs.name: fs for fs in FeatureSet.get_all_for_project('.')}
 
     testtype = args[0]
+    assert testtype
     if testtype in featuresets:
         path = f'build/spinofftest/{testtype}'
         print(
@@ -114,7 +116,7 @@ def spinoff_test(args: list[str]) -> None:
                     flush=True,
                 )
                 subprocess.run(
-                    f'cd "{submpath}" && git checkout master && git pull',
+                    f'cd "{submpath}" && git checkout main && git pull',
                     shell=True,
                     check=True,
                 )

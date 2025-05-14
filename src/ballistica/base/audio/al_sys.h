@@ -3,10 +3,6 @@
 #ifndef BALLISTICA_BASE_AUDIO_AL_SYS_H_
 #define BALLISTICA_BASE_AUDIO_AL_SYS_H_
 
-#include <string>
-
-#include "ballistica/shared/ballistica.h"
-
 #if BA_ENABLE_AUDIO
 
 #if BA_HAVE_FRAMEWORK_OPENAL

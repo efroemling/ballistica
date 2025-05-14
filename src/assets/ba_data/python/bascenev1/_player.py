@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, TypeVar, Generic, cast
+from typing import TYPE_CHECKING, cast
 
 import babase
 
@@ -18,16 +18,10 @@ if TYPE_CHECKING:
 
     import bascenev1
 
-PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
-TeamT = TypeVar('TeamT', bound='bascenev1.Team')
-
 
 @dataclass
 class PlayerInfo:
-    """Holds basic info about a player.
-
-    Category: Gameplay Classes
-    """
+    """Holds basic info about a player."""
 
     name: str
     character: str
@@ -35,19 +29,14 @@ class PlayerInfo:
 
 @dataclass
 class StandLocation:
-    """Describes a point in space and an angle to face.
-
-    Category: Gameplay Classes
-    """
+    """Describes a point in space and an angle to face."""
 
     position: babase.Vec3
     angle: float | None = None
 
 
-class Player(Generic[TeamT]):
+class Player[TeamT: bascenev1.Team]:
     """A player in a specific bascenev1.Activity.
-
-    Category: Gameplay Classes
 
     These correspond to bascenev1.SessionPlayer objects, but are associated
     with a single bascenev1.Activity instance. This allows activities to
@@ -102,7 +91,10 @@ class Player(Generic[TeamT]):
         self.character = sessionplayer.character
         self.color = sessionplayer.color
         self.highlight = sessionplayer.highlight
-        self._team = cast(TeamT, sessionplayer.sessionteam.activityteam)
+        self._team = cast(
+            TeamT,  # pylint: disable=undefined-variable
+            sessionplayer.sessionteam.activityteam,
+        )
         assert self._team is not None
         self._customdata = {}
         self._expired = False
@@ -282,8 +274,6 @@ class Player(Generic[TeamT]):
 class EmptyPlayer(Player['bascenev1.EmptyTeam']):
     """An empty player for use by Activities that don't need to define one.
 
-    Category: Gameplay Classes
-
     bascenev1.Player and bascenev1.Team are 'Generic' types, and so passing
     those top level classes as type arguments when defining a
     bascenev1.Activity reduces type safety. For example,
@@ -303,10 +293,10 @@ class EmptyPlayer(Player['bascenev1.EmptyTeam']):
 # instead of requiring extra work by them.
 
 
-def playercast(totype: type[PlayerT], player: bascenev1.Player) -> PlayerT:
+def playercast[PlayerT: bascenev1.Player](
+    totype: type[PlayerT], player: bascenev1.Player
+) -> PlayerT:
     """Cast a bascenev1.Player to a specific bascenev1.Player subclass.
-
-    Category: Gameplay Functions
 
     When writing type-checked code, sometimes code will deal with raw
     bascenev1.Player objects which need to be cast back to a game's actual
@@ -321,12 +311,9 @@ def playercast(totype: type[PlayerT], player: bascenev1.Player) -> PlayerT:
 # NOTE: ideally we should have a single playercast() call and use overloads
 # for the optional variety, but that currently seems to not be working.
 # See: https://github.com/python/mypy/issues/8800
-def playercast_o(
+def playercast_o[PlayerT: bascenev1.Player](
     totype: type[PlayerT], player: bascenev1.Player | None
 ) -> PlayerT | None:
-    """A variant of bascenev1.playercast() for use with optional Player values.
-
-    Category: Gameplay Functions
-    """
+    """A variant of bascenev1.playercast() for optional Player values."""
     assert isinstance(player, (totype, type(None)))
     return player

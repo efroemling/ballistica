@@ -4,15 +4,19 @@
 
 from __future__ import annotations
 
-import logging
 import copy
 import math
+import logging
+from typing import override, TYPE_CHECKING
 
 import bascenev1 as bs
 import bauiv1 as bui
 
+if TYPE_CHECKING:
+    from bauiv1lib.play import PlaylistSelectContext
 
-class PlaylistBrowserWindow(bui.Window):
+
+class PlaylistBrowserWindow(bui.MainWindow):
     """Window for starting teams games."""
 
     def __init__(
@@ -20,29 +24,15 @@ class PlaylistBrowserWindow(bui.Window):
         sessiontype: type[bs.Session],
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        playlist_select_context: PlaylistSelectContext | None = None,
     ):
-        # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist import PlaylistTypeVars
 
-        # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
-
-        assert bui.app.classic is not None
-
         # Store state for when we exit the next game.
         if issubclass(sessiontype, bs.DualTeamSession):
-            bui.app.ui_v1.set_main_menu_location('Team Game Select')
             bui.set_analytics_screen('Teams Window')
         elif issubclass(sessiontype, bs.FreeForAllSession):
-            bui.app.ui_v1.set_main_menu_location('Free-for-All Game Select')
             bui.set_analytics_screen('FreeForAll Window')
         else:
             raise TypeError(f'Invalid sessiontype: {sessiontype}.')
@@ -53,6 +43,7 @@ class PlaylistBrowserWindow(bui.Window):
         self._customize_button: bui.Widget | None = None
         self._sub_width: float | None = None
         self._sub_height: float | None = None
+        self._playlist_select_context = playlist_select_context
 
         self._ensure_standard_playlists_exist()
 
@@ -62,103 +53,142 @@ class PlaylistBrowserWindow(bui.Window):
         )
 
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1100.0 if uiscale is bui.UIScale.SMALL else 800.0
-        x_inset = 150 if uiscale is bui.UIScale.SMALL else 0
-        self._height = (
-            480
+        self._width = (
+            1100.0
             if uiscale is bui.UIScale.SMALL
-            else 510 if uiscale is bui.UIScale.MEDIUM else 580
+            else 800.0 if uiscale is bui.UIScale.MEDIUM else 1040
+        )
+        self._height = (
+            600
+            if uiscale is bui.UIScale.SMALL
+            else 550 if uiscale is bui.UIScale.MEDIUM else 700
         )
 
-        top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.85
+            if uiscale is bui.UIScale.SMALL
+            else 1.0 if uiscale is bui.UIScale.MEDIUM else 0.8
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 100, screensize[0] / scale)
+        target_height = min(self._height - 100, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 31
+        scroll_bottom = yoffs - 60 - self._scroll_height
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + top_extra),
-                transition=transition,
-                toolbar_visibility='menu_full',
-                scale_origin_stack_offset=scale_origin,
-                scale=(
-                    1.69
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.05 if uiscale is bui.UIScale.MEDIUM else 0.9
+                size=(self._width, self._height),
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if (
+                        uiscale is bui.UIScale.SMALL
+                        or playlist_select_context is not None
+                    )
+                    else 'menu_full'
                 ),
-                stack_offset=(
-                    (0, -26) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
-            )
+                scale=scale,
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
-        self._back_button: bui.Widget | None = bui.buttonwidget(
+        self._back_button: bui.Widget | None
+        if uiscale is bui.UIScale.SMALL:
+            self._back_button = None
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self._on_back_press
+            )
+        else:
+            self._back_button = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(59, yoffs - 45),
+                size=(60, 54),
+                scale=1.0,
+                on_activate_call=self._on_back_press,
+                autoselect=True,
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+            )
+            bui.containerwidget(
+                edit=self._root_widget, cancel_button=self._back_button
+            )
+
+        self._title_text = bui.textwidget(
             parent=self._root_widget,
-            position=(59 + x_inset, self._height - 70),
-            size=(120, 60),
-            scale=1.0,
-            on_activate_call=self._on_back_press,
-            autoselect=True,
-            label=bui.Lstr(resource='backText'),
-            button_type='back',
-        )
-        bui.containerwidget(
-            edit=self._root_widget, cancel_button=self._back_button
-        )
-        txt = self._title_text = bui.textwidget(
-            parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 41),
+            position=(
+                self._width * 0.5,
+                yoffs - (45 if uiscale is bui.UIScale.SMALL else 20),
+            ),
             size=(0, 0),
             text=self._pvars.window_title_name,
-            scale=1.3,
+            scale=(0.8 if uiscale is bui.UIScale.SMALL else 1.3),
             res_scale=1.5,
             color=bui.app.ui_v1.heading_color,
             h_align='center',
             v_align='center',
         )
-        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
-            bui.textwidget(edit=txt, text='')
 
-        bui.buttonwidget(
-            edit=self._back_button,
-            button_type='backSmall',
-            size=(60, 54),
-            position=(59 + x_inset, self._height - 67),
-            label=bui.charstr(bui.SpecialChar.BACK),
-        )
-
-        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
-            self._back_button.delete()
-            self._back_button = None
-            bui.containerwidget(
-                edit=self._root_widget, on_cancel_call=self._on_back_press
-            )
-            scroll_offs = 33
-        else:
-            scroll_offs = 0
-        self._scroll_width = self._width - (100 + 2 * x_inset)
-        self._scroll_height = self._height - (
-            146
-            if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars
-            else 136
-        )
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
             size=(self._scroll_width, self._scroll_height),
             position=(
-                (self._width - self._scroll_width) * 0.5,
-                65 + scroll_offs,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
             ),
+            border_opacity=0.4,
+            center_small_content_horizontally=True,
         )
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
         self._subcontainer: bui.Widget | None = None
         self._config_name_full = self._pvars.config_name + ' Playlists'
         self._last_config = None
 
-        # Update now and once per second.
-        # (this should do our initial refresh)
+        # Update now and once per second (this should do our initial
+        # refresh).
         self._update()
         self._update_timer = bui.AppTimer(
             1.0, bui.WeakCall(self._update), repeat=True
         )
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull things out of self here; if we do it below in the lambda
+        # then we keep self alive.
+        sessiontype = self._sessiontype
+
+        # Pull anything out of self here; if we do it in the lambda
+        # we'll inadvertanly keep self alive.
+        playlist_select_context = self._playlist_select_context
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                sessiontype=sessiontype,
+                playlist_select_context=playlist_select_context,
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
 
     def _ensure_standard_playlists_exist(self) -> None:
         plus = bui.app.plus
@@ -348,15 +378,22 @@ class PlaylistBrowserWindow(bui.Window):
         items.sort(key=lambda x2: asserttype(x2[0], str).lower())
         items = [['__default__', None]] + items  # default is always first
 
-        count = len(items)
-        columns = 3
-        rows = int(math.ceil(float(count) / columns))
         button_width = 230
         button_height = 230
         button_buffer_h = -3
         button_buffer_v = 0
 
-        self._sub_width = self._scroll_width
+        count = len(items)
+        columns = max(
+            1,
+            math.floor(
+                self._scroll_width / (button_width + 2 * button_buffer_h)
+            ),
+        )
+        rows = int(math.ceil(float(count) / columns))
+
+        self._sub_width = columns * button_width + 2 * button_buffer_h
+
         self._sub_height = (
             40.0 + rows * (button_height + 2 * button_buffer_v) + 90
         )
@@ -372,11 +409,20 @@ class PlaylistBrowserWindow(bui.Window):
         for child in children:
             child.delete()
 
+        # On small ui-scale, nudge 'Playlists' text to the right when
+        # we're small enough so that the back button doesn't partly
+        # obscure it.
+        uiscale = bui.app.ui_v1.uiscale
+        screensize = bui.get_virtual_screen_size()
+        xoffs = (
+            40 if uiscale is bui.UIScale.SMALL and screensize[0] < 1400 else 0
+        )
+
         assert bui.app.classic is not None
         bui.textwidget(
             parent=self._subcontainer,
             text=bui.Lstr(resource='playlistsText'),
-            position=(40, self._sub_height - 26),
+            position=(40 + xoffs, self._sub_height - 26),
             size=(0, 0),
             scale=1.0,
             maxwidth=400,
@@ -392,7 +438,8 @@ class PlaylistBrowserWindow(bui.Window):
         mesh_transparent = bui.getmesh('level_select_button_transparent')
         mask_tex = bui.gettexture('mapPreviewMask')
 
-        h_offs = 225 if count == 1 else 115 if count == 2 else 0
+        # h_offs = 225 if count == 1 else 115 if count == 2 else 0
+        h_offs = 2
         h_offs_bottom = 0
 
         uiscale = bui.app.ui_v1.uiscale
@@ -418,23 +465,15 @@ class PlaylistBrowserWindow(bui.Window):
                     position=pos,
                 )
 
-                if (
-                    x == 0
-                    and bui.app.ui_v1.use_toolbars
-                    and uiscale is bui.UIScale.SMALL
-                ):
+                if x == 0 and uiscale is bui.UIScale.SMALL:
                     bui.widget(
                         edit=btn,
                         left_widget=bui.get_special_widget('back_button'),
                     )
-                if (
-                    x == columns - 1
-                    and bui.app.ui_v1.use_toolbars
-                    and uiscale is bui.UIScale.SMALL
-                ):
+                if x == columns - 1 and uiscale is bui.UIScale.SMALL:
                     bui.widget(
                         edit=btn,
-                        right_widget=bui.get_special_widget('party_button'),
+                        right_widget=bui.get_special_widget('squad_button'),
                     )
                 bui.buttonwidget(
                     edit=btn,
@@ -443,7 +482,16 @@ class PlaylistBrowserWindow(bui.Window):
                     ),
                     on_select_call=bui.Call(self._on_playlist_select, name),
                 )
-                bui.widget(edit=btn, show_buffer_top=50, show_buffer_bottom=50)
+
+                # Top row biases things up more to show header above it.
+                if y == 0:
+                    bui.widget(
+                        edit=btn, show_buffer_top=60, show_buffer_bottom=5
+                    )
+                else:
+                    bui.widget(
+                        edit=btn, show_buffer_top=30, show_buffer_bottom=30
+                    )
 
                 if self._selected_playlist == name:
                     bui.containerwidget(
@@ -635,15 +683,35 @@ class PlaylistBrowserWindow(bui.Window):
 
     def on_play_options_window_run_game(self) -> None:
         """(internal)"""
-        if not self._root_widget:
+
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
+            # if not self._root_widget:
             return
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
+
+        if self._playlist_select_context is not None:
+            # Done doing a playlist selection; now back all the way out
+            # of our selection windows to our stored starting point.
+            if self._playlist_select_context.back_state is None:
+                logging.error(
+                    'No back state found'
+                    ' after playlist select context completion.'
+                )
+            else:
+                self.main_window_back_state = (
+                    self._playlist_select_context.back_state
+                )
+            self.main_window_back()
+        else:
+            # Launching a regular game session; simply get our window
+            # transitioning out.
+            self.main_window_close(transition='out_left')
 
     def _on_playlist_select(self, playlist_name: str) -> None:
         self._selected_playlist = playlist_name
 
     def _update(self) -> None:
-        # make sure config exists
+        # Make sure config exists.
         if self._config_name_full not in bui.app.config:
             bui.app.config[self._config_name_full] = {}
 
@@ -672,6 +740,7 @@ class PlaylistBrowserWindow(bui.Window):
             scale_origin=button.get_screen_space_center(),
             playlist=playlist_name,
             delegate=self,
+            playlist_select_context=self._playlist_select_context,
         )
 
     def _on_customize_press(self) -> None:
@@ -680,27 +749,23 @@ class PlaylistBrowserWindow(bui.Window):
             PlaylistCustomizeBrowserWindow,
         )
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
+        self.main_window_replace(
             PlaylistCustomizeBrowserWindow(
                 origin_widget=self._customize_button,
                 sessiontype=self._sessiontype,
-            ).get_root_widget(),
-            from_window=self._root_widget,
+            )
         )
 
     def _on_back_press(self) -> None:
         # pylint: disable=cyclic-import
-        from bauiv1lib.play import PlayWindow
+        # from bauiv1lib.play import PlayWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
         # Store our selected playlist if that's changed.
@@ -715,15 +780,7 @@ class PlaylistBrowserWindow(bui.Window):
                 )
                 cfg.commit()
 
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PlayWindow(transition='in_left').get_root_widget(),
-            from_window=self._root_widget,
-        )
+        self.main_window_back()
 
     def _save_state(self) -> None:
         try:

@@ -19,10 +19,7 @@ def register_campaign(campaign: bascenev1.Campaign) -> None:
 
 
 class Campaign:
-    """Represents a unique set or series of baclassic.Level-s.
-
-    Category: **App Classes**
-    """
+    """Represents a unique set of :class:`~bascenev1.Level` instances."""
 
     def __init__(
         self,
@@ -39,18 +36,18 @@ class Campaign:
 
     @property
     def name(self) -> str:
-        """The name of the Campaign."""
+        """The name of the campaign."""
         return self._name
 
     @property
     def sequential(self) -> bool:
-        """Whether this Campaign's levels must be played in sequence."""
+        """Whether this campaign's levels must be played in sequence."""
         return self._sequential
 
     def addlevel(
         self, level: bascenev1.Level, index: int | None = None
     ) -> None:
-        """Adds a baclassic.Level to the Campaign."""
+        """Add a level to the campaign."""
         if level.campaign is not None:
             raise RuntimeError('Level already belongs to a campaign.')
         level.set_campaign(self, len(self._levels))
@@ -61,11 +58,11 @@ class Campaign:
 
     @property
     def levels(self) -> list[bascenev1.Level]:
-        """The list of baclassic.Level-s in the Campaign."""
+        """The list of levels in the campaign."""
         return self._levels
 
     def getlevel(self, name: str) -> bascenev1.Level:
-        """Return a contained baclassic.Level by name."""
+        """Return a contained level by name."""
 
         for level in self._levels:
             if level.name == name:
@@ -75,11 +72,11 @@ class Campaign:
         )
 
     def reset(self) -> None:
-        """Reset state for the Campaign."""
+        """Reset state for the campaign."""
         babase.app.config.setdefault('Campaigns', {})[self._name] = {}
 
-    # FIXME should these give/take baclassic.Level instances instead
-    #  of level names?..
+    # FIXME: should these give/take baclassic.Level instances instead of
+    #  level names?..
     def set_selected_level(self, levelname: str) -> None:
         """Set the Level currently selected in the UI (by name)."""
         self.configdict['Selection'] = levelname

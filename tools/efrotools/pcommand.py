@@ -10,6 +10,7 @@ from __future__ import annotations
 
 # Note: import as little as possible here at the module level to keep
 # launch times fast for small snippets.
+import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -39,8 +40,8 @@ _g_batch_server_mode: bool = False
 def pcommand_main(globs: dict[str, Any]) -> None:
     """Main entry point to pcommand scripts.
 
-    We simply look for all public functions and call
-    the one corresponding to the first passed arg.
+    We simply look for all public functions in the provided module globals
+    and call the one corresponding to the first passed arg.
     """
     import types
 
@@ -50,7 +51,50 @@ def pcommand_main(globs: dict[str, Any]) -> None:
     global _g_funcs  # pylint: disable=global-statement
     assert _g_funcs is None
 
-    # Build our list of available funcs.
+    # Nowadays generated pcommand scripts run themselves using the
+    # project virtual environment's Python interpreter
+    # (.venv/bin/pythonX.Y, etc.). This nicely sets up the Python
+    # environment but does not touch PATH, meaning the stuff under
+    # .venv/bin won't get found if we do subprocess.run()/etc.
+    #
+    # One way to solve this would be to always do `source
+    # .venv/bin/activate` before running tools/pcommand. This sets PATH
+    # but also seems unwieldy and easy to forget. It's nice to be able
+    # to just run tools/pcommand and assume it'll do the right thing.
+    #
+    # So let's go ahead and set up PATH here so tools/pcommand by itself
+    # *does* do the right thing.
+
+    # Don't do this on Windows; we're not currently using virtual-envs
+    # there for the little bit of tools stuff we support.
+    if not sys.platform.startswith('win'):
+        abs_exe_path = Path(sys.executable).absolute()
+        pathparts = abs_exe_path.parts
+        if (
+            len(pathparts) < 3
+            or pathparts[-3] != '.venv'
+            or pathparts[-2] != 'bin'
+            or not pathparts[-1].startswith('python')
+        ):
+            raise RuntimeError(
+                'Unexpected Python environment;'
+                f' we expect to be running under something like'
+                f" .venv/bin/pythonX.Y; found '{abs_exe_path}'."
+            )
+
+        cur_paths_str = os.environ.get('PATH')
+        if cur_paths_str is None:
+            raise RuntimeError("'PATH' is not currently set; unexpected.")
+
+        venv_bin_dir = str(abs_exe_path.parent)
+
+        # Only add our entry if it's not already there; don't want PATH to
+        # get out of control if we're doing recursive stuff.
+        cur_paths = cur_paths_str.split(':')
+        if venv_bin_dir not in cur_paths:
+            os.environ['PATH'] = ':'.join([venv_bin_dir] + cur_paths)
+
+    # Build our list of available command functions.
     _g_funcs = dict(
         (
             (name, obj)

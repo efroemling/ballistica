@@ -4,7 +4,7 @@
 #define BALLISTICA_SHARED_FOUNDATION_EXCEPTION_H_
 #ifdef __cplusplus
 
-#include <stdexcept>
+#include <stdexcept>  // IWYU pragma: keep.
 #include <string>
 
 #include "ballistica/shared/foundation/types.h"
@@ -48,9 +48,6 @@ auto GetShortExceptionDescription(const std::exception& exc) -> const char*;
 
 class Exception : public std::exception {
  public:
-  // NOTE: When adding exception types here, add a corresponding
-  // handler in Python::SetPythonException.
-
   explicit Exception(std::string message = "",
                      PyExcType python_type = PyExcType::kRuntime);
   explicit Exception(PyExcType python_type);

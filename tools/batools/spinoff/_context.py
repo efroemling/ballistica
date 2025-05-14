@@ -15,7 +15,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, assert_never
 
 from efrotools.code import format_python_str, format_cpp_str
-from efrotools import getprojectconfig, replace_exact
+from efrotools.project import getprojectconfig
+from efrotools.util import replace_exact
 from efro.error import CleanError
 from efro.terminal import Clr
 from efro.util import timedelta_str
@@ -61,6 +62,7 @@ class SpinoffContext:
         src_root: str,
         dst_root: str,
         mode: Mode,
+        *,
         force: bool = False,
         verbose: bool = False,
         print_full_lists: bool = False,
@@ -71,11 +73,11 @@ class SpinoffContext:
     ) -> None:
         # pylint: disable=too-many-statements
 
-        # By default, if dst files have their modtimes changed but
-        # still line up with src files, we can recover. But one may
-        # choose to error in that case to track down things mucking
-        # with dst files when they shouldn't be.
-        self.strict = False
+        #: By default, if dst files have their modtimes changed but
+        #: still line up with src files, we can recover. But one may
+        #: choose to error in that case to track down things mucking
+        #: with dst files when they shouldn't be.
+        self.strict: bool = False
 
         self._mode = mode
         self._force = force
@@ -693,7 +695,7 @@ class SpinoffContext:
 
     def _generate_env_hash(self) -> None:
         # pylint: disable=cyclic-import
-        from efrotools import get_files_hash
+        from efrotools.util import get_files_hash
 
         # noinspection PyUnresolvedReferences
         import batools.spinoff
@@ -1049,10 +1051,11 @@ class SpinoffContext:
         # The proper way might be to ask the parent repo for its full list of
         # script files but that would add more expense.
         if (
-            src_path.endswith('.py') or src_path in {'tools/cloudshell'}
+            src_path.endswith('.py')
+            # or src_path in {'tools/cloudshell'}
         ) and out != text:
             self._ensure_parent_repo_tool_configs_exist()
-            out = format_python_str(out)
+            out = format_python_str(projroot=self._src_root, code=out)
 
         # Ditto for .cc
         if src_path.endswith('.cc') and out != text:
@@ -1070,7 +1073,7 @@ class SpinoffContext:
             # Interestingly, seems we need to use shell command cd here
             # instead of just passing cwd arg.
             subprocess.run(
-                f'cd {self._src_root} && make prereqs',
+                f'cd {self._src_root} && make env',
                 shell=True,
                 check=True,
                 capture_output=True,
@@ -1208,6 +1211,8 @@ class SpinoffContext:
         dst_path_full: str,
         key: str,
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
+
         # Ick; dst changed.  Now the only way we allow
         # the delete is if we can re-filter its src
         # and come up with the same dst again
@@ -1524,11 +1529,13 @@ class SpinoffContext:
         dst_path_full: str,
         display_diff_cmd: str,
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
+
         if os.path.isfile(src_path_full) and os.path.isfile(dst_path_full):
-            # We want to show how this update would change the dst
-            # file, so we need to compare a filtered version of src
-            # to the existing dst. For non-filtered src files we
-            # can just do a direct compare
+            # We want to show how this update would change the dst file,
+            # so we need to compare a filtered version of src to the
+            # existing dst. For non-filtered src files we can just do a
+            # direct compare
             delete_file_name: str | None
             if self._should_filter_src_file(src_path):
                 with tempfile.NamedTemporaryFile('wb', delete=False) as tmpf:
@@ -1563,11 +1570,7 @@ class SpinoffContext:
                 os.remove(delete_file_name)
 
     def _is_project_file(self, path: str) -> bool:
-        if (
-            path.startswith('tools/')
-            or path.startswith('src/external')
-            or path.startswith('src/assets/sphinx')
-        ):
+        if path.startswith('tools/') or path.startswith('src/external'):
             return False
         bname = os.path.basename(path)
         return (
@@ -1614,9 +1617,9 @@ class SpinoffContext:
 
             # For project-updater to do its thing, we need to provide
             # filtered source versions of *all* project files which
-            # might be changing. (Some project files may implicitly generate
-            # others as part of their own generation so we need all sources
-            # in place before any generation happens).
+            # might be changing. (Some project files may implicitly
+            # generate others as part of their own generation so we need
+            # all sources in place before any generation happens).
             for src_path in project_src_paths:
                 self._handle_src_copy_project_updater_register(src_path)
 
@@ -1760,7 +1763,7 @@ class SpinoffContext:
         src_entity: SrcEntity,
         is_project_file: bool,
     ) -> DstEntity:
-        # del dst_path  # Unused.
+        # pylint: disable=too-many-positional-arguments
 
         # If this is a project file, we already fed the filtered
         # src into our ProjectUpdater instance, so all we do here is
@@ -2043,6 +2046,7 @@ class SpinoffContext:
         dst_entity: DstEntity,
         dst_exists: bool,
     ) -> None:
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals

@@ -15,7 +15,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 //#include <malloc.h>
 #else
 #include <alloca.h>

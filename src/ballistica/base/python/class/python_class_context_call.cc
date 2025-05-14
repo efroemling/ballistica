@@ -2,10 +2,11 @@
 
 #include "ballistica/base/python/class/python_class_context_call.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::base {
 
@@ -23,43 +24,41 @@ void PythonClassContextCall::SetupType(PyTypeObject* cls) {
       "\n"
       "A context-preserving callable.\n"
       "\n"
-      "Category: **General Utility Classes**\n"
-      "\n"
-      "A ContextCall wraps a callable object along with a reference\n"
-      "to the current context (see babase.ContextRef); it handles restoring\n"
-      "the context when run and automatically clears itself if the context\n"
-      "it belongs to dies.\n"
+      "This wraps a callable object along with a reference to the current\n"
+      "context (see :class:`~babase.ContextRef`); it handles restoring the\n"
+      "context when run and automatically clears itself if the context it\n"
+      "belongs to dies.\n"
       "\n"
       "Generally you should not need to use this directly; all standard\n"
       "Ballistica callbacks involved with timers, materials, UI functions,\n"
       "etc. handle this under-the-hood so you don't have to worry about it.\n"
       "The only time it may be necessary is if you are implementing your\n"
       "own callbacks, such as a worker thread that does some action and then\n"
-      "runs some game code when done. By wrapping said callback in one of\n"
+      "runs some engine code when done. By wrapping said callback in one of\n"
       "these, you can ensure that you will not inadvertently be keeping the\n"
       "current activity alive or running code in a torn-down (expired)\n"
-      "context_ref.\n"
+      ":class:`~babase.ContextRef`.\n"
       "\n"
-      "You can also use babase.WeakCall for similar functionality, but\n"
-      "ContextCall has the added bonus that it will not run during "
-      "context_ref\n"
-      "shutdown, whereas babase.WeakCall simply looks at whether the target\n"
-      "object instance still exists.\n"
+      "You can also use :class:`~babase.WeakCall` for similar functionality,\n"
+      "but ContextCall has the added bonus that it will not run during\n"
+      ":class:`~babase.ContextRef` shutdown, whereas\n"
+      ":class:`~babase.WeakCall` simply looks at whether the target object\n"
+      "instance still exists.\n"
       "\n"
-      "##### Examples\n"
-      "**Example A:** code like this can inadvertently prevent our activity\n"
+      "**Example A:** Code like this can inadvertently prevent our activity\n"
       "(self) from ending until the operation completes, since the bound\n"
       "method we're passing (self.dosomething) contains a strong-reference\n"
-      "to self).\n"
-      ">>> start_some_long_action(callback_when_done=self.dosomething)\n"
+      "to self)::\n"
       "\n"
-      "**Example B:** in this case our activity (self) can still die\n"
+      "    start_some_long_action(callback_when_done=self.dosomething)\n"
+      "\n"
+      "**Example B:** In this case our activity (self) can still die\n"
       "properly; the callback will clear itself when the activity starts\n"
       "shutting down, becoming a harmless no-op and releasing the reference\n"
-      "to our activity.\n"
+      "to our activity::\n"
       "\n"
-      ">>> start_long_action(\n"
-      "...     callback_when_done=babase.ContextCall(self.mycallback))\n";
+      "    start_long_action(\n"
+      "        callback_when_done=babase.ContextCall(self.mycallback))\n";
 
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
@@ -92,8 +91,8 @@ auto PythonClassContextCall::tp_new(PyTypeObject* type, PyObject* args,
 }
 
 auto PythonClassContextCall::tp_call(PythonClassContextCall* self,
-                                     PyObject* args,
-                                     PyObject* keywds) -> PyObject* {
+                                     PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -109,7 +108,7 @@ auto PythonClassContextCall::tp_call(PythonClassContextCall* self,
 auto PythonClassContextCall::tp_repr(PythonClassContextCall* self)
     -> PyObject* {
   BA_PYTHON_TRY;
-  assert(self->context_call_->Exists());
+  assert(self->context_call_->exists());
   return PyUnicode_FromString(
       ("<ba.ContextCall call="
        + (*(self->context_call_))->GetObjectDescription() + ">")

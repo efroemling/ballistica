@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/node/node_attribute.h"
 
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "ballistica/scene_v1/node/node.h"
 #include "ballistica/scene_v1/node/node_attribute_connection.h"
 #include "ballistica/scene_v1/node/node_type.h"
@@ -48,7 +52,8 @@ auto NodeAttributeUnbound::GetNodeAttributeTypeName(NodeAttributeType t)
     case NodeAttributeType::kCollisionMeshArray:
       return "collision-mesh-array";
     default:
-      Log(LogLevel::kError,
+      g_core->Log(
+          LogName::kBa, LogLevel::kError,
           "Unknown attr type name: " + std::to_string(static_cast<int>(t)));
       return "unknown";
   }
@@ -81,14 +86,14 @@ void NodeAttributeUnbound::DisconnectIncoming(Node* node) {
   assert(node);
   auto i = node->attribute_connections_incoming().find(index());
   if (i != node->attribute_connections_incoming().end()) {
-    NodeAttributeConnection* a = i->second.Get();
+    NodeAttributeConnection* a = i->second.get();
 
 #if BA_DEBUG_BUILD
     Object::WeakRef<NodeAttributeConnection> test_ref(a);
 #endif
 
     assert(a != nullptr);
-    assert(a->src_node.Exists());
+    assert(a->src_node.exists());
 
     // Remove from src node's outgoing list.
     a->src_node->attribute_connections_.erase(a->src_iterator);
@@ -97,8 +102,9 @@ void NodeAttributeUnbound::DisconnectIncoming(Node* node) {
     node->attribute_connections_incoming_.erase(i);
 
 #if BA_DEBUG_BUILD
-    if (test_ref.Exists()) {
-      Log(LogLevel::kError, "Attr connection still exists after ref releases!");
+    if (test_ref.exists()) {
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "Attr connection still exists after ref releases!");
     }
 #endif
   }

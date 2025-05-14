@@ -1,10 +1,11 @@
 // Released under the MIT License. See LICENSE for details.
 
-#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS
 #include "ballistica/base/platform/apple/base_platform_apple.h"
 
+#include <string>
+
 #if BA_XCODE_BUILD
-#include "ballistica/base/platform/apple/apple_utils.h"
 #include "ballistica/base/platform/apple/from_swift.h"
 #endif
 
@@ -18,7 +19,7 @@ namespace ballistica::base {
 
 BasePlatformApple::BasePlatformApple() {
   // On iOS, keep the device from falling asleep in our app
-#if BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_IOS_TVOS
   // AppleUtils::DisableIdleTimer();
 #endif
 }
@@ -45,7 +46,6 @@ void BasePlatformApple::PurchaseAck(const std::string& purchase,
                                     const std::string& order_id) {
 #if BA_USE_STORE_KIT
   BallisticaKit::StoreKitContext::purchaseAck(purchase, order_id);
-  // AppleUtils::PurchaseAck(purchase, order_id);
 #else
   BasePlatform::PurchaseAck(purchase, order_id);
 #endif
@@ -53,15 +53,60 @@ void BasePlatformApple::PurchaseAck(const std::string& purchase,
 
 void BasePlatformApple::DoOpenURL(const std::string& url) {
 #if BA_XCODE_BUILD
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::openURL(url);
 #else
   BallisticaKit::UIKitFromCpp::openURL(url);
-#endif  // BA_OSTYPE_MACOS
+#endif  // BA_PLATFORM_MACOS
 
 #else
   // For non-xcode builds, go with the default (Python webbrowser module).
   BasePlatform::DoOpenURL(url);
+#endif  // BA_XCODE_BUILD
+}
+
+auto BasePlatformApple::OverlayWebBrowserIsSupported() -> bool {
+#if BA_XCODE_BUILD
+#if BA_PLATFORM_MACOS
+  return BallisticaKit::CocoaFromCpp::haveOverlayWebBrowser();
+#else
+  // TODO(ericf): Implement for uikit.
+  return BasePlatform::OverlayWebBrowserIsSupported();
+#endif  // BA_PLATFORM_MACOS
+
+#else
+  // Fall back to default for non-xcode apple builds.
+  return BasePlatform::OverlayWebBrowserIsSupported();
+#endif  // BA_XCODE_BUILD
+}
+
+void BasePlatformApple::DoOverlayWebBrowserOpenURL(const std::string& url) {
+#if BA_XCODE_BUILD
+#if BA_PLATFORM_MACOS
+  BallisticaKit::CocoaFromCpp::openURLInOverlayWebBrowser(url);
+#else
+  // TODO(ericf): Implement for uikit.
+  BasePlatform::DoOverlayWebBrowserOpenURL(url);
+#endif  // BA_PLATFORM_MACOS
+
+#else
+  // For non-xcode builds, go with the default (Python webbrowser module).
+  BasePlatform::DoOverlayWebBrowserOpenURL(url);
+#endif  // BA_XCODE_BUILD
+}
+
+void BasePlatformApple::DoOverlayWebBrowserClose() {
+#if BA_XCODE_BUILD
+#if BA_PLATFORM_MACOS
+  BallisticaKit::CocoaFromCpp::closeOverlayWebBrowser();
+#else
+  // TODO(ericf): Implement for uikit.
+  BasePlatform::OverlayWebBrowserIsSupported();
+#endif  // BA_PLATFORM_MACOS
+
+#else
+  // Fall back to default for non-xcode apple builds.
+  BasePlatform::OverlayWebBrowserIsSupported();
 #endif  // BA_XCODE_BUILD
 }
 
@@ -71,8 +116,8 @@ void BasePlatformApple::LoginAdapterGetSignInToken(
   if (login_type == "game_center") {
     BallisticaKit::GameCenterContext::getSignInToken(attempt_id);
   } else {
-    Log(LogLevel::kError,
-        "Got unexpected get-sign-in-token login-type: " + login_type);
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Got unexpected get-sign-in-token login-type: " + login_type);
   }
 #else
   BasePlatform::LoginAdapterGetSignInToken(login_type, attempt_id);
@@ -85,7 +130,8 @@ void BasePlatformApple::LoginAdapterBackEndActiveChange(
   if (login_type == "game_center") {
     BallisticaKit::GameCenterContext::backEndActiveChange(active);
   } else {
-    Log(LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "Got unexpected back-end-active-change login-type: " + login_type);
   }
 #else
@@ -94,7 +140,7 @@ void BasePlatformApple::LoginAdapterBackEndActiveChange(
 }
 
 auto BasePlatformApple::SupportsOpenDirExternally() -> bool {
-#if BA_XCODE_BUILD && BA_OSTYPE_MACOS
+#if BA_XCODE_BUILD && BA_PLATFORM_MACOS
   return true;
 #else
   return BasePlatform::SupportsOpenDirExternally();
@@ -102,7 +148,7 @@ auto BasePlatformApple::SupportsOpenDirExternally() -> bool {
 }
 
 void BasePlatformApple::OpenDirExternally(const std::string& path) {
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
+#if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   BallisticaKit::CocoaFromCpp::openDirExternally(path);
 #else
   BasePlatform::OpenDirExternally(path);
@@ -110,7 +156,7 @@ void BasePlatformApple::OpenDirExternally(const std::string& path) {
 }
 
 void BasePlatformApple::OpenFileExternally(const std::string& path) {
-#if BA_OSTYPE_MACOS && BA_XCODE_BUILD
+#if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   BallisticaKit::CocoaFromCpp::openFileExternally(path);
 #else
   BasePlatform::OpenFileExternally(path);
@@ -119,4 +165,4 @@ void BasePlatformApple::OpenFileExternally(const std::string& path) {
 
 }  // namespace ballistica::base
 
-#endif  // BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS
+#endif  // BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS

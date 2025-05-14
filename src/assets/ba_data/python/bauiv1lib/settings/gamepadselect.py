@@ -4,8 +4,7 @@
 
 from __future__ import annotations
 
-import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 import bauiv1 as bui
@@ -14,98 +13,14 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-def gamepad_configure_callback(event: dict[str, Any]) -> None:
-    """Respond to a gamepad button press during config selection."""
-    from bauiv1lib.settings import gamepad
-
-    # Ignore all but button-presses.
-    if event['type'] not in ['BUTTONDOWN', 'HATMOTION']:
-        return
-    bs.release_gamepad_input()
-    assert bui.app.classic is not None
-    try:
-        bui.app.ui_v1.clear_main_menu_window(transition='out_left')
-    except Exception:
-        logging.exception('Error transitioning out main_menu_window.')
-    bui.getsound('activateBeep').play()
-    bui.getsound('swish').play()
-    device = event['input_device']
-    assert isinstance(device, bs.InputDevice)
-    if device.allows_configuring:
-        bui.app.ui_v1.set_main_menu_window(
-            gamepad.GamepadSettingsWindow(device).get_root_widget(),
-            from_window=None,
-        )
-    else:
-        width = 700
-        height = 200
-        button_width = 80
-        uiscale = bui.app.ui_v1.uiscale
-        dlg = bui.containerwidget(
-            scale=(
-                1.7
-                if uiscale is bui.UIScale.SMALL
-                else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
-            ),
-            size=(width, height),
-            transition='in_right',
-        )
-        bui.app.ui_v1.set_main_menu_window(dlg, from_window=None)
-
-        if device.allows_configuring_in_system_settings:
-            msg = bui.Lstr(
-                resource='configureDeviceInSystemSettingsText',
-                subs=[('${DEVICE}', device.name)],
-            )
-        elif device.is_controller_app:
-            msg = bui.Lstr(
-                resource='bsRemoteConfigureInAppText',
-                subs=[('${REMOTE_APP_NAME}', bui.get_remote_app_name())],
-            )
-        else:
-            msg = bui.Lstr(
-                resource='cantConfigureDeviceText',
-                subs=[('${DEVICE}', device.name)],
-            )
-        bui.textwidget(
-            parent=dlg,
-            position=(0, height - 80),
-            size=(width, 25),
-            text=msg,
-            scale=0.8,
-            h_align='center',
-            v_align='top',
-        )
-
-        def _ok() -> None:
-            from bauiv1lib.settings import controls
-
-            # no-op if our underlying widget is dead or on its way out.
-            if not dlg or dlg.transitioning_out:
-                return
-
-            bui.containerwidget(edit=dlg, transition='out_right')
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                controls.ControlsSettingsWindow(
-                    transition='in_left'
-                ).get_root_widget(),
-                from_window=dlg,
-            )
-
-        bui.buttonwidget(
-            parent=dlg,
-            position=((width - button_width) / 2, 20),
-            size=(button_width, 60),
-            label=bui.Lstr(resource='okText'),
-            on_activate_call=_ok,
-        )
-
-
-class GamepadSelectWindow(bui.Window):
+class GamepadSelectWindow(bui.MainWindow):
     """Window for selecting a gamepad to configure."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
+    ) -> None:
         from typing import cast
 
         width = 480
@@ -123,8 +38,9 @@ class GamepadSelectWindow(bui.Window):
                     else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 size=(width, height),
-                transition='in_right',
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         btn = bui.buttonwidget(
@@ -134,10 +50,11 @@ class GamepadSelectWindow(bui.Window):
             label=bui.Lstr(resource='backText'),
             button_type='back',
             scale=0.8,
-            on_activate_call=self._back,
+            on_activate_call=self.main_window_back,
         )
-        # Let's not have anything selected by default; its misleading looking
-        # for the controller getting configured.
+
+        # Let's not have anything selected by default; its misleading
+        # looking for the controller getting configured.
         bui.containerwidget(
             edit=self._root_widget,
             cancel_button=btn,
@@ -147,7 +64,7 @@ class GamepadSelectWindow(bui.Window):
             parent=self._root_widget,
             position=(20, height - 50),
             size=(width, 25),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             maxwidth=250,
             color=bui.app.ui_v1.title_color,
             h_align='center',
@@ -168,7 +85,7 @@ class GamepadSelectWindow(bui.Window):
             position=(15, v),
             size=(width - 30, 30),
             scale=0.8,
-            text=bui.Lstr(resource=self._r + '.pressAnyButtonText'),
+            text=bui.Lstr(resource=f'{self._r}.pressAnyButtonText'),
             maxwidth=width * 0.95,
             color=bui.app.ui_v1.infotextcolor,
             h_align='center',
@@ -181,28 +98,140 @@ class GamepadSelectWindow(bui.Window):
                 position=(15, v),
                 size=(width - 30, 30),
                 scale=0.46,
-                text=bui.Lstr(resource=self._r + '.androidNoteText'),
+                text=bui.Lstr(resource=f'{self._r}.androidNoteText'),
                 maxwidth=width * 0.95,
                 color=(0.7, 0.9, 0.7, 0.5),
                 h_align='center',
                 v_align='top',
             )
 
-        bs.capture_gamepad_input(gamepad_configure_callback)
+        bs.capture_gamepad_input(bui.WeakCall(self.gamepad_configure_callback))
 
-    def _back(self) -> None:
-        from bauiv1lib.settings import controls
+    def __del__(self) -> None:
+        bs.release_gamepad_input()
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
+
+    def gamepad_configure_callback(self, event: dict[str, Any]) -> None:
+        """Respond to a gamepad button press during config selection."""
+        from bauiv1lib.settings.gamepad import GamepadSettingsWindow
+
+        if not self.main_window_has_control():
             return
 
+        # Ignore all but button-presses.
+        if event['type'] not in ['BUTTONDOWN', 'HATMOTION']:
+            return
         bs.release_gamepad_input()
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
+
         assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            controls.ControlsSettingsWindow(
-                transition='in_left'
-            ).get_root_widget(),
-            from_window=self._root_widget,
+
+        bui.getsound('activateBeep').play()
+        bui.getsound('swish').play()
+        device = event['input_device']
+        assert isinstance(device, bs.InputDevice)
+
+        # No matter where we redirect to, we want their back
+        # functionality to skip over us and go to our parent.
+        assert self.main_window_back_state is not None
+        back_state = self.main_window_back_state
+
+        if device.allows_configuring:
+            self.main_window_replace(
+                GamepadSettingsWindow(device), back_state=back_state
+            )
+        else:
+            self.main_window_replace(
+                _NotConfigurableWindow(device), back_state=back_state
+            )
+
+
+class _NotConfigurableWindow(bui.MainWindow):
+
+    def __init__(
+        self,
+        device: bs.InputDevice,
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
+    ) -> None:
+        width = 700
+        height = 200
+        button_width = 80
+        uiscale = bui.app.ui_v1.uiscale
+        super().__init__(
+            root_widget=bui.containerwidget(
+                scale=(
+                    1.7
+                    if uiscale is bui.UIScale.SMALL
+                    else (1.4 if uiscale is bui.UIScale.MEDIUM else 1.0)
+                ),
+                size=(width, height),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
+        )
+        self.device = device
+
+        if device.allows_configuring_in_system_settings:
+            msg = bui.Lstr(
+                resource='configureDeviceInSystemSettingsText',
+                subs=[('${DEVICE}', device.name)],
+            )
+        elif device.is_controller_app:
+            msg = bui.Lstr(
+                resource='bsRemoteConfigureInAppText',
+                subs=[
+                    (
+                        '${REMOTE_APP_NAME}',
+                        bui.get_remote_app_name(),
+                    )
+                ],
+            )
+        else:
+            msg = bui.Lstr(
+                resource='cantConfigureDeviceText',
+                subs=[('${DEVICE}', device.name)],
+            )
+        bui.textwidget(
+            parent=self._root_widget,
+            position=(0, height - 80),
+            size=(width, 25),
+            text=msg,
+            scale=0.8,
+            h_align='center',
+            v_align='top',
+        )
+
+        btn = bui.buttonwidget(
+            parent=self._root_widget,
+            position=((width - button_width) / 2, 20),
+            size=(button_width, 60),
+            label=bui.Lstr(resource='okText'),
+            on_activate_call=self.main_window_back,
+        )
+        bui.containerwidget(edit=self._root_widget, cancel_button=btn)
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull stuff out of self here; if we do it in the lambda we'll
+        # keep self alive which we don't want.
+        device = self.device
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                device=device,
+                transition=transition,
+                origin_widget=origin_widget,
+            )
         )

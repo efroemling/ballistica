@@ -4,8 +4,12 @@
 
 #include "ballistica/base/app_adapter/app_adapter_sdl.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+#include <vector>
+
 #include "ballistica/base/base.h"
-#include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -42,12 +46,6 @@ class AppAdapterSDL::ScopedAllowGraphics_ {
 AppAdapterSDL::AppAdapterSDL() {
   assert(!g_core->HeadlessMode());
   assert(g_core->InMainThread());
-
-  // Enable display-time debug logs via env var.
-  auto val = g_core->platform->GetEnv("BA_DEBUG_LOG_SDL_FRAME_TIMING");
-  if (val && *val == "1") {
-    debug_log_sdl_frame_timing_ = true;
-  }
 }
 
 void AppAdapterSDL::OnMainThreadStartApp() {
@@ -57,13 +55,13 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   uint32_t sdl_flags{SDL_INIT_VIDEO | SDL_INIT_JOYSTICK};
 
   if (strict_graphics_context_) {
-    Log(LogLevel::kWarning,
-        "AppAdapterSDL strict_graphics_context_ is enabled."
-        " Remember to turn this off.");
+    g_core->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                "AppAdapterSDL strict_graphics_context_ is enabled."
+                " Remember to turn this off.");
   }
 
   // We may or may not want xinput on windows.
-  if (g_buildconfig.ostype_windows()) {
+  if (g_buildconfig.platform_windows()) {
     if (!g_core->platform->GetLowLevelConfigValue("enablexinput", 1)) {
       SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
     }
@@ -79,7 +77,7 @@ void AppAdapterSDL::OnMainThreadStartApp() {
 
   // Register events we can send ourself.
   sdl_runnable_event_id_ = SDL_RegisterEvents(1);
-  assert(sdl_runnable_event_id_ != (uint32_t)-1);
+  assert(sdl_runnable_event_id_ != static_cast<uint32_t>(-1));
 
   // SDL builds just assume keyboard input is available.
   g_base->input->PushCreateKeyboardInputDevices();
@@ -212,7 +210,7 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
   assert(g_core->InMainThread());
 
   while (!done_) {
-    microsecs_t cycle_start_time = g_core->GetAppTimeMicrosecs();
+    microsecs_t cycle_start_time = g_core->AppTimeMicrosecs();
 
     // Events.
     SDL_Event event;
@@ -276,22 +274,21 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
 
   // Normally we just calc when our next draw should happen and sleep 'til
   // then.
-  microsecs_t now = g_core->GetAppTimeMicrosecs();
+  microsecs_t now = g_core->AppTimeMicrosecs();
   auto used_max_fps = max_fps_;
   millisecs_t millisecs_per_frame = 1000000 / used_max_fps;
 
   // Special case: if we've got vsync enabled, let's tweak our drawing to
   // happen just a *tiny* bit faster than requested. This means, if our
-  // max-fps matches the refresh rate, we'll be trying to render just a
-  // *bit* faster than vsync which should push us up against the vsync wall
-  // and keep vsync doing most of the delay work. In that case the logging
-  // below should show mostly 'no sleep.'. Without this delay, our render
-  // kick-offs tend to drift around the middle of the vsync cycle and I
-  // worry there could be bad interference patterns in certain spots close
-  // to the edges. Note that we want this tweak to be small enough that it
-  // won't be noticable in situations where vsync and max-fps *don't* match.
-  // For instance, limiting to 60hz on a 120hz vsynced monitor should still
-  // work as expected.
+  // max-fps matches the refresh rate, we should gently push us up against
+  // the vsync wall and keep vsync doing most of the delay work. In that
+  // case the logging below should show mostly 'no sleep.'. Without this
+  // delay, our render kick-offs tend to drift around the middle of the
+  // vsync cycle and I worry there could be bad interference patterns in
+  // certain spots close to the edges. Note that we want this tweak to be
+  // small enough that it won't be noticable in situations where vsync and
+  // max-fps *don't* match. For instance, limiting to 60hz on a 120hz
+  // vsynced monitor should still work as expected.
   if (vsync_actually_enabled_) {
     millisecs_per_frame = 99 * millisecs_per_frame / 100;
   }
@@ -303,25 +300,26 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
   // oversleep system will compensate for our earliness just as it does if
   // we sleep too long.
   const microsecs_t min_sleep{2000};
+
   if (now + min_sleep >= target_time) {
-    if (debug_log_sdl_frame_timing_) {
-      Log(LogLevel::kDebug, "no sleep.");  // 'till brooklyn!
-    }
+    g_core->Log(LogName::kBaGraphics, LogLevel::kDebug,
+                "no sleep.");  // 'till brooklyn!
   } else {
-    if (debug_log_sdl_frame_timing_) {
-      char buf[256];
-      snprintf(buf, sizeof(buf), "render %.1f sleep %.1f",
-               (now - cycle_start_time) / 1000.0f,
-               (target_time - now) / 1000.0f);
-      Log(LogLevel::kDebug, buf);
-    }
+    g_core->Log(LogName::kBaGraphics, LogLevel::kDebug,
+                [now, cycle_start_time, target_time] {
+                  char buf[256];
+                  snprintf(buf, sizeof(buf), "render %.1fms sleep %.1fms",
+                           (now - cycle_start_time) / 1000.0f,
+                           (target_time - now) / 1000.0f);
+                  return std::string(buf);
+                });
     g_core->platform->SleepMicrosecs(target_time - now);
   }
 
   // Maintain an 'oversleep' amount to compensate for the timer not being
   // exact. This should keep us exactly at our target frame-rate in the
   // end.
-  now = g_core->GetAppTimeMicrosecs();
+  now = g_core->AppTimeMicrosecs();
   oversleep_ = now - target_time;
 
   // Prevent oversleep from compensating by more than a few millisecs per
@@ -371,8 +369,9 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
           g_base->input->PushJoystickEvent(event, js);
         }
       } else {
-        Log(LogLevel::kError, "Unable to get SDL Joystick for event type "
-                                  + std::to_string(event.type));
+        g_core->Log(LogName::kBaInput, LogLevel::kError,
+                    "Unable to get SDL Joystick for event type "
+                        + std::to_string(event.type));
       }
       break;
     }
@@ -408,6 +407,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_KEYDOWN: {
+      // printf("KEYDOWN %d\n", static_cast<int>(event.key.keysym.sym));
       if (!event.key.repeat) {
         g_base->input->PushKeyPressEvent(event.key.keysym);
       }
@@ -415,6 +415,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_KEYUP: {
+      // printf("KEYUP %d\n", static_cast<int>(event.key.keysym.sym));
       g_base->input->PushKeyReleaseEvent(event.key.keysym);
       break;
     }
@@ -437,7 +438,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       break;
 
     case SDL_QUIT:
-      if (g_core->GetAppTimeSeconds() - last_windowevent_close_time_ < 0.1) {
+      if (g_core->AppTimeSeconds() - last_windowevent_close_time_ < 0.1) {
         // If they hit the window close button, skip the confirm.
         g_base->QuitApp(false);
       } else {
@@ -458,12 +459,12 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
         case SDL_WINDOWEVENT_CLOSE: {
           // Simply note that this happened. We use this to adjust our
           // SDL_QUIT behavior (quit is called right after this).
-          last_windowevent_close_time_ = g_core->GetAppTimeSeconds();
+          last_windowevent_close_time_ = g_core->AppTimeSeconds();
           break;
         }
 
         case SDL_WINDOWEVENT_MAXIMIZED: {
-          if (g_buildconfig.ostype_macos() && !fullscreen_) {
+          if (g_buildconfig.platform_macos() && !fullscreen_) {
             // Special case: on Mac, we wind up here if someone fullscreens
             // our window via the window widget. This *basically* is the
             // same thing as setting fullscreen through sdl, so we want to
@@ -485,7 +486,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
         }
 
         case SDL_WINDOWEVENT_RESTORED:
-          if (g_buildconfig.ostype_macos() && fullscreen_) {
+          if (g_buildconfig.platform_macos() && fullscreen_) {
             // See note above about Mac fullscreen.
             fullscreen_ = false;
             g_base->logic->event_loop()->PushCall([] {
@@ -553,8 +554,18 @@ void AppAdapterSDL::OnSDLJoystickAdded_(int device_index) {
 
   // Create the joystick here in the main thread and then pass it over to
   // the logic thread to be added to the action.
-  auto* j = Object::NewDeferred<JoystickInput>(device_index);
-  int instance_id = SDL_JoystickInstanceID(j->sdl_joystick());
+  JoystickInput* j{};
+  try {
+    j = Object::NewDeferred<JoystickInput>(device_index);
+  } catch (const std::exception& exc) {
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                std::string("Error creating JoystickInput for SDL device-index "
+                            + std::to_string(device_index) + ": ")
+                    + exc.what());
+    return;
+  }
+  assert(j != nullptr);
+  auto instance_id = SDL_JoystickInstanceID(j->sdl_joystick());
   AddSDLInputDevice_(j, instance_id);
 }
 
@@ -583,13 +594,26 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
   assert(g_core->InMainThread());
   assert(index >= 0);
   JoystickInput* j = GetSDLJoystickInput_(index);
+
+  // Note: am running into this with a PS5 controller on macOS Sequoia beta.
+  if (!j) {
+    g_core->Log(
+        LogName::kBaInput, LogLevel::kError,
+        "GetSDLJoystickInput_() returned nullptr on RemoveSDLInputDevice_();"
+        " joysticks size is "
+            + std::to_string(sdl_joysticks_.size()) + "; index is "
+            + std::to_string(index) + ".");
+    return;
+  }
+
   assert(j);
   if (static_cast_check_fit<int>(sdl_joysticks_.size()) > index) {
     sdl_joysticks_[index] = nullptr;
   } else {
-    Log(LogLevel::kError, "Invalid index on RemoveSDLInputDevice: size is "
-                              + std::to_string(sdl_joysticks_.size())
-                              + "; index is " + std::to_string(index));
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "Invalid index on RemoveSDLInputDevice: size is "
+                    + std::to_string(sdl_joysticks_.size()) + "; index is "
+                    + std::to_string(index) + ".");
   }
   g_base->input->PushRemoveInputDeviceCall(j, true);
 }
@@ -623,9 +647,9 @@ auto AppAdapterSDL::GetSDLJoystickInput_(const SDL_Event* e) const
 auto AppAdapterSDL::GetSDLJoystickInput_(int sdl_joystick_id) const
     -> JoystickInput* {
   assert(g_core->InMainThread());
-  for (auto sdl_joystick : sdl_joysticks_) {
-    if ((sdl_joystick != nullptr) && (*sdl_joystick).sdl_joystick_id() >= 0
-        && (*sdl_joystick).sdl_joystick_id() == sdl_joystick_id)
+  for (auto* sdl_joystick : sdl_joysticks_) {
+    if ((sdl_joystick != nullptr) && sdl_joystick->sdl_joystick_id() >= 0
+        && sdl_joystick->sdl_joystick_id() == sdl_joystick_id)
       return sdl_joystick;
   }
   return nullptr;  // Epic fail.
@@ -645,8 +669,14 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
     fullscreen_ = settings->fullscreen;
 
     // A reasonable default window size.
-    auto width = static_cast<int>(kBaseVirtualResX * 0.8f);
-    auto height = static_cast<int>(kBaseVirtualResY * 0.8f);
+    int width, height;
+    if (g_base->ui->scale() == UIScale::kSmall) {
+      width = static_cast<int>(1300.0f * 0.8f);
+      height = static_cast<int>(600.0f * 0.8f);
+    } else {
+      width = static_cast<int>(kBaseVirtualResX * 0.8f);
+      height = static_cast<int>(kBaseVirtualResY * 0.8f);
+    }
 
     uint32_t flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN
                      | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
@@ -655,7 +685,7 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
     }
 
     int context_flags{};
-    if (g_buildconfig.ostype_macos()) {
+    if (g_buildconfig.platform_macos()) {
       // On Mac we ask for a GL 4.1 Core profile. This is supported by all
       // hardware that we officially support and is also the last version of
       // GL supported on Apple hardware. So we have a nice fixed target to
@@ -752,7 +782,8 @@ void AppAdapterSDL::DoPushGraphicsContextRunnable(Runnable* runnable) {
   if (strict_graphics_context_) {
     auto lock = std::scoped_lock(strict_graphics_calls_mutex_);
     if (strict_graphics_calls_.size() > 1000) {
-      BA_LOG_ONCE(LogLevel::kError, "strict_graphics_calls_ got too big.");
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
+                  "strict_graphics_calls_ got too big.");
     }
     strict_graphics_calls_.push_back(runnable);
   } else {

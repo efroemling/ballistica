@@ -6,8 +6,13 @@ from __future__ import annotations
 # Note: import as little as possible here at the module level to
 # keep launch times fast for small snippets.
 import sys
+from typing import TYPE_CHECKING
 
 from efrotools import pcommand
+
+if TYPE_CHECKING:
+    from libcst import BaseExpression
+    from libcst.metadata import CodeRange
 
 
 def gen_monolithic_register_modules() -> None:
@@ -124,7 +129,7 @@ def py_examine() -> None:
     """Run a python examination at a given point in a given file."""
     import os
     from pathlib import Path
-    import efrotools
+    import efrotools.emacs
 
     pcommand.disallow_in_batch()
 
@@ -153,7 +158,7 @@ def py_examine() -> None:
         sys.path.append(scriptsdir)
     if toolsdir not in sys.path:
         sys.path.append(toolsdir)
-    efrotools.py_examine(
+    efrotools.emacs.py_examine(
         pcommand.PROJROOT, filename, line, column, selection, operation
     )
 
@@ -204,7 +209,7 @@ def win_ci_install_prereqs() -> None:
 
     # We'll need to pull a handful of things out of efrocache for the
     # build to succeed. Normally this would happen through our Makefile
-    # targets but we can't use them under raw window so we need to just
+    # targets but we can't use them under raw Windows so we need to just
     # hard-code whatever we need here.
     lib_dbg_win32 = 'build/prefab/lib/windows/Debug_Win32'
     needed_targets: set[str] = {
@@ -256,11 +261,11 @@ def win_ci_binary_build() -> None:
 
 
 def update_cmake_prefab_lib() -> None:
-    """Update prefab internal libs for builds."""
+    """Update prefab internal libs; run as part of a build."""
     import subprocess
     import os
     from efro.error import CleanError
-    import batools.build
+    from batools.build import PrefabPlatform
 
     pcommand.disallow_in_batch()
 
@@ -275,14 +280,18 @@ def update_cmake_prefab_lib() -> None:
         raise CleanError(f'Invalid buildtype: {buildtype}')
     if mode not in {'debug', 'release'}:
         raise CleanError(f'Invalid mode: {mode}')
-    platform = batools.build.get_current_prefab_platform(
-        wsl_gives_windows=False
-    )
-    suffix = '_server' if buildtype == 'server' else '_gui'
-    target = f'build/prefab/lib/{platform}{suffix}/{mode}/libballisticaplus.a'
 
-    # Build the target and then copy it to dst if it doesn't exist there yet
-    # or the existing one is older than our target.
+    # Our 'cmake' build targets use the Linux side of WSL; not native
+    # Windows.
+    platform = PrefabPlatform.get_current(wsl_targets_windows=False)
+
+    suffix = '_server' if buildtype == 'server' else '_gui'
+    target = (
+        f'build/prefab/lib/{platform.value}{suffix}/{mode}/libballisticaplus.a'
+    )
+
+    # Build the target and then copy it to dst if it doesn't exist there
+    # yet or the existing one is older than our target.
     subprocess.run(['make', target], check=True)
 
     libdir = os.path.join(builddir, 'prefablib')
@@ -419,6 +428,10 @@ def wsl_build_check_win_drive() -> None:
     import subprocess
     import textwrap
     from efro.error import CleanError
+    from efrotools.util import (
+        is_wsl_windows_build_path,
+        wsl_windows_build_path_description,
+    )
 
     # We use env vars to influence our behavior and thus can't support
     # batch.
@@ -431,16 +444,18 @@ def wsl_build_check_win_drive() -> None:
         != 0
     ):
         raise CleanError(
-            'wslpath not found; you must run this from a WSL environment'
+            "'wslpath' not found. This does not seem to be a WSL environment."
         )
 
     if os.environ.get('WSL_BUILD_CHECK_WIN_DRIVE_IGNORE') == '1':
         return
 
+    nativepath = os.getcwd()
+
     # Get a windows path to the current dir.
-    path = (
+    winpath = (
         subprocess.run(
-            ['wslpath', '-w', '-a', os.getcwd()],
+            ['wslpath', '-w', '-a', nativepath],
             capture_output=True,
             check=True,
         )
@@ -448,44 +463,65 @@ def wsl_build_check_win_drive() -> None:
         .strip()
     )
 
-    # If we're sitting under the linux filesystem, our path
-    # will start with \\wsl$; fail in that case and explain why.
-    if not path.startswith('\\\\wsl$'):
-        return
-
     def _wrap(txt: str) -> str:
         return textwrap.fill(txt, 76)
 
-    raise CleanError(
-        '\n\n'.join(
-            [
-                _wrap(
-                    'ERROR: This project appears to live'
-                    ' on the Linux filesystem.'
-                ),
-                _wrap(
-                    'Visual Studio compiles will error here for reasons related'
-                    ' to Linux filesystem case-sensitivity, and thus are'
-                    ' disallowed.'
-                    ' Clone the repo to a location that maps to a native'
-                    ' Windows drive such as \'/mnt/c/ballistica\''
-                    ' and try again.'
-                ),
-                _wrap(
-                    'Note that WSL2 filesystem performance'
-                    ' is poor when accessing'
-                    ' native Windows drives, so if Visual Studio builds are not'
-                    ' needed it may be best to keep things'
-                    ' on the Linux filesystem.'
-                    ' This behavior may differ under WSL1 (untested).'
-                ),
-                _wrap(
-                    'Set env-var WSL_BUILD_CHECK_WIN_DRIVE_IGNORE=1 to skip'
-                    ' this check.'
-                ),
-            ]
+    # If we're sitting under the linux filesystem, our path will start
+    # with '\\wsl$' or '\\wsl.localhost' or '\\wsl\'; fail in that case
+    # and explain why.
+    if any(
+        winpath.startswith(x) for x in ['\\\\wsl$', '\\\\wsl.', '\\\\wsl\\']
+    ):
+        raise CleanError(
+            '\n\n'.join(
+                [
+                    _wrap(
+                        'ERROR: This project appears to live'
+                        ' on the Linux filesystem.'
+                    ),
+                    _wrap(
+                        'Visual Studio compiles will error here'
+                        ' for reasons related to Linux filesystem'
+                        ' case-sensitivity, and thus are disallowed.'
+                        ' Clone the repo to a location that maps to a native'
+                        ' Windows drive such as \'/mnt/c/ballistica\''
+                        ' and try again.'
+                    ),
+                    _wrap(
+                        'Note that WSL2 filesystem performance'
+                        ' is poor when accessing native Windows drives,'
+                        ' so if Visual Studio builds are not needed it may'
+                        ' be best to keep things here on the Linux filesystem.'
+                        ' This behavior may differ under WSL1 (untested).'
+                    ),
+                    _wrap(
+                        'Set env-var WSL_BUILD_CHECK_WIN_DRIVE_IGNORE=1 to skip'
+                        ' this check.'
+                    ),
+                ]
+            )
         )
-    )
+
+    # We also now require this check to be true. We key off this same
+    # check in other places to introduce various workarounds to deal
+    # with funky permissions issues/etc.
+    #
+    # Note that we could rely on *only* this check, but it might be nice
+    # to leave the above one in as well to better explain the Linux
+    # filesystem situation.
+    if not is_wsl_windows_build_path(nativepath):
+        reqs = wsl_windows_build_path_description()
+        raise CleanError(
+            '\n\n'.join(
+                [
+                    _wrap(
+                        f'ERROR: This project\'s path ({nativepath})'
+                        f' is not valid for WSL Windows builds.'
+                        f' Path must be: {reqs}.'
+                    )
+                ]
+            )
+        )
 
 
 def wsl_path_to_win() -> None:
@@ -540,3 +576,163 @@ def wsl_path_to_win() -> None:
     if escape:
         out = out.replace('\\', '\\\\')
     print(out, end='')
+
+
+def get_modern_make() -> None:
+    """Print name of a modern make command."""
+    import platform
+    import subprocess
+
+    pcommand.disallow_in_batch()
+
+    # Mac gnu make is outdated (due to newer versions using GPL3 I believe).
+    # so let's return 'gmake' there which will point to homebrew make which
+    # should be up to date.
+    if platform.system() == 'Darwin':
+        if (
+            subprocess.run(
+                ['which', 'gmake'], check=False, capture_output=True
+            ).returncode
+            != 0
+        ):
+            print(
+                'WARNING: this requires gmake (mac system make is too old).'
+                " Install it with 'brew install make'",
+                file=sys.stderr,
+                flush=True,
+            )
+        print('gmake')
+    else:
+        print('make')
+
+
+def asset_package_resolve() -> None:
+    """Resolve exact asset-package-version we'll use (if any)."""
+    import os
+
+    from efro.error import CleanError
+    from efrotools.project import getprojectconfig
+
+    pcommand.disallow_in_batch()
+    args = pcommand.get_args()
+    if len(args) != 1:
+        raise CleanError('Expected 1 arg.')
+
+    resolve_path = args[0]
+
+    apversion = getprojectconfig(pcommand.PROJROOT).get('assets')
+    if apversion is None:
+        raise CleanError("No 'assets' value found in projectconfig.")
+
+    splits = apversion.split('.')
+    if len(splits) != 3:
+        raise CleanError(
+            f"'{apversion}' is not a valid asset-package-version id."
+        )
+
+    # 'dev' versions are a special case; in that case we don't create
+    # a resolve file, which effectively causes our manifest fetch logic
+    # to run each time.
+    if splits[2] == 'dev':
+        if os.path.exists(resolve_path):
+            os.unlink(resolve_path)
+    else:
+        with open(resolve_path, 'w', encoding='utf-8') as outfile:
+            outfile.write(apversion)
+
+
+def asset_package_assemble() -> None:
+    """Assemble asset package data and its manifest."""
+    import os
+    import subprocess
+
+    from efro.error import CleanError
+    from efro.terminal import Clr
+    from efrotools.project import getprojectconfig
+
+    pcommand.disallow_in_batch()
+    args = pcommand.get_args()
+    if len(args) != 2:
+        raise CleanError('Expected 2 args.')
+
+    resolve_path, flavor = args
+
+    # If resolve path exists, it is the exact asset-package-version we
+    # should use.
+    apversion: str | None
+    if os.path.exists(resolve_path):
+        with open(resolve_path, encoding='utf-8') as infile:
+            apversion = infile.read()
+    else:
+        # If there's no resolve file, look up the value directly from
+        # project-config. Generally this means it's set to a dev
+        # version.
+        apversion = getprojectconfig(pcommand.PROJROOT).get('assets')
+    if not isinstance(apversion, str):
+        raise CleanError(
+            f'Expected a string asset-package-version; got {type(apversion)}.'
+        )
+
+    try:
+        print(
+            f'{Clr.BLU}Assembling {apversion} ({flavor} flavor)...', flush=True
+        )
+        subprocess.run(
+            [
+                f'{pcommand.PROJROOT}/tools/bacloud',
+                'assetpackage',
+                '_assemble',
+                apversion,
+                flavor,
+            ],
+            check=True,
+        )
+    except Exception as exc:
+        raise CleanError(
+            f'Failed to assemble {apversion} ({flavor} flavor).'
+        ) from exc
+
+
+def cst_test() -> None:
+    """Test filtering a Python file using LibCST."""
+
+    from typing import override
+
+    from efro.error import CleanError
+    import libcst as cst
+    from libcst import CSTTransformer, Name, Index, Subscript
+
+    args = pcommand.get_args()
+
+    if len(args) != 2:
+        raise CleanError('Expected an in-path and out-path.')
+
+    filename = args[0]
+    filenameout = args[1]
+
+    class RemoveAnnotatedTransformer(CSTTransformer):
+        """Replaces `Annotated[FOO, ...]` with just `FOO`"""
+
+        @override
+        def leave_Subscript(
+            self, original_node: BaseExpression, updated_node: BaseExpression
+        ) -> BaseExpression:
+            if (
+                isinstance(updated_node, Subscript)
+                and isinstance(updated_node.value, Name)
+                and updated_node.value.value == 'Annotated'
+                and isinstance(updated_node.slice[0].slice, Index)
+            ):
+                return updated_node.slice[0].slice.value
+            return updated_node
+
+    with open(filename, 'r', encoding='utf-8') as f:
+        source_code: str = f.read()
+
+    tree: cst.Module = cst.parse_module(source_code)
+    modified_tree: cst.Module = tree.visit(RemoveAnnotatedTransformer())
+
+    with open(filenameout, 'w', encoding='utf-8') as f:
+        f.write(modified_tree.code)
+
+    print('Success!')

@@ -4,7 +4,7 @@
 # pylint: disable=useless-suppression, missing-module-docstring, line-too-long
 from __future__ import annotations
 
-# noinspection PyProtectedMember
+from bacommon.app import AppArchitecture, AppPlatform, AppVariant
 from babase._mgen import enums
 
 # noinspection PyProtectedMember
@@ -59,6 +59,7 @@ values = [
     _hooks.get_dev_console_tab_names,  # kGetDevConsoleTabNamesCall
     _hooks.unsupported_controller_message,  # kUnsupportedControllerMessageCall
     _hooks.get_v2_account_id,  # kGetV2AccountIdCall
+    _hooks.copy_dev_console_history,  # kCopyDevConsoleHistoryCall
     _language.Lstr,  # kLStrClass
     _general.Call,  # kCallClass
     _apputils.garbage_collect_session_end,  # kGarbageCollectSessionEndCall
@@ -72,8 +73,6 @@ values = [
     _error.WidgetNotFoundError,  # kWidgetNotFoundError
     _error.ActivityNotFoundError,  # kActivityNotFoundError
     _error.SessionNotFoundError,  # kSessionNotFoundError
-    enums.TimeFormat,  # kTimeFormatClass
-    enums.TimeType,  # kTimeTypeClass
     enums.QuitType,  # kQuitTypeClass
     enums.InputType,  # kInputTypeClass
     enums.Permission,  # kPermissionClass
@@ -89,4 +88,28 @@ values = [
     _env.on_native_module_import,  # kEnvOnNativeModuleImportCall
     _env.on_main_thread_start_app,  # kOnMainThreadStartAppCall
     _ui.DevConsoleStringEditAdapter,  # kDevConsoleStringEditAdapterClass
+    AppArchitecture.UNKNOWN,  # kAppArchitectureUnknown
+    AppArchitecture.ARM,  # kAppArchitectureArm
+    AppArchitecture.ARM64,  # kAppArchitectureArm64
+    AppArchitecture.X86,  # kAppArchitectureX86
+    AppArchitecture.X86_64,  # kAppArchitectureX8664
+    AppPlatform.UNKNOWN,  # kAppPlatformUnknown
+    AppPlatform.MACOS,  # kAppPlatformMacOS
+    AppPlatform.WINDOWS,  # kAppPlatformWindows
+    AppPlatform.LINUX,  # kAppPlatformLinux
+    AppPlatform.ANDROID,  # kAppPlatformAndroid
+    AppPlatform.IOS,  # kAppPlatformIOS
+    AppPlatform.TVOS,  # kAppPlatformTVOS
+    AppVariant.GENERIC,  # kAppVariantGeneric
+    AppVariant.TEST_BUILD,  # kAppVariantTestBuild
+    AppVariant.AMAZON_APPSTORE,  # kAppVariantAmazonAppstore
+    AppVariant.GOOGLE_PLAY,  # kAppVariantGooglePlay
+    AppVariant.APPLE_APP_STORE,  # kAppVariantAppleAppStore
+    AppVariant.WINDOWS_STORE,  # kAppVariantWindowsStore
+    AppVariant.STEAM,  # kAppVariantSteam
+    AppVariant.META,  # kAppVariantMeta
+    AppVariant.EPIC_GAMES_STORE,  # kAppVariantEpicGamesStore
+    AppVariant.ARCADE,  # kAppVariantArcade
+    AppVariant.DEMO,  # kAppVariantDemo
+    AppVariant.CARDBOARD,  # kAppVariantCardboard
 ]

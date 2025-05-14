@@ -35,8 +35,8 @@ auto PythonClass::TypeIsSetUp(PyTypeObject* cls) -> bool {
   return Py_REFCNT(cls) > 0;
 }
 
-auto PythonClass::tp_new(PyTypeObject* type, PyObject* args,
-                         PyObject* kwds) -> PyObject* {
+auto PythonClass::tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
+    -> PyObject* {
   // Simply allocating and returning a zeroed instance of our class here.
   // If subclasses need to construct/destruct any other values in the object
   // they can either do it manually here and in tp_dealloc *or* they can get
@@ -57,8 +57,8 @@ auto PythonClass::tp_getattro(PythonClass* node, PyObject* attr) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PythonClass::tp_setattro(PythonClass* node, PyObject* attr,
-                              PyObject* val) -> int {
+auto PythonClass::tp_setattro(PythonClass* node, PyObject* attr, PyObject* val)
+    -> int {
   BA_PYTHON_TRY;
   return PyObject_GenericSetAttr(reinterpret_cast<PyObject*>(node), attr, val);
   BA_PYTHON_INT_CATCH;

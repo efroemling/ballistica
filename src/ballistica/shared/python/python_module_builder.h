@@ -3,10 +3,12 @@
 #ifndef BALLISTICA_SHARED_PYTHON_PYTHON_MODULE_BUILDER_H_
 #define BALLISTICA_SHARED_PYTHON_PYTHON_MODULE_BUILDER_H_
 
+#include <Python.h>
+
+#include <string>
 #include <vector>
 
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica {
 

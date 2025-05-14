@@ -4,7 +4,6 @@
 #define BALLISTICA_SHARED_FOUNDATION_MACROS_H_
 
 #ifdef __cplusplus
-#include <cassert>
 #include <string>
 #endif
 
@@ -27,7 +26,7 @@
 #define BA_BUILD_COMMAND_FILENAME \
   "<string: " __FILE__ " line " BA_TOSTRING(__LINE__) ">"
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #define BA_DIRSLASH "\\"
 #else
 #define BA_DIRSLASH "/"
@@ -44,7 +43,7 @@
 // FIXME: Turn these into C++ classes.
 #if BA_DEBUG_BUILD
 #define BA_DEBUG_FUNCTION_TIMER_BEGIN() \
-  millisecs_t _dfts = g_core->platform->GetTicks()
+  millisecs_t _dfts = g_core->platform->TimeSinceLaunchMillisecs()
 #define BA_DEBUG_FUNCTION_TIMER_END(time) \
   ::ballistica::MacroFunctionTimerEnd(g_core, _dfts, time, __PRETTY_FUNCTION__)
 #define BA_DEBUG_FUNCTION_TIMER_END_THREAD(time)                 \
@@ -56,7 +55,7 @@
   ::ballistica::MacroFunctionTimerEndThreadEx(g_core, _dfts, time, \
                                               __PRETTY_FUNCTION__, what)
 #define BA_DEBUG_TIME_CHECK_BEGIN(name) \
-  millisecs_t name##_ts = g_core->platform->GetTicks()
+  millisecs_t name##_ts = g_core->platform->TimeSinceLaunchMillisecs()
 #define BA_DEBUG_TIME_CHECK_END(name, time)                                 \
   ::ballistica::MacroTimeCheckEnd(g_core, name##_ts, time, #name, __FILE__, \
                                   __LINE__)
@@ -105,14 +104,14 @@
   }                                                                            \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
-#define BA_LOG_ONCE(lvl, msg)      \
-  {                                \
-    static bool did_log_here{};    \
-    if (!did_log_here) {           \
-      ::ballistica::Log(lvl, msg); \
-      did_log_here = true;         \
-    }                              \
-  }                                \
+#define BA_LOG_ONCE(nm, lvl, msg) \
+  {                               \
+    static bool did_log_here{};   \
+    if (!did_log_here) {          \
+      g_core->Log(nm, lvl, msg);  \
+      did_log_here = true;        \
+    }                             \
+  }                               \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
 #define BA_LOG_PYTHON_TRACE(msg) ::ballistica::MacroLogPythonTrace(g_core, msg)
@@ -173,8 +172,8 @@ namespace ballistica {
 
 // Support functions used by some of our macros; not intended to be used
 // directly.
-auto MacroPathFilter(core::CoreFeatureSet* corefs,
-                     const char* filename) -> const char*;
+auto MacroPathFilter(core::CoreFeatureSet* corefs, const char* filename)
+    -> const char*;
 void MacroFunctionTimerEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
                            millisecs_t time, const char* funcname);
 void MacroFunctionTimerEndThread(core::CoreFeatureSet* corefs,

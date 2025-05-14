@@ -3,6 +3,14 @@
 #ifndef BALLISTICA_SHARED_BUILDCONFIG_BUILDCONFIG_CMAKE_H_
 #define BALLISTICA_SHARED_BUILDCONFIG_BUILDCONFIG_CMAKE_H_
 
+// CMake may override our variant.
+#if BA_VARIANT_TEST_BUILD
+#define BA_VARIANT "test_build"
+#else
+#define BA_VARIANT "generic"
+#define BA_VARIANT_GENERIC 1
+#endif
+
 // For cmake builds, attempt to figure out what architecture we're running on
 // and define stuff accordingly.
 #if __APPLE__
@@ -11,35 +19,35 @@
 // stressing me out.
 #define GL_SILENCE_DEPRECATION
 
+#define BA_PLATFORM "macos"
+#define BA_PLATFORM_MACOS 1
+
 // We currently support regular and client builds on 64 bit mac posix
 #if __amd64__
-#define BA_PLATFORM_STRING "macos x86_64"
+#define BA_ARCH "x86_64"
 #elif __aarch64__
-#define BA_PLATFORM_STRING "macos arm64"
+#define BA_ARCH "arm64"
 #else
 #error Unknown processor architecture.
 #endif
 
-#define BA_OSTYPE_MACOS 1
 // #define BA_HAVE_FRAMEWORK_OPENAL 1
 
 #elif __linux__
 
-#if __amd64__
-#define BA_PLATFORM_STRING "linux x86_64"
-#define BA_OSTYPE_LINUX 1
-#elif __i386__
-#define BA_PLATFORM_STRING "linux x86"
-#define BA_OSTYPE_LINUX 1
-#elif __arm__
-#define BA_PLATFORM_STRING "linux arm"
-#define BA_OSTYPE_LINUX 1
-#elif __aarch64__
-#define BA_PLATFORM_STRING "linux arm64"
-#define BA_OSTYPE_LINUX 1
+#define BA_PLATFORM "linux"
+#define BA_PLATFORM_LINUX 1
 
+#if __amd64__
+#define BA_ARCH "x86_64"
+#elif __i386__
+#define BA_ARCH "x86"
+#elif __arm__
+#define BA_ARCH "arm"
+#elif __aarch64__
+#define BA_ARCH "arm64"
 #else
-#error unknown linux variant
+#error unknown linux arch
 #endif
 
 #else
@@ -52,7 +60,6 @@
 #define BA_ENABLE_AUDIO 1
 #define BA_ENABLE_OPENGL 1
 #define BA_SDL_BUILD 1
-// #define BA_SDL2_BUILD 1
 #define BA_ENABLE_SDL_JOYSTICKS 1
 #else
 #define BA_MINSDL_BUILD 1

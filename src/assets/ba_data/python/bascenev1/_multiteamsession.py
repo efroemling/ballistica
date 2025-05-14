@@ -6,9 +6,8 @@ from __future__ import annotations
 import copy
 import random
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 
 import _bascenev1
@@ -25,8 +24,6 @@ DEFAULT_TEAM_NAMES = ('Blue', 'Red')
 
 class MultiTeamSession(Session):
     """Common base for DualTeamSession and FreeForAllSession.
-
-    Category: **Gameplay Classes**
 
     Free-for-all-mode is essentially just teams-mode with each
     bascenev1.Player having their own bascenev1.Team, so there is much

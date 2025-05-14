@@ -32,7 +32,7 @@ class ConnectionSet {
 
   // Returns our host-connection or nullptr if there is none.
   auto connection_to_host() -> ConnectionToHost* {
-    return connection_to_host_.Get();
+    return connection_to_host_.get();
   }
   auto GetConnectionToHostUDP() -> ConnectionToHostUDP*;
 

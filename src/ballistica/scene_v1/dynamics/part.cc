@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/dynamics/part.h"
 
+#include <vector>
+
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/material/material.h"
 #include "ballistica/scene_v1/support/scene.h"
@@ -13,7 +15,7 @@ Part::Part(Node* node, bool default_collide)
     : our_id_(node->AddPart(this)),
       default_collides_(default_collide),
       node_(node) {
-  assert(node_.Exists());
+  assert(node_.exists());
   birth_time_ = node_->scene()->time();
   dynamics_ = node_->scene()->dynamics();
 }
@@ -58,7 +60,7 @@ void Part::SetMaterials(const std::vector<Material*>& vals) {
 void Part::ApplyMaterials(MaterialContext* s, const Part* src_part,
                           const Part* dst_part) {
   for (auto&& i : materials_) {
-    assert(i.Exists());
+    assert(i.exists());
     i->Apply(s, src_part, dst_part);
   }
 }
@@ -66,8 +68,8 @@ void Part::ApplyMaterials(MaterialContext* s, const Part* src_part,
 auto Part::ContainsMaterial(const Material* m) const -> bool {
   assert(m);
   for (auto&& i : materials_) {
-    assert(i.Exists());
-    if (m == i.Get()) {
+    assert(i.exists());
+    if (m == i.get()) {
       return true;
     }
   }
@@ -97,8 +99,8 @@ void Part::SetCollidingWith(int64_t node_id, int part, bool colliding,
     for (auto&& i : collisions_) {
       if (i.node == node_id && i.part == part) {
         BA_PRECONDITION(node());
-        Log(LogLevel::kError,
-            "Got SetCollidingWith for part already colliding with.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Got SetCollidingWith for part already colliding with.");
         return;
       }
     }
@@ -118,14 +120,14 @@ void Part::SetCollidingWith(int64_t node_id, int part, bool colliding,
         return;
       }
     }
-    Log(LogLevel::kError,
-        "Got SetCollidingWith (separated) call for part we're "
-        "not colliding with.");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Got SetCollidingWith (separated) call for part we're "
+                "not colliding with.");
   }
 }
 
 auto Part::GetAge() const -> millisecs_t {
-  assert(node_.Exists());
+  assert(node_.exists());
   assert(node_->scene()->time() >= birth_time_);
   return node_->scene()->time() - birth_time_;
 }

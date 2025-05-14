@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
 from bauiv1lib.popup import PopupMenu
 from bauiv1lib.config import ConfigCheckBox
@@ -14,27 +14,17 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-class GraphicsSettingsWindow(bui.Window):
+class GraphicsSettingsWindow(bui.MainWindow):
     """Window for graphics settings."""
 
     def __init__(
         self,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
-
-        # if they provided an origin-widget, scale up from that
-        scale_origin: tuple[float, float] | None
-        if origin_widget is not None:
-            self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
-        else:
-            self._transition_out = 'out_right'
-            scale_origin = None
 
         self._r = 'graphicsSettingsWindow'
         app = bui.app
@@ -43,8 +33,8 @@ class GraphicsSettingsWindow(bui.Window):
         spacing = 32
         self._have_selected_child = False
         uiscale = app.ui_v1.uiscale
-        width = 450.0
-        height = 302.0
+        width = 1200 if uiscale is bui.UIScale.SMALL else 450.0
+        height = 900 if uiscale is bui.UIScale.SMALL else 302.0
         self._max_fps_dirty = False
         self._last_max_fps_set_time = bui.apptime()
         self._last_max_fps_str = ''
@@ -61,7 +51,7 @@ class GraphicsSettingsWindow(bui.Window):
 
         show_max_fps = bui.supports_max_fps()
         if show_max_fps:
-            height += 50
+            height += 60
 
         show_resolution = True
         if app.env.vr:
@@ -69,52 +59,80 @@ class GraphicsSettingsWindow(bui.Window):
                 app.classic.platform == 'android'
                 and app.classic.subplatform == 'cardboard'
             )
-
         assert bui.app.classic is not None
-        uiscale = bui.app.ui_v1.uiscale
-        base_scale = (
-            2.0
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.9
             if uiscale is bui.UIScale.SMALL
-            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
-        popup_menu_scale = base_scale * 1.2
-        v = height - 50
-        v -= spacing * 1.15
+        popup_menu_scale = scale * 1.2
+
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        # target_width = min(width - 80, screensize[0] / scale)
+        target_height = min(height - 80, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * height + 0.5 * target_height + 30.0
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
-                transition=transition,
-                scale_origin_stack_offset=scale_origin,
-                scale=base_scale,
-                stack_offset=(
-                    (0, -30) if uiscale is bui.UIScale.SMALL else (0, 0)
+                scale=scale,
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
+        )
+
+        # Center most of our content in the middle of the window.
+        v = height * 0.5 + (100 if show_max_fps else 85)
+        h_offs = width * 0.5 - 220
+
+        if uiscale is bui.UIScale.SMALL:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
-        )
-
-        back_button = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(35, height - 50),
-            # size=(120, 60),
-            size=(60, 60),
-            scale=0.8,
-            text_scale=1.2,
-            autoselect=True,
-            label=bui.charstr(bui.SpecialChar.BACK),
-            button_type='backSmall',
-            on_activate_call=self._back,
-        )
-
-        bui.containerwidget(edit=self._root_widget, cancel_button=back_button)
+            back_button = None
+        else:
+            back_button = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(35, yoffs - 50),
+                size=(60, 60),
+                scale=0.8,
+                text_scale=1.2,
+                autoselect=True,
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
+            )
+            bui.containerwidget(
+                edit=self._root_widget, cancel_button=back_button
+            )
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(0, height - 44),
-            size=(width, 25),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            position=(
+                width * 0.5,
+                yoffs - (53 if uiscale is bui.UIScale.SMALL else 25),
+            ),
+            size=(0, 0),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
             h_align='center',
-            v_align='top',
+            v_align='center',
         )
 
         self._fullscreen_checkbox: bui.Widget | None = None
@@ -135,7 +153,7 @@ class GraphicsSettingsWindow(bui.Window):
                 )
             self._fullscreen_checkbox = bui.checkboxwidget(
                 parent=self._root_widget,
-                position=(100, v),
+                position=(h_offs + 100, v),
                 value=bui.fullscreen_control_get(),
                 on_value_change_call=bui.fullscreen_control_set,
                 maxwidth=250,
@@ -157,9 +175,9 @@ class GraphicsSettingsWindow(bui.Window):
         # Quality
         bui.textwidget(
             parent=self._root_widget,
-            position=(60, v),
+            position=(h_offs + 60, v),
             size=(160, 25),
-            text=bui.Lstr(resource=self._r + '.visualsText'),
+            text=bui.Lstr(resource=f'{self._r}.visualsText'),
             color=bui.app.ui_v1.heading_color,
             scale=0.65,
             maxwidth=150,
@@ -168,7 +186,7 @@ class GraphicsSettingsWindow(bui.Window):
         )
         PopupMenu(
             parent=self._root_widget,
-            position=(60, v - 50),
+            position=(h_offs + 60, v - 50),
             width=150,
             scale=popup_menu_scale,
             choices=['Auto', 'Higher', 'High', 'Medium', 'Low'],
@@ -179,10 +197,10 @@ class GraphicsSettingsWindow(bui.Window):
             ),
             choices_display=[
                 bui.Lstr(resource='autoText'),
-                bui.Lstr(resource=self._r + '.higherText'),
-                bui.Lstr(resource=self._r + '.highText'),
-                bui.Lstr(resource=self._r + '.mediumText'),
-                bui.Lstr(resource=self._r + '.lowText'),
+                bui.Lstr(resource=f'{self._r}.higherText'),
+                bui.Lstr(resource=f'{self._r}.highText'),
+                bui.Lstr(resource=f'{self._r}.mediumText'),
+                bui.Lstr(resource=f'{self._r}.lowText'),
             ],
             current_choice=bui.app.config.resolve('Graphics Quality'),
             on_value_change_call=self._set_quality,
@@ -191,9 +209,9 @@ class GraphicsSettingsWindow(bui.Window):
         # Texture controls
         bui.textwidget(
             parent=self._root_widget,
-            position=(230, v),
+            position=(h_offs + 230, v),
             size=(160, 25),
-            text=bui.Lstr(resource=self._r + '.texturesText'),
+            text=bui.Lstr(resource=f'{self._r}.texturesText'),
             color=bui.app.ui_v1.heading_color,
             scale=0.65,
             maxwidth=150,
@@ -202,27 +220,24 @@ class GraphicsSettingsWindow(bui.Window):
         )
         textures_popup = PopupMenu(
             parent=self._root_widget,
-            position=(230, v - 50),
+            position=(h_offs + 230, v - 50),
             width=150,
             scale=popup_menu_scale,
             choices=['Auto', 'High', 'Medium', 'Low'],
             choices_display=[
                 bui.Lstr(resource='autoText'),
-                bui.Lstr(resource=self._r + '.highText'),
-                bui.Lstr(resource=self._r + '.mediumText'),
-                bui.Lstr(resource=self._r + '.lowText'),
+                bui.Lstr(resource=f'{self._r}.highText'),
+                bui.Lstr(resource=f'{self._r}.mediumText'),
+                bui.Lstr(resource=f'{self._r}.lowText'),
             ],
             current_choice=bui.app.config.resolve('Texture Quality'),
             on_value_change_call=self._set_textures,
         )
-        if bui.app.ui_v1.use_toolbars:
-            bui.widget(
-                edit=textures_popup.get_button(),
-                right_widget=bui.get_special_widget('party_button'),
-            )
+        bui.widget(
+            edit=textures_popup.get_button(),
+            right_widget=bui.get_special_widget('squad_button'),
+        )
         v -= 80
-
-        h_offs = 0
 
         resolution_popup: PopupMenu | None = None
 
@@ -231,7 +246,7 @@ class GraphicsSettingsWindow(bui.Window):
                 parent=self._root_widget,
                 position=(h_offs + 60, v),
                 size=(160, 25),
-                text=bui.Lstr(resource=self._r + '.resolutionText'),
+                text=bui.Lstr(resource=f'{self._r}.resolutionText'),
                 color=bui.app.ui_v1.heading_color,
                 scale=0.65,
                 maxwidth=150,
@@ -317,9 +332,9 @@ class GraphicsSettingsWindow(bui.Window):
         if show_vsync:
             bui.textwidget(
                 parent=self._root_widget,
-                position=(230, v),
+                position=(h_offs + 230, v),
                 size=(160, 25),
-                text=bui.Lstr(resource=self._r + '.verticalSyncText'),
+                text=bui.Lstr(resource=f'{self._r}.verticalSyncText'),
                 color=bui.app.ui_v1.heading_color,
                 scale=0.65,
                 maxwidth=150,
@@ -328,14 +343,14 @@ class GraphicsSettingsWindow(bui.Window):
             )
             vsync_popup = PopupMenu(
                 parent=self._root_widget,
-                position=(230, v - 50),
+                position=(h_offs + 230, v - 50),
                 width=150,
                 scale=popup_menu_scale,
                 choices=['Auto', 'Always', 'Never'],
                 choices_display=[
                     bui.Lstr(resource='autoText'),
-                    bui.Lstr(resource=self._r + '.alwaysText'),
-                    bui.Lstr(resource=self._r + '.neverText'),
+                    bui.Lstr(resource=f'{self._r}.alwaysText'),
+                    bui.Lstr(resource=f'{self._r}.neverText'),
                 ],
                 current_choice=bui.app.config.resolve('Vertical Sync'),
                 on_value_change_call=self._set_vsync,
@@ -358,9 +373,9 @@ class GraphicsSettingsWindow(bui.Window):
             v -= 5
             bui.textwidget(
                 parent=self._root_widget,
-                position=(155, v + 10),
+                position=(h_offs + 155, v + 10),
                 size=(0, 0),
-                text=bui.Lstr(resource=self._r + '.maxFPSText'),
+                text=bui.Lstr(resource=f'{self._r}.maxFPSText'),
                 color=bui.app.ui_v1.heading_color,
                 scale=0.9,
                 maxwidth=90,
@@ -372,7 +387,7 @@ class GraphicsSettingsWindow(bui.Window):
             self._last_max_fps_str = max_fps_str
             self._max_fps_text = bui.textwidget(
                 parent=self._root_widget,
-                position=(170, v - 5),
+                position=(h_offs + 170, v - 5),
                 size=(105, 30),
                 text=max_fps_str,
                 max_chars=5,
@@ -395,11 +410,11 @@ class GraphicsSettingsWindow(bui.Window):
 
         fpsc = ConfigCheckBox(
             parent=self._root_widget,
-            position=(69, v - 6),
+            position=(h_offs + 69, v - 6),
             size=(210, 30),
             scale=0.86,
             configkey='Show FPS',
-            displayname=bui.Lstr(resource=self._r + '.showFPSText'),
+            displayname=bui.Lstr(resource=f'{self._r}.showFPSText'),
             maxwidth=130,
         )
         if self._max_fps_text is not None:
@@ -415,11 +430,11 @@ class GraphicsSettingsWindow(bui.Window):
         if show_tv_mode:
             tvc = ConfigCheckBox(
                 parent=self._root_widget,
-                position=(240, v - 6),
+                position=(h_offs + 240, v - 6),
                 size=(210, 30),
                 scale=0.86,
                 configkey='TV Border',
-                displayname=bui.Lstr(resource=self._r + '.tvBorderText'),
+                displayname=bui.Lstr(resource=f'{self._r}.tvBorderText'),
                 maxwidth=130,
             )
             bui.widget(edit=fpsc.widget, right_widget=tvc.widget)
@@ -433,27 +448,19 @@ class GraphicsSettingsWindow(bui.Window):
             0.25, bui.WeakCall(self._update_controls), repeat=True
         )
 
-    def _back(self) -> None:
-        from bauiv1lib.settings import allsettings
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition, origin_widget=origin_widget
+            )
+        )
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        # Applying max-fps takes a few moments. Apply if it hasn't been
-        # yet.
+    @override
+    def on_main_window_close(self) -> None:
         self._apply_max_fps()
-
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            allsettings.AllSettingsWindow(
-                transition='in_left'
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )
 
     def _set_quality(self, quality: str) -> None:
         cfg = bui.app.config

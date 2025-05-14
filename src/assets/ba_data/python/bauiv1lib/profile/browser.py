@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 import bascenev1 as bs
@@ -14,23 +14,19 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-class ProfileBrowserWindow(bui.Window):
+class ProfileBrowserWindow(bui.MainWindow):
     """Window for browsing player profiles."""
 
     def __init__(
         self,
-        transition: str = 'in_right',
-        in_main_menu: bool = True,
+        transition: str | None = 'in_right',
+        # in_main_menu: bool = True,
         selected_profile: str | None = None,
         origin_widget: bui.Widget | None = None,
+        minimal_toolbar: bool = False,
     ):
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
-        self._in_main_menu = in_main_menu
-        if self._in_main_menu:
-            back_label = bui.Lstr(resource='backText')
-        else:
-            back_label = bui.Lstr(resource='doneText')
+        self._minimal_toolbar = minimal_toolbar
+        back_label = bui.Lstr(resource='backText')
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._width = 800.0 if uiscale is bui.UIScale.SMALL else 600.0
@@ -41,20 +37,11 @@ class ProfileBrowserWindow(bui.Window):
             else 385.0 if uiscale is bui.UIScale.MEDIUM else 410.0
         )
 
-        # If we're being called up standalone, handle pause/resume ourself.
-        if not self._in_main_menu:
-            assert bui.app.classic is not None
-            bui.app.classic.pause()
-
-        # If they provided an origin-widget, scale up from that.
-        scale_origin: tuple[float, float] | None
+        # Need to handle out-transitions ourself for modal mode.
         if origin_widget is not None:
             self._transition_out = 'out_scale'
-            scale_origin = origin_widget.get_screen_space_center()
-            transition = 'in_scale'
         else:
             self._transition_out = 'out_right'
-            scale_origin = None
 
         self._r = 'playerProfilesWindow'
 
@@ -67,50 +54,59 @@ class ProfileBrowserWindow(bui.Window):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
-                transition=transition,
-                scale_origin_stack_offset=scale_origin,
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if (uiscale is bui.UIScale.SMALL or minimal_toolbar)
+                    else 'menu_full'
+                ),
                 scale=(
-                    2.2
+                    2.5
                     if uiscale is bui.UIScale.SMALL
-                    else 1.6 if uiscale is bui.UIScale.MEDIUM else 1.0
+                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
                     (0, -14) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
+        )
+
+        if bui.app.ui_v1.uiscale is bui.UIScale.SMALL:
+            self._back_button = bui.get_special_widget('back_button')
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
             )
-        )
-
-        self._back_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(40 + x_inset, self._height - 59),
-            size=(120, 60),
-            scale=0.8,
-            label=back_label,
-            button_type='back' if self._in_main_menu else None,
-            autoselect=True,
-            on_activate_call=self._back,
-        )
-        bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 36),
-            size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.titleText'),
-            maxwidth=300,
-            color=bui.app.ui_v1.title_color,
-            scale=0.9,
-            h_align='center',
-            v_align='center',
-        )
-
-        if self._in_main_menu:
+        else:
+            self._back_button = btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(40 + x_inset, self._height - 59),
+                size=(120, 60),
+                scale=0.8,
+                label=back_label,
+                button_type='back',
+                autoselect=True,
+                on_activate_call=self.main_window_back,
+            )
+            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
             bui.buttonwidget(
                 edit=btn,
                 button_type='backSmall',
                 size=(60, 60),
                 label=bui.charstr(bui.SpecialChar.BACK),
             )
+
+        bui.textwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height - 36),
+            size=(0, 0),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            maxwidth=300,
+            color=bui.app.ui_v1.title_color,
+            scale=0.9,
+            h_align='center',
+            v_align='center',
+        )
 
         scroll_height = self._height - 140.0
         self._scroll_width = self._width - (188 + x_inset * 2)
@@ -134,7 +130,7 @@ class ProfileBrowserWindow(bui.Window):
             autoselect=True,
             textcolor=(0.75, 0.7, 0.8),
             text_scale=0.7,
-            label=bui.Lstr(resource=self._r + '.newButtonText'),
+            label=bui.Lstr(resource=f'{self._r}.newButtonText'),
         )
         v -= 70.0 * scl
         self._edit_button = bui.buttonwidget(
@@ -147,7 +143,7 @@ class ProfileBrowserWindow(bui.Window):
             autoselect=True,
             textcolor=(0.75, 0.7, 0.8),
             text_scale=0.7,
-            label=bui.Lstr(resource=self._r + '.editButtonText'),
+            label=bui.Lstr(resource=f'{self._r}.editButtonText'),
         )
         v -= 70.0 * scl
         self._delete_button = bui.buttonwidget(
@@ -160,7 +156,7 @@ class ProfileBrowserWindow(bui.Window):
             autoselect=True,
             textcolor=(0.75, 0.7, 0.8),
             text_scale=0.7,
-            label=bui.Lstr(resource=self._r + '.deleteButtonText'),
+            label=bui.Lstr(resource=f'{self._r}.deleteButtonText'),
         )
 
         v = self._height - 87
@@ -169,7 +165,7 @@ class ProfileBrowserWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 71),
             size=(0, 0),
-            text=bui.Lstr(resource=self._r + '.explanationText'),
+            text=bui.Lstr(resource=f'{self._r}.explanationText'),
             color=bui.app.ui_v1.infotextcolor,
             maxwidth=self._width * 0.83,
             scale=0.6,
@@ -203,13 +199,32 @@ class ProfileBrowserWindow(bui.Window):
         self._refresh()
         self._restore_state()
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        minimal_toolbar = self._minimal_toolbar
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                minimal_toolbar=minimal_toolbar,
+            )
+        )
+
+    @override
+    def on_main_window_close(self) -> None:
+        self._save_state()
+
     def _new_profile(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
         from bauiv1lib.purchase import PurchaseWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # No-op if we're not the in-control main window.
+        if not self.main_window_has_control():
             return
 
         plus = bui.app.plus
@@ -220,7 +235,8 @@ class ProfileBrowserWindow(bui.Window):
         assert self._profiles is not None
         assert bui.app.classic is not None
         if (
-            not bui.app.classic.accounts.have_pro_options()
+            bool(False)  # Phasing out pro.
+            and not bui.app.classic.accounts.have_pro_options()
             and len(self._profiles) >= max_non_pro_profiles
         ):
             PurchaseWindow(
@@ -247,14 +263,7 @@ class ProfileBrowserWindow(bui.Window):
             bui.getsound('error').play()
             return
 
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        bui.app.ui_v1.set_main_menu_window(
-            EditProfileWindow(
-                existing_profile=None, in_main_menu=self._in_main_menu
-            ).get_root_widget(),
-            from_window=self._root_widget if self._in_main_menu else False,
-        )
+        self.main_window_replace(EditProfileWindow(existing_profile=None))
 
     def _delete_profile(self) -> None:
         # pylint: disable=cyclic-import
@@ -269,13 +278,13 @@ class ProfileBrowserWindow(bui.Window):
         if self._selected_profile == '__account__':
             bui.getsound('error').play()
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantDeleteAccountProfileText'),
+                bui.Lstr(resource=f'{self._r}.cantDeleteAccountProfileText'),
                 color=(1, 0, 0),
             )
             return
         confirm.ConfirmWindow(
             bui.Lstr(
-                resource=self._r + '.deleteConfirmText',
+                resource=f'{self._r}.deleteConfirmText',
                 subs=[('${PROFILE}', self._selected_profile)],
             ),
             self._do_delete_profile,
@@ -302,8 +311,8 @@ class ProfileBrowserWindow(bui.Window):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
             return
 
         if self._selected_profile is None:
@@ -312,44 +321,12 @@ class ProfileBrowserWindow(bui.Window):
                 bui.Lstr(resource='nothingIsSelectedErrorText'), color=(1, 0, 0)
             )
             return
-        self._save_state()
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            EditProfileWindow(
-                self._selected_profile, in_main_menu=self._in_main_menu
-            ).get_root_widget(),
-            from_window=self._root_widget if self._in_main_menu else False,
-        )
+
+        self.main_window_replace(EditProfileWindow(self._selected_profile))
 
     def _select(self, name: str, index: int) -> None:
         del index  # Unused.
         self._selected_profile = name
-
-    def _back(self) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.account.settings import AccountSettingsWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        assert bui.app.classic is not None
-
-        self._save_state()
-        bui.containerwidget(
-            edit=self._root_widget, transition=self._transition_out
-        )
-        if self._in_main_menu:
-            assert bui.app.classic is not None
-            bui.app.ui_v1.set_main_menu_window(
-                AccountSettingsWindow(transition='in_left').get_root_widget(),
-                from_window=self._root_widget,
-            )
-
-        # If we're being called up standalone, handle pause/resume ourself.
-        else:
-            bui.app.classic.resume()
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-locals
@@ -411,24 +388,11 @@ class ProfileBrowserWindow(bui.Window):
                 char_index = spazzes.index('Spaz')
 
             assert isinstance(tval, str)
-            character = bui.buttonwidget(
-                parent=self._subcontainer,
-                position=(0, y_val),
-                size=(28, 28),
-                label='',
-                color=(1, 1, 1),
-                mask_texture=bui.gettexture('characterIconMask'),
-                tint_color=color,
-                tint2_color=_highlight,
-                texture=icon_textures[char_index],
-                tint_texture=icon_tint_textures[char_index],
-                selectable=False,
-            )
             txtw = bui.textwidget(
                 parent=self._subcontainer,
-                position=(35, y_val),
+                position=(5, y_val),
                 size=((self._width - 210) / scl, 28),
-                text=bui.Lstr(value=tval),
+                text=bui.Lstr(value=f'    {tval}'),
                 h_align='left',
                 v_align='center',
                 on_select_call=bui.WeakCall(self._select, p_name, index),
@@ -438,6 +402,17 @@ class ProfileBrowserWindow(bui.Window):
                 always_highlight=True,
                 on_activate_call=bui.Call(self._edit_button.activate),
                 selectable=True,
+            )
+            character = bui.imagewidget(
+                parent=self._subcontainer,
+                position=(0, y_val),
+                size=(30, 30),
+                color=(1, 1, 1),
+                mask_texture=bui.gettexture('characterIconMask'),
+                tint_color=color,
+                tint2_color=_highlight,
+                texture=icon_textures[char_index],
+                tint_texture=icon_tint_textures[char_index],
             )
             if index == 0:
                 bui.widget(edit=txtw, up_widget=self._back_button)

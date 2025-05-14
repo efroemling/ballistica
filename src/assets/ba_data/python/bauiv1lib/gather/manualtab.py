@@ -9,10 +9,9 @@ import logging
 from enum import Enum
 from threading import Thread
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 from bauiv1lib.gather import GatherTab
 
-from typing_extensions import override
 import bauiv1 as bui
 import bascenev1 as bs
 
@@ -48,11 +47,15 @@ class _HostLookupThread(Thread):
         try:
             import socket
 
-            result = [
+            aresult = [
                 item[-1][0]
                 for item in socket.getaddrinfo(self.name, self._port)
             ][0]
+            if isinstance(aresult, int):
+                raise RuntimeError('Unexpected getaddrinfo int result')
+            result = aresult
         except Exception:
+            # Hmm should we be logging this?
             result = None
         bui.pushcall(
             lambda: self._call(result, self._port), from_other_thread=True
@@ -90,10 +93,10 @@ class ManualGatherTab(GatherTab):
         self._container: bui.Widget | None = None
         self._join_by_address_text: bui.Widget | None = None
         self._favorites_text: bui.Widget | None = None
-        self._width: int | None = None
-        self._height: int | None = None
-        self._scroll_width: int | None = None
-        self._scroll_height: int | None = None
+        self._width: float | None = None
+        self._height: float | None = None
+        self._scroll_width: float | None = None
+        self._scroll_height: float | None = None
         self._favorites_scroll_width: int | None = None
         self._favorites_connect_button: bui.Widget | None = None
         self._scrollwidget: bui.Widget | None = None
@@ -115,6 +118,7 @@ class ManualGatherTab(GatherTab):
         region_left: float,
         region_bottom: float,
     ) -> bui.Widget:
+        # pylint: disable=too-many-positional-arguments
         c_width = region_width
         c_height = region_height - 20
 
@@ -242,7 +246,7 @@ class ManualGatherTab(GatherTab):
             self._build_join_by_address_tab(region_width, region_height)
 
         if value is SubTabType.FAVORITES:
-            self._build_favorites_tab(region_height)
+            self._build_favorites_tab(region_width, region_height)
 
     # The old manual tab
     def _build_join_by_address_tab(
@@ -277,7 +281,9 @@ class ManualGatherTab(GatherTab):
             maxwidth=380,
             size=(420, 60),
         )
+        assert self._join_by_address_text is not None
         bui.widget(edit=self._join_by_address_text, down_widget=txt)
+        assert self._favorites_text is not None
         bui.widget(edit=self._favorites_text, down_widget=txt)
         bui.textwidget(
             parent=self._container,
@@ -349,14 +355,16 @@ class ManualGatherTab(GatherTab):
         )
         bui.widget(edit=self._check_button, up_widget=btn)
 
-    # Tab containing saved favorite addresses
-    def _build_favorites_tab(self, region_height: float) -> None:
+    # Tab containing saved favorite addresses.
+    def _build_favorites_tab(
+        self, region_width: float, region_height: float
+    ) -> None:
         c_height = region_height - 20
         v = c_height - 35 - 25 - 30
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1240 if uiscale is bui.UIScale.SMALL else 1040
+        self._width = region_width
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
             578
@@ -401,7 +409,7 @@ class ManualGatherTab(GatherTab):
         self._favorites_connect_button = btn1 = bui.buttonwidget(
             parent=self._container,
             size=(b_width, b_height),
-            position=(40 if uiscale is bui.UIScale.SMALL else 40, btnv),
+            position=(140 if uiscale is bui.UIScale.SMALL else 40, btnv),
             button_type='square',
             color=(0.6, 0.53, 0.63),
             textcolor=(0.75, 0.7, 0.8),
@@ -410,7 +418,7 @@ class ManualGatherTab(GatherTab):
             label=bui.Lstr(resource='gatherWindow.manualConnectText'),
             autoselect=True,
         )
-        if uiscale is bui.UIScale.SMALL and bui.app.ui_v1.use_toolbars:
+        if uiscale is bui.UIScale.SMALL:
             bui.widget(
                 edit=btn1,
                 left_widget=bui.get_special_widget('back_button'),
@@ -419,7 +427,7 @@ class ManualGatherTab(GatherTab):
         bui.buttonwidget(
             parent=self._container,
             size=(b_width, b_height),
-            position=(40 if uiscale is bui.UIScale.SMALL else 40, btnv),
+            position=(140 if uiscale is bui.UIScale.SMALL else 40, btnv),
             button_type='square',
             color=(0.6, 0.53, 0.63),
             textcolor=(0.75, 0.7, 0.8),
@@ -432,7 +440,7 @@ class ManualGatherTab(GatherTab):
         bui.buttonwidget(
             parent=self._container,
             size=(b_width, b_height),
-            position=(40 if uiscale is bui.UIScale.SMALL else 40, btnv),
+            position=(140 if uiscale is bui.UIScale.SMALL else 40, btnv),
             button_type='square',
             color=(0.6, 0.53, 0.63),
             textcolor=(0.75, 0.7, 0.8),
@@ -445,7 +453,7 @@ class ManualGatherTab(GatherTab):
         v -= sub_scroll_height + 23
         self._scrollwidget = scrlw = bui.scrollwidget(
             parent=self._container,
-            position=(190 if uiscale is bui.UIScale.SMALL else 225, v),
+            position=(290 if uiscale is bui.UIScale.SMALL else 225, v),
             size=(sub_scroll_width, sub_scroll_height),
             claims_left_right=True,
         )
@@ -470,7 +478,7 @@ class ManualGatherTab(GatherTab):
             scale=1.2,
             position=(
                 (
-                    (190 if uiscale is bui.UIScale.SMALL else 225)
+                    (240 if uiscale is bui.UIScale.SMALL else 225)
                     + sub_scroll_width * 0.5
                 ),
                 v + sub_scroll_height * 0.5,
@@ -761,6 +769,7 @@ class ManualGatherTab(GatherTab):
             claims_left_right=bool(servers),
             claims_up_down=bool(servers),
         )
+        assert self._scrollwidget is not None
         bui.widget(
             edit=self._scrollwidget,
             up_widget=self._favorites_text,
@@ -865,6 +874,11 @@ class ManualGatherTab(GatherTab):
             config['Last Manual Party Connect Address'] = resolved_address
             config['Last Manual Party Connect Port'] = port
             config.commit()
+
+            # Store UI location to return to when done.
+            if bs.app.classic is not None:
+                bs.app.classic.save_ui_state()
+
             bs.connect_to_party(resolved_address, port=port)
 
     def _run_addr_fetch(self) -> None:
@@ -1056,7 +1070,7 @@ class ManualGatherTab(GatherTab):
             self._t_accessible_extra = t_accessible_extra
             bui.app.classic.master_server_v1_get(
                 'bsAccessCheck',
-                {'b': bui.app.env.build_number},
+                {'b': bui.app.env.engine_build_number},
                 callback=bui.WeakCall(self._on_accessible_response),
             )
 

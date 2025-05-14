@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     import bascenev1 as bs
 
 
-class PlaylistMapSelectWindow(bui.Window):
+class PlaylistMapSelectWindow(bui.MainWindow):
     """Window to select a map."""
 
     def __init__(
@@ -24,9 +24,14 @@ class PlaylistMapSelectWindow(bui.Window):
         sessiontype: type[bs.Session],
         config: dict[str, Any],
         edit_info: dict[str, Any],
-        completion_call: Callable[[dict[str, Any] | None], Any],
-        transition: str = 'in_right',
+        completion_call: Callable[[dict[str, Any] | None, bui.MainWindow], Any],
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
+        select_get_more_maps_button: bool = False,
     ):
+        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-positional-arguments
+
         from bascenev1 import get_filtered_map_name
 
         self._gametype = gametype
@@ -35,6 +40,7 @@ class PlaylistMapSelectWindow(bui.Window):
         self._completion_call = completion_call
         self._edit_info = edit_info
         self._maps: list[tuple[str, bui.Texture]] = []
+        self._selected_get_more_maps = False
         try:
             self._previous_map = get_filtered_map_name(
                 config['settings']['map']
@@ -47,42 +53,43 @@ class PlaylistMapSelectWindow(bui.Window):
         width = 815 if uiscale is bui.UIScale.SMALL else 615
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         height = (
-            400
+            420
             if uiscale is bui.UIScale.SMALL
             else 480 if uiscale is bui.UIScale.MEDIUM else 600
         )
+        yoffs = -37 if uiscale is bui.UIScale.SMALL else 0
 
-        top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(width, height + top_extra),
-                transition=transition,
+                size=(width, height),
                 scale=(
-                    2.17
+                    2.3
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -27) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
 
         self._cancel_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(38 + x_inset, height - 67),
+            position=(38 + x_inset, height - 67 + yoffs),
             size=(140, 50),
             scale=0.9,
             text_scale=1.0,
             autoselect=True,
             label=bui.Lstr(resource='cancelText'),
-            on_activate_call=self._cancel,
+            on_activate_call=self.main_window_back,
         )
 
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
         bui.textwidget(
             parent=self._root_widget,
-            position=(width * 0.5, height - 46),
+            position=(width * 0.5, height - 46 + yoffs),
             size=(0, 0),
             maxwidth=260,
             scale=1.1,
@@ -94,14 +101,17 @@ class PlaylistMapSelectWindow(bui.Window):
             h_align='center',
             v_align='center',
         )
-        v = height - 70
+        v = height - 70 + yoffs
         self._scroll_width = width - (80 + 2 * x_inset)
-        self._scroll_height = height - 140
+        self._scroll_height = height - (
+            170 if uiscale is bui.UIScale.SMALL else 140
+        )
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             position=(40 + x_inset, v - self._scroll_height),
             size=(self._scroll_width, self._scroll_height),
+            border_opacity=0.4,
         )
         bui.containerwidget(
             edit=self._root_widget, selected_child=self._scrollwidget
@@ -109,7 +119,34 @@ class PlaylistMapSelectWindow(bui.Window):
         bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
 
         self._subcontainer: bui.Widget | None = None
-        self._refresh()
+        self._refresh(select_get_more_maps_button=select_get_more_maps_button)
+
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        # Pull things out of self here; if we do it in the lambda we'll
+        # keep ourself alive.
+        gametype = self._gametype
+        sessiontype = self._sessiontype
+        config = self._config
+        edit_info = self._edit_info
+        completion_call = self._completion_call
+        select_get_more_maps = self._selected_get_more_maps
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                gametype=gametype,
+                sessiontype=sessiontype,
+                config=config,
+                edit_info=edit_info,
+                completion_call=completion_call,
+                select_get_more_maps_button=select_get_more_maps,
+            )
+        )
 
     def _refresh(self, select_get_more_maps_button: bool = False) -> None:
         # pylint: disable=too-many-statements
@@ -198,10 +235,10 @@ class PlaylistMapSelectWindow(bui.Window):
                     bui.widget(edit=btn, left_widget=self._cancel_button)
                 if y == 0:
                     bui.widget(edit=btn, up_widget=self._cancel_button)
-                if x == columns - 1 and bui.app.ui_v1.use_toolbars:
+                if x == columns - 1:
                     bui.widget(
                         edit=btn,
-                        right_widget=bui.get_special_widget('party_button'),
+                        right_widget=bui.get_special_widget('squad_button'),
                     )
 
                 bui.widget(edit=btn, show_buffer_top=60, show_buffer_bottom=60)
@@ -247,71 +284,40 @@ class PlaylistMapSelectWindow(bui.Window):
             )
 
     def _on_store_press(self) -> None:
-        from bauiv1lib import account
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.store.browser import StoreBrowserWindow
+
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
+            return
 
         plus = bui.app.plus
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+            show_sign_in_prompt()
             return
-        StoreBrowserWindow(
-            modal=True,
-            show_tab=StoreBrowserWindow.TabID.MAPS,
-            on_close_call=self._on_store_close,
-            origin_widget=self._get_more_maps_button,
+
+        self._selected_get_more_maps = True
+
+        self.main_window_replace(
+            StoreBrowserWindow(
+                show_tab=StoreBrowserWindow.TabID.MAPS,
+                origin_widget=self._get_more_maps_button,
+                minimal_toolbars=True,
+            )
         )
 
-    def _on_store_close(self) -> None:
-        self._refresh(select_get_more_maps_button=True)
-
     def _select(self, map_name: str) -> None:
-        from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
 
         # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
+        if not self.main_window_has_control():
             return
 
         self._config['settings']['map'] = map_name
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistEditGameWindow(
-                self._gametype,
-                self._sessiontype,
-                self._config,
-                self._completion_call,
-                default_selection='map',
-                transition='in_left',
-                edit_info=self._edit_info,
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )
+        self.main_window_back()
 
     def _select_with_delay(self, map_name: str) -> None:
         bui.lock_all_input()
         bui.apptimer(0.1, bui.unlock_all_input)
         bui.apptimer(0.1, bui.WeakCall(self._select, map_name))
-
-    def _cancel(self) -> None:
-        from bauiv1lib.playlist.editgame import PlaylistEditGameWindow
-
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistEditGameWindow(
-                self._gametype,
-                self._sessiontype,
-                self._config,
-                self._completion_call,
-                default_selection='map',
-                transition='in_left',
-                edit_info=self._edit_info,
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )

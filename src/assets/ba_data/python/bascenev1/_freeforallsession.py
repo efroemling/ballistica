@@ -4,9 +4,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 
 import _bascenev1
@@ -17,10 +16,7 @@ if TYPE_CHECKING:
 
 
 class FreeForAllSession(MultiTeamSession):
-    """bascenev1.Session type for free-for-all mode games.
-
-    Category: **Gameplay Classes**
-    """
+    """bascenev1.Session type for free-for-all mode games."""
 
     use_teams = False
     use_team_colors = False

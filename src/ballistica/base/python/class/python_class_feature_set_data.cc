@@ -2,6 +2,8 @@
 
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
 
+#include "ballistica/base/base.h"
+
 namespace ballistica::base {
 
 auto PythonClassFeatureSetData::type_name() -> const char* {

@@ -2,8 +2,9 @@
 
 #include "ballistica/scene_v1/assets/scene_sound.h"
 
+#include <string>
+
 #include "ballistica/base/assets/assets.h"
-#include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_sound.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/session_stream.h"
@@ -23,7 +24,7 @@ SceneSound::SceneSound(const std::string& name, Scene* scene)
     base::Assets::AssetListLock lock;
     sound_data_ = g_base->assets->GetSound(name);
   }
-  assert(sound_data_.Exists());
+  assert(sound_data_.exists());
 }
 
 SceneSound::~SceneSound() { MarkDead(); }

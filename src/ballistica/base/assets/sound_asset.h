@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "ballistica/base/assets/asset.h"
-#include "ballistica/base/audio/al_sys.h"
+#include "ballistica/base/audio/al_sys.h"  // IWYU pragma: keep.
 
 namespace ballistica::base {
 

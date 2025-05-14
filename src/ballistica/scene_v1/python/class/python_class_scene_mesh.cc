@@ -2,10 +2,11 @@
 
 #include "ballistica/scene_v1/python/class/python_class_scene_mesh.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
 
@@ -13,8 +14,8 @@ auto PythonClassSceneMesh::tp_repr(PythonClassSceneMesh* self) -> PyObject* {
   BA_PYTHON_TRY;
   auto&& m = *(self->mesh_);
   return Py_BuildValue(
-      "s", (std::string("<bascenev1.Mesh ")
-            + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
+      "s", (std::string("<_bascenev1.Mesh ")
+            + (m.exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
 }
@@ -24,15 +25,13 @@ auto PythonClassSceneMesh::type_name() -> const char* { return "Mesh"; }
 void PythonClassSceneMesh::SetupType(PyTypeObject* cls) {
   PythonClass::SetupType(cls);
   // Fully qualified type path we will be exposed as:
-  cls->tp_name = "bascenev1.Mesh";
+  cls->tp_name = "_bascenev1.Mesh";
   cls->tp_basicsize = sizeof(PythonClassSceneMesh);
   cls->tp_doc =
       "A reference to a mesh.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
       "Meshes are used for drawing.\n"
-      "Use bascenev1.getmesh() to instantiate one.";
+      "Use :meth:`bascenev1.getmesh()` to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
@@ -52,7 +51,7 @@ auto PythonClassSceneMesh::Create(SceneMesh* mesh) -> PyObject* {
 }
 
 auto PythonClassSceneMesh::GetMesh(bool doraise) const -> SceneMesh* {
-  SceneMesh* mesh = mesh_->Get();
+  SceneMesh* mesh = mesh_->get();
   if (!mesh && doraise) {
     throw Exception("Invalid mesh.", PyExcType::kNotFound);
   }

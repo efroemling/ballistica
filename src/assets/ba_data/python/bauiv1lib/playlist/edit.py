@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
@@ -14,13 +14,14 @@ if TYPE_CHECKING:
     from bauiv1lib.playlist.editcontroller import PlaylistEditController
 
 
-class PlaylistEditWindow(bui.Window):
+class PlaylistEditWindow(bui.MainWindow):
     """Window for editing an individual game playlist."""
 
     def __init__(
         self,
         editcontroller: PlaylistEditController,
-        transition: str = 'in_right',
+        transition: str | None = 'in_right',
+        origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
@@ -34,29 +35,30 @@ class PlaylistEditWindow(bui.Window):
         self._width = 870 if uiscale is bui.UIScale.SMALL else 670
         x_inset = 100 if uiscale is bui.UIScale.SMALL else 0
         self._height = (
-            400
+            500
             if uiscale is bui.UIScale.SMALL
             else 470 if uiscale is bui.UIScale.MEDIUM else 540
         )
+        yoffs = -68 if uiscale is bui.UIScale.SMALL else 0
 
-        top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + top_extra),
-                transition=transition,
+                size=(self._width, self._height),
                 scale=(
                     2.0
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
                 stack_offset=(
-                    (0, -16) if uiscale is bui.UIScale.SMALL else (0, 0)
+                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
-            )
+            ),
+            transition=transition,
+            origin_widget=origin_widget,
         )
         cancel_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(35 + x_inset, self._height - 60),
+            position=(35 + x_inset, self._height - 60 + yoffs),
             scale=0.8,
             size=(175, 60),
             autoselect=True,
@@ -65,7 +67,7 @@ class PlaylistEditWindow(bui.Window):
         )
         save_button = btn = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - (195 + x_inset), self._height - 60),
+            position=(self._width - (195 + x_inset), self._height - 60 + yoffs),
             scale=0.8,
             size=(190, 60),
             autoselect=True,
@@ -74,11 +76,10 @@ class PlaylistEditWindow(bui.Window):
             text_scale=1.2,
         )
 
-        if bui.app.ui_v1.use_toolbars:
-            bui.widget(
-                edit=btn,
-                right_widget=bui.get_special_widget('party_button'),
-            )
+        bui.widget(
+            edit=btn,
+            right_widget=bui.get_special_widget('squad_button'),
+        )
 
         bui.widget(
             edit=cancel_button,
@@ -88,9 +89,9 @@ class PlaylistEditWindow(bui.Window):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(-10, self._height - 50),
+            position=(-10, self._height - 50 + yoffs),
             size=(self._width, 25),
-            text=bui.Lstr(resource=self._r + '.titleText'),
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
             color=bui.app.ui_v1.title_color,
             scale=1.05,
             h_align='center',
@@ -98,13 +99,13 @@ class PlaylistEditWindow(bui.Window):
             maxwidth=270,
         )
 
-        v = self._height - 115.0
+        v = self._height - 115.0 + yoffs
 
         self._scroll_width = self._width - (205 + 2 * x_inset)
 
         bui.textwidget(
             parent=self._root_widget,
-            text=bui.Lstr(resource=self._r + '.listNameText'),
+            text=bui.Lstr(resource=f'{self._r}.listNameText'),
             position=(196 + x_inset, v + 31),
             maxwidth=150,
             color=(0.8, 0.8, 0.8, 0.5),
@@ -122,9 +123,10 @@ class PlaylistEditWindow(bui.Window):
             h_align='left',
             v_align='center',
             max_chars=40,
+            maxwidth=380,
             autoselect=True,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=bui.Lstr(resource=self._r + '.listNameText'),
+            description=bui.Lstr(resource=f'{self._r}.listNameText'),
             editable=True,
             padding=4,
             on_return_press_call=self._save_press_with_sound,
@@ -134,7 +136,7 @@ class PlaylistEditWindow(bui.Window):
         self._list_widgets: list[bui.Widget] = []
 
         h = 40 + x_inset
-        v = self._height - 172.0
+        v = self._height - 172.0 + yoffs
 
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
@@ -160,7 +162,7 @@ class PlaylistEditWindow(bui.Window):
             color=b_color,
             textcolor=b_textcolor,
             text_scale=0.8,
-            label=bui.Lstr(resource=self._r + '.addGameText'),
+            label=bui.Lstr(resource=f'{self._r}.addGameText'),
         )
         bui.widget(edit=add_game_button, up_widget=self._text_field)
         v -= 63.0 * scl
@@ -176,7 +178,7 @@ class PlaylistEditWindow(bui.Window):
             color=b_color,
             textcolor=b_textcolor,
             text_scale=0.8,
-            label=bui.Lstr(resource=self._r + '.editGameText'),
+            label=bui.Lstr(resource=f'{self._r}.editGameText'),
         )
         v -= 63.0 * scl
 
@@ -190,7 +192,7 @@ class PlaylistEditWindow(bui.Window):
             button_type='square',
             color=b_color,
             textcolor=b_textcolor,
-            label=bui.Lstr(resource=self._r + '.removeGameText'),
+            label=bui.Lstr(resource=f'{self._r}.removeGameText'),
         )
         v -= 40
         h += 9
@@ -220,14 +222,17 @@ class PlaylistEditWindow(bui.Window):
             repeat=True,
         )
 
-        v = self._height - 100
-        scroll_height = self._height - 155
+        v = self._height - 100 + yoffs
+        scroll_height = self._height - (
+            250 if uiscale is bui.UIScale.SMALL else 155
+        )
         scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             position=(160 + x_inset, v - scroll_height),
             highlight=False,
             on_select_call=bui.Call(self._set_ui_selection, 'gameList'),
             size=(self._scroll_width, (scroll_height - 15)),
+            border_opacity=0.4,
         )
         bui.widget(
             edit=scrollwidget,
@@ -269,50 +274,52 @@ class PlaylistEditWindow(bui.Window):
                 edit=self._root_widget, selected_child=scrollwidget
             )
 
+    @override
+    def get_main_window_state(self) -> bui.MainWindowState:
+        # Support recreating our window for back/refresh purposes.
+        cls = type(self)
+
+        editcontroller = self._editcontroller
+
+        return bui.BasicMainWindowState(
+            create_call=lambda transition, origin_widget: cls(
+                transition=transition,
+                origin_widget=origin_widget,
+                editcontroller=editcontroller,
+            )
+        )
+
     def _set_ui_selection(self, selection: str) -> None:
         self._editcontroller.set_edit_ui_selection(selection)
 
     def _cancel(self) -> None:
-        from bauiv1lib.playlist.customizebrowser import (
-            PlaylistCustomizeBrowserWindow,
-        )
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
         bui.getsound('powerdown01').play()
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistCustomizeBrowserWindow(
-                transition='in_left',
-                sessiontype=self._editcontroller.get_session_type(),
-                select_playlist=(
-                    self._editcontroller.get_existing_playlist_name()
-                ),
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )
+        self.main_window_back()
 
     def _add(self) -> None:
         # Store list name then tell the session to perform an add.
         self._editcontroller.setname(
             cast(str, bui.textwidget(query=self._text_field))
         )
-        self._editcontroller.add_game_pressed()
+        self._editcontroller.add_game_pressed(from_window=self)
 
     def _edit(self) -> None:
         # Store list name then tell the session to perform an add.
         self._editcontroller.setname(
             cast(str, bui.textwidget(query=self._text_field))
         )
-        self._editcontroller.edit_game_pressed()
+        self._editcontroller.edit_game_pressed(from_window=self)
 
     def _save_press(self) -> None:
-        from bauiv1lib.playlist.customizebrowser import (
-            PlaylistCustomizeBrowserWindow,
-        )
+
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
+            return
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -330,7 +337,7 @@ class PlaylistEditWindow(bui.Window):
             ]
         ):
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantSaveAlreadyExistsText')
+                bui.Lstr(resource=f'{self._r}.cantSaveAlreadyExistsText')
             )
             bui.getsound('error').play()
             return
@@ -339,7 +346,7 @@ class PlaylistEditWindow(bui.Window):
             return
         if not self._editcontroller.get_playlist():
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantSaveEmptyListText')
+                bui.Lstr(resource=f'{self._r}.cantSaveEmptyListText')
             )
             bui.getsound('error').play()
             return
@@ -348,7 +355,7 @@ class PlaylistEditWindow(bui.Window):
         # using its exact name to avoid confusion.
         if new_name == self._editcontroller.get_default_list_name().evaluate():
             bui.screenmessage(
-                bui.Lstr(resource=self._r + '.cantOverwriteDefaultText')
+                bui.Lstr(resource=f'{self._r}.cantOverwriteDefaultText')
             )
             bui.getsound('error').play()
             return
@@ -375,17 +382,9 @@ class PlaylistEditWindow(bui.Window):
         )
         plus.run_v1_account_transactions()
 
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
         bui.getsound('gunCocking').play()
-        assert bui.app.classic is not None
-        bui.app.ui_v1.set_main_menu_window(
-            PlaylistCustomizeBrowserWindow(
-                transition='in_left',
-                sessiontype=self._editcontroller.get_session_type(),
-                select_playlist=new_name,
-            ).get_root_widget(),
-            from_window=self._root_widget,
-        )
+
+        self.main_window_back()
 
     def _save_press_with_sound(self) -> None:
         bui.getsound('swish').play()

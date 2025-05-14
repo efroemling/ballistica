@@ -2,15 +2,14 @@
 #
 """Implements Target Practice game."""
 
-# ba_meta require api 8
+# ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -76,6 +75,7 @@ class TargetPracticeGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def on_team_join(self, team: Team) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         if self.has_begun():
             self.update_scoreboard()
 
@@ -94,6 +94,7 @@ class TargetPracticeGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def spawn_player(self, player: Player) -> bs.Actor:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         spawn_center = (0, 3, -5)
         pos = (
             spawn_center[0] + random.uniform(-1.5, 1.5),
@@ -178,6 +179,8 @@ class TargetPracticeGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # When players die, respawn them.
         if isinstance(msg, bs.PlayerDiedMessage):
             super().handlemessage(msg)  # Do standard stuff.
@@ -198,6 +201,7 @@ class TargetPracticeGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        """End the game."""
         results = bs.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.score)

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/classic/classic.h"
 #include "ballistica/scene_v1/support/client_controller_interface.h"
 #include "ballistica/shared/foundation/object.h"
 
@@ -121,8 +122,8 @@ class SessionStream : public Object, public ClientControllerInterface {
   template <typename T>
   auto GetPointerCount(const std::vector<T*>& vec) -> size_t;
   template <typename T>
-  auto GetFreeIndex(std::vector<T*>* vec,
-                    std::vector<size_t>* free_indices) -> size_t;
+  auto GetFreeIndex(std::vector<T*>* vec, std::vector<size_t>* free_indices)
+      -> size_t;
   template <typename T>
   void Add(T* val, std::vector<T*>* vec, std::vector<size_t>* free_indices);
   template <typename T>
@@ -138,7 +139,7 @@ class SessionStream : public Object, public ClientControllerInterface {
   std::vector<uint8_t> out_message_;
   std::vector<ConnectionToClient*> connections_to_clients_;
   std::vector<ConnectionToClient*> connections_to_clients_ignored_;
-  SceneV1AppMode* app_mode_;
+  classic::ClassicAppMode* app_mode_;
   bool writing_replay_{};
   millisecs_t last_physics_correction_time_{};
   millisecs_t last_send_time_{};

@@ -2,7 +2,15 @@
 
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <list>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "ballistica/base/input/device/keyboard_input.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_context_ref.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
@@ -28,10 +36,11 @@
 #include "ballistica/scene_v1/python/methods/python_methods_input.h"
 #include "ballistica/scene_v1/python/methods/python_methods_networking.h"
 #include "ballistica/scene_v1/python/methods/python_methods_scene.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/python/python_command.h"
+#include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
 
 namespace ballistica::scene_v1 {
@@ -91,7 +100,7 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
   NodeAttribute attr = node->GetAttribute(attr_name);
   switch (attr.type()) {
     case NodeAttributeType::kFloat: {
-      float val = Python::GetPyFloat(value_obj);
+      float val = Python::GetFloat(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, val);
       }
@@ -102,7 +111,7 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
       break;
     }
     case NodeAttributeType::kInt: {
-      int64_t val = Python::GetPyInt64(value_obj);
+      int64_t val = Python::GetInt64(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, val);
       }
@@ -113,7 +122,7 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
       break;
     }
     case NodeAttributeType::kBool: {
-      bool val = Python::GetPyBool(value_obj);
+      bool val = Python::GetBool(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, val);
       }
@@ -124,7 +133,7 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
       break;
     }
     case NodeAttributeType::kFloatArray: {
-      std::vector<float> vals = Python::GetPyFloats(value_obj);
+      std::vector<float> vals = Python::GetFloats(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, vals);
       }
@@ -135,7 +144,7 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
       break;
     }
     case NodeAttributeType::kIntArray: {
-      std::vector<int64_t> vals = Python::GetPyInts64(value_obj);
+      std::vector<int64_t> vals = Python::GetInts64(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, vals);
       }
@@ -324,7 +333,7 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
 
   std::string name;
   if (name_obj != Py_None) {
-    name = Python::GetPyString(name_obj);
+    name = Python::GetString(name_obj);
   } else {
     // By default do something like 'text@foo.py:20'.
     name = std::string(type) + "@" + Python::GetPythonFileLocation();
@@ -360,9 +369,10 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
         attr_vals.emplace_back(
             t->GetAttribute(std::string(PyUnicode_AsUTF8(key))), value);
       } catch (const std::exception&) {
-        Log(LogLevel::kError, "Attr not found on initial attr set: '"
-                                  + std::string(PyUnicode_AsUTF8(key)) + "' on "
-                                  + type + " node '" + name + "'");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Attr not found on initial attr set: '"
+                        + std::string(PyUnicode_AsUTF8(key)) + "' on " + type
+                        + " node '" + name + "'");
       }
     }
 
@@ -372,9 +382,9 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
       try {
         SetNodeAttr(node, i.first->name().c_str(), i.second);
       } catch (const std::exception& e) {
-        Log(LogLevel::kError, "Exception in initial attr set for attr '"
-                                  + i.first->name() + "' on " + type + " node '"
-                                  + name + "':" + e.what());
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Exception in initial attr set for attr '" + i.first->name()
+                        + "' on " + type + " node '" + name + "':" + e.what());
       }
     }
   }
@@ -387,12 +397,12 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
     if (PythonClassNode::Check(owner_obj)) {
       Node* owner_node = GetPyNode(owner_obj, true);
       if (owner_node == nullptr) {
-        Log(LogLevel::kError,
-            "Empty node-ref passed for 'owner'; pass None if you want "
-            "no owner.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Empty node-ref passed for 'owner'; pass None if you want "
+                    "no owner.");
       } else if (owner_node->scene() != node->scene()) {
-        Log(LogLevel::kError,
-            "Owner node is from a different scene; ignoring.");
+        g_core->Log(LogName::kBa, LogLevel::kError,
+                    "Owner node is from a different scene; ignoring.");
       } else {
         owner_node->AddDependentNode(node);
       }
@@ -412,9 +422,9 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
     }
     node->OnCreate();
   } catch (const std::exception& e) {
-    Log(LogLevel::kError, "Exception in OnCreate() for node "
-                              + ballistica::ObjToString(node)
-                              + "':" + e.what());
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Exception in OnCreate() for node "
+                    + ballistica::ObjToString(node) + "':" + e.what());
   }
 
   return node;
@@ -422,8 +432,8 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
 
 // Return the node attr as a PyObject, or nullptr if the node doesn't have that
 // attr.
-auto SceneV1Python::GetNodeAttr(Node* node,
-                                const char* attr_name) -> PyObject* {
+auto SceneV1Python::GetNodeAttr(Node* node, const char* attr_name)
+    -> PyObject* {
   assert(node);
   NodeAttribute attr = node->GetAttribute(attr_name);
   switch (attr.type()) {
@@ -629,7 +639,7 @@ auto SceneV1Python::IsPyHostActivity(PyObject* o) -> bool {
   int result =
       PyObject_IsInstance(o, g_scene_v1->python->objs()
                                  .Get(SceneV1Python::ObjID::kActivityClass)
-                                 .Get());
+                                 .get());
   if (result == -1) {
     result = 0;
     PyErr_Clear();
@@ -694,9 +704,9 @@ auto SceneV1Python::GetPyNodes(PyObject* o) -> std::vector<Node*> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<Node*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -735,9 +745,9 @@ auto SceneV1Python::GetPyMaterials(PyObject* o) -> std::vector<Material*> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<Material*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -777,9 +787,9 @@ auto SceneV1Python::GetPySceneTextures(PyObject* o)
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<SceneTexture*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -819,9 +829,9 @@ auto SceneV1Python::GetPySceneMeshes(PyObject* o) -> std::vector<SceneMesh*> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<SceneMesh*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -836,7 +846,7 @@ auto SceneV1Python::IsPyPlayer(PyObject* o) -> bool {
 
   int result = PyObject_IsInstance(
       o,
-      g_scene_v1->python->objs().Get(SceneV1Python::ObjID::kPlayerClass).Get());
+      g_scene_v1->python->objs().Get(SceneV1Python::ObjID::kPlayerClass).get());
   if (result == -1) {
     result = 0;
     PyErr_Clear();
@@ -889,7 +899,7 @@ auto SceneV1Python::ValidatedPackageAssetName(PyObject* package,
   if (!PyObject_IsInstance(package,
                            g_scene_v1->python->objs()
                                .Get(SceneV1Python::ObjID::kAssetPackageClass)
-                               .Get())) {
+                               .get())) {
     throw Exception("Object is not an AssetPackage.", PyExcType::kType);
   }
 
@@ -897,15 +907,15 @@ auto SceneV1Python::ValidatedPackageAssetName(PyObject* package,
   // Now validate that its context is current...
   PythonRef context_obj(PyObject_GetAttrString(package, "context_ref"),
                         PythonRef::kSteal);
-  if (!context_obj.Exists()
-      || !(PyObject_IsInstance(context_obj.Get(),
+  if (!context_obj.exists()
+      || !(PyObject_IsInstance(context_obj.get(),
                                reinterpret_cast<PyObject*>(
                                    &base::PythonClassContextRef::type_obj)))) {
     throw Exception("Asset package context_ref not found.",
                     PyExcType::kNotFound);
   }
   auto* pycontext =
-      reinterpret_cast<base::PythonClassContextRef*>(context_obj.Get());
+      reinterpret_cast<base::PythonClassContextRef*>(context_obj.get());
   auto* ctargetref = pycontext->context_ref().Get();
   if (!ctargetref) {
     throw Exception("Asset package context_ref does not exist.",
@@ -920,14 +930,14 @@ auto SceneV1Python::ValidatedPackageAssetName(PyObject* package,
   // Ok; now pull the package id...
   PythonRef package_id(PyObject_GetAttrString(package, "package_id"),
                        PythonRef::kSteal);
-  if (!PyUnicode_Check(package_id.Get())) {
+  if (!PyUnicode_Check(package_id.get())) {
     throw Exception("Got non-string AssetPackage ID.", PyExcType::kType);
   }
 
   // TODO(ericf): make sure the package is valid for this context,
   // and return a fully qualified name with the package included.
 
-  printf("would give %s:%s\n", PyUnicode_AsUTF8(package_id.Get()), name);
+  printf("would give %s:%s\n", PyUnicode_AsUTF8(package_id.get()), name);
   return name;
 }
 
@@ -961,9 +971,9 @@ auto SceneV1Python::GetPySceneSounds(PyObject* o) -> std::vector<SceneSound*> {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<SceneSound*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -972,8 +982,9 @@ auto SceneV1Python::GetPySceneSounds(PyObject* o) -> std::vector<SceneSound*> {
   return vals;
 }
 
-auto SceneV1Python::GetPySceneCollisionMesh(
-    PyObject* o, bool allow_empty_ref, bool allow_none) -> SceneCollisionMesh* {
+auto SceneV1Python::GetPySceneCollisionMesh(PyObject* o, bool allow_empty_ref,
+                                            bool allow_none)
+    -> SceneCollisionMesh* {
   assert(Python::HaveGIL());
   BA_PRECONDITION_FATAL(o != nullptr);
 
@@ -1003,9 +1014,9 @@ auto SceneV1Python::GetPySceneCollisionMeshes(PyObject* o)
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
   PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
-  assert(sequence.Exists());
-  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.Get()));
-  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.Get());
+  assert(sequence.exists());
+  auto size = static_cast<size_t>(PySequence_Fast_GET_SIZE(sequence.get()));
+  PyObject** pyobjs = PySequence_Fast_ITEMS(sequence.get());
   std::vector<SceneCollisionMesh*> vals(size);
   assert(vals.size() == size);
   for (size_t i = 0; i < size; i++) {
@@ -1021,7 +1032,7 @@ auto SceneV1Python::IsPySession(PyObject* o) -> bool {
   int result = PyObject_IsInstance(
       o, g_scene_v1->python->objs()
              .Get(SceneV1Python::ObjID::kSceneV1SessionClass)
-             .Get());
+             .get());
   if (result == -1) {
     PyErr_Clear();
     result = 0;
@@ -1101,15 +1112,15 @@ auto SceneV1Python::GetPySceneDataAsset(PyObject* o, bool allow_empty_ref,
       PyExcType::kType);
 }
 
-auto SceneV1Python::FilterChatMessage(std::string* message,
-                                      int client_id) -> bool {
+auto SceneV1Python::FilterChatMessage(std::string* message, int client_id)
+    -> bool {
   assert(message);
   base::ScopedSetContext ssc(nullptr);
 
   // This string data can be coming straight in off the network; need
   // to avoid letting malicious garbage through to Python api.
   if (!Utils::IsValidUTF8(*message)) {
-    BA_LOG_ONCE(LogLevel::kWarning,
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
                 "FilterChatMessage got invalid UTF8 data; could be an attack.");
     return false;
   }
@@ -1119,20 +1130,21 @@ auto SceneV1Python::FilterChatMessage(std::string* message,
   PythonRef result = objs().Get(ObjID::kFilterChatMessageCall).Call(args);
 
   // If something went wrong, just allow all messages through verbatim.
-  if (!result.Exists()) {
+  if (!result.exists()) {
     return true;
   }
 
   // If they returned None, they want to ignore the message.
-  if (result.Get() == Py_None) {
+  if (result.get() == Py_None) {
     return false;
   }
 
   // Replace the message string with whatever they gave us.
   try {
-    *message = g_base->python->GetPyLString(result.Get());
+    *message = g_base->python->GetPyLString(result.get());
   } catch (const std::exception& e) {
-    Log(LogLevel::kError,
+    g_core->Log(
+        LogName::kBa, LogLevel::kError,
         "Error getting string from chat filter: " + std::string(e.what()));
   }
   return true;
@@ -1166,7 +1178,7 @@ void SceneV1Python::DoBuildNodeMessage(PyObject* args, int arg_offset,
   } else {
     (*user_message_obj) = nullptr;
   }
-  type = Python::GetPyString(obj);
+  type = Python::GetString(obj);
   NodeMessageType ac = Scene::GetNodeMessageType(type);
   const char* format = Scene::GetNodeMessageFormat(ac);
   assert(format);
@@ -1276,25 +1288,25 @@ void SceneV1Python::DoBuildNodeMessage(PyObject* args, int arg_offset,
     switch (*f) {
       case 'I':
         Utils::EmbedInt32NBO(
-            &ptr, static_cast_check_fit<int32_t>(Python::GetPyInt64(obj)));
+            &ptr, static_cast_check_fit<int32_t>(Python::GetInt64(obj)));
         break;
       case 'i':
         Utils::EmbedInt16NBO(
-            &ptr, static_cast_check_fit<int16_t>(Python::GetPyInt64(obj)));
+            &ptr, static_cast_check_fit<int16_t>(Python::GetInt64(obj)));
         break;
       case 'c':  // NOLINT(bugprone-branch-clone)
-        Utils::EmbedInt8(
-            &ptr, static_cast_check_fit<int8_t>(Python::GetPyInt64(obj)));
+        Utils::EmbedInt8(&ptr,
+                         static_cast_check_fit<int8_t>(Python::GetInt64(obj)));
         break;
       case 'b':
-        Utils::EmbedInt8(
-            &ptr, static_cast_check_fit<int8_t>(Python::GetPyInt64(obj)));
+        Utils::EmbedInt8(&ptr,
+                         static_cast_check_fit<int8_t>(Python::GetInt64(obj)));
         break;
       case 'F':
-        Utils::EmbedFloat32(&ptr, Python::GetPyFloat(obj));
+        Utils::EmbedFloat32(&ptr, Python::GetFloat(obj));
         break;
       case 'f':
-        Utils::EmbedFloat16NBO(&ptr, Python::GetPyFloat(obj));
+        Utils::EmbedFloat16NBO(&ptr, Python::GetFloat(obj));
         break;
       case 's':
         Utils::EmbedString(&ptr, PyUnicode_AsUTF8(obj));
@@ -1374,7 +1386,7 @@ auto SceneV1Python::HandleCapturedKeyReleaseCall(const SDL_Keysym& keysym)
 
 auto SceneV1Python::HandleCapturedKeyPress(const SDL_Keysym& keysym) -> bool {
   assert(g_base->InLogicThread());
-  if (!keyboard_capture_call_.Exists()) {
+  if (!keyboard_capture_call_.exists()) {
     return false;
   }
   base::ScopedSetContext ssc(nullptr);
@@ -1392,14 +1404,14 @@ auto SceneV1Python::HandleCapturedKeyPress(const SDL_Keysym& keysym) -> bool {
     keyboard_capture_call_.Call(args);
   } else {
     BA_LOG_ONCE(
-        LogLevel::kWarning,
+        LogName::kBa, LogLevel::kWarning,
         "Python key-press callbacks do not work with this input-device class.");
   }
   return true;
 }
 auto SceneV1Python::HandleCapturedKeyRelease(const SDL_Keysym& keysym) -> bool {
   assert(g_base->InLogicThread());
-  if (!keyboard_capture_call_.Exists()) {
+  if (!keyboard_capture_call_.exists()) {
     return false;
   }
   base::ScopedSetContext ssc(nullptr);
@@ -1417,17 +1429,18 @@ auto SceneV1Python::HandleCapturedKeyRelease(const SDL_Keysym& keysym) -> bool {
     keyboard_capture_call_.Call(args);
   } else {
     BA_LOG_ONCE(
-        LogLevel::kWarning,
+        LogName::kBa, LogLevel::kWarning,
         "Python key-press callbacks do not work with this input-device class.");
   }
   return true;
 }
 
-auto SceneV1Python::HandleCapturedJoystickEvent(
-    const SDL_Event& event, base::InputDevice* input_device) -> bool {
+auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
+                                                base::InputDevice* input_device)
+    -> bool {
   assert(g_base->InLogicThread());
   assert(input_device != nullptr);
-  if (!joystick_capture_call_.Exists()) {
+  if (!joystick_capture_call_.exists()) {
     return false;
   }
   // This currently only works with the scene_v1 input-device classes.
@@ -1488,7 +1501,7 @@ auto SceneV1Python::HandleCapturedJoystickEvent(
     }
   } else {
     BA_LOG_ONCE(
-        LogLevel::kWarning,
+        LogName::kBa, LogLevel::kWarning,
         "Python key-press callbacks do not work with this input-device class.");
   }
   return true;

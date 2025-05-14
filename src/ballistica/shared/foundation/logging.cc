@@ -2,9 +2,13 @@
 
 #include "ballistica/shared/foundation/logging.h"
 
+#include <cstdio>
+#include <string>
+
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
+#include "ballistica/shared/math/vector4f.h"
 
 namespace ballistica {
 
@@ -15,16 +19,55 @@ using core::g_core;
 
 int g_early_v1_cloud_log_writes{10};
 
-void Logging::Log(LogLevel level, const std::string& msg) {
-  BA_PRECONDITION(g_core);
-  g_core->python->LoggingCall(level, msg);
+void Logging::Log(LogName name, LogLevel level, const std::string& msg) {
+  // Wrappers calling us should check these bits.
+  assert(g_core);
+  assert(g_core->LogLevelEnabled(name, level));
+
+  g_core->python->LoggingCall(name, level, msg);
 }
 
-void Logging::EmitLog(const std::string& name, LogLevel level,
+void Logging::EmitLog(const std::string& name, LogLevel level, double timestamp,
                       const std::string& msg) {
   // Print to the dev console.
-  if (g_base_soft) {
-    g_base_soft->PushDevConsolePrintCall(msg + "\n");
+  if (name == "stdout" || name == "stderr") {
+    // Print stdout/stderr entries with no extra info.
+    g_base_soft->PushDevConsolePrintCall(msg, 1.0f, kVector4f1);
+  } else {
+    auto elt{g_core->ba_env_launch_timestamp()};
+
+    // Show -1 for time if we don't have a launch timestamp yet.
+    auto rel_time{elt > 0.0 ? (timestamp - elt) : -1.0};
+
+    if (g_base_soft) {
+      Vector4f logcolor;
+      switch (level) {
+        case LogLevel::kDebug:
+          logcolor = Vector4f(0.0f, 0.5f, 1.0f, 1.0f);
+          break;
+        case LogLevel::kInfo:
+          logcolor = Vector4f(1.0f, 1.0f, 1.0f, 1.0f);
+          break;
+        case LogLevel::kWarning:
+          logcolor = Vector4f(1.0f, 0.7f, 0.0f, 1.0f);
+          break;
+        case LogLevel::kError:
+          logcolor = Vector4f(1.0f, 0.0, 0.0f, 1.0f);
+          break;
+        case LogLevel::kCritical:
+          logcolor = Vector4f(0.6f, 0.0, 0.25f, 1.0f);
+          break;
+      }
+      char prestr[256];
+
+      snprintf(prestr, sizeof(prestr), "%.3f  %s", rel_time, name.c_str());
+      g_base_soft->PushDevConsolePrintCall("", 0.3f, kVector4f1);
+      g_base_soft->PushDevConsolePrintCall(
+          prestr, 0.75f,
+          Vector4f(logcolor.x * 0.4f + 0.6f, logcolor.y * 0.4f + 0.6f,
+                   logcolor.z * 0.4f + 0.6f, 0.75));
+      g_base_soft->PushDevConsolePrintCall(msg, 1.0f, logcolor);
+    }
   }
 
   // Ship to platform-specific display mechanisms (android log, etc).

@@ -2,7 +2,8 @@
 
 #include "ballistica/ui_v1/widget/widget.h"
 
-#include "ballistica/base/logic/logic.h"
+#include <vector>
+
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/ui_v1/python/class/python_class_widget.h"
@@ -35,16 +36,9 @@ void Widget::SetToolbarVisibility(ToolbarVisibility v) {
   }
 }
 
-void Widget::SetDepthRange(float min_depth, float max_depth) {
-  BA_PRECONDITION(min_depth >= 0.0f && min_depth <= 1.0f);
-  BA_PRECONDITION(max_depth >= min_depth && max_depth <= 1.0f);
-  depth_range_min_ = min_depth;
-  depth_range_max_ = max_depth;
-}
-
 auto Widget::IsInMainStack() const -> bool {
   if (!g_base->ui) {
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                 "Widget::IsInMainStack() called before ui creation.");
     return false;
   }
@@ -85,7 +79,7 @@ void Widget::SetSelected(bool s, SelectionCause cause) {
     return;
   }
   selected_ = s;
-  if (selected_ && on_select_call_.Exists()) {
+  if (selected_ && on_select_call_.exists()) {
     // Schedule this to run immediately after any current UI traversal.
     on_select_call_->ScheduleInUIOperation();
   }
@@ -172,7 +166,7 @@ auto Widget::GetDrawBrightness(millisecs_t current_time) const -> float {
 }
 
 void Widget::ScreenPointToWidget(float* x, float* y) const {
-#if BA_DEBUG_BUILD || BA_TEST_BUILD
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   float x_old = *x;
   float y_old = *y;
 #endif
@@ -194,20 +188,21 @@ void Widget::ScreenPointToWidget(float* x, float* y) const {
   }
 
   // Sanity test: do the reverse and make sure it comes out the same.
-#if BA_DEBUG_BUILD || BA_TEST_BUILD
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   float x_test = *x;
   float y_test = *y;
   WidgetPointToScreen(&x_test, &y_test);
   if (std::abs(x_test - x_old) > 0.01f || std::abs(y_test - y_old) > 0.01f) {
-    Log(LogLevel::kError,
-        "ScreenPointToWidget sanity check error: expected ("
-            + std::to_string(x_old) + "," + std::to_string(y_old) + ") got ("
-            + std::to_string(x_test) + "," + std::to_string(y_test) + ")");
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "ScreenPointToWidget sanity check error: expected ("
+                    + std::to_string(x_old) + "," + std::to_string(y_old)
+                    + ") got (" + std::to_string(x_test) + ","
+                    + std::to_string(y_test) + ")");
   }
-#endif  // BA_DEBUG_BUILD || BA_TEST_BUILD
+#endif  // BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
 }
 
-auto Widget::GetPyWidget(bool new_ref) -> PyObject* {
+auto Widget::GetPyWidget_(bool new_ref) -> PyObject* {
   assert(g_base->InLogicThread());
   if (py_ref_ == nullptr) {
     py_ref_ = PythonClassWidget::Create(this);
@@ -238,5 +233,25 @@ auto Widget::IsAcceptingInput() const -> bool { return true; }
 void Widget::Activate() {}
 
 auto Widget::IsTransitioningOut() const -> bool { return false; }
+
+void Widget::SetRightWidget(Widget* w) {
+  BA_PRECONDITION(!neighbors_locked_);
+  right_widget_ = w;
+}
+
+void Widget::SetLeftWidget(Widget* w) {
+  BA_PRECONDITION(!neighbors_locked_);
+  left_widget_ = w;
+}
+
+void Widget::SetUpWidget(Widget* w) {
+  BA_PRECONDITION(!neighbors_locked_);
+  up_widget_ = w;
+}
+
+void Widget::SetDownWidget(Widget* w) {
+  BA_PRECONDITION(!neighbors_locked_);
+  down_widget_ = w;
+}
 
 }  // namespace ballistica::ui_v1

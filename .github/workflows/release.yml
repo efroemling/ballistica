@@ -1,0 +1,466 @@
+name: Release
+
+on:
+  push:
+    tags:
+    - 'v*'
+        
+jobs:
+
+################################################################################
+#                                                                              #
+#                                   Linux                                      #
+#                                                                              #
+################################################################################
+  release_linux_x86_64_gui_debug_build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Setup project environment
+        run: make env
+      - name: Make the build
+        run: make prefab-gui-debug-build
+      - name: Compress the build
+        run: tar -cf "linux_x86_64_gui_debug.tar" build/prefab/full/linux_x86_64_gui/
+      - name: Upload the build
+        uses: ncipollo/release-action@v1
+        with:
+            body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+            allowUpdates: true
+            artifacts: linux_x86_64_gui_debug.tar
+
+  release_linux_x86_64_server_debug_build:
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+        - name: Setup Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.13'
+        - name: Setup project environment
+          run: make env
+        - name: Make the build
+          run: make prefab-server-debug-build
+        - name: Compress the build
+          run: tar -cf "linux_x86_64_server_debug.tar" build/prefab/full/linux_x86_64_server/
+        - name: Upload the build
+          uses: ncipollo/release-action@v1
+          with:
+            body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+            allowUpdates: true
+            artifacts: linux_x86_64_server_debug.tar
+    
+  release_linux_arm64_gui_debug_build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-linux-arm64-gui-debug-build
+    - name: Compress the build
+      run: tar -cf "linux_arm64_gui_debug.tar" build/prefab/full/linux_arm64_gui/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        body : https://github.com/${{ github.repository }}/CHANGELOG.md
+        allowUpdates: true
+        artifacts: linux_arm64_gui_debug.tar
+        
+  release_linux_arm64_server_debug_build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-linux-arm64-server-debug-build
+    - name: Compress the build
+      run: tar -cf "linux_arm64_server_debug.tar" build/prefab/full/linux_arm64_server/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+        allowUpdates: true
+        artifacts: linux_arm64_server_debug.tar
+    
+################################################################################
+#                                                                              #
+#                                    Mac                                       #
+#                                                                              #
+################################################################################
+  release_mac_arm64_gui_debug_build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-mac-arm64-gui-debug-build
+    - name: Compress the build
+      run: tar -cf "mac_arm64_gui_debug.tar" build/prefab/full/mac_arm64_gui/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+        allowUpdates: true
+        artifacts: mac_arm64_gui_debug.tar
+  
+  release_mac_arm64_server_debug_build: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-mac-arm64-server-debug-build
+    - name: Compress the build
+      run: tar -cf "mac_arm64_server_debug.tar" build/prefab/full/mac_arm64_server/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+        allowUpdates: true
+        artifacts: mac_arm64_server_debug.tar
+
+################################################################################
+#                                                                              #
+#                                   Windows                                    #
+#                                                                              #
+################################################################################
+  release_windows_x86_gui_debug_build: 
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-windows-x86-gui-debug-build
+    - name: Compress the build
+      run: tar -cf "windows_x86_gui_debug.tar" build/prefab/full/windows_x86_gui/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+        allowUpdates: true
+        artifacts: windows_x86_gui_debug.tar
+
+  release_windows_x86_server_debug_build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make prefab-windows-x86-server-debug-build
+    - name: Compress the build
+      run: tar -cf "windows_x86_server_debug.tar" build/prefab/full/windows_x86_server/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+        allowUpdates: true
+        artifacts: windows_x86_server_debug.tar
+
+################################################################################
+#                                                                              #
+#                                   Docker                                     #
+#                                                                              #
+################################################################################
+  release_docker_gui_debug_image:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Docker login
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }} 
+    - name: Make the build
+      run: |
+        make docker-gui-debug
+        make docker-save
+    - name: Zip the build
+      run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+        allowUpdates: true
+        artifacts: bombsquad_docker_gui_debug.tar.zip
+    - name: Push to github image repository
+      run: |
+        docker tag bombsquad_gui_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_${{ github.ref_name }}_x86_64
+        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_${{ github.ref_name }}_x86_64
+
+  release_docker_server_debug_image:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Docker login
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }} 
+    - name: Make the build
+      run: |
+        make docker-server-debug
+        make docker-save
+    - name: Zip the build
+      run: zip -j bombsquad_docker_server_debug.tar.zip build/docker/bombsquad_server_debug_docker.tar
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+        allowUpdates: true
+        artifacts: bombsquad_docker_server_debug.tar.zip
+    - name: Push to github image repository
+      run: |
+        docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}_x86_64
+        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}_x86_64
+
+  upload_docker_x86_64_server_release_image:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Docker login
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }} 
+    - name: Make the build
+      run: |
+        make docker-server-release
+    #    make docker-save
+    # - name: Zip the build
+    #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
+    # - name: Upload the build
+    #   uses: ncipollo/release-action@v1
+    #   with:
+    #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+    #     allowUpdates: true
+    #     artifacts: bombsquad_docker_gui_debug.tar.zip
+    - name: Push to github image repository
+      run: |
+        docker tag bombsquad_server_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64
+        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64
+
+  upload_docker_arm64_server_release_image:
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Docker login
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }} 
+    - name: Make the build
+      run: |
+        make docker-arm64-server-release
+    #    make docker-save
+    # - name: Zip the build
+    #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
+    # - name: Upload the build
+    #   uses: ncipollo/release-action@v1
+    #   with:
+    #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+    #     allowUpdates: true
+    #     artifacts: bombsquad_docker_gui_debug.tar.zip
+    - name: Push to github image repository
+      run: |
+        docker tag bombsquad_server_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
+        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
+
+  manifest_docker_server_multiarch:
+    needs: [upload_docker_x86_64_server_release_image , upload_docker_arm64_server_release_image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create manifest
+        run: |
+          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:${{ github.ref_name }} \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64 \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
+          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:${{ github.ref_name }}
+          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:latest \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64 \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
+          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:latest
+
+  upload_docker_x86_64_gui_release_image:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Docker login
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }} 
+    - name: Make the build
+      run: |
+        make docker-gui-release
+    #    make docker-save
+    # - name: Zip the build
+    #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
+    # - name: Upload the build
+    #   uses: ncipollo/release-action@v1
+    #   with:
+    #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+    #     allowUpdates: true
+    #     artifacts: bombsquad_docker_gui_debug.tar.zip
+    - name: Push to github image repository
+      run: |
+        docker tag bombsquad_gui_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64
+        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64
+        
+  upload_docker_arm64_gui_release_image:
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Docker login
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }} 
+    - name: Make the build
+      run: |
+        make docker-arm64-gui-release
+    #    make docker-save
+    # - name: Zip the build
+    #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
+    # - name: Upload the build
+    #   uses: ncipollo/release-action@v1
+    #   with:
+    #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+    #     allowUpdates: true
+    #     artifacts: bombsquad_docker_gui_debug.tar.zip
+    - name: Push to github image repository
+      run: |
+        docker tag bombsquad_gui_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
+        docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
+      
+  manifest_docker_gui_multiarch:
+    needs: [upload_docker_x86_64_gui_release_image , upload_docker_arm64_gui_release_image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create manifest
+        run: |
+          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:${{ github.ref_name }} \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64 \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
+          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:${{ github.ref_name }}
+          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:latest \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64 \
+            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
+          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:latest
+
+################################################################################
+#                                                                              #
+#                                    Docs                                      #
+#                                                                              #
+################################################################################
+  release_docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Setup project environment
+      run: make env
+    - name: Make the build
+      run: make docs
+    - name: Compress the build
+      run: tar -cf "html_docs.tar" build/docs/
+    - name: Upload the build
+      uses: ncipollo/release-action@v1
+      with:
+        body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+        allowUpdates: true
+        artifacts: html_docs.tar

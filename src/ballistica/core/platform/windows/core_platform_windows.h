@@ -2,8 +2,10 @@
 
 #ifndef BALLISTICA_CORE_PLATFORM_WINDOWS_CORE_PLATFORM_WINDOWS_H_
 #define BALLISTICA_CORE_PLATFORM_WINDOWS_CORE_PLATFORM_WINDOWS_H_
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 
+#include <cstdio>
+#include <list>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -31,8 +33,8 @@ class CorePlatformWindows : public CorePlatform {
   auto Remove(const char* path) -> int;
   auto Stat(const char* path, struct BA_STAT* buffer) -> int;
   auto Rename(const char* oldname, const char* newname) -> int;
-  auto DoAbsPath(const std::string& path,
-                 std::string* outpath) -> bool override;
+  auto DoAbsPath(const std::string& path, std::string* outpath)
+      -> bool override;
   auto FOpen(const char* path, const char* mode) -> FILE* override;
   auto GetErrnoString() -> std::string override;
   auto GetSocketErrorString() -> std::string override;
@@ -53,8 +55,8 @@ class CorePlatformWindows : public CorePlatform {
   void CloseSocket(int socket) override;
   auto GetBroadcastAddrs() -> std::vector<uint32_t> override;
   auto SetSocketNonBlocking(int sd) -> bool override;
-  auto GetPlatformName() -> std::string override;
-  auto GetSubplatformName() -> std::string override;
+  auto GetLegacyPlatformName() -> std::string override;
+  auto GetLegacySubplatformName() -> std::string override;
   bool have_stdin_stdout_ = false;
 
   auto FormatWinStackTraceForDisplay(WinStackTrace* stack_trace) -> std::string;
@@ -67,5 +69,5 @@ class CorePlatformWindows : public CorePlatform {
 
 }  // namespace ballistica::core
 
-#endif  // BA_OSTYPE_WINDOWS
+#endif  // BA_PLATFORM_WINDOWS
 #endif  // BALLISTICA_CORE_PLATFORM_WINDOWS_CORE_PLATFORM_WINDOWS_H_

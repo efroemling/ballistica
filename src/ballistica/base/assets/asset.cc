@@ -2,18 +2,54 @@
 
 #include "ballistica/base/assets/asset.h"
 
+#include <string>
+
+#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
+
 namespace ballistica::base {
 
 Asset::Asset() {
   assert(g_base);
   assert(g_base->InLogicThread());
-  last_used_time_ = g_core->GetAppTimeMillisecs();
+  last_used_time_ = g_core->AppTimeMillisecs();
+}
+
+auto Asset::AssetTypeName(AssetType assettype) -> const char* {
+  const char* asset_type_name{"unknown"};
+  switch (assettype) {
+    case AssetType::kCollisionMesh:
+      asset_type_name = "collision-mesh";
+      break;
+    case AssetType::kMesh:
+      asset_type_name = "mesh";
+      break;
+    case AssetType::kData:
+      asset_type_name = "data";
+      break;
+    case AssetType::kSound:
+      asset_type_name = "sound";
+      break;
+    case AssetType::kTexture:
+      asset_type_name = "texture";
+      break;
+    case AssetType::kLast:
+      break;
+  }
+  return asset_type_name;
+}
+
+void Asset::ObjectPostInit() {
+  g_core->Log(LogName::kBaAssets, LogLevel::kInfo, [this] {
+    return std::string("allocating ") + AssetTypeName(GetAssetType()) + " "
+           + GetName();
+  });
+  Object::ObjectPostInit();
 }
 
 Asset::~Asset() {
-  // at the moment whoever owns the last reference to us
-  // needs to make sure to unload us before we die..
-  // I feel like there should be a more elegant solution to that.
+  // at the moment whoever owns the last reference to us needs to make sure
+  // to unload us before we die. I feel like there should be a more elegant
+  // solution to that.
   assert(g_base && g_base->assets);
   assert(!locked());
   assert(!loaded());
@@ -25,9 +61,13 @@ void Asset::Preload(bool already_locked) {
   if (!preloaded_) {
     assert(!loaded_);
     BA_PRECONDITION(locked());
-    preload_start_time_ = g_core->GetAppTimeMillisecs();
+    g_core->Log(LogName::kBaAssets, LogLevel::kDebug, [this] {
+      return std::string("preloading ") + AssetTypeName(GetAssetType()) + " "
+             + GetName();
+    });
+    preload_start_time_ = g_core->AppTimeMillisecs();
     DoPreload();
-    preload_end_time_ = g_core->GetAppTimeMillisecs();
+    preload_end_time_ = g_core->AppTimeMillisecs();
     preloaded_ = true;
   }
 }
@@ -43,9 +83,13 @@ void Asset::Load(bool already_locked) {
     assert(preloaded_ && !loaded_);
     BA_DEBUG_FUNCTION_TIMER_BEGIN();
     BA_PRECONDITION(locked());
-    load_start_time_ = g_core->GetAppTimeMillisecs();
+    g_core->Log(LogName::kBaAssets, LogLevel::kDebug, [this] {
+      return std::string("loading ") + AssetTypeName(GetAssetType()) + " "
+             + GetName();
+    });
+    load_start_time_ = g_core->AppTimeMillisecs();
     DoLoad();
-    load_end_time_ = g_core->GetAppTimeMillisecs();
+    load_end_time_ = g_core->AppTimeMillisecs();
     BA_DEBUG_FUNCTION_TIMER_END_THREAD_EX(50, GetName());
     loaded_ = true;
   }

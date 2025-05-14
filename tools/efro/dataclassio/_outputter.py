@@ -19,8 +19,9 @@ from typing import TYPE_CHECKING, cast, Any
 from efro.util import check_utc
 from efro.dataclassio._base import (
     Codec,
-    _parse_annotated,
+    parse_annotated,
     EXTRA_ATTRS_ATTR,
+    LOSSY_ATTR,
     _is_valid_for_codec,
     _get_origin,
     SIMPLE_TYPES,
@@ -38,25 +39,44 @@ class _Outputter:
     """Validates or exports data contained in a dataclass instance."""
 
     def __init__(
-        self, obj: Any, create: bool, codec: Codec, coerce_to_float: bool
+        self,
+        obj: Any,
+        *,
+        create: bool,
+        codec: Codec,
+        coerce_to_float: bool,
+        discard_extra_attrs: bool,
     ) -> None:
         self._obj = obj
         self._create = create
         self._codec = codec
         self._coerce_to_float = coerce_to_float
+        self._discard_extra_attrs = discard_extra_attrs
 
     def run(self) -> Any:
         """Do the thing."""
 
+        obj = self._obj
+
+        # mypy workaround - if we check 'obj' here it assumes the
+        # isinstance call below fails.
         assert dataclasses.is_dataclass(self._obj)
+
+        # If this data has been flagged as lossy, don't allow outputting
+        # it. This hopefully helps avoid unintentional data
+        # modification/loss.
+        if getattr(obj, LOSSY_ATTR, False):
+            raise ValueError(
+                'Object has been flagged as lossy; output is disallowed.'
+            )
 
         # For special extended data types, call their 'will_output' callback.
         # FIXME - should probably move this into _process_dataclass so it
         # can work on nested values.
-        if isinstance(self._obj, IOExtendedData):
-            self._obj.will_output()
+        if isinstance(obj, IOExtendedData):
+            obj.will_output()
 
-        return self._process_dataclass(type(self._obj), self._obj, '')
+        return self._process_dataclass(type(obj), obj, '')
 
     def soft_default_check(
         self, value: Any, anntype: Any, fieldpath: str
@@ -89,7 +109,7 @@ class _Outputter:
             anntype = prep.annotations[fieldname]
             value = getattr(obj, fieldname)
 
-            anntype, ioattrs = _parse_annotated(anntype)
+            anntype, ioattrs = parse_annotated(anntype)
 
             # If we're not storing default values for this fella,
             # we can skip all output processing if we've got a default value.
@@ -133,17 +153,18 @@ class _Outputter:
                 out[storagename] = outvalue
 
         # If there's extra-attrs stored on us, check/include them.
-        extra_attrs = getattr(obj, EXTRA_ATTRS_ATTR, None)
-        if isinstance(extra_attrs, dict):
-            if not _is_valid_for_codec(extra_attrs, self._codec):
-                raise TypeError(
-                    f'Extra attrs on \'{fieldpath}\' contains data type(s)'
-                    f' not supported by \'{self._codec.value}\' codec:'
-                    f' {extra_attrs}.'
-                )
-            if self._create:
-                assert out is not None
-                out.update(extra_attrs)
+        if not self._discard_extra_attrs:
+            extra_attrs = getattr(obj, EXTRA_ATTRS_ATTR, None)
+            if isinstance(extra_attrs, dict):
+                if not _is_valid_for_codec(extra_attrs, self._codec):
+                    raise TypeError(
+                        f'Extra attrs on \'{fieldpath}\' contains data type(s)'
+                        f' not supported by \'{self._codec.value}\' codec:'
+                        f' {extra_attrs}.'
+                    )
+                if self._create:
+                    assert out is not None
+                    out.update(extra_attrs)
 
         # If this obj inherits from multi-type, store its type id.
         if isinstance(obj, IOMultiType):
@@ -161,7 +182,15 @@ class _Outputter:
             assert obj.get_type(type_id) is type(obj)
             if self._create:
                 assert out is not None
-                out[obj.ID_STORAGE_NAME] = type_id.value
+                storagename = obj.get_type_id_storage_name()
+                if any(f.name == storagename for f in fields):
+                    raise RuntimeError(
+                        f'dataclassio: {type(obj)} contains a'
+                        f" '{storagename}' field which clashes with"
+                        f' the type-id-storage-name of the IOMulticlass'
+                        f' it inherits from.'
+                    )
+                out[storagename] = type_id.value
 
         return out
 
@@ -173,6 +202,7 @@ class _Outputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
@@ -276,7 +306,11 @@ class _Outputter:
             childanntype = childanntypes[0]
 
             # If that type is a multi-type, we determine our type per-object.
-            if issubclass(childanntype, IOMultiType):
+            # Make sure we only pass actual types to issubclass; it will error
+            # if we give it something like typing.Any.
+            if isinstance(childanntype, type) and issubclass(
+                childanntype, IOMultiType
+            ):
                 # In the multi-type case, we use each object's own type
                 # to do its conversion, but lets at least make sure each
                 # of those types inherits from the annotated multi-type
@@ -374,7 +408,8 @@ class _Outputter:
                     ),
                     key=(
                         None
-                        if childanntypes[0] in [str, int, float, bool]
+                        if childanntypes[0]
+                        in [str, int, float, bool, datetime.datetime]
                         else lambda v: json.dumps(v, sort_keys=True)
                     ),
                 )
@@ -446,6 +481,17 @@ class _Outputter:
                 if self._create
                 else None
             )
+        if issubclass(origin, datetime.timedelta):
+            if not isinstance(value, origin):
+                raise TypeError(
+                    f'Expected a {origin} for {fieldpath};'
+                    f' found a {type(value)}.'
+                )
+            return (
+                [value.days, value.seconds, value.microseconds]
+                if self._create
+                else None
+            )
 
         if origin is bytes:
             return self._process_bytes(cls, fieldpath, value)
@@ -481,6 +527,7 @@ class _Outputter:
         value: dict,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
         if not isinstance(value, dict):
             raise TypeError(

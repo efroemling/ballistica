@@ -3,8 +3,10 @@
 #ifndef BALLISTICA_CLASSIC_SUPPORT_STRESS_TEST_H_
 #define BALLISTICA_CLASSIC_SUPPORT_STRESS_TEST_H_
 
+#include <list>
+
 #include "ballistica/base/base.h"
-#include "ballistica/shared/ballistica.h"
+#include "ballistica/base/support/app_timer.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::classic {

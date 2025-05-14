@@ -3,7 +3,9 @@
 #ifndef BALLISTICA_BASE_PLATFORM_SUPPORT_MIN_SDL_KEY_NAMES_H_
 #define BALLISTICA_BASE_PLATFORM_SUPPORT_MIN_SDL_KEY_NAMES_H_
 
-#include "ballistica/base/input/device/keyboard_input.h"
+#include <string>  // IWYU pragma: keep.
+
+#include "ballistica/base/input/device/keyboard_input.h"  // IWYU pragma: keep.
 
 namespace ballistica::base {
 
@@ -346,7 +348,7 @@ static const char* GetScancodeName(SDL_Scancode scancode) {
   const char* name;
   if (static_cast<int>(scancode) < SDL_SCANCODE_UNKNOWN
       || scancode >= SDL_NUM_SCANCODES) {
-    BA_LOG_ONCE(LogLevel::kError,
+    BA_LOG_ONCE(LogName::kBaInput, LogLevel::kError,
                 "GetScancodeName passed invalid scancode "
                     + std::to_string(static_cast<int>(scancode)));
     return "";
@@ -368,7 +370,7 @@ auto MinSDL_GetKeyName(int keycode) -> std::string {
   char* end;
 
   // Handle a few specially per platform.
-  if (g_buildconfig.ostype_macos()) {
+  if (g_buildconfig.platform_macos()) {
     switch (key) {
       case SDLK_LGUI:
         return "Left Command";

@@ -35,11 +35,11 @@ class PropNode : public Node {
   void SetReflectionScale(const std::vector<float>& vals);
   auto GetReflection() const -> std::string;
   void SetReflection(const std::string& val);
-  auto color_texture() const -> SceneTexture* { return color_texture_.Get(); }
+  auto color_texture() const -> SceneTexture* { return color_texture_.get(); }
   void set_color_texture(SceneTexture* val) { color_texture_ = val; }
-  auto GetMesh() const -> SceneMesh* { return mesh_.Get(); }
+  auto GetMesh() const -> SceneMesh* { return mesh_.get(); }
   void set_mesh(SceneMesh* val) { mesh_ = val; }
-  auto light_mesh() const -> SceneMesh* { return light_mesh_.Get(); }
+  auto light_mesh() const -> SceneMesh* { return light_mesh_.get(); }
   void set_light_mesh(SceneMesh* val) { light_mesh_ = val; }
   auto sticky() const -> bool { return sticky_; }
   void set_sticky(bool val) { sticky_ = val; }
@@ -51,7 +51,7 @@ class PropNode : public Node {
   void set_mesh_scale(float val) { mesh_scale_ = val; }
   auto flashing() const -> bool { return flashing_; }
   void set_flashing(bool val) { flashing_ = val; }
-  auto owner() const -> Node* { return owner_.Get(); }
+  auto owner() const -> Node* { return owner_.get(); }
   void set_owner(Node* val) { owner_ = val; }
   auto GetMaterials() const -> std::vector<Material*>;
   void SetMaterials(const std::vector<Material*>& materials);

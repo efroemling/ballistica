@@ -3,20 +3,16 @@
 """Provides the AppComponent class."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, cast
+from typing import TYPE_CHECKING, cast
 
 import _babase
 
 if TYPE_CHECKING:
     from typing import Callable, Any
 
-T = TypeVar('T', bound=type)
-
 
 class AppComponentSubsystem:
     """Subsystem for wrangling AppComponents.
-
-    Category: **App Classes**
 
     This subsystem acts as a registry for classes providing particular
     functionality for the app, and allows plugins or other custom code
@@ -68,7 +64,7 @@ class AppComponentSubsystem:
             _babase.pushcall(self._run_change_callbacks)
         self._dirty_base_classes.add(baseclass)
 
-    def getclass(self, baseclass: T) -> T:
+    def getclass[T: type](self, baseclass: T) -> T:
         """Given a base-class, return the current implementation class.
 
         If no custom implementation has been set, the provided
@@ -78,9 +74,13 @@ class AppComponentSubsystem:
             raise RuntimeError('this must be called from the logic thread.')
 
         del baseclass  # Unused.
-        return cast(T, None)
 
-    def register_change_callback(
+        # FIXME - I think our pylint plugin is doing the wrong thing
+        # here and clearing all func generic params when it should just
+        # be clearing their type annotations.
+        return cast(T, None)  # pylint: disable=undefined-variable
+
+    def register_change_callback[T: type](
         self, baseclass: T, callback: Callable[[T], None]
     ) -> None:
         """Register a callback to fire on class implementation changes.

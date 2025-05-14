@@ -29,7 +29,7 @@ class ShowFriendCodeWindow(bui.Window):
                 color=(0.45, 0.63, 0.15),
                 transition='in_scale',
                 scale=(
-                    1.7
+                    1.5
                     if uiscale is bui.UIScale.SMALL
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),

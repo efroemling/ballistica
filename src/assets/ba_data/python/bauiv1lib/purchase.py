@@ -18,7 +18,7 @@ class PurchaseWindow(bui.Window):
     def __init__(
         self,
         items: list[str],
-        transition: str = 'in_right',
+        origin_widget: bui.Widget | None = None,
         header_text: bui.Lstr | None = None,
     ):
         from bauiv1lib.store.item import instantiate_store_item_display
@@ -40,16 +40,24 @@ class PurchaseWindow(bui.Window):
         self._width = 580
         self._height = 520
         uiscale = bui.app.ui_v1.uiscale
+
+        if origin_widget is not None:
+            scale_origin = origin_widget.get_screen_space_center()
+        else:
+            scale_origin = None
+
         super().__init__(
             root_widget=bui.containerwidget(
+                parent=bui.get_special_widget('overlay_stack'),
                 size=(self._width, self._height),
-                transition=transition,
-                toolbar_visibility='menu_currency',
+                transition='in_scale',
+                toolbar_visibility='menu_store',
                 scale=(
                     1.2
                     if uiscale is bui.UIScale.SMALL
                     else 1.1 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
+                scale_origin_stack_offset=scale_origin,
                 stack_offset=(
                     (0, -15) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
@@ -155,14 +163,13 @@ class PurchaseWindow(bui.Window):
             if bui.app.classic.accounts.have_pro():
                 can_die = True
         else:
-            if plus.get_purchased(self._items[0]):
+            if plus.get_v1_account_product_purchased(self._items[0]):
                 can_die = True
 
         if can_die:
-            bui.containerwidget(edit=self._root_widget, transition='out_left')
+            bui.containerwidget(edit=self._root_widget, transition='out_scale')
 
     def _purchase(self) -> None:
-        from bauiv1lib import getcurrency
 
         plus = bui.app.plus
         assert plus is not None
@@ -176,8 +183,12 @@ class PurchaseWindow(bui.Window):
             except Exception:
                 ticket_count = None
             if ticket_count is not None and ticket_count < self._price:
-                getcurrency.show_get_tickets_prompt()
                 bui.getsound('error').play()
+                bui.screenmessage(
+                    bui.Lstr(resource='notEnoughTicketsText'),
+                    color=(1, 0, 0),
+                )
+                # gettickets.show_get_tickets_prompt()
                 return
 
             def do_it() -> None:
@@ -189,4 +200,4 @@ class PurchaseWindow(bui.Window):
             do_it()
 
     def _cancel(self) -> None:
-        bui.containerwidget(edit=self._root_widget, transition='out_right')
+        bui.containerwidget(edit=self._root_widget, transition='out_scale')

@@ -11,17 +11,20 @@ import time
 import logging
 from enum import Enum
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, override
 
-from typing_extensions import override
+from efro.error import CommunicationError
 from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
+import bacommon.cloud
 from bacommon.net import (
     PrivateHostingState,
     PrivateHostingConfig,
     PrivatePartyConnectResult,
 )
 from bauiv1lib.gather import GatherTab
-from bauiv1lib.getcurrency import GetCurrencyWindow, show_get_tickets_prompt
+from bauiv1lib.play import PlaylistSelectContext
+
+from bauiv1lib.gettokens import show_get_tokens_prompt
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -47,6 +50,7 @@ class State:
     """Our core state that persists while the app is running."""
 
     sub_tab: SubTabType = SubTabType.JOIN
+    playlist_select_context: PlaylistSelectContext | None = None
 
 
 class PrivateGatherTab(GatherTab):
@@ -56,7 +60,9 @@ class PrivateGatherTab(GatherTab):
         super().__init__(window)
         self._container: bui.Widget | None = None
         self._state: State = State()
+        self._last_datacode_refresh_time: float | None = None
         self._hostingstate = PrivateHostingState()
+        self._v2state: bacommon.bs.PrivatePartyResponse | None = None
         self._join_sub_tab_text: bui.Widget | None = None
         self._host_sub_tab_text: bui.Widget | None = None
         self._update_timer: bui.AppTimer | None = None
@@ -64,14 +70,15 @@ class PrivateGatherTab(GatherTab):
         self._c_width: float = 0.0
         self._c_height: float = 0.0
         self._last_hosting_state_query_time: float | None = None
+        self._last_v2_state_query_time: float | None = None
         self._waiting_for_initial_state = True
         self._waiting_for_start_stop_response = True
         self._host_playlist_button: bui.Widget | None = None
         self._host_copy_button: bui.Widget | None = None
         self._host_connect_button: bui.Widget | None = None
         self._host_start_stop_button: bui.Widget | None = None
-        self._get_tickets_button: bui.Widget | None = None
-        self._ticket_count_text: bui.Widget | None = None
+        self._get_tokens_button: bui.Widget | None = None
+        self._token_count_text: bui.Widget | None = None
         self._showing_not_signed_in_screen = False
         self._create_time = time.time()
         self._last_action_send_time: float | None = None
@@ -92,6 +99,7 @@ class PrivateGatherTab(GatherTab):
         region_left: float,
         region_bottom: float,
     ) -> bui.Widget:
+        # pylint: disable=too-many-positional-arguments
         self._c_width = region_width
         self._c_height = region_height - 20
         self._container = bui.containerwidget(
@@ -160,7 +168,9 @@ class PrivateGatherTab(GatherTab):
         # Prevent taking any action until we've updated our state.
         self._waiting_for_initial_state = True
 
-        # This will get a state query sent out immediately.
+        # Force some immediate refreshes.
+        self._last_datacode_refresh_time = None
+        self._last_v2_state_query_time = None
         self._last_action_send_time = None  # Ensure we don't ignore response.
         self._last_hosting_state_query_time = None
         self._update()
@@ -264,19 +274,20 @@ class PrivateGatherTab(GatherTab):
         plus = bui.app.plus
         assert plus is not None
 
-        try:
-            t_str = str(plus.get_v1_account_ticket_count())
-        except Exception:
-            t_str = '?'
-        if self._get_tickets_button:
+        if self._v2state is not None:
+            t_str = str(self._v2state.tokens)
+        else:
+            t_str = '-'
+
+        if self._get_tokens_button:
             bui.buttonwidget(
-                edit=self._get_tickets_button,
-                label=bui.charstr(bui.SpecialChar.TICKET) + t_str,
+                edit=self._get_tokens_button,
+                label=bui.charstr(bui.SpecialChar.TOKEN) + t_str,
             )
-        if self._ticket_count_text:
+        if self._token_count_text:
             bui.textwidget(
-                edit=self._ticket_count_text,
-                text=bui.charstr(bui.SpecialChar.TICKET) + t_str,
+                edit=self._token_count_text,
+                text=bui.charstr(bui.SpecialChar.TOKEN) + t_str,
             )
 
     def _update(self) -> None:
@@ -293,11 +304,11 @@ class PrivateGatherTab(GatherTab):
             # If we're not signed in, just refresh to show that.
             if (
                 plus.get_v1_account_state() != 'signed_in'
-                and self._showing_not_signed_in_screen
-            ):
+                or plus.accounts.primary is None
+            ) and not self._showing_not_signed_in_screen:
                 self._refresh_sub_tab()
             else:
-                # Query an updated state periodically.
+                # Query an updated v1 state periodically.
                 if (
                     self._last_hosting_state_query_time is None
                     or now - self._last_hosting_state_query_time > 15.0
@@ -310,23 +321,78 @@ class PrivateGatherTab(GatherTab):
                                 'expire_time': time.time() + 20,
                             },
                             callback=bui.WeakCall(
-                                self._hosting_state_idle_response
+                                self._idle_hosting_state_response
                             ),
                         )
                         plus.run_v1_account_transactions()
                     else:
-                        self._hosting_state_idle_response(None)
+                        self._idle_hosting_state_response(None)
                     self._last_hosting_state_query_time = now
 
-    def _hosting_state_idle_response(
+                # Query an updated v2 state periodically.
+                if (
+                    self._last_v2_state_query_time is None
+                    or now - self._last_v2_state_query_time > 12.0
+                ):
+                    self._debug_server_comm('querying pp v2 state')
+
+                    if plus.accounts.primary is not None:
+                        with plus.accounts.primary:
+                            plus.cloud.send_message_cb(
+                                bacommon.bs.PrivatePartyMessage(
+                                    need_datacode=(
+                                        self._last_datacode_refresh_time is None
+                                        or time.monotonic()
+                                        - self._last_datacode_refresh_time
+                                        > 30.0
+                                    )
+                                ),
+                                on_response=bui.WeakCall(
+                                    self._on_private_party_query_response
+                                ),
+                            )
+
+                    self._last_v2_state_query_time = now
+
+    def _on_private_party_query_response(
+        self, response: bacommon.bs.PrivatePartyResponse | Exception
+    ) -> None:
+        if isinstance(response, Exception):
+            self._debug_server_comm('got pp v2 state response (err)')
+            # We expect comm errors sometimes. Make noise on anything else.
+            if not isinstance(response, CommunicationError):
+                logging.exception('Error on private-party-query-response')
+            return
+
+        # Ignore if something went wrong server-side.
+        if not response.success:
+            self._debug_server_comm('got pp v2 state response (serverside err)')
+            return
+
+        self._debug_server_comm('got pp v2 state response')
+
+        existing_datacode = (
+            None if self._v2state is None else self._v2state.datacode
+        )
+
+        self._v2state = response
+        if self._v2state.datacode is None:
+            # We don't fetch datacode each time; preserve our existing
+            # if we didn't.
+            self._v2state.datacode = existing_datacode
+        else:
+            # If we *did* fetch it, note the time.
+            self._last_datacode_refresh_time = time.monotonic()
+
+    def _idle_hosting_state_response(
         self, result: dict[str, Any] | None
     ) -> None:
         # This simply passes through to our standard response handler.
         # The one exception is if we've recently sent an action to the
-        # server (start/stop hosting/etc.) In that case we want to ignore
-        # idle background updates and wait for the response to our action.
-        # (this keeps the button showing 'one moment...' until the change
-        # takes effect, etc.)
+        # server (start/stop hosting/etc.) In that case we want to
+        # ignore idle background updates and wait for the response to
+        # our action. (this keeps the button showing 'one moment...'
+        # until the change takes effect, etc.)
         if (
             self._last_action_send_time is not None
             and time.time() - self._last_action_send_time < 5.0
@@ -355,8 +421,8 @@ class PrivateGatherTab(GatherTab):
         else:
             self._debug_server_comm('private party state response errored')
 
-        # Hmm I guess let's just ignore failed responses?...
-        # Or should we show some sort of error state to the user?...
+        # Hmm I guess let's just ignore failed responses?... Or should
+        # we show some sort of error state to the user?...
         if result is None or state is None:
             return
 
@@ -370,14 +436,17 @@ class PrivateGatherTab(GatherTab):
         if playsound:
             bui.getsound('click01').play()
 
-        # If switching from join to host, do a fresh state query.
+        # If switching from join to host, force some refreshes.
         if self._state.sub_tab is SubTabType.JOIN and value is SubTabType.HOST:
-            # Prevent taking any action until we've gotten a fresh state.
+            # Prevent taking any action until we've gotten a fresh
+            # state.
             self._waiting_for_initial_state = True
 
-            # This will get a state query sent out immediately.
+            # Get some refreshes going immediately.
             self._last_hosting_state_query_time = None
             self._last_action_send_time = None  # So we don't ignore response.
+            self._last_datacode_refresh_time = None
+            self._last_v2_state_query_time = None
             self._update()
 
         self._state.sub_tab = value
@@ -404,14 +473,14 @@ class PrivateGatherTab(GatherTab):
             self._host_copy_button,
             self._host_connect_button,
             self._host_start_stop_button,
-            self._get_tickets_button,
+            self._get_tokens_button,
         ]
 
     def _refresh_sub_tab(self) -> None:
         assert self._container
 
-        # Store an index for our current selection so we can
-        # reselect the equivalent recreated widget if possible.
+        # Store an index for our current selection so we can reselect
+        # the equivalent recreated widget if possible.
         selindex: int | None = None
         selchild = self._container.get_selected_child()
         if selchild is not None:
@@ -473,7 +542,7 @@ class PrivateGatherTab(GatherTab):
         btn = bui.buttonwidget(
             parent=self._container,
             size=(300, 70),
-            label=bui.Lstr(resource='gatherWindow.' 'manualConnectText'),
+            label=bui.Lstr(resource='gatherWindow.manualConnectText'),
             position=(self._c_width * 0.5 - 150, self._c_height - 350),
             on_activate_call=self._join_connect_press,
             autoselect=True,
@@ -482,30 +551,30 @@ class PrivateGatherTab(GatherTab):
             edit=self._join_party_code_text, on_return_press_call=btn.activate
         )
 
-    def _on_get_tickets_press(self) -> None:
-        if self._waiting_for_start_stop_response:
-            return
-
-        # Bring up get-tickets window and then kill ourself (we're on the
-        # overlay layer so we'd show up above it).
-        GetCurrencyWindow(modal=True, origin_widget=self._get_tickets_button)
-
     def _build_host_tab(self) -> None:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
-        assert bui.app.classic is not None
+        classic = bui.app.classic
+        assert classic is not None
 
         plus = bui.app.plus
         assert plus is not None
 
         hostingstate = self._hostingstate
+
+        havegoldpass = self._v2state is not None and self._v2state.gold_pass
+
+        # We use both v1 and v2 account functionality here (sigh). So
+        # make sure we're signed in on both ends.
+
+        # Make sure the V1 side is good to go.
         if plus.get_v1_account_state() != 'signed_in':
             bui.textwidget(
                 parent=self._container,
                 size=(0, 0),
                 h_align='center',
                 v_align='center',
-                maxwidth=200,
+                maxwidth=self._c_width * 0.8,
                 scale=0.8,
                 color=(0.6, 0.56, 0.6),
                 position=(self._c_width * 0.5, self._c_height * 0.5),
@@ -513,14 +582,31 @@ class PrivateGatherTab(GatherTab):
             )
             self._showing_not_signed_in_screen = True
             return
+
+        # Make sure the V2 side is good to go.
+        if plus.accounts.primary is None:
+            bui.textwidget(
+                parent=self._container,
+                size=(0, 0),
+                h_align='center',
+                v_align='center',
+                maxwidth=self._c_width * 0.8,
+                scale=0.8,
+                color=(0.6, 0.56, 0.6),
+                position=(self._c_width * 0.5, self._c_height * 0.5),
+                text=bui.Lstr(resource='v2AccountRequiredText'),
+            )
+            self._showing_not_signed_in_screen = True
+            return
+
         self._showing_not_signed_in_screen = False
 
-        # At first we don't want to show anything until we've gotten a state.
-        # Update: In this situation we now simply show our existing state
-        # but give the start/stop button a loading message and disallow its
-        # use. This keeps things a lot less jumpy looking and allows selecting
-        # playlists/etc without having to wait for the server each time
-        # back to the ui.
+        # At first we don't want to show anything until we've gotten a
+        # state. Update: In this situation we now simply show our
+        # existing state but give the start/stop button a loading
+        # message and disallow its use. This keeps things a lot less
+        # jumpy looking and allows selecting playlists/etc without
+        # having to wait for the server each time back to the ui.
         if self._waiting_for_initial_state and bool(False):
             bui.textwidget(
                 parent=self._container,
@@ -538,43 +624,15 @@ class PrivateGatherTab(GatherTab):
             )
             return
 
-        # If we're not currently hosting and hosting requires tickets,
+        # If we're not currently hosting and hosting requires tokens,
         # Show our count (possibly with a link to purchase more).
         if (
             not self._waiting_for_initial_state
             and hostingstate.party_code is None
             and hostingstate.tickets_to_host_now != 0
+            and not havegoldpass
         ):
-            if not bui.app.ui_v1.use_toolbars:
-                if bui.app.classic.allow_ticket_purchases:
-                    self._get_tickets_button = bui.buttonwidget(
-                        parent=self._container,
-                        position=(
-                            self._c_width - 210 + 125,
-                            self._c_height - 44,
-                        ),
-                        autoselect=True,
-                        scale=0.6,
-                        size=(120, 60),
-                        textcolor=(0.2, 1, 0.2),
-                        label=bui.charstr(bui.SpecialChar.TICKET),
-                        color=(0.65, 0.5, 0.8),
-                        on_activate_call=self._on_get_tickets_press,
-                    )
-                else:
-                    self._ticket_count_text = bui.textwidget(
-                        parent=self._container,
-                        scale=0.6,
-                        position=(
-                            self._c_width - 210 + 125,
-                            self._c_height - 44,
-                        ),
-                        color=(0.2, 1, 0.2),
-                        h_align='center',
-                        v_align='center',
-                    )
-                # Set initial ticket count.
-                self._update_currency_ui()
+            pass
 
         v = self._c_height - 90
         if hostingstate.party_code is None:
@@ -593,9 +651,10 @@ class PrivateGatherTab(GatherTab):
                 ),
             )
 
-        v -= 100
+        v -= 90
         if hostingstate.party_code is None:
-            # We've got no current party running; show options to set one up.
+            # We've got no current party running; show options to set
+            # one up.
             bui.textwidget(
                 parent=self._container,
                 size=(0, 0),
@@ -621,12 +680,13 @@ class PrivateGatherTab(GatherTab):
 
             # If it appears we're coming back from playlist selection,
             # re-select our playlist button.
-            if bui.app.ui_v1.selecting_private_party_playlist:
+            if self._state.playlist_select_context is not None:
+                self._state.playlist_select_context = None
                 bui.containerwidget(
                     edit=self._container,
                     selected_child=self._host_playlist_button,
                 )
-                bui.app.ui_v1.selecting_private_party_playlist = False
+
         else:
             # We've got a current party; show its info.
             bui.textwidget(
@@ -688,7 +748,7 @@ class PrivateGatherTab(GatherTab):
                 autoselect=True,
             )
 
-        v -= 120
+        v -= 110
 
         # Line above the main action button:
 
@@ -714,8 +774,14 @@ class PrivateGatherTab(GatherTab):
                     )
                 ),
             )
+        elif havegoldpass:
+            # If we have a gold pass, none of the
+            # timing/free-server-availability info below is relevant to
+            # us.
+            pass
         elif hostingstate.free_host_minutes_remaining is not None:
-            # If we've been pre-approved to start/stop for free, show that.
+            # If we've been pre-approved to start/stop for free, show
+            # that.
             bui.textwidget(
                 parent=self._container,
                 size=(0, 0),
@@ -812,12 +878,12 @@ class PrivateGatherTab(GatherTab):
                     resource='gatherWindow.hostingUnavailableText'
                 )
             elif hostingstate.party_code is None:
-                ticon = bui.charstr(bui.SpecialChar.TICKET)
-                nowtickets = hostingstate.tickets_to_host_now
-                if nowtickets > 0:
+                ticon = bui.charstr(bui.SpecialChar.TOKEN)
+                nowtokens = hostingstate.tokens_to_host_now
+                if nowtokens > 0 and not havegoldpass:
                     btnlabel = bui.Lstr(
                         resource='gatherWindow.startHostingPaidText',
-                        subs=[('${COST}', f'{ticon}{nowtickets}')],
+                        subs=[('${COST}', f'{ticon}{nowtokens}')],
                     )
                 else:
                     btnlabel = bui.Lstr(
@@ -849,7 +915,13 @@ class PrivateGatherTab(GatherTab):
 
     def _playlist_press(self) -> None:
         assert self._host_playlist_button is not None
-        self.window.playlist_select(origin_widget=self._host_playlist_button)
+
+        self._state.playlist_select_context = PlaylistSelectContext()
+
+        self.window.playlist_select(
+            origin_widget=self._host_playlist_button,
+            context=self._state.playlist_select_context,
+        )
 
     def _host_copy_press(self) -> None:
         assert self._hostingstate.party_code is not None
@@ -868,8 +940,8 @@ class PrivateGatherTab(GatherTab):
             )
 
     def _connect_to_party_code(self, code: str) -> None:
-        # Ignore attempted followup sends for a few seconds.
-        # (this will reset if we get a response)
+        # Ignore attempted followup sends for a few seconds (this will
+        # reset if we get a response).
         plus = bui.app.plus
         assert plus is not None
 
@@ -916,21 +988,30 @@ class PrivateGatherTab(GatherTab):
 
         bui.getsound('click01').play()
 
+        # We need our v2 info for this.
+        if self._v2state is None or self._v2state.datacode is None:
+            bui.screenmessage(
+                bui.Lstr(resource='internal.unavailableNoConnectionText'),
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
+
         # If we're not hosting, start.
         if self._hostingstate.party_code is None:
-            # If there's a ticket cost, make sure we have enough tickets.
-            if self._hostingstate.tickets_to_host_now > 0:
-                ticket_count: int | None
-                try:
-                    ticket_count = plus.get_v1_account_ticket_count()
-                except Exception:
-                    # FIXME: should add a bui.NotSignedInError we can use here.
-                    ticket_count = None
-                ticket_cost = self._hostingstate.tickets_to_host_now
-                if ticket_count is not None and ticket_count < ticket_cost:
-                    show_get_tickets_prompt()
+            # If there's a token cost, make sure we have enough tokens
+            # or a gold pass.
+            if self._hostingstate.tokens_to_host_now > 0:
+
+                if (
+                    not self._v2state.gold_pass
+                    and self._v2state.tokens
+                    < self._hostingstate.tokens_to_host_now
+                ):
+                    show_get_tokens_prompt()
                     bui.getsound('error').play()
                     return
+
             self._last_action_send_time = time.time()
             plus.add_v1_account_transaction(
                 {
@@ -938,6 +1019,7 @@ class PrivateGatherTab(GatherTab):
                     'config': dataclass_to_dict(self._hostingconfig),
                     'region_pings': bui.app.net.zone_pings,
                     'expire_time': time.time() + 20,
+                    'datacode': self._v2state.datacode,
                 },
                 callback=bui.WeakCall(self._hosting_state_response),
             )
@@ -990,8 +1072,13 @@ class PrivateGatherTab(GatherTab):
                 bui.getsound('error').play()
                 return
             self._debug_server_comm('got valid connect response')
-            assert cresult.addr is not None and cresult.port is not None
-            bs.connect_to_party(cresult.addr, port=cresult.port)
+            assert cresult.address4 is not None and cresult.port is not None
+
+            # Store UI location to return to when done.
+            if bs.app.classic is not None:
+                bs.app.classic.save_ui_state()
+
+            bs.connect_to_party(cresult.address4, port=cresult.port)
         except Exception:
             self._debug_server_comm('got connect response error')
             bui.getsound('error').play()

@@ -27,12 +27,12 @@ if (APPLE)
   # to load a 3.X library from within it which doesn't exist. So we need
   # to be a bit more explicit telling it where to look. Note: this was last
   # tested with 3.7; should revisit sometime to make sure still applies.
-  execute_process(COMMAND "python3.11-config" "--prefix"
+  execute_process(COMMAND "python3.13-config" "--prefix"
     OUTPUT_VARIABLE Python_ROOT_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 endif ()
-find_package (Python 3.11 REQUIRED EXACT COMPONENTS Development)
+find_package (Python 3.13 REQUIRED EXACT COMPONENTS Development)
   
 
 if (HEADLESS)
@@ -65,7 +65,7 @@ if (HEADLESS)
 endif ()
 
 if (TEST_BUILD)
-  add_definitions(-DBA_TEST_BUILD=1)
+  add_definitions(-DBA_VARIANT_TEST_BUILD=1)
 endif ()
 
 # Currently seeing warnings about parameter order changing in GCC 7.1
@@ -209,8 +209,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/app_adapter/app_adapter_vr.h
   ${BA_SRC_ROOT}/ballistica/base/app_mode/app_mode.cc
   ${BA_SRC_ROOT}/ballistica/base/app_mode/app_mode.h
-  ${BA_SRC_ROOT}/ballistica/base/app_mode/app_mode_empty.cc
-  ${BA_SRC_ROOT}/ballistica/base/app_mode/app_mode_empty.h
+  ${BA_SRC_ROOT}/ballistica/base/app_mode/empty_app_mode.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_mode/empty_app_mode.h
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.h
   ${BA_SRC_ROOT}/ballistica/base/assets/assets.cc
@@ -426,12 +426,12 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_simple_sound.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_vec3.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_vec3.h
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_app.cc
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_app.h
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_graphics.cc
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_graphics.h
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_misc.cc
-  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_misc.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_1.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_1.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_2.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_2.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.cc
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call_runnable.h
@@ -463,6 +463,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/classic/python/classic_python.h
   ${BA_SRC_ROOT}/ballistica/classic/python/methods/python_methods_classic.cc
   ${BA_SRC_ROOT}/ballistica/classic/python/methods/python_methods_classic.h
+  ${BA_SRC_ROOT}/ballistica/classic/support/classic_app_mode.cc
+  ${BA_SRC_ROOT}/ballistica/classic/support/classic_app_mode.h
   ${BA_SRC_ROOT}/ballistica/classic/support/stress_test.cc
   ${BA_SRC_ROOT}/ballistica/classic/support/stress_test.h
   ${BA_SRC_ROOT}/ballistica/classic/support/v1_account.cc
@@ -657,8 +659,6 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player_spec.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene.h
-  ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_v1_app_mode.cc
-  ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_v1_app_mode.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_v1_context.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_v1_context.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_v1_input_device_delegate.cc
@@ -672,8 +672,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_cmake.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_common.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_common.h
-  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_generic.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_headless.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_testbuild.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/event_loop.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/event_loop.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/exception.cc
@@ -752,8 +752,6 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/methods/python_methods_ui_v1.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/ui_v1_python.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/ui_v1_python.h
-  ${BA_SRC_ROOT}/ballistica/ui_v1/support/root_ui.cc
-  ${BA_SRC_ROOT}/ballistica/ui_v1/support/root_ui.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/ui_v1.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/ui_v1.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/button_widget.cc
@@ -774,6 +772,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/row_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/scroll_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/scroll_widget.h
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/spinner_widget.cc
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/spinner_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/stack_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/stack_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/text_widget.cc

@@ -2,6 +2,14 @@
 
 #include "ballistica/base/graphics/text/text_graphics.h"
 
+#include <cstdio>
+#include <list>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include "ballistica/base/graphics/text/font_page_map_data.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/generic/utils.h"
@@ -47,9 +55,15 @@ TextGraphics::TextGraphics() {
           g.pen_offset_y -= 0.1f;
         }
 
+        // Bring Fast Forward & Rewind down and to the left a bit.
+        if (index == 13 || index == 15) {
+          g.pen_offset_y -= 0.055;
+          g.pen_offset_x -= 0.01;
+        }
+
         // Shrink account logos and move them up a bit.
-        if (index == 29 || index == 32 || index == 33 || index == 38
-            || index == 40 || index == 48 || index == 49) {
+        if (index == 32 || index == 33 || index == 38 || index == 40
+            || index == 48 || index == 49) {
           g.pen_offset_y += 0.4f;
           extra_advance += 0.08f;
           g.x_size *= 0.55f;
@@ -74,6 +88,11 @@ TextGraphics::TextGraphics() {
             g.y_size *= 0.55f;
           }
         }
+        // Special handling of tokens icon.
+        if (index == 29) {
+          extra_advance += 0.12f;
+        }
+
         // Special case for v2 logo.
         if (index == 99) {
           g.pen_offset_y += 0.25f;
@@ -330,7 +349,8 @@ TextGraphics::TextGraphics() {
         if (g.tex_max_x > 1.0f || g.tex_max_x < 0.0f || g.tex_min_x > 1.0
             || g.tex_min_x < 0.0f || g.tex_max_y > 1.0f || g.tex_max_y < 0.0
             || g.tex_min_y > 1.0f || g.tex_min_y < 0.0f) {
-          BA_LOG_ONCE(LogLevel::kWarning, "glyph bounds error");
+          BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
+                      "glyph bounds error");
         }
       }
     }
@@ -1023,7 +1043,7 @@ void TextGraphics::GetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
     g_core->platform->GetTextBoundsAndWidth(s, &entry->r, &entry->width);
   } else {
     BA_LOG_ONCE(
-        LogLevel::kError,
+        LogName::kBaGraphics, LogLevel::kError,
         "FIXME: GetOSTextSpanBoundsAndWidth unimplemented on this platform");
     r->l = 0.0f;
     r->r = 1.0f;

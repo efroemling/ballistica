@@ -3,9 +3,8 @@
 """Functionality related to teams sessions."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 
 import _bascenev1
@@ -16,10 +15,7 @@ if TYPE_CHECKING:
 
 
 class DualTeamSession(MultiTeamSession):
-    """bascenev1.Session type for teams mode games.
-
-    Category: **Gameplay Classes**
-    """
+    """bascenev1.Session type for teams mode games."""
 
     # Base class overrides:
     use_teams = True

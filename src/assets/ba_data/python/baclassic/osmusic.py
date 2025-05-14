@@ -7,15 +7,16 @@ import os
 import random
 import logging
 import threading
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import babase
 
 from baclassic._music import MusicPlayer
 
 if TYPE_CHECKING:
     from typing import Callable, Any
+
+    import bauiv1
 
 
 class OSMusicPlayer(MusicPlayer):
@@ -40,7 +41,7 @@ class OSMusicPlayer(MusicPlayer):
         callback: Callable[[Any], None],
         current_entry: Any,
         selection_target_name: str,
-    ) -> Any:
+    ) -> bauiv1.MainWindow:
         # pylint: disable=cyclic-import
         from bauiv1lib.soundtrack.entrytypeselect import (
             SoundtrackEntryTypeSelectWindow,

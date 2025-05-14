@@ -4,9 +4,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import override
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -15,8 +14,6 @@ if TYPE_CHECKING:
 
 class OnScreenCountdown(bs.Actor):
     """A Handy On-Screen Timer.
-
-    category: Gameplay Classes
 
     Useful for time-based games that count down to zero.
     """

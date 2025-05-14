@@ -5,16 +5,13 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
-
-from typing_extensions import override
+from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any, Callable
-
     import bascenev1 as bs
 
 
@@ -31,9 +28,12 @@ class TournamentEntryWindow(PopupWindow):
         offset: tuple[float, float] = (0.0, 0.0),
         on_close_call: Callable[[], Any] | None = None,
     ):
-        # Needs some tidying.
+        # pylint: disable=too-many-positional-arguments
+        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+
+        from bauiv1lib.coop.tournamentbutton import USE_ENTRY_FEES
 
         assert bui.app.classic is not None
         assert bui.app.plus
@@ -44,9 +44,15 @@ class TournamentEntryWindow(PopupWindow):
             self._tournament_id
         ]
 
+        self._purchase_name: str | None
+        self._purchase_price_name: str | None
+
         # Set a few vars depending on the tourney fee.
         self._fee = self._tournament_info['fee']
-        self._allow_ads = self._tournament_info['allowAds']
+        assert isinstance(self._fee, int | None)
+        self._allow_ads = (
+            self._tournament_info['allowAds'] if USE_ENTRY_FEES else False
+        )
         if self._fee == 4:
             self._purchase_name = 'tournament_entry_4'
             self._purchase_price_name = 'price.tournament_entry_4'
@@ -59,6 +65,9 @@ class TournamentEntryWindow(PopupWindow):
         elif self._fee == 1:
             self._purchase_name = 'tournament_entry_1'
             self._purchase_price_name = 'price.tournament_entry_1'
+        elif self._fee is None or self._fee == -1:
+            self._purchase_name = None
+            self._purchase_price_name = 'FREE-WOOT'
         else:
             if self._fee != 0:
                 raise ValueError('invalid fee: ' + str(self._fee))
@@ -80,10 +89,20 @@ class TournamentEntryWindow(PopupWindow):
 
         self._tournament_activity = tournament_activity
 
-        self._width = 340
-        self._height = 225
+        self._width: float = 340.0
+        self._height: float = 225.0
 
         bg_color = (0.5, 0.4, 0.6)
+
+        # Show the practice button as long as we're not
+        # restarting while on a paid tournament run.
+        self._do_practice = (
+            self._tournament_activity is None
+            and bui.app.config.get('tournament_practice_enabled', False)
+        )
+
+        off_p = 0 if not self._do_practice else 48
+        self._height += off_p * 0.933
 
         # Creates our root_widget.
         super().__init__(
@@ -92,7 +111,7 @@ class TournamentEntryWindow(PopupWindow):
             scale=scale,
             bg_color=bg_color,
             offset=offset,
-            toolbar_visibility='menu_currency',
+            toolbar_visibility='menu_store_no_back',
         )
 
         self._last_ad_press_time = -9999.0
@@ -107,7 +126,7 @@ class TournamentEntryWindow(PopupWindow):
 
         self._cancel_button = bui.buttonwidget(
             parent=self.root_widget,
-            position=(20, self._height - 34),
+            position=(40, self._height - 34),
             size=(60, 60),
             scale=0.5,
             label='',
@@ -127,20 +146,21 @@ class TournamentEntryWindow(PopupWindow):
             scale=0.6,
             text=bui.Lstr(resource='tournamentEntryText'),
             maxwidth=180,
-            color=(1, 1, 1, 0.4),
+            # color=(1, 1, 1, 0.4),
+            color=bui.app.ui_v1.title_color,
         )
 
         btn = self._pay_with_tickets_button = bui.buttonwidget(
             parent=self.root_widget,
-            position=(30 + x_offs, 60),
+            position=(30 + x_offs, 60 + off_p),
             autoselect=True,
             button_type='square',
             size=(120, 120),
             label='',
             on_activate_call=self._on_pay_with_tickets_press,
         )
-        self._ticket_img_pos = (50 + x_offs, 94)
-        self._ticket_img_pos_free = (50 + x_offs, 80)
+        self._ticket_img_pos = (50 + x_offs, 94 + off_p)
+        self._ticket_img_pos_free = (50 + x_offs, 80 + off_p)
         self._ticket_img = bui.imagewidget(
             parent=self.root_widget,
             draw_controller=btn,
@@ -148,8 +168,8 @@ class TournamentEntryWindow(PopupWindow):
             position=self._ticket_img_pos,
             texture=bui.gettexture('tickets'),
         )
-        self._ticket_cost_text_position = (87 + x_offs, 88)
-        self._ticket_cost_text_position_free = (87 + x_offs, 120)
+        self._ticket_cost_text_position = (87 + x_offs, 88 + off_p)
+        self._ticket_cost_text_position_free = (87 + x_offs, 120 + off_p)
         self._ticket_cost_text = bui.textwidget(
             parent=self.root_widget,
             draw_controller=btn,
@@ -165,7 +185,7 @@ class TournamentEntryWindow(PopupWindow):
         self._free_plays_remaining_text = bui.textwidget(
             parent=self.root_widget,
             draw_controller=btn,
-            position=(87 + x_offs, 78),
+            position=(87 + x_offs, 78 + off_p),
             size=(0, 0),
             h_align='center',
             v_align='center',
@@ -178,7 +198,7 @@ class TournamentEntryWindow(PopupWindow):
         if self._do_ad_btn:
             btn = self._pay_with_ad_btn = bui.buttonwidget(
                 parent=self.root_widget,
-                position=(190, 60),
+                position=(190, 60 + off_p),
                 autoselect=True,
                 button_type='square',
                 size=(120, 120),
@@ -189,12 +209,12 @@ class TournamentEntryWindow(PopupWindow):
                 parent=self.root_widget,
                 draw_controller=btn,
                 size=(80, 80),
-                position=(210, 94),
+                position=(210, 94 + off_p),
                 texture=bui.gettexture('tv'),
             )
 
-            self._ad_text_position = (251, 88)
-            self._ad_text_position_remaining = (251, 92)
+            self._ad_text_position = (251, 88 + off_p)
+            self._ad_text_position_remaining = (251, 92 + off_p)
             have_ad_tries_remaining = (
                 self._tournament_info['adTriesRemaining'] is not None
             )
@@ -210,7 +230,7 @@ class TournamentEntryWindow(PopupWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                # Note: AdMob now requires rewarded ad usage
+                # Note to self: AdMob requires rewarded ad usage
                 # specifically says 'Ad' in it.
                 text=bui.Lstr(resource='watchAnAdText'),
                 maxwidth=95,
@@ -224,7 +244,7 @@ class TournamentEntryWindow(PopupWindow):
             self._ad_plays_remaining_text = bui.textwidget(
                 parent=self.root_widget,
                 draw_controller=btn,
-                position=(251, 78),
+                position=(251, 78 + off_p),
                 size=(0, 0),
                 h_align='center',
                 v_align='center',
@@ -236,7 +256,7 @@ class TournamentEntryWindow(PopupWindow):
 
             bui.textwidget(
                 parent=self.root_widget,
-                position=(self._width * 0.5, 120),
+                position=(self._width * 0.5, 120 + off_p),
                 size=(0, 0),
                 h_align='center',
                 v_align='center',
@@ -250,30 +270,21 @@ class TournamentEntryWindow(PopupWindow):
         else:
             self._pay_with_ad_btn = None
 
+        btn_size = (150, 45)
+        btn_pos = (self._width / 2 - btn_size[0] / 2, self._width / 2 - 110)
+        self._practice_button = None
+        if self._do_practice:
+            self._practice_button = bui.buttonwidget(
+                parent=self.root_widget,
+                position=btn_pos,
+                autoselect=True,
+                size=btn_size,
+                label=bui.Lstr(resource='practiceText'),
+                on_activate_call=self._on_practice_press,
+            )
+
         self._get_tickets_button: bui.Widget | None = None
         self._ticket_count_text: bui.Widget | None = None
-        if not bui.app.ui_v1.use_toolbars:
-            if bui.app.classic.allow_ticket_purchases:
-                self._get_tickets_button = bui.buttonwidget(
-                    parent=self.root_widget,
-                    position=(self._width - 190 + 125, self._height - 34),
-                    autoselect=True,
-                    scale=0.5,
-                    size=(120, 60),
-                    textcolor=(0.2, 1, 0.2),
-                    label=bui.charstr(bui.SpecialChar.TICKET),
-                    color=(0.65, 0.5, 0.8),
-                    on_activate_call=self._on_get_tickets_press,
-                )
-            else:
-                self._ticket_count_text = bui.textwidget(
-                    parent=self.root_widget,
-                    scale=0.5,
-                    position=(self._width - 190 + 125, self._height - 34),
-                    color=(0.2, 1, 0.2),
-                    h_align='center',
-                    v_align='center',
-                )
 
         self._seconds_remaining = None
 
@@ -372,6 +383,8 @@ class TournamentEntryWindow(PopupWindow):
         sel = self.root_widget.get_selected_child()
         if sel == self._pay_with_ad_btn:
             sel_name = 'Ad'
+        elif sel == self._practice_button:
+            sel_name = 'Practice'
         else:
             sel_name = 'Tickets'
         cfg = bui.app.config
@@ -382,6 +395,8 @@ class TournamentEntryWindow(PopupWindow):
         sel_name = bui.app.config.get('Tournament Pay Selection', 'Tickets')
         if sel_name == 'Ad' and self._pay_with_ad_btn is not None:
             sel = self._pay_with_ad_btn
+        elif sel_name == 'Practice' and self._practice_button is not None:
+            sel = self._practice_button
         else:
             sel = self._pay_with_tickets_button
         bui.containerwidget(edit=self.root_widget, selected_child=sel)
@@ -436,29 +451,52 @@ class TournamentEntryWindow(PopupWindow):
                 )
 
         # Keep price up-to-date and update the button with it.
-        self._purchase_price = plus.get_v1_account_misc_read_val(
-            self._purchase_price_name, None
-        )
+        if self._purchase_price_name is not None:
+            self._purchase_price = (
+                0
+                if self._purchase_price_name == 'FREE-WOOT'
+                else plus.get_v1_account_misc_read_val(
+                    self._purchase_price_name, None
+                )
+            )
 
+        # HACK - this is always free now, so just have this say 'PLAY'
         bui.textwidget(
             edit=self._ticket_cost_text,
             text=(
-                bui.Lstr(resource='getTicketsWindow.freeText')
-                if self._purchase_price == 0
-                else bui.Lstr(
-                    resource='getTicketsWindow.ticketsText',
-                    subs=[
-                        (
-                            '${COUNT}',
-                            (
-                                str(self._purchase_price)
-                                if self._purchase_price is not None
-                                else '?'
-                            ),
-                        )
-                    ],
-                )
+                bui.Lstr(resource='playText')
+                # if self._purchase_price == 0
+                # else bui.Lstr(
+                #     resource='getTicketsWindow.ticketsText',
+                #     subs=[
+                #         (
+                #             '${COUNT}',
+                #             (
+                #                 str(self._purchase_price)
+                #                 if self._purchase_price is not None
+                #                 else '?'
+                #             ),
+                #         )
+                #     ],
+                # )
             ),
+            # text=(
+            #     bui.Lstr(resource='getTicketsWindow.freeText')
+            #     if self._purchase_price == 0
+            #     else bui.Lstr(
+            #         resource='getTicketsWindow.ticketsText',
+            #         subs=[
+            #             (
+            #                 '${COUNT}',
+            #                 (
+            #                     str(self._purchase_price)
+            #                     if self._purchase_price is not None
+            #                     else '?'
+            #                 ),
+            #             )
+            #         ],
+            #     )
+            # ),
             position=(
                 self._ticket_cost_text_position_free
                 if self._purchase_price == 0
@@ -469,19 +507,20 @@ class TournamentEntryWindow(PopupWindow):
 
         bui.textwidget(
             edit=self._free_plays_remaining_text,
-            text=(
-                ''
-                if (
-                    self._tournament_info['freeTriesRemaining'] in [None, 0]
-                    or self._purchase_price != 0
-                )
-                else '' + str(self._tournament_info['freeTriesRemaining'])
-            ),
+            # text=(
+            #     ''
+            #     if (
+            #         self._tournament_info['freeTriesRemaining'] in [None, 0]
+            #         or self._purchase_price != 0
+            #     )
+            #     else '' + str(self._tournament_info['freeTriesRemaining'])
+            # ),
+            text='',  # No longer relevant.
         )
 
         bui.imagewidget(
             edit=self._ticket_img,
-            opacity=0.2 if self._purchase_price == 0 else 1.0,
+            opacity=0.0 if self._purchase_price == 0 else 1.0,
             position=(
                 self._ticket_img_pos_free
                 if self._purchase_price == 0
@@ -537,29 +576,38 @@ class TournamentEntryWindow(PopupWindow):
                 text=bui.charstr(bui.SpecialChar.TICKET) + t_str,
             )
 
-    def _launch(self) -> None:
+    def _launch(self, practice: bool = False) -> None:
         assert bui.app.classic is not None
         if self._launched:
             return
         self._launched = True
         launched = False
 
-        # If they gave us an existing activity, just restart it.
-        if self._tournament_activity is not None:
+        # If they gave us an existing, non-consistent practice activity,
+        # just restart it.
+        if (
+            self._tournament_activity is not None
+            and not practice == self._tournament_activity.session.submit_score
+        ):
             try:
-                bui.apptimer(0.1, bui.getsound('cashRegister').play)
+                if not practice:
+                    bui.apptimer(0.1, bui.getsound('drumRollShort').play)
+                    # bui.apptimer(0.1, bui.getsound('cashRegister').play)
+                    bui.screenmessage(
+                        bui.Lstr(
+                            translate=(
+                                'serverResponses',
+                                'Entering tournament...',
+                            )
+                        ),
+                        color=(0, 1, 0),
+                    )
+                bui.apptimer(0 if practice else 0.3, self._transition_out)
+                launched = True
                 with self._tournament_activity.context:
                     self._tournament_activity.end(
                         {'outcome': 'restart'}, force=True
                     )
-                bui.apptimer(0.3, self._transition_out)
-                launched = True
-                bui.screenmessage(
-                    bui.Lstr(
-                        translate=('serverResponses', 'Entering tournament...')
-                    ),
-                    color=(0, 1, 0),
-                )
 
             # We can hit exceptions here if _tournament_activity ends before
             # our restart attempt happens.
@@ -572,9 +620,17 @@ class TournamentEntryWindow(PopupWindow):
         # If we had no existing activity (or were unable to restart it)
         # launch a new session.
         if not launched:
-            bui.apptimer(0.1, bui.getsound('cashRegister').play)
+            if not practice:
+                bui.apptimer(0.1, bui.getsound('drumRollShort').play)
+                # bui.apptimer(0.1, bui.getsound('cashRegister').play)
+                bui.screenmessage(
+                    bui.Lstr(
+                        translate=('serverResponses', 'Entering tournament...')
+                    ),
+                    color=(0, 1, 0),
+                )
             bui.apptimer(
-                1.0,
+                0 if practice else 1.0,
                 lambda: (
                     bui.app.classic.launch_coop_game(
                         self._tournament_info['game'],
@@ -582,22 +638,17 @@ class TournamentEntryWindow(PopupWindow):
                             'min_players': self._tournament_info['minPlayers'],
                             'max_players': self._tournament_info['maxPlayers'],
                             'tournament_id': self._tournament_id,
+                            'submit_score': not practice,
                         },
                     )
                     if bui.app.classic is not None
                     else None
                 ),
             )
-            bui.apptimer(0.7, self._transition_out)
-            bui.screenmessage(
-                bui.Lstr(
-                    translate=('serverResponses', 'Entering tournament...')
-                ),
-                color=(0, 1, 0),
-            )
+            bui.apptimer(0 if practice else 1.25, self._transition_out)
 
     def _on_pay_with_tickets_press(self) -> None:
-        from bauiv1lib import getcurrency
+        # from bauiv1lib import gettickets
 
         plus = bui.app.plus
         assert plus is not None
@@ -640,15 +691,21 @@ class TournamentEntryWindow(PopupWindow):
             ticket_count = None
         ticket_cost = self._purchase_price
         if ticket_count is not None and ticket_count < ticket_cost:
-            getcurrency.show_get_tickets_prompt()
             bui.getsound('error').play()
+            bui.screenmessage(
+                bui.Lstr(resource='notEnoughTicketsText'),
+                color=(1, 0, 0),
+            )
+            # gettickets.show_get_tickets_prompt()
             self._transition_out()
             return
 
         cur_time = bui.apptime()
         self._last_ticket_press_time = cur_time
-        assert isinstance(ticket_cost, int)
-        plus.in_game_purchase(self._purchase_name, ticket_cost)
+
+        if self._purchase_name is not None:
+            assert isinstance(ticket_cost, int)
+            plus.in_game_purchase(self._purchase_name, ticket_cost)
 
         self._entering = True
         plus.add_v1_account_transaction(
@@ -691,6 +748,25 @@ class TournamentEntryWindow(PopupWindow):
                 on_completion_call=bui.WeakCall(self._on_ad_complete),
             )
 
+    def _on_practice_press(self) -> None:
+        plus = bui.app.plus
+        assert plus is not None
+
+        # If we're already entering, ignore.
+        if self._entering:
+            return
+
+        # Deny if it looks like the tourney has ended.
+        if self._seconds_remaining == 0:
+            bui.screenmessage(
+                bui.Lstr(resource='tournamentEndedText'), color=(1, 0, 0)
+            )
+            bui.getsound('error').play()
+            return
+
+        self._entering = True
+        self._launch(practice=True)
+
     def _on_ad_complete(self, actually_showed: bool) -> None:
         plus = bui.app.plus
         assert plus is not None
@@ -709,7 +785,7 @@ class TournamentEntryWindow(PopupWindow):
         # This should have awarded us the tournament_entry_ad purchase;
         # make sure that's present.
         # (otherwise the server will ignore our tournament entry anyway)
-        if not plus.get_purchased('tournament_entry_ad'):
+        if not plus.get_v1_account_product_purchased('tournament_entry_ad'):
             print('no tournament_entry_ad purchase present in _on_ad_complete')
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
             bui.getsound('error').play()
@@ -726,30 +802,20 @@ class TournamentEntryWindow(PopupWindow):
         plus.run_v1_account_transactions()
         self._launch()
 
-    def _on_get_tickets_press(self) -> None:
-        from bauiv1lib import getcurrency
-
-        # If we're already entering, ignore presses.
-        if self._entering:
-            return
-
-        # Bring up get-tickets window and then kill ourself (we're on the
-        # overlay layer so we'd show up above it).
-        getcurrency.GetCurrencyWindow(
-            modal=True, origin_widget=self._get_tickets_button
-        )
-        self._transition_out()
-
     def _on_cancel(self) -> None:
         plus = bui.app.plus
         assert plus is not None
         # Don't allow canceling for several seconds after poking an enter
         # button if it looks like we're waiting on a purchase or entering
         # the tournament.
-        if (bui.apptime() - self._last_ticket_press_time < 6.0) and (
-            plus.have_outstanding_v1_account_transactions()
-            or plus.get_purchased(self._purchase_name)
-            or self._entering
+        if (
+            (bui.apptime() - self._last_ticket_press_time < 6.0)
+            and self._purchase_name is not None
+            and (
+                plus.have_outstanding_v1_account_transactions()
+                or plus.get_v1_account_product_purchased(self._purchase_name)
+                or self._entering
+            )
         ):
             bui.getsound('error').play()
             return

@@ -2,10 +2,11 @@
 
 #include "ballistica/scene_v1/python/class/python_class_scene_collision_mesh.h"
 
+#include <string>
+
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
 
@@ -16,7 +17,7 @@ auto PythonClassSceneCollisionMesh::tp_repr(PythonClassSceneCollisionMesh* self)
   auto&& m = *self->collision_mesh_;
   return Py_BuildValue(
       "s", (std::string("<bascenev1.CollisionMesh ")
-            + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
+            + (m.exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
 }
@@ -33,9 +34,7 @@ void PythonClassSceneCollisionMesh::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a collision-mesh.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
-      "Use bascenev1.getcollisionmesh() to instantiate one.";
+      "Use :meth:`bascenev1.getcollisionmesh()` to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
@@ -57,7 +56,7 @@ auto PythonClassSceneCollisionMesh::Create(SceneCollisionMesh* collision_mesh)
 
 auto PythonClassSceneCollisionMesh::GetCollisionMesh(bool doraise) const
     -> SceneCollisionMesh* {
-  SceneCollisionMesh* collision_mesh = collision_mesh_->Get();
+  SceneCollisionMesh* collision_mesh = collision_mesh_->get();
   if (!collision_mesh && doraise) {
     throw Exception("Invalid CollisionMesh.", PyExcType::kNotFound);
   }

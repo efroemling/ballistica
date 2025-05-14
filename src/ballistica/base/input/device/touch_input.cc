@@ -2,6 +2,12 @@
 
 #include "ballistica/base/input/device/touch_input.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+#include <vector>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/input.h"
@@ -87,7 +93,7 @@ TouchInput::TouchInput() {
 TouchInput::~TouchInput() = default;
 
 void TouchInput::UpdateButtons(bool new_touch) {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
   float spread_scaled_actions =
       kButtonSpread * base_controls_scale_ * controls_scale_actions_;
   float width = g_base->graphics->screen_virtual_width();
@@ -128,7 +134,7 @@ void TouchInput::UpdateButtons(bool new_touch) {
     closest_to_bomb = true;
   }
   if (buttons_touch_) {
-    last_buttons_touch_time_ = g_core->GetAppTimeMillisecs();
+    last_buttons_touch_time_ = g_core->AppTimeMillisecs();
   }
 
   // Handle swipe mode.
@@ -846,8 +852,8 @@ void TouchInput::UpdateMapping() {
   } else if (touch_movement_type == "joystick") {
     movement_control_type_ = TouchInput::MovementControlType::kJoystick;
   } else {
-    Log(LogLevel::kError,
-        "Invalid touch-movement-type: " + touch_movement_type);
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "Invalid touch-movement-type: " + touch_movement_type);
     movement_control_type_ = TouchInput::MovementControlType::kSwipe;
   }
   std::string touch_action_type =
@@ -857,7 +863,8 @@ void TouchInput::UpdateMapping() {
   } else if (touch_action_type == "buttons") {
     action_control_type_ = TouchInput::ActionControlType::kButtons;
   } else {
-    Log(LogLevel::kError, "Invalid touch-action-type: " + touch_action_type);
+    g_core->Log(LogName::kBaInput, LogLevel::kError,
+                "Invalid touch-action-type: " + touch_action_type);
     action_control_type_ = TouchInput::ActionControlType::kSwipe;
   }
 

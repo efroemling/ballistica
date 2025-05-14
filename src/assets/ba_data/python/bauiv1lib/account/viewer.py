@@ -4,10 +4,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import logging
 
-from typing_extensions import override
 import bauiv1 as bui
 
 from bauiv1lib.popup import PopupWindow, PopupMenuWindow
@@ -24,6 +23,7 @@ class AccountViewerWindow(PopupWindow):
     def __init__(
         self,
         account_id: str,
+        *,
         profile_id: str | None = None,
         position: tuple[float, float] = (0.0, 0.0),
         scale: float | None = None,
@@ -88,7 +88,7 @@ class AccountViewerWindow(PopupWindow):
             scale=0.6,
             text=bui.Lstr(resource='playerInfoText'),
             maxwidth=200,
-            color=(0.7, 0.7, 0.7, 0.7),
+            color=bui.app.ui_v1.title_color,
         )
 
         self._scrollwidget = bui.scrollwidget(
@@ -97,19 +97,25 @@ class AccountViewerWindow(PopupWindow):
             position=(30, 30),
             capture_arrows=True,
             simple_culling_v=10,
+            border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
 
+        # Note to self: Make sure to always update loading text and
+        # spinner visibility together.
         self._loading_text = bui.textwidget(
             parent=self._scrollwidget,
             scale=0.5,
-            text=bui.Lstr(
-                value='${A}...',
-                subs=[('${A}', bui.Lstr(resource='loadingText'))],
-            ),
+            text='',
             size=(self._width - 60, 100),
             h_align='center',
             v_align='center',
+        )
+        self._loading_spinner = bui.spinnerwidget(
+            parent=self.root_widget,
+            position=(self._width * 0.5, self._height * 0.5),
+            style='bomb',
+            size=48,
         )
 
         # In cases where the user most likely has a browser/email, lets
@@ -139,7 +145,7 @@ class AccountViewerWindow(PopupWindow):
         bui.app.classic.master_server_v1_get(
             'bsAccountInfo',
             {
-                'buildNumber': bui.app.env.build_number,
+                'buildNumber': bui.app.env.engine_build_number,
                 'accountID': self._account_id,
                 'profileID': self._profile_id,
             },
@@ -227,9 +233,11 @@ class AccountViewerWindow(PopupWindow):
                 edit=self._loading_text,
                 text=bui.Lstr(resource='internal.unavailableNoConnectionText'),
             )
+            bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         else:
             try:
                 self._loading_text.delete()
+                self._loading_spinner.delete()
                 trophystr = ''
                 try:
                     trophystr = data['trophies']

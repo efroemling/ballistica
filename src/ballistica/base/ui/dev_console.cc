@@ -2,6 +2,14 @@
 
 #include "ballistica/base/ui/dev_console.h"
 
+#include <Python.h>
+
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
@@ -11,17 +19,19 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/context.h"
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/math/vector4f.h"
 #include "ballistica/shared/python/python_command.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::base {
 
 // How much of the screen the console covers when it is at full size.
-const float kDevConsoleSize{0.9f};
+const float kDevConsoleFullSizeCoverage{0.9f};
+const float kDevConsoleMiniSize{100.0f};
 const int kDevConsoleLineLimit{80};
 const int kDevConsoleStringBreakUpSize{1950};
 const float kDevConsoleTabButtonCornerRadius{16.0f};
@@ -29,13 +39,69 @@ const float kDevConsoleTabButtonCornerRadius{16.0f};
 const double kTransitionSeconds{0.15};
 
 enum class DevConsoleHAnchor_ { kLeft, kCenter, kRight };
-enum class DevButtonStyle_ { kNormal, kDark };
+enum class DevButtonStyle_ {
+  kNormal,
+  kBright,
+  kRed,
+  kRedBright,
+  kPurple,
+  kPurpleBright,
+  kYellow,
+  kYellowBright,
+  kBlue,
+  kBlueBright,
+  kWhite,
+  kWhiteBright,
+  kBlack,
+  kBlackBright
+};
 
 static auto DevButtonStyleFromStr_(const char* strval) {
-  if (!strcmp(strval, "dark")) {
-    return DevButtonStyle_::kDark;
+  if (!strcmp(strval, "normal")) {
+    return DevButtonStyle_::kNormal;
   }
-  assert(!strcmp(strval, "normal"));
+  if (!strcmp(strval, "bright")) {
+    return DevButtonStyle_::kBright;
+  }
+  if (!strcmp(strval, "red")) {
+    return DevButtonStyle_::kRed;
+  }
+  if (!strcmp(strval, "red_bright")) {
+    return DevButtonStyle_::kRedBright;
+  }
+  if (!strcmp(strval, "blue")) {
+    return DevButtonStyle_::kBlue;
+  }
+  if (!strcmp(strval, "blue_bright")) {
+    return DevButtonStyle_::kBlueBright;
+  }
+  if (!strcmp(strval, "purple")) {
+    return DevButtonStyle_::kPurple;
+  }
+  if (!strcmp(strval, "purple_bright")) {
+    return DevButtonStyle_::kPurpleBright;
+  }
+  if (!strcmp(strval, "yellow")) {
+    return DevButtonStyle_::kYellow;
+  }
+  if (!strcmp(strval, "yellow_bright")) {
+    return DevButtonStyle_::kYellowBright;
+  }
+  if (!strcmp(strval, "white")) {
+    return DevButtonStyle_::kWhite;
+  }
+  if (!strcmp(strval, "white_bright")) {
+    return DevButtonStyle_::kWhiteBright;
+  }
+  if (!strcmp(strval, "black")) {
+    return DevButtonStyle_::kBlack;
+  }
+  if (!strcmp(strval, "black_bright")) {
+    return DevButtonStyle_::kBlackBright;
+  }
+
+  g_core->Log(LogName::kBa, LogLevel::kError,
+              std::string("Invalid button-style: ") + strval);
   return DevButtonStyle_::kNormal;
 }
 
@@ -85,38 +151,38 @@ static auto XOffs(DevConsoleHAnchor_ attach) -> float {
 }
 
 static auto IsValidHungryChar_(uint32_t this_char) -> bool {
-  // Include letters, numbers, and underscore.
+  // Include letters, numbers, and underscore.
   return ((this_char >= 65 && this_char <= 90)
           || (this_char >= 97 && this_char <= 122)
           || (this_char >= 48 && this_char <= 57) || this_char == '_');
 }
 
-static void DrawRect(RenderPass* pass, Mesh* mesh, float bottom, float x,
-                     float y, float width, float height,
-                     const Vector3f& bgcolor) {
+static void DrawRect(RenderPass* pass, Mesh* mesh, float x, float y,
+                     float width, float height, const Vector3f& bgcolor,
+                     float alpha = 1.0f) {
   SimpleComponent c(pass);
   c.SetTransparent(true);
-  c.SetColor(bgcolor.x, bgcolor.y, bgcolor.z, 1.0f);
+  c.SetColor(bgcolor.x, bgcolor.y, bgcolor.z, alpha);
   c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircle));
   // Draw mesh bg.
   if (mesh) {
     auto xf = c.ScopedTransform();
-    c.Translate(x, y + bottom, kDevConsoleZDepth);
+    c.Translate(x, y, kDevConsoleZDepth);
     c.DrawMesh(mesh);
   }
 }
 
-static void DrawText(RenderPass* pass, TextGroup* tgrp, float tscale,
-                     float bottom, float x, float y, const Vector3f& fgcolor) {
+static void DrawText(RenderPass* pass, TextGroup* tgrp, float tscale, float x,
+                     float y, const Vector3f& fgcolor, float alpha = 1.0f) {
   SimpleComponent c(pass);
   c.SetTransparent(true);
   // Draw text.
   {
     auto xf = c.ScopedTransform();
-    c.Translate(x, y + bottom, kDevConsoleZDepth);
+    c.Translate(x, y, kDevConsoleZDepth);
     c.Scale(tscale, tscale, 1.0f);
     int elem_count = tgrp->GetElementCount();
-    c.SetColor(fgcolor.x, fgcolor.y, fgcolor.z, 1.0f);
+    c.SetColor(fgcolor.x, fgcolor.y, fgcolor.z, alpha);
     c.SetFlatness(1.0f);
     for (int e = 0; e < elem_count; e++) {
       c.SetTexture(tgrp->GetElementTexture(e));
@@ -178,7 +244,8 @@ class DevConsole::Text_ : public DevConsole::Widget_ {
 
   void Draw(RenderPass* pass, float bottom) override {
     auto fgcolor = Vector3f{0.8f, 0.7f, 0.8f};
-    DrawText(pass, &text_group, scale, bottom, x + XOffs(h_attach), y, fgcolor);
+    DrawText(pass, &text_group, scale, x + XOffs(h_attach), bottom + y,
+             fgcolor);
   }
 };
 
@@ -195,11 +262,12 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
   TextGroup text_group;
   float text_scale;
   DevButtonStyle_ style;
+  bool disabled;
 
   template <typename F>
   Button_(const std::string& label, float text_scale, DevConsoleHAnchor_ attach,
           float x, float y, float width, float height, float corner_radius,
-          DevButtonStyle_ style, const F& lambda)
+          DevButtonStyle_ style, bool disabled, const F& lambda)
       : attach{attach},
         x{x},
         y{y},
@@ -208,6 +276,7 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         call{NewLambdaRunnable(lambda)},
         text_scale{text_scale},
         style{style},
+        disabled{disabled},
         mesh(0.0f, 0.0f, 0.0f, width, height,
              NinePatchMesh::BorderForRadius(corner_radius, width, height),
              NinePatchMesh::BorderForRadius(corner_radius, height, width),
@@ -224,7 +293,9 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
 
   auto HandleMouseDown(float mx, float my) -> bool override {
     if (InUs(mx, my)) {
-      pressed = true;
+      if (!disabled) {
+        pressed = true;
+      }
       return true;
     }
     return false;
@@ -234,8 +305,8 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
     if (pressed) {
       pressed = false;
       if (InUs(mx, my)) {
-        if (call.Exists()) {
-          call.Get()->Run();
+        if (call.exists()) {
+          call.get()->Run();
         }
       }
     }
@@ -245,11 +316,83 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
     Vector3f fgcolor;
     Vector3f bgcolor;
     switch (style) {
-      case DevButtonStyle_::kDark:
+      case DevButtonStyle_::kYellow:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{0.8f, 0.5f, 0.0f} : Vector3f{0.45, 0.4f, 0.35f};
+        break;
+      case DevButtonStyle_::kYellowBright:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.0f, 0.0f, 0.0f};
+        bgcolor =
+            pressed ? Vector3f{1.0f, 0.5f, 0.0f} : Vector3f{0.9, 0.7f, 0.0f};
+        break;
+      case DevButtonStyle_::kRed:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{1.0f, 0.2f, 0.2f} : Vector3f{0.45, 0.3f, 0.35f};
+        break;
+      case DevButtonStyle_::kRedBright:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{1.0f, 0.0f, 0.0f} : Vector3f{0.8, 0.05f, 0.1f};
+        break;
+      case DevButtonStyle_::kPurple:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{0.8f, 0.0f, 1.0f} : Vector3f{0.35, 0.2f, 0.4f};
+        break;
+      case DevButtonStyle_::kPurpleBright:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{1.0f, 0.5f, 1.0f} : Vector3f{0.6, 0.2f, 0.8f};
+        break;
+      case DevButtonStyle_::kBlue:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{0.0f, 0.5f, 0.7f} : Vector3f{0.35, 0.4f, 0.55f};
+        break;
+      case DevButtonStyle_::kBlueBright:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.0f, 0.0f, 0.0f};
+        bgcolor =
+            pressed ? Vector3f{0.2f, 0.2f, 1.0f} : Vector3f{0.5, 0.7f, 1.0f};
+        break;
+      case DevButtonStyle_::kWhite:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{0.3f, 0.3f, 0.3f} : Vector3f{0.38, 0.33f, 0.4f};
+        break;
+      case DevButtonStyle_::kWhiteBright:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.0f, 0.0f, 0.0f};
+        bgcolor =
+            pressed ? Vector3f{1.0f, 1.0f, 1.0f} : Vector3f{0.9, 0.85f, 0.95f};
+        break;
+      case DevButtonStyle_::kBlack:
         fgcolor =
             pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.8f, 0.7f, 0.8f};
         bgcolor =
-            pressed ? Vector3f{0.6f, 0.5f, 0.6f} : Vector3f{0.16, 0.07f, 0.18f};
+            pressed ? Vector3f{1.0f, 1.0f, 1.0f} : Vector3f{0.0, 0.0f, 0.0f};
+        break;
+      case DevButtonStyle_::kBlackBright:
+        fgcolor =
+            pressed ? Vector3f{1.0f, 1.0f, 1.0f} : Vector3f{1.0f, 0.9f, 1.0f};
+        bgcolor =
+            pressed ? Vector3f{0.4f, 0.4f, 0.4f} : Vector3f{0.25f, 0.2f, 0.25f};
+        break;
+      case DevButtonStyle_::kBright:
+        fgcolor =
+            pressed ? Vector3f{0.0f, 0.0f, 0.0f} : Vector3f{0.9f, 0.8f, 0.9f};
+        bgcolor =
+            pressed ? Vector3f{0.8f, 0.7f, 0.8f} : Vector3f{0.4, 0.33f, 0.5f};
         break;
       default:
         assert(style == DevButtonStyle_::kNormal);
@@ -258,9 +401,11 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
         bgcolor =
             pressed ? Vector3f{0.8f, 0.7f, 0.8f} : Vector3f{0.25, 0.2f, 0.3f};
     }
-    DrawRect(pass, &mesh, bottom, x + XOffs(attach), y, width, height, bgcolor);
-    DrawText(pass, &text_group, text_scale, bottom,
-             x + XOffs(attach) + width * 0.5f, y + height * 0.5f, fgcolor);
+    float alpha = disabled ? 0.3f : 1.0f;
+    DrawRect(pass, &mesh, x + XOffs(attach), bottom + y, width, height, bgcolor,
+             alpha);
+    DrawText(pass, &text_group, text_scale, x + XOffs(attach) + width * 0.5f,
+             bottom + y + height * 0.5f, fgcolor, alpha);
   }
 };
 
@@ -320,20 +465,20 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
       if (InUs(mx, my)) {
         on = !on;
         auto&& call = on ? on_call : off_call;
-        if (call.Exists()) {
-          call.Get()->Run();
+        if (call.exists()) {
+          call.get()->Run();
         }
       }
     }
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    DrawRect(pass, &mesh, bottom, x + XOffs(attach), y, width, height,
+    DrawRect(pass, &mesh, x + XOffs(attach), bottom + y, width, height,
              pressed ? Vector3f{0.5f, 0.2f, 1.0f}
              : on    ? Vector3f{0.5f, 0.4f, 0.6f}
                      : Vector3f{0.25, 0.2f, 0.3f});
-    DrawText(pass, &text_group, text_scale, bottom,
-             x + XOffs(attach) + width * 0.5f, y + height * 0.5f,
+    DrawText(pass, &text_group, text_scale, x + XOffs(attach) + width * 0.5f,
+             bottom + y + height * 0.5f,
              pressed ? Vector3f{1.0f, 1.0f, 1.0f}
              : on    ? Vector3f{1.0f, 1.0f, 1.0f}
                      : Vector3f{0.8f, 0.7f, 0.8f});
@@ -401,20 +546,20 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
         // unselected for a frame before the deferred call runs.
         selected = true;
 
-        if (call.Exists()) {
-          call.Get()->Run();
+        if (call.exists()) {
+          call.get()->Run();
         }
       }
     }
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    DrawRect(pass, &mesh, bottom, x + XOffs(attach), y, width, height,
+    DrawRect(pass, &mesh, x + XOffs(attach), bottom + y, width, height,
              pressed    ? Vector3f{0.4f, 0.2f, 0.8f}
              : selected ? Vector3f{0.4f, 0.3f, 0.4f}
                         : Vector3f{0.25, 0.2f, 0.3f});
-    DrawText(pass, &text_group, text_scale, bottom,
-             x + XOffs(attach) + width * 0.5f, y + height * 0.5f,
+    DrawText(pass, &text_group, text_scale, x + XOffs(attach) + width * 0.5f,
+             bottom + y + height * 0.5f,
              pressed    ? Vector3f{1.0f, 1.0f, 1.0f}
              : selected ? Vector3f{1.0f, 1.0f, 1.0f}
                         : Vector3f{0.6f, 0.5f, 0.6f});
@@ -423,12 +568,18 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
 
 class DevConsole::OutputLine_ {
  public:
-  OutputLine_(std::string s_in, double c)
-      : creation_time(c), s(std::move(s_in)) {}
-  double creation_time;
+  OutputLine_(std::string s_in, double creation_time, float scale,
+              Vector4f color)
+      : creation_time(creation_time),
+        s(std::move(s_in)),
+        scale(scale),
+        color(color) {}
   std::string s;
+  double creation_time;
+  float scale;
+  Vector4f color;
   auto GetText() -> TextGroup& {
-    if (!s_mesh_.Exists()) {
+    if (!s_mesh_.exists()) {
       s_mesh_ = Object::New<TextGroup>();
       s_mesh_->SetText(s);
     }
@@ -446,12 +597,31 @@ DevConsole::DevConsole() {
   if (g_buildconfig.debug_build()) {
     title += " (debug)";
   }
-  if (g_buildconfig.test_build()) {
+  if (g_buildconfig.variant_test_build()) {
     title += " (test)";
   }
   title_text_group_.SetText(title);
   built_text_group_.SetText("Built: " __DATE__ " " __TIME__);
   prompt_text_group_.SetText(">");
+}
+
+void DevConsole::OnUIScaleChanged() {
+  g_base->logic->event_loop()->PushCall([this] {
+    RefreshCloseButton_();
+    RefreshTabButtons_();
+    RefreshTabContents_();
+  });
+}
+
+void DevConsole::RefreshCloseButton_() {
+  float bs = BaseScale();
+  float bwidth = 32.0f * bs;
+  float bheight = 26.0f * bs;
+  float bscale = 0.6f * bs;
+  float x = 0.0f;
+  close_button_ = std::make_unique<TabButton_>(
+      "×", false, bscale, DevConsoleHAnchor_::kLeft, x, -bheight, bwidth,
+      bheight, [this] { Dismiss(); });
 }
 
 void DevConsole::RefreshTabButtons_() {
@@ -495,6 +665,7 @@ void DevConsole::RefreshTabButtons_() {
           // Can't muck with UI from code called while iterating through UI.
           // So defer it.
           g_base->logic->event_loop()->PushCall([this] {
+            RefreshCloseButton_();
             RefreshTabButtons_();
             RefreshTabContents_();
           });
@@ -540,7 +711,8 @@ void DevConsole::AddText(const char* text, float x, float y,
 void DevConsole::AddButton(const char* label, float x, float y, float width,
                            float height, PyObject* call,
                            const char* h_anchor_str, float label_scale,
-                           float corner_radius, const char* style_str) {
+                           float corner_radius, const char* style_str,
+                           bool disabled) {
   assert(g_base->InLogicThread());
 
   auto style = DevButtonStyleFromStr_(style_str);
@@ -548,8 +720,8 @@ void DevConsole::AddButton(const char* label, float x, float y, float width,
 
   widgets_.emplace_back(std::make_unique<Button_>(
       label, label_scale, h_anchor, x, y, width, height, corner_radius, style,
-      [this, callref = PythonRef::Acquired(call)] {
-        if (callref.Get() != Py_None) {
+      disabled, [this, callref = PythonRef::Acquired(call)] {
+        if (callref.get() != Py_None) {
           callref.Call();
         }
       }));
@@ -559,8 +731,12 @@ void DevConsole::AddPythonTerminal() {
   float bs = BaseScale();
   widgets_.emplace_back(std::make_unique<Button_>(
       "Exec", 0.5f * bs, DevConsoleHAnchor_::kRight, -33.0f * bs, 15.95f * bs,
-      32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal,
+      32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal, false,
       [this] { Exec(); }));
+  widgets_.emplace_back(std::make_unique<Button_>(
+      "Copy History", 0.5f * bs, DevConsoleHAnchor_::kRight, -85.0f * bs,
+      Height() - 25.0f * bs, 80.0f * bs, 20.0f * bs, 4.0 * bs,
+      DevButtonStyle_::kNormal, false, [this] { CopyHistory(); }));
   python_terminal_visible_ = true;
 }
 
@@ -589,6 +765,9 @@ auto DevConsole::HandleMouseDown(int button, float x, float y) -> bool {
     // Make sure we don't muck with our UI while we're in here.
     auto lock = ScopedUILock_(this);
 
+    if (close_button_ && close_button_->HandleMouseDown(x, y - bottom)) {
+      return true;
+    }
     for (auto&& button : tab_buttons_) {
       if (button->HandleMouseDown(x, y - bottom)) {
         return true;
@@ -617,7 +796,11 @@ auto DevConsole::Width() -> float {
 }
 
 auto DevConsole::Height() -> float {
-  return g_base->graphics->screen_virtual_height() - Bottom_();
+  if (state_ == State_::kMini) {
+    return kDevConsoleMiniSize;
+  }
+  return g_base->graphics->screen_virtual_height()
+         * kDevConsoleFullSizeCoverage;
 }
 
 void DevConsole::HandleMouseUp(int button, float x, float y) {
@@ -627,6 +810,10 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
   if (button == 1) {
     // Make sure we don't muck with our UI while we're in here.
     auto lock = ScopedUILock_(this);
+
+    if (close_button_) {
+      close_button_->HandleMouseUp(x, y - bottom);
+    }
 
     for (auto&& button : tab_buttons_) {
       button->HandleMouseUp(x, y - bottom);
@@ -651,9 +838,9 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
 
 void DevConsole::InvokeStringEditor_() {
   // If there's already a valid edit-adapter attached to us, do nothing.
-  if (string_edit_adapter_.Exists()
+  if (string_edit_adapter_.exists()
       && !g_base->python->CanPyStringEditAdapterBeReplaced(
-          string_edit_adapter_.Get())) {
+          string_edit_adapter_.get())) {
     return;
   }
 
@@ -662,21 +849,22 @@ void DevConsole::InvokeStringEditor_() {
   auto result = g_base->python->objs()
                     .Get(BasePython::ObjID::kDevConsoleStringEditAdapterClass)
                     .Call();
-  if (!result.Exists()) {
-    Log(LogLevel::kError, "Error invoking string edit dialog.");
+  if (!result.exists()) {
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "Error invoking string edit dialog.");
     return;
   }
 
   // If this new one is already marked replacable, it means it wasn't able
   // to register as the active one, so we can ignore it.
-  if (g_base->python->CanPyStringEditAdapterBeReplaced(result.Get())) {
+  if (g_base->python->CanPyStringEditAdapterBeReplaced(result.get())) {
     return;
   }
 
   // Ok looks like we're good; store the adapter as our active one.
   string_edit_adapter_ = result;
 
-  g_base->platform->InvokeStringEditor(string_edit_adapter_.Get());
+  g_base->platform->InvokeStringEditor(string_edit_adapter_.get());
 }
 
 void DevConsole::set_input_string(const std::string& val) {
@@ -1019,15 +1207,22 @@ auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
   return state_ != State_::kInactive;
 }
 
+void DevConsole::CopyHistory() {
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->python->objs()
+      .Get(BasePython::ObjID::kCopyDevConsoleHistoryCall)
+      .Call();
+}
+
 void DevConsole::Exec() {
   BA_PRECONDITION(g_base->InLogicThread());
   if (!input_enabled_) {
-    Log(LogLevel::kWarning, "Console input is not allowed yet.");
+    g_core->Log(LogName::kBa, LogLevel::kWarning,
+                "Console input is not allowed yet.");
     return;
   }
   input_history_position_ = 0;
   if (input_string_ == "clear") {
-    last_line_.clear();
     output_lines_.clear();
   } else {
     SubmitPythonCommand_(input_string_);
@@ -1061,8 +1256,8 @@ void DevConsole::SubmitPythonCommand_(const std::string& command) {
     }
     if (cmd.CanEval()) {
       auto obj = cmd.Eval(true, nullptr, nullptr);
-      if (obj.Exists() && obj.Get() != Py_None) {
-        Print(obj.Repr() + "\n");
+      if (obj.exists() && obj.get() != Py_None) {
+        Print(obj.Repr(), 1.0f, kVector4f1);
       }
     } else {
       // Not eval-able; just exec it.
@@ -1096,6 +1291,7 @@ void DevConsole::ToggleState() {
       // Can't muck with UI from code (potentially) called while iterating
       // through UI. So defer it.
       g_base->logic->event_loop()->PushCall([this] {
+        RefreshCloseButton_();
         RefreshTabButtons_();
         RefreshTabContents_();
       });
@@ -1114,23 +1310,21 @@ void DevConsole::ToggleState() {
   transition_start_ = g_base->logic->display_time();
 }
 
-void DevConsole::Print(const std::string& s_in) {
+void DevConsole::Print(const std::string& s_in, float scale, Vector4f color) {
   assert(g_base->InLogicThread());
   std::string s = Utils::GetValidUTF8(s_in.c_str(), "cspr");
-  last_line_ += s;
   std::vector<std::string> broken_up;
   g_base->text_graphics->BreakUpString(
-      last_line_.c_str(), kDevConsoleStringBreakUpSize, &broken_up);
+      s.c_str(), kDevConsoleStringBreakUpSize / scale, &broken_up);
 
-  // Spit out all completed lines and keep the last one as lastline.
-  for (size_t i = 0; i < broken_up.size() - 1; i++) {
-    output_lines_.emplace_back(broken_up[i], g_base->logic->display_time());
+  // Spit out all lines.
+  for (size_t i = 0; i < broken_up.size(); i++) {
+    output_lines_.emplace_back(broken_up[i], g_base->logic->display_time(),
+                               scale, color);
     if (output_lines_.size() > kDevConsoleLineLimit) {
       output_lines_.pop_front();
     }
   }
-  last_line_ = broken_up[broken_up.size() - 1];
-  last_line_mesh_dirty_ = true;
 }
 
 auto DevConsole::Bottom_() const -> float {
@@ -1145,30 +1339,29 @@ auto DevConsole::Bottom_() const -> float {
   // dev-consoles are not meant to be especially pretty and I think it is
   // more important for them to be able to be written to a known hard-coded
   // mini-size.
-  float mini_size = 100.0f;
-
+  //
   // Now that we have tabs and drop-shadows hanging down, we have to
   // overshoot the top of the screen when transitioning out.
   float top_buffer = 100.0f;
   if (state_ == State_::kMini) {
-    bottom = vh - mini_size;
+    bottom = vh - kDevConsoleMiniSize;
   } else {
-    bottom = vh - vh * kDevConsoleSize;
+    bottom = vh * (1.0f - kDevConsoleFullSizeCoverage);
   }
   if (g_base->logic->display_time() - transition_start_ < kTransitionSeconds) {
     float from_height;
     if (state_prev_ == State_::kMini) {
-      from_height = vh - mini_size;
+      from_height = vh - kDevConsoleMiniSize;
     } else if (state_prev_ == State_::kFull) {
-      from_height = vh - vh * kDevConsoleSize;
+      from_height = vh - vh * kDevConsoleFullSizeCoverage;
     } else {
       from_height = vh + top_buffer;
     }
     float to_height;
     if (state_ == State_::kMini) {
-      to_height = vh - mini_size;
+      to_height = vh - kDevConsoleMiniSize;
     } else if (state_ == State_::kFull) {
-      to_height = vh - vh * kDevConsoleSize;
+      to_height = vh - vh * kDevConsoleFullSizeCoverage;
     } else {
       to_height = vh + top_buffer;
     }
@@ -1190,6 +1383,32 @@ void DevConsole::Draw(FrameDef* frame_def) {
     return;
   }
 
+  // If the virtual screen size has changed, refresh.
+  auto screen_virtual_width{g_base->graphics->screen_virtual_width()};
+  auto screen_virtual_height{g_base->graphics->screen_virtual_height()};
+
+  if (last_virtual_res_x_ < 0.0f) {
+    // First time through, just grab current value; don't refresh.
+    last_virtual_res_x_ = screen_virtual_width;
+    last_virtual_res_y_ = screen_virtual_height;
+  } else {
+    // Otherwise if virtual res changed and its been long enough, refresh.
+    auto display_time{g_base->logic->display_time()};
+    double update_interval{0.2};
+    if (display_time > last_virtual_res_change_time_ + update_interval
+        && (last_virtual_res_x_ != screen_virtual_width
+            || last_virtual_res_y_ != screen_virtual_height)) {
+      last_virtual_res_x_ = screen_virtual_width;
+      last_virtual_res_y_ = screen_virtual_height;
+      last_virtual_res_change_time_ = display_time;
+      g_base->logic->event_loop()->PushCall([this] {
+        RefreshCloseButton_();
+        RefreshTabButtons_();
+        RefreshTabContents_();
+      });
+    }
+  }
+
   float bottom = Bottom_();
 
   float border_height{3.0f};
@@ -1204,15 +1423,21 @@ void DevConsole::Draw(FrameDef* frame_def) {
                                     border_height * bs);
     {
       SimpleComponent c(pass);
+
+      // Backing.
       c.SetTransparent(true);
-      c.SetColor(0, 0, 0.1f, 0.9f);
+      c.SetColor(0.04f, 0, 0.15f, 0.86f);
       c.DrawMesh(&bg_mesh_);
       c.Submit();
+
+      // Stripe.
       if (python_terminal_visible_) {
         c.SetColor(1.0f, 1.0f, 1.0f, 0.1f);
         c.DrawMesh(&stripe_mesh_);
         c.Submit();
       }
+
+      // Border.
       c.SetColor(0.25f, 0.2f, 0.3f, 1.0f);
       c.DrawMesh(&border_mesh_);
     }
@@ -1297,7 +1522,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
     }
 
     // Carat.
-    if (!carat_mesh_.Exists() || carat_dirty_) {
+    if (!carat_mesh_.exists() || carat_dirty_) {
       // Note: we explicitly update here if carat is dirty because
       // that updates last_carat_change_time_ which affects whether
       // we draw or not. GetCaratX_() only updates it *if* we draw.
@@ -1316,7 +1541,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
         c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
         c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
         c.Translate(carat_x, 0.0f, 0.0f);
-        c.DrawMesh(carat_glow_mesh_.Get());
+        c.DrawMesh(carat_glow_mesh_.get());
       }
       c.SetTexture(g_base->assets->SysTexture(SysTextureID::kShadowSharp));
       c.SetColor(1.0, 1.0, 1.0, 1.0f);
@@ -1326,7 +1551,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
         c.Translate(15.0f * bs, bottom + 14.5f * bs, kDevConsoleZDepth);
         c.Scale(0.5f * bs, 0.5f * bs, 1.0f);
         c.Translate(carat_x, 0.0f, 0.0f);
-        c.DrawMesh(carat_mesh_.Get());
+        c.DrawMesh(carat_mesh_.get());
       }
     }
 
@@ -1334,46 +1559,26 @@ void DevConsole::Draw(FrameDef* frame_def) {
     {
       SimpleComponent c(pass);
       c.SetTransparent(true);
-      c.SetColor(1, 1, 1, 1);
       c.SetFlatness(1.0f);
-      float draw_scale = 0.6f;
+      float draw_scale = 0.64f;
       float v_inc = 18.0f;
       float h = 0.5f
                 * (g_base->graphics->screen_virtual_width()
                    - (kDevConsoleStringBreakUpSize * draw_scale));
       float v = bottom + 32.0f * bs;
-      if (!last_line_.empty()) {
-        if (last_line_mesh_dirty_) {
-          if (!last_line_mesh_group_.Exists()) {
-            last_line_mesh_group_ = Object::New<TextGroup>();
-          }
-          last_line_mesh_group_->SetText(last_line_);
-          last_line_mesh_dirty_ = false;
-        }
-        int elem_count = last_line_mesh_group_->GetElementCount();
-        for (int e = 0; e < elem_count; e++) {
-          c.SetTexture(last_line_mesh_group_->GetElementTexture(e));
-          {
-            auto xf = c.ScopedTransform();
-            c.Translate(h, v + 2, kDevConsoleZDepth);
-            c.Scale(draw_scale, draw_scale);
-            c.DrawMesh(last_line_mesh_group_->GetElementMesh(e));
-          }
-        }
-        v += v_inc;
-      }
       for (auto i = output_lines_.rbegin(); i != output_lines_.rend(); i++) {
         int elem_count = i->GetText().GetElementCount();
         for (int e = 0; e < elem_count; e++) {
+          c.SetColor(i->color.x, i->color.y, i->color.z, i->color.a);
           c.SetTexture(i->GetText().GetElementTexture(e));
           {
             auto xf = c.ScopedTransform();
             c.Translate(h, v + 2, kDevConsoleZDepth);
-            c.Scale(draw_scale, draw_scale);
+            c.Scale(draw_scale * i->scale, draw_scale * i->scale);
             c.DrawMesh(i->GetText().GetElementMesh(e));
           }
         }
-        v += v_inc;
+        v += v_inc * i->scale;
         if (v > pass->virtual_height() + v_inc) {
           break;
         }
@@ -1381,11 +1586,14 @@ void DevConsole::Draw(FrameDef* frame_def) {
     }
   }
 
-  // Tab Buttons.
+  // Close Button and Tab Buttons.
   {
     // Make sure we don't muck with our UI while we're in here.
     auto lock = ScopedUILock_(this);
 
+    if (close_button_) {
+      close_button_->Draw(pass, bottom);
+    }
     for (auto&& button : tab_buttons_) {
       button->Draw(pass, bottom);
     }
@@ -1444,6 +1652,20 @@ auto DevConsole::PasteFromClipboard() -> bool {
       if (g_base->ClipboardIsSupported()) {
         if (g_base->ClipboardHasText()) {
           auto text = g_base->ClipboardGetText();
+
+          // Strip trailing newlines (if we have a single line ending with a
+          // newline we want to allow that).
+
+          // Find the position of the last character that is not a newline.
+          size_t endpos = text.find_last_not_of("\n\r");
+          if (std::string::npos != endpos) {
+            // Erase all characters after the last non-newline character.
+            text.erase(endpos + 1);
+          } else {
+            // The string is entirely newlines.
+            text.clear();
+          }
+
           if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
             g_base->audio->SafePlaySysSound(SysSoundID::kErrorBeep);
             ScreenMessage("Can only paste single lines of text.",
@@ -1461,7 +1683,7 @@ auto DevConsole::PasteFromClipboard() -> bool {
 }
 
 void DevConsole::UpdateCarat_() {
-  last_carat_x_change_time_ = g_core->GetAppTimeMillisecs();
+  last_carat_x_change_time_ = g_core->AppTimeMillisecs();
   auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjfwef");
   auto unichars_clamped = unichars;
 

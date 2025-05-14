@@ -2,7 +2,10 @@
 
 #include "ballistica/scene_v1/node/time_display_node.h"
 
+#include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <string>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
@@ -47,12 +50,12 @@ TimeDisplayNode::~TimeDisplayNode() = default;
 auto TimeDisplayNode::GetOutput() -> std::string {
   assert(g_base->InLogicThread());
   if (translations_dirty_) {
-    time_suffix_hours_ = g_base->assets->CompileResourceString(
-        R"({"r":"timeSuffixHoursText"})", "tda");
+    time_suffix_hours_ =
+        g_base->assets->CompileResourceString(R"({"r":"timeSuffixHoursText"})");
     time_suffix_minutes_ = g_base->assets->CompileResourceString(
-        R"({"r":"timeSuffixMinutesText"})", "tdb");
+        R"({"r":"timeSuffixMinutesText"})");
     time_suffix_seconds_ = g_base->assets->CompileResourceString(
-        R"({"r":"timeSuffixSecondsText"})", "tdc");
+        R"({"r":"timeSuffixSecondsText"})");
     translations_dirty_ = false;
     output_dirty_ = true;
   }

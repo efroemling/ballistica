@@ -42,10 +42,12 @@ class MessageProtocol:
         self,
         message_types: dict[int, type[Message]],
         response_types: dict[int, type[Response]],
+        *,
         forward_communication_errors: bool = False,
         forward_clean_errors: bool = False,
         remote_errors_include_stack_traces: bool = False,
-        log_remote_errors: bool = True,
+        log_errors_on_receiver: bool = True,
+        log_response_decode_errors: bool = True,
     ) -> None:
         """Create a protocol with a given configuration.
 
@@ -62,8 +64,8 @@ class MessageProtocol:
 
         When an exception is not covered by the optional forwarding
         mechanisms above, it will come across as efro.error.RemoteError
-        and the exception will be logged on the receiver
-        end - at least by default (see details below).
+        and the exception will be logged on the receiver end - at least
+        by default (see details below).
 
         If 'remote_errors_include_stack_traces' is True, stringified
         stack traces will be returned with efro.error.RemoteError
@@ -77,14 +79,22 @@ class MessageProtocol:
         goal is usually to avoid returning opaque RemoteErrors and to
         instead return something meaningful as part of the expected
         response type (even if that value itself represents a logical
-        error state). If 'log_remote_errors' is False, however, such
-        exceptions will not be logged on the receiver. This can be
-        useful in combination with 'remote_errors_include_stack_traces'
-        and 'forward_clean_errors' in situations where all error
-        logging/management will be happening on the sender end. Be
-        aware, however, that in that case it may be possible for
-        communication errors to prevent such error messages from
-        ever being seen.
+        error state). If 'log_errors_on_receiver' is False, however,
+        such exceptions will *not* be logged on the receiver. This can
+        be useful in combination with
+        'remote_errors_include_stack_traces' and 'forward_clean_errors'
+        in situations where all error logging/management will be
+        happening on the sender end. Be aware, however, that in that
+        case it may be possible for communication errors to prevent some
+        errors from ever being acknowledged.
+
+        If an error occurs when decoding a message response, a
+        RuntimeError is generated locally. However, in practice it is
+        likely for such errors to be silently ignored by message
+        handling code alongside more common communication type errors,
+        meaning serious protocol breakage could go unnoticed. To avoid
+        this, a log message is also printed in such cases. Pass
+        'log_response_decode_errors' as False to disable this logging.
         """
         # pylint: disable=too-many-locals
         self.message_types_by_id: dict[int, type[Message]] = {}
@@ -168,7 +178,8 @@ class MessageProtocol:
         self.remote_errors_include_stack_traces = (
             remote_errors_include_stack_traces
         )
-        self.log_remote_errors = log_remote_errors
+        self.log_errors_on_receiver = log_errors_on_receiver
+        self.log_response_decode_errors = log_response_decode_errors
 
     @staticmethod
     def encode_dict(obj: dict) -> str:
@@ -213,13 +224,20 @@ class MessageProtocol:
         return (
             ErrorSysResponse(
                 error_message=(
-                    traceback.format_exc()
+                    # Note: need to format exception ourself here; it
+                    # might not be current so we can't use
+                    # traceback.format_exc().
+                    ''.join(
+                        traceback.format_exception(
+                            type(exc), exc, exc.__traceback__
+                        )
+                    )
                     if self.remote_errors_include_stack_traces
                     else 'An internal error has occurred.'
                 ),
                 error_type=ErrorSysResponse.ErrorType.REMOTE,
             ),
-            self.log_remote_errors,
+            self.log_errors_on_receiver,
         )
 
     def _to_dict(
@@ -244,7 +262,7 @@ class MessageProtocol:
         return out
 
     def message_from_dict(self, data: dict) -> Message:
-        """Decode a message from a json string."""
+        """Decode a message from a dict."""
         out = self._from_dict(data, self.message_types_by_id, 'message')
         assert isinstance(out, Message)
         return out
@@ -276,7 +294,14 @@ class MessageProtocol:
             raise UnregisteredMessageIDError(
                 f'Got unregistered {opname} id of {m_id}.'
             )
-        return dataclass_from_dict(msgtype, msgdict)
+
+        # Explicitly allow any fallbacks we define for our enums and
+        # multitypes. This allows us to build message types that remain
+        # loadable even when containing unrecognized future
+        # enums/multitype data. Be aware that this flags the object as
+        # 'lossy' however which prevents it from being reserialized by
+        # default.
+        return dataclass_from_dict(msgtype, msgdict, lossy=True)
 
     def _get_module_header(
         self,
@@ -386,7 +411,6 @@ class MessageProtocol:
             f'\n'
             f'from typing import TYPE_CHECKING{ovld}{ovld2}\n'
             f'\n'
-            # f'from typing_extensions import override\n'
             f'{import_lines}'
             f'\n'
             f'if TYPE_CHECKING:\n'
@@ -408,6 +432,7 @@ class MessageProtocol:
         protocol_module_level_import_code: str | None = None,
     ) -> str:
         """Used by create_sender_module(); do not call directly."""
+        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         import textwrap
@@ -525,6 +550,7 @@ class MessageProtocol:
     ) -> str:
         """Used by create_receiver_module(); do not call directly."""
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-positional-arguments
         import textwrap
 
         desc = 'asynchronous' if is_async else 'synchronous'

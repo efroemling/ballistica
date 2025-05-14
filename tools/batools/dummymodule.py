@@ -1,5 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
+
 """Generates dummy .py modules based on binary modules.
 
 This allows us to use code introspection tools such as pylint without spinning
@@ -14,6 +16,7 @@ import os
 import types
 import textwrap
 import subprocess
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from efro.error import CleanError
@@ -21,7 +24,8 @@ from efro.terminal import Clr
 
 if TYPE_CHECKING:
     from types import ModuleType
-    from typing import Sequence, Any
+    from typing import Sequence, Any, Literal
+
     from batools.docs import AttributeInfo
 
 
@@ -38,13 +42,13 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
         sig = (
             '# Show that ur return type varies based on "doraise" value:\n'
             '@overload\n'
-            'def getdelegate(self, type: type[_T],'
-            ' doraise: Literal[False] = False) -> _T | None:\n'
+            'def getdelegate[T](self, type: type[T],'
+            ' doraise: Literal[False] = False) -> T | None:\n'
             '    ...\n'
             '\n'
             '@overload\n'
-            'def getdelegate(self, type: type[_T],'
-            ' doraise: Literal[True]) -> _T:\n'
+            'def getdelegate[T](self, type: type[T],'
+            ' doraise: Literal[True]) -> T:\n'
             '    ...\n'
             '\n'
             'def getdelegate(self, type: Any,'
@@ -275,6 +279,8 @@ def _writefuncs(
                 returnstr = 'return _uninferrable()'
             elif returns == 'tuple[float, float]':
                 returnstr = 'return (0.0, 0.0)'
+            elif returns == 'tuple[float, float, float]':
+                returnstr = 'return (0.0, 0.0, 0.0)'
             elif returns == 'str | None':
                 returnstr = "return ''"
             elif returns == 'int | None':
@@ -339,12 +345,17 @@ def _writefuncs(
                 returnstr = 'return ' + returns + '()'
             else:
                 raise RuntimeError(
-                    f'unknown returns value: {returns} for {funcname}'
+                    f'Unknown returns value: {returns} for {funcname}'
                 )
+            returnstr = (
+                f'# This is a dummy stub;'
+                f' the actual implementation is native code.\n{returnstr}'
+            )
+
         returnspc = indstr + '    '
         returnstr = ('\n' + returnspc).join(returnstr.strip().splitlines())
         docstr_out = _formatdoc(
-            _filterdoc(docstr, funcname=funcname), indent + 4
+            _filterdoc(docstr, funcname=funcname), indent + 4, form='str'
         )
         out += spcstr + defslines + docstr_out + f'{returnspc}{returnstr}\n'
     return out
@@ -497,32 +508,50 @@ def _special_class_cases(classname: str) -> str:
             '    bomb_pressed: bool = False\n'
             '    fly_pressed: bool = False\n'
             '    hold_position_pressed: bool = False\n'
+            '    #: Available on spaz node.\n'
             '    knockout: float = 0.0\n'
             '    invincible: bool = False\n'
             '    stick_to_owner: bool = False\n'
             '    damage: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    run: float = 0.0\n'
+            '    #: Available on spaz node.\n'
             '    move_up_down: float = 0.0\n'
+            '    #: Available on spaz node.\n'
             '    move_left_right: float = 0.0\n'
             '    curse_death_time: int = 0\n'
             '    boxing_gloves: bool = False\n'
             '    hockey: bool = False\n'
             '    use_fixed_vr_overlay: bool = False\n'
+            '    #: Available on globals node.\n'
             '    allow_kick_idle_players: bool = False\n'
             '    music_continuous: bool = False\n'
             '    music_count: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    hurt: float = 0.0\n'
+            '    #: On shield node.\n'
             '    always_show_health_bar: bool = False\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_1_texture: bascenev1.Texture | None = None\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_1_start_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_1_end_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_2_texture: bascenev1.Texture | None = None\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_2_start_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_2_end_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_3_texture: bascenev1.Texture | None = None\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_3_start_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    mini_billboard_3_end_time: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    boxing_gloves_flashing: bool = False\n'
+            '    #: Available on spaz node.\n'
             '    dead: bool = False\n'
             '    floor_reflection: bool = False\n'
             '    debris_friction: float = 0.0\n'
@@ -541,9 +570,13 @@ def _special_class_cases(classname: str) -> str:
             '    shadow_range: Sequence[float] = (0, 0, 0, 0)\n'
             "    counter_text: str = ''\n"
             '    counter_texture: bascenev1.Texture | None = None\n'
+            '    #: Available on spaz node.\n'
             '    shattered: int = 0\n'
+            '    #: Available on spaz node.\n'
             '    billboard_texture: bascenev1.Texture | None = None\n'
+            '    #: Available on spaz node.\n'
             '    billboard_cross_out: bool = False\n'
+            '    #: Available on spaz node.\n'
             '    billboard_opacity: float = 0.0\n'
             '    slow_motion: bool = False\n'
             "    music: str = ''\n"
@@ -608,10 +641,13 @@ def _filterdoc(docstr: str, funcname: str | None = None) -> str:
         and docslines[0]
         and docslines[0].startswith(funcname)
     ):
-        # Remove this signature from python docstring
-        # as not to repeat ourselves.
-        _, docstr = docstr.split('\n\n', maxsplit=1)
-        docslines = docstr.splitlines()
+        if '\n' in docstr:
+            # Remove this signature from python docstring
+            # as not to repeat ourselves.
+            _, docstr = docstr.split('\n\n', maxsplit=1)
+            docslines = docstr.splitlines()
+        else:
+            docstr = ''
 
     # Assuming that each line between 'Attributes:' and '\n\n' belongs to
     # attrs descriptions.
@@ -643,27 +679,37 @@ def _filterdoc(docstr: str, funcname: str | None = None) -> str:
 def _formatdoc(
     docstr: str,
     indent: int,
-    no_end_newline: bool = False,
-    inner_indent: int = 0,
+    form: Literal['str', 'comment'],
+    # *,
+    # no_end_newline: bool = False,
+    # inner_indent: int = 0,
 ) -> str:
     out = ''
     indentstr = indent * ' '
-    inner_indent_str = inner_indent * ' '
+    # inner_indent_str = inner_indent * ' '
+    # inner_indent_str = ''
     docslines = docstr.splitlines()
 
-    if len(docslines) == 1:
+    if len(docslines) == 1 and form == 'str':
         out += indentstr + '"""' + docslines[0] + '"""\n'
     else:
         for i, line in enumerate(docslines):
-            if i != 0 and line != '':
-                docslines[i] = indentstr + inner_indent_str + line
-        out += (
-            indentstr
-            + '"""'
-            + '\n'.join(docslines)
-            + ('' if no_end_newline else '\n' + indentstr)
-            + '"""\n'
-        )
+            if form == 'comment':
+                docslines[i] = indentstr + '#: ' + line
+            else:
+                if i != 0 and line != '':
+                    docslines[i] = indentstr + line
+        if form == 'comment':
+            out += '\n'.join(docslines) + '\n'
+        else:
+            out += (
+                indentstr
+                + '"""'
+                + '\n'.join(docslines)
+                + '\n'
+                + indentstr
+                + '"""\n'
+            )
     return out
 
 
@@ -694,7 +740,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
 
         docstr = cls.__doc__
         # classname is constructor name
-        out += _formatdoc(_filterdoc(docstr, funcname=classname), 4)
+        out += _formatdoc(_filterdoc(docstr, funcname=classname), 4, form='str')
 
         # Create a public constructor if it has one.
         # If the first docs line appears to be a function signature
@@ -732,15 +778,12 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
         if attrs:
             for attr in attrs:
                 if attr.attr_type is not None:
-                    out += f'    {attr.name}: {attr.attr_type}\n'
                     if attr.docs:
-                        out += _formatdoc(
-                            _filterdoc(attr.docs),
-                            indent=4,
-                            inner_indent=3,
-                            no_end_newline=True,
-                        )
                         out += '\n'
+                        out += _formatdoc(
+                            _filterdoc(attr.docs), indent=4, form='comment'
+                        )
+                    out += f'    {attr.name}: {attr.attr_type}\n'
                 else:
                     raise RuntimeError(
                         f'Found untyped attr in'
@@ -778,14 +821,15 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
 class Generator:
     """Context for a module generation pass."""
 
-    def __init__(self, modulename: str, outfilename: str):
+    def __init__(self, projroot: str, modulename: str, outfilename: str):
+        self.projroot = projroot
         self.mname = modulename
         self.outfilename = outfilename
 
     def run(self) -> None:
         """Run the actual generation from within the app context."""
 
-        from efrotools import get_public_license
+        from efrotools.project import get_public_legal_notice
         from efrotools.code import format_python_str
 
         module = __import__(self.mname)
@@ -813,12 +857,12 @@ class Generator:
         funcnames.sort()
         classnames.sort()
         typing_imports = (
-            'TYPE_CHECKING, overload, Sequence, TypeVar'
+            'TYPE_CHECKING, overload, override, Sequence'
             if self.mname == '_babase'
             else (
-                'TYPE_CHECKING, overload, TypeVar'
+                'TYPE_CHECKING, overload, override'
                 if self.mname == '_bascenev1'
-                else 'TYPE_CHECKING, TypeVar'
+                else 'TYPE_CHECKING, override'
             )
         )
         typing_imports_tc = (
@@ -837,7 +881,9 @@ class Generator:
         tc_import_lines_extra = ''
         if self.mname == '_babase':
             tc_import_lines_extra += (
-                '    from babase import App\n    import babase\n'
+                '    import bacommon.app\n'
+                '    from babase import App\n'
+                '    import babase\n'  # hold
             )
         elif self.mname == '_bascenev1':
             tc_import_lines_extra += '    import babase\n    import bascenev1\n'
@@ -851,7 +897,7 @@ class Generator:
             else '' if self.mname == '_bascenev1' else ''
         )
         out = (
-            get_public_license('python') + '\n'
+            get_public_legal_notice('python') + '\n'
             '#\n'
             f'"""A dummy stub module for the real {self.mname}.\n'
             '\n'
@@ -888,20 +934,20 @@ class Generator:
             '# pylint: disable=redefined-outer-name\n'
             '# pylint: disable=invalid-name\n'
             '# pylint: disable=no-value-for-parameter\n'
+            '# pylint: disable=unused-import\n'
+            '# pylint: disable=too-many-positional-arguments\n'
             '\n'
             'from __future__ import annotations\n'
             '\n'
             f'from typing import {typing_imports}\n'
-            '\n'
-            f'from typing_extensions import override\n'
             '\n'
             f'{enum_import_lines}'
             'if TYPE_CHECKING:\n'
             f'    from typing import {typing_imports_tc}\n'
             f'{tc_import_lines_extra}'
             '\n'
-            '\n'
-            "_T = TypeVar('_T')\n"
+            # '\n'
+            # "_T = TypeVar('_T')\n"
             '\n'
             f'{app_declare_lines}'
             'def _uninferrable() -> Any:\n'
@@ -918,7 +964,7 @@ class Generator:
         )
 
         # Lastly format it.
-        out = format_python_str(out)
+        out = format_python_str(Path(self.projroot), out)
 
         os.makedirs(os.path.dirname(self.outfilename), exist_ok=True)
         with open(self.outfilename, 'w', encoding='utf-8') as outfile:
@@ -945,10 +991,18 @@ def generate_dummy_modules(projroot: str) -> None:
         assets=True, purpose='dummy-module generation'
     )
 
+    # We need access to things like black that are installed into the project
+    # venv.
+    venvpath = '.venv/bin'
+    if not os.path.isdir(venvpath):
+        raise RuntimeError(
+            f'Expected project venv binary path not found: "{venvpath}".'
+        )
     pycmd = (
         f'import sys\n'
         f'sys.path.append("build/assets/ba_data/python")\n'
         f'sys.path.append("{toolsdir}")\n'
+        # f'sys.path.append("{venvpath}")\n'
         f'from batools import dummymodule\n'
     )
 
@@ -967,7 +1021,7 @@ def generate_dummy_modules(projroot: str) -> None:
             os.path.join(projroot, builddir, f'{mname}.py')
         )
         pycmd += (
-            f'dummymodule.Generator(modulename="{mname}",'
+            f'dummymodule.Generator(projroot=".", modulename="{mname}",'
             f' outfilename="{outfilename}").run()\n'
         )
 
@@ -978,11 +1032,20 @@ def generate_dummy_modules(projroot: str) -> None:
         flush=True,
     )
     try:
-        # Note: Ask Python to kindly not scatter __pycache__ files
+        # Note: Ask Python to kindly *not* scatter __pycache__ files
         # throughout our build output.
+        #
+        # Also pass our .venv path so any recursive invocations of Python
+        # will properly pick up our modules (for things like black formatting).
+
+        # pylint: disable=inconsistent-quotes
         subprocess.run(
             [binary_path, '--command', pycmd],
-            env=dict(os.environ, PYTHONDONTWRITEBYTECODE='1'),
+            env=dict(
+                os.environ,
+                PYTHONDONTWRITEBYTECODE='1',
+                PATH=f'.venv/bin:{os.environ["PATH"]}',
+            ),
             check=True,
         )
         print(
@@ -991,7 +1054,12 @@ def generate_dummy_modules(projroot: str) -> None:
             flush=True,
         )
 
-    except Exception as exc2:
+    except Exception as exc:
+        if bool(False):
+            import logging
+
+            logging.exception('ERROR')
+
         # Keep our error simple here; we want focus to be on what went
-        # wrong withing BallisticaKit.
-        raise CleanError('Dummy-module generation failed.') from exc2
+        # wrong within BallisticaKit.
+        raise CleanError('Dummy-module generation failed.') from exc

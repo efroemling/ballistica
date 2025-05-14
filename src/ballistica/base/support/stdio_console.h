@@ -3,7 +3,9 @@
 #ifndef BALLISTICA_BASE_SUPPORT_STDIO_CONSOLE_H_
 #define BALLISTICA_BASE_SUPPORT_STDIO_CONSOLE_H_
 
-#include "ballistica/shared/ballistica.h"
+#include <string>
+
+#include "ballistica/shared/foundation/types.h"
 
 namespace ballistica::base {
 
@@ -14,8 +16,9 @@ class StdioConsole {
   auto event_loop() const -> EventLoop* { return event_loop_; }
 
  private:
-  void StartInMainThread();
-  void PushCommand(const std::string& command);
+  void StartInMainThread_();
+  void PushCommand_(const std::string& command);
+  void Clear_();
   EventLoop* event_loop_{};
   std::string pending_input_;
 };

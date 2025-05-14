@@ -3,10 +3,10 @@
 #ifndef BALLISTICA_BASE_LOGIC_LOGIC_H_
 #define BALLISTICA_BASE_LOGIC_LOGIC_H_
 
+#include <atomic>
 #include <memory>
-#include <string>
 
-#include "ballistica/shared/foundation/object.h"
+#include "ballistica/shared/generic/runnable.h"
 
 namespace ballistica::base {
 
@@ -95,8 +95,8 @@ class Logic {
   void DeleteAppTimer(int timer_id);
   void SetAppTimerLength(int timer_id, microsecs_t length);
 
-  auto NewDisplayTimer(microsecs_t length, bool repeat,
-                       Runnable* runnable) -> int;
+  auto NewDisplayTimer(microsecs_t length, bool repeat, Runnable* runnable)
+      -> int;
   void DeleteDisplayTimer(int timer_id);
   void SetDisplayTimerLength(int timer_id, microsecs_t length);
 
@@ -117,10 +117,9 @@ class Logic {
   auto applied_app_config() const { return applied_app_config_; }
   auto shutting_down() const { return shutting_down_; }
   auto shutdown_completed() const { return shutdown_completed_; }
-
   auto graphics_ready() const { return graphics_ready_; }
-
   auto app_active() const { return app_active_; }
+  auto app_active_applied() -> bool const { return app_active_applied_; }
 
  private:
   void UpdateDisplayTimeForFrameDraw_();
@@ -147,9 +146,14 @@ class Logic {
   /// The logic thread maintains its own app-active state which is
   /// driven by the app-thread's state in g_base.
   bool app_active_{true};
+
+  /// We maintain an app-active value that gets changed once we're done
+  /// calling the Python layer's app-active-changed callback. App suspension
+  /// looks at this to try to ensure that said Python callbacks complete
+  /// before the app gets fully suspended.
+  std::atomic_bool app_active_applied_{true};
   bool app_bootstrapping_complete_{};
   bool have_pending_loads_{};
-  bool debug_log_display_time_{};
   bool applied_app_config_{};
   bool shutting_down_{};
   bool shutdown_completed_{};

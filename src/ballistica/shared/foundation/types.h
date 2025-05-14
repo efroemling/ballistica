@@ -67,9 +67,6 @@ class Graphics;
 
 // BA_EXPORT_PYTHON_ENUM
 /// Types of input a controller can send to the game.
-///
-/// Category: Enums
-///
 enum class InputType : uint8_t {
   kUpDown = 2,
   kLeftRight,
@@ -100,19 +97,18 @@ enum class InputType : uint8_t {
 };
 
 // BA_EXPORT_PYTHON_ENUM
-/// Types of input a controller can send to the game.
-///
-/// Category: Enums
+/// Types of quit behavior that can be requested from the app.
 ///
 /// 'soft' may hide/reset the app but keep the process running, depending
-///    on the platform.
+///    on the platform (generally a thing on mobile).
 ///
 /// 'back' is a variant of 'soft' which may give 'back-button-pressed'
 ///    behavior depending on the platform. (returning to some previous
 ///    activity instead of dumping to the home screen, etc.)
 ///
 /// 'hard' leads to the process exiting. This generally should be avoided
-///    on platforms such as mobile.
+///    on platforms such as mobile where apps are expected to keep running
+///    until killed by the OS.
 enum class QuitType : uint8_t {
   kSoft,
   kBack,
@@ -128,8 +124,6 @@ typedef int64_t TimerMedium;
 /// might render the game at similar pixel resolutions but the size they
 /// display content at will vary significantly.
 ///
-/// Category: Enums
-///
 /// 'large' is used for devices such as desktop PCs where fine details can
 ///    be clearly seen. UI elements are generally smaller on the screen
 ///    and more content can be seen at once.
@@ -142,49 +136,14 @@ typedef int64_t TimerMedium;
 ///    content needs to be presented as large and clear in order to remain
 ///    readable from an average distance.
 enum class UIScale : uint8_t {
-  kLarge,
-  kMedium,
   kSmall,
-  kLast  // Sentinel.
-};
-
-// BA_EXPORT_PYTHON_ENUM
-/// Specifies the type of time for various operations to target/use.
-///
-/// Category: Enums
-///
-/// 'sim' time is the local simulation time for an activity or session.
-///    It can proceed at different rates depending on game speed, stops
-///    for pauses, etc.
-///
-/// 'base' is the baseline time for an activity or session.  It proceeds
-///    consistently regardless of game speed or pausing, but may stop during
-///    occurrences such as network outages.
-///
-/// 'real' time is mostly based on clock time, with a few exceptions.  It may
-///    not advance while the app is backgrounded for instance.  (the engine
-///    attempts to prevent single large time jumps from occurring)
-enum class TimeType : uint8_t {
-  kSim,
-  kBase,
-  kReal,
-  kLast  // Sentinel.
-};
-
-// BA_EXPORT_PYTHON_ENUM
-/// Specifies the format time values are provided in.
-///
-/// Category: Enums
-enum class TimeFormat : uint8_t {
-  kSeconds,
-  kMilliseconds,
+  kMedium,
+  kLarge,
   kLast  // Sentinel.
 };
 
 // BA_EXPORT_PYTHON_ENUM
 /// Permissions that can be requested from the OS.
-///
-/// Category: Enums
 enum class Permission : uint8_t {
   kStorage,
   kLast  // Sentinel.
@@ -192,8 +151,6 @@ enum class Permission : uint8_t {
 
 // BA_EXPORT_PYTHON_ENUM
 /// Special characters the game can print.
-///
-/// Category: Enums
 enum class SpecialChar : uint8_t {
   kDownArrow,
   kUpArrow,
@@ -221,7 +178,7 @@ enum class SpecialChar : uint8_t {
   kOuyaButtonU,
   kOuyaButtonY,
   kOuyaButtonA,
-  kOuyaLogo,
+  kToken,
   kLogo,
   kTicket,
   kGooglePlayGamesLogo,
@@ -295,12 +252,16 @@ enum class SpecialChar : uint8_t {
   kLast  // Sentinel
 };
 
+// NOTE: When adding exception types here, add a corresponding
+// handler in Python::SetPythonException.
+
 /// Python exception types we can raise from our own exceptions.
 enum class PyExcType : uint8_t {
   kRuntime,
   kAttribute,
   kIndex,
   kType,
+  kKey,
   kValue,
   kReference,
   kContext,
@@ -312,6 +273,20 @@ enum class PyExcType : uint8_t {
   kInputDeviceNotFound,
   kDelegateNotFound,
   kWidgetNotFound
+};
+
+enum class LogName : uint8_t {
+  kRoot,
+  kBa,
+  kBaApp,
+  kBaDisplayTime,
+  kBaLifecycle,
+  kBaAudio,
+  kBaGraphics,
+  kBaAssets,
+  kBaInput,
+  kBaNetworking,
+  kLast  // Sentinel
 };
 
 enum class LogLevel : uint8_t {

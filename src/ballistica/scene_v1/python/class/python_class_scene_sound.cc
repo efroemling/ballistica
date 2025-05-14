@@ -2,6 +2,10 @@
 
 #include "ballistica/scene_v1/python/class/python_class_scene_sound.h"
 
+#include <string>
+#include <vector>
+
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -19,9 +23,7 @@ void PythonClassSceneSound::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a sound.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
-      "Use bascenev1.getsound() to instantiate one.";
+      "Use :meth:`bascenev1.getsound()` to instantiate one.";
   cls->tp_methods = tp_methods;
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
@@ -33,7 +35,7 @@ auto PythonClassSceneSound::tp_repr(PythonClassSceneSound* self) -> PyObject* {
   auto&& m = *(self->sound_);
   return Py_BuildValue(
       "s", (std::string("<bascenev1.Sound ")
-            + (m.Exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
+            + (m.exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
 }
@@ -45,14 +47,14 @@ auto PythonClassSceneSound::Create(SceneSound* sound) -> PyObject* {
       PyObject_CallObject(reinterpret_cast<PyObject*>(&type_obj), nullptr));
   s_create_empty_ = false;
   if (!t) {
-    throw Exception("babase.Sound creation failed.");
+    throw Exception("bascenev1.Sound creation failed.");
   }
   *t->sound_ = sound;
   return reinterpret_cast<PyObject*>(t);
 }
 
 auto PythonClassSceneSound::GetSound(bool doraise) const -> SceneSound* {
-  SceneSound* sound = sound_->Get();
+  SceneSound* sound = sound_->get();
   if (!sound && doraise) {
     throw Exception("Invalid Sound.", PyExcType::kNotFound);
   }
@@ -113,7 +115,7 @@ auto PythonClassSceneSound::Play(PythonClassSceneSound* self, PyObject* args,
                       PyExcType::kContext);
     }
     if (pos_obj != Py_None) {
-      std::vector<float> vals = Python::GetPyFloats(pos_obj);
+      std::vector<float> vals = Python::GetFloats(pos_obj);
       if (vals.size() != 3) {
         throw Exception("Expected 3 floats for pos (got "
                             + std::to_string(vals.size()) + ")",
@@ -157,8 +159,6 @@ PyMethodDef PythonClassSceneSound::tp_methods[] = {
         "     host_only: bool = False) -> None\n"
         "\n"
         "Play the sound a single time.\n"
-        "\n"
-        "Category: **Gameplay Functions**\n"
         "\n"
         "If position is not provided, the sound will be at a constant volume\n"
         "everywhere. Position should be a float tuple of size 3.",

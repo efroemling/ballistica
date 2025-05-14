@@ -2,7 +2,9 @@
 
 #include "ballistica/classic/classic.h"
 
-#include "ballistica/base/support/app_timer.h"
+#include <string>
+#include <vector>
+
 #include "ballistica/classic/python/classic_python.h"
 #include "ballistica/classic/support/stress_test.h"
 #include "ballistica/classic/support/v1_account.h"
@@ -10,6 +12,7 @@
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/player_spec.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/ui_v1/ui_v1.h"
 
 namespace ballistica::classic {
 
@@ -17,6 +20,7 @@ core::CoreFeatureSet* g_core{};
 base::BaseFeatureSet* g_base{};
 ClassicFeatureSet* g_classic{};
 scene_v1::SceneV1FeatureSet* g_scene_v1{};
+ui_v1::UIV1FeatureSet* g_ui_v1{};
 
 void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   // Ok, our feature-set's Python module is getting imported.
@@ -28,7 +32,7 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->LifecycleLog("_baclassic exec begin");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_baclassic exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_classic == nullptr);
@@ -52,7 +56,10 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_scene_v1 == nullptr);
   g_scene_v1 = scene_v1::SceneV1FeatureSet::Import();
 
-  g_core->LifecycleLog("_baclassic exec end");
+  assert(g_ui_v1 == nullptr);
+  g_ui_v1 = ui_v1::UIV1FeatureSet::Import();
+
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_baclassic exec end");
 }
 
 ClassicFeatureSet::ClassicFeatureSet()
@@ -70,13 +77,15 @@ auto ClassicFeatureSet::Import() -> ClassicFeatureSet* {
   return ImportThroughPythonModule<ClassicFeatureSet>("_baclassic");
 }
 
-auto ClassicFeatureSet::GetControllerValue(
-    base::InputDevice* device, const std::string& value_name) -> int {
+auto ClassicFeatureSet::GetControllerValue(base::InputDevice* device,
+                                           const std::string& value_name)
+    -> int {
   return python->GetControllerValue(device, value_name);
 }
 
-auto ClassicFeatureSet::GetControllerFloatValue(
-    base::InputDevice* device, const std::string& value_name) -> float {
+auto ClassicFeatureSet::GetControllerFloatValue(base::InputDevice* device,
+                                                const std::string& value_name)
+    -> float {
   return python->GetControllerFloatValue(device, value_name);
 }
 
@@ -147,9 +156,9 @@ auto ClassicFeatureSet::GetV1AccountLoginStateString() -> std::string {
       out = "signing_in";
       break;
     default:
-      Log(LogLevel::kError, "Unknown V1LoginState '"
-                                + std::to_string(static_cast<int>(state))
-                                + "'");
+      g_core->Log(LogName::kBa, LogLevel::kError,
+                  "Unknown V1LoginState '"
+                      + std::to_string(static_cast<int>(state)) + "'");
       out = "signed_out";
       break;
   }
@@ -197,7 +206,7 @@ void ClassicFeatureSet::SetV1DeviceAccount(const std::string& name) {
 auto ClassicFeatureSet::GetClientInfoQueryResponseCall() -> PyObject* {
   return g_scene_v1->python->objs()
       .Get(scene_v1::SceneV1Python::ObjID::kClientInfoQueryResponseCall)
-      .Get();
+      .get();
 }
 
 auto ClassicFeatureSet::BuildPublicPartyStateVal() -> PyObject* {
@@ -239,6 +248,13 @@ auto ClassicFeatureSet::GetV1AccountType() -> int {
 void ClassicFeatureSet::PlayMusic(const std::string& music_type,
                                   bool continuous) {
   python->PlayMusic(music_type, continuous);
+}
+
+void ClassicFeatureSet::GetClassicChestDisplayInfo(
+    const std::string& id, std::string* texclosed, std::string* texclosedtint,
+    Vector3f* color, Vector3f* tint, Vector3f* tint2) {
+  python->GetClassicChestDisplayInfo(id, texclosed, texclosedtint, color, tint,
+                                     tint2);
 }
 
 }  // namespace ballistica::classic

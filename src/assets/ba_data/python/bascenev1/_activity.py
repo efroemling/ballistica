@@ -5,117 +5,114 @@ from __future__ import annotations
 
 import weakref
 import logging
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING
 
 import babase
 import _bascenev1
 from bascenev1._dependency import DependencyComponent
-from bascenev1._team import Team
 from bascenev1._messages import UNHANDLED
-from bascenev1._player import Player
+
 
 if TYPE_CHECKING:
     from typing import Any
     import bascenev1
 
-PlayerT = TypeVar('PlayerT', bound=Player)
-TeamT = TypeVar('TeamT', bound=Team)
 
+class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
+    DependencyComponent
+):
+    """Units of execution wrangled by a :class:`bascenev1.Session`.
 
-class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
-    """Units of execution wrangled by a bascenev1.Session.
-
-    Category: Gameplay Classes
-
-    Examples of Activities include games, score-screens, cutscenes, etc.
-    A bascenev1.Session has one 'current' Activity at any time, though
-    their existence can overlap during transitions.
+    Examples of activities include games, score-screens, cutscenes, etc.
+    A :class:`bascenev1.Session` has one 'current' activity at any time,
+    though their existence can overlap during transitions.
     """
 
     # pylint: disable=too-many-public-methods
 
+    #: The settings dict passed in when the activity was made. This
+    #: attribute is deprecated and should be avoided when possible;
+    #: activities should pull all values they need from the ``settings``
+    #: arg passed to the activity's __init__ call.
     settings_raw: dict[str, Any]
-    """The settings dict passed in when the activity was made.
-       This attribute is deprecated and should be avoided when possible;
-       activities should pull all values they need from the 'settings' arg
-       passed to the Activity __init__ call."""
 
+    #: The list of teams in the activity. This gets populated just before
+    #: on_begin() is called and is updated automatically as players join
+    #: or leave the game. (at least in free-for-all mode where every
+    #: player gets their own team; in teams mode there are always 2 teams
+    #: regardless of the player count).
     teams: list[TeamT]
-    """The list of bascenev1.Team-s in the Activity. This gets populated just
-       before on_begin() is called and is updated automatically as players
-       join or leave the game. (at least in free-for-all mode where every
-       player gets their own team; in teams mode there are always 2 teams
-       regardless of the player count)."""
 
+    #: The list of players in the activity. This gets populated just
+    #: before :meth:`~bascenev1.Activity.on_begin()` is called and is
+    #: updated automatically as players join or leave the game.
     players: list[PlayerT]
-    """The list of bascenev1.Player-s in the Activity. This gets populated
-       just before on_begin() is called and is updated automatically as
-       players join or leave the game."""
 
+    #: Whether to print every time a player dies. This can be pertinent
+    #: in games such as Death-Match but can be annoying in games where it
+    #: doesn't matter.
     announce_player_deaths = False
-    """Whether to print every time a player dies. This can be pertinent
-       in games such as Death-Match but can be annoying in games where it
-       doesn't matter."""
 
+    #: Joining activities are for waiting for initial player joins. They
+    #: are treated slightly differently than regular activities, mainly
+    #: in that all players are passed to the activity at once instead of
+    #: as each joins.
     is_joining_activity = False
-    """Joining activities are for waiting for initial player joins.
-       They are treated slightly differently than regular activities,
-       mainly in that all players are passed to the activity at once
-       instead of as each joins."""
 
+    #: Whether scene-time should still progress when in menus/etc.
     allow_pausing = False
-    """Whether game-time should still progress when in menus/etc."""
 
+    #: Whether idle players can potentially be kicked (should not happen
+    #: in menus/etc).
     allow_kick_idle_players = True
-    """Whether idle players can potentially be kicked (should not happen in
-       menus/etc)."""
 
+    #: In vr mode, this determines whether overlay nodes (text, images,
+    #: etc) are created at a fixed position in space or one that moves
+    #: based on the current map. Generally this should be on for games
+    #: and off for transitions/score-screens/etc. that persist between
+    #: maps.
     use_fixed_vr_overlay = False
-    """In vr mode, this determines whether overlay nodes (text, images, etc)
-       are created at a fixed position in space or one that moves based on
-       the current map. Generally this should be on for games and off for
-       transitions/score-screens/etc. that persist between maps."""
 
+    #: If True, runs in slow motion and turns down sound pitch.
     slow_motion = False
-    """If True, runs in slow motion and turns down sound pitch."""
 
+    #: Set this to True to inherit slow motion setting from previous
+    #: activity (useful for transitions to avoid hitches).
     inherits_slow_motion = False
-    """Set this to True to inherit slow motion setting from previous
-       activity (useful for transitions to avoid hitches)."""
 
+    #: Set this to True to keep playing the music from the previous
+    #: activity (without even restarting it).
     inherits_music = False
-    """Set this to True to keep playing the music from the previous activity
-       (without even restarting it)."""
 
+    #: Set this to true to inherit VR camera offsets from the previous
+    #: activity (useful for preventing sporadic camera movement during
+    #: transitions).
     inherits_vr_camera_offset = False
-    """Set this to true to inherit VR camera offsets from the previous
-       activity (useful for preventing sporadic camera movement
-       during transitions)."""
 
+    #: Set this to true to inherit (non-fixed) VR overlay positioning
+    #: from the previous activity (useful for prevent sporadic overlay
+    #: jostling during transitions).
     inherits_vr_overlay_center = False
-    """Set this to true to inherit (non-fixed) VR overlay positioning from
-       the previous activity (useful for prevent sporadic overlay jostling
-       during transitions)."""
 
+    #: Set this to true to inherit screen tint/vignette colors from the
+    #: previous activity (useful to prevent sudden color changes during
+    #: transitions).
     inherits_tint = False
-    """Set this to true to inherit screen tint/vignette colors from the
-       previous activity (useful to prevent sudden color changes during
-       transitions)."""
 
+    #: Whether players should be allowed to join in the middle of this
+    #: activity. Note that a :class:`bascenev1.Session` may not allow
+    #: mid-activity-joins even if the activity says it is ok.
     allow_mid_activity_joins: bool = True
-    """Whether players should be allowed to join in the middle of this
-       activity. Note that Sessions may not allow mid-activity-joins even
-       if the activity says its ok."""
 
+    #: If the activity fades or transitions in, it should set the length
+    #: of time here so that previous activities will be kept alive for
+    #: that long (avoiding 'holes' in the screen) This value is given in
+    #: real-time seconds.
     transition_time = 0.0
-    """If the activity fades or transitions in, it should set the length of
-       time here so that previous activities will be kept alive for that
-       long (avoiding 'holes' in the screen)
-       This value is given in real-time seconds."""
 
+    #: Is it ok to show an ad after this activity ends before showing the
+    #: next activity?
     can_show_ad_on_death = False
-    """Is it ok to show an ad after this activity ends before showing
-       the next activity?"""
 
     def __init__(self, settings: dict):
         """Creates an Activity in the current bascenev1.Session.
@@ -149,7 +146,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
 
         self._session = weakref.ref(_bascenev1.getsession())
 
-        # Preloaded data for actors, maps, etc; indexed by type.
+        #: Preloaded data for actors, maps, etc; indexed by type.
         self.preloads: dict[type, Any] = {}
 
         # Hopefully can eventually kill this; activities should
@@ -208,8 +205,9 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
 
     @property
     def globalsnode(self) -> bascenev1.Node:
-        """The 'globals' bascenev1.Node for the activity. This contains various
-        global controls and values.
+        """The 'globals' :class:`~bascenev1.Node` for the activity.
+
+        This contains various global controls and values.
         """
         node = self._globalsnode
         if not node:
@@ -221,7 +219,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         """The stats instance accessible while the activity is running.
 
         If access is attempted before or after, raises a
-        bascenev1.NotFoundError.
+        :class:`~bascenev1.NotFoundError`.
         """
         if self._stats is None:
             raise babase.NotFoundError()
@@ -260,22 +258,24 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
 
     @property
     def playertype(self) -> type[PlayerT]:
-        """The type of bascenev1.Player this Activity is using."""
+        """The :class:`~bascenev1.Player` subclass this activity uses."""
         return self._playertype
 
     @property
     def teamtype(self) -> type[TeamT]:
-        """The type of bascenev1.Team this Activity is using."""
+        """The :class:`~bascenev1.Team` subclass this activity uses."""
         return self._teamtype
 
     def set_has_ended(self, val: bool) -> None:
-        """(internal)"""
+        """Internal - used by session.
+
+        :meta private:"""
         self._has_ended = val
 
     def expire(self) -> None:
-        """Begin the process of tearing down the activity.
+        """Internal; Begin the process of tearing down the activity.
 
-        (internal)
+        :meta private:
         """
 
         # Create an app-timer that watches a weak-ref of this activity
@@ -304,11 +304,12 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
             )
 
     def retain_actor(self, actor: bascenev1.Actor) -> None:
-        """Add a strong-reference to a bascenev1.Actor to this Activity.
+        """Add a strong-ref to a :class:`bascenev1.Actor` to this activity.
 
-        The reference will be lazily released once bascenev1.Actor.exists()
-        returns False for the Actor. The bascenev1.Actor.autoretain() method
-        is a convenient way to access this same functionality.
+        The reference will be lazily released once
+        :meth:`bascenev1.Actor.exists()` returns False for the actor.
+        The :meth:`bascenev1.Actor.autoretain()` method is a convenient
+        way to access this same functionality.
         """
         if __debug__:
             from bascenev1._actor import Actor
@@ -317,9 +318,9 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         self._actor_refs.append(actor)
 
     def add_actor_weak_ref(self, actor: bascenev1.Actor) -> None:
-        """Add a weak-reference to a bascenev1.Actor to the bascenev1.Activity.
+        """Add a weak-ref to a :class:`bascenev1.Actor` to the activity.
 
-        (called by the bascenev1.Actor base class)
+        (called by the :class:`bascenev1.Actor` base class)
         """
         if __debug__:
             from bascenev1._actor import Actor
@@ -329,9 +330,10 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
 
     @property
     def session(self) -> bascenev1.Session:
-        """The bascenev1.Session this bascenev1.Activity belongs to.
+        """The session this activity belongs to.
 
-        Raises a babase.SessionNotFoundError if the Session no longer exists.
+        Raises a :class:`~bascenev1.SessionNotFoundError` if the session
+        no longer exists.
         """
         session = self._session()
         if session is None:
@@ -339,44 +341,44 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         return session
 
     def on_player_join(self, player: PlayerT) -> None:
-        """Called when a new bascenev1.Player has joined the Activity.
+        """Called when a player joins the activity.
 
-        (including the initial set of Players)
+        (including the initial set of players)
         """
 
     def on_player_leave(self, player: PlayerT) -> None:
-        """Called when a bascenev1.Player is leaving the Activity."""
+        """Called when a player is leaving the Activity."""
 
     def on_team_join(self, team: TeamT) -> None:
-        """Called when a new bascenev1.Team joins the Activity.
+        """Called when a new team joins the activity.
 
-        (including the initial set of Teams)
+        (including the initial set of teams)
         """
 
     def on_team_leave(self, team: TeamT) -> None:
-        """Called when a bascenev1.Team leaves the Activity."""
+        """Called when a team leaves the activity."""
 
     def on_transition_in(self) -> None:
-        """Called when the Activity is first becoming visible.
+        """Called when the activity is first becoming visible.
 
-        Upon this call, the Activity should fade in backgrounds,
-        start playing music, etc. It does not yet have access to players
-        or teams, however. They remain owned by the previous Activity
-        up until bascenev1.Activity.on_begin() is called.
+        Upon this call, the activity should fade in backgrounds, start
+        playing music, etc. It does not yet have access to players or
+        teams, however. They remain owned by the previous activity up
+        until :meth:`~bascenev1.Activity.on_begin()` is called.
         """
 
     def on_transition_out(self) -> None:
         """Called when your activity begins transitioning out.
 
-        Note that this may happen at any time even if bascenev1.Activity.end()
-        has not been called.
+        Note that this may happen at any time even if
+        :meth:`bascenev1.Activity.end()` has not been called.
         """
 
     def on_begin(self) -> None:
-        """Called once the previous Activity has finished transitioning out.
+        """Called once the previous activity has finished transitioning out.
 
-        At this point the activity's initial players and teams are filled in
-        and it should begin its actual game logic.
+        At this point the activity's initial players and teams are
+        filled in and it should begin its actual game logic.
         """
 
     def handlemessage(self, msg: Any) -> Any:
@@ -385,11 +387,11 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         return UNHANDLED
 
     def has_transitioned_in(self) -> bool:
-        """Return whether bascenev1.Activity.on_transition_in() has run."""
+        """Whether :meth:`~bascenev1.Activity.on_transition_in()` has run."""
         return self._has_transitioned_in
 
     def has_begun(self) -> bool:
-        """Return whether bascenev1.Activity.on_begin() has run."""
+        """Whether :meth:`~bascenev1.Activity.on_begin()` has run."""
         return self._has_begun
 
     def has_ended(self) -> bool:
@@ -397,13 +399,13 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         return self._has_ended
 
     def is_transitioning_out(self) -> bool:
-        """Return whether bascenev1.Activity.on_transition_out() has run."""
+        """Whether :meth:`~bascenev1.Activity.on_transition_out()` has run."""
         return self._transitioning_out
 
     def transition_in(self, prev_globals: bascenev1.Node | None) -> None:
-        """Called by Session to kick off transition-in.
+        """Internal; called by session to kick off transition-in.
 
-        (internal)
+        :meta private:
         """
         assert not self._has_transitioned_in
         self._has_transitioned_in = True
@@ -459,7 +461,10 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         self._activity_data.make_foreground()
 
     def transition_out(self) -> None:
-        """Called by the Session to start us transitioning out."""
+        """Internal; called by session to start us transitioning out.
+
+        :meta private:
+        """
         assert not self._transitioning_out
         self._transitioning_out = True
         with self.context:
@@ -469,9 +474,9 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
                 logging.exception('Error in on_transition_out for %s.', self)
 
     def begin(self, session: bascenev1.Session) -> None:
-        """Begin the activity.
+        """Internal; Begin the activity.
 
-        (internal)
+        :meta private:
         """
 
         assert not self._has_begun
@@ -499,45 +504,46 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
     def end(
         self, results: Any = None, delay: float = 0.0, force: bool = False
     ) -> None:
-        """Commences Activity shutdown and delivers results to the Session.
+        """Commence activity shutdown and delivers results to the session.
 
-        'delay' is the time delay before the Activity actually ends
-        (in seconds). Further calls to end() will be ignored up until
-        this time, unless 'force' is True, in which case the new results
-        will replace the old.
+        'delay' is the time delay before the Activity actually ends (in
+        seconds). Further end calls will be ignored up until this time,
+        unless 'force' is True, in which case the new results will
+        replace the old.
         """
 
         # Ask the session to end us.
         self.session.end_activity(self, results, delay, force)
 
     def create_player(self, sessionplayer: bascenev1.SessionPlayer) -> PlayerT:
-        """Create the Player instance for this Activity.
+        """Create a :class:`bascenev1.Player` instance for this activity.
 
-        Subclasses can override this if the activity's player class
-        requires a custom constructor; otherwise it will be called with
-        no args. Note that the player object should not be used at this
-        point as it is not yet fully wired up; wait for
-        bascenev1.Activity.on_player_join() for that.
+        Note that the player object should not be used at this point as
+        it is not yet fully wired up; wait for
+        :meth:`bascenev1.Activity.on_player_join()` for that.
         """
         del sessionplayer  # Unused.
         player = self._playertype()
         return player
 
     def create_team(self, sessionteam: bascenev1.SessionTeam) -> TeamT:
-        """Create the Team instance for this Activity.
+        """Create a :class:`bascenev1.Team` instance for this activity.
 
         Subclasses can override this if the activity's team class
         requires a custom constructor; otherwise it will be called with
         no args. Note that the team object should not be used at this
-        point as it is not yet fully wired up; wait for on_team_join()
-        for that.
+        point as it is not yet fully wired up; wait for
+        :meth:`bascenev1.Activity.on_team_join()` for that.
         """
         del sessionteam  # Unused.
         team = self._teamtype()
         return team
 
     def add_player(self, sessionplayer: bascenev1.SessionPlayer) -> None:
-        """(internal)"""
+        """Internal
+
+        :meta private:
+        """
         assert sessionplayer.sessionteam is not None
         sessionplayer.resetinput()
         sessionteam = sessionplayer.sessionteam
@@ -565,7 +571,7 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
                 logging.exception('Error in on_player_join for %s.', self)
 
     def remove_player(self, sessionplayer: bascenev1.SessionPlayer) -> None:
-        """Remove a player from the Activity while it is running.
+        """Remove a player from the activity while it is running.
 
         (internal)
         """
@@ -583,10 +589,6 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         assert player in self.players
         self.players.remove(player)
         assert player not in self.players
-
-        # This should allow our bascenev1.Player instance to die.
-        # Complain if that doesn't happen.
-        # verify_object_death(player)
 
         with self.context:
             try:
@@ -608,9 +610,9 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         self._players_that_left.append(weakref.ref(player))
 
     def add_team(self, sessionteam: bascenev1.SessionTeam) -> None:
-        """Add a team to the Activity
+        """Internal; Add a team to the activity
 
-        (internal)
+        :meta private:
         """
         assert not self.expired
 
@@ -624,9 +626,9 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
                 logging.exception('Error in on_team_join for %s.', self)
 
     def remove_team(self, sessionteam: bascenev1.SessionTeam) -> None:
-        """Remove a team from a Running Activity
+        """Internal; remove a team from a running activity
 
-        (internal)
+        :meta private:
         """
         assert not self.expired
         assert sessionteam.activityteam is not None
@@ -685,9 +687,11 @@ class Activity(DependencyComponent, Generic[PlayerT, TeamT]):
         sessionplayer.setactivity(None)
         sessionplayer.activityplayer = None
 
-    # noinspection PyUnresolvedReferences
     def _setup_player_and_team_types(self) -> None:
         """Pull player and team types from our typing.Generic params."""
+
+        from bascenev1._player import Player
+        from bascenev1._team import Team
 
         # TODO: There are proper calls for pulling these in Python 3.8;
         # should update this code when we adopt that.

@@ -5,6 +5,9 @@
 
 #include <ballistica/base/input/device/input_device.h>
 
+#include <string>
+#include <vector>
+
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
@@ -22,10 +25,14 @@ class BaseFeatureSet;
 namespace ballistica::scene_v1 {
 class SceneV1FeatureSet;
 }
+namespace ballistica::ui_v1 {
+class UIV1FeatureSet;
+}
 
 namespace ballistica::classic {
 
 // Predeclared types our feature-set provides.
+class ClassicAppMode;
 class ClassicFeatureSet;
 class ClassicPython;
 class StressTest;
@@ -60,6 +67,7 @@ extern core::CoreFeatureSet* g_core;
 extern base::BaseFeatureSet* g_base;
 extern ClassicFeatureSet* g_classic;
 extern scene_v1::SceneV1FeatureSet* g_scene_v1;
+extern ui_v1::UIV1FeatureSet* g_ui_v1;
 
 /// Our C++ front-end to our feature set. This is what other C++
 /// feature-sets can 'Import' from us.
@@ -100,6 +108,9 @@ class ClassicFeatureSet : public FeatureSetNativeComponent,
   auto GetV1AccountTypeIconString(int account_type) -> std::string override;
   auto V1AccountTypeToString(int account_type) -> std::string override;
   auto GetV1AccountType() -> int override;
+  void GetClassicChestDisplayInfo(const std::string& id, std::string* texclosed,
+                                  std::string* texclosedtint, Vector3f* color,
+                                  Vector3f* tint, Vector3f* tint2) override;
 
   ClassicPython* const python;
   V1Account* const v1_account;

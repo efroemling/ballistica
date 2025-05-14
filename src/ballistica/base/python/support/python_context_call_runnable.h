@@ -15,7 +15,7 @@ class PythonContextCallRunnable : public Runnable {
       : call(Object::New<PythonContextCall>(o)) {}
   Object::Ref<PythonContextCall> call;
   void Run() override {
-    assert(call.Exists());
+    assert(call.exists());
     call->Run();
   }
   ~PythonContextCallRunnable() override = default;

@@ -2,6 +2,10 @@
 
 #include "ballistica/base/graphics/texture/dds.h"
 
+#include <algorithm>
+#include <cstdio>
+#include <string>
+
 #include "ballistica/core/platform/core_platform.h"
 
 /* DDS loader written by Jon Watte 2002 */
@@ -34,7 +38,9 @@ void LoadDDS(const std::string& file_name, unsigned char** buffers, int* widths,
   (*base_level) = 0;
 
   FILE* f = g_core->platform->FOpen(file_name.c_str(), "rb");
-  if (!f) throw Exception("can't open file: \"" + file_name + "\"");
+  if (!f) {
+    throw Exception("can't open file: \"" + file_name + "\"");
+  }
 
   DDS_header hdr{};
 

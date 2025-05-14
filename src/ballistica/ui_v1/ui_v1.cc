@@ -2,12 +2,13 @@
 
 #include "ballistica/ui_v1/ui_v1.h"
 
-#include "ballistica/base/app_mode/app_mode.h"
+#include <string>
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
-#include "ballistica/ui_v1/support/root_ui.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
 
@@ -31,7 +32,7 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   // Various ballistica functionality will fail if this has not been done.
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->LifecycleLog("_bauiv1 exec begin");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bauiv1 exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_ui_v1 == nullptr);
@@ -51,11 +52,7 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);  // Should be getting set once here.
   g_base = base::BaseFeatureSet::Import();
 
-  // Let base know we exist.
-  // (save it the trouble of trying to load us if it uses us passively).
-  // g_base->set_ui_v1(g_ui_v1);
-
-  g_core->LifecycleLog("_bauiv1 exec end");
+  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bauiv1 exec end");
 }
 
 auto UIV1FeatureSet::Import() -> UIV1FeatureSet* {
@@ -81,51 +78,33 @@ bool UIV1FeatureSet::MainMenuVisible() {
 }
 
 bool UIV1FeatureSet::PartyIconVisible() {
-  int party_size = g_base->app_mode()->GetPartySize();
-  if (party_size > 1 || g_base->app_mode()->HasConnectionToHost()
-      || root_ui()->always_draw_party_icon()) {
-    return true;
-  }
-  return false;
+  // Currently this is always visible.
+  return true;
+}
+
+void UIV1FeatureSet::SetAccountState(bool signed_in, const std::string& name) {
+  assert(root_widget_.exists());
+  root_widget_->SetAccountState(signed_in, name);
+}
+
+void UIV1FeatureSet::SetSquadSizeLabel(int num) {
+  assert(root_widget_.exists());
+  root_widget_->SetSquadSizeLabel(num);
 }
 
 void UIV1FeatureSet::ActivatePartyIcon() {
-  if (auto* r = root_ui()) {
-    r->ActivatePartyIcon();
+  if (auto* r = root_widget()) {
+    root_widget_->SquadPress();
   }
 }
 
-bool UIV1FeatureSet::PartyWindowOpen() {
-  if (auto* r = root_ui()) {
-    return r->party_window_open();
-  }
-  return false;
-}
-
-void UIV1FeatureSet::HandleLegacyRootUIMouseMotion(float x, float y) {
-  if (auto* r = root_ui()) {
-    r->HandleMouseMotion(x, y);
-  }
-}
-
-auto UIV1FeatureSet::HandleLegacyRootUIMouseDown(float x, float y) -> bool {
-  if (auto* r = root_ui()) {
-    return r->HandleMouseButtonDown(x, y);
-  }
-  return false;
-}
-
-void UIV1FeatureSet::HandleLegacyRootUIMouseUp(float x, float y) {
-  if (auto* r = root_ui()) {
-    r->HandleMouseButtonUp(x, y);
-  }
-}
+bool UIV1FeatureSet::PartyWindowOpen() { return party_window_open_; }
 
 void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
   base::RenderPass* overlay_flat_pass = frame_def->GetOverlayFlatPass();
 
   // Draw interface elements.
-  auto* root_widget = root_widget_.Get();
+  auto* root_widget = root_widget_.get();
 
   if (root_widget && root_widget->HasChildren()) {
     // Draw our opaque and transparent parts separately. This way we can
@@ -170,23 +149,10 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
 
     g_base->graphics->set_drawing_transparent_only(false);
   }
-
-  if (auto* r = root_ui()) {
-    r->Draw(frame_def);
-  }
 }
 
 void UIV1FeatureSet::OnActivate() {
   assert(g_base->InLogicThread());
-  if (root_ui_ == nullptr) {
-    root_ui_ = new RootUI();
-  }
-}
-void UIV1FeatureSet::OnDeactivate() { assert(g_base->InLogicThread()); }
-
-void UIV1FeatureSet::Reset() {
-  root_widget_.Clear();
-  screen_root_widget_.Clear();
 
   // (Re)create our screen-root widget.
   auto sw(Object::New<StackWidget>());
@@ -209,11 +175,18 @@ void UIV1FeatureSet::Reset() {
   root_widget_ = rw;
   rw->SetWidth(g_base->graphics->screen_virtual_width());
   rw->SetHeight(g_base->graphics->screen_virtual_height());
-  rw->SetScreenWidget(sw.Get());
+  rw->SetScreenWidget(sw.get());
   rw->Setup();
-  rw->SetOverlayWidget(ow.Get());
+  rw->SetOverlayWidget(ow.get());
 
   sw->GlobalSelect();
+}
+
+void UIV1FeatureSet::OnDeactivate() {
+  assert(g_base->InLogicThread());
+
+  root_widget_.Clear();
+  screen_root_widget_.Clear();
 }
 
 void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
@@ -221,13 +194,13 @@ void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
 
   BA_PRECONDITION(parent != nullptr);
 
-  // If they're adding an initial window/dialog to our screen-stack
-  // or overlay stack, send a reset-local-input message so that characters
-  // who have lost focus will not get stuck running or whatnot.
-  // We should come up with a more generalized way to track this sort of
-  // focus as this is a bit hacky, but it works for now.
-  auto* screen_root_widget = screen_root_widget_.Get();
-  auto* overlay_root_widget = overlay_root_widget_.Get();
+  // If they're adding an initial window/dialog to our screen-stack or
+  // overlay stack, send a reset-local-input message so that characters who
+  // have lost focus will not get stuck running or whatnot. We should come
+  // up with a more generalized way to track this sort of focus as this is a
+  // bit hacky, but it works for now.
+  auto* screen_root_widget = screen_root_widget_.get();
+  auto* overlay_root_widget = overlay_root_widget_.get();
   if ((screen_root_widget && !screen_root_widget->HasChildren()
        && parent == screen_root_widget)
       || (overlay_root_widget && !overlay_root_widget->HasChildren()
@@ -239,9 +212,22 @@ void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
 }
 
 void UIV1FeatureSet::OnScreenSizeChange() {
-  if (root_widget_.Exists()) {
+  // This gets called by the native layer as window is resized/etc.
+  if (root_widget_.exists()) {
     root_widget_->SetWidth(g_base->graphics->screen_virtual_width());
     root_widget_->SetHeight(g_base->graphics->screen_virtual_height());
+  }
+}
+
+void UIV1FeatureSet::OnUIScaleChange() {
+  // This gets called by the Python layer when UIScale or window size
+  // changes.
+  assert(g_base->InLogicThread());
+
+  // We allow OnScreenSizeChange() to handle size changes but *do* handle
+  // UIScale changes here.
+  if (auto* root_widget = root_widget_.get()) {
+    root_widget->OnUIScaleChange();
   }
 }
 
@@ -261,7 +247,7 @@ void UIV1FeatureSet::OnLanguageChange() {
 Widget* UIV1FeatureSet::GetRootWidget() { return root_widget(); }
 
 auto UIV1FeatureSet::SendWidgetMessage(const base::WidgetMessage& m) -> int {
-  if (!root_widget_.Exists()) {
+  if (!root_widget_.exists()) {
     return false;
   }
   return root_widget_->HandleMessage(m);
@@ -288,7 +274,6 @@ void UIV1FeatureSet::ConfirmQuit(QuitType quit_type) {
 }
 
 UIV1FeatureSet::UILock::UILock(bool write) {
-  assert(g_base->ui);
   assert(g_base->InLogicThread());
 
   if (write && g_ui_v1->ui_lock_count_ != 0) {
