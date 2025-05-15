@@ -2,11 +2,6 @@ cmake_minimum_required(VERSION 3.12)
 project(BallisticaKit)
 include(CheckIncludeFile)
 
-# Add Discord SDK paths
-set(DISCORD_SDK_DIR ${CMAKE_SOURCE_DIR}/../lib/discord_social_sdk)
-include_directories(${DISCORD_SDK_DIR}/include)
-link_directories(${DISCORD_SDK_DIR}/lib)
-
 option(HEADLESS "build headless server" OFF)
 option(TEST_BUILD "include testing features" OFF)
 
