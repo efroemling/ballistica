@@ -789,7 +789,7 @@ add_executable(ballisticakitbin ${BALLISTICA_SOURCES})
 # (for use with vanilla Python interpreters).
 add_library(ballisticakitso SHARED ${BALLISTICA_SOURCES})
 
-# Discord SDK setup
+#++++++++++++++++++++++++discord_sdk+++++++++++++++++++++++++++++++
 set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../lib/discord_social_sdk")
 set(DISCORD_SDK_INCLUDE_DIR "${DISCORD_SDK_ROOT}/include")
 set(DISCORD_SDK_LIB_DIR "${DISCORD_SDK_ROOT}/lib/release")
@@ -814,35 +814,17 @@ else() # Linux
     set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
 endif()
 
-# Link the Social SDK library for both targets
-target_link_libraries(ballisticakitbin PRIVATE ${DISCORD_LIB_PATH})
-target_link_libraries(ballisticakitso PRIVATE ${DISCORD_LIB_PATH})
+# need to link to this instead
+# Copy the Discord shared library to the output directory
+# add_custom_command(TARGET ballisticakitbin
+#     POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#         "${DISCORD_SHARED_LIB}"
+#         $<TARGET_FILE_DIR:ballisticakitbin>)
 
-# Add runtime path for the shared library
-set_target_properties(ballisticakitbin PROPERTIES
-    INSTALL_RPATH "${DISCORD_SDK_LIB_DIR}"
-    BUILD_WITH_INSTALL_RPATH TRUE)
-
-# Set the runtime search path (RPATH) for Linux and macOS
-if(UNIX)
-    # Use RPATH when building
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-    # Set the RPATH to use the lib directory relative to the executable
-    set(CMAKE_INSTALL_RPATH "$ORIGIN")
-    if(APPLE)
-        set(CMAKE_INSTALL_RPATH "@executable_path")
-    endif()
-endif()
-
-# Copy Social SDK shared library to output directory, so it's available at runtime.
-add_custom_command(TARGET ballisticakitso POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${DISCORD_SHARED_LIB}"
-    $<TARGET_FILE_DIR:ballisticakitbin>
-)
 set(EXTRA_INCLUDE_DIRS ${EXTRA_INCLUDE_DIRS} ${DISCORD_SDK_INCLUDE_DIR})
 set(EXTRA_LIBRARIES ${EXTRA_LIBRARIES} ${DISCORD_LIB_PATH})
-# #++++++++++++++++++++++++Discord SDK+++++++++++++++++++++++++++++++
+# ----------------------------------DISCORD_SDK-----------------------------------
 
 # Gets -rdynamic added when linking gcc builds which exports all symbols
 # which gives us more meaningful stack traces using backtrace_symbols().  
