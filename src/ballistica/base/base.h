@@ -2,6 +2,7 @@
 
 #ifndef BALLISTICA_BASE_BASE_H_
 #define BALLISTICA_BASE_BASE_H_
+#include "discordpp.h"
 
 #include <atomic>
 #include <mutex>
@@ -621,6 +622,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Instantiates our FeatureSet if needed and returns the single
   /// instance of it. Basically C++ analog to Python import.
   static auto Import() -> BaseFeatureSet*;
+  
+
 
   /// Called when our associated Python module is instantiated.
   static void OnModuleExec(PyObject* module);
@@ -650,7 +653,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// to foregrounding on mobile, unminimizing on desktop, etc. Spins
   /// threads back up, re-opens network sockets, etc.
   void UnsuspendApp();
-
+  void InitializeDiscord();
   auto app_suspended() const { return app_suspended_; }
 
   /// Issue a high level app quit request. Can be called from any thread and
