@@ -1,23 +1,15 @@
 // Released under the MIT License. See LICENSE for details.
-#define DISCORDPP_IMPLEMENTATION
-#include <iostream>
-#include <thread>
-#include <atomic>
-#include <functional>
-#include <csignal>
-#include "discordpp.h"
-#include "cdiscord.h"
 #include "ballistica/base/base.h"
 #include <cstdio>
 #include <string>
 #include <vector>
-
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/empty_app_mode.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
+#include "ballistica/base/discord/discord.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
@@ -409,49 +401,8 @@ void BaseFeatureSet::SuspendApp() {
 }
 
 void BaseFeatureSet::InitializeDiscord() {
-    // Replace with your Discord Application ID
-    const uint64_t APPLICATION_ID = 1234567890123456789;
-
-    std::cout << "🚀 Initializing Discord SDK...\n";
-    auto client = std::make_shared<discordpp::Client>();
-    client->AddLogCallback([](auto message, auto severity) {
-    printf("[%d] %s", static_cast<int>(severity), message.c_str());
-  }, discordpp::LoggingSeverity::Info);
-  
-  client->SetStatusChangedCallback([client](auto status, auto error, auto details) {
-    printf("Status has changed to %s\n", discordpp::Client::StatusToString(status).c_str());
-    if (status == discordpp::Client::Status::Ready) {
-      printf("Client is ready, you can now call SDK functions. For example:\n");
-      printf("You have %d friends\n", static_cast<int>(client->GetRelationships().size()));
-    } else if (error != discordpp::Client::Error::None) {
-      printf("Error connecting: %s %d\n", discordpp::Client::ErrorToString(error).c_str(),
-      details);
-    }
-    else {
-      printf("Status changed to %s\n", discordpp::Client::StatusToString(status).c_str());
-    }
-  });
-  auto codeVerifier = client->CreateAuthorizationCodeVerifier();
-  discordpp::AuthorizationArgs args{};
-  args.SetClientId(APPLICATION_ID);
-  args.SetScopes(discordpp::Client::GetDefaultPresenceScopes()); // or discordpp::Client::GetDefaultCommunicationScopes()
-  args.SetCodeChallenge(codeVerifier.Challenge());
-  
-  client->Authorize(args, [client, codeVerifier](auto result, auto code, auto redirectUri) {
-    if (!result.Successful()) {
-      printf("Auth Error: %s\n", result.ToString().c_str());
-    } else {
-      printf("Received authorization code, exchanging for access token\n");
-      client->GetToken(APPLICATION_ID, code, codeVerifier.Verifier(), redirectUri,
-        [client](auto result, auto accessToken, auto refreshToken, auto, auto, auto) {
-          printf("Received access token, connecting to Discord\n");
-          client->UpdateToken(discordpp::AuthorizationTokenType::Bearer, accessToken, [client](auto result) {
-            client->Connect();
-          });
-        });
-    }
-  });
-  
+  DiscordClient client;
+  client.init();
 }
 
 void BaseFeatureSet::UnsuspendApp() {
