@@ -842,10 +842,10 @@ target_link_libraries(ballisticakitbin PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread ${Python_LIBRARIES}
   ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl)
 
+
 # BallisticaKit modular shared library
 # (for use with vanilla Python interpreters).
 add_library(ballisticakitso SHARED ${BALLISTICA_SOURCES})
-
 
 # This is a 'modular' build.
 target_compile_definitions(ballisticakitso PRIVATE BA_MONOLITHIC_BUILD=0)
