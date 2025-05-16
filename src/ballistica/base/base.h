@@ -2,8 +2,6 @@
 
 #ifndef BALLISTICA_BASE_BASE_H_
 #define BALLISTICA_BASE_BASE_H_
-#include "discordpp.h"
-
 #include <atomic>
 #include <mutex>
 #include <string>
@@ -622,8 +620,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Instantiates our FeatureSet if needed and returns the single
   /// instance of it. Basically C++ analog to Python import.
   static auto Import() -> BaseFeatureSet*;
-  
-
 
   /// Called when our associated Python module is instantiated.
   static void OnModuleExec(PyObject* module);

@@ -6,4 +6,4 @@ class DiscordClient {
  public:
   void init();
 };
-}; // namespace ballistica::base
+};  // namespace ballistica::base
