@@ -245,7 +245,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/audio/ogg_stream.h
   ${BA_SRC_ROOT}/ballistica/base/base.cc
   ${BA_SRC_ROOT}/ballistica/base/base.h
-  ${BA_SRC_ROOT}/ballistica/base/discord/discord.cpp
+  ${BA_SRC_ROOT}/ballistica/base/discord/discord.cc
   ${BA_SRC_ROOT}/ballistica/base/discord/discord.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics.cc
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics.h
