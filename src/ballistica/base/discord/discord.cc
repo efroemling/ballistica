@@ -5,6 +5,7 @@
 
 #include <atomic>
 #include <csignal>
+#include <cstdio>
 #include <functional>
 #include <iostream>
 #include <thread>
@@ -14,62 +15,101 @@
 
 namespace ballistica::base {
 
+std::atomic<bool> running = true;
+
+void signalHandler(int signum) { running.store(false); }
+
 void DiscordClient::init() {
   // Replace with your Discord Application ID
-  const uint64_t APPLICATION_ID = 1234567890123456789;
-
+  const uint64_t APPLICATION_ID = 1371951592034668635;
+  std::signal(SIGINT, signalHandler);
   std::cout << "🚀 Initializing Discord SDK...\n";
   auto client = std::make_shared<discordpp::Client>();
+
+  // while (running) {
+  //   discordpp::RunCallbacks();
+  //   std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  // }
   client->AddLogCallback(
       [](auto message, auto severity) {
-        printf("[%d] %s", static_cast<int>(severity), message.c_str());
+        std::cout << "[" << EnumToString(severity) << "] " << message
+                  << std::endl;
       },
       discordpp::LoggingSeverity::Info);
 
-  client->SetStatusChangedCallback(
-      [client](auto status, auto error, auto details) {
-        printf("Status has changed to %s\n",
-               discordpp::Client::StatusToString(status).c_str());
-        if (status == discordpp::Client::Status::Ready) {
-          printf(
-              "Client is ready, you can now call SDK functions. For "
-              "example:\n");
-          printf("You have %d friends\n",
-                 static_cast<int>(client->GetRelationships().size()));
-        } else if (error != discordpp::Client::Error::None) {
-          printf("Error connecting: %s %d\n",
-                 discordpp::Client::ErrorToString(error).c_str(), details);
-        } else {
-          printf("Status changed to %s\n",
-                 discordpp::Client::StatusToString(status).c_str());
-        }
-      });
+  client->SetStatusChangedCallback([client](discordpp::Client::Status status,
+                                            discordpp::Client::Error error,
+                                            int32_t errorDetail) {
+    std::cout << "🔄 Status changed: "
+              << discordpp::Client::StatusToString(status) << std::endl;
+
+    if (status == discordpp::Client::Status::Ready) {
+      std::cout << "✅ Client is ready! You can now call SDK functions.\n";
+    } else if (error != discordpp::Client::Error::None) {
+      std::cerr << "❌ Connection Error: "
+                << discordpp::Client::ErrorToString(error)
+                << " - Details: " << errorDetail << std::endl;
+    }
+  });
+
+  // Generate OAuth2 code verifier for authentication
   auto codeVerifier = client->CreateAuthorizationCodeVerifier();
+
+  // Set up authentication arguments
   discordpp::AuthorizationArgs args{};
   args.SetClientId(APPLICATION_ID);
-  args.SetScopes(
-      discordpp::Client::
-          GetDefaultPresenceScopes());  // or
-                                        // discordpp::Client::GetDefaultCommunicationScopes()
+  args.SetScopes(discordpp::Client::GetDefaultPresenceScopes());
   args.SetCodeChallenge(codeVerifier.Challenge());
 
-  client->Authorize(
-      args, [client, codeVerifier](auto result, auto code, auto redirectUri) {
-        if (!result.Successful()) {
-          printf("Auth Error: %s\n", result.ToString().c_str());
-        } else {
-          printf("Received authorization code, exchanging for access token\n");
-          client->GetToken(
-              APPLICATION_ID, code, codeVerifier.Verifier(), redirectUri,
-              [client](auto result, auto accessToken, auto refreshToken, auto,
-                       auto, auto) {
-                printf("Received access token, connecting to Discord\n");
-                client->UpdateToken(
-                    discordpp::AuthorizationTokenType::Bearer, accessToken,
-                    [client](auto result) { client->Connect(); });
-              });
-        }
-      });
+  // Begin authentication process
+  client->Authorize(args, [client, codeVerifier](auto result, auto code,
+                                                 auto redirectUri) {
+    if (!result.Successful()) {
+      std::cerr << "❌ Authentication Error: " << result.Error() << std::endl;
+      return;
+    } else {
+      std::cout << "✅ Authorization successful! Getting access token...\n";
+
+      // Exchange auth code for access token
+      client->GetToken(
+          APPLICATION_ID, code, codeVerifier.Verifier(), redirectUri,
+          [client](discordpp::ClientResult result, std::string accessToken,
+                   std::string refreshToken,
+                   discordpp::AuthorizationTokenType tokenType,
+                   int32_t expiresIn, std::string scope) {
+            std::cout
+                << "🔓 Access token received! Establishing connection...\n";
+            client->UpdateToken(
+                discordpp::AuthorizationTokenType::Bearer, accessToken,
+                [client](discordpp::ClientResult result) {
+                  if (result.Successful()) {
+                    std::cout << "🔑 Token updated, connecting to Discord...\n";
+                    client->Connect();
+                  }
+                });
+          });
+    }
+  });
+  std::thread discordThread([&]() {
+    while (running) {
+      discordpp::RunCallbacks();
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+  });
+  discordThread.detach();
+  discordpp::Activity activity;
+  activity.SetType(discordpp::ActivityTypes::Playing);
+  activity.SetState("In Competitive Match");
+  activity.SetDetails("Rank: Diamond II");
+
+  // Update rich presence
+  client->UpdateRichPresence(activity, [](discordpp::ClientResult result) {
+    if (result.Successful()) {
+      std::cout << "🎮 Rich Presence updated successfully!\n";
+    } else {
+      std::cerr << "❌ Rich Presence update failed";
+    }
+  });
 }
 
 };  // namespace ballistica::base
