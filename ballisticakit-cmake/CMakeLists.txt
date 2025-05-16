@@ -787,9 +787,6 @@ set(BALLISTICA_SOURCES
 
 # BallisticaKit monolithic binary.
 add_executable(ballisticakitbin ${BALLISTICA_SOURCES})
-# BallisticaKit modular shared library
-# (for use with vanilla Python interpreters).
-add_library(ballisticakitso SHARED ${BALLISTICA_SOURCES})
 
 #++++++++++++++++++++++++discord_sdk+++++++++++++++++++++++++++++++
 set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../lib/discord_social_sdk")
@@ -799,10 +796,6 @@ set(DISCORD_SDK_BIN_DIR "${DISCORD_SDK_ROOT}/bin/release")
 
 # Include Discord SDK headers
 include_directories(${DISCORD_SDK_INCLUDE_DIR})
-
-# Include for Social SDK headers for both targets
-target_include_directories(ballisticakitbin PRIVATE ${DISCORD_SDK_INCLUDE_DIR})
-target_include_directories(ballisticakitso PRIVATE ${DISCORD_SDK_INCLUDE_DIR})
 
 # Platform-specific Social SDK library paths
 if(WIN32)
@@ -849,7 +842,9 @@ target_link_libraries(ballisticakitbin PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread ${Python_LIBRARIES}
   ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl)
 
-
+# BallisticaKit modular shared library
+# (for use with vanilla Python interpreters).
+add_library(ballisticakitso SHARED ${BALLISTICA_SOURCES})
 
 
 # This is a 'modular' build.
