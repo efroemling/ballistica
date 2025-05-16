@@ -2,6 +2,7 @@
 
 #ifndef BALLISTICA_BASE_BASE_H_
 #define BALLISTICA_BASE_BASE_H_
+
 #include <atomic>
 #include <mutex>
 #include <string>

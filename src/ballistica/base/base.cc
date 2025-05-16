@@ -1,4 +1,5 @@
 // Released under the MIT License. See LICENSE for details.
+
 #include "ballistica/base/base.h"
 
 #include <cstdio>
@@ -215,6 +216,7 @@ void BaseFeatureSet::StartApp() {
 
   g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
               "start-app begin (main thread)");
+
   // The logic thread (or maybe other things) need to run Python as
   // we're bringing them up, so let it go for the duration of this call.
   // We'll explicitly grab it if/when we need it.
