@@ -11,7 +11,10 @@ class DiscordClient {
  public:
   void init();
   void authenticate(std::shared_ptr<discordpp::Client> client);
-  static const uint64_t APPLICATION_ID = 1371951592034668635;
+  void SetActivity(std::shared_ptr<discordpp::Client> client,
+                                const std::string& state,
+                                const std::string& details);
+  static const uint64_t APPLICATION_ID = 1373228222002626610;
 };
 }  // namespace ballistica::base
 

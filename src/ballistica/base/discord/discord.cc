@@ -8,8 +8,8 @@
 #include <cstdio>
 #include <functional>
 #include <iostream>
-#include <thread>
 #include <memory>
+#include <thread>
 
 #include "cdiscord.h"
 #include "discordpp.h"
@@ -34,7 +34,7 @@ void DiscordClient::init() {
       },
       discordpp::LoggingSeverity::Info);
 
-  client->SetStatusChangedCallback([client](discordpp::Client::Status status,
+  client->SetStatusChangedCallback([this,client](discordpp::Client::Status status,
                                             discordpp::Client::Error error,
                                             int32_t errorDetail) {
     std::cout << "🔄 Status changed: "
@@ -42,19 +42,7 @@ void DiscordClient::init() {
 
     if (status == discordpp::Client::Status::Ready) {
       std::cout << "✅ Client is ready! You can now call SDK functions.\n";
-      discordpp::Activity activity;
-      activity.SetType(discordpp::ActivityTypes::Playing);
-      activity.SetState("In Competitive Match");
-      activity.SetDetails("Rank: Diamond II");
-
-      // Update rich presence
-      client->UpdateRichPresence(activity, [](discordpp::ClientResult result) {
-        if (result.Successful()) {
-          std::cout << "🎮 Rich Presence updated successfully!\n";
-        } else {
-          std::cerr << "❌ Rich Presence update failed";
-        }
-      });
+      SetActivity(client, "Playing", "Ballistica");
 
     } else if (error != discordpp::Client::Error::None) {
       std::cerr << "❌ Connection Error: "
@@ -65,7 +53,6 @@ void DiscordClient::init() {
 
   authenticate(client);
 
-
   std::thread discordThread([&]() {
     while (running) {
       discordpp::RunCallbacks();
@@ -75,9 +62,8 @@ void DiscordClient::init() {
   discordThread.detach();
 }
 
-
 void DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
-    // Generate OAuth2 code verifier for authentication
+  // Generate OAuth2 code verifier for authentication
   auto codeVerifier = client->CreateAuthorizationCodeVerifier();
   // Set up authentication arguments
   discordpp::AuthorizationArgs args{};
@@ -86,8 +72,8 @@ void DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
   args.SetCodeChallenge(codeVerifier.Challenge());
 
   // Begin authentication process
-  client->Authorize(args, [this,client, codeVerifier](auto result, auto code,
-                                                 auto redirectUri) {
+  client->Authorize(args, [this, client, codeVerifier](auto result, auto code,
+                                                       auto redirectUri) {
     if (!result.Successful()) {
       std::cerr << "❌ Authentication Error: " << result.Error() << std::endl;
       return;
@@ -111,11 +97,28 @@ void DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
                     client->Connect();
                   }
                 }
-                
-              );
+
+            );
           });
     }
   });
 };
 
+void DiscordClient::SetActivity(std::shared_ptr<discordpp::Client> client,
+                                const std::string& state,
+                                const std::string& details) {
+  discordpp::Activity activity;
+  activity.SetType(discordpp::ActivityTypes::Playing);
+  activity.SetState(state);
+  activity.SetDetails(details);
+
+  // Update rich presence
+  client->UpdateRichPresence(activity, [](discordpp::ClientResult result) {
+    if (result.Successful()) {
+      std::cout << "🎮 Rich Presence updated successfully!\n";
+    } else {
+      std::cerr << "❌ Rich Presence update failed";
+    }
+  });
+}
 }  // namespace ballistica::base
