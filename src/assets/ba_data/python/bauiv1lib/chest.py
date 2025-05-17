@@ -743,27 +743,27 @@ class ChestWindow(bui.MainWindow):
             if advance:
                 x += (bui.get_string_width(txt, suppress_warning=True)) * tscale
 
-        self._prizesettxts = {}
-        self._prizesetimgs = {}
+        self._prizesettxts, self._prizesetimgs = {}, {}
 
-        for i, p in enumerate(self._prizesets):
+        # lets use integers for the percentages
+        percentages = [100 * p.weight // totalweight for p in self._prizesets]
+        total_percentage = sum(percentages)
+
+        # Adjust the last percentage to ensure the total is 100%
+        remaining_percentage = 100 - total_percentage
+        if remaining_percentage > 0:
+            percentages[-1] += remaining_percentage
+
+        # Ensure the last percentage is not zero
+        if percentages[-1] == 0:
+            percentages[-1], percentages[-2] = 1, percentages[-2] - 1
+
+        for i, (p, percent) in enumerate(zip(self._prizesets, percentages)):
             prizesettxts = self._prizesettxts.setdefault(i, [])
             prizesetimgs = self._prizesetimgs.setdefault(i, [])
-            x = self._width * 0.5 + xoffs
-            y -= rowheight
-            percent = 100.0 * p.weight / totalweight
+            x, y = self._width * 0.5 + xoffs, y - rowheight
 
-            # Show decimals only if we get very small percentages (looks
-            # better than rounding as '0%').
-            percenttxt = (
-                f'{percent:.2f}%:'
-                if percent < 0.095
-                else (
-                    f'{percent:.1f}%:'
-                    if percent < 0.95
-                    else f'{round(percent)}%:'
-                )
-            )
+            percenttxt = f'{round(percent)}%:'
 
             # We advance manually here to keep values lined up
             # (otherwise single digit percent rows don't line up with
