@@ -26,14 +26,10 @@ void DiscordClient::init() {
   std::cout << "🚀 Initializing Discord SDK...\n";
   auto client = std::make_shared<discordpp::Client>();
 
-  // while (running) {
-  //   discordpp::RunCallbacks();
-  //   std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  // }
   client->AddLogCallback(
       [](auto message, auto severity) {
-        std::cout << "[" << EnumToString(severity) << "] " << message
-                  << std::endl;
+        // std::cout << "[" << EnumToString(severity) << "] " << message
+        //           << std::endl;
       },
       discordpp::LoggingSeverity::Info);
 
@@ -45,6 +41,20 @@ void DiscordClient::init() {
 
     if (status == discordpp::Client::Status::Ready) {
       std::cout << "✅ Client is ready! You can now call SDK functions.\n";
+      discordpp::Activity activity;
+      activity.SetType(discordpp::ActivityTypes::Playing);
+      activity.SetState("In Competitive Match");
+      activity.SetDetails("Rank: Diamond II");
+
+      // Update rich presence
+      client->UpdateRichPresence(activity, [](discordpp::ClientResult result) {
+        if (result.Successful()) {
+          std::cout << "🎮 Rich Presence updated successfully!\n";
+        } else {
+          std::cerr << "❌ Rich Presence update failed";
+        }
+      });
+
     } else if (error != discordpp::Client::Error::None) {
       std::cerr << "❌ Connection Error: "
                 << discordpp::Client::ErrorToString(error)
@@ -90,6 +100,7 @@ void DiscordClient::init() {
           });
     }
   });
+
   std::thread discordThread([&]() {
     while (running) {
       discordpp::RunCallbacks();
@@ -97,19 +108,6 @@ void DiscordClient::init() {
     }
   });
   discordThread.detach();
-  discordpp::Activity activity;
-  activity.SetType(discordpp::ActivityTypes::Playing);
-  activity.SetState("In Competitive Match");
-  activity.SetDetails("Rank: Diamond II");
-
-  // Update rich presence
-  client->UpdateRichPresence(activity, [](discordpp::ClientResult result) {
-    if (result.Successful()) {
-      std::cout << "🎮 Rich Presence updated successfully!\n";
-    } else {
-      std::cerr << "❌ Rich Presence update failed";
-    }
-  });
 }
 
 };  // namespace ballistica::base
