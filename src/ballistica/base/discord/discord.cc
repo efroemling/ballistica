@@ -9,6 +9,7 @@
 #include <functional>
 #include <iostream>
 #include <thread>
+#include <memory>
 
 #include "cdiscord.h"
 #include "discordpp.h"
@@ -21,7 +22,7 @@ void signalHandler(int signum) { running.store(false); }
 
 void DiscordClient::init() {
   // Replace with your Discord Application ID
-  const uint64_t APPLICATION_ID = 1371951592034668635;
+  // APPLICATION_ID = ;
   std::signal(SIGINT, signalHandler);
   std::cout << "🚀 Initializing Discord SDK...\n";
   auto client = std::make_shared<discordpp::Client>();
@@ -62,9 +63,22 @@ void DiscordClient::init() {
     }
   });
 
-  // Generate OAuth2 code verifier for authentication
-  auto codeVerifier = client->CreateAuthorizationCodeVerifier();
+  client = authenticate(client);
 
+
+  std::thread discordThread([&]() {
+    while (running) {
+      discordpp::RunCallbacks();
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+  });
+  discordThread.detach();
+}
+
+
+std::shared_ptr<discordpp::Client> DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
+    // Generate OAuth2 code verifier for authentication
+  auto codeVerifier = client->CreateAuthorizationCodeVerifier();
   // Set up authentication arguments
   discordpp::AuthorizationArgs args{};
   args.SetClientId(APPLICATION_ID);
@@ -72,7 +86,7 @@ void DiscordClient::init() {
   args.SetCodeChallenge(codeVerifier.Challenge());
 
   // Begin authentication process
-  client->Authorize(args, [client, codeVerifier](auto result, auto code,
+  client->Authorize(args, [this,client, codeVerifier](auto result, auto code,
                                                  auto redirectUri) {
     if (!result.Successful()) {
       std::cerr << "❌ Authentication Error: " << result.Error() << std::endl;
@@ -96,18 +110,13 @@ void DiscordClient::init() {
                     std::cout << "🔑 Token updated, connecting to Discord...\n";
                     client->Connect();
                   }
-                });
+                }
+                
+              );
           });
     }
   });
+  return client;
+};
 
-  std::thread discordThread([&]() {
-    while (running) {
-      discordpp::RunCallbacks();
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-  });
-  discordThread.detach();
-}
-
-};  // namespace ballistica::base
+}  // namespace ballistica::base
