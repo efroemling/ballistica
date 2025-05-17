@@ -12,6 +12,7 @@
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
+#include "ballistica/base/discord/discord.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
@@ -244,6 +245,9 @@ void BaseFeatureSet::StartApp() {
   // to avoid crashing if called early.
   app_started_ = true;
 
+  // Initialize Discord right after app is started
+  InitializeDiscord();
+
   // As the last step of this phase, tell the logic thread to apply the app
   // config which will kick off screen creation or otherwise to get the
   // ball rolling.
@@ -398,6 +402,11 @@ void BaseFeatureSet::SuspendApp() {
   msg += ").";
 
   g_core->Log(LogName::kBa, LogLevel::kError, msg);
+}
+
+void BaseFeatureSet::InitializeDiscord() {
+  DiscordClient client;
+  client.init();
 }
 
 void BaseFeatureSet::UnsuspendApp() {
