@@ -63,7 +63,7 @@ void DiscordClient::init() {
     }
   });
 
-  client = authenticate(client);
+  authenticate(client);
 
 
   std::thread discordThread([&]() {
@@ -76,7 +76,7 @@ void DiscordClient::init() {
 }
 
 
-std::shared_ptr<discordpp::Client> DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
+void DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
     // Generate OAuth2 code verifier for authentication
   auto codeVerifier = client->CreateAuthorizationCodeVerifier();
   // Set up authentication arguments
@@ -116,7 +116,6 @@ std::shared_ptr<discordpp::Client> DiscordClient::authenticate(std::shared_ptr<d
           });
     }
   });
-  return client;
 };
 
 }  // namespace ballistica::base
