@@ -44,7 +44,9 @@ void DiscordClient::init() {
 
         if (status == discordpp::Client::Status::Ready) {
           std::cout << "✅ Client is ready! You can now call SDK functions.\n";
-          SetActivity(client, "Playing", "Ballistica");
+          SetActivity(client, "alpha", "discord social sdk", "globe",
+                      "Large Image Text", "party",
+                      "smol party", 0, 0);
 
         } else if (error != discordpp::Client::Error::None) {
           std::cerr << "❌ Connection Error: "
@@ -125,14 +127,40 @@ void DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
 };
 
 void DiscordClient::SetActivity(std::shared_ptr<discordpp::Client> client,
-                                const std::string& state,
-                                const std::string& details) {
-  discordpp::Activity activity;
+    const char* state, const char* details, const char* largeImageKey,
+    const char* largeImageText, const char* smallImageKey,
+    const char* smallImageText, int64_t startTimestamp,
+    int64_t endTimestamp) {
+  // Check if Discord is initialized
+  if (!client) {
+    return;
+  }
+  std::cout << "Setting activity...\n";
+  // Create Discord Activity structure
+  discordpp::Activity activity{};
+  // activity.SetSupportedPlatforms(static_cast<discordpp::ActivityGamePlatforms>(
+  //     static_cast<int>(discordpp::ActivityGamePlatforms::Desktop)
+  //     | static_cast<int>(discordpp::ActivityGamePlatforms::IOS)
+  //     | static_cast<int>(discordpp::ActivityGamePlatforms::Android)
+  //     | static_cast<int>(discordpp::ActivityGamePlatforms::Embedded)));
+  // Set properties if provided
   activity.SetType(discordpp::ActivityTypes::Playing);
-  activity.SetState(state);
-  activity.SetDetails(details);
+  if (state) activity.SetState(state);
+  if (details) activity.SetDetails(details);
 
-  // Update rich presence
+  // Set timestamps if provided
+  // if (startTimestamp > 0)
+  // activity.SetTimestamps(activity.Timestamps(startTimestamp)); if
+  // (endTimestamp > 0) activity.GetTimestamps().SetEnd(endTimestamp);
+
+  // Set assets if provided
+  discordpp::ActivityAssets assets{};
+  if (largeImageKey) assets.SetLargeImage(largeImageKey);
+  if (largeImageText) assets.SetLargeText(largeImageText);
+  if (smallImageKey) assets.SetSmallImage(smallImageKey);
+  if (smallImageText) assets.SetSmallText(smallImageText);
+  activity.SetAssets(assets);
+    // Update rich presence
   client->UpdateRichPresence(activity, [](discordpp::ClientResult result) {
     if (result.Successful()) {
       std::cout << "🎮 Rich Presence updated successfully!\n";
@@ -142,3 +170,6 @@ void DiscordClient::SetActivity(std::shared_ptr<discordpp::Client> client,
   });
 }
 }  // namespace ballistica::base
+
+  
+
