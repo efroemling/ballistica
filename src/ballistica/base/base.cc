@@ -43,6 +43,7 @@ namespace ballistica::base {
 
 core::CoreFeatureSet* g_core{};
 BaseFeatureSet* g_base{};
+std::shared_ptr<discordpp::Client> BaseFeatureSet::discord_client_{};
 
 BaseFeatureSet::BaseFeatureSet()
     : app_adapter{BaseBuildSwitches::CreateAppAdapter()},
@@ -406,7 +407,7 @@ void BaseFeatureSet::SuspendApp() {
 
 void BaseFeatureSet::InitializeDiscord() {
   DiscordClient discord_client;
-  auto client = discord_client.init();
+  discord_client_ = discord_client.init();
 }
 
 void BaseFeatureSet::UnsuspendApp() {

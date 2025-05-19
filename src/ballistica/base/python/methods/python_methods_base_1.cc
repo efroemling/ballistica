@@ -54,19 +54,14 @@ static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
           &start_timestamp, &end_timestamp)) {
     return nullptr;
   }
-  // implement Discord rich presence functionality here
-  // auto client = BaseFeatureSet::GetDiscordClient();
-  // if (client) {
-  //   client->SetActivity(client, state, details, large_image_key,
-  //   large_image_text,
-  //                       small_image_key, small_image_text, start_timestamp,
-  //                       end_timestamp);
-  //   }
-  //  g_base->python->PythonSetDiscordPresence(
-  //       state, details,
-  //       large_image_key, large_image_text,
-  //       small_image_key, small_image_text,
-  //       start_timestamp, end_timestamp);
+  
+  auto discord_client = BaseFeatureSet::GetDiscordClient();
+  if (discord_client) {
+    DiscordClient discord_client_obj;
+    discord_client_obj.SetActivity(discord_client, state, details,
+                              large_image_key, large_image_text, small_image_key,
+                              small_image_text, start_timestamp, end_timestamp);
+  }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

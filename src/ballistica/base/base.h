@@ -6,9 +6,11 @@
 #include <atomic>
 #include <mutex>
 #include <string>
-
+#include <memory>
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
+#include "ballistica/base/discord/discord.h"
+#include "discordpp.h"
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other
@@ -848,6 +850,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// but may opt to call it at other times.
   void Reset();
 
+  static auto GetDiscordClient() -> std::shared_ptr<discordpp::Client>& {
+    return discord_client_;
+  }
+
  private:
   BaseFeatureSet();
   void LogStartupMessage_();
@@ -879,6 +885,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// stale values.
   std::atomic_bool app_active_{true};
   int shutdown_suppress_count_{};
+  static std::shared_ptr<discordpp::Client> discord_client_;
 };
 
 }  // namespace ballistica::base
