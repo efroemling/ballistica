@@ -36,9 +36,9 @@ namespace ballistica::base {
 static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
                                   PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char *state, *details, *large_image_key, *large_image_text,
-      *small_image_key, *small_image_text;
-  int64_t start_timestamp, end_timestamp;
+  const char *state = nullptr, *details= nullptr, *large_image_key= nullptr, *large_image_text= nullptr,
+      *small_image_key= nullptr, *small_image_text= nullptr;
+  int64_t start_timestamp = 0, end_timestamp= 0;
   static char* kwlist[] = {(char*)"state",
                            (char*)"details",
                            (char*)"large_image_key",
@@ -54,13 +54,13 @@ static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
           &start_timestamp, &end_timestamp)) {
     return nullptr;
   }
-  
+
   auto discord_client = BaseFeatureSet::GetDiscordClient();
   if (discord_client) {
     DiscordClient discord_client_obj;
-    discord_client_obj.SetActivity(discord_client, state, details,
-                              large_image_key, large_image_text, small_image_key,
-                              small_image_text, start_timestamp, end_timestamp);
+    discord_client_obj.SetActivity(
+        discord_client, state, details, large_image_key, large_image_text,
+        small_image_key, small_image_text, start_timestamp, end_timestamp);
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -71,23 +71,25 @@ static PyMethodDef PyDiscordRichpresenceDef = {
     (PyCFunction)PyDiscordRichpresence,  // method
     METH_VARARGS | METH_KEYWORDS,        // flags
 
-    //    Set Discord Rich Presence information.
-    //     Args:
-    //       state: The user's current status
-    //       details: What the user is currently doing
-    //       large_image_key: Key for the large image
-    //       large_image_text: Text displayed when hovering over the large image
-    //       small_image_key: Key for the small image
-    //       small_image_text: Text displayed when hovering over the small image
-    //       start_timestamp: Unix timestamp for game start time
-    //       end_timestamp: Unix timestamp for game end time
-    "open_url(address: str, force_fallback: bool = False) -> None\n"
+    "Set Discord Rich Presence information."
     "\n"
-    "Open the provided URL.\n"
+    "Args:"
     "\n"
-    "Attempts to open the provided url in a web-browser. If that is not\n"
-    "possible (or ``force_fallback`` is True), instead displays the url as\n"
-    "a string and/or qrcode."};
+    "state: The user's current status"
+    "\n"
+    "details: What the user is currently doing"
+    "\n"
+    "large_image_key: Key for the large image"
+    "\n"
+    "large_image_text: Text displayed when hovering over the large image"
+    "\n"
+    "small_image_key: Key for the small image"
+    "\n"
+    "small_image_text: Text displayed when hovering over the small image"
+    "\n"
+    "start_timestamp: Unix timestamp for game start time"
+    "\n"
+    " end_timestamp: Unix timestamp for game end time"};
 
 // --------------------------------- appname -----------------------------------
 
