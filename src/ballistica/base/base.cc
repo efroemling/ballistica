@@ -405,8 +405,8 @@ void BaseFeatureSet::SuspendApp() {
 }
 
 void BaseFeatureSet::InitializeDiscord() {
-  DiscordClient client;
-  client.init();
+  DiscordClient discord_client;
+  auto client = discord_client.init();
 }
 
 void BaseFeatureSet::UnsuspendApp() {

@@ -10,7 +10,7 @@
 namespace ballistica::base {
 class DiscordClient {
  public:
-  void init();
+  std::shared_ptr<discordpp::Client> init();
   void authenticate(std::shared_ptr<discordpp::Client> client);
 
   void SetActivity(std::shared_ptr<discordpp::Client> client, const char* state,

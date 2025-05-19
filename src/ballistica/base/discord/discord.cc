@@ -22,7 +22,7 @@ std::atomic<bool> running = true;
 
 void signalHandler(int signum) { running.store(false); }
 
-void DiscordClient::init() {
+std::shared_ptr<discordpp::Client> DiscordClient::init() {
   // Replace with your Discord Application ID
   // APPLICATION_ID = ;
   std::signal(SIGINT, signalHandler);
@@ -45,8 +45,7 @@ void DiscordClient::init() {
         if (status == discordpp::Client::Status::Ready) {
           std::cout << "✅ Client is ready! You can now call SDK functions.\n";
           SetActivity(client, "alpha", "discord social sdk", "globe",
-                      "Large Image Text", "party",
-                      "smol party", 0, 0);
+                      "Large Image Text", "party", "smol party", 0, 0);
 
         } else if (error != discordpp::Client::Error::None) {
           std::cerr << "❌ Connection Error: "
@@ -64,6 +63,7 @@ void DiscordClient::init() {
     }
   });
   discordThread.detach();
+  return client;
 }
 
 void DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
@@ -102,12 +102,23 @@ void DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
               std::fstream file("discord_auth.txt", std::ios::out);
               file << accessToken << std::endl;
               file.close();
+              std::cout << "🔑 Access token found! Using it to connect...\n";
+              client->UpdateToken(
+                  discordpp::AuthorizationTokenType::Bearer, accessToken,
+                  [client](discordpp::ClientResult result) {
+                    if (result.Successful()) {
+                      std::cout
+                          << "🔑 Token updated, connecting to Discord...\n";
+                      client->Connect();
+                    } else {
+                      std::cerr
+                          << "❌ Failed to update token: " << result.Error()
+                          << std::endl;
+                    }
+                  });
             });
       }
     });
-    std::fstream file("discord_auth.txt", std::ios::in);
-    file >> accessToken;
-    file.close();
 
   } else if (!accessToken.empty()) {
     std::cout << "🔑 Access token found! Using it to connect...\n";
@@ -127,10 +138,12 @@ void DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
 };
 
 void DiscordClient::SetActivity(std::shared_ptr<discordpp::Client> client,
-    const char* state, const char* details, const char* largeImageKey,
-    const char* largeImageText, const char* smallImageKey,
-    const char* smallImageText, int64_t startTimestamp,
-    int64_t endTimestamp) {
+                                const char* state, const char* details,
+                                const char* largeImageKey,
+                                const char* largeImageText,
+                                const char* smallImageKey,
+                                const char* smallImageText,
+                                int64_t startTimestamp, int64_t endTimestamp) {
   // Check if Discord is initialized
   if (!client) {
     return;
@@ -160,7 +173,7 @@ void DiscordClient::SetActivity(std::shared_ptr<discordpp::Client> client,
   if (smallImageKey) assets.SetSmallImage(smallImageKey);
   if (smallImageText) assets.SetSmallText(smallImageText);
   activity.SetAssets(assets);
-    // Update rich presence
+  // Update rich presence
   client->UpdateRichPresence(activity, [](discordpp::ClientResult result) {
     if (result.Successful()) {
       std::cout << "🎮 Rich Presence updated successfully!\n";
@@ -170,6 +183,3 @@ void DiscordClient::SetActivity(std::shared_ptr<discordpp::Client> client,
   });
 }
 }  // namespace ballistica::base
-
-  
-
