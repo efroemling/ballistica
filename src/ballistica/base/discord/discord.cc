@@ -23,8 +23,6 @@ std::atomic<bool> running = true;
 void signalHandler(int signum) { running.store(false); }
 
 std::shared_ptr<discordpp::Client> DiscordClient::init() {
-  // Replace with your Discord Application ID
-  // APPLICATION_ID = ;
   std::signal(SIGINT, signalHandler);
   std::cout << "🚀 Initializing Discord SDK...\n";
   auto client = std::make_shared<discordpp::Client>();
@@ -75,13 +73,14 @@ void DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
   args.SetScopes(discordpp::Client::GetDefaultPresenceScopes());
   args.SetCodeChallenge(codeVerifier.Challenge());
 
-  // Begin authentication process
+  
   std::fstream file("discord_auth.txt", std::ios::in);
   std::string accessToken;
   file >> accessToken;
   file.close();
 
   if (accessToken.empty()) {
+    // Begin authentication process
     client->Authorize(args, [this, client, codeVerifier](auto result, auto code,
                                                          auto redirectUri) {
       if (!result.Successful()) {
@@ -144,12 +143,10 @@ void DiscordClient::SetActivity(std::shared_ptr<discordpp::Client> client,
                                 const char* smallImageKey,
                                 const char* smallImageText,
                                 int64_t startTimestamp, int64_t endTimestamp) {
-  // Check if Discord is initialized
   if (!client) {
     return;
   }
   std::cout << "Setting activity...\n";
-  // Create Discord Activity structure
   discordpp::Activity activity{};
   // activity.SetSupportedPlatforms(static_cast<discordpp::ActivityGamePlatforms>(
   //     static_cast<int>(discordpp::ActivityGamePlatforms::Desktop)
@@ -166,14 +163,12 @@ void DiscordClient::SetActivity(std::shared_ptr<discordpp::Client> client,
   // activity.SetTimestamps(activity.Timestamps(startTimestamp)); if
   // (endTimestamp > 0) activity.GetTimestamps().SetEnd(endTimestamp);
 
-  // Set assets if provided
   discordpp::ActivityAssets assets{};
   if (largeImageKey) assets.SetLargeImage(largeImageKey);
   if (largeImageText) assets.SetLargeText(largeImageText);
   if (smallImageKey) assets.SetSmallImage(smallImageKey);
   if (smallImageText) assets.SetSmallText(smallImageText);
   activity.SetAssets(assets);
-  // Update rich presence
   client->UpdateRichPresence(activity, [](discordpp::ClientResult result) {
     if (result.Successful()) {
       std::cout << "🎮 Rich Presence updated successfully!\n";

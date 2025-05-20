@@ -90,7 +90,7 @@ static PyMethodDef PyDiscordRichpresenceDef = {
     "\n"
     "start_timestamp: Unix timestamp for game start time"
     "\n"
-    " end_timestamp: Unix timestamp for game end time"};
+    "end_timestamp: Unix timestamp for game end time"};
 
 // --------------------------------- appname -----------------------------------
 

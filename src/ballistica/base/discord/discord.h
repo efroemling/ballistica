@@ -3,9 +3,9 @@
 #ifndef BALLISTICA_BASE_DISCORD_DISCORD_H_
 #define BALLISTICA_BASE_DISCORD_DISCORD_H_
 
-#include <memory>  // For std::shared_ptr
+#include <memory>
 
-#include "discordpp.h"  // Include the Discord header
+#include "discordpp.h"
 
 namespace ballistica::base {
 class DiscordClient {
