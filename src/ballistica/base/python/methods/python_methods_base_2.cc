@@ -28,39 +28,6 @@ namespace ballistica::base {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 
-// ------------------------------- discord_richpresence
-// ------------------------------------
-
-static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
-                                  PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char *state, *details, *largeImageKey, *largeImageText, *smallImageKey,
-      *smallImageText;
-  int64_t startTimestamp, endTimestamp;
-  static const char* kwlist[] = {"state", "details", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|p",
-                                   const_cast<char**>(kwlist), &state,
-                                   &details)) {
-    return nullptr;
-  }
-  // implement Discord rich presence functionality here
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyDiscordRichpresenceDef = {
-    "discord_richpresence",              // name
-    (PyCFunction)PyDiscordRichpresence,  // method
-    METH_VARARGS | METH_KEYWORDS,        // flags
-
-    "open_url(address: str, force_fallback: bool = False) -> None\n"
-    "\n"
-    "Open the provided URL.\n"
-    "\n"
-    "Attempts to open the provided url in a web-browser. If that is not\n"
-    "possible (or ``force_fallback`` is True), instead displays the url as\n"
-    "a string and/or qrcode."};
-
 // ------------------------------- open_url ------------------------------------
 
 static auto PyOpenURL(PyObject* self, PyObject* args, PyObject* keywds)
