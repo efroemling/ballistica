@@ -4,12 +4,13 @@
 #define BALLISTICA_BASE_BASE_H_
 
 #include <atomic>
+#include <memory>
 #include <mutex>
 #include <string>
-#include <memory>
+
+#include "ballistica/base/discord/discord.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
-#include "ballistica/base/discord/discord.h"
 #include "discordpp.h"
 
 // Common header that most everything using our feature-set should include.

@@ -36,9 +36,10 @@ namespace ballistica::base {
 static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
                                   PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char *state = nullptr, *details= nullptr, *large_image_key= nullptr, *large_image_text= nullptr,
-      *small_image_key= nullptr, *small_image_text= nullptr;
-  int64_t start_timestamp = 0, end_timestamp= 0;
+  const char *state = nullptr, *details = nullptr, *large_image_key = nullptr,
+             *large_image_text = nullptr, *small_image_key = nullptr,
+             *small_image_text = nullptr;
+  int64_t start_timestamp = 0, end_timestamp = 0;
   static char* kwlist[] = {(char*)"state",
                            (char*)"details",
                            (char*)"large_image_key",
