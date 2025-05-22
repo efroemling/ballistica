@@ -1118,8 +1118,9 @@ void RootWidget::StepInbox_(base::RenderPass* renderpass, seconds_t dt) {
     float mult{1.0f
                + fabs(2.0f
                       * sinf(freq_mult * 3.1415f
-                             * (inbox_anim_flash_time_
-                                - renderpass->frame_def()->display_time())))};
+                             * static_cast<float>(
+                                 inbox_anim_flash_time_
+                                 - renderpass->frame_def()->display_time())))};
     widget->set_color(kBotLeftColorR * mult, kBotLeftColorG * mult,
                       kBotLeftColorB * mult);
     inbox_announce_text_->widget->set_color(

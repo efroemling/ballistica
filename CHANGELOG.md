@@ -1,4 +1,4 @@
-### 1.7.40 (build 22373, api 9, 2025-05-22)
+### 1.7.40 (build 22375, api 9, 2025-05-22)
 - Upgraded from Python 3.12 to 3.13. See python.org for what fun new goodies
   this gets us.
 - Bumping minimum supported Android from 6.0 to 7.0. I'm reworking app language
