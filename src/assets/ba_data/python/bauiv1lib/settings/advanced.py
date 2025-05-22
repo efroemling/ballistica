@@ -10,6 +10,7 @@ import os
 import logging
 from typing import TYPE_CHECKING, override
 
+from bacommon.locale import LocaleResolved
 from bauiv1lib.popup import PopupMenu
 import bauiv1 as bui
 
@@ -272,7 +273,20 @@ class AdvancedSettingsWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        available_languages = bui.app.lang.available_languages
+        locale_ss = bui.app.locale
+
+        # available_languages = bui.app.lang.available_languages
+
+        # Build a list of long-values for locales we are able to display.
+        can_display_full_unicode = bui.supports_unicode_display()
+        available_languages = sorted(
+            l.locale.long_value
+            for l in LocaleResolved
+            if (
+                can_display_full_unicode
+                or not locale_ss.requires_full_unicode_display(l)
+            )
+        )
 
         # Don't rebuild if the menu is open or if our language and
         # language-list hasn't changed.
@@ -328,7 +342,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             v_align='center',
         )
 
-        languages = bui.app.lang.available_languages
+        # languages = bui.app.lang.available_languages
         cur_lang = bui.app.config.get('Lang', None)
         if cur_lang is None:
             cur_lang = 'Auto'
@@ -355,11 +369,11 @@ class AdvancedSettingsWindow(bui.MainWindow):
             lang_names_translated = {}
 
         langs_translated = {}
-        for lang in languages:
+        for lang in available_languages:
             langs_translated[lang] = lang_names_translated.get(lang, lang)
 
         langs_full = {}
-        for lang in languages:
+        for lang in available_languages:
             lang_translated = bui.Lstr(translate=('languages', lang)).evaluate()
             if langs_translated[lang] == lang_translated:
                 langs_full[lang] = lang_translated
@@ -371,13 +385,13 @@ class AdvancedSettingsWindow(bui.MainWindow):
         self._language_popup = PopupMenu(
             parent=self._subcontainer,
             position=(210, v - 19),
-            width=150,
+            width=250,
             opening_call=bui.WeakCall(self._on_menu_open),
             closing_call=bui.WeakCall(self._on_menu_close),
             autoselect=False,
             on_value_change_call=bui.WeakCall(self._on_menu_choice),
-            choices=['Auto'] + languages,
-            button_size=(250, 60),
+            choices=['Auto'] + available_languages,
+            button_size=(300, 60),
             choices_display=(
                 [
                     bui.Lstr(
@@ -387,14 +401,14 @@ class AdvancedSettingsWindow(bui.MainWindow):
                             + bui.Lstr(
                                 translate=(
                                     'languages',
-                                    bui.app.lang.default_language,
+                                    bui.app.locale.default_locale.long_value,
                                 )
                             ).evaluate()
                             + ')'
                         )
                     )
                 ]
-                + [bui.Lstr(value=langs_full[l]) for l in languages]
+                + [bui.Lstr(value=langs_full[l]) for l in available_languages]
             ),
             current_choice=cur_lang,
         )
@@ -1002,8 +1016,21 @@ class AdvancedSettingsWindow(bui.MainWindow):
         self._menu_open = False
 
     def _on_menu_choice(self, choice: str) -> None:
-        bui.app.lang.setlanguage(None if choice == 'Auto' else choice)
+
+        cfg = bui.app.config
+        cfgkey = 'Lang'
+
+        if choice == 'Auto':
+            if cfgkey in cfg:
+                del cfg[cfgkey]
+        else:
+            cfg[cfgkey] = choice
+
+        cfg.apply_and_commit()
+
         self._save_state()
+
+        # bui.app.lang.setlanguage(None if choice == 'Auto' else choice)
         bui.apptimer(0.1, bui.WeakCall(self._rebuild))
 
     def _completed_langs_cb(self, results: dict[str, Any] | None) -> None:

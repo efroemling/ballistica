@@ -49,7 +49,7 @@ XZ_VER_APPLE = '5.4.7-1' if APPLE_NEW else '5.4.4-1'
 
 # Android repo doesn't seem to be getting updated much so manually
 # bumping various versions to keep things up to date.
-ANDROID_API_VER = 23
+ANDROID_API_VER = 24
 ZLIB_VER_ANDROID = '1.3.1'
 XZ_VER_ANDROID = '5.6.4'
 BZIP2_VER_ANDROID = '1.0.8'

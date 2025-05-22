@@ -183,7 +183,7 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
       "Platform-specific os version string provided by the native layer.\n"
       "\n"
       "Note that more detailed OS information may be available through\n"
-      "the Python 'platform' module.");
+      "the Python :mod:`platform` module.");
 
   envs["api_version"] = IntEntry_(
       kEngineApiVersion,
@@ -196,6 +196,12 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
       "Ballistica APIs. When that happens, modules/packages should be "
       "updated\n"
       "accordingly and set to target the newer API version number.");
+
+  envs["locale_tag"] = StrEntry_(
+      g_core->platform->GetLocaleTag(),
+      "Locale tag for the current environment in BCP 47 or POSIX"
+      " localization\n"
+      "string form; will be something like ``en-US`` or ``en_US.UTF-8``.");
 
   envs["python_directory_user"] = OptionalStrEntry_(
       g_core->GetUserPythonDirectory(),

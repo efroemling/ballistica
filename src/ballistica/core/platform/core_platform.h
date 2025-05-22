@@ -116,8 +116,20 @@ class CorePlatform {
   /// Return the directory where game replay files live.
   auto GetReplaysDir() -> std::string;
 
-  /// Return something like `en_US` or whatnot.
-  virtual auto GetLocale() -> std::string;
+  /// Return a `long_value` of a Ballistica locale (ie: "ChineseSimplified")
+  /// or an empty string if this is not available. In the empty string case,
+  /// the app will fall back to using GetLocaleTag() to determine the
+  /// Ballistica locale. By embedding Ballistica locale strings as native
+  /// platform translations (ie: strings.xml on Android, etc.) the app can
+  /// allow the OS to use whatever logic it wants (fallbacks languages, etc)
+  /// to arrive at one of our locales. This is likely to be more robust than
+  /// us trying to do the same thing through a single locale tag.
+  virtual auto GetBaLocale() -> std::string;
+
+  /// Return a string describing the active language, country, etc. This can
+  /// be provided in BCP 47 form (`en-US`) or POSIX locale form
+  /// (`en_US.UTF-8`).
+  virtual auto GetLocaleTag() -> std::string;
 
   /// Get the older more complex user-agent-string, used for communication
   /// with v1 servers/etc. This should go away eventually.

@@ -30,13 +30,13 @@ class LoginInfo:
 class LoginAdapter:
     """Allows using implicit login types in an explicit way.
 
-    Some login types such as Google Play Game Services or Game Center are
-    basically always present and often do not provide a way to log out
-    from within a running app, so this adapter exists to use them in a
-    flexible manner by 'attaching' and 'detaching' from an always-present
-    login, allowing for its use alongside other login types. It also
-    provides common functionality for server-side account verification and
-    other handy bits.
+    Some login types such as Google Play Game Services or Game Center
+    are basically always present and often do not provide a way to log
+    out from within a running app, so this adapter exists to use them in
+    a flexible manner by 'attaching to' and 'detaching from' an
+    always-present login, allowing for its use alongside other login
+    types. It also provides common functionality for server-side account
+    verification and other handy bits.
     """
 
     @dataclass

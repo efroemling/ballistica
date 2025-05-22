@@ -9,6 +9,7 @@ import random
 import weakref
 from typing import TYPE_CHECKING, override
 
+from bacommon.locale import LocaleResolved
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -265,7 +266,10 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             # We draw higher in kiosk mode (make sure to test this
             # when making adjustments) for now we're hard-coded for
             # a few languages.. should maybe look into generalizing this?..
-            if app.lang.language == 'Chinese':
+            if (
+                app.locale.current_locale.resolved
+                is LocaleResolved.CHINESE_SIMPLIFIED
+            ):
                 base_x = -270.0
                 x = base_x - 20.0
                 spacing = 85.0 * base_scale

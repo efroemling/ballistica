@@ -1,12 +1,17 @@
-### 1.7.40 (build 22368, api 9, 2025-05-13)
+### 1.7.40 (build 22373, api 9, 2025-05-22)
 - Upgraded from Python 3.12 to 3.13. See python.org for what fun new goodies
   this gets us.
-- Apple builds (namely Mac for now) are now using a more 'vanilla' version of the
-  Python library instead of the custom-built version I've been using for years.
-  For one, this means that Python and its various modules and library
+- Bumping minimum supported Android from 6.0 to 7.0. I'm reworking app language
+  support in this version (see notes below) and setting min-version to 7.0 makes
+  this significantly simpler due to Android 7 adding support for BCP 47
+  resources. It's been a year and a half since the bump to 6.0 and my stats show
+  barely anyone still running 6 so I feel this is reasonable.
+- Apple builds (namely Mac for now) are now using a more 'vanilla' version of
+  the Python library instead of the custom-built version I've been maintaining
+  for years. For one, this means that Python and its various modules and library
   dependencies now exist as separate shared libraries on disk instead of all
   being statically compiled into a single binary. This increases app size and
-  complexity a bit but will make it way easier to update Python going forward
+  complexity a bit but will make it much easier to update Python going forward
   and reduces the chances of things breaking due to nonstandard customizations.
   At some point in the future I may make the same change for the Android
   version, though the custom statically linked build is a bit easier to maintain
@@ -26,6 +31,17 @@
   if anything is referenced in comments that cannot be found (classes, methods,
   etc.) This should help avoid broken or out of date docstrings. Specific
   exceptions to this can be added in `conf.py` if needed.
+- Added the `babase.LocaleSubsystem` which can be found at `ba*.app.locale`.
+  This is the modern replacement for the `LanguageSubsystem` at `ba*.app.lang`
+  which will eventually be removed. This ties in with upcoming goodies such as
+  asset-package based translations.
+- Split the Spanish translation into two different ones: 'Spanish - Latin
+  America' and 'Spanish - Spain'.
+- Split the Portuguese translation into two different ones: 'Portuguese -
+  Brazil' and 'Portuguese - Portugal'.
+- Android should not be smarter about selecting translations - for example, if
+  your first choice language is not available but your second choice is, it
+  should now show your second choice instead of falling back to English.
 
 ### 1.7.39 (build 22353, api 9, 2025-04-08)
 - Lots of work on sphinx documentation. Docs are now generated for both runtime

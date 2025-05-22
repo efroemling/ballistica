@@ -1282,7 +1282,9 @@ class PublicGatherTab(GatherTab):
         # one, update our list.
         party_key = f'{address}_{port}'
         party = self._parties.get(party_key)
+
         if party is not None:
+            print(f'PING {party.name} {result=} {time.monotonic():.1f}')
             if result is not None:
                 party.ping_responses += 1
 

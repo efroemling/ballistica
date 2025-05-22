@@ -734,8 +734,8 @@ void DevConsole::AddPythonTerminal() {
       32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal, false,
       [this] { Exec(); }));
   widgets_.emplace_back(std::make_unique<Button_>(
-      "Copy History", 0.5f * bs, DevConsoleHAnchor_::kRight, -85.0f * bs,
-      Height() - 25.0f * bs, 80.0f * bs, 20.0f * bs, 4.0 * bs,
+      "Copy History", 0.4f * bs, DevConsoleHAnchor_::kRight, -75.0f * bs,
+      Height() - 18.0f * bs, 72.0f * bs, 15.0f * bs, 4.0 * bs,
       DevButtonStyle_::kNormal, false, [this] { CopyHistory(); }));
   python_terminal_visible_ = true;
 }

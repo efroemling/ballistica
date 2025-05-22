@@ -15,6 +15,7 @@ from efro.threadpool import ThreadPoolExecutorEx
 
 import _babase
 from babase._language import LanguageSubsystem
+from babase._locale import LocaleSubsystem
 from babase._plugin import PluginSubsystem
 from babase._meta import MetadataSubsystem
 from babase._net import NetworkSubsystem
@@ -102,6 +103,11 @@ class App:
         self.threadpool: ThreadPoolExecutorEx = ThreadPoolExecutorEx(
             thread_name_prefix='baworker',
             initializer=self._thread_pool_thread_init,
+        )
+
+        #: Locale related functionality.
+        self.locale: LocaleSubsystem = self.register_subsystem(
+            LocaleSubsystem()
         )
 
         #: Language related functionality.

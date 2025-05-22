@@ -425,7 +425,13 @@ void CorePlatform::DoMakeDir(const std::string& dir, bool quiet) {
 #endif
 }
 
-auto CorePlatform::GetLocale() -> std::string {
+auto CorePlatform::GetBaLocale() -> std::string {
+  // Default implementation returns nothing so we fall back to
+  // GetLocaleTag().
+  return "";
+}
+
+auto CorePlatform::GetLocaleTag() -> std::string {
   const char* lang = getenv("LANG");
   if (lang) {
     return lang;
@@ -639,7 +645,7 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
   std::string out{std::string("BallisticaKit ") + kEngineVersion + " ("
                   + std::to_string(kEngineBuildNumber) + ")" + subplatform
                   + " (" + g_buildconfig.platform() + " " + g_buildconfig.arch()
-                  + version + "; " + device + "; " + GetLocale() + ")"};
+                  + version + "; " + device + "; " + GetLocaleTag() + ")"};
 
   // This gets shipped to various places which might choke on fancy unicode
   // characters, so let's limit to simple ascii.

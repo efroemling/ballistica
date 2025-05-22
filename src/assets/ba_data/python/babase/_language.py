@@ -19,15 +19,20 @@ if TYPE_CHECKING:
 
 
 class LanguageSubsystem(AppSubsystem):
-    """Language functionality for the app.
+    """Legacy language functionality for the app.
 
-    Access the single instance of this class at 'babase.app.lang'.
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.lang` attr on the :class:`~babase.App` class.
+
+    .. deprecated:: 1.7.40
+
+       Use :class:`~babase.LocaleSubsystem` for language/locale
+       functionality when possible. This old class remains for
+       compatibility and will be removed eventually.
     """
 
     def __init__(self) -> None:
         super().__init__()
-        self.default_language: str = self._get_default_language()
-
         self._language: str | None = None
         self._language_target: AttrDict | None = None
         self._language_merged: AttrDict | None = None
@@ -59,45 +64,8 @@ class LanguageSubsystem(AppSubsystem):
         """
         if self._language is None:
             raise RuntimeError('App language is not yet set.')
+
         return self._language
-
-    @property
-    def available_languages(self) -> list[str]:
-        """A list of all available languages.
-
-        Note that languages that may be present in game assets but which
-        are not displayable on the running version of the game are not
-        included here.
-        """
-        langs = set()
-        try:
-            names = os.listdir(
-                os.path.join(
-                    _babase.app.env.data_directory,
-                    'ba_data',
-                    'data',
-                    'languages',
-                )
-            )
-            names = [n.replace('.json', '').capitalize() for n in names]
-
-            # FIXME: our simple capitalization fails on multi-word
-            # names; should handle this in a better way...
-            for i, name in enumerate(names):
-                if name == 'Chinesetraditional':
-                    names[i] = 'ChineseTraditional'
-                elif name == 'Piratespeak':
-                    names[i] = 'PirateSpeak'
-        except Exception:
-            applog.exception('Error building available language list.')
-            names = []
-
-        for name in names:
-            if self._can_display_language(name):
-                langs.add(name)
-        return sorted(
-            name for name in names if self._can_display_language(name)
-        )
 
     def testlanguage(self, langid: str) -> None:
         """Set the app to test an in-progress language.
@@ -136,20 +104,27 @@ class LanguageSubsystem(AppSubsystem):
 
     def setlanguage(
         self,
-        language: str | dict | None,
+        language: str | dict,
+        *,
         print_change: bool = True,
         store_to_config: bool = True,
+        ignore_redundant: bool = False,
     ) -> None:
         """Set the active app language.
 
-        Pass None to use OS default language.
+        Note that this only applies to the legacy language system and
+        should not be used directly these days.
         """
+
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         assert _babase.in_logic_thread()
+
         cfg = _babase.app.config
         cur_language = cfg.get('Lang', None)
+
+        if ignore_redundant and language == self._language:
+            return
 
         with open(
             os.path.join(
@@ -175,19 +150,19 @@ class LanguageSubsystem(AppSubsystem):
 
             # Store this in the config if its changing.
             if language != cur_language and store_to_config:
-                if language is None:
-                    if 'Lang' in cfg:
-                        del cfg['Lang']  # Clear it out for default.
-                else:
-                    cfg['Lang'] = language
+                # if language is None:
+                #     if 'Lang' in cfg:
+                #         del cfg['Lang']  # Clear it out for default.
+                # else:
+                cfg['Lang'] = language
                 cfg.commit()
                 switched = True
             else:
                 switched = False
 
             # None implies default.
-            if language is None:
-                language = self.default_language
+            # if language is None:
+            #     language = self.default_language
             try:
                 if language == 'English':
                     lmodvalues = None
@@ -269,15 +244,6 @@ class LanguageSubsystem(AppSubsystem):
                 ),
                 color=(0, 1, 0),
             )
-
-    @override
-    def do_apply_app_config(self) -> None:
-        """:meta private:"""
-        assert _babase.in_logic_thread()
-        assert isinstance(_babase.app.config, dict)
-        lang = _babase.app.config.get('Lang', self.default_language)
-        if lang != self._language:
-            self.setlanguage(lang, print_change=False, store_to_config=False)
 
     def get_resource(
         self,
@@ -420,80 +386,6 @@ class LanguageSubsystem(AppSubsystem):
         if len(char) != 1:
             raise ValueError('Invalid Input; must be length 1')
         return 0xE000 <= ord(char) <= 0xF8FF
-
-    def _can_display_language(self, language: str) -> bool:
-        """Tell whether we can display a particular language.
-
-        On some platforms we don't have unicode rendering yet which
-        limits the languages we can draw.
-        """
-
-        # We don't yet support full unicode display on windows or linux :-(.
-        if (
-            language
-            in {
-                'Chinese',
-                'ChineseTraditional',
-                'Persian',
-                'Korean',
-                'Arabic',
-                'Hindi',
-                'Vietnamese',
-                'Thai',
-                'Tamil',
-            }
-            and not _babase.supports_unicode_display()
-        ):
-            return False
-        return True
-
-    def _get_default_language(self) -> str:
-        languages = {
-            'ar': 'Arabic',
-            'be': 'Belarussian',
-            'zh': 'Chinese',
-            'hr': 'Croatian',
-            'cs': 'Czech',
-            'da': 'Danish',
-            'nl': 'Dutch',
-            'eo': 'Esperanto',
-            'fil': 'Filipino',
-            'fr': 'French',
-            'de': 'German',
-            'el': 'Greek',
-            'hi': 'Hindi',
-            'hu': 'Hungarian',
-            'id': 'Indonesian',
-            'it': 'Italian',
-            'ko': 'Korean',
-            'ms': 'Malay',
-            'fa': 'Persian',
-            'pl': 'Polish',
-            'pt': 'Portuguese',
-            'ro': 'Romanian',
-            'ru': 'Russian',
-            'sr': 'Serbian',
-            'es': 'Spanish',
-            'sk': 'Slovak',
-            'sv': 'Swedish',
-            'ta': 'Tamil',
-            'th': 'Thai',
-            'tr': 'Turkish',
-            'uk': 'Ukrainian',
-            'vec': 'Venetian',
-            'vi': 'Vietnamese',
-        }
-
-        # Special case for Chinese: map specific variations to
-        # traditional. (otherwise will map to 'Chinese' which is
-        # simplified)
-        if self.locale in ('zh_HANT', 'zh_TW'):
-            language = 'ChineseTraditional'
-        else:
-            language = languages.get(self.locale[:2], 'English')
-        if not self._can_display_language(language):
-            language = 'English'
-        return language
 
 
 class Lstr:

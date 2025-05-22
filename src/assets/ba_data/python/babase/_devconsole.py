@@ -129,11 +129,13 @@ class DevConsoleSubsystem:
 
     Access the single shared instance of this class via the
     :attr:`~babase.App.devconsole` attr on the :class:`~babase.App`
-    class. The dev-console is a simple always-available UI intended for
-    use by developers; not end users. Traditionally it is available by
-    typing a backtick (`) key on a keyboard, but can also be accessed
-    via an on-screen button (see settings/advanced/dev-tools to enable
-    said button).
+    class.
+
+    The dev-console is a simple always-available UI intended for use by
+    developers; not end users. Traditionally it is available by typing a
+    backtick (`) key on a keyboard, but can also be accessed via an
+    on-screen button (see settings/advanced/dev-tools to enable said
+    button).
     """
 
     def __init__(self) -> None:

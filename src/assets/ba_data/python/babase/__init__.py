@@ -175,6 +175,7 @@ from babase._general import (
     get_type_name,
 )
 from babase._language import Lstr, LanguageSubsystem
+from babase._locale import LocaleSubsystem
 from babase._logging import balog, applog, lifecyclelog
 from babase._login import LoginAdapter, LoginInfo
 
@@ -295,6 +296,7 @@ __all__ = [
     'is_point_in_box',
     'is_xcode_build',
     'LanguageSubsystem',
+    'LocaleSubsystem',
     'lifecyclelog',
     'lock_all_input',
     'LoginAdapter',

@@ -40,7 +40,7 @@ class CorePlatformWindows : public CorePlatform {
   auto GetSocketErrorString() -> std::string override;
   auto GetSocketError() -> int override;
   void DoMakeDir(const std::string& dir, bool quiet) override;
-  auto GetLocale() -> std::string override;
+  auto GetLocaleTag() -> std::string override;
   auto DoGetDeviceName() -> std::string override;
   auto DoGetDeviceDescription() -> std::string override;
   auto DoHasTouchScreen() -> bool override;

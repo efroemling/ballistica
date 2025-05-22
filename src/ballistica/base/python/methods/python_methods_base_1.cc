@@ -696,6 +696,7 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "{"
         "si"  // build_number
         "ss"  // config_file_path
+        "ss"  // ba_locale
         "ss"  // locale
         "ss"  // legacy_user_agent_string
         "ss"  // version
@@ -716,7 +717,8 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "}",
         "build_number", kEngineBuildNumber,
         "config_file_path", g_core->platform->GetConfigFilePath().c_str(),
-        "locale", g_core->platform->GetLocale().c_str(),
+        "ba_locale", g_core->platform->GetBaLocale().c_str(),
+        "locale", g_core->platform->GetLocaleTag().c_str(),
         "legacy_user_agent_string", g_core->legacy_user_agent_string().c_str(),
         "version", kEngineVersion,
         "debug_build", g_buildconfig.debug_build() ? Py_True : Py_False,

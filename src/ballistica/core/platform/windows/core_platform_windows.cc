@@ -391,11 +391,11 @@ void CorePlatformWindows::DoMakeDir(const std::string& dir, bool quiet) {
   }
 }
 
-std::string CorePlatformWindows::GetLocale() {
+std::string CorePlatformWindows::GetLocaleTag() {
   // Get the windows locale.
   // (see http://msdn.microsoft.com/en-us/goglobal/bb895996.aspx)
   // theres a func to convert this to a string but its not available on xp
-  // the standard is lang_COUNTRY I think..
+  // the standard is lang_COUNTRY I think.
   // languages: http://www.loc.gov/standards/iso639-2/php/code_list.php
   // country codes:  http://www.iso.org/iso/prods-services/iso3166ma
   //   /02iso-3166-code-lists/country_names_and_code_elements

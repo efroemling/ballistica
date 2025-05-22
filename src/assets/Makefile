@@ -186,6 +186,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
+  $(BUILD_DIR)/ba_data/python/babase/_locale.py \
   $(BUILD_DIR)/ba_data/python/babase/_logging.py \
   $(BUILD_DIR)/ba_data/python/babase/_login.py \
   $(BUILD_DIR)/ba_data/python/babase/_math.py \
@@ -471,6 +472,7 @@ SCRIPT_TARGETS_PYC_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_general.cpython-313.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_hooks.cpython-313.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_language.cpython-313.opt-1.pyc \
+  $(BUILD_DIR)/ba_data/python/babase/__pycache__/_locale.cpython-313.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_logging.cpython-313.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_login.cpython-313.opt-1.pyc \
   $(BUILD_DIR)/ba_data/python/babase/__pycache__/_math.cpython-313.opt-1.pyc \
@@ -5519,7 +5521,7 @@ DATA_TARGETS = \
   $(BUILD_DIR)/ba_data/data/langdata.json \
   $(BUILD_DIR)/ba_data/data/languages/arabic.json \
   $(BUILD_DIR)/ba_data/data/languages/belarussian.json \
-  $(BUILD_DIR)/ba_data/data/languages/chinese.json \
+  $(BUILD_DIR)/ba_data/data/languages/chinesesimplified.json \
   $(BUILD_DIR)/ba_data/data/languages/chinesetraditional.json \
   $(BUILD_DIR)/ba_data/data/languages/croatian.json \
   $(BUILD_DIR)/ba_data/data/languages/czech.json \
@@ -5541,12 +5543,14 @@ DATA_TARGETS = \
   $(BUILD_DIR)/ba_data/data/languages/persian.json \
   $(BUILD_DIR)/ba_data/data/languages/piratespeak.json \
   $(BUILD_DIR)/ba_data/data/languages/polish.json \
-  $(BUILD_DIR)/ba_data/data/languages/portuguese.json \
+  $(BUILD_DIR)/ba_data/data/languages/portuguesebrazil.json \
+  $(BUILD_DIR)/ba_data/data/languages/portugueseportugal.json \
   $(BUILD_DIR)/ba_data/data/languages/romanian.json \
   $(BUILD_DIR)/ba_data/data/languages/russian.json \
   $(BUILD_DIR)/ba_data/data/languages/serbian.json \
   $(BUILD_DIR)/ba_data/data/languages/slovak.json \
-  $(BUILD_DIR)/ba_data/data/languages/spanish.json \
+  $(BUILD_DIR)/ba_data/data/languages/spanishlatinamerica.json \
+  $(BUILD_DIR)/ba_data/data/languages/spanishspain.json \
   $(BUILD_DIR)/ba_data/data/languages/swedish.json \
   $(BUILD_DIR)/ba_data/data/languages/tamil.json \
   $(BUILD_DIR)/ba_data/data/languages/thai.json \

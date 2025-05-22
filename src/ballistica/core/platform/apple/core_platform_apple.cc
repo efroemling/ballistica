@@ -458,14 +458,25 @@ auto CorePlatformApple::GetLegacySubplatformName() -> std::string {
 #endif
 }
 
-auto CorePlatformApple::GetLocale() -> std::string {
+auto CorePlatformApple::GetBaLocale() -> std::string {
 #if BA_XCODE_BUILD
-  if (!locale_.has_value()) {
-    locale_ = std::string(BallisticaKit::FromCpp::getLocaleString());
+  if (!ba_locale_.has_value()) {
+    ba_locale_ = std::string(BallisticaKit::FromCpp::getBaLocale());
   }
-  return *locale_;
+  return *ba_locale_;
 #else
-  return CorePlatform::GetLocale();
+  return CorePlatform::GetBaLocale();
+#endif
+}
+
+auto CorePlatformApple::GetLocaleTag() -> std::string {
+#if BA_XCODE_BUILD
+  if (!locale_tag_.has_value()) {
+    locale_tag_ = std::string(BallisticaKit::FromCpp::getLocaleTag());
+  }
+  return *locale_tag_;
+#else
+  return CorePlatform::GetLocaleTag();
 #endif
 }
 

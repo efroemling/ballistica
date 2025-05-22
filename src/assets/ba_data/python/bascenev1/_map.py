@@ -333,7 +333,7 @@ class Map(Actor):
     ) -> Sequence[float]:
         """Return a flag position on the map for the given team index.
 
-        Pass None to get the default flag point.
+        Pass ``None`` to get the default flag point.
         (used for things such as king-of-the-hill)
         """
         if team_index is None:

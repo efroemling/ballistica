@@ -53,7 +53,7 @@ def setmusic(musictype: MusicType | None, continuous: bool = False) -> None:
     platforms so the user can override particular game music with their
     own.
 
-    Pass None to stop music.
+    Pass ``None`` to stop music.
 
     if ``continuous`` is True and musictype is the same as what is
     already playing, the playing track will not be restarted.

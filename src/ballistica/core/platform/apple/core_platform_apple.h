@@ -55,7 +55,8 @@ class CorePlatformApple : public CorePlatform {
   auto GetLegacySubplatformName() -> std::string override;
 
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
-  auto GetLocale() -> std::string override;
+  auto GetBaLocale() -> std::string override;
+  auto GetLocaleTag() -> std::string override;
   auto DoGetDeviceName() -> std::string override;
   auto DoGetDeviceDescription() -> std::string override;
   auto GetOSVersionString() -> std::string override;
@@ -66,7 +67,8 @@ class CorePlatformApple : public CorePlatform {
   auto DoGetDataDirectoryMonolithicDefault() -> std::string override;
 
  private:
-  std::optional<std::string> locale_;
+  std::optional<std::string> ba_locale_;
+  std::optional<std::string> locale_tag_;
 };
 
 }  // namespace ballistica::core
