@@ -91,6 +91,10 @@ class LocaleSubsystem(AppSubsystem):
                 applog.error(
                     'Invalid Lang "%s"; falling back to default.', lang
                 )
+        # Convert the locale to resolved and back again to make sure
+        # we're loading a currently-supported one (for example this will
+        # convert 'Spanish' to 'SpanishLatinAmerica').
+        locale = locale.resolved.locale
 
         self._current_locale = locale
 

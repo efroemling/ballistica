@@ -342,13 +342,10 @@ class AdvancedSettingsWindow(bui.MainWindow):
             v_align='center',
         )
 
-        # languages = bui.app.lang.available_languages
-        cur_lang = bui.app.config.get('Lang', None)
-        if cur_lang is None:
-            cur_lang = 'Auto'
+        cur_lang = bui.app.locale.current_locale.long_value
 
-        # We have a special dict of language names in that language
-        # so we don't have to go digging through each full language.
+        # We have a special dict of language names in that language so
+        # we don't have to go digging through each full language.
         try:
             import json
 
