@@ -10,6 +10,7 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/empty_app_mode.h"
 #include "ballistica/base/audio/audio_server.h"
+#include "ballistica/base/discord/discord.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
@@ -29,6 +30,67 @@ namespace ballistica::base {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 #pragma ide diagnostic ignored "RedundantCast"
+
+// -------------------------- discord_richpresence------------------------------
+
+static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char *state = nullptr, *details = nullptr, *large_image_key = nullptr,
+             *large_image_text = nullptr, *small_image_key = nullptr,
+             *small_image_text = nullptr;
+  int64_t start_timestamp = 0, end_timestamp = 0;
+  static char* kwlist[] = {(char*)"state",
+                           (char*)"details",
+                           (char*)"large_image_key",
+                           (char*)"large_image_text",
+                           (char*)"small_image_key",
+                           (char*)"small_image_text",
+                           (char*)"start_timestamp",
+                           (char*)"end_timestamp",
+                           nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "|ssssssLL", kwlist, &state, &details, &large_image_key,
+          &large_image_text, &small_image_key, &small_image_text,
+          &start_timestamp, &end_timestamp)) {
+    return nullptr;
+  }
+
+  auto discord_client = BaseFeatureSet::GetDiscordClient();
+  if (discord_client) {
+    DiscordClient discord_client_obj;
+    discord_client_obj.SetActivity(
+        discord_client, state, details, large_image_key, large_image_text,
+        small_image_key, small_image_text, start_timestamp, end_timestamp);
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordRichpresenceDef = {
+    "discord_richpresence",              // name
+    (PyCFunction)PyDiscordRichpresence,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+
+    "Set Discord Rich Presence information."
+    "\n"
+    "Args:"
+    "\n"
+    "state: The user's current status"
+    "\n"
+    "details: What the user is currently doing"
+    "\n"
+    "large_image_key: Key for the large image"
+    "\n"
+    "large_image_text: Text displayed when hovering over the large image"
+    "\n"
+    "small_image_key: Key for the small image"
+    "\n"
+    "small_image_text: Text displayed when hovering over the small image"
+    "\n"
+    "start_timestamp: Unix timestamp for game start time"
+    "\n"
+    "end_timestamp: Unix timestamp for game end time"};
 
 // --------------------------------- appname -----------------------------------
 
@@ -1630,6 +1692,7 @@ static PyMethodDef PyInvokeMainMenuDef = {
 
 auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      PyDiscordRichpresenceDef,
       PyAppNameDef,
       PyAppIsActiveDef,
       PyRunAppDef,

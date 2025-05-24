@@ -4,11 +4,14 @@
 #define BALLISTICA_BASE_BASE_H_
 
 #include <atomic>
+#include <memory>
 #include <mutex>
 #include <string>
 
+#include "ballistica/base/discord/discord.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
+#include "discordpp.h"
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other
@@ -650,7 +653,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// to foregrounding on mobile, unminimizing on desktop, etc. Spins
   /// threads back up, re-opens network sockets, etc.
   void UnsuspendApp();
-
+  void InitializeDiscord();
   auto app_suspended() const { return app_suspended_; }
 
   /// Issue a high level app quit request. Can be called from any thread and
@@ -848,6 +851,10 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// but may opt to call it at other times.
   void Reset();
 
+  static auto GetDiscordClient() -> std::shared_ptr<discordpp::Client>& {
+    return discord_client_;
+  }
+
  private:
   BaseFeatureSet();
   void LogStartupMessage_();
@@ -879,6 +886,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// stale values.
   std::atomic_bool app_active_{true};
   int shutdown_suppress_count_{};
+  static std::shared_ptr<discordpp::Client> discord_client_;
 };
 
 }  // namespace ballistica::base
