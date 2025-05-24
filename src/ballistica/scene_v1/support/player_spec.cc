@@ -22,8 +22,8 @@ PlayerSpec::PlayerSpec(const std::string& s) {
       cJSON* name_obj = cJSON_GetObjectItem(root_obj, "n");
       cJSON* short_name_obj = cJSON_GetObjectItem(root_obj, "sn");
       cJSON* account_obj = cJSON_GetObjectItem(root_obj, "a");
-      if (name_obj && short_name_obj && account_obj && cJSON_IsString(name_obj)
-          && cJSON_IsString(short_name_obj) && cJSON_IsString(account_obj)) {
+      if (cJSON_IsString(name_obj) && cJSON_IsString(short_name_obj)
+          && cJSON_IsString(account_obj)) {
         name_ = Utils::GetValidUTF8(name_obj->valuestring, "psps");
         short_name_ = Utils::GetValidUTF8(short_name_obj->valuestring, "psps2");
 

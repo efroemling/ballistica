@@ -174,7 +174,12 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
         if (cJSON* handshake = cJSON_Parse(string_buffer.data())) {
           if (cJSON_IsObject(handshake)) {
             if (cJSON* pspec = cJSON_GetObjectItem(handshake, "s")) {
-              set_peer_spec(PlayerSpec(pspec->valuestring));
+              if (cJSON_IsString(pspec)) {
+                set_peer_spec(PlayerSpec(pspec->valuestring));
+              } else {
+                BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                            "Ignoring non-string peer-spec data.");
+              }
             }
 
             // Newer builds also send their public-device-id; servers
@@ -184,7 +189,7 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
                 public_device_id_ = pubdeviceid->valuestring;
               } else {
                 BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                            "Ignoring non-string player-spec data.");
+                            "Ignoring non-string public-device-id data.");
               }
             }
           } else {
@@ -425,39 +430,42 @@ void ConnectionToClient::HandleMessagePacket(
         std::copy(buffer.begin() + 1, buffer.end(), str_buffer.begin());
         str_buffer.back() = 0;  // Null terminate.
 
-        cJSON* info = cJSON_Parse(str_buffer.data());
-        if (info) {
-          cJSON* b = cJSON_GetObjectItem(info, "b");
-          if (b) {
-            build_number_ = b->valueint;
-          } else {
-            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                        "No buildnumber in clientinfo msg.");
-          }
+        if (cJSON* info = cJSON_Parse(str_buffer.data())) {
+          if (cJSON_IsObject(info)) {
+            cJSON* b = cJSON_GetObjectItem(info, "b");
+            if (cJSON_IsNumber(b)) {
+              build_number_ = b->valueint;
+            } else {
+              BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                          "No buildnumber in clientinfo msg.");
+              Error("");
+            }
 
-          // Grab their token (we use this to ask the server for their v1
-          // account info).
-          cJSON* t = cJSON_GetObjectItem(info, "tk");
-          if (t) {
-            token_ = t->valuestring;
-          } else {
-            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                        "No token in clientinfo msg.");
-          }
+            // Grab their token (we use this to ask the server for their v1
+            // account info).
+            cJSON* t = cJSON_GetObjectItem(info, "tk");
+            if (cJSON_IsString(t)) {
+              token_ = t->valuestring;
+            } else {
+              BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                          "No token in clientinfo msg.");
+              Error("");
+            }
 
-          // Newer clients also pass a peer-hash, which we can include with
-          // the token to allow the v1 server to better verify the client's
-          // identity.
-          cJSON* ph = cJSON_GetObjectItem(info, "ph");
-          if (ph) {
-            peer_hash_ = ph->valuestring;
-          }
-          if (!token_.empty()) {
-            // Kick off a query to the master-server for this client's info.
-            // FIXME: we need to add retries for this in case of failure.
-            g_base->Plus()->ClientInfoQuery(
-                token_, our_handshake_player_spec_str_ + our_handshake_salt_,
-                peer_hash_, build_number_);
+            // Newer clients also pass a peer-hash, which we can include with
+            // the token to allow the v1 server to better verify the client's
+            // identity.
+            cJSON* ph = cJSON_GetObjectItem(info, "ph");
+            if (cJSON_IsString(ph)) {
+              peer_hash_ = ph->valuestring;
+            }
+            if (!token_.empty()) {
+              // Kick off a query to the master-server for this client's info.
+              // FIXME: we need to add retries for this in case of failure.
+              g_base->Plus()->ClientInfoQuery(
+                  token_, our_handshake_player_spec_str_ + our_handshake_salt_,
+                  peer_hash_, build_number_);
+            }
           }
           cJSON_Delete(info);
         } else {
@@ -466,6 +474,7 @@ void ConnectionToClient::HandleMessagePacket(
               "Got invalid json in clientinfo message: '"
                   + std::string(reinterpret_cast<const char*>(&(buffer[1])))
                   + "'.");
+          Error("");
         }
       }
       got_client_info_ = true;

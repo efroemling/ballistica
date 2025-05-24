@@ -1299,87 +1299,84 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
   PythonRef py_client_list(PyList_New(0), PythonRef::kSteal);
 
   cJSON* party = classic::ClassicAppMode::GetSingleton()->game_roster();
-  assert(party);
+  assert(cJSON_IsArray(party));
   int len = cJSON_GetArraySize(party);
   for (int i = 0; i < len; i++) {
     cJSON* client = cJSON_GetArrayItem(party, i);
-    assert(client);
-    cJSON* spec = cJSON_GetObjectItem(client, "spec");
-    cJSON* players = cJSON_GetObjectItem(client, "p");
-    PythonRef py_player_list(PyList_New(0), PythonRef::kSteal);
-    if (players != nullptr) {
-      int plen = cJSON_GetArraySize(players);
-      for (int j = 0; j < plen; ++j) {
-        cJSON* player = cJSON_GetArrayItem(players, j);
-        if (player != nullptr) {
-          cJSON* name = cJSON_GetObjectItem(player, "n");
-          cJSON* py_name_full = cJSON_GetObjectItem(player, "nf");
-          cJSON* id_obj = cJSON_GetObjectItem(player, "i");
-          int id_val = id_obj ? id_obj->valueint : -1;
-          if (name != nullptr && name->valuestring != nullptr
-              && py_name_full != nullptr && py_name_full->valuestring != nullptr
-              && id_val != -1) {
-            PythonRef py_player(
-                Py_BuildValue(
-                    "{sssssi}", "name",
-                    Utils::GetValidUTF8(name->valuestring, "ggr1").c_str(),
-                    "name_full",
-                    Utils::GetValidUTF8(py_name_full->valuestring, "ggr2")
-                        .c_str(),
-                    "id", id_val),
-                PythonRef::kSteal);
-            // This increments ref.
-            PyList_Append(py_player_list.get(), py_player.get());
+    if (cJSON_IsObject(client)) {
+      cJSON* spec = cJSON_GetObjectItem(client, "spec");
+      cJSON* players = cJSON_GetObjectItem(client, "p");
+      PythonRef py_player_list(PyList_New(0), PythonRef::kSteal);
+      if (cJSON_IsArray(players)) {
+        int plen = cJSON_GetArraySize(players);
+        for (int j = 0; j < plen; ++j) {
+          cJSON* player = cJSON_GetArrayItem(players, j);
+          if (cJSON_IsObject(player)) {
+            cJSON* name = cJSON_GetObjectItem(player, "n");
+            cJSON* py_name_full = cJSON_GetObjectItem(player, "nf");
+            cJSON* id_obj = cJSON_GetObjectItem(player, "i");
+            int id_val = cJSON_IsNumber(id_obj) ? id_obj->valueint : -1;
+            if (cJSON_IsString(name) && cJSON_IsString(py_name_full)
+                && cJSON_IsNumber(id_obj)) {
+              PythonRef py_player(
+                  Py_BuildValue(
+                      "{sssssi}", "name",
+                      Utils::GetValidUTF8(name->valuestring, "ggr1").c_str(),
+                      "name_full",
+                      Utils::GetValidUTF8(py_name_full->valuestring, "ggr2")
+                          .c_str(),
+                      "id", id_obj->valueint),
+                  PythonRef::kSteal);
+              // This increments ref.
+              PyList_Append(py_player_list.get(), py_player.get());
+            }
           }
         }
       }
-    }
 
-    // If there's a client_id with this data, include it; otherwise pass None.
-    cJSON* client_id = cJSON_GetObjectItem(client, "i");
-    int clientid{};
-    PythonRef client_id_ref;
-    if (client_id != nullptr) {
-      clientid = client_id->valueint;
-      client_id_ref.Steal(PyLong_FromLong(clientid));
-    } else {
-      client_id_ref.Acquire(Py_None);
-    }
+      // If there's a client_id with this data, include it; otherwise pass None.
+      cJSON* client_id = cJSON_GetObjectItem(client, "i");
+      int clientid{};
+      PythonRef client_id_ref;
+      if (client_id != nullptr) {
+        clientid = client_id->valueint;
+        client_id_ref.Steal(PyLong_FromLong(clientid));
+      } else {
+        client_id_ref.Acquire(Py_None);
+      }
 
-    // Let's also include a public account-id if we have one.
-    std::string account_id;
-    if (clientid == -1) {
-      account_id = g_base->Plus()->GetPublicV1AccountID();
-    } else {
-      if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
-        auto client2 =
-            appmode->connections()->connections_to_clients().find(clientid);
-        if (client2 != appmode->connections()->connections_to_clients().end()) {
-          account_id = client2->second->peer_public_account_id();
+      // Let's also include a public account-id if we have one.
+      std::string account_id;
+      if (clientid == -1) {
+        account_id = g_base->Plus()->GetPublicV1AccountID();
+      } else {
+        if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
+          auto client2 =
+              appmode->connections()->connections_to_clients().find(clientid);
+          if (client2
+              != appmode->connections()->connections_to_clients().end()) {
+            account_id = client2->second->peer_public_account_id();
+          }
         }
       }
-    }
-    PythonRef account_id_ref;
-    if (account_id.empty()) {
-      account_id_ref.Acquire(Py_None);
-    } else {
-      account_id_ref.Steal(PyUnicode_FromString(account_id.c_str()));
-    }
+      PythonRef account_id_ref;
+      if (account_id.empty()) {
+        account_id_ref.Acquire(Py_None);
+      } else {
+        account_id_ref.Steal(PyUnicode_FromString(account_id.c_str()));
+      }
 
-    // Py_BuildValue steals a ref; gotta increment ourself (edit: NO IT DOESNT)
-    // Py_INCREF(py_player_list.get());
-    PythonRef py_client(
-        Py_BuildValue(
-            "{sssssOsOsO}", "display_string",
-            (spec && spec->valuestring)
-                ? PlayerSpec(spec->valuestring).GetDisplayString().c_str()
-                : "",
-            "spec_string", (spec && spec->valuestring) ? spec->valuestring : "",
-            "players", py_player_list.get(), "client_id", client_id_ref.get(),
-            "account_id", account_id_ref.get()),
-        PythonRef::kSteal);
-    PyList_Append(py_client_list.get(),
-                  py_client.get());  // this increments ref
+      auto py_client{PythonRef::Stolen(Py_BuildValue(
+          "{sssssOsOsO}", "display_string",
+          cJSON_IsString(spec)
+              ? PlayerSpec(spec->valuestring).GetDisplayString().c_str()
+              : "",
+          "spec_string", cJSON_IsString(spec) ? spec->valuestring : "",
+          "players", py_player_list.get(), "client_id", client_id_ref.get(),
+          "account_id", account_id_ref.get()))};
+
+      PyList_Append(py_client_list.get(), py_client.get());
+    }
   }
   return py_client_list.NewRef();
   BA_PYTHON_CATCH;

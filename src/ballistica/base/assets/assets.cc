@@ -1457,17 +1457,16 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
       }
     }
     if (translate != nullptr) {
-      if (translate->type != cJSON_Array
-          || cJSON_GetArraySize(translate) != 2) {
+      if (!cJSON_IsArray(translate) || cJSON_GetArraySize(translate) != 2) {
         throw Exception("Expected a 2 member array for translate");
       }
       cJSON* category = cJSON_GetArrayItem(translate, 0);
-      if (category->type != cJSON_String) {
+      if (!cJSON_IsString(category)) {
         throw Exception(
             "First member of translate array (category) must be a string");
       }
       cJSON* value = cJSON_GetArrayItem(translate, 1);
-      if (value->type != cJSON_String) {
+      if (!cJSON_IsString(value)) {
         throw Exception(
             "Second member of translate array (value) must be a string");
       }
@@ -1496,7 +1495,7 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
         }
       }
       if (value != nullptr) {
-        if (value->type != cJSON_String) {
+        if (!cJSON_IsString(value)) {
           throw Exception("Expected a string for value");
         }
         result = value->valuestring;
@@ -1528,20 +1527,20 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
     }
   }
   if (subs != nullptr) {
-    if (subs->type != cJSON_Array) {
+    if (!cJSON_IsArray(subs)) {
       throw Exception("expected an array for 'subs'");
     }
     int subs_count = cJSON_GetArraySize(subs);
     for (int i = 0; i < subs_count; i++) {
       cJSON* sub = cJSON_GetArrayItem(subs, i);
-      if (sub->type != cJSON_Array || cJSON_GetArraySize(sub) != 2) {
+      if (!cJSON_IsArray(sub) || cJSON_GetArraySize(sub) != 2) {
         throw Exception(
             "Invalid subs entry; expected length 2 list of sub/replacement.");
       }
 
       // First item should be a string.
       cJSON* key = cJSON_GetArrayItem(sub, 0);
-      if (key->type != cJSON_String) {
+      if (!cJSON_IsString(key)) {
         throw Exception("Sub keys must be strings.");
       }
       std::string s_key = key->valuestring;
@@ -1549,9 +1548,9 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
       // Second item can be a string or a dict; if its a dict, we go recursive.
       cJSON* value = cJSON_GetArrayItem(sub, 1);
       std::string s_val;
-      if (value->type == cJSON_String) {
+      if (cJSON_IsString(value)) {
         s_val = value->valuestring;
-      } else if (value->type == cJSON_Object) {
+      } else if (cJSON_IsObject(value)) {
         s_val = DoCompileResourceString(value);
       } else {
         throw Exception("Sub values must be strings or dicts.");

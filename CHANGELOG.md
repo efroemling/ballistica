@@ -1,4 +1,10 @@
-### 1.7.40 (build 22377, api 9, 2025-05-22)
+### 1.7.41 (build 22381, api 9, 2025-05-23)
+- Fixed a few unsafe accesses of cJSON objects that could be exploited to crash
+  servers by feeding them bad json data. If you ever come across CXX code
+  accessing a cJSON obj like `obj->valuestring` without calling
+  `cJSON_IsString(obj)` first, please holler loudly at me.
+
+### 1.7.40 (build 22379, api 9, 2025-05-23)
 - Upgraded from Python 3.12 to 3.13. See python.org for what fun new goodies
   this gets us.
 - Bumping minimum supported Android from 6.0 to 7.0. I'm reworking app language

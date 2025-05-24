@@ -174,18 +174,19 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           std::vector<char> string_buffer(data.size() - 3 + 1);
           memcpy(&(string_buffer[0]), &(data[3]), data.size() - 3);
           string_buffer[string_buffer.size() - 1] = 0;
-          cJSON* handshake = cJSON_Parse(string_buffer.data());
-          if (handshake) {
-            // We hash this to prove that we're us; keep it around.
-            peer_hash_input_ = "";
-            cJSON* pspec = cJSON_GetObjectItem(handshake, "s");
-            if (pspec) {
-              peer_hash_input_ += pspec->valuestring;
-              set_peer_spec(PlayerSpec(pspec->valuestring));
-            }
-            cJSON* salt = cJSON_GetObjectItem(handshake, "l");
-            if (salt) {
-              peer_hash_input_ += salt->valuestring;
+          if (cJSON* handshake = cJSON_Parse(string_buffer.data())) {
+            if (cJSON_IsObject(handshake)) {
+              // We hash this to prove that we're us; keep it around.
+              peer_hash_input_ = "";
+              cJSON* pspec = cJSON_GetObjectItem(handshake, "s");
+              if (cJSON_IsString(pspec)) {
+                peer_hash_input_ += pspec->valuestring;
+                set_peer_spec(PlayerSpec(pspec->valuestring));
+              }
+              cJSON* salt = cJSON_GetObjectItem(handshake, "l");
+              if (cJSON_IsString(salt)) {
+                peer_hash_input_ += salt->valuestring;
+              }
             }
             cJSON_Delete(handshake);
           }
@@ -332,24 +333,26 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         std::vector<char> str_buffer(buffer.size());
         std::copy(buffer.begin() + 1, buffer.end(), str_buffer.begin());
         str_buffer.back() = 0;  // Ensure null termination
-        if (cJSON* info = cJSON_Parse(str_buffer.data())) {
+
+        cJSON* info{cJSON_Parse(str_buffer.data())};
+        if (info && cJSON_IsObject(info)) {
           // Build number.
           cJSON* b = cJSON_GetObjectItem(info, "b");
-          if (b) {
+          if (cJSON_IsNumber(b)) {
             build_number_ = b->valueint;
           } else {
-            g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                        "no buildnumber in hostinfo msg");
+            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                        "No buildnumber in hostinfo msg.");
           }
           // Party name.
           cJSON* n = cJSON_GetObjectItem(info, "n");
-          if (n != nullptr) {
+          if (cJSON_IsString(n)) {
             party_name_ = Utils::GetValidUTF8(n->valuestring, "bsmhi");
           }
           cJSON_Delete(info);
         } else {
-          g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                      "got invalid json in hostinfo message");
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "Got invalid json in hostinfo message.");
         }
       }
       got_host_info_ = true;
@@ -362,6 +365,15 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         // current roster with it.
         cJSON* new_roster =
             cJSON_Parse(reinterpret_cast<const char*>(&(buffer[1])));
+
+        // Watch for invalid data.
+        if (new_roster && !cJSON_IsArray(new_roster)) {
+          cJSON_Delete(new_roster);
+          new_roster = nullptr;
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "Got invalid json in hostinfo message.");
+        }
+
         if (new_roster) {
           if (auto* appmode = classic::ClassicAppMode::GetActive()) {
             appmode->SetGameRoster(new_roster);
@@ -375,34 +387,39 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
       // High level json messages (nice and easy to expand on but not
       // especially efficient).
       if (buffer.size() >= 3 && buffer[buffer.size() - 1] == 0) {
-        cJSON* msg =
-            cJSON_Parse(reinterpret_cast<const char*>(buffer.data() + 1));
-        if (msg) {
-          cJSON* type = cJSON_GetObjectItem(msg, "t");
-          if (type != nullptr) {
-            switch (type->valueint) {
-              case BA_JMESSAGE_SCREEN_MESSAGE: {
-                std::string m;
-                float r = 1.0f;
-                float g = 1.0f;
-                float b = 1.0f;
-                if (cJSON* r_obj = cJSON_GetObjectItem(msg, "r")) {
-                  r = static_cast<float>(r_obj->valuedouble);
+        if (cJSON* msg =
+                cJSON_Parse(reinterpret_cast<const char*>(buffer.data() + 1))) {
+          if (cJSON_IsObject(msg)) {
+            cJSON* type = cJSON_GetObjectItem(msg, "t");
+            if (cJSON_IsNumber(type)) {
+              switch (type->valueint) {
+                case BA_JMESSAGE_SCREEN_MESSAGE: {
+                  std::string m;
+                  float r{1.0f};
+                  float g{1.0f};
+                  float b{1.0f};
+                  cJSON* r_obj = cJSON_GetObjectItem(msg, "r");
+                  cJSON* g_obj = cJSON_GetObjectItem(msg, "g");
+                  cJSON* b_obj = cJSON_GetObjectItem(msg, "b");
+                  cJSON* m_obj = cJSON_GetObjectItem(msg, "m");
+                  if (cJSON_IsNumber(r_obj)) {
+                    r = static_cast<float>(r_obj->valuedouble);
+                  }
+                  if (cJSON_IsNumber(g_obj)) {
+                    g = static_cast<float>(g_obj->valuedouble);
+                  }
+                  if (cJSON_IsNumber(b_obj)) {
+                    b = static_cast<float>(b_obj->valuedouble);
+                  }
+                  if (cJSON_IsString(m_obj)) {
+                    m = m_obj->valuestring;
+                    ScreenMessage(m, {r, g, b});
+                  }
+                  break;
                 }
-                if (cJSON* g_obj = cJSON_GetObjectItem(msg, "g")) {
-                  g = static_cast<float>(g_obj->valuedouble);
-                }
-                if (cJSON* b_obj = cJSON_GetObjectItem(msg, "b")) {
-                  b = static_cast<float>(b_obj->valuedouble);
-                }
-                if (cJSON* m_obj = cJSON_GetObjectItem(msg, "m")) {
-                  m = m_obj->valuestring;
-                  ScreenMessage(m, {r, g, b});
-                }
-                break;
+                default:
+                  break;
               }
-              default:
-                break;
             }
           }
           cJSON_Delete(msg);
