@@ -4,6 +4,7 @@ include(CheckIncludeFile)
 
 option(HEADLESS "build headless server" OFF)
 option(TEST_BUILD "include testing features" OFF)
+option(DISCORD "enable Discord" OFF)
 
 # Requiring minimum of C++20 currently.
 set(CMAKE_CXX_STANDARD 20)
@@ -789,6 +790,7 @@ set(BALLISTICA_SOURCES
 add_executable(ballisticakitbin ${BALLISTICA_SOURCES})
 
 #++++++++++++++++++++++++discord_sdk+++++++++++++++++++++++++++++++
+if (DISCORD)
 set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../lib/discord_social_sdk")
 set(DISCORD_SDK_INCLUDE_DIR "${DISCORD_SDK_ROOT}/include")
 set(DISCORD_SDK_LIB_DIR "${DISCORD_SDK_ROOT}/lib/release")
@@ -819,7 +821,7 @@ endif()
 
 set(EXTRA_INCLUDE_DIRS ${EXTRA_INCLUDE_DIRS} ${DISCORD_SDK_INCLUDE_DIR})
 set(EXTRA_LIBRARIES ${EXTRA_LIBRARIES} ${DISCORD_LIB_PATH})
-# ----------------------------------DISCORD_SDK-----------------------------------
+endif() #DISCORD
 
 # Gets -rdynamic added when linking gcc builds which exports all symbols
 # which gives us more meaningful stack traces using backtrace_symbols().  
