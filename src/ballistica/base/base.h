@@ -8,13 +8,12 @@
 #include <mutex>
 #include <string>
 
-
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 #if BA_ENABLE_DISCORD
 #include "ballistica/base/discord/discord.h"
 #include "discordpp.h"
-#endif // BA_ENABLE_DISCORD
+#endif  // BA_ENABLE_DISCORD
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other
@@ -656,7 +655,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// to foregrounding on mobile, unminimizing on desktop, etc. Spins
   /// threads back up, re-opens network sockets, etc.
   void UnsuspendApp();
-  void InitializeDiscord();
   auto app_suspended() const { return app_suspended_; }
 
   /// Issue a high level app quit request. Can be called from any thread and
@@ -833,12 +831,12 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   NetworkWriter* const network_writer;
   StdioConsole* const stdio_console;
   TextGraphics* const text_graphics;
-  Discord* const discord;
   UI* const ui;
   Utils* const utils;
-
+#if BA_ENABLE_DISCORD
+  Discord* const discord;
   static std::shared_ptr<discordpp::Client> discord_client;
-
+#endif  // BA_ENABLE_DISCORD
   // Variable subsystems.
   void set_app_mode(AppMode* mode);
   auto* app_mode() const { return app_mode_; }
@@ -856,10 +854,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// active app-mode. App-modes generally call this when first activating,
   /// but may opt to call it at other times.
   void Reset();
-
-  // static auto GetDiscordClient() -> std::shared_ptr<discordpp::Client>& {
-  //   return discord_client;
-  // }
 
  private:
   BaseFeatureSet();
