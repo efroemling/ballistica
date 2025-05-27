@@ -2,7 +2,7 @@
 
 #ifndef BALLISTICA_BASE_DISCORD_DISCORD_H_
 #define BALLISTICA_BASE_DISCORD_DISCORD_H_
-
+#if BA_ENABLE_DISCORD
 #include <memory>
 
 #include "discordpp.h"
@@ -21,5 +21,5 @@ class Discord {
   static const uint64_t APPLICATION_ID = 1373228222002626610;
 };
 }  // namespace ballistica::base
-
+#endif // BA_ENABLE_DISCORD
 #endif  // BALLISTICA_BASE_DISCORD_DISCORD_H_
