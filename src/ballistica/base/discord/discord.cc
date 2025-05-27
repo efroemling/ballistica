@@ -1,6 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
 #define DISCORDPP_IMPLEMENTATION
+// #if BA_ENABLE_DISCORD
 #include "discord.h"
 
 #include <bits/stdc++.h>
@@ -22,7 +23,7 @@ std::atomic<bool> running = true;
 
 void signalHandler(int signum) { running.store(false); }
 
-std::shared_ptr<discordpp::Client> DiscordClient::init() {
+std::shared_ptr<discordpp::Client> Discord::init() {
   std::signal(SIGINT, signalHandler);
   std::cout << "🚀 Initializing Discord SDK...\n";
   auto client = std::make_shared<discordpp::Client>();
@@ -64,7 +65,7 @@ std::shared_ptr<discordpp::Client> DiscordClient::init() {
   return client;
 }
 
-void DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
+void Discord::authenticate(std::shared_ptr<discordpp::Client> client) {
   // Generate OAuth2 code verifier for authentication
   auto codeVerifier = client->CreateAuthorizationCodeVerifier();
   // Set up authentication arguments
@@ -136,7 +137,7 @@ void DiscordClient::authenticate(std::shared_ptr<discordpp::Client> client) {
   return;
 };
 
-void DiscordClient::SetActivity(std::shared_ptr<discordpp::Client> client,
+void Discord::SetActivity(std::shared_ptr<discordpp::Client> client,
                                 const char* state, const char* details,
                                 const char* largeImageKey,
                                 const char* largeImageText,
@@ -178,3 +179,5 @@ void DiscordClient::SetActivity(std::shared_ptr<discordpp::Client> client,
   });
 }
 }  // namespace ballistica::base
+
+// #endif  // BA_ENABLE_DISCORD

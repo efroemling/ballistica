@@ -68,6 +68,7 @@
 // Yup we've got that.
 #define BA_ENABLE_EXECINFO_BACKTRACES 1
 
+// Enable discord support.
 #define BA_ENABLE_DISCORD 1
 
 // Allow stdin commands too.

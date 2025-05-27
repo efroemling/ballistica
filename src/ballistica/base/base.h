@@ -830,9 +830,11 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   NetworkWriter* const network_writer;
   StdioConsole* const stdio_console;
   TextGraphics* const text_graphics;
-  DiscordClient* const discord_client;
+  Discord* const discord;
   UI* const ui;
   Utils* const utils;
+
+  static std::shared_ptr<discordpp::Client> discord_client;
 
   // Variable subsystems.
   void set_app_mode(AppMode* mode);
@@ -852,9 +854,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// but may opt to call it at other times.
   void Reset();
 
-  static auto GetDiscordClient() -> std::shared_ptr<discordpp::Client>& {
-    return discord_client_;
-  }
+  // static auto GetDiscordClient() -> std::shared_ptr<discordpp::Client>& {
+  //   return discord_client;
+  // }
 
  private:
   BaseFeatureSet();
@@ -887,7 +889,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// stale values.
   std::atomic_bool app_active_{true};
   int shutdown_suppress_count_{};
-  static std::shared_ptr<discordpp::Client> discord_client_;
 };
 
 }  // namespace ballistica::base

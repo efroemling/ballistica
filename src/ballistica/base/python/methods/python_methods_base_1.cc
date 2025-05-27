@@ -55,12 +55,10 @@ static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
           &start_timestamp, &end_timestamp)) {
     return nullptr;
   }
-
-  auto discord_client = BaseFeatureSet::GetDiscordClient();
-  if (discord_client) {
-    DiscordClient discord_client_obj;
-    discord_client_obj.SetActivity(
-        discord_client, state, details, large_image_key, large_image_text,
+  
+  if (g_base->discord_client) {
+    g_base->discord->SetActivity(
+        g_base->discord_client, state, details, large_image_key, large_image_text,
         small_image_key, small_image_text, start_timestamp, end_timestamp);
   }
   Py_RETURN_NONE;

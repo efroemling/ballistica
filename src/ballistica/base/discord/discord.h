@@ -8,7 +8,7 @@
 #include "discordpp.h"
 
 namespace ballistica::base {
-class DiscordClient {
+class Discord {
  public:
   std::shared_ptr<discordpp::Client> init();
   void authenticate(std::shared_ptr<discordpp::Client> client);

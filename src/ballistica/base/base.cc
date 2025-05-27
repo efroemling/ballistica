@@ -43,7 +43,7 @@ namespace ballistica::base {
 
 core::CoreFeatureSet* g_core{};
 BaseFeatureSet* g_base{};
-std::shared_ptr<discordpp::Client> BaseFeatureSet::discord_client_{};
+std::shared_ptr<discordpp::Client> BaseFeatureSet::discord_client{};
 
 BaseFeatureSet::BaseFeatureSet()
     : app_adapter{BaseBuildSwitches::CreateAppAdapter()},
@@ -73,7 +73,7 @@ BaseFeatureSet::BaseFeatureSet()
       text_graphics{new TextGraphics()},
       ui{new UI()},
       utils{new Utils()},
-      discord_client{g_buildconfig.enable_discord() ? new DiscordClient()
+      discord{g_buildconfig.enable_discord() ? new Discord()
                                                     : nullptr} {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_base == nullptr);
@@ -249,8 +249,9 @@ void BaseFeatureSet::StartApp() {
   app_started_ = true;
 
   // Initialize Discord right after app is started
-  discord_client_ = discord_client->init();
-  
+  if (BA_ENABLE_DISCORD){
+    discord_client = discord->init();
+  }
   // As the last step of this phase, tell the logic thread to apply the app
   // config which will kick off screen creation or otherwise to get the
   // ball rolling.
