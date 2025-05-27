@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
 #define DISCORDPP_IMPLEMENTATION
-// #if BA_ENABLE_DISCORD
+#if BA_ENABLE_DISCORD
 #include "discord.h"
 
 #include <bits/stdc++.h>
@@ -180,4 +180,4 @@ void Discord::SetActivity(std::shared_ptr<discordpp::Client> client,
 }
 }  // namespace ballistica::base
 
-// #endif  // BA_ENABLE_DISCORD
+#endif  // BA_ENABLE_DISCORD

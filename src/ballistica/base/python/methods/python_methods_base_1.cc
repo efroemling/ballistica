@@ -55,12 +55,13 @@ static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
           &start_timestamp, &end_timestamp)) {
     return nullptr;
   }
-  
+  #if BA_ENABLE_DISCORD
   if (g_base->discord_client) {
     g_base->discord->SetActivity(
         g_base->discord_client, state, details, large_image_key, large_image_text,
         small_image_key, small_image_text, start_timestamp, end_timestamp);
   }
+  #endif
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
