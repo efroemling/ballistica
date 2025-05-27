@@ -70,7 +70,8 @@ static PyMethodDef PyDiscordRichpresenceDef = {
     "discord_richpresence",              // name
     (PyCFunction)PyDiscordRichpresence,  // method
     METH_VARARGS | METH_KEYWORDS,        // flags
-
+    "discord_richpresence() -> None\n"
+    "\n"
     "Set Discord Rich Presence information."
     "\n"
     "Args:"
