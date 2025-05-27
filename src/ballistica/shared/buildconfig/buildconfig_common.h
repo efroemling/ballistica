@@ -51,7 +51,7 @@ namespace ballistica {
 // Do we enable Discord support
 #ifndef BA_ENABLE_DISCORD
 #define BA_ENABLE_DISCORD 0
-#endif 
+#endif
 
 // Make sure all our platform options have values.
 
@@ -349,9 +349,7 @@ class BuildConfig {
   bool enable_stdio_console() const {
     return EXPBOOL_(BA_ENABLE_STDIO_CONSOLE);
   }
-  bool enable_discord() const {
-    return EXPBOOL_(BA_ENABLE_DISCORD);
-  }
+  bool enable_discord() const { return EXPBOOL_(BA_ENABLE_DISCORD); }
   bool enable_os_font_rendering() const {
     return EXPBOOL_(BA_ENABLE_OS_FONT_RENDERING);
   }

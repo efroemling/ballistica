@@ -74,7 +74,6 @@ void Discord::authenticate(std::shared_ptr<discordpp::Client> client) {
   args.SetScopes(discordpp::Client::GetDefaultPresenceScopes());
   args.SetCodeChallenge(codeVerifier.Challenge());
 
-  
   std::fstream file("discord_auth.txt", std::ios::in);
   std::string accessToken;
   file >> accessToken;
@@ -138,12 +137,10 @@ void Discord::authenticate(std::shared_ptr<discordpp::Client> client) {
 };
 
 void Discord::SetActivity(std::shared_ptr<discordpp::Client> client,
-                                const char* state, const char* details,
-                                const char* largeImageKey,
-                                const char* largeImageText,
-                                const char* smallImageKey,
-                                const char* smallImageText,
-                                int64_t startTimestamp, int64_t endTimestamp) {
+                          const char* state, const char* details,
+                          const char* largeImageKey, const char* largeImageText,
+                          const char* smallImageKey, const char* smallImageText,
+                          int64_t startTimestamp, int64_t endTimestamp) {
   if (!client) {
     return;
   }
