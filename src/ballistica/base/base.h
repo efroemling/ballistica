@@ -8,10 +8,13 @@
 #include <mutex>
 #include <string>
 
-#include "ballistica/base/discord/discord.h"
+
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
+#if BA_ENABLE_DISCORD
+#include "ballistica/base/discord/discord.h"
 #include "discordpp.h"
+#endif // BA_ENABLE_DISCORD
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other
