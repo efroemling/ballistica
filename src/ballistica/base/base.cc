@@ -72,7 +72,9 @@ BaseFeatureSet::BaseFeatureSet()
                                                          : nullptr},
       text_graphics{new TextGraphics()},
       ui{new UI()},
-      utils{new Utils()} {
+      utils{new Utils()},
+      discord_client{g_buildconfig.enable_discord() ? new DiscordClient()
+                                                    : nullptr} {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_base == nullptr);
 
@@ -247,8 +249,8 @@ void BaseFeatureSet::StartApp() {
   app_started_ = true;
 
   // Initialize Discord right after app is started
-  InitializeDiscord();
-
+  discord_client_ = discord_client->init();
+  
   // As the last step of this phase, tell the logic thread to apply the app
   // config which will kick off screen creation or otherwise to get the
   // ball rolling.
@@ -405,10 +407,6 @@ void BaseFeatureSet::SuspendApp() {
   g_core->Log(LogName::kBa, LogLevel::kError, msg);
 }
 
-void BaseFeatureSet::InitializeDiscord() {
-  DiscordClient discord_client;
-  discord_client_ = discord_client.init();
-}
 
 void BaseFeatureSet::UnsuspendApp() {
   assert(g_core);

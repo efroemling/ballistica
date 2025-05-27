@@ -830,6 +830,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   NetworkWriter* const network_writer;
   StdioConsole* const stdio_console;
   TextGraphics* const text_graphics;
+  DiscordClient* const discord_client;
   UI* const ui;
   Utils* const utils;
 

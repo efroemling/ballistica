@@ -48,6 +48,11 @@ namespace ballistica {
 #error BA_VARIANT is not defined
 #endif
 
+// Do we enable Discord support
+#ifndef BA_ENABLE_DISCORD
+#define BA_ENABLE_DISCORD 0
+#endif 
+
 // Make sure all our platform options have values.
 
 #ifndef BA_PLATFORM_WINDOWS
@@ -343,6 +348,9 @@ class BuildConfig {
   bool use_game_center() const { return EXPBOOL_(BA_USE_GAME_CENTER); }
   bool enable_stdio_console() const {
     return EXPBOOL_(BA_ENABLE_STDIO_CONSOLE);
+  }
+  bool enable_discord() const {
+    return EXPBOOL_(BA_ENABLE_DISCORD);
   }
   bool enable_os_font_rendering() const {
     return EXPBOOL_(BA_ENABLE_OS_FONT_RENDERING);

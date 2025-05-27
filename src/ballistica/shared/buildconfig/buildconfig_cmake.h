@@ -68,6 +68,8 @@
 // Yup we've got that.
 #define BA_ENABLE_EXECINFO_BACKTRACES 1
 
+#define BA_ENABLE_DISCORD 1
+
 // Allow stdin commands too.
 #define BA_ENABLE_STDIO_CONSOLE 1
 
