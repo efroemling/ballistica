@@ -56,12 +56,15 @@
 
 #define dTRIMESH_ENABLED 1
 
+//disable this by default for now
+#define BA_ENABLE_DISCORD 0
+
 #if !BA_HEADLESS_BUILD
 #define BA_ENABLE_AUDIO 1
 #define BA_ENABLE_OPENGL 1
 #define BA_SDL_BUILD 1
 #define BA_ENABLE_SDL_JOYSTICKS 1
-#define BA_ENABLE_DISCORD 0
+
 #else
 #define BA_MINSDL_BUILD 1
 #endif
