@@ -34,6 +34,10 @@ ifeq ($(BA_ENABLE_COMPILE_COMMANDS_DB),1)
  ENV_COMPILE_COMMANDS_DB = .cache/compile_commands_db/compile_commands.json
 endif
 
+# Set env-var BA_ENABLE_DISCORD=1 to enable discord integration.
+# If BA_ENABLE_DISCORD is not defined, set it to 0 by default.
+BA_ENABLE_DISCORD ?= 0
+
 # pcommandbatch can be much faster when running hundreds or thousands of
 # commands, but has some downsides and limitations compared to regular
 # pcommand. See tools/efrotools/pcommandbatch.py for more info on when to use
@@ -1097,7 +1101,7 @@ cmake-build: assets-cmake resources cmake-binary
 cmake-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/$(CM_BT_LC)
 	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DDISCORD=$(BA_ENABLE_DISCORD)\
       $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) \
       build/cmake/$(CM_BT_LC)
