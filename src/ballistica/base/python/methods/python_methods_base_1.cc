@@ -93,6 +93,26 @@ static PyMethodDef PyDiscordRichpresenceDef = {
     "\n"
     "end_timestamp: Unix timestamp for game end time"};
 
+// -------------------------- discord_start------------------------------
+
+static auto PyDiscordStart(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+#if BA_ENABLE_DISCORD
+  g_base->discord_client = g_base->discord->init();
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordStartDef = {
+    "discord_start",                     // name
+    (PyCFunction)PyDiscordStart,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+    "discord_start() -> None\n"
+    "\n"};
+
 // --------------------------------- appname -----------------------------------
 
 static auto PyAppName(PyObject* self) -> PyObject* {
@@ -1691,6 +1711,7 @@ static PyMethodDef PyInvokeMainMenuDef = {
 
 auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      PyDiscordStartDef,
       PyDiscordRichpresenceDef,
       PyAppNameDef,
       PyAppIsActiveDef,
