@@ -113,6 +113,34 @@ static PyMethodDef PyDiscordStartDef = {
     "discord_start() -> None\n"
     "\n"};
 
+// -------------------------- discord_is_ready------------------------------
+
+static auto PyDiscordIsReady(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+#if BA_ENABLE_DISCORD
+  if (g_base->discord_client && g_base->discord->client_is_ready) {
+    Py_RETURN_TRUE;
+  }
+  else {
+    Py_RETURN_FALSE;
+  }
+#else
+  // If Discord is not enabled, we return None.
+  Py_RETURN_NONE;
+#endif
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordIsReadyDef = {
+    "discord_is_ready",                     // name
+    (PyCFunction)PyDiscordIsReady,       // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+    "discord_is_ready() -> bool\n"
+    "\n"};
+
+
 // --------------------------------- appname -----------------------------------
 
 static auto PyAppName(PyObject* self) -> PyObject* {
@@ -1711,7 +1739,9 @@ static PyMethodDef PyInvokeMainMenuDef = {
 
 auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      // should this also be in #if BA_ENABLE_DISCORD?
       PyDiscordStartDef,
+      PyDiscordIsReadyDef,
       PyDiscordRichpresenceDef,
       PyAppNameDef,
       PyAppIsActiveDef,

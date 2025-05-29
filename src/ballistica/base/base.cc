@@ -253,10 +253,6 @@ void BaseFeatureSet::StartApp() {
   // to avoid crashing if called early.
   app_started_ = true;
 
-// Initialize Discord right after app is started
-#if BA_ENABLE_DISCORD
-  discord_client = discord->init();
-#endif
   // As the last step of this phase, tell the logic thread to apply the app
   // config which will kick off screen creation or otherwise to get the
   // ball rolling.

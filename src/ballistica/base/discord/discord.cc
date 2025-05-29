@@ -43,8 +43,9 @@ std::shared_ptr<discordpp::Client> Discord::init() {
 
         if (status == discordpp::Client::Status::Ready) {
           std::cout << "✅ Client is ready! You can now call SDK functions.\n";
-          SetActivity(client, "alpha", "discord social sdk", "globe",
-                      "Large Image Text", "party", "smol party", 0, 0);
+          client_is_ready = true;
+          // SetActivity(client, "alpha", "discord social sdk", "globe",
+          //             "Large Image Text", "party", "smol party", 0, 0);
 
         } else if (error != discordpp::Client::Error::None) {
           std::cerr << "❌ Connection Error: "
