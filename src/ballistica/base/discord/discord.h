@@ -2,13 +2,15 @@
 
 #ifndef BALLISTICA_BASE_DISCORD_DISCORD_H_
 #define BALLISTICA_BASE_DISCORD_DISCORD_H_
-#if BA_ENABLE_DISCORD
-#include <memory>
 
+#include <memory>
+#if BA_ENABLE_DISCORD
 #include "discordpp.h"
+#endif  // BA_ENABLE_DISCORD
 
 namespace ballistica::base {
 class Discord {
+#if BA_ENABLE_DISCORD
  public:
   std::shared_ptr<discordpp::Client> init();
   std::shared_ptr<discordpp::Client> client;
@@ -20,7 +22,8 @@ class Discord {
                    const char* smallImageKey, const char* smallImageText,
                    int64_t startTimestamp, int64_t endTimestamp);
   static const uint64_t APPLICATION_ID = 1373228222002626610;
+#endif  // BA_ENABLE_DISCORD
 };
 }  // namespace ballistica::base
-#endif  // BA_ENABLE_DISCORD
+
 #endif  // BALLISTICA_BASE_DISCORD_DISCORD_H_

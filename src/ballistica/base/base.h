@@ -9,9 +9,7 @@
 
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
-#if BA_ENABLE_DISCORD
 #include "ballistica/base/discord/discord.h"
-#endif  // BA_ENABLE_DISCORD
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other
@@ -832,9 +830,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   TextGraphics* const text_graphics;
   UI* const ui;
   Utils* const utils;
-#if BA_ENABLE_DISCORD
   Discord* const discord;
-#endif  // BA_ENABLE_DISCORD
   // Variable subsystems.
   void set_app_mode(AppMode* mode);
   auto* app_mode() const { return app_mode_; }

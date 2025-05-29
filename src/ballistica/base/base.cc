@@ -71,11 +71,8 @@ BaseFeatureSet::BaseFeatureSet()
                                                          : nullptr},
       text_graphics{new TextGraphics()},
       ui{new UI()},
-      utils{new Utils()}
-#if BA_ENABLE_DISCORD
-      ,
+      utils{new Utils()},
       discord{g_buildconfig.enable_discord() ? new Discord() : nullptr}
-#endif  // BA_ENABLE_DISCORD
 {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_base == nullptr);
