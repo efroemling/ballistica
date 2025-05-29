@@ -4,7 +4,6 @@
 #define BALLISTICA_BASE_BASE_H_
 
 #include <atomic>
-#include <memory>
 #include <mutex>
 #include <string>
 
