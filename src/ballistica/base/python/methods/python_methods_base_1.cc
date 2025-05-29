@@ -40,14 +40,14 @@ static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
              *large_image_text = nullptr, *small_image_key = nullptr,
              *small_image_text = nullptr;
   int64_t start_timestamp = 0, end_timestamp = 0;
-  static char* kwlist[] = {(char*)"state",
-                           (char*)"details",
-                           (char*)"large_image_key",
-                           (char*)"large_image_text",
-                           (char*)"small_image_key",
-                           (char*)"small_image_text",
-                           (char*)"start_timestamp",
-                           (char*)"end_timestamp",
+  static char* kwlist[] = {const_cast<char*>("state"),
+                           const_cast<char*>("details"),
+                           const_cast<char*>("large_image_key"),
+                           const_cast<char*>("large_image_text"),
+                           const_cast<char*>("small_image_key"),
+                           const_cast<char*>("start_timestamp"),
+                           const_cast<char*>("small_image_text"),
+                           const_cast<char*>("end_timestamp"),
                            nullptr};
   if (!PyArg_ParseTupleAndKeywords(
           args, keywds, "|ssssssLL", kwlist, &state, &details, &large_image_key,

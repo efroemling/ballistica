@@ -2,20 +2,19 @@
 
 #define DISCORDPP_IMPLEMENTATION
 #if BA_ENABLE_DISCORD
-#include "discord.h"
-
-#include <bits/stdc++.h>
+#include "ballistica/base/discord/discord.h"
 
 #include <atomic>
 #include <csignal>
 #include <cstdio>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <thread>
 
-#include "cdiscord.h"
-#include "discordpp.h"
+#include "../lib/discord_social_sdk/include/discordpp.h"
 
 namespace ballistica::base {
 
@@ -135,7 +134,7 @@ void Discord::authenticate() {
         });
   }
   return;
-};
+}
 
 void Discord::SetActivity(const char* state, const char* details,
                           const char* largeImageKey, const char* largeImageText,
