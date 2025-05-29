@@ -64,7 +64,6 @@
 #define BA_ENABLE_OPENGL 1
 #define BA_SDL_BUILD 1
 #define BA_ENABLE_SDL_JOYSTICKS 1
-
 #else
 #define BA_MINSDL_BUILD 1
 #endif

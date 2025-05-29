@@ -655,6 +655,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// to foregrounding on mobile, unminimizing on desktop, etc. Spins
   /// threads back up, re-opens network sockets, etc.
   void UnsuspendApp();
+  
   auto app_suspended() const { return app_suspended_; }
 
   /// Issue a high level app quit request. Can be called from any thread and
