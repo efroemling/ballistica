@@ -106,12 +106,11 @@ static auto PyDiscordStart(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDiscordStartDef = {
-    "discord_start",                     // name
-    (PyCFunction)PyDiscordStart,  // method
-    METH_VARARGS | METH_KEYWORDS,        // flags
-    "discord_start() -> None\n"
-    "\n"};
+static PyMethodDef PyDiscordStartDef = {"discord_start",               // name
+                                        (PyCFunction)PyDiscordStart,   // method
+                                        METH_VARARGS | METH_KEYWORDS,  // flags
+                                        "discord_start() -> None\n"
+                                        "\n"};
 
 // -------------------------- discord_is_ready------------------------------
 
@@ -122,8 +121,7 @@ static auto PyDiscordIsReady(PyObject* self, PyObject* args, PyObject* keywds)
 #if BA_ENABLE_DISCORD
   if (g_base->discord_client && g_base->discord->client_is_ready) {
     Py_RETURN_TRUE;
-  }
-  else {
+  } else {
     Py_RETURN_FALSE;
   }
 #else
@@ -134,12 +132,11 @@ static auto PyDiscordIsReady(PyObject* self, PyObject* args, PyObject* keywds)
 }
 
 static PyMethodDef PyDiscordIsReadyDef = {
-    "discord_is_ready",                     // name
-    (PyCFunction)PyDiscordIsReady,       // method
-    METH_VARARGS | METH_KEYWORDS,        // flags
+    "discord_is_ready",             // name
+    (PyCFunction)PyDiscordIsReady,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
     "discord_is_ready() -> bool\n"
     "\n"};
-
 
 // --------------------------------- appname -----------------------------------
 
