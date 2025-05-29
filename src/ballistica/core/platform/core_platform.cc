@@ -325,7 +325,7 @@ auto CorePlatform::FOpen(const char* path, const char* mode) -> FILE* {
 }
 
 auto CorePlatform::FilePathExists(const std::string& name) -> bool {
-  struct BA_STAT buffer {};
+  struct BA_STAT buffer{};
   return (Stat(name.c_str(), &buffer) == 0);
 }
 

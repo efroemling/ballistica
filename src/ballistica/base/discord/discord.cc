@@ -24,10 +24,9 @@ std::atomic<bool> running = true;
 void signalHandler(int signum) { running.store(false); }
 
 std::shared_ptr<discordpp::Client> Discord::init() {
-  std::signal(SIGINT, signalHandler);
   std::cout << "🚀 Initializing Discord SDK...\n";
-  auto client = std::make_shared<discordpp::Client>();
-
+  client = std::make_shared<discordpp::Client>();
+  auto client_ = client;
   client->AddLogCallback(
       [](auto message, auto severity) {
         // std::cout << "[" << EnumToString(severity) << "] " << message
@@ -36,8 +35,8 @@ std::shared_ptr<discordpp::Client> Discord::init() {
       discordpp::LoggingSeverity::Info);
 
   client->SetStatusChangedCallback(
-      [this, client](discordpp::Client::Status status,
-                     discordpp::Client::Error error, int32_t errorDetail) {
+      [this, client_](discordpp::Client::Status status,
+                      discordpp::Client::Error error, int32_t errorDetail) {
         std::cout << "🔄 Status changed: "
                   << discordpp::Client::StatusToString(status) << std::endl;
 
@@ -55,7 +54,7 @@ std::shared_ptr<discordpp::Client> Discord::init() {
         }
       });
 
-  authenticate(client);
+  authenticate();
 
   std::thread discordThread([&]() {
     while (running) {
@@ -67,7 +66,7 @@ std::shared_ptr<discordpp::Client> Discord::init() {
   return client;
 }
 
-void Discord::authenticate(std::shared_ptr<discordpp::Client> client) {
+void Discord::authenticate() {
   // Generate OAuth2 code verifier for authentication
   auto codeVerifier = client->CreateAuthorizationCodeVerifier();
   // Set up authentication arguments
@@ -80,7 +79,7 @@ void Discord::authenticate(std::shared_ptr<discordpp::Client> client) {
   std::string accessToken;
   file >> accessToken;
   file.close();
-
+  auto client = this->client;
   if (accessToken.empty()) {
     // Begin authentication process
     client->Authorize(args, [this, client, codeVerifier](auto result, auto code,
@@ -138,14 +137,14 @@ void Discord::authenticate(std::shared_ptr<discordpp::Client> client) {
   return;
 };
 
-void Discord::SetActivity(std::shared_ptr<discordpp::Client> client,
-                          const char* state, const char* details,
+void Discord::SetActivity(const char* state, const char* details,
                           const char* largeImageKey, const char* largeImageText,
                           const char* smallImageKey, const char* smallImageText,
                           int64_t startTimestamp, int64_t endTimestamp) {
   if (!client) {
     return;
   }
+
   std::cout << "Setting activity...\n";
   discordpp::Activity activity{};
   // activity.SetSupportedPlatforms(static_cast<discordpp::ActivityGamePlatforms>(

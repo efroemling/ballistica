@@ -43,9 +43,6 @@ namespace ballistica::base {
 
 core::CoreFeatureSet* g_core{};
 BaseFeatureSet* g_base{};
-#if BA_ENABLE_DISCORD
-std::shared_ptr<discordpp::Client> BaseFeatureSet::discord_client{};
-#endif  // BA_ENABLE_DISCORD
 
 BaseFeatureSet::BaseFeatureSet()
     : app_adapter{BaseBuildSwitches::CreateAppAdapter()},

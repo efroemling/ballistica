@@ -11,14 +11,14 @@ namespace ballistica::base {
 class Discord {
  public:
   std::shared_ptr<discordpp::Client> init();
+  std::shared_ptr<discordpp::Client> client;
   bool client_is_ready = false;
-  void authenticate(std::shared_ptr<discordpp::Client> client);
+  void authenticate();
 
-  void SetActivity(std::shared_ptr<discordpp::Client> client, const char* state,
-                   const char* details, const char* largeImageKey,
-                   const char* largeImageText, const char* smallImageKey,
-                   const char* smallImageText, int64_t startTimestamp,
-                   int64_t endTimestamp);
+  void SetActivity(const char* state, const char* details,
+                   const char* largeImageKey, const char* largeImageText,
+                   const char* smallImageKey, const char* smallImageText,
+                   int64_t startTimestamp, int64_t endTimestamp);
   static const uint64_t APPLICATION_ID = 1373228222002626610;
 };
 }  // namespace ballistica::base
