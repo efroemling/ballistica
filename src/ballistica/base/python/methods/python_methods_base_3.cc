@@ -1116,7 +1116,7 @@ static PyMethodDef PyIncrementAnalyticsCountRaw2Def = {
     METH_VARARGS | METH_KEYWORDS,                // flags
 
     "increment_analytics_count_raw_2(name: str,\n"
-    "  uses_increment: bool = True, increment: int = 1) -> None\n"
+    "  uses_increment: int = 1, increment: int = 1) -> None\n"
     "\n"
     ":meta private:",
 };

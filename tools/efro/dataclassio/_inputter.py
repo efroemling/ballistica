@@ -79,11 +79,12 @@ class _Inputter:
         if issubclass(self._cls, IOMultiType) and not dataclasses.is_dataclass(
             self._cls
         ):
-            type_id_val = values.get(self._cls.get_type_id_storage_name())
+            storename = self._cls.get_type_id_storage_name()
+            type_id_val = values.get(storename)
             if type_id_val is None:
                 raise ValueError(
-                    f'No type id value present for multi-type object:'
-                    f' {values}.'
+                    f'\'{storename}\' type id value'
+                    f' not found in \'{self._cls.__name__}\' input data.'
                 )
             type_id_enum = self._cls.get_type_id_type()
             try:

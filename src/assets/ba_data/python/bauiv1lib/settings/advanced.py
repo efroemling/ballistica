@@ -89,7 +89,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
-        self._prev_lang = ''
+        self._prev_lang: str | None = ''
         self._prev_lang_list: list[str] = []
         self._complete_langs_list: list | None = None
         self._complete_langs_error = False

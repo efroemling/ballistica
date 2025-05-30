@@ -333,26 +333,27 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         std::vector<char> str_buffer(buffer.size());
         std::copy(buffer.begin() + 1, buffer.end(), str_buffer.begin());
         str_buffer.back() = 0;  // Ensure null termination
-
-        cJSON* info{cJSON_Parse(str_buffer.data())};
-        if (info && cJSON_IsObject(info)) {
-          // Build number.
-          cJSON* b = cJSON_GetObjectItem(info, "b");
-          if (cJSON_IsNumber(b)) {
-            build_number_ = b->valueint;
-          } else {
-            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
-                        "No buildnumber in hostinfo msg.");
-          }
-          // Party name.
-          cJSON* n = cJSON_GetObjectItem(info, "n");
-          if (cJSON_IsString(n)) {
-            party_name_ = Utils::GetValidUTF8(n->valuestring, "bsmhi");
+        if (cJSON* info = cJSON_Parse(str_buffer.data())) {
+          if (cJSON_IsObject(info)) {
+            // Build number.
+            cJSON* b = cJSON_GetObjectItem(info, "b");
+            if (cJSON_IsNumber(b)) {
+              build_number_ = b->valueint;
+            } else {
+              BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                          "No buildnumber in hostinfo msg.");
+            }
+            // Party name.
+            cJSON* n = cJSON_GetObjectItem(info, "n");
+            if (cJSON_IsString(n)) {
+              party_name_ = Utils::GetValidUTF8(n->valuestring, "bsmhi");
+            }
           }
           cJSON_Delete(info);
         } else {
           BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                      "Got invalid json in hostinfo message.");
+                      "Got invalid json in hostinfo message: "
+                          + std::string(str_buffer.data()) + ".");
         }
       }
       got_host_info_ = true;
@@ -364,7 +365,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         // Expand this into a json object; if it's valid, replace the game's
         // current roster with it.
         cJSON* new_roster =
-            cJSON_Parse(reinterpret_cast<const char*>(&(buffer[1])));
+            cJSON_Parse(reinterpret_cast<const char*>(buffer.data()) + 1);
 
         // Watch for invalid data.
         if (new_roster && !cJSON_IsArray(new_roster)) {

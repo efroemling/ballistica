@@ -37,18 +37,23 @@ class AssetsV1GlobalVals:
     ] = ''
 
 
-class AssetsV1StrInputTypeID(Enum):
+class AssetsV1StringFileTypeID(Enum):
     """Type ID for each of our subclasses."""
 
-    BASIC = 'b'
+    V1 = 'v1'
 
 
-class AssetsV1StrInput(IOMultiType[AssetsV1StrInputTypeID]):
+class AssetsV1StringFile(IOMultiType[AssetsV1StringFileTypeID]):
     """Top level class for our multitype."""
 
     @override
     @classmethod
-    def get_type_id(cls) -> AssetsV1StrInputTypeID:
+    def get_type_id_storage_name(cls) -> str:
+        return 'string_file_version'
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1StringFileTypeID:
         # Require child classes to supply this themselves. If we did a
         # full type registry/lookup here it would require us to import
         # everything and would prevent lazy loading.
@@ -57,14 +62,14 @@ class AssetsV1StrInput(IOMultiType[AssetsV1StrInputTypeID]):
     @override
     @classmethod
     def get_type(
-        cls, type_id: AssetsV1StrInputTypeID
-    ) -> type[AssetsV1StrInput]:
+        cls, type_id: AssetsV1StringFileTypeID
+    ) -> type[AssetsV1StringFile]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
 
-        t = AssetsV1StrInputTypeID
-        if type_id is t.BASIC:
-            return BasicV1StrInput
+        t = AssetsV1StringFileTypeID
+        if type_id is t.V1:
+            return AssetsV1StringFileV1
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -72,42 +77,66 @@ class AssetsV1StrInput(IOMultiType[AssetsV1StrInputTypeID]):
 
 @ioprepped
 @dataclass
-class BasicV1StrInput(AssetsV1StrInput):
-    """Just a test."""
+class AssetsV1StringFileV1(AssetsV1StringFile):
+    """Our initial version of string file data."""
 
     @override
     @classmethod
-    def get_type_id(cls) -> AssetsV1StrInputTypeID:
-        return AssetsV1StrInputTypeID.BASIC
-
-
-@ioprepped
-@dataclass
-class AssetsV1StrData:
-    """Data and output for a string asset."""
+    def get_type_id(cls) -> AssetsV1StringFileTypeID:
+        return AssetsV1StringFileTypeID.V1
 
     @dataclass
     class Output:
-        """Represents a single instance of localized output."""
+        """Represents a single localized output."""
 
-        class Source(Enum):
-            """Where localized output can come from."""
-
-            AI_V1 = 'ai_v1'
-
-        output_id: Annotated[int, IOAttrs('i')]
-        created: Annotated[datetime.datetime, IOAttrs('c')]
-        source: Annotated[Source, IOAttrs('s')]
-        locale: Annotated[Locale, IOAttrs('l')]
-        value_default: Annotated[
-            str | None, IOAttrs('d', store_default=False)
+        #: When this output was generated (optional metadata).
+        created: Annotated[
+            datetime.datetime | None, IOAttrs('created', store_default=False)
         ] = None
 
-    inputs: Annotated[list[AssetsV1StrInput], IOAttrs('i')] = field(
-        default_factory=list
+        #: If this particular output is dirty (if the input has changed
+        #: since it was last generated).
+        dirty: Annotated[bool, IOAttrs('dirty', store_default=False)] = False
+
+        #: Default value (no counts involved).
+        value: Annotated[str | None, IOAttrs('value', store_default=False)] = (
+            None
+        )
+
+    input: Annotated[str, IOAttrs('input')] = ''
+    outputs: Annotated[dict[Locale, str], IOAttrs('outputs')] = field(
+        default_factory=dict
     )
-    outputs: Annotated[list[Output], IOAttrs('o')] = field(default_factory=list)
-    next_output_id: Annotated[int, IOAttrs('n')] = 0
+
+
+# @ioprepped
+# @dataclass
+# class AssetsV1StrData:
+#     """Data and output for a string asset."""
+
+#     @dataclass
+#     class Output:
+#         """Represents a single instance of localized output."""
+
+#         class Source(Enum):
+#             """Where localized output can come from."""
+
+#             AI_V1 = 'ai_v1'
+
+#         output_id: Annotated[int, IOAttrs('i')]
+#         created: Annotated[datetime.datetime, IOAttrs('c')]
+#         source: Annotated[Source, IOAttrs('s')]
+#         locale: Annotated[Locale, IOAttrs('l')]
+#         value_default: Annotated[
+#             str | None, IOAttrs('d', store_default=False)
+#         ] = None
+
+#     inputs: Annotated[list[AssetsV1StrInput], IOAttrs('i')] = field(
+#         default_factory=list
+#     )
+#     outputs: Annotated[list[Output], IOAttrs('o')] =
+# field(default_factory=list)
+#     next_output_id: Annotated[int, IOAttrs('n')] = 0
 
 
 class AssetsV1PathValsTypeID(Enum):
@@ -169,3 +198,31 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
         return AssetsV1PathValsTypeID.TEX_V1
+
+
+# @ioprepped
+# @dataclass
+# class AssetsV1StringFileData:
+#     """Data format for .bstr files."""
+
+#     @dataclass
+#     class Output:
+#         """Represents a single instance of localized output."""
+
+#         class Source(Enum):
+#             """Where localized output can come from."""
+
+#             AI_V1 = 'ai_v1'
+
+#         output_id: Annotated[int, IOAttrs('i')]
+#         created: Annotated[datetime.datetime, IOAttrs('c')]
+#         source: Annotated[Source, IOAttrs('s')]
+#         locale: Annotated[Locale, IOAttrs('l')]
+#         value_default: Annotated[
+#             str | None, IOAttrs('d', store_default=False)
+#         ] = None
+
+#     input: Annotated[str, IOAttrs('in')] = ''
+#     outputs: Annotated[dict[Locale, str], IOAttrs('out')] = field(
+#         default_factory=dict
+#     )

@@ -469,11 +469,9 @@ void ConnectionToClient::HandleMessagePacket(
           }
           cJSON_Delete(info);
         } else {
-          BA_LOG_ONCE(
-              LogName::kBaNetworking, LogLevel::kWarning,
-              "Got invalid json in clientinfo message: '"
-                  + std::string(reinterpret_cast<const char*>(&(buffer[1])))
-                  + "'.");
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "Got invalid json in clientinfo message: '"
+                          + std::string(str_buffer.data()) + "'.");
           Error("");
         }
       }

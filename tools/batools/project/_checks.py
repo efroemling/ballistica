@@ -395,6 +395,8 @@ def _check_python_file_imports(
         else:
             continue
 
+        single_import: str | None
+
         # Look for simple cases of 'from foo import bar'.
         if (
             importparts

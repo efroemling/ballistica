@@ -1,8 +1,10 @@
-### 1.7.41 (build 22381, api 9, 2025-05-23)
+### 1.7.42 (build 22384, api 9, 2025-05-29)
+
+### 1.7.41 (build 22382, api 9, 2025-05-25)
 - Fixed a few unsafe accesses of cJSON objects that could be exploited to crash
   servers by feeding them bad json data. If you ever come across CXX code
-  accessing a cJSON obj like `obj->valuestring` without calling
-  `cJSON_IsString(obj)` first, please holler loudly at me.
+  accessing a cJSON obj like `obj->valuestring` without making sure
+  `cJSON_IsString(obj)` is true first, please holler loudly at me.
 
 ### 1.7.40 (build 22379, api 9, 2025-05-23)
 - Upgraded from Python 3.12 to 3.13. See python.org for what fun new goodies

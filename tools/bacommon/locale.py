@@ -18,9 +18,9 @@ class Locale(Enum):
 
     This list of locales is considered 'sacred' - we assume any values
     (and associated long values) added here remain in use out in the
-    wild indefinitely. If a locale value is superseded by a newer or
-    more specific one, the new value should be added and both new and
-    old should map to the same LocaleResolved value.
+    wild indefinitely. If a locale is superseded by a newer or more
+    specific one, the new locale should be added and both new and old
+    should map to the same :class:`LocaleResolved`.
     """
 
     # Locale values are not iso codes or anything specific; just
