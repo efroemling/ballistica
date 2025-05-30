@@ -34,9 +34,6 @@ ifeq ($(BA_ENABLE_COMPILE_COMMANDS_DB),1)
  ENV_COMPILE_COMMANDS_DB = .cache/compile_commands_db/compile_commands.json
 endif
 
-# Set env-var BA_ENABLE_DISCORD=1 to enable discord integration.
-# If BA_ENABLE_DISCORD is not defined, set it to 0 by default.
-BA_ENABLE_DISCORD ?= 0
 
 # pcommandbatch can be much faster when running hundreds or thousands of
 # commands, but has some downsides and limitations compared to regular
@@ -1073,7 +1070,7 @@ windows-clean-list: env
 
 # This can be Debug, Release, RelWithDebInfo, or MinSizeRel.
 CMAKE_BUILD_TYPE ?= Debug
-CMAKE_EXTRA_ARGS ?= -DDISCORD=$(BA_ENABLE_DISCORD)
+CMAKE_EXTRA_ARGS ?=
 
 # Build and run the cmake build.
 cmake: cmake-build
