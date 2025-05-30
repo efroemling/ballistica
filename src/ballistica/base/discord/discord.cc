@@ -14,7 +14,7 @@
 #include <string>
 #include <thread>
 
-#include "../lib/discord_social_sdk/include/discordpp.h"
+#include "external/discord_social_sdk/include/discordpp.h"
 
 namespace ballistica::base {
 

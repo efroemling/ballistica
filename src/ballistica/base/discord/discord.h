@@ -5,7 +5,7 @@
 
 #include <memory>
 #if BA_ENABLE_DISCORD
-#include "../lib/discord_social_sdk/include/discordpp.h"
+#include "external/discord_social_sdk/include/discordpp.h"
 #endif  // BA_ENABLE_DISCORD
 
 namespace ballistica::base {

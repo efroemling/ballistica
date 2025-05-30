@@ -1,5 +1,5 @@
 # build/temp files
-lib/discord_social_sdk
+src/external/discord_social_sdk
 Bin/
 build/
 build-server/

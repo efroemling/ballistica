@@ -791,7 +791,7 @@ add_executable(ballisticakitbin ${BALLISTICA_SOURCES})
 
 #++++++++++++++++++++++++discord_sdk+++++++++++++++++++++++++++++++
 if (DISCORD)
-set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../lib/discord_social_sdk")
+set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../src/external/discord_social_sdk")
 set(DISCORD_SDK_INCLUDE_DIR "${DISCORD_SDK_ROOT}/include")
 set(DISCORD_SDK_LIB_DIR "${DISCORD_SDK_ROOT}/lib/release")
 set(DISCORD_SDK_BIN_DIR "${DISCORD_SDK_ROOT}/bin/release")
