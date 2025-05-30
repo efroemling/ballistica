@@ -34,7 +34,6 @@ ifeq ($(BA_ENABLE_COMPILE_COMMANDS_DB),1)
  ENV_COMPILE_COMMANDS_DB = .cache/compile_commands_db/compile_commands.json
 endif
 
-
 # pcommandbatch can be much faster when running hundreds or thousands of
 # commands, but has some downsides and limitations compared to regular
 # pcommand. See tools/efrotools/pcommandbatch.py for more info on when to use
