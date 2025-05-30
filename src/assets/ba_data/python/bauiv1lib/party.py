@@ -235,7 +235,14 @@ class PartyWindow(bui.Window):
 
     def _copy_msg(self, msg: str) -> None:
         if bui.clipboard_is_supported():
-            bui.clipboard_set_text(msg)
+            # Extract content after the first colon
+            if ':' in msg:
+                content = msg.split(':', 1)[1].strip()
+            else:
+                # Just a safe check
+                content = msg
+
+            bui.clipboard_set_text(content)
             bui.screenmessage(
                 bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0)
             )
