@@ -527,7 +527,8 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     exargs = ' --with-pydebug' if debug else ''
     pyvershort = PY_VER_ANDROID.replace('.', '')
     subprocess.run(
-        f'ARCH={arch} ANDROID_API=23 ./build.sh{exargs} --without-ensurepip'
+        f'ARCH={arch} ANDROID_API={ANDROID_API_VER}'
+        f' ./build.sh{exargs} --without-ensurepip'
         f' --with-build-python='
         f'/home/ubuntu/.py{pyvershort}/bin/python{PY_VER_ANDROID}',
         shell=True,
