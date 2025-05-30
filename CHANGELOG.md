@@ -1,4 +1,4 @@
-### 1.7.42 (build 22384, api 9, 2025-05-29)
+### 1.7.42 (build 22385, api 9, 2025-05-29)
 
 ### 1.7.41 (build 22382, api 9, 2025-05-25)
 - Fixed a few unsafe accesses of cJSON objects that could be exploited to crash
