@@ -819,23 +819,23 @@ void RendererGL::SyncGLState_() {
   auto* VAR = static_cast<TYPE*>(mesh_data->renderer_data()); \
   assert(VAR&& VAR == dynamic_cast<TYPE*>(mesh_data->renderer_data()))
 
-#define GET_INDEX_BUFFER()                                      \
-  assert(buffer != buffers.end());                              \
-  assert(index_size != index_sizes.end());                      \
-  MeshIndexBuffer16* indices16{nullptr};                        \
-  MeshIndexBuffer32* indices32{nullptr};                        \
-  assert(*index_size == 4 || *index_size == 2);                 \
-  bool use_indices32 = (*index_size == 4);                      \
-  if (use_indices32) {                                          \
-    indices32 = static_cast<MeshIndexBuffer32*>(buffer->get()); \
-    assert(indices32&& indices32                                \
-           == dynamic_cast<MeshIndexBuffer32*>(buffer->get())); \
-  } else {                                                      \
-    indices16 = static_cast<MeshIndexBuffer16*>(buffer->get()); \
-    assert(indices16&& indices16                                \
-           == dynamic_cast<MeshIndexBuffer16*>(buffer->get())); \
-  }                                                             \
-  index_size++;                                                 \
+#define GET_INDEX_BUFFER()                                                   \
+  assert(buffer != buffers.end());                                           \
+  assert(index_size != index_sizes.end());                                   \
+  MeshIndexBuffer16* indices16{nullptr};                                     \
+  MeshIndexBuffer32* indices32{nullptr};                                     \
+  assert(*index_size == 4 || *index_size == 2);                              \
+  bool use_indices32 = (*index_size == 4);                                   \
+  if (use_indices32) {                                                       \
+    indices32 = static_cast<MeshIndexBuffer32*>(buffer->get());              \
+    assert(indices32                                                         \
+           && indices32 == dynamic_cast<MeshIndexBuffer32*>(buffer->get())); \
+  } else {                                                                   \
+    indices16 = static_cast<MeshIndexBuffer16*>(buffer->get());              \
+    assert(indices16                                                         \
+           && indices16 == dynamic_cast<MeshIndexBuffer16*>(buffer->get())); \
+  }                                                                          \
+  index_size++;                                                              \
   buffer++
 
 #define GET_BUFFER(TYPE, VAR)                              \
