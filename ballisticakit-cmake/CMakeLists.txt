@@ -4,6 +4,7 @@ include(CheckIncludeFile)
 
 option(HEADLESS "build headless server" OFF)
 option(TEST_BUILD "include testing features" OFF)
+option(DISCORD "enable Discord" OFF)
 
 # Requiring minimum of C++20 currently.
 set(CMAKE_CXX_STANDARD 20)
@@ -245,6 +246,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/audio/ogg_stream.h
   ${BA_SRC_ROOT}/ballistica/base/base.cc
   ${BA_SRC_ROOT}/ballistica/base/base.h
+  ${BA_SRC_ROOT}/ballistica/base/discord/discord.cc
+  ${BA_SRC_ROOT}/ballistica/base/discord/discord.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics.cc
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_draw_snapshot.h
@@ -785,6 +788,40 @@ set(BALLISTICA_SOURCES
 
 # BallisticaKit monolithic binary.
 add_executable(ballisticakitbin ${BALLISTICA_SOURCES})
+
+#++++++++++++++++++++++++discord_sdk+++++++++++++++++++++++++++++++
+if (DISCORD)
+set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../src/external/discord_social_sdk")
+set(DISCORD_SDK_INCLUDE_DIR "${DISCORD_SDK_ROOT}/include")
+set(DISCORD_SDK_LIB_DIR "${DISCORD_SDK_ROOT}/lib/release")
+set(DISCORD_SDK_BIN_DIR "${DISCORD_SDK_ROOT}/bin/release")
+
+# Include Discord SDK headers
+include_directories(${DISCORD_SDK_INCLUDE_DIR})
+
+# Platform-specific Social SDK library paths
+if(WIN32)
+    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/discord_partner_sdk.lib")
+    set(DISCORD_SHARED_LIB "${DISCORD_SDK_BIN_DIR}/discord_partner_sdk.dll")
+elseif(APPLE)
+    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
+    set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
+else() # Linux
+    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
+    set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
+endif()
+
+# need to link to this instead
+# Copy the Discord shared library to the output directory
+# add_custom_command(TARGET ballisticakitbin
+#     POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#         "${DISCORD_SHARED_LIB}"
+#         $<TARGET_FILE_DIR:ballisticakitbin>)
+
+set(EXTRA_INCLUDE_DIRS ${EXTRA_INCLUDE_DIRS} ${DISCORD_SDK_INCLUDE_DIR})
+set(EXTRA_LIBRARIES ${EXTRA_LIBRARIES} ${DISCORD_LIB_PATH})
+endif() #DISCORD
 
 # Gets -rdynamic added when linking gcc builds which exports all symbols
 # which gives us more meaningful stack traces using backtrace_symbols().  

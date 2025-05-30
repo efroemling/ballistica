@@ -1069,6 +1069,7 @@ windows-clean-list: env
 
 # This can be Debug, Release, RelWithDebInfo, or MinSizeRel.
 CMAKE_BUILD_TYPE ?= Debug
+CMAKE_EXTRA_ARGS ?=
 
 # Build and run the cmake build.
 cmake: cmake-build
@@ -1097,7 +1098,7 @@ cmake-build: assets-cmake resources cmake-binary
 cmake-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/$(CM_BT_LC)
 	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS)\
       $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) \
       build/cmake/$(CM_BT_LC)

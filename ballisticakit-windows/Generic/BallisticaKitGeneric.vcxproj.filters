@@ -145,6 +145,12 @@
     <ClInclude Include="..\..\src\ballistica\base\base.h">
       <Filter>ballistica\base</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\discord\discord.cc">
+      <Filter>ballistica\base\discord</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\discord\discord.h">
+      <Filter>ballistica\base\discord</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics.cc">
       <Filter>ballistica\base\dynamics\bg</Filter>
     </ClCompile>
@@ -1989,6 +1995,7 @@
     <Filter Include="ballistica\base\app_mode" />
     <Filter Include="ballistica\base\assets" />
     <Filter Include="ballistica\base\audio" />
+    <Filter Include="ballistica\base\discord" />
     <Filter Include="ballistica\base\dynamics" />
     <Filter Include="ballistica\base\dynamics\bg" />
     <Filter Include="ballistica\base\graphics" />

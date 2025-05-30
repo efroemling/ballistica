@@ -7,6 +7,7 @@
 #include <mutex>
 #include <string>
 
+#include "ballistica/base/discord/discord.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
@@ -829,7 +830,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   TextGraphics* const text_graphics;
   UI* const ui;
   Utils* const utils;
-
+  Discord* const discord;
   // Variable subsystems.
   void set_app_mode(AppMode* mode);
   auto* app_mode() const { return app_mode_; }

@@ -12,6 +12,7 @@
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
+#include "ballistica/base/discord/discord.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
@@ -70,7 +71,8 @@ BaseFeatureSet::BaseFeatureSet()
                                                          : nullptr},
       text_graphics{new TextGraphics()},
       ui{new UI()},
-      utils{new Utils()} {
+      utils{new Utils()},
+      discord{g_buildconfig.enable_discord() ? new Discord() : nullptr} {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_base == nullptr);
 
