@@ -55,9 +55,11 @@ std::shared_ptr<discordpp::Client> Discord::init() {
                     << " - Details: " << errorDetail << std::endl;
         }
       });
-  client->SetMessageCreatedCallback([client_](uint64_t messageId) {
-    auto message = client_->GetMessageHandle(messageId);
-    std::cout << "📨 New message received: " << message->Content() << "\n";
+  client->SetMessageCreatedCallback([client_, this](uint64_t messageId) {
+    if (!(messageId == oldMessageId_)) {
+      auto message = client_->GetMessageHandle(messageId);
+      std::cout << "📨 New message received: " << message->Content() << "\n";
+    }
   });
 
   authenticate();

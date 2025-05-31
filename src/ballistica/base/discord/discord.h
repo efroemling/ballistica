@@ -17,6 +17,7 @@ class Discord {
   std::shared_ptr<discordpp::Client> client;
   discordpp::Activity activity;
   uint64_t lobbyId_{0};
+  uint64_t oldMessageId_{0};
   bool client_is_ready = false;
   void authenticate();
 
