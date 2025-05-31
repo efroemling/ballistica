@@ -56,10 +56,10 @@ std::shared_ptr<discordpp::Client> Discord::init() {
         }
       });
   client->SetMessageCreatedCallback([client_, this](uint64_t messageId) {
-    if (!(messageId == oldMessageId_)) {
+    // if (!(messageId == oldMessageId_)) { // this doesnt work
       auto message = client_->GetMessageHandle(messageId);
       std::cout << "📨 New message received: " << message->Content() << "\n";
-    }
+    // }
   });
 
   authenticate();
@@ -163,13 +163,28 @@ void Discord::SetActivity(const char* state, const char* details,
   // if (startTimestamp > 0)
   // activity.SetTimestamps(activity.Timestamps(startTimestamp)); if
   // (endTimestamp > 0) activity.GetTimestamps().SetEnd(endTimestamp);
-
+  
   discordpp::ActivityAssets assets{};
   if (largeImageKey) assets.SetLargeImage(largeImageKey);
   if (largeImageText) assets.SetLargeText(largeImageText);
   if (smallImageKey) assets.SetSmallImage(smallImageKey);
   if (smallImageText) assets.SetSmallText(smallImageText);
   activity.SetAssets(assets);
+  AddButton("Download BombSquad", "https://ballistica.net/downloads");
+  UpdateRP();
+}
+
+// maybe expose this to python
+void Discord::AddButton(const char* label, const char* url) {
+  if (!client) {
+    return;
+  }
+  std::cout << "Adding button...\n";
+  discordpp::ActivityButton button;
+  button.SetLabel(label);
+  button.SetUrl(url);
+  activity.AddButton(button);
+  std::cout << "Button added!\n";
   UpdateRP();
 }
 
@@ -194,7 +209,6 @@ void Discord::SetParty(const char* partyId, int currentPartySize,
   client->RegisterLaunchCommand(
       APPLICATION_ID, "bombsquad://");  // Example deeplink command Create or
                                         // join a lobby from the client
-  std::shared_ptr<discordpp::Client> client_ = client;
   UpdateRP();
 }
 

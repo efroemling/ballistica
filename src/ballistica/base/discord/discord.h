@@ -27,6 +27,7 @@ class Discord {
                    int64_t startTimestamp, int64_t endTimestamp);
 
   void SetParty(const char* partyId, int currentPartySize, int maxPartySize);
+  void AddButton(const char* label, const char* url);
   void JoinLobby(const char* lobbySecret);
   void LeaveLobby(const char* lobbyId);
   void SendLobbyMessage(const char* message);
