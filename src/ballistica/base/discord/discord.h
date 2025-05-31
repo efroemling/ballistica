@@ -12,8 +12,11 @@ namespace ballistica::base {
 class Discord {
 #if BA_ENABLE_DISCORD
  public:
+  static const uint64_t APPLICATION_ID = 1373228222002626610;
   std::shared_ptr<discordpp::Client> init();
   std::shared_ptr<discordpp::Client> client;
+  discordpp::Activity activity{};
+  
   bool client_is_ready = false;
   void authenticate();
 
@@ -21,7 +24,9 @@ class Discord {
                    const char* largeImageKey, const char* largeImageText,
                    const char* smallImageKey, const char* smallImageText,
                    int64_t startTimestamp, int64_t endTimestamp);
-  static const uint64_t APPLICATION_ID = 1373228222002626610;
+
+  void SetParty(const char* partyId, int currentPartySize, int maxPartySize);
+  void UpdateRP();
 #endif  // BA_ENABLE_DISCORD
 };
 }  // namespace ballistica::base

@@ -145,12 +145,6 @@ void Discord::SetActivity(const char* state, const char* details,
   }
 
   std::cout << "Setting activity...\n";
-  discordpp::Activity activity{};
-  // activity.SetSupportedPlatforms(static_cast<discordpp::ActivityGamePlatforms>(
-  //     static_cast<int>(discordpp::ActivityGamePlatforms::Desktop)
-  //     | static_cast<int>(discordpp::ActivityGamePlatforms::IOS)
-  //     | static_cast<int>(discordpp::ActivityGamePlatforms::Android)
-  //     | static_cast<int>(discordpp::ActivityGamePlatforms::Embedded)));
   // Set properties if provided
   activity.SetType(discordpp::ActivityTypes::Playing);
   if (state) activity.SetState(state);
@@ -167,14 +161,39 @@ void Discord::SetActivity(const char* state, const char* details,
   if (smallImageKey) assets.SetSmallImage(smallImageKey);
   if (smallImageText) assets.SetSmallText(smallImageText);
   activity.SetAssets(assets);
+  
+  UpdateRP();
+}
+
+void Discord::SetParty(const char* partyId, int currentPartySize,
+                       int maxPartySize) {
+  if (!client) {
+    return;
+  }
+  std::cout << "Setting party...\n";
+  discordpp::ActivityParty party;
+  party.SetId("party1234");
+  party.SetCurrentSize(1);
+  party.SetMaxSize(5);
+  activity.SetParty(party);
+  std::cout << "Party set!\n";
+  UpdateRP();
+}
+
+void Discord::UpdateRP() {
+  if (!client) {
+    return;
+  }
   client->UpdateRichPresence(activity, [](discordpp::ClientResult result) {
     if (result.Successful()) {
       std::cout << "🎮 Rich Presence updated successfully!\n";
     } else {
-      std::cerr << "❌ Rich Presence update failed";
+      std::cerr << "❌ Rich Presence update failed\n";
     }
   });
 }
+
+
 }  // namespace ballistica::base
 
 #endif  // BA_ENABLE_DISCORD

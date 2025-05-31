@@ -31,6 +31,51 @@ namespace ballistica::base {
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 #pragma ide diagnostic ignored "RedundantCast"
 
+// -------------------------- discord_start------------------------------
+
+static auto PyDiscordStart(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+#if BA_ENABLE_DISCORD
+  g_base->discord->client = g_base->discord->init();
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordStartDef = {"discord_start",               // name
+                                        (PyCFunction)PyDiscordStart,   // method
+                                        METH_VARARGS | METH_KEYWORDS,  // flags
+                                        "discord_start() -> None\n"
+                                        "\n"};
+
+// -------------------------- discord_is_ready------------------------------
+
+static auto PyDiscordIsReady(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+#else
+  // If Discord is not enabled, we return None.
+  Py_RETURN_NONE;
+#endif
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordIsReadyDef = {
+    "discord_is_ready",             // name
+    (PyCFunction)PyDiscordIsReady,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
+    "discord_is_ready() -> bool\n"
+    "\n"};
+
 // -------------------------- discord_richpresence------------------------------
 
 static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
@@ -92,50 +137,45 @@ static PyMethodDef PyDiscordRichpresenceDef = {
     "\n"
     "end_timestamp: Unix timestamp for game end time"};
 
-// -------------------------- discord_start------------------------------
+// -------------------------- discord_set_party ------------------------------
 
-static auto PyDiscordStart(PyObject* self, PyObject* args, PyObject* keywds)
+static auto PyDiscordSetParty(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-
-#if BA_ENABLE_DISCORD
-  g_base->discord->client = g_base->discord->init();
-#endif
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyDiscordStartDef = {"discord_start",               // name
-                                        (PyCFunction)PyDiscordStart,   // method
-                                        METH_VARARGS | METH_KEYWORDS,  // flags
-                                        "discord_start() -> None\n"
-                                        "\n"};
-
-// -------------------------- discord_is_ready------------------------------
-
-static auto PyDiscordIsReady(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-
+  const char* partyId = nullptr;
+  int64_t currentPartySize = 0, maxPartySize = 0;
+  static char* kwlist[] = {const_cast<char*>("party_id"),
+                           const_cast<char*>("current_party_size"),
+                           const_cast<char*>("max_party_size"), 
+                           nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sLL", kwlist, &partyId,
+                                   &currentPartySize, &maxPartySize)) {
+    return nullptr;
+  }
 #if BA_ENABLE_DISCORD
   if (g_base->discord->client_is_ready) {
-    Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
+    g_base->discord->SetParty(partyId, currentPartySize, maxPartySize);
   }
-#else
-  // If Discord is not enabled, we return None.
-  Py_RETURN_NONE;
 #endif
+  Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDiscordIsReadyDef = {
-    "discord_is_ready",             // name
-    (PyCFunction)PyDiscordIsReady,  // method
-    METH_VARARGS | METH_KEYWORDS,   // flags
-    "discord_is_ready() -> bool\n"
-    "\n"};
+static PyMethodDef PyDiscordSetPartyDef = {
+    "discord_set_party",             // name
+    (PyCFunction)PyDiscordSetParty,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+    "discord_set_party() -> None\n"
+    "\n"
+    "Set Discord Party information."
+    "\n"
+    "Args:"
+    "\n"
+    "party_id: Unique identifier for the party"
+    "\n"
+    "current_party_size: Current number of members in the party"
+    "\n"
+    "max_party_size: Maximum number of members allowed in the party"};
 
 // --------------------------------- appname -----------------------------------
 
@@ -1741,6 +1781,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyDiscordStartDef,
       PyDiscordIsReadyDef,
       PyDiscordRichpresenceDef,
+      PyDiscordSetPartyDef,
       PyAppNameDef,
       PyAppIsActiveDef,
       PyRunAppDef,
