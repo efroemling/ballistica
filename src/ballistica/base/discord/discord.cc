@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
 #define DISCORDPP_IMPLEMENTATION
-#ifndef BA_ENABLE_DISCORD // remove in production
+#ifndef BA_ENABLE_DISCORD    // remove in production
 #define BA_ENABLE_DISCORD 1  // only for ide
 #endif
 #if BA_ENABLE_DISCORD
@@ -55,6 +55,10 @@ std::shared_ptr<discordpp::Client> Discord::init() {
                     << " - Details: " << errorDetail << std::endl;
         }
       });
+  client->SetMessageCreatedCallback([client_](uint64_t messageId) {
+    auto message = client_->GetMessageHandle(messageId);
+    std::cout << "📨 New message received: " << message->Content() << "\n";
+  });
 
   authenticate();
 
@@ -74,7 +78,7 @@ void Discord::authenticate() {
   // Set up authentication arguments
   discordpp::AuthorizationArgs args{};
   args.SetClientId(APPLICATION_ID);
-  args.SetScopes(discordpp::Client::GetDefaultPresenceScopes());
+  args.SetScopes(discordpp::Client::GetDefaultCommunicationScopes());
   args.SetCodeChallenge(codeVerifier.Challenge());
 
   std::fstream file("discord_auth.txt", std::ios::in);
@@ -179,12 +183,65 @@ void Discord::SetParty(const char* partyId, int currentPartySize,
   party.SetMaxSize(5);
   activity.SetParty(party);
   std::cout << "Party set!\n";
-  discordpp::ActivitySecrets secrets;
-  secrets.SetJoin("joinsecret1234");
-  activity.SetSecrets(secrets);
+
   activity.SetSupportedPlatforms(discordpp::ActivityGamePlatforms::Desktop);
   activity.SetSupportedPlatforms(discordpp::ActivityGamePlatforms::Android);
+  discordpp::ActivitySecrets secrets;
+  secrets.SetJoin("joinsecret1234");  // Example join secret
+  activity.SetSecrets(secrets);
+  client->RegisterLaunchCommand(
+      APPLICATION_ID, "bombsquad://");  // Example deeplink command Create or
+                                        // join a lobby from the client
+  std::shared_ptr<discordpp::Client> client_ = client;
   UpdateRP();
+}
+
+void Discord::JoinLobby(const char* lobbySecret) {
+  if (!client) {
+    return;
+  }
+  client->CreateOrJoinLobby(
+      "my_lobby_secret",
+      [this](discordpp::ClientResult result, uint64_t lobbyId) {
+        if (result.Successful()) {
+          lobbyId_ = lobbyId;
+          std::cout << "🎮 Lobby created or joined successfully! Lobby Id: "
+                    << lobbyId << std::endl;
+        } else {
+          std::cerr << "❌ Lobby creation/join failed\n";
+        }
+      });
+}
+
+void Discord::LeaveLobby() {
+  if (!client) {
+    return;
+  }
+  auto client_ = client;
+  client->LeaveLobby(lobbyId_, [client_](discordpp::ClientResult result) {
+    if (result.Successful()) {
+      std::cout << "🎮 Left lobby successfully!\n";
+    } else {
+      std::cerr << "❌ Failed to leave lobby\n";
+    }
+  });
+}
+
+void Discord::SendLobbyMessage(const char* message) {
+  if (!client || lobbyId_ == 0) {
+    return;
+  }
+  auto client_ = client;
+  client->SendLobbyMessage(
+      lobbyId_, message,
+      [client_](discordpp::ClientResult result, uint64_t messageId) {
+        if (result.Successful()) {
+          std::cout << "📨 Message sent successfully! Message ID: " << messageId
+                    << "\n";
+        } else {
+          std::cerr << "❌ Failed to send message\n";
+        }
+      });
 }
 
 void Discord::UpdateRP() {

@@ -15,8 +15,8 @@ class Discord {
   static const uint64_t APPLICATION_ID = 1373228222002626610;
   std::shared_ptr<discordpp::Client> init();
   std::shared_ptr<discordpp::Client> client;
-  discordpp::Activity activity{};
-  
+  discordpp::Activity activity;
+  uint64_t lobbyId_{0};
   bool client_is_ready = false;
   void authenticate();
 
@@ -26,6 +26,10 @@ class Discord {
                    int64_t startTimestamp, int64_t endTimestamp);
 
   void SetParty(const char* partyId, int currentPartySize, int maxPartySize);
+  void JoinLobby(const char* lobbySecret);
+  void LeaveLobby(const char* lobbyId);
+  void SendLobbyMessage(const char* message);
+  void LeaveLobby();
   void UpdateRP();
 #endif  // BA_ENABLE_DISCORD
 };

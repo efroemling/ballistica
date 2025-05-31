@@ -146,8 +146,7 @@ static auto PyDiscordSetParty(PyObject* self, PyObject* args, PyObject* keywds)
   int64_t currentPartySize = 0, maxPartySize = 0;
   static char* kwlist[] = {const_cast<char*>("party_id"),
                            const_cast<char*>("current_party_size"),
-                           const_cast<char*>("max_party_size"), 
-                           nullptr};
+                           const_cast<char*>("max_party_size"), nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sLL", kwlist, &partyId,
                                    &currentPartySize, &maxPartySize)) {
     return nullptr;
@@ -176,6 +175,87 @@ static PyMethodDef PyDiscordSetPartyDef = {
     "current_party_size: Current number of members in the party"
     "\n"
     "max_party_size: Maximum number of members allowed in the party"};
+
+// -------------------------- discord_join_lobby ------------------------------
+
+static auto PyDiscordJoinLobby(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* lobbySecret = nullptr;
+  static char* kwlist[] = {const_cast<char*>("lobby_secret"), nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s", kwlist, &lobbySecret)) {
+    return nullptr;
+  }
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->JoinLobby(lobbySecret);
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordJoinLobbyDef = {
+    "discord_join_lobby",             // name
+    (PyCFunction)PyDiscordJoinLobby,  // method
+    METH_VARARGS | METH_KEYWORDS,     // flags
+    "discord_join_lobby() -> None\n"
+    "\n"
+    "Join a discord lobby."
+    "\n"
+    "Args:"
+    "\n"
+    "lobby_secret: Unique identifier for the lobby"};
+
+// -------------------------- discord_leave_lobby ------------------------------
+
+static auto PyDiscordLeaveLobby(PyObject* self, PyObject* args,
+                                PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->LeaveLobby();
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordLeaveLobbyDef = {
+    "discord_leave_lobby",             // name
+    (PyCFunction)PyDiscordLeaveLobby,  // method
+    METH_VARARGS | METH_KEYWORDS,      // flags
+    "discord_leave_lobby() -> None\n"
+    "\n"
+    "Leave a discord lobby."};
+
+// ---------------------- discord_send_lobby_message ---------------------------
+
+static auto PyDiscordSendLobbyMessage(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* message = nullptr;
+  static char* kwlist[] = {const_cast<char*>("message"), nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s", kwlist, &message)) {
+    return nullptr;
+  }
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->SendLobbyMessage(message);
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordSendLobbyMessageDef = {
+    "discord_send_lobby_message",            // name
+    (PyCFunction)PyDiscordSendLobbyMessage,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+    "discord_send_lobby_message() -> None\n"
+    "\n"
+    "Args:"
+    "message: Message to send to a discord lobby."};
 
 // --------------------------------- appname -----------------------------------
 
@@ -1782,6 +1862,9 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyDiscordIsReadyDef,
       PyDiscordRichpresenceDef,
       PyDiscordSetPartyDef,
+      PyDiscordJoinLobbyDef,
+      PyDiscordLeaveLobbyDef,
+      PyDiscordSendLobbyMessageDef,
       PyAppNameDef,
       PyAppIsActiveDef,
       PyRunAppDef,
