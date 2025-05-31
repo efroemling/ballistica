@@ -1,6 +1,9 @@
 // Released under the MIT License. See LICENSE for details.
 
 #define DISCORDPP_IMPLEMENTATION
+#ifndef BA_ENABLE_DISCORD // remove in production
+#define BA_ENABLE_DISCORD 1  // only for ide
+#endif
 #if BA_ENABLE_DISCORD
 #include "ballistica/base/discord/discord.h"
 
@@ -161,7 +164,6 @@ void Discord::SetActivity(const char* state, const char* details,
   if (smallImageKey) assets.SetSmallImage(smallImageKey);
   if (smallImageText) assets.SetSmallText(smallImageText);
   activity.SetAssets(assets);
-  
   UpdateRP();
 }
 
@@ -177,6 +179,11 @@ void Discord::SetParty(const char* partyId, int currentPartySize,
   party.SetMaxSize(5);
   activity.SetParty(party);
   std::cout << "Party set!\n";
+  discordpp::ActivitySecrets secrets;
+  secrets.SetJoin("joinsecret1234");
+  activity.SetSecrets(secrets);
+  activity.SetSupportedPlatforms(discordpp::ActivityGamePlatforms::Desktop);
+  activity.SetSupportedPlatforms(discordpp::ActivityGamePlatforms::Android);
   UpdateRP();
 }
 
@@ -192,7 +199,6 @@ void Discord::UpdateRP() {
     }
   });
 }
-
 
 }  // namespace ballistica::base
 
