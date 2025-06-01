@@ -1,9 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
 #define DISCORDPP_IMPLEMENTATION
-#ifndef BA_ENABLE_DISCORD    // remove in production
-#define BA_ENABLE_DISCORD 1  // only for ide
-#endif
 #if BA_ENABLE_DISCORD
 #include "ballistica/base/discord/discord.h"
 

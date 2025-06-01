@@ -11,6 +11,7 @@
 namespace ballistica::base {
 class Discord {
 #if BA_ENABLE_DISCORD
+
  public:
   static const uint64_t APPLICATION_ID = 1373228222002626610;
   std::shared_ptr<discordpp::Client> init();
