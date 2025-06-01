@@ -201,7 +201,7 @@ class IOAttrs:
     whole_minutes: bool = False
 
     #: If ``True``, values of type ``datetime.datetime`` (in json codec)
-    #: and ``datetime.timedelta` (in all codecs) will be stored as single
+    #: and ``datetime.timedelta`` (in all codecs) will be stored as single
     #: float timestamp/seconds values instead of the default list of
     #: ints. This is more concise but introduces the possibility of
     #: restored values varying slightly from originals due to
