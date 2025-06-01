@@ -74,7 +74,9 @@ class PrefabPlatform(Enum):
 
         if system == 'Darwin':
             if machine == 'x86_64':
-                if bool(True):
+                # Had turned these off but flipping them back on for
+                # now.
+                if bool(False):
                     raise CleanError(
                         'Prefab builds now require an Apple Silicon mac.'
                     )
