@@ -628,7 +628,10 @@ def prefab_binary_path() -> None:
 
     binpath = None
 
-    if platform is PrefabPlatform.WINDOWS_X86:
+    if (
+        platform is PrefabPlatform.WINDOWS_X86
+        or platform is PrefabPlatform.WINDOWS_X86_64
+    ):
         if buildtype == 'gui':
             binpath = 'BallisticaKit.exe'
         elif buildtype == 'server':

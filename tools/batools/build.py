@@ -45,6 +45,7 @@ class PrefabPlatform(Enum):
     MAC_X86_64 = 'mac_x86_64'
     MAC_ARM64 = 'mac_arm64'
     WINDOWS_X86 = 'windows_x86'
+    WINDOWS_X86_64 = 'windows_x86_64'
     LINUX_X86_64 = 'linux_x86_64'
     LINUX_ARM64 = 'linux_arm64'
 
@@ -86,13 +87,14 @@ class PrefabPlatform(Enum):
                 f' {machine}.'
             )
         if system == 'Linux':
-            # If it looks like we're in Windows Subsystem for Linux, we may
-            # want to operate on Windows versions.
+            # If it looks like we're in Windows Subsystem for Linux, we
+            # may want to operate on Windows versions.
             if wsl_targets_windows:
                 if 'microsoft' in platform.uname().release.lower():
                     if machine == 'x86_64':
-                        # Currently always targeting 32 bit for prefab stuff.
-                        return cls.WINDOWS_X86
+                        # Currently always targeting 64 bit for prefab
+                        # stuff.
+                        return cls.WINDOWS_X86_64
                     # TODO: add support for arm windows
                     raise RuntimeError(
                         f'make_prefab: unsupported win machine type: {machine}.'

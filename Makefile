@@ -259,8 +259,11 @@ prefab-clean:
 
 # Specific platform prefab targets:
 
-# (what visual studio calls their x86 (32 bit) target platform)
-WINPLAT_X86 = Win32
+# Visual Studio platform name for prefab builds; can be Win32 or x64.
+WINPREVSP = x64
+
+# Associated name for our PrefabPlatform enum.
+WINPREPLT = windows_x86_64
 
 # Mac gui debug:
 
@@ -510,19 +513,19 @@ build/prefab/lib/linux_%_server/release/libballisticaplus.a: .efrocachemap
 
 # Windows gui debug:
 
-RUN_PREFAB_WINDOWS_X86_GUI_DEBUG = cd build/prefab/full/windows_x86_gui/debug \
-  && ./BallisticaKit.exe
+RUN_PREFAB_WINDOWS_X86_64_GUI_DEBUG = cd \
+ build/prefab/full/windows_x86_64_gui/debug && ./BallisticaKit.exe
 
-prefab-windows-x86-gui-debug: prefab-windows-x86-gui-debug-build
-	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
-	$(RUN_PREFAB_WINDOWS_X86_GUI_DEBUG)
+prefab-windows-x86-64-gui-debug: prefab-windows-x86-64-gui-debug-build
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86_64
+	$(RUN_PREFAB_WINDOWS_X86_64_GUI_DEBUG)
 
-prefab-windows-x86-gui-debug-build: env assets-windows-$(WINPLAT_X86) \
-   build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe
-	@$(STAGE_BUILD) -win-$(WINPLAT_X86) -debug \
-      build/prefab/full/windows_x86_gui/debug
+prefab-windows-x86-64-gui-debug-build: env assets-windows-$(WINPREVSP) \
+   build/prefab/full/windows_x86_64_gui/debug/BallisticaKit.exe
+	@$(STAGE_BUILD) -win-$(WINPREVSP) -debug \
+      build/prefab/full/windows_x86_64_gui/debug
 
-build/prefab/full/windows_x86_gui/debug/BallisticaKit.exe: .efrocachemap
+build/prefab/full/windows_x86_64_gui/debug/BallisticaKit.exe: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Debug_%/BallisticaKitGenericPlus.lib: .efrocachemap
@@ -533,20 +536,20 @@ build/prefab/lib/windows/Debug_%/BallisticaKitGenericPlus.pdb: .efrocachemap
 
 # Windows gui release:
 
-RUN_PREFAB_WINDOWS_X86_GUI_RELEASE = cd \
-  build/prefab/full/windows_x86_gui/release && ./BallisticaKit.exe
+RUN_PREFAB_WINDOWS_X86_64_GUI_RELEASE = cd \
+  build/prefab/full/windows_x86_64_gui/release && ./BallisticaKit.exe
 
-prefab-windows-x86-gui-release: prefab-windows-x86-gui-release-build
-	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
-	$(RUN_PREFAB_WINDOWS_X86_GUI_RELEASE)
+prefab-windows-x86-64-gui-release: prefab-windows-x86-64-gui-release-build
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86_64
+	$(RUN_PREFAB_WINDOWS_X86_64_GUI_RELEASE)
 
-prefab-windows-x86-gui-release-build: env \
-   assets-windows-$(WINPLAT_X86) \
-   build/prefab/full/windows_x86_gui/release/BallisticaKit.exe
-	@$(STAGE_BUILD) -win-$(WINPLAT_X86) -release \
-      build/prefab/full/windows_x86_gui/release
+prefab-windows-x86-64-gui-release-build: env \
+   assets-windows-$(WINPREVSP) \
+   build/prefab/full/windows_x86_64_gui/release/BallisticaKit.exe
+	@$(STAGE_BUILD) -win-$(WINPREVSP) -release \
+      build/prefab/full/windows_x86_64_gui/release
 
-build/prefab/full/windows_x86_gui/release/BallisticaKit.exe: .efrocachemap
+build/prefab/full/windows_x86_64_gui/release/BallisticaKit.exe: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Release_%/BallisticaKitGenericPlus.lib: .efrocachemap
@@ -557,21 +560,21 @@ build/prefab/lib/windows/Release_%/BallisticaKitGenericPlus.pdb: .efrocachemap
 
 # Windows server debug:
 
-RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG = cd \
-   build/prefab/full/windows_x86_server/debug \
+RUN_PREFAB_WINDOWS_X86_64_SERVER_DEBUG = cd \
+   build/prefab/full/windows_x86_64_server/debug \
    && dist/python_d.exe ballisticakit_server.py
 
-prefab-windows-x86-server-debug: prefab-windows-x86-server-debug-build
-	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
-	$(RUN_PREFAB_WINDOWS_X86_SERVER_DEBUG)
+prefab-windows-x86-64-server-debug: prefab-windows-x86-64-server-debug-build
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86_64_64
+	$(RUN_PREFAB_WINDOWS_X86_64_SERVER_DEBUG)
 
-prefab-windows-x86-server-debug-build: env \
-   assets-windows-$(WINPLAT_X86) \
-   build/prefab/full/windows_x86_server/debug/dist/BallisticaKitHeadless.exe
-	@$(STAGE_BUILD) -winserver-$(WINPLAT_X86) -debug \
-      build/prefab/full/windows_x86_server/debug
+prefab-windows-x86-64-server-debug-build: env \
+   assets-windows-$(WINPREVSP) \
+   build/prefab/full/windows_x86_64_server/debug/dist/BallisticaKitHeadless.exe
+	@$(STAGE_BUILD) -winserver-$(WINPREVSP) -debug \
+      build/prefab/full/windows_x86_64_server/debug
 
-build/prefab/full/windows_x86_server/debug/dist/BallisticaKitHeadless.exe: .efrocachemap
+build/prefab/full/windows_x86_64_server/debug/dist/BallisticaKitHeadless.exe: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Debug_%/BallisticaKitHeadlessPlus.lib: .efrocachemap
@@ -582,21 +585,21 @@ build/prefab/lib/windows/Debug_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 
 # Windows server release:
 
-RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE = cd \
-   build/prefab/full/windows_x86_server/release \
+RUN_PREFAB_WINDOWS_X86_64_SERVER_RELEASE = cd \
+   build/prefab/full/windows_x86_64_server/release \
    && dist/python.exe -O ballisticakit_server.py
 
-prefab-windows-x86-server-release: prefab-windows-x86-server-release-build
-	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
-	$(RUN_PREFAB_WINDOWS_X86_SERVER_RELEASE)
+prefab-windows-x86-64-server-release: prefab-windows-x86-64-server-release-build
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86_64
+	$(RUN_PREFAB_WINDOWS_X86_64_SERVER_RELEASE)
 
-prefab-windows-x86-server-release-build: env \
-   assets-windows-$(WINPLAT_X86) \
-   build/prefab/full/windows_x86_server/release/dist/BallisticaKitHeadless.exe
-	@$(STAGE_BUILD) -winserver-$(WINPLAT_X86) -release \
-      build/prefab/full/windows_x86_server/release
+prefab-windows-x86-64-server-release-build: env \
+   assets-windows-$(WINPREVSP) \
+ build/prefab/full/windows_x86_64_server/release/dist/BallisticaKitHeadless.exe
+	@$(STAGE_BUILD) -winserver-$(WINPREVSP) -release \
+      build/prefab/full/windows_x86_64_server/release
 
-build/prefab/full/windows_x86_server/release/dist/BallisticaKitHeadless.exe: .efrocachemap
+build/prefab/full/windows_x86_64_server/release/dist/BallisticaKitHeadless.exe: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
 
 build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.lib: .efrocachemap
@@ -629,12 +632,15 @@ build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
         prefab-linux-arm64-server-debug-build																	\
         prefab-linux-x86-64-server-release prefab-linux-arm64-server-release	\
         prefab-linux-x86-64-server-release-build															\
-        prefab-linux-arm64-server-release-build prefab-windows-x86-gui-debug	\
-        prefab-windows-x86-gui-debug-build prefab-windows-x86-gui-release			\
-        prefab-windows-x86-gui-release-build prefab-windows-x86-server-debug	\
-        prefab-windows-x86-server-debug-build																	\
-        prefab-windows-x86-server-release																			\
-        prefab-windows-x86-server-release-build
+        prefab-linux-arm64-server-release-build                               \
+        prefab-windows-x86-64-gui-debug	                                      \
+        prefab-windows-x86-64-gui-debug-build                                 \
+        prefab-windows-x86-64-gui-release                                     \
+        prefab-windows-x86-64-gui-release-build                               \
+        prefab-windows-x86-64-server-debug	                                  \
+        prefab-windows-x86-64-server-debug-build                              \
+        prefab-windows-x86-64-server-release                                  \
+        prefab-windows-x86-64-server-release-build
 
 
 ################################################################################
@@ -712,8 +718,8 @@ spinoff-upgrade: env
 	@$(PCOMMANDBATCH) echo GRN Spinoff upgrade successful!
 
 # Tell make which of these targets don't represent files.
-.PHONY: spinoff-test-core spinoff-test-base spinoff-test-plus				\
-        spinoff-test-template_fs spinoff-test-clean spinoff-update	\
+.PHONY: spinoff-test-core spinoff-test-base spinoff-test-plus       \
+        spinoff-test-template_fs spinoff-test-clean spinoff-update  \
         spinoff-upgrade
 
 
@@ -987,7 +993,7 @@ preflight2-full:
 WINDOWS_PROJECT ?= Generic
 
 # Can be Win32 or x64
-WINDOWS_PLATFORM ?= Win32
+WINDOWS_PLATFORM ?= x64
 
 # Can be Debug or Release
 WINDOWS_CONFIGURATION ?= Debug
@@ -998,53 +1004,57 @@ windows-staging: assets-windows resources meta
 
 # Build and run a debug windows build (from WSL).
 windows-debug: windows-debug-build
-	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
-	cd build/windows/Debug_Win32 && ./BallisticaKitGeneric.exe
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
+	cd build/windows/Debug_$(WINPREVSP) && ./BallisticaKitGeneric.exe
 
 # Build and run a release windows build (from WSL).
 windows-release: windows-release-build
-	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
-	cd build/windows/Release_Win32 && ./BallisticaKitGeneric.exe
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
+	cd build/windows/Release_$(WINPREVSP) && ./BallisticaKitGeneric.exe
 
 # Build a debug windows build (from WSL).
 windows-debug-build: env \
-   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.lib \
-   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.pdb
-	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+   build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
+   build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
 	@$(PCOMMAND) wsl_build_check_win_drive
-	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
-	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
-  $(MAKE) _windows-wsl-build
+	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=$(WINPREVSP) \
+ $(MAKE) windows-staging
+	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug \
+ WINDOWS_PLATFORM=$(WINPREVSP) $(MAKE) _windows-wsl-build
 
 # Rebuild a debug windows build (from WSL).
 windows-debug-rebuild: env \
-   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.lib \
-   build/prefab/lib/windows/Debug_Win32/BallisticaKitGenericPlus.pdb
-	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+   build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
+   build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
 	@$(PCOMMAND) wsl_build_check_win_drive
-	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
-	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=Win32 \
-  $(MAKE) _windows-wsl-rebuild
+	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=$(WINPREVSP) \
+ $(MAKE) windows-staging
+	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug \
+ WINDOWS_PLATFORM=$(WINPREVSP) $(MAKE) _windows-wsl-rebuild
 
 # Build a release windows build (from WSL).
 windows-release-build: env \
-   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.lib \
-   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.pdb
-	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+   build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
+   build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
 	@$(PCOMMAND) wsl_build_check_win_drive
-	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
-	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
-  $(MAKE) _windows-wsl-build
+	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=$(WINPREVSP) \
+ $(MAKE) windows-staging
+	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release \
+ WINDOWS_PLATFORM=$(WINPREVSP) $(MAKE) _windows-wsl-build
 
 # Rebuild a release windows build (from WSL).
 windows-release-rebuild: env \
-   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.lib \
-   build/prefab/lib/windows/Release_Win32/BallisticaKitGenericPlus.pdb
-	@$(WSLW) $(PCOMMAND) ensure_prefab_platform windows_x86
+   build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
+   build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
+	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
 	@$(PCOMMAND) wsl_build_check_win_drive
-	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 $(MAKE) windows-staging
-	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=Win32 \
-  $(MAKE) _windows-wsl-rebuild
+	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=$(WINPREVSP) \
+ $(MAKE) windows-staging
+	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release \
+ WINDOWS_PLATFORM=$(WINPREVSP) $(MAKE) _windows-wsl-rebuild
 
 # Remove all non-git-managed files in windows subdir.
 windows-clean: env

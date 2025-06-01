@@ -7,6 +7,12 @@
 - Added the `float_times` arg to `dataclassio.IOAttrs` to allow storing
   `datetime.datetime` or `datetime.timedelta` values as simple floats instead of
   int arrays.
+- Windows builds are now 64 bit. The last time I made this switch I heard from
+  some folks who still needed 32 bit so I switched it back, but this time there
+  are technical reasons: we're adopting the discord social sdk which requires
+  it. Also, Windows 10 will be officially end-of-life this coming October and
+  Windows 11 is 64 bit only. If you still need 32 bit builds please holler;
+  maybe we can maintain a stripped-down test build or something.
   
 ### 1.7.41 (build 22382, api 9, 2025-05-25)
 - Fixed a few unsafe accesses of cJSON objects that could be exploited to crash
