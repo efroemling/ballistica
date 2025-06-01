@@ -1,4 +1,4 @@
-### 1.7.42 (build 22387, api 9, 2025-05-30)
+### 1.7.42 (build 22389, api 9, 2025-06-01)
 - Basic Discord social sdk support is now in place, but not yet enabled in by
   default in builds (Thanks Loup-Garou911XD!).
 - Added `discord_start`, `discord_richpresence`, `discord_set_party`,
