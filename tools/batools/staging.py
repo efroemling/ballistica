@@ -85,7 +85,11 @@ class BuildStager:
         )
 
         # Do our janky wsl permissions workaround if need be.
-        if self.wsl_chmod_workaround and self.dst is not None:
+        if (
+            self.wsl_chmod_workaround
+            and self.dst is not None
+            and os.path.exists(self.dst)
+        ):
             cmd = ['chmod', '-R', 'u+w', self.dst]
             print(
                 f'{Clr.CYN}'
