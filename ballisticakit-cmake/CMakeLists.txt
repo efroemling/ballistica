@@ -813,11 +813,11 @@ endif()
 
 # need to link to this instead
 # Copy the Discord shared library to the output directory
-# add_custom_command(TARGET ballisticakitbin
-#     POST_BUILD
-#     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#         "${DISCORD_SHARED_LIB}"
-#         $<TARGET_FILE_DIR:ballisticakitbin>)
+add_custom_command(TARGET ballisticakitbin
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${DISCORD_SHARED_LIB}"
+        $<TARGET_FILE_DIR:ballisticakitbin>)
 
 set(EXTRA_INCLUDE_DIRS ${EXTRA_INCLUDE_DIRS} ${DISCORD_SDK_INCLUDE_DIR})
 set(EXTRA_LIBRARIES ${EXTRA_LIBRARIES} ${DISCORD_LIB_PATH})

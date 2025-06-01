@@ -1,4 +1,6 @@
 ### 1.7.42 (build 22387, api 9, 2025-05-30)
+- Added discord social sdk in C++ layer which is disabled by default for now.
+- Added `discord_start`, `discord_richpresence`, `discord_set_party`, `discord_add_button`, `discord_join_lobby`, `discord_leave_lobby`, `discord_send_lobby_message` funtions to _babase.
 
 ### 1.7.41 (build 22382, api 9, 2025-05-25)
 - Fixed a few unsafe accesses of cJSON objects that could be exploited to crash
