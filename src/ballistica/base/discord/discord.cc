@@ -170,7 +170,6 @@ void Discord::SetActivity(const char* state, const char* details,
   UpdateRP();
 }
 
-// maybe expose this to python
 void Discord::AddButton(const char* label, const char* url) {
   if (!client) {
     return;
