@@ -211,10 +211,10 @@ def win_ci_install_prereqs() -> None:
     # build to succeed. Normally this would happen through our Makefile
     # targets but we can't use them under raw Windows so we need to just
     # hard-code whatever we need here.
-    lib_dbg_win32 = 'build/prefab/lib/windows/Debug_Win32'
+    lib_dbg_x64 = 'build/prefab/lib/windows/Debug_x64'
     needed_targets: set[str] = {
-        f'{lib_dbg_win32}/BallisticaKitGenericPlus.lib',
-        f'{lib_dbg_win32}/BallisticaKitGenericPlus.pdb',
+        f'{lib_dbg_x64}/BallisticaKitGenericPlus.lib',
+        f'{lib_dbg_x64}/BallisticaKitGenericPlus.pdb',
         'ballisticakit-windows/Generic/BallisticaKit.ico',
     }
 
@@ -253,7 +253,7 @@ def win_ci_binary_build() -> None:
             'ballisticakit-windows\\Generic\\BallisticaKitGeneric.vcxproj',
             '-target:Build',
             '-property:Configuration=Debug',
-            '-property:Platform=Win32',
+            '-property:Platform=x64',
             '-property:VisualStudioVersion=17',
         ],
         check=True,
