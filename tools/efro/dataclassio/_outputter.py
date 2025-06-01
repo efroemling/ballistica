@@ -465,9 +465,20 @@ class _Outputter:
             check_utc(value)
             if ioattrs is not None:
                 ioattrs.validate_datetime(value, fieldpath)
+                float_times = ioattrs.float_times
+            else:
+                float_times = False
             if self._codec is Codec.FIRESTORE:
                 return value
             assert self._codec is Codec.JSON
+
+            # By default we spit out an array of ints so that we can
+            # reconstruct the datetime perfectly. However we now have
+            # the option to spit out a float timestamp instead. This is
+            # simpler but may not read back in 100% the same due to
+            # floating point precision issues.
+            if float_times:
+                return value.timestamp() if self._create else None
             return (
                 [
                     value.year,
@@ -487,6 +498,13 @@ class _Outputter:
                     f'Expected a {origin} for {fieldpath};'
                     f' found a {type(value)}.'
                 )
+            if ioattrs is not None:
+                float_times = ioattrs.float_times
+            else:
+                float_times = False
+
+            if float_times:
+                return value.total_seconds() if self._create else None
             return (
                 [value.days, value.seconds, value.microseconds]
                 if self._create

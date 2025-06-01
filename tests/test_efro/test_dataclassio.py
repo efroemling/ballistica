@@ -1820,3 +1820,69 @@ def test_multi_type_3() -> None:
     # particular MTTestClass1.
     wlobj3 = dataclass_from_dict(MTTest3OldListWrapper, wldata3, lossy=True)
     assert wlobj3 == MTTest3OldListWrapper(children=[MTTest3OldClass1(ival=42)])
+
+
+def test_float_timestamps() -> None:
+    """Test exporting times as floats instead of int arrays."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        tmval: Annotated[datetime.datetime, IOAttrs(float_times=True)]
+        tmval2: Annotated[datetime.datetime, IOAttrs(float_times=False)]
+        tmval3: datetime.datetime
+
+    now = utc_now()
+    testclass = _TestClass(tmval=now, tmval2=now, tmval3=now)
+    testclass_dict = dataclass_to_dict(testclass)
+
+    # Make sure prefer_timestamps True gives us a float and False (or
+    # default) gives us the int list.
+    assert isinstance(testclass_dict.get('tmval'), float)
+    assert isinstance(testclass_dict.get('tmval2'), list)
+    assert isinstance(testclass_dict.get('tmval3'), list)
+
+    # Now convert back to get 3 datetime objs and make sure they are
+    # basically the same time (float precision could mean they're not
+    # 100% identical).
+    testclass2 = dataclass_from_dict(_TestClass, testclass_dict)
+    assert abs((testclass2.tmval2 - testclass2.tmval).total_seconds()) < 0.001
+    assert abs((testclass2.tmval - testclass.tmval).total_seconds()) < 0.001
+
+    # The restored int based ones should be *exactly* the same as what
+    # we started with.
+    assert testclass2.tmval2 == testclass.tmval2
+    assert testclass2.tmval3 == testclass.tmval3
+
+
+def test_float_timedeltas() -> None:
+    """Test exporting times as floats instead of int arrays."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        tmval: Annotated[datetime.timedelta, IOAttrs(float_times=True)]
+        tmval2: Annotated[datetime.timedelta, IOAttrs(float_times=False)]
+        tmval3: datetime.timedelta
+
+    testdelta = datetime.timedelta(days=123, hours=12.3423, seconds=2.345)
+
+    testclass = _TestClass(tmval=testdelta, tmval2=testdelta, tmval3=testdelta)
+    testclass_dict = dataclass_to_dict(testclass)
+
+    # Make sure prefer_timestamps True gives us a float and False (or
+    # default) gives us the int list.
+    assert isinstance(testclass_dict.get('tmval'), float)
+    assert isinstance(testclass_dict.get('tmval2'), list)
+    assert isinstance(testclass_dict.get('tmval3'), list)
+
+    # Now convert back to get 3 timedelta objs and make sure they are
+    # basically the same (float precision could mean they're not 100%
+    # identical).
+    testclass2 = dataclass_from_dict(_TestClass, testclass_dict)
+    assert abs((testclass2.tmval2 - testclass2.tmval).total_seconds()) < 0.001
+
+    # The restored int based ones should be *exactly* the same as what
+    # we started with.
+    assert testclass2.tmval2 == testclass.tmval2
+    assert testclass2.tmval3 == testclass.tmval3

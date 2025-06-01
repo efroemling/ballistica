@@ -193,6 +193,109 @@ class Locale(Enum):
             raise ValueError(f'Invalid long value "{value}"') from exc
 
     @cached_property
+    def description(self) -> str:
+        """A human readable description for the locale.
+
+        Intended as instructions to humans or AI for translating. For
+        most locales this is simply the language name, but for special
+        ones like pirate-speak it may include instructions.
+        """
+        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-return-statements
+
+        cls = type(self)
+
+        if self is cls.ENGLISH:
+            return 'English'
+        if self is cls.CHINESE:
+            return 'Chinese'
+        if self is cls.CHINESE_TRADITIONAL:
+            return 'Chinese (Traditional)'
+        if self is cls.CHINESE_SIMPLIFIED:
+            return 'Chinese (Simplified)'
+        if self is cls.PORTUGUESE:
+            return 'Portuguese'
+        if self is cls.PORTUGUESE_PORTUGAL:
+            return 'Portuguese (Portugal)'
+        if self is cls.PORTUGUESE_BRAZIL:
+            return 'Portuguese (Brazil)'
+        if self is cls.ARABIC:
+            return 'Arabic'
+        if self is cls.BELARUSSIAN:
+            return 'Belarussian'
+        if self is cls.CROATIAN:
+            return 'Croatian'
+        if self is cls.CZECH:
+            return 'Czech'
+        if self is cls.DANISH:
+            return 'Danish'
+        if self is cls.DUTCH:
+            return 'Dutch'
+        if self is cls.PIRATE_SPEAK:
+            return 'Pirate-Speak (English as spoken by a pirate)'
+        if self is cls.ESPERANTO:
+            return 'Esperanto'
+        if self is cls.FILIPINO:
+            return 'Filipino'
+        if self is cls.FRENCH:
+            return 'French'
+        if self is cls.GERMAN:
+            return 'German'
+        if self is cls.GIBBERISH:
+            return (
+                'Gibberish (imaginary words vaguely' ' reminiscent of English)'
+            )
+        if self is cls.GREEK:
+            return 'Greek'
+        if self is cls.HINDI:
+            return 'Hindi'
+        if self is cls.HUNGARIAN:
+            return 'Hungarian'
+        if self is cls.INDONESIAN:
+            return 'Indonesian'
+        if self is cls.ITALIAN:
+            return 'Italian'
+        if self is cls.KOREAN:
+            return 'Korean'
+        if self is cls.MALAY:
+            return 'Malay'
+        if self is cls.PERSIAN:
+            return 'Persian'
+        if self is cls.POLISH:
+            return 'Polish'
+        if self is cls.ROMANIAN:
+            return 'Romanian'
+        if self is cls.RUSSIAN:
+            return 'Russian'
+        if self is cls.SERBIAN:
+            return 'Serbian'
+        if self is cls.SPANISH:
+            return 'Spanish'
+        if self is cls.SPANISH_LATIN_AMERICA:
+            return 'Spanish (Latin America)'
+        if self is cls.SPANISH_SPAIN:
+            return 'Spanish (Spain)'
+        if self is cls.SLOVAK:
+            return 'Slovak'
+        if self is cls.SWEDISH:
+            return 'Swedish'
+        if self is cls.TAMIL:
+            return 'Tamil'
+        if self is cls.THAI:
+            return 'Thai'
+        if self is cls.TURKISH:
+            return 'Turkish'
+        if self is cls.UKRAINIAN:
+            return 'Ukrainian'
+        if self is cls.VENETIAN:
+            return 'Venetian'
+        if self is cls.VIETNAMESE:
+            return 'Vietnamese'
+
+        # Make sure we've covered all cases.
+        assert_never(self)
+
+    @cached_property
     def resolved(self) -> LocaleResolved:
         """Return the associated resolved locale."""
         # pylint: disable=too-many-return-statements

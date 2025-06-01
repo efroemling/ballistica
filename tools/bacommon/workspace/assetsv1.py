@@ -80,6 +80,15 @@ class AssetsV1StringFile(IOMultiType[AssetsV1StringFileTypeID]):
 class AssetsV1StringFileV1(AssetsV1StringFile):
     """Our initial version of string file data."""
 
+    class Style(Enum):
+        """Hint for general styling in translated strings."""
+
+        NONE = 'none'
+        TITLE = 'title'
+        DESCRIPTION = 'description'
+        ALERT = 'alert'
+        SUBTLE = 'subtle'
+
     @override
     @classmethod
     def get_type_id(cls) -> AssetsV1StringFileTypeID:
@@ -89,22 +98,24 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
     class Output:
         """Represents a single localized output."""
 
-        #: When this output was generated (optional metadata).
-        created: Annotated[
-            datetime.datetime | None, IOAttrs('created', store_default=False)
-        ] = None
+        #: When this output was last changed.
+        modtime: Annotated[
+            datetime.datetime, IOAttrs('modtime', float_times=True)
+        ]
 
         #: If this particular output is dirty (if the input has changed
         #: since it was last generated).
-        dirty: Annotated[bool, IOAttrs('dirty', store_default=False)] = False
+        # dirty: Annotated[bool, IOAttrs('dirty', store_default=False)] = False
 
         #: Default value (no counts involved).
-        value: Annotated[str | None, IOAttrs('value', store_default=False)] = (
-            None
-        )
+        value: Annotated[str, IOAttrs('value')]
 
-    input: Annotated[str, IOAttrs('input')] = ''
-    outputs: Annotated[dict[Locale, str], IOAttrs('outputs')] = field(
+    input: Annotated[str, IOAttrs('input')]
+    input_modtime: Annotated[
+        datetime.datetime, IOAttrs('input_modtime', float_times=True)
+    ]
+    style: Annotated[Style, IOAttrs('style', store_default=False)] = Style.NONE
+    outputs: Annotated[dict[Locale, Output], IOAttrs('outputs')] = field(
         default_factory=dict
     )
 

@@ -728,20 +728,32 @@ class _Inputter:
 
         assert self._codec is Codec.JSON
 
-        # We expect a list of 7 ints.
-        if type(value) is not list:
-            raise TypeError(
-                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
-                f' expected a list, got a {type(value).__name__}'
+        # We expect a list of 7 ints (exact datetime value dump) OR
+        # a float/int (timestamp).
+        valt = type(value)
+        if valt is float or valt is int:
+            out = datetime.datetime.fromtimestamp(
+                value, tz=datetime.timezone.utc
             )
-        if len(value) != 7 or not all(isinstance(x, int) for x in value):
-            raise ValueError(
-                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
-                f' expected a list of 7 ints, got {[type(v) for v in value]}.'
+        else:
+            if valt is not list:
+                raise TypeError(
+                    f'Invalid input value for "{fieldpath}"'
+                    f' on "{cls.__name__}";'
+                    f' expected a timestamp or list,'
+                    f' got a {type(value).__name__}'
+                )
+            if len(value) != 7 or not all(isinstance(x, int) for x in value):
+                raise ValueError(
+                    f'Invalid input value for "{fieldpath}"'
+                    f' on "{cls.__name__}";'
+                    f' expected a list of 7 ints,'
+                    f' got {[type(v) for v in value]}.'
+                )
+            out = datetime.datetime(  # type: ignore
+                *value, tzinfo=datetime.timezone.utc
             )
-        out = datetime.datetime(  # type: ignore
-            *value, tzinfo=datetime.timezone.utc
-        )
+
         if ioattrs is not None:
             ioattrs.validate_datetime(out, fieldpath)
         return out
@@ -750,18 +762,27 @@ class _Inputter:
         self, cls: type, fieldpath: str, value: Any, ioattrs: IOAttrs | None
     ) -> Any:
         del ioattrs  # Unused.
-        # We expect a list of 3 ints.
-        if type(value) is not list:
-            raise TypeError(
-                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
-                f' expected a list, got a {type(value).__name__}'
+
+        # We expect a list of 3 ints (exact timedelta value dump) OR a
+        # float/int (seconds).
+        valt = type(value)
+        if valt is float or valt is int:
+            out = datetime.timedelta(seconds=value)
+        else:
+            if valt is not list:
+                raise TypeError(
+                    f'Invalid input value for "{fieldpath}"'
+                    f' on "{cls.__name__}";'
+                    f' expected a number or list, got a {type(value).__name__}'
+                )
+            if len(value) != 3 or not all(isinstance(x, int) for x in value):
+                raise ValueError(
+                    f'Invalid input value for "{fieldpath}"'
+                    f' on "{cls.__name__}";'
+                    f' expected a list of 3 ints,'
+                    f' got {[type(v) for v in value]}.'
+                )
+            out = datetime.timedelta(
+                days=value[0], seconds=value[1], microseconds=value[2]
             )
-        if len(value) != 3 or not all(isinstance(x, int) for x in value):
-            raise ValueError(
-                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
-                f' expected a list of 3 ints, got {[type(v) for v in value]}.'
-            )
-        out = datetime.timedelta(
-            days=value[0], seconds=value[1], microseconds=value[2]
-        )
         return out

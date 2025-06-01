@@ -1,7 +1,13 @@
 ### 1.7.42 (build 22387, api 9, 2025-05-30)
-- Added discord social sdk in C++ layer which is disabled by default for now.
-- Added `discord_start`, `discord_richpresence`, `discord_set_party`, `discord_add_button`, `discord_join_lobby`, `discord_leave_lobby`, `discord_send_lobby_message` funtions to _babase.
-
+- Basic Discord social sdk support is now in place, but not yet enabled in by
+  default in builds (Thanks Loup-Garou911XD!).
+- Added `discord_start`, `discord_richpresence`, `discord_set_party`,
+  `discord_add_button`, `discord_join_lobby`, `discord_leave_lobby`,
+  `discord_send_lobby_message` funtions to _babase.
+- Added the `float_times` arg to `dataclassio.IOAttrs` to allow storing
+  `datetime.datetime` or `datetime.timedelta` values as simple floats instead of
+  int arrays.
+  
 ### 1.7.41 (build 22382, api 9, 2025-05-25)
 - Fixed a few unsafe accesses of cJSON objects that could be exploited to crash
   servers by feeding them bad json data. If you ever come across CXX code
