@@ -176,6 +176,40 @@ static PyMethodDef PyDiscordSetPartyDef = {
     "\n"
     "max_party_size: Maximum number of members allowed in the party"};
 
+// -------------------------- discord_add_button ------------------------------
+
+static auto PyDiscordAddButton(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char *label = nullptr, *url = nullptr;
+  static char* kwlist[] = {const_cast<char*>("label"), const_cast<char*>("url"),
+                           nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ss", kwlist, &label, &url)) {
+    return nullptr;
+  }
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->AddButton(label, url);
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordAddButtonDef = {
+    "discord_add_button",             // name
+    (PyCFunction)PyDiscordAddButton,  // method
+    METH_VARARGS | METH_KEYWORDS,     // flags
+    "discord_add_button() -> None\n"
+    "\n"
+    "Add Discord rich presence button."
+    "\n"
+    "Args:"
+    "\n"
+    "label: Label for the button"
+    "\n"
+    "url: URL to open when the button is clicked"};
+
 // -------------------------- discord_join_lobby ------------------------------
 
 static auto PyDiscordJoinLobby(PyObject* self, PyObject* args, PyObject* keywds)
@@ -1862,6 +1896,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyDiscordIsReadyDef,
       PyDiscordRichpresenceDef,
       PyDiscordSetPartyDef,
+      PyDiscordAddButtonDef,
       PyDiscordJoinLobbyDef,
       PyDiscordLeaveLobbyDef,
       PyDiscordSendLobbyMessageDef,
