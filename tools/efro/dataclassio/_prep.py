@@ -86,13 +86,14 @@ def will_ioprep[T](cls: type[T]) -> type[T]:
     In some cases (such as recursive types) we cannot use the @ioprepped
     decorator and must instead call ioprep() explicitly later. However,
     some of our custom pylint checking behaves differently when the
-    @ioprepped decorator is present, in that case requiring type annotations
-    to be present and not simply forward declared under an "if TYPE_CHECKING"
-    block. (since they are used at runtime).
+    @ioprepped decorator is present, in that case requiring type
+    annotations to be present and not simply forward declared under an
+    "if TYPE_CHECKING" block. (since they are used at runtime).
 
     The @will_ioprep decorator triggers the same pylint behavior
-    differences as @ioprepped (which are necessary for the later ioprep() call
-    to work correctly) but without actually running any prep itself.
+    differences as @ioprepped (which are necessary for the later
+    ioprep() call to work correctly) but without actually running any
+    prep itself.
     """
     return cls
 
