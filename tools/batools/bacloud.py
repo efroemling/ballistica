@@ -347,11 +347,8 @@ class App:
             )
             dirname = os.path.dirname(fullpath)
             if dirname not in prepped_dirs:
-                print('PREPPING', dirname)
                 os.makedirs(dirname, exist_ok=True)
                 prepped_dirs.add(dirname)
-            else:
-                print('SKIPPING', dirname)
 
         def _download_entry(entry: ResponseData.Downloads.Entry) -> int | None:
             allargs = downloads.baseargs | entry.args
@@ -362,7 +359,6 @@ class App:
             )
             return self._download_file(fullpath, downloads.cmd, allargs)
 
-        print('DOING', downloads.entries)
         # Run a single thread pre-pass to create all needed dirs.
         # Creating dirs while downloading can introduce race conditions.
         for entry in downloads.entries:

@@ -16,6 +16,7 @@
 - Mac prefab builds for Intel Macs are now enabled again. I had disabled these
   thinking they were likely unused but was happy to find out I was wrong about
   that.
+- Added 'Race' and 'Pro Race' to the Practice co-op section.
   
 ### 1.7.41 (build 22382, api 9, 2025-05-25)
 - Fixed a few unsafe accesses of cJSON objects that could be exploited to crash

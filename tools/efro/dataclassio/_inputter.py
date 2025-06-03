@@ -543,7 +543,7 @@ class _Inputter:
                         keyint = int(key)
                     except ValueError as exc:
                         raise TypeError(
-                            f'Got invalid key value {key} for'
+                            f'Got invalid key value {repr(key)} for'
                             f' dict key at \'{fieldpath}\' on {cls.__name__};'
                             f' expected an int in string form.'
                         ) from exc
@@ -563,7 +563,7 @@ class _Inputter:
                             enumval = keyanntype(key)
                         except ValueError as exc:
                             raise ValueError(
-                                f'Got invalid key value {key} for'
+                                f'Got invalid key value {repr(key)} for'
                                 f' dict key at \'{fieldpath}\''
                                 f' on {cls.__name__};'
                                 f' expected a value corresponding to'
@@ -578,7 +578,7 @@ class _Inputter:
                             enumval = keyanntype(int(key))
                         except (ValueError, TypeError) as exc:
                             raise ValueError(
-                                f'Got invalid key value {key} for'
+                                f'Got invalid key value {repr(key)} for'
                                 f' dict key at \'{fieldpath}\''
                                 f' on {cls.__name__};'
                                 f' expected {keyanntype} value (though'

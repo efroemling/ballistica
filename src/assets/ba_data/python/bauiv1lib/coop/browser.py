@@ -879,6 +879,8 @@ class CoopBrowserWindow(bui.MainWindow):
             'Challenges:Meteor Shower',
             'Challenges:Target Practice B',
             'Challenges:Target Practice',
+            'Challenges:Race',
+            'Challenges:Pro Race',
         ]
 
         # Show easter-egg-hunt either if its easter or we own it.
