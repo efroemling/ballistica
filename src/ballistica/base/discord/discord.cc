@@ -3,7 +3,8 @@
 #define DISCORDPP_IMPLEMENTATION
 #if BA_ENABLE_DISCORD
 #pragma comment( \
-    lib, "../../src/external/discord_social_sdk/lib/debug/discord_partner_sdk.lib")
+    lib,         \
+    "../../src/external/discord_social_sdk/lib/debug/discord_partner_sdk.lib")
 #include "ballistica/base/discord/discord.h"
 
 #include <atomic>
