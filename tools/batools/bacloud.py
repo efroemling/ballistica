@@ -69,8 +69,8 @@ def run_bacloud_main() -> None:
     try:
         App().run()
     except KeyboardInterrupt:
-        # Let's do a clean fail on keyboard interrupt.
-        # Can make this optional if a backtrace is ever useful.
+        # Let's do a clean fail on keyboard interrupt. Can make this
+        # optional if a backtrace is ever useful.
         sys.exit(1)
     except CleanError as clean_exc:
         clean_exc.pretty_print()
@@ -157,8 +157,8 @@ class App:
         }
 
         try:
-            # Trying urllib for comparison (note that this doesn't support
-            # files arg so not actually production ready)
+            # Trying urllib for comparison (note that this doesn't
+            # support files arg so not actually production ready)
             if bool(False):
                 import urllib.request
                 import urllib.parse
@@ -198,8 +198,8 @@ class App:
         assert response_content is not None
         response = dataclass_from_json(ResponseData, response_content)
 
-        # Handle a few things inline.
-        # (so this functionality is available even to recursive commands, etc.)
+        # Handle a few things inline (so this functionality is available
+        # even to recursive commands, etc.)
         if response.message is not None:
             print(response.message, end=response.message_end, flush=True)
 
@@ -237,8 +237,8 @@ class App:
 
         data = zlib.decompress(data_zipped)
 
-        # Write to tmp files first and then move into place. This
-        # way crashes are less likely to lead to corrupt data.
+        # Write to tmp files first and then move into place. This way
+        # crashes are less likely to lead to corrupt data.
         fnametmp = f'{filename}.tmp'
         with open(fnametmp, 'wb') as outfile:
             outfile.write(data)
@@ -285,11 +285,11 @@ class App:
             self._upload_file(filename, uploadcmd, uploadargs)
 
         # Here we can run uploads concurrently if that goes faster...
-        # (should keep an eye on this to make sure its thread safe
-        # and behaves itself)
+        # (should keep an eye on this to make sure its thread safe and
+        # behaves itself)
         with ThreadPoolExecutor(max_workers=4) as executor:
-            # Convert the generator to a list to trigger any
-            # exceptions that occurred.
+            # Convert the generator to a list to surface any exceptions
+            # that occurred.
             list(executor.map(_do_filename, filenames))
 
     def _handle_deletes(self, deletes: list[str]) -> None:
@@ -335,18 +335,23 @@ class App:
 
         starttime = time.monotonic()
 
-        prepped_paths = set[str]()
+        # Minor optimization: avoid repeat mkdir calls for the same path
+        # (we may have lots of stuff in a single dir).
+        prepped_dirs = set[str]()
 
         def _prep_entry(entry: ResponseData.Downloads.Entry) -> None:
-            if entry.path not in prepped_paths:
-                fullpath = (
-                    entry.path
-                    if downloads.basepath is None
-                    else os.path.join(downloads.basepath, entry.path)
-                )
-                dirname = os.path.dirname(fullpath)
+            fullpath = (
+                entry.path
+                if downloads.basepath is None
+                else os.path.join(downloads.basepath, entry.path)
+            )
+            dirname = os.path.dirname(fullpath)
+            if dirname not in prepped_dirs:
+                print('PREPPING', dirname)
                 os.makedirs(dirname, exist_ok=True)
-                prepped_paths.add(entry.path)
+                prepped_dirs.add(dirname)
+            else:
+                print('SKIPPING', dirname)
 
         def _download_entry(entry: ResponseData.Downloads.Entry) -> int | None:
             allargs = downloads.baseargs | entry.args
@@ -357,6 +362,7 @@ class App:
             )
             return self._download_file(fullpath, downloads.cmd, allargs)
 
+        print('DOING', downloads.entries)
         # Run a single thread pre-pass to create all needed dirs.
         # Creating dirs while downloading can introduce race conditions.
         for entry in downloads.entries:
@@ -365,8 +371,8 @@ class App:
         # Run several downloads simultaneously to hopefully maximize
         # throughput.
         with ThreadPoolExecutor(max_workers=4) as executor:
-            # Convert the generator to a list to trigger any
-            # exceptions that occurred.
+            # Convert the generator to a list to trigger any exceptions
+            # that occurred.
             results = list(executor.map(_download_entry, downloads.entries))
 
         num_dls = sum(1 for x in results if x is not None)
@@ -381,7 +387,8 @@ class App:
 
     def _handle_dir_prune_empty(self, prunedir: str) -> None:
         """Handle pruning empty directories."""
-        # Walk the tree bottom-up so we can properly kill recursive empty dirs.
+        # Walk the tree bottom-up so we can properly kill recursive
+        # empty dirs.
         for basename, dirnames, filenames in os.walk(prunedir, topdown=False):
             # It seems that child dirs we kill during the walk are still
             # listed when the parent dir is visited, so lets make sure
@@ -432,7 +439,8 @@ class App:
             {'c': cwd, 'p': str(self._project_root), 'a': args},
         )
 
-        # Now talk to the server in a loop until there's nothing left to do.
+        # Now talk to the server in a loop until there's nothing left to
+        # do.
         while nextcall is not None:
             self._end_command_args = {}
             response = self._servercmd(*nextcall)
@@ -449,10 +457,11 @@ class App:
             if response.uploads_inline is not None:
                 self._handle_uploads_inline(response.uploads_inline)
 
-            # Note: we handle file deletes *before* downloads. This
-            # way our file-download code only has to worry about creating or
-            # removing directories and not files, and corner cases such as
-            # a file getting replaced with a directory should just work.
+            # Note: we handle file deletes *before* downloads. This way
+            # our file-download code only has to worry about creating or
+            # removing directories and not files, and corner cases such
+            # as a file getting replaced with a directory should just
+            # work.
             #
             # UPDATE: that actually only applies to commands where the
             # client uploads a manifest first and then the server
@@ -487,5 +496,4 @@ class App:
             if response.end_command is not None:
                 nextcall = response.end_command
                 for key, val in self._end_command_args.items():
-                    # noinspection PyUnresolvedReferences
                     nextcall[1][key] = val
