@@ -8,6 +8,8 @@
 #define BA_VARIANT "test_build"
 #define BA_VARIANT_TEST_BUILD 1
 
+// keeping discord support disabled by default
+#define BA_ENABLE_DISCORD 0
 #define BA_ENABLE_STDIO_CONSOLE 1
 
 #define BA_SDL_BUILD 1
