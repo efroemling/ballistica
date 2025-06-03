@@ -915,7 +915,7 @@ auto CorePlatformWindows::GetEnv(const std::string& name)
   std::vector<wchar_t> big_buffer(result);
   assert(big_buffer.size() == result);
   result = GetEnvironmentVariableW(UTF8Decode(name).c_str(), big_buffer.data(),
-                                   big_buffer.size());
+                                   static_cast<DWORD>(big_buffer.size()));
 
   // This should always succeed at this point; make noise if not.
   if (result == 0 || result > big_buffer.size()) {

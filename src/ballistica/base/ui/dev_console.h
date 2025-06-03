@@ -95,7 +95,7 @@ class DevConsole {
 
   int input_history_position_{};
   int ui_lock_count_{};
-  int carat_char_{0};
+  int carat_char_{};
   State_ state_{State_::kInactive};
   State_ state_prev_{State_::kInactive};
   bool input_text_dirty_{true};

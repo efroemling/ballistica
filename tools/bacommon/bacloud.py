@@ -120,8 +120,8 @@ class ResponseData:
         tuple[list[str], str, dict] | None, IOAttrs('u', store_default=False)
     ] = None
 
-    #: If present, a list of pathnames that should be gzipped
-    #: and uploaded to an 'uploads_inline' bytes dict in end_command args.
+    #: If present, a list of pathnames that should be gzipped and
+    #: uploaded to an 'uploads_inline' bytes dict in end_command args.
     #: This should be limited to relatively small files.
     uploads_inline: Annotated[
         list[str] | None, IOAttrs('uinl', store_default=False)
@@ -138,9 +138,9 @@ class ResponseData:
         Downloads | None, IOAttrs('dl', store_default=False)
     ] = None
 
-    #: If present, pathnames mapped to gzipped data to
-    #: be written to the client. This should only be used for relatively
-    #: small files as they are all included inline as part of the response.
+    #: If present, pathnames mapped to gzipped data to be written to the
+    #: client. This should only be used for relatively small files as
+    #: they are all included inline as part of the response.
     downloads_inline: Annotated[
         dict[str, bytes] | None, IOAttrs('dinl', store_default=False)
     ] = None
@@ -153,10 +153,10 @@ class ResponseData:
     #: If present, url to display to the user.
     open_url: Annotated[str | None, IOAttrs('url', store_default=False)] = None
 
-    #: If present, a line of input is read and placed into
-    #: end_command args as 'input'. The first value is the prompt printed
-    #: before reading and the second is whether it should be read as a
-    #: password (without echoing to the terminal).
+    #: If present, a line of input is read and placed into end_command
+    #: args as 'input'. The first value is the prompt printed before
+    #: reading and the second is whether it should be read as a password
+    #: (without echoing to the terminal).
     input_prompt: Annotated[
         tuple[str, bool] | None, IOAttrs('inp', store_default=False)
     ] = None
@@ -170,8 +170,8 @@ class ResponseData:
     #: End arg for end_message print() call.
     end_message_end: Annotated[str, IOAttrs('eme', store_default=False)] = '\n'
 
-    #: If present, this command is run with these args at the end
-    #: of response processing.
+    #: If present, this command is run with these args at the end of
+    #: response processing.
     end_command: Annotated[
         tuple[str, dict] | None, IOAttrs('ec', store_default=False)
     ] = None
