@@ -220,9 +220,11 @@ class App:
         if os.path.isfile(filename):
             return None
 
+        # Update: We now assume all dirs have been created before this
+        # runs. Creating them as we go here could cause race conditions
+        # with multithreaded downloads.
         dirname = os.path.dirname(filename)
-        if dirname:
-            os.makedirs(dirname, exist_ok=True)
+        assert os.path.isdir(dirname)
 
         response = self._servercmd(call, args)
 
@@ -333,7 +335,20 @@ class App:
 
         starttime = time.monotonic()
 
-        def _do_entry(entry: ResponseData.Downloads.Entry) -> int | None:
+        prepped_paths = set[str]()
+
+        def _prep_entry(entry: ResponseData.Downloads.Entry) -> None:
+            if entry.path not in prepped_paths:
+                fullpath = (
+                    entry.path
+                    if downloads.basepath is None
+                    else os.path.join(downloads.basepath, entry.path)
+                )
+                dirname = os.path.dirname(fullpath)
+                os.makedirs(dirname, exist_ok=True)
+                prepped_paths.add(entry.path)
+
+        def _download_entry(entry: ResponseData.Downloads.Entry) -> int | None:
             allargs = downloads.baseargs | entry.args
             fullpath = (
                 entry.path
@@ -342,12 +357,17 @@ class App:
             )
             return self._download_file(fullpath, downloads.cmd, allargs)
 
+        # Run a single thread pre-pass to create all needed dirs.
+        # Creating dirs while downloading can introduce race conditions.
+        for entry in downloads.entries:
+            _prep_entry(entry)
+
         # Run several downloads simultaneously to hopefully maximize
         # throughput.
         with ThreadPoolExecutor(max_workers=4) as executor:
             # Convert the generator to a list to trigger any
             # exceptions that occurred.
-            results = list(executor.map(_do_entry, downloads.entries))
+            results = list(executor.map(_download_entry, downloads.entries))
 
         num_dls = sum(1 for x in results if x is not None)
         total_bytes = sum(x for x in results if x is not None)

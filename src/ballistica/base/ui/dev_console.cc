@@ -1193,7 +1193,7 @@ auto DevConsole::HandleTextEditing(const std::string& text) -> bool {
                   addunichars.end());
   input_string_ = Utils::UTF8FromUnicode(unichars);
   input_text_dirty_ = true;
-  carat_char_ += addunichars.size();
+  carat_char_ += static_cast<int>(addunichars.size());
   assert(CaratCharValid_());
   carat_dirty_ = true;
   return true;
