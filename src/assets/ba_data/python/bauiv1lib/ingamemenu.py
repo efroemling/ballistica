@@ -34,8 +34,8 @@ class InGameMenuWindow(bui.MainWindow):
         )
 
         # Grab this stuff in case it changes.
-        self._is_demo = bui.app.env.demo
-        self._is_arcade = bui.app.env.arcade
+        # self._is_demo = bui.app.env.demo
+        # self._is_arcade = bui.app.env.arcade
 
         self._p_index = 0
         self._use_autoselect = True
@@ -316,9 +316,13 @@ class InGameMenuWindow(bui.MainWindow):
                 logging.exception(
                     'Error getting custom menu entries for %s.', session
                 )
+        variant = bui.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
         self._width = 250.0
         self._height = 250.0 if self._input_player else 180.0
-        if (self._is_demo or self._is_arcade) and self._input_player:
+        if arcade_or_demo and self._input_player:
             self._height -= 40
         # if not self._have_settings_button:
         self._height -= 50
@@ -403,7 +407,7 @@ class InGameMenuWindow(bui.MainWindow):
 
         # Add a 'leave' button if the menu-owner has a player.
         if (self._input_player or self._connected_to_remote_player) and not (
-            self._is_demo or self._is_arcade
+            arcade_or_demo
         ):
             h, v, scale = positions[self._p_index]
             self._p_index += 1

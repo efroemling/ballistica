@@ -50,7 +50,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
     @override
     def on_transition_in(self) -> None:
         # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         super().on_transition_in()
         random.seed(123)
         app = bs.app
@@ -88,7 +87,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
         # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
-        if env.test:
+        if env.variant is type(env.variant).TEST_BUILD:
             pos = (230, 35)
             self.beta_info = bs.NodeActor(
                 bs.newnode(
@@ -210,9 +209,9 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         random.seed()
 
         # Need to update this for toolbar mode; currenly doesn't fit.
-        if bool(False):
-            if not (env.demo or env.arcade):
-                self._news = NewsDisplay(self)
+        # if bool(False):
+        #     if not (env.demo or env.arcade):
+        #         self._news = NewsDisplay(self)
 
         self._attract_mode_timer = bs.Timer(
             3.12, self._update_attract_mode, repeat=True
@@ -226,7 +225,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         app = bs.app
-        env = app.env
         assert app.classic is not None
 
         # Update logo in case it changes.
@@ -273,7 +271,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 base_x = -270.0
                 x = base_x - 20.0
                 spacing = 85.0 * base_scale
-                y_extra = 0.0 if (env.demo or env.arcade) else 0.0
+                y_extra = 0.0
                 self._make_logo(
                     x - 110 + 50,
                     113 + y + 1.2 * y_extra,
@@ -338,7 +336,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 base_x = -170
                 x = base_x - 20
                 spacing = 55 * base_scale
-                y_extra = 0 if (env.demo or env.arcade) else 0
+                y_extra = 0
                 xv1 = x
                 delay1 = delay
                 for shadow in (True, False):

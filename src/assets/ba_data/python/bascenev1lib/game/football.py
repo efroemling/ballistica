@@ -524,8 +524,12 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
 
         super().on_begin()
 
-        # Show controls help in demo or arcade mode.
-        if bs.app.env.demo or bs.app.env.arcade:
+        variant = bs.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
+        # Show controls help in demo or arcade variants.
+        if arcade_or_demo:
             controlsguide.ControlsGuide(
                 delay=3.0, lifespan=10.0, bright=True
             ).autoretain()

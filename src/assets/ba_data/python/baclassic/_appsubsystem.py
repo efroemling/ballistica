@@ -178,9 +178,12 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.music.on_app_loading()
 
         # Non-test, non-debug builds should generally be blessed; warn
-        # if not (so I don't accidentally release a build that can't
-        # play tourneys).
-        if not env.debug and not env.test and not plus.is_blessed():
+        # if not (so I don't accidentally release one).
+        if (
+            not env.debug
+            and not env.variant is type(env.variant).TEST_BUILD
+            and not plus.is_blessed()
+        ):
             babase.screenmessage('WARNING: NON-BLESSED BUILD', color=(1, 0, 0))
 
         stdmaps.register_all_maps()
@@ -826,7 +829,11 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # Bring up the last place we were, or start at the main menu
         # otherwise.
         app = bauiv1.app
-        env = app.env
+
+        variant = babase.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
         with bascenev1.ContextRef.empty():
 
             assert app.classic is not None
@@ -837,7 +844,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
                 # When coming back from a kiosk-mode game, jump to the
                 # kiosk start screen.
-                if env.demo or env.arcade:
+                if arcade_or_demo:
                     # pylint: disable=cyclic-import
                     from bauiv1lib.kiosk import KioskWindow
 

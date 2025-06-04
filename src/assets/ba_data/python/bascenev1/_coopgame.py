@@ -57,8 +57,12 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         super().on_begin()
 
         # Show achievements remaining.
-        env = babase.app.env
-        if not (env.demo or env.arcade):
+
+        variant = babase.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
+        if not arcade_or_demo:
             _bascenev1.timer(
                 3.8, babase.WeakCall(self._show_remaining_achievements)
             )

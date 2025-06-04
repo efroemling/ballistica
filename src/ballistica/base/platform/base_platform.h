@@ -143,17 +143,6 @@ class BasePlatform {
   /// Open a file using the system default method (in another app, etc.)
   virtual void OpenFileExternally(const std::string& path);
 
-  /// Return the Python AppArchitecture enum for our architecture (borrowed
-  /// reference).
-  auto GetPyAppArchitecture() -> PyObject*;
-
-  /// Return the Python AppVariant enum for our app (borrowed reference).
-  auto GetPyAppVariant() -> PyObject*;
-
-  /// Return the Python AppPlatform enum for our architecture (borrowed
-  /// reference).
-  auto GetPyAppPlatform() -> PyObject*;
-
  protected:
   /// Pop up a text edit dialog.
   virtual void DoInvokeStringEditor(const std::string& title,

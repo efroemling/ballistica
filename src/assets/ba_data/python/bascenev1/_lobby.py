@@ -65,7 +65,10 @@ class JoinInfo:
             )
         )
 
-        if babase.app.env.demo or babase.app.env.arcade:
+        variant = babase.app.env.variant
+        vart = type(variant)
+
+        if variant is vart.DEMO or variant is vart.ARCADE:
             self._messages = [self._joinmsg]
         else:
             msg1 = babase.Lstr(
@@ -437,7 +440,6 @@ class Chooser:
         """Reload all player profiles."""
 
         app = babase.app
-        env = app.env
         assert app.classic is not None
 
         # Re-construct our profile index and other stuff since the profile
@@ -479,13 +481,17 @@ class Chooser:
         self._profiles['_random'] = {}
 
         # In kiosk mode we disable account profiles to force random.
-        if env.demo or env.arcade:
+        variant = babase.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
+        if arcade_or_demo:
             if '__account__' in self._profiles:
                 del self._profiles['__account__']
 
         # For local devices, add it an 'edit' option which will pop up
         # the profile window.
-        if not is_remote and not is_test_input and not (env.demo or env.arcade):
+        if not is_remote and not is_test_input and not arcade_or_demo:
             self._profiles['_edit'] = {}
 
         # Build a sorted name list we can iterate through.

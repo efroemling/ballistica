@@ -116,12 +116,12 @@ class AppPlatform(Enum):
 
 
 class AppVariant(Enum):
-    """A unique Ballistica build type within a single platform.
+    """A unique Ballistica build variation within a single platform.
 
-    Each distinct flavor of an app has a unique combination of
-    AppPlatform and AppVariant. Generally platform describes a set of
-    hardware, while variant describes a destination or purpose for the
-    build.
+    Each distinct permutation of an app has a unique combination of
+    :class:`AppPlatform` and ``AppVariant``. Generally platform
+    describes a set of hardware, while variant describes a destination
+    or purpose for the build.
     """
 
     #: Default builds.

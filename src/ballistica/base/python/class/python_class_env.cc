@@ -4,11 +4,12 @@
 
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <utility>
 
 #include "ballistica/base/base.h"
-#include "ballistica/base/platform/base_platform.h"
+#include "ballistica/base/python/base_python.h"
 #include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::base {
@@ -81,9 +82,9 @@ static auto IntEntry_(int val, const char* docs)
 static auto AppArchitectureEntry_() -> std::unique_ptr<EnvEntryBase_> {
   return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
       [] {
-        auto* val{g_base->platform->GetPyAppArchitecture()};
-        Py_INCREF(val);
-        return val;
+        return g_base->python->objs()
+            .Get(BasePython::ObjID::kAppArchitecture)
+            .NewRef();
       },
       "bacommon.app.AppArchitecture", "Architecture we are running on."));
 }
@@ -91,9 +92,9 @@ static auto AppArchitectureEntry_() -> std::unique_ptr<EnvEntryBase_> {
 static auto AppVariantEntry_() -> std::unique_ptr<EnvEntryBase_> {
   return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
       [] {
-        auto* val{g_base->platform->GetPyAppVariant()};
-        Py_INCREF(val);
-        return val;
+        return g_base->python->objs()
+            .Get(BasePython::ObjID::kAppVariant)
+            .NewRef();
       },
       "bacommon.app.AppVariant", "App variant we are running."));
 }
@@ -101,11 +102,56 @@ static auto AppVariantEntry_() -> std::unique_ptr<EnvEntryBase_> {
 static auto AppPlatformEntry_() -> std::unique_ptr<EnvEntryBase_> {
   return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
       [] {
-        auto* val{g_base->platform->GetPyAppPlatform()};
-        Py_INCREF(val);
-        return val;
+        return g_base->python->objs()
+            .Get(BasePython::ObjID::kAppPlatform)
+            .NewRef();
       },
       "bacommon.app.AppPlatform", "Platform we are running on."));
+}
+
+static auto AppPlatformTypeEntry_() -> std::unique_ptr<EnvEntryBase_> {
+  return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
+      [] {
+        return g_base->python->objs()
+            .Get(BasePython::ObjID::kAppPlatformType)
+            .NewRef();
+      },
+      "type[bacommon.app.AppPlatform]", "TestingBlah."));
+}
+
+// static auto GetExtraAttrs_() -> std::map<std::string, PythonRef>* {
+//   if (!g_extra_attrs_) {
+//     g_extra_attrs_ = new std::map<std::string, PythonRef>();
+//   }
+//   printf("CREATED EXTRA ATTRS\n");
+//   return g_extra_attrs_;
+// }
+
+// static auto ToLower_(const std::string& input) {
+//   std::string output = input;
+//   std::transform(output.begin(), output.end(), output.begin(),
+//                  [](unsigned char c) { return std::tolower(c); });
+//   return output;
+// }
+
+static auto AddPrefixToLines_(const std::string& input) {
+  std::istringstream stream(input);
+  std::ostringstream output;
+  std::string line;
+  bool first = true;
+
+  while (std::getline(stream, line)) {
+    if (!first) {
+      output << '\n';
+    }
+    first = false;
+    if (!line.empty()) {
+      output << "    " << line;
+    } else {
+      output << line;  // Preserve empty lines
+    }
+  }
+  return output.str();
 }
 
 void PythonClassEnv::SetupType(PyTypeObject* cls) {
@@ -124,9 +170,6 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
   assert(Python::HaveGIL());
   g_entries_ = new std::map<std::string, std::unique_ptr<EnvEntryBase_>>();
   auto& envs{*g_entries_};
-
-  envs["android"] = BoolEntry_(g_buildconfig.platform_android(),
-                               "Is this build targeting an Android based OS?");
 
   envs["engine_build_number"] = IntEntry_(
       kEngineBuildNumber,
@@ -164,19 +207,21 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
       "builds due to compiler optimizations being disabled and extra\n"
       "checks being run.");
 
-  envs["test"] = BoolEntry_(
-      g_buildconfig.variant_test_build(),
-      "Whether the app is running in test mode.\n"
-      "\n"
-      "Test mode enables extra checks and features that are useful for\n"
-      "release testing but which do not slow the game down significantly.");
-
   envs["config_file_path"] =
       StrEntry_(g_core->platform->GetConfigFilePath(),
                 "Where the app's config file is stored on disk.");
 
   envs["data_directory"] = StrEntry_(g_core->GetDataDirectory(),
                                      "Where bundled static app data lives.");
+
+  envs["volatile_data_directory"] = StrEntry_(
+      g_core->platform->GetVolatileDataDirectory(),
+      "Where the app can write large amounts of working data. This data\n"
+      "is guaranteed to persist as long as the app is running, and it\n"
+      "generally can be expected to persist between runs, but the app must\n"
+      "be prepared for the possibility of it being gone at launch, and it\n"
+      "will also be excluded from backups (on applicable platforms).\n"
+      "So anything that goes here should be reproducible.");
 
   envs["os_version"] = StrEntry_(
       g_core->platform->GetOSVersionString(),
@@ -227,16 +272,11 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
       "a non-standard environment, and that python-path modifications may\n"
       "cause modules to be loaded from other locations.");
 
-  envs["tv"] =
-      BoolEntry_(g_core->platform->IsRunningOnTV(),
-                 "Whether the app is targeting a TV-centric experience.");
+  envs["tv"] = BoolEntry_(g_core->platform->IsRunningOnTV(),
+                          "Whether the app is currently running on a TV.");
 
   envs["vr"] = BoolEntry_(g_core->vr_mode(),
                           "Whether the app is currently running in VR.");
-
-  envs["arcade"] =
-      BoolEntry_(g_buildconfig.variant_arcade(),
-                 "Whether the app is targeting an arcade-centric experience.");
 
   envs["headless"] =
       BoolEntry_(g_buildconfig.headless_build(),
@@ -249,19 +289,19 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
                            "\n"
                            "This is the opposite of `headless`.");
 
-  envs["demo"] = BoolEntry_(g_buildconfig.variant_demo(),
-                            "Whether the app is targeting a demo experience.");
   envs["arch"] = AppArchitectureEntry_();
   envs["variant"] = AppVariantEntry_();
   envs["platform"] = AppPlatformEntry_();
+  envs["Platform"] = AppPlatformTypeEntry_();
 
   bool first = true;
+
   for (auto&& entry : envs) {
     if (!first) {
       docs += "\n";
     }
-    docs += "   " + entry.first + " (" + entry.second->typestr + "):\n      "
-            + entry.second->docs + "\n";
+    docs += "  " + entry.first + " (" + entry.second->typestr + "):\n"
+            + AddPrefixToLines_(entry.second->docs) + "\n";
     first = false;
   }
 
@@ -288,6 +328,7 @@ auto PythonClassEnv::tp_new(PyTypeObject* type, PyObject* args,
   // allocation/deallocation so we can push deallocation to a specific
   // thread.
   new (self) PythonClassEnv();
+
   return self;
   BA_PYTHON_NEW_CATCH;
 }

@@ -342,8 +342,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         assert bui.app.classic is not None
 
-        env = bui.app.env
-
         delay = 0.7 if (self._score is not None) else 0.0
 
         # If there's no players left in the game, lets not show the UI
@@ -406,7 +404,11 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         else:
             pass
 
-        show_next_button = self._is_more_levels and not (env.demo or env.arcade)
+        variant = bui.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
+        show_next_button = self._is_more_levels and not arcade_or_demo
 
         if not show_next_button:
             h_offs += 60
@@ -623,7 +625,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         super().on_begin()
 
         app = bs.app
-        env = app.env
         plus = app.plus
         assert plus is not None
 
@@ -662,11 +663,15 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         bs.timer(1.0, bs.WeakCall(self.request_ui))
 
+        variant = bs.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
         if (
             self._is_complete
             and self._victory
             and self._is_more_levels
-            and not (env.demo or env.arcade)
+            and not arcade_or_demo
         ):
             Text(
                 (
@@ -859,7 +864,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             )
         if plus.get_v1_account_state() != 'signed_in':
             # We expect this only in kiosk mode; complain otherwise.
-            if not (env.demo or env.arcade):
+            if not arcade_or_demo:
                 logging.error('got not-signed-in at score-submit; unexpected')
             bs.pushcall(bs.WeakCall(self._got_score_results, None))
         else:

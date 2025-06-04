@@ -716,6 +716,7 @@ def _formatdoc(
 def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
+    # pylint: disable=too-many-locals
     from batools.docs import parse_docs_attrs
 
     out = ''
@@ -723,7 +724,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
         cls = getattr(module, classname)
         if cls is None:
             raise RuntimeError('unexpected')
-        out += '\n' '\n'
+        out += '\n\n'
 
         # Special case: get PyCharm to shut up about Node's methods
         # shadowing builtin types.
@@ -739,21 +740,22 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
             out += f'class {classname}:\n'
 
         docstr = cls.__doc__
-        # classname is constructor name
+
+        # Classname is constructor name.
         out += _formatdoc(_filterdoc(docstr, funcname=classname), 4, form='str')
 
-        # Create a public constructor if it has one.
-        # If the first docs line appears to be a function signature
-        # and not category or a usage statement ending with a period,
-        # assume it has a public constructor.
+        # Create a public constructor if it has one. If the first docs
+        # line appears to be a function signature and not category or a
+        # usage statement ending with a period, assume it has a public
+        # constructor.
         has_constructor = False
         if (
             'category:' not in docstr.splitlines()[0].lower()
             and not docstr.splitlines()[0].endswith('.')
             and docstr != '(internal)'
         ):
-            # Ok.. looks like the first line is a signature.
-            # Make sure we've got a signature followed by a blank line.
+            # Ok.. looks like the first line is a signature. Make sure
+            # we've got a signature followed by a blank line.
             if '\n\n' not in docstr:
                 raise RuntimeError(
                     f'Constructor docstr missing empty line for {cls}.'
@@ -775,6 +777,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
         # declarations for any that we find.
         attrs: list[AttributeInfo] = []
         parse_docs_attrs(attrs, docstr)
+        has_attrs = False
         if attrs:
             for attr in attrs:
                 if attr.attr_type is not None:
@@ -783,6 +786,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
                         out += _formatdoc(
                             _filterdoc(attr.docs), indent=4, form='comment'
                         )
+                    has_attrs = True
                     out += f'    {attr.name}: {attr.attr_type}\n'
                 else:
                     raise RuntimeError(
@@ -810,7 +814,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
         functxt = _writefuncs(
             cls, funcnames, indent=4, spacing=1, as_method=True
         )
-        if functxt == '' and not has_constructor:
+        if functxt == '' and not has_constructor and not has_attrs:
             out += '    pass\n'
         else:
             out += functxt

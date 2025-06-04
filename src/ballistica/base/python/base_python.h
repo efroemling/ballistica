@@ -119,30 +119,12 @@ class BasePython {
     kAppOnNativeActiveChangedCall,
     kCopyDevConsoleHistoryCall,
     kAppOnScreenSizeChangeCall,
-    kAppArchitectureUnknown,
-    kAppArchitectureArm,
-    kAppArchitectureArm64,
-    kAppArchitectureX86,
-    kAppArchitectureX8664,
-    kAppPlatformUnknown,
-    kAppPlatformMacOS,
-    kAppPlatformWindows,
-    kAppPlatformLinux,
-    kAppPlatformAndroid,
-    kAppPlatformIOS,
-    kAppPlatformTVOS,
-    kAppVariantGeneric,
-    kAppVariantTestBuild,
-    kAppVariantAmazonAppstore,
-    kAppVariantGooglePlay,
-    kAppVariantAppleAppStore,
-    kAppVariantWindowsStore,
-    kAppVariantSteam,
-    kAppVariantMeta,
-    kAppVariantEpicGamesStore,
-    kAppVariantArcade,
-    kAppVariantDemo,
-    kAppVariantCardboard,
+    kAppArchitectureType,
+    kAppArchitecture,
+    kAppPlatformType,
+    kAppPlatform,
+    kAppVariantType,
+    kAppVariant,
     kLast  // Sentinel; must be at end.
   };
 
@@ -181,11 +163,11 @@ class BasePython {
   auto GetRawConfigValue(const char* name, bool default_value) -> bool;
   void SetRawConfigValue(const char* name, float value);
 
-  static auto GetPyEnum_Permission(PyObject* obj) -> Permission;
-  static auto GetPyEnum_SpecialChar(PyObject* obj) -> SpecialChar;
-  static auto IsPyEnum_InputType(PyObject* obj) -> bool;
-  static auto GetPyEnum_InputType(PyObject* obj) -> InputType;
-  static auto GetPyEnum_QuitType(PyObject* obj) -> QuitType;
+  auto GetPyEnum_Permission(PyObject* obj) -> Permission;
+  auto GetPyEnum_SpecialChar(PyObject* obj) -> SpecialChar;
+  auto IsPyEnum_InputType(PyObject* obj) -> bool;
+  auto GetPyEnum_InputType(PyObject* obj) -> InputType;
+  auto GetPyEnum_QuitType(PyObject* obj) -> QuitType;
 
   auto PyQuitType(QuitType val) -> PythonRef;
 
@@ -206,6 +188,11 @@ class BasePython {
   void SoftImportClassic();
 
  private:
+  template <typename T>
+  auto IsPyEnum_(BasePython::ObjID enum_class_id, PyObject* obj) -> bool;
+  template <typename T>
+  auto GetPyEnum_(BasePython::ObjID enum_class_id, PyObject* obj) -> T;
+
   std::set<std::string> do_once_locations_;
   PythonObjectSet<ObjID> objs_;
   float last_screen_res_x_{-1.0f};

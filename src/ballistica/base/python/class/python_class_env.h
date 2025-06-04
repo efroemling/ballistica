@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_ENV_H_
 #define BALLISTICA_BASE_PYTHON_CLASS_PYTHON_CLASS_ENV_H_
 
+#include <map>
 #include <string>
 
 #include "ballistica/shared/python/python.h"
@@ -20,7 +21,8 @@ class PythonClassEnv : public PythonClass {
     return PyObject_TypeCheck(o, &type_obj);
   }
 
-  /// Cast raw Python pointer to our type; throws an exception on wrong types.
+  /// Cast raw Python pointer to our type; throws an exception on wrong
+  /// types.
   static auto FromPyObj(PyObject* o) -> PythonClassEnv& {
     if (Check(o)) {
       return *reinterpret_cast<PythonClassEnv*>(o);
@@ -35,6 +37,7 @@ class PythonClassEnv : public PythonClass {
  private:
   PythonClassEnv();
   ~PythonClassEnv();
+  std::map<std::string, PythonRef> extra_attrs_;
   static PyMethodDef tp_methods[];
   static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
       -> PyObject*;

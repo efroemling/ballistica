@@ -446,7 +446,7 @@ def copy_dev_console_history() -> None:
         return
 
     # This requires us to be running with a log-handler set up.
-    envconfig = baenv.get_config()
+    envconfig = baenv.get_env_config()
     if envconfig.log_handler is None:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(

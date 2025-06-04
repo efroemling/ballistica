@@ -45,8 +45,8 @@ class MainMenuWindow(bui.MainWindow):
         )
 
         # Grab this stuff in case it changes.
-        self._is_demo = bui.app.env.demo
-        self._is_arcade = bui.app.env.arcade
+        # self._is_demo = bui.app.env.demo
+        # self._is_arcade = bui.app.env.arcade
 
         self._tdelay = 0.0
         self._t_delay_inc = 0.02
@@ -261,8 +261,12 @@ class MainMenuWindow(bui.MainWindow):
             transition_delay=thistdelay,
         )
 
+        variant = bui.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
         # In kiosk mode, provide a button to get back to the kiosk menu.
-        if bui.app.env.demo or bui.app.env.arcade:
+        if arcade_or_demo:
             # h, v, scale = positions[self._p_index]
             h = self._width * 0.5
             v = button_y_offs
@@ -285,7 +289,7 @@ class MainMenuWindow(bui.MainWindow):
                 label=bui.Lstr(
                     resource=(
                         'modeArcadeText'
-                        if bui.app.env.arcade
+                        if variant is vart.ARCADE
                         else 'modeDemoText'
                     )
                 ),

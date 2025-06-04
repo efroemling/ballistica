@@ -444,9 +444,8 @@ auto PythonClassSessionPlayer::AssignInputCall(PythonClassSessionPlayer* self,
   if (!player) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  if (base::BasePython::IsPyEnum_InputType(input_type_obj)) {
-    InputType input_type =
-        base::BasePython::GetPyEnum_InputType(input_type_obj);
+  if (g_base->python->IsPyEnum_InputType(input_type_obj)) {
+    InputType input_type = g_base->python->GetPyEnum_InputType(input_type_obj);
     player->AssignInputCall(input_type, call_obj);
   } else {
     if (!PyTuple_Check(input_type_obj)) {
@@ -457,11 +456,11 @@ auto PythonClassSessionPlayer::AssignInputCall(PythonClassSessionPlayer* self,
     Py_ssize_t tuple_size = PyTuple_GET_SIZE(input_type_obj);
     for (Py_ssize_t i = 0; i < tuple_size; i++) {
       PyObject* obj = PyTuple_GET_ITEM(input_type_obj, i);
-      if (!base::BasePython::IsPyEnum_InputType(obj)) {
+      if (!g_base->python->IsPyEnum_InputType(obj)) {
         PyErr_SetString(PyExc_TypeError, "Expected tuple of InputTypes.");
         return nullptr;
       }
-      InputType input_type = base::BasePython::GetPyEnum_InputType(obj);
+      InputType input_type = g_base->python->GetPyEnum_InputType(obj);
       player->AssignInputCall(input_type, call_obj);
     }
   }

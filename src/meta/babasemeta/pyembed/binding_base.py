@@ -88,28 +88,7 @@ values = [
     _env.on_native_module_import,  # kEnvOnNativeModuleImportCall
     _env.on_main_thread_start_app,  # kOnMainThreadStartAppCall
     _ui.DevConsoleStringEditAdapter,  # kDevConsoleStringEditAdapterClass
-    AppArchitecture.UNKNOWN,  # kAppArchitectureUnknown
-    AppArchitecture.ARM,  # kAppArchitectureArm
-    AppArchitecture.ARM64,  # kAppArchitectureArm64
-    AppArchitecture.X86,  # kAppArchitectureX86
-    AppArchitecture.X86_64,  # kAppArchitectureX8664
-    AppPlatform.UNKNOWN,  # kAppPlatformUnknown
-    AppPlatform.MACOS,  # kAppPlatformMacOS
-    AppPlatform.WINDOWS,  # kAppPlatformWindows
-    AppPlatform.LINUX,  # kAppPlatformLinux
-    AppPlatform.ANDROID,  # kAppPlatformAndroid
-    AppPlatform.IOS,  # kAppPlatformIOS
-    AppPlatform.TVOS,  # kAppPlatformTVOS
-    AppVariant.GENERIC,  # kAppVariantGeneric
-    AppVariant.TEST_BUILD,  # kAppVariantTestBuild
-    AppVariant.AMAZON_APPSTORE,  # kAppVariantAmazonAppstore
-    AppVariant.GOOGLE_PLAY,  # kAppVariantGooglePlay
-    AppVariant.APPLE_APP_STORE,  # kAppVariantAppleAppStore
-    AppVariant.WINDOWS_STORE,  # kAppVariantWindowsStore
-    AppVariant.STEAM,  # kAppVariantSteam
-    AppVariant.META,  # kAppVariantMeta
-    AppVariant.EPIC_GAMES_STORE,  # kAppVariantEpicGamesStore
-    AppVariant.ARCADE,  # kAppVariantArcade
-    AppVariant.DEMO,  # kAppVariantDemo
-    AppVariant.CARDBOARD,  # kAppVariantCardboard
+    AppArchitecture,  # kAppArchitectureType
+    AppPlatform,  # kAppPlatformType
+    AppVariant,  # kAppVariantType
 ]

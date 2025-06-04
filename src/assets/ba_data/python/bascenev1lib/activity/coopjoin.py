@@ -46,6 +46,7 @@ class CoopJoinActivity(bs.JoinActivity):
         bs.pushcall(self._show_remaining_achievements)
 
     def _show_remaining_achievements(self) -> None:
+        # pylint: disable=too-many-locals
         from bascenev1lib.actor.text import Text
 
         app = bs.app
@@ -69,8 +70,12 @@ class CoopJoinActivity(bs.JoinActivity):
         )
         ts_h_offs = 60
 
+        variant = bs.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
         # Show remaining achievements in some cases.
-        if app.classic is not None and not (env.demo or env.arcade):
+        if app.classic is not None and not arcade_or_demo:
             achievements = [
                 a
                 for a in app.classic.ach.achievements_for_coop_level(levelname)

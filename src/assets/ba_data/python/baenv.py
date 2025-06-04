@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22394
+TARGET_BALLISTICA_BUILD = 22395
 TARGET_BALLISTICA_VERSION = '1.7.42'
 
 
@@ -132,7 +132,7 @@ def config_exists() -> bool:
     return _EnvGlobals.get().config is not None
 
 
-def get_config() -> EnvConfig:
+def get_env_config() -> EnvConfig:
     """Return the active config, creating a default if none exists."""
     envglobals = _EnvGlobals.get()
 

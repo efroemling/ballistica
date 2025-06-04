@@ -36,7 +36,7 @@ def on_native_module_import() -> None:
 
     # If we have a log_handler set up, wire it up to feed _babase its
     # output.
-    envconfig = baenv.get_config()
+    envconfig = baenv.get_env_config()
     if envconfig.log_handler is not None:
         _feed_logs_to_babase(envconfig.log_handler)
 
@@ -174,7 +174,7 @@ def on_app_state_initing() -> None:
 
     # Let the user know if the app Python dir is a 'user' one. This is a
     # risky thing to be doing so don't let them forget they're doing it.
-    envconfig = baenv.get_config()
+    envconfig = baenv.get_env_config()
     if envconfig.is_user_app_python_dir:
         _babase.screenmessage(
             f"Using user system scripts: '{envconfig.app_python_dir}'",

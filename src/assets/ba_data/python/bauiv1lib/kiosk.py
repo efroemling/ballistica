@@ -70,6 +70,9 @@ class KioskWindow(bui.MainWindow):
         img_width = 180.0
         img_v = 158.0 + y_extra
 
+        variant = bui.app.env.variant
+        vart = type(variant)
+
         if self._show_multiplayer:
             tdelay = t_delay_base + t_delay_scale * 1.3
             bui.textwidget(
@@ -96,7 +99,7 @@ class KioskWindow(bui.MainWindow):
                         resource='demoText',
                         fallback_resource='mainMenu.demoMenuText',
                     )
-                    if bui.app.env.demo
+                    if variant is vart.DEMO
                     else 'ARCADE'
                 ),
                 flatness=1.0,
@@ -340,7 +343,7 @@ class KioskWindow(bui.MainWindow):
             self._b4 = self._b5 = self._b6 = None
 
         self._b7: bui.Widget | None
-        if bui.app.env.arcade:
+        if variant is vart.ARCADE:
             self._b7 = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,

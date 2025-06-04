@@ -390,7 +390,7 @@ static auto PyCharStr(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   assert(g_base->logic);
-  auto id(BasePython::GetPyEnum_SpecialChar(name_obj));
+  auto id(g_base->python->GetPyEnum_SpecialChar(name_obj));
   assert(Utils::IsValidUTF8(g_base->assets->CharStr(id)));
   return PyUnicode_FromString(g_base->assets->CharStr(id).c_str());
   BA_PYTHON_CATCH;

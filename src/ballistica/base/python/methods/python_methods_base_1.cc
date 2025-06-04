@@ -777,7 +777,7 @@ static auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   if (quit_type_obj != Py_None) {
-    quit_type = BasePython::GetPyEnum_QuitType(quit_type_obj);
+    quit_type = g_base->python->GetPyEnum_QuitType(quit_type_obj);
   }
 
   g_base->QuitApp(confirm, quit_type);

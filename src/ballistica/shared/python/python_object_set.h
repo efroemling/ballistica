@@ -54,7 +54,8 @@ class PythonObjectSet : public PythonObjectSetBase {
  public:
   PythonObjectSet() : PythonObjectSetBase(static_cast<int>(T::kLast)) {}
 
-  /// Set the value for a named object.
+  /// Set the value for a named object. This grabs a new reference to the
+  /// passed PyObject.
   void Store(T id, PyObject* pyobj) { StoreObj(static_cast<int>(id), pyobj); }
 
   /// Set the value for a named object and verify that it is a callable.

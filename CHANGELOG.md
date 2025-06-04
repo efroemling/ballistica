@@ -1,4 +1,4 @@
-### 1.7.42 (build 22394, api 9, 2025-06-03)
+### 1.7.42 (build 22395, api 9, 2025-06-03)
 - Basic Discord social sdk support is now in place, but not yet enabled in by
   default in builds (Thanks Loup-Garou911XD!).
 - Added `discord_start`, `discord_richpresence`, `discord_set_party`,
@@ -17,6 +17,13 @@
   thinking they were likely unused but was happy to find out I was wrong about
   that.
 - Added 'Race' and 'Pro Race' to the Practice co-op section.
+- Added `ba*.app.env.volatile_data_directory` which is where the app can put
+  downloaded assets and other data that it needs to keep but which it can
+  recreate if needed.
+- Removed the `ba*.app.env.test`, `ba*.app.env.arcade`, and `ba*.app.env.demo`
+  values, which were redundant now that `ba*.app.env.variant` exists.
+- Removed the `ba*.app.env.android` value which is redundant now that we have
+  `ba*.app.env.platform`.
   
 ### 1.7.41 (build 22382, api 9, 2025-05-25)
 - Fixed a few unsafe accesses of cJSON objects that could be exploited to crash

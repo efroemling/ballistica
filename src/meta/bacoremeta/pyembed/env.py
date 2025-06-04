@@ -50,4 +50,4 @@ def get_env_config() -> baenv.EnvConfig:
     """Import baenv and get the config."""
     import baenv
 
-    return baenv.get_config()
+    return baenv.get_env_config()

@@ -17,7 +17,7 @@ requests==2.32.3
 Sphinx==8.2.3
 tomlkit==0.13.2
 types-certifi==2021.10.8.3
-types-docutils==0.21.0.20250526
+types-docutils==0.21.0.20250604
 types-filelock==3.2.7
 types-requests==2.32.0.20250602
 typing_extensions==4.14.0
