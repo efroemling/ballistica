@@ -83,7 +83,7 @@ class WorkspaceSubsystem:
 
         set_path = True
         wspath = Path(
-            _babase.app.env.volatile_data_directory, 'workspaces', workspaceid
+            _babase.app.env.cache_directory, 'workspaces', workspaceid
         )
         try:
             # If it seems we're offline, don't even attempt a sync, but

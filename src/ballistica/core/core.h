@@ -131,6 +131,12 @@ class CoreFeatureSet {
   /// platform-specific bits needed for the app to function.
   auto GetDataDirectory() -> std::string;
 
+  /// Get the cache directory. This dir contains data written by the app
+  /// that it is able to recreate if needed. Files placed here are
+  /// guaranteed to remain in place as long as the app is running, but any
+  /// or all files may be purged between app runs.
+  auto GetCacheDirectory() -> std::string;
+
   /// Return the directory where bundled 3rd party Python files live.
   auto GetSitePythonDirectory() -> std::optional<std::string>;
 
@@ -260,6 +266,7 @@ class CoreFeatureSet {
                                         " " BA_ARCH ")"};
   std::optional<std::string> ba_env_app_python_dir_;
   std::string ba_env_config_dir_;
+  std::string ba_env_cache_dir_;
   std::optional<std::string> ba_env_user_python_dir_;
   std::optional<std::string> ba_env_site_python_dir_;
   std::string ba_env_data_dir_;

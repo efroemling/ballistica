@@ -60,6 +60,9 @@ class CoreConfig {
 
   /// Explicitly passed user-python (mods) dir.
   std::optional<std::string> user_python_dir{};
+
+  /// Explicitly passed cache dir.
+  std::optional<std::string> cache_dir{};
 };
 
 }  // namespace ballistica::core

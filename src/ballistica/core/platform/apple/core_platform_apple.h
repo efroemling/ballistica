@@ -5,7 +5,6 @@
 #if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS
 
 #include <list>
-#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
@@ -21,6 +20,8 @@ class CorePlatformApple : public CorePlatform {
   auto GetRealLegacyDeviceUUID(std::string* uuid) -> bool override;
   auto GenerateUUID() -> std::string override;
   auto DoGetConfigDirectoryMonolithicDefault()
+      -> std::optional<std::string> override;
+  auto DoGetCacheDirectoryMonolithicDefault()
       -> std::optional<std::string> override;
   auto DoHasTouchScreen() -> bool override;
   auto GetDefaultUIScale() -> UIScale override;

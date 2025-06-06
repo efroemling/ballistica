@@ -24,6 +24,7 @@
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
 
@@ -837,7 +838,7 @@ void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
   // Store it away for whoever wants it.
   PyObject* public_id_obj = PyDict_GetItemString(info_obj, "u");
   if (public_id_obj != nullptr && g_base->python->IsPyLString(public_id_obj)) {
-    peer_public_account_id_ = g_base->python->GetPyLString(public_id_obj);
+    peer_public_account_id_ = Python::GetString(public_id_obj);
   } else {
     peer_public_account_id_ = "";
 

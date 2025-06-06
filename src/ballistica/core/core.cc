@@ -150,6 +150,7 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   // Pull everything we want out of it.
   ba_env_config_dir_ = envcfg.GetAttr("config_dir").ValueAsString();
   ba_env_data_dir_ = envcfg.GetAttr("data_dir").ValueAsString();
+  ba_env_cache_dir_ = envcfg.GetAttr("cache_dir").ValueAsString();
   ba_env_app_python_dir_ =
       envcfg.GetAttr("app_python_dir").ValueAsOptionalString();
   ba_env_user_python_dir_ =
@@ -201,6 +202,12 @@ auto CoreFeatureSet::GetUserPythonDirectory() -> std::optional<std::string> {
 auto CoreFeatureSet::GetConfigDirectory() -> std::string {
   BA_PRECONDITION(have_ba_env_vals_);
   return ba_env_config_dir_;
+}
+
+// Return the ballisticakit config dir. This does not vary across versions.
+auto CoreFeatureSet::GetCacheDirectory() -> std::string {
+  BA_PRECONDITION(have_ba_env_vals_);
+  return ba_env_cache_dir_;
 }
 
 auto CoreFeatureSet::GetDataDirectory() -> std::string {

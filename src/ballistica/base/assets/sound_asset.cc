@@ -164,7 +164,7 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
 static void LoadCachedOgg(const char* file_name, std::vector<char>* buffer,
                           ALenum* format, ALsizei* freq) {
   std::string sound_cache_dir =
-      g_core->platform->GetVolatileDataDirectory() + BA_DIRSLASH + "audiocache";
+      g_core->GetCacheDirectory() + BA_DIRSLASH + "audio";
   static bool made_sound_cache_dir = false;
   if (!made_sound_cache_dir) {
     g_core->platform->MakeDir(sound_cache_dir);

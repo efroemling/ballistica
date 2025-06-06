@@ -834,13 +834,13 @@ static auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &config_obj)) {
     return nullptr;
   }
-  if (config_obj == nullptr || !g_base->python->IsPyLString(config_obj)) {
+  if (config_obj == nullptr || !Python::IsString(config_obj)) {
     throw Exception("ERROR ON JSON DUMP");
   }
-  std::string final_str = g_base->python->GetPyLString(config_obj);
+  std::string final_str = Python::GetString(config_obj);
   std::string path = g_core->platform->GetConfigFilePath();
   std::string path_temp = path + ".tmp";
-  std::string path_prev = path + ".prev";
+  std::string path_prev = g_core->platform->GetBackupConfigFilePath();
   if (explicit_bool(true)) {
     FILE* f_out = g_core->platform->FOpen(path_temp.c_str(), "wb");
     if (f_out == nullptr) {
@@ -857,7 +857,7 @@ static auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
     }
     fclose(f_out);
 
-    // Now move any existing config to .prev.
+    // Now move any existing config to prev path.
     if (g_core->platform->FilePathExists(path)) {
       // On windows, rename doesn't overwrite existing files.. need to kill
       // the old explicitly.
@@ -1336,7 +1336,7 @@ static auto PyMacMusicAppPlayPlaylist(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &playlist_obj)) {
     return nullptr;
   }
-  playlist = g_base->python->GetPyLString(playlist_obj);
+  playlist = Python::GetString(playlist_obj);
   if (g_core->platform->MacMusicAppPlayPlaylist(playlist)) {
     Py_RETURN_TRUE;
   } else {

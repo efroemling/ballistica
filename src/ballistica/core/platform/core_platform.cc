@@ -219,8 +219,19 @@ auto CorePlatform::DoGetConfigDirectoryMonolithicDefault()
   return {};
 }
 
+auto CorePlatform::DoGetCacheDirectoryMonolithicDefault()
+    -> std::optional<std::string> {
+  std::string config_dir;
+  // Go with unset here; let baenv handle it in Python-land.
+  return {};
+}
+
 auto CorePlatform::GetConfigFilePath() -> std::string {
   return g_core->GetConfigDirectory() + BA_DIRSLASH + "config.json";
+}
+
+auto CorePlatform::GetBackupConfigFilePath() -> std::string {
+  return g_core->GetConfigDirectory() + BA_DIRSLASH + ".config_prev.json";
 }
 
 // FIXME: should make this unnecessary.
@@ -261,19 +272,19 @@ void CorePlatform::SetLowLevelConfigValue(const char* key, int value) {
   }
 }
 
-auto CorePlatform::GetVolatileDataDirectory() -> std::string {
-  if (!made_volatile_data_dir_) {
-    volatile_data_dir_ = GetDefaultVolatileDataDirectory();
-    MakeDir(volatile_data_dir_);
-    made_volatile_data_dir_ = true;
-  }
-  return volatile_data_dir_;
-}
+// auto CorePlatform::GetCacheDirectory() -> std::string {
+//   if (!made_cache_dir_) {
+//     cache_dir_ = GetDefaultCacheDirectory();
+//     MakeDir(cache_dir_);
+//     made_cache_dir_ = true;
+//   }
+//   return cache_dir_;
+// }
 
-auto CorePlatform::GetDefaultVolatileDataDirectory() -> std::string {
-  // By default, stuff this in a subdir under our config dir.
-  return g_core->GetConfigDirectory() + BA_DIRSLASH + "vdata";
-}
+// auto CorePlatform::GetDefaultCacheDirectory() -> std::string {
+//   // By default, stuff this in a subdir under our config dir.
+//   return g_core->GetConfigDirectory() + BA_DIRSLASH + "cache";
+// }
 
 auto CorePlatform::GetReplaysDir() -> std::string {
   static bool made_dir = false;
@@ -365,15 +376,27 @@ auto CorePlatform::GetErrnoString() -> std::string {
 
 auto CorePlatform::GetConfigDirectoryMonolithicDefault()
     -> std::optional<std::string> {
-  // CoreConfig value trumps all. Otherwise go with platform-specific default.
+  // CoreConfig value trumps all. Otherwise go with platform-specific
+  // default.
   if (g_core->core_config().config_dir.has_value()) {
     return *g_core->core_config().config_dir;
   }
   return DoGetConfigDirectoryMonolithicDefault();
 }
 
+auto CorePlatform::GetCacheDirectoryMonolithicDefault()
+    -> std::optional<std::string> {
+  // CoreConfig value trumps all. Otherwise go with platform-specific
+  // default.
+  if (g_core->core_config().cache_dir.has_value()) {
+    return *g_core->core_config().cache_dir;
+  }
+  return DoGetCacheDirectoryMonolithicDefault();
+}
+
 auto CorePlatform::GetDataDirectoryMonolithicDefault() -> std::string {
-  // CoreConfig arg trumps all. Otherwise ask for platform-specific value.
+  // CoreConfig value trumps all. Otherwise ask for platform-specific
+  // default.
   if (g_core->core_config().data_dir.has_value()) {
     return *g_core->core_config().data_dir;
   }
@@ -558,7 +581,7 @@ void CorePlatform::BlockingFatalErrorDialog(const std::string& message) {
 }
 
 auto CorePlatform::DoGetDataDirectoryMonolithicDefault() -> std::string {
-  // By default, assume we're in it.
+  // By default, look for ba_data and whatnot where we are now.
   return ".";
 }
 

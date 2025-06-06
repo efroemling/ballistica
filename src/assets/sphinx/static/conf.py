@@ -229,9 +229,9 @@ def _wrangle_logging() -> None:
                 if classname not in self._cross_ref_ignores_noted:
                     print(
                         f'{Clr.BLD}efro-note:{Clr.RST}'
-                        f' ignoring (most likely) harmless'
+                        f' Ignoring (most-likely-harmless)'
                         f' more-than-one-target warning for'
-                        f' "{classname}"'
+                        f' "{classname}".'
                     )
                     self._cross_ref_ignores_noted.add(classname)
                 return False  # Ignore.

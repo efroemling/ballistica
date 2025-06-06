@@ -48,7 +48,8 @@ static void PrintHelp() {
       " the app loop.\n"
       " -C, --config-dir  <path>  Override the app config directory.\n"
       " -d, --data-dir    <path>  Override the app data directory.\n"
-      " -m, --mods-dir    <path>  Override the app mods directory.\n");
+      " -m, --mods-dir    <path>  Override the app mods directory.\n"
+      " -a, --cache-dir   <path>  Override the app cache directory.\n");
 }
 
 /// If the arg at the provided index matches the long/short names given,
@@ -134,9 +135,10 @@ void CoreConfig::ApplyArgs(int argc, char** argv) {
                       ParseArgValue(argc, argv, &i, "--config-dir", "-C"))) {
         config_dir = *value;
         // Make sure what they passed exists.
-        // Note: Normally baenv will try to create whatever the config dir is;
-        // do we just want to allow that to happen in this case? But perhaps
-        // being more strict is ok when accepting user input.
+        //
+        // Note: Normally baenv will try to create whatever the config dir
+        // is; do we just want to allow that to happen in this case? But
+        // perhaps being more strict is ok when accepting user input.
         if (!std::filesystem::is_directory(*config_dir)) {
           printf("Error: Provided config-dir path '%s' is not a directory.",
                  config_dir->c_str());
@@ -156,6 +158,14 @@ void CoreConfig::ApplyArgs(int argc, char** argv) {
         if (!std::filesystem::is_directory(*user_python_dir)) {
           printf("Error: Provided mods-dir path '%s' is not a directory.",
                  user_python_dir->c_str());
+          throw BadArgsException();
+        }
+      } else if ((value = ParseArgValue(argc, argv, &i, "--cache-dir", "-a"))) {
+        cache_dir = *value;
+        // Make sure what they passed exists.
+        if (!std::filesystem::is_directory(*cache_dir)) {
+          printf("Error: Provided cache-dir path '%s' is not a directory.",
+                 cache_dir->c_str());
           throw BadArgsException();
         }
       } else {

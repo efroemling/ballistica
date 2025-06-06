@@ -15,7 +15,7 @@ python-lsp-black==2.0.0
 python-lsp-server==1.12.2
 requests==2.32.3
 Sphinx==8.2.3
-tomlkit==0.13.2
+tomlkit==0.13.3
 types-certifi==2021.10.8.3
 types-docutils==0.21.0.20250604
 types-filelock==3.2.7

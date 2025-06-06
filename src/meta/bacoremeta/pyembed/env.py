@@ -20,7 +20,8 @@ def prepend_sys_path(path: str) -> None:
 
 def import_baenv_and_run_configure(
     config_dir: str | None,
-    data_dir: str | None,
+    data_dir: str,
+    cache_dir: str | None,
     user_python_dir: str | None,
     contains_python_dist: bool,
 ) -> None | str:
@@ -36,6 +37,7 @@ def import_baenv_and_run_configure(
         baenv.configure(
             config_dir=config_dir,
             data_dir=data_dir,
+            cache_dir=cache_dir,
             user_python_dir=user_python_dir,
             contains_python_dist=contains_python_dist,
         )

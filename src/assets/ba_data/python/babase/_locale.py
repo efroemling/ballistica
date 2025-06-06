@@ -66,11 +66,10 @@ class LocaleSubsystem(AppSubsystem):
 
         # If we can't properly display this default locale, set it to
         # English instead.
-        if (
-            self.requires_full_unicode_display(self.default_locale.resolved)
-            and not _babase.supports_unicode_display()
-        ):
+        if not self.can_display_locale(self.default_locale):
             self.default_locale = Locale.ENGLISH
+
+        assert self.can_display_locale(self.default_locale)
 
     @override
     def do_apply_app_config(self) -> None:
@@ -114,62 +113,67 @@ class LocaleSubsystem(AppSubsystem):
 
     @staticmethod
     @cache
-    def requires_full_unicode_display(
-        locale: LocaleResolved,
-    ) -> bool:
-        """Does the locale require full unicode support to display?"""
+    def can_display_locale(locale: Locale) -> bool:
+        """Are we able to display the passed locale?
+
+        Some locales require integration with the OS to display the full
+        range of unicode text, which is not implemented on all
+        platforms.
+        """
         # pylint: disable=too-many-boolean-expressions
 
         cls = LocaleResolved
+        rlocale = locale.resolved
 
         # DO need full unicode.
         if (
-            locale is cls.CHINESE_TRADITIONAL
-            or locale is cls.CHINESE_SIMPLIFIED
-            or locale is cls.ARABIC
-            or locale is cls.HINDI
-            or locale is cls.KOREAN
-            or locale is cls.PERSIAN
-            or locale is cls.TAMIL
-            or locale is cls.THAI
-            or locale is cls.VIETNAMESE
+            rlocale is cls.CHINESE_TRADITIONAL
+            or rlocale is cls.CHINESE_SIMPLIFIED
+            or rlocale is cls.ARABIC
+            or rlocale is cls.HINDI
+            or rlocale is cls.KOREAN
+            or rlocale is cls.PERSIAN
+            or rlocale is cls.TAMIL
+            or rlocale is cls.THAI
+            or rlocale is cls.VIETNAMESE
+        ):
+            # Return True only if we can display full unicode.
+            return _babase.supports_unicode_display()
+
+        # Do NOT need full unicode; can always display.
+        if (
+            rlocale is cls.ENGLISH
+            or rlocale is cls.PORTUGUESE_PORTUGAL
+            or rlocale is cls.PORTUGUESE_BRAZIL
+            or rlocale is cls.BELARUSSIAN
+            or rlocale is cls.CROATIAN
+            or rlocale is cls.CZECH
+            or rlocale is cls.DANISH
+            or rlocale is cls.DUTCH
+            or rlocale is cls.PIRATE_SPEAK
+            or rlocale is cls.ESPERANTO
+            or rlocale is cls.FILIPINO
+            or rlocale is cls.FRENCH
+            or rlocale is cls.GERMAN
+            or rlocale is cls.GIBBERISH
+            or rlocale is cls.GREEK
+            or rlocale is cls.HUNGARIAN
+            or rlocale is cls.INDONESIAN
+            or rlocale is cls.ITALIAN
+            or rlocale is cls.MALAY
+            or rlocale is cls.POLISH
+            or rlocale is cls.ROMANIAN
+            or rlocale is cls.RUSSIAN
+            or rlocale is cls.SERBIAN
+            or rlocale is cls.SPANISH_LATIN_AMERICA
+            or rlocale is cls.SPANISH_SPAIN
+            or rlocale is cls.SLOVAK
+            or rlocale is cls.SWEDISH
+            or rlocale is cls.TURKISH
+            or rlocale is cls.UKRAINIAN
+            or rlocale is cls.VENETIAN
         ):
             return True
 
-        # Do NOT need full unicode.
-        if (
-            locale is cls.ENGLISH
-            or locale is cls.PORTUGUESE_PORTUGAL
-            or locale is cls.PORTUGUESE_BRAZIL
-            or locale is cls.BELARUSSIAN
-            or locale is cls.CROATIAN
-            or locale is cls.CZECH
-            or locale is cls.DANISH
-            or locale is cls.DUTCH
-            or locale is cls.PIRATE_SPEAK
-            or locale is cls.ESPERANTO
-            or locale is cls.FILIPINO
-            or locale is cls.FRENCH
-            or locale is cls.GERMAN
-            or locale is cls.GIBBERISH
-            or locale is cls.GREEK
-            or locale is cls.HUNGARIAN
-            or locale is cls.INDONESIAN
-            or locale is cls.ITALIAN
-            or locale is cls.MALAY
-            or locale is cls.POLISH
-            or locale is cls.ROMANIAN
-            or locale is cls.RUSSIAN
-            or locale is cls.SERBIAN
-            or locale is cls.SPANISH_LATIN_AMERICA
-            or locale is cls.SPANISH_SPAIN
-            or locale is cls.SLOVAK
-            or locale is cls.SWEDISH
-            or locale is cls.TURKISH
-            or locale is cls.UKRAINIAN
-            or locale is cls.VENETIAN
-        ):
-            return False
-
         # Make sure we're covering all cases.
-        assert_never(locale)
+        assert_never(rlocale)

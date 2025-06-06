@@ -214,14 +214,15 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
   envs["data_directory"] = StrEntry_(g_core->GetDataDirectory(),
                                      "Where bundled static app data lives.");
 
-  envs["volatile_data_directory"] = StrEntry_(
-      g_core->platform->GetVolatileDataDirectory(),
-      "Where the app can write large amounts of working data. This data\n"
-      "is guaranteed to persist as long as the app is running, and it\n"
-      "generally can be expected to persist between runs, but the app must\n"
-      "be prepared for the possibility of it being gone at launch, and it\n"
-      "will also be excluded from backups (on applicable platforms).\n"
-      "So anything that goes here should be reproducible.");
+  envs["cache_directory"] = StrEntry_(
+      g_core->GetCacheDirectory(),
+      "A directory where the app can place files guaranteed to exist\n"
+      "as long as the app remains running (and likely longer). The app\n"
+      "must be prepared for the possibility of any or all files here\n"
+      "disappearing between runs, though the conditions for and likelyhood\n"
+      "of this occurring varies between platforms. Note that debug builds\n"
+      "may explicitly delete random cache files at launch to exercise this\n"
+      "constraint.");
 
   envs["os_version"] = StrEntry_(
       g_core->platform->GetOSVersionString(),
@@ -244,9 +245,10 @@ void PythonClassEnv::SetupType(PyTypeObject* cls) {
 
   envs["locale_tag"] = StrEntry_(
       g_core->platform->GetLocaleTag(),
-      "Locale tag for the current environment in BCP 47 or POSIX"
-      " localization\n"
-      "string form; will be something like ``en-US`` or ``en_US.UTF-8``.");
+      "Raw string locale tag for the current environment in BCP 47 or POSIX"
+      " localization string form; will be something like ``en-US`` or "
+      "``en_US.UTF-8``. Most things needing locale functionality should look"
+      "at the :class:`~babase.LocaleSubsystem`.");
 
   envs["python_directory_user"] = OptionalStrEntry_(
       g_core->GetUserPythonDirectory(),

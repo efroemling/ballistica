@@ -168,6 +168,15 @@ auto CorePlatformApple::DoGetConfigDirectoryMonolithicDefault()
 #endif
 }
 
+auto CorePlatformApple::DoGetCacheDirectoryMonolithicDefault()
+    -> std::optional<std::string> {
+#if BA_XCODE_BUILD
+  return BallisticaKit::FromCpp::getCacheDirectoryPath();
+#else
+  return CorePlatform::DoGetCacheDirectoryMonolithicDefault();
+#endif
+}
+
 auto CorePlatformApple::DoHasTouchScreen() -> bool {
 #if BA_PLATFORM_IOS
   return true;

@@ -38,7 +38,7 @@ void CorePython::InitPython() {
   Py_BallisticaLowLevelDebugLog = PythonLowLevelDebugLog_;
 #endif
 
-  // Flip on some extra runtime debugging options in debug builds.
+  // Flip on some extra runtime debugging options in our debug builds.
   // https://docs.python.org/3/library/devmode.html#devmode
   int dev_mode{g_buildconfig.debug_build()};
 
@@ -119,32 +119,33 @@ void CorePython::InitPython() {
     // to use abs paths anyway to avoid needing chdir so its a moot point.
     if (g_buildconfig.platform_windows()) {
       // On most platforms we stuff abs paths in here so things can work
-      // from wherever. However on Windows we need to be running from where
-      // this stuff lives so we pick up various .dlls that live there/etc.
-      // So let's make some clear noise if we don't seem to be there.
-      // (otherwise it leads to cryptic Python init messages about locale
-      // module not being found/etc. which is not very helpful).
+      // from wherever and we don't really care where we are. However on
+      // Windows we need to be running from where this stuff lives so we
+      // pick up various .dlls that live there/etc. So let's make some clear
+      // noise if we don't seem to be there. (otherwise it leads to cryptic
+      // Python init messages about locale module not being found/etc. which
+      // is not very helpful).
       if (!g_core->platform->FilePathExists("DLLs")
           || (!g_core->platform->FilePathExists("lib"))
           || (!g_core->platform->FilePathExists("ba_data"))) {
         FatalError(
-            "Ballistica seems to be running from the wrong "
+            "BallisticaKit seems to be running from the wrong "
             "directory; our stuff isn't here (ba_data, etc.).\nCWD is "
             + g_core->platform->GetCWD());
       }
 
       // Windows Python by default looks for Lib and DLLs dirs, along with
       // some others, but we want to be more explicit in limiting to those
-      // two. It also seems that windows Python's paths can be incorrect if
+      // two. It also seems that Windows Python's paths can be incorrect if
       // we're in strange dirs such as \\wsl$\Ubuntu-18.04\ that we get with
       // WSL build setups.
 
-      // NOTE: Python for windows actually comes with 'Lib', not 'lib', but
+      // NOTE: Python for Windows actually comes with 'Lib', not 'lib', but
       // it seems the interpreter defaults point to ./lib (as of 3.8.5).
-      // Normally this doesn't matter since windows is case-insensitive but
-      // under WSL it does.
-      // So we currently bundle the dir as 'lib' and use that in our path so
-      // that everything is happy (both with us and with python.exe).
+      // Normally this doesn't matter since Windows is case-insensitive but
+      // under WSL it does. So we currently bundle the dir as 'lib' and use
+      // that in our path so that everything is happy (both with us and with
+      // python.exe).
       PyWideStringList_Append(&config.module_search_paths,
                               Py_DecodeLocale("lib", nullptr));
       PyWideStringList_Append(&config.module_search_paths,
@@ -368,14 +369,15 @@ void CorePython::MonolithicModeBaEnvConfigure() {
   auto args = PythonRef::Stolen(Py_BuildValue("(s)", default_py_dir.c_str()));
   objs().Get(ObjID::kPrependSysPathCall).Call(args);
 
-  // Import and run baenv.configure() using our 'monolithic' values for all
-  // paths.
+  // Import and run baenv.configure() using our 'monolithic' default values
+  // for all paths.
   std::optional<std::string> config_dir =
       g_core->platform->GetConfigDirectoryMonolithicDefault();
-  std::optional<std::string> data_dir =
-      g_core->platform->GetDataDirectoryMonolithicDefault();
+  std::string data_dir = g_core->platform->GetDataDirectoryMonolithicDefault();
   std::optional<std::string> user_python_dir =
       g_core->platform->GetUserPythonDirectoryMonolithicDefault();
+  std::optional<std::string> cache_dir =
+      g_core->platform->GetCacheDirectoryMonolithicDefault();
 
   // clang-format off
   auto kwargs =
@@ -383,13 +385,16 @@ void CorePython::MonolithicModeBaEnvConfigure() {
       "{"
       "sO"  // config_dir
       "sO"  // data_dir
+      "sO"  // cache_dir
       "sO"  // user_python_dir
       "sO"  // contains_python_dist
       "}",
       "config_dir",
         config_dir ? *PythonRef::FromString(*config_dir) : Py_None,
       "data_dir",
-        data_dir ? *PythonRef::FromString(*data_dir) : Py_None,
+        *PythonRef::FromString(data_dir),
+      "cache_dir",
+        cache_dir ? *PythonRef::FromString(*cache_dir) : Py_None,
       "user_python_dir",
         user_python_dir ? *PythonRef::FromString(*user_python_dir) : Py_None,
       "contains_python_dist",

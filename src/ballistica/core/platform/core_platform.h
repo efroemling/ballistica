@@ -104,14 +104,18 @@ class CorePlatform {
   /// Get the path of the app config file.
   auto GetConfigFilePath() -> std::string;
 
+  auto GetBackupConfigFilePath() -> std::string;
+
   auto GetUserPythonDirectoryMonolithicDefault() -> std::optional<std::string>;
+
+  auto GetCacheDirectoryMonolithicDefault() -> std::optional<std::string>;
 
   /// Get a directory where the app can store internal generated data. This
   /// directory should not be included in backups and the app should remain
   /// functional if this directory is completely cleared between runs
   /// (though it is expected that things stay intact here *while* the app is
   /// running).
-  auto GetVolatileDataDirectory() -> std::string;
+  // auto GetCacheDirectory() -> std::string;
 
   /// Return the directory where game replay files live.
   auto GetReplaysDir() -> std::string;
@@ -446,21 +450,26 @@ class CorePlatform {
   virtual auto DoGetUserPythonDirectoryMonolithicDefault()
       -> std::optional<std::string>;
 
-  /// Return the default config directory for this platform. This will be
-  /// used as the config dir if not overridden via command line options,
+  /// Return the default config directory for this platform on monolithic
+  /// builds. This will be used if not overridden via command line options,
   /// etc.
   virtual auto DoGetConfigDirectoryMonolithicDefault()
       -> std::optional<std::string>;
 
-  /// Return the default data directory for this platform. This will be used
-  /// as the data dir if not overridden by core-config, etc. This is the one
-  /// monolithic-default value that is not optional.
+  /// Return the default cache directory for this platform on monolithic
+  /// builds. This will be used if not overridden via command line options,
+  /// etc.
+  virtual auto DoGetCacheDirectoryMonolithicDefault()
+      -> std::optional<std::string>;
+
+  /// Return the default data directory for this platform on monolithic
+  /// builds. This will be used if not overridden by command line options,
+  /// etc. This is the one monolithic-default value that is not optional.
   virtual auto DoGetDataDirectoryMonolithicDefault() -> std::string;
 
-  /// Return the default Volatile data dir for this platform. This will be
-  /// used as the volatile-data-dir if not overridden via command line
-  /// options/etc.
-  virtual auto GetDefaultVolatileDataDirectory() -> std::string;
+  /// Return the default cache dir for this platform. This will be
+  /// used if not overridden via command line options/etc.
+  // virtual auto GetDefaultCacheDirectory() -> std::string;
 
   /// Generate a random UUID string.
   virtual auto GenerateUUID() -> std::string;
@@ -475,14 +484,14 @@ class CorePlatform {
   bool have_has_touchscreen_value_{};
   bool have_touchscreen_{};
   bool is_tegra_k1_{};
-  bool made_volatile_data_dir_{};
+  bool made_cache_dir_{};
   bool have_device_uuid_{};
   bool ran_base_post_init_{};
   millisecs_t start_time_millisecs_{};
   std::string device_name_;
   std::string device_description_;
   std::string legacy_device_uuid_;
-  std::string volatile_data_dir_;
+  std::string cache_dir_;
   std::string replays_dir_;
 
   // Temp; should be able to remove this once Swift 5.10 is out.

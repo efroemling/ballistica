@@ -34,7 +34,11 @@ DisplayTime = NewType('DisplayTime', float)
 
 
 class Existable(Protocol):
-    """A Protocol for objects supporting an ``exists()`` method."""
+    """A :class:`~typing.Protocol` for objects with an ``exists()`` method.
+
+    For more info about the concept of 'existables':
+    https://ballistica.net/wiki/Coding-Style-Guide
+    """
 
     def exists(self) -> bool:
         """Whether this object exists."""
@@ -43,17 +47,17 @@ class Existable(Protocol):
 def existing[ExistableT: Existable](
     obj: ExistableT | None,
 ) -> ExistableT | None:
-    """Convert invalid references to None for any babase.Existable object.
+    """Convert invalid refs to None for an :class:`~babase.Existable`.
 
     To best support type checking, it is important that invalid
     references not be passed around and instead get converted to values
     of None. That way the type checker can properly flag attempts to
     pass possibly-dead objects (``FooType | None``) into functions
     expecting only live ones (``FooType``), etc. This call can be used
-    on any 'existable' object (one with an ``exists()`` method) and will
-    convert it to a ``None`` value if it does not exist.
+    on any 'existable' object (one with an ``exists()`` method) to
+    convert it to ``None`` if it does not exist.
 
-    For more info, see notes on 'existables' here:
+    For more info about the concept of 'existables':
     https://ballistica.net/wiki/Coding-Style-Guide
     """
     assert obj is None or hasattr(obj, 'exists'), f'No "exists" attr on {obj}.'

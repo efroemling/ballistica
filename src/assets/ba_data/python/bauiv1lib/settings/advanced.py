@@ -275,27 +275,21 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
         locale_ss = bui.app.locale
 
-        # available_languages = bui.app.lang.available_languages
-
         # Build a list of long-values for locales we are able to display.
-        can_display_full_unicode = bui.supports_unicode_display()
         available_languages = sorted(
-            l.locale.long_value
-            for l in LocaleResolved
-            if (
-                can_display_full_unicode
-                or not locale_ss.requires_full_unicode_display(l)
-            )
+            lr.locale.long_value
+            for lr in LocaleResolved
+            if (locale_ss.can_display_locale(lr.locale))
         )
 
         # Don't rebuild if the menu is open or if our language and
         # language-list hasn't changed.
 
         # NOTE - although we now support widgets updating their own
-        # translations, we still change the label formatting on the language
-        # menu based on the language so still need this. ...however we could
-        # make this more limited to it only rebuilds that one menu instead
-        # of everything.
+        # translations, we still change the label formatting on the
+        # language menu based on the language so still need this.
+        # ...however we could make this more limited to it only rebuilds
+        # that one menu instead of everything.
         if self._menu_open or (
             self._prev_lang == bui.app.config.get('Lang', None)
             and self._prev_lang_list == available_languages

@@ -328,7 +328,7 @@ static auto PySetAdmins(PyObject* self, PyObject* args, PyObject* keywds)
   }
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
-  auto admins = g_base->python->GetPyLStrings(admins_obj);
+  auto admins = Python::GetStrings(admins_obj);
   std::set<std::string> adminset;
   for (auto&& admin : admins) {
     adminset.insert(admin);

@@ -908,7 +908,7 @@ static auto PySetPlatformMiscReadVals(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &vals_obj)) {
     return nullptr;
   }
-  std::string vals = g_base->python->GetPyLString(vals_obj);
+  std::string vals = Python::GetString(vals_obj);
   g_core->platform->SetPlatformMiscReadVals(vals);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

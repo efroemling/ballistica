@@ -13,7 +13,9 @@
 #include <sysinfoapi.h>
 
 /* clang-format off */
-// Builds fail if this is further up.
+// Builds fail if this is further up, so we need to disable clang-format to
+// keep that from happening.
+//
 // This define gives us the unicode version.
 #define DBGHELP_TRANSLATE_TCHAR
 #include <dbghelp.h>

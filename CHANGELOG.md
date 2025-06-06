@@ -1,4 +1,4 @@
-### 1.7.42 (build 22395, api 9, 2025-06-03)
+### 1.7.42 (build 22396, api 9, 2025-06-05)
 - Basic Discord social sdk support is now in place, but not yet enabled in by
   default in builds (Thanks Loup-Garou911XD!).
 - Added `discord_start`, `discord_richpresence`, `discord_set_party`,
@@ -17,13 +17,28 @@
   thinking they were likely unused but was happy to find out I was wrong about
   that.
 - Added 'Race' and 'Pro Race' to the Practice co-op section.
-- Added `ba*.app.env.volatile_data_directory` which is where the app can put
-  downloaded assets and other data that it needs to keep but which it can
-  recreate if needed.
 - Removed the `ba*.app.env.test`, `ba*.app.env.arcade`, and `ba*.app.env.demo`
   values, which were redundant now that `ba*.app.env.variant` exists.
 - Removed the `ba*.app.env.android` value which is redundant now that we have
   `ba*.app.env.platform`.
+- Added `ba*.app.env.cache_directory` which is where the app can put downloaded
+  assets and other data that it wants to keep but which it can recreate if
+  needed. It should always be safe to blow any or all of this data away between
+  runs (as the OS itself might do so in some cases).
+- You can now pass `--cache-dir` or `-a` on the command line to override the
+  app's cache directory. Its default varies per platform but the standard one is
+  `(CONFIG-DIR)/cache`.
+- The `volatile_data_directory` concept which was used internally has been
+  replaced by the cache dir, so if you see a `vdata` dir in your app config dir
+  you can delete it to keep things tidy.
+- Backup configs are now named '.config_prev.json' instead of
+  'config.json.prev'. This keeps them hidden by default on unix-y OSs for a
+  tidier look, and also keeps .json file associations working. Feel free to blow
+  away any 'config.json.prev' files you have lying around.
+- Debug builds will now blow away the occasional random file from the cache at
+  launch. This is meant to exercise the app's ability to recreate anything the
+  OS itself might purge (we make the guarantee that cache files will stay intact
+  while the app is running but no such guarantees between runs).
   
 ### 1.7.41 (build 22382, api 9, 2025-05-25)
 - Fixed a few unsafe accesses of cJSON objects that could be exploited to crash

@@ -80,12 +80,11 @@ class AssetsV1StringFile(IOMultiType[AssetsV1StringFileTypeID]):
 class AssetsV1StringFileV1(AssetsV1StringFile):
     """Our initial version of string file data."""
 
-    class Style(Enum):
-        """Hint for general styling in translated strings."""
+    class StylePreset(Enum):
+        """Preset for general styling in translated strings."""
 
         NONE = 'none'
         TITLE = 'title'
-        DESCRIPTION = 'description'
         INTENSE = 'intense'
         SUBTLE = 'subtle'
 
@@ -110,7 +109,9 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
     input_modtime: Annotated[
         datetime.datetime, IOAttrs('input_modtime', float_times=True)
     ]
-    style: Annotated[Style, IOAttrs('style', store_default=False)] = Style.NONE
+    style_preset: Annotated[
+        StylePreset, IOAttrs('style_preset', store_default=False)
+    ] = StylePreset.NONE
     outputs: Annotated[dict[Locale, Output], IOAttrs('outputs')] = field(
         default_factory=dict
     )
