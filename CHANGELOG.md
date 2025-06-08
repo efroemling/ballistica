@@ -1,3 +1,5 @@
+### 1.7.43 (build 22404, api 9, 2025-06-08)
+
 ### 1.7.42 (build 22402, api 9, 2025-06-08)
 - Basic Discord social sdk support is now in place, but not yet enabled in by
   default in builds (Thanks Loup-Garou911XD!).
