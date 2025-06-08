@@ -1,4 +1,4 @@
-### 1.7.42 (build 22401, api 9, 2025-06-07)
+### 1.7.42 (build 22402, api 9, 2025-06-08)
 - Basic Discord social sdk support is now in place, but not yet enabled in by
   default in builds (Thanks Loup-Garou911XD!).
 - Added `discord_start`, `discord_richpresence`, `discord_set_party`,
@@ -48,7 +48,7 @@
   3.8. It will run a background thread to prune or regenerate .pyc files as
   needed so the full cache should always be up to date (outside of the first few
   moments when launching a new app version). Previously the app shipped with
-  .pyc files scattered in __pycache__ dirs throughout the codebase which were
+  .pyc files scattered in `__pycache__` dirs throughout the codebase which were
   set to always be used when present, which lead to confusing behavior where
   edits to bundled .py files would be ignored unless the associated .pyc file
   was deleted first. Now things should be much more intuitive: there are only
