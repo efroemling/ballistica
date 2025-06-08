@@ -150,7 +150,7 @@ jobs:
 #                                   Windows                                    #
 #                                                                              #
 ################################################################################
-  release_windows_x86_gui_debug_build: 
+  release_windows_x86_64_gui_debug_build: 
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -161,17 +161,17 @@ jobs:
     - name: Setup project environment
       run: make env
     - name: Make the build
-      run: make prefab-windows-x86-gui-debug-build
+      run: make prefab-windows-x86-64-gui-debug-build
     - name: Compress the build
-      run: tar -cf "windows_x86_gui_debug.tar" build/prefab/full/windows_x86_gui/
+      run: tar -cf "windows_x86_64_gui_debug.tar" build/prefab/full/windows_x86_64_gui/
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
         allowUpdates: true
-        artifacts: windows_x86_gui_debug.tar
+        artifacts: windows_x86_64_gui_debug.tar
 
-  release_windows_x86_server_debug_build:
+  release_windows_x86_64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -182,15 +182,15 @@ jobs:
     - name: Setup project environment
       run: make env
     - name: Make the build
-      run: make prefab-windows-x86-server-debug-build
+      run: make prefab-windows-x86-64-server-debug-build
     - name: Compress the build
-      run: tar -cf "windows_x86_server_debug.tar" build/prefab/full/windows_x86_server/
+      run: tar -cf "windows_x86_64_server_debug.tar" build/prefab/full/windows_x86_64_server/
     - name: Upload the build
       uses: ncipollo/release-action@v1
       with:
         body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
         allowUpdates: true
-        artifacts: windows_x86_server_debug.tar
+        artifacts: windows_x86_64_server_debug.tar
 
 ################################################################################
 #                                                                              #
