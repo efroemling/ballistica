@@ -17,6 +17,7 @@
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
@@ -1032,7 +1033,53 @@ static PyMethodDef PyGetVirtualSafeAreaSizeDef = {
     "Return the size of the area on screen that will always be visible.",
 };
 
-// -----------------------------------------------------------------------------
+// -------------------------------- atexit -------------------------------------
+
+static auto PyAtExit(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* call_obj;
+  static const char* kwlist[] = {"call", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &call_obj)) {
+    return nullptr;
+  }
+  g_core->python->AtExit(call_obj);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAtExitDef = {
+    "atexit",                      // name
+    (PyCFunction)PyAtExit,         // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "atexit(call: Callable[[], None]) -> None\n"
+    "\n"
+    "Register a synchronous call to run just before the engine shuts down "
+    "Python.\n"
+    "\n"
+    "Most shutdown functionality should instead use the app's "
+    ":meth:`~babase.App.add_shutdown_task()` functionality, which runs\n"
+    "earlier in the shutdown sequence and operates asynchronousy. This call\n"
+    "is only for components that need to shut down at the very end or in a\n"
+    "specific order.\n"
+    "\n"
+    "Currently this only works in monolithic app builds (see\n"
+    ":attr:`~babase.Env.monolithic_build`).\n"
+    "\n"
+    "This is similar to Python's standard :func:`atexit.register()`\n"
+    "- calls are run on the main thread in the reverse order they were\n"
+    "registered. The key difference is that this runs *before* Python blocks\n"
+    "waiting for all non-daemon threads to exit, allowing this to be used\n"
+    "to gracefully spin down such threads.\n"
+    "\n"
+    "It is highly encouraged on to avoid daemon threads on monolithic builds\n"
+    "and to instead use this or other functionality to kill your thread.\n"
+    "This avoids the inherent danger in daemon threads of accessing Python\n"
+    "state during or after interpreter shutdown. Currently daemon threads\n"
+    "should still be used on modular builds as this function is not available\n"
+    "there."};
 
 auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
   return {
@@ -1069,6 +1116,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PySetUIAccountStateDef,
       PyGetVirtualScreenSizeDef,
       PyGetVirtualSafeAreaSizeDef,
+      PyAtExitDef,
   };
 }
 

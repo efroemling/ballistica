@@ -123,9 +123,15 @@ class CoreFeatureSet {
   auto GetUserPythonDirectory() -> std::optional<std::string>;
 
   /// Get the root config directory. This dir contains the app config file
-  /// and other data considered essential to the app install. This directory
-  /// should be included in OS backups.
+  /// and other data considered essential to the app install.
   auto GetConfigDirectory() -> std::string;
+
+  /// Get the path of the app config file.
+  auto GetConfigFilePath() -> std::string;
+
+  /// Get the path of the backup app config file. Backups are written each
+  /// time a new config write happens.
+  auto GetBackupConfigFilePath() -> std::string;
 
   /// Get the data directory. This dir contains ba_data and possibly other
   /// platform-specific bits needed for the app to function.
@@ -152,10 +158,10 @@ class CoreFeatureSet {
   /// Should be called by a thread before it exits.
   void UnregisterThread();
 
-  /// A bool set just before returning from main or calling exit() or
-  /// whatever is intended to be the last gasp of life for the binary. This
-  /// can be polled periodically by background threads that may otherwise
-  /// keep the process from exiting.
+  /// A bool set just before finalizing the Python interpreter and calling
+  /// exit() or whatever is intended to be the last gasp of life for the
+  /// binary. This can be polled periodically by background threads that may
+  /// otherwise prevent the process from exiting.
   auto engine_done() const { return engine_done_; }
   void set_engine_done() { engine_done_ = true; }
 

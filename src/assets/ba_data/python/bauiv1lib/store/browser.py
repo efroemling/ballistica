@@ -1309,10 +1309,14 @@ def _check_merch_availability_in_bg_thread() -> None:
 # it looks like we've been imported for use in a running app; don't want
 # to do this during docs generation/etc.)
 
+# NOTE: Disabling this for now since we're not showing the merch section
+# (and want to purge all use of daemon threads).
+
 # TODO: Should wire this up explicitly to app bootstrapping; not good to
 # be kicking off work at module import time.
 if (
-    os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') != '1'
+    bool(False)
+    and os.environ.get('BA_RUNNING_WITH_DUMMY_MODULES') != '1'
     and bui.app.state is not bui.AppState.NOT_STARTED
 ):
-    Thread(target=_check_merch_availability_in_bg_thread, daemon=True).start()
+    Thread(target=_check_merch_availability_in_bg_thread).start()

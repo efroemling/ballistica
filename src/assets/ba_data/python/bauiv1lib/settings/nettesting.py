@@ -155,10 +155,7 @@ class NetTestingWindow(bui.MainWindow):
         # Pass a weak-ref to this window so we don't keep it alive
         # if we back out before it completes. Also set is as daemon
         # so it doesn't keep the app running if the user is trying to quit.
-        Thread(
-            daemon=True,
-            target=bui.Call(_run_diagnostics, weakref.ref(self)),
-        ).start()
+        Thread(target=bui.Call(_run_diagnostics, weakref.ref(self))).start()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

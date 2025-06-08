@@ -13,6 +13,7 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_context_ref.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"

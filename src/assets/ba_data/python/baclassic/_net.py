@@ -37,9 +37,7 @@ class MasterServerV1CallThread(threading.Thread):
     ):
         # pylint: disable=too-many-positional-arguments
 
-        # Set daemon=True so long-running requests don't keep us from
-        # quitting the app.
-        super().__init__(daemon=True)
+        super().__init__()
         self._request = request
         self._request_type = request_type
         if not isinstance(response_type, MasterServerResponseType):

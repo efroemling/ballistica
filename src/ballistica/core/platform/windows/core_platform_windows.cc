@@ -856,12 +856,7 @@ bool CorePlatformWindows::DoHasTouchScreen() { return false; }
 void CorePlatformWindows::EmitPlatformLog(const std::string& name,
                                           LogLevel level,
                                           const std::string& msg) {
-  // if (have_stdin_stdout_) {
-  //   // On headless builds we use default handler (simple stdout).
-  //   return CorePlatform::EmitPlatformLog(msg);
-  // }
-
-  // Also spit this out as a debug-string for when running from msvc.
+  // Spit this out as a debug-string for when running from msvc.
   OutputDebugString(UTF8Decode(msg).c_str());
 }
 

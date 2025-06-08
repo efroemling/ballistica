@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Stage files for builds."""
 
 from __future__ import annotations
@@ -18,14 +19,6 @@ from efrotools.pyver import PYVER, PYVERNODOT
 
 if TYPE_CHECKING:
     from concurrent.futures import Future
-
-# Suffix for the pyc files we include in stagings. We're using
-# deterministic opt pyc files; see PEP 552.
-#
-# Note: this means anyone wanting to modify .py files in a build will
-# need to wipe out the existing .pyc files first or the changes will be
-# ignored.
-OPT_PYC_SUFFIX = 'cpython-' + PYVER.replace('.', '') + '.opt-1.pyc'
 
 
 def stage_build(projroot: str, args: list[str] | None = None) -> None:
@@ -380,8 +373,6 @@ class BuildStager:
                     '--include',
                     '*.py',
                     '--include',
-                    f'*.{OPT_PYC_SUFFIX}',
-                    '--include',
                     '*/',
                     '--exclude',
                     '*',
@@ -389,6 +380,7 @@ class BuildStager:
                     f'{self.dst}/{dstdirname}/',
                 ]
             )
+            self._purge_pycache_dirs(f'{self.dst}/{dstdirname}/')
             subprocess.run(cmd, check=True)
 
         # Now sync the top level individual files that we want. We could
@@ -450,6 +442,28 @@ class BuildStager:
         # Update: gonna try simply setting this flag on the source side.
         # _run(f'chmod +x {self.dst}/*.exe')
 
+    def _purge_pycache_dirs(self, path: str) -> None:
+        # Added this at all locations where we used to sync in built pyc
+        # files under __pycache__ dirs; we don't do that anymore but
+        # there's lots of old dirs scattered in existing builds. Doing
+        # explicit purges for now to avoid 'cannot delete non-empty
+        # directory' warnings about those dirs. We can kill this after a
+        # while.
+        pcachepaths: list[str] = []
+        for root, dnames, _fnames in os.walk(path):
+            if '__pycache__' in dnames:
+                pcachepaths.append(os.path.join(root, '__pycache__'))
+
+        if pcachepaths:
+            import shutil
+
+            for pcachepath in pcachepaths:
+                print(
+                    f'Purging old staged pycache dir'
+                    f' (we don\'t bundle pycache files anymore): {pcachepath}'
+                )
+                shutil.rmtree(pcachepath)
+
     def _sync_pylib(self) -> None:
         assert self.pylib_src_path is not None
         assert not self.pylib_src_path.endswith('/')
@@ -465,8 +479,6 @@ class BuildStager:
             '--include',
             '*.py',
             '--include',
-            f'*.{OPT_PYC_SUFFIX}',
-            '--include',
             '*.so',
             '--include',
             '*/',  # Note to self: is this necessary?
@@ -475,6 +487,7 @@ class BuildStager:
             f'{self.src}/{self.pylib_src_path}/',
             f'{self.dst}/pylib/',
         ]
+        self._purge_pycache_dirs(f'{self.dst}/pylib/')
         subprocess.run(cmd, check=True)
 
     def _sync_ba_data_legacy(self) -> None:
@@ -519,8 +532,6 @@ class BuildStager:
                 '*.py',
                 '--include',
                 '*.pem',
-                '--include',
-                f'*.{OPT_PYC_SUFFIX}',
             ]
 
         if self.include_textures:
@@ -551,6 +562,7 @@ class BuildStager:
             f'{self.src}/ba_data/',
             f'{self.dst}/ba_data/',
         ]
+        self._purge_pycache_dirs(f'{self.dst}/ba_data/')
         subprocess.run(cmd, check=True)
 
     def _sync_ba_data_new(self) -> None:
@@ -960,8 +972,8 @@ def _stage_server_file(
             if mode == 'release':
                 lines[0] = replace_exact(
                     lines[0],
-                    f'#!/usr/bin/env python{PYVER}',
-                    f'#!/usr/bin/env -S python{PYVER} -O',
+                    f'#!/usr/bin/env -S python{PYVER} -B',
+                    f'#!/usr/bin/env -S python{PYVER} -OB',
                 )
         _write_if_changed(
             outfilename, '\n'.join(lines) + '\n', make_executable=True
@@ -978,20 +990,19 @@ def _stage_server_file(
             lines[1] = replace_exact(
                 lines[1],
                 ':: Python interpreter.',
-                ':: Python interpreter.'
-                ' (in opt mode so we use bundled .opt-1.pyc files)',
+                ':: Python interpreter. (in opt mode)',
             )
             lines[2] = replace_exact(
                 lines[2],
-                'dist\\\\python.exe ballisticakit_server.py',
-                'dist\\\\python.exe -O ballisticakit_server.py',
+                'dist\\\\python.exe -B ballisticakit_server.py',
+                'dist\\\\python.exe -OB ballisticakit_server.py',
             )
         else:
             # In debug mode we use the bundled debug interpreter.
             lines[2] = replace_exact(
                 lines[2],
-                'dist\\\\python.exe ballisticakit_server.py',
-                'dist\\\\python_d.exe ballisticakit_server.py',
+                'dist\\\\python.exe -B ballisticakit_server.py',
+                'dist\\\\python_d.exe -B ballisticakit_server.py',
             )
 
         _write_if_changed(outfilename, '\n'.join(lines) + '\n')

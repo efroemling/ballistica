@@ -226,14 +226,6 @@ auto CorePlatform::DoGetCacheDirectoryMonolithicDefault()
   return {};
 }
 
-auto CorePlatform::GetConfigFilePath() -> std::string {
-  return g_core->GetConfigDirectory() + BA_DIRSLASH + "config.json";
-}
-
-auto CorePlatform::GetBackupConfigFilePath() -> std::string {
-  return g_core->GetConfigDirectory() + BA_DIRSLASH + ".config_prev.json";
-}
-
 // FIXME: should make this unnecessary.
 auto CorePlatform::GetLowLevelConfigValue(const char* key, int default_value)
     -> int {

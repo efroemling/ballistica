@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "ballistica/base/base.h"
+#include "ballistica/core/core.h"
 
 // Need to move away from OpenAL on Apple stuff.
 #if __clang__

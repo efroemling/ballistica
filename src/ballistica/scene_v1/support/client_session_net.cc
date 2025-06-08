@@ -10,6 +10,7 @@
 #include "ballistica/base/graphics/support/net_graph.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
 
 namespace ballistica::scene_v1 {

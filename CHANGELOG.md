@@ -1,4 +1,4 @@
-### 1.7.42 (build 22396, api 9, 2025-06-05)
+### 1.7.42 (build 22401, api 9, 2025-06-07)
 - Basic Discord social sdk support is now in place, but not yet enabled in by
   default in builds (Thanks Loup-Garou911XD!).
 - Added `discord_start`, `discord_richpresence`, `discord_set_party`,
@@ -9,8 +9,8 @@
   int arrays.
 - Windows builds are now 64 bit. The last time I made this switch I heard from
   some folks who still needed 32 bit so I switched it back, but this time there
-  are technical reasons: we're adopting the discord social sdk which requires
-  it. Also, Windows 10 will be officially end-of-life this coming October and
+  are technical reasons: we're adopting the discord social sdk which is 64 bit
+  only. Also, Windows 10 will be officially end-of-life this coming October and
   Windows 11 is 64 bit only. If you still need 32 bit builds please holler;
   maybe we can maintain a stripped-down test build or something.
 - Mac prefab builds for Intel Macs are now enabled again. I had disabled these
@@ -19,8 +19,11 @@
 - Added 'Race' and 'Pro Race' to the Practice co-op section.
 - Removed the `ba*.app.env.test`, `ba*.app.env.arcade`, and `ba*.app.env.demo`
   values, which were redundant now that `ba*.app.env.variant` exists.
-- Removed the `ba*.app.env.android` value which is redundant now that we have
+- Removed the `ba*.app.env.android` value which was redundant now that we have
   `ba*.app.env.platform`.
+- The `ba*.app.env.debug` value is now `ba*.app.env.debug_build` to make it more
+  clear that this refers to how the app was built; not to a setting that can be
+  flipped on or off at runtime (like Python's `__debug__` value).
 - Added `ba*.app.env.cache_directory` which is where the app can put downloaded
   assets and other data that it wants to keep but which it can recreate if
   needed. It should always be safe to blow any or all of this data away between
@@ -29,16 +32,41 @@
   app's cache directory. Its default varies per platform but the standard one is
   `(CONFIG-DIR)/cache`.
 - The `volatile_data_directory` concept which was used internally has been
-  replaced by the cache dir, so if you see a `vdata` dir in your app config dir
-  you can delete it to keep things tidy.
-- Backup configs are now named '.config_prev.json' instead of
-  'config.json.prev'. This keeps them hidden by default on unix-y OSs for a
+  replaced by the new cache directory, so if you see a `vdata` dir in your app
+  config dir you can delete it to keep things tidy.
+- Backup configs are now named `.config_prev.json` instead of
+  `config.json.prev`. This keeps them hidden by default on unix-y OSs for a
   tidier look, and also keeps .json file associations working. Feel free to blow
-  away any 'config.json.prev' files you have lying around.
-- Debug builds will now blow away the occasional random file from the cache at
-  launch. This is meant to exercise the app's ability to recreate anything the
-  OS itself might purge (we make the guarantee that cache files will stay intact
-  while the app is running but no such guarantees between runs).
+  away any `config.json.prev` files you have lying around.
+- Debug builds will now blow away the occasional random file from the cache-dir
+  just before spinning up the engine. This is meant to exercise the app's
+  ability to recreate anything the OS itself might purge between runs (we make
+  the guarantee that cache-dir files remain intact while the app is running but
+  no such guarantees between runs).
+- The engine is now set up to generate its own Python bytecode (.pyc) files in
+  the cache-dir using the PYTHONPYCACHEPREFIX functionality introduced in Python
+  3.8. It will run a background thread to prune or regenerate .pyc files as
+  needed so the full cache should always be up to date (outside of the first few
+  moments when launching a new app version). Previously the app shipped with
+  .pyc files scattered in __pycache__ dirs throughout the codebase which were
+  set to always be used when present, which lead to confusing behavior where
+  edits to bundled .py files would be ignored unless the associated .pyc file
+  was deleted first. Now things should be much more intuitive: there are only
+  .py files in ba_data and edits to them will work as expected; all .pyc
+  wrangling is handled automagically in the background. This makes me especially
+  happy as it allows me to simplify asset pipelines. Please holler if you run
+  into any side-effects of this system such as hitches or slowness on launch
+  compared to previous versions.
+- Cleaned up threading and shutdown behavior. The app now properly shuts down
+  Python on exit which means it will block and wait for all Python threads to
+  finish (though it will still force the issue and quit immediately if stuck for
+  a while). Also purged all uses of 'daemon=True' in threads which is generally
+  considered unsafe due to such threads possibly accessing Python state after
+  Python has shut down. So this new setup is safer and more deterministic but we
+  need to be careful about making sure all threads properly exit at app
+  shutdown. If you run into cases where the app consistently gets stuck when
+  trying to exit or you see warnings about unexpected threads still running,
+  please holler.
   
 ### 1.7.41 (build 22382, api 9, 2025-05-25)
 - Fixed a few unsafe accesses of cJSON objects that could be exploited to crash

@@ -11,6 +11,7 @@
 #include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"

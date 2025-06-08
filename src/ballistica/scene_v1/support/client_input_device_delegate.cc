@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "ballistica/base/networking/networking.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/support/client_input_device.h"
 

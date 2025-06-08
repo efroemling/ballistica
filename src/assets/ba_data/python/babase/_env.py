@@ -3,10 +3,13 @@
 """Environment related functionality."""
 from __future__ import annotations
 
+import os
 import sys
+import time
 import signal
 import logging
 import warnings
+import threading
 from typing import TYPE_CHECKING, override
 
 from efro.logging import LogLevel
@@ -45,22 +48,24 @@ def on_native_module_import() -> None:
             lambda: _babase.set_thread_name('ballistica logging')
         )
 
-    env = _babase.pre_env()
+    pre_env = _babase.pre_env()
 
     # Give a soft warning if we're being used with a different binary
     # version than we were built for.
-    running_build: int = env['build_number']
+    running_build: int = pre_env['build_number']
+    assert isinstance(running_build, int)
+
     if running_build != baenv.TARGET_BALLISTICA_BUILD:
-        logging.warning(
+        logging.error(
             'These scripts are meant to be used with'
             ' Ballistica build %d, but you are running build %d.'
-            " This might cause problems. Module path: '%s'.",
+            " This is likely to cause problems. Module path: '%s'.",
             baenv.TARGET_BALLISTICA_BUILD,
             running_build,
             __file__,
         )
 
-    debug_build = env['debug_build']
+    debug_build = pre_env['debug_build']
 
     # We expect dev_mode on in debug builds and off otherwise;
     # make noise if that's not the case.
@@ -115,15 +120,18 @@ def on_main_thread_start_app() -> None:
     # release builds so its good to have this on everywhere.
     warnings.simplefilter('default', DeprecationWarning)
 
-    # Turn off fancy-pants cyclic garbage-collection. We run it only at
-    # explicit times to avoid random hitches and keep things more
-    # deterministic. Non-reference-looped objects will still get cleaned
-    # up immediately, so we should try to structure things to avoid
-    # reference loops (just like Swift, ObjC, etc).
+    # Turn off cyclic garbage-collection. We run it only at explicit
+    # times to avoid random hitches and keep things more deterministic.
+    # Non-reference-looped objects will still get cleaned up
+    # immediately, so we should try to structure things to avoid and/or
+    # break reference loops (just like Swift, ObjC, etc).
 
-    # FIXME - move this to Python bootstrapping code. or perhaps disable
-    #  it completely since we've got more bg stuff happening now?...
-    #  (but put safeguards in place to time/minimize gc pauses).
+    # TODO: Should wire up some sort of callback for things that the
+    # cyclic collector kills so we can try to get everything
+    # deterministic and then there is no downside to running cyclic
+    # collections very rarely. Could also just leave the cyclic
+    # collector on in that case, but I wonder if there could be
+    # overhead/hitches from it even if nothing gets collected.
     gc.disable()
 
     # pylint: disable=c-extension-no-member
@@ -131,8 +139,8 @@ def on_main_thread_start_app() -> None:
         import __main__
 
         # Clear out the standard quit/exit messages since they don't
-        # work in our embedded situation (should revisit this once we're
-        # usable from a standard interpreter). Note that these don't
+        # work in our embedded situations and we wouldn't want to use them
+        # if they did since Note that these don't
         # exist in the first place for our monolithic builds which don't
         # use site.py.
         for attr in ('quit', 'exit'):
@@ -164,6 +172,178 @@ def on_main_thread_start_app() -> None:
 
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+    # Kick off some background cache cleanup operations.
+    threading.Thread(target=_pycache_upkeep).start()
+
+
+def _pycache_cleanup_old_builds() -> None:
+    """Blow away pyc dirs for old builds."""
+    import shutil
+
+    import _babase
+    from babase._logging import applog
+
+    # First, let's totally blow away cache dirs for old builds.
+
+    # Per entry: is_us, modtime, path
+    entries: list[tuple[bool, float, str]] = []
+
+    env = _babase.app.env
+
+    try:
+        pycdir = os.path.join(env.cache_directory, 'pyc')
+        fnames = os.listdir(pycdir)
+        build_number_str = str(env.engine_build_number)
+        for fname in fnames:
+            fullpath = os.path.join(pycdir, fname)
+
+            # If it doesn't look like a build-number dir, kill it immediately.
+            if not fname.isdigit() or not os.path.isdir(fullpath):
+                try:
+                    if os.path.isdir(fullpath):
+                        shutil.rmtree(fullpath)
+                    else:
+                        os.unlink(fullpath)
+                except Exception as exc:
+                    applog.warning(
+                        'Unable to prune unused cache dir "%s": %s',
+                        fullpath,
+                        exc,
+                    )
+            else:
+                entries.append(
+                    (
+                        fname == build_number_str,
+                        os.path.getmtime(fullpath),
+                        fullpath,
+                    )
+                )
+
+        # Puts our cache at the top followed by newest modtime ones.
+        entries.sort()
+
+        # Now prune all but the top 3; that seems reasonable.
+        for entry_is_us, _entry_mtime, entry_path in entries[:-1]:
+            assert not entry_is_us
+            try:
+                shutil.rmtree(entry_path)
+            except Exception as exc:
+                applog.warning(
+                    'Unable to prune unused cache dir "%s": %s', entry_path, exc
+                )
+
+    except Exception:
+        applog.exception('Error in pyc cleanup.')
+
+
+def _pycache_gen_pycs() -> None:
+    """Take a quick pass at generating pycs for all .py files."""
+    # pylint: disable=too-many-locals
+    import py_compile
+    import importlib.util
+
+    import _babase
+    from babase._logging import applog
+
+    env = _babase.app.env
+
+    # Now let's go through all of our scripts dirs and compile pycs for
+    # for sources without one or newer than the existing one.
+    #
+    # For ordering, let's prioritize app scripts followed by mods and
+    # finally stdlib. Stdlib might have the most stuff we don't use so
+    # keeping them to the end could be good.
+    #
+    # We don't do anything fancy here; just create when one doesn't
+    # exist. We don't bother with updating when sources change or
+    # pruning orphaned pycs since build number bumps will cause us to
+    # regen a whole new set which will cover most changes out in the
+    # wild.
+
+    # Note: originally I was using os.__file__ but it turns out that
+    # module is 'frozen' in some cases and won't have a __file__. So we
+    # need to pick something that is always bundled as a .py. Hopefully
+    # py_compile fits the bill.
+    stdlibpath = os.path.dirname(py_compile.__file__)
+
+    dirpaths: list[str | None] = [
+        env.python_directory_app,
+        env.python_directory_app_site,
+        stdlibpath,
+        env.python_directory_user,
+    ]
+
+    # Skip over particular dirnames; namely stuff in stdlib we're very
+    # unlikely to ever use. This shaves off quite a bit of work.
+    skip_dirs = {
+        'test',
+        'email',
+        '__pycache__',
+        'idlelib',
+        'tkinter',
+        'turtledemo',
+        'unittest',
+        'encodings',
+    }
+    complained = False
+    for dirpath in dirpaths:
+        if dirpath is None or not os.path.isdir(dirpath):
+            continue
+        for root, dnames, fnames in os.walk(dirpath):
+            # Modify dirnames in-place to prevent walk from descending
+            # into them.
+            if dnames:
+                dnames[:] = [d for d in dnames if d not in skip_dirs]
+            for fname in fnames:
+                if not fname.endswith('.py'):
+                    continue
+                fullpath = os.path.join(root, fname)
+                try:
+                    pycpath = importlib.util.cache_from_source(fullpath)
+                    if not os.path.exists(pycpath) or os.path.getmtime(
+                        fullpath
+                    ) > os.path.getmtime(pycpath):
+                        py_compile.compile(fullpath, doraise=True)
+                except Exception as exc:
+                    # Make a bit of noise (once) for any other issues
+                    # though.
+
+                    # ..however first let's pause and see if it actually
+                    # is updated first. There's a chance we could hit
+                    # odd issues with trying to update a file that
+                    # Python is already updating.
+                    if not complained:
+                        time.sleep(0.2)
+                        still_out_of_date = not os.path.exists(
+                            pycpath
+                        ) or os.path.getmtime(fullpath) > os.path.getmtime(
+                            pycpath
+                        )
+                        if still_out_of_date:
+                            applog.warning(
+                                'Error precompiling %s: %s', fullpath, exc
+                            )
+                            complained = True
+
+
+def _pycache_upkeep() -> None:
+    from babase._logging import applog
+
+    starttime = time.monotonic()
+
+    try:
+        _pycache_cleanup_old_builds()
+    except Exception:
+        applog.exception('Error cleaning up old build pycaches')
+
+    try:
+        _pycache_gen_pycs()
+    except Exception:
+        applog.exception('Error bg generating pycs')
+
+    duration = time.monotonic() - starttime
+    applog.debug('Completed pycache upkeep in %.3fs.', duration)
+
 
 def on_app_state_initing() -> None:
     """Called when the app reaches the initing state."""
@@ -179,6 +359,56 @@ def on_app_state_initing() -> None:
         _babase.screenmessage(
             f"Using user system scripts: '{envconfig.app_python_dir}'",
             color=(0.6, 0.6, 1.0),
+        )
+
+
+def interpreter_shutdown_sanity_checks() -> None:
+    """Run sanity checks just before finalizing after an app run."""
+    import baenv
+    from babase._logging import applog
+
+    env_config = baenv.get_env_config()
+    main_thread = threading.main_thread()
+
+    # Warn about any still-running threads that we don't expect to find.
+    warn_threads: list[threading.Thread] = []
+    for thread in threading.enumerate():
+
+        if thread is main_thread:
+            continue
+
+        # Our log-handler thread gets set up early and will get torn
+        # down after us; we expect it to still be around.
+        if (
+            env_config.log_handler is not None
+            and thread
+            is env_config.log_handler._thread  # pylint: disable=W0212
+        ):
+            continue
+
+        # Dummy threads are native threads that happen to have Python
+        # stuff called in them. Ideally we should be using all Python
+        # threads so should clear these out at some point. Just ignoring
+        # them for now though.
+        #
+        if isinstance(thread, threading._DummyThread):  # pylint: disable=W0212
+            continue
+
+        warn_threads.append(thread)
+
+    if warn_threads:
+        applog.warning(
+            '%s',
+            '\n '.join(
+                [
+                    f'{len(warn_threads)}'
+                    f' unexpected thread(s) still running at'
+                    f' Python shutdown:'
+                ]
+                + [str(t) for t in warn_threads]
+            )
+            + '\nThreads should spin themselves down at app shutdown'
+            ' (see App.add_shutdown_task()).',
         )
 
 

@@ -53,11 +53,18 @@ class CorePython {
     kPrependSysPathCall,
     kBaEnvConfigureCall,
     kBaEnvGetConfigCall,
+    kBaEnvAtExitCall,
+    kBaEnvPreFinalizeCall,
     kLast  // Sentinel; must be at end.
   };
 
-  /// Bring up Python itself. Only needed in Monolithic builds.
+  /// Bring up Python itself. Only applicable to monolithic builds.
   void InitPython();
+
+  /// Finalize Python itself. Only applicable to monolithic builds. This
+  /// will block waiting for all remaining (non-daemon) Python threads to
+  /// join. Any further Python use must be avoided after calling this.
+  void FinalizePython();
 
   /// Run baenv.configure() with all of our monolithic-mode paths/etc.
   void MonolithicModeBaEnvConfigure();
@@ -75,6 +82,7 @@ class CorePython {
   void VerifyPythonEnvironment();
   void SoftImportBase();
   void UpdateInternalLoggerLevels(LogLevel* log_levels);
+  void AtExit(PyObject*);
 
   static auto WasModularMainCalled() -> bool;
 
@@ -88,9 +96,12 @@ class CorePython {
  private:
   PythonObjectSet<ObjID> objs_;
 
+  bool monolithic_init_complete_{};
+  bool python_logging_calls_enabled_{};
+  bool finalize_called_{};
+
   // Log calls we make before we're set up to ship logs through Python
   // go here. They all get shipped at once as soon as it is possible.
-  bool python_logging_calls_enabled_{};
   std::mutex early_log_lock_;
   std::list<std::tuple<LogName, LogLevel, std::string>> early_logs_;
 };

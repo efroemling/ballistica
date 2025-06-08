@@ -8,12 +8,10 @@ import json
 import os
 from typing import TYPE_CHECKING
 
-from efrotools.pyver import PYVER, PYVERNODOT
+from efrotools.pyver import PYVER
 
 if TYPE_CHECKING:
     pass
-
-PYC_SUFFIX = f'.cpython-{PYVERNODOT}.opt-1.pyc'
 
 ASSETS_SRC = 'src/assets'
 BUILD_DIR = 'build/assets'
@@ -63,7 +61,7 @@ def _get_py_targets(
     src: str,
     dst: str,
     py_targets: list[str],
-    pyc_targets: list[str],
+    # pyc_targets: list[str],
     so_targets: list[str],
     all_targets: set[str],
     subset: str,
@@ -167,11 +165,12 @@ def _get_py_targets(
                 py_targets.append(os.path.join(dstrootvar, fname))
 
                 # and .pyc:
-                fname_pyc = fname[:-3] + PYC_SUFFIX
-                all_targets.add(os.path.join(dstfin, '__pycache__', fname_pyc))
-                pyc_targets.append(
-                    os.path.join(dstrootvar, '__pycache__', fname_pyc)
-                )
+                # fname_pyc = fname[:-3] + PYC_SUFFIX
+                # all_targets.add(os.path.join(dstfin,
+                # '__pycache__', fname_pyc))
+                # pyc_targets.append(
+                #     os.path.join(dstrootvar, '__pycache__', fname_pyc)
+                # )
 
     # Create py and pyc targets for all physical scripts in src, with
     # the exception of our dynamically generated stuff.
@@ -232,7 +231,6 @@ def _get_py_targets_subset(
     subset: str,
     suffix: str,
 ) -> str:
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-positional-arguments
 
     copyrule_so: str | None = None
@@ -281,7 +279,7 @@ def _get_py_targets_subset(
             )
 
     py_targets: list[str] = []
-    pyc_targets: list[str] = []
+    # pyc_targets: list[str] = []
     so_targets: list[str] = []
 
     _get_py_targets(
@@ -291,22 +289,22 @@ def _get_py_targets_subset(
         src,
         dst,
         py_targets,
-        pyc_targets,
+        # pyc_targets,
         so_targets,
         all_targets,
         subset=subset,
     )
 
     # Need to sort py and pyc combined to keep pairs together.
-    combined_targets = [
-        (py_targets[i], pyc_targets[i]) for i in range(len(py_targets))
-    ]
-    combined_targets.sort()
-
+    # combined_targets = [
+    #     (py_targets[i], pyc_targets[i]) for i in range(len(py_targets))
+    # ]
+    # combined_targets.sort()
+    py_targets.sort()
     so_targets.sort()
 
-    py_targets = [t[0] for t in combined_targets]
-    pyc_targets = [t[1] for t in combined_targets]
+    # py_targets = [t[0] for t in combined_targets]
+    # pyc_targets = [t[1] for t in combined_targets]
 
     out = (
         f'\nSCRIPT_TARGETS_PY{suffix} = \\\n  '
@@ -314,11 +312,11 @@ def _get_py_targets_subset(
         + '\n'
     )
 
-    out += (
-        f'\nSCRIPT_TARGETS_PYC{suffix} = \\\n  '
-        + ' \\\n  '.join(pyc_targets)
-        + '\n'
-    )
+    # out += (
+    #     f'\nSCRIPT_TARGETS_PYC{suffix} = \\\n  '
+    #     + ' \\\n  '.join(pyc_targets)
+    #     + '\n'
+    # )
 
     out += (
         f'\nSCRIPT_TARGETS_SO{suffix} = \\\n  '
@@ -360,37 +358,37 @@ def _get_py_targets_subset(
     # )
 
     # Fancy new simple loop-based target generation.
-    out += (
-        f'\n# These are too complex to define in a pattern rule;\n'
-        f'# Instead we generate individual targets in a loop.\n'
-        f'$(foreach element,$(SCRIPT_TARGETS_PYC{suffix}),\\\n'
-        f'$(eval $(call make-opt-pyc-target,$(element))))'
-    )
+    # out += (
+    #     f'\n# These are too complex to define in a pattern rule;\n'
+    #     f'# Instead we generate individual targets in a loop.\n'
+    #     f'$(foreach element,$(SCRIPT_TARGETS_PYC{suffix}),\\\n'
+    #     f'$(eval $(call make-opt-pyc-target,$(element))))'
+    # )
 
     # Old code to explicitly emit individual targets.
-    if bool(False):
-        out += (
-            '\n# Looks like path mangling from py to pyc is too complex for'
-            ' pattern rules so\n# just generating explicit targets'
-            ' for each. Could perhaps look into using a\n# fancy for-loop'
-            ' instead, but perhaps listing these explicitly isn\'t so bad.\n'
-        )
-        for i, target in enumerate(pyc_targets):
-            # Note: there's currently a bug which can cause python bytecode
-            # generation to be non-deterministic. This can break our blessing
-            # process since we bless in core but then regenerate bytecode in
-            # spinoffs. See https://bugs.python.org/issue34722
-            # For now setting PYTHONHASHSEED=1 is a workaround.
-            out += (
-                '\n'
-                + target
-                + ': \\\n      '
-                + py_targets[i]
-                + '\n\t@echo Compiling script: $(subst $(BUILD_DIR),,$^)\n'
-                '\t@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/pcommand'
-                ' compile_python_file $^'
-                ' && chmod 444 $@\n'
-            )
+    # if bool(False):
+    #     out += (
+    #         '\n# Looks like path mangling from py to pyc is too complex for'
+    #         ' pattern rules so\n# just generating explicit targets'
+    #         ' for each. Could perhaps look into using a\n# fancy for-loop'
+    #         ' instead, but perhaps listing these explicitly isn\'t so bad.\n'
+    #     )
+    #     for i, target in enumerate(pyc_targets):
+    #         # Note: there's currently a bug which can cause python bytecode
+    #         # generation to be non-deterministic. This can break our blessing
+    #         # process since we bless in core but then regenerate bytecode in
+    #         # spinoffs. See https://bugs.python.org/issue34722
+    #         # For now setting PYTHONHASHSEED=1 is a workaround.
+    #         out += (
+    #             '\n'
+    #             + target
+    #             + ': \\\n      '
+    #             + py_targets[i]
+    #             + '\n\t@echo Compiling script: $(subst $(BUILD_DIR),,$^)\n'
+    #             '\t@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/pcommand'
+    #             ' compile_python_file $^'
+    #             ' && chmod 444 $@\n'
+    #         )
 
     return out
 

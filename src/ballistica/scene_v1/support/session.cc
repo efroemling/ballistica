@@ -3,6 +3,7 @@
 #include "ballistica/scene_v1/support/session.h"
 
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 
 namespace ballistica::scene_v1 {
 

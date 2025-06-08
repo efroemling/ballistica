@@ -9,6 +9,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"

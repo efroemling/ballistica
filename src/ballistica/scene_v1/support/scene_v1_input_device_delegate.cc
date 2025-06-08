@@ -10,6 +10,7 @@
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
 #include "ballistica/scene_v1/node/player_node.h"
 #include "ballistica/scene_v1/python/class/python_class_input_device.h"

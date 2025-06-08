@@ -9,6 +9,7 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/core/core.h"
 
 namespace ballistica::base {
 

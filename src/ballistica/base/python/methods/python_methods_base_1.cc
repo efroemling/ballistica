@@ -838,9 +838,9 @@ static auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
     throw Exception("ERROR ON JSON DUMP");
   }
   std::string final_str = Python::GetString(config_obj);
-  std::string path = g_core->platform->GetConfigFilePath();
+  std::string path = g_core->GetConfigFilePath();
   std::string path_temp = path + ".tmp";
-  std::string path_prev = g_core->platform->GetBackupConfigFilePath();
+  std::string path_prev = g_core->GetBackupConfigFilePath();
   if (explicit_bool(true)) {
     FILE* f_out = g_core->platform->FOpen(path_temp.c_str(), "wb");
     if (f_out == nullptr) {
@@ -977,7 +977,7 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "ss"  // data_directory
         "}",
         "build_number", kEngineBuildNumber,
-        "config_file_path", g_core->platform->GetConfigFilePath().c_str(),
+        "config_file_path", g_core->GetConfigFilePath().c_str(),
         "ba_locale", g_core->platform->GetBaLocale().c_str(),
         "locale", g_core->platform->GetLocaleTag().c_str(),
         "legacy_user_agent_string", g_core->legacy_user_agent_string().c_str(),

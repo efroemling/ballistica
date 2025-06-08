@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
 
 namespace ballistica::base {

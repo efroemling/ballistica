@@ -92,7 +92,7 @@ class MetadataSubsystem:
             ]
         )
 
-        Thread(target=self._run_scan_in_bg, daemon=True).start()
+        Thread(target=self._run_scan_in_bg).start()
 
     def start_extra_scan(self) -> None:
         """Proceed to the extra_scan_dirs portion of the scan.
@@ -130,8 +130,7 @@ class MetadataSubsystem:
                 cls,
                 completion_cb,
                 completion_cb_in_bg_thread,
-            ),
-            daemon=True,
+            )
         ).start()
 
     def _load_exported_classes[T](

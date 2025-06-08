@@ -18,7 +18,7 @@ namespace ballistica::core {
 /// Low level platform-specific functionality is contained here, to be
 /// implemented by platform-specific subclasses.
 ///
-/// TODO(ericf): Most of the stuff below should be migrated into
+/// TODO(ericf): Much of the stuff below should be migrated into
 ///   BasePlatform or other higher-level places. Core should contain only
 ///   what is directly needed to bootstrap Python and the engine
 ///   environment.
@@ -79,8 +79,11 @@ class CorePlatform {
 #pragma mark PRINTING/LOGGING --------------------------------------------------
 
   /// Display a message to any default log for the platform (android log,
-  /// etc.) Note that this can be called from any thread. Default
-  /// implementation does nothing.
+  /// etc.) This can be called from any thread. The default implementation does
+  /// nothing. Implementations should not print to stdout or stderr, as mapping
+  /// those to log messages is handled at a higher level. Implementations should
+  /// not use any Python functionality, as this may be called before Python is
+  /// spun up or after it is finalized.
   virtual void EmitPlatformLog(const std::string& name, LogLevel level,
                                const std::string& msg);
 
@@ -96,26 +99,25 @@ class CorePlatform {
   /// etc).
   virtual auto GetDefaultUIScale() -> UIScale;
 
-  /// Return default DataDirectory value for monolithic builds.
+  /// Return default data-directory value for monolithic builds. This will be
+  /// passed to pyenv as a starting point, and whatever pyenv gives us back
+  /// will be our actual value.
   auto GetDataDirectoryMonolithicDefault() -> std::string;
 
+  /// Return default config-directory value for monolithic builds. This will be
+  /// passed to pyenv as a starting point, and whatever pyenv gives us back
+  /// will be our actual value.
   auto GetConfigDirectoryMonolithicDefault() -> std::optional<std::string>;
 
-  /// Get the path of the app config file.
-  auto GetConfigFilePath() -> std::string;
-
-  auto GetBackupConfigFilePath() -> std::string;
-
+  /// Return default user-python (mods) directory value for monolithic
+  /// builds. This will be passed to pyenv as a starting point, and whatever
+  /// pyenv gives us back will be our actual value.
   auto GetUserPythonDirectoryMonolithicDefault() -> std::optional<std::string>;
 
+  /// Return default cache-directory value for monolithic builds. This will
+  /// be passed to pyenv as a starting point, and whatever pyenv gives us
+  /// back will be our actual value.
   auto GetCacheDirectoryMonolithicDefault() -> std::optional<std::string>;
-
-  /// Get a directory where the app can store internal generated data. This
-  /// directory should not be included in backups and the app should remain
-  /// functional if this directory is completely cleared between runs
-  /// (though it is expected that things stay intact here *while* the app is
-  /// running).
-  // auto GetCacheDirectory() -> std::string;
 
   /// Return the directory where game replay files live.
   auto GetReplaysDir() -> std::string;

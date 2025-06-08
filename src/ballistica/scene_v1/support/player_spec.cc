@@ -6,6 +6,7 @@
 
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"

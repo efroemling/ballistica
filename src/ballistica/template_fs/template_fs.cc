@@ -3,6 +3,7 @@
 #include "ballistica/template_fs/template_fs.h"
 
 #include "ballistica/base/base.h"
+#include "ballistica/core/core.h"
 #include "ballistica/template_fs/python/template_fs_python.h"
 
 namespace ballistica::template_fs {

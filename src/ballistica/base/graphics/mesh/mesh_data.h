@@ -6,6 +6,7 @@
 #include <list>
 
 #include "ballistica/base/base.h"
+#include "ballistica/core/core.h"
 
 namespace ballistica::base {
 

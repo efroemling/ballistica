@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "ballistica/base/audio/audio_server.h"
+#include "ballistica/core/core.h"
 #include "ballistica/shared/generic/utils.h"
 
 // Need to move away from OpenAL on Apple stuff.

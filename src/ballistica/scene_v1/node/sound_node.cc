@@ -6,6 +6,7 @@
 
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"

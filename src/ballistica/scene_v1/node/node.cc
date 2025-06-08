@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/dynamics/part.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_attribute_connection.h"

@@ -12,6 +12,7 @@
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/part.h"

@@ -39,7 +39,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22396;
+const int kEngineBuildNumber = 22401;
 const char* kEngineVersion = "1.7.42";
 const int kEngineApiVersion = 9;
 
@@ -83,6 +83,11 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       // Let anyone interested know we're trying to go down NOW.
       l_core->set_engine_done();
 
+      // Take the Python interpreter down gracefully. This will block for
+      // any outstanding threads/etc.
+      l_core->python->FinalizePython();
+
+      // Laterz.
       exit(success ? 0 : 1);
     }
 
@@ -146,8 +151,14 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     if (l_base->AppManagesMainThreadEventLoop()) {
       // In environments where we control the event loop, do that.
       l_base->RunAppToCompletion();
+
       // Let anyone interested know we're trying to go down NOW.
       l_core->set_engine_done();
+
+      // Take the Python interpreter down gracefully. This will block for
+      // any outstanding threads/etc.
+      l_core->python->FinalizePython();
+
     } else {
       // If the environment is managing events, we now simply return and let
       // it feed us those events.
@@ -181,6 +192,8 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       // Let anyone interested know we're trying to go down NOW.
       if (l_core) {
         l_core->set_engine_done();
+        // Note: We DO NOT call FinalizePython() in this case; we're already
+        // going down in flames so that might just make things worse.
       }
       if (try_to_exit_cleanly) {
         exit(1);

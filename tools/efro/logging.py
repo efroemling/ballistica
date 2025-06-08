@@ -133,6 +133,7 @@ class LogHandler(logging.Handler):
         cache_time_limit: datetime.timedelta | None,
         echofile_timestamp_format: Literal['default', 'relative'] = 'default',
         launch_time: float | None = None,
+        strict_threads: bool = False,
     ):
         super().__init__()
         # pylint: disable=consider-using-with
@@ -154,10 +155,16 @@ class LogHandler(logging.Handler):
         self._cache_index_offset = 0
         self._cache_lock = Lock()
         self._printed_callback_error = False
-        self._thread_bootstrapped = False
-        self._thread = Thread(target=self._log_thread_main, daemon=True)
         if __debug__:
             self._last_slow_emit_warning_time: float | None = None
+
+        # Strict-threads mode means we don't use a daemon thread, but then
+        # it is up to the user to explicitly call shutdown() to get our
+        # background thread to exit.
+        self._thread_bootstrapped = False
+        self._thread = Thread(
+            target=self._log_thread_main, daemon=not strict_threads
+        )
         self._thread.start()
 
         # Spin until our thread is up and running; otherwise we could
@@ -221,6 +228,7 @@ class LogHandler(logging.Handler):
                     self._time_prune_cache()
                 )
             self._event_loop.run_forever()
+            assert self._echofile is not None
         except BaseException:
             # If this ever goes down we're in trouble; we won't be able
             # to log about it though. Try to make some noise however we
@@ -514,23 +522,33 @@ class LogHandler(logging.Handler):
             traceback.print_exc(file=self._echofile)
 
     def shutdown(self) -> None:
-        """Block until all pending logs/prints are done."""
-        done = False
+        """Kill bg thread and flush pending logs/prints."""
+        assert current_thread() is not self._thread
+
+        # done = False
         self.file_flush('stdout')
         self.file_flush('stderr')
 
-        def _set_done() -> None:
-            nonlocal done
-            done = True
+        # Push a message to our thread to break out of its loop, and
+        # then wait for the thread to exit. This will effectively flush
+        # all pending messages up to this point but will leave the loop
+        # intact so if anyone pushes a message at this point it won't
+        # error (though it will never get processed either).
+        self._event_loop.call_soon_threadsafe(self._event_loop.stop)
+        self._thread.join()
 
-        self._event_loop.call_soon_threadsafe(_set_done)
+        # def _set_done() -> None:
+        #     nonlocal done
+        #     done = True
 
-        starttime = time.monotonic()
-        while not done:
-            if time.monotonic() - starttime > 5.0:
-                print('LogHandler shutdown hung!!!', file=sys.stderr)
-                break
-            time.sleep(0.01)
+        # self._event_loop.call_soon_threadsafe(_set_done)
+
+        # starttime = time.monotonic()
+        # while not done:
+        #     if time.monotonic() - starttime > 5.0:
+        #         print('LogHandler shutdown hung!!!', file=sys.stderr)
+        #         break
+        #     time.sleep(0.01)
 
     def file_flush(self, name: str) -> None:
         """Send raw stdout/stderr flush to the logger to be collated."""
@@ -670,6 +688,7 @@ def setup_logging(
     cache_size_limit: int = 0,
     cache_time_limit: datetime.timedelta | None = None,
     launch_time: float | None = None,
+    strict_threads: bool = False,
 ) -> LogHandler:
     """Set up our logging environment.
 
@@ -704,6 +723,7 @@ def setup_logging(
         cache_size_limit=cache_size_limit,
         cache_time_limit=cache_time_limit,
         launch_time=launch_time,
+        strict_threads=strict_threads,
     )
 
     # Note: going ahead with force=True here so that we replace any

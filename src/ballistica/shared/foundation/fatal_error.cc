@@ -220,6 +220,9 @@ auto FatalError::HandleFatalError(bool exit_cleanly,
       // hang on exit because a bg thread is blocked in a read of stdin.
       g_core->set_engine_done();
 
+      // Note: We DO NOT call FinalizePython() in this case; we're already
+      // going down in flames so that might just make things worse.
+
       exit(1);
     } else {
       Logging::EmitLog("root", LogLevel::kCritical,

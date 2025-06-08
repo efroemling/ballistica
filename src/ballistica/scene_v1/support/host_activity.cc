@@ -10,6 +10,7 @@
 
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"

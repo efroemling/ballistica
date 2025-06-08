@@ -201,7 +201,7 @@ def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
         # req.close()
         # req.fp.close()
 
-    threading.Thread(target=doit).run()
+    threading.Thread(target=doit).start()
 
     with open(filename, 'wb') as outfile:
         file_size_dl = 0

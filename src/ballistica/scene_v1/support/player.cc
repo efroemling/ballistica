@@ -9,6 +9,7 @@
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/python/class/python_class_session_player.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"

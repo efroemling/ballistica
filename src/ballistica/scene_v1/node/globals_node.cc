@@ -11,6 +11,7 @@
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_activity.h"

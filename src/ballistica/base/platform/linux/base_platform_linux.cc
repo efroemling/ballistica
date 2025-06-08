@@ -7,6 +7,8 @@
 
 #include <string>
 
+#include "ballistica/core/core.h"
+
 namespace ballistica::base {
 
 BasePlatformLinux::BasePlatformLinux() = default;

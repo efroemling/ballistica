@@ -12,6 +12,7 @@
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/huffman.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"

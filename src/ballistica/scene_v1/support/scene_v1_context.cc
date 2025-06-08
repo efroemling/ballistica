@@ -7,6 +7,7 @@
 #include <string>
 
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/shared/generic/runnable.h"
 

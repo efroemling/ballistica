@@ -17,6 +17,7 @@
 #include "ballistica/base/python/methods/python_methods_base_1.h"
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 #include "ballistica/base/python/methods/python_methods_base_3.h"
+#include "ballistica/core/core.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
 

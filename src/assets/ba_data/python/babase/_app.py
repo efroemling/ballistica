@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+import time
 import logging
 from enum import Enum
 from functools import partial
@@ -242,19 +243,6 @@ class App:
         self._asyncio_tasks.add(task)
         task.add_done_callback(self._on_task_done)
 
-    def _on_task_done(self, task: asyncio.Task) -> None:
-        # Report any errors that occurred.
-        try:
-            exc = task.exception()
-            if exc is not None:
-                logging.error(
-                    "Error in async task '%s'.", task.get_name(), exc_info=exc
-                )
-        except Exception:
-            logging.exception('Error reporting async task error.')
-
-        self._asyncio_tasks.remove(task)
-
     @property
     def mode_selector(self) -> babase.AppModeSelector:
         """Controls which app-modes are used for handling given intents.
@@ -273,6 +261,19 @@ class App:
     @mode_selector.setter
     def mode_selector(self, selector: babase.AppModeSelector) -> None:
         self._mode_selector = selector
+
+    def _on_task_done(self, task: asyncio.Task) -> None:
+        # Report any errors that occurred.
+        try:
+            exc = task.exception()
+            if exc is not None:
+                logging.error(
+                    "Error in async task '%s'.", task.get_name(), exc_info=exc
+                )
+        except Exception:
+            logging.exception('Error reporting async task error.')
+
+        self._asyncio_tasks.remove(task)
 
     def _get_subsystem_property(
         self, ssname: str, create_call: Callable[[], AppSubsystem | None]
@@ -409,9 +410,16 @@ class App:
     def add_shutdown_task(self, coro: Coroutine[None, None, None]) -> None:
         """Add a task to be run on app shutdown.
 
-        Note that shutdown tasks will be canceled after
-        :py:const:`SHUTDOWN_TASK_TIMEOUT_SECONDS` if they are still
-        running.
+        All shutdown tasks will be run concurrently alongside a fade-out,
+        so it is ok for them to take a moment or two to do their thing.
+
+        If a shutdown task is still running after
+        :py:const:`SHUTDOWN_TASK_TIMEOUT_SECONDS`, however, it will be
+        canceled.
+
+        Code needing more exact control over its place in app shutdown
+        can look into :func:`babase.atexit()`, (though this comes with
+        some limitations as well).
         """
         if (
             self.state is AppState.SHUTTING_DOWN
@@ -422,6 +430,17 @@ class App:
                 f'Cannot add shutdown tasks with current state {stname}.'
             )
         self._shutdown_tasks.append(coro)
+
+    def _pre_interpreter_shutdown(self) -> None:
+        """Called just before interpreter is finalized."""
+        from babase._env import interpreter_shutdown_sanity_checks
+
+        # Finish up anything the threadpool is working on and kill its
+        # threads.
+        self.threadpool.shutdown()
+
+        # General sanity checks for lingering threads/etc.
+        interpreter_shutdown_sanity_checks()
 
     def run(self) -> None:
         """Run the app to completion.
@@ -745,6 +764,15 @@ class App:
         from babase import _env
 
         assert _babase.in_logic_thread()
+
+        # Since we're officially spinning up an app, add some sanity
+        # checks to help make sure we do a clean exit at the end of it
+        # (at least on monolithic builds). We add this before we make
+        # any other on-initing calls that could result in thread
+        # spinups/etc. so that any of their atexits will have fired
+        # before this one.
+        if self.env.monolithic_build:
+            _babase.atexit(self._pre_interpreter_shutdown)
 
         _env.on_app_state_initing()
 
@@ -1084,11 +1112,32 @@ class App:
 
         # Kick off a short fade and give it time to complete.
         lifecyclelog.info('fade-and-shutdown-graphics begin')
-        _babase.fade_screen(False, time=0.15)
-        await asyncio.sleep(0.15)
+        fade_done = False
 
-        # Now tell the graphics system to go down and wait until
-        # it has done so.
+        starttime = time.monotonic()
+
+        def _set_fade_done() -> None:
+            nonlocal fade_done
+            fade_done = True
+
+        if _babase.app.env.gui:
+            _babase.fade_screen(False, time=0.15, endcall=_set_fade_done)
+        else:
+            fade_done = True
+
+        # Note: originally was just sleeping once for the fade duration,
+        # but due to timing mismatches that could resulted in the game
+        # freezing visually mid-fade to finish quitting. So now waiting
+        # until the fade confirms that it is done.
+        while not fade_done:
+            await asyncio.sleep(0.03)
+            # Fallback trigger in case fade never calls back.
+            if time.monotonic() - starttime > 2.0:
+                lifecyclelog.warning('fade_screen took too long; cutting off.')
+                fade_done = True
+
+        # Now tell the graphics system to go down and wait until it has
+        # done so.
         _babase.graphics_shutdown_begin()
         while not _babase.graphics_shutdown_is_complete():
             await asyncio.sleep(0.01)

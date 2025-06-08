@@ -204,6 +204,14 @@ auto CoreFeatureSet::GetConfigDirectory() -> std::string {
   return ba_env_config_dir_;
 }
 
+auto CoreFeatureSet::GetConfigFilePath() -> std::string {
+  return g_core->GetConfigDirectory() + BA_DIRSLASH + "config.json";
+}
+
+auto CoreFeatureSet::GetBackupConfigFilePath() -> std::string {
+  return g_core->GetConfigDirectory() + BA_DIRSLASH + ".config_prev.json";
+}
+
 // Return the ballisticakit config dir. This does not vary across versions.
 auto CoreFeatureSet::GetCacheDirectory() -> std::string {
   BA_PRECONDITION(have_ba_env_vals_);

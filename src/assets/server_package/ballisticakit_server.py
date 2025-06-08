@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.13
+#!/usr/bin/env -S python3.13 -B
 # Released under the MIT License. See LICENSE for details.
 #
 # pylint: disable=too-many-lines
@@ -34,9 +34,17 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-VERSION_STR = '1.3.4'
+VERSION_STR = '1.3.5'
 
 # Version history:
+#
+# 1.3.5
+#
+#  - Minor updates accounting for the fact that the game binary no longer
+#    bundles .pyc files but rather generates them itself in a dedicated
+#    directory. So we now run this wrapper with bytecode disabled (-B)
+#    to keep the source tree tidy; the wrapper isn't performance sensitive
+#    so this should have no impact on performance.
 #
 # 1.3.4
 #

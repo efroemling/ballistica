@@ -180,7 +180,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # Non-test, non-debug builds should generally be blessed; warn
         # if not (so I don't accidentally release one).
         if (
-            not env.debug
+            not env.debug_build
             and not env.variant is type(env.variant).TEST_BUILD
             and not plus.is_blessed()
         ):

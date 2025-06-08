@@ -7,9 +7,7 @@ from __future__ import annotations
 import time
 import asyncio
 import logging
-import weakref
 from enum import Enum
-from functools import partial
 from collections import deque
 from dataclasses import dataclass
 from threading import current_thread
@@ -83,45 +81,46 @@ def ssl_stream_writer_underlying_transport_info(
     return '(not found)'
 
 
-def ssl_stream_writer_force_close_check(writer: asyncio.StreamWriter) -> None:
-    """Ensure a writer is closed; hacky workaround for odd hang."""
-    from threading import Thread
+# def ssl_stream_writer_force_close_check(writer: asyncio.StreamWriter) -> None:
+#     """Ensure a writer is closed; hacky workaround for odd hang."""
+#     from threading import Thread
 
-    # Disabling for now..
-    if bool(True):
-        return
+#     # Disabling for now..
+#     if bool(True):
+#         return
 
-    # Hopefully can remove this in Python 3.11?...
-    # see issue with is_closing() below for more details.
-    transport = getattr(writer, '_transport', None)
-    if transport is not None:
-        sslproto = getattr(transport, '_ssl_protocol', None)
-        if sslproto is not None:
-            raw_transport = getattr(sslproto, '_transport', None)
-            if raw_transport is not None:
-                Thread(
-                    target=partial(
-                        _do_writer_force_close_check, weakref.ref(raw_transport)
-                    ),
-                    daemon=True,
-                ).start()
+#     # Hopefully can remove this in Python 3.11?...
+#     # see issue with is_closing() below for more details.
+#     transport = getattr(writer, '_transport', None)
+#     if transport is not None:
+#         sslproto = getattr(transport, '_ssl_protocol', None)
+#         if sslproto is not None:
+#             raw_transport = getattr(sslproto, '_transport', None)
+#             if raw_transport is not None:
+#                 Thread(
+#                     target=partial(
+#                         _do_writer_force_close_check,
+#                          weakref.ref(raw_transport),
+#                     ),
+#                     daemon=True,
+#                 ).start()
 
 
-def _do_writer_force_close_check(transport_weak: weakref.ref) -> None:
-    try:
-        # Attempt to bail as soon as the obj dies.
-        # If it hasn't done so by our timeout, force-kill it.
-        starttime = time.monotonic()
-        while time.monotonic() - starttime < 10.0:
-            time.sleep(0.1)
-            if transport_weak() is None:
-                return
-        transport = transport_weak()
-        if transport is not None:
-            logging.info('Forcing abort on stuck transport %s.', transport)
-            transport.abort()
-    except Exception:
-        logging.warning('Error in writer-force-close-check', exc_info=True)
+# def _do_writer_force_close_check(transport_weak: weakref.ref) -> None:
+#     try:
+#         # Attempt to bail as soon as the obj dies. If it hasn't done so
+#         # by our timeout, force-kill it.
+#         starttime = time.monotonic()
+#         while time.monotonic() - starttime < 10.0:
+#             time.sleep(0.1)
+#             if transport_weak() is None:
+#                 return
+#         transport = transport_weak()
+#         if transport is not None:
+#             logging.info('Forcing abort on stuck transport %s.', transport)
+#             transport.abort()
+#     except Exception:
+#         logging.warning('Error in writer-force-close-check', exc_info=True)
 
 
 class _InFlightMessage:
@@ -249,7 +248,7 @@ class RPCEndpoint:
 
         # Currently seeing rare issue where sockets don't go down;
         # let's add a timer to force the issue until we can figure it out.
-        ssl_stream_writer_force_close_check(self._writer)
+        # ssl_stream_writer_force_close_check(self._writer)
 
     async def run(self) -> None:
         """Run the endpoint until the connection is lost or closed.

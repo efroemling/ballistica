@@ -27,9 +27,13 @@ from typing import TYPE_CHECKING
 import __main__
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable
 
     from efro.logging import LogHandler
+
+# Normally we'd grab __name__ here, but in modular builds we wind up
+# being __main__ that way; we'd rather show up as 'baenv' in all cases.
+logger = logging.getLogger('baenv')
 
 # IMPORTANT - It is likely (and in some cases expected) that this
 # module's code will be exec'ed multiple times. This is because it is
@@ -39,7 +43,7 @@ if TYPE_CHECKING:
 # /abs/path/to/ba_data/scripts/babase.py to ba_data/scripts/babase.py).
 # This can result in the next import of baenv loading us from our 'new'
 # location, which may or may not actually be the same file on disk as
-# the last load. Either way, however, multiple execs will happen in some
+# the last load. Either way, however, multiple execs can happen in some
 # form.
 #
 # To handle that situation gracefully, we need to do a few things:
@@ -54,7 +58,7 @@ if TYPE_CHECKING:
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22396
+TARGET_BALLISTICA_BUILD = 22401
 TARGET_BALLISTICA_VERSION = '1.7.42'
 
 
@@ -147,7 +151,7 @@ def get_env_config() -> EnvConfig:
     # paths to run Ballistica apps should be explicitly calling
     # configure() first to get a full featured setup.
     if not envglobals.called_configure:
-        configure(setup_logging=False)
+        configure(setup_logging=False, setup_pycache=False)
 
     config = envglobals.config
     if config is None:
@@ -168,6 +172,8 @@ def configure(
     cache_dir: str | None = None,
     contains_python_dist: bool = False,
     setup_logging: bool = True,
+    setup_pycache: bool = True,
+    strict_threads_atexit: Callable[[Callable[[], None]], None] | None = None,
 ) -> None:
     """Set up the environment for running a Ballistica app.
 
@@ -175,6 +181,7 @@ def configure(
     creation. This must be called before any actual Ballistica modules
     are imported; the environment is locked in as soon as that happens.
     """
+    # pylint: disable=too-many-locals
 
     # Measure when we start doing this stuff. We plug this in to show
     # relative times in our log timestamp displays and also pass this to
@@ -217,12 +224,26 @@ def configure(
         cache_dir,
     )
 
+    # The one other thing we do before setting up logging is redirect
+    # our pyc files to our cache dir. We want to do this is calced so
+    # that as much stuff as possible (efro.logging), etc.) will get its
+    # pyc files made in our custom cache dir.
+    prev_pycache_prefix = sys.pycache_prefix
+    if setup_pycache:
+        sys.pycache_prefix = os.path.join(
+            cache_dir, 'pyc', str(TARGET_BALLISTICA_BUILD)
+        )
+
     # Set up our log-handler and pipe Python's stdout/stderr into it.
     # Later, once the engine comes up, the handler will feed its logs
     # (including cached history) to the os-specific output location.
     # This means anything printed or logged at this point forward should
     # be visible on all platforms.
-    log_handler = _create_log_handler(launch_time) if setup_logging else None
+    log_handler = (
+        _create_log_handler(launch_time, strict_threads_atexit)
+        if setup_logging
+        else None
+    )
 
     # Load the raw app-config dict.
     app_config = _read_app_config(os.path.join(config_dir, 'config.json'))
@@ -233,9 +254,34 @@ def configure(
 
     # We want to always be run in UTF-8 mode; complain if we're not.
     if sys.flags.utf8_mode != 1:
-        logging.warning(
+        logger.warning(
             "Python's UTF-8 mode is not set. Running Ballistica without"
             ' it may lead to errors.'
+        )
+
+    # We set pycache_prefix above so that opt .pyc files are written to
+    # the cache directory we just set up, but ideally Python should have
+    # been set to that value at startup (so that modules we've imported
+    # up to this point can be cached there too).
+    #
+    # In most cases we can actually do this by calcing/setting the same
+    # path we use here before spinning up Python, but in some cases
+    # that's impossible (such as our _modular_main path below where we
+    # are already in Python before we get a chance to parse args that
+    # affect cache path).
+    #
+    # So let's warn here any time pycache_prefix differs from what we
+    # set it to. In the case of modular builds the user will know that
+    # they can optionally set PYTHONPYCACHEPREFIX to line things up and
+    # in the case of our own builds we'll know that we need to fix
+    # something.
+    if setup_pycache and prev_pycache_prefix != sys.pycache_prefix:
+        logger.warning(
+            'Changing sys.pycache_prefix from %s to %s.'
+            ' For best performance, run with PYTHONPYCACHEPREFIX=%s.',
+            repr(prev_pycache_prefix),
+            repr(sys.pycache_prefix),
+            repr(sys.pycache_prefix),
         )
 
     # Attempt to create dirs that we'll write stuff to.
@@ -274,7 +320,7 @@ def _chaos_test_cache(cache_dir: str) -> None:
             # Let's kill one out of every 1000 files; should be a
             # reasonable amount of chaos I think. Can recalibrate this
             # as our average cache file count goes up.
-            if random.random() < 0.01:
+            if random.random() < 0.001:
                 fullpath = os.path.join(basename, fname)
                 os.unlink(fullpath)
 
@@ -296,7 +342,7 @@ def _read_app_config(config_file_path: str) -> dict:
             config = {}
 
     except Exception:
-        logging.exception(
+        logger.exception(
             "Error reading config file '%s'.\n"
             "Backing up broken config to'%s.broken'.",
             config_file_path,
@@ -308,7 +354,7 @@ def _read_app_config(config_file_path: str) -> dict:
 
             shutil.copyfile(config_file_path, config_file_path + '.broken')
         except Exception:
-            logging.exception('Error copying broken config.')
+            logger.exception('Error copying broken config.')
         config = {}
 
     return config
@@ -337,7 +383,10 @@ def _calc_data_dir(data_dir: str | None) -> str:
     return data_dir
 
 
-def _create_log_handler(launch_time: float) -> LogHandler:
+def _create_log_handler(
+    launch_time: float,
+    strict_threads_atexit: Callable[[Callable[[], None]], None] | None,
+) -> LogHandler:
     from efro.logging import setup_logging, LogLevel
 
     log_handler = setup_logging(
@@ -346,7 +395,18 @@ def _create_log_handler(launch_time: float) -> LogHandler:
         log_stdout_stderr=True,
         cache_size_limit=1024 * 1024,
         launch_time=launch_time,
+        strict_threads=strict_threads_atexit is not None,
     )
+
+    # If we were given a strict_threads_atexit call, it means we should
+    # NOT use daemon threads but instead can use the atexit call to
+    # register a callback to gracefully exit our handler thread just
+    # before the interpreter shuts down. This is safer than using daemon
+    # threads, which can theoretically continue to use Python objs
+    # during and after interpreter shutdown.
+    if strict_threads_atexit is not None:
+        strict_threads_atexit(log_handler.shutdown)
+
     return log_handler
 
 
@@ -386,7 +446,7 @@ def _set_log_levels(app_config: dict) -> None:
         ).apply()
 
     except Exception:
-        logging.exception('Error setting log levels.')
+        logger.exception('Error setting log levels.')
 
 
 def _setup_certs(contains_python_dist: bool) -> None:
@@ -482,7 +542,7 @@ def _setup_paths(
                 app_python_dir = str(check_dir)
                 is_user_app_python_dir = True
         except PermissionError:
-            logging.warning(
+            logger.warning(
                 "PermissionError checking user-app-python-dir path '%s'.",
                 check_dir,
             )
@@ -547,7 +607,7 @@ def _setup_dirs(
                 os.makedirs(cdir, exist_ok=True)
             except Exception:
                 # Not the end of the world if we can't make these dirs.
-                logging.warning(
+                logger.warning(
                     "Unable to create %s dir at '%s'.", cdirname, cdir
                 )
 

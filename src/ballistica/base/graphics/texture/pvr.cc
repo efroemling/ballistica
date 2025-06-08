@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <string>
 
+#include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::base {

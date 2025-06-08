@@ -9,8 +9,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-# import subprocess
-
 PYVER = '3.13'
 PYVERNODOT = PYVER.replace('.', '')
 

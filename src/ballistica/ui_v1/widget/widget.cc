@@ -6,6 +6,7 @@
 
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/core.h"
 #include "ballistica/ui_v1/python/class/python_class_widget.h"
 #include "ballistica/ui_v1/widget/container_widget.h"
 #include "ballistica/ui_v1/widget/root_widget.h"

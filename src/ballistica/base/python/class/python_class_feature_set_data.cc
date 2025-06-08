@@ -2,7 +2,8 @@
 
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
 
-#include "ballistica/base/base.h"
+#include "ballistica/base/base.h"  // IWYU pragma: keep.
+#include "ballistica/core/core.h"  // IWYU pragma: keep.
 
 namespace ballistica::base {
 
