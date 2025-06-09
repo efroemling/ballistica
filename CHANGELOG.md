@@ -1,3 +1,5 @@
+### 1.7.44 (build 22409, api 9, 2025-06-09)
+
 ### 1.7.43 (build 22406, api 9, 2025-06-09)
 - Fixes an issue with tournament scores not submitting properly in 1.7.42.
 
