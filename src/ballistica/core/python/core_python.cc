@@ -224,6 +224,11 @@ void CorePython::InitPython() {
     MonolithicRegisterPythonModules();
   }
 
+  // Optionally prevent .pyc creation.
+  if (g_core->core_config().dont_write_bytecode) {
+    config.write_bytecode = 0;
+  }
+
   // Init Python.
   CheckPyInitStatus("Py_InitializeFromConfig",
                     Py_InitializeFromConfig(&config));
@@ -476,6 +481,7 @@ void CorePython::MonolithicModeBaEnvConfigure() {
       "sO"  // user_python_dir
       "sO"  // contains_python_dist
       "sO"  // strict_threads_atexit
+      "sO"  // setup_pycache_prefix
       "}",
       "config_dir",
         config_dir ? *PythonRef::FromString(*config_dir) : Py_None,
@@ -488,7 +494,9 @@ void CorePython::MonolithicModeBaEnvConfigure() {
       "contains_python_dist",
         g_buildconfig.contains_python_dist() ? Py_True : Py_False,
       "strict_threads_atexit",
-        *objs().Get(ObjID::kBaEnvAtExitCall)));
+        *objs().Get(ObjID::kBaEnvAtExitCall),
+      "setup_pycache_prefix",
+        Py_True));
   // clang-format on
 
   auto result = objs()

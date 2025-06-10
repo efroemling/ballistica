@@ -178,67 +178,82 @@ def on_main_thread_start_app() -> None:
 
 def _pycache_cleanup_old_builds() -> None:
     """Blow away pyc dirs for old builds."""
+    # pylint: disable=too-many-locals
     import shutil
 
     import _babase
     from babase._logging import applog
 
-    # First, let's totally blow away cache dirs for old builds.
+    # If pyc writing is disabled, doesn't make sense to do this.
+    if sys.dont_write_bytecode:
+        return
+
+    # This is only really relevant for our builds where we're mucking
+    # with pycache_prefix. If that not set, let's skip this (probably
+    # wouldn't hurt to run anyway but whatevs).
+    if sys.pycache_prefix is None:
+        return
 
     # Per entry: is_us, modtime, path
     entries: list[tuple[bool, float, str]] = []
 
     env = _babase.app.env
 
-    try:
-        pycdir = os.path.join(env.cache_directory, 'pyc')
-        fnames = os.listdir(pycdir)
-        build_number_str = str(env.engine_build_number)
-        for fname in fnames:
-            fullpath = os.path.join(pycdir, fname)
+    pycdir = os.path.join(env.cache_directory, 'pyc')
+    fnames = os.listdir(pycdir)
+    build_number_str = str(env.engine_build_number)
+    for fname in fnames:
+        fullpath = os.path.join(pycdir, fname)
 
-            # If it doesn't look like a build-number dir, kill it immediately.
-            if not fname.isdigit() or not os.path.isdir(fullpath):
-                try:
-                    if os.path.isdir(fullpath):
-                        shutil.rmtree(fullpath)
-                    else:
-                        os.unlink(fullpath)
-                except Exception as exc:
-                    applog.warning(
-                        'Unable to prune unused cache dir "%s": %s',
-                        fullpath,
-                        exc,
-                    )
-            else:
-                entries.append(
-                    (
-                        fname == build_number_str,
-                        os.path.getmtime(fullpath),
-                        fullpath,
-                    )
-                )
+        # Abort if the app is shutting down.
+        appstate = _babase.app.state
+        appstate_t = type(appstate)
+        if (
+            appstate is appstate_t.SHUTTING_DOWN
+            or appstate is appstate_t.SHUTDOWN_COMPLETE
+        ):
+            break
 
-        # Puts our cache at the top followed by newest modtime ones.
-        entries.sort()
-
-        # Now prune all but the top 3; that seems reasonable.
-        for entry_is_us, _entry_mtime, entry_path in entries[:-1]:
-            assert not entry_is_us
+        # If it doesn't look like a build-number dir, kill it immediately.
+        if not fname.isdigit() or not os.path.isdir(fullpath):
             try:
-                shutil.rmtree(entry_path)
+                if os.path.isdir(fullpath):
+                    shutil.rmtree(fullpath)
+                else:
+                    os.unlink(fullpath)
             except Exception as exc:
                 applog.warning(
-                    'Unable to prune unused cache dir "%s": %s', entry_path, exc
+                    'Unable to prune unused cache dir "%s": %s',
+                    fullpath,
+                    exc,
                 )
+        else:
+            entries.append(
+                (
+                    fname == build_number_str,
+                    os.path.getmtime(fullpath),
+                    fullpath,
+                )
+            )
 
-    except Exception:
-        applog.exception('Error in pyc cleanup.')
+    # Puts our cache at the top followed by newest modtime ones.
+    entries.sort()
+
+    # Now prune all but the top 3; that seems reasonable.
+    for entry_is_us, _entry_mtime, entry_path in entries[:-1]:
+        assert not entry_is_us
+        try:
+            shutil.rmtree(entry_path)
+        except Exception as exc:
+            applog.warning(
+                'Unable to prune unused cache dir "%s": %s', entry_path, exc
+            )
 
 
 def _pycache_gen_pycs() -> None:
     """Take a quick pass at generating pycs for all .py files."""
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
     import py_compile
     import importlib.util
 
@@ -246,6 +261,16 @@ def _pycache_gen_pycs() -> None:
     from babase._logging import applog
 
     env = _babase.app.env
+
+    # If pyc writing is disabled, doesn't make sense to do this.
+    if sys.dont_write_bytecode:
+        return
+
+    # Also let's not do this if a pycacheprefix is not set; we'd likely
+    # be doing a lot of failed writes in that case for read-only stdlib
+    # module dirs.
+    if sys.pycache_prefix is None:
+        return
 
     # Now let's go through all of our scripts dirs and compile pycs for
     # for sources without one or newer than the existing one.
@@ -295,6 +320,18 @@ def _pycache_gen_pycs() -> None:
             if dnames:
                 dnames[:] = [d for d in dnames if d not in skip_dirs]
             for fname in fnames:
+
+                # Abort if the app is shutting down (only check
+                # this when we're doing actual writes; probably
+                # not worth checking when just scanning modtimes).
+                appstate = _babase.app.state
+                appstate_t = type(appstate)
+                if (
+                    appstate is appstate_t.SHUTTING_DOWN
+                    or appstate is appstate_t.SHUTDOWN_COMPLETE
+                ):
+                    return
+
                 if not fname.endswith('.py'):
                     continue
                 fullpath = os.path.join(root, fname)
@@ -304,6 +341,7 @@ def _pycache_gen_pycs() -> None:
                         fullpath
                     ) > os.path.getmtime(pycpath):
                         py_compile.compile(fullpath, doraise=True)
+
                 except Exception as exc:
                     # Make a bit of noise (once) for any other issues
                     # though.

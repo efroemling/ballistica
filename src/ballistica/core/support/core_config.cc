@@ -40,16 +40,17 @@ static auto IsSingleArgSpecialCase(int argc, char** argv, const char* arg_long,
 static void PrintHelp() {
   printf(
       "ballisticakit help:\n"
-      " -h, --help                Print this help.\n"
-      " -v, --version             Print app version information.\n"
-      " -c, --command     <cmd>   Run a Python command instead of the normal"
+      " -h, --help                 Print this help.\n"
+      " -v, --version              Print app version information.\n"
+      " -c, --command      <cmd>   Run a Python command instead of the normal"
       " app loop.\n"
-      " -e, --exec        <cmd>   Run a Python command from within"
+      " -e, --exec         <cmd>   Run a Python command from within"
       " the app loop.\n"
-      " -C, --config-dir  <path>  Override the app config directory.\n"
-      " -d, --data-dir    <path>  Override the app data directory.\n"
-      " -m, --mods-dir    <path>  Override the app mods directory.\n"
-      " -a, --cache-dir   <path>  Override the app cache directory.\n");
+      " -d, --data-dir     <path>  Override the app data directory.\n"
+      " -C, --config-dir   <path>  Override the app config directory.\n"
+      " -m, --mods-dir     <path>  Override the app mods directory.\n"
+      " -a, --cache-dir    <path>  Override the app cache directory.\n"
+      " -B, --dont-write-bytecode  Don\'t write bytecode (.pyc) files.\n");
 }
 
 /// If the arg at the provided index matches the long/short names given,
@@ -76,6 +77,23 @@ static auto ParseArgValue(int argc, char** argv, int* i, const char* arg_long,
   }
   // No match.
   return {};
+}
+
+static auto ParseFlag(int argc, char** argv, int* i, const char* arg_long,
+                      const char* arg_short = nullptr) -> bool {
+  assert(i);
+  assert(*i < argc);
+  for (const char* arg : {arg_short, arg_long}) {
+    if (arg == nullptr) {
+      continue;
+    }
+    if (!strcmp(argv[*i], arg)) {
+      *i += 1;
+      return true;
+    }
+  }
+  // No match.
+  return false;
 }
 
 void CoreConfig::ApplyEnvVars() {
@@ -168,6 +186,8 @@ void CoreConfig::ApplyArgs(int argc, char** argv) {
                  cache_dir->c_str());
           throw BadArgsException();
         }
+      } else if ((ParseFlag(argc, argv, &i, "--dont-write-bytecode", "-B"))) {
+        dont_write_bytecode = true;
       } else {
         printf(
             "Error: Invalid arg '%s'.\n"

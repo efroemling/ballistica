@@ -1,5 +1,5 @@
 cpplint==2.0.2
-cryptography==45.0.3
+cryptography==45.0.4
 dmgbuild==1.6.5
 filelock==3.18.0
 furo==2024.8.6
@@ -13,7 +13,7 @@ pytest==8.4.0
 python-daemon==3.1.2
 python-lsp-black==2.0.0
 python-lsp-server==1.12.2
-requests==2.32.3
+requests==2.32.4
 Sphinx==8.2.3
 tomlkit==0.13.3
 types-certifi==2021.10.8.3

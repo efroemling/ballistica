@@ -718,6 +718,14 @@ class ServerManagerApp:
         # instead?
         os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
 
+        # Set particular things that can *only* be passed as args and
+        # not config vals (because they need to be handled by the binary
+        # before spinning up Python or whatnot).
+        extra_args: list[str] = []
+
+        if self._config.dont_write_bytecode:
+            extra_args += ['--dont-write-bytecode']
+
         # Set an environment var to change the device name. Device name
         # is used while making connection with master server,
         # cloud-console recognize us with this name.
@@ -735,7 +743,7 @@ class ServerManagerApp:
         # Launch!
         try:
             self._subprocess = subprocess.Popen(
-                [binary_name, '--config-dir', self._ba_root_path],
+                [binary_name, '--config-dir', self._ba_root_path] + extra_args,
                 stdin=subprocess.PIPE,
                 cwd='dist',
             )

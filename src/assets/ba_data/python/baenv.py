@@ -58,7 +58,7 @@ logger = logging.getLogger('baenv')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22409
+TARGET_BALLISTICA_BUILD = 22410
 TARGET_BALLISTICA_VERSION = '1.7.44'
 
 
@@ -151,7 +151,7 @@ def get_env_config() -> EnvConfig:
     # paths to run Ballistica apps should be explicitly calling
     # configure() first to get a full featured setup.
     if not envglobals.called_configure:
-        configure(setup_logging=False, setup_pycache=False)
+        configure(setup_logging=False, setup_pycache_prefix=False)
 
     config = envglobals.config
     if config is None:
@@ -172,7 +172,7 @@ def configure(
     cache_dir: str | None = None,
     contains_python_dist: bool = False,
     setup_logging: bool = True,
-    setup_pycache: bool = True,
+    setup_pycache_prefix: bool = False,
     strict_threads_atexit: Callable[[Callable[[], None]], None] | None = None,
 ) -> None:
     """Set up the environment for running a Ballistica app.
@@ -229,7 +229,7 @@ def configure(
     # that as much stuff as possible (efro.logging), etc.) will get its
     # pyc files made in our custom cache dir.
     prev_pycache_prefix = sys.pycache_prefix
-    if setup_pycache:
+    if setup_pycache_prefix:
         sys.pycache_prefix = os.path.join(
             cache_dir, 'pyc', str(TARGET_BALLISTICA_BUILD)
         )
@@ -259,10 +259,10 @@ def configure(
             ' it may lead to errors.'
         )
 
-    # We set pycache_prefix above so that opt .pyc files are written to
-    # the cache directory we just set up, but ideally Python should have
-    # been set to that value at startup (so that modules we've imported
-    # up to this point can be cached there too).
+    # We (possibly) set pycache_prefix above so that opt .pyc files are
+    # written to the cache directory we just set up, but ideally Python
+    # should have been set to that value at startup so that modules
+    # we've imported up to this point get cached there too.
     #
     # In most cases we can actually do this by calcing/setting the same
     # path we use here before spinning up Python, but in some cases
@@ -270,12 +270,11 @@ def configure(
     # are already in Python before we get a chance to parse args that
     # affect cache path).
     #
-    # So let's warn here any time pycache_prefix differs from what we
-    # set it to. In the case of modular builds the user will know that
-    # they can optionally set PYTHONPYCACHEPREFIX to line things up and
-    # in the case of our own builds we'll know that we need to fix
-    # something.
-    if setup_pycache and prev_pycache_prefix != sys.pycache_prefix:
+    # So let's warn here any time we're trying to set up pycache_prefix
+    # but find that we're setting it to a different value than it was
+    # already set to. We can inform the user (or ourselves) how to line
+    # things up using PYTHONPYCACHEPREFIX or whatnot.
+    if setup_pycache_prefix and prev_pycache_prefix != sys.pycache_prefix:
         logger.warning(
             'Changing sys.pycache_prefix from %s to %s.'
             ' For best performance, run with PYTHONPYCACHEPREFIX=%s.',
@@ -681,9 +680,8 @@ def _modular_main() -> None:
 
         # NOTE: We need to keep these arg long/short arg versions synced
         # to those in core_config.cc. That code will parse these same
-        # args (even if it doesn't do anything with them in this
-        # monolithic path) and will complain if unrecognized args come
-        # through.
+        # args (even if it doesn't do anything with them in this modular
+        # path) and will complain if unrecognized args come through.
 
         # Our -c arg basically mirrors Python's -c arg. If we get that,
         # simply exec it and return; no engine stuff.

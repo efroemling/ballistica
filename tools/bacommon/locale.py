@@ -759,6 +759,10 @@ class LocaleResolved(Enum):
                 fallback.name,
             )
             return fallback
+        if lang == 'c':
+            # The C.UTF-8 is a minimal locale defined by POSIX we
+            # sometimes run into.
+            return cls.ENGLISH
         if lang == 'ar':
             return cls.ARABIC
         if lang == 'be':

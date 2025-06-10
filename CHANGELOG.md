@@ -1,4 +1,16 @@
-### 1.7.44 (build 22409, api 9, 2025-06-09)
+### 1.7.44 (build 22410, api 9, 2025-06-09)
+- Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
+  an associated `dont_write_bytecode` value for the server config file. In most
+  cases writing .pyc files is useful as it can speed up relaunches and keep
+  things running smoother, but if you are doing something like generating tons
+  of config dirs for your servers then having the cache directories under each
+  of them fill with .pyc files may be wasteful.
+- Renamed the `setup_pycache` arg in `baenv` to `setup_pycache_prefix` and
+  switched it to default to `False` instead of `True`. Monolithic builds (pretty
+  much everything that matters currently) now explicitly pass `True` for it. The
+  only real impact this has is that modular builds now use totally vanilla
+  Python caching behavior (`__pycache__` dirs) instead of nagging the user about
+  manually setting the 'PYTHONPYCACHEPREFIX' env var to specific values.
 
 ### 1.7.43 (build 22406, api 9, 2025-06-09)
 - Fixes an issue with tournament scores not submitting properly in 1.7.42.

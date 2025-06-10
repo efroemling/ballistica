@@ -63,6 +63,9 @@ class CoreConfig {
 
   /// Explicitly passed cache dir.
   std::optional<std::string> cache_dir{};
+
+  /// Disable writing of bytecode (.pyc) files.
+  bool dont_write_bytecode{};
 };
 
 }  // namespace ballistica::core

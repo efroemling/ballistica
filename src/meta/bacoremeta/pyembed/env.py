@@ -29,6 +29,7 @@ def import_baenv_and_run_configure(
     user_python_dir: str | None,
     contains_python_dist: bool,
     strict_threads_atexit: Callable[[Callable[[], None]], None],
+    setup_pycache_prefix: bool,
 ) -> None | str:
     """Import baenv and run its configure method.
 
@@ -47,6 +48,7 @@ def import_baenv_and_run_configure(
             user_python_dir=user_python_dir,
             contains_python_dist=contains_python_dist,
             strict_threads_atexit=strict_threads_atexit,
+            setup_pycache_prefix=setup_pycache_prefix,
         )
         return None
     except Exception:

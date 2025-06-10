@@ -191,6 +191,15 @@ class ServerConfig:
     # CRITICAL.
     log_levels: dict[str, str] | None = None
 
+    # Flip this on to disable writing of Python bytecode (pyc) files. By
+    # default, pyc files are written to the cache directory under the
+    # game's config directory, and if you are iterating through lots of
+    # different config directories it is possible for this disk usage to
+    # add up. Not having pyc files available should have a pretty
+    # minimal impact on a server, unlike on a gui client where compiling
+    # modules on demand could cause visual hitches.
+    dont_write_bytecode: bool = False
+
 
 # NOTE: as much as possible, communication from the server-manager to
 # the child-process should go through these and not ad-hoc Python string
