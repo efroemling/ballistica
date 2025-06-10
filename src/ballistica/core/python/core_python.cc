@@ -111,8 +111,7 @@ void CorePython::InitPython() {
   }
   // If we've calced a cache-dir, we can calc pycache-dir.
   if (cache_dir.has_value()) {
-    pycache_prefix = *cache_dir + BA_DIRSLASH + "pyc" + BA_DIRSLASH
-                     + std::to_string(kEngineBuildNumber);
+    pycache_prefix = *cache_dir + BA_DIRSLASH + "pyc";
   }
 
   if (pycache_prefix.has_value()) {

@@ -1,4 +1,4 @@
-### 1.7.44 (build 22412, api 9, 2025-06-09)
+### 1.7.44 (build 22413, api 9, 2025-06-10)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
   an associated `dont_write_bytecode` value for the server config file. In most
   cases writing .pyc files is useful as it can speed up relaunches and keep
@@ -11,6 +11,11 @@
   only real impact this has is that modular builds now use totally vanilla
   Python caching behavior (`__pycache__` dirs) instead of nagging the user about
   manually setting the 'PYTHONPYCACHEPREFIX' env var to specific values.
+- The new pycache dir is now simply `(CACHE_DIR)/pyc` instead of
+  `(CACHE_DIR)/pyc/(BUILD_NUMBER)`. Having a single directory slightly
+  complicates the logic of pruning outdated caches, but I think I prefer that
+  over having to regerate a completely new cache each time a minor update comes
+  through.
 
 ### 1.7.43 (build 22406, api 9, 2025-06-09)
 - Fixes an issue with tournament scores not submitting properly in 1.7.42.

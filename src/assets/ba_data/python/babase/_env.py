@@ -176,122 +176,37 @@ def on_main_thread_start_app() -> None:
     threading.Thread(target=_pycache_upkeep).start()
 
 
-def _pycache_cleanup_old_builds() -> None:
-    """Blow away pyc dirs for old builds."""
-    # pylint: disable=too-many-locals
-    import shutil
-
-    import _babase
+def _pycache_upkeep() -> None:
     from babase._logging import applog
 
-    # If pyc writing is disabled, doesn't make sense to do this.
-    if sys.dont_write_bytecode:
-        return
+    starttime = time.monotonic()
+    try:
+        _do_pycache_upkeep()
+    except Exception:
+        applog.exception('Error upkeeping pycs')
 
-    # This is only really relevant for our builds where we're mucking
-    # with pycache_prefix. If that not set, let's skip this (probably
-    # wouldn't hurt to run anyway but whatevs).
-    if sys.pycache_prefix is None:
-        return
-
-    # Per entry: is_us, modtime, path
-    entries: list[tuple[bool, float, str]] = []
-
-    env = _babase.app.env
-
-    pycdir = os.path.join(env.cache_directory, 'pyc')
-    fnames = os.listdir(pycdir)
-    build_number_str = str(env.engine_build_number)
-    for fname in fnames:
-        fullpath = os.path.join(pycdir, fname)
-
-        # Abort if the app is shutting down.
-        appstate = _babase.app.state
-        appstate_t = type(appstate)
-        if (
-            appstate is appstate_t.SHUTTING_DOWN
-            or appstate is appstate_t.SHUTDOWN_COMPLETE
-        ):
-            break
-
-        # If it doesn't look like a build-number dir, kill it immediately.
-        if not fname.isdigit() or not os.path.isdir(fullpath):
-            try:
-                if os.path.isdir(fullpath):
-                    shutil.rmtree(fullpath)
-                else:
-                    os.unlink(fullpath)
-            except Exception as exc:
-                applog.warning(
-                    'Unable to prune unused cache dir "%s": %s',
-                    fullpath,
-                    exc,
-                )
-        else:
-            entries.append(
-                (
-                    fname == build_number_str,
-                    os.path.getmtime(fullpath),
-                    fullpath,
-                )
-            )
-
-    # Puts our cache at the top followed by newest modtime ones.
-    entries.sort()
-
-    # Now prune all but the top 3; that seems reasonable.
-    for entry_is_us, _entry_mtime, entry_path in entries[:-1]:
-        assert not entry_is_us
-        try:
-            shutil.rmtree(entry_path)
-        except Exception as exc:
-            applog.warning(
-                'Unable to prune unused cache dir "%s": %s', entry_path, exc
-            )
+    duration = time.monotonic() - starttime
+    applog.debug('Completed pycache upkeep in %.3fs.', duration)
 
 
-def _pycache_gen_pycs() -> None:
+def _do_pycache_upkeep() -> None:
     """Take a quick pass at generating pycs for all .py files."""
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     import py_compile
     import importlib.util
 
+    from efro.util import prune_empty_dirs
+
     import _babase
     from babase._logging import applog
 
     env = _babase.app.env
 
-    # If pyc writing is disabled, doesn't make sense to do this.
-    if sys.dont_write_bytecode:
-        return
-
-    # Also let's not do this if a pycacheprefix is not set; we'd likely
-    # be doing a lot of failed writes in that case for read-only stdlib
-    # module dirs.
-    if sys.pycache_prefix is None:
-        return
-
-    # Now let's go through all of our scripts dirs and compile pycs for
-    # for sources without one or newer than the existing one.
-    #
-    # For ordering, let's prioritize app scripts followed by mods and
-    # finally stdlib. Stdlib might have the most stuff we don't use so
-    # keeping them to the end could be good.
-    #
-    # We don't do anything fancy here; just create when one doesn't
-    # exist. We don't bother with updating when sources change or
-    # pruning orphaned pycs since build number bumps will cause us to
-    # regen a whole new set which will cover most changes out in the
-    # wild.
-
-    # Note: originally I was using os.__file__ but it turns out that
-    # module is 'frozen' in some cases and won't have a __file__. So we
-    # need to pick something that is always bundled as a .py. Hopefully
-    # py_compile fits the bill.
     stdlibpath = os.path.dirname(py_compile.__file__)
 
-    dirpaths: list[str | None] = [
+    srcdirs: list[str | None] = [
         env.python_directory_app,
         env.python_directory_app_site,
         stdlibpath,
@@ -310,77 +225,111 @@ def _pycache_gen_pycs() -> None:
         'unittest',
         'encodings',
     }
+
+    # We do lots of stuff and if everything spits an error it's gonna
+    # get messy, so let's only report the first thing that goes wrong.
     complained = False
-    for dirpath in dirpaths:
-        if dirpath is None or not os.path.isdir(dirpath):
+
+    def complain(msg: str) -> None:
+        nonlocal complained
+        if complained:
+            return
+        applog.warning('Error updating pycache dir: %s', msg)
+
+    def should_abort() -> bool:
+        appstate = _babase.app.state
+        appstate_t = type(appstate)
+        return (
+            appstate is appstate_t.SHUTTING_DOWN
+            or appstate is appstate_t.SHUTDOWN_COMPLETE
+        )
+
+    # Build a dict of dst pyc paths mapped to src py paths and
+    # src py modtimes.
+    entries: dict[str, tuple[str, float]] = {}
+    for srcdir in srcdirs:
+        if srcdir is None or not os.path.isdir(srcdir):
             continue
-        for root, dnames, fnames in os.walk(dirpath):
+        for dpath, dnames, fnames in os.walk(srcdir):
             # Modify dirnames in-place to prevent walk from descending
             # into them.
-            if dnames:
-                dnames[:] = [d for d in dnames if d not in skip_dirs]
+            dnames[:] = [d for d in dnames if d not in skip_dirs]
             for fname in fnames:
-
-                # Abort if the app is shutting down (only check
-                # this when we're doing actual writes; probably
-                # not worth checking when just scanning modtimes).
-                appstate = _babase.app.state
-                appstate_t = type(appstate)
-                if (
-                    appstate is appstate_t.SHUTTING_DOWN
-                    or appstate is appstate_t.SHUTDOWN_COMPLETE
-                ):
-                    return
-
                 if not fname.endswith('.py'):
                     continue
-                fullpath = os.path.join(root, fname)
+                srcpath = os.path.join(dpath, fname)
+                dstpath = importlib.util.cache_from_source(srcpath)
+                srcmodtime = os.path.getmtime(srcpath)
+                entries[dstpath] = (srcpath, srcmodtime)
+
+                if should_abort():
+                    return
+
+    pycdir = os.path.join(env.cache_directory, 'pyc')
+
+    # Sanity test: make sure these pyc paths appear to be under our
+    # designated cache dir.
+    for entry in entries:
+        if not entry.startswith(pycdir):
+            complain(
+                f'pyc target {entry}'
+                f' does not start with expected prefix {pycdir}.'
+            )
+
+        # Just check the first.
+        break
+
+    # Now kill all files in our dst pyc dir that *don't* appear in our
+    # dict of dst paths.
+    for dpath, dnames, fnames in os.walk(pycdir):
+        for fname in fnames:
+            fullpath = os.path.join(dpath, fname)
+            # We excluded skip_dirs when we generated entries, but its
+            # still possible that stuff from those dirs has been cached
+            # on-demand. So to be extra sure we can delete something we
+            # make sure it isn't a .pyc file with an existing src .py
+            # file. Technically we could check *everything* this way but
+            # its probably lots faster to do the fast-out dict lookup.
+            if fullpath not in entries and (
+                not fullpath.endswith('.pyc')
+                or not os.path.exists(
+                    importlib.util.source_from_cache(fullpath)
+                )
+            ):
                 try:
-                    pycpath = importlib.util.cache_from_source(fullpath)
-                    if not os.path.exists(pycpath) or os.path.getmtime(
-                        fullpath
-                    ) > os.path.getmtime(pycpath):
-                        py_compile.compile(fullpath, doraise=True)
-
+                    os.unlink(fullpath)
                 except Exception as exc:
-                    # Make a bit of noise (once) for any other issues
-                    # though.
+                    complain(f'Failed to delete file "{fullpath}": {exc}')
 
-                    # ..however first let's pause and see if it actually
-                    # is updated first. There's a chance we could hit
-                    # odd issues with trying to update a file that
-                    # Python is already updating.
-                    if not complained:
-                        time.sleep(0.2)
-                        still_out_of_date = not os.path.exists(
-                            pycpath
-                        ) or os.path.getmtime(fullpath) > os.path.getmtime(
-                            pycpath
-                        )
-                        if still_out_of_date:
-                            applog.warning(
-                                'Error precompiling %s: %s', fullpath, exc
-                            )
-                            complained = True
-
-
-def _pycache_upkeep() -> None:
-    from babase._logging import applog
-
-    starttime = time.monotonic()
-
+    # Ok, we've killed all files that aren't valid cache files. Now
+    # prune all empty dirs.
     try:
-        _pycache_cleanup_old_builds()
-    except Exception:
-        applog.exception('Error cleaning up old build pycaches')
+        prune_empty_dirs(pycdir)
+    except Exception as exc:
+        complain(str(exc))
 
-    try:
-        _pycache_gen_pycs()
-    except Exception:
-        applog.exception('Error bg generating pycs')
+    # Lastly, go through all src paths and compile all dst paths that
+    # don't exist or are outdated.
+    for dstpath, (srcpath, srcmtime) in entries.items():
+        if not os.path.exists(dstpath) or srcmtime > os.path.getmtime(dstpath):
+            try:
+                py_compile.compile(srcpath, doraise=True)
+            except Exception as exc:
+                # The first time a compile fails, let's pause and see if
+                # it actually wound up updated first. There's a chance
+                # we could hit the odd sporadic issue trying to update a
+                # file that Python is already updating.
+                if not complained:
+                    time.sleep(0.2)
+                    still_out_of_date = not os.path.exists(
+                        dstpath
+                    ) or srcmtime > os.path.getmtime(dstpath)
+                    if still_out_of_date:
+                        complain(f'Error precompiling {fullpath}: {exc}')
+                        assert complained
 
-    duration = time.monotonic() - starttime
-    applog.debug('Completed pycache upkeep in %.3fs.', duration)
+            if should_abort():
+                return
 
 
 def on_app_state_initing() -> None:

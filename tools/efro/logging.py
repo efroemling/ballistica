@@ -228,7 +228,6 @@ class LogHandler(logging.Handler):
                     self._time_prune_cache()
                 )
             self._event_loop.run_forever()
-            assert self._echofile is not None
         except BaseException:
             # If this ever goes down we're in trouble; we won't be able
             # to log about it though. Try to make some noise however we
