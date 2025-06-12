@@ -1,3 +1,3 @@
 {
-    "python.analysis.extraPaths": ["src/assets/ba_data/python","build/dummymodules"]
+    "python.analysis.extraPaths": ["src/assets/ba_data/python","build/dummymodules","tools"]
 }
