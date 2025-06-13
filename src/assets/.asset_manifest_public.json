@@ -14,6 +14,7 @@
  "ba_data/python/babase/_cloud.py",
  "ba_data/python/babase/_devconsole.py",
  "ba_data/python/babase/_devconsoletabs.py",
+ "ba_data/python/babase/_discord.py",
  "ba_data/python/babase/_emptyappmode.py",
  "ba_data/python/babase/_env.py",
  "ba_data/python/babase/_error.py",
