@@ -6,34 +6,41 @@ from typing import Any
 
 import _babase
 
-ASSET_MAP = {}
+ASSET_MAP = dict[str, str]
+
+
 class Discord:
     """Discord SDK integration class."""
 
-    def __init__(self):
-        self.details = None
-        self.state = None
-        self.large_image_key = None
-        self.small_image_key = None
-        self.large_image_text = None
-        self.small_image_text = None
-        self.start_timestamp = None
-        self.end_timestamp = None
+    # pylint: disable=too-many-positional-arguments
+    def __init__(self) -> None:
+        self.details: str | None = None
+        self.state: str | None = None
+        self.large_image_key: str | None = None
+        self.small_image_key: str | None = None
+        self.large_image_text: str | None = None
+        self.small_image_text: str | None = None
+        self.start_timestamp: str | None = None
+        self.end_timestamp: str | None = None
         if not self.is_available():
             return
-        print("starting discord")
         _babase.discord_start()
+        # _babase.app.add_shutdown_task(self._shutdown_coroutine())
 
     @staticmethod
     def is_available() -> bool:
         """Check if the Discord SDK is available.
         _babase.discord_is_ready() returns None if not available."""
-        return _babase.discord_is_ready() != None
-    
+        return _babase.discord_is_ready() is not None
+
+    async def _shutdown_coroutine(self) -> None:
+        """Coroutine for shutting down Discord."""
+        _babase.discord_shutdown()
+
     @property
     def is_ready(self) -> bool:
         """Check if the Discord SDK is ready."""
-        return _babase.discord_is_ready() 
+        return _babase.discord_is_ready()
 
     def set_presence(
         self,

@@ -291,6 +291,28 @@ static PyMethodDef PyDiscordSendLobbyMessageDef = {
     "Args:"
     "   message: Message to send to a discord lobby."};
 
+// -------------------------- discord_shutdown ------------------------------
+
+static auto PyDiscordShutdown(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->Shutdown();
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordShutdownDef = {
+    "discord_shutdown",             // name
+    (PyCFunction)PyDiscordShutdown,  // method
+    METH_VARARGS | METH_KEYWORDS,     // flags
+    "discord_shutdown() -> None\n"
+    "\n"
+    "Shutdown and disconnect the Discord client."};
+
 // --------------------------------- appname -----------------------------------
 
 static auto PyAppName(PyObject* self) -> PyObject* {
@@ -1900,6 +1922,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyDiscordJoinLobbyDef,
       PyDiscordLeaveLobbyDef,
       PyDiscordSendLobbyMessageDef,
+      PyDiscordShutdownDef,
       PyAppNameDef,
       PyAppIsActiveDef,
       PyRunAppDef,

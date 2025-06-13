@@ -34,6 +34,12 @@ class Discord {
   void SendLobbyMessage(const char* message);
   void LeaveLobby();
   void UpdateRP();
+  void Shutdown() {
+    if (client) {
+      client->Disconnect();
+      client.reset();
+    }
+  }
 #endif  // BA_ENABLE_DISCORD
 };
 }  // namespace ballistica::base
