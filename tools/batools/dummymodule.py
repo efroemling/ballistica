@@ -848,6 +848,9 @@ class Generator:
             elif self.mname == '_babase' and entry == 'app':
                 # Ignore _babase.app.
                 continue
+            elif self.mname == '_babase' and entry == 'discord':
+                # Ignore _babase.discord.
+                continue
             elif entry == '_ba_feature_set_data':
                 # Ignore the C++ data we stuff into our feature-set modules.
                 continue
