@@ -58,7 +58,7 @@ logger = logging.getLogger('baenv')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22412
+TARGET_BALLISTICA_BUILD = 22413
 TARGET_BALLISTICA_VERSION = '1.7.44'
 
 
@@ -230,9 +230,7 @@ def configure(
     # pyc files made in our custom cache dir.
     prev_pycache_prefix = sys.pycache_prefix
     if setup_pycache_prefix:
-        sys.pycache_prefix = os.path.join(
-            cache_dir, 'pyc', str(TARGET_BALLISTICA_BUILD)
-        )
+        sys.pycache_prefix = os.path.join(cache_dir, 'pyc')
 
     # Set up our log-handler and pipe Python's stdout/stderr into it.
     # Later, once the engine comes up, the handler will feed its logs

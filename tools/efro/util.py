@@ -1009,3 +1009,24 @@ def weighted_choice[T](*args: tuple[T, float]) -> T:
     weights: tuple[float]
     items, weights = zip(*args)
     return random.choices(items, weights=weights)[0]
+
+
+def prune_empty_dirs(prunedir: str) -> None:
+    """Prune all empty dirs under the path provided."""
+    # Walk the tree bottom-up so we can properly kill recursive
+    # empty dirs.
+    for dirpath, dirnames, filenames in os.walk(prunedir, topdown=False):
+        # It seems that child dirs we kill during the walk are still
+        # listed when the parent dir is visited, so we need to explicitly
+        # check for their existence.
+        any_dirname_exists = any(
+            os.path.exists(os.path.join(dirpath, dirname))
+            for dirname in dirnames
+        )
+        if not any_dirname_exists and not filenames and dirpath != prunedir:
+            try:
+                os.rmdir(dirpath)
+            except Exception as exc:
+                raise RuntimeError(
+                    f'Failed to prune empty dir "{dirpath}": {exc}'
+                ) from exc
