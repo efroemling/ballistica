@@ -90,8 +90,8 @@ static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
                            const_cast<char*>("large_image_key"),
                            const_cast<char*>("large_image_text"),
                            const_cast<char*>("small_image_key"),
-                           const_cast<char*>("start_timestamp"),
                            const_cast<char*>("small_image_text"),
+                           const_cast<char*>("start_timestamp"),
                            const_cast<char*>("end_timestamp"),
                            nullptr};
   if (!PyArg_ParseTupleAndKeywords(
@@ -121,21 +121,21 @@ static PyMethodDef PyDiscordRichpresenceDef = {
     "\n"
     "Args:"
     "\n"
-    "state: The user's current status"
+    "   state: The user's current status"
     "\n"
-    "details: What the user is currently doing"
+    "   details: What the user is currently doing"
     "\n"
-    "large_image_key: Key for the large image"
+    "   large_image_key: Key for the large image"
     "\n"
-    "large_image_text: Text displayed when hovering over the large image"
+    "   large_image_text: Text displayed when hovering over the large image"
     "\n"
-    "small_image_key: Key for the small image"
+    "   small_image_key: Key for the small image"
     "\n"
-    "small_image_text: Text displayed when hovering over the small image"
+    "   small_image_text: Text displayed when hovering over the small image"
     "\n"
-    "start_timestamp: Unix timestamp for game start time"
+    "   start_timestamp: Unix timestamp for game start time"
     "\n"
-    "end_timestamp: Unix timestamp for game end time"};
+    "   end_timestamp: Unix timestamp for game end time"};
 
 // -------------------------- discord_set_party ------------------------------
 
@@ -170,11 +170,11 @@ static PyMethodDef PyDiscordSetPartyDef = {
     "\n"
     "Args:"
     "\n"
-    "party_id: Unique identifier for the party"
+    "   party_id: Unique identifier for the party"
     "\n"
-    "current_party_size: Current number of members in the party"
+    "   current_party_size: Current number of members in the party"
     "\n"
-    "max_party_size: Maximum number of members allowed in the party"};
+    "   max_party_size: Maximum number of members allowed in the party"};
 
 // -------------------------- discord_add_button ------------------------------
 
@@ -206,9 +206,9 @@ static PyMethodDef PyDiscordAddButtonDef = {
     "\n"
     "Args:"
     "\n"
-    "label: Label for the button"
+    "   label: Label for the button"
     "\n"
-    "url: URL to open when the button is clicked"};
+    "   url: URL to open when the button is clicked"};
 
 // -------------------------- discord_join_lobby ------------------------------
 
@@ -239,7 +239,7 @@ static PyMethodDef PyDiscordJoinLobbyDef = {
     "\n"
     "Args:"
     "\n"
-    "lobby_secret: Unique identifier for the lobby"};
+    "   lobby_secret: Unique identifier for the lobby"};
 
 // -------------------------- discord_leave_lobby ------------------------------
 
@@ -289,7 +289,29 @@ static PyMethodDef PyDiscordSendLobbyMessageDef = {
     "discord_send_lobby_message() -> None\n"
     "\n"
     "Args:"
-    "message: Message to send to a discord lobby."};
+    "   message: Message to send to a discord lobby."};
+
+// -------------------------- discord_shutdown ------------------------------
+
+static auto PyDiscordShutdown(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->Shutdown();
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordShutdownDef = {
+    "discord_shutdown",              // name
+    (PyCFunction)PyDiscordShutdown,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+    "discord_shutdown() -> None\n"
+    "\n"
+    "Shutdown and disconnect the Discord client."};
 
 // --------------------------------- appname -----------------------------------
 
@@ -1900,6 +1922,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyDiscordJoinLobbyDef,
       PyDiscordLeaveLobbyDef,
       PyDiscordSendLobbyMessageDef,
+      PyDiscordShutdownDef,
       PyAppNameDef,
       PyAppIsActiveDef,
       PyRunAppDef,
