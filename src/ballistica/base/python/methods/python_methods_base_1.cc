@@ -90,8 +90,8 @@ static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
                            const_cast<char*>("large_image_key"),
                            const_cast<char*>("large_image_text"),
                            const_cast<char*>("small_image_key"),
-                           const_cast<char*>("start_timestamp"),
                            const_cast<char*>("small_image_text"),
+                           const_cast<char*>("start_timestamp"),
                            const_cast<char*>("end_timestamp"),
                            nullptr};
   if (!PyArg_ParseTupleAndKeywords(
@@ -306,9 +306,9 @@ static auto PyDiscordShutdown(PyObject* self, PyObject* args, PyObject* keywds)
 }
 
 static PyMethodDef PyDiscordShutdownDef = {
-    "discord_shutdown",             // name
+    "discord_shutdown",              // name
     (PyCFunction)PyDiscordShutdown,  // method
-    METH_VARARGS | METH_KEYWORDS,     // flags
+    METH_VARARGS | METH_KEYWORDS,    // flags
     "discord_shutdown() -> None\n"
     "\n"
     "Shutdown and disconnect the Discord client."};
