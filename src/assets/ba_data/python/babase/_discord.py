@@ -2,11 +2,8 @@
 
 """Functionality related to discord sdk integration"""
 from __future__ import annotations
-from typing import Any
-
+from typing import Any  # pylint: disable=unused-import
 import _babase
-
-ASSET_MAP = dict[str, str]
 
 
 class Discord:
@@ -20,12 +17,12 @@ class Discord:
         self.small_image_key: str | None = None
         self.large_image_text: str | None = None
         self.small_image_text: str | None = None
-        self.start_timestamp: str | None = None
-        self.end_timestamp: str | None = None
+        self.start_timestamp: float | None = None
+        self.end_timestamp: float | None = None
         if not self.is_available():
             return
         _babase.discord_start()
-        # _babase.app.add_shutdown_task(self._shutdown_coroutine())
+        _babase.app.add_shutdown_task(self._shutdown_coroutine())
 
     @staticmethod
     def is_available() -> bool:

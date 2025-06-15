@@ -44,11 +44,13 @@ static auto PyDiscordStart(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDiscordStartDef = {"discord_start",               // name
-                                        (PyCFunction)PyDiscordStart,   // method
-                                        METH_VARARGS | METH_KEYWORDS,  // flags
-                                        "discord_start() -> None\n"
-                                        "\n"};
+static PyMethodDef PyDiscordStartDef = {
+    "discord_start",               // name
+    (PyCFunction)PyDiscordStart,   // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+    "discord_start() -> None\n"
+    "\n"
+    "start the discord sdk and connect the client."};
 
 // -------------------------- discord_is_ready------------------------------
 
@@ -85,19 +87,19 @@ static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
              *large_image_text = nullptr, *small_image_key = nullptr,
              *small_image_text = nullptr;
   int64_t start_timestamp = 0, end_timestamp = 0;
-  static char* kwlist[] = {const_cast<char*>("state"),
-                           const_cast<char*>("details"),
-                           const_cast<char*>("large_image_key"),
-                           const_cast<char*>("large_image_text"),
-                           const_cast<char*>("small_image_key"),
-                           const_cast<char*>("small_image_text"),
-                           const_cast<char*>("start_timestamp"),
-                           const_cast<char*>("end_timestamp"),
-                           nullptr};
+  static const char* kwlist[] = {const_cast<char*>("state"),
+                                 const_cast<char*>("details"),
+                                 const_cast<char*>("large_image_key"),
+                                 const_cast<char*>("large_image_text"),
+                                 const_cast<char*>("small_image_key"),
+                                 const_cast<char*>("small_image_text"),
+                                 const_cast<char*>("start_timestamp"),
+                                 const_cast<char*>("end_timestamp"),
+                                 nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|ssssssLL", kwlist, &state, &details, &large_image_key,
-          &large_image_text, &small_image_key, &small_image_text,
-          &start_timestamp, &end_timestamp)) {
+          args, keywds, "|ssssssLL", const_cast<char**>(kwlist), &state,
+          &details, &large_image_key, &large_image_text, &small_image_key,
+          &small_image_text, &start_timestamp, &end_timestamp)) {
     return nullptr;
   }
 #if BA_ENABLE_DISCORD
@@ -115,7 +117,14 @@ static PyMethodDef PyDiscordRichpresenceDef = {
     "discord_richpresence",              // name
     (PyCFunction)PyDiscordRichpresence,  // method
     METH_VARARGS | METH_KEYWORDS,        // flags
-    "discord_richpresence() -> None\n"
+    "discord_richpresence(state: str | None = None,"
+    "details: str | None = None,"
+    "large_image_key: str | None = None,"
+    "large_image_text: str | None = None,"
+    "small_image_key: str | None = None,"
+    "small_image_text: str | None = None,"
+    "start_timestamp: str | None = None,"
+    "end_timestamp: str | None = None,) -> None\n"
     "\n"
     "Set Discord Rich Presence information."
     "\n"
@@ -164,7 +173,9 @@ static PyMethodDef PyDiscordSetPartyDef = {
     "discord_set_party",             // name
     (PyCFunction)PyDiscordSetParty,  // method
     METH_VARARGS | METH_KEYWORDS,    // flags
-    "discord_set_party() -> None\n"
+    "discord_set_party(party_id: str | None = None,"
+    "current_party_size: int | None = None, "
+    "max_party_size: int | None = None) -> None\n"
     "\n"
     "Set Discord Party information."
     "\n"
@@ -200,7 +211,7 @@ static PyMethodDef PyDiscordAddButtonDef = {
     "discord_add_button",             // name
     (PyCFunction)PyDiscordAddButton,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
-    "discord_add_button() -> None\n"
+    "discord_add_button(label: str, url: str) -> None\n"
     "\n"
     "Add Discord rich presence button."
     "\n"
@@ -233,7 +244,7 @@ static PyMethodDef PyDiscordJoinLobbyDef = {
     "discord_join_lobby",             // name
     (PyCFunction)PyDiscordJoinLobby,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
-    "discord_join_lobby() -> None\n"
+    "discord_join_lobby(lobby_secret: str) -> None\n"
     "\n"
     "Join a discord lobby."
     "\n"
@@ -286,10 +297,11 @@ static PyMethodDef PyDiscordSendLobbyMessageDef = {
     "discord_send_lobby_message",            // name
     (PyCFunction)PyDiscordSendLobbyMessage,  // method
     METH_VARARGS | METH_KEYWORDS,            // flags
-    "discord_send_lobby_message() -> None\n"
+    "discord_send_lobby_message(message: str) -> None\n"
     "\n"
     "Args:"
-    "   message: Message to send to a discord lobby."};
+    "\n"
+    "       message: Message to send to a discord lobby."};
 
 // -------------------------- discord_shutdown ------------------------------
 

@@ -344,10 +344,6 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         mapname = getattr(self._map_type, 'name', None)
         map_preview = getattr(self._map_type, 'get_preview_texture_name', None)
 
-        print(
-            f"Map info - name: {mapname}, has_preview: {map_preview is not None}, preview: {map_preview().lower().removesuffix('preview')}"
-        )
-
         if babase.discord.is_ready and mapname and map_preview:
             preview = map_preview().lower().removesuffix('preview')
             babase.discord.set_presence(
@@ -383,7 +379,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             party_size = len(self.players)
             max_size = max(8, party_size)
             babase.discord.set_presence(
-                party_id=str(uuid.uuid4()), party_size=[party_size, max_size]
+                party_id=str(uuid.uuid4()), party_size=(party_size, max_size)
             )
 
         _bascenev1.timer(0.001, self._show_scoreboard_info)
