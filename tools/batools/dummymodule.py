@@ -848,6 +848,9 @@ class Generator:
             elif self.mname == '_babase' and entry == 'app':
                 # Ignore _babase.app.
                 continue
+            elif self.mname == '_babase' and entry == 'discord':
+                # Ignore _babase.discord.
+                continue
             elif entry == '_ba_feature_set_data':
                 # Ignore the C++ data we stuff into our feature-set modules.
                 continue
@@ -886,14 +889,16 @@ class Generator:
         if self.mname == '_babase':
             tc_import_lines_extra += (
                 '    import bacommon.app\n'
-                '    from babase import App\n'
+                '    from babase import App, Discord\n'
                 '    import babase\n'  # hold
             )
         elif self.mname == '_bascenev1':
             tc_import_lines_extra += '    import babase\n    import bascenev1\n'
         elif self.mname == '_bauiv1':
             tc_import_lines_extra += '    import babase\n    import bauiv1\n'
-        app_declare_lines = 'app: App\n\n' if self.mname == '_babase' else ''
+        extra_declare_lines = (
+            'app: App\ndiscord: Discord\n\n' if self.mname == '_babase' else ''
+        )
         enum_import_lines = (
             ''
             if self.mname == '_babase'
@@ -953,7 +958,7 @@ class Generator:
             # '\n'
             # "_T = TypeVar('_T')\n"
             '\n'
-            f'{app_declare_lines}'
+            f'{extra_declare_lines}'
             'def _uninferrable() -> Any:\n'
             '    """Get an "Any" in mypy and "uninferrable" in Pylint."""\n'
             '    # pylint: disable=undefined-variable\n'

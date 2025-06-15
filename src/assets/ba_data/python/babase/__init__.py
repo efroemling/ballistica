@@ -146,6 +146,7 @@ from babase._devconsole import (
     DevConsoleTabEntry,
     DevConsoleSubsystem,
 )
+from babase._discord import Discord
 from babase._emptyappmode import EmptyAppMode
 from babase._error import (
     ContextError,
@@ -200,8 +201,10 @@ from babase._text import timestring
 from babase._workspace import WorkspaceSubsystem
 
 _babase.app = app = App()
+_babase.discord = discord = Discord()
 
 __all__ = [
+    'discord',
     'AccountV2Handle',
     'AccountV2Subsystem',
     'ActivityNotFoundError',
@@ -253,6 +256,7 @@ __all__ = [
     'DevConsoleTab',
     'DevConsoleTabEntry',
     'DevConsoleSubsystem',
+    'Discord',
     'DisplayTime',
     'displaytime',
     'displaytimer',
