@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import random
 import logging
+import time
+import uuid
 from typing import TYPE_CHECKING, override
 
 import babase
@@ -338,8 +340,27 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         # Make our map.
         self._map = self._map_type()
 
-        # Give our map a chance to override the music.
-        # (for happy-thoughts and other such themed maps)
+        # Add default activities for our map.
+        mapname = getattr(self._map_type, 'name', None)
+        map_preview = getattr(self._map_type, 'get_preview_texture_name', None)
+
+        if babase.app.discord.is_ready and mapname and map_preview:
+            preview = map_preview().lower().removesuffix('preview')
+            babase.app.discord.set_presence(
+                state=self.getname(),
+                details=f"Playing on {mapname}",
+                large_image_key=preview,
+                large_image_text=mapname,
+                small_image_key=(
+                    babase.app.classic.platform if babase.app.classic else None
+                ),
+                small_image_text=(
+                    babase.app.classic.platform if babase.app.classic else None
+                ),
+                start_timestamp=int(time.time()),
+            )
+
+        # Give our map a chance to override the music
         map_music = self._map_type.get_music_type()
         music = map_music if map_music is not None else self.default_music
 
@@ -353,8 +374,14 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         if babase.app.classic is not None:
             babase.app.classic.game_begin_analytics()
 
-        # We don't do this in on_transition_in because it may depend on
-        # players/teams which aren't available until now.
+        # Update Discord party info
+        if babase.app.discord.is_ready:
+            party_size = len(self.players)
+            max_size = max(8, party_size)
+            babase.app.discord.set_presence(
+                party_id=str(uuid.uuid4()), party_size=(party_size, max_size)
+            )
+
         _bascenev1.timer(0.001, self._show_scoreboard_info)
         _bascenev1.timer(1.0, self._show_info)
         _bascenev1.timer(2.5, self._show_tip)

@@ -15,6 +15,7 @@ from threading import RLock
 from efro.threadpool import ThreadPoolExecutorEx
 
 import _babase
+from babase._discord import Discord
 from babase._language import LanguageSubsystem
 from babase._locale import LocaleSubsystem
 from babase._plugin import PluginSubsystem
@@ -93,6 +94,8 @@ class App:
 
         #: Static environment values for the app.
         self.env: babase.Env = _babase.Env()
+
+        self.discord: Discord = Discord()
 
         #: Current app state.
         self.state: AppState = AppState.NOT_STARTED

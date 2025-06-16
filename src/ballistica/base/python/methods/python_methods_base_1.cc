@@ -44,11 +44,13 @@ static auto PyDiscordStart(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDiscordStartDef = {"discord_start",               // name
-                                        (PyCFunction)PyDiscordStart,   // method
-                                        METH_VARARGS | METH_KEYWORDS,  // flags
-                                        "discord_start() -> None\n"
-                                        "\n"};
+static PyMethodDef PyDiscordStartDef = {
+    "discord_start",               // name
+    (PyCFunction)PyDiscordStart,   // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+    "discord_start() -> None\n"
+    "\n"
+    "start the discord sdk and connect the client."};
 
 // -------------------------- discord_is_ready------------------------------
 
@@ -85,19 +87,19 @@ static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
              *large_image_text = nullptr, *small_image_key = nullptr,
              *small_image_text = nullptr;
   int64_t start_timestamp = 0, end_timestamp = 0;
-  static char* kwlist[] = {const_cast<char*>("state"),
-                           const_cast<char*>("details"),
-                           const_cast<char*>("large_image_key"),
-                           const_cast<char*>("large_image_text"),
-                           const_cast<char*>("small_image_key"),
-                           const_cast<char*>("start_timestamp"),
-                           const_cast<char*>("small_image_text"),
-                           const_cast<char*>("end_timestamp"),
-                           nullptr};
+  static const char* kwlist[] = {const_cast<char*>("state"),
+                                 const_cast<char*>("details"),
+                                 const_cast<char*>("large_image_key"),
+                                 const_cast<char*>("large_image_text"),
+                                 const_cast<char*>("small_image_key"),
+                                 const_cast<char*>("small_image_text"),
+                                 const_cast<char*>("start_timestamp"),
+                                 const_cast<char*>("end_timestamp"),
+                                 nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|ssssssLL", kwlist, &state, &details, &large_image_key,
-          &large_image_text, &small_image_key, &small_image_text,
-          &start_timestamp, &end_timestamp)) {
+          args, keywds, "|ssssssLL", const_cast<char**>(kwlist), &state,
+          &details, &large_image_key, &large_image_text, &small_image_key,
+          &small_image_text, &start_timestamp, &end_timestamp)) {
     return nullptr;
   }
 #if BA_ENABLE_DISCORD
@@ -115,27 +117,34 @@ static PyMethodDef PyDiscordRichpresenceDef = {
     "discord_richpresence",              // name
     (PyCFunction)PyDiscordRichpresence,  // method
     METH_VARARGS | METH_KEYWORDS,        // flags
-    "discord_richpresence() -> None\n"
+    "discord_richpresence(state: str | None = None,"
+    "details: str | None = None,"
+    "large_image_key: str | None = None,"
+    "large_image_text: str | None = None,"
+    "small_image_key: str | None = None,"
+    "small_image_text: str | None = None,"
+    "start_timestamp: str | None = None,"
+    "end_timestamp: str | None = None,) -> None\n"
     "\n"
     "Set Discord Rich Presence information."
     "\n"
     "Args:"
     "\n"
-    "state: The user's current status"
+    "   state: The user's current status"
     "\n"
-    "details: What the user is currently doing"
+    "   details: What the user is currently doing"
     "\n"
-    "large_image_key: Key for the large image"
+    "   large_image_key: Key for the large image"
     "\n"
-    "large_image_text: Text displayed when hovering over the large image"
+    "   large_image_text: Text displayed when hovering over the large image"
     "\n"
-    "small_image_key: Key for the small image"
+    "   small_image_key: Key for the small image"
     "\n"
-    "small_image_text: Text displayed when hovering over the small image"
+    "   small_image_text: Text displayed when hovering over the small image"
     "\n"
-    "start_timestamp: Unix timestamp for game start time"
+    "   start_timestamp: Unix timestamp for game start time"
     "\n"
-    "end_timestamp: Unix timestamp for game end time"};
+    "   end_timestamp: Unix timestamp for game end time"};
 
 // -------------------------- discord_set_party ------------------------------
 
@@ -164,17 +173,19 @@ static PyMethodDef PyDiscordSetPartyDef = {
     "discord_set_party",             // name
     (PyCFunction)PyDiscordSetParty,  // method
     METH_VARARGS | METH_KEYWORDS,    // flags
-    "discord_set_party() -> None\n"
+    "discord_set_party(party_id: str | None = None,"
+    "current_party_size: int | None = None, "
+    "max_party_size: int | None = None) -> None\n"
     "\n"
     "Set Discord Party information."
     "\n"
     "Args:"
     "\n"
-    "party_id: Unique identifier for the party"
+    "   party_id: Unique identifier for the party"
     "\n"
-    "current_party_size: Current number of members in the party"
+    "   current_party_size: Current number of members in the party"
     "\n"
-    "max_party_size: Maximum number of members allowed in the party"};
+    "   max_party_size: Maximum number of members allowed in the party"};
 
 // -------------------------- discord_add_button ------------------------------
 
@@ -200,15 +211,15 @@ static PyMethodDef PyDiscordAddButtonDef = {
     "discord_add_button",             // name
     (PyCFunction)PyDiscordAddButton,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
-    "discord_add_button() -> None\n"
+    "discord_add_button(label: str, url: str) -> None\n"
     "\n"
     "Add Discord rich presence button."
     "\n"
     "Args:"
     "\n"
-    "label: Label for the button"
+    "   label: Label for the button"
     "\n"
-    "url: URL to open when the button is clicked"};
+    "   url: URL to open when the button is clicked"};
 
 // -------------------------- discord_join_lobby ------------------------------
 
@@ -233,13 +244,13 @@ static PyMethodDef PyDiscordJoinLobbyDef = {
     "discord_join_lobby",             // name
     (PyCFunction)PyDiscordJoinLobby,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
-    "discord_join_lobby() -> None\n"
+    "discord_join_lobby(lobby_secret: str) -> None\n"
     "\n"
     "Join a discord lobby."
     "\n"
     "Args:"
     "\n"
-    "lobby_secret: Unique identifier for the lobby"};
+    "   lobby_secret: Unique identifier for the lobby"};
 
 // -------------------------- discord_leave_lobby ------------------------------
 
@@ -286,10 +297,33 @@ static PyMethodDef PyDiscordSendLobbyMessageDef = {
     "discord_send_lobby_message",            // name
     (PyCFunction)PyDiscordSendLobbyMessage,  // method
     METH_VARARGS | METH_KEYWORDS,            // flags
-    "discord_send_lobby_message() -> None\n"
+    "discord_send_lobby_message(message: str) -> None\n"
     "\n"
     "Args:"
-    "message: Message to send to a discord lobby."};
+    "\n"
+    "       message: Message to send to a discord lobby."};
+
+// -------------------------- discord_shutdown ------------------------------
+
+static auto PyDiscordShutdown(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->Shutdown();
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordShutdownDef = {
+    "discord_shutdown",              // name
+    (PyCFunction)PyDiscordShutdown,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+    "discord_shutdown() -> None\n"
+    "\n"
+    "Shutdown and disconnect the Discord client."};
 
 // --------------------------------- appname -----------------------------------
 
@@ -1900,6 +1934,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyDiscordJoinLobbyDef,
       PyDiscordLeaveLobbyDef,
       PyDiscordSendLobbyMessageDef,
+      PyDiscordShutdownDef,
       PyAppNameDef,
       PyAppIsActiveDef,
       PyRunAppDef,
