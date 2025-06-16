@@ -2,11 +2,15 @@
 
 """Functionality related to discord sdk integration"""
 from __future__ import annotations
-from typing import Any  # pylint: disable=unused-import
+
+from typing import TYPE_CHECKING
 import _babase
 
+if TYPE_CHECKING:
+    from typing import Any
+
 # Add a config key preferably for this
-ENABLE_DISCORD = False  # disable this for now
+ENABLE_DISCORD = True  # disable this for now
 
 
 class Discord:

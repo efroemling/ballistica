@@ -201,10 +201,8 @@ from babase._text import timestring
 from babase._workspace import WorkspaceSubsystem
 
 _babase.app = app = App()
-_babase.discord = discord = Discord()
 
 __all__ = [
-    'discord',
     'AccountV2Handle',
     'AccountV2Subsystem',
     'ActivityNotFoundError',

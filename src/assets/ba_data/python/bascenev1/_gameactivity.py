@@ -344,9 +344,9 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         mapname = getattr(self._map_type, 'name', None)
         map_preview = getattr(self._map_type, 'get_preview_texture_name', None)
 
-        if babase.discord.is_ready and mapname and map_preview:
+        if babase.app.discord.is_ready and mapname and map_preview:
             preview = map_preview().lower().removesuffix('preview')
-            babase.discord.set_presence(
+            babase.app.discord.set_presence(
                 state=self.getname(),
                 details=f"Playing on {mapname}",
                 large_image_key=preview,
@@ -375,10 +375,10 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             babase.app.classic.game_begin_analytics()
 
         # Update Discord party info
-        if babase.discord.is_ready:
+        if babase.app.discord.is_ready:
             party_size = len(self.players)
             max_size = max(8, party_size)
-            babase.discord.set_presence(
+            babase.app.discord.set_presence(
                 party_id=str(uuid.uuid4()), party_size=(party_size, max_size)
             )
 
