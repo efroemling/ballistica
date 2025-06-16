@@ -1,4 +1,4 @@
-### 1.7.44 (build 22418, api 9, 2025-06-16)
+### 1.7.44 (build 22419, api 9, 2025-06-16)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
   an associated `dont_write_bytecode` value for the server config file. In most
   cases writing .pyc files is useful as it can speed up relaunches and keep

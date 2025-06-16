@@ -284,6 +284,26 @@ def _do_pycache_upkeep() -> None:
         # Just check the first.
         break
 
+    def _has_py_source(path: str) -> bool:
+        """Does this .pyc path have an associated existing .py file?"""
+        if not path.endswith('.pyc'):
+            return False
+        try:
+            srcpath = importlib.util.source_from_cache(fullpath)
+        except Exception as exc:
+            # Have gotten reports of failures here on a file named
+            # hook-mitmproxy.addons.onboardingapp.cpython-313.pyc'
+            # (found in site-packages on a linux install).
+            if 'expected only 2 or 3 dots' in str(exc):
+                pass
+            else:
+                complain(f'Error looking for py src for "{path}": {exc}')
+            # If anything goes wrong, just assume it does have a source;
+            # let's only kill stuff where we're sure it doesn't.
+            return True
+
+        return os.path.exists(srcpath)
+
     # Now kill all files in our dst pyc dir that *don't* appear in our
     # dict of dst paths.
     for dpath, dnames, fnames in os.walk(pycdir):
@@ -294,13 +314,10 @@ def _do_pycache_upkeep() -> None:
             # on-demand. So to be extra sure we can delete something we
             # make sure it isn't a .pyc file with an existing src .py
             # file. Technically we could check *everything* this way but
-            # its probably lots faster to do the fast-out dict lookup.
-            if fullpath not in entries and (
-                not fullpath.endswith('.pyc')
-                or not os.path.exists(
-                    importlib.util.source_from_cache(fullpath)
-                )
-            ):
+            # it should be lots faster to fast-out with the entries dict
+            # lookup first.
+
+            if fullpath not in entries and not _has_py_source(fullpath):
                 try:
                     cachelog.debug(
                         'pycache-upkeep: pruning file \'%s\'.', fullpath
