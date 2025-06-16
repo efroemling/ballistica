@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import Any  # pylint: disable=unused-import
 import _babase
 
+# Add a config key preferably for this
+ENABLE_DISCORD = False  # disable this for now
+
 
 class Discord:
     """Discord SDK integration class."""
@@ -19,6 +22,8 @@ class Discord:
         self.small_image_text: str | None = None
         self.start_timestamp: float | None = None
         self.end_timestamp: float | None = None
+        if not ENABLE_DISCORD:
+            return
         if not self.is_available():
             return
         _babase.discord_start()
@@ -105,4 +110,5 @@ class Discord:
             )
 
         # Update rich presence
-        _babase.discord_richpresence(**presence)
+        if presence:
+            _babase.discord_richpresence(**presence)
