@@ -31,7 +31,7 @@ class Discord:
         if not self.is_available():
             return
         _babase.discord_start()
-        _babase.app.add_shutdown_task(self._shutdown_coroutine())
+        # _babase.app.add_shutdown_task(self._shutdown_coroutine())
 
     @staticmethod
     def is_available() -> bool:
