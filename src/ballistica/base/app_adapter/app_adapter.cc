@@ -10,6 +10,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 
 namespace ballistica::base {
 

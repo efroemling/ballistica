@@ -58,7 +58,7 @@ logger = logging.getLogger('baenv')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22413
+TARGET_BALLISTICA_BUILD = 22418
 TARGET_BALLISTICA_VERSION = '1.7.44'
 
 
@@ -289,7 +289,7 @@ def configure(
     # correctly if/when the OS does the same thing.
     if __debug__:
         if '_babase' not in sys.modules:
-            _chaos_test_cache(cache_dir)
+            _cache_ninja_rampage(cache_dir)
 
     # Get ssl working if needed so we can use https and all that.
     _setup_certs(contains_python_dist)
@@ -310,7 +310,7 @@ def configure(
     )
 
 
-def _chaos_test_cache(cache_dir: str) -> None:
+def _cache_ninja_rampage(cache_dir: str) -> None:
     assert os.path.isdir(cache_dir)
     for basename, _dirnames, filenames in os.walk(cache_dir):
         for fname in filenames:
@@ -319,6 +319,9 @@ def _chaos_test_cache(cache_dir: str) -> None:
             # as our average cache file count goes up.
             if random.random() < 0.001:
                 fullpath = os.path.join(basename, fname)
+                logging.getLogger('ba.cache').debug(
+                    "Cache-ninja assasinated '%s'.", fullpath
+                )
                 os.unlink(fullpath)
 
 

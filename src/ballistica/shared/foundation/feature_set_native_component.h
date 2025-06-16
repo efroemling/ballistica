@@ -3,7 +3,7 @@
 #ifndef BALLISTICA_SHARED_FOUNDATION_FEATURE_SET_NATIVE_COMPONENT_H_
 #define BALLISTICA_SHARED_FOUNDATION_FEATURE_SET_NATIVE_COMPONENT_H_
 
-#include "ballistica/shared/ballistica.h"  // IWYU pragma: keep.
+#include "ballistica/shared/foundation/macros.h"
 
 namespace ballistica {
 

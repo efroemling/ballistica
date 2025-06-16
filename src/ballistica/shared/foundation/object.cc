@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/generic/utils.h"
@@ -163,10 +164,10 @@ void Object::LsObjects() {
       assert(count == g_core->object_count);
     }
   }
-  g_core->Log(LogName::kBa, LogLevel::kInfo, s);
+  g_core->logging->Log(LogName::kBa, LogLevel::kInfo, s);
 #else
-  g_core->Log(LogName::kBa, LogLevel::kInfo,
-              "LsObjects() only functions in debug builds.");
+  g_core->logging->Log(LogName::kBa, LogLevel::kInfo,
+                       "LsObjects() only functions in debug builds.");
 #endif  // BA_DEBUG_BUILD
 }
 
@@ -186,7 +187,8 @@ static auto GetCurrentEventLoopID() -> EventLoopID {
   } else if (g_base_soft && g_base_soft->InBGDynamicsThread()) {
     return EventLoopID::kBGDynamics;
   } else {
-    throw Exception(std::string("unrecognized thread: ") + CurrentThreadName());
+    throw Exception(std::string("unrecognized thread: ")
+                    + g_core->CurrentThreadName());
   }
 }
 
@@ -227,7 +229,7 @@ void Object::ObjectThreadCheck() const {
 #define DO_FAIL(THREADNAME)                                                \
   throw Exception("ObjectThreadCheck failed for " + GetObjectDescription() \
                   + "; expected " THREADNAME " thread; got "               \
-                  + CurrentThreadName())
+                  + g_core->CurrentThreadName())
   switch (t) {
     case EventLoopID::kMain:
       if (!g_core->InMainThread()) {

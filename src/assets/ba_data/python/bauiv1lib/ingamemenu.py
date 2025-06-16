@@ -64,7 +64,7 @@ class InGameMenuWindow(bui.MainWindow):
 
         self._r = 'mainMenu'
 
-        self._input_device = input_device = bs.get_ui_input_device()
+        self._input_device = input_device = bs.get_main_ui_input_device()
 
         # Are we connected to a local player?
         self._input_player = input_device.player if input_device else None

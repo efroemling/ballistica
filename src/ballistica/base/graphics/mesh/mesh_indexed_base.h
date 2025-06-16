@@ -6,6 +6,7 @@
 #include "ballistica/base/graphics/mesh/mesh.h"
 #include "ballistica/base/graphics/mesh/mesh_index_buffer_16.h"
 #include "ballistica/base/graphics/mesh/mesh_index_buffer_32.h"
+#include "ballistica/core/logging/logging_macros.h"
 
 namespace ballistica::base {
 

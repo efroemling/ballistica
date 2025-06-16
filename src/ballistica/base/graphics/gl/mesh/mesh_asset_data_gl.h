@@ -11,6 +11,7 @@
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/core/logging/logging_macros.h"
 
 namespace ballistica::base {
 

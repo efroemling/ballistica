@@ -11,6 +11,8 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -113,7 +115,7 @@ HostActivity::~HostActivity() {
       for (auto& python_call : context_calls_)
         s += "\n  " + std::to_string(count++) + ": "
              + (*python_call).GetObjectDescription();
-      g_core->Log(LogName::kBa, LogLevel::kWarning, s);
+      g_core->logging->Log(LogName::kBa, LogLevel::kWarning, s);
     }
   }
 }
@@ -159,29 +161,31 @@ void HostActivity::RegisterContextCall(base::PythonContextCall* call) {
   // If we're shutting down, just kill the call immediately.
   // (we turn all of our calls to no-ops as we shut down)
   if (shutting_down_) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "Adding call to expired activity; call will not function: "
-                    + call->GetObjectDescription());
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kWarning,
+        "Adding call to expired activity; call will not function: "
+            + call->GetObjectDescription());
     call->MarkDead();
   }
 }
 
 void HostActivity::Start() {
   if (started_) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "HostActivity::Start() called twice.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "HostActivity::Start() called twice.");
     return;
   }
   started_ = true;
   if (shutting_down_) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "HostActivity::Start() called for shutting-down activity.");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "HostActivity::Start() called for shutting-down activity.");
     return;
   }
   auto* host_session = host_session_.get();
   if (!host_session) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "HostActivity::Start() called with dead session.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "HostActivity::Start() called with dead session.");
     return;
   }
   // Create our step timer - gets called whenever scene should step.
@@ -293,9 +297,9 @@ void HostActivity::HandleOutOfBoundsNodes() {
   // Make sure someone's handling our out-of-bounds messages.
   out_of_bounds_in_a_row_++;
   if (out_of_bounds_in_a_row_ > 100) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "100 consecutive out-of-bounds messages sent."
-                " They are probably not being handled properly");
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "100 consecutive out-of-bounds messages sent."
+                         " They are probably not being handled properly");
     int j = 0;
     for (auto&& i : scene()->out_of_bounds_nodes()) {
       j++;
@@ -307,11 +311,11 @@ void HostActivity::HandleOutOfBoundsNodes() {
         if (delegate.exists()) {
           dstr = delegate.Str();
         }
-        g_core->Log(LogName::kBa, LogLevel::kWarning,
-                    "   node #" + std::to_string(j) + ": type='"
-                        + n->type()->name()
-                        + "' addr=" + Utils::PtrToString(i.get()) + " name='"
-                        + n->label() + "' delegate=" + dstr);
+        g_core->logging->Log(
+            LogName::kBa, LogLevel::kWarning,
+            "   node #" + std::to_string(j) + ": type='" + n->type()->name()
+                + "' addr=" + Utils::PtrToString(i.get()) + " name='"
+                + n->label() + "' delegate=" + dstr);
       }
     }
     out_of_bounds_in_a_row_ = 0;
@@ -349,8 +353,9 @@ auto HostActivity::GetPyActivity() const -> PyObject* {
   // ever happen so currently just providing a simple error msg.
   assert(result == -1);
   PyErr_Clear();
-  g_core->Log(LogName::kBa, LogLevel::kError,
-              "HostActivity::GetPyActivity(): error getting weakref obj.");
+  g_core->logging->Log(
+      LogName::kBa, LogLevel::kError,
+      "HostActivity::GetPyActivity(): error getting weakref obj.");
   return nullptr;
 }
 

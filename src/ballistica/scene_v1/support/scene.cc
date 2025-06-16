@@ -13,6 +13,7 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/part.h"
@@ -217,8 +218,8 @@ void Scene::DeleteNode(Node* node) {
   // Sanity test: at this point the node should be dead.
 #if BA_DEBUG_BUILD
   if (temp_weak_ref.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Node still exists after ref release!!");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Node still exists after ref release!!");
   }
 #endif  // BA_DEBUG_BUILD
 
@@ -402,9 +403,10 @@ void Scene::DumpNodes(SessionStream* out) {
             break;
           }
           default:
-            g_core->Log(LogName::kBa, LogLevel::kError,
-                        "Invalid attr type for Scene::DumpNodes() attr set: "
-                            + std::to_string(static_cast<int>(attr.type())));
+            g_core->logging->Log(
+                LogName::kBa, LogLevel::kError,
+                "Invalid attr type for Scene::DumpNodes() attr set: "
+                    + std::to_string(static_cast<int>(attr.type())));
             break;
         }
       }

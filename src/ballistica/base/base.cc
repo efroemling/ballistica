@@ -28,13 +28,14 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/base_build_switches.h"
-#include "ballistica/base/support/huffman.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/support/stdio_console.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/base/ui/ui_delegate.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/vector4f.h"
 #include "ballistica/shared/python/python_command.h"
@@ -59,7 +60,6 @@ BaseFeatureSet::BaseFeatureSet()
       context_ref{new ContextRef(nullptr)},
       graphics{BaseBuildSwitches::CreateGraphics()},
       graphics_server{new GraphicsServer()},
-      huffman{new Huffman()},
       input{new Input()},
       logic{new Logic()},
       network_reader{new NetworkReader()},
@@ -91,7 +91,8 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_babase exec begin");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "_babase exec begin");
 
   // This locks in a baenv configuration.
   g_core->ApplyBaEnvConfig();
@@ -135,7 +136,8 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(!g_base->base_native_import_completed_);
   g_base->base_native_import_completed_ = true;
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_babase exec end");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "_babase exec end");
 }
 
 void BaseFeatureSet::OnReachedEndOfBaBaseImport() {
@@ -158,7 +160,7 @@ void BaseFeatureSet::SuccessScreenMessage() {
       python->objs().Get(BasePython::ObjID::kSuccessMessageCall).Call();
     });
   } else {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kError,
         "SuccessScreenMessage called without logic event_loop in place.");
   }
@@ -170,8 +172,9 @@ void BaseFeatureSet::ErrorScreenMessage() {
       python->objs().Get(BasePython::ObjID::kErrorMessageCall).Call();
     });
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "ErrorScreenMessage called without logic event_loop in place.");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "ErrorScreenMessage called without logic event_loop in place.");
   }
 }
 
@@ -190,8 +193,8 @@ auto BaseFeatureSet::GetV2AccountID() -> std::optional<std::string> {
     }
     return result.ValueAsString();
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "GetV2AccountID() py call errored.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "GetV2AccountID() py call errored.");
     return {};
   }
 }
@@ -215,8 +218,8 @@ void BaseFeatureSet::StartApp() {
 
   LogStartupMessage_();
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
-              "start-app begin (main thread)");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "start-app begin (main thread)");
 
   // The logic thread (or maybe other things) need to run Python as
   // we're bringing them up, so let it go for the duration of this call.
@@ -254,8 +257,8 @@ void BaseFeatureSet::StartApp() {
     python->objs().Get(BasePython::ObjID::kAppPushApplyAppConfigCall).Call();
   }
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
-              "start-app end (main thread)");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "start-app end (main thread)");
 
   // Make some noise if this takes more than a few seconds. If we pass 5
   // seconds or so we start to trigger App-Not-Responding reports which
@@ -265,7 +268,7 @@ void BaseFeatureSet::StartApp() {
     char buffer[128];
     snprintf(buffer, sizeof(buffer),
              "StartApp() took too long (%.2lf seconds).", duration);
-    g_core->Log(LogName::kBa, LogLevel::kWarning, buffer);
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning, buffer);
   }
 }
 
@@ -274,8 +277,9 @@ void BaseFeatureSet::SuspendApp() {
   assert(g_core->InMainThread());
 
   if (app_suspended_) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "AppAdapter::SuspendApp() called with app already suspended.");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kWarning,
+        "AppAdapter::SuspendApp() called with app already suspended.");
     return;
   }
 
@@ -336,7 +340,7 @@ void BaseFeatureSet::SuspendApp() {
     running_loops = EventLoop::GetStillSuspendingEventLoops();
     if (running_loops.empty()) {
       if (g_buildconfig.debug_build()) {
-        g_core->Log(
+        g_core->logging->Log(
             LogName::kBa, LogLevel::kDebug,
             "SuspendApp() completed in "
                 + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()
@@ -399,7 +403,7 @@ void BaseFeatureSet::SuspendApp() {
   }
   msg += ").";
 
-  g_core->Log(LogName::kBa, LogLevel::kError, msg);
+  g_core->logging->Log(LogName::kBa, LogLevel::kError, msg);
 }
 
 void BaseFeatureSet::UnsuspendApp() {
@@ -407,7 +411,7 @@ void BaseFeatureSet::UnsuspendApp() {
   assert(g_core->InMainThread());
 
   if (!app_suspended_) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kWarning,
         "AppAdapter::UnsuspendApp() called with app not in suspendedstate.");
     return;
@@ -426,7 +430,7 @@ void BaseFeatureSet::UnsuspendApp() {
   g_base->networking->OnAppUnsuspend();
 
   if (g_buildconfig.debug_build()) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kDebug,
         "UnsuspendApp() completed in "
             + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()
@@ -441,8 +445,8 @@ void BaseFeatureSet::OnAppShutdownComplete() {
   assert(g_base);
 
   // Flag our own event loop to exit (or ask the OS to if they're managing).
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
-              "app exiting (main thread)");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "app exiting (main thread)");
   if (app_adapter->ManagesMainThreadEventLoop()) {
     app_adapter->DoExitMainThreadEventLoop();
   } else {
@@ -460,7 +464,7 @@ void BaseFeatureSet::LogStartupMessage_() {
     snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d starting...",
              kEngineVersion, kEngineBuildNumber);
   }
-  g_core->Log(LogName::kBaApp, LogLevel::kInfo, buffer);
+  g_core->logging->Log(LogName::kBaApp, LogLevel::kInfo, buffer);
 }
 
 void BaseFeatureSet::set_app_mode(AppMode* mode) {
@@ -469,7 +473,7 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
   // Redundant sets should not happen (make an exception here for empty mode
   // since that's in place before any app mode is officially set).
   if (mode == app_mode_ && mode != EmptyAppMode::GetSingleton()) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kWarning,
         "set_app_mode called with already-current app-mode; unexpected.");
   }
@@ -598,8 +602,8 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
     if (!have_app_instance_uuid) {
       // As an emergency fallback simply use a single random number. We
       // should probably simply disallow this before Python is up.
-      g_core->Log(LogName::kBa, LogLevel::kWarning,
-                  "GetSessionUUID() using rand fallback.");
+      g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                           "GetSessionUUID() using rand fallback.");
       srand(static_cast<unsigned int>(
           core::CorePlatform::TimeMonotonicMillisecs()));  // NOLINT
       app_instance_uuid =
@@ -607,8 +611,8 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
       have_app_instance_uuid = true;
     }
     if (app_instance_uuid.size() >= 100) {
-      g_core->Log(LogName::kBa, LogLevel::kWarning,
-                  "session id longer than it should be.");
+      g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                           "session id longer than it should be.");
     }
   }
   return app_instance_uuid;
@@ -740,12 +744,12 @@ void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
   }
 
   // Only attempt direct sends a few times.
-  if (g_early_v1_cloud_log_writes <= 0) {
+  if (core::g_early_v1_cloud_log_writes <= 0) {
     return;
   }
 
   // Ok; going ahead with the direct send.
-  g_early_v1_cloud_log_writes -= 1;
+  core::g_early_v1_cloud_log_writes -= 1;
   std::string logprefix = "EARLY-LOG:";
   std::string logsuffix;
 
@@ -1001,9 +1005,9 @@ void BaseFeatureSet::SetAppActive(bool active) {
   // Issue a gentle warning if they are feeding us the same state twice in a
   // row; might imply faulty logic on an app-adapter or whatnot.
   if (app_active_set_ && app_active_ == active) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "SetAppActive called with state " + std::to_string(active)
-                    + " twice in a row.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "SetAppActive called with state "
+                             + std::to_string(active) + " twice in a row.");
   }
   app_active_set_ = true;
   app_active_ = active;
@@ -1030,7 +1034,7 @@ void BaseFeatureSet::SetUIScale(UIScale scale) {
   assert(InLogicThread());
 
   // Store the canonical value in UI.
-  ui->SetScale(scale);
+  ui->SetUIScale(scale);
 
   // Let interested parties know that it has changed.
   graphics->OnUIScaleChange();

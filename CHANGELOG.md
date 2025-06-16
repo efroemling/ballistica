@@ -1,4 +1,4 @@
-### 1.7.44 (build 22413, api 9, 2025-06-10)
+### 1.7.44 (build 22418, api 9, 2025-06-16)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
   an associated `dont_write_bytecode` value for the server config file. In most
   cases writing .pyc files is useful as it can speed up relaunches and keep
@@ -16,6 +16,13 @@
   complicates the logic of pruning outdated caches, but I think I prefer that
   over having to regerate a completely new cache each time a minor update comes
   through.
+- Holding shift while pressing a dev-console toggle key (~ or F2) now cycles it
+  in reverse.
+- The dev-console now remembers which tab was selected between runs.
+- The dev-console logging tab now remembers which logger you were last viewing
+  between app runs. This means if you have one particular logger you flip off
+  and on a lot you can generally get at it by just bringing up the small size
+  dev-console.
 
 ### 1.7.43 (build 22406, api 9, 2025-06-09)
 - Fixes an issue with tournament scores not submitting properly in 1.7.42.

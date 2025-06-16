@@ -19,6 +19,8 @@
 #include "ballistica/base/graphics/texture/dds.h"
 #include "ballistica/base/graphics/texture/ktx.h"
 #include "ballistica/base/graphics/texture/pvr.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
@@ -83,7 +85,7 @@ TextureAsset::TextureAsset(const std::string& qr_url) : is_qr_code_(true) {
              "QR code url byte length %zu exceeds soft-limit of %zu;"
              " please use shorter urls. (url=%s)",
              qr_url.size(), soft_limit, qr_url.c_str());
-    g_core->Log(LogName::kBaAssets, LogLevel::kWarning, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning, buffer);
   }
   file_name_ = qr_url;
   valid_ = true;

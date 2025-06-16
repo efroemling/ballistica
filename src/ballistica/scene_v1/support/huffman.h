@@ -1,13 +1,11 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_SUPPORT_HUFFMAN_H_
-#define BALLISTICA_BASE_SUPPORT_HUFFMAN_H_
+#ifndef BALLISTICA_SCENE_V1_SUPPORT_HUFFMAN_H_
+#define BALLISTICA_SCENE_V1_SUPPORT_HUFFMAN_H_
 
 #include <vector>
 
-#include "ballistica/shared/foundation/object.h"
-
-namespace ballistica::base {
+namespace ballistica::scene_v1 {
 
 class Huffman {
  public:
@@ -20,8 +18,8 @@ class Huffman {
 
   void build();
 
-  // NOTE: this assumes the topmost bit of the first byte is unused
-  // (see details in implementation).
+  // NOTE: this assumes the topmost bit of the first byte is unused (see
+  // details in implementation).
   auto compress(const std::vector<uint8_t>& src) -> std::vector<uint8_t>;
   auto decompress(const std::vector<uint8_t>& src) -> std::vector<uint8_t>;
   auto get_built() const -> bool { return built; }
@@ -45,8 +43,8 @@ class Huffman {
     // Right child index in node array (-1 for none).
     int16_t right_child = -1;
 
-    // Parent index in node array (0 for none - add 255 to this to get actual
-    // index).
+    // Parent index in node array (0 for none - add 255 to this to get
+    // actual index).
     uint8_t parent = 0;
     uint8_t bits = 0;
     uint16_t val = 0;
@@ -56,6 +54,6 @@ class Huffman {
   Node nodes_[511];
 };
 
-}  // namespace ballistica::base
+}  // namespace ballistica::scene_v1
 
-#endif  // BALLISTICA_BASE_SUPPORT_HUFFMAN_H_
+#endif  // BALLISTICA_SCENE_V1_SUPPORT_HUFFMAN_H_

@@ -85,8 +85,8 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
 
   void DoHandleDeviceMenuPress(base::InputDevice* device) override;
   void DoShowURL(const std::string& url) override;
-  auto MainMenuVisible() -> bool override;
-  auto PartyIconVisible() -> bool override;
+  auto IsMainUIVisible() -> bool override;
+  auto IsPartyIconVisible() -> bool override;
   void ActivatePartyIcon() override;
   void Draw(base::FrameDef* frame_def) override;
 
@@ -98,7 +98,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void OnActivate() override;
   void OnDeactivate() override;
 
-  auto PartyWindowOpen() -> bool override;
+  auto IsPartyWindowOpen() -> bool override;
 
   // Return the root widget containing all windows & dialogs. Whenever this
   // contains children, the UI is considered to be in focus

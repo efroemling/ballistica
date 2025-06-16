@@ -19,9 +19,8 @@
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/context.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
-#include "ballistica/shared/foundation/inline.h"
-#include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/button_widget.h"
@@ -1409,10 +1408,10 @@ void RootWidget::Update_(base::RenderPass* renderpass) {
     update_pause_total_time_ += time_diff;
     seconds_t threshold{30.0};
     if (oldtime < threshold && update_pause_total_time_ >= threshold) {
-      g_core->Log(LogName::kBaApp, LogLevel::kWarning,
-                  "RootWidget updates have been paused for "
-                      + std::to_string(update_pause_total_time_)
-                      + " seconds; something may be broken.");
+      g_core->logging->Log(LogName::kBaApp, LogLevel::kWarning,
+                           "RootWidget updates have been paused for "
+                               + std::to_string(update_pause_total_time_)
+                               + " seconds; something may be broken.");
     }
   } else {
     update_pause_total_time_ = 0.0;
@@ -1571,7 +1570,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     return;
   }
 
-  bool is_small{g_base->ui->scale() == UIScale::kSmall};
+  bool is_small{g_base->ui->uiscale() == UIScale::kSmall};
 
   // Update enabled-state for all buttons.
   for (Button_& b : buttons_) {
@@ -1776,7 +1775,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
 void RootWidget::UpdateLayout() {
   // Now actually put things in place.
   base_scale_ = 1.0f;
-  switch (g_base->ui->scale()) {
+  switch (g_base->ui->uiscale()) {
     case UIScale::kLarge:
       base_scale_ = 0.6f;
       break;
@@ -1968,7 +1967,7 @@ auto RootWidget::ColorForLeagueValue_(const std::string& value) -> Vector3f {
   } else if (league_type_vis_value_ == "d") {
     color = {1.0f, 0.8f, 2.0f};
   } else {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kError,
         "RootWidget: Invalid league type '" + league_type_vis_value_ + "'.");
   }

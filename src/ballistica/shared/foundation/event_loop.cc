@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/fatal_error.h"
@@ -389,9 +391,9 @@ auto EventLoop::ThreadMain_() -> int {
     return 0;
   } catch (const std::exception& e) {
     auto error_msg = std::string("Unhandled exception in ")
-                     + CurrentThreadName() + " thread:\n" + e.what();
+                     + g_core->CurrentThreadName() + " thread:\n" + e.what();
 
-    FatalError::ReportFatalError(error_msg, true);
+    FatalErrorHandling::ReportFatalError(error_msg, true);
 
     // Exiting the app via an exception leads to crash reports on various
     // platforms. If it seems we're not on an official live build then we'd
@@ -400,7 +402,8 @@ auto EventLoop::ThreadMain_() -> int {
     bool try_to_exit_cleanly =
         !(g_base_soft && g_base_soft->IsUnmodifiedBlessedBuild());
 
-    bool handled = FatalError::HandleFatalError(try_to_exit_cleanly, true);
+    bool handled =
+        FatalErrorHandling::HandleFatalError(try_to_exit_cleanly, true);
 
     // Do the default thing if platform didn't handle it.
     if (!handled) {
@@ -545,7 +548,7 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
 
   // Now log anything we accumulated safely outside of the locked section.
   for (auto&& log_entry : log_entries) {
-    g_core->Log(LogName::kBa, log_entry.first, log_entry.second);
+    g_core->logging->Log(LogName::kBa, log_entry.first, log_entry.second);
   }
 }
 
@@ -560,18 +563,18 @@ void EventLoop::SetEventLoopsSuspended(bool suspended) {
 
 auto EventLoop::GetStillSuspendingEventLoops() -> std::vector<EventLoop*> {
   assert(g_core);
-  std::vector<EventLoop*> threads;
+  std::vector<EventLoop*> event_loops;
   assert(std::this_thread::get_id() == g_core->main_thread_id());
 
   // Only return results if an actual suspend is in effect.
   if (g_core->event_loops_suspended()) {
     for (auto&& i : g_core->suspendable_event_loops) {
       if (!i->suspended()) {
-        threads.push_back(i);
+        event_loops.push_back(i);
       }
     }
   }
-  return threads;
+  return event_loops;
 }
 
 auto EventLoop::AreEventLoopsSuspended() -> bool {
@@ -609,8 +612,8 @@ void EventLoop::RunPendingRunnables_() {
     i.first->RunAndLogErrors();
     delete i.first;
 
-    // If this runnable wanted to be flagged when done, set its flag
-    // and make a note to wake all client listeners.
+    // If this runnable wanted to be flagged when done, set its flag and
+    // make a note to wake all client listeners.
     if (i.second != nullptr) {
       *(i.second) = true;
       do_notify_listeners = true;
@@ -663,8 +666,8 @@ void EventLoop::AddUnsuspendCallback(Runnable* runnable) {
 
 void EventLoop::PushRunnable(Runnable* runnable) {
   assert(Object::IsValidUnmanagedObject(runnable));
-  // If we're being called from withing our thread, just drop it in the list.
-  // otherwise send it as a message to the other thread.
+  // If we're being called from withing our thread, just drop it in the
+  // list. otherwise send it as a message to the other thread.
   if (std::this_thread::get_id() == thread_id()) {
     PushLocalRunnable_(runnable, nullptr);
   } else {
@@ -695,8 +698,8 @@ void EventLoop::PushRunnableSynchronous(Runnable* runnable) {
 
   // Now listen until our completion flag gets set.
   client_listener_cv_.wait(lock, [complete_ptr] {
-    // Go back to sleep on spurious wakeups
-    // (if we're not actually complete yet).
+    // Go back to sleep on spurious wakeups (if we're not actually complete
+    // yet).
     return *complete_ptr;
   });
 }
@@ -729,9 +732,9 @@ void EventLoop::AcquireGIL_() {
     auto duration{core::CorePlatform::TimeMonotonicMillisecs()
                   - startmillisecs};
     if (duration > (1000 / 120)) {
-      g_core->Log(LogName::kBa, LogLevel::kInfo,
-                  "GIL acquire took too long (" + std::to_string(duration)
-                      + " millisecs).");
+      g_core->logging->Log(LogName::kBa, LogLevel::kInfo,
+                           "GIL acquire took too long ("
+                               + std::to_string(duration) + " millisecs).");
     }
   }
 }

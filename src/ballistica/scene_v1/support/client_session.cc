@@ -12,6 +12,7 @@
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
@@ -201,7 +202,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
         if (g_buildconfig.debug_build()) {
           if (current_cmd_ptr_ != nullptr) {
             if (current_cmd_ptr_ != &(current_cmd_[0]) + current_cmd_.size()) {
-              g_core->Log(
+              g_core->logging->Log(
                   LogName::kBaNetworking, LogLevel::kError,
                   "SIZE ERROR FOR CMD "
                       + std::to_string(static_cast<int>(current_cmd_[0]))
@@ -814,7 +815,7 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           std::string val = ReadString();
           Vector3f color{};
           ReadFloats(3, color.v);
-          ScreenMessage(val, color);
+          g_base->ScreenMessage(val, color);
           break;
         }
         case SessionCommand::kScreenMessageTop: {
@@ -971,8 +972,8 @@ auto ClientSession::GetCollisionMesh(int id) const -> SceneCollisionMesh* {
 }
 
 void ClientSession::Error(const std::string& description) {
-  g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-              "Client session error: " + description);
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                       "Client session error: " + description);
   End();
 }
 

@@ -16,6 +16,7 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/macros.h"
@@ -189,7 +190,7 @@ static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
     color = BasePython::GetPyVector3f(color_obj);
   }
   if (log) {
-    g_core->Log(LogName::kBa, LogLevel::kInfo, message_str);
+    g_core->logging->Log(LogName::kBa, LogLevel::kInfo, message_str);
   }
 
   // This version simply displays it locally.

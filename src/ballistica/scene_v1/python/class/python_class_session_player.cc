@@ -7,6 +7,7 @@
 
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
@@ -171,7 +172,7 @@ auto PythonClassSessionPlayer::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
 
   // If the user is creating one, make sure they passed None to get an

@@ -8,12 +8,10 @@
 #include <utility>
 #include <vector>
 
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
-#include "ballistica/shared/foundation/inline.h"
-#include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/foundation/macros.h"
-#include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/runnable.h"
 
 namespace ballistica::core {
@@ -77,7 +75,8 @@ void CoreFeatureSet::DoImport_(const CoreConfig& config) {
   g_core->PostInit_();
 
   // We can't report core import begin since core didn't exist at that point.
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "core import end");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "core import end");
 }
 
 CoreFeatureSet::CoreFeatureSet(CoreConfig config)
@@ -85,6 +84,7 @@ CoreFeatureSet::CoreFeatureSet(CoreConfig config)
       python{new CorePython()},
       platform{CorePlatform::Create()},
       core_config_{std::move(config)},
+      logging{new Logging()},
       last_app_time_measure_microsecs_{CorePlatform::TimeMonotonicMicrosecs()},
       vr_mode_{config.vr_mode} {
   // We're a singleton. If there's already one of us, something's wrong.
@@ -163,10 +163,7 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   auto appcfg = envcfg.GetAttr("initial_app_config");
   initial_app_config_ = appcfg.NewRef();
 
-  // This is also a reasonable time to grab initial logger levels that baenv
-  // likely mucked with. For any changes after this to make it to the native
-  // layer, babase.update_internal_logger_levels() must be called.
-  UpdateInternalLoggerLevels();
+  logging->ApplyBaEnvConfig();
 
   // Consider app-python-dir to be 'custom' if baenv provided a value for it
   // AND that value differs from baenv's default.
@@ -182,10 +179,6 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   if (!platform->FilePathExists(fullpath)) {
     FatalError("ba_data directory not found at '" + fullpath + "'.");
   }
-}
-
-void CoreFeatureSet::UpdateInternalLoggerLevels() {
-  python->UpdateInternalLoggerLevels(log_levels_);
 }
 
 auto CoreFeatureSet::GetAppPythonDirectory() -> std::optional<std::string> {
@@ -236,8 +229,9 @@ auto CoreFeatureSet::CalcBuildSrcDir_() -> std::string {
   auto* f_end = strstr(f, "src" BA_DIRSLASH "ballistica" BA_DIRSLASH
                           "core" BA_DIRSLASH "core.cc");
   if (!f_end) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        [] { return "Unable to calc build source dir from __FILE__."; });
+    logging->Log(LogName::kBa, LogLevel::kWarning, [] {
+      return "Unable to calc build source dir from __FILE__.";
+    });
     return "";
   } else {
     return std::string(f).substr(0, f_end - f);
@@ -287,12 +281,12 @@ void CoreFeatureSet::RunSanityChecks_() {
   // from. Use this to adjust the filtering as necessary so the resulting
   // type name matches what is expected.
   if (explicit_bool(false)) {
-    Log(LogName::kBa, LogLevel::kError, [] {
+    logging->Log(LogName::kBa, LogLevel::kError, [] {
       return "static_type_name check; name is '"
              + static_type_name<decltype(g_core)>() + "' debug_full is '"
              + static_type_name<decltype(g_core)>(true) + "'";
     });
-    Log(LogName::kBa, LogLevel::kError, [] {
+    logging->Log(LogName::kBa, LogLevel::kError, [] {
       return "static_type_name check; name is '"
              + static_type_name<decltype(testrunnable)>() + "' debug_full is '"
              + static_type_name<decltype(testrunnable)>(true) + "'";
@@ -312,30 +306,6 @@ auto CoreFeatureSet::SoftImportBase() -> BaseSoftInterface* {
     tried_importing_base_ = true;
   }
   return g_base_soft;
-}
-
-void CoreFeatureSet::Log(LogName name, LogLevel level, char* msg) {
-  // Avoid touching the Python layer if the log will get ignored there
-  // anyway.
-  if (LogLevelEnabled(name, level)) {
-    Logging::Log(name, level, msg);
-  }
-}
-
-void CoreFeatureSet::Log(LogName name, LogLevel level, const char* msg) {
-  // Avoid touching the Python layer if the log will get ignored there
-  // anyway.
-  if (LogLevelEnabled(name, level)) {
-    Logging::Log(name, level, msg);
-  }
-}
-
-void CoreFeatureSet::Log(LogName name, LogLevel level, const std::string& msg) {
-  // Avoid touching the Python layer if the log will get ignored there
-  // anyway.
-  if (LogLevelEnabled(name, level)) {
-    Logging::Log(name, level, msg);
-  }
 }
 
 auto CoreFeatureSet::HeadlessMode() -> bool {
@@ -430,13 +400,13 @@ void CoreFeatureSet::UnregisterThread() {
 }
 
 auto CoreFeatureSet::CurrentThreadName() -> std::string {
-  if (g_core == nullptr) {
-    return "unknown(not-yet-inited)";
-  }
+  // if (g_core == nullptr) {
+  //   return "unknown(not-yet-inited)";
+  // }
   {
-    std::scoped_lock lock(g_core->thread_info_map_mutex_);
-    auto i = g_core->thread_info_map_.find(std::this_thread::get_id());
-    if (i != g_core->thread_info_map_.end()) {
+    std::scoped_lock lock(thread_info_map_mutex_);
+    auto i = thread_info_map_.find(std::this_thread::get_id());
+    if (i != thread_info_map_.end()) {
       return i->second;
     }
   }

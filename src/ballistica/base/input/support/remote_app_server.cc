@@ -12,6 +12,7 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_reader.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/platform/support/min_sdl.h"  // IWYU pragma: keep.
 #include "ballistica/shared/foundation/event_loop.h"

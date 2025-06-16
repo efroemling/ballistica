@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/support/base_soft.h"
 
 // Sanity test: our XCode, Android, and Windows builds should be
@@ -97,9 +98,10 @@ void Python::PrintStackTrace() {
     available = g_base_soft->PrintPythonStackTrace();
   }
   if (!available) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "Python::PrintStackTrace() called before _babase set up; "
-                "not printing.");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kWarning,
+        "Python::PrintStackTrace() called before _babase set up; "
+        "not printing.");
   }
 }
 

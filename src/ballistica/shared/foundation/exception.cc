@@ -20,22 +20,24 @@ auto GetShortExceptionDescription(const std::exception& exc) -> const char* {
 
 Exception::Exception(std::string message_in, PyExcType python_type)
     : message_(std::move(message_in)), python_type_(python_type) {
-  thread_name_ = CurrentThreadName();
-
   // If core has been inited, attempt to capture a stack-trace here we
   // can print out later if desired.
   if (core::g_core) {
+    thread_name_ = core::g_core->CurrentThreadName();
     stack_trace_ = core::g_core->platform->GetNativeStackTrace();
+  } else {
+    thread_name_ = "unknown (core not inited)";
   }
 }
 
 Exception::Exception(PyExcType python_type) : python_type_(python_type) {
-  thread_name_ = CurrentThreadName();
-
   // If core has been inited, attempt to capture a stack-trace here we
   // can print out later if desired.
   if (core::g_core) {
+    thread_name_ = core::g_core->CurrentThreadName();
     stack_trace_ = core::g_core->platform->GetNativeStackTrace();
+  } else {
+    thread_name_ = "unknown (core not inited)";
   }
 }
 

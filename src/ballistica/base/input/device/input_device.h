@@ -14,9 +14,8 @@ namespace ballistica::base {
 /// InputDevices can be allocated in any thread (generally on the main
 /// thread in response to some system event). An AddInputDevice() call
 /// should then be pushed to the logic thread to inform it of the new
-/// device. Deletion of the input-device is then handled by the logic
-/// thread and can be triggered by pushing a RemoveInputDevice() call
-/// to it.
+/// device. Deletion of the input-device is then handled by the logic thread
+/// and can be triggered by pushing a RemoveInputDevice() call to it.
 class InputDevice : public Object {
  public:
   InputDevice();
@@ -62,8 +61,8 @@ class InputDevice : public Object {
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
   virtual void HandleSDLEvent(const SDL_Event* e) {}
 #endif
-  virtual auto GetAllowsConfiguring() -> bool { return true; }
 
+  virtual auto GetAllowsConfiguring() -> bool { return true; }
   virtual auto IsController() -> bool { return false; }
   virtual auto IsSDLController() -> bool { return false; }
   virtual auto IsTouchScreen() -> bool { return false; }
@@ -82,14 +81,14 @@ class InputDevice : public Object {
   virtual auto GetAxisName(int index) -> std::string;
 
   /// Return whether button-names returned by GetButtonName() for this
-  /// device are identifiable to the user on the input-device itself.
-  /// For example, if a gamepad returns 'A', 'B', 'X', 'Y', etc. as names,
-  /// this should return true, but if it returns 'button 123', 'button 124',
-  /// etc. then it should return false.
+  /// device are identifiable to the user on the input-device itself. For
+  /// example, if a gamepad returns 'A', 'B', 'X', 'Y', etc. as names, this
+  /// should return true, but if it returns 'button 123', 'button 124', etc.
+  /// then it should return false.
   virtual auto HasMeaningfulButtonNames() -> bool;
 
-  /// Should return true if the input device has a start button and
-  /// that button activates default widgets (will cause a start icon to show up
+  /// Should return true if the input device has a start button and that
+  /// button activates default widgets (will cause a start icon to show up
   /// on them).
   virtual auto start_button_activates_default_widget() -> bool { return false; }
   auto last_active_time_millisecs() const -> millisecs_t {
@@ -97,20 +96,9 @@ class InputDevice : public Object {
   }
   virtual auto ShouldBeHiddenFromUser() -> bool;
 
-  /// Return a human-readable name for the device's type.
-  /// This is used for display and also for storing configs/etc.
+  /// Return a human-readable name for the device's type. This is used for
+  /// display and also for storing configs/etc.
   virtual auto GetRawDeviceName() -> std::string { return "Input Device"; }
-
-  /// Return any extra description for the device.
-  /// This portion is only used for display and not for storing configs.
-  /// An example is Mac PS3 controllers; they return "(bluetooth)" or "(usb)"
-  /// here depending on how they are connected.
-  virtual auto GetDeviceExtraDescription() -> std::string { return ""; }
-
-  /// Devices that have a way of identifying uniquely against other devices of
-  /// the same type (a serial number, usb-port, etc) should return that here as
-  /// a string.
-  virtual auto GetDeviceIdentifier() -> std::string { return ""; }
 
   /// Called for all devices in the logic thread when they've successfully
   /// been added to the input-device list, have a valid ID, name, etc.
@@ -119,19 +107,15 @@ class InputDevice : public Object {
   void UpdateLastActiveTime();
 
   auto delegate() -> InputDeviceDelegate& {
-    // TEMP - Tracking down a crash in the wild.
-    // Delegate should always exist any time we're accessing it.
-    if (!delegate_.exists()) {
-      FatalError("Input-device delegate unexpectedly invalid.");
-    }
+    assert(delegate_.exists());
     return *delegate_;
   }
   auto set_delegate(const Object::Ref<InputDeviceDelegate>& delegate) {
     delegate_ = delegate;
   }
 
-  /// Provide a custom player-name that the game can choose to honor.
-  /// This is used by the remote app.
+  /// Provide a custom player-name that the game can choose to honor. This
+  /// is used by the remote app.
   auto custom_default_player_name() const -> std::string {
     return custom_default_player_name_;
   }

@@ -466,17 +466,18 @@ def register_plugins(manager: astroid.Manager) -> None:
     # neither 'if TYPE_CHECKING' blocks nor (most) annotations being
     # evaluated. I like to put as much as possible in 'if TYPE_CHECKING'
     # blocks so as to minimize actual imports, and with mypy (and
-    # vanilla Pylint) there is no simple way to tell what needs to be
-    # imported at runtime vs what can be forward-declared in a
-    # TYPE_CHECKING block. Placing imports under a TYPE_CHECKING block
+    # vanilla Pylint) there is no simple way to determine what needs to
+    # be imported at runtime vs what can be forward-declared in
+    # TYPE_CHECKING blocks. Placing imports under a TYPE_CHECKING block
     # which are actually needed at runtime will lead to errors that are
     # not detected until runtime, which is not good.
     #
-    # The filtering we do here gives us a way to see exactly what needs
-    # to be imported for runtime. We basically wipe out TYPE_CHECKING
-    # blocks and Annotations in Pylint's eyes, so what is left and what
-    # gets checked is strictly runtime imports and usage. Mypy continues
-    # to see and check types against the full original code.
+    # So the filtering we do here is designed to give us a way to see
+    # exactly what needs to be imported for runtime. We basically wipe
+    # out TYPE_CHECKING blocks and Annotations in Pylint's eyes, so what
+    # is left and what gets checked is strictly runtime imports and
+    # usage. Mypy continues to see and check types against the full
+    # original code.
     #
     # So, to use this system in practice: All imports can be added
     # normally at the top of a module. Then if Pylint says an import is
@@ -486,7 +487,7 @@ def register_plugins(manager: astroid.Manager) -> None:
     # unused, but that is not too harmful and we can periodically remove
     # things and see if mypy complains. We could technically run a
     # second pass of Pylint with this filtering disabled for that
-    # purpose but that might be overkill.
+    # purpose but that would probably be overkill.
 
     # Completely ignore everything under an 'if TYPE_CHECKING'
     # conditional. That stuff only gets run for mypy, and in general we

@@ -7,6 +7,7 @@
 
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ode/ode_collision.h"

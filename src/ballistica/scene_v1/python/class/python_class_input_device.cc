@@ -147,7 +147,7 @@ auto PythonClassInputDevice::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
   self->input_device_delegate_ =
       new Object::WeakRef<SceneV1InputDeviceDelegate>();
@@ -437,8 +437,9 @@ auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
                           .Get(base::BasePython::ObjID::kLstrFromJsonCall)
                           .Call(args2);
   if (!results.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating Lstr from raw button name: '" + bname + "'");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "Error creating Lstr from raw button name: '" + bname + "'");
     PythonRef args3(Py_BuildValue("(s)", "?"), PythonRef::kSteal);
     results = g_base->python->objs()
                   .Get(base::BasePython::ObjID::kLstrFromJsonCall)

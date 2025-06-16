@@ -12,6 +12,7 @@
 #include <string>
 
 #include "ballistica/shared/ballistica.h"
+#include "ballistica/shared/foundation/exception.h"
 
 namespace ballistica::core {
 

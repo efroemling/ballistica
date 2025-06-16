@@ -13,12 +13,14 @@
 #include "ballistica/base/graphics/support/graphics_client_context.h"
 #include "ballistica/base/graphics/support/graphics_settings.h"
 #include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/snapshot.h"
 #include "ballistica/shared/math/vector2f.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
+
+const float kTVBorder = 0.075f;
+const float kVRBorder = 0.085f;
 
 // Light/shadow res is divided by this to get pure light res.
 const int kLightResDiv{4};

@@ -649,7 +649,7 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   if (log) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kInfo, message);
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kInfo, message);
   }
 
   // Transient messages get sent to clients as high-level messages instead of
@@ -747,8 +747,8 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
             tint_color.x, tint_color.y, tint_color.z, tint2_color.x,
             tint2_color.y, tint2_color.z);
       } else {
-        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                    "Unhandled screenmessage output_stream case.");
+        g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                             "Unhandled screenmessage output_stream case.");
       }
     }
 
@@ -854,7 +854,7 @@ static auto PyPrintNodes(PyObject* self, PyObject* args) -> PyObject* {
     snprintf(buffer, sizeof(buffer), "#%d:   type: %-14s desc: %s", count,
              i->type()->name().c_str(), i->label().c_str());
     s += buffer;
-    g_core->Log(LogName::kBa, LogLevel::kInfo, buffer);
+    g_core->logging->Log(LogName::kBa, LogLevel::kInfo, buffer);
     count++;
   }
   Py_RETURN_NONE;
@@ -1325,7 +1325,7 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
                       "name_full",
                       Utils::GetValidUTF8(py_name_full->valuestring, "ggr2")
                           .c_str(),
-                      "id", id_obj->valueint),
+                      "id", id_val),
                   PythonRef::kSteal);
               // This increments ref.
               PyList_Append(py_player_list.get(), py_player.get());

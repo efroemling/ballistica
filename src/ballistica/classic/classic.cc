@@ -9,6 +9,7 @@
 #include "ballistica/classic/support/stress_test.h"
 #include "ballistica/classic/support/v1_account.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/player_spec.h"
@@ -33,7 +34,8 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_baclassic exec begin");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "_baclassic exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_classic == nullptr);
@@ -60,7 +62,8 @@ void ClassicFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_ui_v1 == nullptr);
   g_ui_v1 = ui_v1::UIV1FeatureSet::Import();
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_baclassic exec end");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "_baclassic exec end");
 }
 
 ClassicFeatureSet::ClassicFeatureSet()
@@ -157,9 +160,9 @@ auto ClassicFeatureSet::GetV1AccountLoginStateString() -> std::string {
       out = "signing_in";
       break;
     default:
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "Unknown V1LoginState '"
-                      + std::to_string(static_cast<int>(state)) + "'");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "Unknown V1LoginState '"
+                               + std::to_string(static_cast<int>(state)) + "'");
       out = "signed_out";
       break;
   }

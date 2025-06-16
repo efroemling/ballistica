@@ -17,8 +17,11 @@
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/classic/classic.h"
 #include "ballistica/classic/python/classic_python.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
@@ -146,10 +149,10 @@ void ClassicAppMode::Reset_() {
 
   // If all is well our sessions should all be dead at this point.
   if (g_scene_v1->session_count != 0) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "SceneV1 session count is non-zero ("
-                    + std::to_string(g_scene_v1->session_count)
-                    + ") on ClassicAppMode::Reset_().");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "SceneV1 session count is non-zero ("
+                             + std::to_string(g_scene_v1->session_count)
+                             + ") on ClassicAppMode::Reset_().");
   }
 
   // Reset the engine itself to a default state.
@@ -218,16 +221,17 @@ void ClassicAppMode::HostScanCycle() {
     scan_socket_ = socket(AF_INET, SOCK_DGRAM, 0);
 
     if (scan_socket_ == -1) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "Error opening scan socket: "
-                      + g_core->platform->GetSocketErrorString() + ".");
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "Error opening scan socket: "
+                               + g_core->platform->GetSocketErrorString()
+                               + ".");
       return;
     }
 
     // Since this guy lives in the logic-thread we need it to not block.
     if (!g_core->platform->SetSocketNonBlocking(scan_socket_)) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "Error setting socket non-blocking.");
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "Error setting socket non-blocking.");
       g_core->platform->CloseSocket(scan_socket_);
       scan_socket_ = -1;
       return;
@@ -242,9 +246,10 @@ void ClassicAppMode::HostScanCycle() {
     int result =
         ::bind(scan_socket_, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     if (result == 1) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "Error binding socket: "
-                      + g_core->platform->GetSocketErrorString() + ".");
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kError,
+          "Error binding socket: " + g_core->platform->GetSocketErrorString()
+              + ".");
       g_core->platform->CloseSocket(scan_socket_);
       scan_socket_ = -1;
       return;
@@ -256,9 +261,10 @@ void ClassicAppMode::HostScanCycle() {
                         sizeof(op_val));
 
     if (result != 0) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "Error enabling broadcast for scan-socket: "
-                      + g_core->platform->GetSocketErrorString() + ".");
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "Error enabling broadcast for scan-socket: "
+                               + g_core->platform->GetSocketErrorString()
+                               + ".");
       g_core->platform->CloseSocket(scan_socket_);
       scan_socket_ = -1;
       return;
@@ -290,9 +296,9 @@ void ClassicAppMode::HostScanCycle() {
         case ENETUNREACH:
           break;
         default:
-          g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                      "Error on scan-socket sendto: "
-                          + g_core->platform->GetSocketErrorString());
+          g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                               "Error on scan-socket sendto: "
+                                   + g_core->platform->GetSocketErrorString());
       }
     }
   }
@@ -314,9 +320,9 @@ void ClassicAppMode::HostScanCycle() {
         case EWOULDBLOCK:
           break;
         default:
-          g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                      "Error: recvfrom error: "
-                          + g_core->platform->GetSocketErrorString());
+          g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                               "Error: recvfrom error: "
+                                   + g_core->platform->GetSocketErrorString());
           break;
       }
       break;
@@ -373,12 +379,14 @@ void ClassicAppMode::HostScanCycle() {
             PruneScanResults_();
           }
         } else {
-          g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                      "Got invalid BA_PACKET_HOST_QUERY_RESPONSE packet");
+          g_core->logging->Log(
+              LogName::kBaNetworking, LogLevel::kError,
+              "Got invalid BA_PACKET_HOST_QUERY_RESPONSE packet");
         }
       } else {
-        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                    "Got invalid BA_PACKET_HOST_QUERY_RESPONSE packet");
+        g_core->logging->Log(
+            LogName::kBaNetworking, LogLevel::kError,
+            "Got invalid BA_PACKET_HOST_QUERY_RESPONSE packet");
       }
     }
   }
@@ -450,8 +458,9 @@ bool ClassicAppMode::HasConnectionToClients() const {
 auto ClassicAppMode::GetActiveOrWarn() -> ClassicAppMode* {
   auto* val{GetActive()};
   if (val == nullptr) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "Attempting to access ClassicAppMode while it is inactive.");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kWarning,
+        "Attempting to access ClassicAppMode while it is inactive.");
   }
   return val;
 }
@@ -631,9 +640,9 @@ void ClassicAppMode::StepDisplayTime() {
 
     // Complain when our full update takes longer than 1/60th second.
     if (duration > (1000 / 60)) {
-      g_core->Log(LogName::kBa, LogLevel::kInfo,
-                  "Logic::StepDisplayTime update took too long ("
-                      + std::to_string(duration) + " ms).");
+      g_core->logging->Log(LogName::kBa, LogLevel::kInfo,
+                           "Logic::StepDisplayTime update took too long ("
+                               + std::to_string(duration) + " ms).");
 
       // Limit these if we want (not doing so for now).
       next_long_update_report_time_ = app_time;
@@ -1188,7 +1197,7 @@ void ClassicAppMode::ChangeGameSpeed(int offs) {
     int old_speed = replay_speed_exponent();
     SetReplaySpeedExponent(replay_speed_exponent() + offs);
     if (old_speed != replay_speed_exponent()) {
-      ScreenMessage(
+      g_base->ScreenMessage(
           "{\"r\":\"watchWindow.playbackSpeedText\","
           "\"s\":[[\"${SPEED}\",\""
           + std::to_string(replay_speed_mult()) + "\"]]}");
@@ -1199,7 +1208,8 @@ void ClassicAppMode::ChangeGameSpeed(int offs) {
   if (g_buildconfig.debug_build()) {
     debug_speed_exponent_ += offs;
     debug_speed_mult_ = powf(2.0f, static_cast<float>(debug_speed_exponent_));
-    ScreenMessage("DEBUG GAME SPEED TO " + std::to_string(debug_speed_mult_));
+    g_base->ScreenMessage("DEBUG GAME SPEED TO "
+                          + std::to_string(debug_speed_mult_));
     scene_v1::Session* s = GetForegroundSession();
     if (s) {
       s->DebugSpeedMultChanged();
@@ -1247,9 +1257,9 @@ void ClassicAppMode::LocalDisplayChatMessage(
 
       // Show it on the screen if they don't have their chat window open
       // (and don't have chat muted).
-      if (!g_base->ui->PartyWindowOpen()) {
+      if (!g_base->ui->IsPartyWindowOpen()) {
         if (!chat_muted_) {
-          ScreenMessage(final_message, {0.7f, 1.0f, 0.7f});
+          g_base->ScreenMessage(final_message, {0.7f, 1.0f, 0.7f});
         }
       } else {
         // Party window is open - notify it that there's a new message.
@@ -1299,8 +1309,9 @@ void ClassicAppMode::PruneSessions_() {
         try {
           i.Clear();
         } catch (const std::exception& e) {
-          g_core->Log(LogName::kBa, LogLevel::kError,
-                      "Exception killing Session: " + std::string(e.what()));
+          g_core->logging->Log(
+              LogName::kBa, LogLevel::kError,
+              "Exception killing Session: " + std::string(e.what()));
         }
         have_dead_session = true;
       }
@@ -1487,8 +1498,8 @@ void ClassicAppMode::HandleQuitOnIdle_() {
     if (!idle_exiting_ && idle_seconds > (idle_exit_minutes_.value() * 60.0f)) {
       idle_exiting_ = true;
 
-      g_core->Log(LogName::kBa, LogLevel::kInfo,
-                  "Quitting due to reaching idle-exit-minutes.");
+      g_core->logging->Log(LogName::kBa, LogLevel::kInfo,
+                           "Quitting due to reaching idle-exit-minutes.");
       g_base->logic->event_loop()->PushCall([] { g_base->logic->Shutdown(); });
     }
   }
@@ -1546,8 +1557,8 @@ void ClassicAppMode::HandleGameQuery(const char* buffer, size_t size,
 
     BA_PRECONDITION_FATAL(!usid.empty());
     if (usid.size() > 100) {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "had to truncate session-id; shouldn't happen");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "had to truncate session-id; shouldn't happen");
       usid.resize(100);
     }
     if (usid.empty()) {

@@ -14,6 +14,8 @@
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/shared/foundation/macros.h"
 
 namespace ballistica::base {
@@ -289,8 +291,8 @@ auto JoystickInput::GetButtonName(int index) -> std::string {
 
 JoystickInput::~JoystickInput() {
   if (!g_base->InLogicThread()) {
-    g_core->Log(LogName::kBaInput, LogLevel::kError,
-                "Joystick dying in wrong thread.");
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kError,
+                         "Joystick dying in wrong thread.");
   }
 
   // Kill our child if need be.
@@ -312,8 +314,9 @@ JoystickInput::~JoystickInput() {
         [joystick] { SDL_JoystickClose(joystick); });
     sdl_joystick_ = nullptr;
 #else
-    g_core->Log(LogName::kBaInput, LogLevel::kError,
-                "sdl_joystick_ set in non-sdl-joystick build destructor.");
+    g_core->logging->Log(
+        LogName::kBaInput, LogLevel::kError,
+        "sdl_joystick_ set in non-sdl-joystick build destructor.");
 #endif  // BA_ENABLE_SDL_JOYSTICKS
   }
 }
@@ -675,20 +678,18 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
   if (e->type == SDL_JOYBUTTONDOWN) {
     if (e->jbutton.button == start_button_
         || e->jbutton.button == start_button_2_) {
-      // If there's some UI up already, we just pass this along to it.
-      // otherwise we request a main menu.
-      if (!g_base->ui->MainMenuVisible()) {
-        // If there's no menu up,
-        // tell the game to pop it up and snag menu ownership for ourself.
-        g_base->ui->PushMainMenuPressCall(this);
+      // If there's no main ui up, request one with us as owner.
+      if (!g_base->ui->IsMainUIVisible()) {
+        g_base->ui->RequestMainUI(this);
         return;
       }
     }
 
     // On our Oculus build, select presses reset the orientation.
     if (e->jbutton.button == vr_reorient_button_ && g_core->vr_mode()) {
-      ScreenMessage(g_base->assets->GetResourceString("vrOrientationResetText"),
-                    {0, 1, 0});
+      g_base->ScreenMessage(
+          g_base->assets->GetResourceString("vrOrientationResetText"),
+          {0, 1, 0});
       g_core->reset_vr_orientation = true;
       return;
     }
@@ -807,7 +808,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
     }
   }
 
-  if (would_go_to_ui && g_base->ui->GetWidgetForInput(this)) {
+  if (would_go_to_ui && g_base->ui->RequestMainUIControl(this)) {
     bool pass{};
 
     // Special case.. either joy-axis-motion or hold-position events trigger
@@ -915,7 +916,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
             // Toggle the party UI if we're pressing the party button.
             // (currently don't allow remote to do this.. need to make it
             // customizable)
-            if (g_base->ui->PartyIconVisible()
+            if (g_base->ui->IsPartyIconVisible()
                 && e->jbutton.button == pickup_button_
                 && (!IsRemoteControl())) {
               pass = false;
@@ -950,7 +951,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
 
   // If there's a UI up (even if we didn't get it) lets not pass events along.
   // The only exception is if we're doing a reset.
-  if (g_base->ui->MainMenuVisible() && !resetting_) {
+  if (g_base->ui->IsMainUIVisible() && !resetting_) {
     return;
   }
 
@@ -1232,8 +1233,8 @@ void JoystickInput::UpdateMapping() {
   auto* cl{g_base->HaveClassic() ? g_base->classic() : nullptr};
 
   if (!cl) {
-    g_core->Log(LogName::kBaInput, LogLevel::kWarning,
-                "Classic not present; can't config joystick mapping.");
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kWarning,
+                         "Classic not present; can't config joystick mapping.");
   }
 
   // If we're a child, use our parent's id to search for config values and just
@@ -1433,18 +1434,6 @@ auto JoystickInput::GetRawDeviceName() -> std::string {
     // an empty name is passed for the controller type).
     return "Unknown Input Device";
   }
-}
-
-auto JoystickInput::GetDeviceExtraDescription() -> std::string {
-  std::string s;
-
-  // (no longer being used).
-
-  return s;
-}
-
-auto JoystickInput::GetDeviceIdentifier() -> std::string {
-  return raw_sdl_joystick_identifier_;
 }
 
 auto JoystickInput::GetPartyButtonName() const -> std::string {

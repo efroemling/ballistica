@@ -6,6 +6,7 @@
 
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/core/logging/logging.h"  // IWYU pragma: keep.
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
@@ -82,7 +83,7 @@ auto PythonClassContextCall::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
   self->context_call_ = new Object::Ref<PythonContextCall>(
       Object::New<PythonContextCall>(source_obj));

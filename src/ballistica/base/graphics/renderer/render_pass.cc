@@ -9,6 +9,7 @@
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/core/core.h"
 
 // Turn this off to not draw any transparent stuff.
 #define DRAW_TRANSPARENT 1

@@ -10,6 +10,8 @@
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"
 #include "ballistica/base/graphics/support/camera.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/generic/utils.h"
@@ -274,8 +276,9 @@ void PropNode::SetBody(const std::string& val) {
   // we're ok with redundant sets, but complain/ignore if they try to switch..
   if (body_.exists()) {
     if (body_type_ != body_type || shape_ != shape) {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "body attr can not be changed from its initial value");
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kError,
+          "body attr can not be changed from its initial value");
       return;
     }
   }
@@ -436,9 +439,9 @@ void PropNode::Step() {
   if (body_type_ == BodyType::UNSET) {
     if (!reported_unset_body_type_) {
       reported_unset_body_type_ = true;
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "prop-node " + GetObjectDescription()
-                      + " did not have its 'body' attr set.");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "prop-node " + GetObjectDescription()
+                               + " did not have its 'body' attr set.");
       return;
     }
   }

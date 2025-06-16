@@ -1,13 +1,15 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/base/support/huffman.h"
+#include "ballistica/scene_v1/support/huffman.h"
 
 #include <string>
 #include <vector>
 
 #include "ballistica/base/networking/networking.h"
+#include "ballistica/shared/foundation/exception.h"
+#include "ballistica/shared/foundation/macros.h"
 
-namespace ballistica::base {
+namespace ballistica::scene_v1 {
 
 // Yes, I should clean this up to use unsigned vals, but it seems to work
 // fine for now so I don't want to touch it.
@@ -588,4 +590,4 @@ void Huffman::build() {
 
 #pragma clang diagnostic pop
 
-}  // namespace ballistica::base
+}  // namespace ballistica::scene_v1

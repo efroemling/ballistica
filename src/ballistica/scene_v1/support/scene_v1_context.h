@@ -21,21 +21,21 @@ class ContextRefSceneV1 : public base::ContextRef {
     return ContextRefSceneV1(g_base->CurrentContext().Get());
   }
 
-  /// Creates from g_app_mode->GetForegroundContext().
+  /// Creates from app_mode's GetForegroundContext().
   static auto FromAppForegroundContext() -> ContextRefSceneV1;
 
-  // If the current Context is (or is part of) a HostSession, return it;
-  // otherwise return nullptr. be aware that this will return a session if
-  // the context is *either* a host-activity or a host-session
+  /// If the current Context is (or is part of) a HostSession, return it;
+  /// otherwise return nullptr. be aware that this will return a session if
+  /// the context is *either* a host-activity or a host-session
   auto GetHostSession() const -> HostSession*;
 
-  // Return the current context as an HostActivity if it is one; otherwise
-  // nullptr (faster than a dynamic_cast)
+  /// Return the current context as an HostActivity if it is one; otherwise
+  /// nullptr (faster than a dynamic_cast)
   auto GetHostActivity() const -> HostActivity*;
 
-  // If the current context contains a scene that can be manipulated by
-  // standard commands, this returns it. This includes host-sessions,
-  // host-activities, and the UI context.
+  /// If the current context contains a scene that can be manipulated by
+  /// standard commands, this returns it. This includes host-sessions,
+  /// host-activities, and the UI context.
   auto GetMutableScene() const -> Scene*;
 };
 
@@ -50,10 +50,11 @@ class SceneV1Context : public base::Context {
 
   auto GetContextDescription() -> std::string override;
 
-  // Return the HostSession associated with this context, (if there is one).
+  /// Return the HostSession associated with this context, (if there is
+  /// one).
   virtual auto GetHostSession() -> HostSession*;
 
-  // Utility functions for casting; faster than dynamic_cast.
+  /// Utility functions for casting; faster than dynamic_cast.
   virtual auto GetAsHostActivity() -> HostActivity*;
   virtual auto GetMutableScene() -> Scene*;
 
@@ -73,10 +74,10 @@ class SceneV1Context : public base::Context {
   virtual auto GetCollisionMesh(const std::string& name)
       -> Object::Ref<SceneCollisionMesh>;
 
-  // Return the current time of a given type in milliseconds.
-  // Exceptions should be thrown for unsupported timetypes.
-  // Default implementation throws a descriptive error so can be
-  // useful to fall back on for unsupported cases
+  /// Return the current time of a given type in milliseconds. Exceptions
+  /// should be thrown for unsupported timetypes. Default implementation
+  /// throws a descriptive error so can be useful to fall back on for
+  /// unsupported cases
   virtual auto GetTime(TimeType timetype) -> millisecs_t;
 };
 

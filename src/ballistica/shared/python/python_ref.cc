@@ -31,7 +31,7 @@ static void ClearPythonExceptionAndWarnIfUnset() {
   // avoid that situation because it opens up the possibility of us clearing
   // exceptions that aren't related to our nullptr.
   if (!PyErr_Occurred()) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kWarning,
         "A PythonRef acquire/steal call was passed nullptr but no Python "
         "exception is set. This situation should be avoided; only pass "

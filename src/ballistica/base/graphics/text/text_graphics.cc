@@ -12,6 +12,7 @@
 
 #include "ballistica/base/graphics/text/font_page_map_data.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/generic/utils.h"
 

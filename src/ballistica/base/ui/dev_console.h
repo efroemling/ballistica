@@ -29,7 +29,7 @@ class DevConsole {
   auto transition_start() const -> millisecs_t { return transition_start_; }
 
   /// Toggle between mini, fullscreen, and inactive.
-  void ToggleState();
+  void CycleState(bool backwards = false);
 
   /// Tell the console to quietly go away no matter what state it is in.
   void Dismiss();
@@ -41,6 +41,7 @@ class DevConsole {
   void Print(const std::string& s_in, float scale, Vector4f color);
   void Draw(FrameDef* frame_def);
 
+  void DoApplyAppConfig();
   void StepDisplayTime();
 
   /// Called when the console should start accepting Python command input.
@@ -92,6 +93,7 @@ class DevConsole {
   void RefreshCloseButton_();
   void RefreshTabButtons_();
   void RefreshTabContents_();
+  void SaveActiveTab_();
 
   int input_history_position_{};
   int ui_lock_count_{};

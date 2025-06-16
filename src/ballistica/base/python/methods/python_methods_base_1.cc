@@ -17,9 +17,9 @@
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 #include "ballistica/shared/python/python_sys.h"
@@ -546,12 +546,13 @@ static auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds)
     // Warn the user not to use this from the logic thread since it doesnt
     // save/restore context.
     if (!suppress_warning && g_base->InLogicThread()) {
-      g_core->Log(LogName::kBa, LogLevel::kWarning,
-                  "babase.pushcall() called from the logic thread with "
-                  "from_other_thread set to true (call "
-                      + Python::ObjToString(call_obj) + " at "
-                      + Python::GetPythonFileLocation()
-                      + "). That arg should only be used from other threads.");
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kWarning,
+          "babase.pushcall() called from the logic thread with "
+          "from_other_thread set to true (call "
+              + Python::ObjToString(call_obj) + " at "
+              + Python::GetPythonFileLocation()
+              + "). That arg should only be used from other threads.");
     }
 
     assert(Python::HaveGIL());
@@ -1089,7 +1090,7 @@ static auto PyEmitLog(PyObject* self, PyObject* args, PyObject* keywds)
     fprintf(stderr, "Invalid log level to emit_log(): %s\n", levelstr);
     level = LogLevel::kInfo;
   }
-  Logging::EmitLog(name, level, timestamp, message);
+  g_core->logging->EmitLog(name, level, timestamp, message);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1123,7 +1124,7 @@ static auto PyV1CloudLog(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &message)) {
     return nullptr;
   }
-  Logging::V1CloudLog(message);
+  g_core->logging->V1CloudLog(message);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1893,34 +1894,6 @@ static PyMethodDef PyGraphicsShutdownIsCompleteDef = {
     ":meta private:\n",
 };
 
-// --------------------------- invoke_main_menu --------------------------------
-
-static auto PyInvokeMainMenu(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-
-  BA_PRECONDITION(g_base->InLogicThread());
-  if (!g_base->ui->MainMenuVisible()) {
-    g_base->ui->PushMainMenuPressCall(nullptr);
-  }
-  Py_RETURN_NONE;
-
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyInvokeMainMenuDef = {
-    "invoke_main_menu",             // name
-    (PyCFunction)PyInvokeMainMenu,  // method
-    METH_NOARGS,                    // flags
-
-    "invoke_main_menu() -> None\n"
-    "\n"
-    "High level call to bring up the main menu if it is not present.\n"
-    "\n"
-    "This is essentially the same as pressing the menu button on a\n"
-    "controller.\n"
-    "\n"
-    ":meta private:",
-};
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
@@ -1988,7 +1961,6 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyAudioShutdownIsCompleteDef,
       PyGraphicsShutdownBeginDef,
       PyGraphicsShutdownIsCompleteDef,
-      PyInvokeMainMenuDef,
   };
 }
 

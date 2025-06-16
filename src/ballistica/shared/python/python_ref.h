@@ -3,11 +3,12 @@
 #ifndef BALLISTICA_SHARED_PYTHON_PYTHON_REF_H_
 #define BALLISTICA_SHARED_PYTHON_PYTHON_REF_H_
 
+#include <cassert>
 #include <optional>
 #include <string>
 #include <vector>
 
-#include "ballistica/shared/ballistica.h"  // IWYU pragma: keep.
+#include "ballistica/shared/foundation/exception.h"
 
 namespace ballistica {
 

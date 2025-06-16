@@ -10,7 +10,9 @@
 #include <vector>
 
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/support/base_soft.h"
+#include "ballistica/shared/foundation/exception.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utf8.h"
 #include "ballistica/shared/math/random.h"
@@ -225,9 +227,10 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
         }
       }
       logged_count++;
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "GOT INVALID UTF8 SEQUENCE: (" + log_str + "); RETURNING '"
-                      + to + "'; LOC '" + loc + "'");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "GOT INVALID UTF8 SEQUENCE: (" + log_str
+                               + "); RETURNING '" + to + "'; LOC '" + loc
+                               + "'");
     }
 
   } else {
@@ -397,14 +400,10 @@ auto Utils::GetRandomNameList() -> const std::list<std::string>& {
     SetRandomNameList(std::list<std::string>(1, "DEFAULT_NAMES"));
   }
 
-  // Clion incorrectly thinks this might be null.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "NullDereferences"
   if (g_random_names_list != nullptr) {
     return *g_random_names_list;
   }
   throw Exception("random name list uninited");
-#pragma clang diagnostic pop
 }
 
 void Utils::SetRandomNameList(const std::list<std::string>& custom_names) {

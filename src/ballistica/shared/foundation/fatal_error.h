@@ -7,16 +7,17 @@
 
 namespace ballistica {
 
-class FatalError {
+class FatalErrorHandling {
  public:
   /// Complete high level level fatal error call; does both reporting and
   /// handling. ballistica::FatalError() simply calls this.
   static void DoFatalError(const std::string& message);
 
-  /// Report a fatal error to the master-server/user/etc. Note that reporting
-  /// only happens for the first invocation of this call; additional calls
-  /// are no-ops. This is because the process of tearing down the app may
-  /// trigger additional errors which are red herrings.
+  /// Report a fatal error to the master-server/user/etc. Note that
+  /// reporting only happens for the first invocation of this call;
+  /// additional calls are no-ops. This is because the process of tearing
+  /// down the app may trigger additional errors which are likely red
+  /// herrings.
   static void ReportFatalError(const std::string& message,
                                bool in_top_level_exception_handler);
 

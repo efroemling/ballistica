@@ -61,10 +61,10 @@ static PyMethodDef PyGetSimpleSoundDef = {
     ":meta private:",
 };
 
-// -------------------------- set_ui_input_device ------------------------------
+// ----------------------- set_main_ui_input_device ----------------------------
 
-static auto PySetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PySetMainUIInputDevice(PyObject* self, PyObject* args,
+                                   PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   static const char* kwlist[] = {"input_device_id", nullptr};
@@ -81,21 +81,21 @@ static auto PySetUIInputDevice(PyObject* self, PyObject* args, PyObject* keywds)
       throw Exception("Invalid input-device id.");
     }
   }
-  g_base->ui->SetUIInputDevice(device);
+  g_base->ui->SetMainUIInputDevice(device);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PySetUIInputDeviceDef = {
-    "set_ui_input_device",            // name
-    (PyCFunction)PySetUIInputDevice,  // method
-    METH_VARARGS | METH_KEYWORDS,     // flags
+static PyMethodDef PySetMainUIInputDeviceDef = {
+    "set_main_ui_input_device",           // name
+    (PyCFunction)PySetMainUIInputDevice,  // method
+    METH_VARARGS | METH_KEYWORDS,         // flags
 
-    "set_ui_input_device(input_device_id: int | None)"
+    "set_main_ui_input_device(input_device_id: int | None)"
     " -> None\n"
     "\n"
-    "Sets the input-device that currently owns the user interface.\n"
+    "Sets the input-device that currently owns the main ui.\n"
     "\n"
     ":meta private:",
 };
@@ -150,7 +150,7 @@ static auto PyGetUIScale(PyObject* self) -> PyObject* {
 
   // FIXME: Should have this return enums directly once we have an easy way
   // to share enums between Python/CPP.
-  auto scale = g_base->ui->scale();
+  auto scale = g_base->ui->uiscale();
 
   const char* val;
   switch (scale) {
@@ -319,8 +319,8 @@ static auto PySetUpSigInt(PyObject* self) -> PyObject* {
   if (g_base) {
     g_base->platform->SetupInterruptHandling();
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "setup_sigint called before g_base exists.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "setup_sigint called before g_base exists.");
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -500,7 +500,7 @@ static auto PyGetThreadName(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  return PyUnicode_FromString(CurrentThreadName().c_str());
+  return PyUnicode_FromString(g_core->CurrentThreadName().c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -949,7 +949,7 @@ static PyMethodDef PyGetLogFilePathDef = {
 // ----------------------------- is_log_full -----------------------------------
 static auto PyIsLogFull(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  if (g_core->v1_cloud_log_full) {
+  if (g_core->logging->v1_cloud_log_full()) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;
@@ -973,8 +973,8 @@ static auto PyGetV1CloudLog(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_TRY;
   std::string log_fin;
   {
-    std::scoped_lock lock(g_core->v1_cloud_log_mutex);
-    log_fin = g_core->v1_cloud_log;
+    std::scoped_lock lock(g_core->logging->v1_cloud_log_mutex());
+    log_fin = g_core->logging->v1_cloud_log();
   }
   // we want to use something with error handling here since the last
   // bit of this string could be truncated utf8 chars..
@@ -999,7 +999,7 @@ static auto PyMarkLogSent(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   // This way we won't try to send it at shutdown time and whatnot
-  g_core->did_put_v1_cloud_log = true;
+  g_core->logging->set_did_put_v1_cloud_log(true);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1988,7 +1988,9 @@ static PyMethodDef PySetDrawVirtualSafeAreaBoundsDef = {
 
 static auto PyPushBackPress(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  g_base->ui->PushBackButtonCall(nullptr);
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->ui->PushBackButtonCall(
+      g_base->input->GetFuzzyInputDeviceForMenuButton());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2001,6 +2003,30 @@ static PyMethodDef PyPushBackPressDef = {
     "push_back_press() -> None\n"
     "\n"
     ":meta private:",
+};
+
+// ---------------------------- request_main_ui --------------------------------
+
+static auto PyRequestMainUI(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->ui->RequestMainUI(nullptr);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyRequestMainUIDef = {
+    "request_main_ui",             // name
+    (PyCFunction)PyRequestMainUI,  // method
+    METH_NOARGS,                   // flags
+
+    "request_main_ui() -> None\n"
+    "\n"
+    "High level call to request a main ui if it is not already open.\n"
+    "\n"
+    "Can be called from any thread.",
 };
 
 // ---------------------------- set_app_config ---------------------------------
@@ -2031,7 +2057,7 @@ static PyMethodDef PySetAppConfigDef = {
 
 static auto PyUpdateInternalLoggerLevels(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  g_core->UpdateInternalLoggerLevels();
+  g_core->logging->UpdateInternalLoggerLevels();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2090,7 +2116,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyContainsPythonDistDef,
       PyGetIdleTimeDef,
       PyExtraHashValueDef,
-      PySetUIInputDeviceDef,
+      PySetMainUIInputDeviceDef,
       PyGetUIScaleDef,
       PySetUIScaleDef,
       PyGetThreadNameDef,
@@ -2124,6 +2150,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyOpenFileExternallyDef,
       PyGetInputIdleTimeDef,
       PyPushBackPressDef,
+      PyRequestMainUIDef,
       PyGetDrawVirtualSafeAreaBoundsDef,
       PySetDrawVirtualSafeAreaBoundsDef,
       PyGetInitialAppConfigDef,

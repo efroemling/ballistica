@@ -20,5 +20,6 @@ values = [
     app.on_native_shutdown_complete,  # kAppOnNativeShutdownCompleteCall
     app.on_native_active_changed,  # kAppOnNativeActiveChangedCall
     app.devconsole.do_refresh_tab,  # kAppDevConsoleDoRefreshTabCall
+    app.devconsole.save_tab,  # kAppDevConsoleSaveTabCall
     app.on_screen_size_change,  # kAppOnScreenSizeChangeCall
 ]

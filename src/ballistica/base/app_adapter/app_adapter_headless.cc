@@ -5,6 +5,7 @@
 
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/support/graphics_client_context.h"
+#include "ballistica/core/core.h"
 #include "ballistica/shared/ballistica.h"
 
 namespace ballistica::base {

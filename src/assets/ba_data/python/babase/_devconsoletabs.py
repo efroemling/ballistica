@@ -187,6 +187,7 @@ class Table[T]:
         margin_left_right: float = 60.0,
         debug_bounds: bool = False,
         max_columns: int | None = None,
+        focus_entry_config_key: str | None = None,
     ) -> None:
         self._title = title
         self._entry_width = entry_width
@@ -198,11 +199,18 @@ class Table[T]:
         self._entries = entries
         self._draw_entry_call = draw_entry_call
         self._max_columns = max_columns
+        self._focus_entry_config_key = focus_entry_config_key
 
         # Values updated on refresh (for aligning other custom
         # widgets/etc.)
         self.top_left: tuple[float, float] = (0.0, 0.0)
         self.top_right: tuple[float, float] = (0.0, 0.0)
+
+        # If we've got a config key, restore any value there.
+        if self._focus_entry_config_key is not None:
+            val = _babase.app.config.get(self._focus_entry_config_key)
+            if isinstance(val, int):
+                self._focus_entry_index = val
 
     def set_entries(self, entries: list[T]) -> None:
         """Update table entries."""
@@ -219,6 +227,11 @@ class Table[T]:
         This affects which page is shown at the next refresh.
         """
         self._focus_entry_index = max(0, min(len(self._entries) - 1, index))
+        if self._focus_entry_config_key is not None:
+            _babase.app.config[self._focus_entry_config_key] = (
+                self._focus_entry_index
+            )
+            _babase.app.config.commit()
 
     def refresh(self, tab: DevConsoleTab) -> None:
         """Call to refresh the data."""
@@ -391,6 +404,7 @@ class DevConsoleTabLogging(DevConsoleTab):
             entries=list[str](),
             draw_entry_call=self._draw_entry,
             max_columns=1,
+            focus_entry_config_key='Logging Levels Focus Entry',
         )
 
     @override
@@ -504,14 +518,6 @@ class DevConsoleTabLogging(DevConsoleTab):
         level = logger.level
         index = 0
         effectivelevel = logger.getEffectiveLevel()
-        # if entry != 'root' and level == logging.NOTSET:
-        #     # Show the level being inherited in NOTSET cases.
-        #     notsetlevelname = logging.getLevelName(logger.getEffectiveLevel())
-        #     if notsetlevelname == 'NOTSET':
-        #         notsetname = 'Not Set'
-        #     else:
-        #         notsetname = f'Not Set ({notsetlevelname.capitalize()})'
-        # else:
         notsetname = 'Not Set'
         tab.button(
             notsetname,
@@ -534,7 +540,6 @@ class DevConsoleTabLogging(DevConsoleTab):
                 if level == logging.DEBUG
                 else 'blue' if effectivelevel <= logging.DEBUG else 'black'
             ),
-            # style='bright' if level == logging.DEBUG else 'normal',
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.DEBUG
             ),
@@ -550,7 +555,6 @@ class DevConsoleTabLogging(DevConsoleTab):
                 if level == logging.INFO
                 else 'white' if effectivelevel <= logging.INFO else 'black'
             ),
-            # style='bright' if level == logging.INFO else 'normal',
             call=partial(self._set_entry_val, entry_index, entry, logging.INFO),
         )
         index += 1

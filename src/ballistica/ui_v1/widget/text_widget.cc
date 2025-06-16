@@ -21,6 +21,7 @@
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
@@ -275,7 +276,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       {
         auto xf = c.ScopedTransform();
         c.Translate(r - 20, b * 0.5f + t * 0.5f, 0.1f);
-        if (g_base->ui->scale() == UIScale::kSmall) {
+        if (g_base->ui->uiscale() == UIScale::kSmall) {
           c.Scale(30, 30);
         } else {
           c.Scale(25, 25);
@@ -643,8 +644,8 @@ void TextWidget::InvokeStringEditor_() {
                     .Get(UIV1Python::ObjID::kTextWidgetStringEditAdapterClass)
                     .Call(args);
   if (!result.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error invoking string edit dialog.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error invoking string edit dialog.");
     return;
   }
 
@@ -845,7 +846,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           //  we pop up a UI dialog for text input..
           if (editable()) {
             if (auto* kb = g_base->input->keyboard_input()) {
-              g_base->ui->SetUIInputDevice(kb);
+              g_base->ui->SetMainUIInputDevice(kb);
             }
           }
           GlobalSelect();

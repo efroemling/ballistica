@@ -10,6 +10,7 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/python/class/python_class_session_player.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
@@ -129,8 +130,8 @@ auto Player::GetPyTeam() -> PyObject* {
   // ever happen so currently just providing a simple error msg.
   assert(result == -1);
   PyErr_Clear();
-  g_core->Log(LogName::kBa, LogLevel::kError,
-              "Player::GetPyTeam(): error getting weakref obj.");
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       "Player::GetPyTeam(): error getting weakref obj.");
   return nullptr;
 }
 

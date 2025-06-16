@@ -5,6 +5,7 @@
 #include <string>
 
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
@@ -122,7 +123,7 @@ auto PythonClassContextRef::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
 
   auto cs = g_base->CurrentContext();

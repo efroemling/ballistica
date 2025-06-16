@@ -8,6 +8,7 @@
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
+#include "ballistica/shared/foundation/exception.h"
 
 /* DDS loader written by Jon Watte 2002 */
 /* Permission granted to use freely, as long as Jon Watte */

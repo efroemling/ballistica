@@ -7,6 +7,7 @@
 #include <string>
 
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/python/python_command.h"
 
@@ -40,9 +41,9 @@ void PythonObjectSetBase::StoreObj(int id, PyObject* pyobj) {
     // Also make sure we're not storing an object that's already been stored.
     for (auto&& i : objs_) {
       if (i.get() != nullptr && i.get() == pyobj) {
-        g_core->Log(LogName::kBa, LogLevel::kWarning,
-                    "Python::StoreObj() called twice for same ptr; id="
-                        + std::to_string(id) + ".");
+        g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                             "Python::StoreObj() called twice for same ptr; id="
+                                 + std::to_string(id) + ".");
       }
     }
   }

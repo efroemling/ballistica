@@ -7,6 +7,7 @@
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
@@ -117,8 +118,8 @@ auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
   }
   if (spec.name_.size() > 100) {
     // FIXME should perhaps clamp this in unicode space
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "account name size too long: '" + spec.name_ + "'");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "account name size too long: '" + spec.name_ + "'");
     spec.name_.resize(100);
     spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgaps3");
   }
@@ -130,8 +131,9 @@ auto PlayerSpec::GetDummyPlayerSpec(const std::string& name) -> PlayerSpec {
   spec.name_ = Utils::GetValidUTF8(name.c_str(), "bsgdps1");
   if (spec.name_.size() > 100) {
     // FIXME should perhaps clamp this in unicode space
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "dummy player spec name too long: '" + spec.name_ + "'");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "dummy player spec name too long: '" + spec.name_ + "'");
     spec.name_.resize(100);
     spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgdps2");
   }

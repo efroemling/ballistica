@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/foundation/exception.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {

@@ -23,6 +23,8 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/json.h"
@@ -320,7 +322,7 @@ void Assets::PrintLoadInfo() {
   snprintf(buffer, sizeof(buffer), "    %-50s %10s %10s", "FILE",
            "PRELOAD_TIME", "LOAD_TIME");
   s += buffer;
-  g_core->Log(LogName::kBaAssets, LogLevel::kInfo, s);
+  g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, s);
   millisecs_t total_preload_time = 0;
   millisecs_t total_load_time = 0;
   assert(asset_lists_locked_);
@@ -333,7 +335,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -346,7 +348,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -359,7 +361,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -372,7 +374,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -385,7 +387,7 @@ void Assets::PrintLoadInfo() {
              i.second->file_name_full().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
     num++;
   }
   snprintf(buffer, sizeof(buffer),
@@ -393,7 +395,7 @@ void Assets::PrintLoadInfo() {
            "(feeding data to OpenGL, etc): %i",
            static_cast<int>(total_preload_time),
            static_cast<int>(total_load_time));
-  g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+  g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
 }
 
 void Assets::MarkAllAssetsForLoad() {
@@ -1045,37 +1047,41 @@ void Assets::Prune(int level) {
   if (kShowPruningInfo) {
     assert(asset_lists_locked_);
     if (textures_.size() != old_texture_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "Textures pruned from " + std::to_string(old_texture_count)
-                      + " to " + std::to_string(textures_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "Textures pruned from "
+                               + std::to_string(old_texture_count) + " to "
+                               + std::to_string(textures_.size()));
     }
     if (text_textures_.size() != old_text_texture_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "TextTextures pruned from "
-                      + std::to_string(old_text_texture_count) + " to "
-                      + std::to_string(text_textures_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "TextTextures pruned from "
+                               + std::to_string(old_text_texture_count) + " to "
+                               + std::to_string(text_textures_.size()));
     }
     if (qr_textures_.size() != old_qr_texture_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "QrTextures pruned from "
-                      + std::to_string(old_qr_texture_count) + " to "
-                      + std::to_string(qr_textures_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "QrTextures pruned from "
+                               + std::to_string(old_qr_texture_count) + " to "
+                               + std::to_string(qr_textures_.size()));
     }
     if (meshes_.size() != old_mesh_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "Meshes pruned from " + std::to_string(old_mesh_count)
-                      + " to " + std::to_string(meshes_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "Meshes pruned from "
+                               + std::to_string(old_mesh_count) + " to "
+                               + std::to_string(meshes_.size()));
     }
     if (collision_meshes_.size() != old_collision_mesh_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "CollisionMeshes pruned from "
-                      + std::to_string(old_collision_mesh_count) + " to "
-                      + std::to_string(collision_meshes_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "CollisionMeshes pruned from "
+                               + std::to_string(old_collision_mesh_count)
+                               + " to "
+                               + std::to_string(collision_meshes_.size()));
     }
     if (sounds_.size() != old_sound_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "Sounds pruned from " + std::to_string(old_sound_count)
-                      + " to " + std::to_string(sounds_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "Sounds pruned from "
+                               + std::to_string(old_sound_count) + " to "
+                               + std::to_string(sounds_.size()));
     }
   }
 }
@@ -1182,12 +1188,12 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
 
   // We wanna fail gracefully for some types.
   if (type == FileType::kSound && name != "blank") {
-    g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "Unable to load audio: '" + name + "'.");
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+                         "Unable to load audio: '" + name + "'.");
     return FindAssetFile(type, "blank");
   } else if (type == FileType::kTexture && name != "white") {
-    g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "Unable to load texture: '" + name + "'.");
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+                         "Unable to load texture: '" + name + "'.");
     return FindAssetFile(type, "white");
   }
 
@@ -1246,8 +1252,8 @@ void Assets::AddPackage(const std::string& name, const std::string& path) {
   assert(g_base->InLogicThread());
   if (g_buildconfig.debug_build()) {
     if (packages_.find(name) != packages_.end()) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kWarning,
-                  "adding duplicate package: '" + name + "'");
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                           "adding duplicate package: '" + name + "'");
     }
   }
   packages_[name] = path;
@@ -1590,8 +1596,9 @@ auto Assets::CompileResourceString(const std::string& s, bool* valid)
 
   cJSON* root = cJSON_Parse(s.c_str());
   if (root == nullptr) {
-    g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "CompileResourceString failed; invalid json: '" + s + "'");
+    g_core->logging->Log(
+        LogName::kBaAssets, LogLevel::kError,
+        "CompileResourceString failed; invalid json: '" + s + "'");
     *valid = false;
     return "";
   }
@@ -1600,9 +1607,9 @@ auto Assets::CompileResourceString(const std::string& s, bool* valid)
     result = DoCompileResourceString(root);
     *valid = true;
   } catch (const std::exception& e) {
-    g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "CompileResourceString failed: " + std::string(e.what())
-                    + "; str='" + s + "'");
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+                         "CompileResourceString failed: "
+                             + std::string(e.what()) + "; str='" + s + "'");
     result = "<error>";
     *valid = false;
   }

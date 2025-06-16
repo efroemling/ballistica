@@ -114,6 +114,7 @@ class BasePython {
     kDevConsoleStringEditAdapterClass,
     kGetDevConsoleTabNamesCall,
     kAppDevConsoleDoRefreshTabCall,
+    kAppDevConsoleSaveTabCall,
     kUnsupportedControllerMessageCall,
     kGetV2AccountIdCall,
     kAppOnNativeActiveChangedCall,

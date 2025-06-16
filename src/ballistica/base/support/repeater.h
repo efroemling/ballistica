@@ -10,8 +10,8 @@
 namespace ballistica::base {
 
 /// Runs some code immediately and then repeatedly after a delay. Useful for
-/// jobs such as selecting ui elements while keys or buttons are held.
-/// Uses display-time so emphasizes visual smoothness over accuracy.
+/// jobs such as selecting ui elements while keys or buttons are held. Uses
+/// display-time so emphasizes visual smoothness over accuracy.
 class Repeater : public Object {
  public:
   template <typename F>

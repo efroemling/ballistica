@@ -17,6 +17,8 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/support/client_session_net.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
@@ -50,11 +52,12 @@ ConnectionToHost::~ConnectionToHost() {
         s = g_base->assets->GetResourceString("leftPartyText");
         Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
       }
-      ScreenMessage(s, {1, 0.5f, 0.0f});
+      g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
       g_base->audio->SafePlaySysSound(base::SysSoundID::kCorkPop);
     } else {
-      ScreenMessage(g_base->assets->GetResourceString("connectionRejectedText"),
-                    {1, 0, 0});
+      g_base->ScreenMessage(
+          g_base->assets->GetResourceString("connectionRejectedText"),
+          {1, 0, 0});
     }
   }
 }
@@ -253,8 +256,9 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
               g_base->python->GetRawConfigValue("Player Profiles");
           PythonRef empty_dict;
           if (!profiles) {
-            g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                        "No profiles found; sending empty list to host");
+            g_core->logging->Log(
+                LogName::kBaNetworking, LogLevel::kError,
+                "No profiles found; sending empty list to host");
             empty_dict.Steal(PyDict_New());
             profiles = empty_dict.get();
           }
@@ -268,8 +272,8 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
                     .Get(core::CorePython::ObjID::kJsonDumpsCall)
                     .Call(args, keywds);
             if (!results.exists()) {
-              g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                          "Error getting json dump of local profiles");
+              g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                                   "Error getting json dump of local profiles");
             } else {
               try {
                 // Pull the string as utf8 and send.
@@ -279,7 +283,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
                 memcpy(&(msg[1]), &s[0], s.size());
                 SendReliableMessage(msg);
               } catch (const std::exception& e) {
-                g_core->Log(
+                g_core->logging->Log(
                     LogName::kBaNetworking, LogLevel::kError,
                     std::string("Error sending player profiles to host: ")
                         + e.what());
@@ -287,8 +291,9 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
             }
           }
         } else {
-          g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                      "Connected to old protocol; can't send player profiles");
+          g_core->logging->Log(
+              LogName::kBaNetworking, LogLevel::kError,
+              "Connected to old protocol; can't send player profiles");
         }
       }
       break;
@@ -315,8 +320,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
   assert(g_base->InLogicThread());
 
   if (buffer.empty()) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "Got invalid HandleMessagePacket");
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "Got invalid HandleMessagePacket");
     return;
   }
 
@@ -414,7 +419,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                   }
                   if (cJSON_IsString(m_obj)) {
                     m = m_obj->valuestring;
-                    ScreenMessage(m, {r, g, b});
+                    g_base->ScreenMessage(m, {r, g, b});
                   }
                   break;
                 }
@@ -438,7 +443,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
             g_base->assets->GetResourceString("playerJoinedPartyText");
         Utils::StringReplaceOne(
             &s, "${NAME}", PlayerSpec(str_buffer.data()).GetDisplayString());
-        ScreenMessage(s, {0.5f, 1.0f, 0.5f});
+        g_base->ScreenMessage(s, {0.5f, 1.0f, 0.5f});
         g_base->audio->SafePlaySysSound(base::SysSoundID::kGunCock);
       }
       break;
@@ -454,7 +459,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
             g_base->assets->GetResourceString("playerLeftPartyText");
         Utils::StringReplaceOne(
             &s, "${NAME}", PlayerSpec(&(str_buffer[0])).GetDisplayString());
-        ScreenMessage(s, {1, 0.5f, 0.0f});
+        g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
         g_base->audio->SafePlaySysSound(base::SysSoundID::kCorkPop);
       }
       break;
@@ -463,8 +468,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     case BA_MESSAGE_ATTACH_REMOTE_PLAYER_2: {
       // New-style packet which includes a 32-bit player_id.
       if (buffer.size() != 6) {
-        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                    "Invalid attach-remote-player-2 msg");
+        g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                             "Invalid attach-remote-player-2 msg");
         break;
       }
 
@@ -481,7 +486,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
           delegate->AttachToRemotePlayer(this,
                                          static_cast_check_fit<int>(player_id));
         } else {
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBaNetworking, LogLevel::kError,
               "InputDevice does not have a SceneV1 delegate as expected "
               "(loc1).");
@@ -501,8 +506,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         // public servers.
         // TODO(ericf): can remove this once back-compat-protocol > 29.
         if (buffer.size() != 3) {
-          g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                      "Invalid attach-remote-player msg.");
+          g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                               "Invalid attach-remote-player msg.");
           break;
         }
 
@@ -516,7 +521,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                   &input_device->delegate())) {
             delegate->AttachToRemotePlayer(this, buffer[2]);
           } else {
-            g_core->Log(
+            g_core->logging->Log(
                 LogName::kBaNetworking, LogLevel::kError,
                 "InputDevice does not have a SceneV1 delegate as expected "
                 "(loc2).");
@@ -535,8 +540,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
 
     case BA_MESSAGE_DETACH_REMOTE_PLAYER: {
       if (buffer.size() != 2) {
-        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                    "Invalid detach-remote-player msg");
+        g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                             "Invalid detach-remote-player msg");
         break;
       }
       // Server is telling us that our local input device is no longer
@@ -560,7 +565,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
             // be cleared out at this point. Just complain if that's not
             // the case.
             if (connection_to_host != nullptr) {
-              g_core->Log(
+              g_core->logging->Log(
                   LogName::kBaNetworking, LogLevel::kError,
                   "InputDevice does not have a SceneV1 delegate as expected "
                   "(loc3).");
@@ -600,7 +605,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
       s = g_base->assets->GetResourceString("connectedToPartyText");
       Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
     }
-    ScreenMessage(s, {0.5f, 1, 0.5f});
+    g_base->ScreenMessage(s, {0.5f, 1, 0.5f});
     g_base->audio->SafePlaySysSound(base::SysSoundID::kGunCock);
 
     printed_connect_message_ = true;

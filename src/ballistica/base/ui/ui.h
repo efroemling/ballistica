@@ -11,11 +11,6 @@
 #include "ballistica/base/ui/widget_message.h"
 #include "ballistica/shared/math/vector4f.h"
 
-// Predeclare a few things from ui_v1.
-namespace ballistica::ui_v1 {
-class Widget;
-}
-
 namespace ballistica::base {
 
 /// Delay before moving through elements in the UI when a key/button/stick
@@ -55,12 +50,39 @@ class UI {
   /// browser). Can be called from any thread.
   void ShowURL(const std::string& url);
 
-  /// Return whether there is UI present in either the main or overlay
-  /// stacks. Generally this implies the focus should be on the UI.
-  auto MainMenuVisible() const -> bool;
+  /// Return whether a 'main ui' is visible. A 'main ui' is one that
+  /// consumes full user attention and input focus. Common examples are main
+  /// menu screens to get into a game or a menu brought up within a game
+  /// allowing exiting or tweaking settings.
+  auto IsMainUIVisible() const -> bool;
 
-  auto PartyIconVisible() -> bool;
-  auto PartyWindowOpen() -> bool;
+  /// Request invocation a main ui on the behalf of the provided device (or
+  /// nullptr if none). Must be called from the logic thread. May have no
+  /// effect depending on conditions such as a main ui already being
+  /// present.
+  void RequestMainUI(InputDevice* device);
+
+  /// Similar to RequestMainUI(), except that, if there is already a main ui
+  /// present, instead sends a cancel event. Appropriate to use for
+  /// menu/back/escape buttons/keys.
+  void PushBackButtonCall(InputDevice* input_device);
+
+  /// Request control of the main ui on behalf of the provided device.
+  /// Returns false if there is no main ui or if another device currently
+  /// controls it. Devices should only send ui related input after a true
+  /// result from this call. This call may result in on-screen messages that
+  /// the UI is currently owned by some other device, so only call it when
+  /// actively preparing to send some input.
+  auto RequestMainUIControl(InputDevice* input_device) -> bool;
+
+  /// Set the device controlling the main ui.
+  void SetMainUIInputDevice(InputDevice* input_device);
+
+  /// Return the device that currently owns the ui, or nullptr if none does.
+  auto GetMainUIInputDevice() const -> InputDevice*;
+
+  auto IsPartyIconVisible() -> bool;
+  auto IsPartyWindowOpen() -> bool;
   void ActivatePartyIcon();
 
   /// Set persistent squad size label; will be provided to current and
@@ -89,45 +111,27 @@ class UI {
 
   auto InUIOperation() -> bool;
 
-  /// Return the widget an input-device should send commands to, if any.
-  /// Potentially assigns UI control to the provide device, so only call
-  /// this if you intend on actually sending a message to that widget.
-  auto GetWidgetForInput(InputDevice* input_device) -> ui_v1::Widget*;
-
   /// Send a message to the active widget. This is a high level call that
   /// should only be used by top level event handling/etc.
   auto SendWidgetMessage(const WidgetMessage& msg) -> bool;
 
-  /// Set the device controlling the UI.
-  void SetUIInputDevice(InputDevice* input_device);
-
-  /// Return the input-device that currently owns the UI; otherwise nullptr.
-  auto GetUIInputDevice() const -> InputDevice*;
-
   /// Return true if there is a full desktop-style hardware keyboard
-  /// attached and no non-keyboard device is currently controlling the UI. This
-  /// also may take language or user preferences into account. Editable text
-  /// elements can use this to opt in to accepting key events directly
-  /// instead of popping up string edit dialogs.
+  /// attached and no non-keyboard device is currently controlling a main
+  /// ui. This may also take language or user preferences into account.
+  /// Editable text elements can use this to opt in to accepting key events
+  /// directly instead of popping up string edit dialogs.
   auto UIHasDirectKeyboardInput() const -> bool;
-
-  /// Schedule a back button press. Can be called from any thread.
-  void PushBackButtonCall(InputDevice* input_device);
 
   /// Return whether currently selected widgets should flash. This will be
   /// false in some situations such as when only touch screen control is
   /// present.
   auto ShouldHighlightWidgets() const -> bool;
 
-  /// Get overall ui scale for the app.
-  auto scale() const { return scale_; }
+  /// Current overall ui scale for the app.
+  auto uiscale() const { return uiscale_; }
 
   /// Set overall ui scale for the app.
-  void SetScale(UIScale val);
-
-  /// Push a generic 'menu press' event, optionally associated with an input
-  /// device (nullptr to specify none). Can be called from any thread.
-  void PushMainMenuPressCall(InputDevice* device);
+  void SetUIScale(UIScale val);
 
   auto* dev_console() const { return dev_console_; }
 
@@ -153,22 +157,22 @@ class UI {
   };
 
  private:
-  void MainMenuPress_(InputDevice* device);
+  void RequestMainUI_(InputDevice* device);
   auto DevConsoleButtonSize_() const -> float;
   auto InDevConsoleButton_(float x, float y) const -> bool;
   void DrawDevConsoleButton_(FrameDef* frame_def);
 
   Object::Ref<TextGroup> dev_console_button_txt_;
-  Object::WeakRef<InputDevice> ui_input_device_;
+  Object::WeakRef<InputDevice> main_ui_input_device_;
   std::string account_state_name_;
   OperationContext* operation_context_{};
   base::UIDelegateInterface* delegate_{};
   DevConsole* dev_console_{};
   std::list<std::tuple<std::string, float, Vector4f>>
       dev_console_startup_messages_;
-  millisecs_t last_input_device_use_time_{};
+  millisecs_t last_main_ui_input_device_use_time_{};
   millisecs_t last_widget_input_reject_err_sound_time_{};
-  UIScale scale_{UIScale::kLarge};
+  UIScale uiscale_{UIScale::kLarge};
   int squad_size_label_{};
   bool account_state_signed_in_{};
   bool force_scale_{};

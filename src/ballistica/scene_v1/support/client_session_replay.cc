@@ -10,12 +10,13 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/networking/networking.h"
-#include "ballistica/base/support/huffman.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
+#include "ballistica/scene_v1/support/huffman.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/math/vector3f.h"
 
@@ -70,17 +71,17 @@ void ClientSessionReplay::OnClientConnected(ConnectionToClient* c) {
   // sanity check - abort if its on either of our lists already
   for (ConnectionToClient* i : connections_to_clients_) {
     if (i == c) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "ReplayClientSession::OnClientConnected()"
-                  " got duplicate connection");
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "ReplayClientSession::OnClientConnected()"
+                           " got duplicate connection");
       return;
     }
   }
   for (ConnectionToClient* i : connections_to_clients_ignored_) {
     if (i == c) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "ReplayClientSession::OnClientConnected()"
-                  " got duplicate connection");
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "ReplayClientSession::OnClientConnected()"
+                           " got duplicate connection");
       return;
     }
   }
@@ -140,9 +141,9 @@ void ClientSessionReplay::OnClientDisconnected(ConnectionToClient* c) {
       return;
     }
   }
-  g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-              "ReplayClientSession::OnClientDisconnected()"
-              " called for connection not on lists");
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                       "ReplayClientSession::OnClientDisconnected()"
+                       " called for connection not on lists");
 }
 
 void ClientSessionReplay::FetchMessages() {
@@ -225,7 +226,7 @@ void ClientSessionReplay::FetchMessages() {
       return;
     }
     std::vector<uint8_t> data_decompressed =
-        g_base->huffman->decompress(buffer);
+        g_scene_v1->huffman->decompress(buffer);
     HandleSessionMessage(data_decompressed);
 
     // Also send it to all client-connections we're attached to.
@@ -242,8 +243,8 @@ void ClientSessionReplay::FetchMessages() {
 void ClientSessionReplay::Error(const std::string& description) {
   // Close the replay, announce something went wrong with it, and then do
   // standard error response..
-  ScreenMessage(g_base->assets->GetResourceString("replayReadErrorText"),
-                {1, 0, 0});
+  g_base->ScreenMessage(
+      g_base->assets->GetResourceString("replayReadErrorText"), {1, 0, 0});
   if (file_) {
     fclose(file_);
     file_ = nullptr;
@@ -295,8 +296,9 @@ void ClientSessionReplay::OnReset(bool rewind) {
       return;
     }
     if (version > kProtocolVersionMax || version < kProtocolVersionClientMin) {
-      ScreenMessage(g_base->assets->GetResourceString("replayVersionErrorText"),
-                    {1, 0, 0});
+      g_base->ScreenMessage(
+          g_base->assets->GetResourceString("replayVersionErrorText"),
+          {1, 0, 0});
       End();
       return;
     }

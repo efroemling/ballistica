@@ -1,5 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
+#include "ballistica/shared/foundation/exception.h"
 #if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS
 #include "ballistica/core/platform/apple/core_platform_apple.h"
 

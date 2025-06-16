@@ -7,10 +7,11 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/base/networking/networking.h"
-#include "ballistica/base/support/huffman.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/scene_v1.h"
+#include "ballistica/scene_v1/support/huffman.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/math/vector3f.h"
 
@@ -154,7 +155,7 @@ void Connection::HandleResends(millisecs_t real_time,
 void Connection::HandleGamePacketCompressed(const std::vector<uint8_t>& data) {
   std::vector<uint8_t> data_decompressed;
   try {
-    data_decompressed = g_base->huffman->decompress(data);
+    data_decompressed = g_scene_v1->huffman->decompress(data);
   } catch (const std::exception& e) {
     // Allow a few of these through just in case it is a fluke, but kill the
     // connection after that to stop attacks based on this.
@@ -196,8 +197,8 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
 
       // Expect 1 byte type, 2 byte num, 3 byte acks, at least 1 byte payload.
       if (data.size() < 7) {
-        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                    "Got invalid BA_PACKET_STATE packet.");
+        g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                             "Got invalid BA_PACKET_STATE packet.");
         return;
       }
       uint16_t num;
@@ -228,8 +229,8 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
       // Expect 1 byte type, 2 byte num, 2 byte unreliable-num, 3 byte acks,
       // at least 1 byte payload.
       if (data.size() < 9) {
-        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                    "Got invalid BA_PACKET_STATE_UNRELIABLE packet.");
+        g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                             "Got invalid BA_PACKET_STATE_UNRELIABLE packet.");
         return;
       }
       uint16_t num, num_unreliable;
@@ -250,9 +251,9 @@ void Connection::HandleGamePacket(const std::vector<uint8_t>& data) {
     }
 
     default:
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "Connection got unknown packet type: "
-                      + std::to_string(static_cast<int>(data[0])));
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "Connection got unknown packet type: "
+                               + std::to_string(static_cast<int>(data[0])));
       break;
   }
 }
@@ -264,7 +265,7 @@ void Connection::Error(const std::string& msg) {
   }
   errored_ = true;
   if (!msg.empty()) {
-    ScreenMessage(msg, {1.0f, 0.0, 0.0f});
+    g_base->ScreenMessage(msg, {1.0f, 0.0, 0.0f});
   }
 }
 
@@ -447,8 +448,8 @@ void Connection::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         multipart_buffer_.resize(old_size + (buffer.size() - 1));
         memcpy(&(multipart_buffer_[old_size]), &(buffer[1]), buffer.size() - 1);
       } else {
-        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                    "got invalid BA_MESSAGE_MULTIPART");
+        g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                             "got invalid BA_MESSAGE_MULTIPART");
       }
       if (buffer[0] == BA_MESSAGE_MULTIPART_END) {
         if (multipart_buffer_[0] == BA_MESSAGE_MULTIPART) {
@@ -509,7 +510,7 @@ void Connection::SendGamePacket(const std::vector<uint8_t>& data) {
   bytes_out_ += data.size();
 
   // We huffman-compress gamepackets on their way out.
-  std::vector<uint8_t> data_compressed = g_base->huffman->compress(data);
+  std::vector<uint8_t> data_compressed = g_scene_v1->huffman->compress(data);
 
 #if kTestPacketDrops
   if (rand() % 100 < kTestPacketDropPercent) {  // NOLINT

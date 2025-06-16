@@ -177,16 +177,16 @@ def on_main_thread_start_app() -> None:
 
 
 def _pycache_upkeep() -> None:
-    from babase._logging import applog
+    from babase._logging import cachelog
 
     starttime = time.monotonic()
     try:
         _do_pycache_upkeep()
     except Exception:
-        applog.exception('Error upkeeping pycs')
+        cachelog.exception('Error in pycache upkeep.')
 
     duration = time.monotonic() - starttime
-    applog.debug('Completed pycache upkeep in %.3fs.', duration)
+    cachelog.info('Pycache upkeep completed in %.3fs.', duration)
 
 
 def _do_pycache_upkeep() -> None:
@@ -200,7 +200,7 @@ def _do_pycache_upkeep() -> None:
     from efro.util import prune_empty_dirs
 
     import _babase
-    from babase._logging import applog
+    from babase._logging import cachelog
 
     env = _babase.app.env
 
@@ -227,14 +227,16 @@ def _do_pycache_upkeep() -> None:
     }
 
     # We do lots of stuff and if everything spits an error it's gonna
-    # get messy, so let's only report the first thing that goes wrong.
+    # get messy, so let's only warn on the first thing that goes wrong
+    # (the rest can be debug messages).
     complained = False
 
     def complain(msg: str) -> None:
         nonlocal complained
         if complained:
+            cachelog.debug('(repeat) Error updating pycache dir: %s', msg)
             return
-        applog.warning('Error updating pycache dir: %s', msg)
+        cachelog.warning('Error updating pycache dir: %s', msg)
 
     def should_abort() -> bool:
         appstate = _babase.app.state
@@ -263,6 +265,9 @@ def _do_pycache_upkeep() -> None:
                 entries[dstpath] = (srcpath, srcmodtime)
 
                 if should_abort():
+                    cachelog.debug(
+                        'Aborting pycache update early due to app shutdown.'
+                    )
                     return
 
     pycdir = os.path.join(env.cache_directory, 'pyc')
@@ -297,6 +302,9 @@ def _do_pycache_upkeep() -> None:
                 )
             ):
                 try:
+                    cachelog.debug(
+                        'pycache-upkeep: pruning file \'%s\'.', fullpath
+                    )
                     os.unlink(fullpath)
                 except Exception as exc:
                     complain(f'Failed to delete file "{fullpath}": {exc}')
@@ -313,6 +321,7 @@ def _do_pycache_upkeep() -> None:
     for dstpath, (srcpath, srcmtime) in entries.items():
         if not os.path.exists(dstpath) or srcmtime > os.path.getmtime(dstpath):
             try:
+                cachelog.debug('pycache-upkeep: precompiling \'%s\'.', srcpath)
                 py_compile.compile(srcpath, doraise=True)
             except Exception as exc:
                 # The first time a compile fails, let's pause and see if
@@ -329,6 +338,9 @@ def _do_pycache_upkeep() -> None:
                         assert complained
 
             if should_abort():
+                cachelog.debug(
+                    'Aborting pycache update early due to app shutdown.'
+                )
                 return
 
 

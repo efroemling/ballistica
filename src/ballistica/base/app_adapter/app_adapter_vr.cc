@@ -7,6 +7,8 @@
 #include "ballistica/base/graphics/graphics_vr.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
@@ -52,8 +54,8 @@ void AppAdapterVR::VRPreDraw() {
   assert(g_base->app_adapter->InGraphicsContext());
   // FIXME - this is internal graphics-server details that the render-server
   // should handle.
-  g_core->Log(LogName::kBaGraphics, LogLevel::kWarning,
-              "FIXME: Have GraphicsServer handle VR drawing.");
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kWarning,
+                       "FIXME: Have GraphicsServer handle VR drawing.");
   // if (FrameDef* frame_def = g_base->graphics_server->GetRenderFrameDef()) {
   //   // Note: this could be part of PreprocessRenderFrameDef but the non-vr
   //   // path needs it to be separate since preprocess doesn't happen
@@ -76,8 +78,8 @@ void AppAdapterVR::VRPostDraw() {
     g_base->graphics_server->FinishRenderFrameDef(vr_render_frame_def_);
     vr_render_frame_def_ = nullptr;
   }
-  g_core->Log(LogName::kBaGraphics, LogLevel::kWarning,
-              "WOULD RUN RENDER UPKEEP CYCLE");
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kWarning,
+                       "WOULD RUN RENDER UPKEEP CYCLE");
   // RunRenderUpkeepCycle();
 }
 

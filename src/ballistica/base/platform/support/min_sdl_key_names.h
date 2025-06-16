@@ -6,6 +6,7 @@
 #include <string>  // IWYU pragma: keep.
 
 #include "ballistica/base/input/device/keyboard_input.h"  // IWYU pragma: keep.
+#include "ballistica/core/logging/logging_macros.h"       // IWYU pragma: keep.
 
 namespace ballistica::base {
 

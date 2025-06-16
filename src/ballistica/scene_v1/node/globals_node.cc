@@ -12,6 +12,8 @@
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_activity.h"
@@ -113,9 +115,10 @@ GlobalsNode::GlobalsNode(Scene* scene) : Node(scene, node_type) {
   // FIXME: Need to update this for non-host activities at some point.
   if (HostActivity* ha = context_ref().GetHostActivity()) {
     if (ha->globals_node()) {
-      g_core->Log(LogName::kBa, LogLevel::kWarning,
-                  "More than one globals node created in HostActivity; this "
-                  "shouldn't happen");
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kWarning,
+          "More than one globals node created in HostActivity; this "
+          "shouldn't happen");
     }
     ha->SetGlobalsNode(this);
 

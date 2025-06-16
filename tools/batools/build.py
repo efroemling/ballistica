@@ -145,7 +145,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             srcpaths=[
                 'Makefile',
                 'src/meta',
-                'src/ballistica/shared/foundation/types.h',
+                'src/ballistica/shared/ballistica.h',
                 '.efrocachemap',
             ],
             # Our meta Makefile targets generally don't list tools

@@ -234,7 +234,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
          "}";
 
     if (flags & SHD_DEBUG_PRINT) {
-      g_core->Log(LogName::kBaGraphics, LogLevel::kInfo,
+      g_core->logging->Log(LogName::kBaGraphics, LogLevel::kInfo,
           "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     }
 
@@ -383,7 +383,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT) {
-      g_core->Log(LogName::kBaGraphics, LogLevel::kInfo,
+      g_core->logging->Log(LogName::kBaGraphics, LogLevel::kInfo,
           "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     }
 

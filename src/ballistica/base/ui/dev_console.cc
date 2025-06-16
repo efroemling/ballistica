@@ -19,6 +19,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
@@ -100,8 +101,8 @@ static auto DevButtonStyleFromStr_(const char* strval) {
     return DevButtonStyle_::kBlackBright;
   }
 
-  g_core->Log(LogName::kBa, LogLevel::kError,
-              std::string("Invalid button-style: ") + strval);
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       std::string("Invalid button-style: ") + strval);
   return DevButtonStyle_::kNormal;
 }
 
@@ -605,6 +606,16 @@ DevConsole::DevConsole() {
   prompt_text_group_.SetText(">");
 }
 
+void DevConsole::DoApplyAppConfig() {
+  assert(g_base->InLogicThread());
+
+  // Read our active tab from app-config only if we don't have one set.
+  if (active_tab_.empty()) {
+    active_tab_ =
+        g_base->app_config->Resolve(AppConfig::StringID::kDevConsoleActiveTab);
+  }
+}
+
 void DevConsole::OnUIScaleChanged() {
   g_base->logic->event_loop()->PushCall([this] {
     RefreshCloseButton_();
@@ -668,10 +679,20 @@ void DevConsole::RefreshTabButtons_() {
             RefreshCloseButton_();
             RefreshTabButtons_();
             RefreshTabContents_();
+            SaveActiveTab_();
           });
         }));
     x += bwidth;
   }
+}
+
+void DevConsole::SaveActiveTab_() {
+  assert(g_base->InLogicThread());
+
+  PythonRef args(Py_BuildValue("(s)", active_tab_.c_str()), PythonRef::kSteal);
+  g_base->python->objs()
+      .Get(BasePython::ObjID::kAppDevConsoleSaveTabCall)
+      .Call(args);
 }
 
 void DevConsole::RefreshTabContents_() {
@@ -850,8 +871,8 @@ void DevConsole::InvokeStringEditor_() {
                     .Get(BasePython::ObjID::kDevConsoleStringEditAdapterClass)
                     .Call();
   if (!result.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error invoking string edit dialog.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error invoking string edit dialog.");
     return;
   }
 
@@ -1217,8 +1238,8 @@ void DevConsole::CopyHistory() {
 void DevConsole::Exec() {
   BA_PRECONDITION(g_base->InLogicThread());
   if (!input_enabled_) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "Console input is not allowed yet.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "Console input is not allowed yet.");
     return;
   }
   input_history_position_ = 0;
@@ -1282,12 +1303,27 @@ void DevConsole::Dismiss() {
   transition_start_ = g_base->logic->display_time();
 }
 
-void DevConsole::ToggleState() {
+void DevConsole::CycleState(bool backwards) {
   assert(g_base->InLogicThread());
   state_prev_ = state_;
+
+  // Set our new state.
   switch (state_) {
     case State_::kInactive:
-      state_ = State_::kMini;
+      state_ = backwards ? State_::kFull : State_::kMini;
+      break;
+    case State_::kMini:
+      state_ = backwards ? State_::kInactive : State_::kFull;
+      break;
+    case State_::kFull:
+      state_ = backwards ? State_::kMini : State_::kInactive;
+      break;
+  }
+
+  if (state_ == State_::kMini || state_ == State_::kFull) {
+    if (state_prev_ == State_::kInactive) {
+      // Was inactive; refresh everything.
+      //
       // Can't muck with UI from code (potentially) called while iterating
       // through UI. So defer it.
       g_base->logic->event_loop()->PushCall([this] {
@@ -1295,16 +1331,13 @@ void DevConsole::ToggleState() {
         RefreshTabButtons_();
         RefreshTabContents_();
       });
-      break;
-    case State_::kMini:
-      state_ = State_::kFull;
+    } else {
+      // Was already active; just refresh tab contents.
+      //
       // Can't muck with UI from code (potentially) called while iterating
       // through UI. So defer it.
       g_base->logic->event_loop()->PushCall([this] { RefreshTabContents_(); });
-      break;
-    case State_::kFull:
-      state_ = State_::kInactive;
-      break;
+    }
   }
   g_base->audio->SafePlaySysSound(SysSoundID::kBlip);
   transition_start_ = g_base->logic->display_time();
@@ -1611,7 +1644,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
 }
 
 auto DevConsole::BaseScale() const -> float {
-  switch (g_base->ui->scale()) {
+  switch (g_base->ui->uiscale()) {
     case UIScale::kLarge:
       return 1.5f;
     case UIScale::kMedium:
@@ -1668,8 +1701,8 @@ auto DevConsole::PasteFromClipboard() -> bool {
 
           if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
             g_base->audio->SafePlaySysSound(SysSoundID::kErrorBeep);
-            ScreenMessage("Can only paste single lines of text.",
-                          Vector3f(1.0f, 0.0f, 0.0f));
+            g_base->ScreenMessage("Can only paste single lines of text.",
+                                  Vector3f(1.0f, 0.0f, 0.0f));
           } else {
             HandleTextEditing(text);
           }

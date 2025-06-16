@@ -8,6 +8,7 @@
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/shared/generic/runnable.h"
 
@@ -80,8 +81,8 @@ auto SceneV1Context::NewTimer(TimeType timetype, TimerMedium length,
 void SceneV1Context::DeleteTimer(TimeType timetype, int timer_id) {
   // We throw on NewTimer; lets just ignore anything that comes
   // through here to avoid messing up destructors.
-  g_core->Log(LogName::kBa, LogLevel::kError,
-              "ContextTarget::DeleteTimer() called; unexpected.");
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       "ContextTarget::DeleteTimer() called; unexpected.");
 }
 
 auto SceneV1Context::GetTime(TimeType timetype) -> millisecs_t {

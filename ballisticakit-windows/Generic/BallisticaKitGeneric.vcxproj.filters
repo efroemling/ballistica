@@ -748,12 +748,6 @@
     <ClInclude Include="..\..\src\ballistica\base\support\display_timer.h">
       <Filter>ballistica\base\support</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\support\huffman.cc">
-      <Filter>ballistica\base\support</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\support\huffman.h">
-      <Filter>ballistica\base\support</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\base\support\plus_soft.h">
       <Filter>ballistica\base\support</Filter>
     </ClInclude>
@@ -828,6 +822,15 @@
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\core\core.h">
       <Filter>ballistica\core</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\core\logging\logging.cc">
+      <Filter>ballistica\core\logging</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\core\logging\logging.h">
+      <Filter>ballistica\core\logging</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\core\logging\logging_macros.h">
+      <Filter>ballistica\core\logging</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\core\platform\apple\core_platform_apple.cc">
       <Filter>ballistica\core\platform\apple</Filter>
@@ -1375,6 +1378,12 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\host_session.h">
       <Filter>ballistica\scene_v1\support</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\huffman.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\huffman.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\player.cc">
       <Filter>ballistica\scene_v1\support</Filter>
     </ClCompile>
@@ -1385,6 +1394,12 @@
       <Filter>ballistica\scene_v1\support</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\player_spec.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\replay_writer.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\replay_writer.h">
       <Filter>ballistica\scene_v1\support</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\scene.cc">
@@ -1465,15 +1480,6 @@
     <ClCompile Include="..\..\src\ballistica\shared\foundation\inline.cc">
       <Filter>ballistica\shared\foundation</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\shared\foundation\inline.h">
-      <Filter>ballistica\shared\foundation</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\shared\foundation\logging.cc">
-      <Filter>ballistica\shared\foundation</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\shared\foundation\logging.h">
-      <Filter>ballistica\shared\foundation</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\shared\foundation\macros.cc">
       <Filter>ballistica\shared\foundation</Filter>
     </ClCompile>
@@ -1484,9 +1490,6 @@
       <Filter>ballistica\shared\foundation</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\shared\foundation\object.h">
-      <Filter>ballistica\shared\foundation</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\shared\foundation\types.h">
       <Filter>ballistica\shared\foundation</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\shared\generic\base64.cc">
@@ -2029,6 +2032,7 @@
     <Filter Include="ballistica\classic\python\methods" />
     <Filter Include="ballistica\classic\support" />
     <Filter Include="ballistica\core" />
+    <Filter Include="ballistica\core\logging" />
     <Filter Include="ballistica\core\platform" />
     <Filter Include="ballistica\core\platform\apple" />
     <Filter Include="ballistica\core\platform\linux" />

@@ -49,7 +49,7 @@ class UIV1Python {
     kRootUIBackButtonPressCall,
     kRootUISquadButtonPressCall,
     kQuitWindowCall,
-    kDeviceMenuPressCall,
+    kRequestMainUICall,
     kShowURLWindowCall,
     kDoubleTransitionOutWarningCall,
     kTextWidgetStringEditAdapterClass,

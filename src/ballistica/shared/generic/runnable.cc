@@ -5,6 +5,7 @@
 #include <string>
 
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica {
@@ -25,7 +26,7 @@ void Runnable::RunAndLogErrors() {
     } else {
       type_name = "<type unavailable>";
     }
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kError,
         std::string("Error in Runnable: " + type_name + ": ") + exc.what());
   }

@@ -4975,8 +4975,9 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
 
       int elem_count = name_text_group_.GetElementCount();
       float s_extra =
-          (g_core->vr_mode() || g_base->ui->scale() == UIScale::kSmall) ? 1.2f
-                                                                        : 1.0f;
+          (g_core->vr_mode() || g_base->ui->uiscale() == UIScale::kSmall)
+              ? 1.2f
+              : 1.0f;
 
       for (int e = 0; e < elem_count; e++) {
         // Gracefully skip unloaded textures.
@@ -5978,8 +5979,9 @@ auto SpazNode::GetRigidBody(int id) -> RigidBody* {
       return hair_ponytail_bottom_body_.get();
       break;
     default:
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "Request for unknown spaz body: " + std::to_string(id));
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kError,
+          "Request for unknown spaz body: " + std::to_string(id));
       break;
   }
 
@@ -6699,30 +6701,31 @@ void SpazNode::SetHoldNode(Node* val) {
         assert(dynamics);
         Collision* c = dynamics->active_collision();
         if (c) {
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBa, LogLevel::kError,
               "SRC NODE: " + ObjToString(dynamics->GetActiveCollideSrcNode()));
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBa, LogLevel::kError,
               "OPP NODE: " + ObjToString(dynamics->GetActiveCollideDstNode()));
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBa, LogLevel::kError,
               "SRC BODY "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()
                                        ? c->body_id_1
                                        : c->body_id_2));
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBa, LogLevel::kError,
               "OPP BODY "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()
                                        ? c->body_id_2
                                        : c->body_id_1));
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBa, LogLevel::kError,
               "REVERSE "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()));
         } else {
-          g_core->Log(LogName::kBa, LogLevel::kError, "<NO ACTIVE COLLISION>");
+          g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                               "<NO ACTIVE COLLISION>");
         }
       }
       throw Exception("specified hold_body (" + std::to_string(hold_body_)

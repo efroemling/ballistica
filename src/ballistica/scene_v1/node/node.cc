@@ -19,8 +19,8 @@
 namespace ballistica::scene_v1 {
 
 NodeType::~NodeType() {
-  g_core->Log(LogName::kBa, LogLevel::kError,
-              "SHOULD NOT BE DESTRUCTING A TYPE type=(" + name_ + ")");
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       "SHOULD NOT BE DESTRUCTING A TYPE type=(" + name_ + ")");
 }
 
 Node::Node(Scene* scene_in, NodeType* node_type)
@@ -252,8 +252,8 @@ auto Node::GetDelegate() -> PyObject* {
   // ever happen so currently just providing a simple error msg.
   assert(result == -1);
   PyErr_Clear();
-  g_core->Log(LogName::kBa, LogLevel::kError,
-              "Node::GetDelegate(): error getting weakref obj.");
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       "Node::GetDelegate(): error getting weakref obj.");
   return nullptr;
 }
 
@@ -279,8 +279,8 @@ void Node::DispatchOutOfBoundsMessage() {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node OutOfBoundsMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating OutOfBoundsMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating OutOfBoundsMessage");
   }
 }
 
@@ -297,7 +297,8 @@ void Node::DispatchPickUpMessage(Node* node) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node PickUpMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError, "Error creating PickUpMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating PickUpMessage");
   }
 }
 
@@ -312,7 +313,8 @@ void Node::DispatchDropMessage() {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node DropMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError, "Error creating DropMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating DropMessage");
   }
 }
 
@@ -330,8 +332,8 @@ void Node::DispatchPickedUpMessage(Node* by_node) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node PickedUpMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating PickedUpMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating PickedUpMessage");
   }
 }
 
@@ -349,8 +351,8 @@ void Node::DispatchDroppedMessage(Node* by_node) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node DroppedMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating DroppedMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating DroppedMessage");
   }
 }
 
@@ -365,8 +367,8 @@ void Node::DispatchShouldShatterMessage() {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node ShouldShatterMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating ShouldShatterMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating ShouldShatterMessage");
   }
 }
 
@@ -382,8 +384,8 @@ void Node::DispatchImpactDamageMessage(float intensity) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node ImpactDamageMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating ImpactDamageMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating ImpactDamageMessage");
   }
 }
 
@@ -413,10 +415,10 @@ void Node::DispatchUserMessage(PyObject* obj, const char* label) {
         c.Call(PythonRef(Py_BuildValue("(O)", obj), PythonRef::kSteal));
       }
     } catch (const std::exception& e) {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  std::string("Error in handlemessage() with message ")
-                      + PythonRef(obj, PythonRef::kAcquire).Str() + ": '"
-                      + e.what() + "'");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           std::string("Error in handlemessage() with message ")
+                               + PythonRef(obj, PythonRef::kAcquire).Str()
+                               + ": '" + e.what() + "'");
     }
   }
 }

@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/core/logging/logging.h"
+
 #if BA_ENABLE_AUDIO
 #if BA_USE_TREMOR_VORBIS
 #include "ivorbisfile.h"  // NOLINT
@@ -63,9 +65,9 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
   f = g_core->platform->FOpen(file_name, "rb");
   if (f == nullptr) {
     fallback = true;
-    g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                std::string("Can't open sound file '") + file_name
-                    + "' for reading...");
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                         std::string("Can't open sound file '") + file_name
+                             + "' for reading...");
 
     // Attempt a fallback standin; if that doesn't work, throw in the towel.
     file_name = "data/global/audio/blank.ogg";
@@ -85,8 +87,9 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
 
   // Try opening the given file
   if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0) {
-    g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                std::string("Error decoding sound file '") + file_name + "'");
+    g_core->logging->Log(
+        LogName::kBaAudio, LogLevel::kError,
+        std::string("Error decoding sound file '") + file_name + "'");
 
     fclose(f);
 
@@ -209,9 +212,10 @@ static void LoadCachedOgg(const char* file_name, std::vector<char>* buffer,
       // with invalid formats of 0 once. Report and ignore if we see
       // something like that.
       if (*format != AL_FORMAT_MONO16 && *format != AL_FORMAT_STEREO16) {
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                    std::string("Ignoring invalid audio cache of ") + file_name
-                        + " with format " + std::to_string(*format));
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                             std::string("Ignoring invalid audio cache of ")
+                                 + file_name + " with format "
+                                 + std::to_string(*format));
       } else {
         return;  // SUCCESS!!!!
       }

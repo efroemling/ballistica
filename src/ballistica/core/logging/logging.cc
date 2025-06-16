@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/shared/foundation/logging.h"
+#include "ballistica/core/logging/logging.h"
 
 #include <cstdio>
 #include <string>
@@ -10,25 +10,21 @@
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/math/vector4f.h"
 
-namespace ballistica {
-
-// Note: we implicitly use core functionality. Our behavior is undefined
-// if nobody has imported core yet.
-using core::g_base_soft;
-using core::g_core;
+namespace ballistica::core {
 
 int g_early_v1_cloud_log_writes{10};
 
-void Logging::Log(LogName name, LogLevel level, const std::string& msg) {
-  // Wrappers calling us should check these bits.
+void Logging::Log_(LogName name, LogLevel level, const std::string& msg) {
   assert(g_core);
-  assert(g_core->LogLevelEnabled(name, level));
+  // Wrappers calling us should check these bits.
+  assert(LogLevelEnabled(name, level));
 
   g_core->python->LoggingCall(name, level, msg);
 }
 
 void Logging::EmitLog(const std::string& name, LogLevel level, double timestamp,
                       const std::string& msg) {
+  assert(g_base_soft);
   // Print to the dev console.
   if (name == "stdout" || name == "stderr") {
     // Print stdout/stderr entries with no extra info.
@@ -79,22 +75,24 @@ void Logging::EmitLog(const std::string& name, LogLevel level, double timestamp,
 void Logging::V1CloudLog(const std::string& msg) {
   // Route through platform-specific loggers if present.
 
+  assert(g_core);
+
   if (g_core) {
     // (ship to things like Crashlytics crash-logging)
     g_core->platform->LowLevelDebugLog(msg);
 
     // Add to our complete v1-cloud-log.
-    std::scoped_lock lock(g_core->v1_cloud_log_mutex);
-    if (!g_core->v1_cloud_log_full) {
-      (g_core->v1_cloud_log) += (msg + "\n");
-      if ((g_core->v1_cloud_log).size() > 25000) {
+    std::scoped_lock lock(v1_cloud_log_mutex_);
+    if (!v1_cloud_log_full_) {
+      v1_cloud_log_ += (msg + "\n");
+      if (v1_cloud_log_.size() > 25000) {
         // Allow some reasonable overflow for last statement.
-        if ((g_core->v1_cloud_log).size() > 250000) {
+        if (v1_cloud_log_.size() > 250000) {
           // FIXME: This could potentially chop up utf-8 chars.
-          (g_core->v1_cloud_log).resize(250000);
+          v1_cloud_log_.resize(250000);
         }
-        g_core->v1_cloud_log += "\n<max log size reached>\n";
-        g_core->v1_cloud_log_full = true;
+        v1_cloud_log_ += "\n<max log size reached>\n";
+        v1_cloud_log_full_ = true;
       }
     }
   }
@@ -104,5 +102,39 @@ void Logging::V1CloudLog(const std::string& msg) {
     g_base_soft->DoV1CloudLog(msg);
   }
 }
+void Logging::Log(LogName name, LogLevel level, char* msg) {
+  // Avoid touching the Python layer if the log will get ignored there
+  // anyway.
+  if (LogLevelEnabled(name, level)) {
+    Logging::Log_(name, level, msg);
+  }
+}
 
-}  // namespace ballistica
+void Logging::Log(LogName name, LogLevel level, const char* msg) {
+  // Avoid touching the Python layer if the log will get ignored there
+  // anyway.
+  if (LogLevelEnabled(name, level)) {
+    Logging::Log_(name, level, msg);
+  }
+}
+
+void Logging::Log(LogName name, LogLevel level, const std::string& msg) {
+  // Avoid touching the Python layer if the log will get ignored there
+  // anyway.
+  if (LogLevelEnabled(name, level)) {
+    Logging::Log_(name, level, msg);
+  }
+}
+
+void Logging::ApplyBaEnvConfig() {
+  // This is also a reasonable time to grab initial logger levels that baenv
+  // likely mucked with. For any changes after this to make it to the native
+  // layer, babase.update_internal_logger_levels() must be called.
+  UpdateInternalLoggerLevels();
+}
+
+void Logging::UpdateInternalLoggerLevels() {
+  g_core->python->UpdateInternalLoggerLevels(log_levels_);
+}
+
+}  // namespace ballistica::core

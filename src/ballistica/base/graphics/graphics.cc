@@ -204,7 +204,7 @@ auto Graphics::TextureQualityFromAppConfig() -> TextureQualityRequest {
   } else if (texqualstr == "Low") {
     texture_quality_requested = TextureQualityRequest::kLow;
   } else {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBaGraphics, LogLevel::kError,
         "Invalid texture quality: '" + texqualstr + "'; defaulting to low.");
     texture_quality_requested = TextureQualityRequest::kLow;
@@ -222,8 +222,8 @@ auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
   } else if (v_sync == "Never") {
     return VSyncRequest::kNever;
   }
-  g_core->Log(LogName::kBaGraphics, LogLevel::kError,
-              "Invalid 'Vertical Sync' value: '" + v_sync + "'");
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                       "Invalid 'Vertical Sync' value: '" + v_sync + "'");
   return VSyncRequest::kNever;
 }
 
@@ -242,7 +242,7 @@ auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
   } else if (gqualstr == "Low") {
     graphics_quality_requested = GraphicsQualityRequest::kLow;
   } else {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBaGraphics, LogLevel::kError,
         "Invalid graphics quality: '" + gqualstr + "'; defaulting to auto.");
     graphics_quality_requested = GraphicsQualityRequest::kAuto;
@@ -635,8 +635,9 @@ void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
   // (otherwise, overlapping fades can cause things to get lost)
   if (fade_end_call_.exists()) {
     if (g_buildconfig.debug_build()) {
-      g_core->Log(LogName::kBaGraphics, LogLevel::kWarning,
-                  "2 fades overlapping; running first fade-end-call early.");
+      g_core->logging->Log(
+          LogName::kBaGraphics, LogLevel::kWarning,
+          "2 fades overlapping; running first fade-end-call early.");
     }
     fade_end_call_->Schedule();
     fade_end_call_.Clear();
@@ -716,7 +717,7 @@ void Graphics::UpdateGyro(microsecs_t time_microsecs,
     gyro_mag_test_ += tilt_vel_.Length() * 0.01f * timescale;
     gyro_mag_test_ = std::max(0.0f, gyro_mag_test_ - 0.02f * timescale);
     if (gyro_mag_test_ > 100.0f) {
-      ScreenMessage("Wonky gyro; disabling tilt.", {1, 0, 0});
+      g_base->ScreenMessage("Wonky gyro; disabling tilt.", {1, 0, 0});
       gyro_broken_ = true;
     }
   }
@@ -868,7 +869,7 @@ void Graphics::BuildAndPushFrameDef() {
     // drawing/blitting the 2d UI buffer during gameplay for efficiency).
     if (g_core->vr_mode()) {
       if (frame_def->GetOverlayFlatPass()->HasDrawCommands()) {
-        if (!g_base->ui->MainMenuVisible()) {
+        if (!g_base->ui->IsMainUIVisible()) {
           BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
                       "Drawing in overlay pass in VR mode with no UI present; "
                       "shouldn't happen!");
@@ -1023,8 +1024,8 @@ void Graphics::DrawFades(FrameDef* frame_def) {
     // TEMP HACK - don't trigger this while inactive.
     // Need to make overall fade logic smarter.
     if (faded_time > 15000 && g_base->app_active()) {
-      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
-                  "FORCE-ENDING STUCK FADE");
+      g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                           "FORCE-ENDING STUCK FADE");
       fade_out_ = false;
       fade_ = 1.0f;
       fade_time_ = 1000;
@@ -1232,9 +1233,9 @@ void Graphics::ToggleManualCamera() {
   assert(g_base->InLogicThread());
   camera_->SetManual(!camera_->manual());
   if (camera_->manual()) {
-    ScreenMessage("Manual Camera On");
+    g_base->ScreenMessage("Manual Camera On");
   } else {
-    ScreenMessage("Manual Camera Off");
+    g_base->ScreenMessage("Manual Camera Off");
   }
 }
 
@@ -1249,9 +1250,9 @@ void Graphics::ToggleNetworkDebugDisplay() {
   assert(g_base->InLogicThread());
   network_debug_display_enabled_ = !network_debug_display_enabled_;
   if (network_debug_display_enabled_) {
-    ScreenMessage("Network Debug Display Enabled");
+    g_base->ScreenMessage("Network Debug Display Enabled");
   } else {
-    ScreenMessage("Network Debug Display Disabled");
+    g_base->ScreenMessage("Network Debug Display Disabled");
   }
 }
 
@@ -1681,7 +1682,7 @@ auto Graphics::ReflectionTypeFromString(const std::string& s)
 void Graphics::LanguageChanged() {
   assert(g_base && g_base->InLogicThread());
   if (building_frame_def_) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kWarning,
         "Graphics::LanguageChanged() called during draw; should not happen.");
   }
@@ -1703,9 +1704,9 @@ auto Graphics::GraphicsQualityFromRequest(GraphicsQualityRequest request,
     case GraphicsQualityRequest::kAuto:
       return auto_val;
     default:
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "Unhandled GraphicsQualityRequest value: "
-                      + std::to_string(static_cast<int>(request)));
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "Unhandled GraphicsQualityRequest value: "
+                               + std::to_string(static_cast<int>(request)));
       return GraphicsQuality::kLow;
   }
 }
@@ -1723,9 +1724,9 @@ auto Graphics::TextureQualityFromRequest(TextureQualityRequest request,
     case TextureQualityRequest::kAuto:
       return auto_val;
     default:
-      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
-                  "Unhandled TextureQualityRequest value: "
-                      + std::to_string(static_cast<int>(request)));
+      g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                           "Unhandled TextureQualityRequest value: "
+                               + std::to_string(static_cast<int>(request)));
       return TextureQuality::kLow;
   }
 }

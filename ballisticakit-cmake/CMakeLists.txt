@@ -447,8 +447,6 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/context.cc
   ${BA_SRC_ROOT}/ballistica/base/support/context.h
   ${BA_SRC_ROOT}/ballistica/base/support/display_timer.h
-  ${BA_SRC_ROOT}/ballistica/base/support/huffman.cc
-  ${BA_SRC_ROOT}/ballistica/base/support/huffman.h
   ${BA_SRC_ROOT}/ballistica/base/support/plus_soft.h
   ${BA_SRC_ROOT}/ballistica/base/support/repeater.cc
   ${BA_SRC_ROOT}/ballistica/base/support/repeater.h
@@ -474,6 +472,9 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/classic/support/v1_account.h
   ${BA_SRC_ROOT}/ballistica/core/core.cc
   ${BA_SRC_ROOT}/ballistica/core/core.h
+  ${BA_SRC_ROOT}/ballistica/core/logging/logging.cc
+  ${BA_SRC_ROOT}/ballistica/core/logging/logging.h
+  ${BA_SRC_ROOT}/ballistica/core/logging/logging_macros.h
   ${BA_SRC_ROOT}/ballistica/core/platform/apple/core_platform_apple.cc
   ${BA_SRC_ROOT}/ballistica/core/platform/apple/core_platform_apple.h
   ${BA_SRC_ROOT}/ballistica/core/platform/core_platform.cc
@@ -656,10 +657,14 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/host_activity.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/host_session.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/host_session.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/huffman.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/huffman.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player_spec.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player_spec.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/replay_writer.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/replay_writer.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_v1_context.cc
@@ -686,14 +691,10 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/inline.cc
-  ${BA_SRC_ROOT}/ballistica/shared/foundation/inline.h
-  ${BA_SRC_ROOT}/ballistica/shared/foundation/logging.cc
-  ${BA_SRC_ROOT}/ballistica/shared/foundation/logging.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/macros.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/macros.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/object.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/object.h
-  ${BA_SRC_ROOT}/ballistica/shared/foundation/types.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/base64.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/base64.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/buffer.h

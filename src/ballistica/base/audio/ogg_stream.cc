@@ -7,6 +7,7 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::base {
@@ -93,8 +94,9 @@ void OggStream::DoStream(char* pcm, int* size, unsigned int* rate) {
         static bool reported_error = false;
         if (!reported_error) {
           reported_error = true;
-          g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                      "Error streaming ogg file: '" + file_name() + "'.");
+          g_core->logging->Log(
+              LogName::kBaAudio, LogLevel::kError,
+              "Error streaming ogg file: '" + file_name() + "'.");
         }
         if (loops()) {
           ov_pcm_seek(&ogg_file_, 0);

@@ -11,6 +11,7 @@
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_timer.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::ui_v1 {
@@ -131,7 +132,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   assert(g_base->input);
   bool show_icons = false;
 
-  auto* device = g_base->ui->GetUIInputDevice();
+  auto* device = g_base->ui->GetMainUIInputDevice();
 
   // If there's an explicit user-set icon we always show.
   if (icon_.exists()) {
@@ -543,8 +544,9 @@ void ButtonWidget::Activate() { DoActivate(); }
 
 void ButtonWidget::DoActivate(bool is_repeat) {
   if (!enabled_) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "ButtonWidget::DoActivate() called on disabled button");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kWarning,
+        "ButtonWidget::DoActivate() called on disabled button");
     return;
   }
 

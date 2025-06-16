@@ -37,8 +37,8 @@ void Logic::OnMainThreadStartApp() {
 
 void Logic::OnAppStart() {
   assert(g_base->InLogicThread());
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
-              "on-app-start begin (logic thread)");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "on-app-start begin (logic thread)");
 
   // Our thread should not be holding the GIL here at the start (and
   // probably will not have any Python state at all). So here we set both
@@ -74,8 +74,8 @@ void Logic::OnAppStart() {
   }
   g_base->python->OnAppStart();
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
-              "on-app-start end (logic thread)");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "on-app-start end (logic thread)");
 }
 
 void Logic::OnGraphicsReady() {
@@ -120,8 +120,8 @@ void Logic::CompleteAppBootstrapping_() {
   assert(!app_bootstrapping_complete_);
   app_bootstrapping_complete_ = true;
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
-              "app native bootstrapping complete");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "app native bootstrapping complete");
 
   // Let the assets system know it can start loading stuff now that
   // we have a screen and thus know texture formats/etc.
@@ -383,8 +383,9 @@ void Logic::OnAppModeChanged() {
   // Kick our headless stepping into high gear; this will snap us out of any
   // long sleep we're currently in the middle of.
   if (g_core->HeadlessMode()) {
-    if (g_core->LogLevelEnabled(LogName::kBaDisplayTime, LogLevel::kDebug)) {
-      g_core->Log(
+    if (g_core->logging->LogLevelEnabled(LogName::kBaDisplayTime,
+                                         LogLevel::kDebug)) {
+      g_core->logging->Log(
           LogName::kBaDisplayTime, LogLevel::kDebug,
           "Resetting headless display step timer due to app-mode change.");
     }
@@ -416,12 +417,14 @@ void Logic::UpdateDisplayTimeForHeadlessMode_() {
   display_time_increment_ =
       static_cast<double>(display_time_increment_microsecs_) / 1000000.0;
 
-  g_core->Log(LogName::kBaDisplayTime, LogLevel::kDebug, [app_time_microsecs] {
-    char buffer[256];
-    snprintf(buffer, sizeof(buffer), "stepping display-time at app-time %.4f",
-             static_cast<double>(app_time_microsecs) / 1000000.0);
-    return std::string(buffer);
-  });
+  g_core->logging->Log(
+      LogName::kBaDisplayTime, LogLevel::kDebug, [app_time_microsecs] {
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer),
+                 "stepping display-time at app-time %.4f",
+                 static_cast<double>(app_time_microsecs) / 1000000.0);
+        return std::string(buffer);
+      });
 }
 
 void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
@@ -434,7 +437,7 @@ void Logic::PostUpdateDisplayTimeForHeadlessMode_() {
                         kHeadlessMaxDisplayTimeStep),
                kHeadlessMinDisplayTimeStep);
 
-  g_core->Log(
+  g_core->logging->Log(
       LogName::kBaDisplayTime, LogLevel::kDebug,
       [headless_display_step_microsecs] {
         auto sleepsecs =
@@ -546,7 +549,7 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
     if (trailing_dist > trail_buffer) {
       auto offs =
           (trailing_dist - trail_buffer) * (trailing_diff > 0.0 ? 1.0 : -1.0);
-      g_core->Log(
+      g_core->logging->Log(
           LogName::kBaDisplayTime, LogLevel::kDebug,
           [trailing_dist, trail_buffer, offs] {
             char buffer[256];
@@ -564,15 +567,16 @@ void Logic::UpdateDisplayTimeForFrameDraw_() {
     // overflow thread message lists and whatnot.
     display_time_increment_ = std::min(display_time_increment_, 0.25);
 
-    g_core->Log(LogName::kBaDisplayTime, LogLevel::kDebug,
-                [this, use_avg, this_increment, chaos, used] {
-                  char buffer[256];
-                  snprintf(buffer, sizeof(buffer),
-                           "final %.5f current(%s) %.5f sample %.5f chaos %.5f",
-                           display_time_increment_, use_avg ? "avg" : "sample",
-                           used, this_increment, chaos);
-                  return std::string(buffer);
-                });
+    g_core->logging->Log(
+        LogName::kBaDisplayTime, LogLevel::kDebug,
+        [this, use_avg, this_increment, chaos, used] {
+          char buffer[256];
+          snprintf(buffer, sizeof(buffer),
+                   "final %.5f current(%s) %.5f sample %.5f chaos %.5f",
+                   display_time_increment_, use_avg ? "avg" : "sample", used,
+                   this_increment, chaos);
+          return std::string(buffer);
+        });
   }
 
   // Lastly, apply our updated increment value to our time.
@@ -672,8 +676,9 @@ void Logic::SetAppTimerLength(int timer_id, microsecs_t length) {
   if (t) {
     t->SetLength(length);
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Logic::SetAppTimerLength() called on nonexistent timer.");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "Logic::SetAppTimerLength() called on nonexistent timer.");
   }
 }
 
@@ -699,8 +704,9 @@ void Logic::SetDisplayTimerLength(int timer_id, microsecs_t length) {
   if (t) {
     t->SetLength(length);
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Logic::SetDisplayTimerLength() called on nonexistent timer.");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "Logic::SetDisplayTimerLength() called on nonexistent timer.");
   }
 }
 

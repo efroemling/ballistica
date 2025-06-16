@@ -5,7 +5,7 @@
 #include <string>
 
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
+#include "ballistica/core/logging/logging.h"
 
 namespace ballistica::base {
 
@@ -40,7 +40,7 @@ auto Asset::AssetTypeName(AssetType assettype) -> const char* {
 }
 
 void Asset::ObjectPostInit() {
-  g_core->Log(LogName::kBaAssets, LogLevel::kInfo, [this] {
+  g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, [this] {
     return std::string("allocating ") + AssetTypeName(GetAssetType()) + " "
            + GetName();
   });
@@ -62,7 +62,7 @@ void Asset::Preload(bool already_locked) {
   if (!preloaded_) {
     assert(!loaded_);
     BA_PRECONDITION(locked());
-    g_core->Log(LogName::kBaAssets, LogLevel::kDebug, [this] {
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kDebug, [this] {
       return std::string("preloading ") + AssetTypeName(GetAssetType()) + " "
              + GetName();
     });
@@ -84,7 +84,7 @@ void Asset::Load(bool already_locked) {
     assert(preloaded_ && !loaded_);
     BA_DEBUG_FUNCTION_TIMER_BEGIN();
     BA_PRECONDITION(locked());
-    g_core->Log(LogName::kBaAssets, LogLevel::kDebug, [this] {
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kDebug, [this] {
       return std::string("loading ") + AssetTypeName(GetAssetType()) + " "
              + GetName();
     });

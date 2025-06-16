@@ -364,7 +364,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         # to the game (like on mac).
         can_select_extra_buttons = bui.app.classic.platform == 'android'
 
-        bui.set_ui_input_device(None)  # Menu is up for grabs.
+        bui.set_main_ui_input_device(None)  # Menu is up for grabs.
 
         if self._have_achievements and self._account_has_achievements:
             bui.buttonwidget(

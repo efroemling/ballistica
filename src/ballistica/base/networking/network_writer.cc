@@ -6,6 +6,7 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/base/networking/networking.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/networking/sockaddr.h"
 

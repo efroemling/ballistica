@@ -4,6 +4,8 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 
 namespace ballistica::base {
 
@@ -19,6 +21,13 @@ void MeshData::Unload(Renderer* renderer) {
   if (renderer_data_) {
     renderer->DeleteMeshData(renderer_data_, type());
     renderer_data_ = nullptr;
+  }
+}
+
+MeshData::~MeshData() {
+  if (renderer_data_) {
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                         "MeshData going down with rendererData intact!");
   }
 }
 

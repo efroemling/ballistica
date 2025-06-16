@@ -8,8 +8,9 @@
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/support/app_timer.h"
+#include "ballistica/base/ui/ui.h"
+#include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
-#include "ballistica/shared/foundation/inline.h"
 
 namespace ballistica::ui_v1 {
 

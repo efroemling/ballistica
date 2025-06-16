@@ -51,7 +51,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
     // Any new event coming in cancels repeats.
     ui_repeater_.Clear();
 
-    if (g_base->ui->GetWidgetForInput(this)) {
+    if (g_base->ui->RequestMainUIControl(this)) {
       bool pass = false;
       auto c = WidgetMessage::Type::kEmptyMessage;
       if (down) {
@@ -152,8 +152,8 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
   }
 
   // Bring up menu if start is pressed.
-  if (keysym->sym == start_key_ && !g_base->ui->MainMenuVisible()) {
-    g_base->ui->PushMainMenuPressCall(this);
+  if (keysym->sym == start_key_ && !g_base->ui->IsMainUIVisible()) {
+    g_base->ui->RequestMainUI(this);
     return true;
   }
 

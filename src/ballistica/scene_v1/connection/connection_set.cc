@@ -11,6 +11,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/connection/connection_to_client_udp.h"
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
@@ -32,9 +33,9 @@ void ConnectionSet::RegisterClientController(ClientControllerInterface* c) {
   // This shouldn't happen, but if there's already a controller registered,
   // detach all clients from it.
   if (client_controller_) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "RegisterClientController() called "
-                "but already have a controller; bad.");
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "RegisterClientController() called "
+                         "but already have a controller; bad.");
     for (auto&& i : connections_to_clients_) {
       assert(i.second.exists());
       i.second->SetController(nullptr);
@@ -215,8 +216,9 @@ auto ConnectionSet::GetConnectionsToClients()
     if (connections_to_client.second.exists()) {
       connections.push_back(connections_to_client.second.get());
     } else {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "HAVE NONEXISTENT CONNECTION_TO_CLIENT IN LIST; UNEXPECTED");
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kError,
+          "HAVE NONEXISTENT CONNECTION_TO_CLIENT IN LIST; UNEXPECTED");
     }
   }
   return connections;
@@ -260,7 +262,7 @@ void ConnectionSet::SendScreenMessageToSpecificClients(
   // Now print locally only if -1 is in our list.
   for (auto c : clients) {
     if (c == -1) {
-      ScreenMessage(s, {r, g, b});
+      g_base->ScreenMessage(s, {r, g, b});
       break;
     }
   }
@@ -269,13 +271,13 @@ void ConnectionSet::SendScreenMessageToSpecificClients(
 void ConnectionSet::SendScreenMessageToAll(const std::string& s, float r,
                                            float g, float b) {
   SendScreenMessageToClients(s, r, g, b);
-  ScreenMessage(s, {r, g, b});
+  g_base->ScreenMessage(s, {r, g, b});
 }
 
 void ConnectionSet::PrepareForLaunchHostSession() {
   // If for some reason we're still attached to a host, kill the connection.
   if (connection_to_host_.exists()) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBaNetworking, LogLevel::kError,
         "Had host-connection during LaunchHostSession(); shouldn't happen.");
     connection_to_host_->RequestDisconnect();
@@ -322,9 +324,9 @@ auto ConnectionSet::DisconnectClient(int client_id, int ban_seconds) -> bool {
       return false;
     }
     if (client_id > 255) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "DisconnectClient got client_id > 255 ("
-                      + std::to_string(client_id) + ")");
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "DisconnectClient got client_id > 255 ("
+                               + std::to_string(client_id) + ")");
     } else {
       std::vector<uint8_t> msg_out(2);
       msg_out[0] = BA_MESSAGE_KICK_VOTE;
@@ -412,9 +414,10 @@ void ConnectionSet::UnregisterClientController(ClientControllerInterface* c) {
 
   // This shouldn't happen.
   if (client_controller_ != c) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "UnregisterClientController() called with a non-registered "
-                "controller");
+    g_core->logging->Log(
+        LogName::kBaNetworking, LogLevel::kError,
+        "UnregisterClientController() called with a non-registered "
+        "controller");
     return;
   }
 
@@ -572,31 +575,33 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
             keep_trying = hc->SwitchProtocol();
             if (!keep_trying) {
               if (!printed_host_disconnect_) {
-                ScreenMessage(g_base->assets->GetResourceString(
-                                  "connectionFailedVersionMismatchText"),
-                              {1, 0, 0});
+                g_base->ScreenMessage(
+                    g_base->assets->GetResourceString(
+                        "connectionFailedVersionMismatchText"),
+                    {1, 0, 0});
                 printed_host_disconnect_ = true;
               }
             }
           } else if (data[0] == BA_PACKET_CLIENT_DENY_PARTY_FULL) {
             if (!printed_host_disconnect_) {
               if (print_udp_connect_progress_) {
-                ScreenMessage(g_base->assets->GetResourceString(
-                                  "connectionFailedPartyFullText"),
-                              {1, 0, 0});
+                g_base->ScreenMessage(g_base->assets->GetResourceString(
+                                          "connectionFailedPartyFullText"),
+                                      {1, 0, 0});
               }
               printed_host_disconnect_ = true;
             }
           } else if (data[0] == BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY) {
             if (!printed_host_disconnect_) {
-              ScreenMessage(g_base->assets->GetResourceString(
-                                "connectionFailedHostAlreadyInPartyText"),
-                            {1, 0, 0});
+              g_base->ScreenMessage(
+                  g_base->assets->GetResourceString(
+                      "connectionFailedHostAlreadyInPartyText"),
+                  {1, 0, 0});
               printed_host_disconnect_ = true;
             }
           } else {
             if (!printed_host_disconnect_) {
-              ScreenMessage(
+              g_base->ScreenMessage(
                   g_base->assets->GetResourceString("connectionRejectedText"),
                   {1, 0, 0});
               printed_host_disconnect_ = true;
@@ -678,8 +683,8 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
               msg_out[0] = BA_PACKET_CLIENT_DENY;
               msg_out[1] = request_id;
               g_base->network_writer->PushSendToCall(msg_out, addr);
-              g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                          "All client slots full; really?..");
+              g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                                   "All client slots full; really?..");
               break;
             }
             connection_to_client = Object::New<ConnectionToClientUDP>(
@@ -734,9 +739,10 @@ void ConnectionSet::SetClientInfoFromMasterServer(
     const std::string& client_token, PyObject* info_obj) {
   // NOLINTNEXTLINE  (python doing bitwise math on signed int)
   if (!PyDict_Check(info_obj)) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "got non-dict for master-server client info for token "
-                    + client_token + ": " + Python::ObjToString(info_obj));
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "got non-dict for master-server client info for token "
+                             + client_token + ": "
+                             + Python::ObjToString(info_obj));
     return;
   }
   for (ConnectionToClient* client : GetConnectionsToClients()) {

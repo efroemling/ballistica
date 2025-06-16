@@ -66,7 +66,7 @@ void TestInput::Process(millisecs_t time) {
     }
 
     // Do nothing while any UI is up.
-    if (g_base->ui->MainMenuVisible()) {
+    if (g_base->ui->IsMainUIVisible()) {
       return;
     }
 

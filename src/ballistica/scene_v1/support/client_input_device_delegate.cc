@@ -7,6 +7,7 @@
 
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/support/client_input_device.h"
 
@@ -66,7 +67,7 @@ auto ClientInputDeviceDelegate::GetClientID() const -> int {
   if (ConnectionToClient* c = connection_to_client_.get()) {
     return c->id();
   } else {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBaNetworking, LogLevel::kError,
         "ClientInputDevice::get_client_id(): connection_to_client no longer "
         "exists; returning -1..");

@@ -10,6 +10,7 @@
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"
@@ -39,7 +40,8 @@ ConnectionToHostUDP::ConnectionToHostUDP(const SockAddr& addr)
   GetRequestID_();
   if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
     if (appmode->connections()->GetPrintUDPConnectProgress()) {
-      ScreenMessage(g_base->assets->GetResourceString("connectingToPartyText"));
+      g_base->ScreenMessage(
+          g_base->assets->GetResourceString("connectingToPartyText"));
     }
   }
 }
@@ -95,8 +97,8 @@ void ConnectionToHostUDP::Update() {
       > (can_communicate() ? 10000u : 5000u)) {
     // If the connection never got established, announce it failed.
     if (!can_communicate()) {
-      ScreenMessage(g_base->assets->GetResourceString("connectionFailedText"),
-                    {1, 0, 0});
+      g_base->ScreenMessage(
+          g_base->assets->GetResourceString("connectionFailedText"), {1, 0, 0});
     }
 
     // Die immediately in this case; no use trying to wait for a
@@ -126,8 +128,8 @@ void ConnectionToHostUDP::Update() {
 // departure before doing this when possible.
 void ConnectionToHostUDP::Die() {
   if (did_die_) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "Posting multiple die messages; probably not good.");
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "Posting multiple die messages; probably not good.");
     return;
   }
   if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
@@ -135,9 +137,10 @@ void ConnectionToHostUDP::Die() {
       appmode->connections()->PushDisconnectedFromHostCall();
       did_die_ = true;
     } else {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "Running update for non-current host-connection; shouldn't "
-                  "happen.");
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kError,
+          "Running update for non-current host-connection; shouldn't "
+          "happen.");
     }
   }
 }

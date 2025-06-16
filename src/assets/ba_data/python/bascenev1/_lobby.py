@@ -600,9 +600,11 @@ class Chooser:
 
                 classic.profile_browser_window()
 
-                # Give their input-device UI ownership too (prevent
+                # Give their input-device main-UI ownership too (prevent
                 # someone else from snatching it in crowded games).
-                babase.set_ui_input_device(self._sessionplayer.inputdevice.id)
+                babase.set_main_ui_input_device(
+                    self._sessionplayer.inputdevice.id
+                )
             return
 
         if not ready:

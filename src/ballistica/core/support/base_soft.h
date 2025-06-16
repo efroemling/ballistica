@@ -5,6 +5,7 @@
 
 #include <string>
 
+#include "ballistica/shared/foundation/feature_set_native_component.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::core {
@@ -14,7 +15,8 @@ namespace ballistica::core {
 /// should be prepared to handle the not-present case.
 class BaseSoftInterface {
  public:
-  virtual void ScreenMessage(const std::string& s, const Vector3f& color) = 0;
+  virtual void ScreenMessage(const std::string& s,
+                             const Vector3f& color = {1.0f, 1.0f, 1.0f}) = 0;
   virtual auto IsUnmodifiedBlessedBuild() -> bool = 0;
   virtual void StartApp() = 0;
   virtual auto AppManagesMainThreadEventLoop() -> bool = 0;
@@ -45,7 +47,6 @@ class BaseSoftInterface {
                              const std::string& arg) = 0;
   virtual auto IsAppStarted() const -> bool = 0;
   virtual auto IsAppBootstrapped() const -> bool = 0;
-  // virtual auto GetReturnValue() const -> int = 0;
   virtual void PushMainThreadRunnable(Runnable* runnable) = 0;
 };
 

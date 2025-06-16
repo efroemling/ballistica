@@ -3,29 +3,31 @@
 #include "ballistica/scene_v1/support/client_session_net.h"
 
 #include <algorithm>
+#include <memory>
 #include <vector>
 
-#include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/net_graph.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
+#include "ballistica/scene_v1/support/replay_writer.h"
 
 namespace ballistica::scene_v1 {
 
 ClientSessionNet::ClientSessionNet() {
   // Sanity check: we should only ever be writing one replay at once.
   if (g_scene_v1->replay_open) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "g_scene_v1->replay_open true at netclient start;"
-                " shouldn't happen.");
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "g_scene_v1->replay_open true at netclient start;"
+                         " shouldn't happen.");
   }
   assert(g_base->assets_server);
 
   // We always write replays as the highest protocol version we support.
-  g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersionMax);
+  replay_writer_ = new ReplayWriter;
   writing_replay_ = true;
   g_scene_v1->replay_open = true;
 }
@@ -34,13 +36,14 @@ ClientSessionNet::~ClientSessionNet() {
   if (writing_replay_) {
     // Sanity check: we should only ever be writing one replay at once.
     if (!g_scene_v1->replay_open) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "g_scene_v1->replay_open false at net-client close;"
-                  " shouldn't happen.");
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "g_scene_v1->replay_open false at net-client close;"
+                           " shouldn't happen.");
     }
     g_scene_v1->replay_open = false;
     assert(g_base->assets_server);
-    g_base->assets_server->PushEndWriteReplayCall();
+    replay_writer_->Finish();
+    replay_writer_ = nullptr;
     writing_replay_ = false;
   }
 }
@@ -210,7 +213,8 @@ void ClientSessionNet::HandleSessionMessage(
 
   if (writing_replay_) {
     assert(g_base->assets_server);
-    g_base->assets_server->PushAddMessageToReplayCall(message);
+    assert(replay_writer_);
+    replay_writer_->PushAddMessageToReplayCall(message);
   }
 }
 

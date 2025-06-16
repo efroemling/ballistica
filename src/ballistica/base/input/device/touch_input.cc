@@ -14,6 +14,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/logging/logging_macros.h"
 
 namespace ballistica::base {
 
@@ -70,7 +71,7 @@ void TouchInput::HandleTouchEvent(TouchEvent::Type type, void* touch, float x,
 }
 
 TouchInput::TouchInput() {
-  switch (g_base->ui->scale()) {
+  switch (g_base->ui->uiscale()) {
     case UIScale::kSmall:
       base_controls_scale_ = 2.0f;
       world_draw_scale_ = 1.2f;
@@ -362,7 +363,7 @@ void TouchInput::UpdateDPad() {
 
 void TouchInput::Draw(FrameDef* frame_def) {
   assert(g_base->InLogicThread());
-  bool active = (!g_base->ui->MainMenuVisible());
+  bool active = (!g_base->ui->IsMainUIVisible());
   millisecs_t real_time = frame_def->app_time_millisecs();
 
   // Update our action center whenever possible in case screen is resized.
@@ -852,8 +853,8 @@ void TouchInput::UpdateMapping() {
   } else if (touch_movement_type == "joystick") {
     movement_control_type_ = TouchInput::MovementControlType::kJoystick;
   } else {
-    g_core->Log(LogName::kBaInput, LogLevel::kError,
-                "Invalid touch-movement-type: " + touch_movement_type);
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kError,
+                         "Invalid touch-movement-type: " + touch_movement_type);
     movement_control_type_ = TouchInput::MovementControlType::kSwipe;
   }
   std::string touch_action_type =
@@ -863,8 +864,8 @@ void TouchInput::UpdateMapping() {
   } else if (touch_action_type == "buttons") {
     action_control_type_ = TouchInput::ActionControlType::kButtons;
   } else {
-    g_core->Log(LogName::kBaInput, LogLevel::kError,
-                "Invalid touch-action-type: " + touch_action_type);
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kError,
+                         "Invalid touch-action-type: " + touch_action_type);
     action_control_type_ = TouchInput::ActionControlType::kSwipe;
   }
 
@@ -876,7 +877,7 @@ void TouchInput::UpdateMapping() {
       g_base->app_config->Resolve(AppConfig::BoolID::kTouchControlsSwipeHidden);
 
   // Start with defaults.
-  switch (g_base->ui->scale()) {
+  switch (g_base->ui->uiscale()) {
     case UIScale::kSmall:
       buttons_default_frac_x_ = 0.88f;
       buttons_default_frac_y_ = 0.2f;
@@ -944,7 +945,7 @@ auto TouchInput::HandleTouchDown(void* touch, float x, float y) -> bool {
     // Normal in-game operation:
 
     // Normal operation is disabled while a UI is up.
-    if (g_base->ui->MainMenuVisible()) {
+    if (g_base->ui->IsMainUIVisible()) {
       return false;
     }
 
@@ -958,7 +959,7 @@ auto TouchInput::HandleTouchDown(void* touch, float x, float y) -> bool {
         // ..so lets issue a warning to that effect if there's already
         // controllers active.. (only if we got a player though).
         if (AttachedToPlayer() && g_base->input->HaveControllerWithPlayer()) {
-          ScreenMessage(
+          g_base->ScreenMessage(
               g_base->assets->GetResourceString("touchScreenJoinWarningText"),
               {1.0f, 1.0f, 0.0f});
         }
@@ -1067,7 +1068,7 @@ auto TouchInput::HandleTouchMoved(void* touch, float x, float y) -> bool {
   }
 
   // Ignore button/pad touches while gui is up.
-  if (g_base->ui->MainMenuVisible()) {
+  if (g_base->ui->IsMainUIVisible()) {
     return false;
   }
   if (touch == buttons_touch_) {

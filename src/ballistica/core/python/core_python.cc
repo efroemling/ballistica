@@ -438,8 +438,8 @@ void CorePython::VerifyPythonEnvironment() {
 void CorePython::MonolithicModeBaEnvConfigure() {
   assert(g_buildconfig.monolithic_build());
   assert(g_core);
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo,
-              "baenv.configure() begin");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "baenv.configure() begin");
 
   auto gil{Python::ScopedInterpreterLock()};
 
@@ -507,7 +507,8 @@ void CorePython::MonolithicModeBaEnvConfigure() {
   if (result.ValueIsString()) {
     FatalError("Environment setup failed:\n" + result.ValueAsString());
   }
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "baenv.configure() end");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "baenv.configure() end");
 }
 
 void CorePython::LoggingCall(LogName logname, LogLevel loglevel,

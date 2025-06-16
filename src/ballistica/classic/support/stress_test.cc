@@ -7,6 +7,7 @@
 #include "ballistica/base/input/device/test_input.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/classic/classic.h"
+#include "ballistica/core/core.h"
 
 namespace ballistica::classic {
 

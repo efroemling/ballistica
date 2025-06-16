@@ -82,6 +82,13 @@ const int kGameStepMilliseconds = 8;
 const float kGameStepSeconds =
     (static_cast<float>(kGameStepMilliseconds) / 1000.0f);
 
+// Magic numbers at the start of our file types.
+const int kBrpFileID = 83749;
+
+// Largest UDP packets we attempt to send.
+// (is there a definitive answer on what this should be?)
+const int kMaxPacketSize = 700;
+
 // Predeclare types we use throughout our FeatureSet so most headers can get
 // away with just including this header.
 class ClientControllerInterface;
@@ -97,6 +104,7 @@ class ConnectionToHostUDP;
 class ConnectionSet;
 class SceneV1Context;
 class ContextRefSceneV1;
+class Huffman;
 class SceneCubeMapTexture;
 class SceneDataAsset;
 class Dynamics;
@@ -137,6 +145,7 @@ class SceneV1FeatureSet;
 class Session;
 class SceneSound;
 class SceneTexture;
+class ReplayWriter;
 typedef Node* NodeCreateFunc(Scene* sg);
 
 /// Specifies the type of time for various operations to target/use.
@@ -405,6 +414,7 @@ class SceneV1FeatureSet : public FeatureSetNativeComponent {
 
   // Our subcomponents.
   SceneV1Python* const python;
+  Huffman* const huffman;
 
   // FIXME: should be private.
   int session_count{};

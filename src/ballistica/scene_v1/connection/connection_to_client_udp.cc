@@ -10,6 +10,7 @@
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 
 namespace ballistica::scene_v1 {
@@ -73,8 +74,8 @@ void ConnectionToClientUDP::HandleGamePacket(
 
 void ConnectionToClientUDP::Die() {
   if (did_die_) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "Posting multiple die messages; probably not good.");
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "Posting multiple die messages; probably not good.");
     return;
   }
   // this will actually clear the object..

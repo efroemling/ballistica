@@ -13,6 +13,8 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -221,8 +223,9 @@ void HostSession::RequestPlayer(SceneV1InputDeviceDelegate* device) {
 
   // Ignore if we have no Python session Obj.
   if (!GetSessionPyObj()) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "HostSession::RequestPlayer() called w/no session_py_obj_.");
+    g_core->logging->Log(
+        LogName::kBaNetworking, LogLevel::kError,
+        "HostSession::RequestPlayer() called w/no session_py_obj_.");
     return;
   }
 
@@ -315,13 +318,14 @@ void HostSession::IssuePlayerLeft(Player* player) {
         BA_LOG_PYTHON_TRACE_ONCE("missing player on IssuePlayerLeft");
       }
     } else {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kWarning,
-                  "HostSession: IssuePlayerLeft caled with no "
-                  "session_py_obj_");
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                           "HostSession: IssuePlayerLeft caled with no "
+                           "session_py_obj_");
     }
   } catch (const std::exception& e) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                std::string("Error calling on_player_leave(): ") + e.what());
+    g_core->logging->Log(
+        LogName::kBaNetworking, LogLevel::kError,
+        std::string("Error calling on_player_leave(): ") + e.what());
   }
 }
 
@@ -341,9 +345,10 @@ void HostSession::SetForegroundHostActivity(HostActivity* a) {
   auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   if (shutting_down_) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "SetForegroundHostActivity called during session shutdown; "
-                "ignoring.");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kWarning,
+        "SetForegroundHostActivity called during session shutdown; "
+        "ignoring.");
     return;
   }
 
@@ -440,7 +445,7 @@ void HostSession::DecrementPlayerTimeOuts(millisecs_t millisecs) {
       std::string kick_str =
           g_base->assets->GetResourceString("kickIdlePlayersKickedText");
       Utils::StringReplaceOne(&kick_str, "${NAME}", player->GetName());
-      ScreenMessage(kick_str);
+      g_base->ScreenMessage(kick_str);
       RemovePlayer(player);
       return;  // Bail for this round since we prolly mucked with the list.
     } else if (player->time_out() > BA_PLAYER_TIME_OUT_WARN
@@ -450,8 +455,8 @@ void HostSession::DecrementPlayerTimeOuts(millisecs_t millisecs) {
       Utils::StringReplaceOne(&kick_str_1, "${NAME}", player->GetName());
       Utils::StringReplaceOne(&kick_str_1, "${COUNT}",
                               std::to_string(BA_PLAYER_TIME_OUT_WARN / 1000));
-      ScreenMessage(kick_str_1);
-      ScreenMessage(
+      g_base->ScreenMessage(kick_str_1);
+      g_base->ScreenMessage(
           g_base->assets->GetResourceString("kickIdlePlayersWarning2Text"));
     }
     player->set_time_out(player->time_out() - millisecs);
@@ -669,11 +674,11 @@ HostSession::~HostSession() {
           s += ("\n  " + std::to_string(count++) + ": "
                 + i->GetObjectDescription());
         }
-        g_core->Log(LogName::kBa, LogLevel::kWarning, s);
+        g_core->logging->Log(LogName::kBa, LogLevel::kWarning, s);
       }
     }
   } catch (const std::exception& e) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kError,
         "Exception in HostSession destructor: " + std::string(e.what()));
   }
@@ -692,9 +697,10 @@ void HostSession::RegisterContextCall(base::PythonContextCall* call) {
   // If we're shutting down, just kill the call immediately.
   // (we turn all of our calls to no-ops as we shut down).
   if (shutting_down_) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "Adding call to expired session; call will not function: "
-                    + call->GetObjectDescription());
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kWarning,
+        "Adding call to expired session; call will not function: "
+            + call->GetObjectDescription());
     call->MarkDead();
   }
 }

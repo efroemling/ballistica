@@ -10,6 +10,7 @@
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
@@ -422,8 +423,9 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
       throw Exception();
     }
   } catch (const std::exception&) {
-    ScreenMessage(g_base->assets->GetResourceString("invalidAddressErrorText"),
-                  {1, 0, 0});
+    g_base->ScreenMessage(
+        g_base->assets->GetResourceString("invalidAddressErrorText"),
+        {1, 0, 0});
     Py_RETURN_NONE;
   }
   appmode->connections()->PushHostConnectedUDPCall(

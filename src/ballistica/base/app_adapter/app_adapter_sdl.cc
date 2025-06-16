@@ -1,14 +1,15 @@
 // Released under the MIT License. See LICENSE for details.
 
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #if BA_SDL_BUILD
-
-#include "ballistica/base/app_adapter/app_adapter_sdl.h"
 
 #include <algorithm>
 #include <cstdio>
 #include <string>
 #include <vector>
 
+#include "ballistica/base/app_adapter/app_adapter_sdl.h"
 #include "ballistica/base/base.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
@@ -55,9 +56,9 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   uint32_t sdl_flags{SDL_INIT_VIDEO | SDL_INIT_JOYSTICK};
 
   if (strict_graphics_context_) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kWarning,
-                "AppAdapterSDL strict_graphics_context_ is enabled."
-                " Remember to turn this off.");
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                         "AppAdapterSDL strict_graphics_context_ is enabled."
+                         " Remember to turn this off.");
   }
 
   // We may or may not want xinput on windows.
@@ -302,17 +303,18 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
   const microsecs_t min_sleep{2000};
 
   if (now + min_sleep >= target_time) {
-    g_core->Log(LogName::kBaGraphics, LogLevel::kDebug,
-                "no sleep.");  // 'till brooklyn!
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kDebug,
+                         "no sleep.");  // 'till brooklyn!
   } else {
-    g_core->Log(LogName::kBaGraphics, LogLevel::kDebug,
-                [now, cycle_start_time, target_time] {
-                  char buf[256];
-                  snprintf(buf, sizeof(buf), "render %.1fms sleep %.1fms",
-                           (now - cycle_start_time) / 1000.0f,
-                           (target_time - now) / 1000.0f);
-                  return std::string(buf);
-                });
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kDebug,
+                         [now, cycle_start_time, target_time] {
+                           char buf[256];
+                           snprintf(buf, sizeof(buf),
+                                    "render %.1fms sleep %.1fms",
+                                    (now - cycle_start_time) / 1000.0f,
+                                    (target_time - now) / 1000.0f);
+                           return std::string(buf);
+                         });
     g_core->platform->SleepMicrosecs(target_time - now);
   }
 
@@ -369,9 +371,9 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
           g_base->input->PushJoystickEvent(event, js);
         }
       } else {
-        g_core->Log(LogName::kBaInput, LogLevel::kError,
-                    "Unable to get SDL Joystick for event type "
-                        + std::to_string(event.type));
+        g_core->logging->Log(LogName::kBaInput, LogLevel::kError,
+                             "Unable to get SDL Joystick for event type "
+                                 + std::to_string(event.type));
       }
       break;
     }
@@ -558,10 +560,11 @@ void AppAdapterSDL::OnSDLJoystickAdded_(int device_index) {
   try {
     j = Object::NewDeferred<JoystickInput>(device_index);
   } catch (const std::exception& exc) {
-    g_core->Log(LogName::kBaInput, LogLevel::kError,
-                std::string("Error creating JoystickInput for SDL device-index "
-                            + std::to_string(device_index) + ": ")
-                    + exc.what());
+    g_core->logging->Log(
+        LogName::kBaInput, LogLevel::kError,
+        std::string("Error creating JoystickInput for SDL device-index "
+                    + std::to_string(device_index) + ": ")
+            + exc.what());
     return;
   }
   assert(j != nullptr);
@@ -597,7 +600,7 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
 
   // Note: am running into this with a PS5 controller on macOS Sequoia beta.
   if (!j) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBaInput, LogLevel::kError,
         "GetSDLJoystickInput_() returned nullptr on RemoveSDLInputDevice_();"
         " joysticks size is "
@@ -610,10 +613,10 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
   if (static_cast_check_fit<int>(sdl_joysticks_.size()) > index) {
     sdl_joysticks_[index] = nullptr;
   } else {
-    g_core->Log(LogName::kBaInput, LogLevel::kError,
-                "Invalid index on RemoveSDLInputDevice: size is "
-                    + std::to_string(sdl_joysticks_.size()) + "; index is "
-                    + std::to_string(index) + ".");
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kError,
+                         "Invalid index on RemoveSDLInputDevice: size is "
+                             + std::to_string(sdl_joysticks_.size())
+                             + "; index is " + std::to_string(index) + ".");
   }
   g_base->input->PushRemoveInputDeviceCall(j, true);
 }
@@ -670,7 +673,7 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
 
     // A reasonable default window size.
     int width, height;
-    if (g_base->ui->scale() == UIScale::kSmall) {
+    if (g_base->ui->uiscale() == UIScale::kSmall) {
       width = static_cast<int>(1300.0f * 0.8f);
       height = static_cast<int>(600.0f * 0.8f);
     } else {

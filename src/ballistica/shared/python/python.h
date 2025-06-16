@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/math/point2d.h"
 #include "ballistica/shared/python/python_ref.h"
 
@@ -15,8 +16,8 @@ namespace ballistica {
 /// Core Python support/infrastructure class.
 class Python {
  public:
-  /// When calling a python callable directly, you can use the following
-  /// to push and pop a text label which will be printed as 'call' in errors.
+  /// When calling a Python callable directly, you can use the following to
+  /// push and pop a text label which will be printed as 'call' in errors.
   class ScopedCallLabel {
    public:
     explicit ScopedCallLabel(const char* label) {

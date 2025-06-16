@@ -8,6 +8,9 @@
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
@@ -32,7 +35,8 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   // Various ballistica functionality will fail if this has not been done.
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bauiv1 exec begin");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "_bauiv1 exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_ui_v1 == nullptr);
@@ -52,7 +56,8 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);  // Should be getting set once here.
   g_base = base::BaseFeatureSet::Import();
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bauiv1 exec end");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "_bauiv1 exec end");
 }
 
 auto UIV1FeatureSet::Import() -> UIV1FeatureSet* {
@@ -68,7 +73,7 @@ void UIV1FeatureSet::DoHandleDeviceMenuPress(base::InputDevice* device) {
 
 void UIV1FeatureSet::DoShowURL(const std::string& url) { python->ShowURL(url); }
 
-bool UIV1FeatureSet::MainMenuVisible() {
+bool UIV1FeatureSet::IsMainUIVisible() {
   // We consider anything on our screen or overlay stacks to be a 'main menu'.
   // Probably need a better name than 'main menu' though.
   auto* screen_root = screen_root_widget();
@@ -77,7 +82,7 @@ bool UIV1FeatureSet::MainMenuVisible() {
           || (overlay_root && overlay_root->HasChildren()));
 }
 
-bool UIV1FeatureSet::PartyIconVisible() {
+bool UIV1FeatureSet::IsPartyIconVisible() {
   // Currently this is always visible.
   return true;
 }
@@ -98,7 +103,7 @@ void UIV1FeatureSet::ActivatePartyIcon() {
   }
 }
 
-bool UIV1FeatureSet::PartyWindowOpen() { return party_window_open_; }
+bool UIV1FeatureSet::IsPartyWindowOpen() { return party_window_open_; }
 
 void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
   base::RenderPass* overlay_flat_pass = frame_def->GetOverlayFlatPass();

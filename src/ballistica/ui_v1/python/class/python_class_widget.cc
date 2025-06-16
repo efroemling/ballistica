@@ -6,6 +6,7 @@
 
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
@@ -154,7 +155,7 @@ auto PythonClassWidget::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
   self->widget_ = new Object::WeakRef<Widget>();
   return reinterpret_cast<PyObject*>(self);
@@ -301,8 +302,8 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
     if (p) {
       p->DeleteWidget(w);
     } else {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "Can't delete widget: no parent.");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "Can't delete widget: no parent.");
     }
   }
 

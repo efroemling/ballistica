@@ -16,11 +16,14 @@
 // It predeclares our feature-set's various types and globals and other
 // bits.
 
+// Predeclare types from other feature sets that we use.
 namespace ballistica::core {
 class CoreConfig;
 class CoreFeatureSet;
 }  // namespace ballistica::core
 
+// Feature-sets have their own unique namespace under the ballistica
+// namespace.
 namespace ballistica::base {
 
 // Predeclare types we use throughout our FeatureSet so most headers can get
@@ -64,7 +67,6 @@ class Graphics;
 class GraphicsServer;
 struct GraphicsSettings;
 struct GraphicsClientContext;
-class Huffman;
 class ImageMesh;
 class Input;
 class InputDevice;
@@ -605,6 +607,13 @@ enum class SysMeshID : uint8_t {
   kWing
 };
 
+// The screen, no matter what size/aspect, will always fit this virtual
+// rectangle, so placing UI elements within these coords is always safe.
+
+// Our standard virtual res (16:9 aspect ratio).
+const int kBaseVirtualResX = 1280;
+const int kBaseVirtualResY = 720;
+
 // Our feature-set's globals.
 //
 // Feature-sets should NEVER directly access globals in another
@@ -729,7 +738,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   auto InGraphicsContext() const -> bool override;
 
   /// High level screen-message call usable from any thread.
-  void ScreenMessage(const std::string& s, const Vector3f& color) override;
+  void ScreenMessage(const std::string& s,
+                     const Vector3f& color = {1.0f, 1.0f, 1.0f}) override;
 
   /// Has the app bootstrapping phase completed? The bootstrapping phase
   /// involves initial screen/graphics setup. Asset loading is not allowed
@@ -807,7 +817,20 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// be correct even if local time is set wrong.
   auto TimeSinceEpochCloudSeconds() -> seconds_t;
 
-  // Const subsystems.
+  void set_app_mode(AppMode* mode);
+  auto* app_mode() const { return app_mode_; }
+  auto app_active() -> bool const { return app_active_; }
+
+  /// Whether we're running under ballisticakit_server.py
+  /// (affects some app behavior).
+  auto server_wrapper_managed() { return server_wrapper_managed_; }
+
+  /// Reset the engine to a default state. Should only be called by the
+  /// active app-mode. App-modes generally call this when first activating,
+  /// but may opt to call it at other times.
+  void Reset();
+
+  // Const components.
   AppAdapter* const app_adapter;
   AppConfig* const app_config;
   Assets* const assets;
@@ -821,7 +844,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   ContextRef* const context_ref;
   Graphics* const graphics;
   GraphicsServer* const graphics_server;
-  Huffman* const huffman;
   Input* const input;
   Logic* const logic;
   Networking* const networking;
@@ -832,23 +854,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   UI* const ui;
   Utils* const utils;
   Discord* const discord;
-  // Variable subsystems.
-  void set_app_mode(AppMode* mode);
-  auto* app_mode() const { return app_mode_; }
 
-  /// Whether we're running under ballisticakit_server.py
-  /// (affects some app behavior).
-  auto server_wrapper_managed() { return server_wrapper_managed_; }
-
-  // Non-const bits (fixme: clean up access to these).
+  // Non-const components (fixme: clean up access to these).
   TouchInput* touch_input{};
-
-  auto app_active() -> bool const { return app_active_; }
-
-  /// Reset the engine to a default state. Should only be called by the
-  /// active app-mode. App-modes generally call this when first activating,
-  /// but may opt to call it at other times.
-  void Reset();
 
  private:
   BaseFeatureSet();
@@ -861,6 +869,11 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   PlusSoftInterface* plus_soft_{};
   ClassicSoftInterface* classic_soft_{};
   std::mutex shutdown_suppress_lock_;
+  /// Main thread informs logic thread when this changes, but then logic
+  /// reads original value here set by main. need to be sure they never read
+  /// stale values.
+  std::atomic_bool app_active_{true};
+  int shutdown_suppress_count_{};
   bool have_clipboard_is_supported_{};
   bool clipboard_is_supported_{};
   bool app_active_set_{};
@@ -876,11 +889,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool base_native_import_completed_{};
   bool basn_log_behavior_{};
   bool server_wrapper_managed_{};
-  /// Main thread informs logic thread when this changes, but then logic
-  /// reads original value set by main. need to be sure they never read
-  /// stale values.
-  std::atomic_bool app_active_{true};
-  int shutdown_suppress_count_{};
 };
 
 }  // namespace ballistica::base

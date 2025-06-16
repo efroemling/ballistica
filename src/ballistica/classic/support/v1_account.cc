@@ -9,6 +9,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"

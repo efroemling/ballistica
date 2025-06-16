@@ -151,14 +151,14 @@ def quit_window(quit_type: babase.QuitType) -> None:
     app.classic.quit_window(quit_type)
 
 
-def device_menu_press(device_id: int | None) -> None:
+def request_main_ui(device_id: int | None) -> None:
     from babase import app
 
     if app.classic is None:
         logging.exception('Classic not present.')
         return
 
-    app.classic.device_menu_press(device_id)
+    app.classic.request_main_ui(device_id)
 
 
 def show_url_window(address: str) -> None:

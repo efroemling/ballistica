@@ -49,15 +49,16 @@ class AppConfig(dict):
     def default_value(self, key: str) -> Any:
         """Given a string key, return its predefined default value.
 
-        This is the value that will be returned by :meth:`resolve()`
-        if the key is not present in the config dict or of an incompatible
+        This is the value that will be returned by :meth:`resolve()` if
+        the key is not present in the config dict or of an incompatible
         type.
 
-        Raises an Exception for unrecognized key names. To get the list of keys
-        supported by this method, use babase.AppConfig.builtin_keys(). Note
-        that it is perfectly legal to store other data in the config; it just
-        needs to be accessed through standard dict methods and missing values
-        handled manually.
+        Raises an Exception for unrecognized key names. To get the list
+        of keys supported by this method, use
+        babase.AppConfig.builtin_keys(). Note that it is perfectly legal
+        to store other data in the config; it just needs to be accessed
+        through standard dict methods and missing values handled
+        manually.
         """
         return _babase.get_appconfig_default_value(key)
 
@@ -89,8 +90,8 @@ class AppConfig(dict):
     def commit(self) -> None:
         """Commits the config to local storage.
 
-        Note that this call is asynchronous so the actual write to disk may not
-        occur immediately.
+        Note that this call is asynchronous so the actual write to disk
+        may not occur immediately.
         """
         commit_app_config()
 

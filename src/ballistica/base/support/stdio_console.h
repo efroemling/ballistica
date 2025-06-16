@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "ballistica/shared/foundation/types.h"
+#include "ballistica/shared/ballistica.h"
 
 namespace ballistica::base {
 

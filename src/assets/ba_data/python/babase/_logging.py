@@ -9,4 +9,5 @@ import logging
 # Our standard set of loggers.
 balog = logging.getLogger('ba')
 applog = logging.getLogger('ba.app')
+cachelog = logging.getLogger('ba.cache')
 lifecyclelog = logging.getLogger('ba.lifecycle')

@@ -229,7 +229,7 @@ class MetaMakefileGenerator:
         targets.append(
             Target(
                 src=[
-                    '$(PROJ_DIR)/src/ballistica/shared/foundation/types.h',
+                    '$(PROJ_DIR)/src/ballistica/shared/ballistica.h',
                     '$(TOOLS_DIR)/batools/enumspython.py',
                 ],
                 dst=os.path.join(OUT_DIR_BASE_PYTHON, 'enums.py'),

@@ -161,6 +161,12 @@ class DevConsoleSubsystem:
         self.is_refreshing = False
         self._tab_instances: dict[str, DevConsoleTab] = {}
 
+    def save_tab(self, tabname: str) -> None:
+        """Called by the C++ layer when we should store tab to config."""
+        cfg = _babase.app.config
+        cfg['Dev Console Tab'] = tabname
+        cfg.commit()
+
     def do_refresh_tab(self, tabname: str) -> None:
         """Called by the C++ layer when a tab should be filled out.
 

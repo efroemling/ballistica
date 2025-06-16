@@ -7,11 +7,10 @@
 #include <list>
 #include <mutex>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
-#include "ballistica/core/core.h"
-#include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/timer_list.h"
 

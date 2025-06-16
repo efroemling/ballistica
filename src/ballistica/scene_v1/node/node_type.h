@@ -10,7 +10,6 @@
 
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/exception.h"
-#include "ballistica/shared/foundation/inline.h"
 #include "ballistica/shared/foundation/macros.h"
 
 namespace ballistica::scene_v1 {

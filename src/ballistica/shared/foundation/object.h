@@ -8,6 +8,8 @@
 #include <vector>
 
 #include "ballistica/shared/ballistica.h"
+#include "ballistica/shared/foundation/exception.h"
+#include "ballistica/shared/foundation/macros.h"
 
 namespace ballistica {
 

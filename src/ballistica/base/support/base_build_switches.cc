@@ -15,8 +15,9 @@
 
 // ------------------------- PLATFORM SELECTION --------------------------------
 
-// This ugly chunk of macros simply pulls in the correct platform class header
-// for each platform and defines the actual class g_base->platform will be.
+// This ugly chunk of macros simply pulls in the correct platform class
+// header for each platform and defines the actual class that
+// g_base->platform will be.
 
 // Android ---------------------------------------------------------------------
 

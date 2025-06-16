@@ -5,6 +5,8 @@
 
 #include <string>
 
+#include "ballistica/core/logging/logging.h"  // IWYU pragma: keep.
+
 #if BA_XCODE_BUILD
 #include "ballistica/base/platform/apple/from_swift.h"
 #endif
@@ -116,8 +118,9 @@ void BasePlatformApple::LoginAdapterGetSignInToken(
   if (login_type == "game_center") {
     BallisticaKit::GameCenterContext::getSignInToken(attempt_id);
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Got unexpected get-sign-in-token login-type: " + login_type);
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "Got unexpected get-sign-in-token login-type: " + login_type);
   }
 #else
   BasePlatform::LoginAdapterGetSignInToken(login_type, attempt_id);
@@ -130,7 +133,7 @@ void BasePlatformApple::LoginAdapterBackEndActiveChange(
   if (login_type == "game_center") {
     BallisticaKit::GameCenterContext::backEndActiveChange(active);
   } else {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kError,
         "Got unexpected back-end-active-change login-type: " + login_type);
   }

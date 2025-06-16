@@ -6,9 +6,9 @@
 #include <string>
 
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
-#include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/python/python.h"
@@ -21,15 +21,15 @@ namespace ballistica {
 using core::g_base_soft;
 using core::g_core;
 
-bool FatalError::reported_{};
+bool FatalErrorHandling::reported_{};
 
-void FatalError::DoFatalError(const std::string& message) {
+void FatalErrorHandling::DoFatalError(const std::string& message) {
   // Let the user and/or master-server know we're dying.
   ReportFatalError(message, false);
 
-  // In some cases we prefer to cleanly exit the app with an error code
-  // in a way that won't wind up as a crash report; this avoids polluting
-  // our crash reports list with stuff from dev builds.
+  // In some cases we prefer to cleanly exit the app with an error code in a
+  // way that won't wind up as a crash report; this avoids polluting our
+  // crash reports list with stuff from dev builds.
   bool try_to_exit_cleanly =
       !(core::g_base_soft && core::g_base_soft->IsUnmodifiedBlessedBuild());
   bool handled = HandleFatalError(try_to_exit_cleanly, false);
@@ -38,8 +38,8 @@ void FatalError::DoFatalError(const std::string& message) {
   }
 }
 
-void FatalError::ReportFatalError(const std::string& message,
-                                  bool in_top_level_exception_handler) {
+void FatalErrorHandling::ReportFatalError(const std::string& message,
+                                          bool in_top_level_exception_handler) {
   // We want to report only the first fatal error that happens; if further
   // ones happen they are likely red herrings triggered by the first.
   if (reported_) {
@@ -114,17 +114,20 @@ void FatalError::ReportFatalError(const std::string& message,
   // Prevent the early-v1-cloud-log insta-send mechanism from firing since
   // we do basically the same thing ourself here (avoid sending the same
   // logs twice).
-  g_early_v1_cloud_log_writes = 0;
+  core::g_early_v1_cloud_log_writes = 0;
 
   // Add this to our V1CloudLog which we'll be attempting to send
   // momentarily, and also go to platform-specific logging and good ol'
   // stderr.
-  Logging::V1CloudLog(logmsg);
 
-  Logging::EmitLog("root", LogLevel::kCritical,
-                   core::CorePlatform::TimeSinceEpochSeconds(), logmsg);
+  if (g_core) {
+    g_core->logging->V1CloudLog(logmsg);
+    g_core->logging->EmitLog("root", LogLevel::kCritical,
+                             core::CorePlatform::TimeSinceEpochSeconds(),
+                             logmsg);
+  }
+
   fprintf(stderr, "%s\n", logmsg.c_str());
-
   std::string prefix = "FATAL-ERROR-LOG:";
   std::string suffix;
 
@@ -153,7 +156,8 @@ void FatalError::ReportFatalError(const std::string& message,
   }
 }
 
-void FatalError::DoBlockingFatalErrorDialog(const std::string& message) {
+void FatalErrorHandling::DoBlockingFatalErrorDialog(
+    const std::string& message) {
   // Should not be possible to get here without this intact.
   assert(g_core);
   // If we're in the main thread; just fire off the dialog directly.
@@ -195,8 +199,9 @@ void FatalError::DoBlockingFatalErrorDialog(const std::string& message) {
   }
 }
 
-auto FatalError::HandleFatalError(bool exit_cleanly,
-                                  bool in_top_level_exception_handler) -> bool {
+auto FatalErrorHandling::HandleFatalError(bool exit_cleanly,
+                                          bool in_top_level_exception_handler)
+    -> bool {
   // Give the platform the opportunity to completely override our handling.
   if (g_core) {
     auto handled = g_core->platform->HandleFatalError(
@@ -210,24 +215,28 @@ auto FatalError::HandleFatalError(bool exit_cleanly,
   // bring the app down ourself.
   if (!in_top_level_exception_handler) {
     if (exit_cleanly) {
-      Logging::EmitLog("root", LogLevel::kCritical,
-                       core::CorePlatform::TimeSinceEpochSeconds(),
-                       "Calling exit(1)...");
+      if (g_core) {
+        g_core->logging->EmitLog("root", LogLevel::kCritical,
+                                 core::CorePlatform::TimeSinceEpochSeconds(),
+                                 "Calling exit(1)...");
 
-      // Inform anyone who cares that the engine is going down NOW.
-      // This value can be polled by threads that may otherwise block us
-      // from exiting cleanly. As an example, I've seen recent linux builds
-      // hang on exit because a bg thread is blocked in a read of stdin.
-      g_core->set_engine_done();
+        // Inform anyone who cares that the engine is going down NOW.
+        // This value can be polled by threads that may otherwise block us
+        // from exiting cleanly. As an example, I've seen recent linux builds
+        // hang on exit because a bg thread is blocked in a read of stdin.
+        g_core->set_engine_done();
+      }
 
       // Note: We DO NOT call FinalizePython() in this case; we're already
       // going down in flames so that might just make things worse.
 
       exit(1);
     } else {
-      Logging::EmitLog("root", LogLevel::kCritical,
-                       core::CorePlatform::TimeSinceEpochSeconds(),
-                       "Calling abort()...");
+      if (g_core) {
+        g_core->logging->EmitLog("root", LogLevel::kCritical,
+                                 core::CorePlatform::TimeSinceEpochSeconds(),
+                                 "Calling abort()...");
+      }
       abort();
     }
   }

@@ -791,19 +791,18 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         else:
             self.party_window = weakref.ref(PartyWindow(origin=origin))
 
-    def device_menu_press(self, device_id: int | None) -> None:
+    def request_main_ui(self, device_id: int | None) -> None:
         """(internal)"""
         from bauiv1lib.ingamemenu import InGameMenuWindow
-        from bauiv1 import set_ui_input_device
+        from bauiv1 import set_main_ui_input_device
 
         assert babase.app is not None
-        in_main_menu = babase.app.ui_v1.has_main_window()
-        if not in_main_menu:
-            set_ui_input_device(device_id)
+        if not babase.app.ui_v1.has_main_window():
+            set_main_ui_input_device(device_id)
 
-            # Hack(ish). We play swish sound here so it happens for
-            # device presses, but this means we need to disable default
-            # swish sounds for any menu buttons or we'll get double.
+            # Note: we play a swish here for when our UI comes in, so we
+            # need to make sure to disable swish sounds for any buttons
+            # that lead us here.
             if babase.app.env.gui:
                 bauiv1.getsound('swish').play()
 

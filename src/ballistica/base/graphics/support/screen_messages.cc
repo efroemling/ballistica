@@ -93,7 +93,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
       // during gameplay.
       float start_v = g_base->graphics->screen_virtual_height() * 0.05f;
       float scale;
-      switch (g_base->ui->scale()) {
+      switch (g_base->ui->uiscale()) {
         case UIScale::kSmall:
           scale = 1.5f;
           break;

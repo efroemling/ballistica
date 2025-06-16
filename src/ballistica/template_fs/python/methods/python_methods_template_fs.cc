@@ -20,7 +20,7 @@ static auto PyHelloAgainWorld(PyObject* self, PyObject* args, PyObject* keywds)
                                    &name)) {
     return nullptr;
   }
-  g_core->Log(LogName::kBa, LogLevel::kInfo, "HELLO AGAIN WORLD!");
+  g_core->logging->Log(LogName::kBa, LogLevel::kInfo, "HELLO AGAIN WORLD!");
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

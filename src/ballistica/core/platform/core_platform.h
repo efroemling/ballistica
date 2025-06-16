@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/shared/foundation/types.h"
+#include "ballistica/shared/ballistica.h"
 
 namespace ballistica::core {
 
