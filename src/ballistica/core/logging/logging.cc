@@ -14,14 +14,6 @@ namespace ballistica::core {
 
 int g_early_v1_cloud_log_writes{10};
 
-void Logging::Log_(LogName name, LogLevel level, const std::string& msg) {
-  assert(g_core);
-  // Wrappers calling us should check these bits.
-  assert(LogLevelEnabled(name, level));
-
-  g_core->python->LoggingCall(name, level, msg);
-}
-
 void Logging::EmitLog(const std::string& name, LogLevel level, double timestamp,
                       const std::string& msg) {
   assert(g_base_soft);
@@ -103,27 +95,35 @@ void Logging::V1CloudLog(const std::string& msg) {
   }
 }
 void Logging::Log(LogName name, LogLevel level, char* msg) {
-  // Avoid touching the Python layer if the log will get ignored there
-  // anyway.
+  // Checking log-level here is more efficient than letting it happen in
+  // Python land.
   if (LogLevelEnabled(name, level)) {
     Logging::Log_(name, level, msg);
   }
 }
 
 void Logging::Log(LogName name, LogLevel level, const char* msg) {
-  // Avoid touching the Python layer if the log will get ignored there
-  // anyway.
+  // Checking log-level here is more efficient than letting it happen in
+  // Python land.
   if (LogLevelEnabled(name, level)) {
     Logging::Log_(name, level, msg);
   }
 }
 
 void Logging::Log(LogName name, LogLevel level, const std::string& msg) {
-  // Avoid touching the Python layer if the log will get ignored there
-  // anyway.
+  // Checking log-level here is more efficient than letting it happen in
+  // Python land.
   if (LogLevelEnabled(name, level)) {
     Logging::Log_(name, level, msg);
   }
+}
+
+void Logging::Log_(LogName name, LogLevel level, const std::string& msg) {
+  assert(g_core);
+  // Wrappers calling us should be checking this.
+  assert(LogLevelEnabled(name, level));
+
+  g_core->python->LoggingCall(name, level, msg);
 }
 
 void Logging::ApplyBaEnvConfig() {

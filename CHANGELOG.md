@@ -1,4 +1,4 @@
-### 1.7.44 (build 22422, api 9, 2025-06-16)
+### 1.7.44 (build 22426, api 9, 2025-06-17)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
   an associated `dont_write_bytecode` value for the server config file. In most
   cases writing .pyc files is useful as it can speed up relaunches and keep
@@ -28,6 +28,8 @@
   that player, allowing leaving the game with just that player instead of fully
   exiting to the menu/etc. This worked in limited situations before the big
   1.7.37 UI revamp, but now is more generalized and consistent.
+- Added various debug logging for input devices (set `ba.input` to 'Debug' in
+  the dev-console logging tab to see it).
 - Software cursor no longer freezes during fades or other input-locked
   situations and now draws over the top of fades instead of being affected by
   them (makes it more consistent with hardware cursors).

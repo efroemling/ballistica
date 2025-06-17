@@ -116,7 +116,7 @@ auto Input::GetNewNumberedIdentifier_(const std::string& name) -> int {
     // number suffix that's not taken.
     for (auto&& i : input_devices_) {
       if (i.exists()) {
-        if ((i->GetRawDeviceName() == name) && i->number() == num) {
+        if ((i->DoGetDeviceName() == name) && i->number() == num) {
           in_use = true;
           break;
         }
@@ -265,6 +265,12 @@ void Input::RebuildInputDeviceDelegates() {
 void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   assert(g_base->InLogicThread());
 
+  device->set_number(GetNewNumberedIdentifier_(device->DoGetDeviceName()));
+
+  g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug, [device] {
+    return "InputDevice added: " + device->GetDeviceNameUnique() + ".";
+  });
+
   // Let the current app-mode assign it a delegate.
   auto delegate = Object::CompleteDeferred(
       g_base->app_mode()->CreateInputDeviceDelegate(device));
@@ -288,8 +294,6 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
     input_devices_.push_back(Object::CompleteDeferred(device));
     device->set_index(static_cast<int>(input_devices_.size() - 1));
   }
-
-  device->set_number(GetNewNumberedIdentifier_(device->GetRawDeviceName()));
 
   // Let the device know it's been added (for custom announcements, etc.)
   device->OnAdded();
@@ -319,17 +323,23 @@ void Input::PushRemoveInputDeviceCall(InputDevice* input_device,
   });
 }
 
-void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
+void Input::RemoveInputDevice(InputDevice* device, bool standard_message) {
   assert(g_base->InLogicThread());
 
-  if (standard_message && !input->ShouldBeHiddenFromUser()) {
-    ShowStandardInputDeviceDisconnectedMessage_(input);
+  g_base->ui->OnInputDeviceRemoved(device);
+
+  g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug, [device] {
+    return "InputDevice removed: " + device->GetDeviceNameUnique() + ".";
+  });
+
+  if (standard_message && !device->ShouldBeHiddenFromUser()) {
+    ShowStandardInputDeviceDisconnectedMessage_(device);
   }
 
   // Look for it in our list, and if we find it, simply clear the ref (we
   // need to keep the ref around so our list indices don't change).
   for (auto& input_device : input_devices_) {
-    if (input_device.exists() && (input_device.get() == input)) {
+    if (input_device.exists() && (input_device.get() == device)) {
       // Pull it off the list before killing it (in case it tries to trigger
       // another kill itself).
       auto device = Object::Ref<InputDevice>(input_device);

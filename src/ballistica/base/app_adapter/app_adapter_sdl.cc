@@ -1,15 +1,14 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/core/logging/logging.h"
-#include "ballistica/core/logging/logging_macros.h"
 #if BA_SDL_BUILD
+
+#include "ballistica/base/app_adapter/app_adapter_sdl.h"
 
 #include <algorithm>
 #include <cstdio>
 #include <string>
 #include <vector>
 
-#include "ballistica/base/app_adapter/app_adapter_sdl.h"
 #include "ballistica/base/base.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
@@ -21,6 +20,8 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"

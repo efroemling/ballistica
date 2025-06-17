@@ -40,13 +40,41 @@ auto InputDevice::start_button_activates_default_widget() -> bool {
   return false;
 }
 
-auto InputDevice::GetRawDeviceName() -> std::string { return "Input Device"; }
+auto InputDevice::DoGetDeviceName() -> std::string { return "Input Device"; }
 
 void InputDevice::OnAdded() {}
 
 auto InputDevice::GetDeviceName() -> std::string {
   assert(g_base->InLogicThread());
-  return GetRawDeviceName();
+  return DoGetDeviceName();
+}
+
+auto InputDevice::GetDeviceNameUnique() -> std::string {
+  assert(g_base->InLogicThread());
+  return DoGetDeviceName() + " " + GetPersistentIdentifier();
+}
+
+auto InputDevice::GetDeviceNamePretty() -> std::string {
+  assert(g_base->InLogicThread());
+
+  auto device_name{GetDeviceName()};
+  std::string translated_name;
+
+  auto devices_with_name = g_base->input->GetInputDevicesWithName(device_name);
+
+  if (device_name == "Keyboard") {
+    translated_name = g_base->assets->GetResourceString("keyboardText");
+  } else if (GetDeviceName() == "TouchScreen") {
+    translated_name = g_base->assets->GetResourceString("touchScreenText");
+  } else {
+    translated_name = device_name;
+  }
+
+  // If there's just one, no need to tack on the '#2' or whatever.
+  if (devices_with_name.size() == 1) {
+    return translated_name;
+  }
+  return translated_name + " " + GetPersistentIdentifier();
 }
 
 auto InputDevice::GetButtonName(int id) -> std::string {

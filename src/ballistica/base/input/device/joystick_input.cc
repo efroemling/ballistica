@@ -181,23 +181,6 @@ auto JoystickInput::GetButtonName(int index) -> std::string {
   }
 
   if (g_buildconfig.platform_android()) {
-    // Special case: if this is a samsung controller, return the dice
-    // button icons.
-    if (strstr(GetDeviceName().c_str(), "Samsung Game Pad EI")) {
-      switch (index) {
-        case 101:
-          return g_base->assets->CharStr(SpecialChar::kDiceButton4);  // Y
-        case 100:
-          return g_base->assets->CharStr(SpecialChar::kDiceButton3);  // X
-        case 98:
-          return g_base->assets->CharStr(SpecialChar::kDiceButton2);  // B
-        case 97:
-          return g_base->assets->CharStr(SpecialChar::kDiceButton1);  // A
-        default:
-          break;
-      }
-    }
-
     // Some standard android button names:
     switch (index) {
       case 20:
@@ -1417,7 +1400,7 @@ void JoystickInput::ApplyAppConfig() {
   }
 }
 
-auto JoystickInput::GetRawDeviceName() -> std::string {
+auto JoystickInput::DoGetDeviceName() -> std::string {
   if (!custom_device_name_.empty()) {
     return custom_device_name_;
   }

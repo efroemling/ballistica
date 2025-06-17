@@ -29,7 +29,7 @@ class TouchInput : public InputDevice {
   enum class ActionControlType { kButtons, kSwipe };
 
  protected:
-  auto GetRawDeviceName() -> std::string override;
+  auto DoGetDeviceName() -> std::string override;
 
  private:
   void UpdateDPad();

@@ -247,7 +247,7 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
-    return PyLong_FromLong(d->input_device().device_number());
+    return PyLong_FromLong(d->input_device().number());
   } else if (!strcmp(s, "is_controller_app")) {
     auto* d = self->input_device_delegate_->get();
     if (!d) {

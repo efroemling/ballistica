@@ -75,6 +75,8 @@ class UI {
   /// actively preparing to send some input.
   auto RequestMainUIControl(InputDevice* input_device) -> bool;
 
+  void OnInputDeviceRemoved(InputDevice* input_device);
+
   /// Set the device controlling the main ui.
   void SetMainUIInputDevice(InputDevice* input_device);
 

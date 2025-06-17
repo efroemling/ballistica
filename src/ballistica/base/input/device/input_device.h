@@ -30,8 +30,28 @@ class InputDevice : public Object {
   /// (player or remote-player).
   void InputCommand(InputType type, float value = 0.0f);
 
-  /// Return the (not necessarily unique) name of the input device.
+  /// Return the name of the input device. Generally devices of the same
+  /// type will have the same name. This value is not translated so is
+  /// suitable for storing configs/etc.
   auto GetDeviceName() -> std::string;
+
+  /// Return the name of the input device incorporating persistent
+  /// identifier. This value is not translated so it suitable for storing
+  /// configs/etc.
+  auto GetDeviceNameUnique() -> std::string;
+
+  /// Return a (possibly translated) device name which *may* incorporate
+  /// persistent identifier. Be aware that this may change over time - for
+  /// example, a single connected game controller might return
+  /// "FooController" here but if a second is connected it will then return
+  /// "FooController #1". Use this when identifying the device to the user
+  /// but never for storing configs/etc.
+  auto GetDeviceNamePretty() -> std::string;
+
+  /// A string unique among devices with the same name. Generally just a
+  /// number symbol followed by its number() value, but do not make this
+  /// assumption.
+  auto GetPersistentIdentifier() const -> std::string;
 
   /// Called during the game loop - for manual button repeats, etc.
   virtual void Update();
@@ -41,16 +61,11 @@ class InputDevice : public Object {
   /// Return the name of the button used to evoke the party menu from UIs.
   virtual auto GetPartyButtonName() const -> std::string;
 
-  /// Returns a number specific to this device type (saying this is the Nth
-  /// device of this type).
-  auto device_number() const -> int { return number_; }
-  auto GetPersistentIdentifier() const -> std::string;
-
-  /// Return the overall device index; unique among all devices.
+  /// Overall device index; unique among all devices.
   auto index() const -> int { return index_; }
   void set_index(int index_in) { index_ = index_in; }
 
-  /// Our number specific to our type.
+  /// Our number among devices with the same name.
   auto number() const { return number_; }
   void set_number(int n) { number_ = n; }
 
@@ -97,8 +112,8 @@ class InputDevice : public Object {
   virtual auto ShouldBeHiddenFromUser() -> bool;
 
   /// Return a human-readable name for the device's type. This is used for
-  /// display and also for storing configs/etc.
-  virtual auto GetRawDeviceName() -> std::string;
+  /// display and also for storing configs/etc. so should not be translated.
+  virtual auto DoGetDeviceName() -> std::string;
 
   /// Called for all devices in the logic thread when they've successfully
   /// been added to the input-device list, have a valid ID, name, etc.

@@ -1086,6 +1086,6 @@ auto TouchInput::HandleTouchMoved(void* touch, float x, float y) -> bool {
   return true;
 }
 
-auto TouchInput::GetRawDeviceName() -> std::string { return "TouchScreen"; }
+auto TouchInput::DoGetDeviceName() -> std::string { return "TouchScreen"; }
 
 }  // namespace ballistica::base

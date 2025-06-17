@@ -17,7 +17,7 @@ class ClientInputDevice : public base::InputDevice {
                     ConnectionToClient* connection_to_client);
   ~ClientInputDevice() override;
 
-  auto GetRawDeviceName() -> std::string override;
+  auto DoGetDeviceName() -> std::string override;
   auto IsLocal() -> bool override { return false; }
 
   void PassInputCommand(InputType type, float value) {

@@ -230,7 +230,7 @@ auto CoreFeatureSet::CalcBuildSrcDir_() -> std::string {
                           "core" BA_DIRSLASH "core.cc");
   if (!f_end) {
     logging->Log(LogName::kBa, LogLevel::kWarning, [] {
-      return "Unable to calc build source dir from __FILE__.";
+      return std::string("Unable to calc build source dir from __FILE__.");
     });
     return "";
   } else {

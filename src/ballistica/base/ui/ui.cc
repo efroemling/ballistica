@@ -344,13 +344,32 @@ void UI::HandleMouseMotion(float x, float y) {
       WidgetMessage(WidgetMessage::Type::kMouseMove, nullptr, x, y));
 }
 
-void UI::SetMainUIInputDevice(InputDevice* input_device) {
+void UI::SetMainUIInputDevice(InputDevice* device) {
   assert(g_base->InLogicThread());
 
-  main_ui_input_device_ = input_device;
+  if (device != main_ui_input_device_.get()) {
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug, [device] {
+      return "Main UI InputDevice is now "
+             + (device ? device->GetDeviceNameUnique() : "None") + ".";
+    });
+  }
+
+  main_ui_input_device_ = device;
 
   // So they dont get stolen from immediately.
   last_main_ui_input_device_use_time_ = g_core->AppTimeMillisecs();
+}
+
+void UI::OnInputDeviceRemoved(InputDevice* input_device) {
+  assert(input_device);
+  assert(g_base->InLogicThread());
+
+  // If this is the current ui input device, deregister it. This isn't
+  // technically necessary but gives us a clean logging message that the
+  // main ui input device is now None.
+  if (main_ui_input_device_.get() == input_device) {
+    SetMainUIInputDevice(nullptr);
+  }
 }
 
 void UI::Reset() {
@@ -435,8 +454,7 @@ auto UI::RequestMainUIControl(InputDevice* input_device) -> bool {
              || (time - last_main_ui_input_device_use_time_
                  > (1000 * kUIOwnerTimeoutSeconds))
              || !g_base->input->HaveManyLocalActiveInputDevices()) {
-    last_main_ui_input_device_use_time_ = time;
-    main_ui_input_device_ = input_device;
+    SetMainUIInputDevice(input_device);
     ret_val = true;
   } else {
     // For rejected input devices, play error sounds sometimes so they know
@@ -464,23 +482,7 @@ auto UI::RequestMainUIControl(InputDevice* input_device) -> bool {
             " " + g_base->assets->GetResourceString("willTimeOutText");
       }
 
-      std::string name;
-      if (input->GetDeviceName() == "Keyboard") {
-        name = g_base->assets->GetResourceString("keyboardText");
-      } else if (input->GetDeviceName() == "TouchScreen") {
-        name = g_base->assets->GetResourceString("touchScreenText");
-      } else {
-        auto devices_with_name =
-            g_base->input->GetInputDevicesWithName(input->GetDeviceName());
-
-        if (devices_with_name.size() == 1) {
-          // If there's just one, no need to tack on the '#2' or whatever.
-          name = input->GetDeviceName();
-        } else {
-          name =
-              input->GetDeviceName() + " " + input->GetPersistentIdentifier();
-        }
-      }
+      std::string name{input->GetDeviceNamePretty()};
 
       std::string b = g_base->assets->GetResourceString("hasMenuControlText");
       Utils::StringReplaceOne(&b, "${NAME}", name);
@@ -555,11 +557,7 @@ void UI::RequestMainUI_(InputDevice* input_device) {
 
   // Ok; we're (tentatively) bringing up a ui. First, register this device
   // as owning whatever ui may come up.
-  if (input_device) {
-    main_ui_input_device_ = input_device;
-  } else {
-    main_ui_input_device_.Clear();
-  }
+  SetMainUIInputDevice(input_device);
 
   // Ask the app-mode to give us whatever it considers a main ui to be.
   if (auto* app_mode = g_base->app_mode()) {
