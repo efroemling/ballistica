@@ -32,8 +32,7 @@ void PythonClassSimpleSound::SetupType(PyTypeObject* cls) {
   cls->tp_methods = tp_methods;
 }
 
-auto PythonClassSimpleSound::Create(const Object::Ref<SoundAsset>& sound)
-    -> PyObject* {
+auto PythonClassSimpleSound::Create(SoundAsset* sound) -> PyObject* {
   assert(TypeIsSetUp(&type_obj));
   auto* py_sound = reinterpret_cast<PythonClassSimpleSound*>(
       PyObject_CallObject(reinterpret_cast<PyObject*>(&type_obj), nullptr));

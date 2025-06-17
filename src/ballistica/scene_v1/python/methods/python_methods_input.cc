@@ -11,21 +11,17 @@
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
-#include "ballistica/shared/python/python_sys.h"
+#include "ballistica/shared/python/python_macros.h"
 
 namespace ballistica::scene_v1 {
 
-// Ignore signed bitwise stuff; python macros do it quite a bit.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
+// ------------------- get_configurable_game_controllers -----------------------
 
-// ----------------------- get_configurable_game_pads --------------------------
-
-static auto PyGetConfigurableGamePads(PyObject* self, PyObject* args)
+static auto PyGetConfigurableGameControllers(PyObject* self, PyObject* args)
     -> PyObject* {
   BA_PYTHON_TRY;
   std::vector<base::InputDevice*> gamepads =
-      g_base->input->GetConfigurableGamePads();
+      g_base->input->GetConfigurableGameControllers();
   PyObject* list = PyList_New(0);
   for (auto&& i : gamepads) {
     // We require scene-v1 input-devices; try to cast.
@@ -41,12 +37,12 @@ static auto PyGetConfigurableGamePads(PyObject* self, PyObject* args)
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyGetConfigurableGamePadsDef = {
-    "get_configurable_game_pads",  // name
-    PyGetConfigurableGamePads,     // method
-    METH_VARARGS,                  // flags
+static PyMethodDef PyGetConfigurableGameControllersDef = {
+    "get_configurable_game_controllers",  // name
+    PyGetConfigurableGameControllers,     // method
+    METH_VARARGS,                         // flags
 
-    "get_configurable_game_pads() -> list\n"
+    "get_configurable_game_controllers() -> list\n"
     "\n"
     "Returns a list of the currently connected gamepads that can be\n"
     "configured.\n"
@@ -105,9 +101,10 @@ static PyMethodDef PySetTouchscreenEditingDef = {
     ":meta private:",
 };
 
-// ------------------------- capture_gamepad_input -----------------------------
+// --------------------- capture_game_controller_input -------------------------
 
-static auto PyCaptureGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
+static auto PyCaptureGameControllerInput(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* obj;
@@ -119,22 +116,23 @@ static auto PyCaptureGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyCaptureGamePadInputDef = {
-    "capture_gamepad_input",  // name
-    PyCaptureGamePadInput,    // method
-    METH_VARARGS,             // flags
+static PyMethodDef PyCaptureGameControllerInputDef = {
+    "capture_game_controller_input",  // name
+    PyCaptureGameControllerInput,     // method
+    METH_VARARGS,                     // flags
 
-    "capture_gamepad_input(call: Callable[[dict], None]) -> None\n"
+    "capture_game_controller_input(call: Callable[[dict], None]) -> None\n"
     "\n"
-    "Add a callable to be called for subsequent gamepad events.\n"
+    "Add a callable to be called for subsequent game controller events.\n"
     "The method is passed a dict containing info about the event.\n"
     "\n"
     ":meta private:",
 };
 
-// ------------------------- release_gamepad_input -----------------------------
+// --------------------- release_game_controller_input -------------------------
 
-static auto PyReleaseGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
+static auto PyReleaseGameControllerInput(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   g_scene_v1->python->ReleaseJoystickInputCapture();
@@ -142,14 +140,14 @@ static auto PyReleaseGamePadInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyReleaseGamePadInputDef = {
-    "release_gamepad_input",  // name
-    PyReleaseGamePadInput,    // method
-    METH_VARARGS,             // flags
+static PyMethodDef PyReleaseGameControllerInputDef = {
+    "release_game_controller_input",  // name
+    PyReleaseGameControllerInput,     // method
+    METH_VARARGS,                     // flags
 
-    "release_gamepad_input() -> None\n"
+    "release_game_controller_input() -> None\n"
     "\n"
-    "Resumes normal gamepad event processing.\n"
+    "Resumes normal game controller event processing.\n"
     "\n"
     ":meta private:",
 };
@@ -343,14 +341,12 @@ auto PythonMethodsInput::GetMethods() -> std::vector<PyMethodDef> {
       PyGetMainUIInputDeviceDef,
       PyReleaseKeyboardInputDef,
       PyCaptureKeyboardInputDef,
-      PyReleaseGamePadInputDef,
-      PyCaptureGamePadInputDef,
+      PyReleaseGameControllerInputDef,
+      PyCaptureGameControllerInputDef,
       PySetTouchscreenEditingDef,
       PyHaveTouchScreenInputDef,
-      PyGetConfigurableGamePadsDef,
+      PyGetConfigurableGameControllersDef,
   };
 }
-
-#pragma clang diagnostic pop
 
 }  // namespace ballistica::scene_v1

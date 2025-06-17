@@ -7,9 +7,10 @@
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
+#include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
-#include "ballistica/base/input/device/keyboard_input.h"  // IWYU pragma: keep
+#include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/app_config.h"
@@ -329,7 +330,7 @@ auto UI::UIHasDirectKeyboardInput() const -> bool {
     // game-controller is driving, we'll probably want to pop up a
     // controller-centric on-screen-keyboard thingie instead.
     auto* main_ui_input_device = GetMainUIInputDevice();
-    if (auto* keyboard = g_base->input->keyboard_input()) {
+    if (KeyboardInput* keyboard = g_base->input->keyboard_input()) {
       if (main_ui_input_device == keyboard || main_ui_input_device == nullptr) {
         return true;
       }
@@ -507,7 +508,9 @@ void UI::DrawDev(FrameDef* frame_def) {
   }
 }
 
-void UI::PushBackButtonCall(InputDevice* input_device) {
+void UI::MenuPress(InputDevice* input_device) {
+  assert(g_base->InLogicThread());
+
   // Need to wrap passed pointer in a ref; otherwise it could die before
   // our pushed call runs.
   Object::Ref<InputDevice> input_device_ref;
@@ -516,10 +519,9 @@ void UI::PushBackButtonCall(InputDevice* input_device) {
   }
 
   g_base->logic->event_loop()->PushCall([this, input_device_ref] {
-    assert(g_base->InLogicThread());
-
     // If there's a UI up, send along a cancel message.
     if (IsMainUIVisible()) {
+      // Hmm; do we want to set UI ownership in this case?
       SendWidgetMessage(WidgetMessage(WidgetMessage::Type::kCancel));
     } else {
       // If there's no main screen or overlay windows, ask for a menu owned
@@ -532,8 +534,8 @@ void UI::PushBackButtonCall(InputDevice* input_device) {
 void UI::RequestMainUI(InputDevice* input_device) {
   assert(g_base->InLogicThread());
 
-  // Need to wrap passed pointer in a ref; otherwise it could die before
-  // our pushed call runs.
+  // Need to wrap passed pointer in a ref; otherwise it could die before our
+  // pushed call runs.
   Object::Ref<InputDevice> input_device_ref;
   if (input_device) {
     input_device_ref = input_device;
@@ -543,7 +545,7 @@ void UI::RequestMainUI(InputDevice* input_device) {
       [this, input_device_ref] { RequestMainUI_(input_device_ref.get()); });
 }
 
-void UI::RequestMainUI_(InputDevice* device) {
+void UI::RequestMainUI_(InputDevice* input_device) {
   assert(g_base->InLogicThread());
 
   // We're a no-op if a main ui is already up.
@@ -551,8 +553,17 @@ void UI::RequestMainUI_(InputDevice* device) {
     return;
   }
 
-  if (auto* ui_delegate = delegate()) {
-    ui_delegate->DoHandleDeviceMenuPress(device);
+  // Ok; we're (tentatively) bringing up a ui. First, register this device
+  // as owning whatever ui may come up.
+  if (input_device) {
+    main_ui_input_device_ = input_device;
+  } else {
+    main_ui_input_device_.Clear();
+  }
+
+  // Ask the app-mode to give us whatever it considers a main ui to be.
+  if (auto* app_mode = g_base->app_mode()) {
+    app_mode->RequestMainUI();
   }
 }
 
@@ -625,15 +636,16 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
 }
 
 void UI::ShowURL(const std::string& url) {
-  if (auto* ui_delegate = delegate()) {
-    // We can be called from any thread but DoShowURL expects to be run in
-    // the logic thread.
-    g_base->logic->event_loop()->PushCall(
-        [ui_delegate, url] { ui_delegate->DoShowURL(url); });
-  } else {
-    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
-                         "UI::ShowURL called without ui_delegate present.");
-  }
+  // We can be called from any thread but DoShowURL expects to be run in
+  // the logic thread.
+  g_base->logic->event_loop()->PushCall([this, url] {
+    if (auto* ui_delegate = delegate()) {
+      ui_delegate->DoShowURL(url);
+    } else {
+      g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                           "UI::ShowURL called without ui_delegate present.");
+    }
+  });
 }
 
 void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {

@@ -67,15 +67,10 @@ auto UIV1FeatureSet::Import() -> UIV1FeatureSet* {
   return ImportThroughPythonModule<UIV1FeatureSet>("_bauiv1");
 }
 
-void UIV1FeatureSet::DoHandleDeviceMenuPress(base::InputDevice* device) {
-  python->HandleDeviceMenuPress(device);
-}
-
 void UIV1FeatureSet::DoShowURL(const std::string& url) { python->ShowURL(url); }
 
 bool UIV1FeatureSet::IsMainUIVisible() {
-  // We consider anything on our screen or overlay stacks to be a 'main menu'.
-  // Probably need a better name than 'main menu' though.
+  // We consider anything on our screen or overlay stacks to be a 'main ui'.
   auto* screen_root = screen_root_widget();
   auto* overlay_root = overlay_root_widget();
   return ((screen_root && screen_root->HasChildren())

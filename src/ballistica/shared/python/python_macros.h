@@ -1,17 +1,9 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_SHARED_PYTHON_PYTHON_SYS_H_
-#define BALLISTICA_SHARED_PYTHON_PYTHON_SYS_H_
+#ifndef BALLISTICA_SHARED_PYTHON_PYTHON_MACROS_H_
+#define BALLISTICA_SHARED_PYTHON_PYTHON_MACROS_H_
 
-// Any code that actually runs any Python logic should include this. This
-// header pulls in the actual Python includes and also defines some handy
-// macros and functions for working with Python objects.
-
-// UPDATE (September 2024): We now include Python.h directly in some places;
-// this causes less friction with include-what-you-use checks.
 #include <Python.h>
-#include <frameobject.h>
-#include <weakrefobject.h>
 
 #include <string>  // IWYU pragma: keep.
 
@@ -69,13 +61,13 @@
   ((void)0)
 
 // For use in tp_dealloc; simply prints the error.
-#define BA_PYTHON_DEALLOC_CATCH                                  \
-  }                                                              \
-  catch (const std::exception& e) {                              \
-    g_core->logging->Log(LogName::kBa, LogLevel::kError,         \
-                         std::string("tp_dealloc exception: ")   \
-                             + GetShortExceptionDescription(e)); \
-  }                                                              \
+#define BA_PYTHON_DEALLOC_CATCH                                        \
+  }                                                                    \
+  catch (const std::exception& e) {                                    \
+    core::g_core->logging->Log(LogName::kBa, LogLevel::kError,         \
+                               std::string("tp_dealloc exception: ")   \
+                                   + GetShortExceptionDescription(e)); \
+  }                                                                    \
   ((void)0)
 
 // Sets Python error and returns -1.
@@ -91,4 +83,4 @@
   }                                                                       \
   ((void)0)
 
-#endif  // BALLISTICA_SHARED_PYTHON_PYTHON_SYS_H_
+#endif  // BALLISTICA_SHARED_PYTHON_PYTHON_MACROS_H_

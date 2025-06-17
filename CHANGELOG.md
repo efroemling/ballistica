@@ -1,4 +1,4 @@
-### 1.7.44 (build 22419, api 9, 2025-06-16)
+### 1.7.44 (build 22420, api 9, 2025-06-16)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
   an associated `dont_write_bytecode` value for the server config file. In most
   cases writing .pyc files is useful as it can speed up relaunches and keep
@@ -23,6 +23,13 @@
   between app runs. This means if you have one particular logger you flip off
   and on a lot you can generally get at it by just bringing up the small size
   dev-console.
+- Cleaned up input handling. Now, if there is a single player using the local
+  device, all escape/menu/back buttons will bring up the menu associated with
+  that player, allowing leaving the game with just that player instead of fully
+  exiting to the menu/etc. This worked in limited situations before the big
+  1.7.37 UI revamp, but now is more generalized and consistent.
+- On builds with a software cursor, the cursor no longer freezes during fades or
+  other input-locked situations.
 
 ### 1.7.43 (build 22406, api 9, 2025-06-09)
 - Fixes an issue with tournament scores not submitting properly in 1.7.42.

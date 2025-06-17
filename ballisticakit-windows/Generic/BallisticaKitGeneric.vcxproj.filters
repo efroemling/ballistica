@@ -1597,6 +1597,9 @@
     <ClInclude Include="..\..\src\ballistica\shared\python\python_command.h">
       <Filter>ballistica\shared\python</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\python\python_macros.h">
+      <Filter>ballistica\shared\python</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\shared\python\python_module_builder.h">
       <Filter>ballistica\shared\python</Filter>
     </ClInclude>
@@ -1610,9 +1613,6 @@
       <Filter>ballistica\shared\python</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\shared\python\python_ref.h">
-      <Filter>ballistica\shared\python</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\shared\python\python_sys.h">
       <Filter>ballistica\shared\python</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\template_fs\python\class\python_class_hello.cc">

@@ -8,7 +8,7 @@
 #include <string>
 
 #include "ballistica/shared/foundation/exception.h"
-#include "ballistica/shared/networking/networking_sys.h"  // IWYU pragma: keep.
+#include "ballistica/shared/networking/networking_sys.h"
 
 namespace ballistica {
 

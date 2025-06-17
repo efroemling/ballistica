@@ -554,9 +554,7 @@ class ClassicAppMode(babase.AppMode):
         self._update_ui_live_state()
 
     def _root_ui_menu_press(self) -> None:
-        from babase import push_back_press
-
-        print('HELLO FROM MENU PRESS3')
+        from babase import menu_press
 
         ui = babase.app.ui_v1
 
@@ -564,15 +562,16 @@ class ClassicAppMode(babase.AppMode):
         old_window = ui.get_main_window()
         if old_window is not None:
 
+            bauiv1.getsound('swish').play()
+
             classic = babase.app.classic
             assert classic is not None
             classic.resume()
 
             ui.clear_main_window()
-            return
-
-        # Otherwise
-        push_back_press()
+        else:
+            # Otherwise act like a standard menu button.
+            menu_press()
 
     def _root_ui_account_press(self) -> None:
         from bauiv1lib.account.settings import AccountSettingsWindow

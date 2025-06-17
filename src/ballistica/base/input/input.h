@@ -28,22 +28,23 @@ class Input {
   void DoApplyAppConfig();
   void OnScreenSizeChange();
 
-  // Add an input device. Must be called from the logic thread; otherwise use
-  // PushAddInputDeviceCall.
+  // Add an input device. Must be called from the logic thread; otherwise
+  // use PushAddInputDeviceCall.
   void AddInputDevice(InputDevice* device, bool standard_message);
 
-  // Removes a previously-added input-device. Must be called from the
-  // logic thread; otherwise use PushRemoveInputDeviceCall.
+  // Removes a previously-added input-device. Must be called from the logic
+  // thread; otherwise use PushRemoveInputDeviceCall.
   void RemoveInputDevice(InputDevice* input, bool standard_message);
 
-  // Given a device name and persistent identifier for it, returns a device or
-  // nullptr. Note that this can return hidden devices (ones the user has
+  // Given a device name and persistent identifier for it, returns a device
+  // or nullptr. Note that this can return hidden devices (ones the user has
   // flagged as totally-ignored, etc).
   auto GetInputDevice(const std::string& name, const std::string& persistent_id)
       -> InputDevice*;
 
   // Return a device by id, or nullptr for an invalid id. Note that this can
-  // return hidden devices (ones the user has flagged as totally-ignored, etc).
+  // return hidden devices (ones the user has flagged as totally-ignored,
+  // etc).
   auto GetInputDevice(int id) -> InputDevice*;
 
   /// If there is currently a single active local player, return their input
@@ -65,10 +66,10 @@ class Input {
   auto GetInputDevicesWithName(const std::string& name)
       -> std::vector<InputDevice*>;
 
-  /// Release all held buttons/keys/etc. For use when directing input
-  /// to a new target (from in-game to UI, etc.) so that old targets
-  /// don't get stuck moving/etc. Should come up with a more elegant
-  /// way to handle this situation.
+  /// Release all held buttons/keys/etc. For use when directing input to a
+  /// new target (from in-game to UI, etc.) so that old targets don't get
+  /// stuck moving/etc. Should come up with a more elegant way to handle
+  /// this situation.
   void ResetHoldStates();
 
   void Reset();
@@ -89,12 +90,13 @@ class Input {
 
   auto IsCursorVisible() const -> bool;
 
-  // Return list of gamepads that are user-visible and able to be configured.
-  auto GetConfigurableGamePads() -> std::vector<InputDevice*>;
+  // Return list of game controllers that are user-visible and able to be
+  // configured.
+  auto GetConfigurableGameControllers() -> std::vector<InputDevice*>;
 
   // Reset all keyboard keys to a non-held state and deal out associated
-  // messages - used before switching keyboard focus to a new context
-  // so that the old one is not stuck with a held key forever.
+  // messages - used before switching keyboard focus to a new context so
+  // that the old one is not stuck with a held key forever.
   void ResetKeyboardHeldKeys();
 
   // Same idea but for joysticks.
@@ -118,15 +120,12 @@ class Input {
   // recently. This is used to determine whether we need to have strict main
   // ui ownership (otherwise ui interaction would be chaotic with 8 players
   // connected).
-  auto HaveManyLocalActiveInputDevices() -> bool {
-    return GetLocalActiveInputDeviceCount() > 1;
-  }
+  auto HaveManyLocalActiveInputDevices() -> bool;
   auto GetLocalActiveInputDeviceCount() -> int;
 
-  // Return true if there are any joysticks with players attached.
-  // The touch-input uses this to warn the user if it looks like they
-  // may have accidentally joined the game using a controller touchpad or
-  // something.
+  // Return true if there are any joysticks with players attached. The
+  // touch-input uses this to warn the user if it looks like they may have
+  // accidentally joined the game using a controller touchpad or something.
   auto HaveControllerWithPlayer() -> bool;
   auto HaveRemoteAppController() -> bool;
   auto keyboard_input() const -> KeyboardInput* { return keyboard_input_; }
@@ -195,6 +194,7 @@ class Input {
   void CreateKeyboardInputDevices_();
   void DestroyKeyboardInputDevices_();
   void AddFakeKeyMods_(SDL_Keysym* sym);
+  auto GetSingleLocalPlayerAttachedInputDevice_() const -> InputDevice*;
 
   std::list<std::string> input_lock_temp_labels_;
   std::list<std::string> input_unlock_temp_labels_;

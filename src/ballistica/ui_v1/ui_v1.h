@@ -83,7 +83,6 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   /// Called when our associated Python module is instantiated.
   static void OnModuleExec(PyObject* module);
 
-  void DoHandleDeviceMenuPress(base::InputDevice* device) override;
   void DoShowURL(const std::string& url) override;
   auto IsMainUIVisible() -> bool override;
   auto IsPartyIconVisible() -> bool override;

@@ -22,7 +22,7 @@
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
-#include "ballistica/shared/python/python_sys.h"
+#include "ballistica/shared/python/python_macros.h"
 
 namespace ballistica::base {
 
@@ -599,7 +599,7 @@ static PyMethodDef PyPushCallDef = {
     "\n"
     "Push a call to the logic-thread's event loop.\n"
     "\n"
-    "This function expects to be called from the logic thread, and will "
+    "This function expects to be called from the logic thread, and will\n"
     "automatically save and restore the context to behave seamlessly.\n"
     "\n"
     "To push a call from outside of the logic thread, pass\n"

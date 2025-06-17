@@ -16,7 +16,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
-#include <sys/socket.h>
+#include <sys/socket.h>  // IWYU pragma: export
 #include <sys/types.h>
 #include <unistd.h>
 #if BA_PLATFORM_ANDROID

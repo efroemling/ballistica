@@ -6,7 +6,6 @@
 
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"
-#include "ballistica/core/logging/logging.h"  // IWYU pragma: keep.
 #include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {

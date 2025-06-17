@@ -65,7 +65,7 @@ class UI {
   /// Similar to RequestMainUI(), except that, if there is already a main ui
   /// present, instead sends a cancel event. Appropriate to use for
   /// menu/back/escape buttons/keys.
-  void PushBackButtonCall(InputDevice* input_device);
+  void MenuPress(InputDevice* input_device);
 
   /// Request control of the main ui on behalf of the provided device.
   /// Returns false if there is no main ui or if another device currently

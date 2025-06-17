@@ -8,8 +8,8 @@
 #include "ballistica/classic/python/methods/python_methods_classic.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
+#include "ballistica/shared/python/python_macros.h"
 #include "ballistica/shared/python/python_module_builder.h"
-#include "ballistica/shared/python/python_sys.h"
 
 namespace ballistica::classic {
 

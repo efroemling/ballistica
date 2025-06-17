@@ -26,8 +26,7 @@ void PythonClassUISound::SetupType(PyTypeObject* cls) {
   cls->tp_methods = tp_methods;
 }
 
-auto PythonClassUISound::Create(const Object::Ref<base::SoundAsset>& sound)
-    -> PyObject* {
+auto PythonClassUISound::Create(base::SoundAsset* sound) -> PyObject* {
   assert(TypeIsSetUp(&type_obj));
   auto* py_sound = reinterpret_cast<PythonClassUISound*>(
       PyObject_CallObject(reinterpret_cast<PyObject*>(&type_obj), nullptr));

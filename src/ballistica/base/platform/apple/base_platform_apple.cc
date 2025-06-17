@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "ballistica/core/logging/logging.h"  // IWYU pragma: keep.
+#include "ballistica/core/logging/logging.h"
 
 #if BA_XCODE_BUILD
 #include "ballistica/base/platform/apple/from_swift.h"

@@ -27,6 +27,8 @@ auto AppMode::CreateInputDeviceDelegate(InputDevice* device)
   return Object::NewDeferred<InputDeviceDelegate>();
 }
 
+void AppMode::RequestMainUI() {}
+
 auto AppMode::HandleJSONPing(const std::string& data_str) -> std::string {
   return "";
 }

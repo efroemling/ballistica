@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "ballistica/base/assets/asset.h"
-#include "ballistica/base/audio/al_sys.h"  // IWYU pragma: keep.
+#include "ballistica/base/audio/al_sys.h"
 
 namespace ballistica::base {
 
@@ -18,7 +18,8 @@ class SoundAsset : public Asset {
 
   void DoPreload() override;
   void DoLoad() override;
-  // FIXME: Should make sure the sound_data isn't in use before unloading it.
+  // FIXME: Should make sure the sound_data isn't in use before unloading
+  // it.
   void DoUnload() override;
   auto GetAssetType() const -> AssetType override;
   auto GetName() const -> std::string override;

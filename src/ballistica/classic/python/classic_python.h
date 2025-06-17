@@ -26,6 +26,7 @@ class ClassicPython {
     kChestAppearanceDisplayInfos,
     kOnEngineWillResetCall,
     kOnEngineDidResetCall,
+    kRequestMainUICall,
     kLast  // Sentinel; must be at end.
   };
 

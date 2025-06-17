@@ -9,9 +9,10 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
-#include "ballistica/base/assets/sound_asset.h"  // IWYU pragma: keep.
+#include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/input/input.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
@@ -19,8 +20,9 @@
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/core_platform.h"
+#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
-#include "ballistica/shared/generic/native_stack_trace.h"  // IWYU pragma: keep.
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -45,7 +47,8 @@ static auto PyGetSimpleSound(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PRECONDITION(g_base->assets->asset_loads_allowed());
   {
     Assets::AssetListLock lock;
-    return PythonClassSimpleSound::Create(g_base->assets->GetSound(name));
+    Object::Ref<SoundAsset> sound = g_base->assets->GetSound(name);
+    return PythonClassSimpleSound::Create(sound.get());
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1984,23 +1987,27 @@ static PyMethodDef PySetDrawVirtualSafeAreaBoundsDef = {
     ":meta private:",
 };
 
-// ----------------------------- push_back_press -------------------------------
+// ------------------------------- menu_press ----------------------------------
 
-static auto PyPushBackPress(PyObject* self) -> PyObject* {
+static auto PyMenuPress(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  BA_PRECONDITION(g_base->InLogicThread());
-  g_base->ui->PushBackButtonCall(
-      g_base->input->GetFuzzyInputDeviceForMenuButton());
+
+  // Our C++ call needs to happen in the logic thread, but we can be called
+  // from anywhere.
+  g_base->logic->event_loop()->PushCall([] {
+    g_base->ui->MenuPress(g_base->input->GetFuzzyInputDeviceForMenuButton());
+  });
+
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyPushBackPressDef = {
-    "push_back_press",             // name
-    (PyCFunction)PyPushBackPress,  // method
-    METH_NOARGS,                   // flags
+static PyMethodDef PyMenuPressDef = {
+    "menu_press",              // name
+    (PyCFunction)PyMenuPress,  // method
+    METH_NOARGS,               // flags
 
-    "push_back_press() -> None\n"
+    "menu_press() -> None\n"
     "\n"
     ":meta private:",
 };
@@ -2010,10 +2017,14 @@ static PyMethodDef PyPushBackPressDef = {
 static auto PyRequestMainUI(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
 
-  BA_PRECONDITION(g_base->InLogicThread());
-  g_base->ui->RequestMainUI(nullptr);
-  Py_RETURN_NONE;
+  // Our C++ call needs to happen in the logic thread, but we can be called
+  // from anywhere.
+  g_base->logic->event_loop()->PushCall([] {
+    g_base->ui->RequestMainUI(
+        g_base->input->GetFuzzyInputDeviceForMenuButton());
+  });
 
+  Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
@@ -2149,7 +2160,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyTempTestingDef,
       PyOpenFileExternallyDef,
       PyGetInputIdleTimeDef,
-      PyPushBackPressDef,
+      PyMenuPressDef,
       PyRequestMainUIDef,
       PyGetDrawVirtualSafeAreaBoundsDef,
       PySetDrawVirtualSafeAreaBoundsDef,

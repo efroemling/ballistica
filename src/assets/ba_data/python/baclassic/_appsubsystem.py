@@ -791,14 +791,15 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         else:
             self.party_window = weakref.ref(PartyWindow(origin=origin))
 
-    def request_main_ui(self, device_id: int | None) -> None:
+    def request_main_ui(self) -> None:
         """(internal)"""
         from bauiv1lib.ingamemenu import InGameMenuWindow
-        from bauiv1 import set_main_ui_input_device
+
+        # from bauiv1 import set_main_ui_input_device
 
         assert babase.app is not None
         if not babase.app.ui_v1.has_main_window():
-            set_main_ui_input_device(device_id)
+            # set_main_ui_input_device(device_id)
 
             # Note: we play a swish here for when our UI comes in, so we
             # need to make sure to disable swish sounds for any buttons

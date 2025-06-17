@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "ballistica/core/core.h"
-#include "ballistica/shared/python/python_sys.h"
+#include "ballistica/shared/python/python_macros.h"
 
 namespace ballistica::template_fs {
 

@@ -31,12 +31,12 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/support/min_sdl.h"  // IWYU pragma: keep.
+#include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/exception.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
-#include "ballistica/shared/networking/networking_sys.h"  // IWYU pragma: keep.
+#include "ballistica/shared/networking/networking_sys.h"
 
 // ------------------------- PLATFORM SELECTION --------------------------------
 

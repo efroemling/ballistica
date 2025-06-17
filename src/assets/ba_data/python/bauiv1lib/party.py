@@ -200,6 +200,7 @@ class PartyWindow(bui.Window):
         )
 
         bui.textwidget(edit=txt, on_return_press_call=btn.activate)
+        bui.widget(edit=txt, down_widget=btn)
         self._name_widgets: list[bui.Widget] = []
         self._roster: list[dict[str, Any]] | None = None
         self._update_timer = bui.AppTimer(

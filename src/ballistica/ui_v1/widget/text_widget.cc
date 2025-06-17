@@ -15,7 +15,7 @@
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/graphics/text/text_group.h"
-#include "ballistica/base/input/device/keyboard_input.h"  // IWYU pragma: keep.
+#include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
@@ -845,7 +845,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           // FIXME: may need to test/tweak this behavior for cases where
           //  we pop up a UI dialog for text input..
           if (editable()) {
-            if (auto* kb = g_base->input->keyboard_input()) {
+            if (base::KeyboardInput* kb = g_base->input->keyboard_input()) {
               g_base->ui->SetMainUIInputDevice(kb);
             }
           }

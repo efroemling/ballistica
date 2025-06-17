@@ -48,6 +48,8 @@ class ClassicAppMode : public base::AppMode {
   /// it to ever occur.
   static auto GetActiveOrFatal() -> ClassicAppMode*;
 
+  void RequestMainUI() override;
+
   auto HandleJSONPing(const std::string& data_str) -> std::string override;
   void HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
                                const SockAddr& addr) override;

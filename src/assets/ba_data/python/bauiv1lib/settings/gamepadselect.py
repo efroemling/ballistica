@@ -105,10 +105,12 @@ class GamepadSelectWindow(bui.MainWindow):
                 v_align='top',
             )
 
-        bs.capture_gamepad_input(bui.WeakCall(self.gamepad_configure_callback))
+        bs.capture_game_controller_input(
+            bui.WeakCall(self.gamepad_configure_callback)
+        )
 
     def __del__(self) -> None:
-        bs.release_gamepad_input()
+        bs.release_game_controller_input()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -130,7 +132,7 @@ class GamepadSelectWindow(bui.MainWindow):
         # Ignore all but button-presses.
         if event['type'] not in ['BUTTONDOWN', 'HATMOTION']:
             return
-        bs.release_gamepad_input()
+        bs.release_game_controller_input()
 
         assert bui.app.classic is not None
 

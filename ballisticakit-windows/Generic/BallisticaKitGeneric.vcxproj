@@ -721,12 +721,12 @@
     <ClInclude Include="..\..\src\ballistica\shared\python\python_class.h" />
     <ClCompile Include="..\..\src\ballistica\shared\python\python_command.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\python\python_command.h" />
+    <ClInclude Include="..\..\src\ballistica\shared\python\python_macros.h" />
     <ClInclude Include="..\..\src\ballistica\shared\python\python_module_builder.h" />
     <ClCompile Include="..\..\src\ballistica\shared\python\python_object_set.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\python\python_object_set.h" />
     <ClCompile Include="..\..\src\ballistica\shared\python\python_ref.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\python\python_ref.h" />
-    <ClInclude Include="..\..\src\ballistica\shared\python\python_sys.h" />
     <ClCompile Include="..\..\src\ballistica\template_fs\python\class\python_class_hello.cc" />
     <ClInclude Include="..\..\src\ballistica\template_fs\python\class\python_class_hello.h" />
     <ClCompile Include="..\..\src\ballistica\template_fs\python\methods\python_methods_template_fs.cc" />

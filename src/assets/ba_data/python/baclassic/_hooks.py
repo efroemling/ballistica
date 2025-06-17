@@ -36,3 +36,13 @@ def on_engine_did_reset() -> None:
         logging.error(
             'on_engine_did_reset called without ClassicAppMode active.'
         )
+
+
+def request_main_ui() -> None:
+    """Called to bring up in-game menu."""
+
+    if babase.app.classic is None:
+        logging.exception('Classic not present.')
+        return
+
+    babase.app.classic.request_main_ui()

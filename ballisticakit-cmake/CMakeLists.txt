@@ -730,12 +730,12 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/python/python_class.h
   ${BA_SRC_ROOT}/ballistica/shared/python/python_command.cc
   ${BA_SRC_ROOT}/ballistica/shared/python/python_command.h
+  ${BA_SRC_ROOT}/ballistica/shared/python/python_macros.h
   ${BA_SRC_ROOT}/ballistica/shared/python/python_module_builder.h
   ${BA_SRC_ROOT}/ballistica/shared/python/python_object_set.cc
   ${BA_SRC_ROOT}/ballistica/shared/python/python_object_set.h
   ${BA_SRC_ROOT}/ballistica/shared/python/python_ref.cc
   ${BA_SRC_ROOT}/ballistica/shared/python/python_ref.h
-  ${BA_SRC_ROOT}/ballistica/shared/python/python_sys.h
   ${BA_SRC_ROOT}/ballistica/template_fs/python/class/python_class_hello.cc
   ${BA_SRC_ROOT}/ballistica/template_fs/python/class/python_class_hello.h
   ${BA_SRC_ROOT}/ballistica/template_fs/python/methods/python_methods_template_fs.cc

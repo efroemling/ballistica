@@ -5,7 +5,7 @@
 #include <string>
 
 #include "ballistica/base/audio/audio.h"
-#include "ballistica/base/input/device/keyboard_input.h"  // IWYU pragma: keep.
+#include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
@@ -84,24 +84,6 @@ void UIV1Python::ShowURL(const std::string& url) {
   }
 }
 
-void UIV1Python::HandleDeviceMenuPress(base::InputDevice* device) {
-  assert(objs().Exists(ObjID::kRequestMainUICall));
-
-  // Ignore if input is locked or we've not yet got a root widget.
-  if (g_base->input->IsInputLocked() || g_ui_v1 == nullptr
-      || g_ui_v1->root_widget() == nullptr) {
-    return;
-  }
-  base::ScopedSetContext ssc(nullptr);
-  PythonRef args(device ? Py_BuildValue("(i)", device->index())
-                        : Py_BuildValue("(O)", Py_None),
-                 PythonRef::kSteal);
-  {
-    Python::ScopedCallLabel label("HandleDeviceMenuPress");
-    objs().Get(ObjID::kRequestMainUICall).Call(args);
-  }
-}
-
 void UIV1Python::InvokeStringEditor(PyObject* string_edit_adapter_instance) {
   BA_PRECONDITION(g_base->InLogicThread());
   BA_PRECONDITION(string_edit_adapter_instance);
@@ -146,7 +128,7 @@ void UIV1Python::InvokeQuitWindow(QuitType quit_type) {
   objs().Get(UIV1Python::ObjID::kQuitWindowCall).Call(args);
 
   // If we have a keyboard, give it UI ownership.
-  base::InputDevice* keyboard = g_base->input->keyboard_input();
+  base::KeyboardInput* keyboard = g_base->input->keyboard_input();
   if (keyboard) {
     g_base->ui->SetMainUIInputDevice(keyboard);
   }

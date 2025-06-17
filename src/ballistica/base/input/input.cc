@@ -85,13 +85,23 @@ auto Input::GetInputDevice(const std::string& name,
 }
 
 auto Input::GetFuzzyInputDeviceForEscapeKey() -> InputDevice* {
-  printf("WOULD GET FUZZY INPUT FOR ESCAPE\n");
-  return nullptr;
+  assert(g_base->InLogicThread());
+
+  auto* pdevice = GetSingleLocalPlayerAttachedInputDevice_();
+  if (pdevice) {
+    return pdevice;
+  }
+  return keyboard_input_;
 }
 
 auto Input::GetFuzzyInputDeviceForMenuButton() -> InputDevice* {
-  printf("WOULD GET FUZZY INPUT FOR MENU\n");
-  return nullptr;
+  assert(g_base->InLogicThread());
+
+  auto* pdevice = GetSingleLocalPlayerAttachedInputDevice_();
+  if (pdevice) {
+    return pdevice;
+  }
+  return touch_input_;
 }
 
 auto Input::GetNewNumberedIdentifier_(const std::string& name) -> int {
@@ -102,8 +112,8 @@ auto Input::GetNewNumberedIdentifier_(const std::string& name) -> int {
   while (true) {
     bool in_use = false;
 
-    // Scan other devices with the same device-name and find the first number
-    // suffix that's not taken.
+    // Scan other devices with the same device-name and find the first
+    // number suffix that's not taken.
     for (auto&& i : input_devices_) {
       if (i.exists()) {
         if ((i->GetRawDeviceName() == name) && i->number() == num) {
@@ -284,7 +294,7 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   // Let the device know it's been added (for custom announcements, etc.)
   device->OnAdded();
 
-  // Immediately apply controls if initial app-config has already been
+  // Immediately apply app-config if initial app-config has already been
   // applied; otherwise it'll happen as part of that.
   if (g_base->logic->applied_app_config()) {
     // Update controls for just this guy.
@@ -388,6 +398,10 @@ void Input::UpdateInputDeviceCounts_() {
   }
 }
 
+auto Input::HaveManyLocalActiveInputDevices() -> bool {
+  return GetLocalActiveInputDeviceCount() > 1;
+}
+
 auto Input::GetLocalActiveInputDeviceCount() -> int {
   assert(g_base->InLogicThread());
 
@@ -416,6 +430,22 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
     local_active_input_device_count_ = count;
   }
   return local_active_input_device_count_;
+}
+
+auto Input::GetSingleLocalPlayerAttachedInputDevice_() const -> InputDevice* {
+  assert(g_base->InLogicThread());
+
+  InputDevice* pdevice{};
+  int pdevicecount{};
+
+  for (auto& input_device : input_devices_) {
+    if (input_device.exists() && input_device->IsLocal()
+        && input_device->AttachedToPlayer()) {
+      pdevice = input_device.get();
+      pdevicecount += 1;
+    }
+  }
+  return pdevicecount == 1 ? pdevice : nullptr;
 }
 
 auto Input::HaveControllerWithPlayer() -> bool {
@@ -455,7 +485,7 @@ auto Input::GetInputDevicesWithName(const std::string& name)
   return vals;
 }
 
-auto Input::GetConfigurableGamePads() -> std::vector<InputDevice*> {
+auto Input::GetConfigurableGameControllers() -> std::vector<InputDevice*> {
   assert(g_base->InLogicThread());
   std::vector<InputDevice*> vals;
   if (!g_core->HeadlessMode()) {
@@ -970,7 +1000,7 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
       // Menu button on android/etc. pops up the menu.
     case SDLK_MENU: {
       if (!g_base->ui->IsMainUIVisible()) {
-        g_base->ui->RequestMainUI(touch_input_);
+        g_base->ui->RequestMainUI(GetFuzzyInputDeviceForMenuButton());
       }
       handled = true;
       break;
@@ -1029,10 +1059,7 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     case SDLK_ESCAPE:
       if (!g_base->ui->IsMainUIVisible()) {
         // There's no main menu up. Ask for one.
-
-        // Note: keyboard_input_ may be nullptr but escape key should
-        // still function for menus; it just won't claim ownership.
-        g_base->ui->RequestMainUI(keyboard_input_);
+        g_base->ui->RequestMainUI(GetFuzzyInputDeviceForEscapeKey());
       } else {
         // Ok there *is* a main ui up. Send it a cancel message.
         g_base->ui->SendWidgetMessage(
@@ -1210,9 +1237,14 @@ void Input::HandleMouseMotion_(const Vector2f& position) {
   // Mark as active even if input is locked.
   MarkInputActive();
 
-  if (IsInputLocked()) {
-    return;
-  }
+  // Just noticed that blocking these events leads to the cursor freezing up
+  // on fades and whatnot (when we're drawing the cursor at least). So gonna
+  // just let these go through for now. If that ever causes problems we can
+  // reconsider.
+  //
+  // if (IsInputLocked()) {
+  //   return;
+  // }
 
   float old_cursor_pos_x = cursor_pos_x_;
   float old_cursor_pos_y = cursor_pos_y_;

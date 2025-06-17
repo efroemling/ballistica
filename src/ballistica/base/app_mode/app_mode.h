@@ -52,6 +52,9 @@ class AppMode {
   virtual auto CreateInputDeviceDelegate(InputDevice* device)
       -> InputDeviceDelegate*;
 
+  /// Attempt to bring up a main ui (generally an in-game menu).
+  virtual void RequestMainUI();
+
   /// Speed/slow stuff (generally debug builds only).
   virtual void ChangeGameSpeed(int offs);
 

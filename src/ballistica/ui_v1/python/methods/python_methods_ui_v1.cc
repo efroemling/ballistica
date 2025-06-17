@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "ballistica/base/assets/assets.h"
-#include "ballistica/base/assets/sound_asset.h"  // IWYU pragma: keep.
+#include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/base/ui/ui.h"
@@ -40,7 +40,8 @@ static auto PyGetSound(PyObject* self, PyObject* args, PyObject* keywds)
   }
   {
     base::Assets::AssetListLock lock;
-    return PythonClassUISound::Create(g_base->assets->GetSound(name));
+    Object::Ref<base::SoundAsset> sound = g_base->assets->GetSound(name);
+    return PythonClassUISound::Create(sound.get());
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

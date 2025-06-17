@@ -13,10 +13,36 @@ namespace ballistica::base {
 
 InputDevice::InputDevice() = default;
 
+auto InputDevice::GetAllowsConfiguring() -> bool { return true; }
+auto InputDevice::IsController() -> bool { return false; }
+auto InputDevice::IsSDLController() -> bool { return false; }
+auto InputDevice::IsTouchScreen() -> bool { return false; }
+auto InputDevice::IsRemoteControl() -> bool { return false; }
+auto InputDevice::IsTestInput() -> bool { return false; }
+auto InputDevice::IsKeyboard() -> bool { return false; }
+auto InputDevice::IsMFiController() -> bool { return false; }
+auto InputDevice::IsLocal() -> bool { return true; }
+auto InputDevice::IsUIOnly() -> bool { return false; }
+auto InputDevice::IsRemoteApp() -> bool { return false; }
+
+void InputDevice::UpdateMapping() {}
+
+#if BA_SDL_BUILD || BA_MINSDL_BUILD
+void InputDevice::HandleSDLEvent(const SDL_Event* e) {}
+#endif
+
 auto InputDevice::ShouldBeHiddenFromUser() -> bool {
   // Ask the input system whether they want to ignore us..
   return g_base->input->ShouldCompletelyIgnoreInputDevice(this);
 }
+
+auto InputDevice::start_button_activates_default_widget() -> bool {
+  return false;
+}
+
+auto InputDevice::GetRawDeviceName() -> std::string { return "Input Device"; }
+
+void InputDevice::OnAdded() {}
 
 auto InputDevice::GetDeviceName() -> std::string {
   assert(g_base->InLogicThread());

@@ -298,11 +298,21 @@ def _do_pycache_upkeep() -> None:
                 pass
             else:
                 complain(f'Error looking for py src for "{path}": {exc}')
-            # If anything goes wrong, just assume it does have a source;
-            # let's only kill stuff where we're sure it doesn't.
+
+            # If anything goes wrong, just assume it *does* have a source;
+            # let's only kill stuff when we're sure it doesn't.
             return True
 
         return os.path.exists(srcpath)
+
+    def _is_older_than_a_few_seconds(path: str) -> bool:
+        try:
+            return os.path.getmtime(path) < time.time() - 10
+        except FileNotFoundError:
+            # Transient files such as in-progress pycache temp files are
+            # likely to disappear under us. Just consider that as 'not
+            # old'.
+            return False
 
     # Now kill all files in our dst pyc dir that *don't* appear in our
     # dict of dst paths.
@@ -316,8 +326,16 @@ def _do_pycache_upkeep() -> None:
             # file. Technically we could check *everything* this way but
             # it should be lots faster to fast-out with the entries dict
             # lookup first.
+            #
+            # We also now check to make sure files are older than a few
+            # seconds before deleting them; this keeps us out of the way
+            # of in-progress .pyc temp files.
 
-            if fullpath not in entries and not _has_py_source(fullpath):
+            if (
+                fullpath not in entries
+                and _is_older_than_a_few_seconds(fullpath)
+                and not _has_py_source(fullpath)
+            ):
                 try:
                     cachelog.debug(
                         'pycache-upkeep: pruning file \'%s\'.', fullpath

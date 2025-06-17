@@ -7,7 +7,7 @@
 
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
+#include "ballistica/shared/python/python_macros.h"
 
 // Save/restore current command for logging/etc.
 // this isn't exception-safe, but we should never let

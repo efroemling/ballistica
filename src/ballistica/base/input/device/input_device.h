@@ -6,7 +6,6 @@
 #include <string>
 
 #include "ballistica/base/input/device/input_device_delegate.h"
-#include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {
 
@@ -56,23 +55,23 @@ class InputDevice : public Object {
   void set_number(int n) { number_ = n; }
 
   /// Read and apply new control values from config.
-  virtual void UpdateMapping() {}
+  virtual void UpdateMapping();
 
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
-  virtual void HandleSDLEvent(const SDL_Event* e) {}
+  virtual void HandleSDLEvent(const SDL_Event* e);
 #endif
 
-  virtual auto GetAllowsConfiguring() -> bool { return true; }
-  virtual auto IsController() -> bool { return false; }
-  virtual auto IsSDLController() -> bool { return false; }
-  virtual auto IsTouchScreen() -> bool { return false; }
-  virtual auto IsRemoteControl() -> bool { return false; }
-  virtual auto IsTestInput() -> bool { return false; }
-  virtual auto IsKeyboard() -> bool { return false; }
-  virtual auto IsMFiController() -> bool { return false; }
-  virtual auto IsLocal() -> bool { return true; }
-  virtual auto IsUIOnly() -> bool { return false; }
-  virtual auto IsRemoteApp() -> bool { return false; }
+  virtual auto GetAllowsConfiguring() -> bool;
+  virtual auto IsController() -> bool;
+  virtual auto IsSDLController() -> bool;
+  virtual auto IsTouchScreen() -> bool;
+  virtual auto IsRemoteControl() -> bool;
+  virtual auto IsTestInput() -> bool;
+  virtual auto IsKeyboard() -> bool;
+  virtual auto IsMFiController() -> bool;
+  virtual auto IsLocal() -> bool;
+  virtual auto IsUIOnly() -> bool;
+  virtual auto IsRemoteApp() -> bool;
 
   /// Return a human-readable name for a button/key.
   virtual auto GetButtonName(int index) -> std::string;
@@ -90,7 +89,8 @@ class InputDevice : public Object {
   /// Should return true if the input device has a start button and that
   /// button activates default widgets (will cause a start icon to show up
   /// on them).
-  virtual auto start_button_activates_default_widget() -> bool { return false; }
+  virtual auto start_button_activates_default_widget() -> bool;
+
   auto last_active_time_millisecs() const -> millisecs_t {
     return last_active_time_millisecs_;
   }
@@ -98,11 +98,11 @@ class InputDevice : public Object {
 
   /// Return a human-readable name for the device's type. This is used for
   /// display and also for storing configs/etc.
-  virtual auto GetRawDeviceName() -> std::string { return "Input Device"; }
+  virtual auto GetRawDeviceName() -> std::string;
 
   /// Called for all devices in the logic thread when they've successfully
   /// been added to the input-device list, have a valid ID, name, etc.
-  virtual void OnAdded() {}
+  virtual void OnAdded();
 
   void UpdateLastActiveTime();
 

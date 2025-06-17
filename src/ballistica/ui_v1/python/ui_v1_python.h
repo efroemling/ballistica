@@ -20,7 +20,6 @@ class UIV1Python {
   void ImportPythonObjs();
 
   void InvokeStringEditor(PyObject* string_edit_adapter_instance);
-  void HandleDeviceMenuPress(base::InputDevice* device);
   void ShowURL(const std::string& url);
 
   static auto GetPyWidget(PyObject* o) -> Widget*;
@@ -49,7 +48,6 @@ class UIV1Python {
     kRootUIBackButtonPressCall,
     kRootUISquadButtonPressCall,
     kQuitWindowCall,
-    kRequestMainUICall,
     kShowURLWindowCall,
     kDoubleTransitionOutWarningCall,
     kTextWidgetStringEditAdapterClass,

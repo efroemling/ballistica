@@ -3,10 +3,10 @@
 #ifndef BALLISTICA_BASE_PLATFORM_SUPPORT_MIN_SDL_KEY_NAMES_H_
 #define BALLISTICA_BASE_PLATFORM_SUPPORT_MIN_SDL_KEY_NAMES_H_
 
-#include <string>  // IWYU pragma: keep.
+#include <string>
 
-#include "ballistica/base/input/device/keyboard_input.h"  // IWYU pragma: keep.
-#include "ballistica/core/logging/logging_macros.h"       // IWYU pragma: keep.
+#include "ballistica/base/input/device/keyboard_input.h"
+#include "ballistica/core/logging/logging_macros.h"
 
 namespace ballistica::base {
 
@@ -363,8 +363,6 @@ static const char* GetScancodeName(SDL_Scancode scancode) {
   }
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
 auto MinSDL_GetKeyName(int keycode) -> std::string {
   SDL_Keycode key{keycode};
   static char name[8];
@@ -417,7 +415,6 @@ auto MinSDL_GetKeyName(int keycode) -> std::string {
       return name;
   }
 }
-#pragma clang diagnostic pop
 
 #endif  // BA_MINSDL_BUILD
 

@@ -128,6 +128,12 @@ void ClassicAppMode::OnAppSuspend() {
 
 void ClassicAppMode::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 
+void ClassicAppMode::RequestMainUI() {
+  g_classic->python->objs()
+      .Get(ClassicPython::ObjID::kRequestMainUICall)
+      .Call();
+}
+
 // Reset everything to a blank slate.
 void ClassicAppMode::Reset_() {
   assert(g_base);

@@ -3,7 +3,7 @@
 #ifndef BALLISTICA_SHARED_PYTHON_PYTHON_CLASS_H_
 #define BALLISTICA_SHARED_PYTHON_PYTHON_CLASS_H_
 
-#include "ballistica/shared/python/python_sys.h"
+#include "ballistica/shared/python/python_macros.h"
 
 namespace ballistica {
 

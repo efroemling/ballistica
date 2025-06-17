@@ -10,7 +10,7 @@ from baclassic._chest import (
     CHEST_APPEARANCE_DISPLAY_INFOS,
     CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
 )
-from baclassic._hooks import on_engine_did_reset, on_engine_will_reset
+from baclassic import _hooks
 
 # The C++ layer looks for this variable:
 values = [
@@ -18,6 +18,7 @@ values = [
     get_input_device_mapped_value,  # kGetInputDeviceMappedValueCall
     CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,  # kChestAppearanceDisplayInfoDefault
     CHEST_APPEARANCE_DISPLAY_INFOS,  # kChestAppearanceDisplayInfos
-    on_engine_will_reset,  # kOnEngineWillResetCall
-    on_engine_did_reset,  # kOnEngineDidResetCall
+    _hooks.on_engine_will_reset,  # kOnEngineWillResetCall
+    _hooks.on_engine_did_reset,  # kOnEngineDidResetCall
+    _hooks.request_main_ui,  # kRequestMainUICall
 ]
