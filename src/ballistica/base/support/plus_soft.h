@@ -23,7 +23,7 @@ class PlusSoftInterface {
   virtual void OnAppUnsuspend() = 0;
   virtual void OnAppShutdown() = 0;
   virtual void OnAppShutdownComplete() = 0;
-  virtual void DoApplyAppConfig() = 0;
+  virtual void ApplyAppConfig() = 0;
   virtual void OnScreenSizeChange() = 0;
   virtual void StepDisplayTime() = 0;
 

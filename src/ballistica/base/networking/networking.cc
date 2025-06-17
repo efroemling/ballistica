@@ -14,7 +14,7 @@ namespace ballistica::base {
 
 Networking::Networking() = default;
 
-void Networking::DoApplyAppConfig() {
+void Networking::ApplyAppConfig() {
   // Be aware this runs in the logic thread; not the main thread like
   // most of our stuff.
   assert(g_base->InLogicThread());

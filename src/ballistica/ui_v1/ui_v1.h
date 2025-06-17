@@ -125,7 +125,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void OnLanguageChange() override;
   auto GetRootWidget() -> ui_v1::Widget* override;
   auto SendWidgetMessage(const base::WidgetMessage& m) -> int override;
-  void DoApplyAppConfig() override;
+  void ApplyAppConfig() override;
 
   auto always_use_internal_on_screen_keyboard() const {
     return always_use_internal_on_screen_keyboard_;

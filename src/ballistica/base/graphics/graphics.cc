@@ -108,7 +108,7 @@ void Graphics::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
 void Graphics::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 
-void Graphics::DoApplyAppConfig() {
+void Graphics::ApplyAppConfig() {
   assert(g_base->InLogicThread());
 
   // Any time we load the config we ship a new graphics-settings to the
@@ -848,8 +848,6 @@ void Graphics::BuildAndPushFrameDef() {
     // Let UI draw dev console and whatever else.
     DrawDevUI(frame_def);
 
-    DrawCursor(frame_def);
-
     // Draw our light/shadow images to the screen if desired.
     DrawDebugBuffers(overlay_pass);
 
@@ -863,6 +861,7 @@ void Graphics::BuildAndPushFrameDef() {
     }
 
     DrawFades(frame_def);
+    DrawCursor(frame_def);
 
     // Sanity test: If we're in VR, the only reason we should have stuff in
     // the flat overlay pass is if there's windows present (we want to avoid

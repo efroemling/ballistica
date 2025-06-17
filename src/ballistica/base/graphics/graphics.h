@@ -49,7 +49,7 @@ const float kBackingDepth1{0.0f};
 const float kShadowNeutral{0.5f};
 
 // Cursor depth within the front-overlay (not related to above depths).
-const float kCursorZDepth{0.9f};
+const float kCursorZDepth{1.0f};
 
 // Client class for graphics operations (used from the logic thread).
 class Graphics {
@@ -62,7 +62,7 @@ class Graphics {
   void OnAppShutdown();
   void OnAppShutdownComplete();
   void OnScreenSizeChange();
-  void DoApplyAppConfig();
+  void ApplyAppConfig();
 
   /// Should be called by the app-adapter to keep the engine informed on the
   /// drawable area it has to work with (in pixels).

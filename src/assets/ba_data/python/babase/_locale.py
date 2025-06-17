@@ -72,7 +72,7 @@ class LocaleSubsystem(AppSubsystem):
         assert self.can_display_locale(self.default_locale)
 
     @override
-    def do_apply_app_config(self) -> None:
+    def apply_app_config(self) -> None:
         """:meta private:"""
         assert _babase.in_logic_thread()
         assert isinstance(_babase.app.config, dict)

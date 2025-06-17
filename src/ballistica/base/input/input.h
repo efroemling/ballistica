@@ -25,7 +25,7 @@ class Input {
   void OnAppShutdown();
   void OnAppShutdownComplete();
   void StepDisplayTime();
-  void DoApplyAppConfig();
+  void ApplyAppConfig();
   void OnScreenSizeChange();
 
   // Add an input device. Must be called from the logic thread; otherwise
@@ -87,6 +87,8 @@ class Input {
   }
   auto cursor_pos_x() const -> float { return cursor_pos_x_; }
   auto cursor_pos_y() const -> float { return cursor_pos_y_; }
+
+  void set_cursor_in_window(bool val) { cursor_in_window_ = val; }
 
   auto IsCursorVisible() const -> bool;
 
@@ -235,6 +237,7 @@ class Input {
   bool have_button_using_inputs_{};
   bool have_start_activated_default_button_inputs_{};
   bool have_non_touch_inputs_{};
+  bool cursor_in_window_{true};
 };
 
 }  // namespace ballistica::base

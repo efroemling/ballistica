@@ -194,16 +194,16 @@ void UI::OnAppUnsuspend() {
 void UI::OnAppShutdown() { assert(g_base->InLogicThread()); }
 void UI::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 
-void UI::DoApplyAppConfig() {
+void UI::ApplyAppConfig() {
   assert(g_base->InLogicThread());
   if (auto* ui_delegate = delegate()) {
-    ui_delegate->DoApplyAppConfig();
+    ui_delegate->ApplyAppConfig();
   }
   show_dev_console_button_ =
       g_base->app_config->Resolve(AppConfig::BoolID::kShowDevConsoleButton);
 
   if (dev_console_) {
-    dev_console_->DoApplyAppConfig();
+    dev_console_->ApplyAppConfig();
   }
 }
 
@@ -676,7 +676,7 @@ void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {
 
       // Push values to them and trigger various 'changed' callbacks so they
       // pick up the latest state of the world.
-      delegate_->DoApplyAppConfig();
+      delegate_->ApplyAppConfig();
       delegate_->OnScreenSizeChange();
       delegate_->OnLanguageChange();
       delegate_->SetSquadSizeLabel(squad_size_label_);
@@ -720,7 +720,7 @@ void UI::OnAssetsAvailable() {
 
     // If the app-config has been applied at this point, apply it.
     if (g_base->logic->applied_app_config()) {
-      dev_console_->DoApplyAppConfig();
+      dev_console_->ApplyAppConfig();
     }
 
     // Print any messages that have built up.

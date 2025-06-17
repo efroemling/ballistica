@@ -188,7 +188,7 @@ void BasePython::OnAppShutdownComplete() {
   objs().Get(ObjID::kAppOnNativeShutdownCompleteCall).Call();
 }
 
-void BasePython::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
+void BasePython::ApplyAppConfig() { assert(g_base->InLogicThread()); }
 
 void BasePython::OnScreenSizeChange() {
   assert(g_base->InLogicThread());

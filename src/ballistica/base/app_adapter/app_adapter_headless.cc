@@ -21,7 +21,7 @@ void AppAdapterHeadless::OnMainThreadStartApp() {
       new EventLoop(EventLoopID::kMain, ThreadSource::kWrapCurrent);
 }
 
-void AppAdapterHeadless::DoApplyAppConfig() {}
+void AppAdapterHeadless::ApplyAppConfig() {}
 
 void AppAdapterHeadless::RunMainThreadEventLoopToCompletion() {
   assert(g_core->InMainThread());

@@ -298,7 +298,7 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   // applied; otherwise it'll happen as part of that.
   if (g_base->logic->applied_app_config()) {
     // Update controls for just this guy.
-    device->UpdateMapping();
+    device->ApplyAppConfig();
 
     // Need to do this after updating controls, as some control settings can
     // affect things we count (such as whether start activates default
@@ -532,7 +532,7 @@ void Input::OnAppShutdown() { assert(g_base->InLogicThread()); }
 void Input::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 
 // Tells all inputs to update their controls based on the app config.
-void Input::DoApplyAppConfig() {
+void Input::ApplyAppConfig() {
   assert(g_base->InLogicThread());
 
   // It's technically possible that updating these controls will add or
@@ -541,7 +541,7 @@ void Input::DoApplyAppConfig() {
   std::vector<Object::Ref<InputDevice> > input_devices = input_devices_;
   for (auto& input_device : input_devices) {
     if (input_device.exists()) {
-      input_device->UpdateMapping();
+      input_device->ApplyAppConfig();
     }
   }
 
@@ -1089,7 +1089,6 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
 }
 
 void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
-  assert(g_base);
   assert(g_base->InLogicThread());
 
   // Note: we want to let releases through even if input is locked.
@@ -1239,7 +1238,6 @@ void Input::PushMouseMotionEvent(const Vector2f& position) {
 }
 
 void Input::HandleMouseMotion_(const Vector2f& position) {
-  assert(g_base);
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
@@ -1295,7 +1293,6 @@ void Input::PushMouseDownEvent(int button, const Vector2f& position) {
 }
 
 void Input::HandleMouseDown_(int button, const Vector2f& position) {
-  assert(g_base);
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
@@ -1497,21 +1494,20 @@ void Input::Draw(FrameDef* frame_def) {
 }
 
 auto Input::IsCursorVisible() const -> bool {
-  if (!g_base) {
-    return false;
-  }
   assert(g_base->InLogicThread());
 
   // Keeps mouse hidden to start with.
   if (mouse_move_count_ < 2) {
     return false;
   }
-  bool val;
+
+  // If cursor has been flagged as outside the window.
+  if (!cursor_in_window_) {
+    return false;
+  }
 
   // Show our cursor only if its been moved recently.
-  val = (g_core->AppTimeSeconds() - last_mouse_move_time_ < 2.071);
-
-  return val;
+  return (g_core->AppTimeSeconds() - last_mouse_move_time_ < 2.071);
 }
 
 void Input::LsInputDevices() {

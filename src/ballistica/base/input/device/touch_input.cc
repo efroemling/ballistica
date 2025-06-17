@@ -843,7 +843,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
   }
 }
 
-void TouchInput::UpdateMapping() {
+void TouchInput::ApplyAppConfig() {
   assert(g_base->InLogicThread());
 
   std::string touch_movement_type = g_base->app_config->Resolve(

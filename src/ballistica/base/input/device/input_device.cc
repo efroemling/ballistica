@@ -25,7 +25,7 @@ auto InputDevice::IsLocal() -> bool { return true; }
 auto InputDevice::IsUIOnly() -> bool { return false; }
 auto InputDevice::IsRemoteApp() -> bool { return false; }
 
-void InputDevice::UpdateMapping() {}
+void InputDevice::ApplyAppConfig() {}
 
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
 void InputDevice::HandleSDLEvent(const SDL_Event* e) {}

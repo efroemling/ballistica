@@ -87,7 +87,7 @@ class ClassicAppMode : public base::AppMode {
   auto chat_messages() const -> const std::list<std::string>& {
     return chat_messages_;
   }
-  void DoApplyAppConfig() override;
+  void ApplyAppConfig() override;
 
   // Return whichever session is front and center.
   auto GetForegroundSession() const -> scene_v1::Session* {

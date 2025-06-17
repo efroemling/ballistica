@@ -1,4 +1,4 @@
-### 1.7.44 (build 22421, api 9, 2025-06-16)
+### 1.7.44 (build 22422, api 9, 2025-06-16)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
   an associated `dont_write_bytecode` value for the server config file. In most
   cases writing .pyc files is useful as it can speed up relaunches and keep
@@ -28,8 +28,11 @@
   that player, allowing leaving the game with just that player instead of fully
   exiting to the menu/etc. This worked in limited situations before the big
   1.7.37 UI revamp, but now is more generalized and consistent.
-- On builds with a software cursor, the cursor no longer freezes during fades or
-  other input-locked situations.
+- Software cursor no longer freezes during fades or other input-locked
+  situations and now draws over the top of fades instead of being affected by
+  them (makes it more consistent with hardware cursors).
+- Software cursor in sdl builds now disappears when the cursor leaves the window
+  instead of getting stuck at the edge.
 
 ### 1.7.43 (build 22406, api 9, 2025-06-09)
 - Fixes an issue with tournament scores not submitting properly in 1.7.42.

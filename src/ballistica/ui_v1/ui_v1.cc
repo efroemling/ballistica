@@ -263,7 +263,7 @@ void UIV1FeatureSet::DeleteWidget(Widget* widget) {
   }
 }
 
-void UIV1FeatureSet::DoApplyAppConfig() {
+void UIV1FeatureSet::ApplyAppConfig() {
   always_use_internal_on_screen_keyboard_ = g_base->app_config->Resolve(
       base::AppConfig::BoolID::kAlwaysUseInternalKeyboard);
 }

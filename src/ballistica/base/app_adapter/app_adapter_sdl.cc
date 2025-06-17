@@ -458,6 +458,14 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
 
     case SDL_WINDOWEVENT: {
       switch (event.window.event) {
+        case SDL_WINDOWEVENT_ENTER:
+          g_base->input->set_cursor_in_window(true);
+          break;
+
+        case SDL_WINDOWEVENT_LEAVE:
+          g_base->input->set_cursor_in_window(false);
+          break;
+
         case SDL_WINDOWEVENT_CLOSE: {
           // Simply note that this happened. We use this to adjust our
           // SDL_QUIT behavior (quit is called right after this).

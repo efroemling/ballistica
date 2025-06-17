@@ -56,7 +56,7 @@ class AppSubsystem:
         :attr:`~AppState.SHUTDOWN_COMPLETE` state.
         """
 
-    def do_apply_app_config(self) -> None:
+    def apply_app_config(self) -> None:
         """Called when the app config should be applied."""
 
     def on_ui_scale_change(self) -> None:

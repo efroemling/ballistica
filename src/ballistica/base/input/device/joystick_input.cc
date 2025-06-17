@@ -1222,7 +1222,7 @@ void JoystickInput::UpdateRunningState() {
   }
 }
 
-void JoystickInput::UpdateMapping() {
+void JoystickInput::ApplyAppConfig() {
   assert(g_base->InLogicThread());
 
   // This doesn't apply to manual ones (except children which are).

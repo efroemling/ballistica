@@ -901,15 +901,15 @@ class App:
         # be added at this point.
         for subsystem in self._subsystems.copy():
             try:
-                subsystem.do_apply_app_config()
+                subsystem.apply_app_config()
             except Exception:
                 logging.exception(
-                    'Error in do_apply_app_config() for subsystem %s.',
+                    'Error in apply_app_config() for subsystem %s.',
                     subsystem,
                 )
 
         # Let the native layer do its thing.
-        _babase.do_apply_app_config()
+        _babase.apply_app_config()
 
     def _update_state(self) -> None:
         # pylint: disable=too-many-branches

@@ -294,26 +294,26 @@ void Logic::OnAppShutdownComplete() {
       [] { g_base->OnAppShutdownComplete(); });
 }
 
-void Logic::DoApplyAppConfig() {
+void Logic::ApplyAppConfig() {
   assert(g_base->InLogicThread());
 
   // Give all our other subsystems a chance.
   // Note: keep these in the same order as OnAppStart.
-  g_base->app_adapter->DoApplyAppConfig();
-  g_base->platform->DoApplyAppConfig();
-  g_base->graphics->DoApplyAppConfig();
-  g_base->audio->DoApplyAppConfig();
-  g_base->input->DoApplyAppConfig();
-  g_base->ui->DoApplyAppConfig();
-  g_base->app_mode()->DoApplyAppConfig();
+  g_base->app_adapter->ApplyAppConfig();
+  g_base->platform->ApplyAppConfig();
+  g_base->graphics->ApplyAppConfig();
+  g_base->audio->ApplyAppConfig();
+  g_base->input->ApplyAppConfig();
+  g_base->ui->ApplyAppConfig();
+  g_base->app_mode()->ApplyAppConfig();
   if (g_base->HavePlus()) {
-    g_base->Plus()->DoApplyAppConfig();
+    g_base->Plus()->ApplyAppConfig();
   }
-  g_base->python->DoApplyAppConfig();
+  g_base->python->ApplyAppConfig();
 
   // Inform some other subsystems even though they're not our standard
   // set of logic-thread-based ones.
-  g_base->networking->DoApplyAppConfig();
+  g_base->networking->ApplyAppConfig();
 
   applied_app_config_ = true;
 }

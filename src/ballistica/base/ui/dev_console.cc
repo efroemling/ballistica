@@ -606,7 +606,7 @@ DevConsole::DevConsole() {
   prompt_text_group_.SetText(">");
 }
 
-void DevConsole::DoApplyAppConfig() {
+void DevConsole::ApplyAppConfig() {
   assert(g_base->InLogicThread());
 
   // Read our active tab from app-config only if we don't have one set.

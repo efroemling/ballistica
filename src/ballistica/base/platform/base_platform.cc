@@ -242,7 +242,7 @@ void BasePlatform::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnAppShutdown() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void BasePlatform::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
-void BasePlatform::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
+void BasePlatform::ApplyAppConfig() { assert(g_base->InLogicThread()); }
 
 auto BasePlatform::HaveStringEditor() -> bool { return false; }
 

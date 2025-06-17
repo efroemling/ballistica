@@ -107,7 +107,7 @@ void ClassicAppMode::OnActivate() {
 
   // Explicitly fire some of our 'On-Foo-Changed' callbacks to set initial
   // states.
-  DoApplyAppConfig();
+  ApplyAppConfig();
   LanguageChanged();
   OnGameRosterChanged_();
 }
@@ -1278,7 +1278,7 @@ void ClassicAppMode::LocalDisplayChatMessage(
   }
 }
 
-void ClassicAppMode::DoApplyAppConfig() {
+void ClassicAppMode::ApplyAppConfig() {
   // Kick-idle-players setting (hmm is this still relevant?).
   auto* host_session =
       dynamic_cast<scene_v1::HostSession*>(foreground_session_.get());

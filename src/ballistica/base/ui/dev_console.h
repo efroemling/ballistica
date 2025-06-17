@@ -41,7 +41,7 @@ class DevConsole {
   void Print(const std::string& s_in, float scale, Vector4f color);
   void Draw(FrameDef* frame_def);
 
-  void DoApplyAppConfig();
+  void ApplyAppConfig();
   void StepDisplayTime();
 
   /// Called when the console should start accepting Python command input.

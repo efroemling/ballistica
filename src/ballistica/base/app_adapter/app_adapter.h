@@ -29,7 +29,7 @@ class AppAdapter {
   virtual void OnAppShutdown();
   virtual void OnAppShutdownComplete();
   virtual void OnScreenSizeChange();
-  virtual void DoApplyAppConfig();
+  virtual void ApplyAppConfig();
 
   /// When called, should allocate an instance of a GraphicsSettings
   /// subclass using 'new', fill it out, and return it. Runs in the logic

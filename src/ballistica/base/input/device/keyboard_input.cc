@@ -378,7 +378,7 @@ void KeyboardInput::UpdateRun_(SDL_Keycode key, bool down) {
   }
 }
 
-void KeyboardInput::UpdateMapping() {
+void KeyboardInput::ApplyAppConfig() {
   assert(g_base->InLogicThread());
 
   auto* cl{g_base->HaveClassic() ? g_base->classic() : nullptr};

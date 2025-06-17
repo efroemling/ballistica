@@ -31,7 +31,7 @@ void AppAdapter::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 void AppAdapter::OnAppShutdown() { assert(g_base->InLogicThread()); }
 void AppAdapter::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 void AppAdapter::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
-void AppAdapter::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
+void AppAdapter::ApplyAppConfig() { assert(g_base->InLogicThread()); }
 
 void AppAdapter::RunMainThreadEventLoopToCompletion() {
   FatalError("RunMainThreadEventLoopToCompletion is not implemented here.");

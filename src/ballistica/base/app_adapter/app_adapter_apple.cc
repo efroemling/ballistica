@@ -66,7 +66,7 @@ void AppAdapterApple::OnMainThreadStartApp() {
 #endif
 }
 
-void AppAdapterApple::DoApplyAppConfig() { assert(g_base->InLogicThread()); }
+void AppAdapterApple::ApplyAppConfig() { assert(g_base->InLogicThread()); }
 
 void AppAdapterApple::ApplyGraphicsSettings(const GraphicsSettings* settings) {
   auto* graphics_server = g_base->graphics_server;

@@ -1670,10 +1670,7 @@ static PyMethodDef PyLsInputDevicesDef = {
 
     "ls_input_devices() -> None\n"
     "\n"
-    "Print debugging info about game objects.\n"
-    "\n"
-    "This call only functions in debug builds of the game.\n"
-    "It prints various info about the current object count, etc.",
+    "Log debugging info about input devices.",
 };
 
 // -------------------------- set_internal_music -------------------------------

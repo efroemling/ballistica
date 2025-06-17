@@ -55,7 +55,7 @@ class InputDevice : public Object {
   void set_number(int n) { number_ = n; }
 
   /// Read and apply new control values from config.
-  virtual void UpdateMapping();
+  virtual void ApplyAppConfig();
 
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
   virtual void HandleSDLEvent(const SDL_Event* e);

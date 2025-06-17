@@ -32,7 +32,7 @@ class JoystickInput : public InputDevice {
 
   void HandleSDLEvent(const SDL_Event* e) override;
 
-  void UpdateMapping() override;
+  void ApplyAppConfig() override;
   void Update() override;
   void ResetHeldStates() override;
 

@@ -836,31 +836,31 @@ static PyMethodDef PyQuitDef = {
     "See docs for :class:`~babase.QuitType` for explanations of the optional\n"
     "``quit_type`` arg."};
 
-// ----------------------------- apply_config ----------------------------------
+// ---------------------------- apply_app_config -------------------------------
 
-static auto PyDoApplyAppConfig(PyObject* self, PyObject* args) -> PyObject* {
+static auto PyApplyAppConfig(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
-  g_base->logic->DoApplyAppConfig();
+  g_base->logic->ApplyAppConfig();
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDoApplyAppConfigDef = {
-    "do_apply_app_config",  // name
-    PyDoApplyAppConfig,     // method
-    METH_VARARGS,           // flags
+static PyMethodDef PyApplyAppConfigDef = {
+    "apply_app_config",  // name
+    PyApplyAppConfig,    // method
+    METH_VARARGS,        // flags
 
-    "do_apply_app_config() -> None\n"
+    "apply_app_config() -> None\n"
     "\n"
     ":meta private:",
 };
 
-// ----------------------------- commit_config ---------------------------------
+// --------------------------- commit_app_config -------------------------------
 
-static auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
+static auto PyCommitAppConfig(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* config_obj;
@@ -924,12 +924,12 @@ static auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyCommitConfigDef = {
-    "commit_config",               // name
-    (PyCFunction)PyCommitConfig,   // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
+static PyMethodDef PyCommitAppConfigDef = {
+    "commit_app_config",             // name
+    (PyCFunction)PyCommitAppConfig,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
 
-    "commit_config(config: str) -> None\n"
+    "commit_app_config(config: str) -> None\n"
     "\n"
     ":meta private:",
 };
@@ -1917,8 +1917,8 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyV1CloudLogDef,
       PyEnvDef,
       PyPreEnvDef,
-      PyCommitConfigDef,
-      PyDoApplyAppConfigDef,
+      PyCommitAppConfigDef,
+      PyApplyAppConfigDef,
       PyQuitDef,
       PyAppTimerDef,
       PyAppTimeDef,

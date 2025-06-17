@@ -46,7 +46,7 @@ void Audio::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 
 void Audio::StepDisplayTime() { assert(g_base->InLogicThread()); }
 
-void Audio::DoApplyAppConfig() {
+void Audio::ApplyAppConfig() {
   assert(g_base->InLogicThread());
   SetVolumes(g_base->app_config->Resolve(AppConfig::FloatID::kMusicVolume),
              g_base->app_config->Resolve(AppConfig::FloatID::kSoundVolume));

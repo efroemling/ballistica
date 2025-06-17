@@ -43,7 +43,7 @@ class BasePlatform {
   virtual void OnAppShutdown();
   virtual void OnAppShutdownComplete();
   virtual void OnScreenSizeChange();
-  virtual void DoApplyAppConfig();
+  virtual void ApplyAppConfig();
 
   /// Equivalent of fgets() but modified to not block process exit.
   auto SafeStdinFGetS(char* s, int n, FILE* iop) -> char*;

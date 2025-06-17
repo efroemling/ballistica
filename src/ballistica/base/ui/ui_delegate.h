@@ -27,7 +27,7 @@ class UIDelegateInterface {
 
   virtual void OnScreenSizeChange() = 0;
   virtual void OnLanguageChange() = 0;
-  virtual void DoApplyAppConfig() = 0;
+  virtual void ApplyAppConfig() = 0;
 
   /// Called by ShowURL(). Will always be called in the logic thread.
   virtual void DoShowURL(const std::string& url) = 0;
