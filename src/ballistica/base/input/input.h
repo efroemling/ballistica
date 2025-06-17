@@ -116,10 +116,10 @@ class Input {
   /// Should be called whenever user-input of some form comes through.
   auto MarkInputActive() { input_active_ = true; }
 
-  // Return true if more than one non-keyboard device has been active
-  // recently. This is used to determine whether we need to have strict main
-  // ui ownership (otherwise ui interaction would be chaotic with 8 players
-  // connected).
+  // Return true if more than one non-keyboard non-touchscreen device has
+  // been active recently. This is used to determine whether we need to have
+  // strict main ui ownership (prevents chaos if 8 people are connected with
+  // game controllers).
   auto HaveManyLocalActiveInputDevices() -> bool;
   auto GetLocalActiveInputDeviceCount() -> int;
 
@@ -194,7 +194,7 @@ class Input {
   void CreateKeyboardInputDevices_();
   void DestroyKeyboardInputDevices_();
   void AddFakeKeyMods_(SDL_Keysym* sym);
-  auto GetSingleLocalPlayerAttachedInputDevice_() const -> InputDevice*;
+  auto GetFuzzyInputDevice_() -> InputDevice*;
 
   std::list<std::string> input_lock_temp_labels_;
   std::list<std::string> input_unlock_temp_labels_;

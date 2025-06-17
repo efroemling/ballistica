@@ -87,7 +87,7 @@ auto Input::GetInputDevice(const std::string& name,
 auto Input::GetFuzzyInputDeviceForEscapeKey() -> InputDevice* {
   assert(g_base->InLogicThread());
 
-  auto* pdevice = GetSingleLocalPlayerAttachedInputDevice_();
+  auto* pdevice = GetFuzzyInputDevice_();
   if (pdevice) {
     return pdevice;
   }
@@ -97,7 +97,7 @@ auto Input::GetFuzzyInputDeviceForEscapeKey() -> InputDevice* {
 auto Input::GetFuzzyInputDeviceForMenuButton() -> InputDevice* {
   assert(g_base->InLogicThread());
 
-  auto* pdevice = GetSingleLocalPlayerAttachedInputDevice_();
+  auto* pdevice = GetFuzzyInputDevice_();
   if (pdevice) {
     return pdevice;
   }
@@ -432,12 +432,20 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
   return local_active_input_device_count_;
 }
 
-auto Input::GetSingleLocalPlayerAttachedInputDevice_() const -> InputDevice* {
+auto Input::GetFuzzyInputDevice_() -> InputDevice* {
   assert(g_base->InLogicThread());
 
   InputDevice* pdevice{};
   int pdevicecount{};
 
+  // Never return fuzzy devices if it seems that there's multiple active
+  // devices.
+  if (HaveManyLocalActiveInputDevices()) {
+    return nullptr;
+  }
+
+  // Tally up local devices with a player attached. If there is exactly one,
+  // that's our guy.
   for (auto& input_device : input_devices_) {
     if (input_device.exists() && input_device->IsLocal()
         && input_device->AttachedToPlayer()) {
