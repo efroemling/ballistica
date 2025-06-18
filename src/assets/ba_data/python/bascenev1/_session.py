@@ -753,7 +753,7 @@ class Session:
         # to run garbage collection to clear out any circular dependency
         # loops. We keep this disabled normally to avoid non-deterministic
         # hitches.
-        babase.garbage_collect()
+        babase.app.gc.collect()
 
         assert babase.app.classic is not None
         with self.context:

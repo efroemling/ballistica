@@ -18,6 +18,7 @@
  "ba_data/python/babase/_emptyappmode.py",
  "ba_data/python/babase/_env.py",
  "ba_data/python/babase/_error.py",
+ "ba_data/python/babase/_garbagecollection.py",
  "ba_data/python/babase/_general.py",
  "ba_data/python/babase/_hooks.py",
  "ba_data/python/babase/_language.py",

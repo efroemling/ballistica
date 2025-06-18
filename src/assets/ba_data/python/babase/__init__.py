@@ -135,7 +135,6 @@ from babase._appconfig import AppConfig
 from babase._apputils import (
     handle_leftover_v1_cloud_log_file,
     is_browser_likely_available,
-    garbage_collect,
     get_remote_app_name,
     AppHealthSubsystem,
     utc_now_cloud,
@@ -164,6 +163,7 @@ from babase._error import (
     SessionNotFoundError,
     DelegateNotFoundError,
 )
+from babase._garbagecollection import GarbageCollectionSubsystem
 from babase._general import (
     DisplayTime,
     AppTime,
@@ -267,7 +267,7 @@ __all__ = [
     'existing',
     'fade_screen',
     'fatal_error',
-    'garbage_collect',
+    'GarbageCollectionSubsystem',
     'get_display_resolution',
     'get_immediate_return_code',
     'get_input_idle_time',

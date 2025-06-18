@@ -76,9 +76,7 @@ HostSession::HostSession(PyObject* session_type_obj)
   // Now's a good time to run garbage collection; there should be pretty much
   // no game stuff to speak of in existence (provided the last session went
   // down peacefully).
-  g_base->python->objs()
-      .Get(base::BasePython::ObjID::kGarbageCollectCall)
-      .Call();
+  g_base->python->objs().Get(base::BasePython::ObjID::kAppGCCollectCall).Call();
 
   // Instantiate our Python Session instance.
   PythonRef obj;
