@@ -737,7 +737,7 @@ def setup_logging(
             def filter(self, record: logging.LogRecord) -> bool:
                 if (
                     record.levelno == logging.WARNING
-                    and 'Retrying (' in record.getMessage()
+                    and 'Retrying (' in record.msg
                 ):
                     # Downgrade to INFO
                     record.levelno = logging.INFO

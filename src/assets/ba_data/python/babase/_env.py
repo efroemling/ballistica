@@ -199,6 +199,10 @@ def _do_pycache_upkeep() -> None:
     import _babase
     from babase._logging import cachelog
 
+    # Skip this all if bytecode writing is disabled.
+    if sys.dont_write_bytecode:
+        return
+
     env = _babase.app.env
 
     stdlibpath = os.path.dirname(py_compile.__file__)
