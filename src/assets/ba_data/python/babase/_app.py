@@ -15,7 +15,7 @@ from threading import RLock
 from efro.threadpool import ThreadPoolExecutorEx
 
 import _babase
-from babase._discord import Discord
+from babase._discord import DiscordSubsystem
 from babase._language import LanguageSubsystem
 from babase._locale import LocaleSubsystem
 from babase._plugin import PluginSubsystem
@@ -98,8 +98,6 @@ class App:
         #: Static environment values for the app.
         self.env: babase.Env = _babase.Env()
 
-        self.discord: Discord = Discord()
-
         #: Current app state.
         self.state: AppState = AppState.NOT_STARTED
 
@@ -125,6 +123,11 @@ class App:
         #: Subsystem for wrangling plugins.
         self.plugins: PluginSubsystem = self.register_subsystem(
             PluginSubsystem()
+        )
+
+        #: Subsystem for discord functionality
+        self.discord: DiscordSubsystem = self.register_subsystem(
+            DiscordSubsystem()
         )
 
         #: Subsystem for wrangling metadata.

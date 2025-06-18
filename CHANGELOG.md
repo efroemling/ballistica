@@ -44,6 +44,7 @@
   reference loops, and it offers some tips and functionality to help track down
   and eliminate said loops. Flip the `ba.garbagecollection` log to `Debug` to
   learn more.
+- Added `DiscordSubsystem` class which wraps the underlying _babase implementation of discord sdk
 
 ### 1.7.43 (build 22406, api 9, 2025-06-09)
 - Fixes an issue with tournament scores not submitting properly in 1.7.42.

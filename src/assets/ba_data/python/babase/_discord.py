@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 import _babase
+from babase._appsubsystem import AppSubsystem
 
 if TYPE_CHECKING:
     from typing import Any
@@ -13,8 +14,10 @@ if TYPE_CHECKING:
 ENABLE_DISCORD = True  # disable this for now
 
 
-class Discord:
-    """Discord SDK integration class."""
+class DiscordSubsystem(AppSubsystem):
+    """Discord SDK integration class.
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.discord` attr on the :class:`~babase.App` class."""
 
     # pylint: disable=too-many-positional-arguments
     def __init__(self) -> None:
@@ -31,7 +34,10 @@ class Discord:
         if not self.is_available():
             return
         _babase.discord_start()
-        # _babase.app.add_shutdown_task(self._shutdown_coroutine())
+
+    def on_app_shutdown(self):
+        """Called when the app is shutting down."""
+        _babase.discord_shutdown()
 
     @staticmethod
     def is_available() -> bool:
@@ -41,7 +47,7 @@ class Discord:
 
     async def _shutdown_coroutine(self) -> None:
         """Coroutine for shutting down Discord."""
-        _babase.discord_shutdown()
+        ...
 
     @property
     def is_ready(self) -> bool:
