@@ -71,9 +71,9 @@ class DiscordSubsystem(AppSubsystem):
             details: Additional details about current activity
             start_timestamp: Activity start time (epoch timestamp)
             end_timestamp: Activity end time (epoch timestamp)
-            large_image_key: Key for large image asset
-            small_image_key: Key for small image asset
+            large_image_key: Key/Url for large image asset
             large_image_text: Hover text for large image
+            small_image_key: Key/Url for small image asset
             small_image_text: Hover text for small image
             party_id: Current party ID for join/spectate
             party_size: Tuple of (current_size, max_size)
