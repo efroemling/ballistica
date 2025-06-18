@@ -168,6 +168,12 @@ def is_urllib3_communication_error(exc: BaseException, url: str | None) -> bool:
     elif isinstance(exc, urllib3.exceptions.ReadTimeoutError):
         return True
 
+    elif isinstance(exc, urllib3.exceptions.NameResolutionError):
+        # Technically could be a sign of an error on our end, but most
+        # people running into this will be due to wonky dns on their end,
+        # so treating it as a comm error.
+        return True
+
     elif isinstance(exc, urllib3.exceptions.ProtocolError):
         # Most protocol errors quality as CommunicationErrors, but some
         # may be due to server misconfigurations or whatnot so let's

@@ -97,6 +97,7 @@ class UI {
 
   auto HandleMouseDown(int button, float x, float y, bool double_click) -> bool;
   void HandleMouseUp(int button, float x, float y);
+  void HandleMouseCancel(int button, float x, float y);
   void HandleMouseMotion(float x, float y);
 
   /// Draw regular UI.

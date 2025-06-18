@@ -688,6 +688,7 @@ def setup_logging(
     cache_time_limit: datetime.timedelta | None = None,
     launch_time: float | None = None,
     strict_threads: bool = False,
+    standard_filters: bool = True,
 ) -> LogHandler:
     """Set up our logging environment.
 
@@ -724,6 +725,28 @@ def setup_logging(
         launch_time=launch_time,
         strict_threads=strict_threads,
     )
+
+    if standard_filters:
+
+        # The warning for retrying a connection really should be an info.
+        # See https://github.com/urllib3/urllib3/issues/2583
+        class _DowngradeURLLib3RetryWarningFilter(logging.Filter):
+            """Downgrades 'retrying' warning to info."""
+
+            @override
+            def filter(self, record: logging.LogRecord) -> bool:
+                if (
+                    record.levelno == logging.WARNING
+                    and 'Retrying (' in record.getMessage()
+                ):
+                    # Downgrade to INFO
+                    record.levelno = logging.INFO
+                    record.levelname = logging.getLevelName(logging.INFO)
+                return True  # Allow all records through
+
+        logging.getLogger('urllib3.connectionpool').addFilter(
+            _DowngradeURLLib3RetryWarningFilter()
+        )
 
     # Note: going ahead with force=True here so that we replace any
     # existing logger. Though we warn if it looks like we are doing that

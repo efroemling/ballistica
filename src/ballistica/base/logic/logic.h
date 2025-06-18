@@ -12,9 +12,9 @@ namespace ballistica::base {
 
 const int kDisplayTimeSampleCount{15};
 
-/// The max amount of time a headless app can sleep if no events are pending.
-/// This should not be *too* high or it might cause delays when going from
-/// no events present to events present.
+/// The max amount of time a headless app can sleep if no events are
+/// pending. This should not be *too* high or it might cause delays when
+/// going from no events present to events present.
 const microsecs_t kHeadlessMaxDisplayTimeStep{500000};
 
 /// The min amount of time a headless app can sleep. This provides an upper
@@ -143,8 +143,8 @@ class Logic {
   seconds_t recent_display_time_increments_[kDisplayTimeSampleCount]{};
   int recent_display_time_increments_index_{-1};
 
-  /// The logic thread maintains its own app-active state which is
-  /// driven by the app-thread's state in g_base.
+  /// The logic thread maintains its own app-active state which is driven by
+  /// the app-thread's state in g_base.
   bool app_active_{true};
 
   /// We maintain an app-active value that gets changed once we're done

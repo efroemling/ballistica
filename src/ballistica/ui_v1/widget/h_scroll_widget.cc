@@ -218,9 +218,9 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                 // Go ahead and send a mouse-up to the sub-widgets; in their
                 // eyes the click is canceled.
                 if (touch_down_sent_ && !touch_up_sent_) {
-                  ContainerWidget::HandleMessage(
-                      base::WidgetMessage(base::WidgetMessage::Type::kMouseUp,
-                                          nullptr, m.fval1, m.fval2, true));
+                  ContainerWidget::HandleMessage(base::WidgetMessage(
+                      base::WidgetMessage::Type::kMouseCancel, nullptr, m.fval1,
+                      m.fval2, true));
                   touch_up_sent_ = true;
                 }
               }
@@ -269,7 +269,8 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       }
       break;
     }
-    case base::WidgetMessage::Type::kMouseUp: {
+    case base::WidgetMessage::Type::kMouseUp:
+    case base::WidgetMessage::Type::kMouseCancel: {
       mouse_held_scroll_down_ = false;
       mouse_held_scroll_up_ = false;
       mouse_held_thumb_ = false;
@@ -288,23 +289,24 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
           // If we're not claiming it and we haven't sent a mouse_down yet
           // due to our delay, send that first.
-          if (!claimed2 && !touch_down_sent_) {
-            ContainerWidget::HandleMessage(base::WidgetMessage(
-                base::WidgetMessage::Type::kMouseDown, nullptr, m.fval1,
-                m.fval2, static_cast<float>(touch_held_click_count_)));
-            touch_down_sent_ = true;
+          if (m.type == base::WidgetMessage::Type::kMouseUp) {
+            if (!claimed2 && !touch_down_sent_) {
+              ContainerWidget::HandleMessage(base::WidgetMessage(
+                  base::WidgetMessage::Type::kMouseDown, nullptr, m.fval1,
+                  m.fval2, static_cast<float>(touch_held_click_count_)));
+              touch_down_sent_ = true;
+            }
           }
           if (touch_down_sent_ && !touch_up_sent_) {
-            ContainerWidget::HandleMessage(
-                base::WidgetMessage(base::WidgetMessage::Type::kMouseUp,
-                                    nullptr, m.fval1, m.fval2, claimed2));
+            ContainerWidget::HandleMessage(base::WidgetMessage(
+                m.type, nullptr, m.fval1, m.fval2, claimed2));
             touch_up_sent_ = true;
           }
           return true;
         }
       }
 
-      // If coords are outside of our bounds, pass a mouse-up along for
+      // If coords are outside of our bounds, pass a mouse-cancel along for
       // anyone tracking a drag, but mark it as claimed so it doesn't
       // actually get acted on.
       float x = m.fval1;
@@ -312,8 +314,8 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (!((y >= 0.0f) && (y < height()) && (x >= 0.0f) && (x < width()))) {
         pass = false;
         ContainerWidget::HandleMessage(
-            base::WidgetMessage(base::WidgetMessage::Type::kMouseUp, nullptr,
-                                m.fval1, m.fval2, true));
+            base::WidgetMessage(base::WidgetMessage::Type::kMouseCancel,
+                                nullptr, m.fval1, m.fval2, true));
       }
 
       break;

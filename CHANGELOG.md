@@ -1,4 +1,4 @@
-### 1.7.44 (build 22431, api 9, 2025-06-18)
+### 1.7.44 (build 22432, api 9, 2025-06-18)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
   an associated `dont_write_bytecode` value for the server config file. In most
   cases writing .pyc files is useful as it can speed up relaunches and keep
@@ -44,6 +44,16 @@
   garbage collection due to reference loops, and it offers some tips and
   functionality to help track down and eliminate said loops. Flip the
   `ba.garbagecollection` log to `Debug` to learn more.
+- Added proper support for mouse-cancel events. This fixes an annoying issue
+  where using home-bar nav gestures on Android to switch apps could lead to
+  unintended button presses (namely on chest slots since that is near the home
+  bar).
+- Fixed issues on some versions of Android with ads being cut off by system bars
+  at screen edges.
+- (build 22431) Using Android back gestures to bring up the in-game menu now
+  properly shows leave-game options for a single local player (similar fix as
+  mentioned above).
+- Tweaked the default on-screen controls positions slightly for modern phones.
 
 ### 1.7.43 (build 22406, api 9, 2025-06-09)
 - Fixes an issue with tournament scores not submitting properly in 1.7.42.

@@ -12,6 +12,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/base/ui/widget_message.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
@@ -647,7 +648,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       }
       break;
     }
-    case base::WidgetMessage::Type::kMouseUp: {
+    case base::WidgetMessage::Type::kMouseUp:
+    case base::WidgetMessage::Type::kMouseCancel: {
       CheckLayout();
       dragging_ = false;
       float x = m.fval1;
@@ -678,14 +680,16 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float bottom_overlap = 2;
       float top_overlap = 2;
 
-      // When pressed, we *always* claim mouse-ups.
+      // When pressed, we *always* claim mouse-ups/cancels.
       if (pressed_) {
         pressed_ = false;
 
         // If we're pressed, mouse-ups within our region trigger activation.
         if (pressed_activate_ && !claimed && x >= l && x < r
             && y >= b - bottom_overlap && y < t + top_overlap) {
-          Activate();
+          if (m.type == base::WidgetMessage::Type::kMouseUp) {
+            Activate();
+          }
           pressed_activate_ = false;
         }
         return true;
@@ -693,9 +697,12 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       // If its not yet claimed, see if its within our contained region, in
       // which case we claim it but do nothing.
       if (!claimed) {
-        if (background_)
-          if (x >= l && x < r && y >= b - bottom_overlap && y < t + top_overlap)
+        if (background_) {
+          if (x >= l && x < r && y >= b - bottom_overlap
+              && y < t + top_overlap) {
             claimed = true;
+          }
+        }
       }
       break;
     }

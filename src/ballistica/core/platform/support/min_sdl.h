@@ -63,6 +63,7 @@
 
 // Redundantly inluding some stuff here just so we can export it for IWYU.
 #include "SDL_events.h"      // IWYU pragma: export
+#include "SDL_keyboard.h"    // IWYU pragma: export
 #include "SDL_keycode.h"     // IWYU pragma: export
 #include "SDL_messagebox.h"  // IWYU pragma: export
 #else

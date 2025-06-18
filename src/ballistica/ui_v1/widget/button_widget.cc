@@ -510,10 +510,12 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         return false;
       }
     }
-    case base::WidgetMessage::Type::kMouseUp: {
+    case base::WidgetMessage::Type::kMouseUp:
+    case base::WidgetMessage::Type::kMouseCancel: {
       float x = m.fval1;
       float y = m.fval2;
       bool claimed = (m.fval3 > 0.0f);
+
       if (pressed_) {
         pressed_ = false;
 
@@ -527,7 +529,9 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               && (x < (0 + width_ + right_overlap))
               && (y >= (0 - bottom_overlap))
               && (y < (0 + height_ + top_overlap)) && !claimed) {
-            Activate();
+            if (m.type == base::WidgetMessage::Type::kMouseUp) {
+              Activate();
+            }
           }
         }
         return true;  // Pressed buttons always claim mouse-ups.

@@ -9,7 +9,7 @@ pbxproj==4.3.0
 pur==7.3.3
 pylint==3.3.7
 pylsp-mypy==0.7.0
-pytest==8.4.0
+pytest==8.4.1
 python-daemon==3.1.2
 python-lsp-black==2.0.0
 python-lsp-server==1.12.2
@@ -21,4 +21,4 @@ types-docutils==0.21.0.20250604
 types-filelock==3.2.7
 types-requests==2.32.4.20250611
 typing_extensions==4.14.0
-urllib3==2.4.0
+urllib3==2.5.0
