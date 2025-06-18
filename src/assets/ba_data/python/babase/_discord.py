@@ -3,7 +3,7 @@
 """Functionality related to discord sdk integration"""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import _babase
 from babase._appsubsystem import AppSubsystem
 
@@ -35,7 +35,8 @@ class DiscordSubsystem(AppSubsystem):
             return
         _babase.discord_start()
 
-    def on_app_shutdown(self):
+    @override
+    def on_app_shutdown(self) -> None:
         """Called when the app is shutting down."""
         _babase.discord_shutdown()
 
@@ -44,10 +45,6 @@ class DiscordSubsystem(AppSubsystem):
         """Check if the Discord SDK is available.
         _babase.discord_is_ready() returns None if not available."""
         return _babase.discord_is_ready() is not None
-
-    async def _shutdown_coroutine(self) -> None:
-        """Coroutine for shutting down Discord."""
-        ...
 
     @property
     def is_ready(self) -> bool:
