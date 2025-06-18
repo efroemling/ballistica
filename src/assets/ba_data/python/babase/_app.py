@@ -447,7 +447,7 @@ class App:
         # Run a last round of cyclic garbage collection - mostly so
         # we keep ourselves aware of reference cycles that need cleaning
         # up.
-        garbage_collect()
+        garbage_collect(force=True)
 
         # Turn off any garbage-collector debugging or we'll get a huge
         # dump of stuff as Python is tearing itself down, which we don't

@@ -70,9 +70,6 @@ HostSession::HostSession(PyObject* session_type_obj)
     output_stream_->AddScene(scene_.get());
   }
 
-  // Fade in from our current blackness.
-  // g_base->graphics->FadeScreen(true, 250, nullptr);
-
   // Start by showing the progress bar instead of hitching.
   g_base->graphics->EnableProgressBar(true);
 

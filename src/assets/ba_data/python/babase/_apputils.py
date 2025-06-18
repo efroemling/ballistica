@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     import babase
 
 _g_total_num_gc_objects: int = 0
+_g_last_collection_time: float = 0.0
 
 
 def utc_now_cloud() -> datetime.datetime:
@@ -207,7 +208,7 @@ def handle_leftover_v1_cloud_log_file() -> None:
         balog.exception('Error handling leftover log file.')
 
 
-def garbage_collect() -> None:
+def garbage_collect(force: bool = False) -> None:
     """Run an explicit pass of cyclic garbage collection.
 
     By default, ballistica disables Python's cyclic garbage collector to
@@ -226,13 +227,24 @@ def garbage_collect() -> None:
 
     # If automatic is still on, skip all this.
     if gc.isenabled():
-        garbagecollectionlog.debug(
+        garbagecollectionlog.info(
             'Skipping explicit garbage-collection'
             ' (automatic collection is enabled).'
         )
         return
 
-    garbagecollectionlog.debug('Running cyclic-garbage-collector.')
+    # pylint: disable=global-statement
+    global _g_total_num_gc_objects
+    global _g_last_collection_time
+
+    # Even if we come up empty, a full gc pass is a bit of work, so
+    # skip runs if they happen too close together.
+    now = time.monotonic()
+    if now - _g_last_collection_time < 20 and not force:
+        return
+    _g_last_collection_time = now
+
+    garbagecollectionlog.info('Running cyclic-garbage-collector.')
 
     debug_leak_enabled = gc.get_debug() & gc.DEBUG_LEAK == gc.DEBUG_LEAK
 
@@ -246,7 +258,6 @@ def garbage_collect() -> None:
     num_affected_objs = gc.collect()
     duration = time.monotonic() - starttime
 
-    global _g_total_num_gc_objects  # pylint: disable=global-statement
     _g_total_num_gc_objects += num_affected_objs
 
     # If we pass our gc threshold, make some noise. Normally just do
@@ -256,7 +267,7 @@ def garbage_collect() -> None:
     ):
         logcall = garbagecollectionlog.warning
     else:
-        logcall = garbagecollectionlog.debug
+        logcall = garbagecollectionlog.info
 
     elimtip = (
         '\nEliminate reference loops to get this as close to 0 as possible.'
