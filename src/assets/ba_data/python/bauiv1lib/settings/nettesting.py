@@ -460,24 +460,12 @@ def _test_v2_time() -> None:
 
 
 def _test_fetch(baseaddr: str) -> None:
-    # pylint: disable=consider-using-with
-    import urllib.request
 
-    assert bui.app.classic is not None
-    response = urllib.request.urlopen(
-        urllib.request.Request(
-            f'{baseaddr}/ping',
-            None,
-            {'User-Agent': bui.app.classic.legacy_user_agent_string},
-        ),
-        context=bui.app.net.sslcontext,
-        timeout=MAX_TEST_SECONDS,
-    )
-    if response.getcode() != 200:
-        raise RuntimeError(
-            f'Got unexpected response code {response.getcode()}.'
-        )
-    data = response.read()
+    upool = bui.app.net.urllib3pool
+    response = upool.request('GET', f'{baseaddr}/ping')
+    if response.status != 200:
+        raise RuntimeError(f'Got unexpected response code {response.status}.')
+    data = response.data
     if data != b'pong':
         raise RuntimeError('Got unexpected response data.')
 

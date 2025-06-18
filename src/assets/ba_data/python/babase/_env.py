@@ -125,14 +125,11 @@ def on_main_thread_start_app() -> None:
     # Non-reference-looped objects will still get cleaned up
     # immediately, so we should try to structure things to avoid and/or
     # break reference loops (just like Swift, ObjC, etc).
-
-    # TODO: Should wire up some sort of callback for things that the
-    # cyclic collector kills so we can try to get everything
-    # deterministic and then there is no downside to running cyclic
-    # collections very rarely. Could also just leave the cyclic
-    # collector on in that case, but I wonder if there could be
-    # overhead/hitches from it even if nothing gets collected.
     gc.disable()
+
+    if os.environ.get('BA_GC_DEBUG_LEAK') == '1':
+        print('ENABLING GC DEBUG LEAK CHECKS', file=sys.stderr)
+        gc.set_debug(gc.DEBUG_LEAK)
 
     # pylint: disable=c-extension-no-member
     if not TYPE_CHECKING:

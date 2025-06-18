@@ -27,6 +27,7 @@
   "public": true,
   "pylint_ignored_untracked_deps": [
     "__main__",
+    "urllib3",
     "astroid.modutils",
     "astroid.nodes",
     "astroid",

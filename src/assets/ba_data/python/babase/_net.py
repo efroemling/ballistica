@@ -9,6 +9,10 @@ import threading
 import ipaddress
 from typing import TYPE_CHECKING
 
+import urllib3
+
+import _babase
+
 if TYPE_CHECKING:
     pass
 
@@ -24,6 +28,13 @@ class NetworkSubsystem:
         # create it here once and recycle for our various connections.
         self.sslcontext = ssl.create_default_context()
 
+        self.urllib3pool = urllib3.PoolManager(
+            ssl_context=self.sslcontext,
+            timeout=urllib3.util.Timeout(total=DEFAULT_REQUEST_TIMEOUT_SECONDS),
+            maxsize=5,
+            headers={'User-Agent': _babase.user_agent_string()},
+        )
+
         # Anyone accessing/modifying zone_pings should hold this lock,
         # as it is updated by a background thread.
         self.zone_pings_lock = threading.Lock()
@@ -36,9 +47,13 @@ class NetworkSubsystem:
         # For debugging/progress.
         self.v1_test_log: str = ''
         self.v1_ctest_results: dict[int, str] = {}
-        self.connectivity_state = 'uninited'
-        self.transport_state = 'uninited'
+        self.connectivity_state = ''
+        self.transport_state = ''
         self.server_time_offset_hours: float | None = None
+
+    def pre_interpreter_shutdown(self) -> None:
+        """Called just before interpreter shuts down."""
+        self.urllib3pool.clear()
 
 
 def get_ip_address_type(addr: str) -> socket.AddressFamily:

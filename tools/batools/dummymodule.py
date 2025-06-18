@@ -1005,8 +1005,8 @@ def generate_dummy_modules(projroot: str) -> None:
     pycmd = (
         f'import sys\n'
         f'sys.path.append("build/assets/ba_data/python")\n'
+        f'sys.path.append("build/assets/ba_data/python-site-packages")\n'
         f'sys.path.append("{toolsdir}")\n'
-        # f'sys.path.append("{venvpath}")\n'
         f'from batools import dummymodule\n'
     )
 

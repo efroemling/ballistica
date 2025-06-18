@@ -80,7 +80,7 @@ HostSession::HostSession(PyObject* session_type_obj)
   // no game stuff to speak of in existence (provided the last session went
   // down peacefully).
   g_base->python->objs()
-      .Get(base::BasePython::ObjID::kGarbageCollectSessionEndCall)
+      .Get(base::BasePython::ObjID::kGarbageCollectCall)
       .Call();
 
   // Instantiate our Python Session instance.

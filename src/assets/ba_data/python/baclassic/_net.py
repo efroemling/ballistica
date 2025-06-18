@@ -71,14 +71,11 @@ class MasterServerV1CallThread(threading.Thread):
 
     @override
     def run(self) -> None:
-        # pylint: disable=consider-using-with
         # pylint: disable=too-many-branches
-        import urllib.request
         import urllib.parse
-        import urllib.error
         import json
 
-        from efro.error import is_urllib_communication_error
+        from efro.error import is_urllib3_communication_error
 
         plus = babase.app.plus
         assert plus is not None
@@ -91,6 +88,8 @@ class MasterServerV1CallThread(threading.Thread):
             # App is already shutting down, so we're a no-op.
             return
 
+        upool = babase.app.net.urllib3pool
+
         try:
             classic = babase.app.classic
             assert classic is not None
@@ -101,35 +100,36 @@ class MasterServerV1CallThread(threading.Thread):
                 dataenc = urllib.parse.urlencode(self._data)
                 url = f'{msaddr}/{self._request}?{dataenc}'
                 assert url is not None
-                response = urllib.request.urlopen(
-                    urllib.request.Request(
-                        url,
-                        None,
-                        {'User-Agent': classic.legacy_user_agent_string},
-                    ),
-                    context=babase.app.net.sslcontext,
-                    timeout=babase.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+                response = upool.request(
+                    'GET',
+                    url,
+                    headers={'User-Agent': classic.legacy_user_agent_string},
                 )
             elif self._request_type == 'post':
                 url = f'{plus.get_master_server_address()}/{self._request}'
                 assert url is not None
-                response = urllib.request.urlopen(
-                    urllib.request.Request(
-                        url,
-                        urllib.parse.urlencode(self._data).encode(),
-                        {'User-Agent': classic.legacy_user_agent_string},
-                    ),
-                    context=babase.app.net.sslcontext,
-                    timeout=babase.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+
+                # Note: we could use 'fields' here instead of
+                # urlencoding ourself, but we'd need to convert
+                # self._data to strings/bytes.
+                response = upool.request(
+                    'POST',
+                    url,
+                    body=urllib.parse.urlencode(self._data).encode(),
+                    headers={
+                        'User-Agent': classic.legacy_user_agent_string,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
                 )
+
             else:
                 raise TypeError('Invalid request_type: ' + self._request_type)
 
             # If html request failed.
-            if response.getcode() != 200:
+            if response.status != 200:
                 response_data = None
             elif self._response_type == MasterServerResponseType.JSON:
-                raw_data = response.read()
+                raw_data = response.data
 
                 # Empty string here means something failed server side.
                 if raw_data == b'':
@@ -141,7 +141,7 @@ class MasterServerV1CallThread(threading.Thread):
 
         except Exception as exc:
             # Ignore common network errors; note unexpected ones.
-            if not is_urllib_communication_error(exc, url=url):
+            if not is_urllib3_communication_error(exc, url=url):
                 print(
                     f'Error in MasterServerCallThread'
                     f' (url={url},'

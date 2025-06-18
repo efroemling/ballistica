@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import gc
 import os
+import time
 import asyncio
 import threading
 from functools import partial
@@ -24,6 +25,8 @@ if TYPE_CHECKING:
     from typing import Any, TextIO, Callable
 
     import babase
+
+_g_total_num_gc_objects: int = 0
 
 
 def utc_now_cloud() -> datetime.datetime:
@@ -204,37 +207,82 @@ def handle_leftover_v1_cloud_log_file() -> None:
         balog.exception('Error handling leftover log file.')
 
 
-def garbage_collect_session_end() -> None:
-    """Run explicit garbage collection with extra checks for session end."""
-    gc.collect()
-
-    # Can be handy to print this to check for leaks between games.
-    if bool(False):
-        print('PY OBJ COUNT', len(gc.get_objects()))
-    if gc.garbage:
-        print('PYTHON GC FOUND', len(gc.garbage), 'UNCOLLECTIBLE OBJECTS:')
-        for i, obj in enumerate(gc.garbage):
-            print(str(i) + ':', obj)
-
-    # NOTE: no longer running these checks. Perhaps we can allow
-    # running them with an explicit flag passed, but we should never
-    # run them by default because gc.get_objects() can mess up the app.
-    # See notes at top of efro.debug.
-
-    # if bool(False):
-    #     print_live_object_warnings('after session shutdown')
-
-
 def garbage_collect() -> None:
-    """Run an explicit pass of garbage collection.
+    """Run an explicit pass of cyclic garbage collection.
 
-    May also print warnings/etc. if collection takes too long or if
-    uncollectible objects are found (so use this instead of simply
-    :meth:`gc.collect()`.
+    By default, ballistica disables Python's cyclic garbage collector to
+    avoid unpredictable hitches. However, there still may be objects in
+    dependency loops that cannot be freed without it. This call can be
+    run at explicit times when hitches won't be a problem (namely when
+    the screen is faded to black) to free such objects.
 
-    :meta private:
+    Another purpose of this call is to convey via logs when too many
+    objects are getting collected this way so that an effort can be made
+    to eliminate the dependency loops causing it. For that reason,
+    always call this function instead of calling :meth:`gc.collect()`
+    directly.
     """
-    gc.collect()
+    from babase._logging import garbagecollectionlog
+
+    # If automatic is still on, skip all this.
+    if gc.isenabled():
+        garbagecollectionlog.debug(
+            'Skipping explicit garbage-collection'
+            ' (automatic collection is enabled).'
+        )
+        return
+
+    garbagecollectionlog.debug('Running cyclic-garbage-collector.')
+
+    debug_leak_enabled = gc.get_debug() & gc.DEBUG_LEAK == gc.DEBUG_LEAK
+
+    # Normally we don't make noise until there's a substantial amount of
+    # gc happening, but if we are explicitly debugging leaks then we
+    # make noise for *any* gc.
+    gc_threshold = 0 if debug_leak_enabled else 50
+
+    # Do the thing.
+    starttime = time.monotonic()
+    num_affected_objs = gc.collect()
+    duration = time.monotonic() - starttime
+
+    global _g_total_num_gc_objects  # pylint: disable=global-statement
+    _g_total_num_gc_objects += num_affected_objs
+
+    # If we pass our gc threshold, make some noise. Normally just do
+    # this once, or do it every time if we're doing leak debugging.
+    if num_affected_objs > gc_threshold and (
+        _babase.do_once() or debug_leak_enabled
+    ):
+        logcall = garbagecollectionlog.warning
+    else:
+        logcall = garbagecollectionlog.debug
+
+    elimtip = (
+        '\nEliminate reference loops to get this as close to 0 as possible.'
+        if num_affected_objs > 0
+        else ''
+    )
+    tip = (
+        '\nTo debug refs for an object, do'
+        ' `from efro.debug import printrefs, getobj; printrefs(getobj(OBJID))`'
+        if debug_leak_enabled
+        else (
+            '\nTo debug this, do `import gc; gc.set_debug(gc.DEBUG_LEAK)`'
+            ' or set env var BA_GC_DEBUG_LEAK=1.'
+            if num_affected_objs > 0
+            else ''
+        )
+    )
+    logcall(
+        'Cyclic-garbage-collector handled %d objects in %.3fs'
+        ' (total: %d).%s%s',
+        num_affected_objs,
+        duration,
+        _g_total_num_gc_objects,
+        elimtip,
+        tip,
+    )
 
 
 def print_corrupt_file_error() -> None:
@@ -454,7 +502,6 @@ class AppHealthSubsystem(AppSubsystem):
         return self._running
 
     def _monitor_app(self) -> None:
-        import time
 
         while not self.stop_event.is_set():
 

@@ -62,7 +62,7 @@ values = [
     _hooks.copy_dev_console_history,  # kCopyDevConsoleHistoryCall
     _language.Lstr,  # kLStrClass
     _general.Call,  # kCallClass
-    _apputils.garbage_collect_session_end,  # kGarbageCollectSessionEndCall
+    _apputils.garbage_collect,  # kGarbageCollectCall
     _error.ContextError,  # kContextError
     _error.NotFoundError,  # kNotFoundError
     _error.NodeNotFoundError,  # kNodeNotFoundError
