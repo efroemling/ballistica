@@ -29,6 +29,7 @@ from babase._stringedit import StringEditSubsystem
 from babase._devconsole import DevConsoleSubsystem
 from babase._appconfig import AppConfig
 from babase._logging import lifecyclelog, applog
+from babase._garbagecollection import GarbageCollectionSubsystem
 
 if TYPE_CHECKING:
     import asyncio
@@ -108,6 +109,11 @@ class App:
         self.threadpool: ThreadPoolExecutorEx = ThreadPoolExecutorEx(
             thread_name_prefix='baworker',
             initializer=self._thread_pool_thread_init,
+        )
+
+        #: Garbage collection related functionality.
+        self.gc: GarbageCollectionSubsystem = self.register_subsystem(
+            GarbageCollectionSubsystem()
         )
 
         #: Locale related functionality.
@@ -440,7 +446,6 @@ class App:
     def _pre_interpreter_shutdown(self) -> None:
         """Called just before interpreter is finalized."""
         import gc
-        from babase._apputils import garbage_collect
         from babase._env import interpreter_shutdown_sanity_checks
 
         # Spin down connection pools or whatever else used for
@@ -450,7 +455,7 @@ class App:
         # Run a last round of cyclic garbage collection - mostly so
         # we keep ourselves aware of reference cycles that need cleaning
         # up.
-        garbage_collect(force=True)
+        self.gc.collect(force=True)
 
         # Turn off any garbage-collector debugging or we'll get a huge
         # dump of stuff as Python is tearing itself down, which we don't

@@ -22,4 +22,5 @@ values = [
     app.devconsole.do_refresh_tab,  # kAppDevConsoleDoRefreshTabCall
     app.devconsole.save_tab,  # kAppDevConsoleSaveTabCall
     app.on_screen_size_change,  # kAppOnScreenSizeChangeCall
+    app.gc.collect,  # kAppGCCollectCall
 ]

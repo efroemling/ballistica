@@ -40,7 +40,7 @@ class BasePython {
     kTranslateCall,
     kLStrClass,
     kCallClass,
-    kGarbageCollectCall,
+    kAppGCCollectCall,
     kConfig,
     kAppOnNativeBootstrappingCompleteCall,
     kResetToMainMenuCall,

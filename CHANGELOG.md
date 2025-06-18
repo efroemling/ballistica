@@ -1,4 +1,4 @@
-### 1.7.44 (build 22430, api 9, 2025-06-17)
+### 1.7.44 (build 22431, api 9, 2025-06-18)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
   an associated `dont_write_bytecode` value for the server config file. In most
   cases writing .pyc files is useful as it can speed up relaunches and keep
@@ -39,12 +39,13 @@
   `urllib3`. This should perform better and hopefully won't get stuck at
   shutdown like old urllib was prone to do. Please holler if you run into any
   sort of connectivity issues that weren't there before.
-- Greatly cleaned up and improved `babase.garbage_collect()`. It will now warn
-  if too many objects are resorting to cyclic garbage collection due to
-  reference loops, and it offers some tips and functionality to help track down
-  and eliminate said loops. Flip the `ba.garbagecollection` log to `Debug` to
-  learn more.
-- Added `DiscordSubsystem` class which wraps the underlying _babase implementation of discord sdk
+- Turned the `babase.garbage_collect()` function into a full subsystem
+  (`ba*.app.gc`). It will now warn if too many objects are resorting to cyclic
+  garbage collection due to reference loops, and it offers some tips and
+  functionality to help track down and eliminate said loops. Flip the
+  `ba.garbagecollection` log to `Debug` to learn more.
+- Added `DiscordSubsystem` class which wraps the underlying `_babase` 
+  implementation of discord sdk
 
 ### 1.7.43 (build 22406, api 9, 2025-06-09)
 - Fixes an issue with tournament scores not submitting properly in 1.7.42.
