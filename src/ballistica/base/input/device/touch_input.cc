@@ -880,9 +880,9 @@ void TouchInput::ApplyAppConfig() {
   switch (g_base->ui->uiscale()) {
     case UIScale::kSmall:
       buttons_default_frac_x_ = 0.88f;
-      buttons_default_frac_y_ = 0.2f;
+      buttons_default_frac_y_ = 0.25f;
       d_pad_default_frac_x_ = 0.12f;
-      d_pad_default_frac_y_ = 0.2f;
+      d_pad_default_frac_y_ = 0.25f;
       break;
     case UIScale::kMedium:
       buttons_default_frac_x_ = 0.89f;

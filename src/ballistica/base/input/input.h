@@ -185,6 +185,7 @@ class Input {
   void HandleMouseMotion_(const Vector2f& position);
   void HandleMouseDown_(int button, const Vector2f& position);
   void HandleMouseUp_(int button, const Vector2f& position);
+  void HandleMouseCancel_(int button, const Vector2f& position);
   void HandleMouseScroll_(const Vector2f& amount);
   void HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum);
   void HandleJoystickEvent_(const SDL_Event& event, InputDevice* input_device);

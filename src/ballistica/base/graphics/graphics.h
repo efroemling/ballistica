@@ -477,6 +477,8 @@ class Graphics {
   float shadow_upper_top_{40.0f};
   seconds_t last_cursor_visibility_event_time_{};
   millisecs_t fade_start_{};
+  millisecs_t fade_cancel_start_{};
+  millisecs_t fade_cancel_last_real_ms_{};
   millisecs_t fade_time_{};
   millisecs_t next_stat_update_time_{};
   millisecs_t progress_bar_end_time_{-9999};

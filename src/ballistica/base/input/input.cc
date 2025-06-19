@@ -1366,6 +1366,25 @@ void Input::PushMouseUpEvent(int button, const Vector2f& position) {
       [this, button, position] { HandleMouseUp_(button, position); });
 }
 
+static void ApplyMouseUpCancelToCamera(int button) {
+  if (Camera* camera = g_base->graphics->camera()) {
+    switch (button) {
+      case SDL_BUTTON_LEFT:
+        camera->set_mouse_left_down(false);
+        break;
+      case SDL_BUTTON_RIGHT:
+        camera->set_mouse_right_down(false);
+        break;
+      case SDL_BUTTON_MIDDLE:
+        camera->set_mouse_middle_down(false);
+        break;
+      default:
+        break;
+    }
+    camera->UpdateManualMode();
+  }
+}
+
 void Input::HandleMouseUp_(int button, const Vector2f& position) {
   assert(g_base->InLogicThread());
   MarkInputActive();
@@ -1384,24 +1403,34 @@ void Input::HandleMouseUp_(int button, const Vector2f& position) {
                                 cursor_pos_y_);
   }
 
-  if (Camera* camera = g_base->graphics->camera()) {
-    switch (button) {
-      case SDL_BUTTON_LEFT:
-        camera->set_mouse_left_down(false);
-        break;
-      case SDL_BUTTON_RIGHT:
-        camera->set_mouse_right_down(false);
-        break;
-      case SDL_BUTTON_MIDDLE:
-        camera->set_mouse_middle_down(false);
-        break;
-      default:
-        break;
-    }
-    camera->UpdateManualMode();
-  }
+  ApplyMouseUpCancelToCamera(button);
 
   g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
+}
+
+void Input::HandleMouseCancel_(int button, const Vector2f& position) {
+  assert(g_base->InLogicThread());
+  MarkInputActive();
+
+  // Convert normalized view coords to our virtual ones.
+  cursor_pos_x_ = g_base->graphics->PixelToVirtualX(
+      position.x * g_base->graphics->screen_pixel_width());
+  cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
+      position.y * g_base->graphics->screen_pixel_height());
+
+  // If we have a touch-input in editing mode, pass along events to it.
+  // It usually handles its own events but here we want it to play nice
+  // with stuff under it by blocking touches, etc.
+  //
+  // FIXME - passing as touch-up.
+  if (touch_input_ && touch_input_->editing()) {
+    touch_input_->HandleTouchUp(reinterpret_cast<void*>(1), cursor_pos_x_,
+                                cursor_pos_y_);
+  }
+
+  ApplyMouseUpCancelToCamera(button);
+
+  g_base->ui->HandleMouseCancel(button, cursor_pos_x_, cursor_pos_y_);
 }
 
 void Input::PushTouchEvent(const TouchEvent& e) {
@@ -1460,14 +1489,17 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     HandleMouseMotion_(Vector2f(e.x, e.y));
   }
 
-  // Currently just applying touch-cancel the same as touch-up here; perhaps
-  // should be smarter in the future.
-  if ((e.type == TouchEvent::Type::kUp || e.type == TouchEvent::Type::kCanceled)
+  if ((e.type == TouchEvent::Type::kUp)
       && (e.touch == single_touch_ || e.overall)) {
     single_touch_ = nullptr;
     HandleMouseUp_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
   }
 
+  if ((e.type == TouchEvent::Type::kCanceled)
+      && (e.touch == single_touch_ || e.overall)) {
+    single_touch_ = nullptr;
+    HandleMouseCancel_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
+  }
   // If we've got a touch input device, forward events along to it.
   if (touch_input_) {
     touch_input_->HandleTouchEvent(e.type, e.touch, x, y);

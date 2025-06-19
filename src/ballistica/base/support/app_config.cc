@@ -167,18 +167,18 @@ void AppConfig::CompleteMap_(const T& entry_map) {
 void AppConfig::SetupEntries_() {
   // Register all our typed entries.
   float_entries_[FloatID::kScreenPixelScale] =
-      FloatEntry("Screen Pixel Scale", 1.0F);
+      FloatEntry("Screen Pixel Scale", 1.0f);
   float_entries_[FloatID::kTouchControlsScale] =
-      FloatEntry("Touch Controls Scale", 1.0F);
+      FloatEntry("Touch Controls Scale", 1.0f);
   float_entries_[FloatID::kTouchControlsScaleMovement] =
-      FloatEntry("Touch Controls Scale Movement", 1.0F);
+      FloatEntry("Touch Controls Scale Movement", 1.0f);
   float_entries_[FloatID::kTouchControlsScaleActions] =
-      FloatEntry("Touch Controls Scale Actions", 1.0F);
-  float_entries_[FloatID::kSoundVolume] = FloatEntry("Sound Volume", 1.0F);
-  float_entries_[FloatID::kMusicVolume] = FloatEntry("Music Volume", 1.0F);
+      FloatEntry("Touch Controls Scale Actions", 1.0f);
+  float_entries_[FloatID::kSoundVolume] = FloatEntry("Sound Volume", 1.0f);
+  float_entries_[FloatID::kMusicVolume] = FloatEntry("Music Volume", 1.0f);
 
   // Note: keep this synced with the defaults in MainActivity.java.
-  float gvrrts_default = g_core->platform->IsRunningOnDaydream() ? 1.0F : 0.5F;
+  float gvrrts_default = g_core->platform->IsRunningOnDaydream() ? 1.0f : 0.5f;
   float_entries_[FloatID::kGoogleVRRenderTargetScale] =
       FloatEntry("GVR Render Target Scale", gvrrts_default);
 

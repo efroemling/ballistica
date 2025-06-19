@@ -27,7 +27,7 @@ class GarbageCollectionSubsystem(AppSubsystem):
 
     def __init__(self) -> None:
         self._total_num_gc_objects = 0
-        self._last_collection_time = 0.0
+        self._last_collection_time: float | None = None
         self._showed_elim_tip = False
         self._showed_debug_tip = False
         self._showed_debug_ref_tip = False
@@ -59,15 +59,18 @@ class GarbageCollectionSubsystem(AppSubsystem):
         # Even if nothing is collected, a full gc pass is a bit of work,
         # so skip runs if they happen too close together.
         now = time.monotonic()
-        if now - self._last_collection_time < 20 and not force:
+        if (
+            self._last_collection_time is not None
+            and now - self._last_collection_time < 20
+            and not force
+        ):
             garbagecollectionlog.debug(
                 'Skipping explicit garbage-collection'
-                ' (too little time passed since last).'
+                ' (too little time passed).'
             )
             return
+        prev_last_collection_time = self._last_collection_time
         self._last_collection_time = now
-
-        garbagecollectionlog.info('Running cyclic-garbage-collector.')
 
         debug_leak_enabled = gc.get_debug() & gc.DEBUG_LEAK == gc.DEBUG_LEAK
 
@@ -130,11 +133,18 @@ class GarbageCollectionSubsystem(AppSubsystem):
             else:
                 tip = ''
 
+        from_last = (
+            ''
+            if prev_last_collection_time is None
+            else f' from last {now-prev_last_collection_time:.1f}s'
+        )
+
         garbagecollectionlog.log(
             loglevel,
-            'Cyclic-garbage-collector handled %d objects in %.3fs'
+            'Cyclic-garbage-collector handled %d objects%s in %.3fs'
             ' (total: %d).%s%s',
             num_affected_objs,
+            from_last,
             duration,
             self._total_num_gc_objects,
             elimtip,

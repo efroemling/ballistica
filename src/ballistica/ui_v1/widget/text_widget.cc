@@ -865,7 +865,8 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         return false;
       }
     }
-    case base::WidgetMessage::Type::kMouseUp: {
+    case base::WidgetMessage::Type::kMouseUp:
+    case base::WidgetMessage::Type::kMouseCancel: {
       float x{ScaleAdjustedX_(m.fval1)};
       float y{ScaleAdjustedY_(m.fval2)};
       bool claimed = (m.fval3 > 0.0f);
@@ -875,12 +876,16 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           && (!text_raw_.empty()) && (x >= width_ - 35 - kClearMargin)
           && (x < width_ + kClearMargin) && (y >= 0 - kClearMargin)
           && (y < height_ + kClearMargin)) {
-        text_raw_ = "";
-        text_translation_dirty_ = true;
-        carat_position_ = 0;
-        text_group_dirty_ = true;
         clear_pressed_ = false;
-        g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+
+        if (m.type == base::WidgetMessage::Type::kMouseUp) {
+          text_raw_ = "";
+          text_translation_dirty_ = true;
+          carat_position_ = 0;
+          text_group_dirty_ = true;
+          g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+        }
+
         return true;
       }
       clear_pressed_ = false;
@@ -892,17 +897,21 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         if (pressed_activate_ && (x >= (-left_overlap))
             && (x < (width_ + right_overlap)) && (y >= (-bottom_overlap))
             && (y < (height_ + top_overlap)) && !claimed) {
-          Activate();
           pressed_activate_ = false;
+          if (m.type == base::WidgetMessage::Type::kMouseUp) {
+            Activate();
+          }
         } else if (editable_ && ShouldUseStringEditor_()
                    && (x >= (-left_overlap)) && (x < (width_ + right_overlap))
                    && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))
                    && !claimed) {
-          // With dialog-editing, a click/tap brings up our editor.
-          InvokeStringEditor_();
+          if (m.type == base::WidgetMessage::Type::kMouseUp) {
+            // With dialog-editing, a click/tap brings up our editor.
+            InvokeStringEditor_();
+          }
         }
 
-        // Pressed buttons always claim mouse-ups presented to them.
+        // Pressed buttons always claim mouse-ups/cancels presented to them.
         return true;
       }
       break;

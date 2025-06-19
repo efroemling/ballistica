@@ -57,6 +57,7 @@ class DevConsole {
 
   auto HandleMouseDown(int button, float x, float y) -> bool;
   void HandleMouseUp(int button, float x, float y);
+  void HandleMouseCancel(int button, float x, float y);
   void Exec();
   void CopyHistory();
 

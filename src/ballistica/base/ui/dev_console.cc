@@ -218,6 +218,7 @@ class DevConsole::Widget_ {
   virtual ~Widget_() = default;
   virtual auto HandleMouseDown(float mx, float my) -> bool { return false; }
   virtual void HandleMouseUp(float mx, float my) {}
+  virtual void HandleMouseCancel(float mx, float my) {}
   virtual void Draw(RenderPass* pass, float bottom) = 0;
 };
 
@@ -310,6 +311,11 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
           call.get()->Run();
         }
       }
+    }
+  }
+  void HandleMouseCancel(float mx, float my) override {
+    if (pressed) {
+      pressed = false;
     }
   }
 
@@ -472,6 +478,11 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
       }
     }
   }
+  void HandleMouseCancel(float mx, float my) override {
+    if (pressed) {
+      pressed = false;
+    }
+  }
 
   void Draw(RenderPass* pass, float bottom) override {
     DrawRect(pass, &mesh, x + XOffs(attach), bottom + y, width, height,
@@ -551,6 +562,11 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
           call.get()->Run();
         }
       }
+    }
+  }
+  void HandleMouseCancel(float mx, float my) override {
+    if (pressed) {
+      pressed = false;
     }
   }
 
@@ -854,6 +870,31 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
         InvokeStringEditor_();
       }
     }
+  }
+}
+
+void DevConsole::HandleMouseCancel(int button, float x, float y) {
+  assert(g_base->InLogicThread());
+  float bottom{Bottom_()};
+
+  if (button == 1) {
+    // Make sure we don't muck with our UI while we're in here.
+    auto lock = ScopedUILock_(this);
+
+    if (close_button_) {
+      close_button_->HandleMouseCancel(x, y - bottom);
+    }
+
+    for (auto&& button : tab_buttons_) {
+      button->HandleMouseCancel(x, y - bottom);
+    }
+    for (auto&& button : widgets_) {
+      button->HandleMouseCancel(x, y - bottom);
+    }
+  }
+
+  if (button == 1 && python_terminal_pressed_) {
+    python_terminal_pressed_ = false;
   }
 }
 

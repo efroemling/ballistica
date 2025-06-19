@@ -625,6 +625,9 @@ std::string CorePlatformWindows::GetLocaleTag() {
     case 9226:
       return "es_CO";
       break;  // Spanish - Colombia
+    case 16393:
+      return "en_IN";
+      break;  // English - India
     case 3081:
       return "en_AU";
       break;  // English - Australia
@@ -815,6 +818,8 @@ std::string CorePlatformWindows::GetLocaleTag() {
       return "hu_HU";
       break;  // Hungarian
     default:
+      // This will fail to resolve to a Locale but it should generate a
+      // warning so we know to fix it.
       return "lcid_" + std::to_string(lcid);
   }
 }

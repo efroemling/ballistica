@@ -321,6 +321,21 @@ void UI::HandleMouseUp(int button, float x, float y) {
   }
 }
 
+void UI::HandleMouseCancel(int button, float x, float y) {
+  assert(g_base->InLogicThread());
+
+  SendWidgetMessage(
+      WidgetMessage(WidgetMessage::Type::kMouseCancel, nullptr, x, y));
+
+  if (dev_console_) {
+    dev_console_->HandleMouseUp(button, x, y);
+  }
+
+  if (dev_console_button_pressed_ && button == 1) {
+    dev_console_button_pressed_ = false;
+  }
+}
+
 auto UI::UIHasDirectKeyboardInput() const -> bool {
   // As a first gate, ask the app-adapter if it is providing keyboard events
   // at all.
@@ -511,7 +526,7 @@ void UI::DrawDev(FrameDef* frame_def) {
 }
 
 void UI::MenuPress(InputDevice* input_device) {
-  assert(g_base->InLogicThread());
+  BA_PRECONDITION_FATAL(g_base->InLogicThread());
 
   // Need to wrap passed pointer in a ref; otherwise it could die before
   // our pushed call runs.
@@ -534,7 +549,7 @@ void UI::MenuPress(InputDevice* input_device) {
 }
 
 void UI::RequestMainUI(InputDevice* input_device) {
-  assert(g_base->InLogicThread());
+  BA_PRECONDITION_FATAL(g_base->InLogicThread());
 
   // Need to wrap passed pointer in a ref; otherwise it could die before our
   // pushed call runs.

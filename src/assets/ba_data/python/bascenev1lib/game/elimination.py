@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import weakref
 import logging
 from typing import TYPE_CHECKING, override
 
@@ -37,7 +38,7 @@ class Icon(bs.Actor):
     ):
         super().__init__()
 
-        self._player = player
+        self._player = weakref.ref(player)  # Avoid ref loops.
         self._show_lives = show_lives
         self._show_death = show_death
         self._name_scale = name_scale
@@ -110,8 +111,9 @@ class Icon(bs.Actor):
 
     def update_for_lives(self) -> None:
         """Update for the target player's current lives."""
-        if self._player:
-            lives = self._player.lives
+        player = self._player()
+        if player:
+            lives = player.lives
         else:
             lives = 0
         if self._show_lives:
@@ -155,7 +157,8 @@ class Icon(bs.Actor):
                     0.55: 0.2,
                 },
             )
-            lives = self._player.lives
+            player = self._player()
+            lives = player.lives if player else 0
             if lives == 0:
                 bs.timer(0.6, self.update_for_lives)
 
