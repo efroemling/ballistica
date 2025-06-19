@@ -963,6 +963,7 @@ class App:
             # Entering suspended state:
             if self.state is not AppState.SUSPENDED:
                 self.state = AppState.SUSPENDED
+                lifecyclelog.info('app-state is now %s', self.state.name)
                 self._on_suspend()
         else:
             # Leaving suspended state:

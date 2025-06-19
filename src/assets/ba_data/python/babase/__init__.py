@@ -17,8 +17,6 @@ functionality from here and reexpose it in a more focused way.
 # dependency loops. The exception is TYPE_CHECKING blocks and
 # annotations since those aren't evaluated at runtime.
 
-# from efro.util import set_canonical_module_names
-
 import _babase
 from _babase import (
     add_clean_frame_callback,

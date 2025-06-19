@@ -165,7 +165,14 @@ def is_urllib3_communication_error(exc: BaseException, url: str | None) -> bool:
         if exc.code == 403 and url is not None and '.appspot.com' in url:
             return True
 
-    elif isinstance(exc, urllib3.exceptions.ReadTimeoutError):
+    elif isinstance(
+        exc,
+        (
+            urllib3.exceptions.ConnectTimeoutError,
+            urllib3.exceptions.ReadTimeoutError,
+            urllib3.exceptions.NewConnectionError,
+        ),
+    ):
         return True
 
     elif isinstance(exc, urllib3.exceptions.NameResolutionError):

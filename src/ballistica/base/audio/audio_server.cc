@@ -159,16 +159,8 @@ void AudioServer::OnMainThreadStartApp() {
   event_loop_ = new EventLoop(EventLoopID::kAudio);
   g_core->suspendable_event_loops.push_back(event_loop_);
 
-  // Run some setup stuff from our shiny new thread.
-  event_loop_->PushCall([this] {
-    // We want to be informed when our event-loop is pausing and unpausing.
-    event_loop()->AddSuspendCallback(
-        NewLambdaRunnableUnmanaged([this] { OnThreadSuspend_(); }));
-    event_loop()->AddUnsuspendCallback(
-        NewLambdaRunnableUnmanaged([this] { OnThreadUnsuspend_(); }));
-  });
-
-  event_loop_->PushCallSynchronous([this] { OnAppStartInThread_(); });
+  event_loop_->PushCallSynchronous([this] { StartSync_(); });
+  event_loop_->PushCall([this] { Start_(); });
 }
 
 #if BA_OPENAL_IS_SOFT
@@ -221,8 +213,16 @@ void AudioServer::OpenALSoftLogCallback(const std::string& msg) {
     }
   }
 }
+void AudioServer::StartSync_() {
+  assert(g_base->InAudioThread());
+  // We want to be informed when our event-loop is pausing and unpausing.
+  event_loop()->AddSuspendCallback(
+      NewLambdaRunnableUnmanaged([this] { OnThreadSuspend_(); }));
+  event_loop()->AddUnsuspendCallback(
+      NewLambdaRunnableUnmanaged([this] { OnThreadUnsuspend_(); }));
+}
 
-void AudioServer::OnAppStartInThread_() {
+void AudioServer::Start_() {
   assert(g_base->InAudioThread());
 
   // Get our thread to give us periodic processing time.

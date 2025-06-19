@@ -724,6 +724,10 @@ void Logic::OnAppActiveChanged() {
   // and forth quickly and we'll generally skip over those this way.
   auto app_active = g_base->app_active();
   if (app_active != app_active_) {
+    g_core->logging->Log(
+        LogName::kBaLifecycle, LogLevel::kInfo,
+        std::string("app-active is now ") + (app_active ? "True" : "False"));
+
     app_active_ = app_active;
 
     // For now just informing Python (which informs Python level app-mode).

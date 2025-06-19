@@ -29,6 +29,7 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
@@ -546,7 +547,7 @@ void Graphics::GetSafeColor(float* red, float* green, float* blue,
 void Graphics::Reset() {
   assert(g_base->InLogicThread());
   fade_ = 0;
-  fade_start_ = 0;
+  fade_start_ = fade_cancel_start_ = fade_time_ = 0;
 
   if (!camera_.exists()) {
     camera_ = Object::New<Camera>();
@@ -1014,21 +1015,38 @@ void Graphics::UpdateAndDrawProgressBar(FrameDef* frame_def) {
 void Graphics::DrawFades(FrameDef* frame_def) {
   RenderPass* overlay_pass = frame_def->overlay_pass();
 
-  millisecs_t real_time = frame_def->app_time_millisecs();
+  millisecs_t frame_time = frame_def->display_time_millisecs();
 
-  // Guard against accidental fades that never fade back in.
+  // We want to guard against accidental fades that never fade back in. To
+  // do that, let's measure the total time we've been faded and cancel if it
+  // gets too big. However, we reset this counter any time we're inactive or
+  // whenever substantial clock time passes between drawing - there are
+  // cases where we fade out and then show an ad or other screen before
+  // becoming active again and fading back in, and we want to allow for such
+  // cases.
   if (fade_ <= 0.0f && fade_out_) {
-    millisecs_t faded_time = real_time - (fade_start_ + fade_time_);
+    millisecs_t cancel_time = frame_time - fade_cancel_start_;
 
-    // TEMP HACK - don't trigger this while inactive.
-    // Need to make overall fade logic smarter.
-    if (faded_time > 15000 && g_base->app_active()) {
+    // Reset if a substantial amount of real time passes between frame draws.
+    auto real_ms = core::CorePlatform::TimeMonotonicMillisecs();
+    if (real_ms - fade_cancel_last_real_ms_ > 1000) {
+      fade_cancel_start_ = frame_time;
+    }
+    fade_cancel_last_real_ms_ = real_ms;
+
+    // Also reset any time we're inactive (we may still be technically
+    // drawing behind some foreground thing).
+    if (!g_base->app_active()) {
+      fade_cancel_start_ = frame_time;
+    }
+
+    if (cancel_time > 15000) {
       g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
                            "FORCE-ENDING STUCK FADE");
       fade_out_ = false;
       fade_ = 1.0f;
       fade_time_ = 1000;
-      fade_start_ = real_time;
+      fade_start_ = frame_time;
     }
   }
 
@@ -1036,14 +1054,17 @@ void Graphics::DrawFades(FrameDef* frame_def) {
   if (fade_ > 0) {
     if (set_fade_start_on_next_draw_) {
       set_fade_start_on_next_draw_ = false;
-      fade_start_ = real_time;
+      fade_start_ = frame_time;
+      // Calc when we should start counting for force-ending.
+      fade_cancel_start_ = fade_start_ + fade_time_;
+      fade_cancel_last_real_ms_ = core::CorePlatform::TimeMonotonicMillisecs();
     }
     bool was_done = fade_ <= 0;
-    if (real_time <= fade_start_) {
+    if (frame_time <= fade_start_) {
       fade_ = 1;
-    } else if ((real_time - fade_start_) < fade_time_) {
+    } else if ((frame_time - fade_start_) < fade_time_) {
       fade_ = 1.0f
-              - (static_cast<float>(real_time - fade_start_)
+              - (static_cast<float>(frame_time - fade_start_)
                  / static_cast<float>(fade_time_));
       if (fade_ <= 0) {
         fade_ = 0.00001f;
@@ -1060,12 +1081,12 @@ void Graphics::DrawFades(FrameDef* frame_def) {
   // Draw a fade if we're either in a fade or fading back in from a
   // progress-bar screen.
   if (fade_ > 0.00001f || fade_out_
-      || (real_time - progress_bar_end_time_ < kProgressBarFadeTime)) {
+      || (frame_time - progress_bar_end_time_ < kProgressBarFadeTime)) {
     float a = fade_out_ ? 1 - fade_ : fade_;
-    if (real_time - progress_bar_end_time_ < kProgressBarFadeTime) {
+    if (frame_time - progress_bar_end_time_ < kProgressBarFadeTime) {
       a = 1.0f * a
           + (1.0f
-             - static_cast<float>(real_time - progress_bar_end_time_)
+             - static_cast<float>(frame_time - progress_bar_end_time_)
                    / static_cast<float>(kProgressBarFadeTime))
                 * (1.0f - a);
     }
@@ -1073,9 +1094,9 @@ void Graphics::DrawFades(FrameDef* frame_def) {
     DoDrawFade(frame_def, a);
 
     // If we're doing a progress-bar fade, throw in the fading progress bar.
-    if (real_time - progress_bar_end_time_ < kProgressBarFadeTime / 2) {
+    if (frame_time - progress_bar_end_time_ < kProgressBarFadeTime / 2) {
       float o = (1.0f
-                 - static_cast<float>(real_time - progress_bar_end_time_)
+                 - static_cast<float>(frame_time - progress_bar_end_time_)
                        / (static_cast<float>(kProgressBarFadeTime) * 0.5f));
       UpdateProgressBarProgress(1.0f);
       DrawProgressBar(overlay_pass, o);

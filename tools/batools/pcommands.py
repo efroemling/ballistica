@@ -804,7 +804,7 @@ def logcat() -> None:
     # else:
     format_args = '-v color '
     cmd = (
-        f'{adb} logcat {format_args}BallisticaKit:D CrashAnrDetector:V \'*:S\''
+        f'{adb} logcat {format_args}BallisticaKit:V CrashAnrDetector:V \'*:S\''
     )
     print(f'{Clr.BLU}Running logcat command: {Clr.BLD}{cmd}{Clr.RST}')
     subprocess.run(cmd, shell=True, check=True)
