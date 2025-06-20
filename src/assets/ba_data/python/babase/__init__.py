@@ -143,7 +143,7 @@ from babase._devconsole import (
     DevConsoleTabEntry,
     DevConsoleSubsystem,
 )
-from babase._discord import Discord
+from babase._discord import DiscordSubsystem
 from babase._emptyappmode import EmptyAppMode
 from babase._error import (
     ContextError,
@@ -252,7 +252,7 @@ __all__ = [
     'DevConsoleTab',
     'DevConsoleTabEntry',
     'DevConsoleSubsystem',
-    'Discord',
+    'DiscordSubsystem',
     'DisplayTime',
     'displaytime',
     'displaytimer',
