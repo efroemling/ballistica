@@ -199,7 +199,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/__init__.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_accountv1.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_achievement.py \
-  $(BUILD_DIR)/ba_data/python/baclassic/_ads.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_analytics.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_appmode.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_appsubsystem.py \
@@ -219,6 +218,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/osmusic.py \
   $(BUILD_DIR)/ba_data/python/baenv.py \
   $(BUILD_DIR)/ba_data/python/baplus/__init__.py \
+  $(BUILD_DIR)/ba_data/python/baplus/_ads.py \
   $(BUILD_DIR)/ba_data/python/baplus/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baplus/_cloud.py \
   $(BUILD_DIR)/ba_data/python/baplus/_hooks.py \

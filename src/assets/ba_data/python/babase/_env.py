@@ -176,14 +176,10 @@ def on_main_thread_start_app() -> None:
 def _pycache_upkeep() -> None:
     from babase._logging import cachelog
 
-    starttime = time.monotonic()
     try:
         _do_pycache_upkeep()
     except Exception:
         cachelog.exception('Error in pycache upkeep.')
-
-    duration = time.monotonic() - starttime
-    cachelog.info('Pycache upkeep completed in %.3fs.', duration)
 
 
 def _do_pycache_upkeep() -> None:
@@ -202,6 +198,35 @@ def _do_pycache_upkeep() -> None:
     # Skip this all if bytecode writing is disabled.
     if sys.dont_write_bytecode:
         return
+
+    def should_abort() -> bool:
+        appstate = _babase.app.state
+        appstate_t = type(appstate)
+        return (
+            appstate is appstate_t.SHUTTING_DOWN
+            or appstate is appstate_t.SHUTDOWN_COMPLETE
+        )
+
+    # Let's wait until the app has been in the running state for a few
+    # seconds before doing our thing; that way we're out of the way of
+    # more high priority stuff like meta-scans that happen at first
+    # launch.
+    time_in_running_state = 0.0
+    sleep_inc = 0.1
+    while time_in_running_state < 3.0:
+        time.sleep(sleep_inc)
+        appstate = _babase.app.state
+        appstate_t = type(appstate)
+        if appstate is appstate_t.RUNNING:
+            time_in_running_state += sleep_inc
+        if should_abort():
+            cachelog.debug('Aborting pycache update early due to app shutdown.')
+            return
+
+    cachelog.info('Running pycache upkeep...')
+
+    # Measure time from when we actually start working.
+    starttime = time.monotonic()
 
     env = _babase.app.env
 
@@ -238,14 +263,6 @@ def _do_pycache_upkeep() -> None:
             cachelog.debug('(repeat) Error updating pycache dir: %s', msg)
             return
         cachelog.warning('Error updating pycache dir: %s', msg)
-
-    def should_abort() -> bool:
-        appstate = _babase.app.state
-        appstate_t = type(appstate)
-        return (
-            appstate is appstate_t.SHUTTING_DOWN
-            or appstate is appstate_t.SHUTDOWN_COMPLETE
-        )
 
     # Build a dict of dst pyc paths mapped to src py paths and
     # src py modtimes.
@@ -359,6 +376,13 @@ def _do_pycache_upkeep() -> None:
             try:
                 cachelog.debug('pycache-upkeep: precompiling \'%s\'.', srcpath)
                 py_compile.compile(srcpath, doraise=True)
+
+                # Sleep a bit to limit speed to roughly 100/second max.
+                # Hopefully that will reduce any stuttering effects from
+                # this and it should still take only a few seconds on
+                # fast hardware.
+                time.sleep(0.01)
+
             except Exception as exc:
                 # The first time a compile fails, let's pause and see if
                 # it actually wound up updated first. There's a chance
@@ -378,6 +402,9 @@ def _do_pycache_upkeep() -> None:
                     'Aborting pycache update early due to app shutdown.'
                 )
                 return
+
+    duration = time.monotonic() - starttime
+    cachelog.info('Pycache upkeep completed in %.3fs.', duration)
 
 
 def on_app_state_initing() -> None:

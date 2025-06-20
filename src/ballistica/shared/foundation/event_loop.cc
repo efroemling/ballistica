@@ -11,6 +11,7 @@
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/fatal_error.h"
@@ -706,7 +707,7 @@ void EventLoop::PushRunnableSynchronous(Runnable* runnable) {
 
 auto EventLoop::CheckPushSafety() -> bool {
   if (std::this_thread::get_id() == thread_id()) {
-    // behave the same as the thread-message safety check.
+    // Behave the same as the thread-message safety check.
     return (runnables_.size() < kThreadMessageSafetyThreshold);
   } else {
     return CheckPushRunnableSafety_();
@@ -714,7 +715,17 @@ auto EventLoop::CheckPushSafety() -> bool {
 }
 auto EventLoop::CheckPushRunnableSafety_() -> bool {
   std::unique_lock lock(thread_message_mutex_);
-  return thread_messages_.size() < kThreadMessageSafetyThreshold;
+
+  auto have_space{thread_messages_.size() < kThreadMessageSafetyThreshold};
+
+  // If we've hit the safety threshold, log the traceback once so we can
+  // hopefully fix the problem at the call site instead of dropping calls.
+  if (!have_space) {
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE(
+        "CheckPushSafety threshold reached; are you calling something too "
+        "much?");
+  }
+  return have_space;
 }
 
 void EventLoop::AcquireGIL_() {

@@ -15,4 +15,5 @@ fset = FeatureSet.get_active()
 # We're just a library of Python stuff; no C++.
 fset.has_python_binary_module = False
 
+# Stuff we need.
 fset.requirements = {'core', 'base', 'ui_v1', 'classic'}

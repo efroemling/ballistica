@@ -23,6 +23,8 @@ if TYPE_CHECKING:
 # This is purely a convenience; it is possible to use full class paths
 # instead of these or to make the meta system aware of arbitrary classes.
 EXPORT_CLASS_NAME_SHORTCUTS: dict[str, str] = {
+    # DEPRECATED as of 6/2025. Currently am warning if finding these
+    # but should take this out eventually.
     'plugin': 'babase.Plugin',
     # DEPRECATED as of 12/2023. Currently am warning if finding these
     # but should take this out eventually.
@@ -41,12 +43,6 @@ class ScanResults:
     def exports_by_name(self, name: str) -> list[str]:
         """Return exports matching a given name."""
         return self.exports.get(name, [])
-
-    # def exports_of_class(self, cls: type) -> list[str]:
-    #     """Return exports of a given class."""
-
-    #     print('RETURNING', cls)
-    #     return self.exports.get(f'{cls.__module__}.{cls.__qualname__}', [])
 
 
 class MetadataSubsystem:
@@ -435,8 +431,20 @@ class DirectoryScan:
                 if export_class_name is not None:
                     classname = modulename + '.' + export_class_name
 
-                    # Migrating away from the 'keyboard' name shortcut
-                    # since it's specific to bauiv1; warn if we find it.
+                    # Migrating away from the 'plugin' name shortcut;
+                    # warn if we find it.
+                    if exporttypestr == 'plugin':
+                        logging.warning(
+                            "metascan: %s:%d: '# ba_meta export"
+                            " plugin' tag should be replaced by '# ba_meta"
+                            " export babase.Plugin'.",
+                            subpath,
+                            lindex + 1,
+                        )
+                        self.results.announce_errors_occurred = True
+
+                    # Migrating away from the 'keyboard' name shortcut;
+                    # warn if we find it.
                     if exporttypestr == 'keyboard':
                         logging.warning(
                             "metascan: %s:%d: '# ba_meta export"

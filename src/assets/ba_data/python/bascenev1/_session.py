@@ -755,10 +755,14 @@ class Session:
         # hitches.
         babase.app.gc.collect()
 
-        assert babase.app.classic is not None
+        classic = babase.app.classic
+        plus = babase.app.plus
+        assert classic is not None
+        assert plus is not None
+
         with self.context:
-            if can_show_ad_on_death:
-                babase.app.classic.ads.call_after_ad(self.begin_next_activity)
+            if can_show_ad_on_death and classic.can_show_interstitial():
+                plus.ads.call_after_ad(self.begin_next_activity)
             else:
                 babase.pushcall(self.begin_next_activity)
 

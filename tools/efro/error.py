@@ -186,7 +186,10 @@ def is_urllib3_communication_error(exc: BaseException, url: str | None) -> bool:
         # may be due to server misconfigurations or whatnot so let's
         # take it on a case by case basis.
         excstr = str(exc)
-        if 'Connection aborted.' in excstr:
+        if (
+            'Connection aborted.' in excstr
+            or 'Software caused connection abort' in excstr
+        ):
             return True
 
     return False
