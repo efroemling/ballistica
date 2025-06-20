@@ -12,6 +12,7 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we're defining here.
 fset = FeatureSet.get_active()
 
+# Stuff we need.
 fset.requirements = {
     'core',
     'base',
@@ -21,10 +22,10 @@ fset.requirements = {
     'ui_v1_lib',
 }
 
-# We can make use of plus stuff but can live without it.
+# Stuff we use but don't *need* (and only access via app-subsystems).
 fset.soft_requirements = {'plus'}
 
-# We provide 'babase.app.classic'.
+# We provide 'ba*.app.classic'.
 fset.has_python_app_subsystem = True
 
 # If 'plus' is present, our subsystem should be inited *after* it

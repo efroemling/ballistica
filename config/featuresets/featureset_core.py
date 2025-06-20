@@ -12,8 +12,12 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we're defining here.
 fset = FeatureSet.get_active()
 
+# Stuff we need.
 fset.requirements = set()
 
+# We're a special case in that there is no 'bacore' module in Python;
+# all of our functionality is exposed to Python through the 'babase'
+# feature-set.
 fset.has_python_binary_module = False
 
 # Bits of code we're using that don't conform to our feature-set based

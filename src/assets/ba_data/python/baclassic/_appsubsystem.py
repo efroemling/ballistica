@@ -1,5 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
+
 """Provides classic app subsystem."""
 from __future__ import annotations
 
@@ -16,7 +18,6 @@ import bascenev1
 import _baclassic
 from baclassic._music import MusicSubsystem
 from baclassic._accountv1 import AccountV1Subsystem
-from baclassic._ads import AdsSubsystem
 from baclassic._net import MasterServerResponseType, MasterServerV1CallThread
 from baclassic._achievement import AchievementSubsystem
 from baclassic._tips import get_all_tips
@@ -52,7 +53,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self._env = babase.env()
 
         self.accounts = AccountV1Subsystem()
-        self.ads = AdsSubsystem()
         self.ach = AchievementSubsystem()
         self.store = StoreSubsystem()
         self.music = MusicSubsystem()
@@ -134,6 +134,31 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 call()
         else:
             self.main_menu_resume_callbacks.append(call)
+
+    def can_show_interstitial(self) -> bool:
+        """Is this an appropriate time for an interstitial ad?"""
+
+        # Pro or other upgrades disable interstitials.
+        if self.accounts.have_pro() or self.gold_pass or self.remove_ads:
+            return False
+
+        # Don't show ads during tournaments.
+        #
+        # UPDATE: Actually gonna leave this on. Previously it made no
+        # sense because ads were used to *enter* tournaments, but now
+        # that they are free it seems like we shouldn't give tourney
+        # play an advantage over other co-op play.
+        if bool(False):
+            try:
+                session = bascenev1.get_foreground_host_session()
+                assert session is not None
+                is_tournament = session.tournament_id is not None
+            except Exception:
+                is_tournament = False
+            if is_tournament:
+                return False
+
+        return True
 
     @property
     def platform(self) -> str:
