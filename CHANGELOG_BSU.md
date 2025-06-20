@@ -2,3 +2,4 @@
 - Intial Setup for the project
 - Added basic file structure
 - Removed gui builds from releases workflow
+- Basic command system

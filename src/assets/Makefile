@@ -443,6 +443,11 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/url.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/v2upgrade.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/watch.py \
+  $(BUILD_DIR)/ba_data/python/bautils/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chatutils/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chatutils/chat_handle.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chatutils/server_command.py \
   $(BUILD_DIR)/server_package/ballisticakit_server.py
 
 SCRIPT_TARGETS_SO_PUBLIC = \
