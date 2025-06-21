@@ -355,6 +355,26 @@ def generate_sphinx_docs() -> None:
         check=True,
     )
 
+    _printstatus('Generating dummymodules...')
+    subprocess.run(
+        sphinx_apidoc_cmd
+        + [
+            '--doc-project',
+            'Dummy Modules',
+            '--tocfile',
+            'dummymodules',
+            module_first_arg,
+            '--maxdepth',
+            module_list_max_depth,
+            '-f',
+            '-P',
+            str(dummy_modules_filtered_dir),
+        ]
+        + excludes_common,
+        env=environ,
+        check=True,
+    )
+
     # raise RuntimeError('SO FAR SO GOOD')
 
     _printstatus('Running sphinx-build...')
