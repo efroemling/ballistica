@@ -173,7 +173,6 @@ class CoreFeatureSet {
   // The following are misc values that should be migrated to applicable
   // component classes or private vars.
   bool workspaces_in_use{};
-  bool have_incentivized_ad{false};
   bool reset_vr_orientation{};
   bool user_ran_commands{};
   int master_server_source{};

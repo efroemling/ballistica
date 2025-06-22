@@ -10,7 +10,6 @@
 # pylint: disable=missing-function-docstring, missing-class-docstring
 # pylint: disable=too-many-locals
 # pylint: disable=unused-argument
-# pylint: disable=unused-variable
 
 from __future__ import annotations
 
@@ -182,6 +181,424 @@ class Team(bs.Team[Player]):
 
     def __init__(self) -> None:
         pass
+
+
+class Reset:
+    def __init__(self) -> None:
+        pass
+
+    def run(self, a: TutorialActivity) -> None:
+        # if we're looping, print out how long each cycle took
+        # print out how long each cycle took..
+        if a.last_start_time is not None:
+            tval = int(bs.apptime() * 1000.0) - a.last_start_time
+            assert isinstance(tval, int)
+            diff = tval
+            a.cycle_times.append(diff)
+            bs.broadcastmessage(
+                'cycle time: '
+                + str(diff)
+                + ' (average: '
+                + str(sum(a.cycle_times) / len(a.cycle_times))
+                + ')'
+            )
+        tval = int(bs.apptime() * 1000.0)
+        assert isinstance(tval, int)
+        a.last_start_time = tval
+
+        assert a.text
+        a.text.text = ''
+        for spaz in list(a.spazzes.values()):
+            spaz.handlemessage(bs.DieMessage(immediate=True))
+        a.spazzes = {}
+        a.current_spaz = None
+        for n in a.control_ui_nodes:
+            n.opacity = 0.0
+        a.set_stick_image_position(0, 0)
+
+
+# Can be used for debugging.
+class SetSpeed:
+    def __init__(self, speed: int):
+        self._speed = speed
+
+    def run(self, a: TutorialActivity) -> None:
+        print('setting to', self._speed)
+        bs.set_debug_speed_exponent(self._speed)
+
+
+class RemoveGloves:
+    def __init__(self) -> None:
+        pass
+
+    def run(self, a: TutorialActivity) -> None:
+        # pylint: disable=protected-access
+        assert a.current_spaz is not None
+        # noinspection PyProtectedMember
+        a.current_spaz._gloves_wear_off()
+
+
+class KillSpaz:
+    def __init__(self, num: int, explode: bool = False):
+        self._num = num
+        self._explode = explode
+
+    def run(self, a: TutorialActivity) -> None:
+        if self._explode:
+            a.spazzes[self._num].shatter()
+        del a.spazzes[self._num]
+
+
+class SpawnSpaz:
+    def __init__(
+        self,
+        num: int,
+        position: Sequence[float],
+        *,
+        color: Sequence[float] = (1.0, 1.0, 1.0),
+        make_current: bool = False,
+        relative_to: int | None = None,
+        name: str | bs.Lstr = '',
+        flash: bool = True,
+        angle: float = 0.0,
+    ):
+        self._num = num
+        self._position = position
+        self._make_current = make_current
+        self._color = color
+        self._relative_to = relative_to
+        self._name = name
+        self._flash = flash
+        self._angle = angle
+
+    def run(self, a: TutorialActivity) -> None:
+        # if they gave a 'relative to' spaz, position is relative
+        # to them
+        pos: Sequence[float]
+        if self._relative_to is not None:
+            snode = a.spazzes[self._relative_to].node
+            assert snode
+            their_pos = snode.position
+            pos = (
+                their_pos[0] + self._position[0],
+                their_pos[1] + self._position[1],
+                their_pos[2] + self._position[2],
+            )
+        else:
+            pos = self._position
+
+        # if there's already a spaz at this spot, insta-kill it
+        if self._num in a.spazzes:
+            a.spazzes[self._num].handlemessage(bs.DieMessage(immediate=True))
+
+        s = a.spazzes[self._num] = Spaz(
+            color=self._color,
+            start_invincible=self._flash,
+            demo_mode=True,
+        )
+
+        # FIXME: Should extend spaz to support Lstr names.
+        assert s.node
+        if isinstance(self._name, bs.Lstr):
+            s.node.name = self._name.evaluate()
+        else:
+            s.node.name = self._name
+        s.node.name_color = self._color
+        s.handlemessage(bs.StandMessage(pos, self._angle))
+        if self._make_current:
+            a.current_spaz = s
+        if self._flash:
+            a.spawn_sound.play(position=pos)
+
+
+class Powerup:
+    def __init__(
+        self,
+        num: int,
+        position: Sequence[float],
+        *,
+        color: Sequence[float] = (1.0, 1.0, 1.0),
+        make_current: bool = False,
+        relative_to: int | None = None,
+    ):
+        self._position = position
+        self._relative_to = relative_to
+
+    def run(self, a: TutorialActivity) -> None:
+        # If they gave a 'relative to' spaz, position is relative
+        # to them.
+        pos: Sequence[float]
+        if self._relative_to is not None:
+            snode = a.spazzes[self._relative_to].node
+            assert snode
+            their_pos = snode.position
+            pos = (
+                their_pos[0] + self._position[0],
+                their_pos[1] + self._position[1],
+                their_pos[2] + self._position[2],
+            )
+        else:
+            pos = self._position
+        from bascenev1lib.actor import powerupbox
+
+        powerupbox.PowerupBox(position=pos, poweruptype='punch').autoretain()
+
+
+class Delay:
+    def __init__(self, time: int) -> None:
+        self._time = time
+
+    def run(self, a: TutorialActivity) -> int:
+        return self._time
+
+
+class AnalyticsScreen:
+    def __init__(self, screen: str) -> None:
+        self._screen = screen
+
+    def run(self, a: TutorialActivity) -> None:
+        bs.set_analytics_screen(self._screen)
+
+
+class DelayOld:
+    def __init__(self, time: int) -> None:
+        self._time = time
+
+    def run(self, a: TutorialActivity) -> int:
+        return int(0.9 * self._time)
+
+
+class DelayOld2:
+    def __init__(self, time: int) -> None:
+        self._time = time
+
+    def run(self, a: TutorialActivity) -> int:
+        return int(0.8 * self._time)
+
+
+class End:
+    def __init__(self) -> None:
+        pass
+
+    def run(self, a: TutorialActivity) -> None:
+        bs.increment_analytics_count('Tutorial finish')
+        a.end()
+
+
+class Move:
+    def __init__(self, x: float, y: float):
+        self._x = float(x)
+        self._y = float(y)
+
+    def run(self, a: TutorialActivity) -> None:
+        s = a.current_spaz
+        assert s
+        # FIXME: Game should take floats for this.
+        x_clamped = self._x
+        y_clamped = self._y
+        s.on_move_left_right(x_clamped)
+        s.on_move_up_down(y_clamped)
+        a.set_stick_image_position(self._x, self._y)
+
+
+class MoveLR:
+    def __init__(self, x: float):
+        self._x = float(x)
+
+    def run(self, a: TutorialActivity) -> None:
+        s = a.current_spaz
+        assert s
+        # FIXME: Game should take floats for this.
+        x_clamped = self._x
+        s.on_move_left_right(x_clamped)
+        a.set_stick_image_position(self._x, a.stick_image_position_y)
+
+
+class MoveUD:
+    def __init__(self, y: float):
+        self._y = float(y)
+
+    def run(self, a: TutorialActivity) -> None:
+        s = a.current_spaz
+        assert s
+        # FIXME: Game should take floats for this.
+        y_clamped = self._y
+        s.on_move_up_down(y_clamped)
+        a.set_stick_image_position(a.stick_image_position_x, self._y)
+
+
+class Bomb(ButtonPress):
+    def __init__(
+        self,
+        delay: int = 0,
+        release: bool = True,
+        release_delay: int = 500,
+    ):
+        ButtonPress.__init__(
+            self,
+            'bomb',
+            delay=delay,
+            release=release,
+            release_delay=release_delay,
+        )
+
+
+class Jump(ButtonPress):
+    def __init__(
+        self,
+        delay: int = 0,
+        release: bool = True,
+        release_delay: int = 500,
+    ):
+        ButtonPress.__init__(
+            self,
+            'jump',
+            delay=delay,
+            release=release,
+            release_delay=release_delay,
+        )
+
+
+class Punch(ButtonPress):
+    def __init__(
+        self,
+        delay: int = 0,
+        release: bool = True,
+        release_delay: int = 500,
+    ):
+        ButtonPress.__init__(
+            self,
+            'punch',
+            delay=delay,
+            release=release,
+            release_delay=release_delay,
+        )
+
+
+class PickUp(ButtonPress):
+    def __init__(
+        self,
+        delay: int = 0,
+        release: bool = True,
+        release_delay: int = 500,
+    ):
+        ButtonPress.__init__(
+            self,
+            'pickUp',
+            delay=delay,
+            release=release,
+            release_delay=release_delay,
+        )
+
+
+class Run(ButtonPress):
+    def __init__(
+        self,
+        delay: int = 0,
+        release: bool = True,
+        release_delay: int = 500,
+    ):
+        ButtonPress.__init__(
+            self,
+            'run',
+            delay=delay,
+            release=release,
+            release_delay=release_delay,
+        )
+
+
+class BombRelease(ButtonRelease):
+    def __init__(self, delay: int = 0):
+        super().__init__('bomb', delay=delay)
+
+
+class JumpRelease(ButtonRelease):
+    def __init__(self, delay: int = 0):
+        super().__init__('jump', delay=delay)
+
+
+class PunchRelease(ButtonRelease):
+    def __init__(self, delay: int = 0):
+        super().__init__('punch', delay=delay)
+
+
+class PickUpRelease(ButtonRelease):
+    def __init__(self, delay: int = 0):
+        super().__init__('pickUp', delay=delay)
+
+
+class RunRelease(ButtonRelease):
+    def __init__(self, delay: int = 0):
+        super().__init__('run', delay=delay)
+
+
+class ShowControls:
+    def __init__(self) -> None:
+        pass
+
+    def run(self, a: TutorialActivity) -> None:
+        for n in a.control_ui_nodes:
+            bs.animate(n, 'opacity', {0.0: 0.0, 1.0: 1.0})
+
+
+class Text:
+    def __init__(self, text: str | bs.Lstr):
+        self.text = text
+
+    def run(self, a: TutorialActivity) -> None:
+        assert a.text
+        a.text.text = self.text
+
+
+class PrintPos:
+    def __init__(self, spaz_num: int | None = None):
+        self._spaz_num = spaz_num
+
+    def run(self, a: TutorialActivity) -> None:
+        if self._spaz_num is None:
+            s = a.current_spaz
+        else:
+            s = a.spazzes[self._spaz_num]
+        assert s and s.node
+        t = list(s.node.position)
+        print('RestorePos(' + str((t[0], t[1] - 1.0, t[2])) + '),')
+
+
+class RestorePos:
+    def __init__(self, pos: Sequence[float]) -> None:
+        self._pos = pos
+
+    def run(self, a: TutorialActivity) -> None:
+        s = a.current_spaz
+        assert s
+        s.handlemessage(bs.StandMessage(self._pos, 0))
+
+
+class Celebrate:
+    def __init__(
+        self,
+        celebrate_type: str = 'both',
+        spaz_num: int | None = None,
+        duration: int = 1000,
+    ):
+        self._spaz_num = spaz_num
+        self._celebrate_type = celebrate_type
+        self._duration = duration
+
+    def run(self, a: TutorialActivity) -> None:
+        if self._spaz_num is None:
+            s = a.current_spaz
+        else:
+            s = a.spazzes[self._spaz_num]
+        assert s and s.node
+        if self._celebrate_type == 'right':
+            s.node.handlemessage('celebrate_r', self._duration)
+        elif self._celebrate_type == 'left':
+            s.node.handlemessage('celebrate_l', self._duration)
+        elif self._celebrate_type == 'both':
+            s.node.handlemessage('celebrate', self._duration)
+        else:
+            raise RuntimeError('invalid celebrate type ' + self._celebrate_type)
 
 
 class TutorialActivity(bs.Activity[Player, Team]):
@@ -447,405 +864,6 @@ class TutorialActivity(bs.Activity[Player, Team]):
 
     def _read_entries(self) -> None:
         try:
-
-            class Reset:
-                def __init__(self) -> None:
-                    pass
-
-                def run(self, a: TutorialActivity) -> None:
-                    # if we're looping, print out how long each cycle took
-                    # print out how long each cycle took..
-                    if a.last_start_time is not None:
-                        tval = int(bs.apptime() * 1000.0) - a.last_start_time
-                        assert isinstance(tval, int)
-                        diff = tval
-                        a.cycle_times.append(diff)
-                        bs.broadcastmessage(
-                            'cycle time: '
-                            + str(diff)
-                            + ' (average: '
-                            + str(sum(a.cycle_times) / len(a.cycle_times))
-                            + ')'
-                        )
-                    tval = int(bs.apptime() * 1000.0)
-                    assert isinstance(tval, int)
-                    a.last_start_time = tval
-
-                    assert a.text
-                    a.text.text = ''
-                    for spaz in list(a.spazzes.values()):
-                        spaz.handlemessage(bs.DieMessage(immediate=True))
-                    a.spazzes = {}
-                    a.current_spaz = None
-                    for n in a.control_ui_nodes:
-                        n.opacity = 0.0
-                    a.set_stick_image_position(0, 0)
-
-            # Can be used for debugging.
-            class SetSpeed:
-                def __init__(self, speed: int):
-                    self._speed = speed
-
-                def run(self, a: TutorialActivity) -> None:
-                    print('setting to', self._speed)
-                    bs.set_debug_speed_exponent(self._speed)
-
-            class RemoveGloves:
-                def __init__(self) -> None:
-                    pass
-
-                def run(self, a: TutorialActivity) -> None:
-                    # pylint: disable=protected-access
-                    assert a.current_spaz is not None
-                    # noinspection PyProtectedMember
-                    a.current_spaz._gloves_wear_off()
-
-            class KillSpaz:
-                def __init__(self, num: int, explode: bool = False):
-                    self._num = num
-                    self._explode = explode
-
-                def run(self, a: TutorialActivity) -> None:
-                    if self._explode:
-                        a.spazzes[self._num].shatter()
-                    del a.spazzes[self._num]
-
-            class SpawnSpaz:
-                def __init__(
-                    self,
-                    num: int,
-                    position: Sequence[float],
-                    *,
-                    color: Sequence[float] = (1.0, 1.0, 1.0),
-                    make_current: bool = False,
-                    relative_to: int | None = None,
-                    name: str | bs.Lstr = '',
-                    flash: bool = True,
-                    angle: float = 0.0,
-                ):
-                    self._num = num
-                    self._position = position
-                    self._make_current = make_current
-                    self._color = color
-                    self._relative_to = relative_to
-                    self._name = name
-                    self._flash = flash
-                    self._angle = angle
-
-                def run(self, a: TutorialActivity) -> None:
-                    # if they gave a 'relative to' spaz, position is relative
-                    # to them
-                    pos: Sequence[float]
-                    if self._relative_to is not None:
-                        snode = a.spazzes[self._relative_to].node
-                        assert snode
-                        their_pos = snode.position
-                        pos = (
-                            their_pos[0] + self._position[0],
-                            their_pos[1] + self._position[1],
-                            their_pos[2] + self._position[2],
-                        )
-                    else:
-                        pos = self._position
-
-                    # if there's already a spaz at this spot, insta-kill it
-                    if self._num in a.spazzes:
-                        a.spazzes[self._num].handlemessage(
-                            bs.DieMessage(immediate=True)
-                        )
-
-                    s = a.spazzes[self._num] = Spaz(
-                        color=self._color,
-                        start_invincible=self._flash,
-                        demo_mode=True,
-                    )
-
-                    # FIXME: Should extend spaz to support Lstr names.
-                    assert s.node
-                    if isinstance(self._name, bs.Lstr):
-                        s.node.name = self._name.evaluate()
-                    else:
-                        s.node.name = self._name
-                    s.node.name_color = self._color
-                    s.handlemessage(bs.StandMessage(pos, self._angle))
-                    if self._make_current:
-                        a.current_spaz = s
-                    if self._flash:
-                        a.spawn_sound.play(position=pos)
-
-            class Powerup:
-                def __init__(
-                    self,
-                    num: int,
-                    position: Sequence[float],
-                    *,
-                    color: Sequence[float] = (1.0, 1.0, 1.0),
-                    make_current: bool = False,
-                    relative_to: int | None = None,
-                ):
-                    self._position = position
-                    self._relative_to = relative_to
-
-                def run(self, a: TutorialActivity) -> None:
-                    # If they gave a 'relative to' spaz, position is relative
-                    # to them.
-                    pos: Sequence[float]
-                    if self._relative_to is not None:
-                        snode = a.spazzes[self._relative_to].node
-                        assert snode
-                        their_pos = snode.position
-                        pos = (
-                            their_pos[0] + self._position[0],
-                            their_pos[1] + self._position[1],
-                            their_pos[2] + self._position[2],
-                        )
-                    else:
-                        pos = self._position
-                    from bascenev1lib.actor import powerupbox
-
-                    powerupbox.PowerupBox(
-                        position=pos, poweruptype='punch'
-                    ).autoretain()
-
-            class Delay:
-                def __init__(self, time: int) -> None:
-                    self._time = time
-
-                def run(self, a: TutorialActivity) -> int:
-                    return self._time
-
-            class AnalyticsScreen:
-                def __init__(self, screen: str) -> None:
-                    self._screen = screen
-
-                def run(self, a: TutorialActivity) -> None:
-                    bs.set_analytics_screen(self._screen)
-
-            class DelayOld:
-                def __init__(self, time: int) -> None:
-                    self._time = time
-
-                def run(self, a: TutorialActivity) -> int:
-                    return int(0.9 * self._time)
-
-            class DelayOld2:
-                def __init__(self, time: int) -> None:
-                    self._time = time
-
-                def run(self, a: TutorialActivity) -> int:
-                    return int(0.8 * self._time)
-
-            class End:
-                def __init__(self) -> None:
-                    pass
-
-                def run(self, a: TutorialActivity) -> None:
-                    bs.increment_analytics_count('Tutorial finish')
-                    a.end()
-
-            class Move:
-                def __init__(self, x: float, y: float):
-                    self._x = float(x)
-                    self._y = float(y)
-
-                def run(self, a: TutorialActivity) -> None:
-                    s = a.current_spaz
-                    assert s
-                    # FIXME: Game should take floats for this.
-                    x_clamped = self._x
-                    y_clamped = self._y
-                    s.on_move_left_right(x_clamped)
-                    s.on_move_up_down(y_clamped)
-                    a.set_stick_image_position(self._x, self._y)
-
-            class MoveLR:
-                def __init__(self, x: float):
-                    self._x = float(x)
-
-                def run(self, a: TutorialActivity) -> None:
-                    s = a.current_spaz
-                    assert s
-                    # FIXME: Game should take floats for this.
-                    x_clamped = self._x
-                    s.on_move_left_right(x_clamped)
-                    a.set_stick_image_position(
-                        self._x, a.stick_image_position_y
-                    )
-
-            class MoveUD:
-                def __init__(self, y: float):
-                    self._y = float(y)
-
-                def run(self, a: TutorialActivity) -> None:
-                    s = a.current_spaz
-                    assert s
-                    # FIXME: Game should take floats for this.
-                    y_clamped = self._y
-                    s.on_move_up_down(y_clamped)
-                    a.set_stick_image_position(
-                        a.stick_image_position_x, self._y
-                    )
-
-            class Bomb(ButtonPress):
-                def __init__(
-                    self,
-                    delay: int = 0,
-                    release: bool = True,
-                    release_delay: int = 500,
-                ):
-                    ButtonPress.__init__(
-                        self,
-                        'bomb',
-                        delay=delay,
-                        release=release,
-                        release_delay=release_delay,
-                    )
-
-            class Jump(ButtonPress):
-                def __init__(
-                    self,
-                    delay: int = 0,
-                    release: bool = True,
-                    release_delay: int = 500,
-                ):
-                    ButtonPress.__init__(
-                        self,
-                        'jump',
-                        delay=delay,
-                        release=release,
-                        release_delay=release_delay,
-                    )
-
-            class Punch(ButtonPress):
-                def __init__(
-                    self,
-                    delay: int = 0,
-                    release: bool = True,
-                    release_delay: int = 500,
-                ):
-                    ButtonPress.__init__(
-                        self,
-                        'punch',
-                        delay=delay,
-                        release=release,
-                        release_delay=release_delay,
-                    )
-
-            class PickUp(ButtonPress):
-                def __init__(
-                    self,
-                    delay: int = 0,
-                    release: bool = True,
-                    release_delay: int = 500,
-                ):
-                    ButtonPress.__init__(
-                        self,
-                        'pickUp',
-                        delay=delay,
-                        release=release,
-                        release_delay=release_delay,
-                    )
-
-            class Run(ButtonPress):
-                def __init__(
-                    self,
-                    delay: int = 0,
-                    release: bool = True,
-                    release_delay: int = 500,
-                ):
-                    ButtonPress.__init__(
-                        self,
-                        'run',
-                        delay=delay,
-                        release=release,
-                        release_delay=release_delay,
-                    )
-
-            class BombRelease(ButtonRelease):
-                def __init__(self, delay: int = 0):
-                    super().__init__('bomb', delay=delay)
-
-            class JumpRelease(ButtonRelease):
-                def __init__(self, delay: int = 0):
-                    super().__init__('jump', delay=delay)
-
-            class PunchRelease(ButtonRelease):
-                def __init__(self, delay: int = 0):
-                    super().__init__('punch', delay=delay)
-
-            class PickUpRelease(ButtonRelease):
-                def __init__(self, delay: int = 0):
-                    super().__init__('pickUp', delay=delay)
-
-            class RunRelease(ButtonRelease):
-                def __init__(self, delay: int = 0):
-                    super().__init__('run', delay=delay)
-
-            class ShowControls:
-                def __init__(self) -> None:
-                    pass
-
-                def run(self, a: TutorialActivity) -> None:
-                    for n in a.control_ui_nodes:
-                        bs.animate(n, 'opacity', {0.0: 0.0, 1.0: 1.0})
-
-            class Text:
-                def __init__(self, text: str | bs.Lstr):
-                    self.text = text
-
-                def run(self, a: TutorialActivity) -> None:
-                    assert a.text
-                    a.text.text = self.text
-
-            class PrintPos:
-                def __init__(self, spaz_num: int | None = None):
-                    self._spaz_num = spaz_num
-
-                def run(self, a: TutorialActivity) -> None:
-                    if self._spaz_num is None:
-                        s = a.current_spaz
-                    else:
-                        s = a.spazzes[self._spaz_num]
-                    assert s and s.node
-                    t = list(s.node.position)
-                    print('RestorePos(' + str((t[0], t[1] - 1.0, t[2])) + '),')
-
-            class RestorePos:
-                def __init__(self, pos: Sequence[float]) -> None:
-                    self._pos = pos
-
-                def run(self, a: TutorialActivity) -> None:
-                    s = a.current_spaz
-                    assert s
-                    s.handlemessage(bs.StandMessage(self._pos, 0))
-
-            class Celebrate:
-                def __init__(
-                    self,
-                    celebrate_type: str = 'both',
-                    spaz_num: int | None = None,
-                    duration: int = 1000,
-                ):
-                    self._spaz_num = spaz_num
-                    self._celebrate_type = celebrate_type
-                    self._duration = duration
-
-                def run(self, a: TutorialActivity) -> None:
-                    if self._spaz_num is None:
-                        s = a.current_spaz
-                    else:
-                        s = a.spazzes[self._spaz_num]
-                    assert s and s.node
-                    if self._celebrate_type == 'right':
-                        s.node.handlemessage('celebrate_r', self._duration)
-                    elif self._celebrate_type == 'left':
-                        s.node.handlemessage('celebrate_l', self._duration)
-                    elif self._celebrate_type == 'both':
-                        s.node.handlemessage('celebrate', self._duration)
-                    else:
-                        raise RuntimeError(
-                            'invalid celebrate type ' + self._celebrate_type
-                        )
 
             self._entries = deque(
                 [

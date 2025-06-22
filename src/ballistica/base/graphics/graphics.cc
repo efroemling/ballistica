@@ -767,6 +767,8 @@ void Graphics::BuildAndPushFrameDef() {
   assert(camera_.exists());
   assert(!g_core->HeadlessMode());
 
+  // g_core->logging->Log(LogName::kBa, LogLevel::kWarning, "DRAWING");
+
   // Keep track of when we're in here; can be useful for making sure stuff
   // doesn't muck with our lists/etc. while we're using them.
   assert(!building_frame_def_);
@@ -1039,6 +1041,9 @@ void Graphics::DrawFades(FrameDef* frame_def) {
     if (!g_base->app_active()) {
       fade_cancel_start_ = frame_time;
     }
+
+    // g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+    //                      "DOING FADE " + std::to_string(cancel_time));
 
     if (cancel_time > 15000) {
       g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,

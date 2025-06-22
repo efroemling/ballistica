@@ -11,13 +11,12 @@ designed in a more modular way.
 
 # ba_meta require api 9
 
-# Note: Code relying on classic should import things from here *only*
-# for type-checking and use the versions in ba*.app.classic at runtime;
-# that way type-checking will cleanly cover the classic-not-present case
-# (ba*.app.classic being None).
-import logging
+# Note: Stuff in this module mostly exists for type-checking and docs
+# generation and should generally not be imported or used at runtime.
+# Generally all interaction with this feature-set should go through
+# `ba*.app.classic`.
 
-# from efro.util import set_canonical_module_names
+import logging
 
 from baclassic._appmode import ClassicAppMode
 from baclassic._appsubsystem import ClassicAppSubsystem

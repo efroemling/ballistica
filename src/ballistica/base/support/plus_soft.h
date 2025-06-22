@@ -63,6 +63,8 @@ class PlusSoftInterface {
       -> std::string = 0;
   virtual void V1SetClientInfo(JsonDict* dict) = 0;
   virtual void DoPushSubmitAnalyticsCountsCall(const std::string& sval) = 0;
+  virtual void SetHaveIncentivizedAd(bool val) = 0;
+  virtual auto HaveIncentivizedAd() -> bool = 0;
 };
 
 }  // namespace ballistica::base

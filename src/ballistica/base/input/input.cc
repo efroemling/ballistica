@@ -1435,7 +1435,10 @@ void Input::HandleMouseCancel_(int button, const Vector2f& position) {
 
 void Input::PushTouchEvent(const TouchEvent& e) {
   assert(g_base->logic->event_loop());
-  g_base->logic->event_loop()->PushCall([e, this] { HandleTouchEvent_(e); });
+  auto* loop{g_base->logic->event_loop()};
+  if (loop->CheckPushSafety()) {
+    loop->PushCall([e, this] { HandleTouchEvent_(e); });
+  }
 }
 
 void Input::HandleTouchEvent_(const TouchEvent& e) {

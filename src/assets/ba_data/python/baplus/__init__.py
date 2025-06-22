@@ -9,17 +9,21 @@ want to compile the rest of the engine, or a fully open-source app can
 also be built by removing this feature-set.
 """
 
-from __future__ import annotations
+# ba_meta require api 9
 
-# Note: there's not much here. Most interaction with this feature-set
-# should go through ba*.app.plus.
+# Note: Stuff in this module mostly exists for type-checking and docs
+# generation and should generally not be imported or used at runtime.
+# Generally all interaction with this feature-set should go through
+# `ba*.app.plus`.
 
 import logging
 
 from baplus._cloud import CloudSubsystem
 from baplus._appsubsystem import PlusAppSubsystem
+from baplus._ads import AdsSubsystem
 
 __all__ = [
+    'AdsSubsystem',
     'CloudSubsystem',
     'PlusAppSubsystem',
 ]

@@ -251,9 +251,9 @@ def unavailable_message() -> None:
 
 
 def set_last_ad_network(sval: str) -> None:
-    if _babase.app.classic is not None:
-        _babase.app.classic.ads.last_ad_network = sval
-        _babase.app.classic.ads.last_ad_network_set_time = time.time()
+    if _babase.app.plus is not None:
+        _babase.app.plus.ads.last_ad_network = sval
+        _babase.app.plus.ads.last_ad_network_set_time = time.time()
 
 
 def google_play_purchases_not_available_message() -> None:
@@ -305,8 +305,8 @@ def ui_remote_press() -> None:
 
 
 def remove_in_game_ads_message() -> None:
-    if _babase.app.classic is not None:
-        _babase.app.classic.ads.do_remove_in_game_ads_message()
+    if _babase.app.plus is not None:
+        _babase.app.plus.ads.do_remove_in_game_ads_message()
 
 
 def do_quit() -> None:

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, override
 from babase import AppSubsystem
 
 import _baplus
+from baplus._ads import AdsSubsystem
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -29,12 +30,13 @@ class PlusAppSubsystem(AppSubsystem):
 
     # pylint: disable=too-many-public-methods
 
-    # Note: this is basically just a wrapper around _baplus for
-    # type-checking purposes. Maybe there's some smart way we could skip
-    # the overhead of this wrapper at runtime.
-
     accounts: AccountV2Subsystem
     cloud: CloudSubsystem
+
+    def __init__(self) -> None:
+
+        #: Ad wrangling functionality.
+        self.ads: AdsSubsystem = AdsSubsystem()
 
     @override
     def on_app_loading(self) -> None:

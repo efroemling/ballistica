@@ -9,7 +9,6 @@ import logging
 from typing import TYPE_CHECKING
 
 import babase
-import bascenev1
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -18,7 +17,9 @@ if TYPE_CHECKING:
 class AdsSubsystem:
     """Subsystem for ads functionality in the app.
 
-    Access the single shared instance of this class at 'ba.app.ads'.
+    Access the single shared instance of this class via the
+    :attr:`~baplus.PlusAppSubsystem.ads` attr on the
+    :class:`~baplus.PlusAppSubsystem` class.
     """
 
     def __init__(self) -> None:
@@ -81,6 +82,7 @@ class AdsSubsystem:
         classic = app.classic
         assert plus is not None
         assert classic is not None
+
         show = True
 
         # No ads without net-connections, etc.
@@ -88,20 +90,20 @@ class AdsSubsystem:
             show = False
 
         # Pro or other upgrades disable interstitials.
-        if (
-            classic.accounts.have_pro()
-            or classic.gold_pass
-            or classic.remove_ads
-        ):
-            show = False
-        try:
-            session = bascenev1.get_foreground_host_session()
-            assert session is not None
-            is_tournament = session.tournament_id is not None
-        except Exception:
-            is_tournament = False
-        if is_tournament:
-            show = False  # Never show ads during tournaments.
+        # if (
+        #     classic.accounts.have_pro()
+        #     or classic.gold_pass
+        #     or classic.remove_ads
+        # ):
+        #     show = False
+        # try:
+        #     session = bascenev1.get_foreground_host_session()
+        #     assert session is not None
+        #     is_tournament = session.tournament_id is not None
+        # except Exception:
+        #     is_tournament = False
+        # if is_tournament:
+        #     show = False  # Never show ads during tournaments.
 
         if show:
             interval: float | None
@@ -175,7 +177,7 @@ class AdsSubsystem:
             else:
                 show = False
 
-        # If we're *still* cleared to show, actually tell the system to show.
+        # If we're *still* cleared to show, tell the system to show.
         if show:
             # As a safety-check, we set up an object that will run the
             # completion callback if we've returned and sat for several
@@ -188,17 +190,17 @@ class AdsSubsystem:
 
                 def run(self, fallback: bool = False) -> None:
                     """Run the payload."""
-                    assert app.classic is not None
+                    assert app.plus is not None
                     if not self._ran:
                         if fallback:
-                            lanst = app.classic.ads.last_ad_network_set_time
+                            lanst = app.plus.ads.last_ad_network_set_time
                             logging.error(
                                 'Relying on fallback ad-callback! '
                                 'last network: %s (set %s seconds ago);'
                                 ' purpose=%s.',
-                                app.classic.ads.last_ad_network,
+                                app.plus.ads.last_ad_network,
                                 time.time() - lanst,
-                                app.classic.ads.last_ad_purpose,
+                                app.plus.ads.last_ad_purpose,
                             )
                         babase.pushcall(self._call)
                         self._ran = True
@@ -222,6 +224,7 @@ class AdsSubsystem:
                     payload.run(fallback=True)
 
                 babase.app.create_async_task(add_fallback_task())
+
             self.show_ad('between_game', on_completion_call=payload.run)
         else:
             babase.pushcall(call)  # Just run the callback without the ad.

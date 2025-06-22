@@ -1,4 +1,4 @@
-### 1.7.44 (build 22435, api 9, 2025-06-18)
+### 1.7.44 (build 22436, api 9, 2025-06-19)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
   an associated `dont_write_bytecode` value for the server config file. In most
   cases writing .pyc files is useful as it can speed up relaunches and keep
@@ -16,6 +16,9 @@
   complicates the logic of pruning outdated caches, but I think I prefer that
   over having to regerate a completely new cache each time a minor update comes
   through.
+- Pycache upkeep now waits until a few seconds after the app is started up and
+  limits its speed a bit to avoid slowing down app startup and minimize the
+  possibility of hitches.
 - Holding shift while pressing a dev-console toggle key (~ or F2) now cycles it
   in reverse.
 - The dev-console now remembers which tab was selected between runs.
@@ -57,6 +60,25 @@
 - The audio-server now inits itself asynchronously, which in my tests can shave
   5-10% off of startup times. Please holler if you experience any odd audio
   behavior in this build.
+- Officially deprecated the `# ba_meta export plugin` shortcut - you should
+  switch to `# ba_meta export babase.Plugin` if you have not yet. The former
+  will still work for now but will emit a warning.
+- Interstitial ads now show when playing tournaments. Sorry folks. But now that
+  tourneys are free, it doesn't make sense to give them a benefit over other
+  single-player play which *does* show ads. Remember you can permanently remove
+  ads for your account by buying the cheapest token pack. Either way, thanks for
+  helping me buy coffee.
+- Android version now pauses GL rendering while ads are showing (since it is not
+  visible anyway). Should save a bit of battery and help interactive ads play
+  smoother.
+- Cleared out several reference cycles using the new ref-loop detection
+  garbage-collection stuff. Learned an important lesson: don't create dataclass
+  classes within functions, as they seem to always wind up with reference cycles
+  and you'll leak memory each time you call that function (until manual gc is
+  finally run). I found that tutorial.py was creating 214 reference-cycled
+  objects per run due to a bunch of dataclasses defined in a function. Moving
+  them to the global scope dropped that to 0. Another cycle culprit was Flag
+  classes in a few minigames. I fixed those using weakrefs to break the cycles.
 
 ### 1.7.43 (build 22406, api 9, 2025-06-09)
 - Fixes an issue with tournament scores not submitting properly in 1.7.42.

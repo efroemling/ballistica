@@ -45,21 +45,27 @@ class FeatureSet:
         # (internal; don't set this)
         self.internal = False
 
-        #: Other feature-sets this one requires. Any spinoff project this
-        #: feature-set is included in will implicitly include these as
-        #: well.
+        #: Other feature-sets this one requires. Any spinoff project that
+        #: includes our feature-set will implicitly include our
+        #: requirements as well. We are allowed to access Python modules
+        #: of our requirements directly, unlike soft-requirements where
+        #: we must limit our access to their app subsystem.
         self.requirements = set()
 
-        #: Feature-sets this one can use but can survive without. Note
-        #: that each of these requirements must have
-        #: 'allow_as_soft_requirement' enabled. While it is possible to
-        #: programmatically check for the presence of *any* feature-set,
-        #: officially listing soft-requirements ensures that any expected
-        #: python-app-subsystems are in place even for feature-sets not
-        #: included in the spinoff project (though be aware their type
-        #: annotations will be 'Any | None' in that case instead of the
-        #: usual 'FooBarSubsystem | None' due to 'FooBarSubsystem' not
-        #: actually existing).
+        #: Feature-sets we can use but can survive without. All usage of
+        #: soft requirements must be through app-subsystems
+        #: (`ba*.app.foo_bar` for feature-set `foo_bar`, etc.). We must
+        #: be prepared for these subsystems to be missing (set to None)
+        #: and we must never import their modules directly (since they
+        #: might not exist). Note that all featuresets we soft-require
+        #: must have 'allow_as_soft_requirement' enabled. While it is
+        #: possible to programmatically check for the presence of *any*
+        #: feature-set, officially listing soft-requirements ensures that
+        #: any expected app-subsystems are in place even for feature-sets
+        #: not included in the spinoff project (though be aware their
+        #: type annotations will be 'Any | None' in that case instead of
+        #: the usual 'FooBarSubsystem | None' due to 'FooBarSubsystem'
+        #: not actually existing).
         self.soft_requirements = set()
 
         #: Whether this featureset defines a native Python module within
@@ -69,7 +75,7 @@ class FeatureSet:
         self.has_python_binary_module = True
 
         #: If True, for feature-set 'foo_bar', the build system will
-        #: define a 'babase.app.foo_bar' attr which points to a lazy
+        #: define a 'ba*.app.foo_bar' attr which points to a lazy
         #: loaded instance of type 'bafoobar.FooBarSubsystem'.
         self.has_python_app_subsystem = False
 
