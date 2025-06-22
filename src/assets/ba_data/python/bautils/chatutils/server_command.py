@@ -19,9 +19,13 @@ class CommandManager:
             command (ServerCommand): Command class must inherit this
             class to execute.
         """
-        cls.commands[f"{command.command_prefix()}{command.name}"] = command
+        # Get the class name if name is not provided
+        if command.name is None:
+            command.name = command.__class__.__name__
+
+        cls.commands[command.command_prefix() + command.name.upper()] = command
         for alias in command.aliases:
-            cls.commands[f"{command.command_prefix()}{alias}"] = command
+            cls.commands[command.command_prefix() + alias.upper()] = command
 
     @classmethod
     def listen(cls, msg: str, client_id: int) -> str | None:
@@ -68,7 +72,7 @@ class ServerCommand(ABC):
 
     """
 
-    name: str = ""
+    name: str | None = None
     aliases: list[str] = []
     message: str = ""
     client_id: int = -999
@@ -78,26 +82,8 @@ class ServerCommand(ABC):
         """This method gets called out when command is called."""
 
     @classmethod
-    def register_command(
-        cls, name: str | None = None, aliases: list[str] | None = None
-    ) -> None:
-        """Register the command to the server.
-
-        Args:
-            name (str | None, optional): command name.
-                Defaults to class name.
-            aliases (list[str], optional): aliases for command.
-                Defaults to None.
-        """
-        if name is None:
-            name = cls.__name__
-        if aliases is None:
-            aliases = []
-
-        # Use uppercase laters only for all cases of command message
-        cls.name = name.upper()
-        cls.aliases = list(map(str.upper, aliases))
-
+    def register_command(cls) -> None:
+        """Register the command to the server."""
         CommandManager.add_command(cls())
 
     def return_message(self) -> bool:

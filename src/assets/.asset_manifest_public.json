@@ -304,6 +304,7 @@
  "ba_data/python/bautils/chatutils/__init__.py",
  "ba_data/python/bautils/chatutils/chat_handle.py",
  "ba_data/python/bautils/chatutils/commands/__init__.py",
+ "ba_data/python/bautils/chatutils/commands/moderation.py",
  "ba_data/python/bautils/chatutils/server_command.py",
  "ba_data/python/efro/__init__.py",
  "ba_data/python/efro/call.py",
