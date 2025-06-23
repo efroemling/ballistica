@@ -8,7 +8,7 @@ import bascenev1 as bs
 from bautils.chatutils import ServerCommand, register_command
 
 
-@register_command()
+@register_command
 class End(ServerCommand):
     """
     /End
@@ -18,3 +18,4 @@ class End(ServerCommand):
         game = bs.get_foreground_host_activity()
         with game.context:
             game.end_game()
+        print(self.config.admins)
