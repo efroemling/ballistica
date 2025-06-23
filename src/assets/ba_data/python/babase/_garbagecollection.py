@@ -26,6 +26,11 @@ class GarbageCollectionSubsystem(AppSubsystem):
     """
 
     def __init__(self) -> None:
+
+        #: A :func:`time.monotonic()` value updated whenever we do an
+        #: actual collect.
+        self.last_collect_time: float | None = None
+
         self._total_num_gc_objects = 0
         self._last_collection_time: float | None = None
         self._showed_elim_tip = False
@@ -80,7 +85,7 @@ class GarbageCollectionSubsystem(AppSubsystem):
         gc_threshold = 0 if debug_leak_enabled else 50
 
         # Do the thing.
-        starttime = time.monotonic()
+        starttime = self._last_collection_time = time.monotonic()
         num_affected_objs = gc.collect()
         duration = time.monotonic() - starttime
 

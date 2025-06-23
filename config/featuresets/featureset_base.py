@@ -12,6 +12,8 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we're defining here.
 fset = FeatureSet.get_active()
 
+# Stuff we need.
 fset.requirements = {'core'}
 
+# Stuff we use but don't *need* (and only access via app-subsystems).
 fset.soft_requirements = {'classic', 'plus'}

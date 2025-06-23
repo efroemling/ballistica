@@ -739,10 +739,22 @@ def setup_logging(
                     record.levelno == logging.WARNING
                     and 'Retrying (' in record.msg
                 ):
-                    # Downgrade to INFO
-                    record.levelno = logging.INFO
-                    record.levelname = logging.getLevelName(logging.INFO)
-                return True  # Allow all records through
+                    newlevel = logging.INFO
+
+                    record.levelno = newlevel
+                    record.levelname = logging.getLevelName(newlevel)
+
+                    # Since log-level pruning happened before we reached
+                    # this point, we're still destined to show up even
+                    # if we change level to something that's not being
+                    # displayed. So let's manually check level and
+                    # discard if this new level shouldn't be shown.
+                    if not logging.getLogger(record.name).isEnabledFor(
+                        newlevel
+                    ):
+                        return False
+
+                return True
 
         logging.getLogger('urllib3.connectionpool').addFilter(
             _DowngradeURLLib3RetryWarningFilter()

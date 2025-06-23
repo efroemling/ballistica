@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import weakref
 import logging
 from typing import TYPE_CHECKING, override
 
@@ -39,7 +40,7 @@ class CTFFlag(Flag):
             position=team.base_pos,
             color=team.color,
         )
-        self._team = team
+        self._team = weakref.ref(team)  # Avoid ref cycles.
         self.held_count = 0
         self.counter = bs.newnode(
             'text',
@@ -59,7 +60,10 @@ class CTFFlag(Flag):
     @property
     def team(self) -> Team:
         """The flag's team."""
-        return self._team
+        team = self._team()
+        if team is None:
+            raise RuntimeError('Team no longer exists.')
+        return team
 
 
 class Player(bs.Player['Team']):

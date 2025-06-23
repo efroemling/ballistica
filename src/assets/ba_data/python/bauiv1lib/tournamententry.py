@@ -742,8 +742,8 @@ class TournamentEntryWindow(PopupWindow):
         cur_time = bui.apptime()
         if cur_time - self._last_ad_press_time > 5.0:
             self._last_ad_press_time = cur_time
-            assert bui.app.classic is not None
-            bui.app.classic.ads.show_ad_2(
+            assert bui.app.plus is not None
+            bui.app.plus.ads.show_ad_2(
                 'tournament_entry',
                 on_completion_call=bui.WeakCall(self._on_ad_complete),
             )

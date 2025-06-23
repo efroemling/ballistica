@@ -19,6 +19,7 @@
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/context.h"
+#include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/generic/utils.h"
@@ -2492,7 +2493,8 @@ void RootWidget::UpdateChests_() {
         // Show the ad-available tag IF the ad provides an allow-ad time
         // AND that time has passed AND we've got an ad ready to go.
         auto allow_ad{slot.ad_allow_time > 0.0 && slot.ad_allow_time <= now
-                      && g_core->have_incentivized_ad};
+                      && g_base->HavePlus()
+                      && g_base->Plus()->HaveIncentivizedAd()};
 
         slot.lock_icon->visible = true;
         // slot.text->visible = true;
