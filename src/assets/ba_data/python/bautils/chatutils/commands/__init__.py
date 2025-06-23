@@ -4,20 +4,45 @@
 
 # ba_meta require api 9
 
+import os
+import time
+import importlib
+
+from contextlib import contextmanager
+
 import bascenev1 as bs
-from .moderation import (
-    End,
-)
-
-__commands__ = [
-    End,
-]
 
 
-# ba_meta export plugin
+@contextmanager
+def command_loading_context(name="Command system"):
+    """A context manager securing to load all commands in this package."""
+
+    print(f"🚀 Initializing {name}...")
+    start = time.time()
+    try:
+        yield
+        elapsed = time.time() - start
+        print(f"✅ All command modules loaded in {elapsed:.2f}s.\n")
+    except Exception as e:
+        print(f"❌ Failed to load module {name}: {e}")
+        raise
+
+
+# ba_meta export babase.Plugin
 class RegisterCommands(bs.Plugin):
     """Register all commands in this module."""
 
     def on_app_running(self) -> None:
-        for command in __commands__:
-            command.register_command()
+        with command_loading_context():
+            self._auto_import_all_modules()
+
+    def _auto_import_all_modules(self) -> None:
+
+        current_dir = os.path.dirname(__file__)
+        package = __name__  # 'commands'
+
+        for filename in os.listdir(current_dir):
+            if filename.endswith(".py") and filename != "__init__.py":
+                module_name = filename[:-3]
+                full_module = f"{package}.{module_name}"
+                importlib.import_module(full_module)
