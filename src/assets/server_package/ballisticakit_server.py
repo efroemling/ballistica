@@ -26,7 +26,6 @@ sys.path += [
 ]
 
 from bacommon.servermanager import ServerConfig, StartServerModeCommand
-from bacommon.servermanager import ServerConfigManager
 from efro.dataclassio import dataclass_from_dict, dataclass_validate
 from efro.error import CleanError
 from efro.terminal import Clr
@@ -132,7 +131,7 @@ class ServerManagerApp:
 
     def __init__(self) -> None:
         self._user_provided_config_path: str | None = None
-        self._config = ServerConfigManager.get_config()
+        self._config = ServerConfig()
         self._ba_root_path = os.path.abspath('dist/ba_root')
         self._interactive = sys.stdin.isatty()
         self._wrapper_shutdown_desired = False
