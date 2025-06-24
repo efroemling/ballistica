@@ -170,15 +170,15 @@ class ServerCommand(ABC):
         roaster = bs.get_game_roster()
         for player in roaster:
             if player["client_id"] == self.client_id:
-                if player["account_id"] in self.config.admins:
+                if player["account_id"] in self.serverconfig.admins:
                     return True
         return False
 
     @property
-    def config(self) -> ServerConfig:
-        """Returns loaded server config."""
+    def serverconfig(self) -> ServerConfig:
+        """Returns loaded serverconfig."""
 
-        # this seems only way to get server config for now
+        # this seems only way to get serverconfig for now
         # hooking it won't work.
         assert babase.app.classic is not None
         assert babase.app.classic.server is not None
