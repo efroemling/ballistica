@@ -114,6 +114,11 @@ class ServerController:
                 0.25, self._prepare_to_serve, repeat=True
             )
 
+    @property
+    def config(self) -> ServerConfig:
+        """Returns the selected server config."""
+        return self._config
+
     def print_client_list(self) -> None:
         """Print info about all connected clients."""
         import json

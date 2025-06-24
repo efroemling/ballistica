@@ -4,46 +4,40 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-from typing import Type, Callable
 
 import bascenev1 as bs
+import babase
+
+if TYPE_CHECKING:
+    from bacommon.servermanager import ServerConfig
 
 
-def register_command() -> Callable[[Type[ServerCommand]], Type[ServerCommand]]:
+def register_command(cls: type[ServerCommand]) -> type[ServerCommand]:
     """
     Decorator to register a ServerCommand subclass into the registry.
 
+    Args:
+        cls: A subclass of ServerCommand to be registered.
+
     Returns:
-        Callable: A decorator that registers the command class.
+        The class itself after registration.
 
     Example:
-
-    ```
-    from bautils.chatutils.server_command import ServerCommand, register_command
-
-    @register_command()
-    class MyCommand(ServerCommand):
-        def __init__(self) -> None:
-            self.wlm_message = 'welcome'
-
-        def on_command_call() -> None:
-            print(f'{self.wlm_message} {self.client_id}')
-    ```
-
+        @register_command
+        class MyCommand(ServerCommand):
+            ...
     """
+    if not issubclass(cls, ServerCommand):
+        raise TypeError(
+            "@register_command must be used on ServerCommand subclasses"
+        )
 
-    def decorator(cls: Type[ServerCommand]) -> Type[ServerCommand]:
-        if not issubclass(cls, ServerCommand):
-            raise TypeError(
-                "@register_command must be used on ServerCommand subclasses"
-            )
-
-        CommandManager.add_command(cls())
-        return cls
-
-    return decorator
+    CommandManager.add_command(cls())
+    return cls
 
 
 class CommandManager:
@@ -150,6 +144,17 @@ class ServerCommand(ABC):
             str: Returns '/' as default prefix.
         """
         return "/"
+
+    @property
+    def config(self) -> ServerConfig:
+        """Returns loaded server config."""
+
+        # this seems only way to get server config for now
+        # hooking it won't work.
+        assert babase.app.classic is not None
+        assert babase.app.classic.server is not None
+
+        return babase.app.classic.server.config
 
     def __call__(self) -> None:
         with self._handle_errors():
