@@ -32,9 +32,7 @@ def register_command(cls: type[ServerCommand]) -> type[ServerCommand]:
             ...
     """
     if not issubclass(cls, ServerCommand):
-        raise TypeError(
-            "@register_command must be used on ServerCommand subclasses"
-        )
+        raise TypeError("@register_command must be used on ServerCommand subclasses")
 
     CommandManager.add_command(cls())
     return cls
@@ -83,7 +81,19 @@ class CommandManager:
             # set some attributes for abtraction
             command.client_id = client_id
             command.message = msg
-            command()
+
+            if command.admin_authentication():
+                if command.is_admin:
+                    command()
+
+                else:
+                    bs.broadcastmessage(
+                        "❌ Access Denied: Admins only!",
+                        clients=[client_id],
+                        transient=True,
+                    )
+            else:
+                command()
 
             if not command.return_message():
                 return None
@@ -145,6 +155,25 @@ class ServerCommand(ABC):
         """
         return "/"
 
+    def admin_authentication(self) -> bool:
+        """
+        Method to overwrite if command is used by admins only.
+
+        Returns:
+            bool: Returns True to authenticate by default.
+        """
+        return True
+
+    @property
+    def is_admin(self) -> bool:
+        "Returns True if the client is an admin."
+        roaster = bs.get_game_roster()
+        for player in roaster:
+            if player["client_id"] == self.client_id:
+                if player["account_id"] in self.config.admins:
+                    return True
+        return False
+
     @property
     def config(self) -> ServerConfig:
         """Returns loaded server config."""
@@ -155,6 +184,18 @@ class ServerCommand(ABC):
         assert babase.app.classic.server is not None
 
         return babase.app.classic.server.config
+
+    def get_player(self, client_id: int | None = None) -> bs.Player:
+        """Return the player associated with the given client ID."""
+
+        client_id = client_id or self.client_id
+        activity = bs.get_foreground_host_activity()
+
+        for player in activity.players:
+            if player.client_id == client_id:
+                return player
+
+        raise ValueError(f"No player found with client_id={client_id}")
 
     def __call__(self) -> None:
         with self._handle_errors():

@@ -18,4 +18,3 @@ class End(ServerCommand):
         game = bs.get_foreground_host_activity()
         with game.context:
             game.end_game()
-        print(self.config.admins)
