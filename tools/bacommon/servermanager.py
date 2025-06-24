@@ -200,6 +200,18 @@ class ServerConfig:
     # modules on demand could cause visual hitches.
     dont_write_bytecode: bool = False
 
+class ServerConfigManager:
+    """A singlton class that manages ServerConfig instances."""
+
+    running_instance: ServerConfig | None = None
+
+    @classmethod
+    def get_config(cls) -> ServerConfig:
+        """Returns the running instance of ServerConfig."""
+        if cls.running_instance is None:
+            cls.running_instance = ServerConfig()
+        return cls.running_instance
+
 
 # NOTE: as much as possible, communication from the server-manager to
 # the child-process should go through these and not ad-hoc Python string

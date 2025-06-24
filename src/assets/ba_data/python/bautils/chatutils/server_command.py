@@ -8,6 +8,11 @@ from typing import TYPE_CHECKING
 
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+<<<<<<< HEAD
+=======
+
+from bacommon.servermanager import ServerConfig, ServerConfigManager
+>>>>>>> 65f62dde282df03234adb7e22af792afc1043d29
 
 import bascenev1 as bs
 import babase
@@ -147,6 +152,7 @@ class ServerCommand(ABC):
 
     @property
     def config(self) -> ServerConfig:
+<<<<<<< HEAD
         """Returns loaded server config."""
 
         # this seems only way to get server config for now
@@ -155,6 +161,10 @@ class ServerCommand(ABC):
         assert babase.app.classic.server is not None
 
         return babase.app.classic.server.config
+=======
+        """Returns server config."""
+        return ServerConfigManager.get_config()
+>>>>>>> 65f62dde282df03234adb7e22af792afc1043d29
 
     def __call__(self) -> None:
         with self._handle_errors():
