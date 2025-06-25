@@ -9,6 +9,7 @@ import threading
 from enum import Enum
 from typing import TYPE_CHECKING, override
 
+from efro.util import cleanup_exception_chain
 import babase
 import bascenev1
 
@@ -154,6 +155,9 @@ class MasterServerV1CallThread(threading.Thread):
 
             response_data = None
 
+            # Try to avoid reference cycles.
+            cleanup_exception_chain(exc)
+
         finally:
             babase.shutdown_suppress_end()
 
@@ -165,7 +169,7 @@ class MasterServerV1CallThread(threading.Thread):
 
 
 def _utf8_all(data: Any) -> Any:
-    """Convert any unicode data in provided sequence(s) to utf8 bytes."""
+    """Convert all strings in provided data to utf-8 bytes."""
     if isinstance(data, dict):
         return dict(
             (_utf8_all(key), _utf8_all(value))
@@ -176,5 +180,6 @@ def _utf8_all(data: Any) -> Any:
     if isinstance(data, tuple):
         return tuple(_utf8_all(element) for element in data)
     if isinstance(data, str):
-        return data.encode('utf-8', errors='ignore')
+        # return data.encode('utf-8', errors='ignore')
+        return data.encode()
     return data

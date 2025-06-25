@@ -75,6 +75,18 @@ class SysResponse:
     users of the api never see them.
     """
 
+
+# Some standard response types:
+
+
+@ioprepped
+@dataclass
+class ErrorSysResponse(SysResponse):
+    """SysResponse saying some error has occurred for the send.
+
+    This generally results in an Exception being raised for the caller.
+    """
+
     def set_local_exception(self, exc: Exception) -> None:
         """Attach a local exception to facilitate better logging/handling.
 
@@ -88,18 +100,6 @@ class SysResponse:
         value = getattr(self, '_sr_local_exception', None)
         assert isinstance(value, Exception | None)
         return value
-
-
-# Some standard response types:
-
-
-@ioprepped
-@dataclass
-class ErrorSysResponse(SysResponse):
-    """SysResponse saying some error has occurred for the send.
-
-    This generally results in an Exception being raised for the caller.
-    """
 
     class ErrorType(Enum):
         """Type of error that occurred while sending a message."""

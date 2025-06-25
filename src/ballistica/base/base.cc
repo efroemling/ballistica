@@ -286,8 +286,8 @@ void BaseFeatureSet::SuspendApp() {
   millisecs_t start_time{core::CorePlatform::TimeMonotonicMillisecs()};
 
   // Apple mentioned 5 seconds to run stuff once backgrounded or they bring
-  // down the hammer. Let's aim to stay under 2.
-  millisecs_t max_duration{2000};
+  // down the hammer. Let's aim to stay under 4.
+  millisecs_t max_duration{4000};
 
   g_core->platform->LowLevelDebugLog(
       "SuspendApp@"

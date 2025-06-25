@@ -242,9 +242,10 @@ class MessageSender:
                 ),
             )
             # Can include the actual exception since we'll be looking at
-            # this locally; might be helpful.
+            # this response locally; might be helpful.
             response.set_local_exception(exc)
             return response
+
         return self._decode_raw_response(bound_obj, message, response_encoded)
 
     def fetch_raw_response_async(
@@ -299,7 +300,7 @@ class MessageSender:
             ),
         )
         # Can include the actual exception since we'll be looking at
-        # this locally; might be helpful.
+        # this response locally; might be helpful.
         response.set_local_exception(exc)
         return response
 
@@ -318,7 +319,7 @@ class MessageSender:
                 ),
             )
             # Can include the actual exception since we'll be looking at
-            # this locally; might be helpful.
+            # this response locally; might be helpful.
             response.set_local_exception(exc)
             return response
         return self._decode_raw_response(bound_obj, message, response_encoded)
