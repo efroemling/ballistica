@@ -331,7 +331,8 @@ class GarbageCollectionSubsystem(AppSubsystem):
 
         starttime = now
         num_affected_objs = gc.collect()
-        duration = time.monotonic() - starttime
+        now2 = self.last_actual_collect_time = time.monotonic()
+        duration = now2 - starttime
         self._total_num_gc_objects += num_affected_objs
 
         if (
@@ -442,7 +443,8 @@ class GarbageCollectionSubsystem(AppSubsystem):
     def _collect_leak_debug(self, now: float) -> None:
         starttime = now
         num_affected_objs = gc.collect()
-        duration = time.monotonic() - starttime
+        now2 = self.last_actual_collect_time = time.monotonic()
+        duration = now2 - starttime
         self._total_num_gc_objects += num_affected_objs
 
         # Just report some general stats on what we collected. The

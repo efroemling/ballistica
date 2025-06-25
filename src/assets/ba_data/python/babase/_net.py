@@ -16,8 +16,10 @@ import _babase
 if TYPE_CHECKING:
     pass
 
-# Timeout for standard functions talking to the master-server/etc.
-DEFAULT_REQUEST_TIMEOUT_SECONDS = 60
+# Timeout for standard functions talking to the master-server/etc. We
+# generally try to fail fast and retry instead of waiting a long time
+# for things.
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 10
 
 
 class NetworkSubsystem:
