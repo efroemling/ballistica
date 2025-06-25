@@ -12,12 +12,11 @@ from typing import TYPE_CHECKING, final, override
 
 from bacommon.login import LoginType
 
+from babase._logging import loginadapterlog
 import _babase
 
 if TYPE_CHECKING:
     from typing import Callable
-
-logger = logging.getLogger('ba.loginadapter')
 
 
 @dataclass
@@ -97,12 +96,12 @@ class LoginAdapter:
             return
 
         if state is None:
-            logger.debug(
+            loginadapterlog.debug(
                 '%s implicit state changed; now signed out.',
                 self.login_type.name,
             )
         else:
-            logger.debug(
+            loginadapterlog.debug(
                 '%s implicit state changed; now signed in as %s.',
                 self.login_type.name,
                 state.display_name,
@@ -129,7 +128,7 @@ class LoginAdapter:
         :meta private:
         """
         assert _babase.in_logic_thread()
-        logger.debug(
+        loginadapterlog.debug(
             '%s adapter got active logins %s.',
             self.login_type.name,
             {k: v[:4] + '...' + v[-4:] for k, v in logins.items()},
@@ -197,7 +196,7 @@ class LoginAdapter:
         self._last_sign_in_desc = description
         self._last_sign_in_time = now
 
-        logger.debug(
+        loginadapterlog.debug(
             '%s adapter sign_in() called; fetching sign-in-token...',
             self.login_type.name,
         )
@@ -207,7 +206,7 @@ class LoginAdapter:
 
             # Failed to get a sign-in-token.
             if result is None:
-                logger.debug(
+                loginadapterlog.debug(
                     '%s adapter sign-in-token fetch failed;'
                     ' aborting sign-in.',
                     self.login_type.name,
@@ -224,7 +223,7 @@ class LoginAdapter:
             # Got a sign-in token! Now pass it to the cloud which will use
             # it to verify our identity and give us app credentials on
             # success.
-            logger.debug(
+            loginadapterlog.debug(
                 '%s adapter sign-in-token fetch succeeded;'
                 ' passing to cloud for verification...',
                 self.login_type.name,
@@ -235,7 +234,7 @@ class LoginAdapter:
             ) -> None:
                 # This likely means we couldn't communicate with the server.
                 if isinstance(response, Exception):
-                    logger.debug(
+                    loginadapterlog.debug(
                         '%s adapter got error sign-in response: %s',
                         self.login_type.name,
                         response,
@@ -248,7 +247,7 @@ class LoginAdapter:
                             RuntimeError('Sign-in-token was rejected.')
                         )
                     else:
-                        logger.debug(
+                        loginadapterlog.debug(
                             '%s adapter got successful sign-in response',
                             self.login_type.name,
                         )
@@ -298,7 +297,7 @@ class LoginAdapter:
         # any existing state so it can properly respond to this.
         if self._implicit_login_state_dirty and self._on_app_loading_called:
 
-            logger.debug(
+            loginadapterlog.debug(
                 '%s adapter sending implicit-state-changed to app.',
                 self.login_type.name,
             )
@@ -322,7 +321,7 @@ class LoginAdapter:
                 self._implicit_login_state.login_id == self._active_login_id
             )
         if was_active != is_active:
-            logger.debug(
+            loginadapterlog.debug(
                 '%s adapter back-end-active is now %s.',
                 self.login_type.name,
                 is_active,

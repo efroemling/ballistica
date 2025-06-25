@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 import babase
 
+import _baplus
+
 if TYPE_CHECKING:
     from typing import Callable, Any
 
@@ -34,7 +36,7 @@ class AdsSubsystem:
         self._fallback_task: asyncio.Task | None = None
 
     def do_remove_in_game_ads_message(self) -> None:
-        """(internal)"""
+        """:meta private:"""
 
         # Print this message once every 10 minutes at most.
         tval = babase.apptime()
@@ -53,23 +55,42 @@ class AdsSubsystem:
                     ),
                 )
 
+    def can_show_ad(self) -> bool:
+        """Can we show an ad?
+
+        :meta private:
+        """
+        return _baplus.can_show_ad()
+
+    def has_video_ads(self) -> bool:
+        """Are video ads available?
+
+        :meta private:
+        """
+        return _baplus.has_video_ads()
+
+    def have_incentivized_ad(self) -> bool:
+        """Is an incentivized ad available?
+
+        :meta private:
+        """
+        return _baplus.have_incentivized_ad()
+
     def show_ad(
         self, purpose: str, on_completion_call: Callable[[], Any] | None = None
     ) -> None:
-        """(internal)"""
+        """:meta private:"""
         self.last_ad_purpose = purpose
-        assert babase.app.plus is not None
-        babase.app.plus.show_ad(purpose, on_completion_call)
+        _baplus.show_ad(purpose, on_completion_call)
 
     def show_ad_2(
         self,
         purpose: str,
         on_completion_call: Callable[[bool], Any] | None = None,
     ) -> None:
-        """(internal)"""
+        """:meta private:"""
         self.last_ad_purpose = purpose
-        assert babase.app.plus is not None
-        babase.app.plus.show_ad_2(purpose, on_completion_call)
+        _baplus.show_ad_2(purpose, on_completion_call)
 
     def call_after_ad(self, call: Callable[[], Any]) -> None:
         """Run a call after potentially showing an ad."""
@@ -86,24 +107,8 @@ class AdsSubsystem:
         show = True
 
         # No ads without net-connections, etc.
-        if not plus.can_show_ad():
+        if not self.can_show_ad():
             show = False
-
-        # Pro or other upgrades disable interstitials.
-        # if (
-        #     classic.accounts.have_pro()
-        #     or classic.gold_pass
-        #     or classic.remove_ads
-        # ):
-        #     show = False
-        # try:
-        #     session = bascenev1.get_foreground_host_session()
-        #     assert session is not None
-        #     is_tournament = session.tournament_id is not None
-        # except Exception:
-        #     is_tournament = False
-        # if is_tournament:
-        #     show = False  # Never show ads during tournaments.
 
         if show:
             interval: float | None
@@ -130,7 +135,7 @@ class AdsSubsystem:
                 # ad-show-threshold and see if we should *actually* show
                 # (we reach our threshold faster the longer we've been
                 # playing).
-                base = 'ads' if plus.has_video_ads() else 'ads2'
+                base = 'ads' if self.has_video_ads() else 'ads2'
                 min_lc = plus.get_v1_account_misc_read_val(base + '.minLC', 0.0)
                 max_lc = plus.get_v1_account_misc_read_val(base + '.maxLC', 5.0)
                 min_lc_scale = plus.get_v1_account_misc_read_val(
@@ -183,29 +188,8 @@ class AdsSubsystem:
             # completion callback if we've returned and sat for several
             # seconds (in case some random ad network doesn't properly
             # deliver its completion callback).
-            class _Payload:
-                def __init__(self, pcall: Callable[[], Any]):
-                    self._call = pcall
-                    self._ran = False
 
-                def run(self, fallback: bool = False) -> None:
-                    """Run the payload."""
-                    assert app.plus is not None
-                    if not self._ran:
-                        if fallback:
-                            lanst = app.plus.ads.last_ad_network_set_time
-                            logging.error(
-                                'Relying on fallback ad-callback! '
-                                'last network: %s (set %s seconds ago);'
-                                ' purpose=%s.',
-                                app.plus.ads.last_ad_network,
-                                time.time() - lanst,
-                                app.plus.ads.last_ad_purpose,
-                            )
-                        babase.pushcall(self._call)
-                        self._ran = True
-
-            payload = _Payload(call)
+            payload = _AdPayload(call)
 
             # Set up our backup.
             with babase.ContextRef.empty():
@@ -228,3 +212,27 @@ class AdsSubsystem:
             self.show_ad('between_game', on_completion_call=payload.run)
         else:
             babase.pushcall(call)  # Just run the callback without the ad.
+
+
+class _AdPayload:
+    def __init__(self, pcall: Callable[[], Any]):
+        self._call = pcall
+        self._ran = False
+
+    def run(self, fallback: bool = False) -> None:
+        """Run the payload."""
+        plus = babase.app.plus
+        assert plus is not None
+        if not self._ran:
+            if fallback:
+                lanst = plus.ads.last_ad_network_set_time
+                logging.error(
+                    'Relying on fallback ad-callback! '
+                    'last network: %s (set %s seconds ago);'
+                    ' purpose=%s.',
+                    plus.ads.last_ad_network,
+                    time.time() - lanst,
+                    plus.ads.last_ad_purpose,
+                )
+            babase.pushcall(self._call)
+            self._ran = True

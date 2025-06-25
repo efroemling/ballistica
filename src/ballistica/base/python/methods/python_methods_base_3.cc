@@ -1588,12 +1588,14 @@ static auto PyDevConsoleAddText(PyObject* self, PyObject* args) -> PyObject* {
   const char* h_anchor;
   const char* h_align;
   const char* v_align;
+  const char* style_str;
   float scale;
-  if (!PyArg_ParseTuple(args, "sffsssf", &text, &x, &y, &h_anchor, &h_align,
-                        &v_align, &scale)) {
+  if (!PyArg_ParseTuple(args, "sffsssfs", &text, &x, &y, &h_anchor, &h_align,
+                        &v_align, &scale, &style_str)) {
     return nullptr;
   }
-  dev_console->AddText(text, x, y, h_anchor, h_align, v_align, scale);
+  dev_console->AddText(text, x, y, h_anchor, h_align, v_align, scale,
+                       style_str);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1611,6 +1613,7 @@ static PyMethodDef PyDevConsoleAddTextDef = {
     "  h_align: str,\n"
     "  v_align: str,\n"
     "  scale: float,\n"
+    "  style: str,\n"
     ") -> None\n"
     "\n"
     ":meta private:",

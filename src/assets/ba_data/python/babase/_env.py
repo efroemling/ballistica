@@ -96,7 +96,7 @@ def on_main_thread_start_app() -> None:
     _g_babase_app_started = True
 
     assert _g_babase_imported
-    assert baenv.config_exists()
+    assert baenv.env_config_exists()
 
     # If we were unable to set paths earlier, complain now.
     if baenv.did_paths_set_fail():
@@ -120,12 +120,8 @@ def on_main_thread_start_app() -> None:
     # release builds so its good to have this on everywhere.
     warnings.simplefilter('default', DeprecationWarning)
 
-    # Turn off cyclic garbage-collection. We run it only at explicit
-    # times to avoid random hitches and keep things more deterministic.
-    # Non-reference-looped objects will still get cleaned up
-    # immediately, so we should try to structure things to avoid and/or
-    # break reference loops (just like Swift, ObjC, etc).
-    gc.disable()
+    # Set up our garbage collection stuff.
+    _babase.app.gc.set_initial_mode()
 
     if os.environ.get('BA_GC_DEBUG_LEAK') == '1':
         print('ENABLING GC DEBUG LEAK CHECKS', file=sys.stderr)

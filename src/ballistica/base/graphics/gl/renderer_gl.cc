@@ -168,6 +168,7 @@ void RendererGL::CheckGLVersion() {
   }
   const char* version_str = (const char*)glGetString(GL_VERSION);
   BA_PRECONDITION_FATAL(version_str);
+  std::string version_str_s{version_str};
 
   // Do a rough check to make sure we're running 3 or newer of GL/GLES. This
   // query should be available even on older versions which is why we do it
@@ -184,11 +185,13 @@ void RendererGL::CheckGLVersion() {
     }
   } else {
     // Regular GL version strings start with numeric version.
-
-    if (version_str[0] != '3' && version_str[0] != '4') {
+    if (version_str_s.starts_with("4.") || version_str_s.starts_with("3.2")
+        || version_str_s.starts_with("3.3")) {
+      // We're Good.
+    } else {
       FatalError(
           std::string("Your OpenGL version is too old (") + version_str
-          + "). We require 3.0 or later. Try updating your graphics drivers.");
+          + "). We require 3.2 or later. Try updating your graphics drivers.");
     }
   }
   checked_gl_version_ = true;

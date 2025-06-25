@@ -11,7 +11,6 @@
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics_server.h"
-#include "ballistica/core/logging/logging_macros.h"
 
 namespace ballistica::base {
 
@@ -80,9 +79,6 @@ class RendererGL::MeshAssetDataGL : public MeshAssetRendererData {
         break;
       }
       case 4: {
-        BA_LOG_ONCE(
-            LogName::kBaGraphics, LogLevel::kWarning,
-            "GL WARNING - USING 32 BIT INDICES WHICH WONT WORK IN ES2!!");
         elem_count_ = static_cast<uint32_t>(model.indices32().size());
         index_type_ = GL_UNSIGNED_INT;
         index_data = static_cast<const GLvoid*>(model.indices32().data());

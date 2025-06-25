@@ -18,9 +18,29 @@ class Logging {
  public:
   Logging() = default;
 
-  void Log(LogName name, LogLevel level, const std::string& msg);
-  void Log(LogName name, LogLevel level, const char* msg);
-  void Log(LogName name, LogLevel level, char* msg);
+  void Log(LogName name, LogLevel level, const std::string& msg) {
+    // Checking log-level here is more efficient than letting it happen in
+    // Python land.
+    if (LogLevelEnabled(name, level)) {
+      Log_(name, level, msg);
+    }
+  }
+
+  void Log(LogName name, LogLevel level, const char* msg) {
+    // Checking log-level here is more efficient than letting it happen in
+    // Python land.
+    if (LogLevelEnabled(name, level)) {
+      Log_(name, level, msg);
+    }
+  }
+
+  void Log(LogName name, LogLevel level, char* msg) {
+    // Checking log-level here is more efficient than letting it happen in
+    // Python land.
+    if (LogLevelEnabled(name, level)) {
+      Log_(name, level, msg);
+    }
+  }
 
   /// Log call variant taking a call returning a string instead of a string
   /// directly. This is recommended for log strings requiring significant

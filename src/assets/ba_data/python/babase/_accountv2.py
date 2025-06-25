@@ -12,14 +12,14 @@ from typing import TYPE_CHECKING, assert_never
 from efro.error import CommunicationError
 from efro.call import CallbackSet
 from bacommon.login import LoginType
+
+from babase._logging import accountv2log
 import _babase
 
 if TYPE_CHECKING:
     from typing import Any, Callable
 
     from babase._login import LoginAdapter, LoginInfo
-
-logger = logging.getLogger('ba.accountv2')
 
 
 class AccountV2Subsystem:
@@ -280,7 +280,7 @@ class AccountV2Subsystem:
         # generally this means the user has explicitly signed in/out or
         # switched accounts within that back-end.
         if prev_state != new_state:
-            logger.debug(
+            accountv2log.debug(
                 'Implicit state changed (%s -> %s);'
                 ' will update app sign-in state accordingly.',
                 prev_state,
@@ -324,7 +324,7 @@ class AccountV2Subsystem:
             if self._implicit_signed_in_adapter is None:
                 # If implicit back-end has signed out, we follow suit
                 # immediately; no need to wait for network connectivity.
-                logger.debug(
+                accountv2log.debug(
                     'Signing out as result of implicit state change...',
                 )
                 plus.accounts.set_primary_credentials(None)
@@ -343,7 +343,7 @@ class AccountV2Subsystem:
                 # switching accounts via the back-end). NOTE: should
                 # test case where we don't have connectivity here.
                 if plus.cloud.is_connected():
-                    logger.debug(
+                    accountv2log.debug(
                         'Signing in as result of implicit state change...',
                     )
                     self._implicit_signed_in_adapter.sign_in(
@@ -376,7 +376,7 @@ class AccountV2Subsystem:
             and not signed_in_v2
             and self._implicit_signed_in_adapter is not None
         ):
-            logger.debug(
+            accountv2log.debug(
                 'Signing in due to on-launch-auto-sign-in...',
             )
             self._can_do_auto_sign_in = False  # Only ATTEMPT once

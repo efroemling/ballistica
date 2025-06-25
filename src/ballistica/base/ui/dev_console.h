@@ -65,7 +65,8 @@ class DevConsole {
                  PyObject* call, const char* h_anchor_str, float label_scale,
                  float corner_radius, const char* style_str, bool disabled);
   void AddText(const char* text, float x, float y, const char* h_anchor_str,
-               const char* h_align_str, const char* v_align_str, float scale);
+               const char* h_align_str, const char* v_align_str, float scale,
+               const char* style_str);
   void AddPythonTerminal();
 
   auto Width() -> float;

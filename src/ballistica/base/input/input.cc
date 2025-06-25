@@ -1551,6 +1551,12 @@ auto Input::IsCursorVisible() const -> bool {
     return false;
   }
 
+  // Hide our cursor as soon as we start shutting down (don't want software
+  // cursor to be frozen on screen with our last frame).
+  if (g_base->logic->shutting_down()) {
+    return false;
+  }
+
   // Show our cursor only if its been moved recently.
   return (g_core->AppTimeSeconds() - last_mouse_move_time_ < 2.071);
 }

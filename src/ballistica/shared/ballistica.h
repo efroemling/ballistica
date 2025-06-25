@@ -284,6 +284,7 @@ enum class LogName : uint8_t {
   kBaLifecycle,
   kBaAudio,
   kBaGraphics,
+  kBaPerformance,
   kBaAssets,
   kBaInput,
   kBaNetworking,

@@ -1,4 +1,4 @@
-### 1.7.44 (build 22436, api 9, 2025-06-19)
+### 1.7.44 (build 22442, api 9, 2025-06-24)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
   an associated `dont_write_bytecode` value for the server config file. In most
   cases writing .pyc files is useful as it can speed up relaunches and keep
@@ -45,8 +45,8 @@
 - Turned the `babase.garbage_collect()` function into a full subsystem
   (`ba*.app.gc`). It will now warn if too many objects are resorting to cyclic
   garbage collection due to reference loops, and it offers some tips and
-  functionality to help track down and eliminate said loops. Flip the
-  `ba.garbagecollection` log to `Debug` to learn more.
+  functionality to help track down and eliminate said loops. Check out the
+  `GarbageCollectionSubsystem` documentation for more info.
 - Added proper support for mouse-cancel events. This fixes an annoying issue
   where using home-bar nav gestures on Android to switch apps could lead to
   unintended button presses (namely on chest slots since that is near the home
@@ -79,6 +79,11 @@
   objects per run due to a bunch of dataclasses defined in a function. Moving
   them to the global scope dropped that to 0. Another cycle culprit was Flag
   classes in a few minigames. I fixed those using weakrefs to break the cycles.
+- Didn't realize we've technically been requiring OpenGL 3.2 on desktop; not
+  3.0. Updated checks accordingly so any 3.0/3.1 people will get better error
+  messages.
+- The 'Logging' dev-console-tab has been polished up a bit, and now includes
+  descriptions for ballistica's various loggers.
 
 ### 1.7.43 (build 22406, api 9, 2025-06-09)
 - Fixes an issue with tournament scores not submitting properly in 1.7.42.

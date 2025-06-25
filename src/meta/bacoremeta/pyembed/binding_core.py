@@ -9,6 +9,11 @@ import copy
 import logging
 import sys
 
+# IMPORTANT: The logger names we grab below are defined in
+# bacommon.logging, but we need to grab our logger objects here in core
+# before we are able to import modules, so we need to just hard code
+# values here and keep them synced up.
+
 # The C++ layer looks for this variable:
 values = [
     sys.modules['__main__'].__dict__,  # kMainDict
@@ -29,18 +34,20 @@ values = [
     logging.getLogger('ba').log,  # kLoggerBaLogCall
     logging.getLogger('ba.app'),  # kLoggerBaApp
     logging.getLogger('ba.app').log,  # kLoggerBaAppLogCall
+    logging.getLogger('ba.assets'),  # kLoggerBaAssets
+    logging.getLogger('ba.assets').log,  # kLoggerBaAssetsLogCall
     logging.getLogger('ba.audio'),  # kLoggerBaAudio
     logging.getLogger('ba.audio').log,  # kLoggerBaAudioLogCall
     logging.getLogger('ba.displaytime'),  # kLoggerBaDisplayTime
     logging.getLogger('ba.displaytime').log,  # kLoggerBaDisplayTimeLogCall
-    logging.getLogger('ba.graphics'),  # kLoggerBaGraphics
-    logging.getLogger('ba.graphics').log,  # kLoggerBaGraphicsLogCall
-    logging.getLogger('ba.lifecycle'),  # kLoggerBaLifecycle
-    logging.getLogger('ba.lifecycle').log,  # kLoggerBaLifecycleLogCall
-    logging.getLogger('ba.assets'),  # kLoggerBaAssets
-    logging.getLogger('ba.assets').log,  # kLoggerBaAssetsLogCall
+    logging.getLogger('ba.gfx'),  # kLoggerBaGraphics
+    logging.getLogger('ba.gfx').log,  # kLoggerBaGraphicsLogCall
+    logging.getLogger('ba.perf'),  # kLoggerBaPerformance
+    logging.getLogger('ba.perf').log,  # kLoggerBaPerformanceLogCall
     logging.getLogger('ba.input'),  # kLoggerBaInput
     logging.getLogger('ba.input').log,  # kLoggerBaInputLogCall
-    logging.getLogger('ba.networking'),  # kLoggerBaNetworking
-    logging.getLogger('ba.networking').log,  # kLoggerBaNetworkingLogCall
+    logging.getLogger('ba.lifecycle'),  # kLoggerBaLifecycle
+    logging.getLogger('ba.lifecycle').log,  # kLoggerBaLifecycleLogCall
+    logging.getLogger('ba.net'),  # kLoggerBaNetworking
+    logging.getLogger('ba.net').log,  # kLoggerBaNetworkingLogCall
 ]
