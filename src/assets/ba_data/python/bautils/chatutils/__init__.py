@@ -6,8 +6,4 @@
 
 from .server_command import CommandManager, ServerCommand, register_command
 
-__all__ = [
-    "CommandManager",
-    "ServerCommand",
-    "register_command"
-]
+__all__ = ["CommandManager", "ServerCommand", "register_command"]

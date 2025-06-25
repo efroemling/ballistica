@@ -5,16 +5,19 @@
 # ba_meta require api 9
 
 import os
-import time
 import importlib
+import time
 
+from typing import Generator, Any, override
 from contextlib import contextmanager
 
 import bascenev1 as bs
 
 
 @contextmanager
-def command_loading_context(name="Command system"):
+def command_loading_context(
+    name: str = "Command system",
+) -> Generator[None, Any, None]:
     """A context manager securing to load all commands in this package."""
 
     print(f"🚀 Initializing {name}...")
@@ -32,6 +35,7 @@ def command_loading_context(name="Command system"):
 class RegisterCommands(bs.Plugin):
     """Register all commands in this module."""
 
+    @override
     def on_app_running(self) -> None:
         with command_loading_context():
             self._auto_import_all_modules()

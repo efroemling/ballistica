@@ -13,6 +13,7 @@ import bascenev1 as bs
 import babase
 
 if TYPE_CHECKING:
+    from typing import Generator, Any
     from bacommon.servermanager import ServerConfig
 
 
@@ -32,7 +33,9 @@ def register_command(cls: type[ServerCommand]) -> type[ServerCommand]:
             ...
     """
     if not issubclass(cls, ServerCommand):
-        raise TypeError("@register_command must be used on ServerCommand subclasses")
+        raise TypeError(
+            "@register_command must be used on ServerCommand subclasses"
+        )
 
     CommandManager.add_command(cls())
     return cls
@@ -83,6 +86,7 @@ class CommandManager:
             command.message = msg
 
             if command.admin_authentication():
+                # check admins from loaded config file.
                 if command.is_admin:
                     command()
 
@@ -185,24 +189,45 @@ class ServerCommand(ABC):
 
         return babase.app.classic.server.config
 
-    def get_player(self, client_id: int | None = None) -> bs.Player:
+    @property
+    def arguments(self) -> list[str]:
+        """Returns arguments of given command with validation."""
+        args = self.message.split()[1:]
+        if args in ([], [""]):
+            raise ValueError("Please provide neccesary arguments.")
+        return args
+
+    def filter_client_id(self, client_id: str | int) -> int:
+        """Returns client_id with various checks."""
+
+        _id = int(client_id)
+        roaster = bs.get_game_roster()
+        for client in roaster:
+            if _id in client.values():
+                return _id
+        raise ValueError(f"Invalid client-id: {client_id} is provided.")
+
+    def get_session_player(
+        self, client_id: int | None = None
+    ) -> bs.SessionPlayer:
         """Return the player associated with the given client ID."""
 
         client_id = client_id or self.client_id
-        activity = bs.get_foreground_host_activity()
+        session = bs.get_foreground_host_session()
+        assert session is not None
 
-        for player in activity.players:
-            if player.client_id == client_id:
+        for player in session.sessionplayers:
+            if player.inputdevice.client_id == client_id:
                 return player
 
-        raise ValueError(f"No player found with client_id={client_id}")
+        raise ValueError(f"No player found with client-id: {client_id}")
 
     def __call__(self) -> None:
         with self._handle_errors():
             self.on_command_call()
 
     @contextmanager
-    def _handle_errors(self):
+    def _handle_errors(self) -> Generator[None, Any, None]:
         """
         Context manager to catch common argument-related errors and
         show helpful usage info.
