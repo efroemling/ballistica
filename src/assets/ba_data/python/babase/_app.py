@@ -29,7 +29,7 @@ from babase._stringedit import StringEditSubsystem
 from babase._devconsole import DevConsoleSubsystem
 from babase._appconfig import AppConfig
 from babase._logging import lifecyclelog, applog
-from babase._garbagecollection import GarbageCollectionSubsystem
+from babase._gc import GarbageCollectionSubsystem
 
 if TYPE_CHECKING:
     import asyncio

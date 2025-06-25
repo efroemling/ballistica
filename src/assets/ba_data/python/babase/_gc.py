@@ -88,7 +88,7 @@ class GarbageCollectionSubsystem(AppSubsystem):
 
     .. code-block:: sh
 
-      BA_GC_MODE=leak_debug ./ballisticakit
+      BA_GC_MODE=leak_debug ./bombsquad
     """
 
     class Mode(Enum):
@@ -182,6 +182,7 @@ class GarbageCollectionSubsystem(AppSubsystem):
 
     @override
     def on_app_running(self) -> None:
+        """:meta private:"""
         # Inform the user if we're set to something besides standard
         # (so they don't forget to switch it back when done).
         if self._mode is not None and self._mode is not self.Mode.STANDARD:
@@ -238,6 +239,9 @@ class GarbageCollectionSubsystem(AppSubsystem):
 
     def collect(self, force: bool = False) -> None:
         """Request an explicit garbage collection pass.
+
+        Apps should call this when visual hitches would not be noticed,
+        such as when the screen is faded to black during transitions.
 
         The effect of this call is influenced by the current
         :attr:`mode` and other factors. For instance, if mode is
