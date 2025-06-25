@@ -1401,43 +1401,19 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
 
   // If its got a "r" key, look it up as a resource.. (with optional fallback).
   cJSON* resource = cJSON_GetObjectItem(obj, "r");
-  if (resource == nullptr) {
-    resource = cJSON_GetObjectItem(obj, "resource");
-    // As of build 14318, complain if we find long key names; hope to remove
-    // them soon.
-    if (resource != nullptr) {
-      static bool printed = false;
-      if (!printed) {
-        printed = true;
-        char* c = cJSON_Print(obj);
-        BA_LOG_ONCE(
-            LogName::kBaAssets, LogLevel::kError,
-            "found long key 'resource' in raw lstr json: " + std::string(c));
-        free(c);
-      }
-    }
-  }
   if (resource != nullptr) {
+    if (!cJSON_IsString(resource)) {
+      throw Exception("expected a string for resource");
+    }
     // Look for fallback-resource.
     cJSON* fallback_resource = cJSON_GetObjectItem(obj, "f");
-    if (fallback_resource == nullptr) {
-      fallback_resource = cJSON_GetObjectItem(obj, "fallback");
-
-      // As of build 14318, complain if we find old long key names; hope to
-      // remove them soon.
-      if (fallback_resource != nullptr) {
-        static bool printed = false;
-        if (!printed) {
-          printed = true;
-          char* c = cJSON_Print(obj);
-          BA_LOG_ONCE(
-              LogName::kBaAssets, LogLevel::kError,
-              "found long key 'fallback' in raw lstr json: " + std::string(c));
-          free(c);
-        }
-      }
-    }
     cJSON* fallback_value = cJSON_GetObjectItem(obj, "fv");
+    if (fallback_resource && !cJSON_IsString(fallback_resource)) {
+      throw Exception("expected a string for fallback_resource");
+    }
+    if (fallback_value && !cJSON_IsString(fallback_value)) {
+      throw Exception("expected a string for fallback_value");
+    }
     result = g_base->python->GetResource(
         resource->valuestring,
         fallback_resource ? fallback_resource->valuestring : nullptr,
@@ -1445,23 +1421,6 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
   } else {
     // Apparently not a resource; lets try as a translation ("t" keys).
     cJSON* translate = cJSON_GetObjectItem(obj, "t");
-    if (translate == nullptr) {
-      translate = cJSON_GetObjectItem(obj, "translate");
-
-      // As of build 14318, complain if we find long key names; hope to remove
-      // them soon.
-      if (translate != nullptr) {
-        static bool printed = false;
-        if (!printed) {
-          printed = true;
-          char* c = cJSON_Print(obj);
-          BA_LOG_ONCE(
-              LogName::kBaAssets, LogLevel::kError,
-              "found long key 'translate' in raw lstr json: " + std::string(c));
-          free(c);
-        }
-      }
-    }
     if (translate != nullptr) {
       if (!cJSON_IsArray(translate) || cJSON_GetArraySize(translate) != 2) {
         throw Exception("Expected a 2 member array for translate");
@@ -1483,23 +1442,6 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
       // (can be useful for feeding explicit strings while still allowing
       // translated subs
       cJSON* value = cJSON_GetObjectItem(obj, "v");
-      if (value == nullptr) {
-        value = cJSON_GetObjectItem(obj, "value");
-
-        // As of build 14318, complain if we find long key names; hope to remove
-        // them soon.
-        if (value != nullptr) {
-          static bool printed = false;
-          if (!printed) {
-            printed = true;
-            char* c = cJSON_Print(obj);
-            BA_LOG_ONCE(
-                LogName::kBaAssets, LogLevel::kError,
-                "found long key 'value' in raw lstr json: " + std::string(c));
-            free(c);
-          }
-        }
-      }
       if (value != nullptr) {
         if (!cJSON_IsString(value)) {
           throw Exception("Expected a string for value");
@@ -1512,26 +1454,8 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
   }
 
   // Ok; now no matter what it was, see if it contains any subs and replace
-  // them.
-  // ("subs" or "s")
+  // them ("s").
   cJSON* subs = cJSON_GetObjectItem(obj, "s");
-  if (subs == nullptr) {
-    subs = cJSON_GetObjectItem(obj, "subs");
-
-    // As of build 14318, complain if we find long key names; hope to remove
-    // them soon.
-    if (subs != nullptr) {
-      static bool printed = false;
-      if (!printed) {
-        printed = true;
-        char* c = cJSON_Print(obj);
-        BA_LOG_ONCE(
-            LogName::kBaAssets, LogLevel::kError,
-            "found long key 'subs' in raw lstr json: " + std::string(c));
-        free(c);
-      }
-    }
-  }
   if (subs != nullptr) {
     if (!cJSON_IsArray(subs)) {
       throw Exception("expected an array for 'subs'");
@@ -1551,7 +1475,8 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
       }
       std::string s_key = key->valuestring;
 
-      // Second item can be a string or a dict; if its a dict, we go recursive.
+      // Second item can be a string or a dict; if its a dict, we go
+      // recursive.
       cJSON* value = cJSON_GetArrayItem(sub, 1);
       std::string s_val;
       if (cJSON_IsString(value)) {
@@ -1563,8 +1488,10 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
       }
 
       // Replace *ALL* occurrences.
+      //
       // FIXME: Using this simple logic, If our replace value contains our
-      // search value we get an infinite loop. For now, just error in that case.
+      // search value we get an infinite loop. For now, just error in that
+      // case.
       if (s_val.find(s_key) != std::string::npos) {
         throw Exception("Subs replace string cannot contain search string.");
       }
@@ -1595,6 +1522,11 @@ auto Assets::CompileResourceString(const std::string& s, bool* valid)
   }
 
   cJSON* root = cJSON_Parse(s.c_str());
+  if (root && !cJSON_IsObject(root)) {
+    cJSON_Delete(root);
+    root = nullptr;
+  }
+
   if (root == nullptr) {
     g_core->logging->Log(
         LogName::kBaAssets, LogLevel::kError,

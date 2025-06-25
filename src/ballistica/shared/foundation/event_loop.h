@@ -38,7 +38,10 @@ class EventLoop {
 
   void PushSetSuspended(bool suspended);
 
-  auto thread_id() const -> std::thread::id { return thread_id_; }
+  auto thread_id() const -> std::thread::id {
+    assert(this);
+    return thread_id_;
+  }
 
   void RunToCompletion();
   void RunSingleCycle();

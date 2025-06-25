@@ -120,7 +120,7 @@ class TournamentEntryWindow(PopupWindow):
         self._launched = False
 
         # Show the ad button only if we support ads *and* it has a level 1 fee.
-        self._do_ad_btn = bui.app.plus.has_video_ads() and self._allow_ads
+        self._do_ad_btn = bui.app.plus.ads.has_video_ads() and self._allow_ads
 
         x_offs = 0 if self._do_ad_btn else 85
 
@@ -529,7 +529,7 @@ class TournamentEntryWindow(PopupWindow):
         )
 
         if self._do_ad_btn:
-            enabled = plus.have_incentivized_ad()
+            enabled = plus.ads.have_incentivized_ad()
             have_ad_tries_remaining = (
                 self._tournament_info['adTriesRemaining'] is not None
                 and self._tournament_info['adTriesRemaining'] > 0

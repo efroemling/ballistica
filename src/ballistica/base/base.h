@@ -737,7 +737,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   auto InNetworkWriteThread() const -> bool override;
   auto InGraphicsContext() const -> bool override;
 
-  /// High level screen-message call usable from any thread.
+  /// High level screen-message call. Can be called from any thread.
   void ScreenMessage(const std::string& s,
                      const Vector3f& color = {1.0f, 1.0f, 1.0f}) override;
 

@@ -24,6 +24,8 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
     _stdassets = bs.Dependency(bs.AssetPackage, 'stdassets@1')
 
+    _did_initial_transition = False
+
     def __init__(self, settings: dict):
         super().__init__(settings)
         self._logo_node: bs.Node | None = None
@@ -78,10 +80,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 },
             )
         )
-        if (
-            not app.classic.main_menu_did_initial_transition
-            and self.my_name is not None
-        ):
+        if not self._did_initial_transition and self.my_name is not None:
             assert self.my_name.node
             bs.animate(self.my_name.node, 'opacity', {2.3: 0, 3.0: 1.0})
 
@@ -105,7 +104,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     },
                 )
             )
-            if not app.classic.main_menu_did_initial_transition:
+            if not self._did_initial_transition:
                 assert self.beta_info.node
                 bs.animate(self.beta_info.node, 'opacity', {1.3: 0, 1.8: 1.0})
 
@@ -200,7 +199,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             )
         )
 
-        self._update_timer = bs.Timer(1.0, self._update, repeat=True)
+        self._update_timer = bs.Timer(0.1, self._update, repeat=True)
         self._update()
 
         # Hopefully this won't hitch but lets space these out anyway.
@@ -218,8 +217,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         )
 
         app.classic.invoke_main_menu_ui()
-
-        app.classic.main_menu_did_initial_transition = True
 
     def _update(self) -> None:
         # pylint: disable=too-many-locals
@@ -256,7 +253,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             delay_inc = 0.02
 
             # Come on faster after the first time.
-            if app.classic.main_menu_did_initial_transition:
+            if self._did_initial_transition:
                 base_delay = 0.0
                 delay = base_delay
                 delay_inc = 0.02
@@ -633,7 +630,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         if (
             custom_texture is None
             and bs.app.classic is not None
-            and not bs.app.classic.main_menu_did_initial_transition
+            and not self._did_initial_transition
         ):
             jitter()
             cmb = bs.newnode('combine', owner=logo.node, attrs={'size': 2})
@@ -658,6 +655,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 delay + 0.5: 360.0,
             }
             bs.animate(logo.node, 'rotate', keys)
+            type(self)._did_initial_transition = True
         else:
             # For all other cases do a simple scale up animation.
             jitter()

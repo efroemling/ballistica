@@ -382,7 +382,7 @@ class ChestWindow(bui.MainWindow):
         show_ad_button = (
             chest.unlock_tokens > 0
             and chest.ad_allow
-            and plus.have_incentivized_ad()
+            and plus.ads.have_incentivized_ad()
         )
 
         bwidth = 130

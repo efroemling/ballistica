@@ -11,6 +11,8 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 
 namespace ballistica::base {
 
@@ -35,8 +37,10 @@ class RendererGL::ShaderGL : public Object {
     }
 
 #if BA_OPENGL_IS_ES
+    // Shader version for 3.0 ES
     src_fin = "#version 300 es\n" + src_fin;
 #else
+    // Shader version for 3.2 GL core profile.
     src_fin = "#version 150 core\n" + src_fin;
 #endif
 

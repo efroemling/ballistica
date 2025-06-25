@@ -29,7 +29,7 @@ from babase._stringedit import StringEditSubsystem
 from babase._devconsole import DevConsoleSubsystem
 from babase._appconfig import AppConfig
 from babase._logging import lifecyclelog, applog
-from babase._garbagecollection import GarbageCollectionSubsystem
+from babase._gc import GarbageCollectionSubsystem
 
 if TYPE_CHECKING:
     import asyncio
@@ -139,7 +139,7 @@ class App:
         #: Subsystem for wrangling workspaces.
         self.workspaces: WorkspaceSubsystem = WorkspaceSubsystem()
 
-        # (not actually in use yet)
+        #: :meta private:
         self.components: AppComponentSubsystem = AppComponentSubsystem()
 
         #: Subsystem for wrangling text input from various sources.
@@ -1151,7 +1151,7 @@ class App:
             fade_done = True
 
         if _babase.app.env.gui:
-            _babase.fade_screen(False, time=0.15, endcall=_set_fade_done)
+            _babase.fade_screen(False, time=0.25, endcall=_set_fade_done)
         else:
             fade_done = True
 

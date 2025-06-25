@@ -369,6 +369,7 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
       {LogName::kBaApp, ObjID::kLoggerBaApp},
       {LogName::kBaAudio, ObjID::kLoggerBaAudio},
       {LogName::kBaGraphics, ObjID::kLoggerBaGraphics},
+      {LogName::kBaPerformance, ObjID::kLoggerBaPerformance},
       {LogName::kBaDisplayTime, ObjID::kLoggerBaDisplayTime},
       {LogName::kBaLifecycle, ObjID::kLoggerBaLifecycle},
       {LogName::kBaAssets, ObjID::kLoggerBaAssets},
@@ -563,6 +564,10 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
       break;
     case LogName::kBaGraphics:
       logcallobj = ObjID::kLoggerBaGraphicsLogCall;
+      handled = true;
+      break;
+    case LogName::kBaPerformance:
+      logcallobj = ObjID::kLoggerBaPerformanceLogCall;
       handled = true;
       break;
     case LogName::kBaDisplayTime:

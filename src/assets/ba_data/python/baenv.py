@@ -31,9 +31,7 @@ if TYPE_CHECKING:
 
     from efro.logging import LogHandler
 
-# Normally we'd grab __name__ here, but in modular builds we wind up
-# being __main__ that way; we'd rather show up as 'baenv' in all cases.
-logger = logging.getLogger('baenv')
+logger = logging.getLogger('ba.env')
 
 # IMPORTANT - It is likely (and in some cases expected) that this
 # module's code will be exec'ed multiple times. This is because it is
@@ -58,7 +56,7 @@ logger = logging.getLogger('baenv')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22436
+TARGET_BALLISTICA_BUILD = 22444
 TARGET_BALLISTICA_VERSION = '1.7.44'
 
 
@@ -130,11 +128,14 @@ class _EnvGlobals:
 
 
 def did_paths_set_fail() -> bool:
-    """Did we try to set paths and fail?"""
+    """Did we try to set paths and fail?
+
+    :meta private:
+    """
     return _EnvGlobals.get().paths_set_failed
 
 
-def config_exists() -> bool:
+def env_config_exists() -> bool:
     """Has a config been created?"""
 
     return _EnvGlobals.get().config is not None
@@ -612,7 +613,7 @@ def _setup_dirs(
                 )
 
 
-def extract_arg(args: list[str], names: list[str], is_dir: bool) -> str | None:
+def _extract_arg(args: list[str], names: list[str], is_dir: bool) -> str | None:
     """Given a list of args and an arg name, returns a value.
 
     The arg flag and value are removed from the arg list. We also check
@@ -686,15 +687,15 @@ def _modular_main() -> None:
 
         # Our -c arg basically mirrors Python's -c arg. If we get that,
         # simply exec it and return; no engine stuff.
-        command = extract_arg(args, ['--command', '-c'], is_dir=False)
+        command = _extract_arg(args, ['--command', '-c'], is_dir=False)
         if command is not None:
             exec(command)  # pylint: disable=exec-used
             return
 
-        config_dir = extract_arg(args, ['--config-dir', '-C'], is_dir=True)
-        data_dir = extract_arg(args, ['--data-dir', '-d'], is_dir=True)
-        mods_dir = extract_arg(args, ['--mods-dir', '-m'], is_dir=True)
-        cache_dir = extract_arg(args, ['--cache-dir', '-a'], is_dir=True)
+        config_dir = _extract_arg(args, ['--config-dir', '-C'], is_dir=True)
+        data_dir = _extract_arg(args, ['--data-dir', '-d'], is_dir=True)
+        mods_dir = _extract_arg(args, ['--mods-dir', '-m'], is_dir=True)
+        cache_dir = _extract_arg(args, ['--cache-dir', '-a'], is_dir=True)
 
         # We run configure() BEFORE importing babase. (part of its job
         # is to wrangle paths which can affect where babase and

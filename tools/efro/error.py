@@ -171,6 +171,7 @@ def is_urllib3_communication_error(exc: BaseException, url: str | None) -> bool:
             urllib3.exceptions.ConnectTimeoutError,
             urllib3.exceptions.ReadTimeoutError,
             urllib3.exceptions.NewConnectionError,
+            urllib3.exceptions.SSLError,
         ),
     ):
         return True

@@ -383,7 +383,7 @@ class Graphics {
   void DrawCursor(FrameDef* frame_def);
   void DrawFades(FrameDef* frame_def);
   void DrawDebugBuffers(RenderPass* pass);
-  void UpdateAndDrawProgressBar(FrameDef* frame_def);
+  void UpdateAndDrawOnlyProgressBar(FrameDef* frame_def);
   void DoDrawBlotch(std::vector<uint16_t>* indices,
                     std::vector<VertexSprite>* verts, const Vector3f& pos,
                     float size, float r, float g, float b, float a);

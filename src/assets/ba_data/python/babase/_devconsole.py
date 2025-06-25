@@ -80,11 +80,12 @@ class DevConsoleTab:
         h_align: Literal['left', 'center', 'right'] = 'center',
         v_align: Literal['top', 'center', 'bottom', 'none'] = 'center',
         scale: float = 1.0,
+        style: Literal['normal', 'faded'] = 'normal',
     ) -> None:
         """Add a button to the tab being refreshed."""
         assert _babase.app.devconsole.is_refreshing
         _babase.dev_console_add_text(
-            text, pos[0], pos[1], h_anchor, h_align, v_align, scale
+            text, pos[0], pos[1], h_anchor, h_align, v_align, scale, style
         )
 
     def python_terminal(self) -> None:
