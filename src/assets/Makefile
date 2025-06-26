@@ -447,7 +447,11 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bautils/chatutils/__init__.py \
   $(BUILD_DIR)/ba_data/python/bautils/chatutils/chat_handle.py \
   $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/cheats.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/gameutils.py \
   $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/moderation.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/partymanage.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/usercmds.py \
   $(BUILD_DIR)/ba_data/python/bautils/chatutils/server_command.py \
   $(BUILD_DIR)/server_package/ballisticakit_server.py
 

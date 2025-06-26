@@ -1,0 +1,25 @@
+# Released under the MIT License. See LICENSE for details.
+#
+"""A command module handing user commands."""
+
+from __future__ import annotations
+from typing import override
+
+# import bascenev1 as bs
+# import babase as ba
+from bautils.chatutils import ServerCommand, register_command
+
+
+@register_command
+class List(ServerCommand):
+    """/l, /list or /clients"""
+
+    aliases = ["l", "clients"]
+
+    @override
+    def on_command_call(self) -> None:
+        raise NotImplementedError
+
+    @override
+    def admin_authentication(self) -> bool:
+        return False

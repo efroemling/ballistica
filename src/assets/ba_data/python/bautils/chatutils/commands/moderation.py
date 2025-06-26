@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""A chat interpreter to manage chat related things."""
+"""A command module handing moderation commands."""
 
 from __future__ import annotations
 from typing import override
@@ -56,3 +56,32 @@ class Kick(ServerCommand):
 
         bs.broadcastmessage(kick_msg)
         bs.disconnect_client(client_id=client_id, ban_time=ban_time)
+
+
+@register_command
+class Remove(ServerCommand):
+    """/remove"""
+
+    @override
+    def on_command_call(self) -> None:
+        raise NotImplementedError
+
+
+@register_command
+class Ban(ServerCommand):
+    """/ban"""
+
+    @override
+    def on_command_call(self) -> None:
+        raise NotImplementedError
+
+
+@register_command
+class MuteSystem(ServerCommand):
+    """/"""
+
+    aliases = ["mute", "unmute", "servermute"]
+
+    @override
+    def on_command_call(self) -> None:
+        raise NotImplementedError
