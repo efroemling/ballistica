@@ -244,7 +244,7 @@ void ClassicAppMode::HostScanCycle() {
     }
 
     // Bind to whatever.
-    struct sockaddr_in serv_addr{};
+    struct sockaddr_in serv_addr {};
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);  // NOLINT
@@ -921,18 +921,18 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
     starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
                                R"("f":"kickVoteFailedText"})",
                                1, 0, 0);
-  } else if (starter->IsAdmin()) {
-    // Admin doing the kicking succeeds instantly.
-    connections()->SendScreenMessageToClients(
-        R"({"r":"kickOccurredText","s":[["${NAME}",)"
-            + Utils::GetJSONString(
-                target->GetCombinedSpec().GetDisplayString().c_str())
-            + "]]}",
-        1, 1, 0);
-    connections()->DisconnectClient(target->id(), kKickBanSeconds);
-    starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
-                               R"("f":"kickVoteFailedText"})",
-                               1, 0, 0);
+  // } else if (starter->IsAdmin()) {
+  //   // Admin doing the kicking succeeds instantly.
+  //   connections()->SendScreenMessageToClients(
+  //       R"({"r":"kickOccurredText","s":[["${NAME}",)"
+  //           + Utils::GetJSONString(
+  //               target->GetCombinedSpec().GetDisplayString().c_str())
+  //           + "]]}",
+  //       1, 1, 0);
+  //   connections()->DisconnectClient(target->id(), kKickBanSeconds);
+  //   starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
+  //                              R"("f":"kickVoteFailedText"})",
+  //                              1, 0, 0);
   } else if (!kick_voting_enabled_) {
     // No kicking otherwise if its disabled.
     starter->SendScreenMessage(R"({"r":"kickVotingDisabledText",)"
@@ -963,24 +963,23 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
     // Ok, kick off a vote.. (send the question and instructions to everyone
     // except the starter and the target).
     for (auto&& client : connected_clients) {
+      std::string starter_name = starter->GetCombinedSpec().GetDisplayString();
+      std::string target_name = target->GetCombinedSpec().GetDisplayString();
+
       if (client != starter && client != target) {
+        // Message to all other clients
         client->SendScreenMessage(
-            R"({"r":"kickQuestionText","s":[["${NAME}",)"
-                + Utils::GetJSONString(
-                    target->GetCombinedSpec().GetDisplayString().c_str())
-                + "]]}",
+            starter_name + " started a vote to kick " + target_name + ".",
             1, 1, 0);
-        client->SendScreenMessage(R"({"r":"kickWithChatText","s":)"
-                                  R"([["${YES}","'1'"],["${NO}","'0'"]]})",
-                                  1, 1, 0);
-      } else {
-        // For the kicker/kickee, simply print that a kick vote has been
-        // started.
+
         client->SendScreenMessage(
-            R"({"r":"kickVoteStartedText","s":[["${NAME}",)"
-                + Utils::GetJSONString(
-                    target->GetCombinedSpec().GetDisplayString().c_str())
-                + "]]}",
+            R"({"r":"kickWithChatText","s":[["${YES}","'1'"],["${NO}","'0'"]]})",
+            1, 1, 0);
+
+      } else {
+        // Message to starter and target
+        client->SendScreenMessage(
+            "Kick vote initiated against " + target_name + ".",
             1, 1, 0);
       }
     }
@@ -988,9 +987,10 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
     kick_vote_in_progress_ = true;
     last_kick_votes_needed_ = -1;  // make sure we print starting num
 
-    // Keep track of who started the vote.
+    // Track vote initiator and target
     kick_vote_starter_ = starter;
     kick_vote_target_ = target;
+
 
     // Reset votes for all connected clients.
     for (scene_v1::ConnectionToClient* client :

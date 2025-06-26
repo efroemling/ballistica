@@ -150,8 +150,8 @@ enum SpazBodyType {
   kHairPonyTailBottomBodyID
 };
 
-static auto AngleBetween2DVectors(dReal x1, dReal y1, dReal x2, dReal y2)
-    -> dReal {
+static auto AngleBetween2DVectors(dReal x1, dReal y1, dReal x2,
+                                  dReal y2) -> dReal {
   dReal x1_norm, y1_norm, x2_norm, y2_norm;
   dReal len1, len2;
   len1 = sqrtf(x1 * x1 + y1 * y1);
