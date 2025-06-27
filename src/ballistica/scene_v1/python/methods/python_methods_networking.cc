@@ -350,6 +350,37 @@ static PyMethodDef PySetAdminsDef = {
     "(internal)",
 };
 
+// ------------------------ set_enable_admins_kick ---------------------------
+
+static auto PySetEnableAdminsKick(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  int enable;
+  static const char* kwlist[] = {"enable", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &enable)) {
+    return nullptr;
+  }
+  assert(g_base->logic);
+
+  if (auto* appmode{classic::ClassicAppMode::GetActiveOrWarn()}) {
+    appmode->set_admins_kick_enabled(static_cast<bool>(enable));
+  }
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetEnableAdminsKickDef = {
+    "set_enable_admins_kick",                   // name
+    (PyCFunction)PySetEnableAdminsKick,         // method
+    METH_VARARGS | METH_KEYWORDS,               // flags
+
+    "set_enable_admins_kick(enable: bool) -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // --------------------- set_enable_default_kick_voting ------------------------
 
 static auto PySetEnableDefaultKickVoting(PyObject* self, PyObject* args,
@@ -908,6 +939,7 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PySetPublicPartyPublicAddressIPV6Def,
       PySetAuthenticateClientsDef,
       PySetAdminsDef,
+      PySetEnableAdminsKickDef,
       PySetEnableDefaultKickVotingDef,
       PySetPublicPartyMaxSizeDef,
       PySetPublicPartyQueueEnabledDef,

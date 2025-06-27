@@ -38,6 +38,9 @@ class ServerConfig:
     # settings->advanced->enter-code.
     admins: list[str] = field(default_factory=list)
 
+    # Whether an admin can kick players directly.
+    enable_admins_kick: bool = True
+
     # Whether the default kick-voting system is enabled.
     enable_default_kick_voting: bool = True
 

@@ -63,6 +63,7 @@ class ClassicAppMode : public base::AppMode {
   auto kick_vote_in_progress() const -> bool { return kick_vote_in_progress_; }
   void StartKickVote(scene_v1::ConnectionToClient* starter,
                      scene_v1::ConnectionToClient* target);
+  void set_admins_kick_enabled(bool enable) { admins_kick_enabled_ = enable; }
   void set_kick_voting_enabled(bool enable) { kick_voting_enabled_ = enable; }
   void SetForegroundScene(scene_v1::Scene* sg);
 
@@ -306,6 +307,7 @@ class ClassicAppMode : public base::AppMode {
   bool idle_exiting_{};
   bool game_roster_dirty_{};
   bool kick_vote_in_progress_{};
+  bool admins_kick_enabled_{true};
   bool kick_voting_enabled_{true};
   bool replay_paused_{};
   bool root_ui_gold_pass_{};

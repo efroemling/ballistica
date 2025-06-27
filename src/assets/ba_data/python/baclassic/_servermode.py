@@ -420,6 +420,9 @@ class ServerController:
         bascenev1.set_enable_default_kick_voting(
             self._config.enable_default_kick_voting
         )
+        bascenev1.set_enable_admins_kick(
+            self._config.enable_admins_kick
+        )
         bascenev1.set_admins(self._config.admins)
 
         # Call set-enabled last (will push state to the cloud).
