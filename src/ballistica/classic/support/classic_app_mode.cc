@@ -921,18 +921,18 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
     starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
                                R"("f":"kickVoteFailedText"})",
                                1, 0, 0);
-    } else if (starter->IsAdmin() && admins_kick_enabled_) {
-      // Admin doing the kicking succeeds instantly.
-      connections()->SendScreenMessageToClients(
-          R"({"r":"kickOccurredText","s":[["${NAME}",)"
-              + Utils::GetJSONString(
-                  target->GetCombinedSpec().GetDisplayString().c_str())
-              + "]]}",
-          1, 1, 0);
-      connections()->DisconnectClient(target->id(), kKickBanSeconds);
-      starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
-                                 R"("f":"kickVoteFailedText"})",
-                                 1, 0, 0);
+  } else if (starter->IsAdmin() && admins_kick_enabled_) {
+    // Admin doing the kicking succeeds instantly.
+    connections()->SendScreenMessageToClients(
+        R"({"r":"kickOccurredText","s":[["${NAME}",)"
+            + Utils::GetJSONString(
+                target->GetCombinedSpec().GetDisplayString().c_str())
+            + "]]}",
+        1, 1, 0);
+    connections()->DisconnectClient(target->id(), kKickBanSeconds);
+    starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
+                               R"("f":"kickVoteFailedText"})",
+                               1, 0, 0);
   } else if (!kick_voting_enabled_) {
     // No kicking otherwise if its disabled.
     starter->SendScreenMessage(R"({"r":"kickVotingDisabledText",)"

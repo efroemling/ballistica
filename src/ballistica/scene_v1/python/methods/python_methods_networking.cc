@@ -352,8 +352,8 @@ static PyMethodDef PySetAdminsDef = {
 
 // ------------------------ set_enable_admins_kick ---------------------------
 
-static auto PySetEnableAdminsKick(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PySetEnableAdminsKick(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   int enable;
   static const char* kwlist[] = {"enable", nullptr};
@@ -372,9 +372,9 @@ static auto PySetEnableAdminsKick(PyObject* self, PyObject* args, PyObject* keyw
 }
 
 static PyMethodDef PySetEnableAdminsKickDef = {
-    "set_enable_admins_kick",                   // name
-    (PyCFunction)PySetEnableAdminsKick,         // method
-    METH_VARARGS | METH_KEYWORDS,               // flags
+    "set_enable_admins_kick",            // name
+    (PyCFunction)PySetEnableAdminsKick,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
 
     "set_enable_admins_kick(enable: bool) -> None\n"
     "\n"
