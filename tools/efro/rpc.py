@@ -27,6 +27,8 @@ from efro.dataclassio import (
 if TYPE_CHECKING:
     from typing import Literal, Awaitable, Callable
 
+logger = logging.getLogger(__name__)
+
 # Terminology:
 # Packet: A chunk of data consisting of a type and some type-dependent
 #         payload. Even though we use streams we organize our transmission
@@ -134,9 +136,13 @@ class _InFlightMessage:
         )
 
     async def _wait(self) -> bytes:
-        await self._got_response.wait()
-        assert self._response is not None
-        return self._response
+        try:
+            await self._got_response.wait()
+            assert self._response is not None
+            return self._response
+        except asyncio.CancelledError:
+            print('CANCELLED!!!')
+            raise
 
     def set_response(self, data: bytes) -> None:
         """Set response data."""
@@ -232,14 +238,14 @@ class RPCEndpoint:
     def __del__(self) -> None:
         if self._run_called:
             if not self._did_close_writer:
-                logging.warning(
+                logger.warning(
                     'RPCEndpoint %d dying with run'
                     ' called but writer not closed (transport=%s).',
                     id(self),
                     ssl_stream_writer_underlying_transport_info(self._writer),
                 )
             elif not self._did_wait_closed_writer:
-                logging.warning(
+                logger.warning(
                     'RPCEndpoint %d dying with run called'
                     ' but writer not wait-closed (transport=%s).',
                     id(self),
@@ -260,7 +266,7 @@ class RPCEndpoint:
         except asyncio.CancelledError:
             # We aren't really designed to be cancelled so let's warn
             # if it happens.
-            logging.warning(
+            logger.warning(
                 'RPCEndpoint.run got CancelledError;'
                 ' want to try and avoid this.'
             )
@@ -298,14 +304,14 @@ class RPCEndpoint:
             # We want to know if any errors happened aside from CancelledError
             # (which are BaseExceptions, not Exception).
             if isinstance(result, Exception):
-                logging.warning(
+                logger.warning(
                     'Got unexpected error from %s core task: %s',
                     self._label,
                     result,
                 )
 
         if not all(task.done() for task in core_tasks):
-            logging.warning(
+            logger.warning(
                 'RPCEndpoint %d: not all core tasks marked done after gather.',
                 id(self),
             )
@@ -315,7 +321,7 @@ class RPCEndpoint:
             self.close()
             await self.wait_closed()
         except Exception:
-            logging.exception('Error closing %s.', self._label)
+            logger.exception('Error closing %s.', self._label)
 
         if self.debug_print:
             self.debug_print_call(f'{self._label}: finished.')
@@ -493,6 +499,7 @@ class RPCEndpoint:
         # Kill all of our in-flight tasks.
         if self.debug_print:
             self.debug_print_call(f'{self._label}: cancelling tasks...')
+
         for task in self._get_live_tasks():
             task.cancel()
 
@@ -529,7 +536,7 @@ class RPCEndpoint:
             raise RuntimeError('Must be called after close()')
 
         if not self._did_close_writer:
-            logging.warning(
+            logger.warning(
                 'RPCEndpoint wait_closed() called but never'
                 ' explicitly closed writer.'
             )
@@ -552,14 +559,14 @@ class RPCEndpoint:
             # We want to know if any errors happened aside from CancelledError
             # (which are BaseExceptions, not Exception).
             if isinstance(result, Exception):
-                logging.warning(
+                logger.warning(
                     'Got unexpected error cleaning up %s task: %s',
                     self._label,
                     result,
                 )
 
         if not all(task.done() for task in live_tasks):
-            logging.warning(
+            logger.warning(
                 'RPCEndpoint %d: not all live tasks marked done after gather.',
                 id(self),
             )
@@ -587,7 +594,7 @@ class RPCEndpoint:
                 timeout=30.0,
             )
         except asyncio.TimeoutError:
-            logging.info(
+            logger.info(
                 'Timeout on _writer.wait_closed() for %s rpc (transport=%s).',
                 self._label,
                 ssl_stream_writer_underlying_transport_info(self._writer),
@@ -599,7 +606,7 @@ class RPCEndpoint:
                 )
         except Exception as exc:
             if not self._is_expected_connection_error(exc):
-                logging.exception('Error closing _writer for %s.', self._label)
+                logger.exception('Error closing _writer for %s.', self._label)
             else:
                 if self.debug_print:
                     self.debug_print_call(
@@ -607,7 +614,7 @@ class RPCEndpoint:
                         f' _writer.wait_closed(): {exc}.'
                     )
         except asyncio.CancelledError:
-            logging.warning(
+            logger.warning(
                 'RPCEndpoint.wait_closed()'
                 ' got asyncio.CancelledError; not expected.'
             )
@@ -770,7 +777,7 @@ class RPCEndpoint:
             # noise if this gets out of hand.
             if len(self._out_packets) > 200:
                 if not self._did_out_packets_buildup_warning:
-                    logging.warning(
+                    logger.warning(
                         '_out_packets building up too'
                         ' much on RPCEndpoint %s.',
                         id(self),
@@ -821,7 +828,7 @@ class RPCEndpoint:
             # We expect connection errors to put us here, but make noise
             # if something else does.
             if not self._is_expected_connection_error(exc):
-                logging.exception(
+                logger.exception(
                     'Unexpected error in rpc %s %s task'
                     ' (age=%.1f, total_bytes_read=%d).',
                     self._label,
@@ -853,7 +860,7 @@ class RPCEndpoint:
             # If that doesn't happen, make a fuss so we know to fix it.
             # The other end will simply never get a response to this
             # message.
-            logging.exception('Error handling raw rpc message')
+            logger.exception('Error handling raw rpc message')
             return
 
         assert self._peer_info is not None
