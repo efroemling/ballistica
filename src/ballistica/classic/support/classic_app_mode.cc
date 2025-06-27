@@ -244,7 +244,7 @@ void ClassicAppMode::HostScanCycle() {
     }
 
     // Bind to whatever.
-    struct sockaddr_in serv_addr {};
+    struct sockaddr_in serv_addr{};
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);  // NOLINT
@@ -921,18 +921,18 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
     starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
                                R"("f":"kickVoteFailedText"})",
                                1, 0, 0);
-  // } else if (starter->IsAdmin()) {
-  //   // Admin doing the kicking succeeds instantly.
-  //   connections()->SendScreenMessageToClients(
-  //       R"({"r":"kickOccurredText","s":[["${NAME}",)"
-  //           + Utils::GetJSONString(
-  //               target->GetCombinedSpec().GetDisplayString().c_str())
-  //           + "]]}",
-  //       1, 1, 0);
-  //   connections()->DisconnectClient(target->id(), kKickBanSeconds);
-  //   starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
-  //                              R"("f":"kickVoteFailedText"})",
-  //                              1, 0, 0);
+    // } else if (starter->IsAdmin()) {
+    //   // Admin doing the kicking succeeds instantly.
+    //   connections()->SendScreenMessageToClients(
+    //       R"({"r":"kickOccurredText","s":[["${NAME}",)"
+    //           + Utils::GetJSONString(
+    //               target->GetCombinedSpec().GetDisplayString().c_str())
+    //           + "]]}",
+    //       1, 1, 0);
+    //   connections()->DisconnectClient(target->id(), kKickBanSeconds);
+    //   starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
+    //                              R"("f":"kickVoteFailedText"})",
+    //                              1, 0, 0);
   } else if (!kick_voting_enabled_) {
     // No kicking otherwise if its disabled.
     starter->SendScreenMessage(R"({"r":"kickVotingDisabledText",)"
@@ -969,8 +969,8 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
       if (client != starter && client != target) {
         // Message to all other clients
         client->SendScreenMessage(
-            starter_name + " started a vote to kick " + target_name + ".",
-            1, 1, 0);
+            starter_name + " started a vote to kick " + target_name + ".", 1, 1,
+            0);
 
         client->SendScreenMessage(
             R"({"r":"kickWithChatText","s":[["${YES}","'1'"],["${NO}","'0'"]]})",
@@ -979,8 +979,7 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
       } else {
         // Message to starter and target
         client->SendScreenMessage(
-            "Kick vote initiated against " + target_name + ".",
-            1, 1, 0);
+            "Kick vote initiated against " + target_name + ".", 1, 1, 0);
       }
     }
     kick_vote_end_time_ = current_time + kKickVoteDuration;
@@ -990,7 +989,6 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
     // Track vote initiator and target
     kick_vote_starter_ = starter;
     kick_vote_target_ = target;
-
 
     // Reset votes for all connected clients.
     for (scene_v1::ConnectionToClient* client :

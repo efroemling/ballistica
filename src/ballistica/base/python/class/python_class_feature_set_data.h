@@ -40,8 +40,8 @@ class PythonClassFeatureSetData : public PythonClass {
 
  private:
   static PyMethodDef tp_methods[];
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassFeatureSetData* self);
   FeatureSetNativeComponent* feature_set_{};
   static auto Play(PythonClassFeatureSetData* self, PyObject* args,

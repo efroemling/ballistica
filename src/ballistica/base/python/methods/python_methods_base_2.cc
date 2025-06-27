@@ -32,8 +32,8 @@ namespace ballistica::base {
 
 // ------------------------------- open_url ------------------------------------
 
-static auto PyOpenURL(PyObject* self, PyObject* args,
-                      PyObject* keywds) -> PyObject* {
+static auto PyOpenURL(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* address{};
   int force_fallback{};
@@ -171,8 +171,8 @@ static PyMethodDef PyOverlayWebBrowserCloseDef = {
     ":meta private:"};
 // ---------------------------- screenmessage ----------------------------------
 
-static auto PyScreenMessage(PyObject* self, PyObject* args,
-                            PyObject* keywds) -> PyObject* {
+static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* color_obj = Py_None;
   PyObject* message_obj;
@@ -249,8 +249,8 @@ static PyMethodDef PyGetCameraPositionDef = {
 
 // --------------------------- get_camera_target -------------------------------
 
-static auto PyGetCameraTarget(PyObject* self, PyObject* args,
-                              PyObject* keywds) -> PyObject* {
+static auto PyGetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   float x = 0.0f;
   float y = 0.0f;
@@ -314,8 +314,8 @@ static PyMethodDef PySetCameraPositionDef = {
 
 // ---------------------------- set_camera_target ------------------------------
 
-static auto PySetCameraTarget(PyObject* self, PyObject* args,
-                              PyObject* keywds) -> PyObject* {
+static auto PySetCameraTarget(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   float x = 0.0f;
   float y = 0.0f;
@@ -349,8 +349,8 @@ static PyMethodDef PySetCameraTargetDef = {
 
 // ---------------------------- set_camera_manual ------------------------------
 
-static auto PySetCameraManual(PyObject* self, PyObject* args,
-                              PyObject* keywds) -> PyObject* {
+static auto PySetCameraManual(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   bool value = false;
   static const char* kwlist[] = {"value", nullptr};
@@ -382,8 +382,8 @@ static PyMethodDef PySetCameraManualDef = {
 
 // -------------------------------- charstr ------------------------------------
 
-static auto PyCharStr(PyObject* self, PyObject* args,
-                      PyObject* keywds) -> PyObject* {
+static auto PyCharStr(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* name_obj;
   static const char* kwlist[] = {"name", nullptr};
@@ -416,8 +416,8 @@ static PyMethodDef PyCharStrDef = {
 
 // ------------------------------- safecolor -----------------------------------
 
-static auto PySafeColor(PyObject* self, PyObject* args,
-                        PyObject* keywds) -> PyObject* {
+static auto PySafeColor(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* color_obj;
   float red, green, blue;
@@ -491,8 +491,8 @@ static PyMethodDef PyGetMaxGraphicsQualityDef = {
 
 // ------------------------------ evaluate_lstr --------------------------------
 
-static auto PyEvaluateLstr(PyObject* self, PyObject* args,
-                           PyObject* keywds) -> PyObject* {
+static auto PyEvaluateLstr(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* value;
   static const char* kwlist[] = {"value", nullptr};
@@ -517,8 +517,8 @@ static PyMethodDef PyEvaluateLstrDef = {
 
 // --------------------------- get_string_height -------------------------------
 
-static auto PyGetStringHeight(PyObject* self, PyObject* args,
-                              PyObject* keywds) -> PyObject* {
+static auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   std::string s;
   int suppress_warning = 0;
@@ -562,8 +562,8 @@ static PyMethodDef PyGetStringHeightDef = {
 
 // ---------------------------- get_string_width -------------------------------
 
-static auto PyGetStringWidth(PyObject* self, PyObject* args,
-                             PyObject* keywds) -> PyObject* {
+static auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   std::string s;
   PyObject* s_obj;
@@ -607,8 +607,8 @@ static PyMethodDef PyGetStringWidthDef = {
 
 // --------------------------- can_display_chars -------------------------------
 
-static auto PyCanDisplayChars(PyObject* self, PyObject* args,
-                              PyObject* keywds) -> PyObject* {
+static auto PyCanDisplayChars(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   std::string text;
   PyObject* text_obj;
@@ -640,8 +640,8 @@ static PyMethodDef PyCanDisplayCharsDef = {
 
 // ----------------------------- fade_screen -----------------------------------
 
-static auto PyFadeScreen(PyObject* self, PyObject* args,
-                         PyObject* keywds) -> PyObject* {
+static auto PyFadeScreen(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   int fade{};
@@ -933,8 +933,8 @@ static PyMethodDef PySupportsUnicodeDisplayDef = {
 
 // --------------------------- show_progress_bar -------------------------------
 
-static auto PyShowProgressBar(PyObject* self, PyObject* args,
-                              PyObject* keywds) -> PyObject* {
+static auto PyShowProgressBar(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   g_base->graphics->EnableProgressBar(false);
@@ -1036,8 +1036,8 @@ static PyMethodDef PyGetVirtualSafeAreaSizeDef = {
 
 // -------------------------------- atexit -------------------------------------
 
-static auto PyAtExit(PyObject* self, PyObject* args,
-                     PyObject* keywds) -> PyObject* {
+static auto PyAtExit(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* call_obj;
   static const char* kwlist[] = {"call", nullptr};

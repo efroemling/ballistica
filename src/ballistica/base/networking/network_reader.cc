@@ -67,7 +67,7 @@ void NetworkReader::PokeSelf_() {
                          "Unable to create sleep ping socket; errno "
                              + g_core->platform->GetSocketErrorString());
   } else {
-    struct sockaddr_in serv_addr {};
+    struct sockaddr_in serv_addr{};
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);  // NOLINT
@@ -78,7 +78,7 @@ void NetworkReader::PokeSelf_() {
                            "Unable to bind sleep socket: "
                                + g_core->platform->GetSocketErrorString());
     } else {
-      struct sockaddr_in t_addr {};
+      struct sockaddr_in t_addr{};
       memset(&t_addr, 0, sizeof(t_addr));
       t_addr.sin_family = AF_INET;
       t_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);  // NOLINT
@@ -432,7 +432,7 @@ void NetworkReader::OpenSockets_() {
     g_core->platform->SetSocketNonBlocking(sd4_);
 
     // Bind to local server port.
-    struct sockaddr_in serv_addr {};
+    struct sockaddr_in serv_addr{};
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);  // NOLINT
 
@@ -461,7 +461,7 @@ void NetworkReader::OpenSockets_() {
 
   // See what v4 port we actually wound up with.
   if (sd4_ != -1) {
-    struct sockaddr_in sa {};
+    struct sockaddr_in sa{};
     socklen_t sa_len = sizeof(sa);
     if (getsockname(sd4_, reinterpret_cast<sockaddr*>(&sa), &sa_len) == 0) {
       port4_ = ntohs(sa.sin_port);  // NOLINT
@@ -494,7 +494,7 @@ void NetworkReader::OpenSockets_() {
     }
 
     g_core->platform->SetSocketNonBlocking(sd6_);
-    struct sockaddr_in6 serv_addr {};
+    struct sockaddr_in6 serv_addr{};
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin6_family = AF_INET6;
     serv_addr.sin6_port = htons(port6_);  // NOLINT
@@ -525,7 +525,7 @@ void NetworkReader::OpenSockets_() {
 
   // See what v6 port we actually wound up with.
   if (sd6_ != -1) {
-    struct sockaddr_in sa {};
+    struct sockaddr_in sa{};
     socklen_t sa_len = sizeof(sa);
     if (getsockname(sd6_, reinterpret_cast<sockaddr*>(&sa), &sa_len) == 0) {
       port6_ = ntohs(sa.sin_port);  // NOLINT

@@ -713,8 +713,8 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
   }
 }
 
-auto ConnectionSet::VerifyClientAddr(uint8_t client_id,
-                                     const SockAddr& addr) -> bool {
+auto ConnectionSet::VerifyClientAddr(uint8_t client_id, const SockAddr& addr)
+    -> bool {
   auto connection_to_client = connections_to_clients_.find(client_id);
 
   if (connection_to_client != connections_to_clients_.end()) {

@@ -339,8 +339,8 @@ auto Utils::UTF8FromUnicode(std::vector<uint32_t> unichars) -> std::string {
   return buffer.data();
 }
 
-auto Utils::UnicodeFromUTF8(const std::string& s_in,
-                            const char* loc) -> std::vector<uint32_t> {
+auto Utils::UnicodeFromUTF8(const std::string& s_in, const char* loc)
+    -> std::vector<uint32_t> {
   std::string s = GetValidUTF8(s_in.c_str(), loc);
   // worst case every char is a character (plus trailing 0)
   std::vector<uint32_t> vals(s.size() + 1);
