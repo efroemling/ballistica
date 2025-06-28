@@ -49,6 +49,8 @@
   garbage collection due to reference loops, and it offers some tips and
   functionality to help track down and eliminate said loops. Check out the
   `GarbageCollectionSubsystem` documentation for more info.
+- Added `DiscordSubsystem` class which wraps the underlying `_babase` 
+  implementation of discord sdk
 - Added proper support for mouse-cancel events. This fixes an annoying issue
   where using home-bar nav gestures on Android to switch apps could lead to
   unintended button presses (namely on chest slots since that is near the home
