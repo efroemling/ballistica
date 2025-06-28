@@ -96,6 +96,12 @@ class LanguageSubsystem(AppSubsystem):
     def _update_test_language(self, langid: str) -> None:
         if _babase.app.classic is None:
             raise RuntimeError('This requires classic.')
+
+        # Only do this during normal running operation.
+        appstate = _babase.app.state
+        if appstate is not type(appstate).RUNNING:
+            return
+
         _babase.app.classic.master_server_v1_get(
             'bsLangGet',
             {'lang': langid, 'format': 'json'},

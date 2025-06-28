@@ -33,9 +33,10 @@ class NetworkSubsystem:
         # I'm finding that urllib3 exceptions tend to give us reference
         # cycles, which we want to avoid as much as possible. We can
         # work around this by gutting the exceptions using
-        # efro.util.cleanup_exception_chain() after handling them.
+        # efro.util.strip_exception_tracebacks() after handling them.
         # Unfortunately this means we need to turn off retries here
-        # since that effectively hides exceptions from us.
+        # since the retry mechanism effectively hides exceptions from
+        # us.
         self.urllib3pool = urllib3.PoolManager(
             retries=False,
             ssl_context=self.sslcontext,

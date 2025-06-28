@@ -1,4 +1,4 @@
-### 1.7.44 (build 22446, api 9, 2025-06-25)
+### 1.7.44 (build 22449, api 9, 2025-06-28)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and
   an associated `dont_write_bytecode` value for the server config file. In most
   cases writing .pyc files is useful as it can speed up relaunches and keep
@@ -84,7 +84,7 @@
   messages.
 - The 'Logging' dev-console-tab has been polished up a bit, and now includes
   descriptions for ballistica's various loggers.
-- Added `efro.util.cleanup_exception_chain()` which can help break reference
+- Added `efro.util.strip_exception_tracebacks()` which can help break reference
   cycles caused by handling exceptions.
 
 ### 1.7.43 (build 22406, api 9, 2025-06-09)

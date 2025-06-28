@@ -12,7 +12,7 @@ from threading import Thread
 from typing import TYPE_CHECKING, override
 
 from efro.error import CleanError
-from efro.util import cleanup_exception_chain
+from efro.util import strip_exception_tracebacks
 from bauiv1lib.settings.testing import TestingWindow
 import bauiv1 as bui
 
@@ -245,8 +245,9 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             _print(f'Failed in {duration:.2f}s.', color=(1, 0, 0))
             have_error[0] = True
 
-            # Try to avoid reference cycles.
-            cleanup_exception_chain(exc)
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
 
             return False
 
@@ -349,8 +350,9 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             f'{traceback.format_exc()}',
             color=(1, 0, 0),
         )
-        # Try to avoid reference cycles.
-        cleanup_exception_chain(exc)
+        # We're done with the exception, so strip its tracebacks to
+        # avoid reference cycles.
+        strip_exception_tracebacks(exc)
 
 
 def _dummy_success() -> None:

@@ -27,6 +27,24 @@ class WebLocation(Enum):
 
 @ioprepped
 @dataclass
+class CloudVals:
+    """Engine config values provided by the master server.
+
+    Used to convey things such as debug logging.
+    """
+
+    #: Fully qualified type names we should emit extra debug logs for
+    #: when garbage-collected (for debugging ref loops).
+    gc_debug_types: Annotated[
+        list[str], IOAttrs('gct', store_default=False)
+    ] = field(default_factory=list)
+
+    #: Max number of objects of a given type to emit debug logs for.
+    gc_debug_type_limit: Annotated[int, IOAttrs('gdl', store_default=False)] = 2
+
+
+@ioprepped
+@dataclass
 class LoginProxyRequestMessage(Message):
     """Request send to the cloud to ask for a login-proxy."""
 
@@ -343,3 +361,22 @@ class SecureDataCheckerResponse(Response):
     """Here's that checker ya asked for, boss."""
 
     checker: Annotated[SecureDataChecker, IOAttrs('c')]
+
+
+@ioprepped
+@dataclass
+class CloudValsRequest(Message):
+    """Can a fella get some cloud vals around here?."""
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [CloudValsResponse]
+
+
+@ioprepped
+@dataclass
+class CloudValsResponse(Response):
+    """Here's them cloud vals ya asked for, boss."""
+
+    vals: Annotated[CloudVals, IOAttrs('v')]

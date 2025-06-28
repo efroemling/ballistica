@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from threading import current_thread
 from typing import TYPE_CHECKING, Annotated, assert_never
 
+from efro.util import strip_exception_tracebacks
 from efro.error import (
     CommunicationError,
     is_asyncio_streams_communication_error,
@@ -136,13 +137,9 @@ class _InFlightMessage:
         )
 
     async def _wait(self) -> bytes:
-        try:
-            await self._got_response.wait()
-            assert self._response is not None
-            return self._response
-        except asyncio.CancelledError:
-            print('CANCELLED!!!')
-            raise
+        await self._got_response.wait()
+        assert self._response is not None
+        return self._response
 
     def set_response(self, data: bytes) -> None:
         """Set response data."""
@@ -301,14 +298,18 @@ class RPCEndpoint:
         # Core tasks should handle their own errors; the only ones
         # we expect to bubble up are CancelledError.
         for result in results:
-            # We want to know if any errors happened aside from CancelledError
-            # (which are BaseExceptions, not Exception).
+            # We want to know if any errors happened aside from
+            # CancelledError (which are BaseExceptions, not Exception).
             if isinstance(result, Exception):
                 logger.warning(
                     'Got unexpected error from %s core task: %s',
                     self._label,
                     result,
                 )
+            if isinstance(result, BaseException):
+                # We're done with these exceptions, so strip their
+                # tracebacks to avoid reference cycles.
+                strip_exception_tracebacks(result)
 
         if not all(task.done() for task in core_tasks):
             logger.warning(
@@ -613,6 +614,10 @@ class RPCEndpoint:
                         f'{self._label}: silently ignoring error in'
                         f' _writer.wait_closed(): {exc}.'
                     )
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
+
         except asyncio.CancelledError:
             logger.warning(
                 'RPCEndpoint.wait_closed()'
@@ -842,6 +847,10 @@ class RPCEndpoint:
                         f'{self._label}: {tasklabel} task will exit cleanly'
                         f' due to {exc!r}.'
                     )
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
+
         finally:
             # Any core task exiting triggers shutdown.
             if self.debug_print:
@@ -855,12 +864,15 @@ class RPCEndpoint:
     ) -> None:
         try:
             response = await self._handle_raw_message_call(message)
-        except Exception:
+        except Exception as exc:
             # We expect local message handler to always succeed.
             # If that doesn't happen, make a fuss so we know to fix it.
             # The other end will simply never get a response to this
             # message.
             logger.exception('Error handling raw rpc message')
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
             return
 
         assert self._peer_info is not None
