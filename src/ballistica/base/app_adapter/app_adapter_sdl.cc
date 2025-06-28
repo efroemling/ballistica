@@ -212,15 +212,19 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
   assert(g_core->InMainThread());
 
   while (!done_) {
-    microsecs_t cycle_start_time = g_core->AppTimeMicrosecs();
+    auto cycle_start_time{g_core->AppTimeMicrosecs()};
 
     // Events.
     SDL_Event event;
+    int event_count{};
     while (SDL_PollEvent(&event) && (!done_)) {
       HandleSDLEvent_(event);
+      event_count++;
     }
 
     // Draw.
+    auto draw_start_time{g_core->AppTimeMicrosecs()};
+    LogEventProcessingTime_(draw_start_time - cycle_start_time, event_count);
     if (!hidden_ && TryRender()) {
       SDL_GL_SwapWindow(sdl_window_);
     }
@@ -230,6 +234,21 @@ void AppAdapterSDL::RunMainThreadEventLoopToCompletion() {
 
     // Repeat.
   }
+}
+
+void AppAdapterSDL::LogEventProcessingTime_(microsecs_t duration, int count) {
+  // Note if events took more than 2 milliseconds.
+  if (duration < 1000) {
+    return;
+  }
+  g_core->logging->Log(
+      LogName::kBaPerformance, LogLevel::kDebug, [duration, count] {
+        char buf[256];
+        snprintf(buf, sizeof(buf),
+                 "event processing took too long (%.2fms for %d events)",
+                 duration / 1000.0f, count);
+        return std::string(buf);
+      });
 }
 
 auto AppAdapterSDL::TryRender() -> bool {
@@ -284,7 +303,7 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
   // happen just a *tiny* bit faster than requested. This means, if our
   // max-fps matches the refresh rate, we should gently push us up against
   // the vsync wall and keep vsync doing most of the delay work. In that
-  // case the logging below should show mostly 'no sleep.'. Without this
+  // case the logging below should show mostly 'sleep skipped.'. Without this
   // delay, our render kick-offs tend to drift around the middle of the
   // vsync cycle and I worry there could be bad interference patterns in
   // certain spots close to the edges. Note that we want this tweak to be
@@ -304,10 +323,16 @@ void AppAdapterSDL::SleepUntilNextEventCycle_(microsecs_t cycle_start_time) {
   const microsecs_t min_sleep{2000};
 
   if (now + min_sleep >= target_time) {
-    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kDebug,
-                         "no sleep.");  // 'till brooklyn!
+    g_core->logging->Log(LogName::kBaPerformance, LogLevel::kDebug,
+                         [now, cycle_start_time, target_time] {
+                           char buf[256];
+                           snprintf(buf, sizeof(buf),
+                                    "render %.1fms sleep skipped",
+                                    (now - cycle_start_time) / 1000.0f);
+                           return std::string(buf);
+                         });
   } else {
-    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kDebug,
+    g_core->logging->Log(LogName::kBaPerformance, LogLevel::kDebug,
                          [now, cycle_start_time, target_time] {
                            char buf[256];
                            snprintf(buf, sizeof(buf),
@@ -352,6 +377,9 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
   assert(g_core->InMainThread());
   assert(g_base);
 
+  auto starttime{core::CorePlatform::TimeMonotonicMicrosecs()};
+  bool log_long_events{true};
+
   switch (event.type) {
     case SDL_JOYAXISMOTION:
     case SDL_JOYBUTTONDOWN:
@@ -365,7 +393,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
              && event.jaxis.which == event.jhat.which);
       if (static_cast<size_t>(event.jbutton.which) >= sdl_joysticks_.size()
           || sdl_joysticks_[event.jbutton.which] == nullptr) {
-        return;
+        break;
       }
       if (JoystickInput* js = GetSDLJoystickInput_(&event)) {
         if (g_base) {
@@ -410,7 +438,6 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_KEYDOWN: {
-      // printf("KEYDOWN %d\n", static_cast<int>(event.key.keysym.sym));
       if (!event.key.repeat) {
         g_base->input->PushKeyPressEvent(event.key.keysym);
       }
@@ -418,7 +445,6 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_KEYUP: {
-      // printf("KEYUP %d\n", static_cast<int>(event.key.keysym.sym));
       g_base->input->PushKeyReleaseEvent(event.key.keysym);
       break;
     }
@@ -549,12 +575,44 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       // Lastly handle our custom events (can't since their
       // values are dynamic).
       if (event.type == sdl_runnable_event_id_) {
+        auto starttime2{core::CorePlatform::TimeMonotonicMicrosecs()};
+
         auto* runnable = static_cast<Runnable*>(event.user.data1);
+        assert(runnable);
         runnable->RunAndLogErrors();
+
+        // Log calls longer than a millisecond or so.
+        log_long_events = false;  // We handle this ourself.
+        auto duration{core::CorePlatform::TimeMonotonicMicrosecs()
+                      - starttime2};
+        if (duration > 1000) {
+          g_core->logging->Log(
+              LogName::kBaPerformance, LogLevel::kDebug, [duration, runnable] {
+                char buf[256];
+                snprintf(buf, sizeof(buf),
+                         "main thread runnable took too long (%.2fms): %s",
+                         duration / 1000.0f,
+                         runnable->GetObjectDescription().c_str());
+                return std::string(buf);
+              });
+        }
         delete runnable;
-        return;
       }
       break;
+    }
+  }
+
+  if (log_long_events) {
+    // Make noise for anything taking longer than a millisecond or so.
+    auto duration{core::CorePlatform::TimeMonotonicMicrosecs() - starttime};
+    if (duration > 1000) {
+      g_core->logging->Log(
+          LogName::kBaPerformance, LogLevel::kDebug, [duration] {
+            char buf[256];
+            snprintf(buf, sizeof(buf), "sdl event took too long (%.2fms)",
+                     duration / 1000.0f);
+            return std::string(buf);
+          });
     }
   }
 }

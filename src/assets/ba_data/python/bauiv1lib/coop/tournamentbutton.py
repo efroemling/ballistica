@@ -725,8 +725,8 @@ class TournamentButton:
         # Now, if this fee allows ads and we support video ads, show the
         # 'or ad' version.
         if USE_ENTRY_FEES:
-            if allow_ads and plus.has_video_ads():
-                ads_enabled = plus.have_incentivized_ad()
+            if allow_ads and plus.ads.has_video_ads():
+                ads_enabled = plus.ads.have_incentivized_ad()
                 bui.imagewidget(
                     edit=self.entry_fee_ad_image,
                     opacity=1.0 if ads_enabled else 0.25,

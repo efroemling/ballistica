@@ -9,6 +9,7 @@ import threading
 from enum import Enum
 from typing import TYPE_CHECKING, override
 
+from efro.util import strip_exception_tracebacks
 import babase
 import bascenev1
 
@@ -46,6 +47,13 @@ class MasterServerV1CallThread(threading.Thread):
         self._data = {} if data is None else copy.deepcopy(data)
         self._callback: MasterServerCallback | None = callback
         self._context = babase.ContextRef()
+
+        appstate = babase.app.state
+        if appstate.value < type(appstate).LOADING.value:
+            raise RuntimeError(
+                'Cannot use MasterServerV1CallThread'
+                ' until app reaches LOADING state.'
+            )
 
         # Save and restore the context we were created from.
         activity = bascenev1.getactivity(doraise=False)
@@ -154,6 +162,10 @@ class MasterServerV1CallThread(threading.Thread):
 
             response_data = None
 
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
+
         finally:
             babase.shutdown_suppress_end()
 
@@ -165,7 +177,7 @@ class MasterServerV1CallThread(threading.Thread):
 
 
 def _utf8_all(data: Any) -> Any:
-    """Convert any unicode data in provided sequence(s) to utf8 bytes."""
+    """Convert all strings in provided data to utf-8 bytes."""
     if isinstance(data, dict):
         return dict(
             (_utf8_all(key), _utf8_all(value))
@@ -176,5 +188,6 @@ def _utf8_all(data: Any) -> Any:
     if isinstance(data, tuple):
         return tuple(_utf8_all(element) for element in data)
     if isinstance(data, str):
-        return data.encode('utf-8', errors='ignore')
+        # return data.encode('utf-8', errors='ignore')
+        return data.encode()
     return data

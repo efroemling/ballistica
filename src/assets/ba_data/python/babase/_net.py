@@ -16,8 +16,10 @@ import _babase
 if TYPE_CHECKING:
     pass
 
-# Timeout for standard functions talking to the master-server/etc.
-DEFAULT_REQUEST_TIMEOUT_SECONDS = 60
+# Timeout for standard functions talking to the master-server/etc. We
+# generally try to fail fast and retry instead of waiting a long time
+# for things.
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 10
 
 
 class NetworkSubsystem:
@@ -28,7 +30,15 @@ class NetworkSubsystem:
         # create it here once and recycle for our various connections.
         self.sslcontext = ssl.create_default_context()
 
+        # I'm finding that urllib3 exceptions tend to give us reference
+        # cycles, which we want to avoid as much as possible. We can
+        # work around this by gutting the exceptions using
+        # efro.util.strip_exception_tracebacks() after handling them.
+        # Unfortunately this means we need to turn off retries here
+        # since the retry mechanism effectively hides exceptions from
+        # us.
         self.urllib3pool = urllib3.PoolManager(
+            retries=False,
             ssl_context=self.sslcontext,
             timeout=urllib3.util.Timeout(total=DEFAULT_REQUEST_TIMEOUT_SECONDS),
             maxsize=5,

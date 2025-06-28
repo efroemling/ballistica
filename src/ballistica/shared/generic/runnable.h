@@ -3,8 +3,6 @@
 #ifndef BALLISTICA_SHARED_GENERIC_RUNNABLE_H_
 #define BALLISTICA_SHARED_GENERIC_RUNNABLE_H_
 
-#include <string>
-
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica {

@@ -374,7 +374,7 @@ class CoopBrowserWindow(bui.MainWindow):
             )
 
         # Decrement time on our tournament buttons.
-        ads_enabled = plus.have_incentivized_ad()
+        ads_enabled = plus.ads.have_incentivized_ad()
         for tbtn in self._tournament_buttons:
             tbtn.time_remaining = max(0, tbtn.time_remaining - 1)
             if tbtn.time_remaining_value_text is not None:
@@ -391,7 +391,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 )
 
             # Also adjust the ad icon visibility.
-            if tbtn.allow_ads and plus.has_video_ads():
+            if tbtn.allow_ads and plus.ads.has_video_ads():
                 bui.imagewidget(
                     edit=tbtn.entry_fee_ad_image,
                     opacity=1.0 if ads_enabled else 0.25,

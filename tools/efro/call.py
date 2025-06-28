@@ -21,8 +21,8 @@ class CallbackSet[T]:
     implicitly deregistered when an entry is deallocated, so make sure
     to hold on to the return value when adding.
 
-    CallbackSet instances should be used from a single thread only
-    (this will be checked in debug mode).
+    CallbackSet instances should be used from a single thread only (this
+    will be checked in debug mode).
     """
 
     def __init__(self) -> None:

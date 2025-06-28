@@ -4,17 +4,20 @@
 
 from __future__ import annotations
 
+import time
 import logging
 from typing import TYPE_CHECKING, overload
 
+from efro.error import CommunicationError
 from efro.call import CallbackSet
+from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
+import bacommon.cloud
 import babase
 
 if TYPE_CHECKING:
     from typing import Callable, Any
 
     from efro.message import Message, Response
-    import bacommon.cloud
     import bacommon.bs
 
 
@@ -31,11 +34,40 @@ class CloudSubsystem(babase.AppSubsystem):
     :class:`~baplus.PlusAppSubsystem` class.
     """
 
+    #: General engine config values provided by the cloud.
+    vals: bacommon.cloud.CloudVals
+
     def __init__(self) -> None:
         super().__init__()
         self.on_connectivity_changed_callbacks: CallbackSet[
             Callable[[bool], None]
         ] = CallbackSet()
+
+        # Restore saved cloud-vals (or init to default).
+        try:
+            cloudvals_data = babase.app.config.get('CloudVals')
+            if isinstance(cloudvals_data, dict):
+                self.vals = dataclass_from_dict(
+                    bacommon.cloud.CloudVals, cloudvals_data
+                )
+            else:
+                self.vals = bacommon.cloud.CloudVals()
+        except Exception:
+            babase.applog.warning(
+                'Error loading CloudVals; resetting to default.', exc_info=True
+            )
+            self.vals = bacommon.cloud.CloudVals()
+
+        # Set up to start updating cloud-vals once we've got
+        # connectivity.
+        self._vals_updated = False
+        self._vals_update_timer: babase.AppTimer | None = None
+        self._vals_last_request_time: float | None = None
+        self._vals_update_conn_reg = (
+            self.on_connectivity_changed_callbacks.register(
+                self._update_vals_update_for_connectivity
+            )
+        )
 
     @property
     def connected(self) -> bool:
@@ -70,12 +102,70 @@ class CloudSubsystem(babase.AppSubsystem):
             except Exception:
                 logging.exception('Error in connectivity-changed callback.')
 
+    def _update_vals_update_for_connectivity(self, connected: bool) -> None:
+
+        # If we don't have vals yet and are connected, start asking.
+        if connected and not self._vals_updated:
+            # Ask immediately and set up a timer to keep doing so until
+            # successful.
+            self._possibly_send_vals_request()
+            self._vals_update_timer = babase.AppTimer(
+                61.23, self._possibly_send_vals_request, repeat=True
+            )
+        else:
+            # Ok; we're disconnected or have vals - stop asking.
+            self._vals_update_timer = None
+
+    def _possibly_send_vals_request(self) -> None:
+        now = time.monotonic()
+
+        # Only send if we havn't already recently.
+        if (
+            self._vals_last_request_time is None
+            or now - self._vals_last_request_time > 30.0
+        ):
+            self._vals_last_request_time = now
+            self.send_message_cb(
+                bacommon.cloud.CloudValsRequest(), self._on_cloud_vals_response
+            )
+
+    def _on_cloud_vals_response(
+        self, response: bacommon.cloud.CloudValsResponse | Exception
+    ) -> None:
+        if isinstance(response, Exception):
+            # Make noise for any non-communication errors
+            if not isinstance(response, CommunicationError):
+                babase.applog.exception(
+                    'Unexpected error in _on_cloud_vals_response().'
+                )
+            return
+
+        # If what we got differs from what we already had, store it.
+        if response.vals != self.vals:
+            cfg = babase.app.config
+            cfg['CloudVals'] = dataclass_to_dict(response.vals)
+            cfg.commit()
+            self.vals = response.vals
+
+        # We can stop asking now.
+        self._vals_updated = True
+        self._vals_update_timer = None
+
     @overload
     def send_message_cb(
         self,
         msg: bacommon.cloud.LoginProxyRequestMessage,
         on_response: Callable[
             [bacommon.cloud.LoginProxyRequestResponse | Exception], None
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.CloudValsRequest,
+        on_response: Callable[
+            [bacommon.cloud.CloudValsResponse | Exception], None
         ],
     ) -> None: ...
 
@@ -321,6 +411,7 @@ def cloud_console_exec(code: str) -> None:
             execcode = compile(code, '<console>', 'exec')
             # pylint: disable=exec-used
             exec(execcode, vars(__main__), vars(__main__))
+
     except Exception:
         import traceback
 

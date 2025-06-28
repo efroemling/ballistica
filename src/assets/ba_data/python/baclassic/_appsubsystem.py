@@ -81,7 +81,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.chest_dock_full = False
 
         # Main Menu.
-        self.main_menu_did_initial_transition = False
         self.main_menu_last_news_fetch_time: float | None = None
 
         # Spaz.

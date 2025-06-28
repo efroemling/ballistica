@@ -260,50 +260,6 @@ class PlusAppSubsystem(AppSubsystem):
         return _baplus.supports_purchases()
 
     @staticmethod
-    def have_incentivized_ad() -> bool:
-        """Is an incentivized ad available?
-
-        :meta private:
-        """
-        return _baplus.have_incentivized_ad()
-
-    @staticmethod
-    def has_video_ads() -> bool:
-        """Are video ads available?
-
-        :meta private:
-        """
-        return _baplus.has_video_ads()
-
-    @staticmethod
-    def can_show_ad() -> bool:
-        """Can we show an ad?
-
-        :meta private:
-        """
-        return _baplus.can_show_ad()
-
-    @staticmethod
-    def show_ad(
-        purpose: str, on_completion_call: Callable[[], None] | None = None
-    ) -> None:
-        """Show an ad.
-
-        :meta private:
-        """
-        _baplus.show_ad(purpose, on_completion_call)
-
-    @staticmethod
-    def show_ad_2(
-        purpose: str, on_completion_call: Callable[[bool], None] | None = None
-    ) -> None:
-        """Show an ad.
-
-        :meta private:
-        """
-        _baplus.show_ad_2(purpose, on_completion_call)
-
-    @staticmethod
     def show_game_service_ui(
         show: str = 'general',
         game: str | None = None,

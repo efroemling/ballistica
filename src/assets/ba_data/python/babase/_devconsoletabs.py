@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, override
 
 import _babase
 
+from babase._logging import description_for_logger
 from babase._devconsole import DevConsoleTab
 
 if TYPE_CHECKING:
@@ -72,7 +73,7 @@ class DevConsoleTabAppModes(DevConsoleTab):
         self.text(
             'Available AppModes:',
             scale=0.8,
-            pos=(0, 75),
+            pos=(0, 78),
             h_align='center',
             v_align='center',
         )
@@ -80,7 +81,7 @@ class DevConsoleTabAppModes(DevConsoleTab):
         for i, mode in enumerate(self._app_modes):
             self.button(
                 f'{mode.__module__}.{mode.__qualname__}',
-                pos=(xoffs + i * bwidth + bpadding, 10),
+                pos=(xoffs + i * bwidth + bpadding, 15),
                 size=(bwidth - 2.0 * bpadding, 40),
                 label_scale=0.6,
                 call=partial(self._set_app_mode, mode),
@@ -118,13 +119,14 @@ class DevConsoleTabUI(DevConsoleTab):
     def refresh(self) -> None:
         from babase._mgen.enums import UIScale
 
-        xoffs = -375
+        xoffs = -305
+        yoffs = 10
 
         self.text(
-            'Make sure all UIs either fit in the virtual safe area'
+            'A UI should either fit in the virtual safe area'
             ' or dynamically respond to screen size changes.',
             scale=0.6,
-            pos=(xoffs + 15, 70),
+            pos=(xoffs + 15, yoffs + 65),
             h_align='left',
             v_align='center',
         )
@@ -132,7 +134,7 @@ class DevConsoleTabUI(DevConsoleTab):
         ui_overlay = _babase.get_draw_virtual_safe_area_bounds()
         self.button(
             'Virtual Safe Area ON' if ui_overlay else 'Virtual Safe Area OFF',
-            pos=(xoffs + 10, 10),
+            pos=(xoffs + 10, yoffs + 10),
             size=(200, 30),
             label_scale=0.6,
             call=self.toggle_ui_overlay,
@@ -141,7 +143,7 @@ class DevConsoleTabUI(DevConsoleTab):
         x = 300
         self.text(
             'UI-Scale',
-            pos=(xoffs + x - 5, 15),
+            pos=(xoffs + x - 5, yoffs + 15),
             h_align='right',
             v_align='none',
             scale=0.6,
@@ -151,7 +153,7 @@ class DevConsoleTabUI(DevConsoleTab):
         for scale in UIScale:
             self.button(
                 scale.name.capitalize(),
-                pos=(xoffs + x, 10),
+                pos=(xoffs + x, yoffs + 10),
                 size=(bwidth, 30),
                 label_scale=0.6,
                 call=partial(_babase.app.set_ui_scale, scale),
@@ -399,7 +401,7 @@ class DevConsoleTabLogging(DevConsoleTab):
         self._table = Table(
             title='Logging Levels',
             entry_width=800,
-            entry_height=42,
+            entry_height=44,
             debug_bounds=False,
             entries=list[str](),
             draw_entry_call=self._draw_entry,
@@ -409,12 +411,18 @@ class DevConsoleTabLogging(DevConsoleTab):
 
     @override
     def refresh(self) -> None:
+
         assert self._table is not None
 
         # Update table entries with the latest set of loggers (this can
-        # change over time).
+        # change over time). Sort with 'root' first, followed by all our
+        # 'ba' loggers, followed by everything else.
         self._table.set_entries(
-            ['root'] + sorted(logging.root.manager.loggerDict)
+            ['root']
+            + sorted(
+                logging.root.manager.loggerDict,
+                key=lambda name: (name.split('.')[0] != 'ba', name),
+            )
         )
 
         # Draw the table.
@@ -504,13 +512,30 @@ class DevConsoleTabLogging(DevConsoleTab):
         xoffs = -15.0
         bwidth = 80.0
         btextscale = 0.5
+        if desc := description_for_logger(entry):
+            tab.text(
+                desc,
+                (
+                    # x + width - bwidth * 6.5 - 10.0 + xoffs,
+                    x + 12,
+                    y + height * 0.5 - 12,
+                ),
+                h_align='left',
+                scale=0.4,
+                style='faded',
+            )
+            yoffs = 4
+        else:
+            yoffs = 0
+
         tab.text(
             entry,
             (
-                x + width - bwidth * 6.5 - 10.0 + xoffs,
-                y + height * 0.5,
+                # x + width - bwidth * 6.5 - 10.0 + xoffs,
+                x + 12,
+                y + height * 0.5 + yoffs,
             ),
-            h_align='right',
+            h_align='left',
             scale=0.7,
         )
 

@@ -42,6 +42,8 @@ class CorePython {
     kLoggerBaDisplayTimeLogCall,
     kLoggerBaGraphics,
     kLoggerBaGraphicsLogCall,
+    kLoggerBaPerformance,
+    kLoggerBaPerformanceLogCall,
     kLoggerBaLifecycle,
     kLoggerBaLifecycleLogCall,
     kLoggerBaAssets,

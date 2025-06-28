@@ -17,7 +17,7 @@ APPLE_NEW = False
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.13'
-PY_VER_EXACT_ANDROID = '3.13.3'
+PY_VER_EXACT_ANDROID = '3.13.5'
 PY_VER_APPLE = '3.12'
 PY_VER_EXACT_APPLE = '3.12.4' if APPLE_NEW else '3.12.0'
 

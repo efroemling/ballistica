@@ -37,7 +37,7 @@ namespace ballistica::base {
 
 const float kScreenTextZDepth{-0.06f};
 const float kProgressBarZDepth{0.0f};
-const int kProgressBarFadeTime{500};
+const int kProgressBarFadeTime{250};
 const float kDebugImgZDepth{-0.04f};
 const float kScreenMeshZDepth{-0.05f};
 
@@ -297,7 +297,7 @@ void Graphics::DrawProgressBar(RenderPass* pass, float opacity) {
     }
   }
 
-  // Fade out at the end.
+  // Fade out towards the end.
   if (amount > 0.75f) {
     o *= (1.0f - amount) * 4.0f;
   }
@@ -632,8 +632,8 @@ void Graphics::ClearFrameDefDeleteList() {
 
 void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
   assert(g_base->InLogicThread());
-  // If there's an ourstanding fade-end command, go ahead and run it.
-  // (otherwise, overlapping fades can cause things to get lost)
+  // If there's an ourstanding fade-end command, go ahead and run it
+  // (otherwise, overlapping fades can cause things to get lost).
   if (fade_end_call_.exists()) {
     if (g_buildconfig.debug_build()) {
       g_core->logging->Log(
@@ -833,7 +833,7 @@ void Graphics::BuildAndPushFrameDef() {
 
   if (progress_bar_) {
     frame_def->set_needs_clear(true);
-    UpdateAndDrawProgressBar(frame_def);
+    UpdateAndDrawOnlyProgressBar(frame_def);
   } else {
     // Ok, we're drawing a real frame.
 
@@ -994,7 +994,7 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
   }
 }
 
-void Graphics::UpdateAndDrawProgressBar(FrameDef* frame_def) {
+void Graphics::UpdateAndDrawOnlyProgressBar(FrameDef* frame_def) {
   RenderPass* pass = frame_def->overlay_pass();
   UpdateProgressBarProgress(
       1.0f
@@ -1099,12 +1099,13 @@ void Graphics::DrawFades(FrameDef* frame_def) {
     DoDrawFade(frame_def, a);
 
     // If we're doing a progress-bar fade, throw in the fading progress bar.
-    if (frame_time - progress_bar_end_time_ < kProgressBarFadeTime / 2) {
-      float o = (1.0f
+    if (frame_time - progress_bar_end_time_ < kProgressBarFadeTime * 0.5) {
+      float o = std::min(
+          1.0f, (1.0f
                  - static_cast<float>(frame_time - progress_bar_end_time_)
-                       / (static_cast<float>(kProgressBarFadeTime) * 0.5f));
+                       / (static_cast<float>(kProgressBarFadeTime) * 0.5f)));
       UpdateProgressBarProgress(1.0f);
-      DrawProgressBar(overlay_pass, o);
+      DrawProgressBar(overlay_pass, 1.0);
     }
   }
 }

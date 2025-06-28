@@ -161,7 +161,7 @@ from babase._error import (
     SessionNotFoundError,
     DelegateNotFoundError,
 )
-from babase._garbagecollection import GarbageCollectionSubsystem
+from babase._gc import GarbageCollectionSubsystem
 from babase._general import (
     DisplayTime,
     AppTime,

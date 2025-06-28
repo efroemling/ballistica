@@ -7,10 +7,12 @@ from __future__ import annotations
 import time
 import copy
 import weakref
+from dataclasses import dataclass
 from threading import Thread
 from typing import TYPE_CHECKING, override
 
 from efro.error import CleanError
+from efro.util import strip_exception_tracebacks
 from bauiv1lib.settings.testing import TestingWindow
 import bauiv1 as bui
 
@@ -204,6 +206,7 @@ class NetTestingWindow(bui.MainWindow):
 def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
 
     from efro.util import utc_now
 
@@ -241,6 +244,11 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             _print(msg, color=(1.0, 1.0, 0.3))
             _print(f'Failed in {duration:.2f}s.', color=(1, 0, 0))
             have_error[0] = True
+
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
+
             return False
 
     try:
@@ -333,7 +341,7 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
                 '\nDiagnostics complete. Everything looks good!',
                 color=(0, 1, 0),
             )
-    except Exception:
+    except Exception as exc:
         import traceback
 
         _print(
@@ -342,6 +350,9 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             f'{traceback.format_exc()}',
             color=(1, 0, 0),
         )
+        # We're done with the exception, so strip its tracebacks to
+        # avoid reference cycles.
+        strip_exception_tracebacks(exc)
 
 
 def _dummy_success() -> None:
@@ -400,17 +411,17 @@ def _test_v1_transaction() -> None:
         raise RuntimeError(results[0])
 
 
+@dataclass
+class _V2CloudMessageResults:
+    errstr: str | None = None
+    send_time: float | None = None
+    response_time: float | None = None
+
+
 def _test_v2_cloud_message() -> None:
-    from dataclasses import dataclass
     import bacommon.cloud
 
-    @dataclass
-    class _Results:
-        errstr: str | None = None
-        send_time: float | None = None
-        response_time: float | None = None
-
-    results = _Results()
+    results = _V2CloudMessageResults()
 
     def _cb(response: bacommon.cloud.PingResponse | Exception) -> None:
         # Note: this runs in another thread so need to avoid exceptions.

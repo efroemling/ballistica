@@ -712,7 +712,11 @@ class GetTokensWindow(bui.MainWindow):
             or classic.remove_ads
             or classic.accounts.have_pro()
         )
-        if plus is not None and plus.has_video_ads() and not has_removed_ads:
+        if (
+            plus is not None
+            and plus.ads.has_video_ads()
+            and not has_removed_ads
+        ):
             _tinfotxt = bui.textwidget(
                 parent=self._root_widget,
                 position=(

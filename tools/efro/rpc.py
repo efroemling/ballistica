@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from threading import current_thread
 from typing import TYPE_CHECKING, Annotated, assert_never
 
+from efro.util import strip_exception_tracebacks
 from efro.error import (
     CommunicationError,
     is_asyncio_streams_communication_error,
@@ -26,6 +27,8 @@ from efro.dataclassio import (
 
 if TYPE_CHECKING:
     from typing import Literal, Awaitable, Callable
+
+logger = logging.getLogger(__name__)
 
 # Terminology:
 # Packet: A chunk of data consisting of a type and some type-dependent
@@ -232,14 +235,14 @@ class RPCEndpoint:
     def __del__(self) -> None:
         if self._run_called:
             if not self._did_close_writer:
-                logging.warning(
+                logger.warning(
                     'RPCEndpoint %d dying with run'
                     ' called but writer not closed (transport=%s).',
                     id(self),
                     ssl_stream_writer_underlying_transport_info(self._writer),
                 )
             elif not self._did_wait_closed_writer:
-                logging.warning(
+                logger.warning(
                     'RPCEndpoint %d dying with run called'
                     ' but writer not wait-closed (transport=%s).',
                     id(self),
@@ -260,7 +263,7 @@ class RPCEndpoint:
         except asyncio.CancelledError:
             # We aren't really designed to be cancelled so let's warn
             # if it happens.
-            logging.warning(
+            logger.warning(
                 'RPCEndpoint.run got CancelledError;'
                 ' want to try and avoid this.'
             )
@@ -295,17 +298,21 @@ class RPCEndpoint:
         # Core tasks should handle their own errors; the only ones
         # we expect to bubble up are CancelledError.
         for result in results:
-            # We want to know if any errors happened aside from CancelledError
-            # (which are BaseExceptions, not Exception).
+            # We want to know if any errors happened aside from
+            # CancelledError (which are BaseExceptions, not Exception).
             if isinstance(result, Exception):
-                logging.warning(
+                logger.warning(
                     'Got unexpected error from %s core task: %s',
                     self._label,
                     result,
                 )
+            if isinstance(result, BaseException):
+                # We're done with these exceptions, so strip their
+                # tracebacks to avoid reference cycles.
+                strip_exception_tracebacks(result)
 
         if not all(task.done() for task in core_tasks):
-            logging.warning(
+            logger.warning(
                 'RPCEndpoint %d: not all core tasks marked done after gather.',
                 id(self),
             )
@@ -315,7 +322,7 @@ class RPCEndpoint:
             self.close()
             await self.wait_closed()
         except Exception:
-            logging.exception('Error closing %s.', self._label)
+            logger.exception('Error closing %s.', self._label)
 
         if self.debug_print:
             self.debug_print_call(f'{self._label}: finished.')
@@ -493,6 +500,7 @@ class RPCEndpoint:
         # Kill all of our in-flight tasks.
         if self.debug_print:
             self.debug_print_call(f'{self._label}: cancelling tasks...')
+
         for task in self._get_live_tasks():
             task.cancel()
 
@@ -529,7 +537,7 @@ class RPCEndpoint:
             raise RuntimeError('Must be called after close()')
 
         if not self._did_close_writer:
-            logging.warning(
+            logger.warning(
                 'RPCEndpoint wait_closed() called but never'
                 ' explicitly closed writer.'
             )
@@ -552,14 +560,14 @@ class RPCEndpoint:
             # We want to know if any errors happened aside from CancelledError
             # (which are BaseExceptions, not Exception).
             if isinstance(result, Exception):
-                logging.warning(
+                logger.warning(
                     'Got unexpected error cleaning up %s task: %s',
                     self._label,
                     result,
                 )
 
         if not all(task.done() for task in live_tasks):
-            logging.warning(
+            logger.warning(
                 'RPCEndpoint %d: not all live tasks marked done after gather.',
                 id(self),
             )
@@ -586,8 +594,8 @@ class RPCEndpoint:
                 # timeout=60.0 * 6.0,
                 timeout=30.0,
             )
-        except asyncio.TimeoutError:
-            logging.info(
+        except asyncio.TimeoutError as exc:
+            logger.info(
                 'Timeout on _writer.wait_closed() for %s rpc (transport=%s).',
                 self._label,
                 ssl_stream_writer_underlying_transport_info(self._writer),
@@ -597,17 +605,24 @@ class RPCEndpoint:
                     f'{self._label}: got timeout in _writer.wait_closed();'
                     ' This should be fixed in future Python versions.'
                 )
+            # We're done with these exceptions, so strip their
+            # tracebacks to avoid reference cycles.
+            strip_exception_tracebacks(exc)
         except Exception as exc:
             if not self._is_expected_connection_error(exc):
-                logging.exception('Error closing _writer for %s.', self._label)
+                logger.exception('Error closing _writer for %s.', self._label)
             else:
                 if self.debug_print:
                     self.debug_print_call(
                         f'{self._label}: silently ignoring error in'
                         f' _writer.wait_closed(): {exc}.'
                     )
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
+
         except asyncio.CancelledError:
-            logging.warning(
+            logger.warning(
                 'RPCEndpoint.wait_closed()'
                 ' got asyncio.CancelledError; not expected.'
             )
@@ -770,7 +785,7 @@ class RPCEndpoint:
             # noise if this gets out of hand.
             if len(self._out_packets) > 200:
                 if not self._did_out_packets_buildup_warning:
-                    logging.warning(
+                    logger.warning(
                         '_out_packets building up too'
                         ' much on RPCEndpoint %s.',
                         id(self),
@@ -821,7 +836,7 @@ class RPCEndpoint:
             # We expect connection errors to put us here, but make noise
             # if something else does.
             if not self._is_expected_connection_error(exc):
-                logging.exception(
+                logger.exception(
                     'Unexpected error in rpc %s %s task'
                     ' (age=%.1f, total_bytes_read=%d).',
                     self._label,
@@ -835,6 +850,10 @@ class RPCEndpoint:
                         f'{self._label}: {tasklabel} task will exit cleanly'
                         f' due to {exc!r}.'
                     )
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
+
         finally:
             # Any core task exiting triggers shutdown.
             if self.debug_print:
@@ -848,12 +867,15 @@ class RPCEndpoint:
     ) -> None:
         try:
             response = await self._handle_raw_message_call(message)
-        except Exception:
+        except Exception as exc:
             # We expect local message handler to always succeed.
             # If that doesn't happen, make a fuss so we know to fix it.
             # The other end will simply never get a response to this
             # message.
-            logging.exception('Error handling raw rpc message')
+            logger.exception('Error handling raw rpc message')
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
             return
 
         assert self._peer_info is not None

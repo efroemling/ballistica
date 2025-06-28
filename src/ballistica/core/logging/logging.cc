@@ -94,29 +94,6 @@ void Logging::V1CloudLog(const std::string& msg) {
     g_base_soft->DoV1CloudLog(msg);
   }
 }
-void Logging::Log(LogName name, LogLevel level, char* msg) {
-  // Checking log-level here is more efficient than letting it happen in
-  // Python land.
-  if (LogLevelEnabled(name, level)) {
-    Logging::Log_(name, level, msg);
-  }
-}
-
-void Logging::Log(LogName name, LogLevel level, const char* msg) {
-  // Checking log-level here is more efficient than letting it happen in
-  // Python land.
-  if (LogLevelEnabled(name, level)) {
-    Logging::Log_(name, level, msg);
-  }
-}
-
-void Logging::Log(LogName name, LogLevel level, const std::string& msg) {
-  // Checking log-level here is more efficient than letting it happen in
-  // Python land.
-  if (LogLevelEnabled(name, level)) {
-    Logging::Log_(name, level, msg);
-  }
-}
 
 void Logging::Log_(LogName name, LogLevel level, const std::string& msg) {
   assert(g_core);

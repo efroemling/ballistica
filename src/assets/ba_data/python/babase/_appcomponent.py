@@ -30,6 +30,10 @@ class AppComponentSubsystem:
     Change-callbacks can also be requested for base classes which will
     fire in a deferred manner when particular base-classes are
     overridden.
+
+    (This isn't ready for use yet so hiding it from docs)
+
+    :meta private:
     """
 
     def __init__(self) -> None:

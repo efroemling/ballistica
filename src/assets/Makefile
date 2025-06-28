@@ -178,7 +178,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_env.py \
   $(BUILD_DIR)/ba_data/python/babase/_error.py \
-  $(BUILD_DIR)/ba_data/python/babase/_garbagecollection.py \
+  $(BUILD_DIR)/ba_data/python/babase/_gc.py \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
@@ -1163,6 +1163,7 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/_pyrepl/__main__.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/_minimal_curses.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/_threading_handler.py \
+  $(BUILD_DIR)/pylib-android/_pyrepl/base_eventqueue.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/commands.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/completing_reader.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/console.py \
@@ -1182,6 +1183,7 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/_pyrepl/unix_eventqueue.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/utils.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/windows_console.py \
+  $(BUILD_DIR)/pylib-android/_pyrepl/windows_eventqueue.py \
   $(BUILD_DIR)/pylib-android/_sitebuiltins.py \
   $(BUILD_DIR)/pylib-android/_strptime.py \
   $(BUILD_DIR)/pylib-android/_sysconfigdata__android_aarch64-linux-android.py \

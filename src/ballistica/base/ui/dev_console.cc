@@ -36,10 +36,14 @@ const float kDevConsoleMiniSize{100.0f};
 const int kDevConsoleLineLimit{80};
 const int kDevConsoleStringBreakUpSize{1950};
 const float kDevConsoleTabButtonCornerRadius{16.0f};
-
 const double kTransitionSeconds{0.15};
 
-enum class DevConsoleHAnchor_ { kLeft, kCenter, kRight };
+enum class DevConsoleHAnchor_ {
+  kLeft,
+  kCenter,
+  kRight,
+};
+
 enum class DevButtonStyle_ {
   kNormal,
   kBright,
@@ -54,10 +58,15 @@ enum class DevButtonStyle_ {
   kWhite,
   kWhiteBright,
   kBlack,
-  kBlackBright
+  kBlackBright,
 };
 
-static auto DevButtonStyleFromStr_(const char* strval) {
+enum class DevConsoleTextStyle_ {
+  kNormal,
+  kFaded,
+};
+
+static auto ButtonStyleFromStr_(const char* strval) {
   if (!strcmp(strval, "normal")) {
     return DevButtonStyle_::kNormal;
   }
@@ -100,13 +109,24 @@ static auto DevButtonStyleFromStr_(const char* strval) {
   if (!strcmp(strval, "black_bright")) {
     return DevButtonStyle_::kBlackBright;
   }
-
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        std::string("Invalid button-style: ") + strval);
   return DevButtonStyle_::kNormal;
 }
 
-static auto DevConsoleHAttachFromStr_(const char* strval) {
+static auto TextStyleFromStr_(const char* strval) {
+  if (!strcmp(strval, "normal")) {
+    return DevConsoleTextStyle_::kNormal;
+  }
+  if (!strcmp(strval, "faded")) {
+    return DevConsoleTextStyle_::kFaded;
+  }
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       std::string("Invalid text-style: ") + strval);
+  return DevConsoleTextStyle_::kNormal;
+}
+
+static auto HAttachFromStr_(const char* strval) {
   if (!strcmp(strval, "left")) {
     return DevConsoleHAnchor_::kLeft;
   } else if (!strcmp(strval, "right")) {
@@ -116,7 +136,7 @@ static auto DevConsoleHAttachFromStr_(const char* strval) {
   return DevConsoleHAnchor_::kCenter;
 }
 
-static auto TextMeshHAlignFromStr_(const char* strval) {
+static auto MeshHAlignFromStr_(const char* strval) {
   if (!strcmp(strval, "left")) {
     return TextMesh::HAlign::kLeft;
   } else if (!strcmp(strval, "right")) {
@@ -126,7 +146,7 @@ static auto TextMeshHAlignFromStr_(const char* strval) {
   return TextMesh::HAlign::kCenter;
 }
 
-static auto TextMeshVAlignFromStr_(const char* strval) {
+static auto MeshVAlignFromStr_(const char* strval) {
   if (!strcmp(strval, "top")) {
     return TextMesh::VAlign::kTop;
   } else if (!strcmp(strval, "bottom")) {
@@ -231,21 +251,25 @@ class DevConsole::Text_ : public DevConsole::Widget_ {
   float y;
   float scale;
   TextGroup text_group;
-  DevButtonStyle_ style;
+  DevConsoleTextStyle_ style;
 
   Text_(const std::string& text, float x, float y, DevConsoleHAnchor_ h_attach,
-        TextMesh::HAlign h_align, TextMesh::VAlign v_align, float scale)
+        TextMesh::HAlign h_align, TextMesh::VAlign v_align, float scale,
+        DevConsoleTextStyle_ style)
       : h_attach{h_attach},
         h_align(h_align),
         v_align(v_align),
         x{x},
         y{y},
-        scale{scale} {
+        scale{scale},
+        style{style} {
     text_group.SetText(text, h_align, v_align);
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    auto fgcolor = Vector3f{0.8f, 0.7f, 0.8f};
+    auto fgcolor = style == DevConsoleTextStyle_::kFaded
+                       ? Vector3f{0.5f, 0.42f, 0.5f}
+                       : Vector3f{0.8f, 0.7f, 0.8f};
     DrawText(pass, &text_group, scale, x + XOffs(h_attach), bottom + y,
              fgcolor);
   }
@@ -736,13 +760,15 @@ void DevConsole::RefreshTabContents_() {
 
 void DevConsole::AddText(const char* text, float x, float y,
                          const char* h_anchor_str, const char* h_align_str,
-                         const char* v_align_str, float scale) {
-  auto h_anchor = DevConsoleHAttachFromStr_(h_anchor_str);
-  auto h_align = TextMeshHAlignFromStr_(h_align_str);
-  auto v_align = TextMeshVAlignFromStr_(v_align_str);
+                         const char* v_align_str, float scale,
+                         const char* style_str) {
+  auto h_anchor = HAttachFromStr_(h_anchor_str);
+  auto h_align = MeshHAlignFromStr_(h_align_str);
+  auto v_align = MeshVAlignFromStr_(v_align_str);
+  auto style = TextStyleFromStr_(style_str);
 
-  widgets_.emplace_back(
-      std::make_unique<Text_>(text, x, y, h_anchor, h_align, v_align, scale));
+  widgets_.emplace_back(std::make_unique<Text_>(text, x, y, h_anchor, h_align,
+                                                v_align, scale, style));
 }
 
 void DevConsole::AddButton(const char* label, float x, float y, float width,
@@ -752,8 +778,8 @@ void DevConsole::AddButton(const char* label, float x, float y, float width,
                            bool disabled) {
   assert(g_base->InLogicThread());
 
-  auto style = DevButtonStyleFromStr_(style_str);
-  auto h_anchor = DevConsoleHAttachFromStr_(h_anchor_str);
+  auto style = ButtonStyleFromStr_(style_str);
+  auto h_anchor = HAttachFromStr_(h_anchor_str);
 
   widgets_.emplace_back(std::make_unique<Button_>(
       label, label_scale, h_anchor, x, y, width, height, corner_radius, style,
