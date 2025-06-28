@@ -518,7 +518,6 @@ def _summarize_garbage(loglevel: int) -> str:
         if tpname == 'type':
             type_paths.append(f'{obj.__module__}.{obj.__qualname__}')
 
-    obj = None
     obj_summary = '\nObjects by type:' + ''.join(
         f'\n  {tpname}:' f' {tpcount}{_inline_extra(tpname, type_paths)}'
         for tpname, tpcount in sorted(
