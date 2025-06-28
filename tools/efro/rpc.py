@@ -594,7 +594,7 @@ class RPCEndpoint:
                 # timeout=60.0 * 6.0,
                 timeout=30.0,
             )
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as exc:
             logger.info(
                 'Timeout on _writer.wait_closed() for %s rpc (transport=%s).',
                 self._label,
@@ -605,6 +605,9 @@ class RPCEndpoint:
                     f'{self._label}: got timeout in _writer.wait_closed();'
                     ' This should be fixed in future Python versions.'
                 )
+            # We're done with these exceptions, so strip their
+            # tracebacks to avoid reference cycles.
+            strip_exception_tracebacks(exc)
         except Exception as exc:
             if not self._is_expected_connection_error(exc):
                 logger.exception('Error closing _writer for %s.', self._label)
