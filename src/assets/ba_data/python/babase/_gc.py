@@ -321,7 +321,6 @@ class GarbageCollectionSubsystem(AppSubsystem):
         self._apply_mode(self._mode)
 
     def _collect_standard(self, now: float) -> None:
-        # pylint: disable=too-many-locals
 
         assert gc.get_debug() == gc.DEBUG_SAVEALL
 
@@ -357,46 +356,11 @@ class GarbageCollectionSubsystem(AppSubsystem):
             # Build our summary of collected stuff ONLY if we'll actually
             # be showing it.
             if log_is_visible:
-
-                def _ex(tpname: str) -> str:
-                    if tpname == 'type':
-                        return ' (' + ', '.join(sorted(type_paths)) + ')'
-                    return ''
-
-                type_paths: list[str] = []
-                objtypecounts: dict[str, int] = {}
-                for obj in gc.garbage:
-                    cls = type(obj)
-                    if cls.__module__ == 'builtins':
-                        tpname = cls.__qualname__
-                    else:
-                        tpname = f'{cls.__module__}.{cls.__qualname__}'
-                    objtypecounts[tpname] = objtypecounts.get(tpname, 0) + 1
-
-                    # Special case for types that we find: show the path
-                    # for each type (a common cause of refloops is
-                    # dataclasses defined in functions, etc.)
-                    if tpname == 'type':
-                        type_paths.append(
-                            f'{obj.__module__}.{obj.__qualname__}'
-                        )
-                obj = None
-                obj_summary = '\nObjects by type:' + ''.join(
-                    f'\n  {tpname}: {tpcount}{_ex(tpname)}'
-                    for tpname, tpcount in sorted(
-                        objtypecounts.items(),
-                        key=lambda i: (-i[1], i[0]),
-                    )
-                )
-
-                # Include overview if this a warning message.
-                if loglevel == logging.WARNING:
-                    obj_summary += (
-                        '\nToo many objects garbage-collected'
-                        ' - try to reduce this.\n'
-                        'See babase.GarbageCollectionSubsystem documentation'
-                        ' to learn how.'
-                    )
+                try:
+                    obj_summary = _summarize_garbage(loglevel)
+                except Exception:
+                    gc_log.exception('Error summarizing garbage.')
+                    obj_summary = '(error in summarization)'
 
             if len(gc.garbage) < num_affected_objs:
                 gc_log.debug(
@@ -408,11 +372,13 @@ class GarbageCollectionSubsystem(AppSubsystem):
                     len(gc.garbage),
                 )
 
-            # *Actually* kill that stuff.
-            gc.set_debug(0)
-            gc.garbage.clear()
-            gc.collect()
-            gc.set_debug(gc.DEBUG_SAVEALL)
+            # *Actually* kill any stuff we found by temporarily turning
+            # *off save-all and running another collect.
+            if gc.garbage:
+                gc.set_debug(0)
+                gc.garbage.clear()
+                gc.collect()
+                gc.set_debug(gc.DEBUG_SAVEALL)
 
         # We should have no garbage left at this point.
         if gc.garbage:
@@ -500,3 +466,99 @@ class GarbageCollectionSubsystem(AppSubsystem):
                 mode = self.Mode.STANDARD
 
         return mode
+
+
+# Show some inline extra bits for specific types (such
+# as type names for type objects).
+def _inline_extra(tpname: str, type_paths: list[str]) -> str:
+    if tpname == 'type':
+        return ' (' + ', '.join(sorted(type_paths)) + ')'
+    return ''
+
+
+def _summarize_garbage(loglevel: int) -> str:
+    """Print stuff about gc.garbage to aid in breaking ref cycles."""
+    # pylint: disable=too-many-locals
+    import io
+    import traceback
+    from efro.debug import printrefs
+
+    debug_types: set[str]
+    debug_type_limit: int
+    plus = _babase.app.plus
+    if plus is None:
+        debug_types = set()
+        debug_type_limit = 1
+    else:
+        debug_types = set(plus.cloud.vals.gc_debug_types)
+        debug_type_limit = plus.cloud.vals.gc_debug_type_limit
+
+    debug_objs: dict[str, list[Any]] = {}
+
+    type_paths: list[str] = []
+    objtypecounts: dict[str, int] = {}
+
+    for obj in gc.garbage:
+        cls = type(obj)
+        if cls.__module__ == 'builtins':
+            tpname = cls.__qualname__
+        else:
+            tpname = f'{cls.__module__}.{cls.__qualname__}'
+        objtypecounts[tpname] = objtypecounts.get(tpname, 0) + 1
+
+        # Store specific objs for anything we're supposed to
+        # be debugging.
+        if tpname in debug_types and bool(True):
+            objs = debug_objs.setdefault(tpname, [])
+            if len(objs) < debug_type_limit:
+                objs.append(obj)
+            del objs
+
+        # Store type-names for types to show inline.
+        if tpname == 'type':
+            type_paths.append(f'{obj.__module__}.{obj.__qualname__}')
+
+    obj_summary = '\nObjects by type:' + ''.join(
+        f'\n  {tpname}:' f' {tpcount}{_inline_extra(tpname, type_paths)}'
+        for tpname, tpcount in sorted(
+            objtypecounts.items(),
+            key=lambda i: (-i[1], i[0]),
+        )
+    )
+
+    for debug_obj_type, objs in sorted(debug_objs.items()):
+        for i, obj in enumerate(objs):
+            buffer = io.StringIO()
+            printrefs(obj, file=buffer)
+            buffer_indented = '\n'.join(
+                f'  {line}' for line in buffer.getvalue().splitlines()
+            )
+            obj_summary += (
+                f'\n'
+                f'Refs for {debug_obj_type} {i+1} of {len(objs)}:\n'
+                f'{buffer_indented}'
+            )
+            if isinstance(obj, BaseException):
+                trace_str = ''.join(
+                    traceback.format_exception(
+                        type(obj), obj, obj.__traceback__
+                    )
+                )
+                trace_str = '\n'.join(
+                    f'  {line}' for line in trace_str.splitlines()
+                )
+                obj_summary += (
+                    f'\n'
+                    f'Stack for {debug_obj_type} {i+1} of {len(objs)}:\n'
+                    f'{trace_str}'
+                )
+
+    # Include overview if this a warning message.
+    if loglevel == logging.WARNING:
+        obj_summary += (
+            '\nToo many objects garbage-collected'
+            ' - try to reduce this.\n'
+            'See babase.GarbageCollectionSubsystem documentation'
+            ' to learn how.'
+        )
+    return obj_summary

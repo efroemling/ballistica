@@ -11,6 +11,7 @@ import inspect
 import logging
 from typing import TYPE_CHECKING
 
+from efro.util import strip_exception_tracebacks
 from efro.message._message import (
     Message,
     Response,
@@ -306,6 +307,10 @@ class MessageReceiver:
                         ' (likely a message format incompatibility): %s.',
                         msg,
                     )
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
+
             return rstr
 
     def handle_raw_message_async(

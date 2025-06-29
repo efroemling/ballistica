@@ -9,7 +9,7 @@ import threading
 from enum import Enum
 from typing import TYPE_CHECKING, override
 
-from efro.util import cleanup_exception_chain
+from efro.util import strip_exception_tracebacks
 import babase
 import bascenev1
 
@@ -47,6 +47,13 @@ class MasterServerV1CallThread(threading.Thread):
         self._data = {} if data is None else copy.deepcopy(data)
         self._callback: MasterServerCallback | None = callback
         self._context = babase.ContextRef()
+
+        appstate = babase.app.state
+        if appstate.value < type(appstate).LOADING.value:
+            raise RuntimeError(
+                'Cannot use MasterServerV1CallThread'
+                ' until app reaches LOADING state.'
+            )
 
         # Save and restore the context we were created from.
         activity = bascenev1.getactivity(doraise=False)
@@ -155,8 +162,9 @@ class MasterServerV1CallThread(threading.Thread):
 
             response_data = None
 
-            # Try to avoid reference cycles.
-            cleanup_exception_chain(exc)
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
 
         finally:
             babase.shutdown_suppress_end()

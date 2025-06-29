@@ -3,8 +3,9 @@
 """Functionality related to discord sdk integration"""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 import _babase
+from babase._appsubsystem import AppSubsystem
 
 if TYPE_CHECKING:
     from typing import Any
@@ -13,8 +14,10 @@ if TYPE_CHECKING:
 ENABLE_DISCORD = True  # disable this for now
 
 
-class Discord:
-    """Discord SDK integration class."""
+class DiscordSubsystem(AppSubsystem):
+    """Discord SDK integration class.
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.discord` attr on the :class:`~babase.App` class."""
 
     # pylint: disable=too-many-positional-arguments
     def __init__(self) -> None:
@@ -31,17 +34,17 @@ class Discord:
         if not self.is_available():
             return
         _babase.discord_start()
-        # _babase.app.add_shutdown_task(self._shutdown_coroutine())
+
+    @override
+    def on_app_shutdown(self) -> None:
+        """Called when the app is shutting down."""
+        _babase.discord_shutdown()
 
     @staticmethod
     def is_available() -> bool:
         """Check if the Discord SDK is available.
         _babase.discord_is_ready() returns None if not available."""
         return _babase.discord_is_ready() is not None
-
-    async def _shutdown_coroutine(self) -> None:
-        """Coroutine for shutting down Discord."""
-        _babase.discord_shutdown()
 
     @property
     def is_ready(self) -> bool:
@@ -68,9 +71,9 @@ class Discord:
             details: Additional details about current activity
             start_timestamp: Activity start time (epoch timestamp)
             end_timestamp: Activity end time (epoch timestamp)
-            large_image_key: Key for large image asset
-            small_image_key: Key for small image asset
+            large_image_key: Key/Url for large image asset
             large_image_text: Hover text for large image
+            small_image_key: Key/Url for small image asset
             small_image_text: Hover text for small image
             party_id: Current party ID for join/spectate
             party_size: Tuple of (current_size, max_size)

@@ -1032,12 +1032,12 @@ def prune_empty_dirs(prunedir: str) -> None:
                 ) from exc
 
 
-def cleanup_exception_chain(exc: BaseException) -> None:
-    """Clear tracebacks from exceptions to break reference cycles.
+def strip_exception_tracebacks(exc: BaseException) -> None:
+    """Strip tracebacks from exceptions to break reference cycles.
 
     A common cause of reference cycles is handled exceptions holding on
     to tracebacks which hold on to stack frames which hold on to the
-    exceptions in their locals.
+    exceptions somewhere in their locals.
 
     Stripping tracebacks out of exceptions once done handling them is a
     good way to break such cycles and avoid relying on the cyclic
