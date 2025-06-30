@@ -18,6 +18,9 @@ if TYPE_CHECKING:
     from efro.message._message import Message, SysResponse
     from efro.message._protocol import MessageProtocol
 
+# Use a single logger for all message stuff.
+logger = logging.getLogger('efro.message')
+
 
 class MessageSender:
     """Facilitates sending messages to a target and receiving responses.
@@ -377,7 +380,7 @@ class MessageSender:
             # otherwise) which could cause such breakage to go
             # unnoticed.
             if self.protocol.log_response_decode_errors:
-                logging.exception(
+                logger.exception(
                     'Error decoding message response;'
                     ' protocol might be broken.',
                 )

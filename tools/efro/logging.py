@@ -215,7 +215,8 @@ class LogHandler(logging.Handler):
 
         # In our background thread event loop we do a fair amount of
         # slow synchronous stuff such as mucking with the log cache.
-        # Let's avoid getting tons of warnings about this in debug mode.
+        # Let's avoid getting tons of warnings about this in debug mode
+        # since being ultra-real-time is not a huge priority here.
         self._event_loop.slow_callback_duration = 2.0  # Default is 0.1
 
         # NOTE: if we ever use default threadpool at all we should allow

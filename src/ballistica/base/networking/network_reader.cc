@@ -36,7 +36,7 @@ void NetworkReader::OnAppSuspend() {
   assert(g_core->InMainThread());
   assert(!paused_);
   {
-    std::unique_lock<std::mutex> lock(paused_mutex_);
+    std::scoped_lock<std::mutex> lock(paused_mutex_);
     paused_ = true;
   }
 
@@ -52,7 +52,7 @@ void NetworkReader::OnAppUnsuspend() {
   assert(paused_);
 
   {
-    std::unique_lock<std::mutex> lock(paused_mutex_);
+    std::scoped_lock<std::mutex> lock(paused_mutex_);
     paused_ = false;
   }
 

@@ -359,7 +359,7 @@ def checkenv() -> None:
     # Make sure they've got cmake.
     #
     # UPDATE - don't want to do this since they might just be using
-    # prefab builds.
+    # prefab builds, in which case they won't need cmake.
     if bool(False):
         if (
             subprocess.run(
@@ -370,6 +370,18 @@ def checkenv() -> None:
             raise CleanError(
                 'cmake is required; please install it via apt, brew, etc.'
             )
+
+    # Make sure they've got zstd (we're starting to use that for various
+    # compression purposes).
+    if (
+        subprocess.run(
+            ['which', 'zstd'], check=False, capture_output=True
+        ).returncode
+        != 0
+    ):
+        raise CleanError(
+            'zstd is required; please install it via apt, brew, etc.'
+        )
 
     # Make sure they've got curl.
     if (

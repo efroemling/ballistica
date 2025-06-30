@@ -382,7 +382,7 @@ auto EventLoop::ThreadMain_() -> int {
       // waiting for our notification. If we skipped this, it would be
       // possible to zip through and send the notification before they
       // start listening for it which would lead to a hang.
-      std::unique_lock lock(client_listener_mutex_);
+      std::scoped_lock lock(client_listener_mutex_);
     }
     client_listener_cv_.notify_all();
 
@@ -498,7 +498,7 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
   // So tally up any logs and send them after.
   std::vector<std::pair<LogLevel, std::string>> log_entries;
   {
-    std::unique_lock lock(thread_message_mutex_);
+    std::scoped_lock lock(thread_message_mutex_);
 
     // Plop the data on to the list; we're assuming the mutex is locked.
     thread_messages_.push_back(t);
@@ -626,7 +626,7 @@ void EventLoop::RunPendingRunnables_() {
       // now actively waiting for completion notification. If we skipped
       // this it would be possible to notify before they start listening
       // which leads to a hang.
-      std::unique_lock lock(client_listener_mutex_);
+      std::scoped_lock lock(client_listener_mutex_);
     }
     client_listener_cv_.notify_all();
   }
@@ -714,7 +714,7 @@ auto EventLoop::CheckPushSafety() -> bool {
   }
 }
 auto EventLoop::CheckPushRunnableSafety_() -> bool {
-  std::unique_lock lock(thread_message_mutex_);
+  std::scoped_lock lock(thread_message_mutex_);
 
   auto have_space{thread_messages_.size() < kThreadMessageSafetyThreshold};
 
