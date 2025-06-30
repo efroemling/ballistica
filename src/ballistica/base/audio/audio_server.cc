@@ -205,8 +205,9 @@ void AudioServer::OpenALSoftLogCallback(const std::string& msg) {
   std::scoped_lock lock(openalsoft_android_log_mutex_);
 
   if (openalsoft_android_log_.size() < log_cap) {
-    openalsoft_android_log_ +=
-        "openal-log(" + std::to_string(g_core->AppTimeSeconds()) + "s): " + msg;
+    openalsoft_android_log_ += "openal-log("
+                               + std::to_string(g_core->AppTimeSeconds())
+                               + "s): " + msg + "\n";
     if (openalsoft_android_log_.size() >= log_cap) {
       openalsoft_android_log_ +=
           "\n<max openalsoft log storage size reached>\n";

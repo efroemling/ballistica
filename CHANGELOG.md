@@ -1,4 +1,4 @@
-### 1.7.45 (build 22453, api 9, 2025-06-28)
+### 1.7.45 (build 22455, api 9, 2025-06-30)
 
 ### 1.7.44 (build 22451, api 9, 2025-06-28)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and

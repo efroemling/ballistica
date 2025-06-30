@@ -64,31 +64,31 @@ void NetworkReader::PokeSelf_() {
   int sd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sd < 0) {
     g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                         "Unable to create sleep ping socket; errno "
+                         "Error creating poke socket: "
                              + g_core->platform->GetSocketErrorString());
   } else {
     struct sockaddr_in serv_addr{};
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);  // NOLINT
-    serv_addr.sin_port = 0;                         // any
+    serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    serv_addr.sin_port = 0;  // any
     int bresult = ::bind(sd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
-    if (bresult == 1) {
+    if (bresult != 0) {
       g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                           "Unable to bind sleep socket: "
+                           "Error binding poke socket: "
                                + g_core->platform->GetSocketErrorString());
     } else {
       struct sockaddr_in t_addr{};
       memset(&t_addr, 0, sizeof(t_addr));
       t_addr.sin_family = AF_INET;
-      t_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);  // NOLINT
-      t_addr.sin_port = htons(port4_);                  // NOLINT
+      t_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+      t_addr.sin_port = htons(port4_);
       char b[1] = {BA_PACKET_POKE};
       ssize_t sresult =
           sendto(sd, b, 1, 0, (struct sockaddr*)(&t_addr), sizeof(t_addr));
       if (sresult == -1) {
         g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                             "Error on sleep self-sendto: "
+                             "Error on poke socket send: "
                                  + g_core->platform->GetSocketErrorString());
       }
     }
@@ -337,7 +337,7 @@ auto NetworkReader::RunThread_() -> int {
             case BA_PACKET_REMOTE_GAME_QUERY:
             case BA_PACKET_REMOTE_GAME_RESPONSE:
               // These packets are associated with the remote app; let the
-              // remote server handle them.
+              // remote-server handle them.
               if (remote_server_) {
                 remote_server_->HandleData(
                     sd, reinterpret_cast<uint8_t*>(buffer), rresult2,
@@ -368,8 +368,6 @@ auto NetworkReader::RunThread_() -> int {
 
             case BA_PACKET_HOST_QUERY: {
               g_base->app_mode()->HandleGameQuery(buffer, rresult2, &from);
-
-              // HandleGameQuery(buffer, rresult2, &from);
               break;
             }
 
@@ -395,10 +393,8 @@ void NetworkReader::PushIncomingUDPPacketCall_(const std::vector<uint8_t>& data,
   // Avoid buffer-full errors if something is causing us to write too often;
   // these are unreliable messages so its ok to just drop them.
   if (!g_base->logic->event_loop()->CheckPushSafety()) {
-    BA_LOG_ONCE(
-        LogName::kBaNetworking, LogLevel::kError,
-        "Ignoring excessive udp-connection input packets; (could this be a "
-        "flood attack?).");
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                "Ignoring excessive incoming udp packets.");
     return;
   }
 
@@ -434,7 +430,7 @@ void NetworkReader::OpenSockets_() {
     // Bind to local server port.
     struct sockaddr_in serv_addr{};
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);  // NOLINT
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     // Try our requested port for v4, then go with any available if that
     // doesn't work.
@@ -472,10 +468,10 @@ void NetworkReader::OpenSockets_() {
     }
   }
 
-  // Ok now lets try to create an ipv6 socket on the same port.
-  // (its actually possible to just create a v6 socket and let the OSs
-  // dual-stack support provide v4 connectivity too, but that's not
-  // available everywhere (win XP, etc) so let's do this for now.
+  // Ok now lets try to create an ipv6 socket on the same port. Its actually
+  // possible to just create a v6 socket and let the OS's dual-stack support
+  // provide v4 connectivity too, but not sure that's available everywhere;
+  // should look into it.
   sd6_ = socket(AF_INET6, SOCK_DGRAM, 0);
   if (sd6_ < 0) {
     g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
