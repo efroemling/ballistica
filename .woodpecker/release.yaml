@@ -19,29 +19,35 @@ steps:
       - make prefab-linux-arm64-gui-debug-build
       - make prefab-linux-x86-64-gui-debug-build
       - make prefab-mac-arm64-gui-debug-build
-      - make prefab-windows-x86-gui-debug-build
+      - make prefab-mac-x86-64-gui-debug-build
+      - make prefab-windows-x86-64-gui-debug-build
       - make prefab-linux-arm64-server-debug-build
       - make prefab-linux-x86-64-server-debug-build
       - make prefab-mac-arm64-server-debug-build
-      - make prefab-windows-x86-server-debug-build
+      - make prefab-mac-x86-64-server-debug-build
+      - make prefab-windows-x86-64-server-debug-build
       - mv -v build/prefab/full/linux_arm64_gui/debug build/prefab/full/linux_arm64_gui/ballisticakit_linux_arm64
       - tar cvzfC ballisticakit_linux_arm64.tar.gz build/prefab/full/linux_arm64_gui ballisticakit_linux_arm64
       - mv -v build/prefab/full/linux_x86_64_gui/debug build/prefab/full/linux_x86_64_gui/ballisticakit_linux_x86_64
       - tar cvzfC ballisticakit_linux_x86_64.tar.gz build/prefab/full/linux_x86_64_gui ballisticakit_linux_x86_64
-      - mv -v build/prefab/full/mac_arm64_gui/debug build/prefab/full/mac_arm64_gui/ballisticakit_mac
-      - tar cvzfC ballisticakit_mac.tar.gz build/prefab/full/mac_arm64_gui ballisticakit_mac
-      - mv -v build/prefab/full/windows_x86_gui/debug build/prefab/full/windows_x86_gui/ballisticakit_windows
-      - cd build/prefab/full/windows_x86_gui
+      - mv -v build/prefab/full/mac_arm64_gui/debug build/prefab/full/mac_arm64_gui/ballisticakit_mac_arm64
+      - tar cvzfC ballisticakit_mac_arm64.tar.gz build/prefab/full/mac_arm64_gui ballisticakit_mac_arm64
+      - mv -v build/prefab/full/mac_x86_64_gui/debug build/prefab/full/mac_x86_64_gui/ballisticakit_mac_x86_64
+      - tar cvzfC ballisticakit_mac_x86_64.tar.gz build/prefab/full/mac_x86_64_gui ballisticakit_mac_x86_64
+      - mv -v build/prefab/full/windows_x86_64_gui/debug build/prefab/full/windows_x86_64_gui/ballisticakit_windows
+      - cd build/prefab/full/windows_x86_64_gui
       - zip -rv ../../../../ballisticakit_windows.zip ballisticakit_windows
       - cd ../../../..
       - mv -v build/prefab/full/linux_arm64_server/debug build/prefab/full/linux_arm64_server/ballisticakit_linux_arm64_server
       - tar cvzfC ballisticakit_linux_arm64_server.tar.gz build/prefab/full/linux_arm64_server ballisticakit_linux_arm64_server
       - mv -v build/prefab/full/linux_x86_64_server/debug build/prefab/full/linux_x86_64_server/ballisticakit_linux_x86_64_server
       - tar cvzfC ballisticakit_linux_x86_64_server.tar.gz build/prefab/full/linux_x86_64_server ballisticakit_linux_x86_64_server
-      - mv -v build/prefab/full/mac_arm64_server/debug build/prefab/full/mac_arm64_server/ballisticakit_mac_server
-      - tar cvzfC ballisticakit_mac_server.tar.gz build/prefab/full/mac_arm64_server ballisticakit_mac_server
-      - mv -v build/prefab/full/windows_x86_server/debug build/prefab/full/windows_x86_server/ballisticakit_windows_server
-      - cd build/prefab/full/windows_x86_server
+      - mv -v build/prefab/full/mac_arm64_server/debug build/prefab/full/mac_arm64_server/ballisticakit_mac_arm64_server
+      - tar cvzfC ballisticakit_mac_arm64_server.tar.gz build/prefab/full/mac_arm64_server ballisticakit_mac_arm64_server
+      - mv -v build/prefab/full/mac_x86_64_server/debug build/prefab/full/mac_x86_64_server/ballisticakit_mac_x86_64_server
+      - tar cvzfC ballisticakit_mac_x86_64_server.tar.gz build/prefab/full/mac_x86_64_server ballisticakit_mac_x86_64_server
+      - mv -v build/prefab/full/windows_x86_64_server/debug build/prefab/full/windows_x86_64_server/ballisticakit_windows_server
+      - cd build/prefab/full/windows_x86_64_server
       - zip -rv ../../../../ballisticakit_windows_server.zip ballisticakit_windows_server
       - cd ../../../..
     depends_on: [parallel-prepare]
@@ -95,11 +101,13 @@ steps:
       files:
         - '../build_prefabs/ballisticakit_linux_arm64.tar.gz'
         - '../build_prefabs/ballisticakit_linux_x86_64.tar.gz'
-        - '../build_prefabs/ballisticakit_mac.tar.gz'
+        - '../build_prefabs/ballisticakit_mac_arm64.tar.gz'
+        - '../build_prefabs/ballisticakit_mac_x86_64.tar.gz'
         - '../build_prefabs/ballisticakit_windows.zip'
         - '../build_prefabs/ballisticakit_linux_arm64_server.tar.gz'
         - '../build_prefabs/ballisticakit_linux_x86_64_server.tar.gz'
-        - '../build_prefabs/ballisticakit_mac_server.tar.gz'
+        - '../build_prefabs/ballisticakit_mac_arm64_server.tar.gz'
+        - '../build_prefabs/ballisticakit_mac_x86_64_server.tar.gz'
         - '../build_prefabs/ballisticakit_windows_server.zip'
         - '../build_docs/ballistica_docs.tar'
       note: 'These are debug prefab builds; use them for testing purposes only. Docker versions of this release also exist at https://codeberg.org/3ra/-/packages/container/ballisticakit. Check out https://ballistica.net/downloads for official/blessed release builds.'
