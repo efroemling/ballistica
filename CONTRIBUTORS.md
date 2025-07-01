@@ -68,6 +68,9 @@
 - Various CI/CD improvements
 - Added discord social sdk support
 
+### Zacker Tz
+- PW: King of the Hill: Fix flag region on the Happy Thoughts
+
 ### komasio71
 - Retired Discord server moderator
 - Small contributor
