@@ -1,4 +1,10 @@
-### 1.7.45 (build 22453, api 9, 2025-06-28)
+### 1.7.45 (build 22456, api 9, 2025-06-30)
+- Working with the repo now requires the 'zstd' binary, and will complain if it
+  is not found during env checks. This should be pretty widely available through
+  `apt install zstd` or whatever. We'll be making pretty widespread use of Zstd
+  compression in coming years in both the game and tools, as it gives pretty big
+  improvements in both size and speed compared to classic gzip stuff. It is also
+  being added to Python 3.14 later this year.
 
 ### 1.7.44 (build 22451, api 9, 2025-06-28)
 - Added a `-B` / `--dont-write-bytecode` flag to disable writing .pyc files, and

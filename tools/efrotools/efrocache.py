@@ -205,8 +205,8 @@ def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
             if result.returncode != 0:
                 raise CleanError('Download failed; is your internet working?')
 
-            # Ok; cache download finished. Lastly move it in place to be as
-            # atomic as possible.
+            # Ok; cache download finished. Lastly move it in place to be
+            # as atomic as possible.
             os.makedirs(os.path.dirname(local_cache_path), exist_ok=True)
             subprocess.run(
                 ['mv', local_cache_dl_path, local_cache_path], check=True
@@ -221,8 +221,8 @@ def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
     else:
         print(msg)
 
-    # Extract and stage the file in a temp dir before doing
-    # a final move to the target location to be as atomic as possible.
+    # Extract and stage the file in a temp dir before doing a final move
+    # to the target location to be as atomic as possible.
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(local_cache_path, 'rb') as infile:
             data = infile.read()

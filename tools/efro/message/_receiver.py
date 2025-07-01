@@ -25,6 +25,9 @@ if TYPE_CHECKING:
     from efro.message._protocol import MessageProtocol
     from efro.message._message import SysResponse
 
+# Use a single logger for all message stuff.
+logger = logging.getLogger('efro.message')
+
 
 class MessageReceiver:
     """Facilitates receiving & responding to messages from a remote source.
@@ -205,7 +208,7 @@ class MessageReceiver:
                     f' by receiver type {type(self)}.'
                 )
                 if log_only:
-                    logging.error(msg)
+                    logger.error(msg)
                 else:
                     raise TypeError(msg)
 
@@ -296,13 +299,13 @@ class MessageReceiver:
             if dolog:
                 if msg_decoded is not None:
                     msgtype = type(msg_decoded)
-                    logging.exception(
+                    logger.exception(
                         'Error handling %s.%s message.',
                         msgtype.__module__,
                         msgtype.__qualname__,
                     )
                 else:
-                    logging.exception(
+                    logger.exception(
                         'Error handling raw efro.message'
                         ' (likely a message format incompatibility): %s.',
                         msg,
@@ -361,7 +364,7 @@ class MessageReceiver:
         if dolog:
             if msg_decoded is not None:
                 msgtype = type(msg_decoded)
-                logging.exception(
+                logger.exception(
                     'Error handling %s.%s message.',
                     msgtype.__module__,
                     msgtype.__qualname__,
@@ -371,7 +374,7 @@ class MessageReceiver:
                     exc_info=exc,
                 )
             else:
-                logging.exception(
+                logger.exception(
                     'Error handling raw async efro.message'
                     ' (likely a message format incompatibility): %s.',
                     msg_raw,
