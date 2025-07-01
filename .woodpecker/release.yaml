@@ -57,7 +57,7 @@ steps:
       dockerfile: config/docker/Dockerfile
       build_args:
         cmake_build_type: Debug
-        headless_build: 0
+        headless_build: "0"
       platforms:
         - linux/amd64
       registry: codeberg.org
@@ -74,7 +74,7 @@ steps:
       dockerfile: config/docker/Dockerfile
       build_args:
         cmake_build_type: Debug
-        headless_build: 1
+        headless_build: "1"
       platforms:
         - linux/amd64
       registry: codeberg.org
