@@ -9,7 +9,7 @@ steps:
       registry: codeberg.org
       repo: codeberg.org/${CI_REPO}-dev
       tags:
-        - 3.12
+        - latest
       username: ${CI_REPO_OWNER}
       password:
         from_secret: ACCESS_TOKEN
