@@ -7,12 +7,15 @@ from typing import override
 
 import bascenev1 as bs
 import babase as ba
+
 from bautils.chatutils import ServerCommand, register_command
 
 
 @register_command
 class Quit(ServerCommand):
     """/quit or /exit"""
+
+    aliases = ["exit"]
 
     @override
     def on_command_call(self) -> None:
@@ -27,8 +30,11 @@ class End(ServerCommand):
     def on_command_call(self) -> None:
         activity = bs.get_foreground_host_activity()
         assert activity is not None
-        # with activity.context:
-        #     activity.end_game()
+
+        with activity.context:
+            # type checking
+            if isinstance(activity, bs.GameActivity):
+                activity.end_game()
 
 
 @register_command
@@ -37,12 +43,26 @@ class Pause(ServerCommand):
 
     @override
     def on_command_call(self) -> None:
-        # TODO: make paused by admin appear on screen.
+
         activity = bs.get_foreground_host_activity()
         assert activity is not None
-        if activity.globalsnode.paused:
-            return
-        activity.globalsnode.paused = True
+
+        with activity.context:
+            if activity.globalsnode.paused:
+                return
+
+            activity.globalsnode.paused = True
+            activity.paused_text = bs.NodeActor(
+                bs.newnode(
+                    "text",
+                    attrs={
+                        "text": bs.Lstr(resource="pausedByHostText"),
+                        "client_only": True,
+                        "flatness": 1.0,
+                        "h_align": "center",
+                    },
+                )
+            )
 
 
 @register_command
@@ -53,11 +73,15 @@ class Resume(ServerCommand):
 
     @override
     def on_command_call(self) -> None:
+
         activity = bs.get_foreground_host_activity()
         assert activity is not None
-        if activity.globalsnode.paused:
+
+        if not activity.globalsnode.paused:
             return
-        activity.globalsnode.paused = True
+
+        activity.globalsnode.paused = False
+        activity.paused_text = None
 
 
 @register_command

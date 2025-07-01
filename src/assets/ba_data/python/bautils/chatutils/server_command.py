@@ -10,7 +10,16 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 
 import bascenev1 as bs
-import babase
+import babase as ba
+
+from .cmd_manager import CommandManager
+from .errors import (
+    IncorrectUsageError,
+    NoArgumentsProvidedError,
+    IncorrectArgumentsError,
+    InvalidClientIDError,
+    ActorNotFoundError,
+)
 
 if TYPE_CHECKING:
     from typing import Generator, Any
@@ -39,69 +48,6 @@ def register_command(cls: type[ServerCommand]) -> type[ServerCommand]:
 
     CommandManager.add_command(cls())
     return cls
-
-
-class CommandManager:
-    """Factory Managing server commands."""
-
-    commands: dict[str, ServerCommand] = {}
-
-    @classmethod
-    def add_command(cls, command: ServerCommand) -> None:
-        """
-        Add a command to a command factory.
-
-        Args:
-            command (ServerCommand): Command class must inherit this
-            class to execute.
-        """
-        # Get the class name if name is not provided
-        if command.name is None:
-            command.name = command.__class__.__name__
-
-        cls.commands[command.command_prefix() + command.name.upper()] = command
-        for alias in command.aliases:
-            cls.commands[command.command_prefix() + alias.upper()] = command
-
-    @classmethod
-    def listen(cls, msg: str, client_id: int) -> str | None:
-        """
-        A custom hook connecting commands to the game chat.
-
-        Args:
-            msg (str): message content
-            client_id (int): special ID of a player
-
-        Returns:
-            str | None: Returns back original message, ignores if None.
-        """
-
-        # get the beggining of the of the message and get command.
-        # capitalize it to match all cases.
-        command = cls.commands.get(msg.split()[0].upper())
-
-        if command is not None:
-            # set some attributes for abtraction
-            command.client_id = client_id
-            command.message = msg
-
-            if command.admin_authentication():
-                # check admins from loaded config file.
-                if command.is_admin:
-                    command()
-
-                else:
-                    bs.broadcastmessage(
-                        "❌ Access Denied: Admins only!",
-                        clients=[client_id],
-                        transient=True,
-                    )
-            else:
-                command()
-
-            if not command.return_message():
-                return None
-        return msg
 
 
 class ServerCommand(ABC):
@@ -184,28 +130,30 @@ class ServerCommand(ABC):
 
         # this seems only way to get serverconfig for now
         # hooking it won't work.
-        assert babase.app.classic is not None
-        assert babase.app.classic.server is not None
+        assert ba.app.classic is not None
+        assert ba.app.classic.server is not None
 
-        return babase.app.classic.server.config
+        return ba.app.classic.server.config
 
     @property
     def arguments(self) -> list[str]:
         """Returns arguments of given command with validation."""
         args = self.message.split()[1:]
-        if args in ([], [""]):
-            raise ValueError("Please provide neccesary arguments.")
+        if args == [""]:
+            raise IncorrectArgumentsError("Please provide neccesary arguments.")
         return args
 
     def filter_client_id(self, client_id: str | int) -> int:
         """Returns client_id with various checks."""
 
         _id = int(client_id)
-        roaster = bs.get_game_roster()
-        for client in roaster:
+        roster = bs.get_game_roster()
+        for client in roster:
             if _id in client.values():
                 return _id
-        raise ValueError(f"Invalid client-id: {client_id} is provided.")
+        raise InvalidClientIDError(
+            f"Invalid client-id: {client_id} is provided."
+        )
 
     def get_session_player(
         self, client_id: int | None = None
@@ -220,7 +168,28 @@ class ServerCommand(ABC):
             if player.inputdevice.client_id == client_id:
                 return player
 
-        raise ValueError(f"No player found with client-id: {client_id}")
+        raise InvalidClientIDError(
+            f"No player found with client-id: {client_id}"
+        )
+
+    def get_activity_player(self, client_id: int | None = None) -> bs.Player:
+        """Return the player associated with the given client ID."""
+
+        client_id = client_id or self.client_id
+        activity = bs.get_foreground_host_activity()
+        assert activity is not None
+        players: list[bs.Player] = activity.players
+
+        with activity.context:
+            for player in players:
+                s_player = player.sessionplayer
+
+                if s_player.inputdevice.client_id == client_id:
+                    return player
+
+        raise InvalidClientIDError(
+            f"No player found with client-id: {client_id}"
+        )
 
     def __call__(self) -> None:
         with self._handle_errors():
@@ -234,10 +203,19 @@ class ServerCommand(ABC):
         """
         try:
             yield
-        except (TypeError, ValueError, IndexError) as e:
+
+        except (
+            ValueError,
+            IncorrectArgumentsError,
+            NoArgumentsProvidedError,
+            InvalidClientIDError,
+            ActorNotFoundError,
+        ) as exc:
             bs.broadcastmessage(
-                f"❌ Error: {e}", clients=[self.client_id], transient=True
+                f"❌ Error: {exc}", clients=[self.client_id], transient=True
             )
+
+        except IncorrectUsageError:
             bs.broadcastmessage(
                 f"📌 Usage: {self.get_usage()}",
                 clients=[self.client_id],
