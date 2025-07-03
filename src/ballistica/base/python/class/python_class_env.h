@@ -39,8 +39,8 @@ class PythonClassEnv : public PythonClass {
   ~PythonClassEnv();
   std::map<std::string, PythonRef> extra_attrs_;
   static PyMethodDef tp_methods[];
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static void tp_dealloc(PythonClassEnv* self);
   static auto Dir(PythonClassEnv* self) -> PyObject*;
 };

@@ -22,8 +22,8 @@ class TimerList {
 
   // Create a timer with provided runnable.
   auto NewTimer(TimerMedium current_time, TimerMedium length,
-                TimerMedium offset, int repeat_count, Runnable* runnable)
-      -> Timer*;
+                TimerMedium offset, int repeat_count,
+                Runnable* runnable) -> Timer*;
 
   // Return a timer by its id, or nullptr if the timer no longer exists.
   auto GetTimer(int id) -> Timer*;

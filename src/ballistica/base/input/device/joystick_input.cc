@@ -324,8 +324,8 @@ auto JoystickInput::ShouldBeHiddenFromUser() -> bool {
   }
 }
 
-auto JoystickInput::GetCalibratedValue(float raw, float neutral) const
-    -> int32_t {
+auto JoystickInput::GetCalibratedValue(float raw,
+                                       float neutral) const -> int32_t {
   int32_t val;
   float dead_zone = 0.5f;
   float mag, target;

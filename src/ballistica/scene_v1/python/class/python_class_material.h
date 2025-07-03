@@ -27,12 +27,12 @@ class PythonClassMaterial : public PythonClass {
  private:
   static bool s_create_empty_;
   static PyMethodDef tp_methods[];
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static void Delete(Object::Ref<Material>* m);
   static void tp_dealloc(PythonClassMaterial* self);
-  static auto tp_getattro(PythonClassMaterial* self, PyObject* attr)
-      -> PyObject*;
+  static auto tp_getattro(PythonClassMaterial* self,
+                          PyObject* attr) -> PyObject*;
   static auto tp_setattro(PythonClassMaterial* self, PyObject* attr,
                           PyObject* val) -> int;
   static auto tp_repr(PythonClassMaterial* self) -> PyObject*;

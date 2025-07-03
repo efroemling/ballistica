@@ -121,8 +121,8 @@ namespace ballistica {
 
 // Support functions used by some of our macros; not intended to be used
 // directly.
-auto MacroPathFilter(core::CoreFeatureSet* corefs, const char* filename)
-    -> const char*;
+auto MacroPathFilter(core::CoreFeatureSet* corefs,
+                     const char* filename) -> const char*;
 auto MacroFunctionTimerStartTime() -> millisecs_t;
 void MacroFunctionTimerEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
                            millisecs_t time, const char* funcname);

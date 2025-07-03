@@ -199,9 +199,8 @@ void FatalErrorHandling::DoBlockingFatalErrorDialog(
   }
 }
 
-auto FatalErrorHandling::HandleFatalError(bool exit_cleanly,
-                                          bool in_top_level_exception_handler)
-    -> bool {
+auto FatalErrorHandling::HandleFatalError(
+    bool exit_cleanly, bool in_top_level_exception_handler) -> bool {
   // Give the platform the opportunity to completely override our handling.
   if (g_core) {
     auto handled = g_core->platform->HandleFatalError(

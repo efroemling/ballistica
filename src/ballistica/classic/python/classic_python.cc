@@ -124,9 +124,8 @@ auto ClassicPython::GetControllerValue(base::InputDevice* device,
   return static_cast<int>(PyLong_AsLong(ret_val.get()));
 }
 
-auto ClassicPython::GetControllerFloatValue(base::InputDevice* device,
-                                            const std::string& value_name)
-    -> float {
+auto ClassicPython::GetControllerFloatValue(
+    base::InputDevice* device, const std::string& value_name) -> float {
   assert(device);
   assert(objs().Exists(ObjID::kGetInputDeviceMappedValueCall));
 

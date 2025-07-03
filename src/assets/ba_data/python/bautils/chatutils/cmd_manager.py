@@ -65,6 +65,7 @@ class CommandManager:
                         "❌ Access Denied: Admins only!",
                         clients=[client_id],
                         transient=True,
+                        color=(1, 0, 0),
                     )
             else:
                 command()

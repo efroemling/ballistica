@@ -94,7 +94,7 @@ class ServerCommand(ABC):
         Returns:
             bool: Returns True to display message by default.
         """
-        return True
+        return False
 
     def command_prefix(self) -> str:
         """
@@ -119,7 +119,7 @@ class ServerCommand(ABC):
         "Returns True if the client is an admin."
         roaster = bs.get_game_roster()
         for player in roaster:
-            if player["client_id"] == self.client_id:
+            if player["client_id"] == int(self.client_id):
                 if player["account_id"] in self.serverconfig.admins:
                     return True
         return False
@@ -165,7 +165,7 @@ class ServerCommand(ABC):
         assert session is not None
 
         for player in session.sessionplayers:
-            if player.inputdevice.client_id == client_id:
+            if player.inputdevice.client_id == int(client_id):
                 return player
 
         raise InvalidClientIDError(
@@ -184,7 +184,7 @@ class ServerCommand(ABC):
             for player in players:
                 s_player = player.sessionplayer
 
-                if s_player.inputdevice.client_id == client_id:
+                if s_player.inputdevice.client_id == int(client_id):
                     return player
 
         raise InvalidClientIDError(
@@ -212,7 +212,10 @@ class ServerCommand(ABC):
             ActorNotFoundError,
         ) as exc:
             bs.broadcastmessage(
-                f"❌ Error: {exc}", clients=[self.client_id], transient=True
+                f"❌ Error: {exc}",
+                clients=[self.client_id],
+                transient=True,
+                color=(1, 0, 0),
             )
 
         except IncorrectUsageError:
@@ -220,6 +223,7 @@ class ServerCommand(ABC):
                 f"📌 Usage: {self.get_usage()}",
                 clients=[self.client_id],
                 transient=True,
+                color=(1, 0, 0),
             )
 
     def get_usage(self) -> str:

@@ -14,6 +14,8 @@ from bautils.chatutils import (
     IncorrectUsageError,
 )
 
+cyan = (0.0, 0.5, 1.0)
+
 
 @register_command
 class Maxplayers(ServerCommand):
@@ -26,20 +28,29 @@ class Maxplayers(ServerCommand):
 
         match self.arguments:
 
-            case []:
-                raise NoArgumentsProvidedError(
-                    "Please provide neccesary arguments."
-                )
-
             case [size] if size.isdigit():
+                size_int = int(size)
+                if not (2 <= size_int <= 99):
+                    bs.broadcastmessage(
+                        "Max players size must be between 2 and 99.",
+                        transient=True,
+                        clients=[self.client_id],
+                        color=(1, 0, 0),
+                    )
+                    return
 
                 activity = bs.get_foreground_host_session()
                 assert activity is not None
 
                 # set max players in activity as well as party
-                activity.max_players = int(size)
-                bs.set_public_party_max_size(int(size))
-                bs.broadcastmessage(f"Max players size set to {size}")
+                activity.max_players = size_int
+                bs.set_public_party_max_size(size_int)
+                bs.broadcastmessage(
+                    f"Max players size set to {size}",
+                    clients=None,
+                    transient=True,
+                    color=cyan,
+                )
 
             case _:
                 raise IncorrectUsageError
@@ -54,18 +65,23 @@ class Party(ServerCommand):
 
         match self.arguments:
 
-            case []:
-                raise NoArgumentsProvidedError(
-                    "Please provide neccesary arguments."
+            case ["public"] | ["pub"]:
+                bs.set_public_party_enabled(True)
+                bs.broadcastmessage(
+                    "Party mode set to Public",
+                    transient=True,
+                    color=cyan,
+                    clients=None,
                 )
 
-            case ["public"]:
-                bs.set_public_party_enabled(True)
-                bs.broadcastmessage("Party mode set to Public")
-
-            case ["private"]:
+            case ["private"] | ["pvt"]:
                 bs.set_public_party_enabled(False)
-                bs.broadcastmessage("Party mode set to Private")
+                bs.broadcastmessage(
+                    "Party mode set to Private",
+                    transient=True,
+                    color=cyan,
+                    clients=None,
+                )
 
             case _:
                 raise IncorrectUsageError
