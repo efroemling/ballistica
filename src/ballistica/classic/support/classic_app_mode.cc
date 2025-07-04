@@ -59,7 +59,7 @@ const int kKickVoteFailRetryDelayInitiatorExtra{120000};
 // non-headless builds we require more votes since the host doesn't count
 // but may be playing (in a 2on2 with 3 clients, don't want 2 clients able
 // to kick).
-const int kKickVoteMinimumClients{g_buildconfig.headless_build() ? 3 : 4};
+const int kKickVoteMinimumClients{g_buildconfig.headless_build() ? 4 : 5};
 
 struct ClassicAppMode::ScanResultsEntryPriv_ {
   scene_v1::PlayerSpec player_spec;
