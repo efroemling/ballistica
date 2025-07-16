@@ -1333,9 +1333,8 @@ class Spaz(bs.Actor):
             held = self.node.hold_node
             if held:
                 spaz = opposingnode.getdelegate(Spaz)
-                if (
-                    held.getnodetype() == 'flag'
-                    or (spaz and not spaz.is_alive())
+                if held.getnodetype() == 'flag' or (
+                    spaz and not spaz.is_alive()
                 ):
                     return True
 
