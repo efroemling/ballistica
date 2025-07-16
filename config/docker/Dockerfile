@@ -47,7 +47,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         python3-pip \
         python3.13-dev \
         python3.13-venv \
-        rsync
+        rsync \
+        zstd
 
 # Copy source code
 COPY ./ /ballistica
