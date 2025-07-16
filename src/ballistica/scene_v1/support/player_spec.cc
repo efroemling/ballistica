@@ -97,35 +97,33 @@ auto PlayerSpec::GetSpecString() const -> std::string {
 }
 
 auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
-  // auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   PlayerSpec spec;
-  // if (g_base->HaveClassic() && g_base->classic()->IsV1AccountSignedIn()) {
-  //   spec.v1_account_type_ = g_base->classic()->GetV1AccountType();
-  //   // g_classic->v1_account_type();
-  //   spec.name_ = Utils::GetValidUTF8(
-  //       g_base->classic()->GetV1AccountLoginName().c_str(), "bsgaps");
-  // } else {
-  //   // Headless builds fall back to V1 public-party name if that's available.
-  //   if (g_buildconfig.headless_build()
-  //       && !appmode->public_party_name().empty()) {
-  //     spec.name_ =
-  //         Utils::GetValidUTF8(appmode->public_party_name().c_str(),
-  //         "bsgp3r");
-  //   } else {
-  //     // Or lastly fall back to device name.
-  //     spec.name_ = Utils::GetValidUTF8(
-  //         g_core->platform->GetDeviceName().c_str(), "bsgaps2");
-  //   }
-  // }
-  // if (spec.name_.size() > 100) {
-  //   // FIXME should perhaps clamp this in unicode space
-  //   g_core->logging->Log(LogName::kBa, LogLevel::kError,
-  //                        "account name size too long: '" + spec.name_ + "'");
-  //   spec.name_.resize(100);
-  //   spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgaps3");
-  // }
-  spec.v1_account_type_ = 3;
-  spec.name_ = "Cyclones";
+  if (g_base->HaveClassic() && g_base->classic()->IsV1AccountSignedIn()) {
+    spec.v1_account_type_ = g_base->classic()->GetV1AccountType();
+    // g_classic->v1_account_type();
+    spec.name_ = Utils::GetValidUTF8(
+        g_base->classic()->GetV1AccountLoginName().c_str(), "bsgaps");
+  } else {
+    // Headless builds fall back to V1 public-party name if that's available.
+    if (g_buildconfig.headless_build()
+        && !appmode->public_party_name().empty()) {
+      spec.name_ =
+          Utils::GetValidUTF8(appmode->public_party_name().c_str(),
+          "bsgp3r");
+    } else {
+      // Or lastly fall back to device name.
+      spec.name_ = Utils::GetValidUTF8(
+          g_core->platform->GetDeviceName().c_str(), "bsgaps2");
+    }
+  }
+  if (spec.name_.size() > 100) {
+    // FIXME should perhaps clamp this in unicode space
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "account name size too long: '" + spec.name_ + "'");
+    spec.name_.resize(100);
+    spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgaps3");
+  }
   return spec;
 }
 
