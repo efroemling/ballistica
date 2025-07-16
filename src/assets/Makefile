@@ -444,17 +444,22 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/v2upgrade.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/watch.py \
   $(BUILD_DIR)/ba_data/python/bautils/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bautils/chatutils/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bautils/chatutils/chat_handle.py \
-  $(BUILD_DIR)/ba_data/python/bautils/chatutils/cmd_manager.py \
-  $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/cheats.py \
-  $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/gameutils.py \
-  $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/moderation.py \
-  $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/partymanage.py \
-  $(BUILD_DIR)/ba_data/python/bautils/chatutils/commands/usercmds.py \
-  $(BUILD_DIR)/ba_data/python/bautils/chatutils/errors.py \
-  $(BUILD_DIR)/ba_data/python/bautils/chatutils/server_command.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chat/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chat/chat_handle.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chat/cmd_manager.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chat/commands/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chat/commands/cheats.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chat/commands/gameutils.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chat/commands/moderation.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chat/commands/partymanage.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chat/commands/usercmds.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chat/errors.py \
+  $(BUILD_DIR)/ba_data/python/bautils/chat/server_command.py \
+  $(BUILD_DIR)/ba_data/python/bautils/discord/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bautils/plugman/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bautils/tools/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bautils/tools/enums.py \
+  $(BUILD_DIR)/ba_data/python/bautils/tourny/__init__.py \
   $(BUILD_DIR)/server_package/ballisticakit_server.py
 
 SCRIPT_TARGETS_SO_PUBLIC = \
