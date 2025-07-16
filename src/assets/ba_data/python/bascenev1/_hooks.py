@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from bautils.chatutils import chat_handle
+from bautils.chat import chat_handle
 import babase
 
 import _bascenev1

@@ -7,10 +7,9 @@ from typing import override
 
 import bascenev1 as bs
 
-from bautils.chatutils import (
+from bautils.chat import (
     ServerCommand,
     register_command,
-    NoArgumentsProvidedError,
     IncorrectUsageError,
 )
 

@@ -7,7 +7,7 @@ from typing import override
 
 import bascenev1 as bs
 
-from bautils.chatutils import ServerCommand, register_command
+from bautils.chat import ServerCommand, register_command
 
 
 # TODO: make it look more pretty, make characters icon appear in list

@@ -8,7 +8,7 @@ from typing import override
 import bascenev1 as bs
 import babase as ba
 
-from bautils.chatutils import ServerCommand, register_command
+from bautils.chat import ServerCommand, register_command
 
 
 @register_command
