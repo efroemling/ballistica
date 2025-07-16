@@ -352,15 +352,15 @@ class AccountV2Subsystem:
                     )
                     self._implicit_state_changed = False
 
-                    # Once we've made a move here we don't want to
-                    # do any more automatic stuff.
+                    # Once we've made a move here we don't want to do
+                    # any more automatic stuff.
                     self._can_do_auto_sign_in = False
 
         if not self._can_do_auto_sign_in:
             return
 
-        # If we're not currently signed in, we have connectivity, and
-        # we have an available implicit login, auto-sign-in with it once.
+        # If we're not currently signed in, we have connectivity, and we
+        # have an available implicit login, auto-sign-in with it once.
         # The implicit-state-change logic above should keep things
         # mostly in-sync, but that might not always be the case due to
         # connectivity or other issues. We prefer to keep people signed
@@ -397,11 +397,11 @@ class AccountV2Subsystem:
         plus = _babase.app.plus
         assert plus is not None
 
-        # Make some noise on errors since the user knows a
-        # sign-in attempt is happening in this case (the 'explicit' part).
+        # Make some noise on errors since the user knows a sign-in
+        # attempt is happening in this case (the 'explicit' part).
         if isinstance(result, Exception):
-            # We expect the occasional communication errors;
-            # Log a full exception for anything else though.
+            # We expect the occasional communication errors; Log a full
+            # exception for anything else though.
             if not isinstance(result, CommunicationError):
                 logging.warning(
                     'Error on explicit accountv2 sign in attempt.',

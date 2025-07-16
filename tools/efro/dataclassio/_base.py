@@ -8,7 +8,7 @@ import dataclasses
 import typing
 import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, get_args, override
+from typing import TYPE_CHECKING, get_args, override, final
 
 # noinspection PyProtectedMember
 from typing import _AnnotatedAlias  # type: ignore
@@ -110,6 +110,27 @@ class IOMultiType[EnumT: Enum]:
     def get_type(cls, type_id: EnumT) -> type[Self]:
         """Return a specific subclass given a type-id."""
         raise NotImplementedError()
+
+    @final
+    @classmethod
+    def get_type_cached(cls, type_id: EnumT) -> type[Self]:
+        """Version of :meth:`get_type()` with caching.
+
+        Generally end-users of a multi-type class should use this
+        instead of calling :meth:`get_type()` directly. It lazily caches
+        looked up types so can be significantly more efficient with
+        large multitypes and repeat lookups.
+        """
+        storage: dict[EnumT, type[Self]] | None = getattr(
+            cls, '_iomt_tp_cache', None
+        )
+        if storage is None:
+            storage = {}
+            setattr(cls, '_iomt_tp_cache', storage)
+        tp: type[Self] | None = storage.get(type_id)
+        if tp is None:
+            tp = storage[type_id] = cls.get_type(type_id)
+        return tp
 
     @classmethod
     def get_type_id(cls) -> EnumT:
@@ -441,4 +462,4 @@ def _get_multitype_type(
         )
     id_enum_type = cls.get_type_id_type()
     id_enum = id_enum_type(id_val)
-    return cls.get_type(id_enum)
+    return cls.get_type_cached(id_enum)
