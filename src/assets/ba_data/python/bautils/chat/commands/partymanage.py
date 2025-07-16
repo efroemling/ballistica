@@ -12,8 +12,7 @@ from bautils.chat import (
     register_command,
     IncorrectUsageError,
 )
-
-cyan = (0.0, 0.5, 1.0)
+from bautils.tools.enums import Color
 
 
 @register_command
@@ -29,12 +28,12 @@ class Maxplayers(ServerCommand):
 
             case [size] if size.isdigit():
                 size_int = int(size)
-                if not (2 <= size_int <= 99):
+                if not 2 <= size_int <= 99:
                     bs.broadcastmessage(
                         "Max players size must be between 2 and 99.",
                         transient=True,
                         clients=[self.client_id],
-                        color=(1, 0, 0),
+                        color=Color.CYAN.float,
                     )
                     return
 
@@ -46,9 +45,7 @@ class Maxplayers(ServerCommand):
                 bs.set_public_party_max_size(size_int)
                 bs.broadcastmessage(
                     f"Max players size set to {size}",
-                    clients=None,
-                    transient=True,
-                    color=cyan,
+                    color=Color.CYAN.float,
                 )
 
             case _:
@@ -69,8 +66,7 @@ class Party(ServerCommand):
                 bs.broadcastmessage(
                     "Party mode set to Public",
                     transient=True,
-                    color=cyan,
-                    clients=None,
+                    color=Color.CYAN.float,
                 )
 
             case ["private"] | ["pvt"]:
@@ -78,8 +74,7 @@ class Party(ServerCommand):
                 bs.broadcastmessage(
                     "Party mode set to Private",
                     transient=True,
-                    color=cyan,
-                    clients=None,
+                    color=Color.CYAN.float,
                 )
 
             case _:

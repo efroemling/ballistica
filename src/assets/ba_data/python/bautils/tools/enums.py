@@ -5,6 +5,7 @@
 # ba_meta require api 9
 
 from enum import Enum
+from typing import override
 
 
 class Color(Enum):
@@ -44,6 +45,7 @@ class Color(Enum):
     PLUM = (221, 160, 221)
     TAN = (210, 180, 140)
 
+    @override
     def __str__(self) -> str:
         return f"RGB{self.value}"
 
@@ -52,11 +54,3 @@ class Color(Enum):
         """Returns the floating tuple for rgb colors."""
         r, g, b = self.value
         return (r / 255, g / 255, b / 255)
-
-    def __iter__(self):
-        """Allow unpacking directly as floats."""
-        return iter(self.float)
-
-    def __getitem__(self, item):
-        """Allow index access as floats."""
-        return self.float[item]
