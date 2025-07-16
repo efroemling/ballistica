@@ -312,8 +312,8 @@ auto PythonRef::UnicodeCheck() const -> bool {
   return static_cast<bool>(PyUnicode_Check(obj_));
 }
 
-static inline auto _HandleCallResults(PyObject* out,
-                                      bool print_errors) -> PyObject* {
+static inline auto _HandleCallResults(PyObject* out, bool print_errors)
+    -> PyObject* {
   if (!out) {
     if (print_errors) {
       // Save/restore error or it can mess with context print calls.
@@ -332,8 +332,8 @@ static inline auto _HandleCallResults(PyObject* out,
   return out;
 }
 
-auto PythonRef::Call(PyObject* args, PyObject* keywds,
-                     bool print_errors) const -> PythonRef {
+auto PythonRef::Call(PyObject* args, PyObject* keywds, bool print_errors) const
+    -> PythonRef {
   assert(obj_);
   assert(Python::HaveGIL());
   assert(CallableCheck());
@@ -354,8 +354,8 @@ auto PythonRef::Call(bool print_errors) const -> PythonRef {
   return out ? PythonRef(out, PythonRef::kSteal) : PythonRef();
 }
 
-auto PythonRef::Call(const Vector2f& val,
-                     bool print_errors) const -> PythonRef {
+auto PythonRef::Call(const Vector2f& val, bool print_errors) const
+    -> PythonRef {
   assert(Python::HaveGIL());
   PythonRef args(Py_BuildValue("((ff))", val.x, val.y), PythonRef::kSteal);
   return Call(args.get(), nullptr, print_errors);

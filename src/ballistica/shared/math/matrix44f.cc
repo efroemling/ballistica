@@ -57,8 +57,8 @@ auto Matrix44fRotate(float azimuth, float elevation) -> Matrix44f {
   return rotate;
 }
 
-auto Matrix44fOrient(const Vector3f& x, const Vector3f& y,
-                     const Vector3f& z) -> Matrix44f {
+auto Matrix44fOrient(const Vector3f& x, const Vector3f& y, const Vector3f& z)
+    -> Matrix44f {
   Matrix44f orient{kMatrix44fIdentity};
 
   orient.set(0, 0, x.x);
@@ -76,8 +76,8 @@ auto Matrix44fOrient(const Vector3f& x, const Vector3f& y,
   return orient;
 }
 
-auto Matrix44fOrient(const Vector3f& direction,
-                     const Vector3f& up) -> Matrix44f {
+auto Matrix44fOrient(const Vector3f& direction, const Vector3f& up)
+    -> Matrix44f {
   assert(direction.LengthSquared() > 0.0f);
   assert(up.LengthSquared() > 0.0f);
 

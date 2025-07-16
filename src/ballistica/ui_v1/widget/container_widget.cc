@@ -712,8 +712,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   return claimed;
 }
 
-auto ContainerWidget::GetMult(millisecs_t current_time,
-                              bool for_glow) const -> float {
+auto ContainerWidget::GetMult(millisecs_t current_time, bool for_glow) const
+    -> float {
   if (root_selectable_ && selected()) {
     float m;
 
