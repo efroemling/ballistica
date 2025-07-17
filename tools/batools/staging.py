@@ -857,6 +857,12 @@ class BuildStager:
         _stage_server_file(
             projroot=self.projroot,
             mode=modeval,
+            infilename=f'{self.projroot}/src/assets/server_package/requirements.txt',
+            outfilename=os.path.join(self.serverdst, 'requirements.txt'),
+        )
+        _stage_server_file(
+            projroot=self.projroot,
+            mode=modeval,
             infilename=f'{self.projroot}/src/assets/server_package/README.txt',
             outfilename=os.path.join(self.serverdst, 'README.txt'),
         )
@@ -978,6 +984,10 @@ def _stage_server_file(
         _write_if_changed(
             outfilename, '\n'.join(lines) + '\n', make_executable=True
         )
+    elif basename == 'requirements.txt':
+        with open(infilename, encoding='utf-8') as infile:
+            reqs = infile.read()
+        _write_if_changed(outfilename, reqs)
     elif basename == 'README.txt':
         with open(infilename, encoding='utf-8') as infile:
             readme = infile.read()
