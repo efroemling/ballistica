@@ -35,12 +35,12 @@ class PythonClass {
 
  private:
   static auto tp_repr(PythonClass* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* kwds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
+      -> PyObject*;
   static void tp_dealloc(PythonClass* self);
   static auto tp_getattro(PythonClass* node, PyObject* attr) -> PyObject*;
-  static auto tp_setattro(PythonClass* node, PyObject* attr,
-                          PyObject* val) -> int;
+  static auto tp_setattro(PythonClass* node, PyObject* attr, PyObject* val)
+      -> int;
 };
 
 }  // namespace ballistica

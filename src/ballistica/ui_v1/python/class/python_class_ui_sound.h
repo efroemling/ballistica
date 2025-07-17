@@ -41,13 +41,13 @@ class PythonClassUISound : public PythonClass {
  private:
   static PyMethodDef tp_methods[];
   static auto tp_repr(PythonClassUISound* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassUISound* self);
-  static auto Play(PythonClassUISound* self, PyObject* args,
-                   PyObject* keywds) -> PyObject*;
-  static auto Stop(PythonClassUISound* self, PyObject* args,
-                   PyObject* keywds) -> PyObject*;
+  static auto Play(PythonClassUISound* self, PyObject* args, PyObject* keywds)
+      -> PyObject*;
+  static auto Stop(PythonClassUISound* self, PyObject* args, PyObject* keywds)
+      -> PyObject*;
 
   Object::Ref<base::SoundAsset>* sound_;
   bool playing_;

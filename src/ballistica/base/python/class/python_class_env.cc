@@ -42,8 +42,8 @@ struct EnvEntry_ : EnvEntryBase_ {
 
 auto PythonClassEnv::type_name() -> const char* { return "Env"; }
 
-static auto BoolEntry_(bool val,
-                       const char* docs) -> std::unique_ptr<EnvEntryBase_> {
+static auto BoolEntry_(bool val, const char* docs)
+    -> std::unique_ptr<EnvEntryBase_> {
   return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
       [val] {
         PyObject* pyval = val ? Py_True : Py_False;
@@ -53,8 +53,8 @@ static auto BoolEntry_(bool val,
       "bool", docs));
 }
 
-static auto StrEntry_(const std::string& val,
-                      const char* docs) -> std::unique_ptr<EnvEntryBase_> {
+static auto StrEntry_(const std::string& val, const char* docs)
+    -> std::unique_ptr<EnvEntryBase_> {
   return std::unique_ptr<EnvEntryBase_>(new EnvEntry_(
       [val] { return PyUnicode_FromString(val.c_str()); }, "str", docs));
 }
@@ -74,8 +74,8 @@ static auto OptionalStrEntry_(const std::optional<std::string>& val,
       "str | None", docs));
 }
 
-static auto IntEntry_(int val,
-                      const char* docs) -> std::unique_ptr<EnvEntryBase_> {
+static auto IntEntry_(int val, const char* docs)
+    -> std::unique_ptr<EnvEntryBase_> {
   return std::unique_ptr<EnvEntryBase_>(
       new EnvEntry_([val] { return PyLong_FromLong(val); }, "int", docs));
 }
@@ -358,8 +358,8 @@ void PythonClassEnv::tp_dealloc(PythonClassEnv* self) {
   Py_TYPE(self)->tp_free(reinterpret_cast<PyObject*>(self));
 }
 
-auto PythonClassEnv::tp_getattro(PythonClassEnv* self,
-                                 PyObject* attr) -> PyObject* {
+auto PythonClassEnv::tp_getattro(PythonClassEnv* self, PyObject* attr)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   // Do we need to support other attr types?

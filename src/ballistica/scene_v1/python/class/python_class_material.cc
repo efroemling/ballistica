@@ -175,8 +175,8 @@ auto PythonClassMaterial::tp_repr(PythonClassMaterial* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassMaterial::tp_getattro(PythonClassMaterial* self,
-                                      PyObject* attr) -> PyObject* {
+auto PythonClassMaterial::tp_getattro(PythonClassMaterial* self, PyObject* attr)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   // Assuming this will always be a str?

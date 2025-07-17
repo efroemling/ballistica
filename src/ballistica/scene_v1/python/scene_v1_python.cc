@@ -436,8 +436,8 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
 
 // Return the node attr as a PyObject, or nullptr if the node doesn't have that
 // attr.
-auto SceneV1Python::GetNodeAttr(Node* node,
-                                const char* attr_name) -> PyObject* {
+auto SceneV1Python::GetNodeAttr(Node* node, const char* attr_name)
+    -> PyObject* {
   assert(node);
   NodeAttribute attr = node->GetAttribute(attr_name);
   switch (attr.type()) {
@@ -986,8 +986,9 @@ auto SceneV1Python::GetPySceneSounds(PyObject* o) -> std::vector<SceneSound*> {
   return vals;
 }
 
-auto SceneV1Python::GetPySceneCollisionMesh(
-    PyObject* o, bool allow_empty_ref, bool allow_none) -> SceneCollisionMesh* {
+auto SceneV1Python::GetPySceneCollisionMesh(PyObject* o, bool allow_empty_ref,
+                                            bool allow_none)
+    -> SceneCollisionMesh* {
   assert(Python::HaveGIL());
   BA_PRECONDITION_FATAL(o != nullptr);
 
@@ -1115,8 +1116,8 @@ auto SceneV1Python::GetPySceneDataAsset(PyObject* o, bool allow_empty_ref,
       PyExcType::kType);
 }
 
-auto SceneV1Python::FilterChatMessage(std::string* message,
-                                      int client_id) -> bool {
+auto SceneV1Python::FilterChatMessage(std::string* message, int client_id)
+    -> bool {
   assert(message);
   base::ScopedSetContext ssc(nullptr);
 
@@ -1438,8 +1439,9 @@ auto SceneV1Python::HandleCapturedKeyRelease(const SDL_Keysym& keysym) -> bool {
   return true;
 }
 
-auto SceneV1Python::HandleCapturedJoystickEvent(
-    const SDL_Event& event, base::InputDevice* input_device) -> bool {
+auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
+                                                base::InputDevice* input_device)
+    -> bool {
   assert(g_base->InLogicThread());
   assert(input_device != nullptr);
   if (!joystick_capture_call_.exists()) {

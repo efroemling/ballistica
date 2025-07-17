@@ -21,8 +21,8 @@ namespace ballistica::scene_v1 {
 
 // ------------------------------- gettexture ----------------------------------
 
-static auto PyGetTexture(PyObject* self, PyObject* args,
-                         PyObject* keywds) -> PyObject* {
+static auto PyGetTexture(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
@@ -80,8 +80,8 @@ static PyMethodDef PyGetPackageTextureDef = {
 
 // ------------------------------- getsound ------------------------------------
 
-static auto PyGetSound(PyObject* self, PyObject* args,
-                       PyObject* keywds) -> PyObject* {
+static auto PyGetSound(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
@@ -110,8 +110,8 @@ static PyMethodDef PyGetSoundDef = {
 
 // --------------------------- get_package_sound -------------------------------
 
-static auto PyGetPackageSound(PyObject* self, PyObject* args,
-                              PyObject* keywds) -> PyObject* {
+static auto PyGetPackageSound(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   PyObject* package_obj;
@@ -139,8 +139,8 @@ static PyMethodDef PyGetPackageSoundDef = {
 
 // ------------------------------- getdata -------------------------------------
 
-static auto PyGetData(PyObject* self, PyObject* args,
-                      PyObject* keywds) -> PyObject* {
+static auto PyGetData(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
@@ -169,8 +169,8 @@ static PyMethodDef PyGetDataDef = {
 
 // --------------------------- get_package_data --------------------------------
 
-static auto PyGetPackageData(PyObject* self, PyObject* args,
-                             PyObject* keywds) -> PyObject* {
+static auto PyGetPackageData(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   PyObject* package_obj;
@@ -198,8 +198,8 @@ static PyMethodDef PyGetPackageDataDef = {
 
 // -------------------------------- getmesh ------------------------------------
 
-static auto PyGetMesh(PyObject* self, PyObject* args,
-                      PyObject* keywds) -> PyObject* {
+static auto PyGetMesh(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
@@ -228,8 +228,8 @@ static PyMethodDef PyGetMeshDef = {
 
 // ---------------------------- get_package_mesh -------------------------------
 
-static auto PyGetPackageMesh(PyObject* self, PyObject* args,
-                             PyObject* keywds) -> PyObject* {
+static auto PyGetPackageMesh(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   PyObject* package_obj;
@@ -258,8 +258,8 @@ static PyMethodDef PyGetPackageMeshDef = {
 
 // ----------------------------- getcollisionmesh ------------------------------
 
-static auto PyGetCollisionMesh(PyObject* self, PyObject* args,
-                               PyObject* keywds) -> PyObject* {
+static auto PyGetCollisionMesh(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {"name", nullptr};

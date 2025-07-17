@@ -857,7 +857,8 @@ class BuildStager:
         _stage_server_file(
             projroot=self.projroot,
             mode=modeval,
-            infilename=f'{self.projroot}/src/assets/server_package/requirements.txt',
+            infilename=f'{self.projroot}/src/assets/server_package/'
+            'requirements.txt',
             outfilename=os.path.join(self.serverdst, 'requirements.txt'),
         )
         _stage_server_file(
