@@ -99,8 +99,9 @@ class Register(ServerCommand):
             uuid_result = bs.get_client_public_device_uuid(self.client_id)
             print(f"[REGISTRATION] Got UUID from bs.get_client_public_device_uuid: {uuid_result}")
             return str(uuid_result) if uuid_result else "unknown"
-        except AttributeError as e:
-            print(f"[REGISTRATION] bs.get_client_public_device_uuid not found: {e}")
+        except Exception as e:
+            print(f"[REGISTRATION] Failed to get UUID: {e}")
+            return "unknown"
 
 
     def _get_player_pb_id(self, player, device) -> str:  # type: ignore[no-untyped-def]
@@ -174,7 +175,7 @@ class Register(ServerCommand):
                         clients=[self.client_id],
                         transient=True,
                     )
-                    return False
+                    success = False
                 else:
                     # Insert new player
                     player_id = players_table.insert(
@@ -191,11 +192,26 @@ class Register(ServerCommand):
                         f"New registration: ID #{player_id}, "
                         f"Total players: {len(players_table.all())}"
                     )
-                    return True
+                    success = True
             finally:
                 # Always close the database
                 if db is not None:
                     db.close()
+                    
+            # Pretty format the JSON file after closing the database
+            try:
+                #print(f"[REGISTRATION] Formatting JSON file: {db_path}")
+                import json
+                with open(db_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                with open(db_path, 'w', encoding='utf-8') as f:
+                    json.dump(
+                        data, f, indent=4, sort_keys=True, ensure_ascii=False
+                    )
+                #print("[REGISTRATION] JSON formatting completed successfully")
+                return success
+            except Exception as format_error:
+                print(f"[REGISTRATION] JSON formatting failed (but data saved): {format_error}")
 
         except Exception as e:
             print(f"Database error: {e}")
