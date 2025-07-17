@@ -915,6 +915,7 @@
       <w>entrystorename</w>
       <w>entrytype</w>
       <w>entrytypeselect</w>
+      <w>enumspython</w>
       <w>enumtype</w>
       <w>enumval</w>
       <w>enumvaltype</w>
@@ -1232,7 +1233,6 @@
       <w>getcollisionmesh</w>
       <w>getconf</w>
       <w>getconfig</w>
-      <w>gettickets</w>
       <w>getcwd</w>
       <w>getdata</w>
       <w>getenv</w>
@@ -1273,6 +1273,7 @@
       <w>getstarttime</w>
       <w>gettext</w>
       <w>gettexture</w>
+      <w>gettickets</w>
       <w>gettime</w>
       <w>getuisound</w>
       <w>gfile</w>
@@ -2423,7 +2424,6 @@
       <w>pythondevmode</w>
       <w>pythondirs</w>
       <w>pythondontwritebytecode</w>
-      <w>enumspython</w>
       <w>pythonhashseed</w>
       <w>pythonoptimize</w>
       <w>pythonpath</w>

@@ -109,8 +109,7 @@ auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
     if (g_buildconfig.headless_build()
         && !appmode->public_party_name().empty()) {
       spec.name_ =
-          Utils::GetValidUTF8(appmode->public_party_name().c_str(),
-          "bsgp3r");
+          Utils::GetValidUTF8(appmode->public_party_name().c_str(), "bsgp3r");
     } else {
       // Or lastly fall back to device name.
       spec.name_ = Utils::GetValidUTF8(

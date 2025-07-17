@@ -33,7 +33,7 @@ class Maxplayers(ServerCommand):
                         "Max players size must be between 2 and 99.",
                         transient=True,
                         clients=[self.client_id],
-                        color=Color.CYAN.float,
+                        color=Color.RED.float,
                     )
                     return
 

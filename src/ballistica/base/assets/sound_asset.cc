@@ -38,8 +38,8 @@ static auto CallbackRead(void* ptr, size_t size, size_t nmemb,
                          void* data_source) -> size_t {
   return fread(ptr, size, nmemb, static_cast<FILE*>(data_source));
 }
-static auto CallbackSeek(void* data_source, ogg_int64_t offset, int whence)
-    -> int {
+static auto CallbackSeek(void* data_source, ogg_int64_t offset,
+                         int whence) -> int {
   return fseek(static_cast<FILE*>(data_source),
                static_cast_check_fit<long>(offset), whence);  // NOLINT
 }

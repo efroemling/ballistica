@@ -23,8 +23,8 @@ class PythonClassSceneMesh : public PythonClass {
 
  private:
   static bool s_create_empty_;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* kwds) -> PyObject*;
   static void tp_dealloc(PythonClassSceneMesh* self);
   Object::Ref<SceneMesh>* mesh_;
 };

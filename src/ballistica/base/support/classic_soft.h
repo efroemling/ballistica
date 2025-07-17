@@ -19,9 +19,8 @@ class ClassicSoftInterface {
  public:
   virtual auto GetControllerValue(base::InputDevice* device,
                                   const std::string& value_name) -> int = 0;
-  virtual auto GetControllerFloatValue(base::InputDevice* device,
-                                       const std::string& value_name)
-      -> float = 0;
+  virtual auto GetControllerFloatValue(
+      base::InputDevice* device, const std::string& value_name) -> float = 0;
   virtual auto IsV1AccountSignedIn() -> bool = 0;
   virtual auto HandleSignOutV1() -> bool = 0;
   virtual void V2SetV1AccountState(const char* statestr, const char* loginid,

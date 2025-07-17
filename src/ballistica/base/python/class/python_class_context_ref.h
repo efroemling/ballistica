@@ -22,10 +22,10 @@ class PythonClassContextRef : public PythonClass {
  private:
   static PyMethodDef tp_methods[];
   static auto tp_repr(PythonClassContextRef* self) -> PyObject*;
-  static auto tp_richcompare(PythonClassContextRef* c1, PyObject* c2, int op)
-      -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto tp_richcompare(PythonClassContextRef* c1, PyObject* c2,
+                             int op) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static void tp_dealloc(PythonClassContextRef* self);
   static auto Enter(PythonClassContextRef* self) -> PyObject*;
   static auto Exit(PythonClassContextRef* self, PyObject* args) -> PyObject*;

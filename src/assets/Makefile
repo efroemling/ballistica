@@ -460,6 +460,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bautils/tools/__init__.py \
   $(BUILD_DIR)/ba_data/python/bautils/tools/enums.py \
   $(BUILD_DIR)/ba_data/python/bautils/tourny/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bautils/tourny/register.py \
   $(BUILD_DIR)/server_package/ballisticakit_server.py
 
 SCRIPT_TARGETS_SO_PUBLIC = \
