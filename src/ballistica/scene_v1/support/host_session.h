@@ -58,8 +58,8 @@ class HostSession : public Session {
   }
   // Given an activity python type, instantiate a new activity
   // and return a new reference.
-  auto NewHostActivity(PyObject* activity_type_obj, PyObject* settings_obj)
-      -> PyObject*;
+  auto NewHostActivity(PyObject* activity_type_obj,
+                       PyObject* settings_obj) -> PyObject*;
   void DestroyHostActivity(HostActivity* a);
   void RemovePlayer(Player* player);
   void RequestPlayer(SceneV1InputDeviceDelegate* device);
@@ -99,8 +99,8 @@ class HostSession : public Session {
   // New HostActivities should call this in their constructors.
   void AddHostActivity(HostActivity* sgc);
 
-  auto GetUnusedPlayerName(Player* p, const std::string& base_name)
-      -> std::string;
+  auto GetUnusedPlayerName(Player* p,
+                           const std::string& base_name) -> std::string;
   auto ContextAllowsDefaultTimerTypes() -> bool override;
   auto TimeToNextEvent() -> std::optional<microsecs_t> override;
 

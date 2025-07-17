@@ -156,8 +156,8 @@ void MacroLogPythonTrace(core::CoreFeatureSet* corefs, const std::string& msg) {
   corefs->logging->Log(LogName::kBa, LogLevel::kError, msg);
 }
 
-auto MacroPathFilter(core::CoreFeatureSet* corefs, const char* filename)
-    -> const char* {
+auto MacroPathFilter(core::CoreFeatureSet* corefs,
+                     const char* filename) -> const char* {
   assert(corefs);
   // If we've got a build_src_dir set and filename starts with it, skip past
   // it.

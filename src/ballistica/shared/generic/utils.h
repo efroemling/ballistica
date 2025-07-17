@@ -48,8 +48,8 @@ class Utils {
   /// control characters).
   static auto StripNonAsciiFromUTF8(const std::string& s) -> std::string;
 
-  static auto UnicodeFromUTF8(const std::string& s, const char* loc)
-      -> std::vector<uint32_t>;
+  static auto UnicodeFromUTF8(const std::string& s,
+                              const char* loc) -> std::vector<uint32_t>;
   static auto UTF8FromUnicode(std::vector<uint32_t> unichars) -> std::string;
   static auto UTF8FromUnicodeChar(uint32_t c) -> std::string;
   static auto UTF8StringLength(const char* val) -> int;

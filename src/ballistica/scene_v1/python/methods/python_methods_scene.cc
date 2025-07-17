@@ -43,8 +43,8 @@ namespace ballistica::scene_v1 {
 
 // --------------------------------- time --------------------------------------
 
-static auto PyTime(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyTime(PyObject* self, PyObject* args,
+                   PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   static const char* kwlist[] = {nullptr};
@@ -79,8 +79,8 @@ static PyMethodDef PyTimeDef = {
 
 // --------------------------------- timer -------------------------------------
 
-static auto PyTimer(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyTimer(PyObject* self, PyObject* args,
+                    PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
 
@@ -153,8 +153,8 @@ static PyMethodDef PyTimerDef = {
 
 // ----------------------------- basetime -----------------------------------
 
-static auto PyBaseTime(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyBaseTime(PyObject* self, PyObject* args,
+                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   static const char* kwlist[] = {nullptr};
@@ -189,8 +189,8 @@ static PyMethodDef PyBaseTimeDef = {
 
 // --------------------------------- timer -------------------------------------
 
-static auto PyBaseTimer(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyBaseTimer(PyObject* self, PyObject* args,
+                        PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
 
@@ -259,8 +259,8 @@ static PyMethodDef PyBaseTimerDef = {
 
 // ------------------------------- getsession ----------------------------------
 
-static auto PyGetSession(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyGetSession(PyObject* self, PyObject* args,
+                         PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   int raise = true;
   static const char* kwlist[] = {"doraise", nullptr};
@@ -296,8 +296,8 @@ static PyMethodDef PyGetSessionDef = {
 
 // --------------------------- new_host_session --------------------------------
 
-static auto PyNewHostSession(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyNewHostSession(PyObject* self, PyObject* args,
+                             PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* benchmark_type_str = nullptr;
   static const char* kwlist[] = {"sessiontype", "benchmark_type", nullptr};
@@ -338,8 +338,8 @@ static PyMethodDef PyNewHostSessionDef = {
 
 // -------------------------- new_replay_session -------------------------------
 
-static auto PyNewReplaySession(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyNewReplaySession(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   std::string file_name;
   PyObject* file_name_obj;
@@ -368,8 +368,8 @@ static PyMethodDef PyNewReplaySessionDef = {
 
 // ------------------------------ is_in_replay ---------------------------------
 
-static auto PyIsInReplay(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyIsInReplay(PyObject* self, PyObject* args,
+                         PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   static const char* kwlist[] = {nullptr};
@@ -399,8 +399,8 @@ static PyMethodDef PyIsInReplayDef = {
 
 // -------------------------- register_session-------- -------------------------
 
-static auto PyRegisterSession(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyRegisterSession(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* session_obj;
@@ -434,8 +434,8 @@ static PyMethodDef PyRegisterSessionDef = {
 
 // --------------------------- register_activity -------------------------------
 
-static auto PyRegisterActivity(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyRegisterActivity(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   PyObject* activity_obj;
@@ -507,8 +507,8 @@ static PyMethodDef PyGetForegroundHostSessionDef = {
 
 // ----------------------------- newactivity -----------------------------------
 
-static auto PyNewActivity(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyNewActivity(PyObject* self, PyObject* args,
+                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   static const char* kwlist[] = {"activity_type", "settings", nullptr};
@@ -564,8 +564,8 @@ static PyMethodDef PyNewActivityDef = {
 
 // ----------------------------- getactivity -----------------------------------
 
-static auto PyGetActivity(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyGetActivity(PyObject* self, PyObject* args,
+                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   int raise = true;
   static const char* kwlist[] = {"doraise", nullptr};
@@ -620,8 +620,8 @@ static PyMethodDef PyGetActivityDef = {
 
 // -------------------------- broadcastmessage ---------------------------------
 
-static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyBroadcastMessage(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* message = nullptr;
   PyObject* color_obj = Py_None;
@@ -795,8 +795,8 @@ static PyMethodDef PyBroadcastMessageDef = {
 
 // ------------------------------- newnode -------------------------------------
 
-static auto PyNewNode(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyNewNode(PyObject* self, PyObject* args,
+                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   Node* n = SceneV1Python::DoNewNode(args, keywds);
   if (!n) {
@@ -1024,8 +1024,8 @@ static PyMethodDef PyGetCollisionInfoDef = {
 
 // ------------------------------ camerashake ----------------------------------
 
-static auto PyCameraShake(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyCameraShake(PyObject* self, PyObject* args,
+                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   float intensity = 1.0f;
@@ -1073,8 +1073,8 @@ static PyMethodDef PyCameraShakeDef = {
 
 // -------------------------------- emitfx -------------------------------------
 
-static auto PyEmitFx(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyEmitFx(PyObject* self, PyObject* args,
+                     PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {"position",  "velocity",     "count",
                                  "scale",     "spread",       "chunk_type",
@@ -1287,8 +1287,8 @@ static PyMethodDef PyGetForegroundHostActivityDef = {
 
 // --------------------------- get_game_roster ---------------------------------
 
-static auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyGetGameRoster(PyObject* self, PyObject* args,
+                            PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   static const char* kwlist[] = {nullptr};
@@ -1394,8 +1394,8 @@ static PyMethodDef PyGetGameRosterDef = {
 
 // ----------------------- set_debug_speed_exponent ----------------------------
 
-static auto PySetDebugSpeedExponent(PyObject* self, PyObject* args)
-    -> PyObject* {
+static auto PySetDebugSpeedExponent(PyObject* self,
+                                    PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   int speed;
   if (!PyArg_ParseTuple(args, "i", &speed)) {
@@ -1433,8 +1433,8 @@ static PyMethodDef PySetDebugSpeedExponentDef = {
 
 // ----------------------- get_replay_speed_exponent ---------------------------
 
-static auto PyGetReplaySpeedExponent(PyObject* self, PyObject* args)
-    -> PyObject* {
+static auto PyGetReplaySpeedExponent(PyObject* self,
+                                     PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
   return PyLong_FromLong(appmode->replay_speed_exponent());
@@ -1456,8 +1456,8 @@ static PyMethodDef PyGetReplaySpeedExponentDef = {
 
 // ------------------------ set_replay_speed_exponent --------------------------
 
-static auto PySetReplaySpeedExponent(PyObject* self, PyObject* args)
-    -> PyObject* {
+static auto PySetReplaySpeedExponent(PyObject* self,
+                                     PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   int speed;
   if (!PyArg_ParseTuple(args, "i", &speed)) {
@@ -1632,8 +1632,8 @@ static PyMethodDef PyGetRandomNamesDef = {
 
 // -------------------------------- ls_objects ---------------------------------
 
-static auto PyLsObjects(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyLsObjects(PyObject* self, PyObject* args,
+                        PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   Object::LsObjects();
   Py_RETURN_NONE;
@@ -1655,8 +1655,8 @@ static PyMethodDef PyLsObjectsDef = {
 
 // --------------------------- ls_input_devices --------------------------------
 
-static auto PyLsInputDevices(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyLsInputDevices(PyObject* self, PyObject* args,
+                             PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   g_base->input->LsInputDevices();
   Py_RETURN_NONE;
@@ -1675,8 +1675,8 @@ static PyMethodDef PyLsInputDevicesDef = {
 
 // -------------------------- set_internal_music -------------------------------
 
-static auto PySetInternalMusic(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PySetInternalMusic(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   PyObject* music_obj;

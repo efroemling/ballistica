@@ -11,15 +11,13 @@ from bautils.chat import ServerCommand, register_command
 
 # Simple inline registration system for testing
 try:
-    from tinydb import TinyDB, Query
+    from tinydb import TinyDB, Query  # type: ignore[import-not-found]
 
     TINYDB_AVAILABLE = True
-    print("[USERCMDS] TinyDB imported successfully")
 except ImportError:
-    print("[USERCMDS] TinyDB not available")
-    TINYDB_AVAILABLE = False
     TinyDB = None
     Query = None
+    TINYDB_AVAILABLE = False
 
 
 # TODO: make it look more pretty, make characters icon appear in list
@@ -67,13 +65,11 @@ class List(ServerCommand):
 class Register(ServerCommand):
     """/register - Register yourself on this server"""
 
-    @override
-    def on_command_call(self) -> None:
-        # Check if registrations are enabled
+    def _check_registration_enabled(self) -> bool:
+        """Check if registrations are enabled."""
         try:
             from bautils.tourny.register import ENABLE_REGISTRATIONS
 
-            # print(f"[REGISTRATION] ENABLE_REGISTRATIONS value: {ENABLE_REGISTRATIONS}")
             if not ENABLE_REGISTRATIONS:
                 bs.broadcastmessage(
                     "Registration is currently disabled.",
@@ -81,20 +77,129 @@ class Register(ServerCommand):
                     clients=[self.client_id],
                     transient=True,
                 )
-                # print("[REGISTRATION] Registration blocked - disabled in settings")
-                return
+                return False
+            return True
         except ImportError as e:
             print(f"[REGISTRATION] Could not import registration settings: {e}")
-            # If we can't import settings, assume disabled for safety
             bs.broadcastmessage(
                 "Registration system not available.",
                 color=Color.RED.float,
                 clients=[self.client_id],
                 transient=True,
             )
-            return
+            return False
         except Exception as e:
             print(f"[REGISTRATION] Error checking registration settings: {e}")
+            return False
+
+    def _get_player_uuid(self, device) -> str:  # type: ignore[no-untyped-def]
+        """Get player UUID."""
+        try:
+            uuid_result = bs.get_client_public_device_uuid(self.client_id)  # type: ignore[attr-defined]
+            return str(uuid_result)
+        except Exception:
+            return str(getattr(device, "unique_id", "unknown"))
+
+    def _get_player_pb_id(self, player, device) -> str:  # type: ignore[no-untyped-def]
+        """Get player PB ID."""
+        try:
+            if hasattr(player, "get_v1_account_id"):
+                result = player.get_v1_account_id()
+                return str(result) if result else "unknown"
+            if hasattr(device, "get_v1_account_id"):
+                result = device.get_v1_account_id()
+                return str(result) if result else "unknown"
+        except Exception:
+            pass
+
+        # Fallback to roster account_id
+        try:
+            roster = bs.get_game_roster()
+            for client_entry in roster:
+                if client_entry.get('client_id') == self.client_id:
+                    account_id = client_entry.get('account_id', 'unknown')
+                    return str(account_id)
+        except Exception:
+            pass
+        return "unknown"
+
+    def _get_player_v2_id(self) -> str:
+        """Get player V2 ID from roster spec_string."""
+        try:
+            roster = bs.get_game_roster()
+            for client_entry in roster:
+                if client_entry.get('client_id') == self.client_id:
+                    spec_string = client_entry.get('spec_string', '')
+                    if spec_string:
+                        import json
+
+                        spec_data = json.loads(spec_string)
+                        v2_name = spec_data.get('n', 'unknown')
+                        return str(v2_name)
+        except Exception as e:
+            print(f"Error parsing spec_string: {e}")
+        return "unknown"
+
+    def _register_in_database(self, uuid: str, pb_id: str, v2_id: str) -> bool:
+        """Register player in database."""
+        try:
+            import os
+
+            tourny_path = os.path.join(
+                os.path.dirname(__file__), '..', '..', 'tourny'
+            )
+            db_path = os.path.join(tourny_path, "player_registrations.json")
+            os.makedirs(tourny_path, exist_ok=True)
+
+            db = TinyDB(db_path)
+            players_table = db.table('players')
+            player_query = Query()
+
+            print(f"Current players in DB: {len(players_table.all())}")
+
+            # Check if already exists
+            existing = players_table.search(player_query.pb_id == pb_id)
+
+            if existing:
+                player_id = existing[0].doc_id
+                bs.broadcastmessage(
+                    f"Already registered! Your player ID: #{player_id}",
+                    color=Color.YELLOW.float,
+                    clients=[self.client_id],
+                    transient=True,
+                )
+                return False
+            else:
+                # Insert new player
+                player_id = players_table.insert(
+                    {'uuid': uuid, 'pb_id': pb_id, 'v2_id': v2_id}
+                )
+
+                bs.broadcastmessage(
+                    f"Registration successful! Your player ID: #{player_id}",
+                    color=Color.GREEN.float,
+                    clients=[self.client_id],
+                    transient=True,
+                )
+                print(
+                    f"New registration: ID #{player_id}, "
+                    f"Total players: {len(players_table.all())}"
+                )
+                return True
+
+        except Exception as e:
+            print(f"Database error: {e}")
+            bs.broadcastmessage(
+                "Registration failed due to database error.",
+                color=Color.RED.float,
+                clients=[self.client_id],
+                transient=True,
+            )
+            return False
+
+    @override
+    def on_command_call(self) -> None:
+        if not self._check_registration_enabled():
             return
 
         if not TINYDB_AVAILABLE:
@@ -114,143 +219,17 @@ class Register(ServerCommand):
 
         # Extract identifiers
         device = player.inputdevice
+        uuid = self._get_player_uuid(device)
+        pb_id = self._get_player_pb_id(player, device)
+        v2_id = self._get_player_v2_id()
 
-        # Get proper UUID using BombSquad API
-        try:
-
-            uuid = bs.get_client_public_device_uuid(self.client_id)
-        except:
-            uuid = getattr(device, "unique_id", "unknown")
-
-        # Get PB ID using get_v1_account_id method
-        pb_id = "unknown"
-        try:
-            if hasattr(player, "get_v1_account_id"):
-                pb_id = player.get_v1_account_id() or "unknown"
-            elif hasattr(device, "get_v1_account_id"):
-                pb_id = device.get_v1_account_id() or "unknown"
-        except:
-            # Fallback to roster account_id
-            try:
-                roster = bs.get_game_roster()
-                for client_entry in roster:
-                    if client_entry.get('client_id') == self.client_id:
-                        pb_id = client_entry.get('account_id', 'unknown')
-                        break
-            except:
-                pass
-
-        # Get V2 ID from roster spec_string
-        v2_id = "unknown"
-        try:
-            roster = bs.get_game_roster()
-            for client_entry in roster:
-                if client_entry.get('client_id') == self.client_id:
-                    spec_string = client_entry.get('spec_string', '')
-                    if spec_string:
-                        import json
-
-                        spec_data = json.loads(spec_string)
-                        v2_id = spec_data.get(
-                            'n', 'unknown'
-                        )  # 'n' field contains the V2 account name
-                    break
-        except Exception as e:
-            print(f"Error parsing spec_string: {e}")
-            pass
-
-        # Debug output to see what we're getting
+        # Debug output
         print(f"UUID: {uuid}")
         print(f"PB_ID: {pb_id}")
         print(f"V2_ID: {v2_id}")
 
-        # Debug roster info
-        # try:
-        #     roster = bs.get_game_roster()
-        #     for client_entry in roster:
-        #         if client_entry.get('client_id') == self.client_id:
-        #             print(f"[REGISTRATION] Roster entry: {client_entry}")
-        #             break
-        # except:
-        #     print("[REGISTRATION] Could not get roster info")
-
-        # Create/use database
-        try:
-            # Get path to tourny folder
-            import os
-
-            tourny_path = os.path.join(
-                os.path.dirname(__file__), '..', '..', 'tourny'
-            )
-            db_path = os.path.join(tourny_path, "player_registrations.json")
-
-            # Create tourny directory if it doesn't exist
-            os.makedirs(tourny_path, exist_ok=True)
-
-            # Use default TinyDB storage (no custom formatting for now)
-            db = TinyDB(db_path)
-            players_table = db.table('players')
-            Player = Query()
-
-            # print(f"[REGISTRATION] Database path: {db_path}")
-            print(f"Current players in DB: {len(players_table.all())}")
-
-            # Check if already exists - only check PB ID
-            existing = players_table.search(Player.pb_id == pb_id)
-
-            if existing:
-                player_id = existing[0].doc_id
-                bs.broadcastmessage(
-                    f"You are already registered! ID: #{player_id}",
-                    color=Color.CYAN.float,
-                    clients=[self.client_id],
-                    transient=True,
-                )
-                print(
-                    f"Player #{player_id} already registered with PB ID: {pb_id}"
-                )
-            else:
-                # Insert new player (this will append, not replace)
-                player_id = players_table.insert(
-                    {'uuid': uuid, 'pb_id': pb_id, 'v2_id': v2_id}
-                )
-
-                print(f"Inserted player with ID: {player_id}")
-                print(f"Total players now: {len(players_table.all())}")
-
-                bs.broadcastmessage(
-                    f"Registered successfully! ID: #{player_id}",
-                    color=Color.CYAN.float,
-                    clients=[self.client_id],
-                    transient=True,
-                )
-                print(f"New player #{player_id} registered with PB ID: {pb_id}")
-
-            db.close()
-
-            # Optional: Pretty format the JSON file after closing the database
-            try:
-                import json
-
-                with open(db_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                with open(db_path, 'w', encoding='utf-8') as f:
-                    json.dump(
-                        data, f, indent=4, sort_keys=True, ensure_ascii=False
-                    )
-            except Exception as format_error:
-                print(
-                    f"JSON formatting failed (but data saved): {format_error}"
-                )
-
-        except Exception as e:
-            bs.broadcastmessage(
-                "Registration failed. Please try again.",
-                color=Color.RED.float,
-                clients=[self.client_id],
-                transient=True,
-            )
-            print(f"[REGISTRATION] Error: {e}")
+        # Register in database
+        self._register_in_database(uuid, pb_id, v2_id)
 
     def _get_player(self) -> bs.SessionPlayer | None:
         """Get player by client ID."""
@@ -263,7 +242,7 @@ class Register(ServerCommand):
                 if player.inputdevice.client_id == self.client_id:
                     return player
             return None
-        except:
+        except Exception:
             return None
 
     @override

@@ -11,8 +11,8 @@ namespace ballistica::template_fs {
 
 // -------------------------- hello_again_world --------------------------------
 
-static auto PyHelloAgainWorld(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyHelloAgainWorld(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {nullptr};
