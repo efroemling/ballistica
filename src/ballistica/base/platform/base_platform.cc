@@ -220,14 +220,14 @@ void BasePlatform::SetupInterruptHandling() {
   throw Exception();
 #else
   {
-    struct sigaction handler {};
+    struct sigaction handler{};
     handler.sa_handler = HandleSIGINT;
     sigemptyset(&handler.sa_mask);
     handler.sa_flags = 0;
     sigaction(SIGINT, &handler, nullptr);
   }
   {
-    struct sigaction handler {};
+    struct sigaction handler{};
     handler.sa_handler = HandleSIGTERM;
     sigemptyset(&handler.sa_mask);
     handler.sa_flags = 0;

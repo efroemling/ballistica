@@ -18,8 +18,8 @@ class PythonClassBaseTimer : public PythonClass {
   static PyTypeObject type_obj;
 
  private:
-  static auto tp_new(PyTypeObject* type, PyObject* args,
-                     PyObject* keywds) -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
+      -> PyObject*;
   static void tp_dealloc(PythonClassBaseTimer* self);
   int timer_id_;
   ContextRefSceneV1* context_ref_;

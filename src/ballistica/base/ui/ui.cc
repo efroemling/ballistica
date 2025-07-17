@@ -272,8 +272,8 @@ auto UI::IsPartyWindowOpen() -> bool {
   return false;
 }
 
-auto UI::HandleMouseDown(int button, float x, float y,
-                         bool double_click) -> bool {
+auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
+    -> bool {
   assert(g_base->InLogicThread());
 
   bool handled{};

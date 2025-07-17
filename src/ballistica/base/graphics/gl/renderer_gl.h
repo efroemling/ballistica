@@ -141,17 +141,18 @@ class RendererGL : public Renderer {
   void SetDepthTesting(bool enable) override;
   void SetDrawAtEqualDepth(bool enable) override;
   auto NewScreenRenderTarget() -> RenderTarget* override;
-  auto NewFramebufferRenderTarget(
-      int width, int height, bool linear_interp, bool depth, bool texture,
-      bool depth_is_texture, bool high_quality, bool msaa,
-      bool alpha) -> Object::Ref<RenderTarget> override;
+  auto NewFramebufferRenderTarget(int width, int height, bool linear_interp,
+                                  bool depth, bool texture,
+                                  bool depth_is_texture, bool high_quality,
+                                  bool msaa, bool alpha)
+      -> Object::Ref<RenderTarget> override;
   auto NewMeshAssetData(const MeshAsset& mesh)
       -> Object::Ref<MeshAssetRendererData> override;
   auto NewTextureData(const TextureAsset& texture)
       -> Object::Ref<TextureAssetRendererData> override;
 
-  auto NewMeshData(MeshDataType type,
-                   MeshDrawType drawType) -> MeshRendererData* override;
+  auto NewMeshData(MeshDataType type, MeshDrawType drawType)
+      -> MeshRendererData* override;
   void DeleteMeshData(MeshRendererData* data, MeshDataType type) override;
 
   void ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,

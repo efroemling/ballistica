@@ -38,8 +38,8 @@ class Assets {
   /// is deleted once the load is completed.
   void AddPendingLoad(Object::Ref<Asset>* c);
   enum class FileType { kMesh, kCollisionMesh, kTexture, kSound, kData };
-  auto FindAssetFile(FileType fileType,
-                     const std::string& file_in) -> std::string;
+  auto FindAssetFile(FileType fileType, const std::string& file_in)
+      -> std::string;
 
   /// Unload renderer-specific bits only (gl display lists, etc) - used when
   /// recreating/adjusting the renderer.
@@ -111,8 +111,8 @@ class Assets {
       const std::unordered_map<std::string, std::string>& language);
   auto GetResourceString(const std::string& key) -> std::string;
   auto CharStr(SpecialChar id) -> std::string;
-  auto CompileResourceString(const std::string& s,
-                             bool* valid = nullptr) -> std::string;
+  auto CompileResourceString(const std::string& s, bool* valid = nullptr)
+      -> std::string;
 
   auto sys_assets_loaded() const { return sys_assets_loaded_; }
 
@@ -131,8 +131,8 @@ class Assets {
 
   template <typename T>
   auto GetAssetPendingLoadCount(
-      std::unordered_map<std::string, Object::Ref<T> >* t_list,
-      AssetType type) -> int;
+      std::unordered_map<std::string, Object::Ref<T> >* t_list, AssetType type)
+      -> int;
 
   template <typename T>
   auto GetAsset(const std::string& file_name,

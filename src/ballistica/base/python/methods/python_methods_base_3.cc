@@ -34,8 +34,8 @@ namespace ballistica::base {
 
 // ---------------------------- getsimplesound --------------------------------
 
-static auto PyGetSimpleSound(PyObject* self, PyObject* args,
-                             PyObject* keywds) -> PyObject* {
+static auto PyGetSimpleSound(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
@@ -105,8 +105,8 @@ static PyMethodDef PySetMainUIInputDeviceDef = {
 
 // ------------------------------ set_ui_scale ---------------------------------
 
-static auto PySetUIScale(PyObject* self, PyObject* args,
-                         PyObject* keywds) -> PyObject* {
+static auto PySetUIScale(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
 
@@ -187,8 +187,8 @@ static PyMethodDef PyGetUIScaleDef = {
 
 // ----------------------------- hastouchscreen --------------------------------
 
-static auto PyHasTouchScreen(PyObject* self, PyObject* args,
-                             PyObject* keywds) -> PyObject* {
+static auto PyHasTouchScreen(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   static const char* kwlist[] = {nullptr};
@@ -266,8 +266,8 @@ static PyMethodDef PyClipboardHasTextDef = {
 
 // --------------------------- clipboard_set_text ------------------------------
 
-static auto PyClipboardSetText(PyObject* self, PyObject* args,
-                               PyObject* keywds) -> PyObject* {
+static auto PyClipboardSetText(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* value;
   static const char* kwlist[] = {"value", nullptr};
@@ -341,8 +341,8 @@ static PyMethodDef PySetUpSigIntDef = {
 
 // ---------------------------- have_permission --------------------------------
 
-static auto PyHavePermission(PyObject* self, PyObject* args,
-                             PyObject* keywds) -> PyObject* {
+static auto PyHavePermission(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   Permission permission;
@@ -405,8 +405,8 @@ static PyMethodDef PyRequestPermissionDef = {
 
 // ----------------------------- in_logic_thread -------------------------------
 
-static auto PyInLogicThread(PyObject* self, PyObject* args,
-                            PyObject* keywds) -> PyObject* {
+static auto PyInLogicThread(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -435,8 +435,8 @@ static PyMethodDef PyInLogicThreadDef = {
 
 // ------------------------------ in_main_menu ---------------------------------
 
-static auto PyInMainMenu(PyObject* self, PyObject* args,
-                         PyObject* keywds) -> PyObject* {
+static auto PyInMainMenu(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -465,8 +465,8 @@ static PyMethodDef PyInMainMenuDef = {
 
 // ----------------------------- set_thread_name -------------------------------
 
-static auto PySetThreadName(PyObject* self, PyObject* args,
-                            PyObject* keywds) -> PyObject* {
+static auto PySetThreadName(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   static const char* kwlist[] = {"name", nullptr};
@@ -495,8 +495,8 @@ static PyMethodDef PySetThreadNameDef = {
 
 // ---------------------------- get_thread_name ------------------------------
 
-static auto PyGetThreadName(PyObject* self, PyObject* args,
-                            PyObject* keywds) -> PyObject* {
+static auto PyGetThreadName(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -527,8 +527,8 @@ static PyMethodDef PyGetThreadNameDef = {
 // Returns an extra hash value that can be incorporated into security
 // checks; this contains things like whether console commands have been run,
 // etc.
-auto PyExtraHashValue(PyObject* self, PyObject* args,
-                      PyObject* keywds) -> PyObject* {
+auto PyExtraHashValue(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -660,8 +660,8 @@ static PyMethodDef PyDebugPrintPyErrDef = {
 
 // ----------------------------- print_context ---------------------------------
 
-static auto PyPrintContext(PyObject* self, PyObject* args,
-                           PyObject* keywds) -> PyObject* {
+static auto PyPrintContext(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -687,8 +687,8 @@ static PyMethodDef PyPrintContextDef = {
 
 // --------------------------- print_load_info ---------------------------------
 
-static auto PyPrintLoadInfo(PyObject* self, PyObject* args,
-                            PyObject* keywds) -> PyObject* {
+static auto PyPrintLoadInfo(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   g_base->assets->PrintLoadInfo();
   Py_RETURN_NONE;
@@ -707,8 +707,8 @@ static PyMethodDef PyPrintLoadInfoDef = {
 
 // -------------------------- get_replays_dir ----------------------------------
 
-static auto PyGetReplaysDir(PyObject* self, PyObject* args,
-                            PyObject* keywds) -> PyObject* {
+static auto PyGetReplaysDir(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -971,8 +971,8 @@ static PyMethodDef PyIsLogFullDef = {
 
 // -------------------------- get_v1_cloud_log ---------------------------------
 
-static auto PyGetV1CloudLog(PyObject* self, PyObject* args,
-                            PyObject* keywds) -> PyObject* {
+static auto PyGetV1CloudLog(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   std::string log_fin;
   {
@@ -998,8 +998,8 @@ static PyMethodDef PyGetV1CloudLogDef = {
 
 // ---------------------------- mark_log_sent ----------------------------------
 
-static auto PyMarkLogSent(PyObject* self, PyObject* args,
-                          PyObject* keywds) -> PyObject* {
+static auto PyMarkLogSent(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   // This way we won't try to send it at shutdown time and whatnot
   g_core->logging->set_did_put_v1_cloud_log(true);
@@ -1019,8 +1019,8 @@ static PyMethodDef PyMarkLogSentDef = {
 
 // --------------------- increment_analytics_count -----------------------------
 
-auto PyIncrementAnalyticsCount(PyObject* self, PyObject* args,
-                               PyObject* keywds) -> PyObject* {
+auto PyIncrementAnalyticsCount(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
   int increment = 1;
@@ -1211,8 +1211,8 @@ static PyMethodDef PyLoginAdapterBackEndActiveChangeDef = {
 
 // ---------------------- set_internal_language_keys ---------------------------
 
-static auto PySetInternalLanguageKeys(PyObject* self,
-                                      PyObject* args) -> PyObject* {
+static auto PySetInternalLanguageKeys(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* list_obj;
   PyObject* random_names_list_obj;
@@ -1307,8 +1307,8 @@ static PyMethodDef PyAndroidGetExternalFilesDirDef = {
 
 // ------------------------------- do_once -------------------------------------
 
-static auto PyDoOnce(PyObject* self, PyObject* args,
-                     PyObject* keywds) -> PyObject* {
+static auto PyDoOnce(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   if (g_base->python->DoOnce()) {
     Py_RETURN_TRUE;
@@ -1340,8 +1340,8 @@ static PyMethodDef PyDoOnceDef = {
 
 // ------------------------------- getapp --------------------------------------
 
-static auto PyGetApp(PyObject* self, PyObject* args,
-                     PyObject* keywds) -> PyObject* {
+static auto PyGetApp(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -1494,8 +1494,8 @@ static PyMethodDef PyOpenDirExternallyDef = {
 
 // ----------------------------- fatal_error -----------------------------------
 
-static auto PyFatalError(PyObject* self, PyObject* args,
-                         PyObject* keywds) -> PyObject* {
+static auto PyFatalError(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* message;
   static const char* kwlist[] = {"message", nullptr};
@@ -1621,8 +1621,8 @@ static PyMethodDef PyDevConsoleAddTextDef = {
 
 // -------------------- dev_console_add_python_terminal ------------------------
 
-static auto PyDevConsoleAddPythonTerminal(PyObject* self,
-                                          PyObject* args) -> PyObject* {
+static auto PyDevConsoleAddPythonTerminal(PyObject* self, PyObject* args)
+    -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   auto* dev_console = g_base->ui->dev_console();
