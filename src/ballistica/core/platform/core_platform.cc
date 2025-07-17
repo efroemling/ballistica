@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/shared/foundation/macros.h"
+
 #if !BA_PLATFORM_WINDOWS
 #include <dirent.h>
 #endif
@@ -32,11 +34,13 @@
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/support/min_sdl.h"
+#include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/exception.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/networking/networking_sys.h"
+#include "ballistica/shared/python/python.h"
 
 // ------------------------- PLATFORM SELECTION --------------------------------
 
@@ -209,7 +213,13 @@ auto CorePlatform::GetRealLegacyDeviceUUID(std::string* uuid) -> bool {
 }
 
 auto CorePlatform::GenerateUUID() -> std::string {
-  throw Exception("GenerateUUID() unimplemented");
+  // We used to have platform-specific code for this, but nowadays we just
+  // ask Python to do it for us. Perhaps should move this out of platform.
+  Python::ScopedInterpreterLock gil;
+  auto uuid =
+      g_core->python->objs().Get(CorePython::ObjID::kUUIDStrCall).Call();
+  BA_PRECONDITION(uuid.exists());
+  return uuid.ValueAsString();
 }
 
 auto CorePlatform::GetDeviceUUIDInputs() -> std::list<std::string> {

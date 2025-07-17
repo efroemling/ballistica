@@ -4,6 +4,7 @@
 # pylint: disable=useless-suppression, missing-module-docstring, line-too-long
 from __future__ import annotations
 
+import uuid
 import json
 import copy
 import logging
@@ -14,6 +15,11 @@ import sys
 # before we are able to import modules, so we need to just hard code
 # values here and keep them synced up.
 
+
+def _uuid() -> str:
+    return str(uuid.uuid4())
+
+
 # The C++ layer looks for this variable:
 values = [
     sys.modules['__main__'].__dict__,  # kMainDict
@@ -22,6 +28,7 @@ values = [
     copy.copy,  # kShallowCopyCall
     json.dumps,  # kJsonDumpsCall
     json.loads,  # kJsonLoadsCall
+    _uuid,  # kUUIDStrCall
     logging.NOTSET,  # kLoggingLevelNotSet
     logging.DEBUG,  # kLoggingLevelDebug
     logging.INFO,  # kLoggingLevelInfo

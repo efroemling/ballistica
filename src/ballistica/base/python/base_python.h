@@ -99,7 +99,6 @@ class BasePython {
     kPermissionClass,
     kSpecialCharClass,
     kLstrFromJsonCall,
-    kUUIDStrCall,
     kHashStringsCall,
     kHaveAccountV2CredentialsCall,
     kImplicitSignInCall,

@@ -4,7 +4,7 @@ dmgbuild==1.6.5
 filelock==3.18.0
 furo==2024.8.6
 libcst==1.8.2
-mypy==1.16.1
+mypy==1.17.0
 pbxproj==4.3.0
 pur==7.3.3
 pylint==3.3.7
@@ -12,13 +12,13 @@ pylsp-mypy==0.7.0
 pytest==8.4.1
 python-daemon==3.1.2
 python-lsp-black==2.0.0
-python-lsp-server==1.12.2
+python-lsp-server==1.13.0
 requests==2.32.4
 Sphinx==8.2.3
 tomlkit==0.13.3
 types-certifi==2021.10.8.3
-types-docutils==0.21.0.20250604
+types-docutils==0.21.0.20250715
 types-filelock==3.2.7
 types-requests==2.32.4.20250611
-typing_extensions==4.14.0
+typing_extensions==4.14.1
 urllib3==2.5.0

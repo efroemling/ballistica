@@ -18,7 +18,6 @@ class CorePlatformApple : public CorePlatform {
   CorePlatformApple();
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override;
   auto GetRealLegacyDeviceUUID(std::string* uuid) -> bool override;
-  auto GenerateUUID() -> std::string override;
   auto DoGetConfigDirectoryMonolithicDefault()
       -> std::optional<std::string> override;
   auto DoGetCacheDirectoryMonolithicDefault()

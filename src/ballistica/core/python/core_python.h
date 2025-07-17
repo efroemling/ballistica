@@ -57,6 +57,7 @@ class CorePython {
     kBaEnvGetConfigCall,
     kBaEnvAtExitCall,
     kBaEnvPreFinalizeCall,
+    kUUIDStrCall,
     kLast  // Sentinel; must be at end.
   };
 
