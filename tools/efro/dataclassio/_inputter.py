@@ -121,7 +121,7 @@ class _Inputter:
                 # Otherwise the error stands as-is.
                 raise
 
-            outcls = self._cls.get_type(enum_val)
+            outcls = self._cls.get_type_cached(enum_val)
         else:
             outcls = self._cls
 

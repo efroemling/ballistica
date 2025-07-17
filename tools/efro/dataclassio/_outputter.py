@@ -173,13 +173,13 @@ class _Outputter:
             # Sanity checks; make sure looking up this id gets us this
             # type.
             assert isinstance(type_id.value, str)
-            if obj.get_type(type_id) is not type(obj):
+            if obj.get_type_cached(type_id) is not type(obj):
                 raise RuntimeError(
                     f'dataclassio: object of type {type(obj)}'
                     f' gives type-id {type_id} but that id gives type'
-                    f' {obj.get_type(type_id)}. Something is out of sync.'
+                    f' {obj.get_type_cached(type_id)}.'
+                    f' Something is out of sync.'
                 )
-            assert obj.get_type(type_id) is type(obj)
             if self._create:
                 assert out is not None
                 storagename = obj.get_type_id_storage_name()

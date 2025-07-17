@@ -1053,6 +1053,7 @@ class Spaz(bs.Actor):
                         '-' + str(int(damage / 10)) + '%',
                         msg.pos,
                         msg.force_direction,
+                        self._dead,
                     )
 
                 # Let's always add in a super-punch sound with boxing
@@ -1326,11 +1327,16 @@ class Spaz(bs.Actor):
             ):
                 opposingbody = 1
 
-            # Special case - if we're holding a flag, don't replace it
+            # Special case #1 - if we're holding a flag, don't replace it
+            # Special case #2 - corpses should have lower priority
             # (hmm - should make this customizable or more low level).
             held = self.node.hold_node
-            if held and held.getnodetype() == 'flag':
-                return True
+            if held:
+                spaz = opposingnode.getdelegate(Spaz)
+                if held.getnodetype() == 'flag' or (
+                    spaz and not spaz.is_alive()
+                ):
+                    return True
 
             # Note: hold_body needs to be set before hold_node.
             self.node.hold_body = opposingbody
