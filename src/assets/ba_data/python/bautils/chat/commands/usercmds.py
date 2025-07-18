@@ -92,13 +92,17 @@ class Register(ServerCommand):
             print(f"[REGISTRATION] Error checking registration settings: {e}")
             return False
 
-    def _get_player_uuid(self, device) -> str:  # type: ignore[no-untyped-def]
+    def _get_player_uuid(self, device) -> str:
         """Get player UUID."""
         try:
-            uuid_result = bs.get_client_public_device_uuid(self.client_id)  # type: ignore[attr-defined]
-            return str(uuid_result)
-        except Exception:
-            return str(getattr(device, "unique_id", "unknown"))
+            # Function is registered in bascenev1 module
+            uuid_result = bs.get_client_public_device_uuid(self.client_id)
+            print(f"[REGISTRATION] Got UUID from bs.get_client_public_device_uuid: {uuid_result}")
+            return str(uuid_result) if uuid_result else "unknown"
+        except Exception as e:
+            print(f"[REGISTRATION] Failed to get UUID: {e}")
+            return "unknown"
+
 
     def _get_player_pb_id(self, player, device) -> str:  # type: ignore[no-untyped-def]
         """Get player PB ID."""
@@ -151,41 +155,63 @@ class Register(ServerCommand):
             db_path = os.path.join(tourny_path, "player_registrations.json")
             os.makedirs(tourny_path, exist_ok=True)
 
-            db = TinyDB(db_path)
-            players_table = db.table('players')
-            player_query = Query()
+            # Use context manager or ensure proper cleanup
+            db = None
+            try:
+                db = TinyDB(db_path)
+                players_table = db.table('players')
+                player_query = Query()
 
-            print(f"Current players in DB: {len(players_table.all())}")
+                print(f"Current players in DB: {len(players_table.all())}")
 
-            # Check if already exists
-            existing = players_table.search(player_query.pb_id == pb_id)
+                # Check if already exists
+                existing = players_table.search(player_query.pb_id == pb_id)
 
-            if existing:
-                player_id = existing[0].doc_id
-                bs.broadcastmessage(
-                    f"Already registered! Your player ID: #{player_id}",
-                    color=Color.YELLOW.float,
-                    clients=[self.client_id],
-                    transient=True,
-                )
-                return False
-            else:
-                # Insert new player
-                player_id = players_table.insert(
-                    {'uuid': uuid, 'pb_id': pb_id, 'v2_id': v2_id}
-                )
+                if existing:
+                    player_id = existing[0].doc_id
+                    bs.broadcastmessage(
+                        f"Already registered! Your player ID: #{player_id}",
+                        color=Color.YELLOW.float,
+                        clients=[self.client_id],
+                        transient=True,
+                    )
+                    success = False
+                else:
+                    # Insert new player
+                    player_id = players_table.insert(
+                        {'uuid': uuid, 'pb_id': pb_id, 'v2_id': v2_id}
+                    )
 
-                bs.broadcastmessage(
-                    f"Registration successful! Your player ID: #{player_id}",
-                    color=Color.GREEN.float,
-                    clients=[self.client_id],
-                    transient=True,
-                )
-                print(
-                    f"New registration: ID #{player_id}, "
-                    f"Total players: {len(players_table.all())}"
-                )
-                return True
+                    bs.broadcastmessage(
+                        f"Registration successful! Your player ID: #{player_id}",
+                        color=Color.GREEN.float,
+                        clients=[self.client_id],
+                        transient=True,
+                    )
+                    print(
+                        f"New registration: ID #{player_id}, "
+                        f"Total players: {len(players_table.all())}"
+                    )
+                    success = True
+            finally:
+                # Always close the database
+                if db is not None:
+                    db.close()
+                    
+            # Pretty format the JSON file after closing the database
+            try:
+                #print(f"[REGISTRATION] Formatting JSON file: {db_path}")
+                import json
+                with open(db_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                with open(db_path, 'w', encoding='utf-8') as f:
+                    json.dump(
+                        data, f, indent=4, sort_keys=True, ensure_ascii=False
+                    )
+                #print("[REGISTRATION] JSON formatting completed successfully")
+                return success
+            except Exception as format_error:
+                print(f"[REGISTRATION] JSON formatting failed (but data saved): {format_error}")
 
         except Exception as e:
             print(f"Database error: {e}")
