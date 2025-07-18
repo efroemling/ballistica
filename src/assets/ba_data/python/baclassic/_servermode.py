@@ -22,6 +22,9 @@ from bacommon.servermanager import (
 import babase
 import bascenev1
 
+from bautils.tourny import TournamentSession
+
+0
 if TYPE_CHECKING:
     from typing import Any
 
@@ -329,6 +332,8 @@ class ServerController:
             return bascenev1.DualTeamSession
         if self._config.session_type == 'coop':
             return bascenev1.CoopSession
+        if self._config.session_type == 'tournament':
+            return TournamentSession
         raise RuntimeError(
             f'Invalid session_type: "{self._config.session_type}"'
         )
@@ -364,6 +369,8 @@ class ServerController:
                 ptypename = 'Team Tournament'
             elif sessiontype is bascenev1.CoopSession:
                 ptypename = 'Coop'
+            elif sessiontype is TournamentSession:
+                ptypename = 'Tournament'
             else:
                 raise RuntimeError(f'Unknown session type {sessiontype}')
 
@@ -405,6 +412,11 @@ class ServerController:
                 'campaign': self._config.coop_campaign,
                 'level': self._config.coop_level,
             }
+        elif sessiontype is TournamentSession:
+            appcfg['Free-for-All Playlist Selection'] = self._playlist_name
+            appcfg['Free-for-All Playlist Randomize'] = (
+                self._config.playlist_shuffle
+            )
         else:
             raise RuntimeError(f'Unknown session type {sessiontype}')
 
