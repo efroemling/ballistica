@@ -35,6 +35,7 @@
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/vector4f.h"
@@ -592,8 +593,9 @@ auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
   if (!have_app_instance_uuid) {
     if (g_base) {
       Python::ScopedInterpreterLock gil;
-      auto uuid =
-          g_base->python->objs().Get(BasePython::ObjID::kUUIDStrCall).Call();
+      auto uuid = g_core->python->objs()
+                      .Get(core::CorePython::ObjID::kUUIDStrCall)
+                      .Call();
       if (uuid.exists()) {
         app_instance_uuid = uuid.ValueAsString();
         have_app_instance_uuid = true;

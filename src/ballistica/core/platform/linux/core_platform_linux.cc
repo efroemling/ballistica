@@ -18,24 +18,6 @@ namespace ballistica::core {
 
 CorePlatformLinux::CorePlatformLinux() {}
 
-std::string CorePlatformLinux::GenerateUUID() {
-  std::string val;
-  char buffer[100];
-  FILE* fd_out = popen("cat /proc/sys/kernel/random/uuid", "r");
-  if (fd_out) {
-    int size = fread(buffer, 1, 99, fd_out);
-    fclose(fd_out);
-    if (size == 37) {
-      buffer[size - 1] = 0;  // chop off trailing newline
-      val = buffer;
-    }
-  }
-  if (val == "") {
-    throw Exception("kernel uuid not available");
-  }
-  return val;
-}
-
 auto CorePlatformLinux::DoGetDeviceDescription() -> std::string {
   // Let's look for something pretty like "Ubuntu 20.04", etc.
   FILE* file = fopen("/etc/os-release", "r");

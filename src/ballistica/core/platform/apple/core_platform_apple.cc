@@ -147,14 +147,6 @@ auto CorePlatformApple::GetDeviceUUIDInputs() -> std::list<std::string> {
   return out;
 }
 
-auto CorePlatformApple::GenerateUUID() -> std::string {
-  char buffer[100];
-  uuid_t uuid;
-  uuid_generate(uuid);
-  uuid_unparse(uuid, buffer);
-  return buffer;
-}
-
 auto CorePlatformApple::DoGetConfigDirectoryMonolithicDefault()
     -> std::optional<std::string> {
 #if BA_PLATFORM_IOS_TVOS

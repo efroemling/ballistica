@@ -15,7 +15,6 @@ class CorePlatformLinux : public CorePlatform {
  public:
   CorePlatformLinux();
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "l"; }
-  auto GenerateUUID() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
   auto GetLegacyPlatformName() -> std::string override;
   auto GetLegacySubplatformName() -> std::string override;

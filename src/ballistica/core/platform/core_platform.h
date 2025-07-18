@@ -474,7 +474,7 @@ class CorePlatform {
   // virtual auto GetDefaultCacheDirectory() -> std::string;
 
   /// Generate a random UUID string.
-  virtual auto GenerateUUID() -> std::string;
+  auto GenerateUUID() -> std::string;
 
   virtual void HandleLowLevelDebugLog(const std::string& msg);
 

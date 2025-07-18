@@ -26,7 +26,7 @@ class CorePlatformWindows : public CorePlatform {
   auto GetNativeStackTrace() -> NativeStackTrace* override;
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "w"; }
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
-  auto GenerateUUID() -> std::string override;
+  // auto GenerateUUID() -> std::string override;
   auto DoGetConfigDirectoryMonolithicDefault()
       -> std::optional<std::string> override;
   auto DoGetDataDirectoryMonolithicDefault() -> std::string override;
