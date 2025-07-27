@@ -275,3 +275,169 @@ class Register(ServerCommand):
     def admin_authentication(self) -> bool:
         """Allow all players to use this command."""
         return False
+
+
+@register_command
+class Verify(ServerCommand):
+    """/verify - Verify your device against registration database"""
+
+    def _get_player_uuid(self, device) -> str:
+        """Get player UUID."""
+        try:
+            # Function is registered in bascenev1 module
+            uuid_result = bs.get_client_public_device_uuid(self.client_id)
+            print(f"[VERIFY] Got UUID from bs.get_client_public_device_uuid: {uuid_result}")
+            return str(uuid_result) if uuid_result else "unknown"
+        except Exception as e:
+            print(f"[VERIFY] Failed to get UUID: {e}")
+            return "unknown"
+
+    def _get_player_pb_id(self, player, device) -> str:  # type: ignore[no-untyped-def]
+        """Get player PB ID."""
+        try:
+            if hasattr(player, "get_v1_account_id"):
+                result = player.get_v1_account_id()
+                return str(result) if result else "unknown"
+            if hasattr(device, "get_v1_account_id"):
+                result = device.get_v1_account_id()
+                return str(result) if result else "unknown"
+        except Exception:
+            pass
+
+        # Fallback to roster account_id
+        try:
+            roster = bs.get_game_roster()
+            for client_entry in roster:
+                if client_entry.get('client_id') == self.client_id:
+                    account_id = client_entry.get('account_id', 'unknown')
+                    return str(account_id)
+        except Exception:
+            pass
+        return "unknown"
+
+    def _verify_player(self, uuid: str, pb_id: str) -> tuple[bool, str]:
+        """
+        Verify player against database.
+        Returns (is_verified, message)
+        """
+        try:
+            import os
+
+            tourny_path = os.path.join(
+                os.path.dirname(__file__), '..', '..', 'tourny'
+            )
+            db_path = os.path.join(tourny_path, "player_registrations.json")
+
+            if not os.path.exists(db_path):
+                return False, "Registration database not found."
+
+            db = None
+            try:
+                db = TinyDB(db_path)
+                players_table = db.table('players')
+                player_query = Query()
+
+                # First, check if this PB ID exists in database
+                pb_match = players_table.search(player_query.pb_id == pb_id)
+                
+                if not pb_match:
+                    return False, "Your PB ID is not registered in the database."
+
+                # Get the registered entry for this PB ID
+                registered_entry = pb_match[0]
+                registered_uuid = registered_entry.get('uuid', '')
+                registered_v2_id = registered_entry.get('v2_id', 'Unknown')
+
+                # Check if UUIDs match
+                if uuid == registered_uuid:
+                    return True, f"{registered_v2_id} verified successfully"
+                else:
+                    # UUID doesn't match - check if this UUID belongs to someone else
+                    uuid_match = players_table.search(player_query.uuid == uuid)
+                    
+                    if uuid_match:
+                        # This UUID belongs to a different registered player
+                        other_player = uuid_match[0]
+                        other_v2_id = other_player.get('v2_id', 'Unknown')
+                        other_pb_id = other_player.get('pb_id', 'Unknown')
+                        
+                        return False, (
+                            f"Different device detected! "
+                            f"Belonging to: {other_v2_id} (PB: {other_pb_id})"
+                        )
+                    else:
+                        # This UUID is not registered to anyone
+                        return False, (
+                            f"Different device detected! "
+                            f"Unknown player. "
+                        )
+
+            finally:
+                if db is not None:
+                    db.close()
+
+        except Exception as e:
+            print(f"[VERIFY] Database error: {e}")
+            return False, "Verification failed due to database error."
+
+    @override
+    def on_command_call(self) -> None:
+        if not TINYDB_AVAILABLE:
+            bs.broadcastmessage(
+                "Verification system not available.",
+                color=Color.RED.float,
+                clients=[self.client_id],
+                transient=True,
+            )
+            return
+
+        # Get player info
+        player = self._get_player()
+        if not player:
+            bs.broadcastmessage(
+                "Could not find player information, join the game first.",
+                color=Color.RED.float,
+                clients=[self.client_id],
+                transient=True,
+            )
+            return
+
+        # Extract identifiers
+        device = player.inputdevice
+        uuid = self._get_player_uuid(device)
+        pb_id = self._get_player_pb_id(player, device)
+
+        # Debug output
+        print(f"[VERIFY] UUID: {uuid}")
+        print(f"[VERIFY] PB_ID: {pb_id}")
+
+        # Verify against database
+        is_verified, message = self._verify_player(uuid, pb_id)
+        
+        # Send result message
+        color = Color.GREEN.float if is_verified else Color.RED.float
+        bs.broadcastmessage(
+            message,
+            color=color,
+            clients=None,
+            transient=True,
+        )
+
+    def _get_player(self) -> bs.SessionPlayer | None:
+        """Get player by client ID."""
+        try:
+            session = bs.get_foreground_host_session()
+            if not session:
+                return None
+
+            for player in session.sessionplayers:
+                if player.inputdevice.client_id == self.client_id:
+                    return player
+            return None
+        except Exception:
+            return None
+
+    @override
+    def admin_authentication(self) -> bool:
+        """Allow all players to use this command."""
+        return False

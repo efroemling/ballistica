@@ -71,5 +71,5 @@ class CommandManager:
                 command()
 
             if not command.return_message():
-                return None
+                return msg
         return msg
