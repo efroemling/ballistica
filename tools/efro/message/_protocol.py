@@ -201,8 +201,8 @@ class MessageProtocol:
         within handle_raw_message().
         """
 
-        # If anything goes wrong, return a ErrorSysResponse instead.
-        # (either CLEAN or generic REMOTE)
+        # If anything goes wrong, return a ErrorSysResponse instead
+        # (either CLEAN or generic REMOTE).
         if self.forward_clean_errors and isinstance(exc, CleanError):
             return (
                 ErrorSysResponse(

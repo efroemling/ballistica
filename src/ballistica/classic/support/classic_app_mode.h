@@ -246,12 +246,12 @@ class ClassicAppMode : public base::AppMode {
       seconds_t chest_1_ad_allow_time, seconds_t chest_2_ad_allow_time,
       seconds_t chest_3_ad_allow_time);
   void SetHaveLiveAccountValues(bool val);
-  void GetAccountDisplayState(std::string* league_type, int* league_number,
-                              int* league_rank, int* inbox_count,
-                              bool* inbox_count_is_max);
-  void SetAccountDisplayState(const std::string& league_type, int league_number,
-                              int league_rank, int inbox_count,
-                              bool inbox_count_is_max);
+  void GetAccountState(std::string* league_type, int* league_number,
+                       int* league_rank, int* inbox_count,
+                       bool* inbox_count_is_max);
+  void SetAccountState(const std::string& league_type, int league_number,
+                       int league_rank, int inbox_count,
+                       bool inbox_count_is_max);
 
  private:
   ClassicAppMode();

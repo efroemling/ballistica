@@ -79,16 +79,6 @@ class PlusAppSubsystem(AppSubsystem):
         return _baplus.get_price(item)
 
     @staticmethod
-    def get_v1_account_product_purchased(item: str) -> bool:
-        """:meta private:"""
-        return _baplus.get_v1_account_product_purchased(item)
-
-    @staticmethod
-    def get_v1_account_product_purchases_state() -> int:
-        """:meta private:"""
-        return _baplus.get_v1_account_product_purchases_state()
-
-    @staticmethod
     def get_v1_account_display_string(full: bool = True) -> str:
         """:meta private:"""
         return _baplus.get_v1_account_display_string(full)
@@ -128,13 +118,13 @@ class PlusAppSubsystem(AppSubsystem):
         """:meta private:"""
         return _baplus.get_v1_account_state_num()
 
-    @staticmethod
-    def get_v1_account_ticket_count() -> int:
-        """Return the number of tickets for the current account.
+    # @staticmethod
+    # def get_v1_account_ticket_count() -> int:
+    #     """Return the number of tickets for the current account.
 
-        :meta private:
-        """
-        return _baplus.get_v1_account_ticket_count()
+    #     :meta private:
+    #     """
+    #     return _baplus.get_v1_account_ticket_count()
 
     @staticmethod
     def get_v1_account_type() -> str:

@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """BombSquad specific bits."""
 
 from __future__ import annotations
@@ -42,6 +43,25 @@ class PrivatePartyResponse(Response):
     tokens: Annotated[int, IOAttrs('t')]
     gold_pass: Annotated[bool, IOAttrs('g')]
     datacode: Annotated[str | None, IOAttrs('d')]
+
+
+@ioprepped
+@dataclass
+class GetClassicPurchasesMessage(Message):
+    """Asking for current account's classic purchases."""
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [GetClassicPurchasesResponse]
+
+
+@ioprepped
+@dataclass
+class GetClassicPurchasesResponse(Response):
+    """Here's those classic purchases ya asked for boss."""
+
+    purchases: Annotated[set[str], IOAttrs('p')]
 
 
 class ClassicChestAppearance(Enum):
@@ -130,6 +150,9 @@ class ClassicAccountLiveData:
     inbox_contains_prize: Annotated[bool, IOAttrs('icp')]
 
     chests: Annotated[dict[str, Chest], IOAttrs('c')]
+
+    # State id of our purchases for builds 22459+.
+    purchases_state: Annotated[str | None, IOAttrs('p')]
 
 
 class DisplayItemTypeID(Enum):
@@ -957,3 +980,25 @@ class ChestActionResponse(Response):
     effects: Annotated[
         list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
+
+
+@ioprepped
+@dataclass
+class GlobalProfileCheckMessage(Message):
+    """Is this global profile name available?"""
+
+    name: Annotated[str, IOAttrs('n')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [GlobalProfileCheckResponse]
+
+
+@ioprepped
+@dataclass
+class GlobalProfileCheckResponse(Response):
+    """Here's that profile check ya asked for boss."""
+
+    available: Annotated[bool, IOAttrs('a')]
+    ticket_cost: Annotated[int, IOAttrs('tc')]

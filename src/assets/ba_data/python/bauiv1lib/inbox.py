@@ -317,6 +317,8 @@ class InboxWindow(bui.MainWindow):
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
 
+        self._action_ui_pause: bui.RootUIUpdatePause | None = None
+
         self._entry_displays: list[_EntryDisplay] = []
 
         self._width = 900 if uiscale is bui.UIScale.SMALL else 500
@@ -507,6 +509,10 @@ class InboxWindow(bui.MainWindow):
             bui.getsound('error').play()
             return
 
+        # Pause the root ui so stuff like token counts don't change
+        # automatically, allowing the action to animate them.
+        self._action_ui_pause = bui.RootUIUpdatePause()
+
         # Ask the master-server to run our action.
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
@@ -569,6 +575,11 @@ class InboxWindow(bui.MainWindow):
         response: bacommon.bs.ClientUIActionResponse | Exception,
     ) -> None:
         # pylint: disable=too-many-branches
+
+        # Let the UI auto-update again after any animations we may apply
+        # here.
+        self._action_ui_pause = None
+
         display = display_weak()
         if display is None:
             return
@@ -1118,9 +1129,6 @@ class InboxWindow(bui.MainWindow):
                     edit=button,
                     up_widget=above_widget,
                     down_widget=below_widget,
-                    # down_widget=(
-                    #     button if below_widget is None else below_widget
-                    # ),
                     right_widget=buttons[max(j - 1, 0)],
                     left_widget=buttons[min(j + 1, len(buttons) - 1)],
                 )

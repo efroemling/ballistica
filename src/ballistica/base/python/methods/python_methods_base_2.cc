@@ -9,7 +9,6 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
-#include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
@@ -952,10 +951,10 @@ static PyMethodDef PyShowProgressBarDef = {
     ":meta private:",
 };
 
-// ------------------------- set_ui_account_state ------------------------------
+// ---------------------- set_account_sign_in_state ----------------------------
 
-static auto PySetUIAccountState(PyObject* self, PyObject* args,
-                                PyObject* keywds) -> PyObject* {
+static auto PySetAccountSignInState(PyObject* self, PyObject* args,
+                                    PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -971,21 +970,24 @@ static auto PySetUIAccountState(PyObject* self, PyObject* args,
 
   if (signed_in) {
     auto name = Python::GetString(name_obj);
-    g_base->ui->SetAccountState(true, name);
+    g_base->ui->SetAccountSignInState(true, name);
   } else {
-    g_base->ui->SetAccountState(false, "");
+    g_base->ui->SetAccountSignInState(false, "");
   }
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PySetUIAccountStateDef = {
-    "set_ui_account_state",            // name
-    (PyCFunction)PySetUIAccountState,  // method
-    METH_VARARGS | METH_KEYWORDS,      // flags
+static PyMethodDef PySetAccountSignInStateDef = {
+    "set_account_sign_in_state",           // name
+    (PyCFunction)PySetAccountSignInState,  // method
+    METH_VARARGS | METH_KEYWORDS,          // flags
 
-    "set_ui_account_state(signed_in: bool, name: str | None = None) -> None\n"
+    "set_account_sign_in_state(signed_in: bool, name: str | None = None) -> "
+    "None\n"
+    "\n"
+    "Keep the base layer informed of who is currently signed in (or not).\n"
     "\n"
     ":meta private:\n",
 };
@@ -1114,7 +1116,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyFullscreenControlKeyShortcutDef,
       PyFullscreenControlGetDef,
       PyFullscreenControlSetDef,
-      PySetUIAccountStateDef,
+      PySetAccountSignInStateDef,
       PyGetVirtualScreenSizeDef,
       PyGetVirtualSafeAreaSizeDef,
       PyAtExitDef,

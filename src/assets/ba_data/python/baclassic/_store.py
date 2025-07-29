@@ -437,13 +437,14 @@ class StoreSubsystem:
     def get_available_purchase_count(self, tab: str | None = None) -> int:
         """(internal)"""
         plus = babase.app.plus
-        if plus is None:
+        classic = babase.app.classic
+        if plus is None or classic is None:
             return 0
         try:
-            if plus.get_v1_account_state() != 'signed_in':
+            if plus.accounts.primary is None:
                 return 0
             count = 0
-            our_tickets = plus.get_v1_account_ticket_count()
+            our_tickets = classic.tickets
             store_data = self.get_store_layout()
             if tab is not None:
                 tabs = [(tab, store_data[tab])]
@@ -463,22 +464,22 @@ class StoreSubsystem:
     ) -> int:
         plus = babase.app.plus
         assert plus
+        assert babase.app.classic is not None
+        purchases = babase.app.classic.purchases
         for section in tabval:
             for item in section['items']:
                 ticket_cost = plus.get_v1_account_misc_read_val(
                     'price.' + item, None
                 )
                 if ticket_cost is not None:
-                    if (
-                        our_tickets >= ticket_cost
-                        and not plus.get_v1_account_product_purchased(item)
-                    ):
+                    if our_tickets >= ticket_cost and item not in purchases:
                         count += 1
         return count
 
     def get_available_sale_time(self, tab: str) -> int | None:
         """(internal)"""
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-locals
         # pylint: disable=too-many-nested-blocks
         plus = babase.app.plus
         assert plus is not None
@@ -488,6 +489,7 @@ class StoreSubsystem:
 
             app = babase.app
             assert app.classic is not None
+            purchases = app.classic.purchases
             sale_times: list[int | None] = []
 
             # Calc time for our pro sale (old special case).
@@ -546,7 +548,7 @@ class StoreSubsystem:
             for section in store_layout[tab]:
                 for item in section['items']:
                     if item in sales_raw:
-                        if not plus.get_v1_account_product_purchased(item):
+                        if item not in purchases:
                             to_end = (
                                 datetime.datetime.fromtimestamp(
                                     sales_raw[item]['e'], datetime.UTC
@@ -566,15 +568,13 @@ class StoreSubsystem:
 
     def get_unowned_maps(self) -> list[str]:
         """Return the list of local maps not owned by the current account."""
-        plus = babase.app.plus
+        classic = babase.app.classic
+        purchases = classic.purchases if classic is not None else set()
         unowned_maps: set[str] = set()
         if babase.app.env.gui:
             for map_section in self.get_store_layout()['maps']:
                 for mapitem in map_section['items']:
-                    if (
-                        plus is None
-                        or not plus.get_v1_account_product_purchased(mapitem)
-                    ):
+                    if mapitem not in purchases:
                         m_info = self.get_store_item(mapitem)
                         unowned_maps.add(m_info['map_type'].name)
         return sorted(unowned_maps)
@@ -582,7 +582,8 @@ class StoreSubsystem:
     def get_unowned_game_types(self) -> set[type[bascenev1.GameActivity]]:
         """Return present game types not owned by the current account."""
         try:
-            plus = babase.app.plus
+            classic = babase.app.classic
+            purchases = classic.purchases if classic is not None else set()
             unowned_games: set[type[bascenev1.GameActivity]] = set()
             if babase.app.env.gui:
                 for section in self.get_store_layout()['minigames']:
@@ -591,10 +592,7 @@ class StoreSubsystem:
                             # Ignore things like infinite onslaught which
                             # aren't actually game types.
                             continue
-                        if (
-                            plus is None
-                            or not plus.get_v1_account_product_purchased(mname)
-                        ):
+                        if mname not in purchases:
                             m_info = self.get_store_item(mname)
                             unowned_games.add(m_info['gametype'])
             return unowned_games

@@ -39,7 +39,7 @@ class RootWidget : public ContainerWidget {
   void OnLanguageChange() override;
   void UpdateLayout() override;
   void SetSquadSizeLabel(int val);
-  void SetAccountState(bool signed_in, const std::string& name);
+  void SetAccountSignInState(bool signed_in, const std::string& name);
 
   void SetTicketsMeterValue(int val);
   void SetTokensMeterValue(int val, bool gold_pass);
@@ -85,9 +85,9 @@ class RootWidget : public ContainerWidget {
   auto inbox_count_is_max_vis_value() const {
     return inbox_count_is_max_vis_value_;
   }
-  void RestoreAccountDisplayState(const std::string& league_type,
-                                  int league_num, int league_rank,
-                                  int inbox_count, bool inbox_count_is_max);
+  void SetAccountState(const std::string& league_type, int league_num,
+                       int league_rank, int inbox_count,
+                       bool inbox_count_is_max);
   void AnimateChestUnlockTime(const std::string& chestid, seconds_t duration,
                               seconds_t startvalue, seconds_t endvalue);
   void AnimateTickets(seconds_t duration, int startvalue, int endvalue);

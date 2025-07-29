@@ -404,6 +404,8 @@ class TournamentEntryWindow(PopupWindow):
     def _update(self) -> None:
         plus = bui.app.plus
         assert plus is not None
+        classic = bui.app.classic
+        assert classic is not None
 
         # We may outlive our widgets.
         if not self.root_widget:
@@ -562,7 +564,7 @@ class TournamentEntryWindow(PopupWindow):
             )
 
         try:
-            t_str = str(plus.get_v1_account_ticket_count())
+            t_str = str(classic.tickets)
         except Exception:
             t_str = '?'
         if self._get_tickets_button:
@@ -648,10 +650,11 @@ class TournamentEntryWindow(PopupWindow):
             bui.apptimer(0 if practice else 1.25, self._transition_out)
 
     def _on_pay_with_tickets_press(self) -> None:
-        # from bauiv1lib import gettickets
 
         plus = bui.app.plus
         assert plus is not None
+        classic = bui.app.classic
+        assert classic is not None
 
         # If we're already entering, ignore.
         if self._entering:
@@ -685,7 +688,7 @@ class TournamentEntryWindow(PopupWindow):
         # Deny if we don't have enough tickets.
         ticket_count: int | None
         try:
-            ticket_count = plus.get_v1_account_ticket_count()
+            ticket_count = classic.tickets
         except Exception:
             # FIXME: should add a bui.NotSignedInError we can use here.
             ticket_count = None
@@ -770,6 +773,7 @@ class TournamentEntryWindow(PopupWindow):
     def _on_ad_complete(self, actually_showed: bool) -> None:
         plus = bui.app.plus
         assert plus is not None
+        assert bui.app.classic is not None
 
         # Make sure any transactions the ad added got locally applied
         # (rewards added, etc.).
@@ -785,7 +789,7 @@ class TournamentEntryWindow(PopupWindow):
         # This should have awarded us the tournament_entry_ad purchase;
         # make sure that's present.
         # (otherwise the server will ignore our tournament entry anyway)
-        if not plus.get_v1_account_product_purchased('tournament_entry_ad'):
+        if 'tournament_entry_ad' not in bui.app.classic.purchases:
             print('no tournament_entry_ad purchase present in _on_ad_complete')
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
             bui.getsound('error').play()
@@ -805,6 +809,7 @@ class TournamentEntryWindow(PopupWindow):
     def _on_cancel(self) -> None:
         plus = bui.app.plus
         assert plus is not None
+        assert bui.app.classic is not None
         # Don't allow canceling for several seconds after poking an enter
         # button if it looks like we're waiting on a purchase or entering
         # the tournament.
@@ -813,7 +818,7 @@ class TournamentEntryWindow(PopupWindow):
             and self._purchase_name is not None
             and (
                 plus.have_outstanding_v1_account_transactions()
-                or plus.get_v1_account_product_purchased(self._purchase_name)
+                or self._purchase_name in bui.app.classic.purchases
                 or self._entering
             )
         ):

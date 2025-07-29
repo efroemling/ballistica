@@ -1383,13 +1383,13 @@ class AccountSettingsWindow(bui.MainWindow):
         bui.textwidget(edit=self._campaign_progress_text, text=p_str)
 
     def _refresh_tickets_text(self) -> None:
-        plus = bui.app.plus
-        assert plus is not None
+        classic = bui.app.classic
+        assert classic is not None
 
         if self._tickets_text is None:
             return
         try:
-            tc_str = str(plus.get_v1_account_ticket_count())
+            tc_str = str(classic.tickets)
         except Exception:
             logging.exception('error refreshing tickets text')
             tc_str = '-'

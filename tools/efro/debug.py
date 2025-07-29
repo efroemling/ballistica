@@ -571,6 +571,7 @@ class DeadlockWatcher:
         # pylint: disable=too-many-locals
         # pylint: disable=not-an-iterable
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-branches
         from tempfile import TemporaryDirectory
 
         assert cls.watchers_lock is not None and cls.watchers is not None
@@ -606,7 +607,7 @@ class DeadlockWatcher:
 
                 # Sleep most of the way through it but give ourselves time
                 # to turn it off if we're still responsive.
-                time.sleep(timeout - 1.23)
+                time.sleep(timeout - 1.53)
                 now = time.monotonic()
 
                 ex += f' t2 {time.monotonic()-starttime:.2f}'
@@ -692,14 +693,22 @@ class DeadlockWatcher:
                             # pylint: disable=consider-using-with
                             logfile = open(logfilepath, 'wb')
                             if watcher_info is None:
+                                # This seems to happen periodically
+                                # simply due to scheduling on some
+                                # server setups. So let's just warn
+                                # instead of erroring.
+                                logcall = _get_logger().warning
                                 watcher_info = (
                                     f'No expired watchers found'
                                     f' (slept {duration:.2f}s of'
-                                    f' {timeout:.2f}s, {total_duration:.2f}s'
-                                    f' since thread start). Likely a GIL issue.'
+                                    f' {timeout:.2f}s,'
+                                    f' {total_duration:.2f}s'
+                                    f' since thread start).'
                                     f' ex: {ex}'
                                 )
-                            _get_logger().error(
+                            else:
+                                logcall = _get_logger().error
+                            logcall(
                                 'Deadlock Detected!\n%s\n\n%s',
                                 watcher_info,
                                 dump,
@@ -711,9 +720,10 @@ class DeadlockWatcher:
                             logfile = None
 
                     # Its possible that our dumper fired without us
-                    # wanting to this likely means something was holding
-                    # on to the GIL. Let the user know (but only if we're NOT
-                    # using logging, since  we include this info there).
+                    # wanting to; this likely means something was
+                    # holding on to the GIL. Let the user know (but only
+                    # if we're NOT using logging, since we already
+                    # include this info there).
                     if not found_fresh_expired and not use_logs:
                         _get_logger().error(
                             'DeadlockWatcher thread seems to have dumped states'

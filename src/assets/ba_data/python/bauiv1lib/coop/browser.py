@@ -884,9 +884,10 @@ class CoopBrowserWindow(bui.MainWindow):
         ]
 
         # Show easter-egg-hunt either if its easter or we own it.
-        if plus.get_v1_account_misc_read_val(
-            'easter', False
-        ) or plus.get_v1_account_product_purchased('games.easter_egg_hunt'):
+        if (
+            plus.get_v1_account_misc_read_val('easter', False)
+            or 'games.easter_egg_hunt' in bui.app.classic.purchases
+        ):
             items = [
                 'Challenges:Easter Egg Hunt',
                 'Challenges:Pro Easter Egg Hunt',
@@ -1058,8 +1059,8 @@ class CoopBrowserWindow(bui.MainWindow):
 
         # Show pop-up to allow purchasing any required stuff we don't have.
         for purchase in required_purchases:
-            if not plus.get_v1_account_product_purchased(purchase):
-                if plus.get_v1_account_state() != 'signed_in':
+            if not purchase in bui.app.classic.purchases:
+                if plus.accounts.primary is None:
                     show_sign_in_prompt()
                 else:
                     PurchaseWindow(
@@ -1145,8 +1146,8 @@ class CoopBrowserWindow(bui.MainWindow):
             assert required_purchases
 
             for purchase in required_purchases:
-                if not plus.get_v1_account_product_purchased(purchase):
-                    if plus.get_v1_account_state() != 'signed_in':
+                if purchase not in classic.purchases:
+                    if plus.accounts.primary is None:
                         show_sign_in_prompt()
                     else:
                         PurchaseWindow(

@@ -82,9 +82,10 @@ bool UIV1FeatureSet::IsPartyIconVisible() {
   return true;
 }
 
-void UIV1FeatureSet::SetAccountState(bool signed_in, const std::string& name) {
+void UIV1FeatureSet::SetAccountSignInState(bool signed_in,
+                                           const std::string& name) {
   assert(root_widget_.exists());
-  root_widget_->SetAccountState(signed_in, name);
+  root_widget_->SetAccountSignInState(signed_in, name);
 }
 
 void UIV1FeatureSet::SetSquadSizeLabel(int num) {

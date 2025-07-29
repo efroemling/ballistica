@@ -561,7 +561,7 @@ class EditProfileWindow(
         plus = bui.app.plus
         assert plus is not None
 
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             show_sign_in_prompt()
             return
 
@@ -691,9 +691,9 @@ class EditProfileWindow(
         )
 
     def _on_character_press(self) -> None:
-        from bauiv1lib import characterpicker
+        from bauiv1lib.characterpicker import CharacterPicker
 
-        characterpicker.CharacterPicker(
+        CharacterPicker(
             parent=self._root_widget,
             position=self._character_button.get_screen_space_center(),
             selected_character=self._spazzes[self._icon_index],
@@ -703,9 +703,9 @@ class EditProfileWindow(
         )
 
     def _on_icon_press(self) -> None:
-        from bauiv1lib import iconpicker
+        from bauiv1lib.iconpicker import IconPicker
 
-        iconpicker.IconPicker(
+        IconPicker(
             parent=self._root_widget,
             position=self._icon_button.get_screen_space_center(),
             selected_icon=self._icon,

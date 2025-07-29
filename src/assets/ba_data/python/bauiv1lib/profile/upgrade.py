@@ -8,6 +8,8 @@ import time
 import weakref
 from typing import TYPE_CHECKING
 
+import bacommon.bs
+
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -24,18 +26,19 @@ class ProfileUpgradeWindow(bui.Window):
         edit_profile_window: EditProfileWindow,
         transition: str = 'in_right',
     ):
-        if bui.app.classic is None:
-            raise RuntimeError('This requires classic.')
+        # if bui.app.classic is None:
+        #     raise RuntimeError('This requires classic.')
 
         plus = bui.app.plus
         assert plus is not None
 
         self._r = 'editProfileWindow'
 
+        self._cost: int | None = None
+
         uiscale = bui.app.ui_v1.uiscale
         self._width = 750 if uiscale is bui.UIScale.SMALL else 680
         self._height = 450 if uiscale is bui.UIScale.SMALL else 350
-        assert bui.app.classic is not None
         self._base_scale = (
             1.92
             if uiscale is bui.UIScale.SMALL
@@ -83,7 +86,7 @@ class ProfileUpgradeWindow(bui.Window):
             selected_child=self._upgrade_button,
         )
 
-        assert bui.app.classic is not None
+        # assert bui.app.classic is not None
         bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 38 + yoffs),
@@ -96,7 +99,7 @@ class ProfileUpgradeWindow(bui.Window):
             v_align='center',
         )
 
-        assert bui.app.classic is not None
+        # assert bui.app.classic is not None
         bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 100 + yoffs),
@@ -136,22 +139,25 @@ class ProfileUpgradeWindow(bui.Window):
             v_align='center',
         )
 
-        bui.app.classic.master_server_v1_get(
-            'bsGlobalProfileCheck',
-            {'name': self._name, 'b': bui.app.env.engine_build_number},
-            callback=bui.WeakCall(self._profile_check_result),
-        )
-        self._cost = plus.get_v1_account_misc_read_val(
-            'price.global_profile', 500
-        )
+        assert plus.accounts.primary is not None
+        with plus.accounts.primary:
+            plus.cloud.send_message_cb(
+                bacommon.bs.GlobalProfileCheckMessage(self._name),
+                on_response=bui.WeakCall(
+                    self._on_global_profile_check_response
+                ),
+            )
+
         self._status: str | None = 'waiting'
         self._update_timer = bui.AppTimer(
             1.023, bui.WeakCall(self._update), repeat=True
         )
         self._update()
 
-    def _profile_check_result(self, result: dict[str, Any] | None) -> None:
-        if result is None:
+    def _on_global_profile_check_response(
+        self, response: bacommon.bs.GlobalProfileCheckResponse | Exception
+    ) -> None:
+        if isinstance(response, Exception):
             bui.textwidget(
                 edit=self._status_text,
                 text=bui.Lstr(resource='internal.unavailableNoConnectionText'),
@@ -164,7 +170,8 @@ class ProfileUpgradeWindow(bui.Window):
                 textcolor=(0.5, 0.5, 0.5),
             )
         else:
-            if result['available']:
+            self._cost = response.ticket_cost
+            if response.available:
                 bui.textwidget(
                     edit=self._status_text,
                     text=bui.Lstr(
@@ -195,30 +202,32 @@ class ProfileUpgradeWindow(bui.Window):
                 )
 
     def _on_upgrade_press(self) -> None:
-        # from bauiv1lib import gettickets
 
         if self._status is None:
             plus = bui.app.plus
+            classic = bui.app.classic
             assert plus is not None
+            assert classic is not None
+            assert self._cost is not None
 
-            # If it appears we don't have enough tickets, offer to buy more.
-            tickets = plus.get_v1_account_ticket_count()
+            # tickets = plus.get_v1_account_ticket_count()
+            tickets = classic.tickets
             if tickets < self._cost:
                 bui.getsound('error').play()
                 bui.screenmessage(
                     bui.Lstr(resource='notEnoughTicketsText'),
                     color=(1, 0, 0),
                 )
-                # gettickets.show_get_tickets_prompt()
                 return
+
             bui.screenmessage(
                 bui.Lstr(resource='purchasingText'), color=(0, 1, 0)
             )
             self._status = 'pre_upgrading'
 
-            # Now we tell the original editor to save the profile, add an
-            # upgrade transaction, and then sit and wait for everything to
-            # go through.
+            # Now we tell the original editor to save the profile, add
+            # an upgrade transaction, and then sit and wait for
+            # everything to go through.
             edit_profile_window = self._edit_profile_window()
             if edit_profile_window is None:
                 print('profile upgrade: original edit window gone')
@@ -250,8 +259,8 @@ class ProfileUpgradeWindow(bui.Window):
             self._cancel()
             return
 
-        # Once we've kicked off an upgrade attempt and all transactions go
-        # through, we're done.
+        # Once we've kicked off an upgrade attempt and all transactions
+        # go through, we're done.
         if (
             self._status == 'upgrading'
             and not plus.have_outstanding_v1_account_transactions()

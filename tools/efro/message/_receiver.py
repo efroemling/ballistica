@@ -71,7 +71,6 @@ class MessageReceiver:
             | None
         ) = None
 
-    # noinspection PyProtectedMember
     def register_handler(
         self, call: Callable[[Any, Message], Response | None]
     ) -> None:
@@ -80,10 +79,10 @@ class MessageReceiver:
         The message type handled by the call is determined by its
         type annotation.
         """
-        # TODO: can use types.GenericAlias in 3.9.
-        # (hmm though now that we're there,  it seems a drop-in
-        # replace gives us errors. Should re-test in 3.11 as it seems
-        # that typing_extensions handles it differently in that case)
+        # TODO: can use types.GenericAlias in 3.9. (hmm though now that
+        # we're there, it seems a drop-in replace gives us errors.
+        # Should re-test in 3.11 as it seems that typing_extensions
+        # handles it differently in that case)
         from typing import _GenericAlias  # type: ignore
         from typing import get_type_hints, get_args
 
@@ -97,12 +96,13 @@ class MessageReceiver:
                 f' got {sig.args}'
             )
 
-        # Check annotation types to determine what message types we handle.
-        # Return-type annotation can be a Union, but we probably don't
-        # have it available at runtime. Explicitly pull it in.
+        # Check annotation types to determine what message types we
+        # handle. Return-type annotation can be a Union, but we probably
+        # don't have it available at runtime. Explicitly pull it in.
+        #
         # UPDATE: we've updated our pylint filter to where we should
-        # have all annotations available.
-        # anns = get_type_hints(call, localns={'Union': Union})
+        # have all annotations available. anns = get_type_hints(call,
+        # localns={'Union': Union})
         anns = get_type_hints(call)
 
         msgtype = anns.get('msg')
@@ -134,17 +134,16 @@ class MessageReceiver:
             # types.UnionType above.
             responsetypes = (ret,)
 
-        # This will contain NoneType for empty return cases, but
-        # we expect it to be None.
-        # noinspection PyPep8
+        # This will contain NoneType for empty return cases, but we
+        # expect it to be None.
         responsetypes = tuple(
             None if r is type(None) else r for r in responsetypes
         )
 
-        # Make sure our protocol has this message type registered and our
-        # return types exactly match. (Technically we could return a subset
-        # of the supported types; can allow this in the future if it makes
-        # sense).
+        # Make sure our protocol has this message type registered and
+        # our return types exactly match. (Technically we could return a
+        # subset of the supported types; can allow this in the future if
+        # it makes sense).
         registered_types = self.protocol.message_ids_by_type.keys()
 
         if msgtype not in registered_types:
@@ -158,7 +157,8 @@ class MessageReceiver:
                 f'Message type {msgtype} already has a registered handler.'
             )
 
-        # Make sure the responses exactly matches what the message expects.
+        # Make sure the responses exactly matches what the message
+        # expects.
         if set(responsetypes) != set(msgtype.get_response_types()):
             raise TypeError(
                 f'Provided response types {responsetypes} do not'
@@ -324,10 +324,10 @@ class MessageReceiver:
         The return value is the raw response to the message.
         """
 
-        # Note: This call is synchronous so that the first part of it can
-        # happen synchronously. If the whole call were async we wouldn't be
-        # able to guarantee that messages handlers would be called in the
-        # order the messages were received.
+        # Note: This call is synchronous so that the first part of it
+        # can happen synchronously. If the whole call were async we
+        # wouldn't be able to guarantee that messages handlers would be
+        # called in the order the messages were received.
 
         assert self.is_async, "Can't call async handler on sync receiver."
         msg_decoded: Message | None = None
@@ -431,6 +431,7 @@ class BoundMessageReceiver:
         standard handle_raw_message calls. Any errors within those
         calls will be automatically returned as encoded strings.
         """
-        # Passing None for Message here; we would only have that available
-        # for things going wrong in the handler (which this is not for).
+        # Passing None for Message here; we would only have that
+        # available for things going wrong in the handler (which this is
+        # not for).
         return self._receiver.encode_error_response(self._obj, None, exc)[0]

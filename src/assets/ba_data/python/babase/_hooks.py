@@ -174,12 +174,6 @@ def purchase_already_in_progress_error() -> None:
         )
 
 
-def uuid_str() -> str:
-    import uuid
-
-    return str(uuid.uuid4())
-
-
 def orientation_reset_cb_message() -> None:
     from babase._language import Lstr
 

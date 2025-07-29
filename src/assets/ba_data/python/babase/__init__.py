@@ -103,7 +103,7 @@ from _babase import (
     set_low_level_config_value,
     set_thread_name,
     set_main_ui_input_device,
-    set_ui_account_state,
+    set_account_sign_in_state,
     set_ui_scale,
     show_progress_bar,
     shutdown_suppress_begin,
@@ -176,7 +176,7 @@ from babase._general import (
 )
 from babase._language import Lstr, LanguageSubsystem
 from babase._locale import LocaleSubsystem
-from babase._logging import balog, applog, lifecyclelog
+from babase._logging import balog, accountlog, applog, lifecyclelog, netlog
 from babase._login import LoginAdapter, LoginInfo
 
 from babase._mgen.enums import (
@@ -201,6 +201,7 @@ from babase._workspace import WorkspaceSubsystem
 _babase.app = app = App()
 
 __all__ = [
+    'accountlog',
     'AccountV2Handle',
     'AccountV2Subsystem',
     'ActivityNotFoundError',
@@ -320,6 +321,7 @@ __all__ = [
     'native_review_request',
     'native_review_request_supported',
     'native_stack_trace',
+    'netlog',
     'NetworkSubsystem',
     'NodeNotFoundError',
     'normalized_color',
@@ -350,7 +352,7 @@ __all__ = [
     'set_low_level_config_value',
     'set_main_ui_input_device',
     'set_thread_name',
-    'set_ui_account_state',
+    'set_account_sign_in_state',
     'set_ui_scale',
     'show_progress_bar',
     'shutdown_suppress_begin',

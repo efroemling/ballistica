@@ -303,8 +303,7 @@ class PrivateGatherTab(GatherTab):
         if self._state.sub_tab is SubTabType.HOST:
             # If we're not signed in, just refresh to show that.
             if (
-                plus.get_v1_account_state() != 'signed_in'
-                or plus.accounts.primary is None
+                plus.accounts.primary is None
             ) and not self._showing_not_signed_in_screen:
                 self._refresh_sub_tab()
             else:

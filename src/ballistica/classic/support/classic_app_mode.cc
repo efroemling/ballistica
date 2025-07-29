@@ -1670,10 +1670,10 @@ void ClassicAppMode::SetRootUILeagueValues(const std::string league_type,
   }
 }
 
-void ClassicAppMode::GetAccountDisplayState(std::string* league_type,
-                                            int* league_number,
-                                            int* league_rank, int* inbox_count,
-                                            bool* inbox_count_is_max) {
+void ClassicAppMode::GetAccountState(std::string* league_type,
+                                     int* league_number, int* league_rank,
+                                     int* inbox_count,
+                                     bool* inbox_count_is_max) {
   assert(g_base->InLogicThread());
   assert(league_type && league_number && league_rank && inbox_count
          && inbox_count_is_max);
@@ -1700,10 +1700,9 @@ void ClassicAppMode::GetAccountDisplayState(std::string* league_type,
   *inbox_count_is_max = false;
 }
 
-void ClassicAppMode::SetAccountDisplayState(const std::string& league_type,
-                                            int league_number, int league_rank,
-                                            int inbox_count,
-                                            bool inbox_count_is_max) {
+void ClassicAppMode::SetAccountState(const std::string& league_type,
+                                     int league_number, int league_rank,
+                                     int inbox_count, bool inbox_count_is_max) {
   assert(g_base->InLogicThread());
 
   // Apply it to any existing UI.
@@ -1711,9 +1710,8 @@ void ClassicAppMode::SetAccountDisplayState(const std::string& league_type,
     if (auto* root_widget = uiv1_->root_widget()) {
       // Ask the root widget to restore these vis values and kick off anims
       // to the current actual values or whatnot if applicable.
-      root_widget->RestoreAccountDisplayState(league_type, league_number,
-                                              league_rank, inbox_count,
-                                              inbox_count_is_max);
+      root_widget->SetAccountState(league_type, league_number, league_rank,
+                                   inbox_count, inbox_count_is_max);
     }
   }
 }
