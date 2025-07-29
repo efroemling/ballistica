@@ -863,6 +863,15 @@ static PyMethodDef PyApplyAppConfigDef = {
 static auto PyCommitAppConfig(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
+
+  // If writes are suppressed, no-op.
+  if (g_base->config_and_state_writes_suppressed()) {
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kDebug,
+        "Skipping app-config write due to config-and-state-writes-suppressed.");
+    Py_RETURN_NONE;
+  }
+
   PyObject* config_obj;
   static const char* kwlist[] = {"config", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
