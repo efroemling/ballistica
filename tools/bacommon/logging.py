@@ -39,7 +39,7 @@ class ClientLoggerName(Enum):
     V2TRANSPORT = 'ba.v2transport'
     CLOUD_SUBSCRIPTION = 'ba.cloudsub'
     ACCOUNT_CLIENT_V2 = 'ba.accountclientv2'
-    ACCOUNT_V2 = 'ba.accountv2'
+    ACCOUNT = 'ba.account'
     LOGIN_ADAPTER = 'ba.loginadapter'
 
     @property
@@ -82,8 +82,8 @@ class ClientLoggerName(Enum):
             return 'live values fed from regional server'
         if self is cls.ACCOUNT_CLIENT_V2:
             return 'server communication for v2 accounts'
-        if self is cls.ACCOUNT_V2:
-            return 'v2 (modern) account functionality'
+        if self is cls.ACCOUNT:
+            return 'account functionality'
         if self is cls.LOGIN_ADAPTER:
             return 'support for particular login types'
         assert_never(self)

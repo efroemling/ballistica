@@ -93,7 +93,7 @@ class UI {
 
   /// Set persistent account state info; will be provided to current and
   /// future delegates.
-  void SetAccountState(bool signed_in, const std::string& name);
+  void SetAccountSignInState(bool signed_in, const std::string& name);
 
   auto HandleMouseDown(int button, float x, float y, bool double_click) -> bool;
   void HandleMouseUp(int button, float x, float y);

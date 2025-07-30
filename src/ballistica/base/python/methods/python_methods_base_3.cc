@@ -802,6 +802,54 @@ static PyMethodDef PyAppConfigGetBuiltinKeysDef = {
     ":meta private:",
 };
 
+// ------------------- suppress_config_and_state_writes ------------------------
+
+static auto PySuppressConfigAndStateWrites(PyObject* self, PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  g_base->set_config_and_state_writes_suppressed(true);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySuppressConfigAndStateWritesDef = {
+    "suppress_config_and_state_writes",           // name
+    (PyCFunction)PySuppressConfigAndStateWrites,  // method
+    METH_NOARGS,                                  // flags
+
+    "suppress_config_and_state_writes() -> None\n"
+    "\n"
+    "Disable subsequent writes of app config and state files by the engine.\n"
+    "\n"
+    "This can be used by tools intending to manipulate these files\n"
+    "manually. Such tools should be sure to restart or quit the app\n"
+    "when done to restore normal behavior.\n"};
+
+// ----------------- get_suppress_config_and_state_writes ----------------------
+
+static auto PyGetSuppressConfigAndStateWrites(PyObject* self, PyObject* args,
+                                              PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_base->config_and_state_writes_suppressed()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetSuppressConfigAndStateWritesDef = {
+    "get_suppress_config_and_state_writes",          // name
+    (PyCFunction)PyGetSuppressConfigAndStateWrites,  // method
+    METH_NOARGS,                                     // flags
+
+    "get_suppress_config_and_state_writes() -> None\n"
+    "\n"
+    "Are config and state writes suppressed?\n"
+    "\n"
+    "This can be used by tools intending to manipulate these files\n"
+    "manually. Such tools should be sure to restart or quit the app\n"
+    "when done to restore normal behavior.\n"};
+
 // ---------------------- resolve_appconfig_value ------------------------------
 
 static auto PyResolveAppConfigValue(PyObject* self, PyObject* args,
@@ -2170,6 +2218,8 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyGetInitialAppConfigDef,
       PySetAppConfigDef,
       PyUpdateInternalLoggerLevelsDef,
+      PySuppressConfigAndStateWritesDef,
+      PyGetSuppressConfigAndStateWritesDef,
   };
 }
 

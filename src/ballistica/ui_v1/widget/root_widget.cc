@@ -1892,7 +1892,8 @@ auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
   return nullptr;
 }
 
-void RootWidget::SetAccountState(bool signed_in, const std::string& name) {
+void RootWidget::SetAccountSignInState(bool signed_in,
+                                       const std::string& name) {
   if (account_name_text_) {
     auto* w{account_name_text_->widget.get()};
     auto* wb{account_button_->widget.get()};
@@ -1975,40 +1976,28 @@ auto RootWidget::ColorForLeagueValue_(const std::string& value) -> Vector3f {
   return color;
 }
 
-void RootWidget::RestoreAccountDisplayState(const std::string& league_type,
-                                            int league_number, int league_rank,
-                                            int inbox_count,
-                                            bool inbox_count_is_max) {
-  // Only restore display values if we currently have *actual* values.
-  // Otherwise we'll get a janky switch right back to the unset state.
-  if (league_type_value_.empty()) {
-    return;
-  }
+void RootWidget::SetAccountState(const std::string& league_type,
+                                 int league_number, int league_rank,
+                                 int inbox_count, bool inbox_count_is_max) {
+  // Restore *actual* values as well as vis values.
+  league_type_value_ = league_type_vis_value_ = league_type;
+  league_number_value_ = league_number_vis_value_ = league_number;
+  league_rank_value_ = league_rank_vis_value_ = league_rank;
+  inbox_count_value_ = inbox_count_vis_value_ = inbox_count;
+  inbox_count_is_max_value_ = inbox_count_is_max_vis_value_ =
+      inbox_count_is_max;
 
-  // Store these vis values.
-  league_type_vis_value_ = league_type;
-  league_number_vis_value_ = league_number;
-  league_rank_vis_value_ = league_rank;
-  inbox_count_vis_value_ = inbox_count;
-  inbox_count_is_max_vis_value_ = inbox_count_is_max;
-
-  // Apply them instantly to our widgets.
+  // Apply current values instantly to the UI with no animations.
   league_rank_text_->widget->SetText(
       league_rank_vis_value_ > 0
           ? ("#" + std::to_string(league_rank_vis_value_))
           : "");
 
   SetInboxCountValue_(inbox_count_vis_value_, inbox_count_is_max_vis_value_);
-
   auto color{ColorForLeagueValue_(league_type_vis_value_)};
   trophy_icon_->widget->set_color(color.x, color.y, color.z);
-
-  // Kick off timers to animate/switch us from these restored values to our
-  // latest actual ones.
-  trophy_meter_display_timer_ =
-      base::AppTimer::New(1.0f, false, [this] { UpdateLeagueRankDisplay_(); });
-  inbox_display_timer_ =
-      base::AppTimer::New(1.0f, false, [this] { UpdateInboxDisplay_(); });
+  UpdateInboxDisplay_();
+  UpdateLeagueRankDisplay_();
 }
 
 void RootWidget::SetInboxCountValue_(int count, bool is_max) {

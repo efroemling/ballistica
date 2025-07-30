@@ -600,10 +600,10 @@ static PyMethodDef PyAnimateRootUITokensDef = {
     "Animate the displayed tokens value.",
 };
 
-// ----------------------- get_account_display_state ---------------------------
+// --------------------------- get_account_state -------------------------------
 
-static auto PyGetAccountDisplayState(PyObject* self, PyObject* args,
-                                     PyObject* keywds) -> PyObject* {
+static auto PyGetAccountState(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -616,8 +616,8 @@ static auto PyGetAccountDisplayState(PyObject* self, PyObject* args,
   int inbox_count;
   bool inbox_count_is_max;
 
-  appmode->GetAccountDisplayState(&league_type, &league_number, &league_rank,
-                                  &inbox_count, &inbox_count_is_max);
+  appmode->GetAccountState(&league_type, &league_number, &league_rank,
+                           &inbox_count, &inbox_count_is_max);
   // If values are unset, return None.
   if (league_type.empty()) {
     Py_RETURN_NONE;
@@ -644,20 +644,20 @@ static auto PyGetAccountDisplayState(PyObject* self, PyObject* args,
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyGetAccountDisplayStateDef = {
-    "get_account_display_state",            // name
-    (PyCFunction)PyGetAccountDisplayState,  // method
-    METH_NOARGS,                            // flags
+static PyMethodDef PyGetAccountStateDef = {
+    "get_account_state",             // name
+    (PyCFunction)PyGetAccountState,  // method
+    METH_NOARGS,                     // flags
 
-    "get_account_display_state() -> Any\n"
+    "get_account_state() -> Any\n"
     "\n"
     "(internal)",
 };
 
-// ----------------------- set_account_display_state ---------------------------
+// ---------------------------- set_account_state ------------------------------
 
-static auto PySetAccountDisplayState(PyObject* self, PyObject* args,
-                                     PyObject* keywds) -> PyObject* {
+static auto PySetAccountState(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -692,19 +692,19 @@ static auto PySetAccountDisplayState(PyObject* self, PyObject* args,
     inbox_count_is_max = false;
   }
 
-  appmode->SetAccountDisplayState(league_type, league_number, league_rank,
-                                  inbox_count, inbox_count_is_max);
+  appmode->SetAccountState(league_type, league_number, league_rank, inbox_count,
+                           inbox_count_is_max);
   Py_RETURN_NONE;
 
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PySetAccountDisplayStateDef = {
-    "set_account_display_state",            // name
-    (PyCFunction)PySetAccountDisplayState,  // method
-    METH_VARARGS | METH_KEYWORDS,           // flags
+static PyMethodDef PySetAccountStateDef = {
+    "set_account_state",             // name
+    (PyCFunction)PySetAccountState,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
 
-    "set_account_display_state(vals: dict) -> None\n"
+    "set_account_state(vals: dict) -> None\n"
     "\n"
     "(internal)",
 };
@@ -723,8 +723,8 @@ auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
       PyAnimateRootUIChestUnlockTimeDef,
       PyAnimateRootUITicketsDef,
       PyAnimateRootUITokensDef,
-      PyGetAccountDisplayStateDef,
-      PySetAccountDisplayStateDef,
+      PyGetAccountStateDef,
+      PySetAccountStateDef,
       PySetHaveLiveAccountValuesDef,
   };
 }

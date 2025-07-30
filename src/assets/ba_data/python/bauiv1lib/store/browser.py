@@ -503,6 +503,8 @@ class StoreBrowserWindow(bui.MainWindow):
 
         plus = bui.app.plus
         assert plus is not None
+        classic = bui.app.classic
+        assert classic is not None
 
         # Prevent pressing buy within a few seconds of the last press
         # (gives the buttons time to disable themselves and whatnot).
@@ -513,7 +515,7 @@ class StoreBrowserWindow(bui.MainWindow):
         ):
             bui.getsound('error').play()
         else:
-            if plus.get_v1_account_state() != 'signed_in':
+            if plus.accounts.primary is None:
                 show_sign_in_prompt()
             else:
                 self._last_buy_time = curtime
@@ -539,7 +541,7 @@ class StoreBrowserWindow(bui.MainWindow):
                     price = plus.get_v1_account_misc_read_val(
                         'price.' + item, None
                     )
-                    our_tickets = plus.get_v1_account_ticket_count()
+                    our_tickets = classic.tickets
                     if price is not None and our_tickets < price:
                         bui.getsound('error').play()
                         bui.screenmessage(
@@ -598,6 +600,8 @@ class StoreBrowserWindow(bui.MainWindow):
 
         plus = bui.app.plus
         assert plus is not None
+        classic = bui.app.classic
+        assert classic is not None
 
         if not self._root_widget:
             return
@@ -629,7 +633,8 @@ class StoreBrowserWindow(bui.MainWindow):
                 assert bui.app.classic is not None
                 purchased = bui.app.classic.accounts.have_pro()
             else:
-                purchased = plus.get_v1_account_product_purchased(b_type)
+                assert bui.app.classic is not None
+                purchased = b_type in bui.app.classic.purchases
 
             sale_opacity = 0.0
             sale_title_text: str | bui.Lstr = ''
@@ -685,8 +690,8 @@ class StoreBrowserWindow(bui.MainWindow):
                     )
 
                     # Color the button differently if we cant afford this.
-                    if plus.get_v1_account_state() == 'signed_in':
-                        if plus.get_v1_account_ticket_count() < price:
+                    if plus.accounts.primary is not None:
+                        if classic.tickets < price:
                             color = (0.6, 0.61, 0.6)
                     price_text = bui.charstr(bui.SpecialChar.TICKET) + str(
                         plus.get_v1_account_misc_read_val(

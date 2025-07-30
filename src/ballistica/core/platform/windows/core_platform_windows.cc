@@ -268,23 +268,6 @@ auto CorePlatformWindows::GetDeviceUUIDInputs() -> std::list<std::string> {
   return out;
 }
 
-// std::string CorePlatformWindows::GenerateUUID() {
-//   std::string val;
-//   UUID uuid;
-//   ZeroMemory(&uuid, sizeof(UUID));
-//   UuidCreate(&uuid);
-//   RPC_CSTR str_a;
-//   UuidToStringA(&uuid, &str_a);
-//   if (str_a != nullptr) {
-//     val = reinterpret_cast<char*>(str_a);
-//     RpcStringFreeA(&str_a);
-//   } else {
-//     // As a fallback, get processor cycles since boot.
-//     val = std::to_string(__rdtsc());
-//   }
-//   return val;
-// }
-
 auto CorePlatformWindows::DoGetConfigDirectoryMonolithicDefault()
     -> std::optional<std::string> {
   std::string config_dir;

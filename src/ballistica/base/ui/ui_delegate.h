@@ -40,7 +40,8 @@ class UIDelegateInterface {
   virtual auto GetRootWidget() -> ui_v1::Widget* = 0;
   virtual auto SendWidgetMessage(const WidgetMessage& m) -> int = 0;
   virtual void SetSquadSizeLabel(int num) = 0;
-  virtual void SetAccountState(bool signed_in, const std::string& name) = 0;
+  virtual void SetAccountSignInState(bool signed_in,
+                                     const std::string& name) = 0;
 
   /// Should return true if this app mode can confirm quitting the app.
   virtual auto HasQuitConfirmDialog() -> bool = 0;

@@ -90,7 +90,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   void Draw(base::FrameDef* frame_def) override;
 
   void SetSquadSizeLabel(int num) override;
-  void SetAccountState(bool signed_in, const std::string& name) override;
+  void SetAccountSignInState(bool signed_in, const std::string& name) override;
 
   UIV1Python* const python;
 

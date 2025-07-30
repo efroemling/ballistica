@@ -19,7 +19,6 @@ if TYPE_CHECKING:
 class PartyQueueWindow(bui.Window):
     """Window showing players waiting to join a server."""
 
-    # Ewww this needs quite a bit of de-linting if/when i revisit it..
     # pylint: disable=consider-using-dict-comprehension
     class Dude:
         """Represents a single dude waiting in a server line."""
@@ -96,7 +95,7 @@ class PartyQueueWindow(bui.Window):
             )
             self._update_image()
 
-            # DEBUG: vis target pos..
+            # DEBUG: vis target pos.
             self._body_image_target: bui.Widget | None
             self._eyes_image_target: bui.Widget | None
             if self._debug:
@@ -114,18 +113,18 @@ class PartyQueueWindow(bui.Window):
                     color=self._eye_color,
                     mesh_transparent=parent.eyes_mesh,
                 )
-                # (updates our image positions)
+                # Updates our image positions.
                 self.set_target_distance(self._target_distance)
             else:
                 self._body_image_target = self._eyes_image_target = None
 
         def __del__(self) -> None:
-            # ew.  our destructor here may get called as part of an internal
-            # widget tear-down.
-            # running further widget calls here can quietly break stuff, so we
-            # need to push a deferred call to kill these as necessary instead.
-            # (should bulletproof internal widget code to give a clean error
-            # in this case)
+            # Ew. Our destructor here may get called as part of an
+            # internal widget tear-down. Running further widget calls
+            # here can quietly break stuff, so we need to push a
+            # deferred call to kill these as necessary instead. (should
+            # bulletproof internal widget code to give a clean error in
+            # this case).
             def kill_widgets(widgets: Sequence[bui.Widget | None]) -> None:
                 for widget in widgets:
                     if widget:
@@ -318,7 +317,7 @@ class PartyQueueWindow(bui.Window):
             text='',
         )
 
-        # update at roughly 30fps
+        # Update at roughly 30fps.
         self._update_timer = bui.AppTimer(
             0.033, bui.WeakCall(self.update), repeat=True
         )
@@ -388,14 +387,15 @@ class PartyQueueWindow(bui.Window):
                 texture=self._white_tex,
             )
 
-        # now go through the data they sent, creating dudes for us and our
-        # enemies as needed and updating target positions on all of them..
+        # Now go through the data they sent, creating dudes for us and
+        # our enemies as needed and updating target positions on all of
+        # them.
 
-        # mark all as unclaimed so we know which ones to kill off..
+        # Mark all as unclaimed so we know which ones to kill off.
         for dude in self._dudes:
             dude.claimed = False
 
-        # always have a dude for ourself..
+        # Always have a dude for ourself.
         if -1 not in self._dudes_by_id:
             dude = self.Dude(
                 self,
@@ -433,8 +433,7 @@ class PartyQueueWindow(bui.Window):
                 self._dudes_by_id[enemy_id].set_target_distance(enemy_distance)
             self._dudes_by_id[enemy_id].claimed = True
 
-        # remove unclaimed dudes from both of our lists
-        # noinspection PyUnresolvedReferences
+        # Remove unclaimed dudes from both of our lists.
         self._dudes_by_id = dict(
             [
                 item
@@ -460,7 +459,7 @@ class PartyQueueWindow(bui.Window):
         if not self._root_widget:
             return
 
-        # Seeing this in logs; debugging...
+        # Seeing this in logs; debugging.
         if not self._title_text:
             print('PartyQueueWindows update: Have root but no title_text.')
             return
@@ -488,7 +487,7 @@ class PartyQueueWindow(bui.Window):
                 self._hide_field()
                 self._field_shown = False
 
-            # if they told us there's a boost button, update..
+            # If they told us there's a boost button, update.
             if response.get('bt') is not None:
                 self._boost_tickets = response['bt']
                 self._boost_strength = response['ba']
@@ -541,12 +540,13 @@ class PartyQueueWindow(bui.Window):
                     self._boost_label.delete()
                     self._boost_label = None
 
-            # if they told us to go ahead and try and connect, do so..
-            # (note: servers will disconnect us if we try to connect before
-            # getting this go-ahead, so don't get any bright ideas...)
+            # If they told us to go ahead and try and connect, do so.
+            # Note: servers will disconnect us if we try to connect
+            # before getting this go-ahead, so don't get any bright
+            # ideas.
             if response.get('c', False):
-                # enforce a delay between connection attempts
-                # (in case they're jamming on the boost button)
+                # Enforce a delay between connection attempts (in case
+                # they're jamming on the boost button).
                 now = time.time()
                 if (
                     self._last_connect_attempt_time is None
@@ -568,22 +568,21 @@ class PartyQueueWindow(bui.Window):
         """Boost was pressed."""
         from bauiv1lib.account.signin import show_sign_in_prompt
 
-        # from bauiv1lib import gettickets
-
         plus = bui.app.plus
         assert plus is not None
+        classic = bui.app.classic
+        assert classic is not None
 
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             show_sign_in_prompt()
             return
 
-        if plus.get_v1_account_ticket_count() < self._boost_tickets:
+        if classic.tickets < self._boost_tickets:
             bui.getsound('error').play()
             bui.screenmessage(
                 bui.Lstr(resource='notEnoughTicketsText'),
                 color=(1, 0, 0),
             )
-            # gettickets.show_get_tickets_prompt()
             return
 
         bui.getsound('laserReverse').play()
@@ -595,12 +594,12 @@ class PartyQueueWindow(bui.Window):
             },
             callback=bui.WeakCall(self.on_update_response),
         )
-        # lets not run these immediately (since they may be rapid-fire,
-        # just bucket them until the next tick)
+        # Let's not run these immediately (since they may be rapid-fire,
+        # just bucket them until the next tick).
 
-        # the transaction handles the local ticket change, but we apply our
-        # local boost vis manually here..
-        # (our visualization isn't really wired up to be transaction-based)
+        # The transaction handles the local ticket change, but we apply
+        # our local boost vis manually here (our visualization isn't
+        # really wired up to be transaction-based).
         our_dude = self._dudes_by_id.get(-1)
         if our_dude is not None:
             our_dude.boost(self._boost_strength, self._smoothing)
@@ -609,6 +608,8 @@ class PartyQueueWindow(bui.Window):
         """Update!"""
         plus = bui.app.plus
         assert plus is not None
+        classic = bui.app.classic
+        assert classic is not None
 
         if not self._root_widget:
             return
@@ -624,8 +625,8 @@ class PartyQueueWindow(bui.Window):
         # Update boost button color based on if we have enough moola.
         if self._boost_button is not None:
             can_boost = (
-                plus.get_v1_account_state() == 'signed_in'
-                and plus.get_v1_account_ticket_count() >= self._boost_tickets
+                plus.accounts.primary is not None
+                and classic.tickets >= self._boost_tickets
             )
             bui.buttonwidget(
                 edit=self._boost_button,
@@ -637,7 +638,7 @@ class PartyQueueWindow(bui.Window):
             if self._boost_button is not None:
                 if plus.get_v1_account_state() == 'signed_in':
                     val = bui.charstr(bui.SpecialChar.TICKET) + str(
-                        plus.get_v1_account_ticket_count()
+                        classic.tickets
                     )
                 else:
                     val = bui.charstr(bui.SpecialChar.TICKET) + '???'
@@ -658,6 +659,6 @@ class PartyQueueWindow(bui.Window):
             )
             plus.run_v1_account_transactions()
 
-        # step our dudes
+        # Step our dudes.
         for dude in self._dudes:
             dude.step(self._smoothing)

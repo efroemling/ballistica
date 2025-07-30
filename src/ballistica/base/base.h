@@ -825,6 +825,13 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// (affects some app behavior).
   auto server_wrapper_managed() { return server_wrapper_managed_; }
 
+  void set_config_and_state_writes_suppressed(bool val) {
+    config_and_state_writes_suppressed_ = val;
+  }
+  auto config_and_state_writes_suppressed() const {
+    return config_and_state_writes_suppressed_;
+  }
+
   /// Reset the engine to a default state. Should only be called by the
   /// active app-mode. App-modes generally call this when first activating,
   /// but may opt to call it at other times.
@@ -889,6 +896,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool base_native_import_completed_{};
   bool basn_log_behavior_{};
   bool server_wrapper_managed_{};
+  bool config_and_state_writes_suppressed_{};
 };
 
 }  // namespace ballistica::base

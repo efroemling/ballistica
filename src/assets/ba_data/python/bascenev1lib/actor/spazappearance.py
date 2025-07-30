@@ -14,67 +14,69 @@ def get_appearances(include_locked: bool = False) -> list[str]:
     assert plus is not None
 
     assert bs.app.classic is not None
-    get_purchased = plus.get_v1_account_product_purchased
+
+    purchases = bs.app.classic.purchases
+
     disallowed = []
     if not include_locked:
         # Hmm yeah this'll be tough to hack...
-        if not get_purchased('characters.santa'):
+        if 'characters.santa' not in purchases:
             disallowed.append('Santa Claus')
-        if not get_purchased('characters.frosty'):
+        if 'characters.frosty' not in purchases:
             disallowed.append('Frosty')
-        if not get_purchased('characters.bones'):
+        if 'characters.bones' not in purchases:
             disallowed.append('Bones')
-        if not get_purchased('characters.bernard'):
+        if 'characters.bernard' not in purchases:
             disallowed.append('Bernard')
-        if not get_purchased('characters.pixie'):
+        if 'characters.pixie' not in purchases:
             disallowed.append('Pixel')
-        if not get_purchased('characters.pascal'):
+        if 'characters.pascal' not in purchases:
             disallowed.append('Pascal')
-        if not get_purchased('characters.actionhero'):
+        if 'characters.actionhero' not in purchases:
             disallowed.append('Todd McBurton')
-        if not get_purchased('characters.taobaomascot'):
+        if 'characters.taobaomascot' not in purchases:
             disallowed.append('Taobao Mascot')
-        if not get_purchased('characters.agent'):
+        if 'characters.agent' not in purchases:
             disallowed.append('Agent Johnson')
-        if not get_purchased('characters.jumpsuit'):
+        if 'characters.jumpsuit' not in purchases:
             disallowed.append('Lee')
-        if not get_purchased('characters.assassin'):
+        if 'characters.assassin' not in purchases:
             disallowed.append('Zola')
-        if not get_purchased('characters.wizard'):
+        if 'characters.wizard' not in purchases:
             disallowed.append('Grumbledorf')
-        if not get_purchased('characters.cowboy'):
+        if 'characters.cowboy' not in purchases:
             disallowed.append('Butch')
-        if not get_purchased('characters.witch'):
+        if 'characters.witch' not in purchases:
             disallowed.append('Witch')
-        if not get_purchased('characters.warrior'):
+        if 'characters.warrior' not in purchases:
             disallowed.append('Warrior')
-        if not get_purchased('characters.superhero'):
+        if 'characters.superhero' not in purchases:
             disallowed.append('Middle-Man')
-        if not get_purchased('characters.alien'):
+        if 'characters.alien' not in purchases:
             disallowed.append('Alien')
-        if not get_purchased('characters.oldlady'):
+        if 'characters.oldlady' not in purchases:
             disallowed.append('OldLady')
-        if not get_purchased('characters.gladiator'):
+        if 'characters.gladiator' not in purchases:
             disallowed.append('Gladiator')
-        if not get_purchased('characters.wrestler'):
+        if 'characters.wrestler' not in purchases:
             disallowed.append('Wrestler')
-        if not get_purchased('characters.operasinger'):
+        if 'characters.operasinger' not in purchases:
             disallowed.append('Gretel')
-        if not get_purchased('characters.robot'):
+        if 'characters.robot' not in purchases:
             disallowed.append('Robot')
-        if not get_purchased('characters.cyborg'):
+        if 'characters.cyborg' not in purchases:
             disallowed.append('B-9000')
-        if not get_purchased('characters.bunny'):
+        if 'characters.bunny' not in purchases:
             disallowed.append('Easter Bunny')
-        if not get_purchased('characters.kronk'):
+        if 'characters.kronk' not in purchases:
             disallowed.append('Kronk')
-        if not get_purchased('characters.zoe'):
+        if 'characters.zoe' not in purchases:
             disallowed.append('Zoe')
-        if not get_purchased('characters.jackmorgan'):
+        if 'characters.jackmorgan' not in purchases:
             disallowed.append('Jack Morgan')
-        if not get_purchased('characters.mel'):
+        if 'characters.mel' not in purchases:
             disallowed.append('Mel')
-        if not get_purchased('characters.snakeshadow'):
+        if 'characters.snakeshadow' not in purchases:
             disallowed.append('Snake Shadow')
     return [
         s

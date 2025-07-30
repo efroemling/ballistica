@@ -77,8 +77,10 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # Classic-specific account state.
         self.remove_ads = False
         self.gold_pass = False
+        self.tickets = 0
         self.tokens = 0
         self.chest_dock_full = False
+        self.purchases: frozenset[str] = frozenset()
 
         # Main Menu.
         self.main_menu_last_news_fetch_time: float | None = None
@@ -994,14 +996,14 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
     def is_game_unlocked(self, game: str) -> bool:
         """Is a particular game unlocked?"""
-        plus = babase.app.plus
-        assert plus is not None
+        classic = babase.app.classic
+        assert classic is not None
 
         purchases = self.required_purchases_for_game(game)
         if not purchases:
             return True
 
         for purchase in purchases:
-            if not plus.get_v1_account_product_purchased(purchase):
+            if not purchase in classic.purchases:
                 return False
         return True

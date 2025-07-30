@@ -28,7 +28,7 @@ netlog = logging.getLogger(ClientLoggerName.NETWORKING.value)
 connectivitylog = logging.getLogger(ClientLoggerName.CONNECTIVITY.value)
 v2transportlog = logging.getLogger(ClientLoggerName.V2TRANSPORT.value)
 cloudsublog = logging.getLogger(ClientLoggerName.CLOUD_SUBSCRIPTION.value)
-accountv2log = logging.getLogger(ClientLoggerName.ACCOUNT_V2.value)
+accountlog = logging.getLogger(ClientLoggerName.ACCOUNT.value)
 accountclientv2log = logging.getLogger(ClientLoggerName.ACCOUNT_CLIENT_V2.value)
 loginadapterlog = logging.getLogger(ClientLoggerName.LOGIN_ADAPTER.value)
 

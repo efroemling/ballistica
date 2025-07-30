@@ -17,7 +17,7 @@ import babase
 if TYPE_CHECKING:
     from typing import Callable, Any
 
-    from efro.message import Message, Response
+    from efro.message import Message, Response, BoolResponse
     import bacommon.bs
 
 
@@ -213,6 +213,15 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message_cb(
         self,
+        msg: bacommon.bs.GetClassicPurchasesMessage,
+        on_response: Callable[
+            [bacommon.bs.GetClassicPurchasesResponse | Exception], None
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
         msg: bacommon.cloud.StoreQueryMessage,
         on_response: Callable[
             [bacommon.cloud.StoreQueryResponse | Exception], None
@@ -262,6 +271,13 @@ class CloudSubsystem(babase.AppSubsystem):
         on_response: Callable[
             [bacommon.bs.ChestActionResponse | Exception], None
         ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.bs.GlobalProfileCheckMessage,
+        on_response: Callable[[BoolResponse | Exception], None],
     ) -> None: ...
 
     @overload

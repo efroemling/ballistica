@@ -247,7 +247,7 @@ void UI::SetSquadSizeLabel(int val) {
   }
 }
 
-void UI::SetAccountState(bool signed_in, const std::string& name) {
+void UI::SetAccountSignInState(bool signed_in, const std::string& name) {
   assert(g_base->InLogicThread());
 
   // No-op if this exactly matches what we already have.
@@ -261,7 +261,8 @@ void UI::SetAccountState(bool signed_in, const std::string& name) {
 
   // Pass it to any current delegate.
   if (auto* ui_delegate = delegate()) {
-    ui_delegate->SetAccountState(account_state_signed_in_, account_state_name_);
+    ui_delegate->SetAccountSignInState(account_state_signed_in_,
+                                       account_state_name_);
   }
 }
 
@@ -693,7 +694,8 @@ void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {
       delegate_->OnScreenSizeChange();
       delegate_->OnLanguageChange();
       delegate_->SetSquadSizeLabel(squad_size_label_);
-      delegate_->SetAccountState(account_state_signed_in_, account_state_name_);
+      delegate_->SetAccountSignInState(account_state_signed_in_,
+                                       account_state_name_);
     }
   } catch (const Exception& exc) {
     // Switching UI delegates is a big deal; don't try to continue if

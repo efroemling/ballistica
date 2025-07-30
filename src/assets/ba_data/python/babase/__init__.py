@@ -58,6 +58,7 @@ from _babase import (
     get_replays_dir,
     get_string_height,
     get_string_width,
+    get_suppress_config_and_state_writes,
     get_ui_scale,
     get_v1_cloud_log_file_path,
     get_virtual_safe_area_size,
@@ -103,13 +104,14 @@ from _babase import (
     set_low_level_config_value,
     set_thread_name,
     set_main_ui_input_device,
-    set_ui_account_state,
+    set_account_sign_in_state,
     set_ui_scale,
     show_progress_bar,
     shutdown_suppress_begin,
     shutdown_suppress_end,
     shutdown_suppress_count,
     SimpleSound,
+    suppress_config_and_state_writes,
     supports_max_fps,
     supports_vsync,
     supports_unicode_display,
@@ -176,7 +178,7 @@ from babase._general import (
 )
 from babase._language import Lstr, LanguageSubsystem
 from babase._locale import LocaleSubsystem
-from babase._logging import balog, applog, lifecyclelog
+from babase._logging import balog, accountlog, applog, lifecyclelog, netlog
 from babase._login import LoginAdapter, LoginInfo
 
 from babase._mgen.enums import (
@@ -201,6 +203,7 @@ from babase._workspace import WorkspaceSubsystem
 _babase.app = app = App()
 
 __all__ = [
+    'accountlog',
     'AccountV2Handle',
     'AccountV2Subsystem',
     'ActivityNotFoundError',
@@ -276,6 +279,7 @@ __all__ = [
     'get_replays_dir',
     'get_string_height',
     'get_string_width',
+    'get_suppress_config_and_state_writes',
     'get_type_name',
     'get_ui_scale',
     'get_virtual_safe_area_size',
@@ -320,6 +324,7 @@ __all__ = [
     'native_review_request',
     'native_review_request_supported',
     'native_stack_trace',
+    'netlog',
     'NetworkSubsystem',
     'NodeNotFoundError',
     'normalized_color',
@@ -350,13 +355,14 @@ __all__ = [
     'set_low_level_config_value',
     'set_main_ui_input_device',
     'set_thread_name',
-    'set_ui_account_state',
+    'set_account_sign_in_state',
     'set_ui_scale',
     'show_progress_bar',
     'shutdown_suppress_begin',
     'shutdown_suppress_end',
     'shutdown_suppress_count',
     'SimpleSound',
+    'suppress_config_and_state_writes',
     'SpecialChar',
     'storagename',
     'StringEditAdapter',

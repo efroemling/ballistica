@@ -1,4 +1,16 @@
-### 1.7.45 (build 22458, api 9, 2025-07-17)
+### 1.7.45 (build 22465, api 9, 2025-07-29)
+- Ticket counts and purchases are now stored with your V2 account instead of V1.
+  This should make things like opening treasure chests faster and smoother since
+  only a single server is involved instead of two. It also paves the way for all
+  the fun new upcoming store stuff. However be aware that older builds of the
+  game will still use your old V1-server inventory, so if you go back to an
+  older version of the game you may see different ticket counts or unlocks and
+  any inventory changes you make there might not be visible in newer versions.
+  So try and stay on newer versions at this point to be safe.
+- The `baplus.get_v1_account_ticket_count()` method has been removed. This count
+  is now available as `ba*.app.classic.tickets`.
+- The `baplus.get_v1_account_product_purchased()` method has been removed.
+  Current classic purchases are now available as `ba*.app.classic.purchases`.
 - Working with the repo now requires the 'zstd' binary, and will complain if it
   is not found during env checks. This should be pretty widely available through
   `apt install zstd` or whatever. We'll be making pretty widespread use of Zstd

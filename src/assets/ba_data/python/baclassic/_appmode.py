@@ -1,13 +1,17 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Contains ClassicAppMode."""
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
 
 import os
 import logging
+import hashlib
 from functools import partial
 from typing import TYPE_CHECKING, override
 
+from efro.error import CommunicationError
 import bacommon.bs
 import babase
 import bauiv1
@@ -17,7 +21,7 @@ from bauiv1lib.account.signin import show_sign_in_prompt
 import _baclassic
 
 if TYPE_CHECKING:
-    from typing import Callable, Any, Literal
+    from typing import Callable, Any, Literal, Iterable
 
     from efro.call import CallbackRegistration
     import bacommon.cloud
@@ -28,7 +32,7 @@ if TYPE_CHECKING:
 class ClassicAppMode(babase.AppMode):
     """AppMode for the classic BombSquad experience."""
 
-    _LEAGUE_VIS_VALS_CONFIG_KEY = 'ClassicLeagueVisVals'
+    _ACCOUNT_STATE_CONFIG_KEY = 'ClassicAccountState'
 
     def __init__(self) -> None:
         self._on_primary_account_changed_callback: (
@@ -43,10 +47,17 @@ class ClassicAppMode(babase.AppMode):
         self._have_account_values = False
         self._have_connectivity = False
         self._current_account_id: str | None = None
-        self._should_restore_account_display_state = False
 
         self._purchase_ui_pause: bauiv1.RootUIUpdatePause | None = None
         self._last_tokens_value = 0
+
+        self._purchases_update_timer: babase.AppTimer | None = None
+        self._purchase_request_in_flight = False
+        self._target_purchases_state: str | None = None
+
+        # state-hash and purchases we last pushed to the classic subsystem
+        self._current_purchases_state: str | None = None
+        self._current_purchases: frozenset[str] | None = None
 
     @override
     @classmethod
@@ -151,7 +162,7 @@ class ClassicAppMode(babase.AppMode):
         classic = babase.app.classic
 
         # Store latest league vis vals for any active account.
-        self._save_account_display_state()
+        self._save_account_state()
 
         # Stop being informed of account changes.
         self._on_primary_account_changed_callback = None
@@ -179,7 +190,7 @@ class ClassicAppMode(babase.AppMode):
 
             # Also store any league vis state for the active account.
             # this may be our last chance to do this on mobile.
-            self._save_account_display_state()
+            self._save_account_state()
 
     @override
     def on_purchase_process_begin(
@@ -304,7 +315,7 @@ class ClassicAppMode(babase.AppMode):
         This happens at various times such as session switches.
         """
 
-        self._save_account_display_state()
+        self._save_account_state()
 
     def on_engine_did_reset(self) -> None:
         """Called just after classic resets the engine.
@@ -315,7 +326,79 @@ class ClassicAppMode(babase.AppMode):
         # Restore any old league vis state we had; this allows the user
         # to see animations for league improvements or other changes
         # that have occurred since the last time we were visible.
-        self._restore_account_display_state()
+        self._restore_account_state()
+
+    def _update_purchases(self) -> None:
+        self._possibly_request_purchases()
+
+    def _possibly_request_purchases(self) -> None:
+        if self._purchase_request_in_flight:
+            return
+
+        self._purchase_request_in_flight = True
+        babase.accountlog.debug('Requesting latest purchases state...')
+
+        plus = babase.app.plus
+        assert plus is not None
+        if plus.accounts.primary is None:
+            raise RuntimeError(
+                'No account present when requesting classic purchases.'
+            )
+
+        with plus.accounts.primary:
+            plus.cloud.send_message_cb(
+                bacommon.bs.GetClassicPurchasesMessage(),
+                on_response=babase.WeakCall(
+                    self._on_get_classic_purchases_response
+                ),
+            )
+
+    def _on_get_classic_purchases_response(
+        self, response: bacommon.bs.GetClassicPurchasesResponse | Exception
+    ) -> None:
+        assert self._purchase_request_in_flight
+        self._purchase_request_in_flight = False
+
+        if isinstance(response, Exception):
+            if isinstance(response, CommunicationError):
+                # No biggie; we expect these when offline/etc.
+                pass
+            else:
+                babase.netlog.exception('Error requesting classic purchases.')
+            return
+
+        # If we're no longer looking for a state, we can abort early.
+        if self._target_purchases_state is None:
+            babase.accountlog.debug(
+                'No longer looking for new purchases state; aborting fetch.'
+            )
+            self._purchases_update_timer = None
+            return
+
+        state = self._state_from_purchases(response.purchases)
+
+        # If this is NOT the state we're after, ignore and keep going.
+        if state != self._target_purchases_state:
+            return
+
+        # Ok, this is what we were after. Store a frozen version of it
+        # and its hash and push it to the classic subsystem.
+        self._current_purchases = frozenset(response.purchases)
+        self._current_purchases_state = state
+
+        assert babase.app.classic is not None
+        babase.app.classic.purchases = self._current_purchases
+
+        babase.accountlog.debug(
+            'Updated purchases state to %s: (%s items)',
+            state,
+            len(self._current_purchases),
+        )
+        self._purchases_update_timer = None
+
+    @staticmethod
+    def _state_from_purchases(purchases: Iterable[str]) -> str:
+        return hashlib.md5(','.join(sorted(purchases)).encode()).hexdigest()
 
     def _update_for_primary_account(
         self, account: babase.AccountV2Handle | None
@@ -331,17 +414,10 @@ class ClassicAppMode(babase.AppMode):
 
         if account is not None:
             self._current_account_id = account.accountid
-            babase.set_ui_account_state(True, account.tag)
-            self._should_restore_account_display_state = True
+            self._restore_account_state()
         else:
-            # If we had an account, save any existing league vis state
-            # so we'll properly animate to new values the next time we
-            # sign in.
-            self._save_account_display_state()
-
+            self._save_account_state()
             self._current_account_id = None
-            babase.set_ui_account_state(False)
-            self._should_restore_account_display_state = False
 
         # For testing subscription functionality.
         if os.environ.get('BA_SUBSCRIPTION_TEST') == '1':
@@ -358,8 +434,11 @@ class ClassicAppMode(babase.AppMode):
         if account is None:
             classic.gold_pass = False
             classic.tokens = 0
+            classic.tickets = 0
+            classic.purchases = frozenset()
             classic.chest_dock_full = False
             classic.remove_ads = False
+            self._target_purchases_state = None
             self._account_data_sub = None
             _baclassic.set_root_ui_account_values(
                 tickets=-1,
@@ -399,6 +478,8 @@ class ClassicAppMode(babase.AppMode):
             self._update_ui_live_state()
 
         else:
+            # Establish a subscription to inform us whenever basic stuff
+            # (token count, chests, etc) changes.
             with account:
                 self._account_data_sub = (
                     plus.cloud.subscribe_classic_account_data(
@@ -429,9 +510,8 @@ class ClassicAppMode(babase.AppMode):
         self, val: bacommon.bs.ClassicAccountLiveData
     ) -> None:
         achp = round(val.achievements / max(val.achievements_total, 1) * 100.0)
-        # ibc = str(val.inbox_count)
-        # if val.inbox_count_is_max:
-        #     ibc += '+'
+
+        babase.accountlog.debug('Got new classic account data.')
 
         chest0 = val.chests.get('0')
         chest1 = val.chests.get('1')
@@ -445,6 +525,43 @@ class ClassicAppMode(babase.AppMode):
         classic.remove_ads = val.remove_ads
         classic.gold_pass = val.gold_pass
         classic.tokens = val.tokens
+        classic.tickets = val.tickets
+
+        self._target_purchases_state = val.purchases_state
+
+        # If someone replaced our purchases in the classic subsystem,
+        # fix it.
+        if (
+            self._current_purchases is not None
+            and self._current_purchases is not classic.purchases
+        ):
+            classic.purchases = self._current_purchases
+
+        # If we need to fetch purchases, set up a timer to do so until
+        # successful and possibly kick off an immediate attempt.
+        if (
+            self._target_purchases_state is not None
+            and self._current_purchases_state != self._target_purchases_state
+        ):
+            babase.accountlog.debug(
+                'Account purchases state is %s; we have %s. Will fetch new.',
+                self._target_purchases_state,
+                self._current_purchases_state,
+            )
+            if self._purchases_update_timer is not None:
+                # Ok there's already a timer going; just let it keep
+                # doing its thing.
+                pass
+            else:
+                self._purchases_update_timer = babase.AppTimer(
+                    3.456, self._update_purchases, repeat=True
+                )
+                self._possibly_request_purchases()
+
+        else:
+            # Not dirty; don't need a timer.
+            self._purchases_update_timer = None
+
         classic.chest_dock_full = (
             chest0 is not None
             and chest1 is not None
@@ -540,14 +657,6 @@ class ClassicAppMode(babase.AppMode):
                 else chest3.ad_allow_time.timestamp()
             ),
         )
-        if self._should_restore_account_display_state:
-            # If we have a previous display-state for this account,
-            # restore it. This will cause us to animate or otherwise
-            # display league changes that have occurred since we were
-            # last visible. Note we need to do this *after* setting real
-            # vals so there is a current state to animate to.
-            self._restore_account_display_state()
-            self._should_restore_account_display_state = False
 
         # Note that we have values and updated faded state accordingly.
         self._have_account_values = True
@@ -867,37 +976,59 @@ class ClassicAppMode(babase.AppMode):
             )
         )
 
-    def _save_account_display_state(self) -> None:
+    def _save_account_state(self) -> None:
+        if self._current_account_id is None:
+            return
 
-        # If we currently have an account, save the state of what we're
-        # currently displaying for it in the root ui/etc. We'll then
-        # restore that state as a starting point the next time we are
-        # active. This allows things like league rank changes to be
-        # properly animated even if they occurred while we were offline
-        # or while the UI was hidden.
+        vals = _baclassic.get_account_state()
+        if vals is None:
+            return
 
-        if self._current_account_id is not None:
-            vals = _baclassic.get_account_display_state()
-            if vals is not None:
-                # Stuff our account id in there and save it to our
-                # config.
-                assert 'a' not in vals
-                vals['a'] = self._current_account_id
-                cfg = babase.app.config
-                cfg[self._LEAGUE_VIS_VALS_CONFIG_KEY] = vals
-                cfg.commit()
+        # Stuff some vals of our own in the dict and save to config.
+        assert 'a' not in vals
+        vals['a'] = self._current_account_id
 
-    def _restore_account_display_state(self) -> None:
+        assert babase.app.classic is not None
 
-        # If we currently have an account and it matches the
-        # display-state we have stored in the config, restore the state.
-        if self._current_account_id is not None:
-            cfg = babase.app.config
-            vals = cfg.get(self._LEAGUE_VIS_VALS_CONFIG_KEY)
-            if isinstance(vals, dict):
-                valsaccount = vals.get('a')
-                if (
-                    isinstance(valsaccount, str)
-                    and valsaccount == self._current_account_id
-                ):
-                    _baclassic.set_account_display_state(vals)
+        assert 'p' not in vals
+        vals['p'] = list(babase.app.classic.purchases)
+
+        cfg = babase.app.config
+        cfg[self._ACCOUNT_STATE_CONFIG_KEY] = vals
+        cfg.commit()
+
+    def _restore_account_state(self) -> None:
+        # If we've got a stored state for the current account, restore
+        # it.
+        assert babase.app.classic is not None
+
+        if self._current_account_id is None:
+            return
+
+        cfg = babase.app.config
+        vals = cfg.get(self._ACCOUNT_STATE_CONFIG_KEY)
+
+        if not isinstance(vals, dict):
+            return
+
+        # If the state applies to someone else, skip it.
+        accountid = vals.get('a')
+        if (
+            not isinstance(accountid, str)
+            or accountid != self._current_account_id
+        ):
+            return
+
+        purchases = vals.get('p')
+        if isinstance(purchases, list):
+
+            if not all(isinstance(p, str) for p in purchases):
+                babase.balog.exception('Invalid purchases state on restore.')
+            else:
+                self._current_purchases = frozenset(purchases)
+                self._current_purchases_state = self._state_from_purchases(
+                    purchases
+                )
+                babase.app.classic.purchases = self._current_purchases
+
+        _baclassic.set_account_state(vals)

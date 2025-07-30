@@ -168,9 +168,10 @@ class AccountV1Subsystem:
         """(internal)"""
         # pylint: disable=cyclic-import
         plus = babase.app.plus
-        if plus is None:
+        classic = babase.app.classic
+        if plus is None or classic is None:
             return []
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             return []
         icons = []
         store_items: dict[str, Any] = (
@@ -179,9 +180,10 @@ class AccountV1Subsystem:
             else {}
         )
         for item_name, item in list(store_items.items()):
-            if item_name.startswith(
-                'icons.'
-            ) and plus.get_v1_account_product_purchased(item_name):
+            if (
+                item_name.startswith('icons.')
+                and item_name in classic.purchases
+            ):
                 icons.append(item['icon'])
         return icons
 
@@ -228,16 +230,17 @@ class AccountV1Subsystem:
     def have_pro(self) -> bool:
         """Return whether pro is currently unlocked."""
 
-        plus = babase.app.plus
-        if plus is None:
+        classic = babase.app.classic
+        if classic is None:
             return False
+        purchases = classic.purchases
 
         # Check various server-side purchases that mean we have pro.
-        return bool(
-            plus.get_v1_account_product_purchased('gold_pass')
-            or plus.get_v1_account_product_purchased('upgrades.pro')
-            or plus.get_v1_account_product_purchased('static.pro')
-            or plus.get_v1_account_product_purchased('static.pro_sale')
+        return (
+            'gold_pass' in purchases
+            or 'upgrades.pro' in purchases
+            or 'static.pro' in purchases
+            or 'static.pro_sale' in purchases
         )
 
     def have_pro_options(self) -> bool:
