@@ -69,7 +69,7 @@ class AllSettingsWindow(bui.MainWindow):
                 size=(width, height),
                 toolbar_visibility=(
                     'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
+                    if (uiscale is bui.UIScale.SMALL and not bui.in_main_menu())
                     else 'menu_full'
                 ),
                 scale=scale,
@@ -117,7 +117,15 @@ class AllSettingsWindow(bui.MainWindow):
         all_buttons_width = 4.0 * bwidth + 3.0 * margin
 
         x = width * 0.5 - all_buttons_width * 0.5
-        y = height * 0.5 - bheight * 0.5 - 20.0
+
+        # This looks more visualy balanced slid down a bit (except in
+        # small mode when we're showing full toolbars around it).
+        ynudge = (
+            0.0
+            if uiscale is bui.UIScale.SMALL and bui.in_main_menu()
+            else -20.0
+        )
+        y = height * 0.5 - bheight * 0.5 + ynudge
 
         def _button(
             position: tuple[float, float],

@@ -121,9 +121,10 @@ class AccountSettingsWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
+                    # 'menu_minimal'
+                    # if uiscale is bui.UIScale.SMALL
+                    # else 'menu_full'
+                    'menu_full'
                 ),
                 scale=scale,
             ),

@@ -71,7 +71,7 @@ class LeagueRankWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.3
+            1.13
             if uiscale is bui.UIScale.SMALL
             else 0.93 if uiscale is bui.UIScale.MEDIUM else 0.8
         )
@@ -98,9 +98,10 @@ class LeagueRankWindow(bui.MainWindow):
                 ),
                 scale=scale,
                 toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
+                    # 'menu_minimal'
+                    # if uiscale is bui.UIScale.SMALL
+                    # else 'menu_full'
+                    'menu_full'
                 ),
             ),
             transition=transition,
@@ -169,7 +170,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         self._subcontainer: bui.Widget | None = None
         self._subcontainerwidth = 1024
-        self._subcontainerheight = 483
+        self._subcontainerheight = 573
         self._power_ranking_score_widgets: list[bui.Widget] = []
 
         self._season_popup_menu: PopupMenu | None = None
