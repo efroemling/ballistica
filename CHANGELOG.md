@@ -1,3 +1,5 @@
+### 1.7.46 (build 22467, api 9, 2025-07-30)
+
 ### 1.7.45 (build 22465, api 9, 2025-07-29)
 - Ticket counts and purchases are now stored with your V2 account instead of V1.
   This should make things like opening treasure chests faster and smoother since
