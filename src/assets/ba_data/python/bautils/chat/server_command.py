@@ -59,7 +59,7 @@ class ServerCommand(ABC):
     Example:
 
     ```
-    from bautils.chatutils.server_command import ServerCommand
+    from bautils.chatutils import ServerCommand
 
     class MyCommand(ServerCommand):
         def __init__(self) -> None:
@@ -117,11 +117,9 @@ class ServerCommand(ABC):
     @property
     def is_admin(self) -> bool:
         "Returns True if the client is an admin."
-        roaster = bs.get_game_roster()
-        for player in roaster:
-            if player["client_id"] == int(self.client_id):
-                if player["account_id"] in self.serverconfig.admins:
-                    return True
+        player = self.get_session_player(self.client_id)
+        if player.get_v1_account_id() in self.serverconfig.admins:
+            return True
         return False
 
     @property
@@ -147,10 +145,13 @@ class ServerCommand(ABC):
         """Returns client_id with various checks."""
 
         _id = int(client_id)
-        roster = bs.get_game_roster()
-        for client in roster:
-            if _id in client.values():
+        session = bs.get_foreground_host_session()
+        assert session is not None
+
+        for player in session.sessionplayers:
+            if player.inputdevice.client_id == _id:
                 return _id
+
         raise InvalidClientIDError(
             f"Invalid client-id: {client_id} is provided."
         )
