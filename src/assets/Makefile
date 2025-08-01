@@ -458,11 +458,11 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bautils/discord/__init__.py \
   $(BUILD_DIR)/ba_data/python/bautils/plugman/__init__.py \
   $(BUILD_DIR)/ba_data/python/bautils/tools/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bautils/tools/ctxmanagers.py \
   $(BUILD_DIR)/ba_data/python/bautils/tools/enums.py \
   $(BUILD_DIR)/ba_data/python/bautils/tourny/__init__.py \
   $(BUILD_DIR)/ba_data/python/bautils/tourny/joinactivity.py \
   $(BUILD_DIR)/ba_data/python/bautils/tourny/lobby.py \
-  $(BUILD_DIR)/ba_data/python/bautils/tourny/register.py \
   $(BUILD_DIR)/ba_data/python/bautils/tourny/screen.py \
   $(BUILD_DIR)/ba_data/python/bautils/tourny/screens/__init__.py \
   $(BUILD_DIR)/ba_data/python/bautils/tourny/screens/brackets.py \
