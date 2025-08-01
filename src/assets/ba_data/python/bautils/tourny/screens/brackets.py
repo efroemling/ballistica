@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, override
 
 import bascenev1
 import babase
@@ -20,8 +20,14 @@ if TYPE_CHECKING:
 
 @register_screen_activity
 class TournamentBracketsScreen(TournamentScreenActivity):
+    """_summary_
 
-    def on_player_join(self, player) -> None:
+    Args:
+        TournamentScreenActivity (_type_): _description_
+    """
+
+    @override
+    def on_player_join(self, player: bascenev1.Player) -> None:
         player.assigninput(
             (
                 babase.InputType.JUMP_PRESS,
@@ -35,12 +41,15 @@ class TournamentBracketsScreen(TournamentScreenActivity):
             babase.Call(bascenev1.broadcastmessage, "scroll"),
         )
 
+    @override
     def on_transition_in(self) -> None:
         print("we are on tournement brackets screen.")
 
+    @override
     def on_transition_out(self) -> None:
         print("we are out of tournament brackets screen.")
 
+    @override
     @staticmethod
     def get_screen_index() -> int:
         return 3

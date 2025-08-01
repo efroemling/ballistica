@@ -18,6 +18,7 @@ from bascenev1._music import MusicType, setmusic
 if TYPE_CHECKING:
     import bascenev1
     from bascenev1._lobby import JoinInfo
+    from bautils.tourny import TournamentJoinInfo
 
 
 class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
@@ -82,7 +83,7 @@ class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):
 
         self._background: bascenev1.Actor | None = None
         self._tips_text: bascenev1.Actor | None = None
-        self._join_info: JoinInfo | None = None
+        self._join_info: JoinInfo | TournamentJoinInfo | None = None
 
     @override
     def on_transition_in(self) -> None:

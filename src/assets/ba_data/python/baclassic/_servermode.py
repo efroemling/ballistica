@@ -24,7 +24,7 @@ import bascenev1
 
 from bautils.tourny import TournamentSession
 
-0
+
 if TYPE_CHECKING:
     from typing import Any
 

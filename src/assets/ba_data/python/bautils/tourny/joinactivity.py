@@ -7,20 +7,18 @@ from __future__ import annotations
 from typing import override, TYPE_CHECKING
 
 import babase
-import bascenev1 as bs
 from bascenev1 import Activity, EmptyPlayer, EmptyTeam, MusicType, setmusic
-from bascenev1lib.actor.text import Text
-from .lobby import TournamentLobby, TournamentJoinInfo
+
+from .lobby import TournamentLobby
 
 if TYPE_CHECKING:
     import bascenev1
+    from bascenev1lib.actor.text import Text
+    from .lobby import TournamentJoinInfo
 
 
 class TournamentJoinActivity(Activity[EmptyPlayer, EmptyTeam]):
-    """Standard activity for waiting for players to join.
-
-    It shows tips and other info and waits for all players to check ready.
-    """
+    """JoinActivity related to tournament related things."""
 
     def __init__(self, settings: dict):
         super().__init__(settings)
@@ -56,28 +54,28 @@ class TournamentJoinActivity(Activity[EmptyPlayer, EmptyTeam]):
         self._join_info = self.session.lobby.create_join_info()
         babase.set_analytics_screen("Joining Screen")
 
-        from bascenev1lib.actor.controlsguide import ControlsGuide
+        # from bascenev1lib.actor.controlsguide import ControlsGuide
 
-        ControlsGuide(delay=1.0).autoretain()
+        # ControlsGuide(delay=1.0).autoretain()
         # assert isinstance(session, bs.MultiTeamSession)
 
-        # Show info about the next up game.
-        self._next_up_text = Text(
-            # bs.Lstr(
-            #     value="${1} ${2}",
-            #     subs=[
-            #         ("${1}", bs.Lstr(resource="upFirstText")),
-            #         ("${2}", session.get_next_game_description()),
-            #     ],
-            # ),
-            "stupid text",
-            h_attach=Text.HAttach.CENTER,
-            scale=0.7,
-            v_attach=Text.VAttach.TOP,
-            h_align=Text.HAlign.CENTER,
-            position=(0, -70),
-            flash=False,
-            color=(0.5, 0.5, 0.5, 1.0),
-            transition=Text.Transition.FADE_IN,
-            transition_delay=5.0,
-        )
+        # # Show info about the next up game.
+        # self._next_up_text = Text(
+        #     # bs.Lstr(
+        #     #     value="${1} ${2}",
+        #     #     subs=[
+        #     #         ("${1}", bs.Lstr(resource="upFirstText")),
+        #     #         ("${2}", session.get_next_game_description()),
+        #     #     ],
+        #     # ),
+        #     "stupid text",
+        #     h_attach=Text.HAttach.CENTER,
+        #     scale=0.7,
+        #     v_attach=Text.VAttach.TOP,
+        #     h_align=Text.HAlign.CENTER,
+        #     position=(0, -70),
+        #     flash=False,
+        #     color=(0.5, 0.5, 0.5, 1.0),
+        #     transition=Text.Transition.FADE_IN,
+        #     transition_delay=5.0,
+        # )

@@ -12,7 +12,7 @@ from bautils.chat import (
     register_command,
     IncorrectUsageError,
 )
-from bautils.tools.enums import Color
+from bautils.tools import Color
 
 
 @register_command

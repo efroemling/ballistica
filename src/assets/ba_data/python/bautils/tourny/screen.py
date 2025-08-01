@@ -4,14 +4,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, override
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import bascenev1 as bs
 
 if TYPE_CHECKING:
-    pass
+    from typing import Any
 
 
 @dataclass
@@ -28,20 +28,21 @@ class NextScreenActivityMessage:
     index: int | None = None
 
     def __post__init__(self) -> None:
-        if self.index is None:
-            self.index = (
-                TournamentScreenActivities.get_next_screen_act().get_screen_index()
-            )
+        if self.index is not None:
+            return
+        self.index = (
+            TournamentScreenActivities.get_next_screen_act().get_screen_index()
+        )
 
 
 class TournamentScreenActivities:
     """_summary_"""
 
-    screens: list[TournamentScreenActivity] = []
-    current_screen: TournamentScreenActivity | None = None
+    screens: list[type[TournamentScreenActivity]] = []
+    current_screen: type[TournamentScreenActivity] | None = None
 
     @classmethod
-    def register_activity(cls, act) -> None:
+    def register_activity(cls, act: type[TournamentScreenActivity]) -> None:
         """_summary_
 
         Args:
@@ -52,7 +53,7 @@ class TournamentScreenActivities:
     @classmethod
     def get_next_screen_act(
         cls, msg: NextScreenActivityMessage | None = None
-    ) -> TournamentScreenActivity:
+    ) -> type[TournamentScreenActivity]:
         """_summary_
 
         Args:
@@ -133,10 +134,11 @@ class TournamentScreenActivity(ABC, bs.Activity[bs.Player, bs.Team]):
         """
 
     @classmethod
-    def register_screen(cls):
+    def register_screen(cls) -> None:
         """_summary_"""
         TournamentScreenActivities.register_activity(cls)
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, NextScreenActivityMessage):
             self.session.setactivity(
@@ -144,3 +146,5 @@ class TournamentScreenActivity(ABC, bs.Activity[bs.Player, bs.Team]):
                     TournamentScreenActivities.get_next_screen_act(msg)
                 )
             )
+        else:
+            super().handlemessage(msg)

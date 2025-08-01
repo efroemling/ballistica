@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, override
+from typing import TYPE_CHECKING, override
 
 import bascenev1
 from .joinactivity import TournamentJoinActivity
@@ -12,7 +12,7 @@ from .screen import TournamentScreenActivities
 from .lobby import RegisterTournamentMessage
 
 if TYPE_CHECKING:
-    pass
+    from typing import Any
 
 
 class TournamentSession(bascenev1.MultiTeamSession):
@@ -25,6 +25,7 @@ class TournamentSession(bascenev1.MultiTeamSession):
         # Start in our custom join screen.
         self.setactivity(bascenev1.newactivity(TournamentJoinActivity))
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if isinstance(msg, RegisterTournamentMessage):
             self._on_player_ready(msg.chooser)  # type: ignore

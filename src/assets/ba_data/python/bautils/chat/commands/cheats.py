@@ -14,7 +14,7 @@ from bautils.chat import (
     IncorrectUsageError,
     ActorNotFoundError,
 )
-from bautils.tools.enums import Color
+from bautils.tools import Color
 
 
 @register_command

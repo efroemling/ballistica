@@ -4,11 +4,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, override
 
 import bascenev1
 import babase
-from bascenev1 import get_player_profile_colors, animate, animate_array
 
 from bautils.tourny import (
     TournamentScreenActivity,
@@ -22,8 +21,14 @@ if TYPE_CHECKING:
 
 @register_screen_activity
 class PointsTableScreen(TournamentScreenActivity):
+    """_summary_
 
-    def on_player_join(self, player) -> None:
+    Args:
+        TournamentScreenActivity (_type_): _description_
+    """
+
+    @override
+    def on_player_join(self, player: bascenev1.Player) -> None:
         player.assigninput(
             (
                 babase.InputType.JUMP_PRESS,
@@ -37,12 +42,15 @@ class PointsTableScreen(TournamentScreenActivity):
             babase.Call(bascenev1.broadcastmessage, "scroll"),
         )
 
+    @override
     def on_transition_in(self) -> None:
         print("we are on points table screen.")
 
+    @override
     def on_transition_out(self) -> None:
         print("we are out of points table screen.")
 
+    @override
     @staticmethod
     def get_screen_index() -> int:
         return 1
