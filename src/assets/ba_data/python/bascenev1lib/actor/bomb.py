@@ -1095,7 +1095,9 @@ class Bomb(bs.Actor):
         factory.activate_sound.play(0.5, position=self.node.position)
 
     def _handle_hit(self, msg: bs.HitMessage) -> None:
-        ispunched = msg.srcnode and msg.srcnode.getnodetype() == 'spaz'
+        ispunched = (msg.srcnode
+                     and msg.srcnode.getnodetype() == 'spaz'
+                     and msg.radius <= 0)
 
         # Normal bombs are triggered by non-punch impacts;
         # impact-bombs by all impacts.
@@ -1112,12 +1114,9 @@ class Bomb(bs.Actor):
                 # Also inherit the hit type (if a landmine sets off by a bomb,
                 # the credit should go to the mine)
                 # the exception is TNT.  TNT always gets credit.
-                # UPDATE (July 2020): not doing this anymore. Causes too much
-                # weird logic such as bombs acting like punches. Holler if
-                # anything is noticeably broken due to this.
-                # if self.bomb_type != 'tnt':
-                #     self.hit_type = msg.hit_type
-                #     self.hit_subtype = msg.hit_subtype
+                if self.bomb_type != 'tnt':
+                    self.hit_type = msg.hit_type
+                    self.hit_subtype = msg.hit_subtype
 
             bs.timer(
                 0.1 + random.random() * 0.1,
