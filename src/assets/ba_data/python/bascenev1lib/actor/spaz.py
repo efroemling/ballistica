@@ -1047,7 +1047,7 @@ class Spaz(bs.Actor):
                 self.on_punched(damage)
 
                 # If damage was significant, lets show it.
-                if damage >= 350:
+                if damage >= 350 and msg.srcnode:
                     assert msg.force_direction is not None
                     bs.show_damage_count(
                         '-' + str(int(damage / 10)) + '%',
