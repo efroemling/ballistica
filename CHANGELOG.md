@@ -1,4 +1,4 @@
-### 1.7.46 (build 22469, api 9, 2025-08-03)
+### 1.7.46 (build 22471, api 9, 2025-08-03)
 - Resolves some networking issues from certain internet providers.
 - Working towards more consistent toolbar visibility more on small ui mode.
 
