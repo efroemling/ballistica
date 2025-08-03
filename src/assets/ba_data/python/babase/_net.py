@@ -41,7 +41,7 @@ class NetworkSubsystem:
             retries=False,
             ssl_context=self.sslcontext,
             timeout=urllib3.util.Timeout(total=DEFAULT_REQUEST_TIMEOUT_SECONDS),
-            maxsize=5,
+            maxsize=10,
             headers={'User-Agent': _babase.user_agent_string()},
         )
 

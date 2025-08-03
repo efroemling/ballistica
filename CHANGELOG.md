@@ -1,4 +1,6 @@
-### 1.7.46 (build 22467, api 9, 2025-07-30)
+### 1.7.46 (build 22469, api 9, 2025-08-03)
+- Resolves some networking issues from certain internet providers.
+- Working towards more consistent toolbar visibility more on small ui mode.
 
 ### 1.7.45 (build 22465, api 9, 2025-07-29)
 - Ticket counts and purchases are now stored with your V2 account instead of V1.

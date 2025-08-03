@@ -4,7 +4,7 @@ dmgbuild==1.6.5
 filelock==3.18.0
 furo==2025.7.19
 libcst==1.8.2
-mypy==1.17.0
+mypy==1.17.1
 pbxproj==4.3.0
 pur==7.3.3
 pylint==3.3.7

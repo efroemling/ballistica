@@ -421,7 +421,7 @@ class AccountSettingsWindow(bui.MainWindow):
 
         if self._subcontainer is not None:
             self._subcontainer.delete()
-        self._sub_height = 60.0
+        self._sub_height = 90.0
         if show_signed_in_as:
             self._sub_height += signed_in_as_space
         self._sub_height += via_space * len(via_lines)

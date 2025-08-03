@@ -28,7 +28,7 @@ class AchievementsWindow(bui.MainWindow):
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
 
-        self._width = 700 if uiscale is bui.UIScale.SMALL else 550
+        self._width = 800 if uiscale is bui.UIScale.SMALL else 550
         self._height = (
             450
             if uiscale is bui.UIScale.SMALL
