@@ -338,6 +338,7 @@ class Blast(bs.Actor):
         source_player: bs.Player | None = None,
         hit_type: str = 'explosion',
         hit_subtype: str = 'normal',
+        subtype_match: bool = True,
     ):
         """Instantiate with given values."""
 
@@ -355,6 +356,7 @@ class Blast(bs.Actor):
         self.hit_type = hit_type
         self.hit_subtype = hit_subtype
         self.radius = blast_radius
+        self.subtype_match = subtype_match
 
         # Set our position a bit lower so we throw more things upward.
         rmats = (factory.blast_material, shared.attack_material)
@@ -689,6 +691,7 @@ class Blast(bs.Actor):
                     hit_subtype=self.hit_subtype,
                     radius=self.radius,
                     source_player=bs.existing(self._source_player),
+                    subtype_match=self.subtype_match,
                 )
             )
             if self.blast_type == 'ice':
@@ -721,6 +724,7 @@ class Bomb(bs.Actor):
         bomb_scale: float = 1.0,
         source_player: bs.Player | None = None,
         owner: bs.Node | None = None,
+        subtype_match: bool = True,
     ):
         """Create a new Bomb.
 
@@ -769,13 +773,17 @@ class Bomb(bs.Actor):
 
         # By default our hit type/subtype is our own, but we pick up types of
         # whoever sets us off so we know what caused a chain reaction.
-        # UPDATE (July 2020): not inheriting hit-types anymore; this causes
-        # weird effects such as land-mines inheriting 'punch' hit types and
-        # then not being able to destroy certain things they normally could,
-        # etc. Inheriting owner/source-node from things that set us off
-        # should be all we need I think...
+        # UPDATE (August 2025):
+        # If triggered by another source (e.g., a punch or another bomb),
+        # bombs may inherit the hit type and subtype of that source,
+        # but only if the incoming subtype matches the bomb's own type.
+        # This safely revives part of the old "mine punch" behavior,
+        # preventing unrelated damage type propagation.
+        # Now, land-mines and impact bombs can behave like punches when it fits,
+        # without breaking their interactions with objects they should destroy.
         self.hit_type = 'explosion'
         self.hit_subtype = self.bomb_type
+        self.subtype_match = subtype_match
 
         # The node this came from.
         # FIXME: can we unify this and source_player?
@@ -1022,6 +1030,7 @@ class Bomb(bs.Actor):
                 source_player=bs.existing(self._source_player),
                 hit_type=self.hit_type,
                 hit_subtype=self.hit_subtype,
+                subtype_match=self.subtype_match
             ).autoretain()
             for callback in self._explode_callbacks:
                 callback(self, blast)
@@ -1112,12 +1121,23 @@ class Bomb(bs.Actor):
                 # Also inherit the hit type (if a landmine sets off by a bomb,
                 # the credit should go to the mine)
                 # the exception is TNT.  TNT always gets credit.
-                # UPDATE (July 2020): not doing this anymore. Causes too much
-                # weird logic such as bombs acting like punches. Holler if
-                # anything is noticeably broken due to this.
-                # if self.bomb_type != 'tnt':
-                #     self.hit_type = msg.hit_type
-                #     self.hit_subtype = msg.hit_subtype
+                # UPDATE (August 2025):
+                # Only inherit hit type/subtype when the incoming subtype
+                # matches this bomb's type. This revives part of the old
+                # "mine punch" behavior in a safer and more controlled way.
+                # It also allows custom damage logic (e.g., in spaz.py) to
+                # remain consistent. This no longer spreads punch effects
+                # across unrelated bomb types.
+                if self.bomb_type != 'tnt':
+                    if msg.subtype_match:
+                        self.hit_type = msg.hit_type
+                        self.hit_subtype = msg.hit_subtype
+
+            # Retain bomb's unique abilities if the types match up.
+            if self.bomb_type == msg.hit_subtype:
+                self.subtype_match = True
+            else:
+                self.subtype_match = False
 
             bs.timer(
                 0.1 + random.random() * 0.1,

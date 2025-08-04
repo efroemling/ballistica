@@ -221,6 +221,7 @@ class HitMessage:
         hit_type: str = 'generic',
         force_direction: Sequence[float] | None = None,
         hit_subtype: str = 'default',
+        subtype_match: bool = True,
     ):
         """Instantiate a message with given values."""
 
@@ -238,6 +239,7 @@ class HitMessage:
         self.flat_damage = flat_damage
         self.hit_type = hit_type
         self.hit_subtype = hit_subtype
+        self.subtype_match = subtype_match
         self.force_direction = (
             force_direction if force_direction is not None else velocity
         )
