@@ -363,3 +363,19 @@ def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
             return True
 
     return False
+
+
+def is_connection_reset_error(exc: BaseException) -> bool:
+    """Check if the exception is due to a connection reset by peer."""
+    if not isinstance(exc, OSError):
+        return False
+
+    # Linux / Android
+    if exc.errno == errno.ECONNRESET:
+        return True
+
+    # Windows (use exc.winerror if available)
+    if hasattr(exc, 'winerror') and exc.winerror == 10054:
+        return True
+
+    return False

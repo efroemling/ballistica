@@ -232,6 +232,11 @@ class RPCEndpoint:
                 f'{self._label}: connected to {peername} at {self._tm()}.'
             )
 
+    @property
+    def total_bytes_read(self) -> int:
+        """How many total bytes have been read."""
+        return self._total_bytes_read
+
     def __del__(self) -> None:
         if self._run_called:
             if not self._did_close_writer:
