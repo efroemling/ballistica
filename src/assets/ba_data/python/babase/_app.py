@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, override
 from threading import RLock
 
 from efro.threadpool import ThreadPoolExecutorEx
+from efro.util import strip_exception_tracebacks
 
 import _babase
 from babase._discord import DiscordSubsystem
@@ -282,6 +283,11 @@ class App:
                 logging.error(
                     "Error in async task '%s'.", task.get_name(), exc_info=exc
                 )
+                # We're done with the exception, so let's rip out its
+                # tracebacks to try and avoid the need for cyclic
+                # garbage collection.
+                strip_exception_tracebacks(exc)
+
         except Exception:
             logging.exception('Error reporting async task error.')
 
