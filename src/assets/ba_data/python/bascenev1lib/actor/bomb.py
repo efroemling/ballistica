@@ -1119,7 +1119,7 @@ class Bomb(bs.Actor):
                 #     self.hit_type = msg.hit_type
                 #     self.hit_subtype = msg.hit_subtype
 
-            # Let's explode in a much more epic way if we're punched. 
+            # Let's explode in a much more epic way if we're punched.
             if ispunched:
                 self.hit_type = msg.hit_type
 
