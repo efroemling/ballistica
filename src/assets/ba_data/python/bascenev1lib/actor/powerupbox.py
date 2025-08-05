@@ -312,7 +312,8 @@ class PowerupBox(bs.Actor):
 
         elif isinstance(msg, bs.HitMessage):
             # Don't die on punches (that's annoying).
-            if msg.srcnode is None:
+            ispunched = msg.srcnode and msg.srcnode.getnodetype() == 'spaz'
+            if not ispunched:
                 self.handlemessage(bs.DieMessage())
         else:
             return super().handlemessage(msg)
