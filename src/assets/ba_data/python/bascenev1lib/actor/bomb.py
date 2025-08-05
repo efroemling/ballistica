@@ -767,7 +767,7 @@ class Bomb(bs.Actor):
         # The player this came from.
         self._source_player = source_player
 
-         # By default our hit type/subtype is our own, but we pick up types of
+        # By default our hit type/subtype is our own, but we pick up types of
         # whoever sets us off so we know what caused a chain reaction.
         # UPDATE (July 2020): not inheriting hit-types anymore; this causes
         # weird effects such as land-mines inheriting 'punch' hit types and
@@ -1022,7 +1022,6 @@ class Bomb(bs.Actor):
                 source_player=bs.existing(self._source_player),
                 hit_type=self.hit_type,
                 hit_subtype=self.hit_subtype,
-                subtype_match=self.subtype_match
             ).autoretain()
             for callback in self._explode_callbacks:
                 callback(self, blast)
