@@ -1,4 +1,4 @@
-### 1.7.47 (build 22473, api 9, 2025-08-05)
+### 1.7.47 (build 22476, api 9, 2025-08-06)
 
 ### 1.7.46 (build 22472, api 9, 2025-08-05)
 - Resolves some networking issues from certain internet providers.
