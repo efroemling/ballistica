@@ -773,7 +773,7 @@ class Bomb(bs.Actor):
         # weird effects such as land-mines inheriting 'punch' hit types and
         # then not being able to destroy certain things they normally could,
         # etc. Inheriting owner/source-node from things that set us off
-        # should be all we need I think...
+        # should be all we need I think..
         self.hit_type = 'explosion'
         self.hit_subtype = self.bomb_type
 
@@ -1118,6 +1118,10 @@ class Bomb(bs.Actor):
                 # if self.bomb_type != 'tnt':
                 #     self.hit_type = msg.hit_type
                 #     self.hit_subtype = msg.hit_subtype
+
+            # Let's explode in a much more epic way if we're punched.
+            if ispunched:
+                self.hit_type = msg.hit_type
 
             bs.timer(
                 0.1 + random.random() * 0.1,
