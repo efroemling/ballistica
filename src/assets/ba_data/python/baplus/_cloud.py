@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, overload
 from efro.error import CommunicationError
 from efro.call import CallbackSet
 from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
+import bacommon.bs
 import bacommon.cloud
 import babase
 
@@ -335,6 +336,11 @@ class CloudSubsystem(babase.AppSubsystem):
     def send_message(
         self, msg: bacommon.cloud.TestMessage
     ) -> bacommon.cloud.TestResponse: ...
+
+    @overload
+    def send_message(
+        self, msg: bacommon.bs.LegacyRequest
+    ) -> bacommon.bs.LegacyResponse: ...
 
     def send_message(self, msg: Message) -> Response | None:
         """Synchronously send a message to the cloud.

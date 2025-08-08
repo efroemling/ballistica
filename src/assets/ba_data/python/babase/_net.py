@@ -55,8 +55,8 @@ class NetworkSubsystem:
         self.zone_pings: dict[str, float] = {}
 
         # For debugging/progress.
-        self.v1_test_log: str = ''
-        self.v1_ctest_results: dict[int, str] = {}
+        # self.v1_test_log: str = ''
+        # self.v1_ctest_results: dict[int, str] = {}
         self.connectivity_state = ''
         self.transport_state = ''
         self.server_time_offset_hours: float | None = None

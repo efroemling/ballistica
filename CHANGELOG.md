@@ -1,5 +1,9 @@
-### 1.7.47 (build 22476, api 9, 2025-08-06)
-
+### 1.7.47 (build 22477, api 9, 2025-08-07)
+- All communication with the V1 (Legacy) master server is now tunneled through
+  the nearest regional server (the V2Transport connection). This reduces the
+  possible points of failure for the client but makes it extra important to
+  establish that regional server connection.
+  
 ### 1.7.46 (build 22472, api 9, 2025-08-05)
 - Resolves some networking issues from certain internet providers.
 - Working towards more consistent toolbar visibility more on small ui mode.

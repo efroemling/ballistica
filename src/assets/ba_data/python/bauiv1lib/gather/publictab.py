@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import copy
 import time
-import logging
 from threading import Thread
 from enum import Enum
 from dataclasses import dataclass
@@ -266,7 +265,7 @@ class AddrFetchThread(Thread):
             if is_udp_communication_error(exc):
                 pass
             else:
-                logging.exception('Error in addr-fetch-thread')
+                bui.netlog.exception('Error in addr-fetch-thread')
         finally:
             if sock is not None:
                 sock.close()
@@ -291,6 +290,12 @@ class PingThread(Thread):
         assert bui.app.classic is not None
         bui.app.classic.ping_thread_count += 1
         sock: socket.socket | None = None
+
+        # Prevent shutdown while our thread is doing its thing.
+        if not bui.shutdown_suppress_begin():
+            # App is already shutting down, so we're a no-op.
+            return
+
         try:
             import socket
 
@@ -301,8 +306,7 @@ class PingThread(Thread):
             accessible = False
             starttime = time.time()
 
-            # Send a few pings and wait a second for
-            # a response.
+            # Send a few pings and wait a second for a response.
             sock.settimeout(1)
             for _i in range(3):
                 sock.send(b'\x0b')
@@ -334,16 +338,17 @@ class PingThread(Thread):
                 pass
             else:
                 if bui.do_once():
-                    logging.exception('Error on gather ping.')
+                    bui.netlog.exception('Error on gather ping.')
         finally:
             try:
                 if sock is not None:
                     sock.close()
             except Exception:
                 if bui.do_once():
-                    logging.exception('Error on gather ping cleanup')
+                    bui.netlog.exception('Error on gather ping cleanup')
 
         bui.app.classic.ping_thread_count -= 1
+        bui.shutdown_suppress_end()
 
 
 class PublicGatherTab(GatherTab):
