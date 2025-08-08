@@ -269,7 +269,7 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             _print_test_results(_dummy_fail)
 
         # V2 ping
-        baseaddr = plus.get_master_server_address(version=2)
+        baseaddr = plus.get_master_server_address()
         _print(f'\nContacting V2 master-server ({baseaddr})...')
         _print_test_results(lambda: _test_fetch(baseaddr))
 

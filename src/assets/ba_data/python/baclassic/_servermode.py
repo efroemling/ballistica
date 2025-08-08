@@ -95,6 +95,7 @@ class ServerController:
         self._ran_access_check = False
         self._prep_timer: babase.AppTimer | None = None
         self._next_stuck_login_warn_time = time.time() + 10.0
+        self._next_connectivity_warn_time = time.time() + 5.0
         self._first_run = True
         self._shutdown_reason: ShutdownReason | None = None
         self._executing_shutdown = False
@@ -255,6 +256,18 @@ class ServerController:
         """Run in a timer to do prep before beginning to serve."""
         plus = babase.app.plus
         assert plus is not None
+
+        # Cloud connectivity is a prerequisite (v1 comms goes through this now).
+        if not plus.cloud.connected:
+            # Bringing up a cloud connection should not take long;
+            # complain if it does.
+            curtime = time.time()
+            if curtime > self._next_connectivity_warn_time:
+                print('Still waiting for cloud connectivity...')
+                self._next_connectivity_warn_time = curtime + 5.0
+            return
+
+        # Being signed in via v1 is a prerequisite.
         signed_in = plus.get_v1_account_state() == 'signed_in'
         if not signed_in:
             # Signing in to the local server account should not take long;

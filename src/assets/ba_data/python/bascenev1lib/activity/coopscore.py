@@ -1286,7 +1286,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     'http://'
                 ) and not self._score_link.startswith('https://'):
                     self._score_link = (
-                        plus.get_master_server_address()
+                        plus.get_legacy_master_server_address()
                         + '/'
                         + self._score_link
                     )

@@ -61,12 +61,20 @@ class PlusAppSubsystem(AppSubsystem):
         return _baplus.game_service_has_leaderboard(game, config)
 
     @staticmethod
-    def get_master_server_address(source: int = -1, version: int = 1) -> str:
+    def get_legacy_master_server_address() -> str:
+        """Return the address of the old master server.
+
+        :meta private:
+        """
+        return _baplus.get_legacy_master_server_address()
+
+    @staticmethod
+    def get_master_server_address() -> str:
         """Return the address of the master server.
 
         :meta private:
         """
-        return _baplus.get_master_server_address(source, version)
+        return _baplus.get_master_server_address()
 
     @staticmethod
     def get_classic_news_show() -> str:

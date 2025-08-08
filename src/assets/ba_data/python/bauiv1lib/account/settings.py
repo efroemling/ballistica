@@ -1650,5 +1650,5 @@ def show_what_is_legacy_unlinking_page() -> None:
     plus = bui.app.plus
     assert plus is not None
 
-    bamasteraddr = plus.get_master_server_address(version=2)
+    bamasteraddr = plus.get_master_server_address()
     bui.open_url(f'{bamasteraddr}/whatarev1links')
