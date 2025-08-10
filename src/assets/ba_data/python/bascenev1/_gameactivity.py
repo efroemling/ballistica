@@ -1109,8 +1109,8 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                 assert self._tournament_time_limit_text.node
                 self._tournament_time_limit_title_text.node.scale = 1.0
                 self._tournament_time_limit_text.node.scale = 1.3
-                self._tournament_time_limit_title_text.node.position = (80, 85)
-                self._tournament_time_limit_text.node.position = (80, 60)
+                self._tournament_time_limit_title_text.node.position = (-80, 85)
+                self._tournament_time_limit_text.node.position = (-80, 60)
                 cnode = _bascenev1.newnode(
                     'combine',
                     owner=self._tournament_time_limit_text.node,

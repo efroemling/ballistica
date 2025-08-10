@@ -15,7 +15,11 @@ import logging
 import time
 import os
 
+from efro.util import strip_exception_tracebacks
+
 if TYPE_CHECKING:
+    from typing import Any
+
     import babase
 
 # Our timer and event loop for the ballistica logic thread.
@@ -45,6 +49,9 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
     global _asyncio_event_loop
     _asyncio_event_loop = asyncio.new_event_loop()
     _asyncio_event_loop.set_default_executor(babase.app.threadpool)
+
+    # Try to avoid reference loops from exceptions.
+    _asyncio_event_loop.set_exception_handler(_exception_handler)
 
     # Ideally we should integrate asyncio into our C++ Thread class's
     # low level event loop so that asyncio timers/sockets/etc. could
@@ -87,3 +94,15 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
         _testtask = _asyncio_event_loop.create_task(aio_test())
 
     return _asyncio_event_loop
+
+
+def _exception_handler(
+    loop: asyncio.AbstractEventLoop, context: dict[str, Any]
+) -> None:
+    # Do default behavior (should log the exception) and then rip out
+    # exception tracebacks to hopefully avoid reference cycles which
+    # would require cyclic garbage collection.
+    loop.default_exception_handler(context)
+    exc = context.get('exception')
+    if isinstance(exc, BaseException):
+        strip_exception_tracebacks(exc)

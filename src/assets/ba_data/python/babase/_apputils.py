@@ -197,7 +197,7 @@ def handle_leftover_v1_cloud_log_file() -> None:
                     'bsLog', info, response
                 )
             else:
-                # If they don't want logs uploaded just kill it.
+                # If they don't want logs uploaded, just kill it.
                 os.remove(_babase.get_v1_cloud_log_file_path())
 
     except Exception:

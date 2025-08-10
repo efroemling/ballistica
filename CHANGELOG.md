@@ -1,4 +1,12 @@
-### 1.7.46 (build 22467, api 9, 2025-07-30)
+### 1.7.47 (build 22479, api 9, 2025-08-07)
+- All communication with the V1 (Legacy) master server is now tunneled through
+  the nearest regional server (the V2Transport connection). This reduces the
+  possible points of failure for the client but makes it extra important to
+  establish that regional server connection.
+  
+### 1.7.46 (build 22472, api 9, 2025-08-05)
+- Resolves some networking issues from certain internet providers.
+- Working towards more consistent toolbar visibility more on small ui mode.
 
 ### 1.7.45 (build 22465, api 9, 2025-07-29)
 - Ticket counts and purchases are now stored with your V2 account instead of V1.

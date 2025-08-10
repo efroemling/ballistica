@@ -232,6 +232,11 @@ class RPCEndpoint:
                 f'{self._label}: connected to {peername} at {self._tm()}.'
             )
 
+    @property
+    def total_bytes_read(self) -> int:
+        """How many total bytes have been read."""
+        return self._total_bytes_read
+
     def __del__(self) -> None:
         if self._run_called:
             if not self._did_close_writer:
@@ -798,13 +803,15 @@ class RPCEndpoint:
 
         # We explicitly send our own keepalive packets so we can stay
         # more on top of the connection state and possibly decide to
-        # kill it when contact is lost more quickly than the OS would
-        # do itself (or at least keep the user informed that the
-        # connection is lagging). It sounds like we could have the TCP
-        # layer do this sort of thing itself but that might be
-        # OS-specific so gonna go this way for now.
+        # kill it when contact is lost more quickly than the OS would do
+        # itself (or at least keep the user informed that the connection
+        # is lagging). It sounds like we could ask the TCP layer do this
+        # sort of thing itself but that might be OS-specific so gonna go
+        # this way for now.
         while True:
-            assert not self._closing
+            if self._closing:
+                return
+
             await asyncio.sleep(self._keepalive_interval)
             if not self.test_suppress_keepalives:
                 self._enqueue_outgoing_packet(

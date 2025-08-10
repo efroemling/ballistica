@@ -421,7 +421,7 @@ class AccountSettingsWindow(bui.MainWindow):
 
         if self._subcontainer is not None:
             self._subcontainer.delete()
-        self._sub_height = 60.0
+        self._sub_height = 90.0
         if show_signed_in_as:
             self._sub_height += signed_in_as_space
         self._sub_height += via_space * len(via_lines)
@@ -1650,5 +1650,5 @@ def show_what_is_legacy_unlinking_page() -> None:
     plus = bui.app.plus
     assert plus is not None
 
-    bamasteraddr = plus.get_master_server_address(version=2)
+    bamasteraddr = plus.get_master_server_address()
     bui.open_url(f'{bamasteraddr}/whatarev1links')

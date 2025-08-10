@@ -3,13 +3,18 @@
 """Networking related functionality."""
 from __future__ import annotations
 
+import zlib
 import copy
+import time
+import base64
 import weakref
 import threading
 from enum import Enum
 from typing import TYPE_CHECKING, override
 
+from efro.error import CommunicationError
 from efro.util import strip_exception_tracebacks
+import bacommon.bs
 import babase
 import bascenev1
 
@@ -79,87 +84,66 @@ class MasterServerV1CallThread(threading.Thread):
 
     @override
     def run(self) -> None:
-        # pylint: disable=too-many-branches
         import urllib.parse
         import json
-
-        from efro.error import is_urllib3_communication_error
 
         plus = babase.app.plus
         assert plus is not None
         response_data: Any = None
-        url: str | None = None
 
-        # Tearing the app down while this is running can lead to
-        # rare crashes in LibSSL, so avoid that if at all possible.
+        starttime = time.monotonic()
+
+        # Disallow shutdown while we're working.
         if not babase.shutdown_suppress_begin():
             # App is already shutting down, so we're a no-op.
             return
-
-        upool = babase.app.net.urllib3pool
 
         try:
             classic = babase.app.classic
             assert classic is not None
             self._data = _utf8_all(self._data)
             babase.set_thread_name('BA_ServerCallThread')
-            if self._request_type == 'get':
-                msaddr = plus.get_master_server_address()
-                dataenc = urllib.parse.urlencode(self._data)
-                url = f'{msaddr}/{self._request}?{dataenc}'
-                assert url is not None
-                response = upool.request(
-                    'GET',
-                    url,
-                    headers={'User-Agent': classic.legacy_user_agent_string},
-                )
-            elif self._request_type == 'post':
-                url = f'{plus.get_master_server_address()}/{self._request}'
-                assert url is not None
+            dataenc = urllib.parse.urlencode(self._data)
 
-                # Note: we could use 'fields' here instead of
-                # urlencoding ourself, but we'd need to convert
-                # self._data to strings/bytes.
-                response = upool.request(
-                    'POST',
-                    url,
-                    body=urllib.parse.urlencode(self._data).encode(),
-                    headers={
-                        'User-Agent': classic.legacy_user_agent_string,
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
+            mresponse = plus.cloud.send_message(
+                bacommon.bs.LegacyRequest(
+                    self._request,
+                    self._request_type,
+                    classic.legacy_user_agent_string,
+                    dataenc,
                 )
-
+            )
+            mrdata: str | None
+            if mresponse.data is None:
+                mrdata = None
+            elif mresponse.zipped:
+                mrdata = zlib.decompress(
+                    base64.b85decode(mresponse.data)
+                ).decode()
             else:
-                raise TypeError('Invalid request_type: ' + self._request_type)
+                mrdata = mresponse.data
 
-            # If html request failed.
-            if response.status != 200:
+            if mrdata is None:
                 response_data = None
-            elif self._response_type == MasterServerResponseType.JSON:
-                raw_data = response.data
-
-                # Empty string here means something failed server side.
-                if raw_data == b'':
-                    response_data = None
-                else:
-                    response_data = json.loads(raw_data)
             else:
-                raise TypeError(f'invalid responsetype: {self._response_type}')
+                assert self._response_type == MasterServerResponseType.JSON
+                response_data = json.loads(mrdata)
 
         except Exception as exc:
+            duration = time.monotonic() - starttime
             # Ignore common network errors; note unexpected ones.
-            if not is_urllib3_communication_error(exc, url=url):
-                print(
-                    f'Error in MasterServerCallThread'
-                    f' (url={url},'
-                    f' response-type={self._response_type},'
-                    f' response-data={response_data}):'
+            if isinstance(exc, CommunicationError):
+                babase.netlog.debug(
+                    'Legacy %s request failed in %.3fs (communication error).',
+                    self._request,
+                    duration,
                 )
-                import traceback
-
-                traceback.print_exc()
-
+            else:
+                babase.netlog.exception(
+                    'Legacy %s request failed in %.3fs.',
+                    self._request,
+                    duration,
+                )
             response_data = None
 
             # We're done with the exception, so strip its tracebacks to
@@ -168,6 +152,12 @@ class MasterServerV1CallThread(threading.Thread):
 
         finally:
             babase.shutdown_suppress_end()
+
+        if response_data is not None:
+            duration = time.monotonic() - starttime
+            babase.netlog.debug(
+                'Legacy %s request succeeded in %.3fs.', self._request, duration
+            )
 
         if self._callback is not None:
             babase.pushcall(

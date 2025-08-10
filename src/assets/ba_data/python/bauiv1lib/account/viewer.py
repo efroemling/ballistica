@@ -216,9 +216,8 @@ class AccountViewerWindow(PopupWindow):
         plus = bui.app.plus
         assert plus is not None
         bui.open_url(
-            plus.get_master_server_address()
-            + '/highscores?profile='
-            + self._account_id
+            f'{plus.get_legacy_master_server_address()}'
+            f'/highscores?profile={self._account_id}'
         )
 
     def _on_query_response(self, data: dict[str, Any] | None) -> None:

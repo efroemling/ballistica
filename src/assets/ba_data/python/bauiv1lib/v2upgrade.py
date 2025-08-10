@@ -110,7 +110,7 @@ class V2UpgradeWindow(bui.Window):
         # sign in with the 'BombSquad account' option.
         bui.containerwidget(edit=self._root_widget, transition='out_left')
         plus.sign_out_v1()
-        bamasteraddr = plus.get_master_server_address(version=2)
+        bamasteraddr = plus.get_master_server_address()
         bui.open_url(f'{bamasteraddr}/v2uda/{self._code}')
 
     def _done(self) -> None:
@@ -122,5 +122,5 @@ def show_what_is_v2_page() -> None:
     plus = bui.app.plus
     assert plus is not None
 
-    bamasteraddr = plus.get_master_server_address(version=2)
+    bamasteraddr = plus.get_master_server_address()
     bui.open_url(f'{bamasteraddr}/whatisv2')
