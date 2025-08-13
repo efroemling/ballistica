@@ -820,7 +820,7 @@ auto BaseFeatureSet::GetPyLString(PyObject* obj) -> std::string {
   return python->GetPyLString(obj);
 }
 
-std::string BaseFeatureSet::DoGetContextBaseString() {
+std::string BaseFeatureSet::DoContextBaseString() {
   if (!InLogicThread()) {
     return "  context_ref: <not in logic thread>";
   }
@@ -849,14 +849,14 @@ void BaseFeatureSet::PrintContextForCallableLabel_(const char* label) {
   assert(InLogicThread());
   assert(label);
   std::string s = std::string("  root call: ") + label + "\n";
-  s += Python::GetContextBaseString();
+  s += Python::ContextBaseString();
   PySys_WriteStderr("%s\n", s.c_str());
 }
 
 void BaseFeatureSet::PrintContextUnavailable_() {
   // (no logic-thread-check here; can be called early or from other threads)
   std::string s = std::string("  root call: <unavailable>\n");
-  s += Python::GetContextBaseString();
+  s += Python::ContextBaseString();
   PySys_WriteStderr("%s\n", s.c_str());
 }
 

@@ -338,7 +338,7 @@ auto SceneV1Python::DoNewNode(PyObject* args, PyObject* keywds) -> Node* {
     name = Python::GetString(name_obj);
   } else {
     // By default do something like 'text@foo.py:20'.
-    name = std::string(type) + "@" + Python::GetPythonFileLocation();
+    name = std::string(type) + "@" + Python::PythonFileLocation();
   }
 
   Scene* scene = ContextRefSceneV1::FromCurrent().GetMutableScene();

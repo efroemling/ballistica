@@ -12,7 +12,7 @@ from threading import Thread
 from typing import TYPE_CHECKING, override
 
 from efro.error import CleanError
-from efro.util import strip_exception_tracebacks
+from efro.util import strip_exception_tracebacks, strict_partial
 from bauiv1lib.settings.testing import TestingWindow
 import bauiv1 as bui
 
@@ -228,7 +228,7 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         try:
             call()
             duration = time.monotonic() - starttime
-            _print(f'Succeeded in {duration:.2f}s.', color=(0, 1, 0))
+            _print(f'Succeeded in {duration:.3f}s.', color=(0, 1, 0))
             return True
         except Exception as exc:
             import traceback
@@ -268,10 +268,20 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             _print('\nRunning dummy fail test...')
             _print_test_results(_dummy_fail)
 
+        # Bootstrap pings
+        bootstrap_addrs = plus.get_bootstrap_server_addresses()
+        for i, addr in enumerate(bootstrap_addrs):
+            _print(
+                f'\nContacting bootstrap addr {i+1}'
+                f' of {len(bootstrap_addrs)} ({addr})...'
+            )
+            _print_test_results(strict_partial(_test_fetch, addr))
+
         # V2 ping
-        baseaddr = plus.get_master_server_address()
-        _print(f'\nContacting V2 master-server ({baseaddr})...')
-        _print_test_results(lambda: _test_fetch(baseaddr))
+        # (UPDATE: Disabling since this is also a bootstrap server).
+        # baseaddr = plus.get_master_server_address()
+        # _print(f'\nContacting V2 master-server ({baseaddr})...')
+        # _print_test_results(lambda: _test_fetch(baseaddr))
 
         _print('\nComparing local time to V2 server...')
         _print_test_results(_test_v2_time)

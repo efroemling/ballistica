@@ -1,8 +1,20 @@
-### 1.7.47 (build 22479, api 9, 2025-08-07)
+### 1.7.47 (build 22489, api 9, 2025-08-12)
 - All communication with the V1 (Legacy) master server is now tunneled through
   the nearest regional server (the V2Transport connection). This reduces the
   possible points of failure for the client but makes it extra important to
   establish that regional server connection.
+- Wired up a new subdomain `regional.ballistica.net` which points to a
+  world-wide load-balancer that talks to a subset of regional servers. This
+  means the app no longer ever has to talk directly to either the v1 or the v2
+  master server in the US. Currently the regional servers forward many requests
+  along to the US servers anyway so it's not a huge win just yet, but this opens
+  the door to fully handling some stuff on the regional servers which *will* be
+  a big win.
+- Revamped regional server connection bootstrapping - it now uses
+  `regional.ballistica.net` as well as a few fallback options, and can also fall
+  back to http if https is blocked. There are still some server-side performance
+  improvements I'd like to implement, but in general master-server connectivity
+  should be pretty robust now worldwide. Please holler if you see otherwise.
   
 ### 1.7.46 (build 22472, api 9, 2025-08-05)
 - Resolves some networking issues from certain internet providers.

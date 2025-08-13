@@ -40,7 +40,7 @@ class BaseSoftInterface {
   virtual auto GetPyExceptionType(PyExcType exctype) -> PyObject* = 0;
   virtual auto PrintPythonStackTrace() -> bool = 0;
   virtual auto GetPyLString(PyObject* obj) -> std::string = 0;
-  virtual auto DoGetContextBaseString() -> std::string = 0;
+  virtual auto DoContextBaseString() -> std::string = 0;
   virtual void DoPrintContextAuto() = 0;
   virtual void DoPushObjCall(const PythonObjectSetBase* objset, int id) = 0;
   virtual void DoPushObjCall(const PythonObjectSetBase* objset, int id,
