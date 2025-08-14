@@ -56,8 +56,8 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22495
-TARGET_BALLISTICA_VERSION = '1.7.47'
+TARGET_BALLISTICA_BUILD = 22498
+TARGET_BALLISTICA_VERSION = '1.7.48'
 
 
 @dataclass
@@ -259,9 +259,9 @@ def configure(
         )
 
     # We (possibly) set pycache_prefix above so that opt .pyc files are
-    # written to the cache directory we just set up, but ideally Python
-    # should have been set to that value at startup so that modules
-    # we've imported up to this point get cached there too.
+    # written to the cache directory that we just set up, but ideally
+    # Python should have been set to that value at startup so that
+    # modules we've imported up to this point get cached there too.
     #
     # In most cases we can actually do this by calcing/setting the same
     # path we use here before spinning up Python, but in some cases

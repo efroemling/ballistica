@@ -3160,6 +3160,7 @@ DATA_TARGETS = \
   $(BUILD_DIR)/ba_data/data/languages/hungarian.json \
   $(BUILD_DIR)/ba_data/data/languages/indonesian.json \
   $(BUILD_DIR)/ba_data/data/languages/italian.json \
+  $(BUILD_DIR)/ba_data/data/languages/kazakh.json \
   $(BUILD_DIR)/ba_data/data/languages/korean.json \
   $(BUILD_DIR)/ba_data/data/languages/malay.json \
   $(BUILD_DIR)/ba_data/data/languages/persian.json \

@@ -180,6 +180,7 @@ class LocaleSubsystem(AppSubsystem):
             or rlocale is cls.TURKISH
             or rlocale is cls.UKRAINIAN
             or rlocale is cls.VENETIAN
+            or rlocale is cls.KAZAKH
         ):
             return True
 

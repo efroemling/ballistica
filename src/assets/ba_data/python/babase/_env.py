@@ -192,6 +192,12 @@ def on_main_thread_start_app() -> None:
 
 
 def _bootstrap_networking() -> None:
+    """Early networking bootstrapping.
+
+    We start this as early as we can after start-app is called to
+    give it as much time to warm-start network connections/etc. while
+    we're spinning up other stuff.
+    """
 
     from efro.util import strict_partial
 
@@ -219,11 +225,15 @@ def _bootstrap_networking() -> None:
         maxsize=10,
         headers={'User-Agent': _babase.user_agent_string()},
     )
-    # Kick off a request to our first-choice bootstrap server. This will
+    # Kick off a request to our first-choice bootstrap server. This can
     # get dns lookup and ssl negotiation and whatnot going in the
     # background while the rest of our app is coming up, and our first
     # actual request to the server will ideally have an established
     # connection already waiting for it.
+    #
+    # We kick off a separate thread to handle this though since we don't
+    # want the bootstrap process to block on it if its still going when
+    # our bootstrapping results are needed.
     threading.Thread(
         target=strict_partial(
             _warm_start_bootstrap_connection, _g_net_warm_start_pool_manager
@@ -296,13 +306,14 @@ def _do_pycache_upkeep() -> None:
             or appstate is appstate_t.SHUTDOWN_COMPLETE
         )
 
-    # Let's wait until the app has been in the running state for a few
-    # seconds before doing our thing; that way we're out of the way of
-    # more high priority stuff like meta-scans that happen at first
-    # launch.
+    # Let's wait until the app has been in the running state for a wee
+    # bit before doing our thing; that way we're out of the way of more
+    # high priority stuff like meta-scans that happen at first launch.
+    # Packing too much work in at once is likely to lead to visible
+    # stutters and ANR issues and whatnot.
     time_in_running_state = 0.0
     sleep_inc = 0.1
-    while time_in_running_state < 3.0:
+    while time_in_running_state < 10.0:
         time.sleep(sleep_inc)
         appstate = _babase.app.state
         appstate_t = type(appstate)

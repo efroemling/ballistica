@@ -1,3 +1,8 @@
+### 1.7.48 (build 22498, api 9, 2025-08-14)
+- Added Kazakh language (Thanks KAZDOG!)
+- The 'Logging' dev-console-tab is now 'LogLevels'. I kept finding myself going
+  there to look for log output. Maybe this will help.
+
 ### 1.7.47 (build 22495, api 9, 2025-08-13)
 - All communication with the V1 (Legacy) master server is now tunneled through
   the nearest regional server (the V2Transport connection). This reduces the

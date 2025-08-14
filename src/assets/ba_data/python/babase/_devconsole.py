@@ -155,7 +155,7 @@ class DevConsoleSubsystem:
             DevConsoleTabEntry('Python', DevConsoleTabPython),
             DevConsoleTabEntry('AppModes', DevConsoleTabAppModes),
             DevConsoleTabEntry('UI', DevConsoleTabUI),
-            DevConsoleTabEntry('Logging', DevConsoleTabLogging),
+            DevConsoleTabEntry('LogLevels', DevConsoleTabLogging),
         ]
         if os.environ.get('BA_DEV_CONSOLE_TEST_TAB', '0') == '1':
             self.tabs.append(DevConsoleTabEntry('Test', DevConsoleTabTest))

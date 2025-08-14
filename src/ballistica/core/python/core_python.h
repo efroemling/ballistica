@@ -53,6 +53,9 @@ class CorePython {
     kLoggerBaNetworking,
     kLoggerBaNetworkingLogCall,
     kPrependSysPathCall,
+    kWarmStart1Call,
+    kWarmStart2Call,
+    kWarmStart3Call,
     kBaEnvConfigureCall,
     kBaEnvGetConfigCall,
     kBaEnvAtExitCall,
@@ -70,6 +73,7 @@ class CorePython {
   void FinalizePython();
 
   /// Run baenv.configure() with all of our monolithic-mode paths/etc.
+  void MonolithicModeBaEnvImport();
   void MonolithicModeBaEnvConfigure();
 
   /// Call once we should start forwarding our Log calls (along with all
@@ -95,6 +99,10 @@ class CorePython {
       -> std::vector<char*>;
 
   const auto& objs() { return objs_; }
+
+  void WarmStart1();
+  void WarmStart2();
+  void WarmStart3();
 
  private:
   PythonObjectSet<ObjID> objs_;

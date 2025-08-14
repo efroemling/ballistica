@@ -333,6 +333,12 @@ void CorePython::ImportPythonObjs() {
     }
     objs_.StoreCallable(ObjID::kPrependSysPathCall,
                         *ctx.DictGetItem("prepend_sys_path"));
+    objs_.StoreCallable(ObjID::kWarmStart1Call,
+                        *ctx.DictGetItem("warm_start_1"));
+    objs_.StoreCallable(ObjID::kWarmStart2Call,
+                        *ctx.DictGetItem("warm_start_2"));
+    objs_.StoreCallable(ObjID::kWarmStart3Call,
+                        *ctx.DictGetItem("warm_start_3"));
     objs_.StoreCallable(ObjID::kBaEnvConfigureCall,
                         *ctx.DictGetItem("import_baenv_and_run_configure"));
     objs_.StoreCallable(ObjID::kBaEnvGetConfigCall,
@@ -428,6 +434,21 @@ void CorePython::SoftImportBase() {
   }
 }
 
+void CorePython::WarmStart1() {
+  auto result = objs().Get(ObjID::kWarmStart1Call).Call();
+  assert(result.exists());
+}
+
+void CorePython::WarmStart2() {
+  auto result = objs().Get(ObjID::kWarmStart2Call).Call();
+  assert(result.exists());
+}
+
+void CorePython::WarmStart3() {
+  auto result = objs().Get(ObjID::kWarmStart3Call).Call();
+  assert(result.exists());
+}
+
 void CorePython::VerifyPythonEnvironment() {
   // Make sure we're running the Python version we require.
   const char* ver = Py_GetVersion();
@@ -436,7 +457,7 @@ void CorePython::VerifyPythonEnvironment() {
   }
 }
 
-void CorePython::MonolithicModeBaEnvConfigure() {
+void CorePython::MonolithicModeBaEnvImport() {
   assert(g_buildconfig.monolithic_build());
   assert(g_core);
   g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
@@ -460,7 +481,9 @@ void CorePython::MonolithicModeBaEnvConfigure() {
 
   auto args = PythonRef::Stolen(Py_BuildValue("(s)", default_py_dir.c_str()));
   objs().Get(ObjID::kPrependSysPathCall).Call(args);
+}
 
+void CorePython::MonolithicModeBaEnvConfigure() {
   // Import and run baenv.configure() using our 'monolithic' default values
   // for all paths.
   std::optional<std::string> config_dir =
