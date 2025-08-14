@@ -190,11 +190,8 @@ from babase._mgen.enums import (
 )
 from babase._math import normalized_color, is_point_in_box, vec3validate
 from babase._meta import MetadataSubsystem
-from babase._net import (
-    get_ip_address_type,
-    DEFAULT_REQUEST_TIMEOUT_SECONDS,
-    NetworkSubsystem,
-)
+from babase._env import DEFAULT_REQUEST_TIMEOUT_SECONDS
+from babase._net import get_ip_address_type, NetworkSubsystem
 from babase._plugin import PluginSpec, Plugin, PluginSubsystem
 from babase._stringedit import StringEditAdapter, StringEditSubsystem
 from babase._text import timestring

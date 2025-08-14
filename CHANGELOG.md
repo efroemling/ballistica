@@ -1,4 +1,4 @@
-### 1.7.47 (build 22492, api 9, 2025-08-13)
+### 1.7.47 (build 22494, api 9, 2025-08-13)
 - All communication with the V1 (Legacy) master server is now tunneled through
   the nearest regional server (the V2Transport connection). This reduces the
   possible points of failure for the client but makes it extra important to
@@ -15,6 +15,10 @@
   back to http if https is blocked. There are still some server-side performance
   improvements I'd like to implement, but in general master-server connectivity
   should be pretty robust now worldwide. Please holler if you see otherwise.
+- (build 22493) As part of my quest to make network bootstrapping as fast as
+  possible, the app now starts bootstrapping network stuff earlier in the boot
+  process so it can proceed in parallel with other bootstrappy stuff (see
+  `babase._env._bootstrap_networking()`).
   
 ### 1.7.46 (build 22472, api 9, 2025-08-05)
 - Resolves some networking issues from certain internet providers.
