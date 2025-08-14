@@ -1,4 +1,4 @@
-### 1.7.47 (build 22494, api 9, 2025-08-13)
+### 1.7.47 (build 22495, api 9, 2025-08-13)
 - All communication with the V1 (Legacy) master server is now tunneled through
   the nearest regional server (the V2Transport connection). This reduces the
   possible points of failure for the client but makes it extra important to
