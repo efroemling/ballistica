@@ -35,6 +35,7 @@ class PunchHitMessage:
     """Message saying an object was hit."""
 
 
+@dataclass
 class CurseExplodeMessage:
     """We are cursed and should blow up now."""
     srcplayer: bs.Player | None = None
