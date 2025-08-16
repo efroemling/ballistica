@@ -156,6 +156,7 @@ class EventLoop {
   bool suspended_{};
   bool done_{};
   bool acquires_python_gil_{};
+  std::atomic<size_t> thread_messages_size_approx_{};
   std::thread::id thread_id_{};
   std::condition_variable thread_message_cv_;
   std::condition_variable client_listener_cv_;

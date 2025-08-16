@@ -502,6 +502,8 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
 
     // Plop the data on to the list; we're assuming the mutex is locked.
     thread_messages_.push_back(t);
+    thread_messages_size_approx_.store(thread_messages_.size(),
+                                       std::memory_order_relaxed);
 
     // Debugging: show message count states.
     if (explicit_bool(false)) {
@@ -713,10 +715,12 @@ auto EventLoop::CheckPushSafety() -> bool {
     return CheckPushRunnableSafety_();
   }
 }
-auto EventLoop::CheckPushRunnableSafety_() -> bool {
-  std::scoped_lock lock(thread_message_mutex_);
 
-  auto have_space{thread_messages_.size() < kThreadMessageSafetyThreshold};
+auto EventLoop::CheckPushRunnableSafety_() -> bool {
+  // Use our approximate value here to avoid blocking acquiring the list
+  // lock (was seeing this spot show up a lot in ANR reports).
+  auto have_space{thread_messages_size_approx_.load(std::memory_order_relaxed)
+                  < kThreadMessageSafetyThreshold};
 
   // If we've hit the safety threshold, log the traceback once so we can
   // hopefully fix the problem at the call site instead of dropping calls.

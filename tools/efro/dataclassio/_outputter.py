@@ -561,7 +561,7 @@ class _Outputter:
                 value, self._codec
             ):
                 raise TypeError(
-                    f'Invalid value for Dict[Any, Any]'
+                    f'Invalid value for dict[Any, Any]'
                     f' at \'{fieldpath}\' on {cls.__name__};'
                     f' all keys and values must be directly compatible'
                     f' with the specified codec ({self._codec.name})'

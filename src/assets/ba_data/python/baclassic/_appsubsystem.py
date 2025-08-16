@@ -502,15 +502,13 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         request: str,
         data: dict[str, Any],
         callback: MasterServerCallback | None = None,
-        response_type: MasterServerResponseType = MasterServerResponseType.JSON,
     ) -> None:
         """Make a call to the master server via a http GET.
 
         :meta private:
         """
-
         MasterServerV1CallThread(
-            request, 'get', data, callback, response_type
+            request, 'get', data, callback, MasterServerResponseType.JSON
         ).start()
 
     def master_server_v1_post(
@@ -518,14 +516,13 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         request: str,
         data: dict[str, Any],
         callback: MasterServerCallback | None = None,
-        response_type: MasterServerResponseType = MasterServerResponseType.JSON,
     ) -> None:
         """Make a call to the master server via a http POST.
 
         :meta private:
         """
         MasterServerV1CallThread(
-            request, 'post', data, callback, response_type
+            request, 'post', data, callback, MasterServerResponseType.JSON
         ).start()
 
     def set_tournament_prize_image(

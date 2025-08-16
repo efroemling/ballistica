@@ -83,16 +83,16 @@ class Python {
   static void PrintContextNotYetBootstrapped();
   static void PrintContextAuto();
 
-  static auto GetContextBaseString() -> std::string;
+  static auto ContextBaseString() -> std::string;
 
-  /// Borrowed from Python's source code: used in overriding of objects' dir()
-  /// results.
+  /// Borrowed from Python's source code: used in overriding of objects'
+  /// dir() results.
   static auto generic_dir(PyObject* self) -> PyObject*;
 
   /// Return a minimal filename/position string such as 'foo.py:201' based
-  /// on the Python stack state. This shouldn't be too expensive to fetch and
-  /// is useful as an object identifier/etc.
-  static auto GetPythonFileLocation(bool pretty = true) -> std::string;
+  /// on the Python stack state. This shouldn't be too expensive to fetch
+  /// and is useful as an object identifier/etc.
+  static auto PythonFileLocation(bool pretty = true) -> std::string;
 
   /// Set Python exception from C++ Exception.
   static void SetPythonException(const Exception& exc);

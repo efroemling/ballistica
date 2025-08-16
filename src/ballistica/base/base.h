@@ -765,7 +765,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   auto GetPyExceptionType(PyExcType exctype) -> PyObject* override;
   auto PrintPythonStackTrace() -> bool override;
   auto GetPyLString(PyObject* obj) -> std::string override;
-  auto DoGetContextBaseString() -> std::string override;
+  auto DoContextBaseString() -> std::string override;
   void DoPrintContextAuto() override;
   void DoPushObjCall(const PythonObjectSetBase* objset, int id) override;
   void DoPushObjCall(const PythonObjectSetBase* objset, int id,

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 import sys
+import ssl
 import time
 import signal
 import logging
@@ -12,14 +13,24 @@ import warnings
 import threading
 from typing import TYPE_CHECKING, override
 
+import urllib3
 from efro.logging import LogLevel
 
 if TYPE_CHECKING:
     from typing import Any
+
     from efro.logging import LogEntry, LogHandler
 
-_g_babase_imported = False  # pylint: disable=invalid-name
-_g_babase_app_started = False  # pylint: disable=invalid-name
+# Timeout for standard functions talking to the master-server/etc. We
+# generally try to fail fast and retry instead of waiting a long time
+# for things.
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 10
+
+_g_babase_imported: bool = False
+_g_babase_app_started: bool = False
+_g_net_warm_start_thread: threading.Thread | None = None
+_g_net_warm_start_ssl_context: ssl.SSLContext | None = None
+_g_net_warm_start_pool_manager: urllib3.PoolManager | None = None
 
 
 def on_native_module_import() -> None:
@@ -29,6 +40,7 @@ def on_native_module_import() -> None:
     environment modifications until we actually commit to running an
     app.
     """
+    # pylint: disable=cyclic-import
     import _babase
     import baenv
 
@@ -87,6 +99,7 @@ def on_main_thread_start_app() -> None:
     as we like it for running our app stuff. This includes things like
     signal-handling, garbage-collection, and logging.
     """
+    # pylint: disable=cyclic-import
     import gc
     import baenv
     import _babase
@@ -165,8 +178,98 @@ def on_main_thread_start_app() -> None:
 
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+    # Kick off networking bootstrapping. We do this here instead of in
+    # our app net-subsystem so that it can proceed in parallel with the
+    # rest of our bootstrapping (as networking stuff is often an overall
+    # bottleneck). Our net-subsystem then pulls this stuff into itself
+    # when it comes up.
+    global _g_net_warm_start_thread  # pylint: disable=global-statement
+    _g_net_warm_start_thread = threading.Thread(target=_bootstrap_networking)
+    _g_net_warm_start_thread.start()
+
     # Kick off some background cache cleanup operations.
     threading.Thread(target=_pycache_upkeep).start()
+
+
+def _bootstrap_networking() -> None:
+    """Early networking bootstrapping.
+
+    We start this as early as we can after start-app is called to
+    give it as much time to warm-start network connections/etc. while
+    we're spinning up other stuff.
+    """
+
+    from efro.util import strict_partial
+
+    import _babase
+    from babase._logging import netlog
+
+    netlog.debug('_bootstrap_networking() begin')
+
+    # Our shared SSL context. Creating these can be expensive so we
+    # create it here once and recycle for our various connections.
+    global _g_net_warm_start_ssl_context  # pylint: disable=global-statement
+    _g_net_warm_start_ssl_context = ssl.create_default_context()
+
+    # I'm finding that urllib3 exceptions tend to give us reference
+    # cycles, which we want to avoid as much as possible. We can work
+    # around this by gutting the exceptions using
+    # efro.util.strip_exception_tracebacks() after handling them.
+    # Unfortunately this means we need to turn off retries here since
+    # the retry mechanism effectively hides exceptions from us.
+    global _g_net_warm_start_pool_manager  # pylint: disable=global-statement
+    _g_net_warm_start_pool_manager = urllib3.PoolManager(
+        retries=False,
+        ssl_context=_g_net_warm_start_ssl_context,
+        timeout=urllib3.util.Timeout(total=DEFAULT_REQUEST_TIMEOUT_SECONDS),
+        maxsize=10,
+        headers={'User-Agent': _babase.user_agent_string()},
+    )
+    # Kick off a request to our first-choice bootstrap server. This can
+    # get dns lookup and ssl negotiation and whatnot going in the
+    # background while the rest of our app is coming up, and our first
+    # actual request to the server will ideally have an established
+    # connection already waiting for it.
+    #
+    # We kick off a separate thread to handle this though since we don't
+    # want the bootstrap process to block on it if its still going when
+    # our bootstrapping results are needed.
+    threading.Thread(
+        target=strict_partial(
+            _warm_start_bootstrap_connection, _g_net_warm_start_pool_manager
+        )
+    ).start()
+    netlog.debug('_bootstrap_networking() end')
+
+
+def _warm_start_bootstrap_connection(pool: urllib3.PoolManager) -> None:
+    from efro.util import strip_exception_tracebacks
+    from babase._logging import netlog
+    import _babase
+
+    starttime = time.monotonic()
+    try:
+        netlog.debug('Warm starting urllib3 pool...')
+        # Slightly hacky: this runs early enough that the plus subsystem
+        # doesn't exist yet so we need to hard-code this address (the
+        # first bootstrap address that Plus returns). Note that we don't
+        # actually *use* the results of this request; we're just getting
+        # urllib3 to establish a connection to our first-choice server
+        # to hopefully have it available for immediate use when needed.
+        response = pool.request('GET', 'https://regional.ballistica.net/ping')
+        _data = response.data
+        netlog.debug(
+            'Warm starting urllib3 pool succeeded in %.3fs.',
+            time.monotonic() - starttime,
+        )
+    except Exception as exc:
+        netlog.debug(
+            'Warm starting urllib3 pool failed in %.3fs.',
+            time.monotonic() - starttime,
+            exc_info=True,
+        )
+        # Hopefully avoid reference cycles.
+        strip_exception_tracebacks(exc)
 
 
 def _pycache_upkeep() -> None:
@@ -203,13 +306,14 @@ def _do_pycache_upkeep() -> None:
             or appstate is appstate_t.SHUTDOWN_COMPLETE
         )
 
-    # Let's wait until the app has been in the running state for a few
-    # seconds before doing our thing; that way we're out of the way of
-    # more high priority stuff like meta-scans that happen at first
-    # launch.
+    # Let's wait until the app has been in the running state for a wee
+    # bit before doing our thing; that way we're out of the way of more
+    # high priority stuff like meta-scans that happen at first launch.
+    # Packing too much work in at once is likely to lead to visible
+    # stutters and ANR issues and whatnot.
     time_in_running_state = 0.0
     sleep_inc = 0.1
-    while time_in_running_state < 3.0:
+    while time_in_running_state < 10.0:
         time.sleep(sleep_inc)
         appstate = _babase.app.state
         appstate_t = type(appstate)

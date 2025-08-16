@@ -246,7 +246,7 @@ void PythonCommand::PrintContext() {
   if (command().find('\n') == std::string::npos) {
     s += std::string("  call: ") + command() + "\n";
   }
-  s += Python::GetContextBaseString();
+  s += Python::ContextBaseString();
   PySys_WriteStderr("%s\n", s.c_str());
 }
 

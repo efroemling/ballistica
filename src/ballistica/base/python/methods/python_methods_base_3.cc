@@ -1417,7 +1417,7 @@ static auto PyLockAllInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   assert(g_base->input);
-  g_base->input->LockAllInput(false, Python::GetPythonFileLocation());
+  g_base->input->LockAllInput(false, Python::PythonFileLocation());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1440,7 +1440,7 @@ static auto PyUnlockAllInput(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
   assert(g_base->input);
-  g_base->input->UnlockAllInput(false, Python::GetPythonFileLocation());
+  g_base->input->UnlockAllInput(false, Python::PythonFileLocation());
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

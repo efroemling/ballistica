@@ -12,7 +12,7 @@ from threading import Thread
 from typing import TYPE_CHECKING, override
 
 from efro.error import CleanError
-from efro.util import strip_exception_tracebacks
+from efro.util import strip_exception_tracebacks, strict_partial
 from bauiv1lib.settings.testing import TestingWindow
 import bauiv1 as bui
 
@@ -205,8 +205,6 @@ class NetTestingWindow(bui.MainWindow):
 
 def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
     # pylint: disable=too-many-statements
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
 
     from efro.util import utc_now
 
@@ -230,7 +228,7 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         try:
             call()
             duration = time.monotonic() - starttime
-            _print(f'Succeeded in {duration:.2f}s.', color=(0, 1, 0))
+            _print(f'Succeeded in {duration:.3f}s.', color=(0, 1, 0))
             return True
         except Exception as exc:
             import traceback
@@ -270,47 +268,29 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             _print('\nRunning dummy fail test...')
             _print_test_results(_dummy_fail)
 
-        # V1 ping
-        baseaddr = plus.get_master_server_address(source=0, version=1)
-        _print(f'\nContacting V1 master-server src0 ({baseaddr})...')
-        v1worked = _print_test_results(lambda: _test_fetch(baseaddr))
-
-        # V1 alternate ping (only if primary fails since this often fails).
-        if v1worked:
-            _print('\nSkipping V1 master-server src1 test since src0 worked.')
-        else:
-            baseaddr = plus.get_master_server_address(source=1, version=1)
-            _print(f'\nContacting V1 master-server src1 ({baseaddr})...')
-            _print_test_results(lambda: _test_fetch(baseaddr))
-
-        if 'none succeeded' in bui.app.net.v1_test_log:
+        # Bootstrap pings
+        bootstrap_addrs = plus.get_bootstrap_server_addresses()
+        for i, addr in enumerate(bootstrap_addrs):
             _print(
-                f'\nV1-test-log failed: {bui.app.net.v1_test_log}',
-                color=(1, 0, 0),
+                f'\nContacting bootstrap addr {i+1}'
+                f' of {len(bootstrap_addrs)} ({addr})...'
             )
-            have_error[0] = True
-        else:
-            _print(f'\nV1-test-log ok: {bui.app.net.v1_test_log}')
+            _print_test_results(strict_partial(_test_fetch, addr))
 
-        for srcid, result in sorted(bui.app.net.v1_ctest_results.items()):
-            _print(f'\nV1 src{srcid} result: {result}')
+        # V2 ping
+        # (UPDATE: Disabling since this is also a bootstrap server).
+        # baseaddr = plus.get_master_server_address()
+        # _print(f'\nContacting V2 master-server ({baseaddr})...')
+        # _print_test_results(lambda: _test_fetch(baseaddr))
 
-        curv1addr = plus.get_master_server_address(version=1)
-        _print(f'\nUsing V1 address: {curv1addr}')
+        _print('\nComparing local time to V2 server...')
+        _print_test_results(_test_v2_time)
 
         if plus.get_v1_account_state() == 'signed_in':
             _print('\nRunning V1 transaction...')
             _print_test_results(_test_v1_transaction)
         else:
             _print('\nSkipping V1 transaction (Not signed into V1).')
-
-        # V2 ping
-        baseaddr = plus.get_master_server_address(version=2)
-        _print(f'\nContacting V2 master-server ({baseaddr})...')
-        _print_test_results(lambda: _test_fetch(baseaddr))
-
-        _print('\nComparing local time to V2 server...')
-        _print_test_results(_test_v2_time)
 
         # Get V2 nearby zone
         with bui.app.net.zone_pings_lock:

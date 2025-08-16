@@ -366,29 +366,28 @@ class CorePlatform {
   /// guaranteed to not go backwards.
   auto TimeSinceLaunchMillisecs() const -> millisecs_t;
 
-  /// Return a raw current milliseconds value. It *should* be monotonic. It
-  /// is relative to an undefined start point; only use it for time
-  /// differences. Generally the AppTime values are preferable since their
-  /// progression pauses during app suspension and they are 100% guaranteed
-  /// to not go backwards.
+  /// Return a milliseconds value which should not drift or go backwards
+  /// even if system time changes. It is not based on any particular
+  /// start-time so only use it to measure time differences.
   static auto TimeMonotonicMillisecs() -> millisecs_t;
 
-  /// Return a raw current microseconds value. It *should* be monotonic. It
-  /// is relative to an undefined start point; only use it for time
-  /// differences. Generally the AppTime values are preferable since their
-  /// progression pauses during app suspension and they are 100% guaranteed
-  /// to not go backwards.
+  /// Return a microseconds value which should not drift or go backwards
+  /// even if system time changes. It is not based on any particular
+  /// start-time so only use it to measure time differences.
   static auto TimeMonotonicMicrosecs() -> microsecs_t;
 
-  /// Return a raw current seconds integer value. It *should* be monotonic.
-  /// It is relative to an undefined start point; only use it for time
-  /// differences. Generally the AppTime values are preferable since their
-  /// progression pauses during app suspension and they are 100% guaranteed
-  /// to not go backwards.
+  /// Return a seconds value which should not drift or go backwards even if
+  /// system time changes. It is not based on any particular start-time so
+  /// only use it to measure time differences.
+  static auto TimeMonotonicSeconds() -> seconds_t;
+
+  /// Return an integer seconds value which should not drift or go backwards
+  /// even if system time changes. It is not based on any particular
+  /// start-time so only use it to measure time differences.
   static auto TimeMonotonicWholeSeconds() -> int64_t;
 
   /// Return seconds since the epoch; same as Python's time.time().
-  static auto TimeSinceEpochSeconds() -> double;
+  static auto TimeSinceEpochSeconds() -> seconds_t;
 
   static void SleepSeconds(seconds_t duration);
   static void SleepMillisecs(millisecs_t duration);

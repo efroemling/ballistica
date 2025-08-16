@@ -23,6 +23,31 @@ TOKENS4_COUNT = 2600
 
 @ioprepped
 @dataclass
+class LegacyRequest(Message):
+    """A generic request for the legacy master server."""
+
+    request: Annotated[str, IOAttrs('r')]
+    request_type: Annotated[str, IOAttrs('t')]
+    user_agent_string: Annotated[str, IOAttrs('u')]
+    data: Annotated[str, IOAttrs('d')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [LegacyResponse]
+
+
+@ioprepped
+@dataclass
+class LegacyResponse(Response):
+    """Response for generic legacy request."""
+
+    data: Annotated[str | None, IOAttrs('d')]
+    zipped: Annotated[bool, IOAttrs('z')]
+
+
+@ioprepped
+@dataclass
 class PrivatePartyMessage(Message):
     """Message asking about info we need for private-party UI."""
 

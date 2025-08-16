@@ -20,11 +20,7 @@ class ServerNodeEntry:
     """Information about a specific server."""
 
     zone: Annotated[str, IOAttrs('r')]
-
-    # TODO: Remove soft_default after all master-servers upgraded.
-    latlong: Annotated[
-        tuple[float, float] | None, IOAttrs('ll', soft_default=None)
-    ]
+    latlong: Annotated[tuple[float, float] | None, IOAttrs('ll')]
     address: Annotated[str, IOAttrs('a')]
     port: Annotated[int, IOAttrs('p')]
 
@@ -42,6 +38,9 @@ class ServerNodeQueryResponse:
 
     ping_per_dist: Annotated[float, IOAttrs('ppd')]
     max_dist: Annotated[float, IOAttrs('md')]
+
+    # If this came from a bootstrap server, which zone was it in.
+    bootstrap_zone: Annotated[str | None, IOAttrs('b', soft_default=None)]
 
     debug_log_seconds: Annotated[
         float | None, IOAttrs('d', store_default=False)

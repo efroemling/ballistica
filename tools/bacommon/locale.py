@@ -70,6 +70,7 @@ class Locale(Enum):
     UKRAINIAN = 'ukrn'
     VENETIAN = 'venetn'
     VIETNAMESE = 'viet'
+    KAZAKH = 'kazk'
 
     # Note: We use if-statement chains here so we can use assert_never()
     # to ensure we cover all existing values. But we cache lookups so
@@ -172,6 +173,8 @@ class Locale(Enum):
             return 'Venetian'
         if self is cls.VIETNAMESE:
             return 'Vietnamese'
+        if self is cls.KAZAKH:
+            return 'Kazakh'
 
         # Make sure we've covered all cases.
         assert_never(self)
@@ -291,6 +294,8 @@ class Locale(Enum):
             return 'Venetian'
         if self is cls.VIETNAMESE:
             return 'Vietnamese'
+        if self is cls.KAZAKH:
+            return 'Kazakh'
 
         # Make sure we've covered all cases.
         assert_never(self)
@@ -382,6 +387,8 @@ class Locale(Enum):
             return R.VENETIAN
         if self is cls.VIETNAMESE:
             return R.VIETNAMESE
+        if self is cls.KAZAKH:
+            return R.KAZAKH
 
         # Make sure we're covering all cases.
         assert_never(self)
@@ -436,6 +443,7 @@ class LocaleResolved(Enum):
     UKRAINIAN = 'ukrn'
     VENETIAN = 'venetn'
     VIETNAMESE = 'viet'
+    KAZAKH = 'kazk'
 
     # Note: We use if-statement chains here so we can use assert_never()
     # to ensure we cover all existing values. But we cache lookups so
@@ -536,6 +544,8 @@ class LocaleResolved(Enum):
             return Locale.VENETIAN
         if self is cls.VIETNAMESE:
             return Locale.VIETNAMESE
+        if self is cls.KAZAKH:
+            return Locale.KAZAKH
 
         # Make sure we're covering all cases.
         assert_never(self)
@@ -635,6 +645,8 @@ class LocaleResolved(Enum):
             val = 'vec'
         elif self is cls.VIETNAMESE:
             val = 'vi'
+        elif self is cls.KAZAKH:
+            val = 'kk'
         else:
             # Make sure we cover all cases.
             assert_never(self)

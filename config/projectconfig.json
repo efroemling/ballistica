@@ -28,6 +28,7 @@
   "pylint_ignored_untracked_deps": [
     "__main__",
     "urllib3",
+    "urllib3.util",
     "astroid.modutils",
     "astroid.nodes",
     "astroid",

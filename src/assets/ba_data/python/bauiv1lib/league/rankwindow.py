@@ -740,7 +740,7 @@ class LeagueRankWindow(bui.MainWindow):
         else:
             league_str = ''
         bui.open_url(
-            plus.get_master_server_address()
+            plus.get_legacy_master_server_address()
             + '/highscores?list=powerRankings&v=2'
             + league_str
             + season_str
