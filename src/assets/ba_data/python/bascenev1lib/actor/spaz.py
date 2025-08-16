@@ -8,6 +8,7 @@ from __future__ import annotations
 import random
 import logging
 from typing import TYPE_CHECKING, override
+from dataclasses import dataclass
 
 import bascenev1 as bs
 
@@ -36,8 +37,7 @@ class PunchHitMessage:
 
 class CurseExplodeMessage:
     """We are cursed and should blow up now."""
-    def __init__(self, srcplayer):
-        self.srcplayer = srcplayer
+    srcplayer: bs.Player | None = None
 
 
 class BombDiedMessage:
