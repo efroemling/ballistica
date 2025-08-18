@@ -77,6 +77,22 @@ class PlusAppSubsystem(AppSubsystem):
         return _baplus.get_master_server_address()
 
     @staticmethod
+    def get_bootstrap_server_addresses() -> list[str]:
+        """Return addresses we can use to establish regional connection.
+
+        :meta private:
+        """
+        return _baplus.get_bootstrap_server_addresses()
+
+    @staticmethod
+    def get_bootstrap_server_address() -> str:
+        """Return address we can use to establish regional connection.
+
+        :meta private:
+        """
+        return _baplus.get_bootstrap_server_address()
+
+    @staticmethod
     def get_classic_news_show() -> str:
         """:meta private:"""
         return _baplus.get_classic_news_show()

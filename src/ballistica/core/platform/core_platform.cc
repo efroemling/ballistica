@@ -1113,30 +1113,32 @@ void CorePlatform::SetDebugKey(const std::string& key,
 void CorePlatform::HandleLowLevelDebugLog(const std::string& msg) {}
 
 auto CorePlatform::TimeMonotonicMillisecs() -> millisecs_t {
-  return std::chrono::time_point_cast<std::chrono::milliseconds>(
-             std::chrono::steady_clock::now())
-      .time_since_epoch()
+  using std::chrono::duration_cast, std::chrono::milliseconds,
+      std::chrono::steady_clock;
+  return duration_cast<milliseconds>(steady_clock::now().time_since_epoch())
       .count();
 }
 
 auto CorePlatform::TimeMonotonicMicrosecs() -> millisecs_t {
-  return std::chrono::time_point_cast<std::chrono::microseconds>(
-             std::chrono::steady_clock::now())
-      .time_since_epoch()
+  using std::chrono::duration_cast, std::chrono::microseconds,
+      std::chrono::steady_clock;
+  return duration_cast<microseconds>(steady_clock::now().time_since_epoch())
       .count();
 }
 
-auto CorePlatform::TimeSinceEpochSeconds() -> double {
-  return std::chrono::duration<double>(
-             std::chrono::system_clock::now().time_since_epoch())
-      .count();
+auto CorePlatform::TimeMonotonicSeconds() -> seconds_t {
+  using std::chrono::duration, std::chrono::steady_clock;
+  return duration<seconds_t>(steady_clock::now().time_since_epoch()).count();
 }
 
 auto CorePlatform::TimeMonotonicWholeSeconds() -> int64_t {
-  return std::chrono::time_point_cast<std::chrono::seconds>(
-             std::chrono::steady_clock::now())
-      .time_since_epoch()
-      .count();
+  using std::chrono::floor, std::chrono::seconds, std::chrono::steady_clock;
+  return floor<seconds>(steady_clock::now().time_since_epoch()).count();
+}
+
+auto CorePlatform::TimeSinceEpochSeconds() -> seconds_t {
+  using std::chrono::duration, std::chrono::system_clock;
+  return duration<seconds_t>(system_clock::now().time_since_epoch()).count();
 }
 
 auto CorePlatform::System(const char* cmd) -> int {

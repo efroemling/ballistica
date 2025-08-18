@@ -617,7 +617,7 @@ void BasePython::RunDeepLink(const std::string& url) {
 }
 
 auto BasePython::DoOnce() -> bool {
-  std::string location = Python::GetPythonFileLocation(false);
+  std::string location = Python::PythonFileLocation(false);
   if (do_once_locations_.find(location) != do_once_locations_.end()) {
     return false;
   }

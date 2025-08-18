@@ -3,47 +3,32 @@
 """Networking related functionality."""
 from __future__ import annotations
 
-import ssl
 import socket
 import threading
 import ipaddress
 from typing import TYPE_CHECKING
 
-import urllib3
-
-import _babase
-
 if TYPE_CHECKING:
     pass
-
-# Timeout for standard functions talking to the master-server/etc. We
-# generally try to fail fast and retry instead of waiting a long time
-# for things.
-DEFAULT_REQUEST_TIMEOUT_SECONDS = 10
 
 
 class NetworkSubsystem:
     """Network related app subsystem."""
 
     def __init__(self) -> None:
-        # Our shared SSL context. Creating these can be expensive so we
-        # create it here once and recycle for our various connections.
-        self.sslcontext = ssl.create_default_context()
+        import babase._env
 
-        # I'm finding that urllib3 exceptions tend to give us reference
-        # cycles, which we want to avoid as much as possible. We can
-        # work around this by gutting the exceptions using
-        # efro.util.strip_exception_tracebacks() after handling them.
-        # Unfortunately this means we need to turn off retries here
-        # since the retry mechanism effectively hides exceptions from
-        # us.
-        self.urllib3pool = urllib3.PoolManager(
-            retries=False,
-            ssl_context=self.sslcontext,
-            timeout=urllib3.util.Timeout(total=DEFAULT_REQUEST_TIMEOUT_SECONDS),
-            maxsize=10,
-            headers={'User-Agent': _babase.user_agent_string()},
-        )
+        assert babase._env._g_net_warm_start_thread is not None
+        babase._env._g_net_warm_start_thread.join()
+        babase._env._g_net_warm_start_thread = None
+
+        assert babase._env._g_net_warm_start_ssl_context is not None
+        self.sslcontext = babase._env._g_net_warm_start_ssl_context
+        babase._env._g_net_warm_start_ssl_context = None
+
+        assert babase._env._g_net_warm_start_pool_manager is not None
+        self.urllib3pool = babase._env._g_net_warm_start_pool_manager
+        babase._env._g_net_warm_start_pool_manager = None
 
         # Anyone accessing/modifying zone_pings should hold this lock,
         # as it is updated by a background thread.
@@ -55,8 +40,6 @@ class NetworkSubsystem:
         self.zone_pings: dict[str, float] = {}
 
         # For debugging/progress.
-        # self.v1_test_log: str = ''
-        # self.v1_ctest_results: dict[int, str] = {}
         self.connectivity_state = ''
         self.transport_state = ''
         self.server_time_offset_hours: float | None = None

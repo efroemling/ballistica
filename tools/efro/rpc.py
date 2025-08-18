@@ -84,56 +84,14 @@ def ssl_stream_writer_underlying_transport_info(
     return '(not found)'
 
 
-# def ssl_stream_writer_force_close_check(writer: asyncio.StreamWriter) -> None:
-#     """Ensure a writer is closed; hacky workaround for odd hang."""
-#     from threading import Thread
-
-#     # Disabling for now..
-#     if bool(True):
-#         return
-
-#     # Hopefully can remove this in Python 3.11?...
-#     # see issue with is_closing() below for more details.
-#     transport = getattr(writer, '_transport', None)
-#     if transport is not None:
-#         sslproto = getattr(transport, '_ssl_protocol', None)
-#         if sslproto is not None:
-#             raw_transport = getattr(sslproto, '_transport', None)
-#             if raw_transport is not None:
-#                 Thread(
-#                     target=partial(
-#                         _do_writer_force_close_check,
-#                          weakref.ref(raw_transport),
-#                     ),
-#                     daemon=True,
-#                 ).start()
-
-
-# def _do_writer_force_close_check(transport_weak: weakref.ref) -> None:
-#     try:
-#         # Attempt to bail as soon as the obj dies. If it hasn't done so
-#         # by our timeout, force-kill it.
-#         starttime = time.monotonic()
-#         while time.monotonic() - starttime < 10.0:
-#             time.sleep(0.1)
-#             if transport_weak() is None:
-#                 return
-#         transport = transport_weak()
-#         if transport is not None:
-#             logging.info('Forcing abort on stuck transport %s.', transport)
-#             transport.abort()
-#     except Exception:
-#         logging.warning('Error in writer-force-close-check', exc_info=True)
-
-
 class _InFlightMessage:
     """Represents a message that is out on the wire."""
 
-    def __init__(self) -> None:
+    def __init__(self, message_id: int) -> None:
         self._response: bytes | None = None
         self._got_response = asyncio.Event()
         self.wait_task = asyncio.create_task(
-            self._wait(), name='rpc in flight msg wait'
+            self._wait(), name=f'rpc in-flight-msg {message_id} wait'
         )
 
     async def _wait(self) -> bytes:
@@ -266,12 +224,12 @@ class RPCEndpoint:
         try:
             await self._do_run()
         except asyncio.CancelledError:
-            # We aren't really designed to be cancelled so let's warn
-            # if it happens.
+            # Currently trying to design such that we don't need to do
+            # this.
             logger.warning(
-                'RPCEndpoint.run got CancelledError;'
-                ' want to try and avoid this.'
+                'RPCEndpoint.run cancelled; want to try and avoid this.'
             )
+            self.close()
             raise
 
     async def _do_run(self) -> None:
@@ -409,9 +367,12 @@ class RPCEndpoint:
 
         # Make an entry so we know this message is out there.
         assert message_id not in self._in_flight_messages
-        msgobj = self._in_flight_messages[message_id] = _InFlightMessage()
+        msgobj = self._in_flight_messages[message_id] = _InFlightMessage(
+            message_id
+        )
 
-        # Also add its task to our list so we properly cancel it if we die.
+        # Also add its task to our list so we properly cancel it if we
+        # die.
         self._prune_tasks()  # Keep our list from filling with dead tasks.
         self._tasks.append(msgobj.wait_task)
 
@@ -423,11 +384,9 @@ class RPCEndpoint:
             timeout = self.DEFAULT_MESSAGE_TIMEOUT
         assert timeout is not None
 
-        bytes_awaitable = msgobj.wait_task
-
         # Now complete the send asynchronously.
         return self._send_message(
-            message, timeout, close_on_error, bytes_awaitable, message_id
+            message, timeout, close_on_error, msgobj.wait_task, message_id
         )
 
     async def _send_message(
@@ -450,6 +409,7 @@ class RPCEndpoint:
                 raise RuntimeError('Message cannot be larger than 65535 bytes')
 
         try:
+            # print(f'WILL WAIT FOR TASK {bytes_awaitable.get_name()}')
             return await asyncio.wait_for(bytes_awaitable, timeout=timeout)
         except asyncio.CancelledError as exc:
             # Question: we assume this means the above wait_for() was
@@ -489,6 +449,8 @@ class RPCEndpoint:
 
             # Some unexpected error; let it bubble up.
             raise
+        # finally:
+        #     print(f'DID WAIT {message_id}')
 
     def close(self) -> None:
         """I said seagulls; mmmm; stop it now."""
@@ -594,11 +556,7 @@ class RPCEndpoint:
             # indefinitely. See https://github.com/python/cpython/issues/83939
             # It sounds like this should be fixed in 3.11 but for now just
             # forcing the issue with a timeout here.
-            await asyncio.wait_for(
-                self._writer.wait_closed(),
-                # timeout=60.0 * 6.0,
-                timeout=30.0,
-            )
+            await asyncio.wait_for(self._writer.wait_closed(), timeout=30.0)
         except asyncio.TimeoutError as exc:
             logger.info(
                 'Timeout on _writer.wait_closed() for %s rpc (transport=%s).',
@@ -628,10 +586,12 @@ class RPCEndpoint:
 
         except asyncio.CancelledError:
             logger.warning(
-                'RPCEndpoint.wait_closed()'
-                ' got asyncio.CancelledError; not expected.'
+                'RPCEndpoint.wait_closed() got asyncio.CancelledError;'
+                ' not expected.'
             )
             raise
+
+        # Do we still need this?
         assert not self._did_wait_closed_writer
         self._did_wait_closed_writer = True
 

@@ -2,6 +2,7 @@
 
 #include "ballistica/shared/ballistica.h"
 
+#include <cstdio>
 #include <string>
 
 #include "ballistica/core/logging/logging.h"
@@ -9,6 +10,7 @@
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
+#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/fatal_error.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
@@ -39,8 +41,8 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22479;
-const char* kEngineVersion = "1.7.47";
+const int kEngineBuildNumber = 22498;
+const char* kEngineVersion = "1.7.48";
 const int kEngineApiVersion = 9;
 
 #if BA_MONOLITHIC_BUILD
@@ -101,6 +103,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // (essentially the baenv.configure() call). This needs to be done
     // before any other ba* modules are imported since it may affect where
     // those modules get loaded from in the first place.
+    l_core->python->MonolithicModeBaEnvImport();
     l_core->python->MonolithicModeBaEnvConfigure();
 
     auto time3 = core::CorePlatform::TimeMonotonicMillisecs();
@@ -222,21 +225,52 @@ class IncrementalInitRunner_ {
         case 0:
           core_ = core::CoreFeatureSet::Import(&config_);
           step_++;
+          last_step_time_ = core::CorePlatform::TimeMonotonicSeconds();
           return false;
+
         case 1:
-          core_->python->MonolithicModeBaEnvConfigure();
+          core_->python->WarmStart1();
+          LogStepTime_(step_);
           step_++;
           return false;
+
         case 2:
+          core_->python->WarmStart2();
+          LogStepTime_(step_);
+          step_++;
+          return false;
+
+        case 3:
+          core_->python->WarmStart3();
+          LogStepTime_(step_);
+          step_++;
+          return false;
+
+        case 4:
+          core_->python->MonolithicModeBaEnvImport();
+          LogStepTime_(step_);
+          step_++;
+          return false;
+
+        case 5:
+          core_->python->MonolithicModeBaEnvConfigure();
+          LogStepTime_(step_);
+          step_++;
+          return false;
+
+        case 6:
           base_ = core_->SoftImportBase();
           if (!base_) {
             FatalError("Base module unavailable; can't run app.");
           }
+          LogStepTime_(step_);
           step_++;
           return false;
-        case 3:
+
+        case 7:
           base_->StartApp();
           Python::PermanentlyReleaseGIL();
+          LogStepTime_(step_);
           step_++;
           return false;
         default:
@@ -277,7 +311,26 @@ class IncrementalInitRunner_ {
   }
 
  private:
+  /// On Android we want to try and space our steps out (namely our
+  /// warm-start steps) so that they take roughly equal amounts of time (and
+  /// minimize the chances of us triggering ANR reports by hogging the main
+  /// thread too long). Use this log message to calibrate that.
+  void LogStepTime_(int step) {
+    // Currently only showing this on Android where its relevant.
+    if (!g_buildconfig.platform_android() || !g_buildconfig.debug_build()) {
+      return;
+    }
+    char buffer[256];
+    auto now{core::CorePlatform::TimeMonotonicSeconds()};
+    snprintf(buffer, sizeof(buffer), "Incremental init step %d took %.3fs.",
+             step, now - last_step_time_);
+    core_->platform->EmitPlatformLog("ba_native_incr_init", LogLevel::kDebug,
+                                     buffer);
+    last_step_time_ = now;
+  }
+
   int step_{};
+  seconds_t last_step_time_{};
   bool zombie_{};
   core::CoreConfig config_;
   core::CoreFeatureSet* core_{};

@@ -62,7 +62,7 @@ class MasterServerV1CallThread(threading.Thread):
 
         # Save and restore the context we were created from.
         activity = bascenev1.getactivity(doraise=False)
-        self._activity = weakref.ref(activity) if activity is not None else None
+        self._activity = None if activity is None else weakref.ref(activity)
 
     def _run_callback(self, arg: None | dict[str, Any]) -> None:
         # If we were created in an activity context and that activity
@@ -81,6 +81,13 @@ class MasterServerV1CallThread(threading.Thread):
         assert self._callback is not None
         with self._context:
             self._callback(arg)
+
+    @override
+    def __str__(self) -> str:
+        return (
+            f'<MasterServerV1CallThread id={id(self)}'
+            f' request={self._request}>'
+        )
 
     @override
     def run(self) -> None:

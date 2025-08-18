@@ -56,7 +56,7 @@ auto PythonContextCall::GetObjectDescription() const -> std::string {
 void PythonContextCall::GetTrace() {
   // Grab the file/line now in case we error
   // (useful for debugging simple timers and callbacks and such).
-  file_loc_ = Python::GetPythonFileLocation();
+  file_loc_ = Python::PythonFileLocation();
 }
 
 // Called by our owning context when it goes down.
@@ -118,7 +118,7 @@ void PythonContextCall::PrintContext() {
   assert(g_base->InLogicThread());
   std::string s = std::string("  root call: ") + object().Str() + "\n";
   s += ("  root call origin: " + file_loc() + "\n");
-  s += Python::GetContextBaseString();
+  s += Python::ContextBaseString();
   PySys_WriteStderr("%s\n", s.c_str());
 }
 

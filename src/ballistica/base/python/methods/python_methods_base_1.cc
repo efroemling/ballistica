@@ -551,7 +551,7 @@ static auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds)
           "babase.pushcall() called from the logic thread with "
           "from_other_thread set to true (call "
               + Python::ObjToString(call_obj) + " at "
-              + Python::GetPythonFileLocation()
+              + Python::PythonFileLocation()
               + "). That arg should only be used from other threads.");
     }
 

@@ -17,7 +17,7 @@ APPLE_NEW = False
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.13'
-PY_VER_EXACT_ANDROID = '3.13.5'
+PY_VER_EXACT_ANDROID = '3.13.6'
 PY_VER_APPLE = '3.12'
 PY_VER_EXACT_APPLE = '3.12.4' if APPLE_NEW else '3.12.0'
 
@@ -41,6 +41,8 @@ VERSION_MIN_TVOS = '12.0' if APPLE_NEW else '9.0'
 #
 # For now will try to ride out this 3.0 LTS version as long as possible.
 OPENSSL_VER_APPLE = '3.0.12-1'
+# NOTE TO SELF - 3.0.17 IS BUGGY.
+# (see https://github.com/openssl/openssl/issues/28171)
 OPENSSL_VER_ANDROID = '3.0.16'
 
 LIBFFI_VER_APPLE = '3.4.6-1' if APPLE_NEW else '3.4.4-1'
@@ -51,14 +53,14 @@ XZ_VER_APPLE = '5.4.7-1' if APPLE_NEW else '5.4.4-1'
 # bumping various versions to keep things up to date.
 ANDROID_API_VER = 24
 ZLIB_VER_ANDROID = '1.3.1'
-XZ_VER_ANDROID = '5.6.4'
+XZ_VER_ANDROID = '5.8.1'
 BZIP2_VER_ANDROID = '1.0.8'
 GDBM_VER_ANDROID = '1.24'
 LIBFFI_VER_ANDROID = '3.4.7'
 LIBUUID_VER_ANDROID = ('2.41', '2.41')
 NCURSES_VER_ANDROID = '6.5'
 READLINE_VER_ANDROID = '8.2'
-SQLITE_VER_ANDROID = ('2024', '3460000')
+SQLITE_VER_ANDROID = ('2025', '3500400')
 
 # Filenames we prune from Python lib dirs in source repo to cut down on
 # size.

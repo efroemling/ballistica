@@ -123,7 +123,7 @@ auto PythonClassMaterial::tp_new(PyTypeObject* type, PyObject* args,
     if (name_obj != Py_None) {
       name = Python::GetString(name_obj);
     } else {
-      name = Python::GetPythonFileLocation();
+      name = Python::PythonFileLocation();
     }
 
     if (HostActivity* host_activity =
