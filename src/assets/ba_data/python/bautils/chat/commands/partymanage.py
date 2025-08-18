@@ -24,6 +24,7 @@ class Maxplayers(ServerCommand):
     @override
     def on_command_call(self) -> None:
 
+        user = self.get_session_player(self.client_id)
         match self.arguments:
 
             case [size] if size.isdigit():
@@ -33,7 +34,7 @@ class Maxplayers(ServerCommand):
                         "Max players size must be between 2 and 99.",
                         transient=True,
                         clients=[self.client_id],
-                        color=Color.RED.float,
+                        color=Color.RED.float
                     )
                     return
 
@@ -44,8 +45,10 @@ class Maxplayers(ServerCommand):
                 activity.max_players = size_int
                 bs.set_public_party_max_size(size_int)
                 bs.broadcastmessage(
-                    f"Max players size set to {size}",
-                    color=Color.CYAN.float,
+                    f"{user.getname()} set max players to {size_int}.",
+                    color=Color.GREEN.float,
+                    transient=True,
+                    clients=None
                 )
 
             case _:
@@ -59,22 +62,23 @@ class Party(ServerCommand):
     @override
     def on_command_call(self) -> None:
 
+        user = self.get_session_player(self.client_id)
         match self.arguments:
 
             case ["public"] | ["pub"]:
                 bs.set_public_party_enabled(True)
                 bs.broadcastmessage(
-                    "Party mode set to Public",
+                    f"{user.getname()} set party mode to Public",
                     transient=True,
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case ["private"] | ["pvt"]:
                 bs.set_public_party_enabled(False)
                 bs.broadcastmessage(
-                    "Party mode set to Private",
+                    f"{user.getname()} set party mode to Private",
                     transient=True,
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float,
                 )
 
             case _:

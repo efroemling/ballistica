@@ -23,6 +23,8 @@ class Kick(ServerCommand):
     @override
     def on_command_call(self) -> None:
 
+        user = self.get_session_player(self.client_id)
+        target = self.get_session_player(client_id)
         match self.arguments:
 
             case []:
@@ -34,12 +36,22 @@ class Kick(ServerCommand):
                 client_id.isdigit() and ban_time.isdigit()
             ):
                 _id = self.filter_client_id(client_id)
+                bs.broadcastmessage(
+                    f"{user.getname()} kicked {target.getname()} "
+                    f"for {ban_time} seconds. Reason: {' '.join(reason)}.",
+                    color=Color.GREEN.float
+                )
                 self._disconnect(
                     client_id=_id, ban_time=int(ban_time), reason=reason
                 )
 
             case [client_id, *reason] if client_id.isdigit():
                 _id = self.filter_client_id(client_id)
+                bs.broadcastmessage(
+                    f"{user.getname()} kicked {target.getname()}. "
+                    f"Reason: {' '.join(reason)}.",
+                    color=Color.GREEN.float
+                )
                 self._disconnect(client_id=_id, reason=reason)
 
             case _:
@@ -61,11 +73,6 @@ class Kick(ServerCommand):
         reason_str = " ".join(reason) if reason else "Reason not provided"
         client = self.get_session_player(client_id)
 
-        kick_msg = f"Kicking {client.getname()}."
-        if reason:
-            kick_msg += f" Reason: {reason_str}"
-
-        bs.broadcastmessage(kick_msg)
         bs.disconnect_client(client_id=client_id, ban_time=ban_time)
 
 
@@ -78,6 +85,8 @@ class Remove(ServerCommand):
     @override
     def on_command_call(self) -> None:
 
+        user = self.get_session_player(self.client_id)
+        target = self.get_session_player(client_id)
         match self.arguments:
 
             case []:
@@ -89,10 +98,18 @@ class Remove(ServerCommand):
                 roaster = bs.get_game_roster()
                 for client in roaster:
                     self._remove_player(client["client_id"])
+                bs.broadcastmessage(
+                    f"{user.getname()} removed all players.",
+                    color=Color.GREEN.float
+                )
 
             case [client_id] if client_id.isdigit():
                 _id = self.filter_client_id(client_id)
                 self._remove_player(_id)
+                bs.broadcastmessage(
+                    f"{user.getname()} removed {target.getname()}.",
+                    color=Color.GREEN.float
+                )
 
             case _:
                 raise IncorrectUsageError

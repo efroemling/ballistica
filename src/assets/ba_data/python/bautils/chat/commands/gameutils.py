@@ -19,6 +19,11 @@ class Quit(ServerCommand):
 
     @override
     def on_command_call(self) -> None:
+        user = self.get_session_player(self.client_id)
+        bs.broadcastmessage(
+            f"{user.getname()} quit the game.",
+            color=Color.GREEN.float
+        )
         ba.quit()
 
 
@@ -31,10 +36,15 @@ class End(ServerCommand):
         activity = bs.get_foreground_host_activity()
         assert activity is not None
 
+        user = self.get_session_player(self.client_id)
         with activity.context:
             # type checking
             if isinstance(activity, bs.GameActivity):
                 activity.end_game()
+                bs.broadcastmessage(
+                    f"{user.getname()} ended the game.",
+                    color=Color.GREEN.float
+                )
 
 
 @register_command
@@ -45,13 +55,19 @@ class Pause(ServerCommand):
     def on_command_call(self) -> None:
 
         activity = bs.get_foreground_host_activity()
+        user = self.get_session_player(self.client_id)
         assert activity is not None
+
 
         with activity.context:
             if activity.globalsnode.paused:
                 return
 
             activity.globalsnode.paused = True
+            bs.broadcastmessage(
+                f"{user.getname()} paused the game.",
+                color=Color.GREEN.float
+            )
             activity.paused_text = bs.NodeActor(
                 bs.newnode(
                     "text",
@@ -75,6 +91,7 @@ class Resume(ServerCommand):
     def on_command_call(self) -> None:
 
         activity = bs.get_foreground_host_activity()
+        user = self.get_session_player(self.client_id)
         assert activity is not None
 
         if not activity.globalsnode.paused:
@@ -82,6 +99,10 @@ class Resume(ServerCommand):
 
         activity.globalsnode.paused = False
         activity.paused_text = None
+        bs.broadcastmessage(
+            f"{user.getname()} resumed the game.",
+            color=Color.GREEN.float
+        )
 
 
 @register_command
@@ -97,15 +118,24 @@ class EpicMode(ServerCommand):
     def on_command_call(self) -> None:
 
         activity = bs.get_foreground_host_activity()
+        user = self.get_session_player(self.client_id)
         assert activity is not None
         self.epic_mode_enabled = activity.globalsnode.slow_motion
 
         if self.epic_mode_enabled:
             activity.globalsnode.slow_motion = False
             self.epic_mode_enabled = False
+            bs.broadcastmessage(
+                f"{user.getname()} disabled epic mode.",
+                color=Color.GREEN.float
+            )
         else:
             activity.globalsnode.slow_motion = True
             self.epic_mode_enabled = False
+            bs.broadcastmessage(
+                f"{user.getname()} enabled epic mode.",
+                color=Color.GREEN.float
+            )
 
 
 # @register_command

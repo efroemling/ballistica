@@ -71,5 +71,5 @@ class CommandManager:
                 command()
 
             if not command.return_message():
-                return msg
-        return msg
+                return None # commands wont show up in chatbox
+        return msg # /<invalid_command_name> will be visible in chatbox

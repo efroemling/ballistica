@@ -31,7 +31,7 @@ class Kill(ServerCommand):
                 self.kill_player(self.client_id)
                 bs.broadcastmessage(
                     f"{user.getname()} commited sucide.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case ["all"]:
@@ -43,7 +43,7 @@ class Kill(ServerCommand):
                     self.kill_player(client["client_id"])
                 bs.broadcastmessage(
                     f"{user.getname()} killed everyone.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case [client_id] if client_id.isdigit():
@@ -55,7 +55,7 @@ class Kill(ServerCommand):
                 self.kill_player(_id)
                 bs.broadcastmessage(
                     f"{user.getname()} killed {target.getname()}.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case _:
@@ -87,7 +87,7 @@ class Curse(ServerCommand):
                 user = self.get_session_player(self.client_id)
                 bs.broadcastmessage(
                     f"{user.getname()} cursed themselves.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case ["all"]:
@@ -99,7 +99,7 @@ class Curse(ServerCommand):
                     self.curse_player(client["client_id"])
                 bs.broadcastmessage(
                     f"{user.getname()} cursed everyone.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case [client_id] if client_id.isdigit():
@@ -111,7 +111,7 @@ class Curse(ServerCommand):
                 self.curse_player(_id)
                 bs.broadcastmessage(
                     f"{user.getname()} cursed {target.getname()}.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case _:
@@ -144,7 +144,7 @@ class Heal(ServerCommand):
                 user = self.get_session_player(self.client_id)
                 bs.broadcastmessage(
                     f"{user.getname()} healed themselves.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case ["all"]:
@@ -156,7 +156,7 @@ class Heal(ServerCommand):
                     self.heal_player(client["client_id"])
                 bs.broadcastmessage(
                     f"{user.getname()} healed everyone.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case [client_id] if client_id.isdigit():
@@ -168,7 +168,7 @@ class Heal(ServerCommand):
                 self.heal_player(_id)
                 bs.broadcastmessage(
                     f"{user.getname()} healed {target.getname()}.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case _:
@@ -201,7 +201,7 @@ class Gloves(ServerCommand):
                 user = self.get_session_player(self.client_id)
                 bs.broadcastmessage(
                     f"{user.getname()} gave themselves gloves.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case ["all"]:
@@ -213,7 +213,7 @@ class Gloves(ServerCommand):
                     self.give_gloves(client["client_id"])
                 bs.broadcastmessage(
                     f"{user.getname()} gave everyone gloves.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case [client_id] if client_id.isdigit():
@@ -225,7 +225,7 @@ class Gloves(ServerCommand):
                 self.give_gloves(_id)
                 bs.broadcastmessage(
                     f"{user.getname()} gave gloves to {target.getname()}.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case _:
@@ -258,7 +258,7 @@ class Shield(ServerCommand):
                 user = self.get_session_player(self.client_id)
                 bs.broadcastmessage(
                     f"{user.getname()} gave themselves a shield.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case ["all"]:
@@ -270,7 +270,7 @@ class Shield(ServerCommand):
                     self.give_shield(client["client_id"])
                 bs.broadcastmessage(
                     f"{user.getname()} gave everyone a shield.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case [client_id] if client_id.isdigit():
@@ -282,7 +282,7 @@ class Shield(ServerCommand):
                 self.give_shield(_id)
                 bs.broadcastmessage(
                     f"{user.getname()} gave a shield to {target.getname()}.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case _:
@@ -315,7 +315,7 @@ class Freeze(ServerCommand):
                 user = self.get_session_player(self.client_id)
                 bs.broadcastmessage(
                     f"{user.getname()} froze themselves.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case ["all"]:
@@ -327,7 +327,7 @@ class Freeze(ServerCommand):
                     self.freeze_player(client["client_id"])
                 bs.broadcastmessage(
                     f"{user.getname()} froze everyone.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case [client_id] if client_id.isdigit():
@@ -339,7 +339,7 @@ class Freeze(ServerCommand):
                 self.freeze_player(_id)
                 bs.broadcastmessage(
                     f"{user.getname()} froze {target.getname()}.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case _:
@@ -372,7 +372,7 @@ class Thaw(ServerCommand):
                 user = self.get_session_player(self.client_id)
                 bs.broadcastmessage(
                     f"{user.getname()} thawed themselves.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case ["all"]:
@@ -384,7 +384,7 @@ class Thaw(ServerCommand):
                     self.thaw_player(client["client_id"])
                 bs.broadcastmessage(
                     f"{user.getname()} thawed everyone.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case [client_id] if client_id.isdigit():
@@ -396,7 +396,7 @@ class Thaw(ServerCommand):
                 self.thaw_player(_id)
                 bs.broadcastmessage(
                     f"{user.getname()} thawed {target.getname()}.",
-                    color=Color.CYAN.float,
+                    color=Color.GREEN.float
                 )
 
             case _:

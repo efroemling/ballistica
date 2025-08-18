@@ -6,7 +6,12 @@ from __future__ import annotations
 from typing import override
 
 import bascenev1 as bs
-from bautils.chat import ServerCommand, register_command
+from bautils.chat import (
+    ServerCommand,
+    register_command,
+    NoArgumentsProvidedError,
+    IncorrectUsageError,
+)
 
 
 # TODO: make it look more pretty, make characters icon appear in list
@@ -47,4 +52,54 @@ class List(ServerCommand):
 
     @override
     def admin_authentication(self) -> bool:
+        return False
+
+
+@register_command
+class Info(ServerCommand):
+    """/info <client_id> — show the target client's player profiles."""
+
+    aliases: list[str] = ["gp", "profiles"]
+
+    @override
+    def on_command_call(self) -> None:
+        # Follow project style: use self.arguments with match/case
+        match self.arguments:
+            case []:
+                # No args provided
+                raise NoArgumentsProvidedError("Please provide neccesary arguments.")
+
+            case [client_id] if client_id.isdigit():
+                _id = self.filter_client_id(client_id)
+                target = self.get_session_player(_id)
+
+                # Build display message with profiles on that input device.
+                try:
+                    profiles = target.inputdevice.get_player_profiles()
+                except Exception:
+                    profiles = []
+
+                header = f"{'Sr.no':<9} |    {'Name':<12}\n" + ("_" * 25) + "\n"
+                lines = [header]
+                for i, profile in enumerate(profiles, start=1):
+                    try:
+                        lines.append(f"{i:<9} {profile:<12}\n")
+                    except Exception:
+                        # Skip any odd encodings gracefully
+                        continue
+
+                message = "".join(lines) if len(lines) > 1 else "No profiles found."
+                bs.broadcastmessage(
+                    message,
+                    transient=True, 
+                    clients=[self.client_id]
+                )
+
+            case _:
+                # Wrong usage/signature
+                raise IncorrectUsageError
+
+    @override
+    def admin_authentication(self) -> bool:
+        # Let anyone use /info
         return False
