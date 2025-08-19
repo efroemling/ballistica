@@ -39,7 +39,9 @@ class Kick(ServerCommand):
                 bs.broadcastmessage(
                     f"{user.getname()} kicked {target.getname()} "
                     f"for {ban_time} seconds. Reason: {' '.join(reason)}.",
-                    color=Color.GREEN.float
+                    color=Color.GREEN.float,
+                    transient=True,
+                    clients=None
                 )
                 self._disconnect(
                     client_id=_id, ban_time=int(ban_time), reason=reason
@@ -50,7 +52,9 @@ class Kick(ServerCommand):
                 bs.broadcastmessage(
                     f"{user.getname()} kicked {target.getname()}. "
                     f"Reason: {' '.join(reason)}.",
-                    color=Color.GREEN.float
+                    color=Color.GREEN.float,
+                    transient=True,
+                    clients=None
                 )
                 self._disconnect(client_id=_id, reason=reason)
 
@@ -100,7 +104,9 @@ class Remove(ServerCommand):
                     self._remove_player(client["client_id"])
                 bs.broadcastmessage(
                     f"{user.getname()} removed all players.",
-                    color=Color.GREEN.float
+                    color=Color.GREEN.float,
+                    transient=True,
+                    clients=None
                 )
 
             case [client_id] if client_id.isdigit():
@@ -108,7 +114,9 @@ class Remove(ServerCommand):
                 self._remove_player(_id)
                 bs.broadcastmessage(
                     f"{user.getname()} removed {target.getname()}.",
-                    color=Color.GREEN.float
+                    color=Color.GREEN.float,
+                    transient=True,
+                    clients=None
                 )
 
             case _:

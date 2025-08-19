@@ -70,7 +70,8 @@ class Party(ServerCommand):
                 bs.broadcastmessage(
                     f"{user.getname()} set party mode to Public",
                     transient=True,
-                    color=Color.GREEN.float
+                    color=Color.GREEN.float,
+                    clients=None
                 )
 
             case ["private"] | ["pvt"]:
@@ -79,6 +80,7 @@ class Party(ServerCommand):
                     f"{user.getname()} set party mode to Private",
                     transient=True,
                     color=Color.GREEN.float,
+                    clients=None
                 )
 
             case _:

@@ -22,7 +22,9 @@ class Quit(ServerCommand):
         user = self.get_session_player(self.client_id)
         bs.broadcastmessage(
             f"{user.getname()} quit the game.",
-            color=Color.GREEN.float
+            color=Color.GREEN.float,
+            transient=True,
+            clients=None
         )
         ba.quit()
 
@@ -43,7 +45,9 @@ class End(ServerCommand):
                 activity.end_game()
                 bs.broadcastmessage(
                     f"{user.getname()} ended the game.",
-                    color=Color.GREEN.float
+                    color=Color.GREEN.float,
+                    transient=True,
+                    clients=None
                 )
 
 
@@ -66,7 +70,9 @@ class Pause(ServerCommand):
             activity.globalsnode.paused = True
             bs.broadcastmessage(
                 f"{user.getname()} paused the game.",
-                color=Color.GREEN.float
+                color=Color.GREEN.float,
+                transient=True,
+                clients=None
             )
             activity.paused_text = bs.NodeActor(
                 bs.newnode(
@@ -101,7 +107,9 @@ class Resume(ServerCommand):
         activity.paused_text = None
         bs.broadcastmessage(
             f"{user.getname()} resumed the game.",
-            color=Color.GREEN.float
+            color=Color.GREEN.float,
+            transient=True,
+            clients=None
         )
 
 
@@ -127,14 +135,18 @@ class EpicMode(ServerCommand):
             self.epic_mode_enabled = False
             bs.broadcastmessage(
                 f"{user.getname()} disabled epic mode.",
-                color=Color.GREEN.float
+                color=Color.GREEN.float,
+                transient=True,
+                clients=None
             )
         else:
             activity.globalsnode.slow_motion = True
             self.epic_mode_enabled = False
             bs.broadcastmessage(
                 f"{user.getname()} enabled epic mode.",
-                color=Color.GREEN.float
+                color=Color.GREEN.float,
+                transient=True,
+                clients=None
             )
 
 
