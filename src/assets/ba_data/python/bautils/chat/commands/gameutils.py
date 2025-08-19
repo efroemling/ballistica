@@ -9,7 +9,7 @@ import bascenev1 as bs
 import babase as ba
 
 from bautils.chat import ServerCommand, register_command
-
+from bautils.tools import Color
 
 @register_command
 class Quit(ServerCommand):

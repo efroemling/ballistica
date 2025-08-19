@@ -12,7 +12,7 @@ from bautils.chat import (
     NoArgumentsProvidedError,
     IncorrectUsageError,
 )
-
+from bautils.tools import Color
 
 # TODO: make it look more pretty, make characters icon appear in list
 @register_command
