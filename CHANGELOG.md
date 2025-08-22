@@ -1,4 +1,4 @@
-### 1.7.48 (build 22498, api 9, 2025-08-14)
+### 1.7.48 (build 22502, api 9, 2025-08-22)
 - Added Kazakh language (Thanks KAZDOG!)
 - The 'Logging' dev-console-tab is now 'LogLevels'. I kept finding myself going
   there to look for log output. Maybe this will help.

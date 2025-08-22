@@ -461,7 +461,11 @@ def _gen_complete_state_hashes(fnames: list[str]) -> str:
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
         hashes = dict(executor.map(_get_simple_file_hash, fnames))
 
-    return json.dumps(hashes, separators=(',', ':'))
+    return json.dumps(
+        hashes,
+        separators=(',', ':'),
+        allow_nan=False,
+    )
 
 
 def _update_cloud_cache(

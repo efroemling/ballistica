@@ -393,8 +393,12 @@ void NetworkReader::PushIncomingUDPPacketCall_(const std::vector<uint8_t>& data,
   // Avoid buffer-full errors if something is causing us to write too often;
   // these are unreliable messages so its ok to just drop them.
   if (!g_base->logic->event_loop()->CheckPushSafety()) {
-    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                "Ignoring excessive incoming udp packets.");
+    // NOTE: Disabling this log. A single udp packet coming in when the
+    // engine is already in a gummed up state could misleadingly trigger
+    // this warning.
+    //
+    //   BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+    //               "Ignoring excessive incoming udp packets.");
     return;
   }
 

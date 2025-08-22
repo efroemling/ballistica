@@ -836,6 +836,8 @@ class LocaleResolved(Enum):
             return cls.VENETIAN
         if lang == 'vi':
             return cls.VIETNAMESE
+        if lang == 'kk':
+            return cls.KAZAKH
 
         # Make noise if we come across something unexpected so we can
         # add it.
