@@ -66,7 +66,7 @@ modules:
     - type: file
       dest-filename: BombSquad.tar.gz
       url: https://files.ballistica.net/bombsquad/builds/BombSquad_Linux_x86_64_1.7.48.tar.gz
-      sha256: 333187ea4ccc83f00a8b499e97717fd8afff3df0e574f6301289c5e4187b11c9
+      sha256: d425ed37342320822585c1d94984bca75f2a3c04964a8230bd6c8b8cb4a3c966
 
     - type: file
       dest-filename: net.froemling.BombSquad.png
