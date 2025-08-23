@@ -56,7 +56,7 @@ jobs:
             echo "remote added"
             sudo flatpak install -y flathub org.freedesktop.Sdk//24.08
             sudo flatpak install -y flathub org.freedesktop.Platform//24.08
-            flatpak-builder --repo=./cache/flatpak/repo ./cache/flatpak/build_dir config/flatpak/net.froemling.BombSquad.yml
+            make linux-flatpak
         # - name: Upload the build
         #   uses: actions/upload-artifact@v4
         #   with:
