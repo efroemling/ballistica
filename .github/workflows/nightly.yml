@@ -20,7 +20,7 @@ jobs:
             sudo apt install flatpak flatpak-builder
         - name: Make the build
           run: |
-            sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+            sudo flatpak remote-add --if-not-exists --system flathub https://flathub.org/repo/flathub.flatpakrepo
             sudo flatpak install flathub org.freedesktop.Sdk//24.08
             make linux-flatpak
         # - name: Upload the build
