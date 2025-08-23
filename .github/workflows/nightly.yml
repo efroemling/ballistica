@@ -15,13 +15,9 @@ jobs:
           with:
             python-version: '3.13'
         - name: Setup project environment
-          run: make env
-        - name: Docker login
-          uses: docker/login-action@v3
-          with:
-            registry: ghcr.io
-            username: ${{ github.repository_owner }}
-            password: ${{ secrets.GITHUB_TOKEN }} 
+          run: |
+            make env
+            apt install flatpak-builder
         - name: Make the build
           run: |
             make linux-flatpak
