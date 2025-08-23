@@ -154,8 +154,8 @@ class BasePython {
   // functions (which themselves call these functions)
   auto GetRawConfigValue(const char* name)
       -> PyObject*;  // (returns a borrowed ref)
-  auto GetRawConfigValue(const char* name, const char* default_value)
-      -> std::string;
+  auto GetRawConfigValue(const char* name,
+                         const char* default_value) -> std::string;
   auto GetRawConfigValue(const char* name, float default_value) -> float;
   auto GetRawConfigValue(const char* name, std::optional<float> default_value)
       -> std::optional<float>;

@@ -11,6 +11,7 @@ from contextlib import contextmanager
 
 from efro.terminal import Clr
 
+
 @contextmanager
 def package_loading_context(name: str) -> Generator[None, Any, None]:
     """A context manager securing to load all files in this package."""

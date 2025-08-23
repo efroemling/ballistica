@@ -33,7 +33,7 @@ class Kill(ServerCommand):
                     f"{user.getname()} commited sucide.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case ["all"]:
@@ -47,7 +47,7 @@ class Kill(ServerCommand):
                     f"{user.getname()} killed everyone.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case [client_id] if client_id.isdigit():
@@ -61,7 +61,7 @@ class Kill(ServerCommand):
                     f"{user.getname()} killed {target.getname()}.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case _:
@@ -95,7 +95,7 @@ class Curse(ServerCommand):
                     f"{user.getname()} cursed themselves.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case ["all"]:
@@ -109,7 +109,7 @@ class Curse(ServerCommand):
                     f"{user.getname()} cursed everyone.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case [client_id] if client_id.isdigit():
@@ -123,7 +123,7 @@ class Curse(ServerCommand):
                     f"{user.getname()} cursed {target.getname()}.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case _:
@@ -158,7 +158,7 @@ class Heal(ServerCommand):
                     f"{user.getname()} healed themselves.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case ["all"]:
@@ -172,7 +172,7 @@ class Heal(ServerCommand):
                     f"{user.getname()} healed everyone.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case [client_id] if client_id.isdigit():
@@ -186,7 +186,7 @@ class Heal(ServerCommand):
                     f"{user.getname()} healed {target.getname()}.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case _:
@@ -221,7 +221,7 @@ class Gloves(ServerCommand):
                     f"{user.getname()} gave themselves gloves.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case ["all"]:
@@ -235,7 +235,7 @@ class Gloves(ServerCommand):
                     f"{user.getname()} gave everyone gloves.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case [client_id] if client_id.isdigit():
@@ -249,7 +249,7 @@ class Gloves(ServerCommand):
                     f"{user.getname()} gave gloves to {target.getname()}.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case _:
@@ -284,7 +284,7 @@ class Shield(ServerCommand):
                     f"{user.getname()} gave themselves a shield.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case ["all"]:
@@ -298,7 +298,7 @@ class Shield(ServerCommand):
                     f"{user.getname()} gave everyone a shield.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case [client_id] if client_id.isdigit():
@@ -312,7 +312,7 @@ class Shield(ServerCommand):
                     f"{user.getname()} gave a shield to {target.getname()}.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case _:
@@ -347,7 +347,7 @@ class Freeze(ServerCommand):
                     f"{user.getname()} froze themselves.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case ["all"]:
@@ -361,7 +361,7 @@ class Freeze(ServerCommand):
                     f"{user.getname()} froze everyone.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case [client_id] if client_id.isdigit():
@@ -375,7 +375,7 @@ class Freeze(ServerCommand):
                     f"{user.getname()} froze {target.getname()}.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case _:
@@ -410,7 +410,7 @@ class Thaw(ServerCommand):
                     f"{user.getname()} thawed themselves.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case ["all"]:
@@ -424,7 +424,7 @@ class Thaw(ServerCommand):
                     f"{user.getname()} thawed everyone.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case [client_id] if client_id.isdigit():
@@ -438,7 +438,7 @@ class Thaw(ServerCommand):
                     f"{user.getname()} thawed {target.getname()}.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case _:

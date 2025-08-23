@@ -585,8 +585,8 @@ auto EventLoop::AreEventLoopsSuspended() -> bool {
   return g_core->event_loops_suspended();
 }
 
-auto EventLoop::NewTimer(microsecs_t length, bool repeat, Runnable* runnable)
-    -> Timer* {
+auto EventLoop::NewTimer(microsecs_t length, bool repeat,
+                         Runnable* runnable) -> Timer* {
   assert(g_core);
   assert(ThreadIsCurrent());
   assert(Object::IsValidManagedObject(runnable));

@@ -95,8 +95,8 @@ class Logic {
   void DeleteAppTimer(int timer_id);
   void SetAppTimerLength(int timer_id, microsecs_t length);
 
-  auto NewDisplayTimer(microsecs_t length, bool repeat, Runnable* runnable)
-      -> int;
+  auto NewDisplayTimer(microsecs_t length, bool repeat,
+                       Runnable* runnable) -> int;
   void DeleteDisplayTimer(int timer_id);
   void SetDisplayTimerLength(int timer_id, microsecs_t length);
 

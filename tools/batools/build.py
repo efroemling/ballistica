@@ -513,11 +513,11 @@ def _get_server_config_template_toml(projroot: str) -> str:
     # Override some defaults with dummy values we want to display
     # commented out instead.
     cfg.playlist_code = 12345
-    cfg.stats_url = 'https://mystatssite.com/showstats?player=${ACCOUNT}'
+    cfg.stats_url = 'https://discord.gg/4SGKwxAhNh'
     cfg.clean_exit_minutes = 60
     cfg.unclean_exit_minutes = 90
     cfg.idle_exit_minutes = 20
-    cfg.admins = ['pb-yOuRAccOuNtIdHErE', 'pb-aNdMayBeAnotherHeRE']
+    cfg.admins = ['pb-IF4FP0co', 'pb-aNdMayBeAnotherHeRE']
     cfg.protocol_version = 35
     cfg.session_max_players_override = 8
     cfg.playlist_inline = []

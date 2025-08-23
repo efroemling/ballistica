@@ -34,7 +34,7 @@ class Maxplayers(ServerCommand):
                         "Max players size must be between 2 and 99.",
                         transient=True,
                         clients=[self.client_id],
-                        color=Color.RED.float
+                        color=Color.RED.float,
                     )
                     return
 
@@ -48,7 +48,7 @@ class Maxplayers(ServerCommand):
                     f"{user.getname()} set max players to {size_int}.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case _:
@@ -71,7 +71,7 @@ class Party(ServerCommand):
                     f"{user.getname()} set party mode to Public",
                     transient=True,
                     color=Color.GREEN.float,
-                    clients=None
+                    clients=None,
                 )
 
             case ["private"] | ["pvt"]:
@@ -80,7 +80,7 @@ class Party(ServerCommand):
                     f"{user.getname()} set party mode to Private",
                     transient=True,
                     color=Color.GREEN.float,
-                    clients=None
+                    clients=None,
                 )
 
             case _:

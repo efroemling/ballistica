@@ -91,8 +91,8 @@ auto PythonClassContextCall::tp_new(PyTypeObject* type, PyObject* args,
 }
 
 auto PythonClassContextCall::tp_call(PythonClassContextCall* self,
-                                     PyObject* args, PyObject* keywds)
-    -> PyObject* {
+                                     PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",

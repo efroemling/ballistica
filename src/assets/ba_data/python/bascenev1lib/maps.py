@@ -73,7 +73,7 @@ class HockeyStadium(bs.Map):
             'stands_tex': bs.gettexture('footballStadium'),
         }
         mat = bs.Material()
-        mat.add_actions(actions=('modify_part_collision', 'friction', 0.01))
+        mat.add_actions(actions=('modify_part_collision', 'friction', 1.00))
         data['ice_material'] = mat
         return data
 

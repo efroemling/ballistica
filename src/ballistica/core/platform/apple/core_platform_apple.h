@@ -33,14 +33,14 @@ class CorePlatformApple : public CorePlatform {
   auto CreateTextTexture(int width, int height,
                          const std::vector<std::string>& strings,
                          const std::vector<float>& positions,
-                         const std::vector<float>& widths, float scale)
-      -> void* override;
+                         const std::vector<float>& widths,
+                         float scale) -> void* override;
   auto GetTextTextureData(void* tex) -> uint8_t* override;
   void SubmitScore(const std::string& game, const std::string& version,
                    int64_t score) override;
   void ReportAchievement(const std::string& achievement) override;
-  auto HaveLeaderboard(const std::string& game, const std::string& config)
-      -> bool override;
+  auto HaveLeaderboard(const std::string& game,
+                       const std::string& config) -> bool override;
   void ShowGameServiceUI(const std::string& show, const std::string& game,
                          const std::string& game_version) override;
   void ResetAchievements() override;

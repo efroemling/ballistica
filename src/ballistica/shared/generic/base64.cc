@@ -104,8 +104,8 @@ auto base64_encode(const unsigned char* bytes_to_encode, unsigned int in_len,
   return ret;
 }
 
-auto base64_decode(const std::string& encoded_string, bool urlsafe)
-    -> std::string {
+auto base64_decode(const std::string& encoded_string,
+                   bool urlsafe) -> std::string {
   int in_len = static_cast<int>(encoded_string.size());
   int i = 0;
   // int j = 0;

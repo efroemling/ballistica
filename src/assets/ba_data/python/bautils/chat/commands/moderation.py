@@ -14,6 +14,7 @@ from bautils.chat import (
     IncorrectUsageError,
     InvalidClientIDError,
 )
+from bautils.tools import Color
 
 
 @register_command
@@ -24,7 +25,7 @@ class Kick(ServerCommand):
     def on_command_call(self) -> None:
 
         user = self.get_session_player(self.client_id)
-        target = self.get_session_player(client_id)
+
         match self.arguments:
 
             case []:
@@ -36,12 +37,13 @@ class Kick(ServerCommand):
                 client_id.isdigit() and ban_time.isdigit()
             ):
                 _id = self.filter_client_id(client_id)
+                target = self.get_session_player(_id)
                 bs.broadcastmessage(
                     f"{user.getname()} kicked {target.getname()} "
                     f"for {ban_time} seconds. Reason: {' '.join(reason)}.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
                 self._disconnect(
                     client_id=_id, ban_time=int(ban_time), reason=reason
@@ -49,12 +51,13 @@ class Kick(ServerCommand):
 
             case [client_id, *reason] if client_id.isdigit():
                 _id = self.filter_client_id(client_id)
+                target = self.get_session_player(_id)
                 bs.broadcastmessage(
                     f"{user.getname()} kicked {target.getname()}. "
                     f"Reason: {' '.join(reason)}.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
                 self._disconnect(client_id=_id, reason=reason)
 
@@ -67,9 +70,6 @@ class Kick(ServerCommand):
         ban_time: int = 60 * 5,
         reason: list[str] | None = None,
     ) -> None:
-
-        if client_id == self.client_id:
-            raise InvalidClientIDError("You can't kick yourself.")
 
         if ban_time <= 0:
             raise ValueError("Ban time must be a positive number.")
@@ -90,7 +90,7 @@ class Remove(ServerCommand):
     def on_command_call(self) -> None:
 
         user = self.get_session_player(self.client_id)
-        target = self.get_session_player(client_id)
+
         match self.arguments:
 
             case []:
@@ -100,24 +100,29 @@ class Remove(ServerCommand):
 
             case ["all"]:
                 roaster = bs.get_game_roster()
+                username = user.getname()
                 for client in roaster:
-                    self._remove_player(client["client_id"])
+                    try:
+                        self._remove_player(client["client_id"])
+                    except:
+                        continue  # should skip host n players who dint join da game
                 bs.broadcastmessage(
-                    f"{user.getname()} removed all players.",
+                    f"{username} removed all players.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
             case [client_id] if client_id.isdigit():
                 _id = self.filter_client_id(client_id)
-                self._remove_player(_id)
+                target = self.get_session_player(_id)
                 bs.broadcastmessage(
                     f"{user.getname()} removed {target.getname()}.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
+                self._remove_player(_id)
 
             case _:
                 raise IncorrectUsageError

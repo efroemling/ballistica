@@ -11,6 +11,7 @@ import babase as ba
 from bautils.chat import ServerCommand, register_command
 from bautils.tools import Color
 
+
 @register_command
 class Quit(ServerCommand):
     """/quit or /exit"""
@@ -24,7 +25,7 @@ class Quit(ServerCommand):
             f"{user.getname()} quit the game.",
             color=Color.GREEN.float,
             transient=True,
-            clients=None
+            clients=None,
         )
         ba.quit()
 
@@ -47,7 +48,7 @@ class End(ServerCommand):
                     f"{user.getname()} ended the game.",
                     color=Color.GREEN.float,
                     transient=True,
-                    clients=None
+                    clients=None,
                 )
 
 
@@ -62,7 +63,6 @@ class Pause(ServerCommand):
         user = self.get_session_player(self.client_id)
         assert activity is not None
 
-
         with activity.context:
             if activity.globalsnode.paused:
                 return
@@ -72,16 +72,20 @@ class Pause(ServerCommand):
                 f"{user.getname()} paused the game.",
                 color=Color.GREEN.float,
                 transient=True,
-                clients=None
+                clients=None,
             )
             activity.paused_text = bs.NodeActor(
                 bs.newnode(
                     "text",
                     attrs={
-                        "text": bs.Lstr(resource="pausedByHostText"),
+                        "text": "Game Paused",
                         "client_only": True,
                         "flatness": 1.0,
                         "h_align": "center",
+                        "v_attach": "top",
+                        "position": (0, -100),
+                        "color": Color.YELLOW.float,
+                        "scale": 1,
                     },
                 )
             )
@@ -109,7 +113,7 @@ class Resume(ServerCommand):
             f"{user.getname()} resumed the game.",
             color=Color.GREEN.float,
             transient=True,
-            clients=None
+            clients=None,
         )
 
 
@@ -137,7 +141,7 @@ class EpicMode(ServerCommand):
                 f"{user.getname()} disabled epic mode.",
                 color=Color.GREEN.float,
                 transient=True,
-                clients=None
+                clients=None,
             )
         else:
             activity.globalsnode.slow_motion = True
@@ -146,7 +150,7 @@ class EpicMode(ServerCommand):
                 f"{user.getname()} enabled epic mode.",
                 color=Color.GREEN.float,
                 transient=True,
-                clients=None
+                clients=None,
             )
 
 

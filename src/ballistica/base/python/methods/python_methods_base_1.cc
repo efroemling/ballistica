@@ -33,8 +33,8 @@ namespace ballistica::base {
 
 // -------------------------- discord_start------------------------------
 
-static auto PyDiscordStart(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyDiscordStart(PyObject* self, PyObject* args,
+                           PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
 #if BA_ENABLE_DISCORD
@@ -54,8 +54,8 @@ static PyMethodDef PyDiscordStartDef = {
 
 // -------------------------- discord_is_ready------------------------------
 
-static auto PyDiscordIsReady(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyDiscordIsReady(PyObject* self, PyObject* args,
+                             PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
 #if BA_ENABLE_DISCORD
@@ -148,8 +148,8 @@ static PyMethodDef PyDiscordRichpresenceDef = {
 
 // -------------------------- discord_set_party ------------------------------
 
-static auto PyDiscordSetParty(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyDiscordSetParty(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* partyId = nullptr;
   int64_t currentPartySize = 0, maxPartySize = 0;
@@ -189,8 +189,8 @@ static PyMethodDef PyDiscordSetPartyDef = {
 
 // -------------------------- discord_add_button ------------------------------
 
-static auto PyDiscordAddButton(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyDiscordAddButton(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char *label = nullptr, *url = nullptr;
   static char* kwlist[] = {const_cast<char*>("label"), const_cast<char*>("url"),
@@ -223,8 +223,8 @@ static PyMethodDef PyDiscordAddButtonDef = {
 
 // -------------------------- discord_join_lobby ------------------------------
 
-static auto PyDiscordJoinLobby(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyDiscordJoinLobby(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* lobbySecret = nullptr;
   static char* kwlist[] = {const_cast<char*>("lobby_secret"), nullptr};
@@ -305,8 +305,8 @@ static PyMethodDef PyDiscordSendLobbyMessageDef = {
 
 // -------------------------- discord_shutdown ------------------------------
 
-static auto PyDiscordShutdown(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyDiscordShutdown(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 #if BA_ENABLE_DISCORD
   if (g_base->discord->client_is_ready) {
@@ -460,8 +460,8 @@ static PyMethodDef PyIsXCodeBuildDef = {
 
 // -------------------------- app_instance_uuid --------------------------------
 
-static auto PyAppInstanceUUID(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyAppInstanceUUID(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -484,8 +484,8 @@ static PyMethodDef PyAppInstanceUUIDDef = {
 
 // --------------------------- user_ran_commands -------------------------------
 
-static auto PyUserRanCommands(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyUserRanCommands(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -509,8 +509,8 @@ static PyMethodDef PyUserRanCommandsDef = {
 
 // -------------------------------- pushcall ----------------------------------
 
-static auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyPushCall(PyObject* self, PyObject* args,
+                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* call_obj;
   int from_other_thread{};
@@ -611,8 +611,8 @@ static PyMethodDef PyPushCallDef = {
 
 // ------------------------------ apptime --------------------------------------
 
-static auto PyAppTime(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyAppTime(PyObject* self, PyObject* args,
+                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -645,8 +645,8 @@ static PyMethodDef PyAppTimeDef = {
 
 // ------------------------------ apptimer -------------------------------------
 
-static auto PyAppTimer(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyAppTimer(PyObject* self, PyObject* args,
+                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   double length;
@@ -702,8 +702,8 @@ static PyMethodDef PyAppTimerDef = {
 
 // --------------------------- displaytime -------------------------------------
 
-static auto PyDisplayTime(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyDisplayTime(PyObject* self, PyObject* args,
+                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -735,8 +735,8 @@ static PyMethodDef PyDisplayTimeDef = {
 
 // ---------------------------- displaytimer -----------------------------------
 
-static auto PyDisplayTimer(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyDisplayTimer(PyObject* self, PyObject* args,
+                           PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
   double length;
@@ -797,8 +797,8 @@ static PyMethodDef PyDisplayTimerDef = {
 
 // ----------------------------------- quit ------------------------------------
 
-static auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyQuit(PyObject* self, PyObject* args,
+                   PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->IsAppStarted());
 
@@ -860,8 +860,8 @@ static PyMethodDef PyApplyAppConfigDef = {
 
 // --------------------------- commit_app_config -------------------------------
 
-static auto PyCommitAppConfig(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyCommitAppConfig(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   // If writes are suppressed, no-op.
@@ -1067,8 +1067,8 @@ static PyMethodDef PyEnvDef = {
 
 // -------------------------------- emit_log -----------------------------------
 
-static auto PyEmitLog(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyEmitLog(PyObject* self, PyObject* args,
+                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {"name", "level", "timestamp", "message",
                                  nullptr};
@@ -1124,8 +1124,8 @@ static PyMethodDef PyEmitLogDef = {
 
 // ----------------------------- v1_cloud_log ----------------------------------
 
-static auto PyV1CloudLog(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyV1CloudLog(PyObject* self, PyObject* args,
+                         PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* message;
   static const char* kwlist[] = {"message", nullptr};
@@ -1153,8 +1153,8 @@ static PyMethodDef PyV1CloudLogDef = {
 
 // --------------------------- music_player_stop -------------------------------
 
-static auto PyMusicPlayerStop(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyMusicPlayerStop(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   static const char* kwlist[] = {nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
@@ -1179,8 +1179,8 @@ static PyMethodDef PyMusicPlayerStopDef = {
 
 // ---------------------------- music_player_play ------------------------------
 
-static auto PyMusicPlayerPlay(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyMusicPlayerPlay(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* files_obj;
   static const char* kwlist[] = {"files", nullptr};
@@ -1286,8 +1286,8 @@ static PyMethodDef PyReloadMediaDef = {
 
 // --------------------------- mac_music_app_init ------------------------------
 
-static auto PyMacMusicAppInit(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyMacMusicAppInit(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   g_core->platform->MacMusicAppInit();
   Py_RETURN_NONE;
@@ -1350,8 +1350,8 @@ static PyMethodDef PyMacMusicAppSetVolumeDef = {
 
 // --------------------------- mac_music_app_stop ------------------------------
 
-static auto PyMacMusicAppStop(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyMacMusicAppStop(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   g_core->platform->MacMusicAppStop();
   Py_RETURN_NONE;
@@ -1428,8 +1428,8 @@ static PyMethodDef PyMacMusicAppGetPlaylistsDef = {
 
 // -------------------------- is_os_playing_music ------------------------------
 
-static auto PyIsOSPlayingMusic(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyIsOSPlayingMusic(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   if (g_core->platform->IsOSPlayingMusic()) {
     Py_RETURN_TRUE;

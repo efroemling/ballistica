@@ -22,8 +22,8 @@ namespace ballistica::classic {
 
 // -------------------------------- value_test ---------------------------------
 
-static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyValueTest(PyObject* self, PyObject* args,
+                        PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* arg;
   double change = 0.0f;
@@ -602,8 +602,8 @@ static PyMethodDef PyAnimateRootUITokensDef = {
 
 // --------------------------- get_account_state -------------------------------
 
-static auto PyGetAccountState(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyGetAccountState(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
@@ -656,8 +656,8 @@ static PyMethodDef PyGetAccountStateDef = {
 
 // ---------------------------- set_account_state ------------------------------
 
-static auto PySetAccountState(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PySetAccountState(PyObject* self, PyObject* args,
+                              PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());

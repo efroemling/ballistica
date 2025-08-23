@@ -28,8 +28,8 @@ namespace ballistica::scene_v1 {
 
 // Given two parts, returns true if part1 is major in
 // the storage order.
-static auto IsInStoreOrder(int64_t node1, int part1, int64_t node2, int part2)
-    -> bool {
+static auto IsInStoreOrder(int64_t node1, int part1, int64_t node2,
+                           int part2) -> bool {
   assert(node1 >= 0 && part1 >= 0 && node2 >= 0 && part2 >= 0);
 
   // Node with smaller id is primary search node.

@@ -35,8 +35,8 @@ class PythonClassHello : public PythonClass {
   PythonClassHello();
   ~PythonClassHello();
   static PyMethodDef tp_methods[];
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
+  static auto tp_new(PyTypeObject* type, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static void tp_dealloc(PythonClassHello* self);
   static auto TestMethod(PythonClassHello* self, PyObject* args,
                          PyObject* keywds) -> PyObject*;

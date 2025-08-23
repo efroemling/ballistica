@@ -14,6 +14,7 @@ from bautils.chat import (
 )
 from bautils.tools import Color
 
+
 # TODO: make it look more pretty, make characters icon appear in list
 @register_command
 class List(ServerCommand):
@@ -67,7 +68,9 @@ class Info(ServerCommand):
         match self.arguments:
             case []:
                 # No args provided
-                raise NoArgumentsProvidedError("Please provide neccesary arguments.")
+                raise NoArgumentsProvidedError(
+                    "Please provide neccesary arguments."
+                )
 
             case [client_id] if client_id.isdigit():
                 _id = self.filter_client_id(client_id)
@@ -88,11 +91,11 @@ class Info(ServerCommand):
                         # Skip any odd encodings gracefully
                         continue
 
-                message = "".join(lines) if len(lines) > 1 else "No profiles found."
+                message = (
+                    "".join(lines) if len(lines) > 1 else "No profiles found."
+                )
                 bs.broadcastmessage(
-                    message,
-                    transient=True, 
-                    clients=[self.client_id]
+                    message, transient=True, clients=[self.client_id]
                 )
 
             case _:
