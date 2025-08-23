@@ -14,6 +14,7 @@ local.properties
 .sconsign.dblite
 .efrocache
 .mayaSwatches
+.flatpak-builder
 .gdb_history
 .dmypy.json
 .cache
