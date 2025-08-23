@@ -47,7 +47,7 @@ jobs:
             python-version: '3.13'
         - name: Install dependencies
           run: |
-            apt install rsync
+            apk add rsync
         - name: Setup project environment
           run: |
             make env
