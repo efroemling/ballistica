@@ -91,7 +91,12 @@ def dataclass_to_json(
         sort_keys = pretty
     if pretty:
         return json.dumps(jdict, indent=2, sort_keys=sort_keys)
-    return json.dumps(jdict, separators=(',', ':'), sort_keys=sort_keys)
+    return json.dumps(
+        jdict,
+        separators=(',', ':'),
+        sort_keys=sort_keys,
+        allow_nan=False,
+    )
 
 
 def dataclass_from_dict[T](
@@ -206,7 +211,12 @@ def dataclass_hash(obj: Any, coerce_to_float: bool = True) -> str:
     )
 
     # Need to sort keys to keep things deterministic.
-    json_str = json.dumps(json_dict, separators=(',', ':'), sort_keys=True)
+    json_str = json.dumps(
+        json_dict,
+        separators=(',', ':'),
+        sort_keys=True,
+        allow_nan=False,
+    )
 
     sha = hashlib.sha256()
     sha.update(json_str.encode())

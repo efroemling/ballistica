@@ -184,7 +184,11 @@ class MessageProtocol:
     @staticmethod
     def encode_dict(obj: dict) -> str:
         """Json-encode a provided dict."""
-        return json.dumps(obj, separators=(',', ':'))
+        return json.dumps(
+            obj,
+            separators=(',', ':'),
+            allow_nan=False,
+        )
 
     def message_to_dict(self, message: Message) -> dict:
         """Encode a message to a json ready dict."""

@@ -11,7 +11,6 @@
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
-#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/fatal_error.h"
@@ -724,11 +723,16 @@ auto EventLoop::CheckPushRunnableSafety_() -> bool {
 
   // If we've hit the safety threshold, log the traceback once so we can
   // hopefully fix the problem at the call site instead of dropping calls.
-  if (!have_space) {
-    BA_LOG_ERROR_NATIVE_TRACE_ONCE(
-        "CheckPushSafety threshold reached; are you calling something too "
-        "much?");
-  }
+  //
+  // UPDATE: No longer logging here for now. Logging itself acquires the GIL
+  // which is likely to block (especially if the thread itself is busy
+  // working which is likely what leads to this condition being true). The
+  // whole point of this call is to *avoid* blocking.
+  // if (!have_space) {
+  //   BA_LOG_ERROR_NATIVE_TRACE_ONCE(
+  //       "CheckPushSafety threshold reached; are you calling something too "
+  //       "much?");
+  // }
   return have_space;
 }
 
