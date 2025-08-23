@@ -12,17 +12,25 @@ jobs:
         steps:
         - uses: actions/checkout@v4
         - name: Cache Python virtualenv
+          id: cache-venv
           uses: actions/cache@v4
+          env:
+            cache-name: cache-python-dependencies
           with:
             path: .venv # cache the virtualenv directory
-            key: ${{ runner.os }}-venv-${{ hashFiles('config/requirements.txt') }}
+            key: ${{ runner.os }}-venv-${{ env.cache-name }}-${{ hashFiles('config/requirements.txt') }}
             restore-keys: |
+              ${{ runner.os }}-venv-${{ env.cache-name }}-
               ${{ runner.os }}-venv-
-              venv-
+              ${{ runner.os }}
         - name: Set up Python
           uses: actions/setup-python@v5
           with:
             python-version: '3.13'
+        - if: ${{ steps.cache-venv.outputs.cache-hit != 'true' }}
+          name: List the state of node modules
+          continue-on-error: true
+          run: pip list
         - name: Setup project environment
           run: |
             make env
@@ -33,7 +41,7 @@ jobs:
             echo "remote added"
             sudo flatpak install -y flathub org.freedesktop.Sdk//24.08
             sudo flatpak install -y flathub org.freedesktop.Platform//24.08
-            make linux-flatpak
+            # make linux-flatpak
         # - name: Upload the build
         #   uses: actions/upload-artifact@v4
         #   with:
