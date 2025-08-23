@@ -9,6 +9,9 @@ on:
 jobs:
     make_flatpak_gui_debug:
         runs-on: ubuntu-latest
+        container:
+          image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-48
+          options: --privileged
         steps:
         - uses: actions/checkout@v4
         - name: Cache Python virtualenv
@@ -22,41 +25,47 @@ jobs:
             restore-keys: |
               ${{ runner.os }}-venv-${{ env.cache-name }}-
               ${{ runner.os }}-venv-
-        - name: Cache Flatpak builder repo
-          id: cache-flatpak-repo
-          uses: actions/cache@v4
-          with:
-            path: cache/flatpak/repo
-            key: ${{ runner.os }}-flatpak-repo-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}
-            restore-keys: |
-              ${{ runner.os }}-flatpak-repo-
-        - name: Cache Flatpak SDK and Platform
-          id: cache-flatpak-sdk
-          uses: actions/cache@v4
-          with:
-            path: ~/.local/share/flatpak
-            key: ${{ runner.os }}-flatpak-sdk-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}
-            restore-keys: |
-              ${{ runner.os }}-flatpak-sdk-
+        # - name: Cache Flatpak builder repo
+        #   id: cache-flatpak-repo
+        #   uses: actions/cache@v4
+        #   with:
+        #     path: cache/flatpak/repo
+        #     key: ${{ runner.os }}-flatpak-repo-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}
+        #     restore-keys: |
+        #       ${{ runner.os }}-flatpak-repo-
+        # - name: Cache Flatpak SDK and Platform
+        #   id: cache-flatpak-sdk
+        #   uses: actions/cache@v4
+        #   with:
+        #     path: ~/.local/share/flatpak
+        #     key: ${{ runner.os }}-flatpak-sdk-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}
+        #     restore-keys: |
+        #       ${{ runner.os }}-flatpak-sdk-
         - name: Set up Python
           uses: actions/setup-python@v5
           with:
             python-version: '3.13'
-        - if: ${{ steps.cache-venv.outputs.cache-hit != 'true' }}
-          name: List the state of node modules
-          continue-on-error: true
-          run: pip list
         - name: Setup project environment
           run: |
             make env
-            sudo apt install flatpak flatpak-builder
-        - name: Make the build
-          run: |
-            sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-            echo "remote added"
-            sudo flatpak install -y flathub org.freedesktop.Sdk//24.08
-            sudo flatpak install -y flathub org.freedesktop.Platform//24.08
-            make linux-flatpak
+        - name: Build Flatpak
+          uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+          with:
+            bundle: bombsquad.flatpak
+            manifest-path: config/flatpak/net.froemling.BombSquad.yml
+            cache-key: flatpak-builder-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}-${{ github.sha }}
+            cache: true
+            restore-cache: true
+            repository-name: flathub
+            repository-url: https://flathub.org/repo/flathub.flatpakrepo
+
+        # - name: Make the build
+        #   run: |
+        #     sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+        #     echo "remote added"
+        #     sudo flatpak install -y flathub org.freedesktop.Sdk//24.08
+        #     sudo flatpak install -y flathub org.freedesktop.Platform//24.08
+        #     make linux-flatpak
         # - name: Upload the build
         #   uses: actions/upload-artifact@v4
         #   with:
