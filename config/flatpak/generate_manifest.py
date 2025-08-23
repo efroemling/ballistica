@@ -57,7 +57,7 @@ modules:
     buildsystem: simple
     build-commands:
     - mkdir -p ${FLATPAK_DEST}/bin/BombSquad
-    - tar axf BombSquad.tar.gz
+    - tar --no-same-owner axf BombSquad.tar.gz
     - mv BombSquad_*/* ${FLATPAK_DEST}/bin/BombSquad
     - install -Dm755 bombsquad.sh ${FLATPAK_DEST}/bin/bombsquad.sh
     - install -Dm644 -t ${FLATPAK_DEST}/share/applications/ ${FLATPAK_ID}.desktop
