@@ -11,6 +11,14 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - uses: actions/checkout@v4
+        - name: Cache Python virtualenv
+          uses: actions/cache@v4
+          with:
+            path: .venv # cache the virtualenv directory
+            key: ${{ runner.os }}-venv-${{ hashFiles('config/requirements.txt') }}
+            restore-keys: |
+              ${{ runner.os }}-venv-
+              venv-
         - name: Set up Python
           uses: actions/setup-python@v5
           with:
