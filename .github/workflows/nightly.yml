@@ -45,12 +45,12 @@ jobs:
           uses: actions/setup-python@v5
           with:
             python-version: '3.13'
-        - name: Install dependencies
-          run: |
-            apk add rsync
-        - name: Setup project environment
-          run: |
-            make env
+        # - name: Install dependencies
+        #   run: |
+        #     apk add rsync
+        # - name: Setup project environment
+        #   run: |
+        #     make env
         - name: Build Flatpak
           uses: flatpak/flatpak-github-actions/flatpak-builder@v6
           with:
