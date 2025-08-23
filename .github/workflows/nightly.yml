@@ -7,7 +7,7 @@ on:
     push:
 
 jobs:
-    make_docker_gui_debug_image:
+    make_flatpak_gui_debug:
         runs-on: ubuntu-latest
         steps:
         - uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
           run: |
             sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
             echo "remote added"
-            yes | sudo flatpak install flathub org.freedesktop.Sdk//24.08
+            sudo flatpak install -y flathub org.freedesktop.Sdk//24.08
             make linux-flatpak
         # - name: Upload the build
         #   uses: actions/upload-artifact@v4
