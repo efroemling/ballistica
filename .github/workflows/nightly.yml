@@ -22,7 +22,22 @@ jobs:
             restore-keys: |
               ${{ runner.os }}-venv-${{ env.cache-name }}-
               ${{ runner.os }}-venv-
-              ${{ runner.os }}
+        - name: Cache Flatpak builder repo
+          id: cache-flatpak-repo
+          uses: actions/cache@v4
+          with:
+            path: cache/flatpak/repo
+            key: ${{ runner.os }}-flatpak-repo-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}
+            restore-keys: |
+              ${{ runner.os }}-flatpak-repo-
+        - name: Cache Flatpak SDK and Platform
+          id: cache-flatpak-sdk
+          uses: actions/cache@v4
+          with:
+            path: ~/.local/share/flatpak
+            key: ${{ runner.os }}-flatpak-sdk-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}
+            restore-keys: |
+              ${{ runner.os }}-flatpak-sdk-
         - name: Set up Python
           uses: actions/setup-python@v5
           with:
@@ -41,7 +56,7 @@ jobs:
             echo "remote added"
             sudo flatpak install -y flathub org.freedesktop.Sdk//24.08
             sudo flatpak install -y flathub org.freedesktop.Platform//24.08
-            # make linux-flatpak
+            flatpak-builder --repo=./cache/flatpak/repo ./cache/flatpak/build_dir config/flatpak/net.froemling.BombSquad.yml
         # - name: Upload the build
         #   uses: actions/upload-artifact@v4
         #   with:
