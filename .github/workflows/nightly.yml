@@ -32,6 +32,7 @@ jobs:
             sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
             echo "remote added"
             sudo flatpak install -y flathub org.freedesktop.Sdk//24.08
+            sudo flatpak install -y flathub org.freedesktop.Platform//24.08
             make linux-flatpak
         # - name: Upload the build
         #   uses: actions/upload-artifact@v4
