@@ -45,7 +45,9 @@ jobs:
         - name: Setup project environment
           run: |
             make env
-        
+        - name: Install dependencies
+          run: |
+            sudo apt install -y flatpak flatpak-builder
         # - name: Build Flatpak
         #   uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         #   with:
