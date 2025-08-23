@@ -511,10 +511,22 @@ build/prefab/full/linux_%_server/release/dist/ballisticakit_headless: .efrocache
 build/prefab/lib/linux_%_server/release/libballisticaplus.a: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
 
-# Linux flatpak release:
-linux-flatpak: env
-	flatpak-builder --repo=./cache/flatpak/repo ./cache/flatpak/build_dir config/flatpak/net.froemling.BombSquad.yml
-	flatpak build-bundle ./cache/flatpak/repo bombsquad.flatpak net.froemling.BombSquad
+# Linux flatpak debug:
+
+flatpak-linux: env
+	mkdir build/flatpak -p
+	flatpak-builder --repo=./.cache/flatpak/repo \
+	--force-clean --keep-build-dirs \
+	--state-dir=./.cache/flatpak/flatpak-builder \
+	./.cache/flatpak/build_dir \
+	config/flatpak/net.froemling.BombSquad.yml
+	flatpak build-bundle ./.cache/flatpak/repo \
+	build/flatpak/bombsquad.flatpak net.froemling.BombSquad
+
+flatpak-clean:
+	rm build/flatpak -rf
+	rm .cache/flatpak -rf
+
 # Windows gui debug:
 
 RUN_PREFAB_WINDOWS_X86_64_GUI_DEBUG = cd \

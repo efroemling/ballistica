@@ -11,22 +11,10 @@ finish-args:
   - --device=dri
   - --filesystem=host
 
-modules:
-  - name: SDL2
-    buildsystem: cmake
-    builddir: true
-    cleanup:
-      - /bin
-      - /include
-      - /lib/pkgconfig
-      - /lib/cmake
-      - /share
-      - '*.a'
-    sources:
-      - type: git
-        url: https://github.com/libsdl-org/SDL
-        tag: release-2.0.20
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.llvm20
 
+modules:
   - name: Python
     sources:
       - type: archive
@@ -49,24 +37,57 @@ modules:
       - /include
       - /lib/pkgconfig
       - /share
+  
+  - name: SDL2
+    buildsystem: cmake
+    builddir: true
+    cleanup:
+      - /bin
+      - /include
+      - /lib/pkgconfig
+      - /lib/cmake
+      - /share
+      - '*.a'
+    sources:
+      - type: git
+        url: https://github.com/libsdl-org/SDL
+        tag: release-2.32.8
+
+  - name: rsync
+    buildsystem: autotools
+    config-opts:
+      - --prefix=${FLATPAK_DEST}
+      - --disable-debug
+      - --disable-locale
+    sources:
+      - type: archive
+        url: https://download.samba.org/pub/rsync/src/rsync-3.4.1.tar.gz
+        sha256: 2924bcb3a1ed8b551fc101f740b9f0fe0a202b115027647cf69850d65fd88c52
+    cleanup:
+      - /share/man
+      - /share/doc
+      - /bin
 
   - name: BombSquad
     buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/llvm20/bin
+      prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
+      build-args:
+        - --share=network
     build-commands:
     - mkdir -p ${FLATPAK_DEST}/bin/BombSquad
-    - tar axf BombSquad.tar.gz
-    - mv BombSquad_*/* ${FLATPAK_DEST}/bin/BombSquad
+    - make cmake-build
+    - mv build/cmake/debug/ballisticakit build/cmake/debug/staged/
+    - cp -r build/cmake/debug/staged/* ${FLATPAK_DEST}/bin/BombSquad/
     - install -Dm755 bombsquad.sh ${FLATPAK_DEST}/bin/bombsquad.sh
     - install -Dm644 -t ${FLATPAK_DEST}/share/applications/ ${FLATPAK_ID}.desktop
     - install -Dm644 ${FLATPAK_ID}.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
     - install -Dm644 net.froemling.BombSquad.appdata.xml /app/share/metainfo/net.froemling.BombSquad.metainfo.xml
 
-    sources:
-
-    - type: file
-      dest-filename: BombSquad.tar.gz
-      url: https://files.ballistica.net/bombsquad/builds/BombSquad_Linux_x86_64_1.7.48.tar.gz
-      sha256: d425ed37342320822585c1d94984bca75f2a3c04964a8230bd6c8b8cb4a3c966
+    sources: 
+    - type: dir
+      path: ./../../
 
     - type: file
       dest-filename: net.froemling.BombSquad.png
@@ -83,4 +104,4 @@ modules:
       dest-filename: bombsquad.sh
       commands:
         - cd /app/bin/BombSquad
-        - exec ./bombsquad
+        - exec ./ballisticakit
