@@ -67,6 +67,7 @@
 - Added docker build system
 - Various CI/CD improvements
 - Added discord social sdk support
+- Added flatpak build
 
 ### komasio71
 - Retired Discord server moderator
