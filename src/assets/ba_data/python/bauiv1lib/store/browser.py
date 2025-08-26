@@ -42,8 +42,10 @@ class StoreBrowserWindow(bui.MainWindow):
         self,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        *,
         show_tab: StoreBrowserWindow.TabID | None = None,
         minimal_toolbars: bool = False,
+        auxiliary_style: bool = True,
     ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
@@ -72,7 +74,6 @@ class StoreBrowserWindow(bui.MainWindow):
             else 700 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._current_tab: StoreBrowserWindow.TabID | None = None
-        # extra_top = 30 if uiscale is bui.UIScale.SMALL else 0
 
         self.request: Any = None
         self._r = 'store'
@@ -109,6 +110,9 @@ class StoreBrowserWindow(bui.MainWindow):
                     if (uiscale is bui.UIScale.SMALL or minimal_toolbars)
                     else 'menu_full'
                 ),
+                toolbar_cancel_button_style=(
+                    'close' if auxiliary_style else 'back'
+                ),
                 scale=scale,
             ),
             transition=transition,
@@ -123,8 +127,10 @@ class StoreBrowserWindow(bui.MainWindow):
             size=(60, 60),
             scale=1.1,
             autoselect=True,
-            label=bui.charstr(SpecialChar.BACK),
-            button_type='backSmall',
+            label=bui.charstr(
+                SpecialChar.CLOSE if auxiliary_style else SpecialChar.BACK
+            ),
+            button_type=None if auxiliary_style else 'backSmall',
             on_activate_call=self.main_window_back,
         )
 

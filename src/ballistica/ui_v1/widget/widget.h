@@ -37,6 +37,11 @@ class Widget : public Object {
     kNoMenuMinimal = 8192,    // Squad.
   };
 
+  enum class ToolbarCancelButtonStyle : uint8_t {
+    kBack = 0,
+    kClose = 1,
+  };
+
   Widget();
   ~Widget() override;
 
@@ -84,8 +89,11 @@ class Widget : public Object {
 
   /// Only really applicable to container widgets.
   void SetToolbarVisibility(ToolbarVisibility v);
-  auto toolbar_visibility() const -> ToolbarVisibility {
-    return toolbar_visibility_;
+  auto toolbar_visibility() const { return toolbar_visibility_; }
+
+  void SetToolbarCancelButtonStyle(ToolbarCancelButtonStyle s);
+  auto toolbar_cancel_button_style() const {
+    return toolbar_cancel_button_style_;
   }
 
   // FIXME: Replace this with GetBounds so we can do different alignments/etc.
@@ -256,6 +264,8 @@ class Widget : public Object {
   PyObject* py_ref_{};
   Widget* owner_widget_{};
   ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kMenuMinimalNoBack};
+  ToolbarCancelButtonStyle toolbar_cancel_button_style_{
+      ToolbarCancelButtonStyle::kBack};
   float simple_culling_h_{-1.0f};
   float simple_culling_v_{-1.0f};
   float simple_culling_left_{};

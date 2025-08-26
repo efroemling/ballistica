@@ -312,6 +312,7 @@ class InboxWindow(bui.MainWindow):
         self,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        auxiliary_style: bool = True,
     ):
 
         assert bui.app.classic is not None
@@ -353,8 +354,9 @@ class InboxWindow(bui.MainWindow):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                toolbar_visibility=(
-                    'menu_full' if uiscale is bui.UIScale.SMALL else 'menu_full'
+                toolbar_visibility=('menu_full'),
+                toolbar_cancel_button_style=(
+                    'close' if auxiliary_style else 'back'
                 ),
                 scale=scale,
             ),
@@ -376,8 +378,12 @@ class InboxWindow(bui.MainWindow):
                 position=(50, yoffs - 48),
                 size=(60, 60),
                 scale=0.6,
-                label=bui.charstr(bui.SpecialChar.BACK),
-                button_type='backSmall',
+                label=bui.charstr(
+                    bui.SpecialChar.CLOSE
+                    if auxiliary_style
+                    else bui.SpecialChar.BACK
+                ),
+                button_type=None if auxiliary_style else 'backSmall',
                 on_activate_call=self.main_window_back,
             )
             bui.containerwidget(

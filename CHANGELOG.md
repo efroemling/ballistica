@@ -1,9 +1,12 @@
-### 1.7.48 (build 22503, api 9, 2025-08-26)
+### 1.7.48 (build 22504, api 9, 2025-08-26)
 - Added Kazakh language (Thanks KAZDOG!)
 - The 'Logging' dev-console-tab is now 'LogLevels'. I kept finding myself going
   there to look for log output. Maybe this will help.
 - Added `ba*.SpecialChar.CLOSE` and wired it up various places instead of the
   back symbol or old cross-out icon where it makes sense.
+- 'auxiliary' main-windows now use close icons instead of back icons and use
+  scale transitions instead of the normal left/right swipes. Hopefully this
+  helps convey their somewhat modal 'side quest' nature.
 
 ### 1.7.47 (build 22495, api 9, 2025-08-13)
 - All communication with the V1 (Legacy) master server is now tunneled through

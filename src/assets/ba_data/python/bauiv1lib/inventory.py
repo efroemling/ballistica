@@ -54,6 +54,9 @@ class InventoryWindow(bui.MainWindow):
                 toolbar_visibility=(
                     'menu_full' if uiscale is bui.UIScale.SMALL else 'menu_full'
                 ),
+                toolbar_cancel_button_style=(
+                    'close' if auxiliary_style else 'back'
+                ),
                 scale=scale,
             ),
             transition=transition,
@@ -88,6 +91,7 @@ class InventoryWindow(bui.MainWindow):
                 position=(50, yoffs - 50),
                 size=(50, 50) if auxiliary_style else (60, 55),
                 extra_touch_border_scale=2.0,
+                button_type=None if auxiliary_style else 'backSmall',
                 on_activate_call=self.main_window_back,
                 autoselect=True,
                 label=bui.charstr(
