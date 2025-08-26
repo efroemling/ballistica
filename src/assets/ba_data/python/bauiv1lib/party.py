@@ -70,12 +70,10 @@ class PartyWindow(bui.Window):
             scale=0.7,
             position=(30, self._height - 47),
             size=(50, 50),
-            label='',
             on_activate_call=self.close,
             autoselect=True,
             color=(0.45, 0.63, 0.15),
-            icon=bui.gettexture('crossOut'),
-            iconscale=1.2,
+            label=bui.charstr(bui.SpecialChar.CLOSE),
         )
         bui.containerwidget(
             edit=self._root_widget, cancel_button=self._cancel_button

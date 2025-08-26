@@ -46,12 +46,14 @@ class ResourceTypeInfoWindow(PopupWindow):
             position=(40, self._height - 40),
             size=(50, 50),
             scale=0.7,
-            label='',
+            # label='',
             color=bg_color,
             on_activate_call=self._on_cancel_press,
             autoselect=True,
-            icon=bui.gettexture('crossOut'),
-            iconscale=1.2,
+            label=bui.charstr(bui.SpecialChar.CLOSE),
+            textcolor=(1, 1, 1),
+            # icon=bui.gettexture('crossOut'),
+            # iconscale=1.2,
         )
 
         yoffs = self._height - 145

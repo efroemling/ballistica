@@ -354,22 +354,23 @@ def is_asyncio_streams_communication_error(exc: BaseException) -> bool:
     # this one. https://bugs.python.org/issue39951
     if isinstance(exc, ssl.SSLError):
         excstr = str(exc)
+
         if 'APPLICATION_DATA_AFTER_CLOSE_NOTIFY' in excstr:
             return True
 
-        # Also occasionally am getting WRONG_VERSION_NUMBER ssl errors;
-        # Assuming this just means client is attempting to connect from some
-        # outdated browser or whatnot.
+        if 'SSL: UNEXPECTED_RECORD' in excstr:
+            return True
+
         if 'SSL: WRONG_VERSION_NUMBER' in excstr:
             return True
 
-        # Also getting this sometimes which sounds like corrupt SSL data
-        # or something.
         if 'SSL: BAD_RECORD_TYPE' in excstr:
             return True
 
-        # And seeing this very rarely; assuming its just data corruption?
         if 'SSL: DECRYPTION_FAILED_OR_BAD_RECORD_MAC' in excstr:
+            return True
+
+        if 'SSL: SSLV3_ALERT_HANDSHAKE_FAILURE' in excstr:
             return True
 
     return False

@@ -52,16 +52,15 @@ class OnScreenKeyboardWindow(Window):
         )
         self._cancel_button = _bauiv1.buttonwidget(
             parent=self._root_widget,
-            scale=0.5,
+            scale=0.6,
             position=(30, self._height - 55),
-            size=(60, 60),
-            label='',
+            size=(50, 50),
+            label=babase.charstr(babase.SpecialChar.CLOSE),
             enable_sound=False,
             on_activate_call=self._cancel,
             autoselect=True,
             color=(0.55, 0.5, 0.6),
-            icon=_bauiv1.gettexture('crossOut'),
-            iconscale=1.2,
+            textcolor=(1, 1, 1),
         )
         self._done_button = _bauiv1.buttonwidget(
             parent=self._root_widget,

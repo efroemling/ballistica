@@ -250,6 +250,7 @@ enum class SpecialChar : uint8_t {
   kFlagChile,
   kMikirog,
   kV2Logo,
+  kClose,
   kLast  // Sentinel
 };
 

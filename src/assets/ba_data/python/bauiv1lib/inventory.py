@@ -16,6 +16,7 @@ class InventoryWindow(bui.MainWindow):
         self,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        auxiliary_style: bool = True,
     ):
 
         bui.set_analytics_screen('Help Window')
@@ -28,8 +29,6 @@ class InventoryWindow(bui.MainWindow):
             if uiscale is bui.UIScale.SMALL
             else 530 if uiscale is bui.UIScale.MEDIUM else 600
         )
-        # xoffs = 70 if uiscale is bui.UIScale.SMALL else 0
-        # yoffs = -45 if uiscale is bui.UIScale.SMALL else 0
 
         # Do some fancy math to fill all available screen area up to the
         # size of our backing container. This lets us fit to the exact
@@ -43,7 +42,6 @@ class InventoryWindow(bui.MainWindow):
 
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
-        # target_width = min(self._width - 60, screensize[0] / scale)
         target_height = min(self._height - 100, screensize[1] / scale)
 
         # To get top/left coords, go to the center of our window and
@@ -86,39 +84,45 @@ class InventoryWindow(bui.MainWindow):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(50, yoffs - 50),
-                size=(60, 55),
                 scale=0.8,
-                label=bui.charstr(bui.SpecialChar.BACK),
-                button_type='backSmall',
+                position=(50, yoffs - 50),
+                size=(50, 50) if auxiliary_style else (60, 55),
                 extra_touch_border_scale=2.0,
-                autoselect=True,
                 on_activate_call=self.main_window_back,
+                autoselect=True,
+                label=bui.charstr(
+                    bui.SpecialChar.CLOSE
+                    if auxiliary_style
+                    else bui.SpecialChar.BACK
+                ),
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
-        button_width = 300
-        self._player_profiles_button = btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(self._width * 0.5 - button_width * 0.5, yoffs - 200),
-            autoselect=True,
-            size=(button_width, 60),
-            label=bui.Lstr(resource='playerProfilesWindow.titleText'),
-            color=(0.55, 0.5, 0.6),
-            icon=bui.gettexture('cuteSpaz'),
-            textcolor=(0.75, 0.7, 0.8),
-            on_activate_call=self._player_profiles_press,
-        )
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(self._width * 0.5, yoffs - 250),
-            size=(0, 0),
-            text=bui.Lstr(resource='moreSoonText'),
-            scale=0.7,
-            maxwidth=self._width * 0.9,
-            h_align='center',
-            v_align='center',
-        )
+        if bool(False):
+            print('WOULD TEST NEW STUFF')
+        else:
+            button_width = 300
+            self._player_profiles_button = btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(self._width * 0.5 - button_width * 0.5, yoffs - 200),
+                autoselect=True,
+                size=(button_width, 60),
+                label=bui.Lstr(resource='playerProfilesWindow.titleText'),
+                color=(0.55, 0.5, 0.6),
+                icon=bui.gettexture('cuteSpaz'),
+                textcolor=(0.75, 0.7, 0.8),
+                on_activate_call=self._player_profiles_press,
+            )
+            bui.textwidget(
+                parent=self._root_widget,
+                position=(self._width * 0.5, yoffs - 250),
+                size=(0, 0),
+                text=bui.Lstr(resource='moreSoonText'),
+                scale=0.7,
+                maxwidth=self._width * 0.9,
+                h_align='center',
+                v_align='center',
+            )
 
     def _player_profiles_press(self) -> None:
         # pylint: disable=cyclic-import

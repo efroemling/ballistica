@@ -20,5 +20,5 @@ types-certifi==2021.10.8.3
 types-docutils==0.22.0.20250822
 types-filelock==3.2.7
 types-requests==2.32.4.20250809
-typing_extensions==4.14.1
+typing_extensions==4.15.0
 urllib3==2.5.0
