@@ -295,6 +295,7 @@ class CreditsWindow(bui.MainWindow):
             '     vishal332008\n'
             '     itsre3\n'
             '     Drooopyyy\n'
+            '     Loup\n'
             '\n'
             '  Holiday theme vector art designed by Freepik\n'
             '\n'
