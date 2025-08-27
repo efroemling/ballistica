@@ -6,27 +6,24 @@ on:
       - main
 
 jobs:
-  build:
+  setup_bombsquad_cache:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Cache Python venv
-        id: cache-venv
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-python-dependencies
-        with:
-          path: .venv
-          key: ${{ runner.os }}-venv-${{ env.cache-name }}-${{ hashFiles('config/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-venv-${{ env.cache-name }}-
-            ${{ runner.os }}-venv-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - name: Setup project environment
-        run: make env
+      - name: Setup build env
+        uses: ./.github/actions/setup_build_env
+      - name: Make the build
+        run: |
+          make assets-cmake
+          make assets-windows
+
+  build:
+    needs: setup_bombsquad_cache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup build env
+        uses: ./.github/actions/setup_build_env
       - name: Build documentation
         run: make docs
       - name: Upload the build
@@ -41,8 +38,8 @@ jobs:
 
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
-      pages: write      # to deploy to Pages
-      id-token: write   # to verify the deployment originates from an appropriate source
+      pages: write # to deploy to Pages
+      id-token: write # to verify the deployment originates from an appropriate source
 
     # Deploy to the github-pages environment
     environment:

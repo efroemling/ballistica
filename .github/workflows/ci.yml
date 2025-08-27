@@ -6,125 +6,79 @@ on:
   push:
   pull_request:
   schedule:
-      # Note: '*' is a special character in YAML so we have to quote the str.
-      - cron: '0 12 * * *'
-        
-jobs:
+    # Note: '*' is a special character in YAML so we have to quote the str.
+    - cron: "0 12 * * *"
 
+jobs:
   # We run most of our testing only on linux but it should apply to mac too;
   # we can always add an explicit mac job later if it seems worthwhile.
-  check_linux:
-    runs-on: ubuntu-22.04
+  setup_bombsquad_cache:
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Cache Python venv
-      id: cache-venv
-      uses: actions/cache@v4
-      env:
-        cache-name: cache-python-dependencies
-      with:
-        path: .venv
-        key: ${{ runner.os }}-venv-${{ env.cache-name }}-${{ hashFiles('config/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-venv-${{ env.cache-name }}-
-          ${{ runner.os }}-venv-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-    - name: Install dependencies
-      run: make env
-    - name: Run checks
-      run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check
+      - uses: actions/checkout@v4
+      - name: Setup build env
+        uses: ./.github/actions/setup_build_env
+      - name: Make the build
+        run: |
+          make assets-cmake
+          make assets-windows
+
+  check_linux:
+    needs: setup_bombsquad_cache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup build env
+        uses: ./.github/actions/setup_build_env
+      - name: Run checks
+        run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check
 
   # Compile a server binary and run some tests.
   build_and_test_linux:
-    runs-on: ubuntu-22.04
+    needs: setup_bombsquad_cache
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Cache Python venv
-      id: cache-venv
-      uses: actions/cache@v4
-      env:
-        cache-name: cache-python-dependencies
-      with:
-        path: .venv
-        key: ${{ runner.os }}-venv-${{ env.cache-name }}-${{ hashFiles('config/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-venv-${{ env.cache-name }}-
-          ${{ runner.os }}-venv-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-    - name: Install dependencies
-      run: make env
-    - name: Assemble monolithic server build
-      run: make cmake-server-build
-    - name: Run tests
-      run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test
+      - uses: actions/checkout@v4
+      - name: Setup build env
+        uses: ./.github/actions/setup_build_env
+      - name: Assemble monolithic server build
+        run: make cmake-server-build
+      - name: Run tests
+        run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test
 
   # Test spinoff projects - versions of the project with feature-sets
   # added or removed or other changes made.
   # (How ballisticakit becomes bombsquad/etc.)
   spinoff_test_linux:
-    runs-on: ubuntu-22.04
+    needs: setup_bombsquad_cache
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Cache Python venv
-      id: cache-venv
-      uses: actions/cache@v4
-      env:
-        cache-name: cache-python-dependencies
-      with:
-        path: .venv
-        key: ${{ runner.os }}-venv-${{ env.cache-name }}-${{ hashFiles('config/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-venv-${{ env.cache-name }}-
-          ${{ runner.os }}-venv-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-    - name: Install dependencies
-      run: make env
-    - name: Build spinoff project with only core featureset
-      run: make spinoff-test-core
-    - name: Build spinoff project with core and base featuresets
-      run: make spinoff-test-base
+      - uses: actions/checkout@v4
+      - name: Setup build env
+        uses: ./.github/actions/setup_build_env
+      - name: Build spinoff project with only core featureset
+        run: make spinoff-test-core
+      - name: Build spinoff project with core and base featuresets
+        run: make spinoff-test-base
 
   # Test spinoff feature-set copy functionality.
   # Make a copy of the template feature-set and build with it included.
   # Also take the opportunity to test a modular build (we did monolithic above).
   feature_set_copy_test_linux:
-    runs-on: ubuntu-22.04
+    needs: setup_bombsquad_cache
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Cache Python venv
-      id: cache-venv
-      uses: actions/cache@v4
-      env:
-        cache-name: cache-python-dependencies
-      with:
-        path: .venv
-        key: ${{ runner.os }}-venv-${{ env.cache-name }}-${{ hashFiles('config/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-venv-${{ env.cache-name }}-
-          ${{ runner.os }}-venv-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-    - name: Install dependencies
-      run: make env
-    - name: Create poo feature-set
-      run: tools/spinoff fset-copy template_fs poo
-    - name: Add new feature-set to project
-      run: make update
-    - name: Assemble modular server build
-      run: make cmake-modular-server-build
-    - name: Make sure poo is present in build
-      run: cd build/cmake/modular-server-debug/staged/dist && PYTHONPATH=ba_data/python ./ballisticakit_headless -c "import baenv; baenv.configure(); import bapoo; print(bapoo)"
+      - uses: actions/checkout@v4
+      - name: Setup build env
+        uses: ./.github/actions/setup_build_env
+      - name: Create poo feature-set
+        run: tools/spinoff fset-copy template_fs poo
+      - name: Add new feature-set to project
+        run: make update
+      - name: Assemble modular server build
+        run: make cmake-modular-server-build
+      - name: Make sure poo is present in build
+        run: cd build/cmake/modular-server-debug/staged/dist && PYTHONPATH=ba_data/python ./ballisticakit_headless -c "import baenv; baenv.configure(); import bapoo; print(bapoo)"
 
   # Most of our toolset doesn't work on raw Windows without WSL set up,
   # but we can bootstrap enough to run a few things manually. It's nice to
@@ -132,23 +86,24 @@ jobs:
   # significantly between windows and linux/apple. We also are able to
   # build our windows binary.
   build_and_test_windows:
+    needs: setup_bombsquad_cache
     runs-on: windows-2022
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-    - name: Create tools/pcommand
-      run: |
-        $env:PYTHONPATH = "tools"
-        python -m efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest typing_extensions
-        python tools/pcommand win_ci_install_prereqs
-    - name: Compile binary
-      run: python tools/pcommand win_ci_binary_build
-    - name: Run tests
-      run: python tools/pcommand pytest -v tests
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Create tools/pcommand
+        run: |
+          $env:PYTHONPATH = "tools"
+          python -m efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest typing_extensions
+          python tools/pcommand win_ci_install_prereqs
+      - name: Compile binary
+        run: python tools/pcommand win_ci_binary_build
+      - name: Run tests
+        run: python tools/pcommand pytest -v tests
