@@ -427,7 +427,13 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       c.Translate(1.0f * extra_offs_x, 1.0f * extra_offs_y, 0.5f);
       c.Scale(1, 1, 0.5f);
-      c.Translate(width_ * 0.5f, height_ * 0.5f);
+
+      // Special case - fudge text centering for small back buttons.
+      if (style_ == Style::kBackSmall) {
+        c.Translate(width_ * 0.4f, height_ * 0.48f);
+      } else {
+        c.Translate(width_ * 0.5f, height_ * 0.5f);
+      }
 
       // Shift over for our icon if we have it.
       if (show_icons) {

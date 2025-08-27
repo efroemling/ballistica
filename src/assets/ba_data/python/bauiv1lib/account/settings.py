@@ -30,6 +30,7 @@ class AccountSettingsWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
         close_once_signed_in: bool = False,
+        auxiliary_style: bool = True,
     ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
@@ -120,11 +121,9 @@ class AccountSettingsWindow(bui.MainWindow):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                toolbar_visibility=(
-                    # 'menu_minimal'
-                    # if uiscale is bui.UIScale.SMALL
-                    # else 'menu_full'
-                    'menu_full'
+                toolbar_visibility=('menu_full'),
+                toolbar_cancel_button_style=(
+                    'close' if auxiliary_style else 'back'
                 ),
                 scale=scale,
             ),
@@ -142,21 +141,19 @@ class AccountSettingsWindow(bui.MainWindow):
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 position=(51, yoffs - 52.0),
-                size=(120, 60),
+                size=(60, 56),
                 scale=0.8,
                 text_scale=1.2,
                 autoselect=True,
-                label=bui.Lstr(resource='backText'),
-                button_type='back',
+                button_type=None if auxiliary_style else 'backSmall',
                 on_activate_call=self.main_window_back,
+                label=bui.charstr(
+                    bui.SpecialChar.CLOSE
+                    if auxiliary_style
+                    else bui.SpecialChar.BACK
+                ),
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-            bui.buttonwidget(
-                edit=btn,
-                button_type='backSmall',
-                size=(60, 56),
-                label=bui.charstr(bui.SpecialChar.BACK),
-            )
 
         titleyoffs = -45.0 if uiscale is bui.UIScale.SMALL else -28.0
         titlescale = 0.7 if uiscale is bui.UIScale.SMALL else 1.0

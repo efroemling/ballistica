@@ -37,6 +37,15 @@ void Widget::SetToolbarVisibility(ToolbarVisibility v) {
   }
 }
 
+void Widget::SetToolbarCancelButtonStyle(ToolbarCancelButtonStyle s) {
+  toolbar_cancel_button_style_ = s;
+  // Most widgets can never influence the global toolbar so we can
+  // do a quick out.
+  if (parent_widget_ != nullptr && parent_widget_->is_window_stack()) {
+    g_ui_v1->root_widget()->UpdateForFocusedWindow();
+  }
+}
+
 auto Widget::IsInMainStack() const -> bool {
   if (!g_base->ui) {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kError,

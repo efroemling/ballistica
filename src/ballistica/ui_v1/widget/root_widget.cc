@@ -556,15 +556,17 @@ void RootWidget::Setup() {
     {
       TextDef_ td;
       td.button = b;
-      td.x = 5.0f;
-      td.y = 3.0f;
+      td.x = 0.0f;
+      td.y = 0.0f;
+      // td.x = 5.0f;
+      // td.y = 3.0f;
       td.width = bd.width * 0.9f;
       td.text = g_base->assets->CharStr(SpecialChar::kBack);
       td.color_a = 1.0f;
-      td.scale = 2.0f;
+      td.scale = 1.8f;
       td.flatness = 0.0f;
       td.shadow = 0.5f;
-      AddText_(td);
+      back_button_text_ = AddText_(td);
     }
   }
 
@@ -1552,9 +1554,12 @@ void RootWidget::UpdateForFocusedWindow_(Widget* widget) {
   in_main_menu_ = g_base->app_mode()->IsInMainMenu();
 
   if (widget == nullptr) {
-    toolbar_visibility_ = ToolbarVisibility::kInGame;
+    root_widget_toolbar_visibility_ = ToolbarVisibility::kInGame;
+    root_widget_toolbar_cancel_button_style_ = ToolbarCancelButtonStyle::kBack;
   } else {
-    toolbar_visibility_ = widget->toolbar_visibility();
+    root_widget_toolbar_visibility_ = widget->toolbar_visibility();
+    root_widget_toolbar_cancel_button_style_ =
+        widget->toolbar_cancel_button_style();
   }
   MarkForUpdate();
 }
@@ -1576,7 +1581,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
   // Update enabled-state for all buttons.
   for (Button_& b : buttons_) {
     bool enable_button =
-        static_cast<bool>(static_cast<uint32_t>(toolbar_visibility_)
+        static_cast<bool>(static_cast<uint32_t>(root_widget_toolbar_visibility_)
                           & static_cast<uint32_t>(b.visibility_mask));
     // When we're in the main menu, always disable the menu button and shift
     // the party button a bit to the right
@@ -1641,6 +1646,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
   }
   xpos = 0.0f;
   float bottom_left_height{};
+
   for (auto* btn : bottom_left_buttons_) {
     auto enabled = btn->enabled;
     float bwidthhalf = btn->width * 0.5;
@@ -1744,6 +1750,28 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     b.widget->set_width(b.width);
     b.widget->set_height(b.height);
     b.widget->set_scale(b.scale * base_scale_);
+  }
+
+  // Update back button label.
+  if (back_button_->enabled) {
+    if (root_widget_toolbar_cancel_button_style_
+        != root_widget_toolbar_cancel_button_style_vis_) {
+      if (root_widget_toolbar_cancel_button_style_
+          == ToolbarCancelButtonStyle::kBack) {
+        back_button_text_->widget->SetText(
+            g_base->assets->CharStr(SpecialChar::kBack));
+        // back_button_text_->x = 0.0f;
+        // back_button_text_->y = 0.0f;
+      } else if (root_widget_toolbar_cancel_button_style_
+                 == ToolbarCancelButtonStyle::kClose) {
+        back_button_text_->widget->SetText(
+            g_base->assets->CharStr(SpecialChar::kClose));
+        // back_button_text_->x = 0.0f;
+        // back_button_text_->y = 0.0f;
+      }
+      root_widget_toolbar_cancel_button_style_vis_ =
+          root_widget_toolbar_cancel_button_style_;
+    }
   }
 
   for (Text_& t : texts_) {
@@ -2375,8 +2403,6 @@ void RootWidget::UpdateChests_() {
   }
 
   auto now{g_base->TimeSinceEpochCloudSeconds()};
-
-  // auto current_seconds_since_epoch{g_base->TimeSinceEpochCloudSeconds()};
 
   for (auto&& chest_id : chest_ids) {
     auto&& slot{chest_slots_[chest_id]};

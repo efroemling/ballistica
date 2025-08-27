@@ -184,6 +184,7 @@ class RootWidget : public ContainerWidget {
   Text_* inbox_count_text_{};
   Text_* inbox_announce_text_{};
   Text_* trophy_meter_annotation_text_{};
+  Text_* back_button_text_{};
   seconds_t update_pause_total_time_{};
   seconds_t last_chests_step_time_{-1.0f};
   seconds_t update_time_{};
@@ -216,7 +217,11 @@ class RootWidget : public ContainerWidget {
   std::optional<uint32_t> chest_unlock_time_anim_sound_play_id_{};
   std::optional<uint32_t> tickets_anim_sound_play_id_{};
   std::optional<uint32_t> tokens_anim_sound_play_id_{};
-  ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kInGame};
+  ToolbarVisibility root_widget_toolbar_visibility_{ToolbarVisibility::kInGame};
+  ToolbarCancelButtonStyle root_widget_toolbar_cancel_button_style_{
+      ToolbarCancelButtonStyle::kBack};
+  ToolbarCancelButtonStyle root_widget_toolbar_cancel_button_style_vis_{
+      ToolbarCancelButtonStyle::kBack};
   bool child_widgets_dirty_{true};
   bool in_main_menu_{};
   bool gold_pass_{};

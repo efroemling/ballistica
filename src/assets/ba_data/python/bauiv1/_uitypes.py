@@ -195,7 +195,14 @@ class MainWindow(Window):
             assert back_state.is_auxiliary is not None
             assert back_state.window_type is not None
 
-            backwin = back_state.create_window(transition='in_left')
+            # When leaving an auxiliary window, scale the destination
+            # window in instead of sliding to convey that its more of a
+            # 'swapping out' than a 'back' action.
+            backwin = back_state.create_window(
+                transition=(
+                    'in_scale' if self.main_window_is_auxiliary else 'in_left'
+                )
+            )
 
             uiv1.set_main_window(
                 backwin,
@@ -227,9 +234,14 @@ class MainWindow(Window):
                 f' calling main_window_replace().'
             )
 
-        # Just shove the old out the left to give the feel that we're
-        # adding to the nav stack.
-        transition = 'out_left'
+        # For auxiliary windows, use scale to give a feel that we're
+        # switching over to a totally separate 'side quest' ui. For
+        # regular back/forward relationships, shove the old out the left
+        # to give the feel that we're adding to a nav stack.
+        if is_auxiliary:
+            transition = 'out_scale'
+        else:
+            transition = 'out_left'
 
         # Transition ourself out.
         try:

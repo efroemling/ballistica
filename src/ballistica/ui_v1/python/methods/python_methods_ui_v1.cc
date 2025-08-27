@@ -1206,6 +1206,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* edit_obj{Py_None};
   PyObject* selectable_obj{Py_None};
   PyObject* toolbar_visibility_obj{Py_None};
+  PyObject* toolbar_cancel_button_style_obj{Py_None};
   PyObject* on_select_call_obj{Py_None};
   PyObject* claim_outside_clicks_obj{Py_None};
 
@@ -1237,13 +1238,14 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "selectable",
                                  "scale_origin_stack_offset",
                                  "toolbar_visibility",
+                                 "toolbar_cancel_button_style",
                                  "on_select_call",
                                  "claim_outside_clicks",
                                  "claims_up_down",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &background_obj, &selected_child_obj,
           &transition_obj, &cancel_button_obj, &start_button_obj,
@@ -1254,8 +1256,8 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &print_list_exit_instructions_obj, &click_activate_obj,
           &always_highlight_obj, &selectable_obj,
           &scale_origin_stack_offset_obj, &toolbar_visibility_obj,
-          &on_select_call_obj, &claim_outside_clicks_obj,
-          &claims_up_down_obj)) {
+          &toolbar_cancel_button_style_obj, &on_select_call_obj,
+          &claim_outside_clicks_obj, &claims_up_down_obj)) {
     return nullptr;
   }
 
@@ -1460,6 +1462,21 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     }
     widget->SetToolbarVisibility(val);
   }
+
+  if (toolbar_cancel_button_style_obj != Py_None) {
+    Widget::ToolbarCancelButtonStyle val;
+    std::string sval = Python::GetString(toolbar_cancel_button_style_obj);
+    if (sval == "back") {
+      val = Widget::ToolbarCancelButtonStyle::kBack;
+    } else if (sval == "close") {
+      val = Widget::ToolbarCancelButtonStyle::kClose;
+    } else {
+      throw Exception("Invalid toolbar_cancel_button_style: '" + sval + "'.",
+                      PyExcType::kValue);
+    }
+    widget->SetToolbarCancelButtonStyle(val);
+  }
+
   if (claim_outside_clicks_obj != Py_None) {
     widget->set_claims_outside_clicks(
         Python::GetBool(claim_outside_clicks_obj));
@@ -1517,6 +1534,9 @@ static PyMethodDef PyContainerWidgetDef = {
     "                              'get_tokens',\n"
     "                              'no_menu_minimal',\n"
     "                              'inherit',\n"
+    "                             ] | None = None,\n"
+    "  toolbar_cancel_button_style: Literal['back',\n"
+    "                              'close',\n"
     "                             ] | None = None,\n"
     "  on_select_call: Callable[[], None] | None = None,\n"
     "  claim_outside_clicks: bool | None = None,\n"
