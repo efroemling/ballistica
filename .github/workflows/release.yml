@@ -17,13 +17,27 @@ jobs:
           make assets-cmake
           make assets-windows
 
+  create_release:
+    needs: setup_bombsquad_cache
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create_release.outputs.id }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+
   ################################################################################
   #                                                                              #
   #                                   Linux                                      #
   #                                                                              #
   ################################################################################
   release_linux_x86_64_gui_debug_build:
-    needs: setup_bombsquad_cache
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,12 +50,11 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
           allowUpdates: true
           artifacts: linux_x86_64_gui_debug.tar
 
   release_linux_x86_64_server_debug_build:
-    needs: setup_bombsquad_cache
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -54,12 +67,11 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
           allowUpdates: true
           artifacts: linux_x86_64_server_debug.tar
 
   release_linux_arm64_gui_debug_build:
-    needs: setup_bombsquad_cache
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -72,12 +84,11 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: https://github.com/${{ github.repository }}/CHANGELOG.md
           allowUpdates: true
           artifacts: linux_arm64_gui_debug.tar
 
   release_linux_arm64_server_debug_build:
-    needs: setup_bombsquad_cache
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -90,7 +101,6 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
           allowUpdates: true
           artifacts: linux_arm64_server_debug.tar
 
@@ -100,7 +110,7 @@ jobs:
   #                                                                              #
   ################################################################################
   release_mac_arm64_gui_debug_build:
-    needs: setup_bombsquad_cache
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -113,12 +123,11 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
           allowUpdates: true
           artifacts: mac_arm64_gui_debug.tar
 
   release_mac_arm64_server_debug_build:
-    needs: setup_bombsquad_cache
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -131,7 +140,6 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
           allowUpdates: true
           artifacts: mac_arm64_server_debug.tar
 
@@ -141,7 +149,7 @@ jobs:
   #                                                                              #
   ################################################################################
   release_windows_x86_64_gui_debug_build:
-    needs: setup_bombsquad_cache
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -154,12 +162,11 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
           allowUpdates: true
           artifacts: windows_x86_64_gui_debug.tar
 
   release_windows_x86_64_server_debug_build:
-    needs: setup_bombsquad_cache
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -172,7 +179,6 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
           allowUpdates: true
           artifacts: windows_x86_64_server_debug.tar
 
@@ -182,7 +188,7 @@ jobs:
   #                                                                              #
   ################################################################################
   release_docker_gui_debug_image:
-    needs: setup_bombsquad_cache
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -203,7 +209,6 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
           allowUpdates: true
           artifacts: bombsquad_docker_gui_debug.tar.zip
       - name: Push to github image repository
@@ -212,7 +217,7 @@ jobs:
           docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_${{ github.ref_name }}_x86_64
 
   release_docker_server_debug_image:
-    needs: setup_bombsquad_cache
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -233,7 +238,6 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
           allowUpdates: true
           artifacts: bombsquad_docker_server_debug.tar.zip
       - name: Push to github image repository
@@ -419,7 +423,7 @@ jobs:
   #                                                                              #
   ################################################################################
   release_docs:
-    needs: setup_bombsquad_cache
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -432,7 +436,6 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
           allowUpdates: true
           artifacts: html_docs.tar
 
@@ -442,8 +445,8 @@ jobs:
   #                                                                              #
   ################################################################################
 
-  make_flatpak_gui_debug:
-    needs: setup_bombsquad_cache
+  release_flatpak_gui_debug:
+    needs: [create_release, setup_bombsquad_cache]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -482,6 +485,5 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          body: "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
           allowUpdates: true
           artifacts: build/flatpak/bombsquad.flatpak
