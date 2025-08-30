@@ -18,7 +18,6 @@ jobs:
           make assets-windows
 
   create_release:
-    needs: setup_bombsquad_cache
     runs-on: ubuntu-latest
     outputs:
       release_id: ${{ steps.create_release.outputs.id }}
@@ -50,7 +49,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: linux_x86_64_gui_debug.tar
 
   release_linux_x86_64_server_debug_build:
@@ -67,7 +66,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: linux_x86_64_server_debug.tar
 
   release_linux_arm64_gui_debug_build:
@@ -84,7 +83,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: linux_arm64_gui_debug.tar
 
   release_linux_arm64_server_debug_build:
@@ -101,7 +100,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: linux_arm64_server_debug.tar
 
   ################################################################################
@@ -123,7 +122,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: mac_arm64_gui_debug.tar
 
   release_mac_arm64_server_debug_build:
@@ -140,7 +139,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: mac_arm64_server_debug.tar
 
   ################################################################################
@@ -162,7 +161,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: windows_x86_64_gui_debug.tar
 
   release_windows_x86_64_server_debug_build:
@@ -179,7 +178,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: windows_x86_64_server_debug.tar
 
   ################################################################################
@@ -209,7 +208,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: bombsquad_docker_gui_debug.tar.zip
       - name: Push to github image repository
         run: |
@@ -238,7 +237,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: bombsquad_docker_server_debug.tar.zip
       - name: Push to github image repository
         run: |
@@ -436,7 +435,7 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: html_docs.tar
 
   ################################################################################
@@ -485,5 +484,5 @@ jobs:
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
+          omitBody: true
           artifacts: build/flatpak/bombsquad.flatpak
