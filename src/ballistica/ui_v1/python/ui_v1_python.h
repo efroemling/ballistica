@@ -24,6 +24,7 @@ class UIV1Python {
 
   static auto GetPyWidget(PyObject* o) -> Widget*;
   void InvokeQuitWindow(QuitType quit_type);
+  void ReloadHooks();
 
   /// Specific Python objects we hold in objs_.
   enum class ObjID {

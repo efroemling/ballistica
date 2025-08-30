@@ -1512,10 +1512,6 @@ auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
 }
 
 void SceneV1Python::ReloadHooks() {
-  // Sanity-check; we should only be reloading our stuff *after* we've
-  // initially loaded our stuff.
-  assert(g_base->base_import_completed());
-
   // Object-sets normally complain if values within it are set more than
   // once; disable that here to allow us to reload.
   objs_.set_allow_overwrites(true);

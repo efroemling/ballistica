@@ -134,4 +134,14 @@ void UIV1Python::InvokeQuitWindow(QuitType quit_type) {
   }
 }
 
+void UIV1Python::ReloadHooks() {
+  // Object-sets normally complain if values within it are set more than
+  // once; disable that here to allow us to reload.
+  objs_.set_allow_overwrites(true);
+
+  ImportPythonObjs();
+
+  objs_.set_allow_overwrites(false);
+}
+
 }  // namespace ballistica::ui_v1

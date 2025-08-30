@@ -26,6 +26,7 @@
 #include "ballistica/scene_v1/python/class/python_class_activity_data.h"
 #include "ballistica/scene_v1/python/class/python_class_session_data.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
+#include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/scene_v1/support/client_session_replay.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
@@ -1736,7 +1737,7 @@ static PyMethodDef PyProtocolVersionDef = {
 static auto PyReloadHooks(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
 
-  g_base->python->ReloadHooks();
+  g_scene_v1->python->ReloadHooks();
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;

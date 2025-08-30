@@ -2817,6 +2817,28 @@ static PyMethodDef PyRootUIResumeUpdatesDef = {
     "Resume paused updates to the root ui for animation purposes.",
 };
 
+// ----------------------------- reload_hooks ---------------------------------
+
+static auto PyReloadHooks(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  g_ui_v1->python->ReloadHooks();
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyReloadHooksDef = {
+    "reload_hooks",              // name
+    (PyCFunction)PyReloadHooks,  // method
+    METH_NOARGS,                 // flags
+
+    "reload_hooks() -> None\n"
+    "\n"
+    "Reload functions and other objects held by the native layer.\n"
+    "Call this if you replace things in a hooks module to get the\n"
+    "native layer to see your changes.",
+};
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
@@ -2844,6 +2866,7 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyOnUIScaleChangeDef,
       PyRootUIPauseUpdatesDef,
       PyRootUIResumeUpdatesDef,
+      PyReloadHooksDef,
   };
 }
 
