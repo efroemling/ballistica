@@ -76,6 +76,8 @@ class SceneV1Python {
   auto ValidatedPackageAssetName(PyObject* package, const char* name)
       -> std::string;
 
+  void ReloadHooks();
+
   /// Specific Python objects we hold in objs_.
   enum class ObjID {
     kClientInfoQueryResponseCall,

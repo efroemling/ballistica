@@ -1,4 +1,4 @@
-### 1.7.48 (build 22507, api 9, 2025-08-30)
+### 1.7.48 (build 22508, api 9, 2025-08-30)
 - Added Kazakh language (Thanks KAZDOG!)
 - The 'Logging' dev-console-tab is now 'LogLevels'. I kept finding myself going
   there to look for log output. Maybe this will help.
@@ -9,6 +9,7 @@
   helps convey their somewhat modal 'side quest' nature.
 - Added `babase.reload_hooks()` which can be used to get the engine to recognize
   changes made to `babase._hooks` after the engine is running.
+- Added `bascenev.reload_hooks()` (see above).
 
 ### 1.7.47 (build 22495, api 9, 2025-08-13)
 - All communication with the V1 (Legacy) master server is now tunneled through
