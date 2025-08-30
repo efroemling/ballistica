@@ -28,6 +28,7 @@ from efro.dataclassio._base import (
     IOExtendedData,
     _get_multitype_type,
     IOMultiType,
+    TypeNotPresentError,
 )
 from efro.dataclassio._prep import PrepSession
 
@@ -91,37 +92,24 @@ class _Inputter:
                 enum_val = type_id_enum(type_id_val)
             except ValueError as exc:
 
-                # Check the fallback even if not in lossy mode, as we
-                # inform the user of its existence in errors in that
-                # case.
-                fallback = self._cls.get_unknown_type_fallback()
-
-                # Sanity check that fallback is correct type.
-                assert isinstance(fallback, self._cls | None)
-
-                # If we're in lossy mode, provide the fallback value.
-                if self._lossy:
-                    if fallback is not None:
-                        # Ok; they provided a fallback. Flag it as lossy
-                        # to prevent it from being written back out by
-                        # default, and return it.
-                        setattr(fallback, LOSSY_ATTR, True)
-                        return fallback
-                else:
-                    # If we're *not* in lossy mode, inform the user if
-                    # we *would* have succeeded if we were. This is
-                    # useful for debugging these sorts of situations.
-                    if fallback is not None:
-                        raise ValueError(
-                            'Failed loading unrecognized multitype object.'
-                            ' Note that the multitype provides a fallback'
-                            ' and thus would succeed in lossy mode.'
-                        ) from exc
+                fallback_obj = self._get_fallback_object(exc, 'unrecognized')
+                if fallback_obj is not None:
+                    return fallback_obj
 
                 # Otherwise the error stands as-is.
                 raise
 
-            outcls = self._cls.get_type_cached(enum_val)
+            try:
+                outcls = self._cls.get_type_cached(enum_val)
+            except TypeNotPresentError as exc:
+
+                fallback_obj = self._get_fallback_object(exc, 'not-present')
+                if fallback_obj is not None:
+                    return fallback_obj
+
+                # Otherwise the error stands as-is.
+                raise
+
         else:
             outcls = self._cls
 
@@ -151,6 +139,35 @@ class _Inputter:
             setattr(out, LOSSY_ATTR, True)
 
         return out
+
+    def _get_fallback_object(self, exc: Exception, desc: str) -> Any | None:
+        # Check the fallback even if not in lossy mode, as we
+        # inform the user of its existence in errors in that
+        # case.
+        fallback = self._cls.get_unknown_type_fallback()
+
+        # Sanity check that fallback is correct type.
+        assert isinstance(fallback, self._cls | None)
+
+        # If we're in lossy mode, provide the fallback value.
+        if self._lossy:
+            if fallback is not None:
+                # Ok; they provided a fallback. Flag it as lossy
+                # to prevent it from being written back out by
+                # default, and return it.
+                setattr(fallback, LOSSY_ATTR, True)
+                return fallback
+        else:
+            # If we're *not* in lossy mode, inform the user if
+            # we *would* have succeeded if we were. This is
+            # useful for debugging these sorts of situations.
+            if fallback is not None:
+                raise ValueError(
+                    f'Failed loading {desc} multitype object.'
+                    f' Note that the multitype provides a fallback'
+                    f' and thus would succeed in lossy mode.'
+                ) from exc
+        return None
 
     def _value_from_input(
         self,
@@ -342,7 +359,6 @@ class _Inputter:
 
         extra_attrs = {}
 
-        # noinspection PyDataclass
         fields = dataclasses.fields(cls)
         fields_by_name = {f.name: f for f in fields}
 
@@ -646,7 +662,9 @@ class _Inputter:
     def _multitype_obj(self, anntype: Any, fieldpath: str, value: Any) -> Any:
         try:
             mttype = _get_multitype_type(anntype, fieldpath, value)
-        except ValueError:
+        # NOTE: We may want to tighten this up; ValueError might be
+        # covering more than the missing enum case we intend here.
+        except (ValueError, TypeNotPresentError):
             if self._lossy:
                 out = anntype.get_unknown_type_fallback()
                 if out is not None:

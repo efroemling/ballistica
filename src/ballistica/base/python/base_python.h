@@ -135,6 +135,8 @@ class BasePython {
 
   const auto& objs() { return objs_; }
 
+  void ReloadHooks();
+
   static void EnsureContextAllowsDefaultTimerTypes();
 
   static auto CanGetPyVector3f(PyObject* o) -> bool;

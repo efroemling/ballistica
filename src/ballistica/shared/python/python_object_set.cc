@@ -29,21 +29,25 @@ void PythonObjectSetBase::StoreObj(int id, PyObject* pyobj) {
   assert(id >= 0);
   assert(id < static_cast<int>(objs_.size()));
 
-  if (g_buildconfig.debug_build()) {
-    // Assuming we're setting everything once
-    // (make sure we don't accidentally overwrite things we don't intend to).
-    if (objs_[id].exists()) {
-      throw Exception("Python::StoreObj() called twice for id '"
-                      + std::to_string(id) + "' (existing val: '"
-                      + objs_[id].Str() + "').");
-    }
+  if (!allow_overwrites_) {
+    if (g_buildconfig.debug_build()) {
+      // Assuming we're setting everything once (make sure we don't
+      // accidentally overwrite things we don't intend to).
+      if (objs_[id].exists()) {
+        throw Exception("Python::StoreObj() called twice for id '"
+                        + std::to_string(id) + "' (existing val: '"
+                        + objs_[id].Str() + "').");
+      }
 
-    // Also make sure we're not storing an object that's already been stored.
-    for (auto&& i : objs_) {
-      if (i.get() != nullptr && i.get() == pyobj) {
-        g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
-                             "Python::StoreObj() called twice for same ptr; id="
-                                 + std::to_string(id) + ".");
+      // Also make sure we're not storing an object that's already been
+      // stored as something else.
+      for (auto&& i : objs_) {
+        if (i.get() != nullptr && i.get() == pyobj) {
+          g_core->logging->Log(
+              LogName::kBa, LogLevel::kWarning,
+              "Python::StoreObj() called twice for same ptr; id="
+                  + std::to_string(id) + ".");
+        }
       }
     }
   }
@@ -53,9 +57,9 @@ void PythonObjectSetBase::StoreObj(int id, PyObject* pyobj) {
   // so the worst thing that can happen is a harmless extra refcount increment
   // if someone passes us a new ref; that's better than the opposite case where
   // we are passed a borrowed ref and fail to keep it alive.
-  Py_INCREF(pyobj);
+  // Py_INCREF(pyobj);
 
-  objs_[static_cast<int>(id)].Steal(pyobj);
+  objs_[static_cast<int>(id)].Acquire(pyobj);
 }
 
 void PythonObjectSetBase::StoreObjCallable(int id, PyObject* pyobj) {

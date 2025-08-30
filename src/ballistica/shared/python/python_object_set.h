@@ -41,8 +41,12 @@ class PythonObjectSetBase {
   /// Push a call with a single string arg.
   void PushObjCall(int id, const std::string& arg) const;
 
+  void set_allow_overwrites(bool val) { allow_overwrites_ = val; }
+  auto allow_overwrites() const { return allow_overwrites_; }
+
  private:
   std::vector<PythonRef> objs_;
+  bool allow_overwrites_;
 };
 
 /// A class to store and retrieve different Python objects based on enums.

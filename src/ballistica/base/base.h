@@ -832,6 +832,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
     return config_and_state_writes_suppressed_;
   }
 
+  auto base_import_completed() const { return base_import_completed_; }
+
   /// Reset the engine to a default state. Should only be called by the
   /// active app-mode. App-modes generally call this when first activating,
   /// but may opt to call it at other times.

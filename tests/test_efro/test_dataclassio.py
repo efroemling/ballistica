@@ -32,6 +32,7 @@ from efro.dataclassio import (
     DataclassFieldLookup,
     IOExtendedData,
     IOMultiType,
+    TypeNotPresentError,
 )
 
 if TYPE_CHECKING:
@@ -1886,3 +1887,192 @@ def test_float_timedeltas() -> None:
     # we started with.
     assert testclass2.tmval2 == testclass.tmval2
     assert testclass2.tmval3 == testclass.tmval3
+
+
+class MTTestMissingTypeID(Enum):
+    """IDs for our multi-type class."""
+
+    CLASS_1 = 'm1'
+    CLASS_2 = 'm2'
+
+
+class MTTestMissingBase(IOMultiType[MTTestMissingTypeID]):
+    """Our multi-type class.
+
+    These top level multi-type classes are special parent classes
+    that know about all of their child classes and how to serialize
+    & deserialize them using explicit type ids. We can then use the
+    parent class in annotations and dataclassio will do the right thing.
+    Useful for stuff like Message classes where we may want to store a
+    bunch of different types of them into one place.
+    """
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: MTTestMissingTypeID) -> type[MTTestMissingBase]:
+        """Return the subclass for each of our type-ids."""
+
+        # This uses assert_never() to ensure we cover all cases in the
+        # enum. Though this is less efficient than looking up by dict
+        # would be. If we had lots of values we could also support lazy
+        # loading by importing classes only when their value is being
+        # requested.
+        val: type[MTTestMissingBase]
+        if type_id is MTTestMissingTypeID.CLASS_1:
+            val = MTTestMissingClass1
+        elif type_id is MTTestMissingTypeID.CLASS_2:
+            # Here we're simulating not having this class at runtime
+            # (though we know about its existence the enum value
+            # associated with it). This error can be used to allow lossy
+            # loads to resort to a fallback object.
+            raise TypeNotPresentError()
+        else:
+            assert_never(type_id)
+        return val
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestMissingTypeID:
+        """Provide the type-id for this subclass."""
+        # If we wanted, we could just maintain a static mapping of
+        # types-to-ids here, but there are benefits to letting each
+        # child class speak for itself. Namely that we can do
+        # lazy-loading and don't need to have all types present here.
+
+        # So we'll let all our child classes override this.
+        raise NotImplementedError()
+
+
+@ioprepped
+@dataclass
+class MTTestMissingClass1(MTTestMissingBase):
+    """A test child-class for use with our multi-type class."""
+
+    ival: int
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestMissingTypeID:
+        return MTTestMissingTypeID.CLASS_1
+
+
+class MTTestMissing2TypeID(Enum):
+    """IDs for our multi-type class."""
+
+    CLASS_1 = 'm1'
+    CLASS_2 = 'm2'
+    CLASS_MISSING = 'mm'
+
+
+class MTTestMissing2Base(IOMultiType[MTTestMissing2TypeID]):
+    """Our multi-type class.
+
+    These top level multi-type classes are special parent classes
+    that know about all of their child classes and how to serialize
+    & deserialize them using explicit type ids. We can then use the
+    parent class in annotations and dataclassio will do the right thing.
+    Useful for stuff like Message classes where we may want to store a
+    bunch of different types of them into one place.
+    """
+
+    @override
+    @classmethod
+    def get_type(
+        cls, type_id: MTTestMissing2TypeID
+    ) -> type[MTTestMissing2Base]:
+        """Return the subclass for each of our type-ids."""
+
+        # This uses assert_never() to ensure we cover all cases in the
+        # enum. Though this is less efficient than looking up by dict
+        # would be. If we had lots of values we could also support lazy
+        # loading by importing classes only when their value is being
+        # requested.
+        val: type[MTTestMissing2Base]
+        if type_id is MTTestMissing2TypeID.CLASS_1:
+            val = MTTestMissing2Class1
+        elif type_id is MTTestMissing2TypeID.CLASS_2:
+            # Here we're simulating not having this class at runtime
+            # (though we know about its existence the enum value
+            # associated with it). This error can be used to allow lossy
+            # loads to resort to a fallback object.
+            raise TypeNotPresentError()
+        elif type_id is MTTestMissing2TypeID.CLASS_MISSING:
+            val = MTTestMissing2ClassMissing
+        else:
+            assert_never(type_id)
+        return val
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestMissing2TypeID:
+        """Provide the type-id for this subclass."""
+        # If we wanted, we could just maintain a static mapping of
+        # types-to-ids here, but there are benefits to letting each
+        # child class speak for itself. Namely that we can do
+        # lazy-loading and don't need to have all types present here.
+
+        # So we'll let all our child classes override this.
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_unknown_type_fallback(cls) -> MTTestMissing2Base | None:
+        # Define a fallback here that can be returned in cases of
+        # unrecognized types (though only if 'lossy' is enabled for the
+        # load).
+        return MTTestMissing2ClassMissing()
+
+
+@ioprepped
+@dataclass
+class MTTestMissing2Class1(MTTestMissing2Base):
+    """A test child-class for use with our multi-type class."""
+
+    ival: int
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestMissing2TypeID:
+        return MTTestMissing2TypeID.CLASS_1
+
+
+@ioprepped
+@dataclass
+class MTTestMissing2ClassMissing(MTTestMissing2Base):
+    """A test child-class for use with our multi-type class."""
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestMissing2TypeID:
+        return MTTestMissing2TypeID.CLASS_MISSING
+
+
+def test_multi_type_missing() -> None:
+    """Test IOMultiType stuff."""
+
+    val1: MTTestMissingBase = MTTestMissingClass1(ival=123)
+    outdict = dataclass_to_dict(val1)
+    assert outdict == {'ival': 123, '_dciotype': 'm1'}
+
+    val1b = dataclass_from_dict(MTTestMissingBase, outdict)
+    assert val1 == val1b
+
+    outdict2 = {'sval': 'whee', '_dciotype': 'm2'}
+
+    # We're simulating not having class-3, so this will fail.
+    with pytest.raises(TypeNotPresentError):
+        _val2b = dataclass_from_dict(MTTestMissingBase, outdict2)
+
+    # We ask for lossy loading here but there's no fallback object
+    # specified. Still should fail.
+    with pytest.raises(TypeNotPresentError):
+        _val2b = dataclass_from_dict(MTTestMissingBase, outdict2, lossy=True)
+
+    # Lossy loading using a multitype that designates a fallback object
+    # should give us said fallback object.
+    val2c = dataclass_from_dict(MTTestMissing2Base, outdict2, lossy=True)
+    assert isinstance(val2c, MTTestMissing2ClassMissing)
+
+    # Make sure the lossy load disallows output.
+    with pytest.raises(ValueError):
+        _out2c = dataclass_to_dict(val2c)

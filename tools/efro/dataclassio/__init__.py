@@ -18,6 +18,7 @@ from efro.dataclassio._base import (
     IOMultiType,
     EXTRA_ATTRS_ATTR,
     parse_annotated,
+    TypeNotPresentError,
 )
 from efro.dataclassio._prep import (
     ioprep,
@@ -55,6 +56,7 @@ __all__ = [
     'is_ioprepped_dataclass',
     'parse_annotated',
     'will_ioprep',
+    'TypeNotPresentError',
 ]
 
 # Have these things present themselves cleanly as 'thismodule.SomeClass'

@@ -360,6 +360,15 @@ class IOAttrs:
                 )
 
 
+class TypeNotPresentError(TypeError):
+    """Used to communicate non-loadable multitype classes.
+
+    This allows lossy loading of multitype objects in environments where
+    their type enum is known but their actual class is not available. A
+    IOMultiType's get_type() method should raise this in such cases.
+    """
+
+
 def _raise_type_error(
     fieldpath: str, valuetype: type, expected: tuple[type, ...]
 ) -> None:
@@ -447,6 +456,8 @@ def parse_annotated(anntype: Any) -> tuple[Any, IOAttrs | None]:
     return anntype, ioattrs
 
 
+# Note to self: this logic seems a bit redundant with _Inputter.run();
+# should do a cleanup pass.
 def _get_multitype_type(
     cls: type[IOMultiType], fieldpath: str, val: Any
 ) -> type[Any]:

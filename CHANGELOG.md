@@ -1,4 +1,4 @@
-### 1.7.48 (build 22504, api 9, 2025-08-26)
+### 1.7.48 (build 22507, api 9, 2025-08-30)
 - Added Kazakh language (Thanks KAZDOG!)
 - The 'Logging' dev-console-tab is now 'LogLevels'. I kept finding myself going
   there to look for log output. Maybe this will help.
@@ -7,6 +7,8 @@
 - 'auxiliary' main-windows now use close icons instead of back icons and use
   scale transitions instead of the normal left/right swipes. Hopefully this
   helps convey their somewhat modal 'side quest' nature.
+- Added `babase.reload_hooks()` which can be used to get the engine to recognize
+  changes made to `babase._hooks` after the engine is running.
 
 ### 1.7.47 (build 22495, api 9, 2025-08-13)
 - All communication with the V1 (Legacy) master server is now tunneled through
