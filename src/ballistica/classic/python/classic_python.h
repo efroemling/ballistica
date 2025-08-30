@@ -44,6 +44,7 @@ class ClassicPython {
   void GetClassicChestDisplayInfo(const std::string& id, std::string* texclosed,
                                   std::string* texclosedtint, Vector3f* color,
                                   Vector3f* tint, Vector3f* tint2);
+  void ReloadHooks();
 
  private:
   struct ChestDisplay_ {

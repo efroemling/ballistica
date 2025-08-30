@@ -182,4 +182,14 @@ auto ClassicPython::BuildPublicPartyStateVal() -> PyObject* {
       ipv6obj);
 }
 
+void ClassicPython::ReloadHooks() {
+  // Object-sets normally complain if values within it are set more than
+  // once; disable that here to allow us to reload.
+  objs_.set_allow_overwrites(true);
+
+  ImportPythonObjs();
+
+  objs_.set_allow_overwrites(false);
+}
+
 }  // namespace ballistica::classic

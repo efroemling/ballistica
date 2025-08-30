@@ -10,6 +10,7 @@
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/classic/python/classic_python.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/classic/support/stress_test.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -709,6 +710,28 @@ static PyMethodDef PySetAccountStateDef = {
     "(internal)",
 };
 
+// ----------------------------- reload_hooks ---------------------------------
+
+static auto PyReloadHooks(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  g_classic->python->ReloadHooks();
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyReloadHooksDef = {
+    "reload_hooks",              // name
+    (PyCFunction)PyReloadHooks,  // method
+    METH_NOARGS,                 // flags
+
+    "reload_hooks() -> None\n"
+    "\n"
+    "Reload functions and other objects held by the native layer.\n"
+    "Call this if you replace things in a hooks module to get the\n"
+    "native layer to see your changes.",
+};
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
@@ -726,6 +749,7 @@ auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
       PyGetAccountStateDef,
       PySetAccountStateDef,
       PySetHaveLiveAccountValuesDef,
+      PyReloadHooksDef,
   };
 }
 

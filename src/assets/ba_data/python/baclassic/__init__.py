@@ -18,6 +18,7 @@ designed in a more modular way.
 
 import logging
 
+from _baclassic import reload_hooks
 from baclassic._appmode import ClassicAppMode
 from baclassic._appsubsystem import ClassicAppSubsystem
 from baclassic._achievement import Achievement, AchievementSubsystem
@@ -39,6 +40,7 @@ __all__ = [
     'AchievementSubsystem',
     'show_display_item',
     'MusicPlayer',
+    'reload_hooks',
 ]
 
 # We want stuff here to show up as packagename.Foo instead of
