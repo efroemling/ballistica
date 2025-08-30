@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: |
           make assets-cmake
@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Run checks
         run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check
 
@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Assemble monolithic server build
         run: make cmake-server-build
       - name: Run tests
@@ -55,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Build spinoff project with only core featureset
         run: make spinoff-test-core
       - name: Build spinoff project with core and base featuresets
@@ -70,7 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Create poo feature-set
         run: tools/spinoff fset-copy template_fs poo
       - name: Add new feature-set to project

@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: |
           make assets-cmake
@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Build documentation
         run: make docs
       - name: Upload the build

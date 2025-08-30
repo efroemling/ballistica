@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: |
           make assets-cmake
@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: make prefab-gui-debug-build
       - name: Compress the build
@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: make prefab-server-debug-build
       - name: Compress the build
@@ -64,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: make prefab-linux-arm64-gui-debug-build
       - name: Compress the build
@@ -82,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: make prefab-linux-arm64-server-debug-build
       - name: Compress the build
@@ -105,7 +105,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: make prefab-mac-arm64-gui-debug-build
       - name: Compress the build
@@ -123,7 +123,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: make prefab-mac-arm64-server-debug-build
       - name: Compress the build
@@ -146,7 +146,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: make prefab-windows-x86-64-gui-debug-build
       - name: Compress the build
@@ -164,7 +164,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: make prefab-windows-x86-64-server-debug-build
       - name: Compress the build
@@ -187,7 +187,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
         uses: docker/login-action@v3
         with:
@@ -217,7 +217,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
         uses: docker/login-action@v3
         with:
@@ -247,7 +247,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
         uses: docker/login-action@v3
         with:
@@ -277,7 +277,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
         uses: docker/login-action@v3
         with:
@@ -333,7 +333,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
         uses: docker/login-action@v3
         with:
@@ -363,7 +363,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
         uses: docker/login-action@v3
         with:
@@ -424,7 +424,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
         run: make docs
       - name: Compress the build
@@ -448,7 +448,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
-        uses: ./.github/actions/setup_build_env
+        uses: ./.github/actions/bombsquad_build_env
       - name: Cache Flatpak data
         id: cache-flatpak-sdk
         uses: actions/cache@v4
