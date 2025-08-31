@@ -193,6 +193,7 @@ ctx.filter_file_names = {
     'flycheck-dir-locals.el',
     '.projectile',
     '.editorconfig',
+    'action.yml',
     'ci.yml',
     'cd.yml',
     'deploy_docs.yml',
