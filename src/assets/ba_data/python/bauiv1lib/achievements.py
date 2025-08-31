@@ -159,6 +159,8 @@ class AchievementsWindow(bui.MainWindow):
                 left_widget=bui.get_special_widget('back_button'),
             )
 
+        # Add some blotches so our contents fades out as it approaches
+        # the bottom toolbar.
         if uiscale is bui.UIScale.SMALL:
             blotchwidth = 500.0
             blotchheight = 200.0

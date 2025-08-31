@@ -1,4 +1,4 @@
-### 1.7.48 (build 22510, api 9, 2025-08-30)
+### 1.7.48 (build 22512, api 9, 2025-08-31)
 - Added Kazakh language (Thanks KAZDOG!)
 - The 'Logging' dev-console-tab is now 'LogLevels'. I kept finding myself going
   there to look for log output. Maybe this will help.
@@ -12,6 +12,12 @@
 - Added `bascenev1.reload_hooks()` (see above).
 - Added `bauiv1.reload_hooks()` (see above).
 - Added `baclassic.reload_hooks()` (see above).
+- Removed the legacy (v1) unlinking UI from the account window, as well as the
+  ability to show the legacy linking button (has been hidden by default for a
+  long time but still available with a bit of hacking). If you haven't followed
+  the advice to remove v1 account links by now, you'll need to install an older
+  build to do it.
+- Modernized the send-info ui and backend a bit.
 
 ### 1.7.47 (build 22495, api 9, 2025-08-13)
 - All communication with the V1 (Legacy) master server is now tunneled through

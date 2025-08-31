@@ -221,7 +221,7 @@ class AllSettingsWindow(bui.MainWindow):
 
         # Hmm; we're now wide enough that being limited to pressing up
         # might be ok.
-        if bool(False):
+        if bool(True):
             # Left from our leftmost button should go to back button.
             if self._back_button is None:
                 bbtn = bui.get_special_widget('back_button')

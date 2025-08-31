@@ -353,8 +353,8 @@ class CloudSubsystem(babase.AppSubsystem):
 
     @overload
     async def send_message_async(
-        self, msg: bacommon.cloud.SendInfoMessage
-    ) -> bacommon.cloud.SendInfoResponse: ...
+        self, msg: bacommon.bs.SendInfoMessage
+    ) -> bacommon.bs.SendInfoResponse: ...
 
     @overload
     async def send_message_async(

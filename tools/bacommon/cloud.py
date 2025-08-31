@@ -152,29 +152,6 @@ class TestResponse(Response):
 
 @ioprepped
 @dataclass
-class SendInfoMessage(Message):
-    """User is using the send-info function"""
-
-    description: Annotated[str, IOAttrs('c')]
-
-    @override
-    @classmethod
-    def get_response_types(cls) -> list[type[Response] | None]:
-        return [SendInfoResponse]
-
-
-@ioprepped
-@dataclass
-class SendInfoResponse(Response):
-    """Response to sending into the server."""
-
-    handled: Annotated[bool, IOAttrs('v')]
-    message: Annotated[str | None, IOAttrs('m', store_default=False)] = None
-    legacy_code: Annotated[str | None, IOAttrs('l', store_default=False)] = None
-
-
-@ioprepped
-@dataclass
 class WorkspaceFetchState:
     """Common state data for a workspace fetch."""
 

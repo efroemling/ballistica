@@ -1,6 +1,5 @@
 # Released under the MIT License. See LICENSE for details.
 #
-# pylint: disable=too-many-lines
 
 """Provides classic app subsystem."""
 from __future__ import annotations
@@ -683,12 +682,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         from bauiv1lib.v2upgrade import V2UpgradeWindow
 
         V2UpgradeWindow(login_name, code)
-
-    def account_link_code_window(self, data: dict[str, Any]) -> None:
-        """(internal)"""
-        from bauiv1lib.account.link import AccountLinkCodeWindow
-
-        AccountLinkCodeWindow(data)
 
     def server_dialog(self, delay: float, data: dict[str, Any]) -> None:
         """(internal)"""

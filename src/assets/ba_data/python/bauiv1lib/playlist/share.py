@@ -7,14 +7,14 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING, override
 
-from bauiv1lib.sendinfo import SendInfoWindow
+from bauiv1lib.sendinfo import SendInfoWindowLegacyModal
 import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any, Callable
 
 
-class SharePlaylistImportWindow(SendInfoWindow):
+class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
     """Window for importing a shared playlist."""
 
     def __init__(
@@ -22,9 +22,7 @@ class SharePlaylistImportWindow(SendInfoWindow):
         origin_widget: bui.Widget | None = None,
         on_success_callback: Callable[[], Any] | None = None,
     ):
-        SendInfoWindow.__init__(
-            self, modal=True, legacy_code_mode=True, origin_widget=origin_widget
-        )
+        super().__init__(origin_widget=origin_widget)
         self._on_success_callback = on_success_callback
 
     def _on_import_response(self, response: dict[str, Any] | None) -> None:

@@ -19,12 +19,9 @@ class SendInfoWindow(bui.MainWindow):
 
     def __init__(
         self,
-        modal: bool = False,
-        legacy_code_mode: bool = False,
         transition: str | None = 'in_scale',
         origin_widget: bui.Widget | None = None,
     ):
-        self._legacy_code_mode = legacy_code_mode
 
         # Need to wrangle our own transition-out in modal mode.
         if origin_widget is not None:
@@ -32,90 +29,84 @@ class SendInfoWindow(bui.MainWindow):
         else:
             self._transition_out = 'out_right'
 
-        width = 450 if legacy_code_mode else 600
-        height = 200 if legacy_code_mode else 300
+        uiscale = bui.app.ui_v1.uiscale
 
-        self._modal = modal
+        width = 1200 if uiscale is bui.UIScale.SMALL else 600
+        height = 600 if uiscale is bui.UIScale.SMALL else 300
+
         self._r = 'promoCodeWindow'
 
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            2.0
+            if uiscale is bui.UIScale.SMALL
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        # target_width = min(width - 80, screensize[0] / scale)
+        target_height = min(height - 80, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * height + 0.5 * target_height + 20.0
+
         assert bui.app.classic is not None
-        uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
                 toolbar_visibility=(
-                    'menu_minimal_no_back'
-                    if uiscale is bui.UIScale.SMALL or modal
+                    'menu_minimal'
+                    if (uiscale is bui.UIScale.SMALL and not bui.in_main_menu())
                     else 'menu_full'
                 ),
-                scale=(
-                    2.0
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
-        btn = bui.buttonwidget(
-            parent=self._root_widget,
-            scale=0.5,
-            position=(40, height - 40),
-            size=(60, 60),
-            label='',
-            on_activate_call=self._do_back,
-            autoselect=True,
-            color=(0.55, 0.5, 0.6),
-            icon=bui.gettexture('crossOut'),
-            iconscale=1.2,
-        )
-
-        v = height - 74
-
-        if legacy_code_mode:
-            v -= 20
-        else:
-            v -= 20
-            bui.textwidget(
+        if uiscale is not bui.UIScale.SMALL:
+            close_button = bui.buttonwidget(
                 parent=self._root_widget,
-                text=bui.Lstr(resource='sendInfoDescriptionText'),
-                maxwidth=width * 0.9,
-                position=(width * 0.5, v),
-                color=(0.7, 0.7, 0.7, 1.0),
-                size=(0, 0),
-                scale=0.8,
-                h_align='center',
-                v_align='center',
+                position=(25, yoffs - 35),
+                size=(60, 60),
+                scale=0.7,
+                autoselect=True,
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                on_activate_call=self.main_window_back,
             )
-            v -= 20
 
-            # bui.textwidget(
-            #     parent=self._root_widget,
-            #     text=bui.Lstr(
-            #         resource='supportEmailText',
-            #         subs=[('${EMAIL}', 'support@froemling.net')],
-            #     ),
-            #     maxwidth=width * 0.9,
-            #     position=(width * 0.5, v),
-            #     color=(0.7, 0.7, 0.7, 1.0),
-            #     size=(0, 0),
-            #     scale=0.65,
-            #     h_align='center',
-            #     v_align='center',
-            # )
-            v -= 80
+        else:
+            close_button = None
 
+        v = yoffs - 74
+
+        v += -30 if uiscale is bui.UIScale.SMALL else 10
         bui.textwidget(
             parent=self._root_widget,
-            text=bui.Lstr(
-                resource=(
-                    f'{self._r}.codeText'
-                    if legacy_code_mode
-                    else 'descriptionText'
-                )
-            ),
-            position=(22, v),
+            text=bui.Lstr(resource='sendInfoDescriptionText'),
+            maxwidth=width * 0.9,
+            position=(width * 0.5, v),
+            color=(0.7, 0.7, 0.7, 1.0),
+            size=(0, 0),
+            scale=0.8,
+            h_align='center',
+            v_align='center',
+        )
+        v -= 100
+
+        txoffs = -270
+        bui.textwidget(
+            parent=self._root_widget,
+            text=bui.Lstr(resource='descriptionText'),
+            position=(width * 0.5 + txoffs + 22, v),
             color=(0.8, 0.8, 0.8, 1.0),
             size=(90, 30),
             h_align='right',
@@ -125,25 +116,21 @@ class SendInfoWindow(bui.MainWindow):
 
         self._text_field = bui.textwidget(
             parent=self._root_widget,
-            position=(125, v),
-            size=(280 if legacy_code_mode else 380, 46),
+            position=(width * 0.5 + txoffs + 125, v),
+            size=(380, 46),
             text='',
             h_align='left',
             v_align='center',
             max_chars=64,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=bui.Lstr(
-                resource=(
-                    f'{self._r}.codeText'
-                    if legacy_code_mode
-                    else 'descriptionText'
-                )
-            ),
+            description=bui.Lstr(resource='descriptionText'),
             editable=True,
+            autoselect=True,
             padding=4,
             on_return_press_call=self._activate_enter_button,
         )
-        bui.widget(edit=btn, down_widget=self._text_field)
+        if close_button is not None:
+            bui.widget(edit=close_button, down_widget=self._text_field)
 
         v -= 79
         b_width = 200
@@ -156,39 +143,186 @@ class SendInfoWindow(bui.MainWindow):
                 resource='submitText', fallback_resource=f'{self._r}.enterText'
             ),
             on_activate_call=self._do_enter,
+            autoselect=True,
         )
         bui.containerwidget(
             edit=self._root_widget,
-            cancel_button=btn,
             start_button=btn2,
             selected_child=self._text_field,
         )
+        if close_button is not None:
+            bui.containerwidget(
+                edit=self._root_widget,
+                cancel_button=close_button,
+            )
+        else:
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
         cls = type(self)
 
-        assert not self._modal
-
-        # Pull stuff out of self here; if we do it in the lambda we'll
-        # keep self alive which we don't want.
-        legacy_code_mode = self._legacy_code_mode
-
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
-                legacy_code_mode=legacy_code_mode,
                 transition=transition,
                 origin_widget=origin_widget,
             )
         )
 
+    def _activate_enter_button(self) -> None:
+        self._enter_button.activate()
+
+    def _do_enter(self) -> None:
+        # pylint: disable=cyclic-import
+        # from bauiv1lib.settings.advanced import AdvancedSettingsWindow
+
+        plus = bui.app.plus
+        assert plus is not None
+
+        description: Any = bui.textwidget(query=self._text_field)
+        assert isinstance(description, str)
+
+        # no-op if we're not in control.
+        if not self.main_window_has_control():
+            return
+        self.main_window_back()
+
+        # Used for things like unlocking shared playlists or linking
+        # accounts: talk directly to V1 server via transactions.
+        bui.app.create_async_task(_send_info(description))
+
+
+class SendInfoWindowLegacyModal(bui.Window):
+    """Window for sending info to the developer."""
+
+    def __init__(
+        self,
+        transition: str | None = 'in_scale',
+        origin_widget: bui.Widget | None = None,
+    ):
+        # pylint: disable=too-many-locals
+
+        # Need to wrangle our own transition-out in modal mode.
+        if origin_widget is not None:
+            self._transition_out = 'out_scale'
+        else:
+            self._transition_out = 'out_right'
+
+        uiscale = bui.app.ui_v1.uiscale
+
+        width = 450
+        height = 200
+
+        self._r = 'promoCodeWindow'
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            2.0
+            if uiscale is bui.UIScale.SMALL
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        # target_width = min(width - 80, screensize[0] / scale)
+        target_height = min(height - 80, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * height + 0.5 * target_height + 20.0
+
+        scale_origin = (
+            None
+            if origin_widget is None
+            else origin_widget.get_screen_space_center()
+        )
+
+        assert bui.app.classic is not None
+        super().__init__(
+            root_widget=bui.containerwidget(
+                size=(width, height),
+                toolbar_visibility=('menu_minimal_no_back'),
+                transition=transition,
+                scale_origin_stack_offset=scale_origin,
+                scale=scale,
+            ),
+        )
+
+        close_button = bui.buttonwidget(
+            parent=self._root_widget,
+            scale=0.5,
+            position=(30, yoffs - 30),
+            size=(60, 60),
+            on_activate_call=self._do_back,
+            autoselect=True,
+            color=(0.55, 0.5, 0.6),
+            label=bui.charstr(bui.SpecialChar.CLOSE),
+            textcolor=(1, 1, 1),
+        )
+
+        v = yoffs - 74
+
+        txoffs = -200
+        bui.textwidget(
+            parent=self._root_widget,
+            text=bui.Lstr(resource=f'{self._r}.codeText'),
+            position=(width * 0.5 + txoffs + 22, v),
+            color=(0.8, 0.8, 0.8, 1.0),
+            size=(90, 30),
+            h_align='right',
+            maxwidth=100,
+        )
+        v -= 8
+
+        self._text_field = bui.textwidget(
+            parent=self._root_widget,
+            position=(width * 0.5 + txoffs + 125, v),
+            size=(280, 46),
+            text='',
+            h_align='left',
+            v_align='center',
+            max_chars=64,
+            color=(0.9, 0.9, 0.9, 1.0),
+            description=bui.Lstr(resource=f'{self._r}.codeText'),
+            editable=True,
+            autoselect=True,
+            padding=4,
+            on_return_press_call=self._activate_enter_button,
+        )
+        if close_button is not None:
+            bui.widget(edit=close_button, down_widget=self._text_field)
+
+        v -= 79
+        b_width = 200
+        self._enter_button = btn2 = bui.buttonwidget(
+            parent=self._root_widget,
+            position=(width * 0.5 - b_width * 0.5, v),
+            size=(b_width, 60),
+            scale=1.0,
+            label=bui.Lstr(
+                resource='submitText', fallback_resource=f'{self._r}.enterText'
+            ),
+            on_activate_call=self._do_enter,
+            autoselect=True,
+        )
+        bui.containerwidget(
+            edit=self._root_widget,
+            start_button=btn2,
+            selected_child=self._text_field,
+        )
+        if close_button is not None:
+            bui.containerwidget(
+                edit=self._root_widget,
+                cancel_button=close_button,
+            )
+
     def _do_back(self) -> None:
         # pylint: disable=cyclic-import
-
-        if not self._modal:
-            self.main_window_back()
-            return
 
         # Handle modal case:
 
@@ -213,45 +347,39 @@ class SendInfoWindow(bui.MainWindow):
         description: Any = bui.textwidget(query=self._text_field)
         assert isinstance(description, str)
 
-        if self._modal:
-            # no-op if our underlying widget is dead or on its way out.
-            if not self._root_widget or self._root_widget.transitioning_out:
-                return
-            bui.containerwidget(
-                edit=self._root_widget, transition=self._transition_out
-            )
-        else:
-            # no-op if we're not in control.
-            if not self.main_window_has_control():
-                return
-            self.main_window_back()
+        # no-op if our underlying widget is dead or on its way out.
+        if not self._root_widget or self._root_widget.transitioning_out:
+            return
+        bui.containerwidget(
+            edit=self._root_widget, transition=self._transition_out
+        )
 
         # Used for things like unlocking shared playlists or linking
         # accounts: talk directly to V1 server via transactions.
-        if self._legacy_code_mode:
-            if plus.get_v1_account_state() != 'signed_in':
-                bui.screenmessage(
-                    bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
-                )
-                bui.getsound('error').play()
-            else:
-                plus.add_v1_account_transaction(
-                    {
-                        'type': 'PROMO_CODE',
-                        'expire_time': time.time() + 5,
-                        'code': description,
-                    }
-                )
-                plus.run_v1_account_transactions()
+        if plus.get_v1_account_state() != 'signed_in':
+            bui.screenmessage(
+                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+            )
+            bui.getsound('error').play()
         else:
-            bui.app.create_async_task(_send_info(description))
+            plus.add_v1_account_transaction(
+                {
+                    'type': 'PROMO_CODE',
+                    'expire_time': time.time() + 5,
+                    'code': description,
+                }
+            )
+            plus.run_v1_account_transactions()
 
 
 async def _send_info(description: str) -> None:
-    from bacommon.cloud import SendInfoMessage
+    from bacommon.bs import SendInfoMessage
 
     plus = bui.app.plus
     assert plus is not None
+
+    classic = bui.app.classic
+    assert classic is not None
 
     try:
         # Don't allow *anything* if our V2 transport connection isn't up.
@@ -276,7 +404,13 @@ async def _send_info(description: str) -> None:
 
         # Support simple message printing from v2 server.
         if response.message is not None:
-            bui.screenmessage(response.message, color=(0, 1, 0))
+            bui.screenmessage(
+                bui.Lstr(translate=('serverResponses', response.message)),
+                color=(0, 1, 0),
+            )
+        # As of newer builds we support client-effects too.
+        if response.effects:
+            classic.run_bs_client_effects(response.effects)
 
         # If V2 handled it, we're done.
         if response.handled:
