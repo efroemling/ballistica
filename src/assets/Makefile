@@ -5676,7 +5676,7 @@ assets-ios: $(ASSET_TARGETS_IOS) $(ASSET_TARGETS_COMMON_GUI)
 assets-android: $(ASSET_TARGETS_ANDROID) $(ASSET_TARGETS_COMMON_GUI)
 
 # Build all assets for all platforms.
-assets: assets-cmake assets-win-Win32
+assets: assets-cmake assets-win-x64
 clean:
 	@rm -rf $(BUILD_DIR)
 
