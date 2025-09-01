@@ -63,9 +63,7 @@ class AudioSettingsWindow(bui.MainWindow):
                 size=(width, height),
                 scale=scale,
                 toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
+                    'menu_full' if bui.in_main_menu() else 'menu_minimal'
                 ),
             ),
             transition=transition,

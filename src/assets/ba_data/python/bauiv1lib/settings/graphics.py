@@ -66,9 +66,9 @@ class GraphicsSettingsWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.9
+            1.6
             if uiscale is bui.UIScale.SMALL
-            else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
         popup_menu_scale = scale * 1.2
 
@@ -79,16 +79,14 @@ class GraphicsSettingsWindow(bui.MainWindow):
 
         # To get top/left coords, go to the center of our window and
         # offset by half the width/height of our target area.
-        yoffs = 0.5 * height + 0.5 * target_height + 30.0
+        yoffs = 0.5 * height + 0.5 * target_height + 35.0
 
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
                 scale=scale,
                 toolbar_visibility=(
-                    'menu_minimal'
-                    if uiscale is bui.UIScale.SMALL
-                    else 'menu_full'
+                    'menu_full' if bui.in_main_menu() else 'menu_minimal'
                 ),
             ),
             transition=transition,
@@ -102,6 +100,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
         h_offs = width * 0.5 - 220
 
         if uiscale is bui.UIScale.SMALL:
+            v += 30.0
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )

@@ -67,6 +67,7 @@ class ConfirmWindow:
                 else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
             ),
             scale_origin_stack_offset=scale_origin,
+            darken_behind=True,
         )
 
         bui.textwidget(

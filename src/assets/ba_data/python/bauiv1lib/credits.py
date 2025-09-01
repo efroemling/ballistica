@@ -42,6 +42,13 @@ class CreditsWindow(bui.MainWindow):
             if uiscale is bui.UIScale.SMALL
             else 1.2 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
+
+        # Scale down if necessary so the full width of our UI is
+        # visible.
+        min_width = 800
+        if screensize[0] / scale < min_width:
+            scale *= (screensize[0] / scale) / min_width
+
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
         target_width = min(width - 80, screensize[0] / scale)
@@ -49,11 +56,19 @@ class CreditsWindow(bui.MainWindow):
 
         # To get top/left coords, go to the center of our window and
         # offset by half the width/height of our target area.
-        yoffs = 0.5 * height + 0.5 * target_height + 30.0
+        yoffs = 0.5 * height + 0.5 * target_height
 
         scroll_width = target_width
-        scroll_height = target_height - 29
-        scroll_y = yoffs - 58 - scroll_height
+
+        # Use the full screen area in small mode (we'll include our
+        # title in the scrollable content).
+        if uiscale is bui.UIScale.SMALL:
+            scroll_height = target_height
+            scroll_y = yoffs - scroll_height
+        else:
+            yoffs += 30
+            scroll_height = target_height - 29
+            scroll_y = yoffs - 58 - scroll_height
 
         self._r = 'creditsWindow'
         super().__init__(
@@ -88,24 +103,6 @@ class CreditsWindow(bui.MainWindow):
                 autoselect=True,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
-
-        bui.textwidget(
-            parent=self._root_widget,
-            position=(
-                width * 0.5,
-                yoffs - (44 if uiscale is bui.UIScale.SMALL else 28),
-            ),
-            size=(0, 0),
-            scale=0.8 if uiscale is bui.UIScale.SMALL else 1.0,
-            text=bui.Lstr(
-                resource=f'{self._r}.titleText',
-                subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
-            ),
-            h_align='center',
-            v_align='center',
-            color=bui.app.ui_v1.title_color,
-            maxwidth=scroll_width * 0.7,
-        )
 
         scroll = bui.scrollwidget(
             parent=self._root_widget,
@@ -335,6 +332,12 @@ class CreditsWindow(bui.MainWindow):
         self._sub_width = min(700, width - 80)
         self._sub_height = line_height * len(lines) + 40
 
+        inline_title_height = 50
+
+        # Make space for our title when we're stuffing it inline.
+        if uiscale is bui.UIScale.SMALL:
+            self._sub_height += inline_title_height
+
         container = self._subcontainer = bui.containerwidget(
             parent=scroll,
             size=(self._sub_width, self._sub_height),
@@ -342,7 +345,33 @@ class CreditsWindow(bui.MainWindow):
             claims_left_right=False,
         )
 
-        voffs = 0
+        # Stick our title on the scrollable content in small ui mode so
+        # we can use the full screen area for said content.
+        bui.textwidget(
+            parent=(
+                self._subcontainer
+                if uiscale is bui.UIScale.SMALL
+                else self._root_widget
+            ),
+            position=(
+                (self._sub_width * 0.5, self._sub_height - 20)
+                if uiscale is bui.UIScale.SMALL
+                else (width * 0.5, yoffs - 28)
+            ),
+            size=(0, 0),
+            scale=0.8 if uiscale is bui.UIScale.SMALL else 1.0,
+            text=bui.Lstr(
+                resource=f'{self._r}.titleText',
+                subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+            ),
+            h_align='center',
+            v_align='center',
+            color=bui.app.ui_v1.title_color,
+            maxwidth=scroll_width * 0.7,
+        )
+
+        voffs = -inline_title_height if uiscale is bui.UIScale.SMALL else 0
+
         for line in lines:
             bui.textwidget(
                 parent=container,

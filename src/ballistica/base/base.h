@@ -494,6 +494,7 @@ enum class SysTextureID : uint8_t {
   kSpinner9,
   kSpinner10,
   kSpinner11,
+  kCircleSoft,
 };
 
 enum class SysCubeMapTextureID : uint8_t {

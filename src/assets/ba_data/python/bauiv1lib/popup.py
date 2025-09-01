@@ -99,6 +99,7 @@ class PopupWindow:
             claim_outside_clicks=True,
             color=bg_color,
             on_cancel_call=self.on_popup_cancel,
+            darken_behind=True,
         )
         # complain if we outlive our root widget
         bui.uicleanupcheck(self, self.root_widget)

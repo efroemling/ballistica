@@ -3735,6 +3735,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/circleOutline.dds \
   $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha.dds \
   $(BUILD_DIR)/ba_data/textures/circleShadow.dds \
+  $(BUILD_DIR)/ba_data/textures/circleSoft.dds \
   $(BUILD_DIR)/ba_data/textures/circleZigZag.dds \
   $(BUILD_DIR)/ba_data/textures/clayStroke.dds \
   $(BUILD_DIR)/ba_data/textures/coin.dds \
@@ -4163,6 +4164,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/circleOutline.pvr \
   $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha.pvr \
   $(BUILD_DIR)/ba_data/textures/circleShadow.pvr \
+  $(BUILD_DIR)/ba_data/textures/circleSoft.pvr \
   $(BUILD_DIR)/ba_data/textures/circleZigZag.pvr \
   $(BUILD_DIR)/ba_data/textures/clayStroke.pvr \
   $(BUILD_DIR)/ba_data/textures/coin.pvr \
@@ -4591,6 +4593,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/circleOutline.ktx \
   $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha.ktx \
   $(BUILD_DIR)/ba_data/textures/circleShadow.ktx \
+  $(BUILD_DIR)/ba_data/textures/circleSoft.ktx \
   $(BUILD_DIR)/ba_data/textures/circleZigZag.ktx \
   $(BUILD_DIR)/ba_data/textures/clayStroke.ktx \
   $(BUILD_DIR)/ba_data/textures/coin.ktx \
@@ -5018,6 +5021,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha_preview.png \
   $(BUILD_DIR)/ba_data/textures/circleOutline_preview.png \
   $(BUILD_DIR)/ba_data/textures/circleShadow_preview.png \
+  $(BUILD_DIR)/ba_data/textures/circleSoft_preview.png \
   $(BUILD_DIR)/ba_data/textures/circleZigZag_preview.png \
   $(BUILD_DIR)/ba_data/textures/circle_preview.png \
   $(BUILD_DIR)/ba_data/textures/clayStroke_preview.png \

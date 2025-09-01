@@ -61,8 +61,8 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
                                    float y_offset, float scale) {
   BA_DEBUG_UI_READ_LOCK;
 
-  // We're expected to fill z space 0..1 when we draw... so we need to divide
-  // that space between our child widgets plus our bg layer.
+  // We're expected to fill z space 0..1 when we draw... so we need to
+  // divide that space between our child widgets plus our bg layer.
   float layer_thickness{};
   float layer_spacing{};
   float base_offset{};
@@ -76,8 +76,8 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
   float base_offset2{};
   float base_offset3{};
 
-  // In single-depth mode we draw all widgets at the same depth so they each get
-  // our full depth resolution. however they may overlap incorrectly.
+  // In single-depth mode we draw all widgets at the same depth so they each
+  // get our full depth resolution. however they may overlap incorrectly.
   if (background_) {
     assert(!single_depth_root_);
     if (single_depth_) {
@@ -92,8 +92,8 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
     }
   } else {
     if (single_depth_) {
-      // Single-depth-root is a special mode for our root container
-      // where the first child (the screen stack) gets most of the depth range,
+      // Single-depth-root is a special mode for our root container where
+      // the first child (the screen stack) gets most of the depth range,
       // the last child (the overlay stack) gets a bit of the rest, and the
       // remainder is shared between root widget children (toolbars, etc).
       if (single_depth_root_) {
@@ -798,7 +798,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   BA_DEBUG_UI_READ_LOCK;
 
   CheckLayout();
-  millisecs_t net_time = pass->frame_def()->display_time_millisecs();
+  millisecs_t display_time_ms = pass->frame_def()->display_time_millisecs();
   float offset_h = 0.0f;
 
   // If we're transitioning, update our offsets in the first (opaque) pass.
@@ -807,9 +807,9 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
     if (!draw_transparent) {
       if (transition_type_ == TransitionType::kInScale) {
-        if (net_time - dynamics_update_time_millisecs_ > 1000)
-          dynamics_update_time_millisecs_ = net_time - 1000;
-        while (net_time - dynamics_update_time_millisecs_ > 5) {
+        if (display_time_ms - dynamics_update_time_millisecs_ > 1000)
+          dynamics_update_time_millisecs_ = display_time_ms - 1000;
+        while (display_time_ms - dynamics_update_time_millisecs_ > 5) {
           dynamics_update_time_millisecs_ += 5;
           d_transition_scale_ +=
               std::min(0.2f, (1.0f - transition_scale_)) * 0.04f;
@@ -822,9 +822,9 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           }
         }
       } else if (transition_type_ == TransitionType::kOutScale) {
-        if (net_time - dynamics_update_time_millisecs_ > 1000)
-          dynamics_update_time_millisecs_ = net_time - 1000;
-        while (net_time - dynamics_update_time_millisecs_ > 5) {
+        if (display_time_ms - dynamics_update_time_millisecs_ > 1000)
+          dynamics_update_time_millisecs_ = display_time_ms - 1000;
+        while (display_time_ms - dynamics_update_time_millisecs_ > 5) {
           dynamics_update_time_millisecs_ += 5;
           transition_scale_ -= 0.04f;
           if (transition_scale_ <= 0.0f) {
@@ -844,9 +844,9 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         }
       } else {
         // Step our dynamics up to the present.
-        if (net_time - dynamics_update_time_millisecs_ > 1000)
-          dynamics_update_time_millisecs_ = net_time - 1000;
-        while (net_time - dynamics_update_time_millisecs_ > 5) {
+        if (display_time_ms - dynamics_update_time_millisecs_ > 1000)
+          dynamics_update_time_millisecs_ = display_time_ms - 1000;
+        while (display_time_ms - dynamics_update_time_millisecs_ > 5) {
           dynamics_update_time_millisecs_ += 5;
 
           if (transitioning_) {
@@ -919,8 +919,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         }
       }
 
-      // If we're scaling in or out, update our transition offset
-      // (so we can zoom from a point somewhere else on screen).
+      // If we're scaling in or out, update our transition offset (so we can
+      // zoom from a point somewhere else on screen).
       if (transition_type_ == TransitionType::kInScale
           || transition_type_ == TransitionType::kOutScale) {
         // Add a fudge factor since our scale point isn't exactly in our center.
@@ -949,8 +949,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   float w = width_;
   float h = height_;
 
-  // Update bg vals if need be
-  // (we may need these even if bg is turned off so always calc them).
+  // Update bg vals if need be (we may need these even if bg is turned off
+  // so always calc them).
   if (bg_dirty_) {
     base::SysTextureID tex_id;
     float l_border, r_border, b_border, t_border;
@@ -993,6 +993,64 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // Draw our window backing if we have one.
   if ((w > 0) && (h > 0)) {
     if (background_) {
+      float zoffs{};
+      if (darken_behind_) {
+        // Draw the regular bg a bit in front of us.
+        zoffs = 0.1f;
+        if (draw_transparent) {
+          // Currently we only work with single-depth since we reserve a
+          // slice of 0.2 there.
+          if (!single_depth_) {
+            BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
+                        "darken_behind only works with single-depth enabled.");
+          }
+          base::SimpleComponent c(pass);
+          c.SetTransparent(true);
+
+          // Fade in/out with transitions.
+          float amt;
+          if (transitioning_) {
+            if (transitioning_out_) {
+              // 1.0 is a 1 second fade. Note that we'll snap to 1 or 0 once
+              // fades end so we need to make sure we're fast enough to show
+              // our whole range.
+              auto fade_speed{10.0f};
+              amt = std::max(0.0f,
+                             std::min(1.0f, 1.0f
+                                                - static_cast<float>(
+                                                      display_time_ms
+                                                      - transition_start_time_)
+                                                      / 1000.0f * fade_speed));
+            } else {
+              // 1.0 is a 1 second fade. Note that we'll snap to 1 or 0 once
+              // fades end so we need to make sure we're fast enough to show
+              // our whole range.
+              auto fade_speed{5.0f};
+              amt = std::max(
+                  0.0f,
+                  std::min(1.0f, static_cast<float>(display_time_ms
+                                                    - transition_start_time_)
+                                     / 1000.0f * fade_speed));
+            }
+          } else {
+            amt = 1.0f;
+          }
+          // printf("AMT %.2f\n", amt);
+          c.SetColor(0.0f, 0.0f, 0.0f, 0.5 * amt);
+          c.SetTexture(
+              g_base->assets->SysTexture(base::SysTextureID::kCircleSoft));
+          auto s{8.0f * std::max(bg_width_, bg_height_)};
+          {
+            auto xf = c.ScopedTransform();
+            c.Translate(bg_center_x_, bg_center_y_);
+            c.Scale(s, s);
+            c.DrawMeshAsset(
+                g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          }
+          c.Submit();
+        }
+      }
+
       base::SimpleComponent c(pass);
       c.SetTransparent(draw_transparent);
       float s = 1.0f;
@@ -1004,7 +1062,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetTexture(tex_.get());
       {
         auto xf = c.ScopedTransform();
-        c.Translate(bg_center_x_, bg_center_y_);
+        c.Translate(bg_center_x_, bg_center_y_, zoffs);
         c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
         c.DrawMeshAsset(g_base->assets->SysMesh(
             draw_transparent ? bg_mesh_transparent_i_d_ : bg_mesh_opaque_i_d_));
@@ -1020,7 +1078,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   // Draw overlay glow.
   if (root_selectable_ && selected()) {
-    float m = GetMult(net_time, true);
+    float m = GetMult(display_time_ms, true);
     if (draw_transparent) {
       if (glow_dirty_) {
         float l_border, r_border, b_border, t_border;

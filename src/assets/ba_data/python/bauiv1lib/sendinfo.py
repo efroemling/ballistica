@@ -59,9 +59,7 @@ class SendInfoWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(width, height),
                 toolbar_visibility=(
-                    'menu_minimal'
-                    if (uiscale is bui.UIScale.SMALL and not bui.in_main_menu())
-                    else 'menu_full'
+                    'menu_full' if bui.in_main_menu() else 'menu_minimal'
                 ),
                 scale=scale,
             ),

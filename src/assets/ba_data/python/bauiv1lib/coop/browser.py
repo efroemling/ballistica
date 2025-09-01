@@ -114,6 +114,13 @@ class CoopBrowserWindow(bui.MainWindow):
             if uiscale is bui.UIScale.SMALL
             else 0.8 if uiscale is bui.UIScale.MEDIUM else 0.75
         )
+
+        # Scale down if necessary so the full width of our UI is
+        # visible.
+        min_width = 1000
+        if screensize[0] / scale < min_width:
+            scale *= (screensize[0] / scale) / min_width
+
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
         target_width = min(self._width - 120, screensize[0] / scale)

@@ -1,3 +1,17 @@
+### 1.7.49 (build 22516, api 9, 2025-09-01)
+- Added a `darken_behind` arg for `bauiv1.containerwidget()`. Useful for things
+  such as popups and dialogs to show that stuff outside the container isn't
+  currently tappable.
+- Updated a few more UIs to keeping toolbars visible on small ui-scale (phones).
+  One could argue that showing toolbars at that scale makes things a bit busy
+  looking overall, but I think having them transition in and out constantly
+  looks a bit distracting itself, so let's see how this feels.
+- Updated a few UIs such as help and credits to use the full screen area on
+  small ui-scale (phones) instead of drawing a 'titlebar'.
+- Fixed a few UIs such as Co-op and credits which would draw offscreen on small
+  ui-scale (phones) with very narrow aspect ratios.
+- Various other bits of UI polish. Sometimes you just need a UI polish day.
+
 ### 1.7.48 (build 22512, api 9, 2025-08-31)
 - Added Kazakh language (Thanks KAZDOG!)
 - The 'Logging' dev-console-tab is now 'LogLevels'. I kept finding myself going

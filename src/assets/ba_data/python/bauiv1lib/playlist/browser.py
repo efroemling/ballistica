@@ -27,6 +27,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         playlist_select_context: PlaylistSelectContext | None = None,
     ):
         # pylint: disable=cyclic-import
+        # pylint: disable=too-many-locals
         from bauiv1lib.playlist import PlaylistTypeVars
 
         # Store state for when we exit the next game.
@@ -91,10 +92,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 size=(self._width, self._height),
                 toolbar_visibility=(
                     'menu_minimal'
-                    if (
-                        uiscale is bui.UIScale.SMALL
-                        or playlist_select_context is not None
-                    )
+                    if playlist_select_context is not None
                     else 'menu_full'
                 ),
                 scale=scale,
@@ -156,6 +154,44 @@ class PlaylistBrowserWindow(bui.MainWindow):
         self._subcontainer: bui.Widget | None = None
         self._config_name_full = self._pvars.config_name + ' Playlists'
         self._last_config = None
+
+        # Add some blotches so our contents fades out as it approaches
+        # the bottom toolbar.
+        if uiscale is bui.UIScale.SMALL and playlist_select_context is None:
+            blotchwidth = 500.0
+            blotchheight = 200.0
+            bimg = bui.imagewidget(
+                parent=self._root_widget,
+                texture=bui.gettexture('uiAtlas'),
+                mesh_transparent=bui.getmesh('windowBGBlotch'),
+                position=(
+                    self._width * 0.5
+                    - self._scroll_width * 0.5
+                    + 60.0
+                    - blotchwidth * 0.5,
+                    scroll_bottom - blotchheight * 0.5,
+                ),
+                size=(blotchwidth, blotchheight),
+                color=(0.4, 0.37, 0.49),
+                # color=(1, 0, 0),
+            )
+            bui.widget(edit=bimg, depth_range=(0.9, 1.0))
+            bimg = bui.imagewidget(
+                parent=self._root_widget,
+                texture=bui.gettexture('uiAtlas'),
+                mesh_transparent=bui.getmesh('windowBGBlotch'),
+                position=(
+                    self._width * 0.5
+                    + self._scroll_width * 0.5
+                    - 60.0
+                    - blotchwidth * 0.5,
+                    scroll_bottom - blotchheight * 0.5,
+                ),
+                size=(blotchwidth, blotchheight),
+                color=(0.4, 0.37, 0.49),
+                # color=(1, 0, 0),
+            )
+            bui.widget(edit=bimg, depth_range=(0.9, 1.0))
 
         # Update now and once per second (this should do our initial
         # refresh).
@@ -392,10 +428,15 @@ class PlaylistBrowserWindow(bui.MainWindow):
         )
         rows = int(math.ceil(float(count) / columns))
 
+        extra_bottom_buffer = 50
+
         self._sub_width = columns * button_width + 2 * button_buffer_h
 
         self._sub_height = (
-            40.0 + rows * (button_height + 2 * button_buffer_v) + 90
+            40.0
+            + rows * (button_height + 2 * button_buffer_v)
+            + 90
+            + extra_bottom_buffer
         )
         assert self._sub_width is not None
         assert self._sub_height is not None
@@ -490,7 +531,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     )
                 else:
                     bui.widget(
-                        edit=btn, show_buffer_top=30, show_buffer_bottom=30
+                        edit=btn, show_buffer_top=30, show_buffer_bottom=60
                     )
 
                 if self._selected_playlist == name:
@@ -670,7 +711,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         self._customize_button = btn = bui.buttonwidget(
             parent=self._subcontainer,
             size=(100, 30),
-            position=(34 + h_offs_bottom, 50),
+            position=(34 + h_offs_bottom, 50 + extra_bottom_buffer),
             text_scale=0.6,
             label=bui.Lstr(resource='customizeText'),
             on_activate_call=self._on_customize_press,
@@ -678,7 +719,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
             textcolor=(0.7, 0.65, 0.7),
             autoselect=True,
         )
-        bui.widget(edit=btn, show_buffer_top=22, show_buffer_bottom=28)
+        bui.widget(edit=btn, show_buffer_top=22, show_buffer_bottom=60)
         self._restore_state()
 
     def on_play_options_window_run_game(self) -> None:
