@@ -136,6 +136,8 @@ class HelpWindow(bui.MainWindow):
                 f'{self._r}.orPunchingSomethingExtraSpace'
             )
         )
+
+        # Make space for our title when we're stuffing it inline.
         if uiscale is bui.UIScale.SMALL:
             self._sub_height += inline_title_height
 

@@ -1036,7 +1036,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             amt = 1.0f;
           }
           // printf("AMT %.2f\n", amt);
-          c.SetColor(0.0f, 0.0f, 0.0f, 0.5 * amt);
+          c.SetColor(0.0f, 0.0f, 0.0f, 0.6 * amt);
           c.SetTexture(
               g_base->assets->SysTexture(base::SysTextureID::kCircleSoft));
           auto s{8.0f * std::max(bg_width_, bg_height_)};
