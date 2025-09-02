@@ -1,4 +1,6 @@
 ### 1.7.49 (build 22517, api 9, 2025-09-01)
+- Fixes an issue where `bascenev1.reload_hooks()` and `bauiv1.reload_hooks()`
+  were actually calling `_babase.reload_hooks()` (oops my bad).
 - Added a `darken_behind` arg for `bauiv1.containerwidget()`. Useful for things
   such as popups and dialogs to show that stuff outside the container isn't
   currently tappable.
