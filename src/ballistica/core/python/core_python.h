@@ -54,8 +54,7 @@ class CorePython {
     kLoggerBaNetworkingLogCall,
     kPrependSysPathCall,
     kWarmStart1Call,
-    kWarmStart2Call,
-    kWarmStart3Call,
+    kWarmStart1CompletedCall,
     kBaEnvConfigureCall,
     kBaEnvGetConfigCall,
     kBaEnvAtExitCall,
@@ -101,8 +100,7 @@ class CorePython {
   const auto& objs() { return objs_; }
 
   void WarmStart1();
-  void WarmStart2();
-  void WarmStart3();
+  auto WarmStart1Completed() -> bool;
 
  private:
   PythonObjectSet<ObjID> objs_;

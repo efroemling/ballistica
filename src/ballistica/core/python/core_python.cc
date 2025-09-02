@@ -335,10 +335,8 @@ void CorePython::ImportPythonObjs() {
                         *ctx.DictGetItem("prepend_sys_path"));
     objs_.StoreCallable(ObjID::kWarmStart1Call,
                         *ctx.DictGetItem("warm_start_1"));
-    objs_.StoreCallable(ObjID::kWarmStart2Call,
-                        *ctx.DictGetItem("warm_start_2"));
-    objs_.StoreCallable(ObjID::kWarmStart3Call,
-                        *ctx.DictGetItem("warm_start_3"));
+    objs_.StoreCallable(ObjID::kWarmStart1CompletedCall,
+                        *ctx.DictGetItem("warm_start_1_completed"));
     objs_.StoreCallable(ObjID::kBaEnvConfigureCall,
                         *ctx.DictGetItem("import_baenv_and_run_configure"));
     objs_.StoreCallable(ObjID::kBaEnvGetConfigCall,
@@ -439,14 +437,12 @@ void CorePython::WarmStart1() {
   assert(result.exists());
 }
 
-void CorePython::WarmStart2() {
-  auto result = objs().Get(ObjID::kWarmStart2Call).Call();
+auto CorePython::WarmStart1Completed() -> bool {
+  auto result = objs().Get(ObjID::kWarmStart1CompletedCall).Call();
   assert(result.exists());
-}
-
-void CorePython::WarmStart3() {
-  auto result = objs().Get(ObjID::kWarmStart3Call).Call();
-  assert(result.exists());
+  auto* result_obj{result.get()};
+  assert(result_obj == Py_True || result_obj || Py_False);
+  return result_obj == Py_True;
 }
 
 void CorePython::VerifyPythonEnvironment() {

@@ -45,7 +45,7 @@ class AudioSettingsWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            2.2
+            2.0
             if uiscale is bui.UIScale.SMALL
             else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
         )

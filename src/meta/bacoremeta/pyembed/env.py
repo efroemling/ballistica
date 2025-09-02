@@ -94,9 +94,20 @@ def pre_finalize() -> None:
 # mobile device can take a bit of time.
 
 
+_g_warm_start_1_completed = False  # pylint: disable=invalid-name
+
+
 def warm_start_1() -> None:
     """Early import python bits we'll be using later."""
+    import threading
+
+    threading.Thread(target=_warm_start_imports).start()
+
+
+def _warm_start_imports() -> None:
     # pylint: disable=unused-import
+    # pylint: disable=global-statement
+    # pylint: disable=too-many-locals
     import os
     import ssl
     import zlib
@@ -112,12 +123,6 @@ def warm_start_1() -> None:
     import shutil
     import string
     import zipfile
-
-
-def warm_start_2() -> None:
-    """Early import python bits we'll be using later."""
-    # pylint: disable=unused-import
-    # pylint: disable=too-many-locals
     import inspect
     import logging
     import weakref
@@ -136,9 +141,12 @@ def warm_start_2() -> None:
     import urllib.parse
     import collections.abc
     import concurrent.futures
-
-
-def warm_start_3() -> None:
-    """Early import python bits we'll be using later."""
-    # pylint: disable=unused-import
     import asyncio
+
+    global _g_warm_start_1_completed
+    _g_warm_start_1_completed = True
+
+
+def warm_start_1_completed() -> bool:
+    """Is warm-start-1 done?"""
+    return _g_warm_start_1_completed

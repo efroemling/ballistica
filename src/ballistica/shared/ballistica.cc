@@ -41,7 +41,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22517;
+const int kEngineBuildNumber = 22519;
 const char* kEngineVersion = "1.7.49";
 const int kEngineApiVersion = 9;
 
@@ -234,31 +234,43 @@ class IncrementalInitRunner_ {
           step_++;
           return false;
 
-        case 2:
-          core_->python->WarmStart2();
-          LogStepTime_(step_);
-          step_++;
-          return false;
+        case 2: {
+          // This step is a special case; the previous step kicked off a
+          // bunch of background work and in this step we simply poll for it
+          // to finish, returning periodically to avoid ANRs.
+          auto starttime{core::CorePlatform::TimeMonotonicMillisecs()};
+          while (explicit_bool(true)) {
+            if (core::CorePlatform::TimeMonotonicMillisecs() - starttime
+                > 1000) {
+              // Out of time this pass.
+              LogStepTime_(step_);
+              return false;
+            }
+            if (core_->python->WarmStart1Completed()) {
+              // We finished this step.
+              LogStepTime_(step_);
+              step_++;
+              return false;
+            }
+            // Sleep for short bits while the warm start bg stuff is going
+            // so they get most of the cpu.
+            core::CorePlatform::SleepMillisecs(1);
+          }
+        }
 
         case 3:
-          core_->python->WarmStart3();
-          LogStepTime_(step_);
-          step_++;
-          return false;
-
-        case 4:
           core_->python->MonolithicModeBaEnvImport();
           LogStepTime_(step_);
           step_++;
           return false;
 
-        case 5:
+        case 4:
           core_->python->MonolithicModeBaEnvConfigure();
           LogStepTime_(step_);
           step_++;
           return false;
 
-        case 6:
+        case 5:
           base_ = core_->SoftImportBase();
           if (!base_) {
             FatalError("Base module unavailable; can't run app.");
@@ -267,7 +279,7 @@ class IncrementalInitRunner_ {
           step_++;
           return false;
 
-        case 7:
+        case 6:
           base_->StartApp();
           Python::PermanentlyReleaseGIL();
           LogStepTime_(step_);
