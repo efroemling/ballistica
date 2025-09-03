@@ -41,7 +41,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22519;
+const int kEngineBuildNumber = 22521;
 const char* kEngineVersion = "1.7.49";
 const int kEngineApiVersion = 9;
 
@@ -254,7 +254,12 @@ class IncrementalInitRunner_ {
             }
             // Sleep for short bits while the warm start bg stuff is going
             // so they get most of the cpu.
-            core::CorePlatform::SleepMillisecs(1);
+            //
+            // IMPORTANT: Let go of the GIL while we're sleeping.
+            {
+              Python::ScopedInterpreterLockRelease gil_release;
+              core::CorePlatform::SleepMillisecs(1);
+            }
           }
         }
 
