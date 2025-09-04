@@ -516,7 +516,8 @@ class InboxWindow(bui.MainWindow):
             return
 
         # Pause the root ui so stuff like token counts don't change
-        # automatically, allowing the action to animate them.
+        # automatically until we've run any client-effect animations
+        # resulting from this message.
         self._action_ui_pause = bui.RootUIUpdatePause()
 
         # Ask the master-server to run our action.

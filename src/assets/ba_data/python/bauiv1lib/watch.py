@@ -413,6 +413,7 @@ class WatchWindow(bui.MainWindow):
             size=(c_width, c_height),
             transition='in_scale',
             parent=bui.get_special_widget('overlay_stack'),
+            darken_behind=True,
         )
         dname = self._get_replay_display_name(self._my_replay_selected)
         bui.textwidget(

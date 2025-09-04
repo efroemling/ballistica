@@ -200,7 +200,6 @@
  "ba_data/python/bauiv1lib/account/__init__.py",
  "ba_data/python/bauiv1lib/account/settings.py",
  "ba_data/python/bauiv1lib/account/signin.py",
- "ba_data/python/bauiv1lib/account/unlink.py",
  "ba_data/python/bauiv1lib/account/v2proxy.py",
  "ba_data/python/bauiv1lib/account/viewer.py",
  "ba_data/python/bauiv1lib/achievements.py",

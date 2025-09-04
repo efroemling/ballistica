@@ -343,7 +343,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/settings.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/signin.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/account/unlink.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/v2proxy.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/viewer.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/achievements.py \

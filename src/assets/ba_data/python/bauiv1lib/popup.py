@@ -32,6 +32,7 @@ class PopupWindow:
             'menu_store_no_back',
         ] = 'menu_minimal_no_back',
         edge_buffer_scale: float = 1.0,
+        darken_behind: bool = True,
     ):
         # pylint: disable=too-many-locals
         if focus_size is None:
@@ -99,7 +100,7 @@ class PopupWindow:
             claim_outside_clicks=True,
             color=bg_color,
             on_cancel_call=self.on_popup_cancel,
-            darken_behind=True,
+            darken_behind=darken_behind,
         )
         # complain if we outlive our root widget
         bui.uicleanupcheck(self, self.root_widget)
@@ -196,7 +197,10 @@ class PopupMenuWindow(PopupWindow):
         # Init parent class - this will rescale and reposition things as
         # needed and create our root widget.
         super().__init__(
-            position, size=(self._width, self._height), scale=self._scale
+            position,
+            size=(self._width, self._height),
+            scale=self._scale,
+            darken_behind=False,  # Looks too intense for a menu.
         )
 
         if self._use_scroll:

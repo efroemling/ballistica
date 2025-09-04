@@ -61,6 +61,7 @@ class PurchaseWindow(bui.Window):
                 stack_offset=(
                     (0, -15) if uiscale is bui.UIScale.SMALL else (0, 0)
                 ),
+                darken_behind=True,
             )
         )
         self._is_double = False

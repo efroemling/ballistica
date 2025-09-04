@@ -248,6 +248,7 @@ class SendInfoWindowLegacyModal(bui.Window):
                 transition=transition,
                 scale_origin_stack_offset=scale_origin,
                 scale=scale,
+                darken_behind=True,
             ),
         )
 
@@ -379,6 +380,8 @@ async def _send_info(description: str) -> None:
     classic = bui.app.classic
     assert classic is not None
 
+    ui_pause: bui.RootUIUpdatePause | None = None  # pylint: disable=W0612
+
     try:
         # Don't allow *anything* if our V2 transport connection isn't up.
         if not plus.cloud.connected:
@@ -388,6 +391,11 @@ async def _send_info(description: str) -> None:
             )
             bui.getsound('error').play()
             return
+
+        # Pause root ui updates so stuff like token counts don't change
+        # automatically until we've run any client-effect animations
+        # resulting from this message.
+        ui_pause = bui.RootUIUpdatePause()
 
         # Ship to V2 server, with or without account info.
         if plus.accounts.primary is not None:
@@ -440,3 +448,7 @@ async def _send_info(description: str) -> None:
         logging.exception('Error sending promo code.')
         bui.screenmessage('Error sending code (see log).', color=(1, 0, 0))
         bui.getsound('error').play()
+    finally:
+        # Make sure ui-pause is dead even if something is holding
+        # on to this stack frame.
+        ui_pause = None

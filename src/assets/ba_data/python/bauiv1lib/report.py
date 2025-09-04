@@ -38,12 +38,11 @@ class ReportPlayerWindow(bui.Window):
             scale=0.7,
             position=(40, self._height - 50),
             size=(50, 50),
-            label='',
+            label=bui.charstr(bui.SpecialChar.CLOSE),
+            textcolor=(1, 1, 1),
             on_activate_call=self.close,
             autoselect=True,
             color=(0.4, 0.4, 0.5),
-            icon=bui.gettexture('crossOut'),
-            iconscale=1.2,
         )
         bui.containerwidget(
             edit=self._root_widget, cancel_button=self._cancel_button

@@ -283,12 +283,11 @@ class PartyQueueWindow(bui.Window):
             scale=1.0,
             position=(60, self._height - 80),
             size=(50, 50),
-            label='',
+            label=bui.charstr(bui.SpecialChar.CLOSE),
+            textcolor=(1, 1, 1),
             on_activate_call=self.close,
             autoselect=True,
             color=(0.45, 0.63, 0.15),
-            icon=bui.gettexture('crossOut'),
-            iconscale=1.2,
         )
         bui.containerwidget(
             edit=self._root_widget, cancel_button=self._cancel_button

@@ -366,11 +366,16 @@ class CoopBrowserWindow(bui.MainWindow):
         if self._fg_state != bui.app.fg_state:
             self._tourney_data_up_to_date = False
 
-        # Send off a new tournament query if its been long enough or whatnot.
-        if not self._doing_tournament_query and (
-            self._last_tournament_query_time is None
-            or cur_time - self._last_tournament_query_time > 30.0
-            or self._fg_state != bui.app.fg_state
+        # Send off a new tournament query if its been long enough or
+        # whatnot.
+        if (
+            not self._doing_tournament_query
+            and plus.cloud.connected
+            and (
+                self._last_tournament_query_time is None
+                or cur_time - self._last_tournament_query_time > 30.0
+                or self._fg_state != bui.app.fg_state
+            )
         ):
             self._fg_state = bui.app.fg_state
             self._last_tournament_query_time = cur_time

@@ -183,8 +183,6 @@ class PlayOptionsWindow(PopupWindow):
             color=(0.42, 0.73, 0.2),
             on_activate_call=self._on_cancel_press,
             autoselect=True,
-            # icon=bui.gettexture('crossOut'),
-            # iconscale=1.2,
         )
 
         h_offs_img = self._width * 0.5 - c_width_total * 0.5

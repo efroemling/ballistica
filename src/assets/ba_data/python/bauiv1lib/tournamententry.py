@@ -129,12 +129,11 @@ class TournamentEntryWindow(PopupWindow):
             position=(40, self._height - 34),
             size=(60, 60),
             scale=0.5,
-            label='',
+            label=bui.charstr(bui.SpecialChar.CLOSE),
+            textcolor=(1, 1, 1),
             color=bg_color,
             on_activate_call=self._on_cancel,
             autoselect=True,
-            icon=bui.gettexture('crossOut'),
-            iconscale=1.2,
         )
 
         self._title_text = bui.textwidget(
@@ -146,7 +145,6 @@ class TournamentEntryWindow(PopupWindow):
             scale=0.6,
             text=bui.Lstr(resource='tournamentEntryText'),
             maxwidth=180,
-            # color=(1, 1, 1, 0.4),
             color=bui.app.ui_v1.title_color,
         )
 

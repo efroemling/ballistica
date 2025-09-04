@@ -33,6 +33,7 @@ class ShowFriendCodeWindow(bui.Window):
                     if uiscale is bui.UIScale.SMALL
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
+                darken_behind=True,
             )
         )
         self._data = copy.deepcopy(data)
@@ -44,12 +45,11 @@ class ShowFriendCodeWindow(bui.Window):
             scale=0.7,
             position=(50, self._height - 50),
             size=(60, 60),
-            label='',
+            label=bui.charstr(bui.SpecialChar.CLOSE),
+            textcolor=(1, 1, 1),
             on_activate_call=self.close,
             autoselect=True,
             color=(0.45, 0.63, 0.15),
-            icon=bui.gettexture('crossOut'),
-            iconscale=1.2,
         )
         bui.containerwidget(
             edit=self._root_widget, cancel_button=self._cancel_button

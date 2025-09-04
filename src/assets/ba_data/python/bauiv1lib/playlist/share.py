@@ -7,6 +7,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING, override
 
+from efro.util import strict_partial
 from bauiv1lib.sendinfo import SendInfoWindowLegacyModal
 import bauiv1 as bui
 
@@ -76,7 +77,7 @@ class SharePlaylistResultsWindow(bui.Window):
     """Window for sharing playlists."""
 
     def __init__(
-        self, name: str, data: str, origin: tuple[float, float] = (0.0, 0.0)
+        self, name: str, code: str, origin: tuple[float, float] = (0.0, 0.0)
     ):
         del origin  # unused arg
         self._width = 450
@@ -93,6 +94,7 @@ class SharePlaylistResultsWindow(bui.Window):
                     if uiscale is bui.UIScale.SMALL
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
+                darken_behind=True,
             )
         )
         bui.getsound('cashRegister').play()
@@ -103,12 +105,11 @@ class SharePlaylistResultsWindow(bui.Window):
             scale=0.7,
             position=(40, self._height - 40),
             size=(50, 50),
-            label='',
+            label=bui.charstr(bui.SpecialChar.CLOSE),
+            textcolor=(1, 1, 1),
             on_activate_call=self.close,
             autoselect=True,
             color=(0.45, 0.63, 0.15),
-            icon=bui.gettexture('crossOut'),
-            iconscale=1.2,
         )
         bui.containerwidget(
             edit=self._root_widget, cancel_button=self._cancel_button
@@ -150,10 +151,25 @@ class SharePlaylistResultsWindow(bui.Window):
             scale=2.3,
             h_align='center',
             v_align='center',
-            text=data,
+            text=code,
             maxwidth=self._width * 0.85,
         )
+        if bui.clipboard_is_supported():
+            bui.buttonwidget(
+                parent=self._root_widget,
+                size=(140, 40),
+                textcolor=(1, 1, 1),
+                color=(0.45, 0.63, 0.15),
+                on_activate_call=strict_partial(self._copy_press, code),
+                label=bui.Lstr(resource='gatherWindow.copyCodeText'),
+                position=(self._width * 0.5 - 70, 35),
+                autoselect=True,
+            )
 
     def close(self) -> None:
         """Close the window."""
         bui.containerwidget(edit=self._root_widget, transition='out_scale')
+
+    def _copy_press(self, code: str) -> None:
+        bui.clipboard_set_text(code)
+        bui.screenmessage(bui.Lstr(resource='gatherWindow.copyCodeConfirmText'))
