@@ -2,8 +2,11 @@
 
 #include "ballistica/shared/ballistica.h"
 
+#include <chrono>
 #include <cstdio>
+#include <memory>
 #include <string>
+#include <thread>
 
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
@@ -41,7 +44,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22525;
+const int kEngineBuildNumber = 22528;
 const char* kEngineVersion = "1.7.50";
 const int kEngineApiVersion = 9;
 
@@ -228,11 +231,30 @@ class IncrementalInitRunner_ {
           last_step_time_ = core::CorePlatform::TimeMonotonicSeconds();
           return false;
 
-        case 1:
+        case 1: {
           core_->python->WarmStart1();
+
+          // Launch a thread which spins and waits for the Python bg stuff
+          // we just launched to complete. We do this in a separate thread
+          // because even acquiring the GIL to make the check in the main
+          // thread can be enough to trigger ANRs on slower hardware.
+          thread_ = std::make_unique<std::thread>([this] {
+            while (explicit_bool(true)) {
+              {
+                Python::ScopedInterpreterLock gil_acquire;
+                if (core_->python->WarmStart1Completed()) {
+                  warm_start_completed_ = true;
+                  break;
+                }
+              }
+              std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+          });
+
           LogStepTime_(step_);
           step_++;
           return false;
+        }
 
         case 2: {
           // This step is a special case; the previous step kicked off a
@@ -246,7 +268,11 @@ class IncrementalInitRunner_ {
               LogStepTime_(step_);
               return false;
             }
-            if (core_->python->WarmStart1Completed()) {
+            // if (core_->python->WarmStart1Completed()) {
+            if (warm_start_completed_) {
+              // Our thread that set this should be done.
+              thread_->join();
+
               // We finished this step.
               LogStepTime_(step_);
               step_++;
@@ -349,6 +375,8 @@ class IncrementalInitRunner_ {
   int step_{};
   seconds_t last_step_time_{};
   bool zombie_{};
+  bool warm_start_completed_{};
+  std::unique_ptr<std::thread> thread_{};
   core::CoreConfig config_;
   core::CoreFeatureSet* core_{};
   core::BaseSoftInterface* base_{};

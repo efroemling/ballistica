@@ -1,7 +1,9 @@
-### 1.7.50 (build 22525, api 9, 2025-09-04)
+### 1.7.50 (build 22528, api 9, 2025-09-05)
 - Cleaned up cursor handling on Mac build. Fixes an issue where the cursor could
   sometimes revert to the system cursor for a few seconds after moving the
   cursor to the top of a fullscreen window.
+- Chest prize odds now show with most valuable stuff at the top instead of
+  bottom (feels more intuitive to me).
 
 ### 1.7.49 (build 22524, api 9, 2025-09-04)
 - Fixes an issue where `bascenev1.reload_hooks()` and `bauiv1.reload_hooks()`

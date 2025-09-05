@@ -153,6 +153,11 @@ class ClassicAccountLiveData:
         GOLD = 'g'
         DIAMOND = 'd'
 
+    class Flag(Enum):
+        """Flags set for our account."""
+
+        ASK_FOR_REVIEW = 'r'
+
     tickets: Annotated[int, IOAttrs('ti')]
 
     tokens: Annotated[int, IOAttrs('to')]
@@ -178,6 +183,8 @@ class ClassicAccountLiveData:
 
     # State id of our purchases for builds 22459+.
     purchases_state: Annotated[str | None, IOAttrs('p')]
+
+    flags: Annotated[set[Flag], IOAttrs('f', soft_default_factory=set)]
 
 
 class DisplayItemTypeID(Enum):

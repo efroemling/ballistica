@@ -327,10 +327,11 @@ class ChestWindow(bui.MainWindow):
         )
 
         # Store the prize-sets so we can display odds/etc. Sort them
-        # with largest weights first.
-        self._prizesets = sorted(
-            chest.prizesets, key=lambda s: s.weight, reverse=True
-        )
+        # with smallest weights first (higher visually == better).
+        # self._prizesets = sorted(
+        #     chest.prizesets, key=lambda s: s.weight, reverse=True
+        # )
+        self._prizesets = chest.prizesets
 
         if chest.unlock_tokens > 0:
             lsize = 30
@@ -746,11 +747,15 @@ class ChestWindow(bui.MainWindow):
         self._prizesettxts = {}
         self._prizesetimgs = {}
 
+        basey = y
+
         for i, p in enumerate(self._prizesets):
             prizesettxts = self._prizesettxts.setdefault(i, [])
             prizesetimgs = self._prizesetimgs.setdefault(i, [])
             x = self._width * 0.5 + xoffs
-            y -= rowheight
+
+            # Display from bottom up.
+            y = basey - (len(self._prizesets) - i) * rowheight
             percent = 100.0 * p.weight / totalweight
 
             # Show decimals only if we get very small percentages (looks

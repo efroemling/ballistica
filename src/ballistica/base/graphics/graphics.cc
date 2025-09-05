@@ -1141,10 +1141,19 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
       new_cursor_visibility = true;
     }
 
+    // As of macOS 15.6.1 there seems to be a bug where moving the cursor down
+    // from the top portion of a fullscreen window flips it back to the arrow
+    // cursor. Should submit a bug to Apple if this is still the case in macOS
+    // 16, but for now am just forcing cursor resets at a higher frequency there
+    // to hide that.
+    seconds_t fudge_secs =
+        (g_buildconfig.platform_macos() && g_buildconfig.xcode_build()) ? 0.235
+                                                                        : 2.345;
+
     // Ship this state when it changes and also every now and then just in
     // case things go wonky.
     if (new_cursor_visibility != hardware_cursor_visible_
-        || app_time - last_cursor_visibility_event_time_ > 2.137) {
+        || app_time - last_cursor_visibility_event_time_ > fudge_secs) {
       hardware_cursor_visible_ = new_cursor_visibility;
       last_cursor_visibility_event_time_ = app_time;
       g_base->app_adapter->PushMainThreadCall([this] {

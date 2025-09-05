@@ -9,7 +9,7 @@ pbxproj==4.3.0
 pur==7.3.3
 pylint==3.3.8
 pylsp-mypy==0.7.0
-pytest==8.4.1
+pytest==8.4.2
 python-daemon==3.1.2
 python-lsp-black==2.0.0
 python-lsp-server==1.13.1

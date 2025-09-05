@@ -33,6 +33,7 @@ class ClassicAppMode(babase.AppMode):
     """AppMode for the classic BombSquad experience."""
 
     _ACCOUNT_STATE_CONFIG_KEY = 'ClassicAccountState'
+    _ASKED_FOR_REVIEW_CONFIG_KEY = 'AskedForReview'
 
     def __init__(self) -> None:
         self._on_primary_account_changed_callback: (
@@ -528,6 +529,18 @@ class ClassicAppMode(babase.AppMode):
         classic.tickets = val.tickets
 
         self._target_purchases_state = val.purchases_state
+
+        # If they want us to ask for a review (and we haven't yet), do
+        # so.
+        if val.Flag.ASK_FOR_REVIEW in val.flags:
+            cfg = babase.app.config
+            if (
+                not cfg.get(self._ASKED_FOR_REVIEW_CONFIG_KEY, False)
+                and babase.native_review_request_supported()
+            ):
+                cfg[self._ASKED_FOR_REVIEW_CONFIG_KEY] = True
+                cfg.commit()
+                babase.native_review_request()
 
         # If someone replaced our purchases in the classic subsystem,
         # fix it.

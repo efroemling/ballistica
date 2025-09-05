@@ -180,8 +180,9 @@ class AdvancedSettingsWindow(bui.MainWindow):
         )
 
         # Add some blotches so our contents fades out as it approaches
-        # the bottom toolbar.
-        if uiscale is bui.UIScale.SMALL:
+        # the bottom toolbar (but only in the main menu when there's
+        # something down there).
+        if uiscale is bui.UIScale.SMALL and bui.in_main_menu():
             blotchwidth = 500.0
             blotchheight = 200.0
             bimg = bui.imagewidget(
