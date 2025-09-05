@@ -485,6 +485,7 @@ jobs:
             ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-
       - name: Install dependencies
         run: |
+          sudo apt-get update
           sudo apt install -y flatpak flatpak-builder
 
       # This works but its nice to have precise control over the cache
