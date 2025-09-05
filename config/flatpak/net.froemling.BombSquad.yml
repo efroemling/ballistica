@@ -1,6 +1,6 @@
 app-id: net.froemling.BombSquad
 runtime: org.freedesktop.Platform
-runtime-version: '24.08'
+runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 command: bombsquad.sh
 finish-args:
@@ -15,28 +15,33 @@ sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm20
 
 modules:
-  - name: Python
-    sources:
-      - type: archive
-        url: https://www.python.org/ftp/python/3.13.3/Python-3.13.3.tar.xz
-        sha256: 40f868bcbdeb8149a3149580bb9bfd407b3321cd48f0be631af955ac92c0e041
-    config-opts:
-      - --prefix=${FLATPAK_DEST}
-      - --enable-shared
-      - --enable-optimizations
-      - --with-computed-gotos
-      - --with-lto
-      - --enable-ipv6
-      - --with-system-expat
-      - --with-system-ffi
-      - --with-system-libmpdec
-      - --enable-loadable-sqlite-extensions
-      - --without-ensurepip
-    cleanup:
-      - /bin
-      - /include
-      - /lib/pkgconfig
-      - /share
+# We are currently using org.freedesktop.Sdk version 25.08
+# which provides python3.13 required by bombsquad
+# if this ever changes then enable this python module to build
+# the required python locally
+
+  # - name: Python
+  #   sources:
+  #     - type: archive
+  #       url: https://www.python.org/ftp/python/3.13.3/Python-3.13.3.tar.xz
+  #       sha256: 40f868bcbdeb8149a3149580bb9bfd407b3321cd48f0be631af955ac92c0e041
+  #   config-opts:
+  #     - --prefix=${FLATPAK_DEST}
+  #     - --enable-shared
+  #     - --enable-optimizations
+  #     - --with-computed-gotos
+  #     - --with-lto
+  #     - --enable-ipv6
+  #     - --with-system-expat
+  #     - --with-system-ffi
+  #     - --with-system-libmpdec
+  #     - --enable-loadable-sqlite-extensions
+  #     - --without-ensurepip
+  #   cleanup:
+  #     - /bin
+  #     - /include
+  #     - /lib/pkgconfig
+  #     - /share
   
   - name: SDL2
     buildsystem: cmake
@@ -77,6 +82,8 @@ modules:
         - --share=network
     build-commands:
     - mkdir -p ${FLATPAK_DEST}/bin/BombSquad
+    # Get rid of tools/pcommand and similar with wrong shebangs
+    - make env-clean
     - make cmake-build
     - mv build/cmake/debug/ballisticakit build/cmake/debug/staged/
     - cp -r build/cmake/debug/staged/* ${FLATPAK_DEST}/bin/BombSquad/

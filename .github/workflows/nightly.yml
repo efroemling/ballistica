@@ -86,9 +86,16 @@ jobs:
           name: html_docs
           path: build/docs
 
-  make_flatpak_x86_64_gui_debug:
+  make_flatpak_gui_debug:
     needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
@@ -110,7 +117,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt install -y flatpak flatpak-builder
-
+      
+      # This works but its nice to have precise control over the cache
       # - name: Build Flatpak
       #   uses: flatpak/flatpak-github-actions/flatpak-builder@v6
       #   with:
@@ -121,58 +129,12 @@ jobs:
       - name: Make the build
         run: |
           sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          sudo flatpak install -y flathub org.freedesktop.Sdk//24.08
-          sudo flatpak install -y flathub org.freedesktop.Platform//24.08
-          sudo flatpak install -y flathub org.freedesktop.Sdk.Extension.llvm20
+          sudo flatpak install -y flathub org.freedesktop.Sdk//25.08
+          sudo flatpak install -y flathub org.freedesktop.Platform//25.08
+          sudo flatpak install -y flathub org.freedesktop.Sdk.Extension.llvm20//25.08
           make flatpak-linux
       - name: Upload the build
         uses: actions/upload-artifact@v4
         with:
-          name: bombsquad_x86_64(debug).flatpak
-          path: build/flatpak/bombsquad.flatpak
-
-  make_flatpak_arm64_gui_debug:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Cache Flatpak data
-        id: cache-flatpak-sdk
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-flatpak
-        with:
-          path: |
-            ~/.local/share/flatpak
-            .cache/flatpak/flatpak-builder
-            .cache/flatpak/build_dir
-            .cache/flatpak/repo
-          key: ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y flatpak flatpak-builder
-
-      # - name: Build Flatpak
-      #   uses: flatpak/flatpak-github-actions/flatpak-builder@v6
-      #   with:
-      #     bundle: bombsquad.flatpak
-      #     manifest-path: config/flatpak/net.froemling.BombSquad.yml
-      #     cache-key: flatpak-builder-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}-${{ github.sha }}
-
-      - name: Make the build
-        run: |
-          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          sudo flatpak install -y flathub org.freedesktop.Sdk//24.08
-          sudo flatpak install -y flathub org.freedesktop.Platform//24.08
-          sudo flatpak install -y flathub org.freedesktop.Sdk.Extension.llvm20
-          make flatpak-linux
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
-        with:
-          name: bombsquad_arm64(debug).flatpak
+          name: bombsquad_${{ matrix.arch }}(debug).flatpak
           path: build/flatpak/bombsquad.flatpak
