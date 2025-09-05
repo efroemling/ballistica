@@ -89,6 +89,7 @@ jobs:
   make_flatpak_gui_debug:
     needs: setup_bombsquad_cache
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
