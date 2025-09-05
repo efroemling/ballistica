@@ -503,7 +503,7 @@ jobs:
           sudo flatpak install -y flathub org.freedesktop.Platform//25.08
           sudo flatpak install -y flathub org.freedesktop.Sdk.Extension.llvm20//25.08
           make flatpak-linux
-          mv build/flatpak/bombsquad.flatpak bombsquad${{ matrix.arch }}.flatpak
+          mv build/flatpak/bombsquad.flatpak bombsquad_${{ matrix.arch }}.flatpak
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
