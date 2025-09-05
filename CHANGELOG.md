@@ -1,3 +1,8 @@
+### 1.7.50 (build 22525, api 9, 2025-09-04)
+- Cleaned up cursor handling on Mac build. Fixes an issue where the cursor could
+  sometimes revert to the system cursor for a few seconds after moving the
+  cursor to the top of a fullscreen window.
+
 ### 1.7.49 (build 22524, api 9, 2025-09-04)
 - Fixes an issue where `bascenev1.reload_hooks()` and `bauiv1.reload_hooks()`
   were actually calling `_babase.reload_hooks()` (oops my bad).
