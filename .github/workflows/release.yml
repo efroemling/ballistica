@@ -509,4 +509,4 @@ jobs:
         with:
           allowUpdates: true
           omitBody: true
-          artifacts: bombsquad${{ matrix.arch }}.flatpak
+          artifacts: bombsquad_${{ matrix.arch }}.flatpak
