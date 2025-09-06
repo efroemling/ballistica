@@ -4,6 +4,6 @@ Comment=Blow up your friends in mini-games ranging from capture-the-flag to hock
 Keywords=ballistica;bs;game;multiplayer;
 Exec=bombsquad.sh
 Icon=net.froemling.BombSquad
-Terminal=true
+Terminal=false
 Type=Application
 Categories=Game;
