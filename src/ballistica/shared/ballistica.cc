@@ -44,8 +44,8 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22533;
-const char* kEngineVersion = "1.7.50";
+const int kEngineBuildNumber = 22535;
+const char* kEngineVersion = "1.7.51";
 const int kEngineApiVersion = 9;
 
 #if BA_MONOLITHIC_BUILD
