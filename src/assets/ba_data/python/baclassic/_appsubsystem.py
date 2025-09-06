@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 
 """Provides classic app subsystem."""
 from __future__ import annotations
@@ -811,11 +812,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         """(internal)"""
         from bauiv1lib.ingamemenu import InGameMenuWindow
 
-        # from bauiv1 import set_main_ui_input_device
-
         assert babase.app is not None
         if not babase.app.ui_v1.has_main_window():
-            # set_main_ui_input_device(device_id)
 
             # Note: we play a swish here for when our UI comes in, so we
             # need to make sure to disable swish sounds for any buttons
@@ -826,8 +824,13 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             # Pause gameplay.
             self.pause()
 
+            menu_button = bauiv1.get_special_widget('menu_button')
             babase.app.ui_v1.set_main_window(
-                InGameMenuWindow(), is_top_level=True, suppress_warning=True
+                InGameMenuWindow(
+                    transition='scale_in', origin_widget=menu_button
+                ),
+                is_top_level=True,
+                suppress_warning=True,
             )
 
     def save_ui_state(self) -> None:

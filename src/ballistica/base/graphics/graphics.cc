@@ -185,7 +185,8 @@ void Graphics::AddCleanFrameCommand(const Object::Ref<PythonContextCall>& c) {
 void Graphics::RunCleanFrameCommands() {
   assert(g_base->InLogicThread());
   for (auto&& i : clean_frame_commands_) {
-    i->Run();
+    // Can't run immediately as we're in a frame-draw.
+    i->Schedule();
   }
   clean_frame_commands_.clear();
 }
@@ -766,8 +767,6 @@ void Graphics::BuildAndPushFrameDef() {
   assert(g_base->logic->app_bootstrapping_complete());
   assert(camera_.exists());
   assert(!g_core->HeadlessMode());
-
-  // g_core->logging->Log(LogName::kBa, LogLevel::kWarning, "DRAWING");
 
   // Keep track of when we're in here; can be useful for making sure stuff
   // doesn't muck with our lists/etc. while we're using them.

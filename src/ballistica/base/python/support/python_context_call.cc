@@ -4,8 +4,10 @@
 
 #include <string>
 
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
@@ -59,8 +61,8 @@ void PythonContextCall::GetTrace() {
   file_loc_ = Python::PythonFileLocation();
 }
 
-// Called by our owning context when it goes down.
-// We should clear ourself out to be a no-op if we still happen to be called.
+// Called by our owning context when it goes down. We should clear ourself
+// out to be a no-op if we still happen to be called.
 void PythonContextCall::MarkDead() {
   dead_ = true;
   object_.Release();
@@ -69,19 +71,23 @@ void PythonContextCall::MarkDead() {
 void PythonContextCall::Run(PyObject* args) {
   assert(this);
 
-  // We implicitly use core globals; don't normally do this.
-  assert(g_core);
-
   if (dead_ || context_state_.IsExpired()) {
     return;
+  }
+
+  // We want to hunt down and eliminate any cases of Python calls happening
+  // during drawing. However let's do so gently with log messages and not
+  // exceptions (which we currently don't handle during drawing).
+  if (g_base->graphics->building_frame_def()) {
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE(
+        "Running Python call during drawing; should not happen.");
   }
 
   // Restore the context from when we were made.
   base::ScopedSetContext ssc(context_state_);
 
-  // Hold a ref to this call throughout this process
-  // so we know it'll still exist if we need to report
-  // exception info and whatnot.
+  // Hold a ref to this call throughout this process so we know it'll still
+  // exist if we need to report exception info and whatnot.
   Object::Ref<PythonContextCall> keep_alive_ref(this);
 
   PythonContextCall* prev_call = current_call_;
@@ -107,8 +113,8 @@ void PythonContextCall::Run(PyObject* args) {
     BA_PYTHON_ERROR_RESTORE;
 
     // We pass zero here to avoid grabbing references to this exception
-    // which can cause objects to stick around and trip up our deletion checks.
-    // (nodes, actors existing after their games have ended).
+    // which can cause objects to stick around and trip up our deletion
+    // checks. (nodes, actors existing after their games have ended).
     PyErr_PrintEx(0);
     PyErr_Clear();
   }

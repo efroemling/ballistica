@@ -168,8 +168,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # pylint: disable=too-many-statements
         from bauiv1._uitypes import MainWindow
 
-        # If we haven't grabbed initial uiscale or screen size for recreate
-        # comparision purposes, this is a good time to do so.
+        # If we haven't grabbed initial uiscale or screen size for
+        # recreate comparision purposes, this is a good time to do so.
         if self._last_win_recreate_screen_size is None:
             self._last_win_recreate_screen_size = (
                 babase.get_virtual_screen_size()
@@ -220,8 +220,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                     ' Make sure to only pass fully-filled-out MainWindowStates.'
                 )
 
-        # If a top-level main-window is being set, complain if there already
-        # is a main-window.
+        # If a top-level main-window is being set, complain if there
+        # already is a main-window.
         if is_top_level:
             if existing:
                 logging.warning(
@@ -282,8 +282,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             window.main_window_is_top_level = back_state.is_top_level
             window.main_window_is_auxiliary = back_state.is_auxiliary
         else:
-            # Store if the window is top-level so we won't complain later if
-            # we go back from it and there's nowhere to go to.
+            # Store if the window is top-level so we won't complain
+            # later if we go back from it and there's nowhere to go to.
             window.main_window_is_top_level = is_top_level
 
             window.main_window_is_auxiliary = is_auxiliary
@@ -291,8 +291,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             # When navigating forward, generate a back-window-state from
             # the outgoing window.
             if is_top_level:
-                # Top level windows don't have or expect anywhere to
-                # go back to.
+                # Top level windows don't have or expect anywhere to go
+                # back to.
                 window.main_window_back_state = None
             elif back_state is not None:
                 window.main_window_back_state = back_state

@@ -370,6 +370,7 @@ class Graphics {
   void set_draw_virtual_safe_area_bounds(bool val) {
     draw_virtual_safe_area_bounds_ = val;
   }
+  auto building_frame_def() const { return building_frame_def_; }
 
   ScreenMessages* const screenmessages;
 

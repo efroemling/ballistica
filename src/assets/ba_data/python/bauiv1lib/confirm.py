@@ -42,7 +42,7 @@ class ConfirmWindow:
         width = max(width, 360)
         self._action = action
 
-        # if they provided an origin-widget, scale up from that
+        # If they provided an origin-widget, scale up from that.
         self._transition_out: str | None
         scale_origin: tuple[float, float] | None
         if origin_widget is not None:
@@ -96,9 +96,9 @@ class ConfirmWindow:
             bui.containerwidget(edit=self.root_widget, cancel_button=btn)
             ok_button_h = width - 175
         else:
-            # if they don't want a cancel button, we still want back presses to
-            # be able to dismiss the window; just wire it up to do the ok
-            # button
+            # if they don't want a cancel button, we still want back
+            # presses to be able to dismiss the window; just wire it up
+            # to do the ok button
             ok_button_h = width * 0.5 - 75
             cbtn = None
         btn = bui.buttonwidget(
@@ -110,8 +110,8 @@ class ConfirmWindow:
             on_activate_call=self._ok,
         )
 
-        # if they didn't want a cancel button, we still want to be able to hit
-        # cancel/back/etc to dismiss the window
+        # if they didn't want a cancel button, we still want to be able
+        # to hit cancel/back/etc to dismiss the window
         if not cancel_button:
             bui.containerwidget(
                 edit=self.root_widget, on_cancel_call=btn.activate

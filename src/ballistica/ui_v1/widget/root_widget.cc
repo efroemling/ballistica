@@ -1916,6 +1916,8 @@ auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
     return chest_slots_.at("2").button->widget.get();
   } else if (s == "chest_3_button") {
     return chest_slots_.at("3").button->widget.get();
+  } else if (s == "menu_button") {
+    return menu_button_ ? menu_button_->widget.get() : nullptr;
   }
   return nullptr;
 }

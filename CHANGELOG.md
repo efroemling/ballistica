@@ -1,4 +1,4 @@
-### 1.7.50 (build 22528, api 9, 2025-09-05)
+### 1.7.50 (build 22533, api 9, 2025-09-06)
 - Cleaned up cursor handling on Mac build. Fixes an issue where the cursor could
   sometimes revert to the system cursor for a few seconds after moving the
   cursor to the top of a fullscreen window.

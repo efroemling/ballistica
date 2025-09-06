@@ -13,6 +13,7 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/base/ui/widget_message.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
@@ -887,7 +888,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                 transition_offset_x_smoothed_ = 0.0f;
                 transition_offset_y_smoothed_ = 0.0f;
                 if (transitioning_out_) {
-                  // Probably not safe to delete ourself here since we're in the
+                  // Its not safe to delete ourself here since we're in the
                   // draw loop, but we can set up an event to do it.
                   Object::WeakRef<Widget> weakref(this);
                   g_base->logic->event_loop()->PushCall([weakref] {
@@ -1035,7 +1036,6 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           } else {
             amt = 1.0f;
           }
-          // printf("AMT %.2f\n", amt);
           c.SetColor(0.0f, 0.0f, 0.0f, 0.6 * amt);
           c.SetTexture(
               g_base->assets->SysTexture(base::SysTextureID::kCircleSoft));
@@ -1160,8 +1160,9 @@ void ContainerWidget::AddWidget(Widget* w) {
     if (w->IsSelectable()) {
       // A change on the main or overlay window stack changes the global
       // selection (unless its on the main window stack and there's already
-      // something on the overlay stack) in all other cases we just shift our
-      // direct selected child (which may not affect the global selection).
+      // something on the overlay stack) in all other cases we just shift
+      // our direct selected child (which may not affect the global
+      // selection).
       if (is_window_stack_
           && (is_overlay_window_stack_
               || !g_ui_v1->root_widget()
@@ -1169,8 +1170,8 @@ void ContainerWidget::AddWidget(Widget* w) {
                       ->HasChildren())) {
         w->GlobalSelect();
 
-        // Special case for the main window stack; whenever a window is added,
-        // update the toolbar state for the topmost living container.
+        // Special case for the main window stack; whenever a window is
+        // added, update the toolbar state for the topmost living container.
         if (is_main_window_stack_) {
           g_ui_v1->root_widget()->UpdateForFocusedWindow();
         }

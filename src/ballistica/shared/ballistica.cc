@@ -44,7 +44,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22528;
+const int kEngineBuildNumber = 22533;
 const char* kEngineVersion = "1.7.50";
 const int kEngineApiVersion = 9;
 
@@ -227,11 +227,16 @@ class IncrementalInitRunner_ {
       switch (step_) {
         case 0:
           core_ = core::CoreFeatureSet::Import(&config_);
+          // At this point, go ahead and release the GIL. We'll need to
+          // explicitly grab it when we need it going forward.
+          Python::PermanentlyReleaseGIL();
+
           step_++;
           last_step_time_ = core::CorePlatform::TimeMonotonicSeconds();
           return false;
 
         case 1: {
+          Python::ScopedInterpreterLock gil_acquire;
           core_->python->WarmStart1();
 
           // Launch a thread which spins and waits for the Python bg stuff
@@ -259,7 +264,9 @@ class IncrementalInitRunner_ {
         case 2: {
           // This step is a special case; the previous step kicked off a
           // bunch of background work and in this step we simply poll for it
-          // to finish, returning periodically to avoid ANRs.
+          // to finish, returning periodically to avoid ANRs. Note that we
+          // DON'T need to acquire the GIL here since we kicked off a
+          // background thread to set a plain old bool we can watch for.
           auto starttime{core::CorePlatform::TimeMonotonicMillisecs()};
           while (explicit_bool(true)) {
             if (core::CorePlatform::TimeMonotonicMillisecs() - starttime
@@ -268,7 +275,6 @@ class IncrementalInitRunner_ {
               LogStepTime_(step_);
               return false;
             }
-            // if (core_->python->WarmStart1Completed()) {
             if (warm_start_completed_) {
               // Our thread that set this should be done.
               thread_->join();
@@ -280,28 +286,28 @@ class IncrementalInitRunner_ {
             }
             // Sleep for short bits while the warm start bg stuff is going
             // so they get most of the cpu.
-            //
-            // IMPORTANT: Let go of the GIL while we're sleeping.
-            {
-              Python::ScopedInterpreterLockRelease gil_release;
-              core::CorePlatform::SleepMillisecs(1);
-            }
+            core::CorePlatform::SleepMillisecs(1);
           }
         }
 
-        case 3:
+        case 3: {
+          Python::ScopedInterpreterLock gil_acquire;
           core_->python->MonolithicModeBaEnvImport();
           LogStepTime_(step_);
           step_++;
           return false;
+        }
 
-        case 4:
+        case 4: {
+          Python::ScopedInterpreterLock gil_acquire;
           core_->python->MonolithicModeBaEnvConfigure();
           LogStepTime_(step_);
           step_++;
           return false;
+        }
 
-        case 5:
+        case 5: {
+          Python::ScopedInterpreterLock gil_acquire;
           base_ = core_->SoftImportBase();
           if (!base_) {
             FatalError("Base module unavailable; can't run app.");
@@ -309,13 +315,16 @@ class IncrementalInitRunner_ {
           LogStepTime_(step_);
           step_++;
           return false;
+        }
 
-        case 6:
+        case 6: {
+          Python::ScopedInterpreterLock gil_acquire;
           base_->StartApp();
-          Python::PermanentlyReleaseGIL();
           LogStepTime_(step_);
           step_++;
           return false;
+        }
+
         default:
           return true;
       }
