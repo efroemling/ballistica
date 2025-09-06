@@ -478,7 +478,7 @@ class MainMenuWindow(bui.MainWindow):
             self._quit_button = quit_button = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=self._use_autoselect,
-                position=(h + 4.0, v),
+                position=(h, v),
                 size=(side_button_2_width, side_button_2_height),
                 scale=side_button_2_scale,
                 label=bui.Lstr(
