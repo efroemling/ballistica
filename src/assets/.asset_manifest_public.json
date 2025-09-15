@@ -195,6 +195,7 @@
  "ba_data/python/bauiv1/_hooks.py",
  "ba_data/python/bauiv1/_keyboard.py",
  "ba_data/python/bauiv1/_uitypes.py",
+ "ba_data/python/bauiv1/_window.py",
  "ba_data/python/bauiv1/onscreenkeyboard.py",
  "ba_data/python/bauiv1lib/__init__.py",
  "ba_data/python/bauiv1lib/account/__init__.py",

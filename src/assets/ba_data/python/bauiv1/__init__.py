@@ -139,15 +139,17 @@ from _bauiv1 import (
 )
 from bauiv1._keyboard import Keyboard
 from bauiv1._uitypes import (
+    uicleanupcheck,
+    RootUIUpdatePause,
+)
+from bauiv1._appsubsystem import UIV1AppSubsystem
+from bauiv1._window import (
     Window,
     MainWindowState,
     BasicMainWindowState,
-    uicleanupcheck,
     MainWindow,
-    RootUIUpdatePause,
     MainWindowAutoRecreateSuppress,
 )
-from bauiv1._appsubsystem import UIV1AppSubsystem
 
 __all__ = [
     'add_clean_frame_callback',

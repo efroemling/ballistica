@@ -51,8 +51,8 @@ class ConfigCheckBox:
             scale=scale,
             maxwidth=maxwidth,
         )
-        # complain if we outlive our checkbox
-        bui.uicleanupcheck(self, self.widget)
+        # Complain if we outlive our checkbox.
+        bui.app.ui_v1.add_ui_cleanup_check(self, self.widget)
 
     def _value_changed(self, val: bool) -> None:
         cfg = bui.app.config
@@ -162,7 +162,7 @@ class ConfigNumberEdit:
             enable_sound=changesound,
         )
         # Complain if we outlive our widgets.
-        bui.uicleanupcheck(self, self.nametext)
+        bui.app.ui_v1.add_ui_cleanup_check(self, self.nametext)
         self._update_display()
 
     def _up(self) -> None:

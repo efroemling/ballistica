@@ -338,6 +338,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \

@@ -89,14 +89,17 @@
 
 /// Test a condition and simply print a log message if it fails (on both debug
 /// and release builds)
-#define BA_PRECONDITION_LOG(b)                                        \
-  {                                                                   \
-    if (!(b)) {                                                       \
-      Log(LogLevel::kError, std::string("Precondition failed @ ")     \
-                                + cxpr_base_name(__FILE__)            \
-                                + ":" BA_TOSTRING(__LINE__) ": " #b); \
-    }                                                                 \
-  }                                                                   \
+#define BA_PRECONDITION_LOG_ONCE(b)                                  \
+  {                                                                  \
+    static bool did_log_here{};                                      \
+    if (!did_log_here && !(b)) {                                     \
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,           \
+                           std::string("Precondition failed @ ")     \
+                               + cxpr_base_name(__FILE__)            \
+                               + ":" BA_TOSTRING(__LINE__) ": " #b); \
+      did_log_here = true;                                           \
+    }                                                                \
+  }                                                                  \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
 /// Test a condition and abort the program if it fails (on both debug

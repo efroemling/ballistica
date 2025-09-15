@@ -102,8 +102,8 @@ class PopupWindow:
             on_cancel_call=self.on_popup_cancel,
             darken_behind=darken_behind,
         )
-        # complain if we outlive our root widget
-        bui.uicleanupcheck(self, self.root_widget)
+        # Complain if we outlive our root widget.
+        bui.app.ui_v1.add_ui_cleanup_check(self, self.root_widget)
 
     def on_popup_cancel(self) -> None:
         """Called when the popup is canceled.
@@ -375,7 +375,7 @@ class PopupMenu:
         self._window_widget: bui.Widget | None = None
 
         # Complain if we outlive our button.
-        bui.uicleanupcheck(self, self._button)
+        bui.app.ui_v1.add_ui_cleanup_check(self, self._button)
 
     def _make_popup(self) -> None:
         if not self._button:

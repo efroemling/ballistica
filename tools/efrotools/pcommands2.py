@@ -48,10 +48,10 @@ def sortlines() -> None:
     print('\n'.join(sorted(lines, key=lambda l: l.lower())))
 
 
-def openal_build_android() -> None:
+def openal_android_build() -> None:
     """Build openalsoft for android."""
     from efro.error import CleanError
-    from efrotools.openalbuild import build_openal
+    from efrotools.openalbuildandroid import build_openal
 
     pcommand.disallow_in_batch()
 
@@ -65,10 +65,28 @@ def openal_build_android() -> None:
     build_openal(args[0], args[1])
 
 
-def openal_gather() -> None:
+def openal_mac_build() -> None:
+    """Build openalsoft for mac."""
+    from efrotools.openalbuildapple import build_openal_mac
+
+    pcommand.disallow_in_batch()
+
+    build_openal_mac()
+
+
+def openal_mac_gather() -> None:
+    """Gather openalsoft for mac."""
+    from efrotools.openalbuildapple import gather_openal_mac
+
+    pcommand.disallow_in_batch()
+
+    gather_openal_mac()
+
+
+def openal_android_gather() -> None:
     """Gather built opealsoft libs into src."""
     from efro.error import CleanError
-    from efrotools.openalbuild import gather
+    from efrotools.openalbuildandroid import gather
 
     pcommand.disallow_in_batch()
 

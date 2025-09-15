@@ -13,7 +13,7 @@ import babase
 
 import _bauiv1
 from bauiv1._keyboard import Keyboard
-from bauiv1._uitypes import Window
+from bauiv1._window import Window
 
 if TYPE_CHECKING:
     from babase import StringEditAdapter

@@ -597,7 +597,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                 150,
             )
 
-    def _get_playlist_display_name(self, playlist: str) -> bui.Lstr:
+    def _get_playlist_display_name(self, playlist: str | bui.Lstr) -> bui.Lstr:
         if playlist == '__default__':
             return self._pvars.default_list_name
         return (

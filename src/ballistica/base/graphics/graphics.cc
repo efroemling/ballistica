@@ -1099,10 +1099,12 @@ void Graphics::DrawFades(FrameDef* frame_def) {
 
     // If we're doing a progress-bar fade, throw in the fading progress bar.
     if (frame_time - progress_bar_end_time_ < kProgressBarFadeTime * 0.5) {
-      float o = std::min(
-          1.0f, (1.0f
-                 - static_cast<float>(frame_time - progress_bar_end_time_)
-                       / (static_cast<float>(kProgressBarFadeTime) * 0.5f)));
+      //      float o = std::min(
+      //          1.0f, (1.0f
+      //                 - static_cast<float>(frame_time -
+      //                 progress_bar_end_time_)
+      //                       / (static_cast<float>(kProgressBarFadeTime) *
+      //                       0.5f)));
       UpdateProgressBarProgress(1.0f);
       DrawProgressBar(overlay_pass, 1.0);
     }

@@ -60,8 +60,10 @@ from efrotools.pcommands import (
 from efrotools.pcommands2 import (
     with_build_lock,
     sortlines,
-    openal_build_android,
-    openal_gather,
+    openal_android_build,
+    openal_android_gather,
+    openal_mac_build,
+    openal_mac_gather,
     pyright,
     build_pcommandbatch,
     batchserver,

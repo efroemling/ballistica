@@ -1,4 +1,11 @@
-### 1.7.51 (build 22535, api 9, 2025-09-06)
+### 1.7.51 (build 22539, api 9, 2025-09-14)
+- Deprecated `bauiv1.uicleanupcheck()` - to be removed when api 9 support ends.
+  Use `ba*.app.ui_v1.add_ui_cleanup_check()` instead.
+- Official Mac builds now use OpenALSoft for audio instead of Apple's old
+  bundled OpenAL. Something seems to be broken in the bundled one in macOS Tahoe
+  26.0 causing all of our mono sounds to not play. Weird. It's probably not a
+  bad idea to be using OpenALSoft here anyway since Apple considers theirs
+  deprecated.
 
 ### 1.7.50 (build 22533, api 9, 2025-09-06)
 - Cleaned up cursor handling on Mac build. Fixes an issue where the cursor could

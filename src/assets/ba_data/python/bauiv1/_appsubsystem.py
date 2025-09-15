@@ -4,12 +4,14 @@
 
 from __future__ import annotations
 
+import os
 import time
 import logging
 import inspect
 import weakref
 import warnings
 from enum import Enum
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 from efro.util import empty_weakref
@@ -20,13 +22,12 @@ import _bauiv1
 if TYPE_CHECKING:
     from typing import Any, Callable
 
-    from bauiv1._uitypes import (
-        UICleanupCheck,
-        Window,
-        MainWindow,
-        MainWindowState,
-    )
+    from bauiv1._window import Window, MainWindow, MainWindowState
     import bauiv1
+
+# Set environment variable BA_DEBUG_UI_CLEANUP_CHECKS to 1
+# to print detailed info about what is getting cleaned up when.
+DEBUG_UI_CLEANUP_CHECKS = os.environ.get('BA_DEBUG_UI_CLEANUP_CHECKS') == '1'
 
 
 class UIV1AppSubsystem(babase.AppSubsystem):
@@ -57,7 +58,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         CHEST_SLOT_3 = 'chest_slot_3'
 
     def __init__(self) -> None:
-        from bauiv1._uitypes import MainWindow
+        from bauiv1._window import MainWindow
 
         super().__init__()
 
@@ -74,18 +75,16 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # other UI related classes.
         self.window_states: dict[type, Any] = {}
 
-        self._uiscale: babase.UIScale
-        self._update_ui_scale()
-
-        self.cleanupchecks: list[UICleanupCheck] = []
-        self.upkeeptimer: babase.AppTimer | None = None
-
         self.title_color = (0.72, 0.7, 0.75)
         self.heading_color = (0.72, 0.7, 0.75)
         self.infotextcolor = (0.7, 0.9, 0.7)
 
         self.window_auto_recreate_suppress_count = 0
 
+        self._uiscale: babase.UIScale
+        self._update_ui_scale()
+        self._upkeeptimer: babase.AppTimer | None = None
+        self._cleanupchecks: list[_UICleanupCheck] = []
         self._last_win_recreate_screen_size: tuple[float, float] | None = None
         self._last_win_recreate_uiscale: bauiv1.UIScale | None = None
         self._last_win_recreate_time: float | None = None
@@ -121,7 +120,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
     @override
     def reset(self) -> None:
-        from bauiv1._uitypes import MainWindow
+        from bauiv1._window import MainWindow
 
         self.root_ui_calls.clear()
         self._main_window = empty_weakref(MainWindow)
@@ -134,10 +133,9 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
     @override
     def on_app_loading(self) -> None:
-        from bauiv1._uitypes import ui_upkeep
 
         # Kick off our periodic UI upkeep.
-        self.upkeeptimer = babase.AppTimer(2.6543, ui_upkeep, repeat=True)
+        self._upkeeptimer = babase.AppTimer(2.6543, self._upkeep, repeat=True)
 
     def get_main_window(self) -> bauiv1.MainWindow | None:
         """Return main window, if any."""
@@ -166,7 +164,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
-        from bauiv1._uitypes import MainWindow
+        from bauiv1._window import MainWindow
 
         # If we haven't grabbed initial uiscale or screen size for
         # recreate comparision purposes, this is a good time to do so.
@@ -324,7 +322,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
     def clear_main_window(self, transition: str | None = None) -> None:
         """Clear any existing main window."""
-        from bauiv1._uitypes import MainWindow
+        from bauiv1._window import MainWindow
 
         main_window = self._main_window()
         if main_window:
@@ -411,6 +409,41 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         self._schedule_main_win_recreate()
 
+    def add_ui_cleanup_check(self, obj: Any, widget: bauiv1.Widget) -> None:
+        """Checks to ensure a widget-owning object gets cleaned up properly.
+
+        This adds a check which will print an error message if the provided
+        object still exists ~5 seconds after the provided bauiv1.Widget
+        dies.
+
+        This is a good sanity check for any sort of object that wraps or
+        controls a bauiv1.Widget. For instance, a 'Window' class instance
+        has no reason to still exist once its root container bauiv1.Widget
+        has fully transitioned out and been destroyed. Circular references
+        or careless strong referencing can lead to such objects never
+        getting destroyed, however, and this helps detect such cases to
+        avoid memory leaks.
+        """
+        if DEBUG_UI_CLEANUP_CHECKS:
+            print(f'adding uicleanup to {obj}')
+        if not isinstance(widget, _bauiv1.Widget):
+            raise TypeError('widget arg is not a bauiv1.Widget')
+
+        if bool(False):
+
+            def foobar() -> None:
+                """Just testing."""
+                if DEBUG_UI_CLEANUP_CHECKS:
+                    print('uicleanupcheck widget dying...')
+
+            widget.add_delete_callback(foobar)
+
+        self._cleanupchecks.append(
+            _UICleanupCheck(
+                obj=weakref.ref(obj), widget=widget, widget_death_time=None
+            )
+        )
+
     def _schedule_main_win_recreate(self) -> None:
 
         # If there is a timer set already, do nothing.
@@ -483,3 +516,48 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # future recreates.
         self._last_win_recreate_uiscale = uiscale
         self._last_win_recreate_screen_size = virtual_screen_size
+
+    def _upkeep(self) -> None:
+        """Run UI cleanup checks, etc. should be called periodically."""
+
+        assert babase.app.classic is not None
+        remainingchecks = []
+        now = babase.apptime()
+        for check in self._cleanupchecks:
+            obj = check.obj()
+
+            # If the object has died, ignore and don't re-add.
+            if obj is None:
+                if DEBUG_UI_CLEANUP_CHECKS:
+                    print('uicleanupcheck object is dead; hooray!')
+                continue
+
+            # If the widget hadn't died yet, note if it has.
+            if check.widget_death_time is None:
+                remainingchecks.append(check)
+                if not check.widget:
+                    check.widget_death_time = now
+            else:
+                # Widget was already dead; complain if its been too long.
+                if now - check.widget_death_time > 5.0:
+                    print(
+                        'WARNING:',
+                        obj,
+                        'is still alive 5 second after its Widget died;'
+                        ' you might have a memory leak. Look for circular'
+                        ' references or outside things referencing your Window'
+                        ' class instance. See efro.debug module'
+                        ' for tools that can help debug this sort of thing.',
+                    )
+                else:
+                    remainingchecks.append(check)
+        self._cleanupchecks = remainingchecks
+
+
+@dataclass
+class _UICleanupCheck:
+    """Holds info about a uicleanupcheck target."""
+
+    obj: weakref.ref
+    widget: bauiv1.Widget
+    widget_death_time: float | None

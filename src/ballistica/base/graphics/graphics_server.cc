@@ -14,6 +14,7 @@
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/macros.h"
 
 namespace ballistica::base {
 
@@ -149,13 +150,14 @@ auto GraphicsServer::TryRender() -> bool {
 }
 
 auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
-  assert(g_base->app_adapter->InGraphicsContext());
+  BA_PRECONDITION_LOG_ONCE(g_base->app_adapter->InGraphicsContext());
   millisecs_t start_time = g_core->AppTimeMillisecs();
 
   // Spin and wait for a short bit for a frame_def to appear.
   while (true) {
     // Stop waiting if we can't/shouldn't render anyway.
-    if (!renderer_ || shutting_down_ || g_base->app_suspended()) {
+    if (!renderer_ || !renderer_loaded_ || shutting_down_
+        || g_base->app_suspended()) {
       return nullptr;
     }
 
@@ -218,7 +220,8 @@ void GraphicsServer::PreprocessRenderFrameDef(FrameDef* frame_def) {
 
   // Now let the renderer do any preprocess passes (shadows, etc).
   assert(renderer_);
-  if (renderer_ != nullptr) {
+  assert(renderer_loaded_);
+  if (renderer_ && renderer_loaded_) {
     renderer_->PreprocessFrameDef(frame_def);
   }
 }
@@ -227,7 +230,8 @@ void GraphicsServer::PreprocessRenderFrameDef(FrameDef* frame_def) {
 // stereo eye or in mono.
 void GraphicsServer::DrawRenderFrameDef(FrameDef* frame_def, int eye) {
   assert(renderer_);
-  if (renderer_) {
+  assert(renderer_loaded_);
+  if (renderer_ && renderer_loaded_) {
     renderer_->RenderFrameDef(frame_def);
   }
 }
@@ -235,7 +239,8 @@ void GraphicsServer::DrawRenderFrameDef(FrameDef* frame_def, int eye) {
 // Clean up the frame_def once done drawing it.
 void GraphicsServer::FinishRenderFrameDef(FrameDef* frame_def) {
   assert(renderer_);
-  if (renderer_) {
+  assert(renderer_loaded_);
+  if (renderer_ && renderer_loaded_) {
     renderer_->FinishFrameDef(frame_def);
   }
 }
@@ -245,7 +250,7 @@ void GraphicsServer::ReloadMedia_() {
   assert(g_base->app_adapter->InGraphicsContext());
 
   // Immediately unload all renderer data here in this thread.
-  if (renderer_) {
+  if (renderer_ && renderer_loaded_) {
     g_base->assets->UnloadRendererBits(true, true);
   }
 
