@@ -1,6 +1,5 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 project(BallisticaKit)
-include(CheckIncludeFile)
 
 option(HEADLESS "build headless server" OFF)
 option(TEST_BUILD "include testing features" OFF)
@@ -9,86 +8,78 @@ option(DISCORD "enable Discord" OFF)
 # Requiring minimum of C++20 currently.
 set(CMAKE_CXX_STANDARD 20)
 
-if (APPLE)
-  # Seems as of Mojave we need to explicitly pull in homebrew paths.
-  # Just hard-coding recommended homebrew install paths for now.
-  # Is there a more elegant way to do this?
-  if (CMAKE_SYSTEM_PROCESSOR MATCHES arm64)
-    list(APPEND CMAKE_PREFIX_PATH /opt/homebrew)
-    include_directories("/opt/homebrew/include")
-    link_directories("/opt/homebrew/lib")
-  else()
-    list(APPEND CMAKE_PREFIX_PATH /usr/local)
-    include_directories("/usr/local/include")
-    link_directories("/usr/local/lib")
-  endif()
-
-  # On Mac with homebrew it seems that Requesting 3.X when we've got
-  # 3.(X+1) installed will point us at the 3.(X+1) framework but will attempt
-  # to load a 3.X library from within it which doesn't exist. So we need
-  # to be a bit more explicit telling it where to look. Note: this was last
-  # tested with 3.7; should revisit sometime to make sure still applies.
-  execute_process(COMMAND "python3.13-config" "--prefix"
-    OUTPUT_VARIABLE Python_ROOT_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-endif ()
-find_package (Python 3.13 REQUIRED EXACT COMPONENTS Development)
+# Stuff applying everywhere.
+add_library(common_deps INTERFACE)
   
+# Stuff applying to all ba targets.
+add_library(ba_deps INTERFACE)
 
-if (HEADLESS)
-  add_definitions(-DBA_HEADLESS_BUILD=1)
- else ()
-  find_package(SDL2 QUIET)
-  if (SDL2_FOUND)
-    if ("${SDL2_LIBRARIES}" STREQUAL "")
-      message(WARNING "SDL2_LIBRARIES wasn't set, manually setting to SDL2::SDL2")
-      set(SDL2_LIBRARIES "SDL2::SDL2")
-    endif ()
-    # Getting complaint about space at the end of this on ubuntu16.
-    string(STRIP "${SDL2_LIBRARIES}" SDL2_LIBRARIES)
-  else ()
-    message(FATAL_ERROR "SDL2 not found")
-  endif ()
+if(APPLE)
+  # Look for homebrew's keg-only OpenAL Soft. We don't want to use Apple's
+  # OpenAL anymore since its deprecated (and buggy as of Tahoe).
+  execute_process(
+    COMMAND brew --prefix openal-soft
+    OUTPUT_VARIABLE _OPENAL_SOFT_PREFIX
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE _brew_rc
+  )
+  if(_brew_rc EQUAL 0)
+    set(_pcdir "${_OPENAL_SOFT_PREFIX}/lib/pkgconfig")
+    set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${_pcdir}")
+  endif()  
+  
+endif()  # APPLE
+
+set(Python3_FIND_FRAMEWORK NEVER)
+# TODO: Look into using Development.Module/Development.Embed here.
+find_package(Python3 3.13 EXACT REQUIRED COMPONENTS Development)
+
+  
+if(HEADLESS)
+  target_compile_definitions(common_deps INTERFACE BA_HEADLESS_BUILD=1)
+else()
+  find_package(PkgConfig REQUIRED)
+  
+  pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
+  pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
+  pkg_check_modules(OGG REQUIRED IMPORTED_TARGET ogg)
+  pkg_check_modules(VORBISFILE REQUIRED IMPORTED_TARGET vorbisfile)
+  
+  # On linux, prefer modern libOpenGL.so over legacy libGL.so.
+  set(OpenGL_GL_PREFERENCE GLVND)
   find_package(OpenGL REQUIRED)
-  find_package(OpenAL REQUIRED)
-  find_library(OGG_LIBRARY ogg)
-  find_library(VORBISFILE_LIBRARY vorbisfile)
-  if (NOT OGG_LIBRARY)
-    message(FATAL_ERROR "ogg library not found")
-  endif ()
-  if (NOT VORBISFILE_LIBRARY)
-    message(FATAL_ERROR "vorbisfile library not found")
-  endif ()
-  set(EXTRA_INCLUDE_DIRS ${OPENGL_INCLUDE_DIRS}
-    ${OPENAL_INCLUDE_DIR} ${SDL2_INCLUDE_DIRS})
-  set(EXTRA_LIBRARIES ogg vorbisfile ${OPENGL_LIBRARIES} ${OPENAL_LIBRARY})
-endif ()
-
-if (TEST_BUILD)
-  add_definitions(-DBA_VARIANT_TEST_BUILD=1)
-endif ()
-
-# Currently seeing warnings about parameter order changing in GCC 7.1
-# on Raspberry Pi builds. We never need to care about C++ abi compatibility
-# so just silencing them for now. Can maybe remove this later if they stop.
-if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+  
+  target_link_libraries(ba_deps INTERFACE
+    PkgConfig::OPENAL
+    PkgConfig::SDL2
+    PkgConfig::OGG
+    PkgConfig::VORBISFILE
+    OpenGL::GL
+  )
+  
 endif()
 
-set(BA_SRC_ROOT ../src)
-include_directories(${BA_SRC_ROOT})
-add_compile_options(-include ballistica/shared/buildconfig/buildconfig_cmake.h)
+if(TEST_BUILD)
+  target_compile_definitions(common_deps INTERFACE BA_VARIANT_TEST_BUILD=1)
+endif()
 
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-  add_definitions(-DBA_DEBUG_BUILD=1)
-else ()
-  # It seems that cmake can choose -O2 sometimes and -O3 sometimes
-  # for release builds (depending on Release vs RelWithDebInfo, etc).
-  # Let's keep all our non-debug builds consistent at -O3 for now; can
-  # revisit if it causes problems.
-  add_definitions(-O3)
-endif ()
+set(BA_SRC_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../src")
+target_include_directories(common_deps INTERFACE
+  "${BA_SRC_ROOT}"
+)
+target_compile_options(common_deps INTERFACE
+  -include "${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_cmake.h"
+)
+
+# Define BA_DEBUG_BUILD for debug builds.
+target_compile_definitions(common_deps INTERFACE
+  $<$<CONFIG:Debug>:BA_DEBUG_BUILD=1>
+)
+
+# Go with -O3 for non-debug builds.
+target_compile_options(common_deps INTERFACE
+  $<$<NOT:$<CONFIG:Debug>>:-O3>
+)
 
 set(ODE_SRC_ROOT ${BA_SRC_ROOT}/external/open_dynamics_engine-ef)
 
@@ -172,28 +163,14 @@ add_library(ode
   )
 target_include_directories(ode PRIVATE ${ODE_SRC_ROOT})
 
-# Necessary on GCC to allow linking in to our .so version.
-# (but disabling semantic-interposition should lessen the associated speed hit).
-if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
-  target_compile_options(ode PRIVATE -fPIC -fno-semantic-interposition)
-endif ()
+# Necessary on GCC to allow linking in to our .so version. (but disabling
+# semantic-interposition should lessen the associated speed hit).
+set_property(TARGET ode PROPERTY POSITION_INDEPENDENT_CODE ON)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(ode PRIVATE -fno-semantic-interposition)
+endif()
 
-# NOTE: There used to be an issue with optimized GCC builds where mesh
-# collisions would fail randomly, leading to characters falling through
-# floors somewhat regularly. For this reason I was limiting optimization to
-# -O1 for the rigid body library. However, as of April 2021, all seems
-# well when testing on arm64 and x86-64 linux builds. (I think)
-# The last time I remember seeing this bug was around 2016 I believe, but I
-# haven't looked for it since. Perhaps GCC was fixed or perhaps the error
-# was limited to 32 bit x86 builds; in either case we should be good, as
-# we're no longer building any 32 bit x86 builds using GCC.
-# Keeping this in here commented out just in case it rears its ugly head
-# again though.
-# if (CMAKE_BUILD_TYPE MATCHES Release)
-#   if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
-#     target_compile_options(ode PRIVATE -O1)
-#   endif()
-# endif ()
+target_link_libraries(ode PRIVATE common_deps)
 
 set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/external/qr_code_generator/QrCode.cpp
@@ -790,60 +767,62 @@ set(BALLISTICA_SOURCES
 # BallisticaKit monolithic binary.
 add_executable(ballisticakitbin ${BALLISTICA_SOURCES})
 
-#++++++++++++++++++++++++discord_sdk+++++++++++++++++++++++++++++++
-if (DISCORD)
-set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../src/external/discord_social_sdk")
-set(DISCORD_SDK_INCLUDE_DIR "${DISCORD_SDK_ROOT}/include")
-set(DISCORD_SDK_LIB_DIR "${DISCORD_SDK_ROOT}/lib/release")
-set(DISCORD_SDK_BIN_DIR "${DISCORD_SDK_ROOT}/bin/release")
+############################ Discord Platform SDK ##############################
+if(DISCORD)
+  set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../src/external/discord_social_sdk")
+  set(DISCORD_SDK_INCLUDE_DIR "${DISCORD_SDK_ROOT}/include")
+  set(DISCORD_SDK_LIB_DIR "${DISCORD_SDK_ROOT}/lib/release")
+  set(DISCORD_SDK_BIN_DIR "${DISCORD_SDK_ROOT}/bin/release")
 
-# Include Discord SDK headers
-include_directories(${DISCORD_SDK_INCLUDE_DIR})
+  # Include Discord SDK headers.
+  include_directories(${DISCORD_SDK_INCLUDE_DIR})
 
-# Platform-specific Social SDK library paths
-if(WIN32)
+  # Platform-specific Social SDK library paths
+  if(WIN32)
     set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/discord_partner_sdk.lib")
     set(DISCORD_SHARED_LIB "${DISCORD_SDK_BIN_DIR}/discord_partner_sdk.dll")
-elseif(APPLE)
+  elseif(APPLE)
     set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
     set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
-else() # Linux
+  else()  # Linux
     set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
     set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
-endif()
-
-# need to link to this instead
-# Copy the Discord shared library to the output directory
-add_custom_command(TARGET ballisticakitbin
+  endif()
+  
+  # Need to link to this instead.
+  # Copy the Discord shared library to the output directory.
+  add_custom_command(TARGET ballisticakitbin
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${DISCORD_SHARED_LIB}"
-        $<TARGET_FILE_DIR:ballisticakitbin>)
+    "${DISCORD_SHARED_LIB}"
+    $<TARGET_FILE_DIR:ballisticakitbin>)
+  
+  target_include_directories(ba_deps INTERFACE ${DISCORD_SDK_INCLUDE_DIR})
+  target_link_libraries(ba_deps INTERFACE ${DISCORD_LIB_PATH})
+endif()  # DISCORD
 
-set(EXTRA_INCLUDE_DIRS ${EXTRA_INCLUDE_DIRS} ${DISCORD_SDK_INCLUDE_DIR})
-set(EXTRA_LIBRARIES ${EXTRA_LIBRARIES} ${DISCORD_LIB_PATH})
-endif() #DISCORD
-
-# Gets -rdynamic added when linking gcc builds which exports all symbols
-# which gives us more meaningful stack traces using backtrace_symbols().  
+# Gets -rdynamic added when linking gcc builds which exports all symbols which
+# gives us more meaningful stack traces using backtrace_symbols().
 set_target_properties(ballisticakitbin PROPERTIES ENABLE_EXPORTS 1)
   
-if (HEADLESS)
+if(HEADLESS)
   set_target_properties(ballisticakitbin
-    PROPERTIES OUTPUT_NAME "ballisticakit_headless")
-else ()
+    PROPERTIES OUTPUT_NAME "ballisticakit_headless"
+  )
+else()
   set_target_properties(ballisticakitbin
-    PROPERTIES OUTPUT_NAME "ballisticakit")
-endif ()
+    PROPERTIES OUTPUT_NAME "ballisticakit"
+  )
+endif()
 
 target_include_directories(ballisticakitbin PRIVATE
-  ${Python_INCLUDE_DIRS}
   ${BA_SRC_ROOT}/external/open_dynamics_engine-ef
-  ${EXTRA_INCLUDE_DIRS})
+  ${EXTRA_INCLUDE_DIRS}
+)
 
 target_link_libraries(ballisticakitbin PRIVATE
-  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread ${Python_LIBRARIES}
-  ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl)
+  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread dl common_deps ba_deps Python3::Python
+)
 
 
 # BallisticaKit modular shared library
@@ -853,29 +832,38 @@ add_library(ballisticakitso SHARED ${BALLISTICA_SOURCES})
 # This is a 'modular' build.
 target_compile_definitions(ballisticakitso PRIVATE BA_MONOLITHIC_BUILD=0)
 
+# Improves speed on GCC.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+target_compile_options(ballisticakitso PRIVATE -fno-semantic-interposition)
+endif()
+
 # Gets -rdynamic added when linking gcc builds which exports all symbols
-# which gives us more meaningful stack traces using backtrace_symbols().  
+# which gives us more meaningful stack traces using backtrace_symbols().
+# This involves a speed/size hit so ideally we should turn this off and
+# use .dSYMs to get pretty stack traces, but that would be a technical
+# challenge to do from the client end.
+# UPDATE: Apparently .so targets have thisenabled anyway?.. Should read
+#  up on that.
 set_target_properties(ballisticakitso PROPERTIES ENABLE_EXPORTS 1)
 
-set_target_properties(ballisticakitso
-  PROPERTIES PREFIX "")
-set_target_properties(ballisticakitso
-  PROPERTIES SUFFIX ".so")
+set_target_properties(ballisticakitso PROPERTIES PREFIX "")
+# TODO: Look into ${PYTHON3_EXTENSION_SUFFIX} (.cpython-313-arm64-gnu.so, etc)
+set_target_properties(ballisticakitso PROPERTIES SUFFIX ".so")
 
-if (HEADLESS)
+if(HEADLESS)
   set_target_properties(ballisticakitso
     PROPERTIES OUTPUT_NAME "ballisticakit_headless")
-else ()
+else()
   set_target_properties(ballisticakitso
     PROPERTIES OUTPUT_NAME "ballisticakit")
-endif ()
+endif()
 
 target_include_directories(ballisticakitso PRIVATE
-  ${Python_INCLUDE_DIRS}
   ${BA_SRC_ROOT}/external/open_dynamics_engine-ef
-  ${EXTRA_INCLUDE_DIRS})
+  ${EXTRA_INCLUDE_DIRS}
+)
 
 target_link_libraries(ballisticakitso PRIVATE
-  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread ${Python_LIBRARIES}
-  ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl)
+  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread dl common_deps ba_deps Python3::Python
+)
 

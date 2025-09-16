@@ -1,4 +1,4 @@
-### 1.7.51 (build 22539, api 9, 2025-09-14)
+### 1.7.51 (build 22541, api 9, 2025-09-15)
 - Deprecated `bauiv1.uicleanupcheck()` - to be removed when api 9 support ends.
   Use `ba*.app.ui_v1.add_ui_cleanup_check()` instead.
 - Official Mac builds now use OpenALSoft for audio instead of Apple's old
@@ -6,6 +6,12 @@
   26.0 causing all of our mono sounds to not play. Weird. It's probably not a
   bad idea to be using OpenALSoft here anyway since Apple considers theirs
   deprecated.
+- Related to the above, modified CMakeLists.txt so Mac cmake builds will use
+  homebrew OpenAL Soft instead of Apple's. This means you need to do a `brew
+  install openal-soft` before compiling cmake builds on Mac.
+- While I was in CMakeLists.txt, went ahead and cleaned everything up and
+  modernized it. Please holler if you get build failures with CMake (especially
+  if it worked before).
 
 ### 1.7.50 (build 22533, api 9, 2025-09-06)
 - Cleaned up cursor handling on Mac build. Fixes an issue where the cursor could
