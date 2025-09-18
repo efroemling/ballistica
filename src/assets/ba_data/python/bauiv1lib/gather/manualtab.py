@@ -693,8 +693,8 @@ class ManualGatherTab(GatherTab):
                 ],
             ),
             self._delete_saved_party,
-            450,
-            150,
+            width=450,
+            height=150,
         )
 
     def _delete_saved_party(self) -> None:

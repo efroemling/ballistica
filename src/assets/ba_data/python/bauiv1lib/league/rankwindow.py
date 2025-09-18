@@ -9,6 +9,7 @@ import copy
 import logging
 from typing import TYPE_CHECKING, override
 
+from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.popup import PopupMenu
 import bauiv1 as bui
 
@@ -57,9 +58,6 @@ class LeagueRankWindow(bui.MainWindow):
         )
         self._r = 'coopSelectWindow'
         self._rdict = bui.app.lang.get_resource(self._r)
-        # top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
-
-        # self._xoffs = 80.0 if uiscale is bui.UIScale.SMALL else 0
         self._xoffs = 40
 
         self._league_url_arg = ''
@@ -86,17 +84,22 @@ class LeagueRankWindow(bui.MainWindow):
         yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
 
         self._scroll_width = target_width
-        self._scroll_height = target_height - 35
+        self._scroll_height = target_height - 50
         scroll_bottom = yoffs - 80 - self._scroll_height
+
+        # Go with full-screen scrollable area in small ui.
+        if uiscale is bui.UIScale.SMALL:
+            self._scroll_height += 53
+            scroll_bottom -= 1
 
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                stack_offset=(
-                    (0, 0)
-                    if uiscale is bui.UIScale.SMALL
-                    else (0, 10) if uiscale is bui.UIScale.MEDIUM else (0, 0)
-                ),
+                # stack_offset=(
+                #     (0, 0)
+                #     if uiscale is bui.UIScale.SMALL
+                #     else (0, 0) if uiscale is bui.UIScale.MEDIUM else (0, 0)
+                # ),
                 scale=scale,
                 toolbar_visibility=('menu_full'),
                 toolbar_cancel_button_style=(
@@ -135,6 +138,40 @@ class LeagueRankWindow(bui.MainWindow):
                 selected_child=self._back_button,
             )
 
+        self._scrollwidget = bui.scrollwidget(
+            parent=self._root_widget,
+            highlight=False,
+            size=(self._scroll_width, self._scroll_height),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+            ),
+            center_small_content=True,
+            center_small_content_horizontally=True,
+            border_opacity=0.4,
+        )
+        bui.widget(edit=self._scrollwidget, autoselect=True)
+        bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
+
+        # With full-screen scrolling, fade content as it approaches
+        # toolbars.
+        if uiscale is bui.UIScale.SMALL:
+            scroll_fade_top(
+                self._root_widget,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+                self._scroll_width,
+                self._scroll_height,
+                yscale=0.5,
+            )
+            scroll_fade_bottom(
+                self._root_widget,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+                self._scroll_width,
+                self._scroll_height,
+            )
+
         self._title_text = bui.textwidget(
             parent=self._root_widget,
             position=(
@@ -153,27 +190,17 @@ class LeagueRankWindow(bui.MainWindow):
             v_align='center',
         )
 
-        self._scrollwidget = bui.scrollwidget(
-            parent=self._root_widget,
-            highlight=False,
-            size=(self._scroll_width, self._scroll_height),
-            position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
-                scroll_bottom,
-            ),
-            center_small_content=True,
-            center_small_content_horizontally=True,
-            border_opacity=0.4,
-        )
-        bui.widget(edit=self._scrollwidget, autoselect=True)
-        bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
-
         self._last_power_ranking_query_time: float | None = None
         self._doing_power_ranking_query = False
 
         self._subcontainer: bui.Widget | None = None
         self._subcontainerwidth = 1024
         self._subcontainerheight = 573
+
+        # For fullscreen scrollable, account for toolbar.
+        if uiscale is bui.UIScale.SMALL:
+            self._subcontainerheight += 53
+
         self._power_ranking_score_widgets: list[bui.Widget] = []
 
         self._season_popup_menu: PopupMenu | None = None
@@ -383,6 +410,11 @@ class LeagueRankWindow(bui.MainWindow):
         v = self._subcontainerheight - 20
 
         v -= 0
+
+        # For fullscreen scrollable, account for toolbar.
+        uiscale = bui.app.ui_v1.uiscale
+        if uiscale is bui.UIScale.SMALL:
+            v -= 52
 
         h2 = 80
         v2 = v - 60
@@ -811,6 +843,11 @@ class LeagueRankWindow(bui.MainWindow):
         self._season = data['s'] if data is not None else None
 
         v = self._subcontainerheight - 20
+        # For fullscreen scrollable, account for toolbar.
+        uiscale = bui.app.ui_v1.uiscale
+        if uiscale is bui.UIScale.SMALL:
+            v -= 52
+
         popup_was_selected = False
         if self._season_popup_menu is not None:
             btn = self._season_popup_menu.get_button()

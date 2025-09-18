@@ -593,8 +593,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                     subs=[('${LIST}', self._selected_playlist_name)],
                 ),
                 self._do_delete_playlist,
-                450,
-                150,
+                width=450,
+                height=150,
             )
 
     def _get_playlist_display_name(self, playlist: str | bui.Lstr) -> bui.Lstr:

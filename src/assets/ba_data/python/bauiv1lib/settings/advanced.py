@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.locale import LocaleResolved
 from bauiv1lib.popup import PopupMenu
+from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -73,6 +74,11 @@ class AdvancedSettingsWindow(bui.MainWindow):
         self._scroll_height = target_height - 25
         scroll_bottom = yoffs - 56 - self._scroll_height
 
+        # Go with full-screen scrollable area in small ui.
+        if uiscale is bui.UIScale.SMALL:
+            self._scroll_height += 27
+            scroll_bottom += 1
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -99,6 +105,10 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
         self._sub_width = min(550, self._scroll_width * 0.95)
         self._sub_height = 920.0
+
+        # For fullscreen scrollable, account for toolbar.
+        if uiscale is bui.UIScale.SMALL:
+            self._sub_height += 27
 
         if self._show_always_use_internal_keyboard:
             self._sub_height += 62
@@ -144,20 +154,6 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 edit=self._root_widget, cancel_button=self._back_button
             )
 
-        self._title_text = bui.textwidget(
-            parent=self._root_widget,
-            position=(
-                self._width * 0.5,
-                yoffs - (43 if uiscale is bui.UIScale.SMALL else 25),
-            ),
-            size=(0, 0),
-            scale=0.75 if uiscale is bui.UIScale.SMALL else 1.0,
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
-            color=app.ui_v1.title_color,
-            h_align='center',
-            v_align='center',
-        )
-
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             size=(self._scroll_width, self._scroll_height),
@@ -172,6 +168,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
+
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
             size=(self._sub_width, self._sub_height),
@@ -179,44 +176,38 @@ class AdvancedSettingsWindow(bui.MainWindow):
             selection_loops_to_parent=True,
         )
 
-        # Add some blotches so our contents fades out as it approaches
-        # the bottom toolbar (but only in the main menu when there's
-        # something down there).
+        # With full-screen scrolling, fade content as it approaches
+        # toolbars. (but only in the main menu where we're showing said
+        # toolbars).
         if uiscale is bui.UIScale.SMALL and bui.in_main_menu():
-            blotchwidth = 500.0
-            blotchheight = 200.0
-            bimg = bui.imagewidget(
-                parent=self._root_widget,
-                texture=bui.gettexture('uiAtlas'),
-                mesh_transparent=bui.getmesh('windowBGBlotch'),
-                position=(
-                    self._width * 0.5
-                    - self._scroll_width * 0.5
-                    + 60.0
-                    - blotchwidth * 0.5,
-                    scroll_bottom - blotchheight * 0.5,
-                ),
-                size=(blotchwidth, blotchheight),
-                color=(0.4, 0.37, 0.49),
-                # color=(1, 0, 0),
+            scroll_fade_top(
+                self._root_widget,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+                self._scroll_width,
+                self._scroll_height,
             )
-            bui.widget(edit=bimg, depth_range=(0.9, 1.0))
-            bimg = bui.imagewidget(
-                parent=self._root_widget,
-                texture=bui.gettexture('uiAtlas'),
-                mesh_transparent=bui.getmesh('windowBGBlotch'),
-                position=(
-                    self._width * 0.5
-                    + self._scroll_width * 0.5
-                    - 60.0
-                    - blotchwidth * 0.5,
-                    scroll_bottom - blotchheight * 0.5,
-                ),
-                size=(blotchwidth, blotchheight),
-                color=(0.4, 0.37, 0.49),
-                # color=(1, 0, 0),
+            scroll_fade_bottom(
+                self._root_widget,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+                self._scroll_width,
+                self._scroll_height,
             )
-            bui.widget(edit=bimg, depth_range=(0.9, 1.0))
+
+        self._title_text = bui.textwidget(
+            parent=self._root_widget,
+            position=(
+                self._width * 0.5,
+                yoffs - (43 if uiscale is bui.UIScale.SMALL else 25),
+            ),
+            size=(0, 0),
+            scale=0.75 if uiscale is bui.UIScale.SMALL else 1.0,
+            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            color=app.ui_v1.title_color,
+            h_align='center',
+            v_align='center',
+        )
 
         self._rebuild()
 
@@ -341,6 +332,11 @@ class AdvancedSettingsWindow(bui.MainWindow):
             child.delete()
 
         v = self._sub_height - 35
+
+        # For fullscreen scrollable, account for toolbar.
+        uiscale = bui.app.ui_v1.uiscale
+        if uiscale is bui.UIScale.SMALL:
+            v -= 27
 
         v -= self._spacing * 1.2
 
@@ -798,7 +794,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
         )
 
         for child in self._subcontainer.get_children():
-            bui.widget(edit=child, show_buffer_bottom=60, show_buffer_top=20)
+            bui.widget(edit=child, show_buffer_bottom=80, show_buffer_top=80)
 
         pbtn = bui.get_special_widget('squad_button')
         bui.widget(edit=self._scrollwidget, right_widget=pbtn)

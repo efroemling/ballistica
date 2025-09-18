@@ -323,8 +323,8 @@ class SoundtrackBrowserWindow(bui.MainWindow):
                     subs=[('${NAME}', self._selected_soundtrack)],
                 ),
                 self._do_delete_soundtrack,
-                450,
-                150,
+                width=450,
+                height=150,
             )
 
     def _duplicate_soundtrack(self) -> None:

@@ -13,6 +13,7 @@ from typing import override, assert_never, TYPE_CHECKING
 from efro.util import strict_partial, pairs_from_flat
 from efro.error import CommunicationError
 import bacommon.bs
+from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -351,6 +352,11 @@ class InboxWindow(bui.MainWindow):
         scroll_height = target_height - 31
         scroll_bottom = yoffs - 59 - scroll_height
 
+        # Go with full screen area scrollable on small ui.
+        if uiscale is bui.UIScale.SMALL:
+            scroll_height += 36
+            scroll_bottom -= 4
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -389,21 +395,6 @@ class InboxWindow(bui.MainWindow):
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
             )
-
-        self._title_text = bui.textwidget(
-            parent=self._root_widget,
-            position=(
-                self._width * 0.5,
-                yoffs - (45 if uiscale is bui.UIScale.SMALL else 30),
-            ),
-            size=(0, 0),
-            h_align='center',
-            v_align='center',
-            scale=0.6 if uiscale is bui.UIScale.SMALL else 0.8,
-            text=bui.Lstr(resource='inboxText'),
-            maxwidth=200,
-            color=bui.app.ui_v1.title_color,
-        )
 
         # Shows 'loading', 'no messages', etc.
         self._infotext = bui.textwidget(
@@ -446,10 +437,43 @@ class InboxWindow(bui.MainWindow):
                 left_widget=bui.get_special_widget('back_button'),
             )
 
+        # When we're doing fullscreen scrolling, fade content around
+        # toolbars.
+        if uiscale is bui.UIScale.SMALL:
+            scroll_fade_top(
+                self._root_widget,
+                self._width * 0.5 - scroll_width * 0.5,
+                scroll_bottom,
+                scroll_width,
+                scroll_height,
+            )
+            scroll_fade_bottom(
+                self._root_widget,
+                self._width * 0.5 - scroll_width * 0.5,
+                scroll_bottom,
+                scroll_width,
+                scroll_height,
+            )
+
         bui.containerwidget(
             edit=self._root_widget,
             cancel_button=self._back_button,
             single_depth=True,
+        )
+
+        self._title_text = bui.textwidget(
+            parent=self._root_widget,
+            position=(
+                self._width * 0.5,
+                yoffs - (45 if uiscale is bui.UIScale.SMALL else 30),
+            ),
+            size=(0, 0),
+            h_align='center',
+            v_align='center',
+            scale=0.6 if uiscale is bui.UIScale.SMALL else 0.8,
+            text=bui.Lstr(resource='inboxText'),
+            maxwidth=200,
+            color=bui.app.ui_v1.title_color,
         )
 
         # Kick off request.
@@ -716,6 +740,10 @@ class InboxWindow(bui.MainWindow):
         # notifications to target a fixed width.
         sub_width = 400.0
         sub_height = margin_top
+
+        # For fullscreen scrollable, account for toolbar.
+        if uiscale is bui.UIScale.SMALL:
+            sub_height += 36
 
         # Construct entries for everything we'll display.
         for i, wrapper in enumerate(response.wrappers):
@@ -1004,6 +1032,12 @@ class InboxWindow(bui.MainWindow):
 
         buttonrows: list[list[bui.Widget]] = []
         y = sub_height - margin_top
+
+        # For fullscreen scrollable, account for toolbar.
+        uiscale = bui.app.ui_v1.uiscale
+        if uiscale is bui.UIScale.SMALL:
+            y -= 36
+
         for i, _wrapper in enumerate(response.wrappers):
             entry_display = self._entry_displays[i]
             entry_display_weak = weakref.ref(entry_display)

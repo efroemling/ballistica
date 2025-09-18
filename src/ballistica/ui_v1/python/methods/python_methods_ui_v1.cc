@@ -1210,6 +1210,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* on_select_call_obj{Py_None};
   PyObject* claim_outside_clicks_obj{Py_None};
   PyObject* darken_behind_obj{Py_None};
+  PyObject* darken_behind_is_permanent_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -1244,10 +1245,11 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "claim_outside_clicks",
                                  "claims_up_down",
                                  "darken_behind",
+                                 "darken_behind_is_permanent",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &background_obj, &selected_child_obj,
           &transition_obj, &cancel_button_obj, &start_button_obj,
@@ -1259,7 +1261,8 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &always_highlight_obj, &selectable_obj,
           &scale_origin_stack_offset_obj, &toolbar_visibility_obj,
           &toolbar_cancel_button_style_obj, &on_select_call_obj,
-          &claim_outside_clicks_obj, &claims_up_down_obj, &darken_behind_obj)) {
+          &claim_outside_clicks_obj, &claims_up_down_obj, &darken_behind_obj,
+          &darken_behind_is_permanent_obj)) {
     return nullptr;
   }
 
@@ -1487,6 +1490,10 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (darken_behind_obj != Py_None) {
     widget->set_darken_behind(Python::GetBool(darken_behind_obj));
   }
+  if (darken_behind_is_permanent_obj != Py_None) {
+    widget->set_darken_behind_is_permanent(
+        Python::GetBool(darken_behind_is_permanent_obj));
+  }
 
   // Run any calls built up by UI callbacks.
   ui_op_context.Finish();
@@ -1547,7 +1554,8 @@ static PyMethodDef PyContainerWidgetDef = {
     "  on_select_call: Callable[[], None] | None = None,\n"
     "  claim_outside_clicks: bool | None = None,\n"
     "  claims_up_down: bool | None = None,\n"
-    "  darken_behind: bool | None = None) -> bauiv1.Widget\n"
+    "  darken_behind: bool | None = None,\n"
+    "  darken_behind_is_permanent: bool | None = None) -> bauiv1.Widget\n"
     "\n"
     "Create or edit a container widget.\n"
     "\n"

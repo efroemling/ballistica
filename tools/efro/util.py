@@ -824,7 +824,7 @@ def set_canonical_module_names(module_globals: dict[str, Any]) -> None:
 
 
 def timedelta_str(
-    timeval: datetime.timedelta | float, maxparts: int = 2, decimals: int = 0
+    timeval: datetime.timedelta | float, *, maxparts: int = 2, decimals: int = 0
 ) -> str:
     """Return a simple human readable time string for a length of time.
 
@@ -833,8 +833,8 @@ def timedelta_str(
     Example output:
 
     - ``"23d 1h 2m 32s"`` (with maxparts == 4)
-    - ``"23d 1h"`` (with maxparts == 2)
-    - ``"23d 1.08h"`` (with maxparts == 2 and decimals == 2)
+    - ``"23d 1h"``        (with maxparts == 2)
+    - ``"23d 1.08h"``     (with maxparts == 2 and decimals == 2)
 
     Note that this is hard-coded in English and probably not especially
     performant.
@@ -902,6 +902,7 @@ def timedelta_str(
 
 def ago_str(
     timeval: datetime.datetime,
+    *,
     maxparts: int = 1,
     now: datetime.datetime | None = None,
     decimals: int = 0,

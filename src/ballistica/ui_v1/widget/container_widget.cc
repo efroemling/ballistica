@@ -816,6 +816,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
               std::min(0.2f, (1.0f - transition_scale_)) * 0.04f;
           d_transition_scale_ *= 0.87f;
           transition_scale_ += d_transition_scale_;
+
           if (std::abs(transition_scale_ - 1.0f) < 0.001
               && std::abs(d_transition_scale_) < 0.0001f) {
             transition_scale_ = 1.0f;
@@ -825,21 +826,28 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       } else if (transition_type_ == TransitionType::kOutScale) {
         if (display_time_ms - dynamics_update_time_millisecs_ > 1000)
           dynamics_update_time_millisecs_ = display_time_ms - 1000;
+
+        // Special case: for permanent darkens we never fade back in or
+        // die.
+        auto permanent = darken_behind_ && darken_behind_is_permanent_;
+
         while (display_time_ms - dynamics_update_time_millisecs_ > 5) {
           dynamics_update_time_millisecs_ += 5;
           transition_scale_ -= 0.04f;
           if (transition_scale_ <= 0.0f) {
             transition_scale_ = 0.0f;
 
-            // Probably not safe to delete ourself here since we're in
-            // the draw loop, but we can push a call to do it.
-            Object::WeakRef<Widget> weakref(this);
-            g_base->logic->event_loop()->PushCall([weakref] {
-              Widget* w = weakref.get();
-              if (w) {
-                g_ui_v1->DeleteWidget(w);
-              }
-            });
+            if (!permanent) {
+              // Probably not safe to delete ourself here since we're in
+              // the draw loop, but we can push a call to do it.
+              Object::WeakRef<Widget> weakref(this);
+              g_base->logic->event_loop()->PushCall([weakref] {
+                Widget* w = weakref.get();
+                if (w) {
+                  g_ui_v1->DeleteWidget(w);
+                }
+              });
+            }
             return;
           }
         }
@@ -883,17 +891,21 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                         && (std::abs(transition_offset_x_smoothed_) < 0.05f)
                         && (std::abs(transition_offset_y_smoothed_) < 0.05f));
               }
-              if (done) {
+
+              // Special case: for permanent darkens we never fade back in
+              // or die.
+              auto permanent = darken_behind_ && darken_behind_is_permanent_;
+
+              if (done && !permanent) {
                 transitioning_ = false;
                 transition_offset_x_smoothed_ = 0.0f;
                 transition_offset_y_smoothed_ = 0.0f;
                 if (transitioning_out_) {
-                  // Its not safe to delete ourself here since we're in the
-                  // draw loop, but we can set up an event to do it.
+                  // Can't delete ourself here during drawing; push a call
+                  // to do it.
                   Object::WeakRef<Widget> weakref(this);
                   g_base->logic->event_loop()->PushCall([weakref] {
-                    Widget* w = weakref.get();
-                    if (w) {
+                    if (Widget* w = weakref.get()) {
                       g_ui_v1->DeleteWidget(w);
                     }
                   });
@@ -1008,20 +1020,24 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           base::SimpleComponent c(pass);
           c.SetTransparent(true);
 
-          // Fade in/out with transitions.
+          // Fade our darkening in/out with transitions.
           float amt;
           if (transitioning_) {
             if (transitioning_out_) {
-              // 1.0 is a 1 second fade. Note that we'll snap to 1 or 0 once
-              // fades end so we need to make sure we're fast enough to show
-              // our whole range.
-              auto fade_speed{10.0f};
-              amt = std::max(0.0f,
-                             std::min(1.0f, 1.0f
-                                                - static_cast<float>(
-                                                      display_time_ms
-                                                      - transition_start_time_)
-                                                      / 1000.0f * fade_speed));
+              if (darken_behind_is_permanent_) {
+                amt = 1.0f;
+              } else {
+                // 1.0 is a 1 second fade. Note that we'll snap to 1 or 0 once
+                // fades end so we need to make sure we're fast enough to show
+                // our whole range.
+                auto fade_speed{10.0f};
+                amt = std::max(
+                    0.0f, std::min(1.0f, 1.0f
+                                             - static_cast<float>(
+                                                   display_time_ms
+                                                   - transition_start_time_)
+                                                   / 1000.0f * fade_speed));
+              }
             } else {
               // 1.0 is a 1 second fade. Note that we'll snap to 1 or 0 once
               // fades end so we need to make sure we're fast enough to show

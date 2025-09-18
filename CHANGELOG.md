@@ -1,4 +1,4 @@
-### 1.7.51 (build 22541, api 9, 2025-09-15)
+### 1.7.51 (build 22544, api 9, 2025-09-17)
 - Deprecated `bauiv1.uicleanupcheck()` - to be removed when api 9 support ends.
   Use `ba*.app.ui_v1.add_ui_cleanup_check()` instead.
 - Official Mac builds now use OpenALSoft for audio instead of Apple's old
@@ -12,6 +12,11 @@
 - While I was in CMakeLists.txt, went ahead and cleaned everything up and
   modernized it. Please holler if you get build failures with CMake (especially
   if it worked before).
+- Nitpicky fix: hitting 'OK' to quit on desktop no longer fades back in
+  momentarily before fading out to quit.
+- Updated various scrollable UIs such as the co-op game browser to fade content
+  at the top instead of showing the scroll-box edge when in small ui-mode
+  (phones). This keeps the UI a bit cleaner looking.
 
 ### 1.7.50 (build 22533, api 9, 2025-09-06)
 - Cleaned up cursor handling on Mac build. Fixes an issue where the cursor could

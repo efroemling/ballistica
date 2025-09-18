@@ -13,6 +13,7 @@ from bacommon.login import LoginType
 import bacommon.cloud
 import bauiv1 as bui
 
+from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.connectivity import wait_for_connectivity
 
 
@@ -90,6 +91,11 @@ class AccountSettingsWindow(bui.MainWindow):
         self._scroll_height = target_height - 33
         scroll_bottom = yoffs - 61 - self._scroll_height
 
+        # Go with full-screen scrollable area in small ui.
+        if uiscale is bui.UIScale.SMALL:
+            self._scroll_height += 35
+            scroll_bottom -= 3
+
         self._sign_in_button = None
         self._sign_in_text = None
 
@@ -149,6 +155,37 @@ class AccountSettingsWindow(bui.MainWindow):
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
+        self._scrollwidget = bui.scrollwidget(
+            parent=self._root_widget,
+            highlight=False,
+            size=(self._scroll_width, self._scroll_height),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+            ),
+            claims_left_right=True,
+            selection_loops_to_parent=True,
+            border_opacity=0.4,
+        )
+
+        # With full-screen scrolling, fade content as it approaches
+        # toolbars.
+        if uiscale is bui.UIScale.SMALL:
+            scroll_fade_top(
+                self._root_widget,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+                self._scroll_width,
+                self._scroll_height,
+            )
+            scroll_fade_bottom(
+                self._root_widget,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+                self._scroll_width,
+                self._scroll_height,
+            )
+
         titleyoffs = -45.0 if uiscale is bui.UIScale.SMALL else -28.0
         titlescale = 0.7 if uiscale is bui.UIScale.SMALL else 1.0
         bui.textwidget(
@@ -166,18 +203,6 @@ class AccountSettingsWindow(bui.MainWindow):
             v_align='center',
         )
 
-        self._scrollwidget = bui.scrollwidget(
-            parent=self._root_widget,
-            highlight=False,
-            size=(self._scroll_width, self._scroll_height),
-            position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
-                scroll_bottom,
-            ),
-            claims_left_right=True,
-            selection_loops_to_parent=True,
-            border_opacity=0.4,
-        )
         self._subcontainer: bui.Widget | None = None
         self._refresh()
         self._restore_state()
@@ -399,6 +424,12 @@ class AccountSettingsWindow(bui.MainWindow):
         if self._subcontainer is not None:
             self._subcontainer.delete()
         self._sub_height = 90.0
+
+        # For fullscreen scrollable, account for toolbar.
+        uiscale = bui.app.ui_v1.uiscale
+        if uiscale is bui.UIScale.SMALL:
+            self._sub_height += 35
+
         if show_signed_in_as:
             self._sub_height += signed_in_as_space
         self._sub_height += via_space * len(via_lines)
@@ -448,6 +479,10 @@ class AccountSettingsWindow(bui.MainWindow):
 
         first_selectable = None
         v = self._sub_height - 10.0
+
+        # For fullscreen scrollable, account for toolbar.
+        if uiscale is bui.UIScale.SMALL:
+            v -= 35
 
         assert bui.app.classic is not None
         self._account_name_text: bui.Widget | None

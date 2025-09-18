@@ -45,6 +45,9 @@ class ContainerWidget : public Widget {
   void SetRootSelectable(bool enable);
   void set_selectable(bool val) { selectable_ = val; }
   void set_darken_behind(bool val) { darken_behind_ = val; }
+  void set_darken_behind_is_permanent(bool val) {
+    darken_behind_is_permanent_ = val;
+  }
 
   virtual void SetWidth(float w) {
     bg_dirty_ = glow_dirty_ = true;
@@ -270,6 +273,7 @@ class ContainerWidget : public Widget {
   bool is_window_stack_{};
   bool background_{true};
   bool darken_behind_{false};
+  bool darken_behind_is_permanent_{false};
   bool root_selectable_{};
   bool selectable_{true};
   bool ignore_input_{};

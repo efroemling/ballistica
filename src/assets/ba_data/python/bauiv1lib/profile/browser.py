@@ -288,7 +288,7 @@ class ProfileBrowserWindow(bui.MainWindow):
                 subs=[('${PROFILE}', self._selected_profile)],
             ),
             self._do_delete_profile,
-            350,
+            width=350,
         )
 
     def _do_delete_profile(self) -> None:

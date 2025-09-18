@@ -174,7 +174,8 @@ class HelpWindow(bui.MainWindow):
         )
 
         spacing = 1.0
-        h = self._sub_width * 0.5
+        baseh = self._sub_width * 0.5
+        h = baseh + 30
         v = self._sub_height - 55
         if uiscale is bui.UIScale.SMALL:
             v -= inline_title_height
@@ -217,6 +218,7 @@ class HelpWindow(bui.MainWindow):
             position=(hval2 - 0.5 * icon_size, v - 0.45 * icon_size),
             texture=logo_tex,
         )
+        h = baseh
 
         app = bui.app
         assert app.classic is not None
@@ -283,6 +285,8 @@ class HelpWindow(bui.MainWindow):
             v_align='center',
             flatness=1.0,
         )
+
+        h = baseh + 20
 
         v -= spacing * 40.0
         txt_scale = 0.74
@@ -373,6 +377,8 @@ class HelpWindow(bui.MainWindow):
 
         v -= spacing * 150.0
 
+        h = baseh + 30
+
         txt = bui.Lstr(resource=f'{self._r}.controlsText').evaluate()
         txt_scale = 1.4
         txt_maxwidth = 480
@@ -404,6 +410,8 @@ class HelpWindow(bui.MainWindow):
         )
 
         v -= spacing * 45.0
+
+        h = baseh
 
         txt_scale = 0.7
         txt = bui.Lstr(
@@ -557,6 +565,8 @@ class HelpWindow(bui.MainWindow):
 
         v -= spacing * 280.0
 
+        h = baseh + 30
+
         txt = bui.Lstr(resource=f'{self._r}.powerupsText').evaluate()
         txt_scale = 1.4
         txt_maxwidth = 480
@@ -585,6 +595,8 @@ class HelpWindow(bui.MainWindow):
             texture=logo_tex,
         )
 
+        h = baseh + 20
+
         v -= spacing * 50.0
         txt_scale = getres(f'{self._r}.powerupsSubtitleTextScale')
         txt = bui.Lstr(resource=f'{self._r}.powerupsSubtitleText').evaluate()
@@ -600,6 +612,8 @@ class HelpWindow(bui.MainWindow):
             v_align='center',
             flatness=1.0,
         )
+
+        h = baseh + 20
 
         v -= spacing * 1.0
 
@@ -670,7 +684,7 @@ class HelpWindow(bui.MainWindow):
                 position=(h + mm3, v),
                 size=(0, 0),
                 scale=txt_scale,
-                maxwidth=300,
+                maxwidth=290,
                 flatness=1.0,
                 text=txtl,
                 h_align='left',

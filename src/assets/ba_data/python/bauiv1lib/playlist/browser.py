@@ -10,6 +10,7 @@ import logging
 from typing import override, TYPE_CHECKING
 
 import bascenev1 as bs
+from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -27,7 +28,6 @@ class PlaylistBrowserWindow(bui.MainWindow):
         playlist_select_context: PlaylistSelectContext | None = None,
     ):
         # pylint: disable=cyclic-import
-        # pylint: disable=too-many-locals
         from bauiv1lib.playlist import PlaylistTypeVars
 
         # Store state for when we exit the next game.
@@ -87,6 +87,11 @@ class PlaylistBrowserWindow(bui.MainWindow):
         self._scroll_height = target_height - 31
         scroll_bottom = yoffs - 60 - self._scroll_height
 
+        # Go with full-screen scrollable area in small ui.
+        if uiscale is bui.UIScale.SMALL:
+            self._scroll_height += 35
+            scroll_bottom -= 2
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -124,21 +129,6 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 edit=self._root_widget, cancel_button=self._back_button
             )
 
-        self._title_text = bui.textwidget(
-            parent=self._root_widget,
-            position=(
-                self._width * 0.5,
-                yoffs - (45 if uiscale is bui.UIScale.SMALL else 20),
-            ),
-            size=(0, 0),
-            text=self._pvars.window_title_name,
-            scale=(0.8 if uiscale is bui.UIScale.SMALL else 1.3),
-            res_scale=1.5,
-            color=bui.app.ui_v1.heading_color,
-            h_align='center',
-            v_align='center',
-        )
-
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
@@ -155,43 +145,39 @@ class PlaylistBrowserWindow(bui.MainWindow):
         self._config_name_full = self._pvars.config_name + ' Playlists'
         self._last_config = None
 
-        # Add some blotches so our contents fades out as it approaches
-        # the bottom toolbar.
-        if uiscale is bui.UIScale.SMALL and playlist_select_context is None:
-            blotchwidth = 500.0
-            blotchheight = 200.0
-            bimg = bui.imagewidget(
-                parent=self._root_widget,
-                texture=bui.gettexture('uiAtlas'),
-                mesh_transparent=bui.getmesh('windowBGBlotch'),
-                position=(
-                    self._width * 0.5
-                    - self._scroll_width * 0.5
-                    + 60.0
-                    - blotchwidth * 0.5,
-                    scroll_bottom - blotchheight * 0.5,
-                ),
-                size=(blotchwidth, blotchheight),
-                color=(0.4, 0.37, 0.49),
-                # color=(1, 0, 0),
+        # With full-screen scrolling, fade content as it approaches
+        # toolbars.
+        if uiscale is bui.UIScale.SMALL and bool(True):
+            scroll_fade_top(
+                self._root_widget,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+                self._scroll_width,
+                self._scroll_height,
             )
-            bui.widget(edit=bimg, depth_range=(0.9, 1.0))
-            bimg = bui.imagewidget(
-                parent=self._root_widget,
-                texture=bui.gettexture('uiAtlas'),
-                mesh_transparent=bui.getmesh('windowBGBlotch'),
-                position=(
-                    self._width * 0.5
-                    + self._scroll_width * 0.5
-                    - 60.0
-                    - blotchwidth * 0.5,
-                    scroll_bottom - blotchheight * 0.5,
-                ),
-                size=(blotchwidth, blotchheight),
-                color=(0.4, 0.37, 0.49),
-                # color=(1, 0, 0),
-            )
-            bui.widget(edit=bimg, depth_range=(0.9, 1.0))
+            if playlist_select_context is None:
+                scroll_fade_bottom(
+                    self._root_widget,
+                    self._width * 0.5 - self._scroll_width * 0.5,
+                    scroll_bottom,
+                    self._scroll_width,
+                    self._scroll_height,
+                )
+
+        self._title_text = bui.textwidget(
+            parent=self._root_widget,
+            position=(
+                self._width * 0.5,
+                yoffs - (45 if uiscale is bui.UIScale.SMALL else 20),
+            ),
+            size=(0, 0),
+            text=self._pvars.window_title_name,
+            scale=(0.8 if uiscale is bui.UIScale.SMALL else 1.3),
+            res_scale=1.5,
+            color=bui.app.ui_v1.heading_color,
+            h_align='center',
+            v_align='center',
+        )
 
         # Update now and once per second (this should do our initial
         # refresh).
@@ -438,6 +424,12 @@ class PlaylistBrowserWindow(bui.MainWindow):
             + 90
             + extra_bottom_buffer
         )
+
+        # For fullscreen scrollable, account for toolbar.
+        uiscale = bui.app.ui_v1.uiscale
+        if uiscale is bui.UIScale.SMALL:
+            self._sub_height += 35
+
         assert self._sub_width is not None
         assert self._sub_height is not None
         self._subcontainer = bui.containerwidget(
@@ -459,11 +451,16 @@ class PlaylistBrowserWindow(bui.MainWindow):
             40 if uiscale is bui.UIScale.SMALL and screensize[0] < 1400 else 0
         )
 
+        # For fullscreen scrollable, account for toolbar.
+        yoffs = 0
+        if uiscale is bui.UIScale.SMALL:
+            yoffs -= 35
+
         assert bui.app.classic is not None
         bui.textwidget(
             parent=self._subcontainer,
             text=bui.Lstr(resource='playlistsText'),
-            position=(40 + xoffs, self._sub_height - 26),
+            position=(40 + xoffs, self._sub_height + yoffs - 26),
             size=(0, 0),
             scale=1.0,
             maxwidth=400,
@@ -494,6 +491,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     + 8
                     + h_offs,
                     self._sub_height
+                    + yoffs
                     - 47
                     - (y + 1) * (button_height + 2 * button_buffer_v),
                 )
@@ -527,7 +525,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 # Top row biases things up more to show header above it.
                 if y == 0:
                     bui.widget(
-                        edit=btn, show_buffer_top=60, show_buffer_bottom=5
+                        edit=btn, show_buffer_top=80, show_buffer_bottom=5
                     )
                 else:
                     bui.widget(

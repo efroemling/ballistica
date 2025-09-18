@@ -297,6 +297,7 @@
  "ba_data/python/bauiv1lib/tournamentscores.py",
  "ba_data/python/bauiv1lib/trophies.py",
  "ba_data/python/bauiv1lib/url.py",
+ "ba_data/python/bauiv1lib/utils.py",
  "ba_data/python/bauiv1lib/v2upgrade.py",
  "ba_data/python/bauiv1lib/watch.py",
  "ba_data/python/efro/__init__.py",
