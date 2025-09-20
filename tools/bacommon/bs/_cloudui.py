@@ -4,14 +4,11 @@
 
 from __future__ import annotations
 
-import datetime
 from enum import Enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
-
-from bacommon.bs._displayitem import DisplayItemWrapper
 
 
 class CloudUITypeID(Enum):
@@ -46,7 +43,7 @@ class CloudUI(IOMultiType[CloudUITypeID]):
         if type_id is t.UNKNOWN:
             out = UnknownCloudUI
         elif type_id is t.V1:
-            out = BasicCloudUI
+            out = V1CloudUI
         else:
             # Important to make sure we provide all types.
             assert_never(type_id)
@@ -74,23 +71,19 @@ class UnknownCloudUI(CloudUI):
         return CloudUITypeID.UNKNOWN
 
 
-class BasicCloudUIComponentTypeID(Enum):
+class V1CloudUIComponentTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     UNKNOWN = 'u'
     TEXT = 't'
-    LINK = 'l'
-    BS_CLASSIC_TOURNEY_RESULT = 'ct'
-    DISPLAY_ITEMS = 'di'
-    EXPIRE_TIME = 'd'
 
 
-class BasicCloudUIComponent(IOMultiType[BasicCloudUIComponentTypeID]):
+class V1CloudUIComponent(IOMultiType[V1CloudUIComponentTypeID]):
     """Top level class for our multitype."""
 
     @override
     @classmethod
-    def get_type_id(cls) -> BasicCloudUIComponentTypeID:
+    def get_type_id(cls) -> V1CloudUIComponentTypeID:
         # Require child classes to supply this themselves. If we did a
         # full type registry/lookup here it would require us to import
         # everything and would prevent lazy loading.
@@ -99,39 +92,31 @@ class BasicCloudUIComponent(IOMultiType[BasicCloudUIComponentTypeID]):
     @override
     @classmethod
     def get_type(
-        cls, type_id: BasicCloudUIComponentTypeID
-    ) -> type[BasicCloudUIComponent]:
+        cls, type_id: V1CloudUIComponentTypeID
+    ) -> type[V1CloudUIComponent]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
 
-        t = BasicCloudUIComponentTypeID
+        t = V1CloudUIComponentTypeID
         if type_id is t.UNKNOWN:
-            return BasicCloudUIComponentUnknown
+            return V1CloudUIComponentUnknown
         if type_id is t.TEXT:
-            return BasicCloudUIComponentText
-        if type_id is t.LINK:
-            return BasicCloudUIComponentLink
-        if type_id is t.BS_CLASSIC_TOURNEY_RESULT:
-            return BasicCloudUIBsClassicTourneyResult
-        if type_id is t.DISPLAY_ITEMS:
-            return BasicCloudUIDisplayItems
-        if type_id is t.EXPIRE_TIME:
-            return BasicCloudUIExpireTime
+            return V1CloudUIComponentText
 
         # Important to make sure we provide all types.
         assert_never(type_id)
 
     @override
     @classmethod
-    def get_unknown_type_fallback(cls) -> BasicCloudUIComponent:
+    def get_unknown_type_fallback(cls) -> V1CloudUIComponent:
         # If we encounter some future message type we don't know
         # anything about, drop in a placeholder.
-        return BasicCloudUIComponentUnknown()
+        return V1CloudUIComponentUnknown()
 
 
 @ioprepped
 @dataclass
-class BasicCloudUIComponentUnknown(BasicCloudUIComponent):
+class V1CloudUIComponentUnknown(V1CloudUIComponent):
     """An unknown basic client component type.
 
     In practice these should never show up since the master-server
@@ -141,169 +126,55 @@ class BasicCloudUIComponentUnknown(BasicCloudUIComponent):
 
     @override
     @classmethod
-    def get_type_id(cls) -> BasicCloudUIComponentTypeID:
-        return BasicCloudUIComponentTypeID.UNKNOWN
+    def get_type_id(cls) -> V1CloudUIComponentTypeID:
+        return V1CloudUIComponentTypeID.UNKNOWN
 
 
 @ioprepped
 @dataclass
-class BasicCloudUIComponentText(BasicCloudUIComponent):
-    """Show some text in the inbox message."""
+class V1CloudUIComponentText(V1CloudUIComponent):
+    """Show some text over a button."""
 
     text: Annotated[str, IOAttrs('t')]
-    subs: Annotated[list[str], IOAttrs('s', store_default=False)] = field(
-        default_factory=list
-    )
+    # position: Annotated[float, IOAttrs('p', store_default=False)] = 1.0
+    # scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
+    # color: Annotated[
+    #     tuple[float, float, float, float], IOAttrs('c', store_default=False)
+    # ] = (1.0, 1.0, 1.0, 1.0)
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> V1CloudUIComponentTypeID:
+        return V1CloudUIComponentTypeID.TEXT
+
+
+@ioprepped
+@dataclass
+class V1CloudUIButton:
+    """A button in our cloud ui."""
+
+    color: Annotated[tuple[float, float, float], IOAttrs('cl')]
+    size: Annotated[tuple[float, float], IOAttrs('sz')]
+    components: Annotated[list[V1CloudUIComponent], IOAttrs('c')]
     scale: Annotated[float, IOAttrs('sc', store_default=False)] = 1.0
-    color: Annotated[
-        tuple[float, float, float, float], IOAttrs('c', store_default=False)
-    ] = (1.0, 1.0, 1.0, 1.0)
-    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
-    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
-
-    @override
-    @classmethod
-    def get_type_id(cls) -> BasicCloudUIComponentTypeID:
-        return BasicCloudUIComponentTypeID.TEXT
 
 
 @ioprepped
 @dataclass
-class BasicCloudUIComponentLink(BasicCloudUIComponent):
-    """Show a link in the inbox message."""
+class V1CloudUIRow:
+    """A row in our cloud ui."""
 
-    url: Annotated[str, IOAttrs('u')]
-    label: Annotated[str, IOAttrs('l')]
-    subs: Annotated[list[str], IOAttrs('s', store_default=False)] = field(
-        default_factory=list
-    )
-    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
-    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
-
-    @override
-    @classmethod
-    def get_type_id(cls) -> BasicCloudUIComponentTypeID:
-        return BasicCloudUIComponentTypeID.LINK
+    buttons: Annotated[list[V1CloudUIButton], IOAttrs('b')]
 
 
 @ioprepped
 @dataclass
-class BasicCloudUIBsClassicTourneyResult(BasicCloudUIComponent):
-    """Show info about a classic tourney."""
+class V1CloudUI(CloudUI):
+    """Version 1 of our cloud-defined UI type."""
 
-    tournament_id: Annotated[str, IOAttrs('t')]
-    game: Annotated[str, IOAttrs('g')]
-    players: Annotated[int, IOAttrs('p')]
-    rank: Annotated[int, IOAttrs('r')]
-    trophy: Annotated[str | None, IOAttrs('tr')]
-    prizes: Annotated[list[DisplayItemWrapper], IOAttrs('pr')]
-
-    @override
-    @classmethod
-    def get_type_id(cls) -> BasicCloudUIComponentTypeID:
-        return BasicCloudUIComponentTypeID.BS_CLASSIC_TOURNEY_RESULT
-
-
-@ioprepped
-@dataclass
-class BasicCloudUIDisplayItems(BasicCloudUIComponent):
-    """Show some display-items."""
-
-    items: Annotated[list[DisplayItemWrapper], IOAttrs('d')]
-    width: Annotated[float, IOAttrs('w')] = 100.0
-    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
-    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
-
-    @override
-    @classmethod
-    def get_type_id(cls) -> BasicCloudUIComponentTypeID:
-        return BasicCloudUIComponentTypeID.DISPLAY_ITEMS
-
-
-@ioprepped
-@dataclass
-class BasicCloudUIExpireTime(BasicCloudUIComponent):
-    """Show expire-time."""
-
-    time: Annotated[datetime.datetime, IOAttrs('d')]
-    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
-    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
-
-    @override
-    @classmethod
-    def get_type_id(cls) -> BasicCloudUIComponentTypeID:
-        return BasicCloudUIComponentTypeID.EXPIRE_TIME
-
-
-@ioprepped
-@dataclass
-class BasicCloudUI(CloudUI):
-    """A basic UI for the client."""
-
-    class ButtonLabel(Enum):
-        """Distinct button labels we support."""
-
-        UNKNOWN = 'u'
-        OK = 'o'
-        APPLY = 'a'
-        CANCEL = 'c'
-        ACCEPT = 'ac'
-        DECLINE = 'dn'
-        IGNORE = 'ig'
-        CLAIM = 'cl'
-        DISCARD = 'd'
-
-    class InteractionStyle(Enum):
-        """Overall interaction styles we support."""
-
-        UNKNOWN = 'u'
-        BUTTON_POSITIVE = 'p'
-        BUTTON_POSITIVE_NEGATIVE = 'pn'
-
-    components: Annotated[list[BasicCloudUIComponent], IOAttrs('s')]
-
-    interaction_style: Annotated[
-        InteractionStyle, IOAttrs('i', enum_fallback=InteractionStyle.UNKNOWN)
-    ] = InteractionStyle.BUTTON_POSITIVE
-
-    button_label_positive: Annotated[
-        ButtonLabel, IOAttrs('p', enum_fallback=ButtonLabel.UNKNOWN)
-    ] = ButtonLabel.OK
-
-    button_label_negative: Annotated[
-        ButtonLabel, IOAttrs('n', enum_fallback=ButtonLabel.UNKNOWN)
-    ] = ButtonLabel.CANCEL
+    rows: Annotated[list[V1CloudUIRow], IOAttrs('r')]
 
     @override
     @classmethod
     def get_type_id(cls) -> CloudUITypeID:
         return CloudUITypeID.V1
-
-    def contains_unknown_elements(self) -> bool:
-        """Whether something within us is an unknown type or enum."""
-        return (
-            self.interaction_style is self.InteractionStyle.UNKNOWN
-            or self.button_label_positive is self.ButtonLabel.UNKNOWN
-            or self.button_label_negative is self.ButtonLabel.UNKNOWN
-            or any(
-                c.get_type_id() is BasicCloudUIComponentTypeID.UNKNOWN
-                for c in self.components
-            )
-        )
-
-
-@ioprepped
-@dataclass
-class CloudUIWrapper:
-    """Wrapper for a CloudUI and its common data."""
-
-    id: Annotated[str, IOAttrs('i')]
-    createtime: Annotated[datetime.datetime, IOAttrs('c')]
-    ui: Annotated[CloudUI, IOAttrs('e')]
-
-
-class CloudUIAction(Enum):
-    """Types of actions we can run."""
-
-    BUTTON_PRESS_POSITIVE = 'p'
-    BUTTON_PRESS_NEGATIVE = 'n'

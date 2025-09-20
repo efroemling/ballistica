@@ -573,12 +573,15 @@ class DevConsoleTabLogging(DevConsoleTab):
         index = 0
         effectivelevel = logger.getEffectiveLevel()
         notsetname = 'Not Set'
+        bradius = 5.0
+        bspacing = 2.0
         tab.button(
             notsetname,
             pos=(x + width - bwidth * 6.5 + xoffs + 1.0, y + 5.0),
-            size=(bwidth * 1.0 - 2.0, height - 10),
+            size=(bwidth * 1.0 - bspacing, height - 10),
             label_scale=btextscale,
             style='white_bright' if level == logging.NOTSET else 'black',
+            corner_radius=bradius,
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.NOTSET
             ),
@@ -587,13 +590,14 @@ class DevConsoleTabLogging(DevConsoleTab):
         tab.button(
             'Debug',
             pos=(x + width - bwidth * 5 + xoffs + 1.0, y + 5.0),
-            size=(bwidth - 2.0, height - 10),
+            size=(bwidth - bspacing, height - 10),
             label_scale=btextscale,
             style=(
                 'white_bright'
                 if level == logging.DEBUG
                 else 'blue' if effectivelevel <= logging.DEBUG else 'black'
             ),
+            corner_radius=bradius,
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.DEBUG
             ),
@@ -602,26 +606,28 @@ class DevConsoleTabLogging(DevConsoleTab):
         tab.button(
             'Info',
             pos=(x + width - bwidth * 4 + xoffs + 1.0, y + 5.0),
-            size=(bwidth - 2.0, height - 10),
+            size=(bwidth - bspacing, height - 10),
             label_scale=btextscale,
             style=(
                 'white_bright'
                 if level == logging.INFO
                 else 'white' if effectivelevel <= logging.INFO else 'black'
             ),
+            corner_radius=bradius,
             call=partial(self._set_entry_val, entry_index, entry, logging.INFO),
         )
         index += 1
         tab.button(
             'Warning',
             pos=(x + width - bwidth * 3 + xoffs + 1.0, y + 5.0),
-            size=(bwidth - 2.0, height - 10),
+            size=(bwidth - bspacing, height - 10),
             label_scale=btextscale,
             style=(
                 'white_bright'
                 if level == logging.WARNING
                 else 'yellow' if effectivelevel <= logging.WARNING else 'black'
             ),
+            corner_radius=bradius,
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.WARNING
             ),
@@ -630,13 +636,14 @@ class DevConsoleTabLogging(DevConsoleTab):
         tab.button(
             'Error',
             pos=(x + width - bwidth * 2 + xoffs + 1.0, y + 5.0),
-            size=(bwidth - 2.0, height - 10),
+            size=(bwidth - bspacing, height - 10),
             label_scale=btextscale,
             style=(
                 'white_bright'
                 if level == logging.ERROR
                 else 'red' if effectivelevel <= logging.ERROR else 'black'
             ),
+            corner_radius=bradius,
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.ERROR
             ),
@@ -645,7 +652,7 @@ class DevConsoleTabLogging(DevConsoleTab):
         tab.button(
             'Critical',
             pos=(x + width - bwidth * 1 + xoffs + 1.0, y + 5.0),
-            size=(bwidth - 2.0, height - 10),
+            size=(bwidth - bspacing, height - 10),
             label_scale=btextscale,
             style=(
                 'white_bright'
@@ -654,6 +661,7 @@ class DevConsoleTabLogging(DevConsoleTab):
                     'purple' if effectivelevel <= logging.CRITICAL else 'black'
                 )
             ),
+            corner_radius=bradius,
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.CRITICAL
             ),

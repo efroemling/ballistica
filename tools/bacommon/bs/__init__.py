@@ -27,6 +27,7 @@ from bacommon.bs._clienteffect import (
 )
 from bacommon.bs._clouddialog import (
     BasicCloudDialog,
+    BasicCloudDialogComponent,
     BasicCloudDialogBsClassicTourneyResult,
     BasicCloudDialogComponentLink,
     BasicCloudDialogComponentText,
@@ -40,6 +41,7 @@ from bacommon.bs._clouddialog import (
     CloudDialogWrapper,
     UnknownCloudDialog,
 )
+from bacommon.bs._cloudui import CloudUITypeID, CloudUI
 from bacommon.bs._displayitem import (
     ChestDisplayItem,
     DisplayItem,
@@ -76,6 +78,7 @@ from bacommon.bs._msg import (
 
 __all__ = [
     'BasicCloudDialog',
+    'BasicCloudDialogComponent',
     'BasicCloudDialogBsClassicTourneyResult',
     'BasicCloudDialogComponentLink',
     'BasicCloudDialogComponentText',
@@ -105,6 +108,8 @@ __all__ = [
     'CloudDialogActionResponse',
     'CloudDialogTypeID',
     'CloudDialogWrapper',
+    'CloudUI',
+    'CloudUITypeID',
     'DisplayItem',
     'DisplayItemTypeID',
     'DisplayItemWrapper',

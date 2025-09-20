@@ -109,8 +109,8 @@ class TemplateMainWindow(bui.MainWindow):
             v_align='center',
         )
 
-        # For small UI we use the system back button; otherwise we make
-        # our own.
+        # For small UI-scale we use the system back/close button;
+        # otherwise we make our own.
         if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self.main_window_back
@@ -197,7 +197,7 @@ class TemplateMainWindow(bui.MainWindow):
         # our same class with random different dummy values).
         button_width = 300
         for i in range(3):
-            child_dummy_data = random.randrange(100, 1000)
+            child_dummy_data = self._dummy_data + i * 17
             self._player_profiles_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
                 position=(
@@ -224,7 +224,7 @@ class TemplateMainWindow(bui.MainWindow):
         cls = type(self)
 
         # IMPORTANT - Pull values from self HERE; if we do it in the
-        # lambda it'll keep self alive which will lead to
+        # lambda below it'll keep self alive which will lead to
         # 'ui-not-getting-cleaned-up' warnings and memory leaks.
         dummy_data = self._dummy_data
         auxiliary_style = self._auxiliary_style
