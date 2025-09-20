@@ -109,46 +109,6 @@ class TemplateMainWindow(bui.MainWindow):
             v_align='center',
         )
 
-        # Draw text bits at our corners to show the vis-area we
-        # calculated.
-        if bool(True):
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(vis_left, vis_top),
-                size=(0, 0),
-                color=(1, 1, 1, 0.5),
-                text='TL',
-                h_align='center',
-                v_align='center',
-            )
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(vis_left + vis_width, vis_top),
-                size=(0, 0),
-                color=(1, 1, 1, 0.5),
-                text='TR',
-                h_align='center',
-                v_align='center',
-            )
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(vis_left, vis_top - vis_height),
-                size=(0, 0),
-                color=(1, 1, 1, 0.5),
-                text='TL',
-                h_align='center',
-                v_align='center',
-            )
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(vis_left + vis_width, vis_top - vis_height),
-                size=(0, 0),
-                color=(1, 1, 1, 0.5),
-                text='TR',
-                h_align='center',
-                v_align='center',
-            )
-
         # For small UI we use the system back button; otherwise we make
         # our own.
         if uiscale is bui.UIScale.SMALL:
@@ -172,6 +132,49 @@ class TemplateMainWindow(bui.MainWindow):
                 ),
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
+
+        # Show our vis-area bounds (for debugging).
+        if bool(True):
+            bui.textwidget(
+                parent=self._root_widget,
+                position=(vis_left, vis_top),
+                size=(0, 0),
+                color=(1, 1, 1, 0.5),
+                scale=0.5,
+                text='TL',
+                h_align='left',
+                v_align='top',
+            )
+            bui.textwidget(
+                parent=self._root_widget,
+                position=(vis_left + vis_width, vis_top),
+                size=(0, 0),
+                color=(1, 1, 1, 0.5),
+                scale=0.5,
+                text='TR',
+                h_align='right',
+                v_align='top',
+            )
+            bui.textwidget(
+                parent=self._root_widget,
+                position=(vis_left, vis_top - vis_height),
+                size=(0, 0),
+                color=(1, 1, 1, 0.5),
+                scale=0.5,
+                text='BL',
+                h_align='left',
+                v_align='bottom',
+            )
+            bui.textwidget(
+                parent=self._root_widget,
+                position=(vis_left + vis_width, vis_top - vis_height),
+                size=(0, 0),
+                scale=0.5,
+                color=(1, 1, 1, 0.5),
+                text='BR',
+                h_align='right',
+                v_align='bottom',
+            )
 
         # Description.
         bui.textwidget(
