@@ -202,10 +202,16 @@ class App:
         return _babase.app_is_active()
 
     @property
-    def mode(self) -> AppMode | None:
-        """The app's current mode."""
+    def mode(self) -> AppMode:
+        """The app's current mode.
+
+        Raises :class:`ValueError` if no mode is set.
+        """
         assert _babase.in_logic_thread()
-        return self._mode
+        mode = self._mode
+        if mode is None:
+            raise ValueError('No app-mode set.')
+        return mode
 
     @property
     def asyncio_loop(self) -> asyncio.AbstractEventLoop:

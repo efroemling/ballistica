@@ -4,7 +4,6 @@
 # This file was automatically generated from "step_right_up.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (0.3544110667, 6.07676405, -2.271833016)

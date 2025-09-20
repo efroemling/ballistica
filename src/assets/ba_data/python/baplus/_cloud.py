@@ -250,9 +250,9 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.bs.ClientUIActionMessage,
+        msg: bacommon.bs.CloudDialogActionMessage,
         on_response: Callable[
-            [bacommon.bs.ClientUIActionResponse | Exception], None
+            [bacommon.bs.CloudDialogActionResponse | Exception], None
         ],
     ) -> None: ...
 

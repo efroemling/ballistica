@@ -12,7 +12,6 @@ from pbxproj import XcodeProject
 from pbxproj.pbxextensions import TreeType, PBXGroup
 
 # Need to patch XcodeProject slightly to support .cc files.
-# noinspection PyProtectedMember
 xcft = XcodeProject._FILE_TYPES  # pylint: disable=protected-access
 if '.cc' not in xcft:
     xcft['.cc'] = xcft['.cpp']

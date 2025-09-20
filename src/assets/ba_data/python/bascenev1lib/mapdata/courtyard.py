@@ -4,7 +4,6 @@
 # This file was automatically generated from "courtyard.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (0.3544110667, 3.958431362, -2.175025358)

@@ -697,7 +697,6 @@ class SpinoffContext:
         # pylint: disable=cyclic-import
         from efrotools.util import get_files_hash
 
-        # noinspection PyUnresolvedReferences
         import batools.spinoff
         import batools.project
 

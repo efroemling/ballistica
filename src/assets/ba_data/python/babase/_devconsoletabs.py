@@ -119,14 +119,30 @@ class DevConsoleTabUI(DevConsoleTab):
     def refresh(self) -> None:
         from babase._mgen.enums import UIScale
 
-        xoffs = -305
-        yoffs = 10
+        xoffs = -305.0
+        yoffs = 10.0
+
+        custom_buttons = _babase.app.mode.get_dev_console_ui_tab_buttons()
+        cboffs = 50
+        cbwidth = 180
+        cbspacing = 10
+
+        if custom_buttons:
+            cbtotalwidth = (
+                len(custom_buttons) * cbwidth
+                + max(0, len(custom_buttons) - 1) * cbspacing
+                + cboffs
+            )
+        else:
+            cbtotalwidth = 0
+
+        xoffs -= cbtotalwidth * 0.5
 
         self.text(
             'A UI should either fit in the virtual safe area'
             ' or dynamically respond to screen size changes.',
             scale=0.6,
-            pos=(xoffs + 15, yoffs + 65),
+            pos=(xoffs + 8, yoffs + 65),
             h_align='left',
             v_align='center',
         )
@@ -164,6 +180,19 @@ class DevConsoleTabUI(DevConsoleTab):
                 ),
             )
             x += bwidth + 2
+
+        if custom_buttons:
+            x += cboffs
+            for custom_button in custom_buttons:
+                self.button(
+                    custom_button.name,
+                    pos=(xoffs + x, yoffs + 15),
+                    size=(cbwidth, 40),
+                    label_scale=0.6,
+                    call=custom_button.call,
+                    corner_radius=10.0,
+                )
+                x += cbwidth + cbspacing
 
     def toggle_ui_overlay(self) -> None:
         """Toggle UI overlay drawing."""

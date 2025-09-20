@@ -502,7 +502,6 @@ class Chooser:
             self._profileindex = self._profilenames.index(self._profilename)
         else:
             self._profileindex = 0
-            # noinspection PyUnresolvedReferences
             self._profilename = self._profilenames[self._profileindex]
 
     def update_position(self) -> None:

@@ -4,7 +4,7 @@ dmgbuild==1.6.5
 filelock==3.19.1
 furo==2025.7.19
 libcst==1.8.4
-mypy==1.18.1
+mypy==1.18.2
 pbxproj==4.3.0
 pur==7.3.3
 pylint==3.3.8
@@ -17,7 +17,7 @@ requests==2.32.5
 Sphinx==8.2.3
 tomlkit==0.13.3
 types-certifi==2021.10.8.3
-types-docutils==0.22.0.20250914
+types-docutils==0.22.0.20250919
 types-filelock==3.2.7
 types-requests==2.32.4.20250913
 typing_extensions==4.15.0

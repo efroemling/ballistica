@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from babase import AppIntent
+    from babase import AppIntent, DevConsoleButtonDef
 
 
 class AppMode:
@@ -125,3 +125,11 @@ class AppMode:
         )
         if babase.asset_loads_allowed():
             babase.getsimplesound('cashRegister').play()
+
+    def get_dev_console_ui_tab_buttons(self) -> list[DevConsoleButtonDef]:
+        """Define buttons to show up in the UI dev console.
+
+        This can be useful for exposing UI code examples or debugging
+        functionality.
+        """
+        return []

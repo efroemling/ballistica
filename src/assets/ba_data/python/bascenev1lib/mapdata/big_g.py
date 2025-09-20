@@ -4,7 +4,6 @@
 # This file was automatically generated from "big_g.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (-0.4011866709, 2.331310176, -0.5426286416)

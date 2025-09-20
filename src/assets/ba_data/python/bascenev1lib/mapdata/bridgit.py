@@ -4,7 +4,6 @@
 # This file was automatically generated from "bridgit.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (-0.2457963347, 3.828181068, -1.528362695)

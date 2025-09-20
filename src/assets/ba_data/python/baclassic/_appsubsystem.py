@@ -895,17 +895,17 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
     @staticmethod
     def basic_client_ui_button_label_str(
-        label: bacommon.bs.BasicClientUI.ButtonLabel,
+        label: bacommon.bs.BasicCloudDialog.ButtonLabel,
     ) -> babase.Lstr:
         """Given a client-ui label, return an Lstr."""
         import bacommon.bs
 
-        cls = bacommon.bs.BasicClientUI.ButtonLabel
+        cls = bacommon.bs.BasicCloudDialog.ButtonLabel
         if label is cls.UNKNOWN:
             # Server should not be sending us unknown stuff; make noise
             # if they do.
             logging.error(
-                'Got BasicClientUI.ButtonLabel.UNKNOWN; should not happen.'
+                'Got BasicCloudDialog.ButtonLabel.UNKNOWN; should not happen.'
             )
             return babase.Lstr(value='<error>')
 

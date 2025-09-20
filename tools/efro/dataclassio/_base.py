@@ -10,7 +10,6 @@ import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, get_args, override, final
 
-# noinspection PyProtectedMember
 from typing import _AnnotatedAlias  # type: ignore
 
 if TYPE_CHECKING:

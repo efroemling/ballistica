@@ -19,9 +19,6 @@ class InventoryWindow(bui.MainWindow):
         auxiliary_style: bool = True,
     ):
 
-        bui.set_analytics_screen('Help Window')
-
-        assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._width = 1400 if uiscale is bui.UIScale.SMALL else 750
         self._height = (

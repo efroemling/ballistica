@@ -306,7 +306,6 @@ def test_coerce() -> None:
 
     # Float value present for int should never work.
     obj = _TestClass()
-    # noinspection PyTypeHints
     obj.ival = 1.0  # type: ignore
     with pytest.raises(TypeError):
         dataclass_validate(obj, coerce_to_float=True)
@@ -447,7 +446,6 @@ def test_validate() -> None:
     dataclass_validate(tclass)
 
     # No longer valid.
-    # noinspection PyTypeHints
     tclass.ival = None  # type: ignore
     with pytest.raises(TypeError):
         dataclass_validate(tclass)
@@ -1036,7 +1034,6 @@ def test_soft_default() -> None:
         @ioprepped
         @dataclass
         class _TestClassD2:
-            # noinspection PyTypeHints
             lval: Annotated[set, IOAttrs(soft_default=set())]
 
     with pytest.raises(TypeError):

@@ -17,7 +17,6 @@ import types
 import datetime
 from typing import TYPE_CHECKING, get_type_hints
 
-# noinspection PyProtectedMember
 from efro.dataclassio._base import (
     parse_annotated,
     _get_origin,
@@ -200,7 +199,6 @@ class PrepSession:
                 f' explicit prep call.'
             ) from exc
 
-        # noinspection PyDataclass
         fields = dataclasses.fields(cls)
         fields_by_name = {f.name: f for f in fields}
 
@@ -280,7 +278,6 @@ class PrepSession:
         if issubclass(origin, IOMultiType):
             return
 
-        # noinspection PyPep8
         if origin is typing.Union or origin is types.UnionType:
             self.prep_union(
                 cls, attrname, anntype, recursion_level=recursion_level + 1

@@ -336,7 +336,6 @@ class ColorPickerExact(PopupWindow):
         # Store the current text for our next comparison.
         self._hex_prev_text = hextext
 
-    # noinspection PyUnresolvedReferences
     def _update_for_color(self) -> None:
         if not self.root_widget:
             return

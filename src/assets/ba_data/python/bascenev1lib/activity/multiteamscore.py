@@ -101,7 +101,6 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
             player_records = []
             valid_players = list(self.stats.get_records().items())
 
-            # noinspection PyUnresolvedReferences
             def _get_player_score_set_entry(
                 player: bs.SessionPlayer,
             ) -> bs.PlayerRecord | None:

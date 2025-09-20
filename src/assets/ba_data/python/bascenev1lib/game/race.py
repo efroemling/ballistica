@@ -700,7 +700,6 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             # FIXME: This is not type-safe!
             #   This call is expected to always return an Actor!
             #   Perhaps we need something like can_spawn_player()...
-            # noinspection PyTypeChecker
             return None  # type: ignore
         pos = self._regions[player.last_region].pos
 

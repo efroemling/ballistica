@@ -182,16 +182,17 @@ def _writefuncs(
             if is_classmethod:
                 defslines = f'{indstr}@classmethod\n{defslines}'
 
-            if funcname in {'quit', 'newnode', 'basetimer'}:
-                defslines = (
-                    f'{indstr}# noinspection PyShadowingBuiltins\n'
-                    f'{defslines}'
-                )
+            # if funcname in {'quit', 'newnode', 'basetimer'}:
+            #     defslines = (
+            #         f'{indstr}# noinspection PyShadowingBuiltins\n'
+            #         f'{defslines}'
+            #     )
 
-            if funcname in {'basetimer', 'timer'}:
-                defslines = (
-                    f'{indstr}# noinspection PyShadowingNames\n' f'{defslines}'
-                )
+            # if funcname in {'basetimer', 'timer'}:
+            #     defslines = (
+            #         f'{indstr}# noinspection
+            # PyShadowingNames\n' f'{defslines}'
+            #     )
 
             # Types can be strings for forward-declaration cases.
             if (returns[0] == "'" and returns[-1] == "'") or (
@@ -728,10 +729,10 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
 
         # Special case: get PyCharm to shut up about Node's methods
         # shadowing builtin types.
-        if classname in {'Node', 'SessionPlayer'}:
-            out += '# noinspection PyShadowingBuiltins\n'
-        if classname in {'Timer', 'BaseTimer'}:
-            out += '# noinspection PyShadowingNames\n'
+        # if classname in {'Node', 'SessionPlayer'}:
+        #     out += '# noinspection PyShadowingBuiltins\n'
+        # if classname in {'Timer', 'BaseTimer'}:
+        #     out += '# noinspection PyShadowingNames\n'
 
         # Special case:
         if classname == 'Vec3':

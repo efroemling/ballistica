@@ -337,7 +337,6 @@ class DispatchMethodWrapper[ArgT, RetT]():
     registry: dict[Any, Callable]
 
 
-# noinspection PyProtectedMember,PyTypeHints
 def dispatchmethod[ArgT, RetT](
     func: Callable[[Any, ArgT], RetT],
 ) -> DispatchMethodWrapper[ArgT, RetT]:

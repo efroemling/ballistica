@@ -95,7 +95,6 @@ def _default_color_enabled() -> bool:
     return True
 
 
-# noinspection PyPep8Naming
 def _windows_enable_color() -> bool:
     """Attempt to enable ANSI color on windows terminal; return success."""
     # pylint: disable=invalid-name, import-error, undefined-variable

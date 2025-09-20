@@ -83,7 +83,6 @@ def animate(
     # FIXME: Even if we are looping we should have a way to die once we
     #  get disconnected.
     if not loop:
-        # noinspection PyUnresolvedReferences
         _bascenev1.timer(
             (int(mult * items[-1][0]) + 1000) / 1000.0, curve.delete
         )
@@ -146,8 +145,6 @@ def animate_array(
         # If we're not looping, set a timer to kill this
         # curve after its done its job.
         if not loop:
-            # (PyCharm seems to think item is a float, not a tuple)
-            # noinspection PyUnresolvedReferences
             _bascenev1.timer(
                 (int(mult * items[-1][0]) + 1000) / 1000.0,
                 curve.delete,
@@ -159,8 +156,6 @@ def animate_array(
     # FIXME: Even if we are looping we should have a way to die
     #  once we get disconnected.
     if not loop:
-        # (PyCharm seems to think item is a float, not a tuple)
-        # noinspection PyUnresolvedReferences
         _bascenev1.timer(
             (int(mult * items[-1][0]) + 1000) / 1000.0, combine.delete
         )

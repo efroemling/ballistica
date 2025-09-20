@@ -4,7 +4,6 @@
 # This file was automatically generated from "crag_castle.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (0.7033834902, 6.55869393, -3.153439808)

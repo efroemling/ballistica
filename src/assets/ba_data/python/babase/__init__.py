@@ -142,6 +142,7 @@ from babase._apputils import (
 )
 from babase._cloud import CloudSubscription
 from babase._devconsole import (
+    DevConsoleButtonDef,
     DevConsoleTab,
     DevConsoleTabEntry,
     DevConsoleSubsystem,
@@ -250,6 +251,7 @@ __all__ = [
     'ContextError',
     'ContextRef',
     'DelegateNotFoundError',
+    'DevConsoleButtonDef',
     'DevConsoleTab',
     'DevConsoleTabEntry',
     'DevConsoleSubsystem',

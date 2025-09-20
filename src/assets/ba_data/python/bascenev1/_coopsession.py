@@ -260,7 +260,6 @@ class CoopSession(Session):
             with activity.context:
                 activity.end(results={'outcome': 'restart'}, force=True)
 
-    # noinspection PyUnresolvedReferences
     @override
     def on_activity_end(
         self, activity: bascenev1.Activity, results: Any

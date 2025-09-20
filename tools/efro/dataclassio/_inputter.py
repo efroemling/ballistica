@@ -195,7 +195,6 @@ class _Inputter:
                 )
             return value
 
-        # noinspection PyPep8
         if origin is typing.Union or origin is types.UnionType:
             # Currently, the only unions we support are None/Value
             # (translated from Optional), which we verified on prep. So

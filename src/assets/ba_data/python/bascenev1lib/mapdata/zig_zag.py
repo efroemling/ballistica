@@ -4,7 +4,6 @@
 # This file was automatically generated from "zig_zag.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (-1.807378035, 3.943412768, -1.61304303)

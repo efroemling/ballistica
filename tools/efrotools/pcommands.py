@@ -71,7 +71,10 @@ def requirements_upgrade() -> None:
         with open(fname, 'w', encoding='utf-8') as outfile:
             outfile.write(reqs)
 
-        subprocess.run([sys.executable, '-m', 'pur', '-r', fname], check=True)
+        subprocess.run(
+            [sys.executable, '-m', 'pur', '-r', fname],
+            check=True,
+        )
 
         # Sort lines.
         with open(fname, encoding='utf-8') as infile:

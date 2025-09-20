@@ -390,7 +390,6 @@ class PluginWindow(bui.MainWindow):
                     )
                 ),
             )
-            # noinspection PyUnresolvedReferences
             if plugin is not None and plugin.has_settings_ui():
                 button = bui.buttonwidget(
                     parent=self._subcontainer,
@@ -399,7 +398,6 @@ class PluginWindow(bui.MainWindow):
                     size=(100, 40),
                     position=(sub_width - 130, item_y + 6),
                 )
-                # noinspection PyUnresolvedReferences
                 bui.buttonwidget(
                     edit=button,
                     on_activate_call=bui.Call(plugin.show_settings_ui, button),

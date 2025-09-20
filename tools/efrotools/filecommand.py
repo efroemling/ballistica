@@ -36,7 +36,6 @@ class _FileBatchesRun:
         if self._include_mac_packages:
             # pylint: disable=useless-suppression
             # pylint: disable=no-name-in-module, import-error
-            # noinspection PyUnresolvedReferences
             from Cocoa import NSWorkspace  # pyright: ignore
 
             self._shared_nsworkspace = NSWorkspace.sharedWorkspace()

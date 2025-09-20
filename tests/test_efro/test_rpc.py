@@ -220,7 +220,6 @@ class _Tester:
             debug_print=server_debug_print,
         )
 
-    # noinspection PyProtectedMember
     def run(self, testcall: Awaitable[None]) -> None:
         """Run our test."""
 

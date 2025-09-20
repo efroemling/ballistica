@@ -234,7 +234,6 @@ class RemoveGloves:
     def run(self, a: TutorialActivity) -> None:
         # pylint: disable=protected-access
         assert a.current_spaz is not None
-        # noinspection PyProtectedMember
         a.current_spaz._gloves_wear_off()
 
 

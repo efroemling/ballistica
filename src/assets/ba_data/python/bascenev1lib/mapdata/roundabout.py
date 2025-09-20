@@ -4,7 +4,6 @@
 # This file was automatically generated from "roundabout.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (-1.552280404, 3.189001207, -2.40908495)

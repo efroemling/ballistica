@@ -444,6 +444,107 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             )
         )
 
+    def auxiliary_window_activate(
+        self,
+        win_type: type[bauiv1.MainWindow],
+        win_create_call: Callable[[], bauiv1.MainWindow],
+    ) -> None:
+        """Navigate to or away from an Auxiliary window.
+
+        Auxiliary windows can be thought of as 'side quests' in the
+        window hierarchy; places such as settings windows or league
+        ranking windows that the user might want to visit without losing
+        their place in the regular hierarchy.
+
+        Calling this method with a MainWindow of the provided type
+        already in the stack will back out past it (effectively toggling
+        the 'side quest' back off).
+
+        Calling this method with a *different* auxiliary window in the
+        stack will back out past that and replace it with this
+        (effectively ending the old side-quest and starting a new one).
+        """
+        # pylint: disable=unidiomatic-typecheck
+
+        current_main_window = self.get_main_window()
+
+        # Scan our ancestors for auxiliary states matching our type as
+        # well as auxiliary states in general.
+        aux_matching_state: bauiv1.MainWindowState | None = None
+        aux_state: bauiv1.MainWindowState | None = None
+
+        if current_main_window is None:
+            raise RuntimeError(
+                'Not currently handling no-top-level-window case.'
+            )
+
+        state = current_main_window.main_window_back_state
+        while state is not None:
+            assert state.window_type is not None
+            if state.is_auxiliary:
+                if state.window_type is win_type:
+                    aux_matching_state = state
+                else:
+                    aux_state = state
+
+            state = state.parent
+
+        # If there's an ancestor auxiliary window-state matching our
+        # type, back out past it (example: poking settings, navigating
+        # down a level or two, and then poking settings again should
+        # back out of settings).
+        if aux_matching_state is not None:
+            current_main_window.main_window_back_state = (
+                aux_matching_state.parent
+            )
+            current_main_window.main_window_back()
+            return
+
+        # If there's an ancestory auxiliary state *not* matching our
+        # type, crop the state and swap in our new auxiliary UI
+        # (example: poking settings, then poking account, then poking
+        # back should end up where things were before the settings
+        # poke).
+        if aux_state is not None:
+            # Blow away the window stack and build a fresh one.
+            self.clear_main_window()
+            self.set_main_window(
+                win_create_call(),
+                from_window=False,  # Disable from-check.
+                back_state=aux_state.parent,
+                suppress_warning=True,
+                is_auxiliary=True,
+            )
+            return
+
+        # Ok, no auxiliary states found. Now if current window is
+        # auxiliary and the type matches, simply do a back.
+        if (
+            current_main_window.main_window_is_auxiliary
+            and type(current_main_window) is win_type
+        ):
+            current_main_window.main_window_back()
+            return
+
+        # If current window is auxiliary but type doesn't match,
+        # swap it out for our new auxiliary UI.
+        if current_main_window.main_window_is_auxiliary:
+            self.clear_main_window()
+            self.set_main_window(
+                win_create_call(),
+                from_window=False,  # Disable from-check.
+                back_state=current_main_window.main_window_back_state,
+                suppress_warning=True,
+                is_auxiliary=True,
+            )
+            return
+
+        # Ok, no existing auxiliary stuff was found period. Just
+        # navigate forward to this UI.
+        current_main_window.main_window_replace(
+            win_create_call(), is_auxiliary=True
+        )
+
     def _schedule_main_win_recreate(self) -> None:
 
         # If there is a timer set already, do nothing.

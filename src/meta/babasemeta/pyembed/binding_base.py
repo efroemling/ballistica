@@ -7,7 +7,6 @@ from __future__ import annotations
 from bacommon.app import AppArchitecture, AppPlatform, AppVariant
 from babase._mgen import enums
 
-# noinspection PyProtectedMember
 from babase import _language, _apputils, _hooks, _env, _error, _general, _ui
 
 # The C++ layer looks for this variable:
