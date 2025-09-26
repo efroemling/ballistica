@@ -43,6 +43,15 @@ class TemplateMainWindow(bui.MainWindow):
         # save/restore actual data).
         self._dummy_data = dummy_data
 
+        # We want to give all our selectable child widgets unique ids so
+        # we can use automatic selection save/restore. So we need a
+        # unique prefix to avoid id clashes with other windows. Normally
+        # a window could just have a single constant prefix, but since
+        # we navigate between multiple instances of ourself we want
+        # unique prefixes. So let's incorporate our data to uniquify
+        # things.
+        self._idprefix = f'template{dummy_data}'
+
         # We want to display differently whether we're an auxiliary
         # window or not, but unfortunately that value is not yet
         # available until we're added to the main-window-stack so it
@@ -118,6 +127,7 @@ class TemplateMainWindow(bui.MainWindow):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self._idprefix}|close',
                 scale=0.8,
                 position=(vis_left - 15, vis_top - 30),
                 size=(50, 50) if auxiliary_style else (60, 55),
@@ -135,16 +145,19 @@ class TemplateMainWindow(bui.MainWindow):
 
         # Show our vis-area bounds (for debugging).
         if bool(True):
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(vis_left, vis_top),
-                size=(0, 0),
-                color=(1, 1, 1, 0.5),
-                scale=0.5,
-                text='TL',
-                h_align='left',
-                v_align='top',
-            )
+            # Skip top-left since its always overlapping back/close
+            # buttons.
+            if bool(False):
+                bui.textwidget(
+                    parent=self._root_widget,
+                    position=(vis_left, vis_top),
+                    size=(0, 0),
+                    color=(1, 1, 1, 0.5),
+                    scale=0.5,
+                    text='TL',
+                    h_align='left',
+                    v_align='top',
+                )
             bui.textwidget(
                 parent=self._root_widget,
                 position=(vis_left + vis_width, vis_top),
@@ -197,9 +210,10 @@ class TemplateMainWindow(bui.MainWindow):
         # our same class with random different dummy values).
         button_width = 300
         for i in range(3):
-            child_dummy_data = self._dummy_data + i * 17
+            child_dummy_data = self._dummy_data + (i + 1) * 17
             self._player_profiles_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self._idprefix}|button{i + 1}',
                 position=(
                     self._width * 0.5 - button_width * 0.5,
                     vis_top - 230 - i * 80,
@@ -229,11 +243,14 @@ class TemplateMainWindow(bui.MainWindow):
         dummy_data = self._dummy_data
         auxiliary_style = self._auxiliary_style
 
+        print('GETTING', bui.get_selected_widget())
+
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition,
                 origin_widget=origin_widget,
                 dummy_data=dummy_data,
                 auxiliary_style=auxiliary_style,
-            )
+            ),
+            restore_selection=True,
         )

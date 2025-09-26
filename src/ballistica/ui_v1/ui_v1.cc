@@ -152,23 +152,47 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
   }
 }
 
+auto UIV1FeatureSet::GetSelectedWidget() -> Widget* {
+  assert(g_base->InLogicThread());
+  assert(root_widget_.exists());
+  Widget* w{root_widget_.get()};
+
+  while (true) {
+    // If this widget has a selected child, recurse down.
+    if (auto* cw = dynamic_cast<ContainerWidget*>(w)) {
+      if (Widget* selected_widget = cw->selected_widget()) {
+        w = selected_widget;
+        continue;
+      }
+    }
+    // Ok; no more children. Return the widget itself if its selectable, or
+    // nothing otherwise.
+    if (w->IsSelectable()) {
+      return w;
+    }
+    return nullptr;
+  }
+}
+
 void UIV1FeatureSet::OnActivate() {
   assert(g_base->InLogicThread());
 
-  // (Re)create our screen-root widget.
+  // (Re)create our screen window stack.
   auto sw(Object::New<StackWidget>());
   sw->set_is_main_window_stack(true);
   sw->SetWidth(g_base->graphics->screen_virtual_width());
   sw->SetHeight(g_base->graphics->screen_virtual_height());
   sw->set_translate(0, 0);
+  sw->SetID("screen_root");
   screen_root_widget_ = sw;
 
-  // (Re)create our screen-overlay widget.
+  // (Re)create our overlay window stack.
   auto ow(Object::New<StackWidget>());
   ow->set_is_overlay_window_stack(true);
   ow->SetWidth(g_base->graphics->screen_virtual_width());
   ow->SetHeight(g_base->graphics->screen_virtual_height());
   ow->set_translate(0, 0);
+  ow->SetID("overlay_root");
   overlay_root_widget_ = ow;
 
   // (Re)create our abs-root widget.
@@ -176,6 +200,12 @@ void UIV1FeatureSet::OnActivate() {
   root_widget_ = rw;
   rw->SetWidth(g_base->graphics->screen_virtual_width());
   rw->SetHeight(g_base->graphics->screen_virtual_height());
+  rw->SetID("root");
+  // We don't call AddWidget on this so we need to manually register stuff:
+  RegisterWidgetID(*rw->id(), rw.get());
+  rw->set_in_hierarchy(true);
+  // In order, add the screen stack, root's own ui bits, and then the
+  // overlay stack.
   rw->SetScreenWidget(sw.get());
   rw->Setup();
   rw->SetOverlayWidget(ow.get());
@@ -188,6 +218,10 @@ void UIV1FeatureSet::OnDeactivate() {
 
   root_widget_.Clear();
   screen_root_widget_.Clear();
+  overlay_root_widget_.Clear();
+
+  // All widgets should have unregistered their IDs by this point.
+  assert(widgets_by_id_.empty());
 }
 
 void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
@@ -274,20 +308,89 @@ void UIV1FeatureSet::ConfirmQuit(QuitType quit_type) {
   python->InvokeQuitWindow(quit_type);
 }
 
-UIV1FeatureSet::UILock::UILock(bool write) {
+UIV1FeatureSet::UIReadLock::UIReadLock() {
   assert(g_base->InLogicThread());
 
-  if (write && g_ui_v1->ui_lock_count_ != 0) {
-    BA_LOG_ERROR_NATIVE_TRACE_ONCE("Illegal operation: UI is locked.");
+  // Grabbing a read-lock while writing is happening is an error.
+  if (g_ui_v1->ui_write_lock_count_ != 0) {
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE("Can't read-lock UI: is write-locked");
   }
-  g_ui_v1->ui_lock_count_++;
+  g_ui_v1->ui_read_lock_count_++;
 }
 
-UIV1FeatureSet::UILock::~UILock() {
-  g_ui_v1->ui_lock_count_--;
-  if (g_ui_v1->ui_lock_count_ < 0) {
-    BA_LOG_ERROR_NATIVE_TRACE_ONCE("ui_lock_count_ < 0");
-    g_ui_v1->ui_lock_count_ = 0;
+UIV1FeatureSet::UIReadLock::~UIReadLock() {
+  g_ui_v1->ui_read_lock_count_--;
+  if (g_ui_v1->ui_read_lock_count_ < 0) {
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE("ui_read_lock_count_ < 0");
+    g_ui_v1->ui_read_lock_count_ = 0;
+  }
+}
+
+UIV1FeatureSet::UIWriteLock::UIWriteLock() {
+  assert(g_base->InLogicThread());
+
+  // Grabbing a write-lock while reads are happening is an error.
+  if (g_ui_v1->ui_read_lock_count_ != 0) {
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE("Can't write-lock UI: is read-locked.");
+  }
+  g_ui_v1->ui_write_lock_count_++;
+}
+
+UIV1FeatureSet::UIWriteLock::~UIWriteLock() {
+  g_ui_v1->ui_write_lock_count_--;
+  if (g_ui_v1->ui_write_lock_count_ < 0) {
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE("ui_write_lock_count_ < 0");
+    g_ui_v1->ui_write_lock_count_ = 0;
+  }
+}
+void UIV1FeatureSet::RegisterWidgetID(const std::string& id, Widget* w) {
+  assert(g_base->InLogicThread());
+  g_core->logging->Log(LogName::kBaUI, LogLevel::kDebug,
+                       [&id] { return "Registering widget id '" + id + "'."; });
+
+  // Warn if there is already a widget with this ID.
+  auto it = widgets_by_id_.find(id);
+  if (it != widgets_by_id_.end()) {
+    g_core->logging->Log(LogName::kBaUI, LogLevel::kWarning, [&id] {
+      return "Widget id '" + id
+             + "' is already in use;"
+               " all widgets should have unique IDs.";
+    });
+  }
+  auto& vec = widgets_by_id_[id];
+  vec.push_back(w);
+}
+
+void UIV1FeatureSet::UnregisterWidgetID(const std::string& id, Widget* w) {
+  assert(g_base->InLogicThread());
+  g_core->logging->Log(LogName::kBaUI, LogLevel::kDebug, [&id] {
+    return "Unregistering widget id '" + id + "'.";
+  });
+
+  auto it = widgets_by_id_.find(id);
+  if (it == widgets_by_id_.end()) {
+    g_core->logging->Log(LogName::kBaUI, LogLevel::kError, [&id] {
+      return "Widget id '" + id + "' not found at unregister.";
+    });
+    return;
+  }
+
+  auto& vec = it->second;
+  auto vit = std::find(vec.begin(), vec.end(), w);
+  if (vit == vec.end()) {
+    g_core->logging->Log(LogName::kBaUI, LogLevel::kError, [&id] {
+      return "Widget id '" + id
+             + "' does not point to provided widget at unregister.";
+    });
+    return;
+  }
+
+  // Remove the widget pointer from the vector.
+  vec.erase(vit);
+
+  // Remove the id entirely if its vector is now empty.
+  if (vec.empty()) {
+    widgets_by_id_.erase(it);
   }
 }
 

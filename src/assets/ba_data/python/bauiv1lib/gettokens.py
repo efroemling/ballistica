@@ -802,8 +802,14 @@ def show_get_tokens_window(origin_widget: bui.Widget | None = None) -> None:
 
     # NOTE TO USERS: The code below is not the proper way to do things;
     # whenever possible one should use a MainWindow's
-    # main_window_replace() or main_window_back() methods. We just need
-    # to do things a bit more manually in this particular case.
+    # main_window_replace() or main_window_back() methods or
+    # bauiv1.auxiliary_window_activate(). We just need to do things a
+    # bit more manually in this particular case.
+
+    # Basically we want to pop up our auxiliary window but we don't want
+    # to replace any existing auxiliary windows; we want our close
+    # button to go back to whatever was there already, no matter whether
+    # it was an auxiliary window or not.
 
     prev_main_window = bui.app.ui_v1.get_main_window()
 

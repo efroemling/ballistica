@@ -47,7 +47,7 @@ void HScrollWidget::OnTouchDelayTimerExpired() {
 }
 
 void HScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
   bool is_scrolling = (touch_held_ || !has_momentum_);
   float strong_force;
   float weak_force;
@@ -104,7 +104,7 @@ void HScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
 }
 
 auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
   bool claimed = false;
   bool pass = true;
   float bottom_overlap = 3;
@@ -490,7 +490,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 }
 
 void HScrollWidget::UpdateLayout() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   // Move everything based on our offset.
   auto i = widgets().begin();

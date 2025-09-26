@@ -43,11 +43,7 @@ ContainerWidget::ContainerWidget(float width_in, float height_in)
       dynamics_update_time_millisecs_(
           static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)) {}
 
-ContainerWidget::~ContainerWidget() {
-  BA_DEBUG_UI_READ_LOCK;
-  // Wipe out our children.
-  widgets_.clear();
-}
+ContainerWidget::~ContainerWidget() { Clear(); }
 
 void ContainerWidget::SetOnActivateCall(PyObject* c) {
   on_activate_call_ = Object::New<base::PythonContextCall>(c);
@@ -60,7 +56,7 @@ void ContainerWidget::SetOnOutsideClickCall(PyObject* c) {
 void ContainerWidget::DrawChildren(base::RenderPass* pass,
                                    bool draw_transparent, float x_offset,
                                    float y_offset, float scale) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   // We're expected to fill z space 0..1 when we draw... so we need to
   // divide that space between our child widgets plus our bg layer.
@@ -305,7 +301,7 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
 }
 
 auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   bool claimed = false;
   if (ignore_input_) {
@@ -796,7 +792,7 @@ void ContainerWidget::SetRootSelectable(bool enable) {
 }
 
 void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   CheckLayout();
   millisecs_t display_time_ms = pass->frame_def()->display_time_millisecs();
@@ -1162,21 +1158,32 @@ void ContainerWidget::Activate() {
 }
 
 void ContainerWidget::AddWidget(Widget* w) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   Object::WeakRef<ContainerWidget> weakthis(this);
   {
-    BA_DEBUG_UI_WRITE_LOCK;
+    BA_DEBUG_UI_WRITE_LOCK;  // We are changing widget hierarchy.
+
+    // We expect to be adding a not-in-hierarchy widget to an in-hierarchy
+    // one.
+    assert(w->parent_widget() == nullptr);
+    assert(in_hierarchy());
+    assert(!w->in_hierarchy());
+
+    if (w->id().has_value()) {
+      g_ui_v1->RegisterWidgetID(*w->id(), w);
+    }
     w->set_parent_widget(this);
+    w->set_in_hierarchy(true);
     widgets_.insert(widgets_.end(), Object::Ref<Widget>(w));
   }
 
-  // If we're not selectable ourself and our child is, select it.
+  // If we're not selectable ourself and our new child is, select it.
   if (!root_selectable_
       && ((selected_widget_ == nullptr) || is_window_stack_)) {
     if (w->IsSelectable()) {
       // A change on the main or overlay window stack changes the global
       // selection (unless its on the main window stack and there's already
-      // something on the overlay stack) in all other cases we just shift
+      // something on the overlay stack). In all other cases we just shift
       // our direct selected child (which may not affect the global
       // selection).
       if (is_window_stack_
@@ -1211,7 +1218,8 @@ auto ContainerWidget::IsAcceptingInput() const -> bool {
 
 // Delete all widgets.
 void ContainerWidget::Clear() {
-  BA_DEBUG_UI_WRITE_LOCK;
+  assert(g_base->InLogicThread());
+  BA_DEBUG_UI_WRITE_LOCK;  // We are changing widget hierarchy.
   widgets_.clear();
   selected_widget_ = nullptr;
   prev_selected_widget_ = nullptr;
@@ -1264,7 +1272,7 @@ static auto _IsTransitionOut(ContainerWidget::TransitionType type) {
 }
 
 void ContainerWidget::SetTransition(TransitionType t) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
   assert(g_base->InLogicThread());
 
   bg_dirty_ = glow_dirty_ = true;
@@ -1374,7 +1382,7 @@ void ContainerWidget::ReselectLastSelectedWidget() {
 void ContainerWidget::DeleteWidget(Widget* w) {
   bool found = false;
   {
-    BA_DEBUG_UI_WRITE_LOCK;
+    BA_DEBUG_UI_WRITE_LOCK;  // We are changing widget hierarchy.
     // Hmmm couldn't we do this without having to iterate here?
     // (at least in release build).
     for (auto i = widgets_.begin(); i != widgets_.end(); i++) {
@@ -1410,7 +1418,7 @@ void ContainerWidget::DeleteWidget(Widget* w) {
 
   // in some cases we want to auto select a new child widget
   if (selected_widget_ == nullptr || is_window_stack_) {
-    BA_DEBUG_UI_READ_LOCK;
+    BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
     // no UI lock needed here.. we don't change anything until SelectWidget,
     // at which point we exit the loop..
     for (auto i = widgets_.rbegin(); i != widgets_.rend(); i++) {
@@ -1480,7 +1488,7 @@ void ContainerWidget::ShowWidget(Widget* w) {
 }
 
 void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (w == nullptr) {
     if (selected_widget_) {
@@ -1510,8 +1518,8 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
           selected_widget_ = &(*widget);
 
           // Store the old one as prev-selected if its not the one we're
-          // selecting now. (otherwise re-selecting repeatedly kills our prev
-          // mechanism).
+          // selecting now. (otherwise re-selecting repeatedly kills our
+          // prev mechanism).
           if (prev_selected_widget != selected_widget_) {
             prev_selected_widget_ = prev_selected_widget;
           }
@@ -1532,7 +1540,7 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
 }
 
 void ContainerWidget::SetSelected(bool s, SelectionCause cause) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   Widget::SetSelected(s, cause);
 
@@ -1558,10 +1566,6 @@ void ContainerWidget::SetSelected(bool s, SelectionCause cause) {
         }
       }
     }
-  } else {
-    // if we're being deselected and we have a selected child, tell them
-    // they're deselected if (selected_widget_) {
-    // }
   }
 }
 
@@ -1686,7 +1690,7 @@ auto ContainerWidget::GetClosestDownWidget(float our_x, float our_y,
 }
 
 void ContainerWidget::SelectDownWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
@@ -1752,7 +1756,7 @@ void ContainerWidget::SelectDownWidget() {
 }
 
 void ContainerWidget::SelectUpWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
@@ -1818,7 +1822,7 @@ void ContainerWidget::SelectUpWidget() {
 }
 
 void ContainerWidget::SelectLeftWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
@@ -1871,7 +1875,7 @@ void ContainerWidget::SelectLeftWidget() {
   }
 }
 void ContainerWidget::SelectRightWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (!g_base->ui || !g_ui_v1->root_widget()
       || !g_ui_v1->screen_root_widget()) {
@@ -1926,7 +1930,7 @@ void ContainerWidget::SelectRightWidget() {
 }
 
 void ContainerWidget::SelectNextWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (!g_base->ui || !g_ui_v1->root_widget()
       || !g_ui_v1->screen_root_widget()) {
@@ -2020,7 +2024,7 @@ void ContainerWidget::PrintExitListInstructions(
 }
 
 void ContainerWidget::SelectPrevWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   millisecs_t old_last_prev_next_time = last_prev_next_time_millisecs_;
   if (should_print_list_exit_instructions_) {

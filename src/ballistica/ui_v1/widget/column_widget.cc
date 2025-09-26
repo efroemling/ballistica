@@ -31,7 +31,7 @@ auto ColumnWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 }
 
 void ColumnWidget::UpdateLayout() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   float total_height{2.0f * margin_};
   for (const auto& i : widgets()) {

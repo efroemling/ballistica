@@ -302,9 +302,23 @@ class BasicMainWindowState(MainWindowState):
             ],
             bauiv1.MainWindow,
         ],
+        restore_selection: bool = False,
     ) -> None:
         super().__init__()
         self.create_call = create_call
+        self.selection: str | None = None
+
+        if restore_selection:
+            sel = _bauiv1.get_selected_widget()
+            if sel is not None:
+                self.selection = sel.id
+                if self.selection is None:
+                    babase.uilog.warning(
+                        'restore_selection was passed to BasicMainWindowState'
+                        ' but the selected widget has no id;'
+                        ' selection will not be restored.'
+                    )
+            babase.uilog.debug("Saving ui selection: '%s'.", self.selection)
 
     @override
     def create_window(

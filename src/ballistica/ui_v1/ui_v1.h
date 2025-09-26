@@ -6,6 +6,8 @@
 #include <ballistica/base/input/device/input_device.h>
 
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
@@ -14,14 +16,16 @@
 // It predeclares our feature-set's various types and globals and other
 // bits.
 
-// UI-Locks: make sure widget-lists don't change under you. Use a read-lock
-// if you just need to ensure lists remain intact but won't be changing
-// anything. Use a write-lock whenever modifying a list.
+// UI-Locks: make sure widget-hierarchy doesn't change when its not supposed
+// to. Hold a read-lock if you want to make sure things remain constant but
+// won't be changing anything (draw code, etc.). Hold a write-lock whenever
+// modifying hierarchies to make sure nothing is expecting them to be
+// constant.
 #if BA_DEBUG_BUILD
 #define BA_DEBUG_UI_READ_LOCK \
-  ::ballistica::ui_v1::UIV1FeatureSet::UILock ui_lock(false)
+  ::ballistica::ui_v1::UIV1FeatureSet::UIReadLock ui_read_lock
 #define BA_DEBUG_UI_WRITE_LOCK \
-  ::ballistica::ui_v1::UIV1FeatureSet::UILock ui_lock(true)
+  ::ballistica::ui_v1::UIV1FeatureSet::UIWriteLock ui_write_lock
 #else
 #define BA_DEBUG_UI_READ_LOCK
 #define BA_DEBUG_UI_WRITE_LOCK
@@ -71,13 +75,21 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
 
   /// Used to ensure widgets are not created or destroyed at certain times
   /// (while traversing widget hierarchy, etc).
-  class UILock {
+  class UIReadLock {
    public:
-    explicit UILock(bool write);
-    ~UILock();
+    explicit UIReadLock();
+    ~UIReadLock();
 
    private:
-    BA_DISALLOW_CLASS_COPIES(UILock);
+    BA_DISALLOW_CLASS_COPIES(UIReadLock);
+  };
+  class UIWriteLock {
+   public:
+    explicit UIWriteLock();
+    ~UIWriteLock();
+
+   private:
+    BA_DISALLOW_CLASS_COPIES(UIWriteLock);
   };
 
   /// Called when our associated Python module is instantiated.
@@ -112,12 +124,15 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   // Return the absolute root widget; this includes persistent UI bits such
   // as the top/bottom bars
   auto root_widget() -> ui_v1::RootWidget* { return root_widget_.get(); }
-  // void Reset() override;
 
   // Add a widget to a container. If a parent is provided, the widget is
   // added to it; otherwise it is added to the root widget.
   void AddWidget(Widget* w, ContainerWidget* to);
   void DeleteWidget(Widget* widget);
+
+  /// Return the current globally selected widget, or nullptr if none
+  /// exists. Must be called from the logic thread.
+  auto GetSelectedWidget() -> Widget*;
 
   void OnScreenSizeChange() override;
   void OnUIScaleChange();
@@ -132,6 +147,9 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   }
   auto set_party_window_open(bool value) { party_window_open_ = value; }
 
+  void RegisterWidgetID(const std::string& id, Widget* w);
+  void UnregisterWidgetID(const std::string& id, Widget* w);
+
   auto HasQuitConfirmDialog() -> bool override;
   void ConfirmQuit(QuitType quit_type) override;
 
@@ -140,7 +158,9 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   Object::Ref<ContainerWidget> screen_root_widget_;
   Object::Ref<ContainerWidget> overlay_root_widget_;
   Object::Ref<RootWidget> root_widget_;
-  int ui_lock_count_{};
+  std::unordered_map<std::string, std::vector<Widget*>> widgets_by_id_;
+  int ui_read_lock_count_{};
+  int ui_write_lock_count_{};
   int language_state_{};
   bool always_use_internal_on_screen_keyboard_{};
   bool party_window_open_{};

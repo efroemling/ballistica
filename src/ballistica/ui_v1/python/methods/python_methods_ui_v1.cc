@@ -277,7 +277,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Set applicable values.
   if (id_obj != Py_None) {
-    b->set_id(Python::GetString(id_obj));
+    b->SetID(Python::GetString(id_obj));
   }
   if (label_obj != Py_None) {
     b->set_text(g_base->python->GetPyLString(label_obj));
@@ -591,7 +591,7 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Set applicable values.
   if (id_obj != Py_None) {
-    widget->set_id(Python::GetString(id_obj));
+    widget->SetID(Python::GetString(id_obj));
   }
   if (size_obj != Py_None) {
     Point2D p = Python::GetPoint2D(size_obj);
@@ -1300,7 +1300,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
     // Id needs to be set before adding to parent.
     if (id_obj != Py_None) {
-      widget->set_id(Python::GetString(id_obj));
+      widget->SetID(Python::GetString(id_obj));
     }
 
     g_ui_v1->AddWidget(widget.get(), parent_widget);
@@ -2717,6 +2717,29 @@ static PyMethodDef PyGetSpecialWidgetDef = {
     "(internal)",
 };
 
+// ------------------------- get_selected_widget -------------------------------
+
+static auto PyGetSelectedWidget(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (Widget* w = g_ui_v1->GetSelectedWidget()) {
+    return w->NewPyRef();
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetSelectedWidgetDef = {
+    "get_selected_widget",             // name
+    (PyCFunction)PyGetSelectedWidget,  // method
+    METH_NOARGS,                       // flags
+
+    "get_selected_widget() -> bauiv1.Widget | None\n"
+    "\n"
+    "Return the current globally selected widget, if any.",
+};
+
 // -------------------------- root_ui_back_press -------------------------------
 
 static auto PyRootUIBackPress(PyObject* self) -> PyObject* {
@@ -2861,6 +2884,7 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyRootUIBackPressDef,
       PyGetSpecialWidgetDef,
+      PyGetSelectedWidgetDef,
       PySetPartyWindowOpenDef,
       PyButtonWidgetDef,
       PyCheckBoxWidgetDef,

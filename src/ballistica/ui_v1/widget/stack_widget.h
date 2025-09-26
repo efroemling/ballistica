@@ -17,16 +17,16 @@ class StackWidget : public ContainerWidget {
   auto GetWidgetTypeName() -> std::string override { return "stack"; }
   void SetWidth(float w) override {
     set_width(w);
-    _sizeDirty = true;
+    _size_dirty = true;
     MarkForUpdate();
   }
   void SetHeight(float h) override {
     set_height(h);
-    _sizeDirty = true;
+    _size_dirty = true;
     MarkForUpdate();
   }
-  // stack widget doesn't have a clearly visible position so don't wanna allow
-  // selecting it via keys
+  // stack widget doesn't have a clearly visible position so don't wanna
+  // allow selecting it via keys
   auto IsSelectableViaKeys() -> bool override { return false; }
 
  protected:
@@ -34,7 +34,7 @@ class StackWidget : public ContainerWidget {
   void UpdateLayout() override;
 
  private:
-  bool _sizeDirty = false;
+  bool _size_dirty = false;
 };
 
 }  // namespace ballistica::ui_v1

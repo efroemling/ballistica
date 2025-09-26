@@ -47,10 +47,12 @@ def _spelling(words: list[str]) -> None:
 
 def requirements_upgrade() -> None:
     """Upgrade project requirements."""
+    # pylint: disable=too-many-locals
     import os
     import tempfile
     import subprocess
 
+    from efro.terminal import Clr
     from efro.error import CleanError
 
     pcommand.disallow_in_batch()
@@ -83,6 +85,18 @@ def requirements_upgrade() -> None:
             '\n'.join(sorted(reqs2.splitlines(), key=lambda l: l.lower()))
             + '\n'
         )
+
+        # Pin particular versions of things to particular earlier
+        # versions. This is intended as a workaround for bugs specific
+        # to one exact version and thus shouldn't apply to later ones.
+        filterlines: list[tuple[str, str]] = [
+            # Fails to build on bastaging (submitted fix).
+            ('pyicu==2.15.3', 'pyicu==2.15.2'),
+        ]
+        for fsrc, fdst in filterlines:
+            if fsrc in reqs_new:
+                reqs_new = reqs_new.replace(fsrc, fdst)
+                print(f'{Clr.MAG}HOLDING BACK {fdst}{Clr.RST}')
 
         if reqs_new != reqs:
             with open(reqpath, 'w', encoding='utf-8') as outfile:

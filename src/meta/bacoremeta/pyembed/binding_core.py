@@ -53,6 +53,8 @@ values = [
     logging.getLogger('ba.perf').log,  # kLoggerBaPerformanceLogCall
     logging.getLogger('ba.input'),  # kLoggerBaInput
     logging.getLogger('ba.input').log,  # kLoggerBaInputLogCall
+    logging.getLogger('ba.ui'),  # kLoggerBaUI
+    logging.getLogger('ba.ui').log,  # kLoggerBaUILogCall
     logging.getLogger('ba.lifecycle'),  # kLoggerBaLifecycle
     logging.getLogger('ba.lifecycle').log,  # kLoggerBaLifecycleLogCall
     logging.getLogger('ba.net'),  # kLoggerBaNetworking

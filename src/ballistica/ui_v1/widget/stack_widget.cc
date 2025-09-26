@@ -16,7 +16,7 @@ StackWidget::StackWidget() {
 StackWidget::~StackWidget() = default;
 
 void StackWidget::UpdateLayout() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
   // Stick everything in the middle.
   for (const auto& i : widgets()) {
     float x_offs = (*i).stack_offset_x();
@@ -26,7 +26,7 @@ void StackWidget::UpdateLayout() {
     float l = (width() - w) / 2 + x_offs;
     float b = (height() - h) / 2 + y_offs;
     (*i).set_translate(l, b);
-    _sizeDirty = false;
+    _size_dirty = false;
   }
 }
 

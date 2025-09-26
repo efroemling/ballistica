@@ -31,6 +31,7 @@ cloudsublog = logging.getLogger(ClientLoggerName.CLOUD_SUBSCRIPTION.value)
 accountlog = logging.getLogger(ClientLoggerName.ACCOUNT.value)
 accountclientv2log = logging.getLogger(ClientLoggerName.ACCOUNT_CLIENT_V2.value)
 loginadapterlog = logging.getLogger(ClientLoggerName.LOGIN_ADAPTER.value)
+uilog = logging.getLogger(ClientLoggerName.UI.value)
 
 
 def description_for_logger(logger: str) -> str | None:

@@ -6,7 +6,7 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/base/networking/networking.h"
-#include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/core/core.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/networking/sockaddr.h"
 
@@ -24,12 +24,24 @@ void NetworkWriter::PushSendToCall(const std::vector<uint8_t>& msg,
                                    const SockAddr& addr) {
   // These are unreliable sends so its ok to drop stuff instead of possibly
   // dying due to event loop hitting its limit.
-  if (!event_loop()->CheckPushSafety()) {
-    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
-                "Network-writer buffer is full;"
-                " dropping outbound messages.");
-    return;
-  }
+  //
+  // UPDATE: Disabling this for now. Am getting reports of servers
+  // effectively dying after showing this message
+  // (https://github.com/efroemling/ballistica/issues/862), so I'm wondering
+  // if it's a pathological situation where once we hit this threshold then
+  // we start to get a bunch of message re-sends which makes only the
+  // situation worse. So perhaps its better to stick with the standard
+  // behavior of logging warnings when the list gets too big and dying if it
+  // gets out of control big. We could also try blocking in this call, but I
+  // would want to know that it would not lead to things effectively
+  // breaking also.
+  //
+  // if (!event_loop()->CheckPushSafety()) {
+  //   BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+  //               "Network-writer buffer is full;"
+  //               " dropping outbound messages.");
+  //   return;
+  // }
   event_loop()->PushCall([msg, addr] {
     assert(g_base->network_reader);
     Networking::SendTo(msg, addr);

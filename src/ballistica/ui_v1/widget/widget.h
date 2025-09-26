@@ -234,20 +234,16 @@ class Widget : public Object {
   void set_simple_culling_right(float val) { simple_culling_right_ = val; }
   void set_simple_culling_bottom(float val) { simple_culling_bottom_ = val; }
   void set_simple_culling_top(float val) { simple_culling_top_ = val; }
+  auto in_hierarchy() const { return in_hierarchy_; }
 
   /// Should only be called by a widget's parent container.
   virtual void SetSelected(bool s, SelectionCause cause);
 
   /// Set widget ID; can be used to lookup particular widgets.
-  void set_id(const std::string& id) {
-    // It is caller's responsibility to only call us once before we are
-    // added to a parent widget.
-    assert(!id_.has_value());
-    assert(parent_widget_ == nullptr);
-
-    id_ = id;
-  }
+  void SetID(const std::string& id);
   auto id() const { return id_; }
+
+  void set_in_hierarchy(bool val) { in_hierarchy_ = val; }
 
  private:
   auto GetPyWidget_(bool new_ref) -> PyObject*;
@@ -287,6 +283,7 @@ class Widget : public Object {
   bool visible_in_container_{true};
   bool neighbors_locked_{};
   bool auto_select_{};
+  bool in_hierarchy_{};
 };
 
 }  // namespace ballistica::ui_v1

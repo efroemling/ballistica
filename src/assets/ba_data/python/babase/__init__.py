@@ -180,7 +180,14 @@ from babase._general import (
 )
 from babase._language import Lstr, LanguageSubsystem
 from babase._locale import LocaleSubsystem
-from babase._logging import balog, accountlog, applog, lifecyclelog, netlog
+from babase._logging import (
+    balog,
+    accountlog,
+    applog,
+    lifecyclelog,
+    netlog,
+    uilog,
+)
 from babase._login import LoginAdapter, LoginInfo
 
 from babase._mgen.enums import (
@@ -373,6 +380,7 @@ __all__ = [
     'supports_unicode_display',
     'TeamNotFoundError',
     'timestring',
+    'uilog',
     'UIScale',
     'unlock_all_input',
     'update_internal_logger_levels',

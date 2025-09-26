@@ -302,6 +302,8 @@ void CorePython::EnablePythonLoggingCalls() {
   assert(objs().Exists(ObjID::kLoggerBaAssetsLogCall));
   assert(objs().Exists(ObjID::kLoggerBaInput));
   assert(objs().Exists(ObjID::kLoggerBaInputLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaUI));
+  assert(objs().Exists(ObjID::kLoggerBaUILogCall));
   assert(objs().Exists(ObjID::kLoggerBaNetworking));
   assert(objs().Exists(ObjID::kLoggerBaNetworkingLogCall));
 
@@ -378,6 +380,7 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
       {LogName::kBaLifecycle, ObjID::kLoggerBaLifecycle},
       {LogName::kBaAssets, ObjID::kLoggerBaAssets},
       {LogName::kBaInput, ObjID::kLoggerBaInput},
+      {LogName::kBaUI, ObjID::kLoggerBaUI},
       {LogName::kBaNetworking, ObjID::kLoggerBaNetworking},
   };
 
@@ -607,6 +610,10 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
       break;
     case LogName::kBaLifecycle:
       logcallobj = ObjID::kLoggerBaLifecycleLogCall;
+      handled = true;
+      break;
+    case LogName::kBaUI:
+      logcallobj = ObjID::kLoggerBaUILogCall;
       handled = true;
       break;
     case LogName::kLast:

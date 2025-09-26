@@ -23,6 +23,8 @@ class MainMenuWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
     ):
 
+        self.baseid = 'mainmenu'
+
         # Preload some modules we use in a background thread so we won't
         # have a visual hitch when the user taps them.
         bui.app.threadpool.submit_no_wait(self._preload_modules)
@@ -280,7 +282,7 @@ class MainMenuWindow(bui.MainWindow):
             demo_menu_delay = 0.0
             self._demo_menu_button = bui.buttonwidget(
                 parent=self._root_widget,
-                id='demo',
+                id=f'{self.baseid}|demo',
                 position=(self._width * 0.5 - this_b_width * 0.5, v + 90),
                 size=(this_b_width, 45),
                 autoselect=True,
@@ -359,7 +361,7 @@ class MainMenuWindow(bui.MainWindow):
 
         self._how_to_play_button = bui.buttonwidget(
             parent=self._root_widget,
-            id='howtoplay',
+            id=f'{self.baseid}|howtoplay',
             position=(h, v),
             autoselect=self._use_autoselect,
             size=(side_button_2_width, side_button_2_height * 2.0),

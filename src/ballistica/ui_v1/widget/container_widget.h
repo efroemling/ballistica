@@ -94,8 +94,8 @@ class ContainerWidget : public Widget {
 
   void Activate() override;
 
-  // Add a newly allocated widget to the container.
-  // This widget is now owned by the container and will be disposed by it.
+  /// Add a newly allocated widget to the container. This widget is now
+  /// owned by the container and will be disposed by it.
   void AddWidget(Widget* w);
 
   // Remove a widget from the container.

@@ -1,4 +1,4 @@
-### 1.7.51 (build 22549, api 9, 2025-09-19)
+### 1.7.51 (build 22553, api 9, 2025-09-25)
 - Deprecated `bauiv1.uicleanupcheck()` - to be removed when api 9 support ends.
   Use `ba*.app.ui_v1.add_ui_cleanup_check()` instead.
 - Official Mac builds now use OpenALSoft for audio instead of Apple's old
@@ -28,6 +28,16 @@
   dev-console. This brings up `bauiv1lib.template.MainWindowTemplate` which is a
   minimal example of a well-behaved main-window (handy as a starting point for
   custom main-windows).
+- Added `bauiv1.get_selected_widget()` which returns the globally selected
+  widget (if there is one).
+- Added the `ba.ui` log. Flip this to debug mode to show various ui related
+  stuff (currently mostly about widget ids).
+- (Hopefully) fixes an issue where extremely busy servers could effectively just
+  break. I had recently added code to drop outgoing messages if the buffer of
+  outbound messages got too big, but I think this has lead to a pathology where
+  the app then starts to try to re-send these dropped messages which further
+  floods the buffer. I've reverted to the old behavior of warning in such cases
+  but not clamping.
 
 ### 1.7.50 (build 22533, api 9, 2025-09-06)
 - Cleaned up cursor handling on Mac build. Fixes an issue where the cursor could

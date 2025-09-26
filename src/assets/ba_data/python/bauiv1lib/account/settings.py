@@ -121,7 +121,7 @@ class AccountSettingsWindow(bui.MainWindow):
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                toolbar_visibility=('menu_full'),
+                toolbar_visibility='menu_full',
                 toolbar_cancel_button_style=(
                     'close' if auxiliary_style else 'back'
                 ),

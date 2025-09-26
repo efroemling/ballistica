@@ -50,6 +50,8 @@ class CorePython {
     kLoggerBaAssetsLogCall,
     kLoggerBaInput,
     kLoggerBaInputLogCall,
+    kLoggerBaUI,
+    kLoggerBaUILogCall,
     kLoggerBaNetworking,
     kLoggerBaNetworkingLogCall,
     kPrependSysPathCall,

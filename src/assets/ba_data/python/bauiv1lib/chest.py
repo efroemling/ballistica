@@ -33,6 +33,7 @@ class ChestWindow(bui.MainWindow):
         index: int,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        auxiliary_style: bool = True,
     ):
         # pylint: disable=too-many-statements
         self._index = index
@@ -101,6 +102,9 @@ class ChestWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 toolbar_visibility='menu_full',
+                toolbar_cancel_button_style=(
+                    'close' if auxiliary_style else 'back'
+                ),
                 scale=scale,
             ),
             transition=transition,
@@ -136,10 +140,14 @@ class ChestWindow(bui.MainWindow):
             btn = bui.buttonwidget(
                 parent=self._root_widget,
                 position=(50, self._yoffs - 44),
-                size=(60, 55),
+                size=(60, 60),
                 scale=0.8,
-                label=bui.charstr(bui.SpecialChar.BACK),
-                button_type='backSmall',
+                label=bui.charstr(
+                    bui.SpecialChar.CLOSE
+                    if auxiliary_style
+                    else bui.SpecialChar.BACK
+                ),
+                button_type=None if auxiliary_style else 'backSmall',
                 extra_touch_border_scale=2.0,
                 autoselect=True,
                 on_activate_call=self.main_window_back,

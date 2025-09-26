@@ -29,7 +29,7 @@ auto RowWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 }
 
 void RowWidget::UpdateLayout() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
   float border = 2;
   float b = border;
   float l = 0;

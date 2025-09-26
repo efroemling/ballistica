@@ -288,6 +288,7 @@ enum class LogName : uint8_t {
   kBaPerformance,
   kBaAssets,
   kBaInput,
+  kBaUI,
   kBaNetworking,
   kLast  // Sentinel
 };

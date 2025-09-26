@@ -48,7 +48,7 @@ void ScrollWidget::OnTouchDelayTimerExpired() {
 }
 
 void ScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   bool is_scrolling;
   if (touch_mode_) {
@@ -112,7 +112,7 @@ void ScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
 }
 
 auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
   bool claimed = false;
   bool pass = true;
   float right_overlap = 0;
@@ -566,7 +566,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 }
 
 void ScrollWidget::UpdateLayout() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   // Move everything based on our offset.
   auto i = widgets().begin();

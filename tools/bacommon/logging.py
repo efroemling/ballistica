@@ -41,6 +41,7 @@ class ClientLoggerName(Enum):
     ACCOUNT_CLIENT_V2 = 'ba.accountclientv2'
     ACCOUNT = 'ba.account'
     LOGIN_ADAPTER = 'ba.loginadapter'
+    UI = 'ba.ui'
 
     @property
     def description(self) -> str:
@@ -86,6 +87,8 @@ class ClientLoggerName(Enum):
             return 'account functionality'
         if self is cls.LOGIN_ADAPTER:
             return 'support for particular login types'
+        if self is cls.UI:
+            return 'anything user-interface related'
         assert_never(self)
 
 

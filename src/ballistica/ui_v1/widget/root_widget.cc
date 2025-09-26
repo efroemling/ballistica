@@ -1817,7 +1817,7 @@ void RootWidget::UpdateLayout() {
   }
 
   // Update the window stack.
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
   if (screen_stack_widget_ != nullptr) {
     screen_stack_widget_->set_translate(0, 0);
     screen_stack_widget_->SetWidth(width());
@@ -1864,14 +1864,14 @@ void RootWidget::BackPress() {
 }
 
 void RootWidget::SetScreenWidget(StackWidget* w) {
-  // this needs to happen before any buttons get added.
+  // This needs to happen before any buttons get added.
   assert(buttons_.empty());
   AddWidget(w);
   screen_stack_widget_ = w;
 }
 
 void RootWidget::SetOverlayWidget(StackWidget* w) {
-  // this needs to happen after our buttons and things get added..
+  // This needs to happen after our buttons and things get added.
   assert(!buttons_.empty());
 
   AddWidget(w);
