@@ -482,7 +482,7 @@ class MainMenuWindow(bui.MainWindow):
                 parent=self._root_widget,
                 id=f'{self._id_prefix}|quit',
                 autoselect=self._use_autoselect,
-                position=(h + 4.0, v),
+                position=(h, v),
                 size=(side_button_2_width, side_button_2_height),
                 scale=side_button_2_scale,
                 label=bui.Lstr(
