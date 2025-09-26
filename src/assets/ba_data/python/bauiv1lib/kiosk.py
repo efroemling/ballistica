@@ -529,13 +529,15 @@ class KioskWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.mainmenu import MainMenuWindow
 
-        # no-op if we're not in control.
+        # No-op if we're not in control.
         if not self.main_window_has_control():
             return
 
         assert bui.app.classic is not None
 
         self._save_state()
-        bui.app.classic.did_menu_intro = True  # prevent delayed transition-in
 
-        self.main_window_replace(MainMenuWindow())
+        # Prevent delayed transition-in.
+        bui.app.classic.did_menu_intro = True
+
+        self.main_window_replace(MainMenuWindow)

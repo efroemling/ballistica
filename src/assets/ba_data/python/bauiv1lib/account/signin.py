@@ -35,13 +35,16 @@ def _show_account_settings() -> None:
     if isinstance(prev_main_window, AccountSettingsWindow):
         return
 
+    ui = bui.app.ui_v1
+
     # Set our new main window.
-    bui.app.ui_v1.set_main_window(
+    ui.set_main_window(
         AccountSettingsWindow(
             close_once_signed_in=True,
             origin_widget=bui.get_special_widget('account_button'),
         ),
-        from_window=False,
+        back_state=ui.save_current_main_window_state(),
+        from_window=False,  # Don't check where we're coming from.
         is_auxiliary=True,
         suppress_warning=True,
     )

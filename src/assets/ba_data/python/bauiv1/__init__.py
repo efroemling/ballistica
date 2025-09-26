@@ -147,6 +147,7 @@ from _bauiv1 import (
     uibounds,
     Widget,
     widget,
+    widget_by_id,
 )
 from bauiv1._keyboard import Keyboard
 from bauiv1._uitypes import (
@@ -297,6 +298,7 @@ __all__ = [
     'utc_now_cloud',
     'WeakCall',
     'widget',
+    'widget_by_id',
     'Widget',
     'Window',
     'workspaces_in_use',

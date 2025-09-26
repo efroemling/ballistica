@@ -1,4 +1,4 @@
-### 1.7.51 (build 22555, api 9, 2025-09-26)
+### 1.7.51 (build 22556, api 9, 2025-09-26)
 - Deprecated `bauiv1.uicleanupcheck()` - to be removed when api 9 support ends.
   Use `ba*.app.ui_v1.add_ui_cleanup_check()` instead.
 - Official Mac builds now use OpenALSoft for audio instead of Apple's old
@@ -38,6 +38,28 @@
   the app then starts to try to re-send these dropped messages which further
   floods the buffer. I've reverted to the old behavior of warning in such cases
   but not clamping.
+- The `back_state` arg to `ba*.ui_v1.set_main_window()` no longer has a default
+  value and must be passed explicitly. This technically may break code, but
+  generally one should not be calling this function directly anyway so hopefully
+  the impact is minimal.
+- The `MainWindow.main_window_replace()` method now takes a callable to generate
+  a `MainWindow` instead of taking a `MainWindow` directly. The old form is
+  still accepted for now but will generate a warning and will be removed once
+  api 9 support ends. Generally this just means
+  `main_window_replace(MyWin(some_arg))` needs to become
+  `main_window_replace(lambda: MyWin(some_arg))`. A nice side-effect of this
+  change is that it is no longer necessary to check
+  `self.main_window_has_control()` before calling `main_window_replace()` (since
+  it can now do that itself internally and simply not call your create method if
+  your window is not in control).
+- `str()` for a `bauiv1.Widget` now includes the filename/line where the widget
+  was created which should be useful for debugging.
+- Automatic selection save/restore for `MainWindow` classes now works. This
+  should let us clear up a lot of boilerplate code doing this manually, and it
+  also means we can restore selections that were outside of the window (global
+  toolbars, etc). You just need to define unique ids for all selectable widgets
+  and pass `restore_selection=True` when creating a `bui.BasicMainWindowState`.
+  See `bauiv1lib.template` for an example.
 
 ### 1.7.50 (build 22533, api 9, 2025-09-06)
 - Cleaned up cursor handling on Mac build. Fixes an issue where the cursor could

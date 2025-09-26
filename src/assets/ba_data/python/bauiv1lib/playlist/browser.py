@@ -788,12 +788,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
             PlaylistCustomizeBrowserWindow,
         )
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            PlaylistCustomizeBrowserWindow(
+            lambda: PlaylistCustomizeBrowserWindow(
                 origin_widget=self._customize_button,
                 sessiontype=self._sessiontype,
             )

@@ -536,24 +536,16 @@ class MainMenuWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.credits import CreditsWindow
 
-        # no-op if we're not currently in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            CreditsWindow(origin_widget=self._credits_button),
+            lambda: CreditsWindow(origin_widget=self._credits_button),
         )
 
     def _howtoplay(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.help import HelpWindow
 
-        # no-op if we're not currently in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            HelpWindow(origin_widget=self._how_to_play_button),
+            lambda: HelpWindow(origin_widget=self._how_to_play_button),
         )
 
     def _save_state(self) -> None:
@@ -615,32 +607,22 @@ class MainMenuWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.gather import GatherWindow
 
-        # no-op if we're not currently in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            GatherWindow(origin_widget=self._gather_button)
+            lambda: GatherWindow(origin_widget=self._gather_button)
         )
 
     def _watch_press(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.watch import WatchWindow
 
-        # no-op if we're not currently in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            WatchWindow(origin_widget=self._watch_button),
+            lambda: WatchWindow(origin_widget=self._watch_button),
         )
 
     def _play_press(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.play import PlayWindow
 
-        # no-op if we're not currently in control.
-        if not self.main_window_has_control():
-            return
-
-        self.main_window_replace(PlayWindow(origin_widget=self._play_button))
+        self.main_window_replace(
+            lambda: PlayWindow(origin_widget=self._play_button)
+        )

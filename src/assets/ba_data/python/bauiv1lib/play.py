@@ -602,19 +602,15 @@ class PlayWindow(bui.MainWindow):
             return
 
         self.main_window_replace(
-            CoopBrowserWindow(origin_widget=self._coop_button)
+            lambda: CoopBrowserWindow(origin_widget=self._coop_button)
         )
 
     def _team_tourney(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.browser import PlaylistBrowserWindow
 
-        # no-op if we're not currently in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            PlaylistBrowserWindow(
+            lambda: PlaylistBrowserWindow(
                 origin_widget=self._teams_button,
                 sessiontype=bs.DualTeamSession,
                 playlist_select_context=self._playlist_select_context,
@@ -625,12 +621,8 @@ class PlayWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.playlist.browser import PlaylistBrowserWindow
 
-        # no-op if we're not currently in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            PlaylistBrowserWindow(
+            lambda: PlaylistBrowserWindow(
                 origin_widget=self._free_for_all_button,
                 sessiontype=bs.FreeForAllSession,
                 playlist_select_context=self._playlist_select_context,

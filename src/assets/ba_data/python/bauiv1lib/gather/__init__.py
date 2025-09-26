@@ -282,15 +282,17 @@ class GatherWindow(bui.MainWindow):
         if not self.main_window_has_control():
             return
 
-        playwindow = PlayWindow(
-            origin_widget=origin_widget, playlist_select_context=context
+        new_window = self.main_window_replace(
+            lambda: PlayWindow(
+                origin_widget=origin_widget, playlist_select_context=context
+            )
         )
-        self.main_window_replace(playwindow)
+        assert new_window is not None
 
         # Grab the newly-set main-window's back-state; that will lead us
         # back here once we're done going down our main-window
         # rabbit-hole for playlist selection.
-        context.back_state = playwindow.main_window_back_state
+        context.back_state = new_window.main_window_back_state
 
     def _set_tab(self, tab_id: TabID) -> None:
         if self._current_tab is tab_id:

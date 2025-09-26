@@ -817,10 +817,12 @@ def show_get_tokens_window(origin_widget: bui.Widget | None = None) -> None:
     if isinstance(prev_main_window, GetTokensWindow):
         return
 
+    ui = bui.app.ui_v1
     # Set our new main window.
-    bui.app.ui_v1.set_main_window(
+    ui.set_main_window(
         GetTokensWindow(origin_widget=origin_widget),
-        from_window=False,
+        from_window=False,  # Don't check where we're coming from.
+        back_state=ui.save_current_main_window_state(),
         is_auxiliary=True,
         suppress_warning=True,
     )

@@ -229,7 +229,9 @@ class TemplateMainWindow(bui.MainWindow):
     def _child_press(self, dummy_data: int) -> None:
         # Navigate to a new one of us.
         self.main_window_replace(
-            TemplateMainWindow(auxiliary_style=False, dummy_data=dummy_data)
+            lambda: TemplateMainWindow(
+                auxiliary_style=False, dummy_data=dummy_data
+            )
         )
 
     @override
@@ -243,8 +245,6 @@ class TemplateMainWindow(bui.MainWindow):
         dummy_data = self._dummy_data
         auxiliary_style = self._auxiliary_style
 
-        print('GETTING', bui.get_selected_widget())
-
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition,
@@ -252,5 +252,9 @@ class TemplateMainWindow(bui.MainWindow):
                 dummy_data=dummy_data,
                 auxiliary_style=auxiliary_style,
             ),
+            # This little bit of magic will grab the widget id of the
+            # current selection and reselect that id when restoring the
+            # state. Note that this requires us to give every selectable
+            # widget a unique ID.
             restore_selection=True,
         )

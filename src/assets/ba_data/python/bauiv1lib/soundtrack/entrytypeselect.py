@@ -190,10 +190,6 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
             MacMusicAppPlaylistSelectWindow,
         )
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
         current_playlist_entry: str | None
         if (
             music.get_soundtrack_entry_type(self._current_entry)
@@ -206,7 +202,7 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
             current_playlist_entry = None
 
         self.main_window_replace(
-            MacMusicAppPlaylistSelectWindow(
+            lambda: MacMusicAppPlaylistSelectWindow(
                 self._callback, current_playlist_entry, self._current_entry
             )
         )
@@ -216,15 +212,11 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
         from baclassic.osmusic import OSMusicPlayer
         from bauiv1lib.fileselector import FileSelectorWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
         base_path = android_get_external_files_dir()
         assert bui.app.classic is not None
 
         self.main_window_replace(
-            FileSelectorWindow(
+            lambda: FileSelectorWindow(
                 base_path,
                 callback=self._music_file_selector_cb,
                 show_base_path=False,
@@ -239,15 +231,11 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
         from bauiv1lib.fileselector import FileSelectorWindow
         from babase import android_get_external_files_dir
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
         base_path = android_get_external_files_dir()
         assert bui.app.classic is not None
 
         self.main_window_replace(
-            FileSelectorWindow(
+            lambda: FileSelectorWindow(
                 base_path,
                 callback=self._music_folder_selector_cb,
                 show_base_path=False,

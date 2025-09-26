@@ -2740,6 +2740,37 @@ static PyMethodDef PyGetSelectedWidgetDef = {
     "Return the current globally selected widget, if any.",
 };
 
+// ----------------------------- widget_by_id ----------------------------------
+
+static auto PyWidgetByID(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  const char* id;
+  static const char* kwlist[] = {"id", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &id)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w{g_ui_v1->WidgetByID(id)};
+  if (w != nullptr) {
+    return w->NewPyRef();
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyWidgetByIDDef = {
+    "widget_by_id",                // name
+    (PyCFunction)PyWidgetByID,     // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "widget_by_id(id: str) -> bauiv1.Widget | None\n"
+    "\n"
+    "Return a widget with the given ID, or None if there is none.",
+};
+
 // -------------------------- root_ui_back_press -------------------------------
 
 static auto PyRootUIBackPress(PyObject* self) -> PyObject* {
@@ -2885,6 +2916,7 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyRootUIBackPressDef,
       PyGetSpecialWidgetDef,
       PyGetSelectedWidgetDef,
+      PyWidgetByIDDef,
       PySetPartyWindowOpenDef,
       PyButtonWidgetDef,
       PyCheckBoxWidgetDef,

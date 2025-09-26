@@ -438,7 +438,9 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             return
 
         self.main_window_replace(
-            SoundtrackEditWindow(existing_soundtrack=self._selected_soundtrack)
+            lambda: SoundtrackEditWindow(
+                existing_soundtrack=self._selected_soundtrack
+            )
         )
 
     def _get_soundtrack_display_name(self, soundtrack: str) -> bui.Lstr:
@@ -540,7 +542,9 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             PurchaseWindow(items=['pro'])
             return
 
-        self.main_window_replace(SoundtrackEditWindow(existing_soundtrack=None))
+        self.main_window_replace(
+            lambda: SoundtrackEditWindow(existing_soundtrack=None)
+        )
 
     def _create_done(self, new_soundtrack: str) -> None:
         if new_soundtrack is not None:

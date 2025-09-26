@@ -143,13 +143,13 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
     def set_main_window(
         self,
-        window: bauiv1.MainWindow,
+        window: bauiv1.MainWindow | Callable[[], bauiv1.MainWindow],
         *,
+        back_state: MainWindowState | None,
         from_window: bauiv1.MainWindow | None | bool = True,
         is_back: bool = False,
         is_top_level: bool = False,
         is_auxiliary: bool = False,
-        back_state: MainWindowState | None = None,
         suppress_warning: bool = False,
     ) -> None:
         """Set the current 'main' window.
@@ -161,7 +161,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         The caller is responsible for cleaning up any previous main
         window.
         """
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         from bauiv1._window import MainWindow
@@ -291,27 +290,32 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             if is_top_level:
                 # Top level windows don't have or expect anywhere to go
                 # back to.
-                window.main_window_back_state = None
-            elif back_state is not None:
-                window.main_window_back_state = back_state
-            else:
-                oldwin = self._main_window()
-                if oldwin is None:
-                    # We currenty only hold weak refs to windows so that
-                    # they are free to die on their own, but we expect
-                    # the main menu window to keep itself alive as long
-                    # as its the main one. Holler if that seems to not
-                    # be happening.
-                    logging.warning(
-                        'set_main_window: No old MainWindow found'
-                        ' and is_top_level is False;'
-                        ' this should not happen.'
-                    )
-                    window.main_window_back_state = None
-                else:
-                    window.main_window_back_state = self.save_main_window_state(
-                        oldwin
-                    )
+                assert back_state is None
+                # window.main_window_back_state = None
+            # elif back_state is not None:
+            # Use a supplied back-state.
+            #     window.main_window_back_state = back_state
+            # else:
+            #     # Calc a back-state from the current window.
+            #     oldwin = self._main_window()
+            #     if oldwin is None:
+            #         # We currenty only hold weak refs to windows so that
+            #         # they are free to die on their own, but we expect
+            #         # the main menu window to keep itself alive as long
+            #         # as its the main one. Holler if that seems to not
+            #         # be happening.
+            #         logging.warning(
+            #             'set_main_window: No old MainWindow found'
+            #             ' and is_top_level is False;'
+            #             ' this should not happen.'
+            #         )
+            #         window.main_window_back_state = None
+            #     else:
+            #         window.main_window_back_state
+            # = self.save_main_window_state(
+            #             oldwin
+            #         )
+            window.main_window_back_state = back_state
 
         self._main_window = window_weakref
         self._main_window_widget = window_widget
@@ -355,6 +359,23 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         winstate.window_type = type(window)
 
         return winstate
+
+    def save_current_main_window_state(self) -> MainWindowState | None:
+        """Save state for the current window, if any."""
+        # Calc a back-state from the current window.
+        current_main_win = self._main_window()
+        if current_main_win is None:
+            # We currenty only hold weak refs to windows so that
+            # they are free to die on their own, but we expect
+            # the main menu window to keep itself alive as long
+            # as its the main one. Holler if that seems to not
+            # be happening.
+            babase.uilog.warning(
+                'save_current_main_window_state: No old MainWindow found;'
+                ' this should not happen.'
+            )
+            return None
+        return self.save_main_window_state(current_main_win)
 
     def restore_main_window_state(self, state: MainWindowState) -> None:
         """Restore UI to a saved state."""
@@ -509,7 +530,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             # Blow away the window stack and build a fresh one.
             self.clear_main_window()
             self.set_main_window(
-                win_create_call(),
+                win_create_call,
                 from_window=False,  # Disable from-check.
                 back_state=aux_state.parent,
                 suppress_warning=True,
@@ -531,7 +552,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         if current_main_window.main_window_is_auxiliary:
             self.clear_main_window()
             self.set_main_window(
-                win_create_call(),
+                win_create_call,
                 from_window=False,  # Disable from-check.
                 back_state=current_main_window.main_window_back_state,
                 suppress_warning=True,
@@ -542,7 +563,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # Ok, no existing auxiliary stuff was found period. Just
         # navigate forward to this UI.
         current_main_window.main_window_replace(
-            win_create_call(), is_auxiliary=True
+            win_create_call, is_auxiliary=True
         )
 
     def _schedule_main_win_recreate(self) -> None:

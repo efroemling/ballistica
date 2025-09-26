@@ -244,6 +244,7 @@ class Widget : public Object {
   auto id() const { return id_; }
 
   void set_in_hierarchy(bool val) { in_hierarchy_ = val; }
+  auto source_location() const { return source_location_; }
 
  private:
   auto GetPyWidget_(bool new_ref) -> PyObject*;
@@ -251,6 +252,7 @@ class Widget : public Object {
   std::optional<std::string> id_;
   Object::Ref<base::PythonContextCall> on_select_call_;
   std::vector<Object::Ref<base::PythonContextCall> > on_delete_calls_;
+  std::string source_location_;
   Object::WeakRef<Widget> draw_control_parent_;
   Object::WeakRef<Widget> down_widget_;
   Object::WeakRef<Widget> up_widget_;

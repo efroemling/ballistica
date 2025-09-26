@@ -370,55 +370,35 @@ class ControlsSettingsWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.keyboard import ConfigKeyboardWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            ConfigKeyboardWindow(bs.getinputdevice('Keyboard', '#1'))
+            lambda: ConfigKeyboardWindow(bs.getinputdevice('Keyboard', '#1'))
         )
 
     def _config_keyboard2(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.keyboard import ConfigKeyboardWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            ConfigKeyboardWindow(bs.getinputdevice('Keyboard', '#2'))
+            lambda: ConfigKeyboardWindow(bs.getinputdevice('Keyboard', '#2'))
         )
 
     def _do_mobile_devices(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.remoteapp import RemoteAppSettingsWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
-        self.main_window_replace(RemoteAppSettingsWindow())
+        self.main_window_replace(RemoteAppSettingsWindow)
 
     def _do_gamepads(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.gamepadselect import GamepadSelectWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
-        self.main_window_replace(GamepadSelectWindow())
+        self.main_window_replace(GamepadSelectWindow)
 
     def _do_touchscreen(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.touchscreen import TouchscreenSettingsWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
-        self.main_window_replace(TouchscreenSettingsWindow())
+        self.main_window_replace(TouchscreenSettingsWindow)
 
     def _save_state(self) -> None:
         sel = self._root_widget.get_selected_child()

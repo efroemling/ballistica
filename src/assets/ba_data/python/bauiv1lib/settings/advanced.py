@@ -823,20 +823,14 @@ class AdvancedSettingsWindow(bui.MainWindow):
     def _on_vr_test_press(self) -> None:
         from bauiv1lib.settings.vrtesting import VRTestingWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
-        self.main_window_replace(VRTestingWindow(transition='in_right'))
+        self.main_window_replace(lambda: VRTestingWindow(transition='in_right'))
 
     def _on_net_test_press(self) -> None:
         from bauiv1lib.settings.nettesting import NetTestingWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
-        self.main_window_replace(NetTestingWindow(transition='in_right'))
+        self.main_window_replace(
+            lambda: NetTestingWindow(transition='in_right')
+        )
 
     def _on_friend_promo_code_press(self) -> None:
         from bauiv1lib import appinvite
@@ -853,46 +847,30 @@ class AdvancedSettingsWindow(bui.MainWindow):
     def _on_plugins_button_press(self) -> None:
         from bauiv1lib.settings.plugins import PluginWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            PluginWindow(origin_widget=self._plugins_button)
+            lambda: PluginWindow(origin_widget=self._plugins_button)
         )
 
     def _on_dev_tools_button_press(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.devtools import DevToolsWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            DevToolsWindow(origin_widget=self._dev_tools_button)
+            lambda: DevToolsWindow(origin_widget=self._dev_tools_button)
         )
 
     def _on_send_info_press(self) -> None:
         from bauiv1lib.sendinfo import SendInfoWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            SendInfoWindow(origin_widget=self._send_info_button)
+            lambda: SendInfoWindow(origin_widget=self._send_info_button)
         )
 
     def _on_benchmark_press(self) -> None:
         from bauiv1lib.settings.benchmarks import BenchmarksAndStressTestsWindow
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            BenchmarksAndStressTestsWindow(transition='in_right')
+            lambda: BenchmarksAndStressTestsWindow(transition='in_right')
         )
 
     def _save_state(self) -> None:

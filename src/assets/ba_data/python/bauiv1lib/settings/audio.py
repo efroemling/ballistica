@@ -218,7 +218,9 @@ class AudioSettingsWindow(bui.MainWindow):
             return
 
         self.main_window_replace(
-            SoundtrackBrowserWindow(origin_widget=self._soundtrack_button)
+            lambda: SoundtrackBrowserWindow(
+                origin_widget=self._soundtrack_button
+            )
         )
 
     def _save_state(self) -> None:

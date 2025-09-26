@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import TYPE_CHECKING, override
 
 import babase
@@ -147,10 +148,11 @@ class MainWindow(Window):
     def main_window_has_control(self) -> bool:
         """Is this MainWindow allowed to change the global main window?
 
-        It is a good idea to make sure this is True before calling
-        main_window_replace(). This prevents fluke UI breakage such as
-        multiple simultaneous events causing a MainWindow to spawn
-        multiple replacements for itself.
+        This is called internally by methods such as
+        :meth:`main_window_replace()` and :meth:`main_window_back()` so
+        generally you do not need to call it directly when using those.
+        However you may still opt to check this if doing other actions
+        besides main-window navigation (such as displaying pop-ups).
         """
         # We are allowed to change main windows if we are the current one
         # AND our underlying widget is still alive and not transitioning out.
@@ -210,22 +212,60 @@ class MainWindow(Window):
 
     def main_window_replace(
         self,
-        new_window: MainWindow,
+        new_window: MainWindow | Callable[[], MainWindow],
         back_state: MainWindowState | None = None,
         is_auxiliary: bool = False,
-    ) -> None:
-        """Replace ourself with a new MainWindow."""
+    ) -> MainWindow | None:
+        """Replace ourself with a new MainWindow.
 
-        # Users should always check main_window_has_control() *before*
-        # creating new MainWindows and passing them in here. Kill the
-        # passed window and Error if it seems they did not.
-        if not self.main_window_has_control():
-            new_window.get_root_widget().delete()
-            raise RuntimeError(
-                f'main_window_replace() called on a not-in-control window'
-                f' ({self}); always check main_window_has_control() before'
-                f' calling main_window_replace().'
+        Returns the new MainWindow. Will no-op and return None if
+        we are not allowed to replace the MainWindow.
+        """
+
+        ui = babase.app.ui_v1
+
+        # If they didn't provide an explicit back-state, calc one.
+        if back_state is None:
+            back_state = ui.save_current_main_window_state()
+
+        if not isinstance(new_window, MainWindow):
+            # If we're not in control, we're not allowed to change things.
+            if not self.main_window_has_control():
+                babase.uilog.debug(
+                    'main_window_replace:'
+                    ' no-op due to main_window_has_control() returning False.',
+                    stack_info=True,
+                )
+                return None
+
+            new_window = new_window()
+        else:
+            # We originally were passed MainWindows directly, but want
+            # to phase this out, as it prevents our automatic selection
+            # save/restore from working (we need to save the old
+            # selection *before* the replacement window is created since
+            # the creation itself will change the selection).
+            warnings.warn(
+                'Passing MainWindow objects to main_window_replace() is'
+                ' deprecated and will be removed when api 9 support ends.'
+                ' You should instead pass calls to generate MainWindow objects.'
+                ' So `main_window_replace(MyWin(some_arg))` would become'
+                ' `main_win_replace(lambda: MyWin(some_arg))`.',
+                DeprecationWarning,
+                stacklevel=2,
             )
+
+            # In this old path, users should always check
+            # main_window_has_control() *before* creating new
+            # MainWindows and passing them in here. Kill the passed
+            # window and Error if it seems they did not.
+            if not self.main_window_has_control():
+                new_window.get_root_widget().delete()
+                raise RuntimeError(
+                    f'main_window_replace() called on a not-in-control window'
+                    f' ({self}); always check main_window_has_control() before'
+                    f' calling main_window_replace().'
+                )
 
         # For auxiliary windows, use scale to give a feel that we're
         # switching over to a totally separate 'side quest' ui. For
@@ -250,6 +290,7 @@ class MainWindow(Window):
             is_auxiliary=is_auxiliary,
             suppress_warning=True,
         )
+        return new_window
 
     def on_main_window_close(self) -> None:
         """Called before transitioning out a main window.
@@ -291,7 +332,11 @@ class MainWindowState:
 
 
 class BasicMainWindowState(MainWindowState):
-    """A basic MainWindowState holding a lambda to recreate a MainWindow."""
+    """A basic MainWindowState.
+
+    Holds some call to recreate a window and optionally a selection to
+    restore.
+    """
 
     def __init__(
         self,
@@ -312,13 +357,19 @@ class BasicMainWindowState(MainWindowState):
             sel = _bauiv1.get_selected_widget()
             if sel is not None:
                 self.selection = sel.id
-                if self.selection is None:
-                    babase.uilog.warning(
-                        'restore_selection was passed to BasicMainWindowState'
-                        ' but the selected widget has no id;'
-                        ' selection will not be restored.'
+                if self.selection is not None:
+                    babase.uilog.debug(
+                        "Saving ui selection: '%s'.", self.selection
                     )
-            babase.uilog.debug("Saving ui selection: '%s'.", self.selection)
+                else:
+                    babase.uilog.warning(
+                        'restore_selection=True was passed to'
+                        ' BasicMainWindowState but the currently selected'
+                        ' widget has no id. All selectable widgets must have'
+                        ' ids for selection restore to work properly.'
+                        ' Current selection=%s.',
+                        sel,
+                    )
 
     @override
     def create_window(
@@ -326,7 +377,21 @@ class BasicMainWindowState(MainWindowState):
         transition: Literal['in_right', 'in_left', 'in_scale'] | None = None,
         origin_widget: bauiv1.Widget | None = None,
     ) -> bauiv1.MainWindow:
-        return self.create_call(transition, origin_widget)
+        win = self.create_call(transition, origin_widget)
+        if self.selection is not None:
+            widget = _bauiv1.widget_by_id(self.selection)
+            if widget is not None:
+                widget.global_select()
+            else:
+                # We expect this to happen sometimes (windows may come
+                # up with different UIs visible/etc.). Let's note it but
+                # subtly.
+                babase.uilog.debug(
+                    "Unable to restore selection '%s'; widget not found.",
+                    self.selection,
+                )
+
+        return win
 
 
 class MainWindowAutoRecreateSuppress:

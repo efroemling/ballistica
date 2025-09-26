@@ -288,7 +288,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
             return
 
         self.main_window_replace(
-            StoreBrowserWindow(
+            lambda: StoreBrowserWindow(
                 show_tab=StoreBrowserWindow.TabID.MINIGAMES,
                 origin_widget=self._get_more_games_button,
                 minimal_toolbars=True,

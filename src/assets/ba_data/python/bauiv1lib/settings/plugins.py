@@ -254,11 +254,9 @@ class PluginWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.settings.pluginsettings import PluginSettingsWindow
 
-        # no-op if we don't have control.
-        if not self.main_window_has_control():
-            return
-
-        self.main_window_replace(PluginSettingsWindow(transition='in_right'))
+        self.main_window_replace(
+            lambda: PluginSettingsWindow(transition='in_right')
+        )
 
     def _show_category_options(self) -> None:
         uiscale = bui.app.ui_v1.uiscale

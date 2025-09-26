@@ -40,6 +40,7 @@ class PythonClassWidget : public PythonClass {
       -> PyObject*;
   static auto AddDeleteCallback(PythonClassWidget* self, PyObject* args,
                                 PyObject* keywds) -> PyObject*;
+  static auto GlobalSelect(PythonClassWidget* self) -> PyObject*;
   Object::WeakRef<Widget>* widget_;
   static auto nb_bool(PythonClassWidget* self) -> int;
   static PyNumberMethods as_number_;

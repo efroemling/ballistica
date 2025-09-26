@@ -153,6 +153,8 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   auto HasQuitConfirmDialog() -> bool override;
   void ConfirmQuit(QuitType quit_type) override;
 
+  auto WidgetByID(const std::string& val) -> Widget*;
+
  private:
   UIV1FeatureSet();
   Object::Ref<ContainerWidget> screen_root_widget_;

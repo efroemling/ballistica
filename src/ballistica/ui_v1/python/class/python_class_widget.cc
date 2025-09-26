@@ -152,15 +152,25 @@ auto PythonClassWidget::tp_setattro(PythonClassWidget* self, PyObject* attr,
 auto PythonClassWidget::tp_repr(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
   Widget* w = self->widget_->get();
+
+  std::string typestr{(w ? w->GetWidgetTypeName() : "<invalid>")};
+
   std::string idstr;
-  if (w->id().has_value()) {
-    idstr = "'" + *w->id() + "' ";
+  if (w && w->id().has_value()) {
+    idstr = "'" + *w->id() + "'";
+  } else {
+    idstr = "None";
   }
+
+  std::string originstr;
+  if (w) {
+    originstr = w->source_location();
+  }
+
   return Py_BuildValue(
-      "s",
-      (std::string("<bauiv1 '") + (w ? w->GetWidgetTypeName() : "<invalid>")
-       + "' widget " + idstr + Utils::PtrToString(w) + ">")
-          .c_str());
+      "s", ("<_bauiv1.Widget at " + Utils::PtrToString(w) + " (type=" + typestr
+            + ", id=" + idstr + ", origin=" + originstr + ")>")
+               .c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -353,6 +363,18 @@ auto PythonClassWidget::AddDeleteCallback(PythonClassWidget* self,
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassWidget::GlobalSelect(PythonClassWidget* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
+  if (!w) {
+    throw Exception(PyExcType::kWidgetNotFound);
+  }
+  w->GlobalSelect();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassWidget::Dir(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
 
@@ -418,6 +440,16 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      "add_delete_callback(call: Callable) -> None\n"
      "\n"
      "Add a call to be run immediately after this widget is destroyed."},
+    {"global_select", (PyCFunction)GlobalSelect,
+     METH_NOARGS,  // NOLINT (signed bitwise stuff)
+     "global_select() -> None\n"
+     "\n"
+     "Select this widget globally.\n"
+     "\n"
+     "This should be used with caution. In general it is better to set\n"
+     " selected-child on container widgets.\n"
+     "\n"
+     ":meta private:"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};

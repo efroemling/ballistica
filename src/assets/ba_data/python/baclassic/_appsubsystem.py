@@ -753,7 +753,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         origin_widget: bauiv1.Widget | None = None,
         selected_profile: str | None = None,
     ) -> None:
-        """(internal)"""
+        """Pop up a browser window from within a game."""
         from bauiv1lib.profile.browser import ProfileBrowserWindow
 
         main_window = babase.app.ui_v1.get_main_window()
@@ -772,6 +772,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 minimal_toolbar=True,
             ),
             is_top_level=True,
+            back_state=None,
             suppress_warning=True,
         )
 
@@ -830,6 +831,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                     transition='scale_in', origin_widget=menu_button
                 ),
                 is_top_level=True,
+                back_state=None,
                 suppress_warning=True,
             )
 
@@ -868,7 +870,10 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                     from bauiv1lib.kiosk import KioskWindow
 
                     app.ui_v1.set_main_window(
-                        KioskWindow(), is_top_level=True, suppress_warning=True
+                        KioskWindow(),
+                        is_top_level=True,
+                        back_state=None,
+                        suppress_warning=True,
                     )
                 else:
                     # If there's a saved ui state, restore that.
@@ -881,6 +886,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                         app.ui_v1.set_main_window(
                             MainMenuWindow(transition=None),
                             is_top_level=True,
+                            back_state=None,
                             suppress_warning=True,
                         )
 

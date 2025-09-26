@@ -301,7 +301,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         self._selected_get_more_maps = True
 
         self.main_window_replace(
-            StoreBrowserWindow(
+            lambda: StoreBrowserWindow(
                 show_tab=StoreBrowserWindow.TabID.MAPS,
                 origin_widget=self._get_more_maps_button,
                 minimal_toolbars=True,

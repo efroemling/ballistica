@@ -196,11 +196,7 @@ class NetTestingWindow(bui.MainWindow):
     def _show_val_testing(self) -> None:
         assert bui.app.classic is not None
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
-        self.main_window_replace(get_net_val_testing_window())
+        self.main_window_replace(get_net_val_testing_window)
 
 
 def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:

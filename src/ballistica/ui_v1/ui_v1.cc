@@ -395,4 +395,16 @@ void UIV1FeatureSet::UnregisterWidgetID(const std::string& id, Widget* w) {
   }
 }
 
+auto UIV1FeatureSet::WidgetByID(const std::string& id) -> Widget* {
+  assert(g_base->InLogicThread());
+  auto it = widgets_by_id_.find(id);
+  if (it == widgets_by_id_.end()) {
+    return nullptr;
+  }
+  auto& vec = it->second;
+  assert(!vec.empty());  // Should not be holding empty vecs.
+  // In the case of multiple registrations, grab the most recent.
+  return vec.back();
+}
+
 }  // namespace ballistica::ui_v1

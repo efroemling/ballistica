@@ -552,14 +552,14 @@ class PlaylistEditGameWindow(bui.MainWindow):
         if not self.main_window_has_control():
             return
 
-        self._config = self._getconfig()
+        config = self._config = self._getconfig()
 
         # Replace ourself with the map-select UI.
         self.main_window_replace(
-            PlaylistMapSelectWindow(
+            lambda: PlaylistMapSelectWindow(
                 self._gametype,
                 self._sessiontype,
-                self._config,
+                config,
                 self._edit_info,
                 self._completion_call,
             )

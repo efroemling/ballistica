@@ -422,15 +422,17 @@ class SoundtrackEditWindow(bui.MainWindow):
             'soundtrack': self._soundtrack,
             'last_edited_song_type': song_type,
         }
-        new_win = music.get_music_player().select_entry(
-            bui.Call(self._restore_editor, state, song_type),
-            entry,
-            selection_target_name,
+        new_win = self.main_window_replace(
+            lambda: music.get_music_player().select_entry(
+                bui.Call(self._restore_editor, state, song_type),
+                entry,
+                selection_target_name,
+            )
         )
-        self.main_window_replace(new_win)
 
         # Once we've set the new window, grab the back-state; we'll use
         # that to jump back here after selection completes.
+        assert new_win is not None
         assert new_win.main_window_back_state is not None
         state['back_state'] = new_win.main_window_back_state
 

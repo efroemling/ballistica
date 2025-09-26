@@ -263,7 +263,9 @@ class ProfileBrowserWindow(bui.MainWindow):
             bui.getsound('error').play()
             return
 
-        self.main_window_replace(EditProfileWindow(existing_profile=None))
+        self.main_window_replace(
+            lambda: EditProfileWindow(existing_profile=None)
+        )
 
     def _delete_profile(self) -> None:
         # pylint: disable=cyclic-import
@@ -322,7 +324,9 @@ class ProfileBrowserWindow(bui.MainWindow):
             )
             return
 
-        self.main_window_replace(EditProfileWindow(self._selected_profile))
+        self.main_window_replace(
+            lambda: EditProfileWindow(self._selected_profile)
+        )
 
     def _select(self, name: str, index: int) -> None:
         del index  # Unused.

@@ -129,12 +129,10 @@ class InventoryWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.browser import ProfileBrowserWindow
 
-        # no-op if our underlying widget is dead or on its way out.
-        if not self._root_widget or self._root_widget.transitioning_out:
-            return
-
         self.main_window_replace(
-            ProfileBrowserWindow(origin_widget=self._player_profiles_button)
+            lambda: ProfileBrowserWindow(
+                origin_widget=self._player_profiles_button
+            )
         )
 
     @override

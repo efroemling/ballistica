@@ -14,15 +14,16 @@
 
 namespace ballistica::ui_v1 {
 
-Widget::Widget() = default;
+Widget::Widget() : source_location_{Python::PythonFileLocation()} {}
 
 Widget::~Widget() {
   assert(g_base->InLogicThread());
 
-  if (in_hierarchy()) {
+  if (in_hierarchy_) {
     if (id().has_value()) {
       g_ui_v1->UnregisterWidgetID(*id(), this);
     }
+    in_hierarchy_ = false;
   }
 
   // Release our ref to ourself if we have one.
@@ -104,6 +105,7 @@ void Widget::SetSelected(bool s, SelectionCause cause) {
 }
 
 auto Widget::IsHierarchySelected() const -> bool {
+  assert(g_base->InLogicThread());
   const Widget* p = this;
   while (true) {
     if (!p->selected()) {
@@ -126,6 +128,7 @@ void Widget::AddOnDeleteCall(PyObject* call_obj) {
 }
 
 void Widget::GlobalSelect() {
+  assert(g_base->InLogicThread());
   Widget* w = this;
   ContainerWidget* c = parent_widget();
   if (!c) {
@@ -142,6 +145,7 @@ void Widget::GlobalSelect() {
 }
 
 void Widget::Show() {
+  assert(g_base->InLogicThread());
   Widget* w = this;
   ContainerWidget* c = parent_widget();
   if (!c) {

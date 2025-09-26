@@ -22,19 +22,12 @@ class EditProfileWindow(
     def reload_window(self) -> None:
         """Transitions out and recreates ourself."""
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
         # Replace ourself with ourself, but keep the same back location.
         assert self.main_window_back_state is not None
         self.main_window_replace(
-            EditProfileWindow(self.getname()),
+            lambda: EditProfileWindow(self.getname()),
             back_state=self.main_window_back_state,
         )
-
-    # def __del__(self) -> None:
-    #     print(f'~EditProfileWindow({id(self)})')
 
     def __init__(
         self,
@@ -652,11 +645,8 @@ class EditProfileWindow(
         """User wants to get more icons."""
         from bauiv1lib.store.browser import StoreBrowserWindow
 
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            StoreBrowserWindow(
+            lambda: StoreBrowserWindow(
                 minimal_toolbars=True,
                 show_tab=StoreBrowserWindow.TabID.ICONS,
             )
@@ -680,11 +670,8 @@ class EditProfileWindow(
     def on_character_picker_get_more_press(self) -> None:
         from bauiv1lib.store.browser import StoreBrowserWindow
 
-        if not self.main_window_has_control():
-            return
-
         self.main_window_replace(
-            StoreBrowserWindow(
+            lambda: StoreBrowserWindow(
                 minimal_toolbars=True,
                 show_tab=StoreBrowserWindow.TabID.CHARACTERS,
             )
