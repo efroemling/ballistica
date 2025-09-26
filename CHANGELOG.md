@@ -1,4 +1,4 @@
-### 1.7.51 (build 22556, api 9, 2025-09-26)
+### 1.7.51 (build 22557, api 9, 2025-09-26)
 - Deprecated `bauiv1.uicleanupcheck()` - to be removed when api 9 support ends.
   Use `ba*.app.ui_v1.add_ui_cleanup_check()` instead.
 - Official Mac builds now use OpenALSoft for audio instead of Apple's old

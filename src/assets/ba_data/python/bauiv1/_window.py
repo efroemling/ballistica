@@ -299,7 +299,7 @@ class MainWindow(Window):
         """
 
     def get_main_window_state(self) -> MainWindowState:
-        """Return a WindowState to recreate this window, if supported."""
+        """Return a WindowState to recreate this window."""
         raise NotImplementedError()
 
 
@@ -365,7 +365,7 @@ class BasicMainWindowState(MainWindowState):
                     babase.uilog.warning(
                         'restore_selection=True was passed to'
                         ' BasicMainWindowState but the currently selected'
-                        ' widget has no id. All selectable widgets must have'
+                        ' widget has no id. All selectable widgets should have'
                         ' ids for selection restore to work properly.'
                         ' Current selection=%s.',
                         sel,
@@ -379,6 +379,8 @@ class BasicMainWindowState(MainWindowState):
     ) -> bauiv1.MainWindow:
         win = self.create_call(transition, origin_widget)
         if self.selection is not None:
+            babase.uilog.debug("Restoring ui selection: '%s'.", self.selection)
+
             widget = _bauiv1.widget_by_id(self.selection)
             if widget is not None:
                 widget.global_select()

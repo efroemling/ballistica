@@ -153,7 +153,7 @@ auto PythonClassWidget::tp_repr(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
   Widget* w = self->widget_->get();
 
-  std::string typestr{(w ? w->GetWidgetTypeName() : "<invalid>")};
+  std::string typestr{(w ? ("'" + w->GetWidgetTypeName() + "'") : "<invalid>")};
 
   std::string idstr;
   if (w && w->id().has_value()) {
@@ -164,7 +164,7 @@ auto PythonClassWidget::tp_repr(PythonClassWidget* self) -> PyObject* {
 
   std::string originstr;
   if (w) {
-    originstr = w->source_location();
+    originstr = "'" + w->source_location() + "'";
   }
 
   return Py_BuildValue(

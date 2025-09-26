@@ -32,6 +32,13 @@ class ConfirmWindow:
         permanent_ok_fade: bool = False,
     ):
         # pylint: disable=too-many-locals
+
+        ui = bui.app.ui_v1
+
+        # Make sure our widgets have unique ids (and allow restoring so
+        # we can recreate from saved state).
+        self._id_prefix = ui.new_id_prefix('confirm')
+
         if text is None:
             text = bui.Lstr(resource='areYouSureText')
         if ok_text is None:
@@ -89,6 +96,7 @@ class ConfirmWindow:
         if cancel_button:
             cbtn = btn = bui.buttonwidget(
                 parent=self.root_widget,
+                id=f'{self._id_prefix}|cancel',
                 autoselect=True,
                 position=(20, 20),
                 size=(150, 50),
@@ -105,6 +113,7 @@ class ConfirmWindow:
             cbtn = None
         btn = bui.buttonwidget(
             parent=self.root_widget,
+            id=f'{self._id_prefix}|ok',
             autoselect=True,
             position=(ok_button_h, 20),
             size=(150, 50),

@@ -122,7 +122,7 @@ class RootWidget : public ContainerWidget {
   void StepTicketsMeter_(base::RenderPass* renderpass, seconds_t dt);
   void StepTokensMeter_(base::RenderPass* renderpass, seconds_t dt);
   void AddMeter_(MeterType_ type, float h_align, float r, float g, float b,
-                 bool plus, const std::string& s);
+                 bool plus, const std::string& s, const std::string& widget_id);
   void UpdateTokensMeterTextColor_();
   void ShowTrophyMeterAnnotation_(const std::string& val,
                                   const Vector3f& color);

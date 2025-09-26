@@ -85,6 +85,7 @@ struct RootWidget::ButtonDef_ {
   std::string img;
   std::string mesh_transparent;
   std::string mesh_opaque;
+  std::string widget_id;
   VAlign_ v_align{VAlign_::kTop};
   UIV1Python::ObjID call{UIV1Python::ObjID::kEmptyCall};
   uint32_t visibility_mask{};
@@ -244,7 +245,8 @@ void RootWidget::HideTrophyMeterAnnotation_() {
 }
 
 void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
-                           float b, bool plus, const std::string& s) {
+                           float b, bool plus, const std::string& s,
+                           const std::string& widget_id) {
   float y_offs_small{7.0f};
 
   float width = (type == MeterType_::kTrophy) ? 80.0f : 110.0f;
@@ -347,6 +349,7 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
         break;
     }
 
+    bd.widget_id = widget_id + "_bar";
     Button_* btn = AddButton_(bd);
 
     // Store the bar button in some cases.
@@ -522,6 +525,7 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
     bd.pre_buffer = -10.0f;
     bd.allow_in_game = false;
 
+    bd.widget_id = widget_id + "_plus";
     Button_* btn = AddButton_(bd);
     if (type == MeterType_::kTokens) {
       get_tokens_button_ = btn;
@@ -550,6 +554,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kGetTokens)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuTokens));
     bd.pre_buffer = -30.0f;
+    bd.widget_id = "back";
     Button_* b = back_button_ = AddButton_(bd);
     top_left_buttons_.push_back(b);
 
@@ -590,6 +595,7 @@ void RootWidget::Setup() {
     bd.call = UIV1Python::ObjID::kEmptyCall;
     bd.visibility_mask |=
         static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuStore);
+    bd.widget_id = "top_bar_backing";
     AddButton_(bd);
   }
 
@@ -616,6 +622,7 @@ void RootWidget::Setup() {
         static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot);
     bd.visibility_mask |=
         static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull);
+    bd.widget_id = "top_bar_backing_2";
     AddButton_(bd);
   }
 
@@ -641,6 +648,7 @@ void RootWidget::Setup() {
 
     bd.allow_in_game = false;
 
+    bd.widget_id = "account";
     Button_* b = account_button_ = AddButton_(bd);
     top_left_buttons_.push_back(b);
 
@@ -660,8 +668,10 @@ void RootWidget::Setup() {
       account_name_text_ = AddText_(td);
     }
   }
-  AddMeter_(MeterType_::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
-  AddMeter_(MeterType_::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
+  AddMeter_(MeterType_::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "",
+            "level_meter");
+  AddMeter_(MeterType_::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "",
+            "trophy_meter");
 
   {
     ButtonDef_ b;
@@ -687,6 +697,7 @@ void RootWidget::Setup() {
     b.pre_buffer = 5.0f;
     b.enable_sound = false;
     b.allow_in_main_menu = false;
+    b.widget_id = "menu";
     menu_button_ = AddButton_(b);
     top_right_buttons_.push_back(menu_button_);
   }
@@ -715,6 +726,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kNoMenuMinimal));
     b.pre_buffer = 5.0f;
     b.enable_sound = false;
+    b.widget_id = "squad";
     squad_button_ = AddButton_(b);
     top_right_buttons_.push_back(squad_button_);
 
@@ -737,8 +749,10 @@ void RootWidget::Setup() {
     }
   }
 
-  AddMeter_(MeterType_::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "");
-  AddMeter_(MeterType_::kTickets, 1.0f, 1.0f, 1.0f, 1.0f, false, "");
+  AddMeter_(MeterType_::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "",
+            "tokens_meter");
+  AddMeter_(MeterType_::kTickets, 1.0f, 1.0f, 1.0f, 1.0f, false, "",
+            "tickets_meter");
 
   // Chest slots.
   {
@@ -793,18 +807,22 @@ void RootWidget::Setup() {
 
     b.call = UIV1Python::ObjID::kRootUIChestSlot0PressCall;
     b.x = -1.5f * spacing;
+    b.widget_id = "chest0";
     chest0.button = AddButton_(b);
 
     b.call = UIV1Python::ObjID::kRootUIChestSlot1PressCall;
     b.x = -0.5f * spacing;
+    b.widget_id = "chest1";
     chest1.button = AddButton_(b);
 
     b.x = 0.5f * spacing;
     b.call = UIV1Python::ObjID::kRootUIChestSlot2PressCall;
+    b.widget_id = "chest2";
     chest2.button = AddButton_(b);
 
     b.x = 1.5f * spacing;
     b.call = UIV1Python::ObjID::kRootUIChestSlot3PressCall;
+    b.widget_id = "chest3";
     chest3.button = AddButton_(b);
 
     // Lock icons.
@@ -902,6 +920,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     b.pre_buffer = 20.0f;
     b.allow_in_game = false;
+    b.widget_id = "inbox";
     inbox_button_ = AddButton_(b);
 
     bottom_left_buttons_.push_back(inbox_button_);
@@ -978,6 +997,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
     b.pre_buffer = 20.0f;
     b.allow_in_game = false;
+    b.widget_id = "achievements";
     achievements_button_ = AddButton_(b);
     bottom_left_buttons_.push_back(achievements_button_);
 
@@ -1016,6 +1036,7 @@ void RootWidget::Setup() {
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot));
+    b.widget_id = "leaderboards";
     AddButton_(b);
   }
 
@@ -1037,6 +1058,7 @@ void RootWidget::Setup() {
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullRoot)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuInGame));
     b.pre_buffer = 20.0f;
+    b.widget_id = "settings";
     settings_button_ = AddButton_(b);
     bottom_left_buttons_.push_back(settings_button_);
   }
@@ -1063,6 +1085,7 @@ void RootWidget::Setup() {
     // it, so suck target area in a bit.
     b.target_extra_left = -20.0f;
     b.target_extra_right = -20.0f;
+    b.widget_id = "inventory";
     inventory_button_ = AddButton_(b);
     bottom_right_buttons_.push_back(inventory_button_);
   }
@@ -1083,6 +1106,7 @@ void RootWidget::Setup() {
     b.pre_buffer = 10.0f;
     b.allow_in_game = false;
 
+    b.widget_id = "store";
     store_button_ = AddButton_(b);
     bottom_right_buttons_.push_back(store_button_);
   }
@@ -1491,6 +1515,15 @@ auto RootWidget::AddButton_(const ButtonDef_& def) -> RootWidget::Button_* {
   if (def.call != UIV1Python::ObjID::kEmptyCall) {
     b.widget->SetOnActivateCall(g_ui_v1->python->objs().Get(def.call).get());
   }
+
+  // We should always be setting ids for selectable widgets.
+  if (def.selectable) {
+    assert(!def.widget_id.empty());
+  }
+  if (!def.widget_id.empty()) {
+    b.widget->SetID(def.widget_id);
+  }
+
   AddWidget(b.widget.get());
   return &b;
 }

@@ -33,15 +33,25 @@ class TemplateMainWindow(bui.MainWindow):
     def __init__(
         self,
         dummy_data: int,
+        *,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
+        id_prefix: str | None = None,
     ):
         # pylint: disable=too-many-locals
+
+        ui = bui.app.ui_v1
 
         # A simple number standing in for actual data (to show how we'd
         # save/restore actual data).
         self._dummy_data = dummy_data
+
+        # Get a prefix our widgets have globally unique ids (and allow
+        # restoring it when recreating from saved states).
+        self._id_prefix = (
+            ui.new_id_prefix('template') if id_prefix is None else id_prefix
+        )
 
         # We want to give all our selectable child widgets unique ids so
         # we can use automatic selection save/restore. So we need a
@@ -63,7 +73,7 @@ class TemplateMainWindow(bui.MainWindow):
         # visible on-screen and for small mode we aim for a window big
         # enough that we never see the window edges; only the window
         # texture covering the whole screen.
-        uiscale = bui.app.ui_v1.uiscale
+        uiscale = ui.uiscale
         self._width = 1400 if uiscale is bui.UIScale.SMALL else 750
         self._height = 1200 if uiscale is bui.UIScale.SMALL else 500
         scale = (
@@ -110,7 +120,7 @@ class TemplateMainWindow(bui.MainWindow):
             position=(self._width * 0.5, vis_top - 20),
             size=(0, 0),
             text=f'Template{self._dummy_data}',
-            color=bui.app.ui_v1.title_color,
+            color=ui.title_color,
             scale=0.9 if uiscale is bui.UIScale.SMALL else 1.0,
             # Make sure we avoid overlapping meters in small mode/etc.
             maxwidth=(130 if uiscale is bui.UIScale.SMALL else 200),
@@ -244,6 +254,7 @@ class TemplateMainWindow(bui.MainWindow):
         # 'ui-not-getting-cleaned-up' warnings and memory leaks.
         dummy_data = self._dummy_data
         auxiliary_style = self._auxiliary_style
+        id_prefix = self._id_prefix
 
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
@@ -251,6 +262,7 @@ class TemplateMainWindow(bui.MainWindow):
                 origin_widget=origin_widget,
                 dummy_data=dummy_data,
                 auxiliary_style=auxiliary_style,
+                id_prefix=id_prefix,
             ),
             # This little bit of magic will grab the widget id of the
             # current selection and reselect that id when restoring the

@@ -1416,27 +1416,33 @@ void ContainerWidget::DeleteWidget(Widget* w) {
     }
   }
 
-  // in some cases we want to auto select a new child widget
+  // In some cases we want to auto select a new child widget.
   if (selected_widget_ == nullptr || is_window_stack_) {
     BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
-    // no UI lock needed here.. we don't change anything until SelectWidget,
-    // at which point we exit the loop..
     for (auto i = widgets_.rbegin(); i != widgets_.rend(); i++) {
       if ((**i).IsSelectable()) {
+        SelectWidget(&(**i));
+
+        // NOTE: Disabling the code below for now, as it was causing
+        // problems with automatic selection restore. Not sure if it is
+        // still relevant; will see if anything breaks.
+        //
         // A change on the main or overlay window stack changes the global
-        // selection (unless its on the main window stack and there's already
-        // something on the overlay stack) in all other cases we just shift
-        // our direct selected child (which may not affect the global
-        // selection).
-        if (is_window_stack_
-            && (is_overlay_window_stack_
-                || !g_ui_v1->root_widget()
-                        ->overlay_window_stack()
-                        ->HasChildren())) {
-          (**i).GlobalSelect();
-        } else {
-          SelectWidget(&(**i));
-        }
+        // selection (unless its on the main window stack and there's
+        // already something on the overlay stack). In all other cases we
+        // just shift our direct selected child (which may not affect the
+        // global selection).
+        // if (is_window_stack_
+        //     && (is_overlay_window_stack_
+        //         || !g_ui_v1->root_widget()
+        //                 ->overlay_window_stack()
+        //                 ->HasChildren())) {
+        //   (**i).GlobalSelect();
+        // } else {
+        //   // In other cases we just select a new child,
+        //   // which may or may not affect the global selection.
+        //   SelectWidget(&(**i));
+        // }
         break;
       }
     }

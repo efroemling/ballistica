@@ -89,12 +89,22 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self._last_win_recreate_uiscale: bauiv1.UIScale | None = None
         self._last_win_recreate_time: float | None = None
         self._win_recreate_timer: babase.AppTimer | None = None
+        self._base_ids: dict[str, int] = {}
 
         # Elements in our root UI will call anything here when
         # activated.
         self.root_ui_calls: dict[
             UIV1AppSubsystem.RootUIElement, Callable[[], None]
         ] = {}
+
+    def new_id_prefix(self, name: str) -> str:
+        """Generate a unique id given a base name.
+
+        Useful to ensure widgets have globally unique ids even if
+        a particular window type is instantiated multiple times.
+        """
+        val = self._base_ids[name] = self._base_ids.get(name, 0) + 1
+        return f'{name}{val}'
 
     def _update_ui_scale(self) -> None:
         uiscalestr = babase.get_ui_scale()
