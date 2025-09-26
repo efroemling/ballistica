@@ -2,6 +2,7 @@
 
 #include "ballistica/ui_v1/ui_v1.h"
 
+#include <algorithm>
 #include <string>
 
 #include "ballistica/base/assets/assets.h"
