@@ -153,7 +153,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
     def set_main_window(
         self,
-        window: bauiv1.MainWindow | Callable[[], bauiv1.MainWindow],
+        # window: bauiv1.MainWindow | Callable[[], bauiv1.MainWindow],
+        window: bauiv1.MainWindow,
         *,
         back_state: MainWindowState | None,
         from_window: bauiv1.MainWindow | None | bool = True,
@@ -198,6 +199,10 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         # We used to accept Widgets but now want MainWindows.
         if not isinstance(window, MainWindow):
+
+            # if callable(window):
+            #     window = window()
+            # else:
             raise RuntimeError(
                 f'set_main_window() now takes a MainWindow as its "window" arg.'
                 f' You passed a {type(window)}.',
@@ -540,7 +545,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             # Blow away the window stack and build a fresh one.
             self.clear_main_window()
             self.set_main_window(
-                win_create_call,
+                win_create_call(),
                 from_window=False,  # Disable from-check.
                 back_state=aux_state.parent,
                 suppress_warning=True,
@@ -562,7 +567,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         if current_main_window.main_window_is_auxiliary:
             self.clear_main_window()
             self.set_main_window(
-                win_create_call,
+                win_create_call(),
                 from_window=False,  # Disable from-check.
                 back_state=current_main_window.main_window_back_state,
                 suppress_warning=True,
