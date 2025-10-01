@@ -141,6 +141,7 @@ class ControlsSettingsWindow(bui.MainWindow):
         else:
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(35, height - 60),
                 size=(60, 60),
                 scale=0.8,
@@ -182,6 +183,7 @@ class ControlsSettingsWindow(bui.MainWindow):
         if show_touch:
             self._touch_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|touch',
                 position=((width - button_width) / 2, v),
                 size=(button_width, 43),
                 autoselect=True,
@@ -206,6 +208,7 @@ class ControlsSettingsWindow(bui.MainWindow):
         if show_gamepads:
             self._gamepads_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|gamepads',
                 position=((width - button_width) / 2 - 7, v),
                 size=(button_width, 43),
                 autoselect=True,
@@ -236,6 +239,7 @@ class ControlsSettingsWindow(bui.MainWindow):
         if show_keyboard:
             self._keyboard_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|keyboard',
                 position=((width - button_width) / 2 - 5, v),
                 size=(button_width, 43),
                 autoselect=True,
@@ -263,6 +267,7 @@ class ControlsSettingsWindow(bui.MainWindow):
         if show_keyboard_p2:
             self._keyboard_2_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|keyboard2',
                 position=((width - button_width) / 2 - 3, v),
                 size=(button_width, 43),
                 autoselect=True,
@@ -279,6 +284,7 @@ class ControlsSettingsWindow(bui.MainWindow):
         if show_remote:
             self._idevices_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|mobile',
                 position=((width - button_width) / 2 - 5, v),
                 size=(button_width, 43),
                 autoselect=True,
@@ -345,8 +351,6 @@ class ControlsSettingsWindow(bui.MainWindow):
             )
             v -= spacing
 
-        self._restore_state()
-
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
@@ -358,8 +362,8 @@ class ControlsSettingsWindow(bui.MainWindow):
         )
 
     @override
-    def on_main_window_close(self) -> None:
-        self._save_state()
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     def _set_mac_controller_subsystem(self, val: str) -> None:
         cfg = bui.app.config
@@ -399,43 +403,3 @@ class ControlsSettingsWindow(bui.MainWindow):
         from bauiv1lib.settings.touchscreen import TouchscreenSettingsWindow
 
         self.main_window_replace(TouchscreenSettingsWindow)
-
-    def _save_state(self) -> None:
-        sel = self._root_widget.get_selected_child()
-        if sel == self._gamepads_button:
-            sel_name = 'GamePads'
-        elif sel == self._touch_button:
-            sel_name = 'Touch'
-        elif sel == self._keyboard_button:
-            sel_name = 'Keyboard'
-        elif sel == self._keyboard_2_button:
-            sel_name = 'Keyboard2'
-        elif sel == self._idevices_button:
-            sel_name = 'iDevices'
-        else:
-            sel_name = 'Back'
-        assert bui.app.classic is not None
-        bui.app.ui_v1.window_states[type(self)] = sel_name
-
-    def _restore_state(self) -> None:
-        assert bui.app.classic is not None
-        sel_name = bui.app.ui_v1.window_states.get(type(self))
-        if sel_name == 'GamePads':
-            sel = self._gamepads_button
-        elif sel_name == 'Touch':
-            sel = self._touch_button
-        elif sel_name == 'Keyboard':
-            sel = self._keyboard_button
-        elif sel_name == 'Keyboard2':
-            sel = self._keyboard_2_button
-        elif sel_name == 'iDevices':
-            sel = self._idevices_button
-        elif sel_name == 'Back':
-            sel = self._back_button
-        else:
-            sel = (
-                self._gamepads_button
-                if self._gamepads_button is not None
-                else self._back_button
-            )
-        bui.containerwidget(edit=self._root_widget, selected_child=sel)

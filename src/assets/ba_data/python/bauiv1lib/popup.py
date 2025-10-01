@@ -312,6 +312,7 @@ class PopupMenu:
         position: tuple[float, float],
         choices: Sequence[str],
         *,
+        widget_id: str | None = None,
         current_choice: str | None = None,
         on_value_change_call: Callable[[str], Any] | None = None,
         opening_call: Callable[[], Any] | None = None,
@@ -359,6 +360,7 @@ class PopupMenu:
 
         self._button = bui.buttonwidget(
             parent=self._parent,
+            id=widget_id,
             position=(self._position[0], self._position[1]),
             autoselect=autoselect,
             size=self._button_size,

@@ -115,6 +115,7 @@ class LeagueRankWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(75 + x_inset, yoffs - 60),
                 size=(60, 55),
                 scale=1.2,
@@ -207,7 +208,6 @@ class LeagueRankWindow(bui.MainWindow):
         self._account_state = plus.get_v1_account_state()
 
         self._refresh()
-        self._restore_state()
 
         # If we've got cached power-ranking data already, display it.
         assert bui.app.classic is not None
@@ -231,8 +231,8 @@ class LeagueRankWindow(bui.MainWindow):
         )
 
     @override
-    def on_main_window_close(self) -> None:
-        self._save_state()
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     def _on_achievements_press(self) -> None:
         from bauiv1lib.achievements import AchievementsWindow
@@ -341,9 +341,6 @@ class LeagueRankWindow(bui.MainWindow):
         self._league_rank_data = copy.deepcopy(data)
         self._update_for_league_rank_data(data)
 
-    def _restore_state(self) -> None:
-        pass
-
     def _update(self, show: bool = False) -> None:
         plus = bui.app.plus
         assert plus is not None
@@ -354,7 +351,6 @@ class LeagueRankWindow(bui.MainWindow):
         account_state = plus.get_v1_account_state()
         if account_state != self._account_state:
             self._account_state = account_state
-            self._save_state()
             self._refresh()
 
             # And power ranking too.
@@ -439,6 +435,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         self._power_ranking_achievements_button = bui.buttonwidget(
             parent=w_parent,
+            id=f'{self.main_window_id_prefix}|ach',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
             icon=bui.gettexture('achievementsIcon'),
@@ -469,6 +466,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         self._power_ranking_trophies_button = bui.buttonwidget(
             parent=w_parent,
+            id=f'{self.main_window_id_prefix}|trophies',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
             icon=bui.gettexture('medalSilver'),
@@ -513,6 +511,7 @@ class LeagueRankWindow(bui.MainWindow):
         if plus.get_v1_account_misc_read_val('act', False):
             self._activity_mult_button = bui.buttonwidget(
                 parent=w_parent,
+                id=f'{self.main_window_id_prefix}|amult',
                 position=(self._xoffs + h2 - 60, v2 + 10),
                 size=(200, 60),
                 icon=bui.gettexture('heart'),
@@ -544,6 +543,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         self._up_to_date_bonus_button = bui.buttonwidget(
             parent=w_parent,
+            id=f'{self.main_window_id_prefix}|uptodatebonus',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 60),
             icon=bui.gettexture('logo'),
@@ -741,6 +741,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         self._see_more_button = bui.buttonwidget(
             parent=w_parent,
+            id=f'{self.main_window_id_prefix}|seemore',
             label=self._rdict.seeMoreText,
             position=(self._xoffs + h, v),
             color=(0.5, 0.5, 0.6),
@@ -887,6 +888,7 @@ class LeagueRankWindow(bui.MainWindow):
             assert self._subcontainer
             self._season_popup_menu = PopupMenu(
                 parent=self._subcontainer,
+                widget_id=f'{self.main_window_id_prefix}|season',
                 position=(self._xoffs + 390, v - 45),
                 width=150,
                 button_size=(200, 50),
@@ -1194,6 +1196,9 @@ class LeagueRankWindow(bui.MainWindow):
                 v_align='center',
                 scale=0.9,
             )
+            # Giving these ids doesn't work cleanly with sel
+            # save/restore due to refreshing, so let's just not for now.
+            bui.widget(edit=txt, suppress_missing_id_warnings=True)
             self._power_ranking_score_widgets.append(txt)
             bui.textwidget(
                 edit=txt,
@@ -1221,6 +1226,3 @@ class LeagueRankWindow(bui.MainWindow):
         self._requested_season = value
         self._last_power_ranking_query_time = None  # Update asap.
         self._update(show=True)
-
-    def _save_state(self) -> None:
-        pass
