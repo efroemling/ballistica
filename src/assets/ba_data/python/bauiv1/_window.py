@@ -77,6 +77,11 @@ class MainWindow(Window):
         Automatically handles in and out transitions on the provided
         widget, so there is no need to set transitions when creating it.
         """
+
+        self.main_window_id_prefix = babase.app.ui_v1.new_id_prefix(
+            type(self).__name__.lower()
+        )
+
         # A back-state supplied by the ui system.
         self.main_window_back_state: MainWindowState | None = None
 
@@ -117,6 +122,102 @@ class MainWindow(Window):
             scale_origin_stack_offset=scale_origin,
         )
 
+    def save_shared_state(self) -> None:
+        """Save shared state, if any.
+
+        :meta private:
+        """
+        # pylint: disable=assignment-from-none
+        key = self.get_main_window_shared_state_id()
+        assert isinstance(key, str | None)
+        keyfin = type(self) if key is None else key
+
+        shared_state: dict = {}
+
+        # Save selection if desired.
+        if self.main_window_should_preserve_selection():
+            sel = _bauiv1.get_selected_widget()
+            if sel is None:
+                selfin = None
+            else:
+                selfin = sel.id
+                if selfin is not None:
+                    pre = f'{self.main_window_id_prefix}|'
+                    if selfin.startswith(pre):
+                        selfin = f'$(WIN)|{selfin.removeprefix(pre)}'
+                    babase.uilog.debug("Saving ui selection: '%s'.", selfin)
+                else:
+                    if not sel.suppress_missing_id_warnings:
+                        babase.uilog.warning(
+                            'main_window_should_preserve_selection() returned'
+                            ' True for %s but no id was assigned to the'
+                            ' currently selected widget %s. All selectable'
+                            ' widgets must be assigned unique ids for'
+                            ' selection-preserving to work properly.',
+                            self,
+                            sel,
+                        )
+            shared_state['selection'] = selfin
+
+        # Allow win to save any custom state. (Do this after selection
+        # save so user can manipulate save output if they want).
+        try:
+            self.main_window_shared_state_save(shared_state)
+        except Exception:
+            logging.exception(
+                'Error in main_window_shared_state_save() for %s.', self
+            )
+        assert isinstance(shared_state, dict)
+
+        babase.uilog.debug('Saving shared state with key %r.', keyfin)
+        babase.app.ui_v1.main_window_shared_states[keyfin] = shared_state
+
+    def restore_shared_state(self) -> None:
+        """Restore shared state, if any.
+
+        :meta private:
+        """
+
+        # pylint: disable=assignment-from-none
+        key = self.get_main_window_shared_state_id()
+        assert isinstance(key, str | None)
+        keyfin = type(self) if key is None else key
+        shared_state = babase.app.ui_v1.main_window_shared_states.get(keyfin)
+        if shared_state is None:
+            shared_state = {}
+        assert isinstance(shared_state, dict)
+
+        # Allow win to restore any custom state. (Do this before
+        # selection restore so user can manipulate input if they want).
+        try:
+            self.main_window_shared_state_restore(shared_state)
+        except Exception:
+            logging.exception(
+                'Error in main_window_shared_state_restore() for %s.', self
+            )
+
+        # Restore selection if desired.
+        if self.main_window_should_preserve_selection():
+            sel = shared_state.get('selection')
+            if isinstance(sel, str):
+                babase.uilog.debug("Restoring ui selection: '%s'.", sel)
+                pre = '$(WIN)|'
+                if sel.startswith(pre):
+                    sel = (
+                        f'{self.main_window_id_prefix}|{sel.removeprefix(pre)}'
+                    )
+                widget = _bauiv1.widget_by_id(sel)
+                if widget is not None:
+                    widget.global_select()
+                else:
+                    # We expect this to happen sometimes (windows may come
+                    # up with different UIs visible/etc.). Let's note it but
+                    # subtly.
+                    babase.uilog.debug(
+                        "Unable to restore selection '%s'; widget not found.",
+                        sel,
+                    )
+
     def main_window_close(self, transition: str | None = None) -> None:
         """Get window transitioning out if still alive."""
 
@@ -124,11 +225,16 @@ class MainWindow(Window):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        # Transition ourself out.
+        # Save selection, etc.
+        self.save_shared_state()
+
+        # Give the user a chance to do whatever.
         try:
             self.on_main_window_close()
         except Exception:
             logging.exception('Error in on_main_window_close() for %s.', self)
+
+        # Transition ourself out.
 
         # Note: normally transition of None means instant, but we use
         # that to mean 'do the default' so we support a special
@@ -176,6 +282,9 @@ class MainWindow(Window):
 
         uiv1 = babase.app.ui_v1
 
+        # Get ourself transitioning out.
+        self.main_window_close()
+
         # Get the 'back' window coming in.
         if not self.main_window_is_top_level:
 
@@ -207,9 +316,6 @@ class MainWindow(Window):
                 suppress_warning=True,
             )
 
-        # Transition ourself out.
-        self.main_window_close()
-
     def main_window_replace(
         self,
         new_window: MainWindow | Callable[[], MainWindow],
@@ -224,9 +330,13 @@ class MainWindow(Window):
 
         ui = babase.app.ui_v1
 
-        # If they didn't provide an explicit back-state, calc one.
+        # If they didn't provide an explicit back-state, calc one to
+        # recreate this window.
         if back_state is None:
             back_state = ui.save_current_main_window_state()
+
+        # Save selection, etc.
+        self.save_shared_state()
 
         if not isinstance(new_window, MainWindow):
             # If we're not in control, we're not allowed to change things.
@@ -267,6 +377,12 @@ class MainWindow(Window):
                     f' calling main_window_replace().'
                 )
 
+        # Give user a chance to do whatever.
+        try:
+            self.on_main_window_close()
+        except Exception:
+            logging.exception('Error in on_main_window_close() for %s.', self)
+
         # For auxiliary windows, use scale to give a feel that we're
         # switching over to a totally separate 'side quest' ui. For
         # regular back/forward relationships, shove the old out the left
@@ -277,11 +393,6 @@ class MainWindow(Window):
             transition = 'out_left'
 
         # Transition ourself out.
-        try:
-            self.on_main_window_close()
-        except Exception:
-            logging.exception('Error in on_main_window_close() for %s.', self)
-
         _bauiv1.containerwidget(edit=self._root_widget, transition=transition)
         babase.app.ui_v1.set_main_window(
             new_window,
@@ -299,8 +410,46 @@ class MainWindow(Window):
         """
 
     def get_main_window_state(self) -> MainWindowState:
-        """Return a WindowState to recreate this window."""
+        """Return a WindowState to recreate this specific window.
+
+        Used to gracefully return to a window from another window or ui
+        system.
+        """
         raise NotImplementedError()
+
+    def main_window_should_preserve_selection(self) -> bool:
+        """Whether this window should auto-save/restore selection.
+
+        If enabled, selection will be stored in the window's shared
+        state. See :meth:`get_main_window_shared_state_id()` for more
+        info about main-window shared-state.
+        """
+        return False
+
+    def get_main_window_shared_state_id(self) -> str | None:
+        """Provide a custom id for window shared state.
+
+        Unlike :class:`MainWindowState`, which is used to save and
+        restore a single main-window instance, shared-state is intended
+        to hold values that can apply to multiple instances of a window.
+
+        By default, shared state uses the window class as an index (so
+        is shared by all windows of the same class), but this method can
+        be overridden to provide more distinct states. For example, a
+        store-page main-window class might want to keep distinct states
+        for different sub-pages it can display instead of having a
+        single state for the whole class.
+
+        Note that shared state only persists for the current run of the
+        app.
+        """
+        return None
+
+    def main_window_shared_state_save(self, state: dict) -> None:
+        """Save state into the provided shared state dict."""
+
+    def main_window_shared_state_restore(self, state: dict) -> None:
+        """Restore state from the provided shared state dict."""
 
 
 class MainWindowState:
@@ -316,7 +465,6 @@ class MainWindowState:
         self.is_top_level: bool | None = None
         self.is_auxiliary: bool | None = None
         self.window_type: type[MainWindow] | None = None
-        self.selection: str | None = None
 
     def create_window(
         self,
@@ -347,29 +495,9 @@ class BasicMainWindowState(MainWindowState):
             ],
             bauiv1.MainWindow,
         ],
-        restore_selection: bool = False,
     ) -> None:
         super().__init__()
         self.create_call = create_call
-        self.selection: str | None = None
-
-        if restore_selection:
-            sel = _bauiv1.get_selected_widget()
-            if sel is not None:
-                self.selection = sel.id
-                if self.selection is not None:
-                    babase.uilog.debug(
-                        "Saving ui selection: '%s'.", self.selection
-                    )
-                else:
-                    babase.uilog.warning(
-                        'restore_selection=True was passed to'
-                        ' BasicMainWindowState but the currently selected'
-                        ' widget has no id. All selectable widgets should have'
-                        ' ids for selection restore to work properly.'
-                        ' Current selection=%s.',
-                        sel,
-                    )
 
     @override
     def create_window(
@@ -378,20 +506,6 @@ class BasicMainWindowState(MainWindowState):
         origin_widget: bauiv1.Widget | None = None,
     ) -> bauiv1.MainWindow:
         win = self.create_call(transition, origin_widget)
-        if self.selection is not None:
-            babase.uilog.debug("Restoring ui selection: '%s'.", self.selection)
-
-            widget = _bauiv1.widget_by_id(self.selection)
-            if widget is not None:
-                widget.global_select()
-            else:
-                # We expect this to happen sometimes (windows may come
-                # up with different UIs visible/etc.). Let's note it but
-                # subtly.
-                babase.uilog.debug(
-                    "Unable to restore selection '%s'; widget not found.",
-                    self.selection,
-                )
 
         return win
 
@@ -402,7 +516,7 @@ class MainWindowAutoRecreateSuppress:
     Can be instantiated and held by windows or processes within windows
     for the purpose of preventing the main-window auto-recreate
     mechanism from firing. This mechanism normally fires when the screen
-    is resized or the ui-scale is changed, allowing windows to be
+    is resized or the ui-scale is changed, allowing main-windows to be
     recreated to adapt to the new configuration.
     """
 

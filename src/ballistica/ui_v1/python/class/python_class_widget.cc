@@ -23,10 +23,15 @@ PyNumberMethods PythonClassWidget::as_number_;
 // Attrs we expose through our custom getattr/setattr.
 #define ATTR_TRANSITIONING_OUT "transitioning_out"
 #define ATTR_ID "id"
+#define ATTR_SUPPRESS_MISSING_ID_WARNINGS "suppress_missing_id_warnings"
 
 // The set we expose via dir().
-static const char* extra_dir_attrs[] = {ATTR_TRANSITIONING_OUT, ATTR_ID,
-                                        nullptr};
+static const char* extra_dir_attrs[] = {
+    ATTR_TRANSITIONING_OUT,
+    ATTR_ID,
+    ATTR_SUPPRESS_MISSING_ID_WARNINGS,
+    nullptr,
+};
 
 auto PythonClassWidget::type_name() -> const char* { return "Widget"; }
 
@@ -51,9 +56,13 @@ void PythonClassWidget::SetupType(PyTypeObject* cls) {
       "        It can be useful to check this on a window's root widget to\n"
       "        prevent multiple window actions from firing simultaneously,\n"
       "        potentially leaving the UI in a broken state.\n"
-  "\n"
+     "\n"
       "    " ATTR_ID " (str | None):\n"
-      "        ID for this widget (if any).\n";
+      "        ID for this widget (if any).\n"
+     "\n"
+      "    " ATTR_SUPPRESS_MISSING_ID_WARNINGS " (bool):\n"
+      "        Whether this widget should suppress warnings about missing\n"
+      "        id values during auto selection save/restore operations.\n";
 
   // clang-format on
 
@@ -125,6 +134,16 @@ auto PythonClassWidget::tp_getattro(PythonClassWidget* self, PyObject* attr)
       return PyUnicode_FromString(w->id()->c_str());
     }
     Py_RETURN_NONE;
+  }
+  if (!strcmp(s, ATTR_SUPPRESS_MISSING_ID_WARNINGS)) {
+    Widget* w = self->widget_->get();
+    if (!w) {
+      throw Exception("Invalid Widget", PyExcType::kReference);
+    }
+    if (w->suppress_missing_id_warnings()) {
+      Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
   }
 
   // Fall back to generic behavior.

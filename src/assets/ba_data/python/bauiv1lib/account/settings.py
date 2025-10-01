@@ -140,6 +140,7 @@ class AccountSettingsWindow(bui.MainWindow):
         else:
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(51, yoffs - 52.0),
                 size=(60, 56),
                 scale=0.8,
@@ -205,7 +206,6 @@ class AccountSettingsWindow(bui.MainWindow):
 
         self._subcontainer: bui.Widget | None = None
         self._refresh()
-        self._restore_state()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -218,8 +218,8 @@ class AccountSettingsWindow(bui.MainWindow):
         )
 
     @override
-    def on_main_window_close(self) -> None:
-        self._save_state()
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     def _update(self) -> None:
         plus = bui.app.plus
@@ -615,8 +615,9 @@ class AccountSettingsWindow(bui.MainWindow):
         if show_google_play_sign_in_button:
             button_width = 350
             v -= sign_in_button_space
-            self._sign_in_google_play_button = btn = bui.buttonwidget(
+            btn = bui.buttonwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|signingoogleplay',
                 position=((self._sub_width - button_width) * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
@@ -655,8 +656,9 @@ class AccountSettingsWindow(bui.MainWindow):
         if show_game_center_sign_in_button:
             button_width = 350
             v -= sign_in_button_space
-            self._sign_in_google_play_button = btn = bui.buttonwidget(
+            btn = bui.buttonwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|signingamecenter',
                 position=((self._sub_width - button_width) * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
@@ -697,6 +699,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= sign_in_button_space
             self._sign_in_v2_proxy_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|signinv2',
                 position=((self._sub_width - button_width) * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
@@ -764,6 +767,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= sign_in_button_space + deprecated_space
             self._sign_in_device_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|signindevice',
                 position=((self._sub_width - button_width) * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
@@ -851,6 +855,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= manage_account_button_space
             self._manage_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|manage',
                 position=((self._sub_width - button_width) * 0.5, v),
                 autoselect=True,
                 size=(button_width, 60),
@@ -872,6 +877,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= create_account_button_space
             self._create_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|create',
                 position=((self._sub_width - button_width) * 0.5, v - 30),
                 autoselect=True,
                 size=(button_width, 60),
@@ -905,6 +911,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 )
             self._game_center_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|gamecenter',
                 position=((self._sub_width - button_width) * 0.5, v),
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
@@ -949,6 +956,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= leaderboards_button_space
             self._leaderboards_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|leaderboards',
                 position=((self._sub_width - button_width) * 0.5, v),
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
@@ -1012,6 +1020,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= sign_out_button_space
             self._sign_out_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|signout',
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
                 label=bui.Lstr(resource=f'{self._r}.signOutText'),
@@ -1031,6 +1040,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= cancel_sign_in_button_space
             self._cancel_sign_in_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|cancelsignin',
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
                 label=bui.Lstr(resource='cancelText'),
@@ -1050,6 +1060,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= delete_account_button_space
             self._delete_account_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|deleteaccount',
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
                 label=bui.Lstr(resource=f'{self._r}.deleteAccountText'),
@@ -1389,34 +1400,6 @@ class AccountSettingsWindow(bui.MainWindow):
 
         assert self._sign_in_v2_proxy_button is not None
         V2ProxySignInWindow(origin_widget=self._sign_in_v2_proxy_button)
-
-    def _save_state(self) -> None:
-        try:
-            sel = self._root_widget.get_selected_child()
-            if sel == self._back_button:
-                sel_name = 'Back'
-            elif sel == self._scrollwidget:
-                sel_name = 'Scroll'
-            else:
-                raise ValueError('unrecognized selection')
-            assert bui.app.classic is not None
-            bui.app.ui_v1.window_states[type(self)] = sel_name
-        except Exception:
-            logging.exception('Error saving state for %s.', self)
-
-    def _restore_state(self) -> None:
-        try:
-            assert bui.app.classic is not None
-            sel_name = bui.app.ui_v1.window_states.get(type(self))
-            if sel_name == 'Back':
-                sel = self._back_button
-            elif sel_name == 'Scroll':
-                sel = self._scrollwidget
-            else:
-                sel = self._back_button
-            bui.containerwidget(edit=self._root_widget, selected_child=sel)
-        except Exception:
-            logging.exception('Error restoring state for %s.', self)
 
 
 def show_what_is_legacy_unlinking_page() -> None:

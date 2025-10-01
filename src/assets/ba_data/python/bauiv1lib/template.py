@@ -13,11 +13,6 @@ import bauiv1 as bui
 def show_template_main_window() -> None:
     """Bust out a template-main-window."""
 
-    # Unintuitively, swish sounds come from buttons, not windows.
-    # And dev-console buttons don't make sounds. So we need to
-    # explicitly do so here.
-    bui.getsound('swish').play()
-
     # Pop up an auxiliary window wherever we are in the nav stack.
     bui.app.ui_v1.auxiliary_window_activate(
         win_type=TemplateMainWindow,
@@ -37,7 +32,6 @@ class TemplateMainWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
-        id_prefix: str | None = None,
     ):
         # pylint: disable=too-many-locals
 
@@ -46,21 +40,6 @@ class TemplateMainWindow(bui.MainWindow):
         # A simple number standing in for actual data (to show how we'd
         # save/restore actual data).
         self._dummy_data = dummy_data
-
-        # Get a prefix our widgets have globally unique ids (and allow
-        # restoring it when recreating from saved states).
-        self._id_prefix = (
-            ui.new_id_prefix('template') if id_prefix is None else id_prefix
-        )
-
-        # We want to give all our selectable child widgets unique ids so
-        # we can use automatic selection save/restore. So we need a
-        # unique prefix to avoid id clashes with other windows. Normally
-        # a window could just have a single constant prefix, but since
-        # we navigate between multiple instances of ourself we want
-        # unique prefixes. So let's incorporate our data to uniquify
-        # things.
-        self._idprefix = f'template{dummy_data}'
 
         # We want to display differently whether we're an auxiliary
         # window or not, but unfortunately that value is not yet
@@ -137,7 +116,7 @@ class TemplateMainWindow(bui.MainWindow):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
-                id=f'{self._idprefix}|close',
+                id=f'{self.main_window_id_prefix}|close',
                 scale=0.8,
                 position=(vis_left - 15, vis_top - 30),
                 size=(50, 50) if auxiliary_style else (60, 55),
@@ -223,7 +202,7 @@ class TemplateMainWindow(bui.MainWindow):
             child_dummy_data = self._dummy_data + (i + 1) * 17
             self._player_profiles_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
-                id=f'{self._idprefix}|button{i + 1}',
+                id=f'{self.main_window_id_prefix}|button{i + 1}',
                 position=(
                     self._width * 0.5 - button_width * 0.5,
                     vis_top - 230 - i * 80,
@@ -254,7 +233,6 @@ class TemplateMainWindow(bui.MainWindow):
         # 'ui-not-getting-cleaned-up' warnings and memory leaks.
         dummy_data = self._dummy_data
         auxiliary_style = self._auxiliary_style
-        id_prefix = self._id_prefix
 
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
@@ -262,11 +240,23 @@ class TemplateMainWindow(bui.MainWindow):
                 origin_widget=origin_widget,
                 dummy_data=dummy_data,
                 auxiliary_style=auxiliary_style,
-                id_prefix=id_prefix,
             ),
-            # This little bit of magic will grab the widget id of the
-            # current selection and reselect that id when restoring the
-            # state. Note that this requires us to give every selectable
-            # widget a unique ID.
-            restore_selection=True,
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # If we return True here, the app will reselect the last
+        # selected widget when creating a new one of our windows. We
+        # just need to make sure all of our selectable widgets have
+        # unique ids starting with `self.main_window_id_prefix`.
+        return True
+
+    @override
+    def get_main_window_shared_state_id(self) -> str | None:
+        # Here we return a unique id based on what we're displaying.
+        # This means each level will remember its selected button. If we
+        # remove this function override we get the default behavior
+        # where this state is shared for all instances of our class
+        # (thus selecting the second button will go to a new window with
+        # the second button already selected).
+        return f'template{self._dummy_data}'

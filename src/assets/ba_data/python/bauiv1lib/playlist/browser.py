@@ -28,6 +28,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         playlist_select_context: PlaylistSelectContext | None = None,
     ):
         # pylint: disable=cyclic-import
+        # pylint: disable=too-many-statements
         from bauiv1lib.playlist import PlaylistTypeVars
 
         # Store state for when we exit the next game.
@@ -117,6 +118,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(59, yoffs - 45),
                 size=(60, 54),
                 scale=1.0,
@@ -179,6 +181,11 @@ class PlaylistBrowserWindow(bui.MainWindow):
             v_align='center',
         )
 
+        # By default, start with the scroll-widget selected.
+        bui.containerwidget(
+            edit=self._root_widget, selected_child=self._scrollwidget
+        )
+
         # Update now and once per second (this should do our initial
         # refresh).
         self._update()
@@ -209,8 +216,12 @@ class PlaylistBrowserWindow(bui.MainWindow):
         )
 
     @override
-    def on_main_window_close(self) -> None:
-        self._save_state()
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
+
+    # @override
+    # def on_main_window_close(self) -> None:
+    #     self._save_state()
 
     def _ensure_standard_playlists_exist(self) -> None:
         plus = bui.app.plus
@@ -382,7 +393,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         if not self._root_widget:
             return
         if self._subcontainer is not None:
-            self._save_state()
+            # self._save_state()
             self._subcontainer.delete()
 
         # Make sure config exists.
@@ -503,6 +514,11 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     label='',
                     position=pos,
                 )
+                # We handle reselecting these manually below so don't
+                # provide them proper ids for auto-reselection. Let's
+                # suppress the warnings that usually happen in that
+                # case.
+                bui.widget(edit=btn, suppress_missing_id_warnings=True)
 
                 if x == 0 and uiscale is bui.UIScale.SMALL:
                     bui.widget(
@@ -708,6 +724,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 break
         self._customize_button = btn = bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|customize',
             size=(100, 30),
             position=(34 + h_offs_bottom, 50 + extra_bottom_buffer),
             text_scale=0.6,
@@ -718,7 +735,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
             autoselect=True,
         )
         bui.widget(edit=btn, show_buffer_top=22, show_buffer_bottom=60)
-        self._restore_state()
+        # self._restore_state()
 
     def on_play_options_window_run_game(self) -> None:
         """(internal)"""
@@ -773,7 +790,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         if not exists:
             return
 
-        self._save_state()
+        # self._save_state()
         PlayOptionsWindow(
             sessiontype=self._sessiontype,
             scale_origin=button.get_screen_space_center(),
@@ -817,42 +834,42 @@ class PlaylistBrowserWindow(bui.MainWindow):
 
         self.main_window_back()
 
-    def _save_state(self) -> None:
-        try:
-            sel = self._root_widget.get_selected_child()
-            if sel == self._back_button:
-                sel_name = 'Back'
-            elif sel == self._scrollwidget:
-                assert self._subcontainer is not None
-                subsel = self._subcontainer.get_selected_child()
-                if subsel == self._customize_button:
-                    sel_name = 'Customize'
-                else:
-                    sel_name = 'Scroll'
-            else:
-                raise RuntimeError('Unrecognized selected widget.')
-            assert bui.app.classic is not None
-            bui.app.ui_v1.window_states[type(self)] = sel_name
-        except Exception:
-            logging.exception('Error saving state for %s.', self)
+    # def _save_state(self) -> None:
+    #     try:
+    #         sel = self._root_widget.get_selected_child()
+    #         if sel == self._back_button:
+    #             sel_name = 'Back'
+    #         elif sel == self._scrollwidget:
+    #             assert self._subcontainer is not None
+    #             subsel = self._subcontainer.get_selected_child()
+    #             if subsel == self._customize_button:
+    #                 sel_name = 'Customize'
+    #             else:
+    #                 sel_name = 'Scroll'
+    #         else:
+    #             raise RuntimeError('Unrecognized selected widget.')
+    #         assert bui.app.classic is not None
+    #         bui.app.ui_v1.window_states[type(self)] = sel_name
+    #     except Exception:
+    #         logging.exception('Error saving state for %s.', self)
 
-    def _restore_state(self) -> None:
-        try:
-            assert bui.app.classic is not None
-            sel_name = bui.app.ui_v1.window_states.get(type(self))
-            if sel_name == 'Back':
-                sel = self._back_button
-            elif sel_name == 'Scroll':
-                sel = self._scrollwidget
-            elif sel_name == 'Customize':
-                sel = self._scrollwidget
-                bui.containerwidget(
-                    edit=self._subcontainer,
-                    selected_child=self._customize_button,
-                    visible_child=self._customize_button,
-                )
-            else:
-                sel = self._scrollwidget
-            bui.containerwidget(edit=self._root_widget, selected_child=sel)
-        except Exception:
-            logging.exception('Error restoring state for %s.', self)
+    # def _restore_state(self) -> None:
+    #     try:
+    #         assert bui.app.classic is not None
+    #         sel_name = bui.app.ui_v1.window_states.get(type(self))
+    #         if sel_name == 'Back':
+    #             sel = self._back_button
+    #         elif sel_name == 'Scroll':
+    #             sel = self._scrollwidget
+    #         elif sel_name == 'Customize':
+    #             sel = self._scrollwidget
+    #             bui.containerwidget(
+    #                 edit=self._subcontainer,
+    #                 selected_child=self._customize_button,
+    #                 visible_child=self._customize_button,
+    #             )
+    #         else:
+    #             sel = self._scrollwidget
+    #         bui.containerwidget(edit=self._root_widget, selected_child=sel)
+    #     except Exception:
+    #         logging.exception('Error restoring state for %s.', self)

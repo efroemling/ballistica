@@ -1,4 +1,4 @@
-### 1.7.51 (build 22557, api 9, 2025-09-26)
+### 1.7.51 (build 22559, api 9, 2025-10-01)
 - Deprecated `bauiv1.uicleanupcheck()` - to be removed when api 9 support ends.
   Use `ba*.app.ui_v1.add_ui_cleanup_check()` instead.
 - Official Mac builds now use OpenALSoft for audio instead of Apple's old
@@ -55,11 +55,18 @@
 - `str()` for a `bauiv1.Widget` now includes the filename/line where the widget
   was created which should be useful for debugging.
 - Automatic selection save/restore for `MainWindow` classes now works. This
-  should let us clear up a lot of boilerplate code doing this manually, and it
-  also means we can restore selections that were outside of the window (global
-  toolbars, etc). You just need to define unique ids for all selectable widgets
-  and pass `restore_selection=True` when creating a `bui.BasicMainWindowState`.
-  See `bauiv1lib.template` for an example.
+  should let us clear up a lot of boilerplate code doing this manually and also
+  means we can restore selections that were outside of the window (global
+  toolbars, etc). So if you select the settings button and hit return to invoke
+  settings and then press escape to go back, the settings button will now be
+  properly reselected instead of some widget in the previous window. To add
+  automatic selection save/restore to a main-window you just need to override
+  `main_window_should_preserve_selection()` to return True and ensure all your
+  selectable widgets have unique ids. See `bauiv1lib.template` for an example.
+- Cleaned up UI event routing a bit. Pressing escape/back while a toolbar button
+  is selected will now do the right thing and cancel out of the current window
+  on medium/large UI scales (previously this only worked right on small ui
+  scale).
 
 ### 1.7.50 (build 22533, api 9, 2025-09-06)
 - Cleaned up cursor handling on Mac build. Fixes an issue where the cursor could

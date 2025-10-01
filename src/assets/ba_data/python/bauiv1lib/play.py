@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-import logging
+# import logging
 from typing import override, TYPE_CHECKING
 
 import bascenev1 as bs
@@ -34,6 +34,8 @@ class PlayWindow(bui.MainWindow):
 
         import bacommon.cloud
 
+        ui = bui.app.ui_v1
+
         # TEMP TESTING
         if bool(False):
             print('HELLO FROM TEST')
@@ -59,7 +61,7 @@ class PlayWindow(bui.MainWindow):
 
         self._playlist_select_context = playlist_select_context
 
-        uiscale = bui.app.ui_v1.uiscale
+        uiscale = ui.uiscale
         width = 1300 if uiscale is bui.UIScale.SMALL else 1000
         height = 1000 if uiscale is bui.UIScale.SMALL else 550
 
@@ -127,6 +129,7 @@ class PlayWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(50, yoffs - 100),
                 size=(60, 60),
                 scale=1.1,
@@ -158,7 +161,7 @@ class PlayWindow(bui.MainWindow):
             scale=1.2 if uiscale is bui.UIScale.SMALL else 1.7,
             res_scale=2.0,
             maxwidth=250,
-            color=bui.app.ui_v1.heading_color,
+            color=ui.heading_color,
             h_align='center',
             v_align='center',
         )
@@ -203,6 +206,7 @@ class PlayWindow(bui.MainWindow):
         if self._playlist_select_context is None:
             self._coop_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|coop',
                 position=(hoffs, v),
                 size=(
                     scl * button_width,
@@ -303,6 +307,7 @@ class PlayWindow(bui.MainWindow):
 
         self._teams_button = btn = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|teams',
             position=(hoffs, v),
             size=(
                 scl * button_width,
@@ -424,6 +429,7 @@ class PlayWindow(bui.MainWindow):
         hoffs += scl * button_width + button_spacing
         self._free_for_all_button = btn = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|ffa',
             position=(hoffs, v),
             size=(scl * button_width, scl * button_height),
             extra_touch_border_scale=0.1,
@@ -555,8 +561,6 @@ class PlayWindow(bui.MainWindow):
                 ),
             )
 
-        self._restore_state()
-
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
@@ -565,17 +569,18 @@ class PlayWindow(bui.MainWindow):
         # Pull any values out of self here; if we do it in the lambda
         # we'll keep our window alive inadvertantly.
         playlist_select_context = self._playlist_select_context
+
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition,
                 origin_widget=origin_widget,
                 playlist_select_context=playlist_select_context,
-            )
+            ),
         )
 
     @override
-    def on_main_window_close(self) -> None:
-        self._save_state()
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     @staticmethod
     def _preload_modules() -> None:
@@ -747,43 +752,3 @@ class PlayWindow(bui.MainWindow):
                 color=eye_color,
                 mesh_transparent=self._eyes_mesh,
             )
-
-    def _save_state(self) -> None:
-        try:
-            sel = self._root_widget.get_selected_child()
-            if sel == self._teams_button:
-                sel_name = 'Team Games'
-            elif self._coop_button is not None and sel == self._coop_button:
-                sel_name = 'Co-op Games'
-            elif sel == self._free_for_all_button:
-                sel_name = 'Free-for-All Games'
-            elif sel == self._back_button:
-                sel_name = 'Back'
-            else:
-                raise ValueError(f'unrecognized selection {sel}')
-            assert bui.app.classic is not None
-            bui.app.ui_v1.window_states[type(self)] = sel_name
-        except Exception:
-            logging.exception('Error saving state for %s.', self)
-
-    def _restore_state(self) -> None:
-        try:
-            assert bui.app.classic is not None
-            sel_name = bui.app.ui_v1.window_states.get(type(self))
-            if sel_name == 'Team Games':
-                sel = self._teams_button
-            elif sel_name == 'Co-op Games' and self._coop_button is not None:
-                sel = self._coop_button
-            elif sel_name == 'Free-for-All Games':
-                sel = self._free_for_all_button
-            elif sel_name == 'Back' and self._back_button is not None:
-                sel = self._back_button
-            else:
-                sel = (
-                    self._coop_button
-                    if self._coop_button is not None
-                    else self._teams_button
-                )
-            bui.containerwidget(edit=self._root_widget, selected_child=sel)
-        except Exception:
-            logging.exception('Error restoring state for %s.', self)

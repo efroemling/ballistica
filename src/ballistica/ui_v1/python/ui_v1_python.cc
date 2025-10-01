@@ -128,8 +128,7 @@ void UIV1Python::InvokeQuitWindow(QuitType quit_type) {
   objs().Get(UIV1Python::ObjID::kQuitWindowCall).Call(args);
 
   // If we have a keyboard, give it UI ownership.
-  base::KeyboardInput* keyboard = g_base->input->keyboard_input();
-  if (keyboard) {
+  if (base::KeyboardInput* keyboard = g_base->input->keyboard_input()) {
     g_base->ui->SetMainUIInputDevice(keyboard);
   }
 }

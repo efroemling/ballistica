@@ -33,9 +33,9 @@ static const int kUIOwnerTimeoutSeconds = 30;
 /// bad idea to schedule such runnables in the event loop, because a
 /// runnable may wish to modify the UI to prevent further runs from
 /// happening and that won't work if multiple runnables can be scheduled
-/// before the first runs. So our goldilocks approach here is to gather
-/// all runnables that get scheduled as part of each operation and then
-/// run them explicitly once we are safely out of any UI list traversal.
+/// before the first runs. So our goldilocks approach here is to gather all
+/// runnables that get scheduled as part of each operation and then run them
+/// explicitly once we are safely out of any UI list traversal.
 UI::OperationContext::OperationContext() {
   assert(g_base->InLogicThread());
 
@@ -54,14 +54,14 @@ UI::OperationContext::~OperationContext() {
     assert(g_base->ui->operation_context_ == this);
     g_base->ui->operation_context_ = nullptr;
   } else {
-    // If a context was set when we came into existence, it should
-    // still be that same context when we go out of existence.
+    // If a context was set when we came into existence, it should still be
+    // that same context when we go out of existence.
     assert(g_base->ui->operation_context_ == parent_);
     assert(runnables_.empty());
   }
 
-  // Complain if our Finish() call was never run (unless it seems we're being
-  // torn down as part of stack-unwinding due to an exception).
+  // Complain if our Finish() call was never run (unless it seems we're
+  // being torn down as part of stack-unwinding due to an exception).
   if (!ran_finish_ && !std::uncaught_exceptions()) {
     BA_LOG_ERROR_NATIVE_TRACE_ONCE(
         "UI::InteractionContext_ being torn down without Finish() called.");

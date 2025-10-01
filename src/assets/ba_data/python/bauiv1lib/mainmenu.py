@@ -21,16 +21,8 @@ class MainMenuWindow(bui.MainWindow):
         self,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
-        id_prefix: str | None = None,
     ):
-
         ui = bui.app.ui_v1
-
-        # Make sure our widgets have unique ids (and allow restoring so
-        # we can recreate from saved state).
-        self._id_prefix = (
-            ui.new_id_prefix('mainmenu') if id_prefix is None else id_prefix
-        )
 
         # Preload some modules we use in a background thread so we won't
         # have a visual hitch when the user taps them.
@@ -46,7 +38,6 @@ class MainMenuWindow(bui.MainWindow):
         super().__init__(
             root_widget=bui.containerwidget(
                 toolbar_visibility=('menu_full_no_back'),
-                id=f'{self._id_prefix}|root',
             ),
             transition=transition,
             origin_widget=origin_widget,
@@ -78,16 +69,20 @@ class MainMenuWindow(bui.MainWindow):
 
         # Pull values from self here; if we do it in the lambda we'll
         # keep self alive which we don't want.
-        id_prefix = self._id_prefix
+        # id_prefix = self._id_prefix
 
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition,
                 origin_widget=origin_widget,
-                id_prefix=id_prefix,
+                # id_prefix=id_prefix,
             ),
-            restore_selection=True,
+            # restore_selection=True,
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     @staticmethod
     def _preload_modules() -> None:
@@ -281,7 +276,7 @@ class MainMenuWindow(bui.MainWindow):
             demo_menu_delay = 0.0
             self._demo_menu_button = bui.buttonwidget(
                 parent=self._root_widget,
-                id=f'{self._id_prefix}|demo',
+                id=f'{self.main_window_id_prefix}|demo',
                 position=(self._width * 0.5 - this_b_width * 0.5, v + 90),
                 size=(this_b_width, 45),
                 autoselect=True,
@@ -313,7 +308,7 @@ class MainMenuWindow(bui.MainWindow):
         thistdelay = self._tdelay + td2 * self._t_delay_inc
         self._gather_button = bui.buttonwidget(
             parent=self._root_widget,
-            id=f'{self._id_prefix}|gather',
+            id=f'{self.main_window_id_prefix}|gather',
             position=(h - side_button_width * side_button_scale * 0.5, v),
             size=(side_button_width, side_button_height),
             scale=side_button_scale,
@@ -361,7 +356,7 @@ class MainMenuWindow(bui.MainWindow):
 
         self._how_to_play_button = bui.buttonwidget(
             parent=self._root_widget,
-            id=f'{self._id_prefix}|howtoplay',
+            id=f'{self.main_window_id_prefix}|howtoplay',
             position=(h, v),
             autoselect=self._use_autoselect,
             size=(side_button_2_width, side_button_2_height * 2.0),
@@ -384,7 +379,7 @@ class MainMenuWindow(bui.MainWindow):
         thistdelay = self._tdelay + td3 * self._t_delay_inc
         self._play_button = play_button = bui.buttonwidget(
             parent=self._root_widget,
-            id=f'{self._id_prefix}|play',
+            id=f'{self.main_window_id_prefix}|play',
             position=(h - play_button_width * 0.5 * play_button_scale, v),
             size=(play_button_width, play_button_height),
             autoselect=self._use_autoselect,
@@ -410,7 +405,7 @@ class MainMenuWindow(bui.MainWindow):
         thistdelay = self._tdelay + td4 * self._t_delay_inc
         self._watch_button = bui.buttonwidget(
             parent=self._root_widget,
-            id=f'{self._id_prefix}|watch',
+            id=f'{self.main_window_id_prefix}|watch',
             position=(h - side_button_width * side_button_scale * 0.5, v),
             size=(side_button_width, side_button_height),
             scale=side_button_scale,
@@ -459,7 +454,7 @@ class MainMenuWindow(bui.MainWindow):
 
         self._credits_button = bui.buttonwidget(
             parent=self._root_widget,
-            id=f'{self._id_prefix}|credits',
+            id=f'{self.main_window_id_prefix}|credits',
             position=(h, v),
             button_type=None if self._have_quit_button else 'square',
             size=(
@@ -480,7 +475,7 @@ class MainMenuWindow(bui.MainWindow):
             # credits button to get to it.
             self._quit_button = quit_button = bui.buttonwidget(
                 parent=self._root_widget,
-                id=f'{self._id_prefix}|quit',
+                id=f'{self.main_window_id_prefix}|quit',
                 autoselect=self._use_autoselect,
                 position=(h + 4.0, v),
                 size=(side_button_2_width, side_button_2_height),

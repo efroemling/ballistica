@@ -969,6 +969,7 @@ class ChestWindow(bui.MainWindow):
         self, response: bacommon.bs.ChestActionResponse
     ) -> float:
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
 
         from baclassic import show_display_item
 
@@ -1109,9 +1110,10 @@ class ChestWindow(bui.MainWindow):
         # through highlighting our options and stop on the winner when
         # the chest opens. To do this, we start at the end at the prize
         # and work backwards setting timers.
+        ease_out = False  # Experimenting...
         if self._prizesets:
             toffs2 = toffsopen - 0.01
-            amt = 0.02
+            amt = 0.25 if ease_out else 0.02
             i = self._prizeindex
             while toffs2 > 0.0:
                 bui.apptimer(
@@ -1119,7 +1121,10 @@ class ChestWindow(bui.MainWindow):
                     bui.WeakCall(self._highlight_odds_row, i),
                 )
                 toffs2 -= amt
-                amt *= 1.05 * random.uniform(0.9, 1.1)
+                if ease_out:
+                    amt = max(0.032, amt * 0.75 * random.uniform(0.9, 1.1))
+                else:
+                    amt *= 1.05 * random.uniform(0.9, 1.1)
                 i = (i - 1) % len(self._prizesets)
 
         # Let the caller know how long we'll take in case they want to

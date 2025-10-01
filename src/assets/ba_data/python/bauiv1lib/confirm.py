@@ -35,8 +35,7 @@ class ConfirmWindow:
 
         ui = bui.app.ui_v1
 
-        # Make sure our widgets have unique ids (and allow restoring so
-        # we can recreate from saved state).
+        # Make sure our widgets have globally unique ids.
         self._id_prefix = ui.new_id_prefix('confirm')
 
         if text is None:

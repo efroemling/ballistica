@@ -74,6 +74,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # For storing arbitrary class-level state data for Windows or
         # other UI related classes.
         self.window_states: dict[type, Any] = {}
+        self.main_window_shared_states: dict = {}
 
         self.title_color = (0.72, 0.7, 0.75)
         self.heading_color = (0.72, 0.7, 0.75)
@@ -153,7 +154,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
     def set_main_window(
         self,
-        # window: bauiv1.MainWindow | Callable[[], bauiv1.MainWindow],
         window: bauiv1.MainWindow,
         *,
         back_state: MainWindowState | None,
@@ -334,6 +334,9 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         self._main_window = window_weakref
         self._main_window_widget = window_widget
+
+        # Now that we're all set up, restore any state.
+        window.restore_shared_state()
 
     def has_main_window(self) -> bool:
         """Return whether a main menu window is present."""

@@ -2095,6 +2095,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* adapter_finished_obj{Py_None};
   PyObject* glow_type_obj{Py_None};
   PyObject* allow_clear_button_obj{Py_None};
+  PyObject* id_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2136,9 +2137,10 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "adapter_finished",
                                  "glow_type",
                                  "allow_clear_button",
+                                 "id",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &size_obj,
           &pos_obj, &text_obj, &v_align_obj, &h_align_obj, &editable_obj,
           &padding_obj, &on_return_press_call_obj, &on_activate_call_obj,
@@ -2150,7 +2152,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &force_internal_editing_obj, &always_show_carat_obj, &big_obj,
           &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
           &query_description_obj, &adapter_finished_obj, &glow_type_obj,
-          &allow_clear_button_obj))
+          &allow_clear_button_obj, &id_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2377,6 +2379,9 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (allow_clear_button_obj != Py_None) {
     widget->set_allow_clear_button(Python::GetBool(allow_clear_button_obj));
   }
+  if (id_obj != Py_None) {
+    widget->SetID(Python::GetString(id_obj));
+  }
 
   // If making a new widget, add it at the end.
   if (edit_obj == Py_None) {
@@ -2436,8 +2441,9 @@ static PyMethodDef PyTextWidgetDef = {
     "  query_description: bauiv1.Widget | None = None,\n"
     "  adapter_finished: bool | None = None,\n"
     "  glow_type: str | None = None,\n"
-    "  allow_clear_button: bool | None = None)\n"
-    "  -> bauiv1.Widget\n"
+    "  allow_clear_button: bool | None = None,\n"
+    "  id: str | None = None,\n"
+    ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"
     "\n"
@@ -2463,6 +2469,7 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* show_buffer_right_obj{Py_None};
   PyObject* depth_range_obj{Py_None};
   PyObject* autoselect_obj{Py_None};
+  PyObject* suppress_missing_id_warnings_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "up_widget",
@@ -2475,12 +2482,14 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
                                  "show_buffer_right",
                                  "depth_range",
                                  "autoselect",
+                                 "suppress_missing_id_warnings",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "O|OOOOOOOOOO", const_cast<char**>(kwlist), &edit_obj,
+          args, keywds, "O|OOOOOOOOOOO", const_cast<char**>(kwlist), &edit_obj,
           &up_widget_obj, &down_widget_obj, &left_widget_obj, &right_widget_obj,
           &show_buffer_top_obj, &show_buffer_bottom_obj, &show_buffer_left_obj,
-          &show_buffer_right_obj, &depth_range_obj, &autoselect_obj))
+          &show_buffer_right_obj, &depth_range_obj, &autoselect_obj,
+          &suppress_missing_id_warnings_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2558,6 +2567,10 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
   if (autoselect_obj != Py_None) {
     widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
+  if (suppress_missing_id_warnings_obj != Py_None) {
+    widget->set_suppress_missing_id_warnings(
+        Python::GetBool(suppress_missing_id_warnings_obj));
+  }
 
   // Run any calls built up by UI callbacks.
   ui_op_context.Finish();
@@ -2582,7 +2595,9 @@ static PyMethodDef PyWidgetDef = {
     "  show_buffer_left: float | None = None,\n"
     "  show_buffer_right: float | None = None,\n"
     "  depth_range: tuple[float, float] | None = None,\n"
-    "  autoselect: bool | None = None) -> None\n"
+    "  autoselect: bool | None = None,\n"
+    "  suppress_missing_id_warnings: bool | None = None,\n"
+    ") -> None\n"
     "\n"
     "Edit common attributes of any widget.\n"
     "\n"
@@ -2600,17 +2615,9 @@ auto PyUIBounds(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
     return nullptr;
   }
   assert(g_base->graphics);
-  // Note: to be safe, we return our min guaranteed screen bounds; not our
-  // current (which can be bigger).
   float x, virtual_res_y;
-
-  // if (g_base->ui->scale() == UIScale::kSmall) {
-  //   x = 0.5f * kBaseVirtualResSmallX;
-  //   virtual_res_y = kBaseVirtualResSmallY;
-  // } else {
   x = 0.5f * base::kBaseVirtualResX;
   virtual_res_y = base::kBaseVirtualResY;
-  // }
   float y = 0.5f * virtual_res_y;
   return Py_BuildValue("(ffff)", -x, x, -y, y);
   BA_PYTHON_CATCH;
@@ -2623,12 +2630,10 @@ static PyMethodDef PyUIBoundsDef = {
 
     "uibounds() -> tuple[float, float, float, float]\n"
     "\n"
-    "(internal)\n"
+    "Returns ui-bounds values: (x-min, x-max, y-min, y-max).\n"
     "\n"
-    "Returns a tuple of 4 values: (x-min, x-max, y-min, y-max) "
-    "representing\n"
-    "the range of values that can be plugged into a root level\n"
-    "bauiv1.ContainerWidget's stack_offset value while guaranteeing that its\n"
+    "This is the range of values that can be plugged into 'stack_offset' for\n"
+    "a :meth:`bauiv1.containerwidget()` call while guaranteeing that its\n"
     "center remains onscreen.",
 };
 
@@ -2789,7 +2794,9 @@ static PyMethodDef PyRootUIBackPressDef = {
     METH_NOARGS,                     // flags
     "root_ui_back_press() -> None\n"
     "\n"
-    "(internal)",
+    "Handle a press of the global back button.\n"
+    "\n"
+    ":meta private:",
 };
 
 // ----------------------------- is_available ----------------------------------
@@ -2807,15 +2814,13 @@ static auto PyIsAvailable(PyObject* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyIsAvailableDef = {
-    "is_available",              // name
-    (PyCFunction)PyIsAvailable,  // method
-    METH_NOARGS,                 // flags
+static PyMethodDef PyIsAvailableDef = {"is_available",              // name
+                                       (PyCFunction)PyIsAvailable,  // method
+                                       METH_NOARGS,                 // flags
 
-    "is_available() -> bool\n"
-    "\n"
-    "(internal)",
-};
+                                       "is_available() -> bool\n"
+                                       "\n"
+                                       ":meta private:"};
 
 // --------------------------- on_ui_scale_change ------------------------------
 
@@ -2835,7 +2840,7 @@ static PyMethodDef PyOnUIScaleChangeDef = {
 
     "on_ui_scale_change() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------ root_ui_pause_updates ------------------------------

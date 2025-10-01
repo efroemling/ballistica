@@ -107,10 +107,10 @@ struct RootWidget::ButtonDef_ {
   float color_b{1.0f};
   float opacity{1.0f};
   float disable_offset_scale{1.0f};
-  float target_extra_left{0.0f};
-  float target_extra_right{0.0f};
-  float pre_buffer{0.0f};
-  float post_buffer{0.0f};
+  float target_extra_left{};
+  float target_extra_right{};
+  float pre_buffer{};
+  float post_buffer{};
 };
 
 struct RootWidget::Button_ {
@@ -128,8 +128,8 @@ struct RootWidget::Button_ {
   float height{30.0f};
   float scale{1.0f};
   float disable_offset_scale{1.0f};
-  float pre_buffer{0.0f};
-  float post_buffer{0.0f};
+  float pre_buffer{};
+  float post_buffer{};
   bool selectable{true};
   bool fully_offscreen{};
   bool enabled{};
@@ -563,8 +563,6 @@ void RootWidget::Setup() {
       td.button = b;
       td.x = 0.0f;
       td.y = 0.0f;
-      // td.x = 5.0f;
-      // td.y = 3.0f;
       td.width = bd.width * 0.9f;
       td.text = g_base->assets->CharStr(SpecialChar::kBack);
       td.color_a = 1.0f;
@@ -1793,14 +1791,10 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
           == ToolbarCancelButtonStyle::kBack) {
         back_button_text_->widget->SetText(
             g_base->assets->CharStr(SpecialChar::kBack));
-        // back_button_text_->x = 0.0f;
-        // back_button_text_->y = 0.0f;
       } else if (root_widget_toolbar_cancel_button_style_
                  == ToolbarCancelButtonStyle::kClose) {
         back_button_text_->widget->SetText(
             g_base->assets->CharStr(SpecialChar::kClose));
-        // back_button_text_->x = 0.0f;
-        // back_button_text_->y = 0.0f;
       }
       root_widget_toolbar_cancel_button_style_vis_ =
           root_widget_toolbar_cancel_button_style_;
@@ -1873,14 +1867,27 @@ void RootWidget::OnUIScaleChange() { MarkForUpdate(); }
 auto RootWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   // If a cancel message comes through and our back button is enabled, fire
   // our back button. In all other cases just do the default.
-  if (m.type == base::WidgetMessage::Type::kCancel && back_button_ != nullptr
-      && back_button_->widget->enabled()
-      && !overlay_stack_widget_->HasChildren()) {
-    back_button_->widget->Activate();
-    return true;
-  } else {
-    return ContainerWidget::HandleMessage(m);
+  if (m.type == base::WidgetMessage::Type::kCancel) {
+    // Handle cancel events specially. This lets us hit escape or a back
+    // button no matter what toolbar or window widget it selected and have
+    // it behave predictably.
+
+    // If there is something in our overlay stack, pass the cancel to it.
+    if (overlay_stack_widget_->HasChildren()) {
+      return overlay_stack_widget_->HandleMessage(m);
+    }
+
+    // Otherwise we want the cancel to go to whatever is in the main window
+    // stack. To do that we either send the event directly or we activate our
+    // global back button which does the same thing.
+    if (back_button_ != nullptr && back_button_->widget->enabled()) {
+      back_button_->widget->Activate();
+      return true;
+    }
+    // No global back button; just send the cancel directly.
+    return screen_stack_widget_->HandleMessage(m);
   }
+  return ContainerWidget::HandleMessage(m);
 }
 
 void RootWidget::SquadPress() {

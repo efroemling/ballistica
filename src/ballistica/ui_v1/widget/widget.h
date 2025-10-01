@@ -119,6 +119,13 @@ class Widget : public Object {
   void set_auto_select(bool enable) { auto_select_ = enable; }
   auto auto_select() const -> bool { return auto_select_; }
 
+  void set_suppress_missing_id_warnings(bool val) {
+    suppress_missing_id_warnings_ = val;
+  }
+  auto suppress_missing_id_warnings() const -> bool {
+    return suppress_missing_id_warnings_;
+  }
+
   // If neighbors are locked, calls to set the up/down/left/right widget
   // will fail. (useful for global toolbar widgets where we don't want users
   // redirecting them to transient per-window stuff).
@@ -286,6 +293,7 @@ class Widget : public Object {
   bool neighbors_locked_{};
   bool auto_select_{};
   bool in_hierarchy_{};
+  bool suppress_missing_id_warnings_{};
 };
 
 }  // namespace ballistica::ui_v1
