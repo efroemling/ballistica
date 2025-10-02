@@ -421,17 +421,18 @@ class MainWindow(Window):
         """Whether this window should auto-save/restore selection.
 
         If enabled, selection will be stored in the window's shared
-        state. See :meth:`get_main_window_shared_state_id()` for more
-        info about main-window shared-state.
+        state. See :meth:`~bauiv1.MainWindow.get_main_window_shared_state_id()`
+        for more info about main-window shared-state.
         """
         return False
 
     def get_main_window_shared_state_id(self) -> str | None:
         """Provide a custom id for window shared state.
 
-        Unlike :class:`MainWindowState`, which is used to save and
-        restore a single main-window instance, shared-state is intended
-        to hold values that can apply to multiple instances of a window.
+        Unlike :class:`~bauiv1.MainWindowState`, which is used to save
+        and restore a single main-window instance, shared-state is
+        intended to hold values that can apply to multiple instances of
+        a window.
 
         By default, shared state uses the window class as an index (so
         is shared by all windows of the same class), but this method can
