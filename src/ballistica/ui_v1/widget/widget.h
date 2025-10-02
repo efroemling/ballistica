@@ -77,7 +77,7 @@ class Widget : public Object {
   void GlobalSelect();
 
   /// Show this widget if possible (by scrolling to it, etc).
-  void Show();
+  void ScrollIntoView();
 
   /// Returns true if the widget is the currently selected child of its
   /// parent. Note that this does not mean that the parent is selected,

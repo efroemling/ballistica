@@ -1736,7 +1736,7 @@ void ContainerWidget::SelectDownWidget() {
         g_core->logging->Log(LogName::kBa, LogLevel::kError,
                              "Down_widget is not selectable.");
       } else {
-        w->Show();
+        w->ScrollIntoView();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
@@ -1802,7 +1802,7 @@ void ContainerWidget::SelectUpWidget() {
         g_core->logging->Log(LogName::kBa, LogLevel::kError,
                              "up_widget is not selectable.");
       } else {
-        w->Show();
+        w->ScrollIntoView();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
@@ -1856,7 +1856,7 @@ void ContainerWidget::SelectLeftWidget() {
         g_core->logging->Log(LogName::kBa, LogLevel::kError,
                              "left_widget is not selectable.");
       } else {
-        w->Show();
+        w->ScrollIntoView();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
@@ -1910,7 +1910,7 @@ void ContainerWidget::SelectRightWidget() {
         g_core->logging->Log(LogName::kBa, LogLevel::kError,
                              "right_widget is not selectable.");
       } else {
-        w->Show();
+        w->ScrollIntoView();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();

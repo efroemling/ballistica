@@ -394,6 +394,18 @@ auto PythonClassWidget::GlobalSelect(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassWidget::ScrollIntoView(PythonClassWidget* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
+  if (!w) {
+    throw Exception(PyExcType::kWidgetNotFound);
+  }
+  w->ScrollIntoView();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassWidget::Dir(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
 
@@ -469,6 +481,11 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      " selected-child on container widgets.\n"
      "\n"
      ":meta private:"},
+    {"scroll_into_view", (PyCFunction)ScrollIntoView,
+     METH_NOARGS,  // NOLINT (signed bitwise stuff)
+     "scroll_into_view() -> None\n"
+     "\n"
+     "Scroll to show this widget if possible."},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};

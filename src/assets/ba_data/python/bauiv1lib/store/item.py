@@ -15,11 +15,12 @@ if TYPE_CHECKING:
 def instantiate_store_item_display(
     item_name: str,
     item: dict[str, Any],
+    *,
     parent_widget: bui.Widget,
     b_pos: tuple[float, float],
     b_width: float,
     b_height: float,
-    *,
+    idprefix: str,
     boffs_h: float = 0.0,
     boffs_h2: float = 0.0,
     boffs_v2: float = 0,
@@ -27,7 +28,6 @@ def instantiate_store_item_display(
     button: bool = True,
 ) -> None:
     """(internal)"""
-    # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
@@ -55,6 +55,7 @@ def instantiate_store_item_display(
     if button:
         item['button'] = btn = bui.buttonwidget(
             parent=parent_widget,
+            id=f'{idprefix}|store_item.{item_name}',
             position=b_pos,
             transition_delay=delay,
             show_buffer_top=showbuffer,

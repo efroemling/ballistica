@@ -123,6 +123,7 @@ class StoreBrowserWindow(bui.MainWindow):
 
         self._back_button = btn = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|back',
             position=(70, yoffs - 37),
             size=(60, 60),
             scale=1.1,
@@ -148,6 +149,7 @@ class StoreBrowserWindow(bui.MainWindow):
         ):
             bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|restorepurchases',
                 position=(self._width * 0.5 - 70, 16),
                 size=(230, 50),
                 scale=0.65,
@@ -200,6 +202,7 @@ class StoreBrowserWindow(bui.MainWindow):
         self._tab_row = TabRow(
             self._root_widget,
             tabs_def,
+            idprefix=self.main_window_id_prefix,
             size=(self._scroll_width - 2.0 * tab_inset, 50),
             pos=(
                 self._width * 0.5 - self._scroll_width * 0.5 + tab_inset,
@@ -298,12 +301,15 @@ class StoreBrowserWindow(bui.MainWindow):
                 right_widget=bui.get_special_widget('tickets_meter'),
             )
 
-        # self._scroll_width = self._width - scroll_buffer_h
-        # self._scroll_height = self._height - 180
-
         self._scrollwidget: bui.Widget | None = None
         self._status_textwidget: bui.Widget | None = None
-        self._restore_state()
+
+        # Restore/set tab.
+        try:
+            current_tab = self.TabID(bui.app.config.get('Store Tab'))
+        except ValueError:
+            current_tab = self.TabID.CHARACTERS
+        self._set_tab(current_tab)
 
     def _restore_purchases(self) -> None:
         from bauiv1lib.account.signin import show_sign_in_prompt
@@ -378,8 +384,8 @@ class StoreBrowserWindow(bui.MainWindow):
             border_opacity=0.4,
         )
 
-        # NOTE: this stuff is modified by the _Store class.
-        # Should maybe clean that up.
+        # NOTE: this stuff is modified by the _Store class. Should maybe
+        # clean that up.
         self.button_infos = {}
         self.update_buttons_timer = None
 
@@ -820,6 +826,15 @@ class StoreBrowserWindow(bui.MainWindow):
                     scrollwidget=self._scrollwidget,
                     tab_button=self._tab_row.tabs[self._current_tab].button,
                 )
+                # Most of our UI won't exist until this point so we need
+                # to explicitly restore state for selection restore to
+                # work.
+                #
+                # Note to self: perhaps we should *not* do this if
+                # significant time has passed since the window was made
+                # or if input commands have happened.
+                self.restore_shared_state()
+
             else:
                 cnt = bui.containerwidget(
                     parent=self._scrollwidget,
@@ -856,74 +871,8 @@ class StoreBrowserWindow(bui.MainWindow):
         )
 
     @override
-    def on_main_window_close(self) -> None:
-        self._save_state()
-
-    def _save_state(self) -> None:
-        try:
-            sel = self._root_widget.get_selected_child()
-            selected_tab_ids = [
-                tab_id
-                for tab_id, tab in self._tab_row.tabs.items()
-                if sel == tab.button
-            ]
-            if sel == self._scrollwidget:
-                sel_name = 'Scroll'
-            elif sel == self._back_button:
-                sel_name = 'Back'
-            elif selected_tab_ids:
-                assert len(selected_tab_ids) == 1
-                sel_name = f'Tab:{selected_tab_ids[0].value}'
-            else:
-                raise ValueError(f'unrecognized selection \'{sel}\'')
-            assert bui.app.classic is not None
-            bui.app.ui_v1.window_states[type(self)] = {
-                'sel_name': sel_name,
-            }
-        except Exception:
-            logging.exception('Error saving state for %s.', self)
-
-    def _restore_state(self) -> None:
-
-        try:
-            sel: bui.Widget | None
-            assert bui.app.classic is not None
-            sel_name = bui.app.ui_v1.window_states.get(type(self), {}).get(
-                'sel_name'
-            )
-            assert isinstance(sel_name, (str, type(None)))
-
-            try:
-                current_tab = self.TabID(bui.app.config.get('Store Tab'))
-            except ValueError:
-                current_tab = self.TabID.CHARACTERS
-
-            if self._show_tab is not None:
-                current_tab = self._show_tab
-            if sel_name == 'Back':
-                sel = self._back_button
-            elif sel_name == 'Scroll':
-                sel = self._scrollwidget
-            elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
-                try:
-                    sel_tab_id = self.TabID(sel_name.split(':')[-1])
-                except ValueError:
-                    sel_tab_id = self.TabID.CHARACTERS
-                sel = self._tab_row.tabs[sel_tab_id].button
-            else:
-                sel = self._tab_row.tabs[current_tab].button
-
-            # If we were requested to show a tab, select it too.
-            if (
-                self._show_tab is not None
-                and self._show_tab in self._tab_row.tabs
-            ):
-                sel = self._tab_row.tabs[self._show_tab].button
-            self._set_tab(current_tab)
-            if sel is not None:
-                bui.containerwidget(edit=self._root_widget, selected_child=sel)
-        except Exception:
-            logging.exception('Error restoring state for %s.', self)
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
 
 def _check_merch_availability_in_bg_thread() -> None:
@@ -1203,6 +1152,7 @@ class _Store:
                 instantiate_store_item_display(
                     item_name,
                     item,
+                    idprefix=self._store_window.main_window_id_prefix,
                     parent_widget=cnt2,
                     b_pos=b_pos,
                     boffs_h=boffs_h,

@@ -36,6 +36,8 @@ class PurchaseWindow(bui.Window):
             )
         if len(items) != 1:
             raise ValueError('expected exactly 1 item')
+
+        self._idprefix = bui.app.ui_v1.new_id_prefix('purchase')
         self._items = list(items)
         self._width = 580
         self._height = 520
@@ -81,6 +83,7 @@ class PurchaseWindow(bui.Window):
         instantiate_store_item_display(
             items[0],
             display,
+            idprefix=self._idprefix,
             parent_widget=self._root_widget,
             b_pos=(
                 self._width * 0.5

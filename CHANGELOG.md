@@ -1,4 +1,4 @@
-### 1.7.51 (build 22560, api 9, 2025-10-01)
+### 1.7.51 (build 22561, api 9, 2025-10-02)
 - Deprecated `bauiv1.uicleanupcheck()` - to be removed when api 9 support ends.
   Use `ba*.app.ui_v1.add_ui_cleanup_check()` instead.
 - Official Mac builds now use OpenALSoft for audio instead of Apple's old
@@ -67,6 +67,9 @@
   is selected will now do the right thing and cancel out of the current window
   on medium/large UI scales (previously this only worked right on small ui
   scale).
+- Added `bauiv1.Widget.scroll_into_view()`. This should be more foolproof than
+  setting `visible_child` on a container widget, as it should properly affect
+  multiple levels of containers if need be.
 
 ### 1.7.50 (build 22533, api 9, 2025-09-06)
 - Cleaned up cursor handling on Mac build. Fixes an issue where the cursor could

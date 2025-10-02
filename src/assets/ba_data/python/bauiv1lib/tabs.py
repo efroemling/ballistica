@@ -11,6 +11,7 @@ import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any, Callable
+    from enum import Enum
 
 
 @dataclass
@@ -22,7 +23,7 @@ class Tab:
     size: tuple[float, float]
 
 
-class TabRow[T]:
+class TabRow[T: Enum]:
     """Encapsulates a row of tab-styled buttons.
 
     Tabs are indexed by id which is an arbitrary user-provided type.
@@ -36,6 +37,7 @@ class TabRow[T]:
         size: tuple[float, float],
         *,
         on_select_call: Callable[[T], None] | None = None,
+        idprefix: str | None = None,
     ) -> None:
         if not tabdefs:
             raise ValueError('At least one tab def is required')
@@ -49,6 +51,11 @@ class TabRow[T]:
             size = (tab_button_width - tab_spacing, 50.0)
             btn = bui.buttonwidget(
                 parent=parent,
+                id=(
+                    None
+                    if idprefix is None
+                    else f'{idprefix}|tab_button.{tab_id.value}'
+                ),
                 position=pos,
                 autoselect=True,
                 button_type='tab',

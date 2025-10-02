@@ -144,7 +144,7 @@ void Widget::GlobalSelect() {
   }
 }
 
-void Widget::Show() {
+void Widget::ScrollIntoView() {
   assert(g_base->InLogicThread());
   Widget* w = this;
   ContainerWidget* c = parent_widget();
@@ -285,7 +285,7 @@ void Widget::SetID(const std::string& id) {
   // Validate IDs.
   for (char c : id) {
     bool ok = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
-              || (c >= '0' && c <= '9') || c == '_' || c == '|';
+              || (c >= '0' && c <= '9') || c == '.' || c == '_' || c == '|';
     if (!ok) {
       throw Exception(
           "Invalid character '" + std::string(1, c) + "' in id: '" + id + "'",

@@ -209,6 +209,7 @@ class MainWindow(Window):
                 widget = _bauiv1.widget_by_id(sel)
                 if widget is not None:
                     widget.global_select()
+                    widget.scroll_into_view()
                 else:
                     # We expect this to happen sometimes (windows may come
                     # up with different UIs visible/etc.). Let's note it but
