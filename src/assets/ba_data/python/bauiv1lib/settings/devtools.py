@@ -8,7 +8,6 @@ from typing import override
 
 import babase
 import bauiv1 as bui
-from bauiv1lib.popup import PopupMenu
 from bauiv1lib.confirm import ConfirmWindow
 from bauiv1lib.config import ConfigCheckBox
 
@@ -85,6 +84,7 @@ class DevToolsWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(53, yoffs - 50),
                 size=(140, 60),
                 scale=0.8,
@@ -146,6 +146,7 @@ class DevToolsWindow(bui.MainWindow):
         v -= self._spacing * 2.5
         self._show_dev_console_button_check_box = ConfigCheckBox(
             parent=self._subcontainer,
+            check_box_id=f'{self.main_window_id_prefix}|showdevsonsole',
             position=(90, v + 40),
             size=(self._sub_width - 100, 30),
             configkey='Show Dev Console Button',
@@ -164,6 +165,7 @@ class DevToolsWindow(bui.MainWindow):
         v -= self._spacing * 1.2
         self._create_user_system_scripts_button = bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|createusersystemscripts',
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
@@ -175,6 +177,7 @@ class DevToolsWindow(bui.MainWindow):
         v -= self._spacing * 2.5
         self._delete_user_system_scripts_button = bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|deleteusersystemscripts',
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
@@ -185,42 +188,6 @@ class DevToolsWindow(bui.MainWindow):
             ),
         )
 
-        # Currently this is not wired up. The current official way to test
-        # UIScales is either to use the switcher in the dev-console or to
-        # set the BA_UI_SCALE env var.
-        if bool(False):
-            v -= self._spacing * 2.5
-            bui.textwidget(
-                parent=self._subcontainer,
-                position=(170, v + 10),
-                size=(0, 0),
-                text=bui.Lstr(resource='uiScaleText'),
-                color=app.ui_v1.title_color,
-                h_align='center',
-                v_align='center',
-            )
-
-            PopupMenu(
-                parent=self._subcontainer,
-                position=(230, v - 20),
-                button_size=(200.0, 60.0),
-                width=100.0,
-                choices=[
-                    'auto',
-                    'small',
-                    'medium',
-                    'large',
-                ],
-                choices_display=[
-                    bui.Lstr(resource='autoText'),
-                    bui.Lstr(resource='sizeSmallText'),
-                    bui.Lstr(resource='sizeMediumText'),
-                    bui.Lstr(resource='sizeLargeText'),
-                ],
-                current_choice=app.config.get('UI Scale', 'auto'),
-                on_value_change_call=self._set_uiscale,
-            )
-
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
@@ -230,6 +197,10 @@ class DevToolsWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     def _set_uiscale(self, val: str) -> None:
         cfg = bui.app.config

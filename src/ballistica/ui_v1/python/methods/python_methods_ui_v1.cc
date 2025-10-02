@@ -1004,6 +1004,7 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
 
+  PyObject* id_obj{Py_None};
   PyObject* size_obj{Py_None};
   PyObject* pos_obj{Py_None};
   PyObject* background_obj{Py_None};
@@ -1023,6 +1024,7 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* claims_left_right_obj{Py_None};
   static const char* kwlist[] = {"edit",
                                  "parent",
+                                 "id",
                                  "size",
                                  "position",
                                  "background",
@@ -1040,7 +1042,7 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
           args, keywds, "|OOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
-          &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
+          &edit_obj, &parent_obj, &id_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &visible_child_obj, &single_depth_obj,
           &print_list_exit_instructions_obj, &left_border_obj, &top_border_obj,
           &bottom_border_obj, &selection_loops_to_parent_obj, &border_obj,
@@ -1076,6 +1078,9 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
 
   // Set applicable values.
+  if (id_obj != Py_None) {
+    widget->SetID(Python::GetString(id_obj));
+  }
   if (size_obj != Py_None) {
     Point2D p = Python::GetPoint2D(size_obj);
     widget->SetWidth(p.x);
@@ -1151,6 +1156,7 @@ static PyMethodDef PyColumnWidgetDef = {
     "columnwidget(*,\n"
     "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
+    "  id: str | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
     "  background: bool | None = None,\n"
@@ -1164,7 +1170,8 @@ static PyMethodDef PyColumnWidgetDef = {
     "  selection_loops_to_parent: bool | None = None,\n"
     "  border: float | None = None,\n"
     "  margin: float | None = None,\n"
-    "  claims_left_right: bool | None = None) -> bauiv1.Widget\n"
+    "  claims_left_right: bool | None = None,\n"
+    ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a column widget.\n"
     "\n"

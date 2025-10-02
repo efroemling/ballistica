@@ -66,6 +66,7 @@ class PluginSettingsWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(55, self._yoffs - 33),
                 size=(60, 60),
                 scale=0.8,
@@ -98,6 +99,7 @@ class PluginSettingsWindow(bui.MainWindow):
 
         self._enable_plugins_button = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|enableall',
             position=(x, y),
             size=(350, 60),
             autoselect=True,
@@ -111,6 +113,7 @@ class PluginSettingsWindow(bui.MainWindow):
         y -= 70
         self._disable_plugins_button = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|disableall',
             position=(x, y),
             size=(350, 60),
             autoselect=True,
@@ -124,6 +127,7 @@ class PluginSettingsWindow(bui.MainWindow):
         y -= 70
         self._enable_new_plugins_check_box = bui.checkboxwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|enablenew',
             position=(x, y),
             size=(350, 60),
             value=bui.app.config.get(
@@ -162,6 +166,10 @@ class PluginSettingsWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     def _enable_all_plugins(self) -> None:
         cfg = bui.app.config

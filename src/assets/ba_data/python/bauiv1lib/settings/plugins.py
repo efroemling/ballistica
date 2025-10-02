@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import logging
 from enum import Enum
 from typing import TYPE_CHECKING, assert_never, override
 
@@ -100,6 +99,7 @@ class PluginWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(53, yoffs - 49),
                 size=(60, 60),
                 scale=0.8,
@@ -144,6 +144,7 @@ class PluginWindow(bui.MainWindow):
 
         self._category_button = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|category',
             scale=0.7,
             position=(settings_button_x - 105, button_row_yoffs - 60),
             size=(130, 60),
@@ -156,6 +157,7 @@ class PluginWindow(bui.MainWindow):
 
         self._settings_button = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|settings',
             position=(settings_button_x, button_row_yoffs - 58),
             size=(40, 40),
             label='',
@@ -223,7 +225,6 @@ class PluginWindow(bui.MainWindow):
         bui.containerwidget(
             edit=self._root_widget, selected_child=self._scrollwidget
         )
-        self._restore_state()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -236,8 +237,8 @@ class PluginWindow(bui.MainWindow):
         )
 
     @override
-    def on_main_window_close(self) -> None:
-        self._save_state()
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     def _check_value_changed(self, plug: bui.PluginSpec, value: bool) -> None:
         bui.screenmessage(
@@ -364,6 +365,7 @@ class PluginWindow(bui.MainWindow):
             item_y = sub_height - (num_shown + 1) * plug_line_height
             check = bui.checkboxwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|enabled.{classpath}',
                 text=bui.Lstr(value=classpath),
                 autoselect=True,
                 value=enabled,
@@ -391,6 +393,7 @@ class PluginWindow(bui.MainWindow):
             if plugin is not None and plugin.has_settings_ui():
                 button = bui.buttonwidget(
                     parent=self._subcontainer,
+                    id=f'{self.main_window_id_prefix}|settings.{classpath}',
                     label=bui.Lstr(resource='mainMenu.settingsText'),
                     autoselect=True,
                     size=(100, 40),
@@ -431,39 +434,3 @@ class PluginWindow(bui.MainWindow):
                 edit=self._no_plugins_installed_text,
                 text=bui.Lstr(resource='noPluginsInstalledText'),
             )
-
-    def _save_state(self) -> None:
-        try:
-            sel = self._root_widget.get_selected_child()
-            if sel == self._category_button:
-                sel_name = 'Category'
-            elif sel == self._settings_button:
-                sel_name = 'Settings'
-            elif sel == self._back_button:
-                sel_name = 'Back'
-            elif sel == self._scrollwidget:
-                sel_name = 'Scroll'
-            else:
-                raise ValueError(f'unrecognized selection \'{sel}\'')
-            assert bui.app.classic is not None
-            bui.app.ui_v1.window_states[type(self)] = sel_name
-        except Exception:
-            logging.exception('Error saving state for %s.', self)
-
-    def _restore_state(self) -> None:
-        try:
-            assert bui.app.classic is not None
-            sel_name = bui.app.ui_v1.window_states.get(type(self))
-            sel: bui.Widget | None
-            if sel_name == 'Category':
-                sel = self._category_button
-            elif sel_name == 'Settings':
-                sel = self._settings_button
-            elif sel_name == 'Back':
-                sel = self._back_button
-            else:
-                sel = self._scrollwidget
-            if sel:
-                bui.containerwidget(edit=self._root_widget, selected_child=sel)
-        except Exception:
-            logging.exception('Error restoring state for %s.', self)

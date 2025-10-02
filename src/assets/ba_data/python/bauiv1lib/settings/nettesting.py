@@ -90,6 +90,7 @@ class NetTestingWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(46, yoffs - 77),
                 size=(60, 60),
                 scale=0.9,
@@ -108,6 +109,7 @@ class NetTestingWindow(bui.MainWindow):
         xextra = -80 if uiscale is bui.UIScale.SMALL else 0
         self._copy_button = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|copy',
             position=(
                 self._width * 0.5 + scroll_width * 0.5 - 210 + 80 + xextra,
                 yoffs - 79,
@@ -121,6 +123,7 @@ class NetTestingWindow(bui.MainWindow):
 
         self._settings_button = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|settings',
             position=(
                 self._width * 0.5 + scroll_width * 0.5 - 110 + 80 + xextra,
                 yoffs - 77,
@@ -151,7 +154,10 @@ class NetTestingWindow(bui.MainWindow):
             autoselect=True,
             border_opacity=0.4,
         )
-        self._rows = bui.columnwidget(parent=self._scroll)
+        self._rows = bui.columnwidget(
+            parent=self._scroll,
+            id=f'{self.main_window_id_prefix}|content',
+        )
 
         # Now kick off the tests.
         # Pass a weak-ref to this window so we don't keep it alive
@@ -168,6 +174,10 @@ class NetTestingWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     def print(self, text: str, color: tuple[float, float, float]) -> None:
         """Print text to our console thingie."""
