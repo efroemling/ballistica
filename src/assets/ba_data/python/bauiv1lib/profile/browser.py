@@ -4,23 +4,24 @@
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 import bascenev1 as bs
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, ClassVar
 
 
 class ProfileBrowserWindow(bui.MainWindow):
     """Window for browsing player profiles."""
 
+    # Keep track of this at the class level to share between instances.
+    selected_profile: ClassVar[str | None] = None
+
     def __init__(
         self,
         transition: str | None = 'in_right',
-        # in_main_menu: bool = True,
         selected_profile: str | None = None,
         origin_widget: bui.Widget | None = None,
         minimal_toolbar: bool = False,
@@ -80,6 +81,7 @@ class ProfileBrowserWindow(bui.MainWindow):
         else:
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(40 + x_inset, self._height - 59),
                 size=(120, 60),
                 scale=0.8,
@@ -122,6 +124,7 @@ class ProfileBrowserWindow(bui.MainWindow):
         v -= 70.0 * scl
         self._new_button = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|new',
             position=(h, v),
             size=(80, 66.0 * scl),
             on_activate_call=self._new_profile,
@@ -135,6 +138,7 @@ class ProfileBrowserWindow(bui.MainWindow):
         v -= 70.0 * scl
         self._edit_button = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|edit',
             position=(h, v),
             size=(80, 66.0 * scl),
             on_activate_call=self._edit_profile,
@@ -148,6 +152,7 @@ class ProfileBrowserWindow(bui.MainWindow):
         v -= 70.0 * scl
         self._delete_button = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|delete',
             position=(h, v),
             size=(80, 66.0 * scl),
             on_activate_call=self._delete_profile,
@@ -194,10 +199,10 @@ class ProfileBrowserWindow(bui.MainWindow):
         )
         v -= 255
         self._profiles: dict[str, dict[str, Any]] | None = None
-        self._selected_profile = selected_profile
+        if selected_profile is not None:
+            type(self).selected_profile = selected_profile
         self._profile_widgets: list[bui.Widget] = []
         self._refresh()
-        self._restore_state()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -215,8 +220,19 @@ class ProfileBrowserWindow(bui.MainWindow):
         )
 
     @override
-    def on_main_window_close(self) -> None:
-        self._save_state()
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
+
+    # @override
+    # def main_window_do_save_shared_state(self, state: dict) -> None:
+    #     state['selected_profile'] = self._selected_profile
+
+    # @override
+    # def main_window_do_restore_shared_state(self, state: dict) -> None:
+    #     pval = state.get('selected_profile')
+    #     if isinstance(pval, str | None):
+    #         print('RESTORING', pval)
+    #         self._selected_profile = pval
 
     def _new_profile(self) -> None:
         # pylint: disable=cyclic-import
@@ -271,13 +287,13 @@ class ProfileBrowserWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib import confirm
 
-        if self._selected_profile is None:
+        if self.selected_profile is None:
             bui.getsound('error').play()
             bui.screenmessage(
                 bui.Lstr(resource='nothingIsSelectedErrorText'), color=(1, 0, 0)
             )
             return
-        if self._selected_profile == '__account__':
+        if self.selected_profile == '__account__':
             bui.getsound('error').play()
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.cantDeleteAccountProfileText'),
@@ -287,7 +303,7 @@ class ProfileBrowserWindow(bui.MainWindow):
         confirm.ConfirmWindow(
             bui.Lstr(
                 resource=f'{self._r}.deleteConfirmText',
-                subs=[('${PROFILE}', self._selected_profile)],
+                subs=[('${PROFILE}', self.selected_profile)],
             ),
             self._do_delete_profile,
             width=350,
@@ -297,8 +313,11 @@ class ProfileBrowserWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
+        # Go back to default selection.
+        type(self).selected_profile = None
+
         plus.add_v1_account_transaction(
-            {'type': 'REMOVE_PLAYER_PROFILE', 'name': self._selected_profile}
+            {'type': 'REMOVE_PLAYER_PROFILE', 'name': self.selected_profile}
         )
         plus.run_v1_account_transactions()
         bui.getsound('shieldDown').play()
@@ -317,7 +336,7 @@ class ProfileBrowserWindow(bui.MainWindow):
         if not self.main_window_has_control():
             return
 
-        if self._selected_profile is None:
+        if self.selected_profile is None:
             bui.getsound('error').play()
             bui.screenmessage(
                 bui.Lstr(resource='nothingIsSelectedErrorText'), color=(1, 0, 0)
@@ -325,12 +344,12 @@ class ProfileBrowserWindow(bui.MainWindow):
             return
 
         self.main_window_replace(
-            lambda: EditProfileWindow(self._selected_profile)
+            lambda: EditProfileWindow(self.selected_profile)
         )
 
     def _select(self, name: str, index: int) -> None:
         del index  # Unused.
-        self._selected_profile = name
+        type(self).selected_profile = name
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-locals
@@ -344,7 +363,7 @@ class ProfileBrowserWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        old_selection = self._selected_profile
+        old_selection = self.selected_profile
 
         # Delete old.
         while self._profile_widgets:
@@ -394,6 +413,7 @@ class ProfileBrowserWindow(bui.MainWindow):
             assert isinstance(tval, str)
             txtw = bui.textwidget(
                 parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|profile{index}',
                 position=(5, y_val),
                 size=((self._width - 210) / scl, 28),
                 text=bui.Lstr(value=f'    {tval}'),
@@ -407,6 +427,9 @@ class ProfileBrowserWindow(bui.MainWindow):
                 on_activate_call=bui.Call(self._edit_button.activate),
                 selectable=True,
             )
+            # We handle reselection of these manually; no need for ids.
+            bui.widget(edit=txtw, suppress_missing_id_warnings=True)
+
             character = bui.imagewidget(
                 parent=self._subcontainer,
                 position=(0, y_val),
@@ -420,16 +443,16 @@ class ProfileBrowserWindow(bui.MainWindow):
             )
             if index == 0:
                 bui.widget(edit=txtw, up_widget=self._back_button)
-                if self._selected_profile is None:
-                    self._selected_profile = p_name
+                if self.selected_profile is None:
+                    type(self).selected_profile = p_name
             bui.widget(edit=txtw, show_buffer_top=40, show_buffer_bottom=40)
             self._profile_widgets.append(txtw)
             self._profile_widgets.append(character)
 
-            # Select/show this one if it was previously selected
+            # Select/show this one if it was previously selected.
             # (but defer till after this loop since our height is
             # still changing).
-            if p_name == old_selection:
+            if p_name == old_selection or widget_to_select is None:
                 widget_to_select = txtw
 
             index += 1
@@ -451,46 +474,3 @@ class ProfileBrowserWindow(bui.MainWindow):
         session = bs.get_foreground_host_session()
         if session is not None:
             session.handlemessage(PlayerProfilesChangedMessage())
-
-    def _save_state(self) -> None:
-        try:
-            sel = self._root_widget.get_selected_child()
-            if sel == self._new_button:
-                sel_name = 'New'
-            elif sel == self._edit_button:
-                sel_name = 'Edit'
-            elif sel == self._delete_button:
-                sel_name = 'Delete'
-            elif sel == self._scrollwidget:
-                sel_name = 'Scroll'
-            else:
-                sel_name = 'Back'
-            assert bui.app.classic is not None
-            bui.app.ui_v1.window_states[type(self)] = sel_name
-        except Exception:
-            logging.exception('Error saving state for %s.', self)
-
-    def _restore_state(self) -> None:
-        try:
-            assert bui.app.classic is not None
-            sel_name = bui.app.ui_v1.window_states.get(type(self))
-            if sel_name == 'Scroll':
-                sel = self._scrollwidget
-            elif sel_name == 'New':
-                sel = self._new_button
-            elif sel_name == 'Delete':
-                sel = self._delete_button
-            elif sel_name == 'Edit':
-                sel = self._edit_button
-            elif sel_name == 'Back':
-                sel = self._back_button
-            else:
-                # By default we select our scroll widget if we have profiles;
-                # otherwise our new widget.
-                if not self._profile_widgets:
-                    sel = self._new_button
-                else:
-                    sel = self._scrollwidget
-            bui.containerwidget(edit=self._root_widget, selected_child=sel)
-        except Exception:
-            logging.exception('Error restoring state for %s.', self)

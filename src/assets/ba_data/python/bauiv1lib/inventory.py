@@ -84,6 +84,7 @@ class InventoryWindow(bui.MainWindow):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 scale=0.8,
                 position=(50, yoffs - 50),
                 size=(50, 50) if auxiliary_style else (60, 55),
@@ -105,6 +106,7 @@ class InventoryWindow(bui.MainWindow):
             button_width = 300
             self._player_profiles_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|playerprofiles',
                 position=(self._width * 0.5 - button_width * 0.5, yoffs - 200),
                 autoselect=True,
                 size=(button_width, 60),
@@ -114,6 +116,8 @@ class InventoryWindow(bui.MainWindow):
                 textcolor=(0.75, 0.7, 0.8),
                 on_activate_call=self._player_profiles_press,
             )
+            # Select this by default.
+            bui.containerwidget(edit=self._root_widget, selected_child=btn)
             bui.textwidget(
                 parent=self._root_widget,
                 position=(self._width * 0.5, yoffs - 250),
@@ -144,3 +148,7 @@ class InventoryWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True

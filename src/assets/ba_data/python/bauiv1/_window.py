@@ -125,10 +125,14 @@ class MainWindow(Window):
     def main_window_save_shared_state(self) -> None:
         """Save shared state (such as widget selection).
 
-        This is automatically called when main-windows are destroyed,
-        but the user may opt to call it at other times such as before
-        refreshing a UI (so that selection can be restored after the
-        refresh, etc.)
+        This is automatically called just before main-windows are
+        destroyed, but the user may opt to call it at other times such
+        as before refreshing a UI (so that selection can be restored
+        after the refresh, etc.)
+
+        State contained here is intended to operate on
+        already-constructed UI; state that influences which UI is
+        contructed should go through other mechanisms.
         """
         # pylint: disable=assignment-from-none
         key = self.get_main_window_shared_state_id()
@@ -186,9 +190,13 @@ class MainWindow(Window):
     def main_window_restore_shared_state(self) -> None:
         """Restore shared state (such as widget selection), if any.
 
-        This is automatically called when new main-windows are created,
-        but the user may opt to call it at other times such as after
-        explicitly refreshing some UI.
+        This is automatically called just after main-windows are
+        created, but the user may opt to call it at other times such as
+        after explicitly refreshing some UI.
+
+        State contained here is intended to operate on
+        already-constructed UI; state that influences which UI is
+        contructed should go through other mechanisms.
         """
 
         # pylint: disable=assignment-from-none

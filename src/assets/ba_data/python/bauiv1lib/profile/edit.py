@@ -528,6 +528,11 @@ class EditProfileWindow(
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # Not bothering with this for now.
+        return False
+
     def assign_random_name(self) -> None:
         """Assigning a random name to the player."""
         names = bs.get_random_names()
@@ -819,6 +824,9 @@ class EditProfileWindow(
 
     def save(self, transition_out: bool = True) -> bool:
         """Save has been selected."""
+        # pylint: disable=cyclic-import
+
+        from bauiv1lib.profile.browser import ProfileBrowserWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -842,6 +850,9 @@ class EditProfileWindow(
             )
             bui.getsound('error').play()
             return False
+
+        # Set the profile-browser to have this one selected by default.
+        ProfileBrowserWindow.selected_profile = new_name
 
         if transition_out:
             bui.getsound('gunCocking').play()
