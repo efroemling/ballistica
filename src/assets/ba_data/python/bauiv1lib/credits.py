@@ -94,8 +94,9 @@ class CreditsWindow(bui.MainWindow):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(40, yoffs - 46),
-                size=(60, 48),
+                size=(60, 55),
                 scale=0.8,
                 label=bui.charstr(bui.SpecialChar.BACK),
                 button_type='backSmall',
@@ -113,15 +114,16 @@ class CreditsWindow(bui.MainWindow):
             center_small_content_horizontally=True,
         )
 
-        bui.widget(
-            edit=scroll,
-            right_widget=bui.get_special_widget('squad_button'),
-        )
         if uiscale is bui.UIScale.SMALL:
             bui.widget(
                 edit=scroll,
                 left_widget=bui.get_special_widget('back_button'),
             )
+        bui.widget(
+            edit=scroll,
+            right_widget=bui.get_special_widget('squad_button'),
+        )
+        bui.containerwidget(edit=self._root_widget, selected_child=scroll)
 
         def _format_names(names2: Sequence[str], inset: float) -> str:
             sval = ''
@@ -340,6 +342,7 @@ class CreditsWindow(bui.MainWindow):
 
         container = self._subcontainer = bui.containerwidget(
             parent=scroll,
+            id=f'{self.main_window_id_prefix}|sub',
             size=(self._sub_width, self._sub_height),
             background=False,
             claims_left_right=False,
@@ -396,3 +399,7 @@ class CreditsWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True

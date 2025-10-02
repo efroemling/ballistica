@@ -230,6 +230,7 @@
  "ba_data/python/bauiv1lib/discord.py",
  "ba_data/python/bauiv1lib/fileselector.py",
  "ba_data/python/bauiv1lib/gather/__init__.py",
+ "ba_data/python/bauiv1lib/gather/_gather.py",
  "ba_data/python/bauiv1lib/gather/abouttab.py",
  "ba_data/python/bauiv1lib/gather/manualtab.py",
  "ba_data/python/bauiv1lib/gather/nearbytab.py",

@@ -888,7 +888,7 @@ class LeagueRankWindow(bui.MainWindow):
             assert self._subcontainer
             self._season_popup_menu = PopupMenu(
                 parent=self._subcontainer,
-                widget_id=f'{self.main_window_id_prefix}|season',
+                button_id=f'{self.main_window_id_prefix}|season',
                 position=(self._xoffs + 390, v - 45),
                 width=150,
                 button_size=(200, 50),

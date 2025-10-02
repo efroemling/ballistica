@@ -34,6 +34,7 @@ class ConfigCheckBox:
         maxwidth: float | None = None,
         autoselect: bool = True,
         value_change_call: Callable[[Any], Any] | None = None,
+        check_box_id: str | None = None,
     ):
         if displayname is None:
             displayname = configkey
@@ -41,6 +42,7 @@ class ConfigCheckBox:
         self._configkey = configkey
         self.widget = bui.checkboxwidget(
             parent=parent,
+            id=check_box_id,
             autoselect=autoselect,
             position=position,
             size=size,

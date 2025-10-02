@@ -306,30 +306,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 # Top level windows don't have or expect anywhere to go
                 # back to.
                 assert back_state is None
-                # window.main_window_back_state = None
-            # elif back_state is not None:
-            # Use a supplied back-state.
-            #     window.main_window_back_state = back_state
-            # else:
-            #     # Calc a back-state from the current window.
-            #     oldwin = self._main_window()
-            #     if oldwin is None:
-            #         # We currenty only hold weak refs to windows so that
-            #         # they are free to die on their own, but we expect
-            #         # the main menu window to keep itself alive as long
-            #         # as its the main one. Holler if that seems to not
-            #         # be happening.
-            #         logging.warning(
-            #             'set_main_window: No old MainWindow found'
-            #             ' and is_top_level is False;'
-            #             ' this should not happen.'
-            #         )
-            #         window.main_window_back_state = None
-            #     else:
-            #         window.main_window_back_state
-            # = self.save_main_window_state(
-            #             oldwin
-            #         )
             window.main_window_back_state = back_state
 
         self._main_window = window_weakref

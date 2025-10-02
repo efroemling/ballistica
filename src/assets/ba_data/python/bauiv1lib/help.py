@@ -91,6 +91,7 @@ class HelpWindow(bui.MainWindow):
         else:
             btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(50, yoffs - 45),
                 size=(60, 55),
                 scale=0.8,
@@ -117,7 +118,6 @@ class HelpWindow(bui.MainWindow):
                 edit=self._scrollwidget,
                 left_widget=bui.get_special_widget('back_button'),
             )
-
         bui.widget(
             edit=self._scrollwidget,
             right_widget=bui.get_special_widget('squad_button'),
@@ -143,6 +143,7 @@ class HelpWindow(bui.MainWindow):
 
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
+            id=f'{self.main_window_id_prefix}|sub',
             size=(self._sub_width, self._sub_height),
             background=False,
             claims_left_right=False,
@@ -705,3 +706,7 @@ class HelpWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True

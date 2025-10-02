@@ -669,6 +669,7 @@ static PyMethodDef PyCheckBoxWidgetDef = {
     "checkboxwidget(*,\n"
     "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
+    "  id: str | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
     "  text: str | bauiv1.Lstr | None = None,\n"
@@ -681,7 +682,8 @@ static PyMethodDef PyCheckBoxWidgetDef = {
     "  is_radio_button: bool | None = None,\n"
     "  maxwidth: float | None = None,\n"
     "  autoselect: bool | None = None,\n"
-    "  color: Sequence[float] | None = None) -> bauiv1.Widget\n"
+    "  color: Sequence[float] | None = None,\n"
+    ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a check-box widget.\n"
     "\n"
@@ -1714,9 +1716,11 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* claims_left_right_obj{Py_None};
   PyObject* claims_up_down_obj{Py_None};
   PyObject* autoselect_obj{Py_None};
+  PyObject* id_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
+                                 "id",
                                  "size",
                                  "position",
                                  "background",
@@ -1736,8 +1740,8 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
-          &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
+          args, keywds, "|OOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          &edit_obj, &parent_obj, &id_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
           &center_small_content_obj, &center_small_content_horizontally_obj,
           &color_obj, &highlight_obj, &border_opacity_obj,
@@ -1831,6 +1835,9 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (autoselect_obj != Py_None) {
     widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
+  if (id_obj != Py_None) {
+    widget->SetID(Python::GetString(id_obj));
+  }
 
   // If making a new widget add it at the end.
   if (edit_obj == Py_None) {
@@ -1853,6 +1860,7 @@ static PyMethodDef PyScrollWidgetDef = {
     "scrollwidget(*,\n"
     "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
+    "  id: str | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
     "  background: bool | None = None,\n"
@@ -1868,7 +1876,8 @@ static PyMethodDef PyScrollWidgetDef = {
     "  selection_loops_to_parent: bool | None = None,\n"
     "  claims_left_right: bool | None = None,\n"
     "  claims_up_down: bool | None = None,\n"
-    "  autoselect: bool | None = None) -> bauiv1.Widget\n"
+    "  autoselect: bool | None = None,\n"
+    ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a scroll widget.\n"
     "\n"
@@ -2099,6 +2108,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   static const char* kwlist[] = {"edit",
                                  "parent",
+                                 "id",
                                  "size",
                                  "position",
                                  "text",
@@ -2137,22 +2147,22 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "adapter_finished",
                                  "glow_type",
                                  "allow_clear_button",
-                                 "id",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
           args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
-          const_cast<char**>(kwlist), &edit_obj, &parent_obj, &size_obj,
-          &pos_obj, &text_obj, &v_align_obj, &h_align_obj, &editable_obj,
-          &padding_obj, &on_return_press_call_obj, &on_activate_call_obj,
-          &selectable_obj, &query_obj, &max_chars_obj, &color_obj,
-          &click_activate_obj, &on_select_call_obj, &always_highlight_obj,
-          &draw_controller_obj, &scale_obj, &corner_scale_obj, &description_obj,
-          &transition_delay_obj, &maxwidth_obj, &max_height_obj, &flatness_obj,
-          &shadow_obj, &autoselect_obj, &rotate_obj, &enabled_obj,
+          const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
+          &size_obj, &pos_obj, &text_obj, &v_align_obj, &h_align_obj,
+          &editable_obj, &padding_obj, &on_return_press_call_obj,
+          &on_activate_call_obj, &selectable_obj, &query_obj, &max_chars_obj,
+          &color_obj, &click_activate_obj, &on_select_call_obj,
+          &always_highlight_obj, &draw_controller_obj, &scale_obj,
+          &corner_scale_obj, &description_obj, &transition_delay_obj,
+          &maxwidth_obj, &max_height_obj, &flatness_obj, &shadow_obj,
+          &autoselect_obj, &rotate_obj, &enabled_obj,
           &force_internal_editing_obj, &always_show_carat_obj, &big_obj,
           &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
           &query_description_obj, &adapter_finished_obj, &glow_type_obj,
-          &allow_clear_button_obj, &id_obj))
+          &allow_clear_button_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2404,6 +2414,7 @@ static PyMethodDef PyTextWidgetDef = {
     "textwidget(*,\n"
     "  edit: bauiv1.Widget | None = None,\n"
     "  parent: bauiv1.Widget | None = None,\n"
+    "  id: str | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
     "  text: str | bauiv1.Lstr | None = None,\n"
@@ -2442,7 +2453,6 @@ static PyMethodDef PyTextWidgetDef = {
     "  adapter_finished: bool | None = None,\n"
     "  glow_type: str | None = None,\n"
     "  allow_clear_button: bool | None = None,\n"
-    "  id: str | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"

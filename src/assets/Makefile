@@ -365,6 +365,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/_gather.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/abouttab.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/manualtab.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/nearbytab.py \

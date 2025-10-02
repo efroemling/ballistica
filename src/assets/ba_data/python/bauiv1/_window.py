@@ -135,7 +135,7 @@ class MainWindow(Window):
         shared_state: dict = {}
 
         # Save selection if desired.
-        if self.main_window_should_preserve_selection():
+        if self._get_main_window_should_preserve_selection():
             sel = _bauiv1.get_selected_widget()
             if sel is None:
                 selfin = None
@@ -145,7 +145,11 @@ class MainWindow(Window):
                     pre = f'{self.main_window_id_prefix}|'
                     if selfin.startswith(pre):
                         selfin = f'$(WIN)|{selfin.removeprefix(pre)}'
-                    babase.uilog.debug("Saving ui selection: '%s'.", selfin)
+                    babase.uilog.debug(
+                        "Saving ui selection from '%s': '%s'.",
+                        self.main_window_id_prefix,
+                        selfin,
+                    )
                 else:
                     if not sel.suppress_missing_id_warnings:
                         babase.uilog.warning(
@@ -169,7 +173,11 @@ class MainWindow(Window):
             )
         assert isinstance(shared_state, dict)
 
-        babase.uilog.debug('Saving shared state with key %r.', keyfin)
+        babase.uilog.debug(
+            "Saving shared state from '%s' using key %r.",
+            self.main_window_id_prefix,
+            keyfin,
+        )
         babase.app.ui_v1.main_window_shared_states[keyfin] = shared_state
 
     def restore_shared_state(self) -> None:
@@ -182,6 +190,11 @@ class MainWindow(Window):
         key = self.get_main_window_shared_state_id()
         assert isinstance(key, str | None)
         keyfin = type(self) if key is None else key
+        babase.uilog.debug(
+            "Restoring shared state to '%s' using key %r.",
+            self.main_window_id_prefix,
+            keyfin,
+        )
         shared_state = babase.app.ui_v1.main_window_shared_states.get(keyfin)
         if shared_state is None:
             shared_state = {}
@@ -197,10 +210,14 @@ class MainWindow(Window):
             )
 
         # Restore selection if desired.
-        if self.main_window_should_preserve_selection():
+        if self._get_main_window_should_preserve_selection():
             sel = shared_state.get('selection')
             if isinstance(sel, str):
-                babase.uilog.debug("Restoring ui selection: '%s'.", sel)
+                babase.uilog.debug(
+                    "Restoring ui selection to '%s': '%s'.",
+                    self.main_window_id_prefix,
+                    sel,
+                )
                 pre = '$(WIN)|'
                 if sel.startswith(pre):
                     sel = (
@@ -418,14 +435,18 @@ class MainWindow(Window):
         """
         raise NotImplementedError()
 
-    def main_window_should_preserve_selection(self) -> bool:
+    def main_window_should_preserve_selection(self) -> bool | None:
         """Whether this window should auto-save/restore selection.
 
         If enabled, selection will be stored in the window's shared
         state. See :meth:`~bauiv1.MainWindow.get_main_window_shared_state_id()`
         for more info about main-window shared-state.
+
+        The default value of None results in a warning to explicitly
+        override this (as the implicit default will change from False to
+        True after api 9 support ends).
         """
-        return False
+        return None
 
     def get_main_window_shared_state_id(self) -> str | None:
         """Provide a custom id for window shared state.
@@ -452,6 +473,22 @@ class MainWindow(Window):
 
     def main_window_shared_state_restore(self, state: dict) -> None:
         """Restore state from the provided shared state dict."""
+
+    def _get_main_window_should_preserve_selection(self) -> bool:
+        # pylint: disable=assignment-from-none
+        val = self.main_window_should_preserve_selection()
+        if val is None:
+            warnings.warn(
+                f'{type(self)} should override'
+                f' main_window_should_preserve_selection()'
+                ' to return True or False.'
+                f' The current default is False (for backward compatibility)'
+                f' but it will change to True when api 9 support ends.',
+                FutureWarning,
+                stacklevel=2,
+            )
+            val = False
+        return val
 
 
 class MainWindowState:

@@ -108,6 +108,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
         else:
             back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(35, yoffs - 50),
                 size=(60, 60),
                 scale=0.8,
@@ -152,6 +153,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 )
             self._fullscreen_checkbox = bui.checkboxwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|fullscreen',
                 position=(h_offs + 100, v),
                 value=bui.fullscreen_control_get(),
                 on_value_change_call=bui.fullscreen_control_set,
@@ -185,6 +187,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
         )
         PopupMenu(
             parent=self._root_widget,
+            button_id=f'{self.main_window_id_prefix}|graphicsquality',
             position=(h_offs + 60, v - 50),
             width=150,
             scale=popup_menu_scale,
@@ -219,6 +222,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
         )
         textures_popup = PopupMenu(
             parent=self._root_widget,
+            button_id=f'{self.main_window_id_prefix}|texturequality',
             position=(h_offs + 230, v - 50),
             width=150,
             scale=popup_menu_scale,
@@ -265,6 +269,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
                     )
                     resolution_popup = PopupMenu(
                         parent=self._root_widget,
+                        button_id=f'{self.main_window_id_prefix}|resolution',
                         position=(h_offs + 60, v - 50),
                         width=120,
                         scale=popup_menu_scale,
@@ -290,6 +295,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
                     )
                     resolution_popup = PopupMenu(
                         parent=self._root_widget,
+                        button_id=f'{self.main_window_id_prefix}|resolution',
                         position=(h_offs + 60, v - 50),
                         width=120,
                         scale=popup_menu_scale,
@@ -309,6 +315,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
                     )
                     resolution_popup = PopupMenu(
                         parent=self._root_widget,
+                        button_id=f'{self.main_window_id_prefix}|resolution',
                         position=(h_offs + 60, v - 50),
                         width=120,
                         scale=popup_menu_scale,
@@ -342,6 +349,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
             )
             vsync_popup = PopupMenu(
                 parent=self._root_widget,
+                button_id=f'{self.main_window_id_prefix}|vsync',
                 position=(h_offs + 230, v - 50),
                 width=150,
                 scale=popup_menu_scale,
@@ -386,6 +394,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
             self._last_max_fps_str = max_fps_str
             self._max_fps_text = bui.textwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|maxfps',
                 position=(h_offs + 170, v - 5),
                 size=(105, 30),
                 text=max_fps_str,
@@ -409,6 +418,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
 
         fpsc = ConfigCheckBox(
             parent=self._root_widget,
+            check_box_id=f'{self.main_window_id_prefix}|showfps',
             position=(h_offs + 69, v - 6),
             size=(210, 30),
             scale=0.86,
@@ -429,6 +439,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
         if show_tv_mode:
             tvc = ConfigCheckBox(
                 parent=self._root_widget,
+                check_box_id=f'{self.main_window_id_prefix}|tvborder',
                 position=(h_offs + 240, v - 6),
                 size=(210, 30),
                 scale=0.86,
@@ -456,6 +467,10 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     @override
     def on_main_window_close(self) -> None:
