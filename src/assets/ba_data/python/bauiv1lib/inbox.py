@@ -1206,7 +1206,7 @@ class InboxWindow(bui.MainWindow):
         # Note to self: perhaps we should *not* do this if significant
         # time has passed since the window was made or if input commands
         # have happened.
-        self.restore_shared_state()
+        self.main_window_restore_shared_state()
 
 
 def _get_bs_classic_tourney_results_sections() -> list[_Section]:

@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
-import logging
 
 import bauiv1 as bui
 
@@ -80,6 +79,7 @@ class AudioSettingsWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(35, yoffs - 55),
                 size=(60, 60),
                 scale=0.8,
@@ -114,6 +114,7 @@ class AudioSettingsWindow(bui.MainWindow):
 
         self._sound_volume_numedit = svne = ConfigNumberEdit(
             parent=self._root_widget,
+            idprefix=f'{self.main_window_id_prefix}|soundvolume',
             position=(x, y),
             xoffset=10,
             configkey='Sound Volume',
@@ -130,6 +131,7 @@ class AudioSettingsWindow(bui.MainWindow):
         y -= spacing
         self._music_volume_numedit = ConfigNumberEdit(
             parent=self._root_widget,
+            idprefix=f'{self.main_window_id_prefix}|musicvolume',
             position=(x, y),
             xoffset=10,
             configkey='Music Volume',
@@ -149,6 +151,7 @@ class AudioSettingsWindow(bui.MainWindow):
             y -= 1.2 * spacing
             self._soundtrack_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|soundtrack',
                 position=(width * 0.5 - 155, y),
                 size=(310, 50),
                 autoselect=True,
@@ -180,8 +183,6 @@ class AudioSettingsWindow(bui.MainWindow):
                 edit=svne.minusbutton, up_widget=spback, left_widget=spback
             )
 
-        self._restore_state()
-
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
@@ -193,8 +194,8 @@ class AudioSettingsWindow(bui.MainWindow):
         )
 
     @override
-    def on_main_window_close(self) -> None:
-        self._save_state()
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     def _do_soundtracks(self) -> None:
         # pylint: disable=cyclic-import
@@ -222,49 +223,3 @@ class AudioSettingsWindow(bui.MainWindow):
                 origin_widget=self._soundtrack_button
             )
         )
-
-    def _save_state(self) -> None:
-        try:
-            sel = self._root_widget.get_selected_child()
-            if sel == self._sound_volume_numedit.minusbutton:
-                sel_name = 'SoundMinus'
-            elif sel == self._sound_volume_numedit.plusbutton:
-                sel_name = 'SoundPlus'
-            elif sel == self._music_volume_numedit.minusbutton:
-                sel_name = 'MusicMinus'
-            elif sel == self._music_volume_numedit.plusbutton:
-                sel_name = 'MusicPlus'
-            elif sel == self._soundtrack_button:
-                sel_name = 'Soundtrack'
-            elif sel == self._back_button:
-                sel_name = 'Back'
-            else:
-                raise ValueError(f'unrecognized selection \'{sel}\'')
-            assert bui.app.classic is not None
-            bui.app.ui_v1.window_states[type(self)] = sel_name
-        except Exception:
-            logging.exception('Error saving state for %s.', self)
-
-    def _restore_state(self) -> None:
-        try:
-            assert bui.app.classic is not None
-            sel_name = bui.app.ui_v1.window_states.get(type(self))
-            sel: bui.Widget | None
-            if sel_name == 'SoundMinus':
-                sel = self._sound_volume_numedit.minusbutton
-            elif sel_name == 'SoundPlus':
-                sel = self._sound_volume_numedit.plusbutton
-            elif sel_name == 'MusicMinus':
-                sel = self._music_volume_numedit.minusbutton
-            elif sel_name == 'MusicPlus':
-                sel = self._music_volume_numedit.plusbutton
-            elif sel_name == 'Soundtrack':
-                sel = self._soundtrack_button
-            elif sel_name == 'Back':
-                sel = self._back_button
-            else:
-                sel = self._back_button
-            if sel:
-                bui.containerwidget(edit=self._root_widget, selected_child=sel)
-        except Exception:
-            logging.exception('Error restoring state for %s.', self)

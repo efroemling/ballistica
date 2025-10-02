@@ -122,10 +122,13 @@ class MainWindow(Window):
             scale_origin_stack_offset=scale_origin,
         )
 
-    def save_shared_state(self) -> None:
-        """Save shared state, if any.
+    def main_window_save_shared_state(self) -> None:
+        """Save shared state (such as widget selection).
 
-        :meta private:
+        This is automatically called when main-windows are destroyed,
+        but the user may opt to call it at other times such as before
+        refreshing a UI (so that selection can be restored after the
+        refresh, etc.)
         """
         # pylint: disable=assignment-from-none
         key = self.get_main_window_shared_state_id()
@@ -166,10 +169,10 @@ class MainWindow(Window):
         # Allow win to save any custom state. (Do this after selection
         # save so user can manipulate save output if they want).
         try:
-            self.main_window_shared_state_save(shared_state)
+            self.main_window_do_save_shared_state(shared_state)
         except Exception:
             logging.exception(
-                'Error in main_window_shared_state_save() for %s.', self
+                'Error in main_window_do_save_shared_state() for %s.', self
             )
         assert isinstance(shared_state, dict)
 
@@ -180,10 +183,12 @@ class MainWindow(Window):
         )
         babase.app.ui_v1.main_window_shared_states[keyfin] = shared_state
 
-    def restore_shared_state(self) -> None:
-        """Restore shared state, if any.
+    def main_window_restore_shared_state(self) -> None:
+        """Restore shared state (such as widget selection), if any.
 
-        :meta private:
+        This is automatically called when new main-windows are created,
+        but the user may opt to call it at other times such as after
+        explicitly refreshing some UI.
         """
 
         # pylint: disable=assignment-from-none
@@ -203,10 +208,10 @@ class MainWindow(Window):
         # Allow win to restore any custom state. (Do this before
         # selection restore so user can manipulate input if they want).
         try:
-            self.main_window_shared_state_restore(shared_state)
+            self.main_window_do_restore_shared_state(shared_state)
         except Exception:
             logging.exception(
-                'Error in main_window_shared_state_restore() for %s.', self
+                'Error in main_window_do_restore_shared_state() for %s.', self
             )
 
         # Restore selection if desired.
@@ -244,7 +249,7 @@ class MainWindow(Window):
             return
 
         # Save selection, etc.
-        self.save_shared_state()
+        self.main_window_save_shared_state()
 
         # Give the user a chance to do whatever.
         try:
@@ -354,7 +359,7 @@ class MainWindow(Window):
             back_state = ui.save_current_main_window_state()
 
         # Save selection, etc.
-        self.save_shared_state()
+        self.main_window_save_shared_state()
 
         if not isinstance(new_window, MainWindow):
             # If we're not in control, we're not allowed to change things.
@@ -468,11 +473,17 @@ class MainWindow(Window):
         """
         return None
 
-    def main_window_shared_state_save(self, state: dict) -> None:
-        """Save state into the provided shared state dict."""
+    def main_window_do_save_shared_state(self, state: dict) -> None:
+        """Save state into the provided shared state dict.
 
-    def main_window_shared_state_restore(self, state: dict) -> None:
-        """Restore state from the provided shared state dict."""
+        Can be overridden by subclasses to save custom data.
+        """
+
+    def main_window_do_restore_shared_state(self, state: dict) -> None:
+        """Restore state from the provided shared state dict.
+
+        Can be overridden by subclasses to restore custom data.
+        """
 
     def _get_main_window_should_preserve_selection(self) -> bool:
         # pylint: disable=assignment-from-none

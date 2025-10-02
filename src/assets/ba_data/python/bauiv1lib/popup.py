@@ -253,6 +253,8 @@ class PopupMenuWindow(PopupWindow):
                 selectable=(not inactive),
                 glow_type='uniform',
             )
+            bui.widget(edit=wdg, suppress_missing_id_warnings=True)
+
             if choice == self._current_choice:
                 bui.containerwidget(
                     edit=self._columnwidget,

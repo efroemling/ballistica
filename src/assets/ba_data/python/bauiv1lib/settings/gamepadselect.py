@@ -122,6 +122,11 @@ class GamepadSelectWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # Not really needed here.
+        return False
+
     def gamepad_configure_callback(self, event: dict[str, Any]) -> None:
         """Respond to a gamepad button press during config selection."""
         from bauiv1lib.settings.gamepad import GamepadSettingsWindow

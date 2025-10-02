@@ -257,8 +257,8 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 v_align='center',
             )
 
-            # On standard android we have 'Auto', 'Native', and a few
-            # HD standards.
+            # On standard android we have 'Auto', 'Native', and a few HD
+            # standards.
             if app.classic.platform == 'android':
                 # on cardboard/daydream android we have a few
                 # render-target-scale options

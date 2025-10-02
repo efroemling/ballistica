@@ -312,7 +312,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self._main_window_widget = window_widget
 
         # Now that we're all set up, restore any state.
-        window.restore_shared_state()
+        window.main_window_restore_shared_state()
 
     def has_main_window(self) -> bool:
         """Return whether a main menu window is present."""
