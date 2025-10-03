@@ -88,6 +88,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
         else:
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(40, yoffs - 53),
                 size=(60, 60),
                 scale=0.8,
@@ -136,6 +137,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
         button_width = 300
         btn = bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|cpu',
             position=((self._sub_width - button_width) * 0.5, v),
             size=(button_width, 60),
             autoselect=True,
@@ -149,6 +151,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
 
         bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|mediareload',
             position=((self._sub_width - button_width) * 0.5, v),
             size=(button_width, 60),
             autoselect=True,
@@ -185,6 +188,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
 
         popup.PopupMenu(
             parent=self._subcontainer,
+            button_id=f'{self.main_window_id_prefix}|playlisttype',
             position=(x_offs, v),
             width=150,
             choices=['Random', 'Teams', 'Free-For-All'],
@@ -215,6 +219,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
 
         self._stress_test_playlist_name_field = bui.textwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|playlistname',
             position=(x_offs + 5, v - 5),
             size=(250, 46),
             text=self._stress_test_playlist,
@@ -256,6 +261,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
         )
         bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|pdec',
             position=(330 - x_sub, v - 11),
             size=(28, 28),
             label='-',
@@ -266,6 +272,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
         )
         bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|pinc',
             position=(380 - x_sub, v - 11),
             size=(28, 28),
             label='+',
@@ -301,6 +308,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
         )
         bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|rdurdec',
             position=(330 - x_sub, v - 11),
             size=(28, 28),
             label='-',
@@ -313,6 +321,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
         )
         bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|rdurinc',
             position=(380 - x_sub, v - 11),
             size=(28, 28),
             label='+',
@@ -326,6 +335,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
         v -= 82
         btn = bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|runstress',
             position=((self._sub_width - button_width) * 0.5, v),
             size=(button_width, 60),
             autoselect=True,
@@ -343,6 +353,10 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     def _stress_test_player_count_decrement(self) -> None:
         self._stress_test_player_count = max(

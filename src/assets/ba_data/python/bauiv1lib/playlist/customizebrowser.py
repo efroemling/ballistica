@@ -103,6 +103,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(43, yoffs - 87),
                 size=(60, 60),
                 scale=0.77,
@@ -134,11 +135,12 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         ymargin = 0.05
 
         def _make_button(
-            i: int, label: bui.Lstr, call: Callable[[], None]
+            i: int, button_id: str, label: bui.Lstr, call: Callable[[], None]
         ) -> bui.Widget:
             v = self._scroll_bottom + self._button_height * i
             return bui.buttonwidget(
                 parent=self._root_widget,
+                id=button_id,
                 position=(
                     h + xmargin * self._button_width,
                     v + ymargin * self._button_height,
@@ -158,6 +160,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         new_button = _make_button(
             5,
+            f'{self.main_window_id_prefix}|new',
             bui.Lstr(
                 resource='newText', fallback_resource=f'{self._r}.newText'
             ),
@@ -165,6 +168,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         )
         self._edit_button = _make_button(
             4,
+            f'{self.main_window_id_prefix}|edit',
             bui.Lstr(
                 resource='editText',
                 fallback_resource=f'{self._r}.editText',
@@ -174,6 +178,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         duplicate_button = _make_button(
             3,
+            f'{self.main_window_id_prefix}|duplicate',
             bui.Lstr(
                 resource='duplicateText',
                 fallback_resource=f'{self._r}.duplicateText',
@@ -183,6 +188,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         delete_button = _make_button(
             2,
+            f'{self.main_window_id_prefix}|delete',
             bui.Lstr(
                 resource='deleteText', fallback_resource=f'{self._r}.deleteText'
             ),
@@ -190,11 +196,17 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         )
 
         self._import_button = _make_button(
-            1, bui.Lstr(resource='importText'), self._import_playlist
+            1,
+            f'{self.main_window_id_prefix}|import',
+            bui.Lstr(resource='importText'),
+            self._import_playlist,
         )
 
         share_button = _make_button(
-            0, bui.Lstr(resource='shareText'), self._share_playlist
+            0,
+            f'{self.main_window_id_prefix}|share',
+            bui.Lstr(resource='shareText'),
+            self._share_playlist,
         )
 
         scrollwidget = bui.scrollwidget(
@@ -285,6 +297,10 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         )
 
     @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
+
+    @override
     def on_main_window_close(self) -> None:
         if self._selected_playlist_name is not None:
             cfg = bui.app.config
@@ -353,7 +369,15 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                 on_activate_call=bui.Call(self._edit_button.activate),
                 selectable=True,
             )
-            bui.widget(edit=txtw, show_buffer_top=50, show_buffer_bottom=50)
+            # We don't give these widgets ids because we handle
+            # re-selecting them ourself, but we need to suppress the
+            # warning this usually causes.
+            bui.widget(
+                edit=txtw,
+                show_buffer_top=50,
+                show_buffer_bottom=50,
+                suppress_missing_id_warnings=True,
+            )
 
             # Hitting up from top widget should jump to 'back'.
             if index == 0:

@@ -78,6 +78,10 @@ class ConfigKeyboardWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return False
+
     def _get_config_mapping(self, default: bool = False) -> None:
         for button in [
             'buttonJump',

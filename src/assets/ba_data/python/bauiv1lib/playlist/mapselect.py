@@ -148,6 +148,10 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return False
+
     def _refresh(self, select_get_more_maps_button: bool = False) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches

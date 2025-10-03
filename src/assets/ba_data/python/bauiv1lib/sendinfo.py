@@ -170,6 +170,10 @@ class SendInfoWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
+
     def _activate_enter_button(self) -> None:
         self._enter_button.activate()
 

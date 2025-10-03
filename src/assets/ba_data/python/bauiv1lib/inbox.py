@@ -420,6 +420,7 @@ class InboxWindow(bui.MainWindow):
         )
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|scroll',
             size=(scroll_width, scroll_height),
             position=(self._width * 0.5 - scroll_width * 0.5, scroll_bottom),
             capture_arrows=True,
@@ -1025,7 +1026,7 @@ class InboxWindow(bui.MainWindow):
         sub_height += margin_bottom
 
         subcontainer = bui.containerwidget(
-            id='inboxsub',
+            id=f'{self.main_window_id_prefix}|subc',
             parent=self._scrollwidget,
             size=(sub_width, sub_height),
             background=False,

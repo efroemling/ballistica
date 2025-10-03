@@ -87,6 +87,7 @@ class AchievementsWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 autoselect=True,
                 position=(50, yoffs - 48),
                 size=(60, 60),
@@ -108,11 +109,15 @@ class AchievementsWindow(bui.MainWindow):
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|scroll',
             size=(scroll_width, scroll_height),
             position=(self._width * 0.5 - scroll_width * 0.5, scroll_bottom),
             capture_arrows=True,
             simple_culling_v=10,
             border_opacity=0.4,
+        )
+        bui.containerwidget(
+            edit=self._root_widget, selected_child=self._scrollwidget
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
         if uiscale is bui.UIScale.SMALL:
@@ -200,6 +205,7 @@ class AchievementsWindow(bui.MainWindow):
 
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
+            id=f'{self.main_window_id_prefix}|subcontainer',
             size=(sub_width, sub_height),
             background=False,
         )
@@ -358,3 +364,7 @@ class AchievementsWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
