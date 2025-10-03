@@ -1,3 +1,6 @@
+### 1.7.52 (build 22571, api 9, 2025-10-03)
+- Empty version number bump.
+
 ### 1.7.51 (build 22569, api 9, 2025-10-03)
 - Deprecated `bauiv1.uicleanupcheck()` - to be removed when api 9 support ends.
   Use `ba*.app.ui_v1.add_ui_cleanup_check()` instead.
