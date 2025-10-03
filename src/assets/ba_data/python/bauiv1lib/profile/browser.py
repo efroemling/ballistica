@@ -428,7 +428,7 @@ class ProfileBrowserWindow(bui.MainWindow):
                 selectable=True,
             )
             # We handle reselection of these manually; no need for ids.
-            bui.widget(edit=txtw, suppress_missing_id_warnings=True)
+            bui.widget(edit=txtw, allow_preserve_selection=False)
 
             character = bui.imagewidget(
                 parent=self._subcontainer,

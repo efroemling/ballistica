@@ -1584,6 +1584,10 @@ void RootWidget::UpdateForFocusedWindow_(Widget* widget) {
   // Take note whether we're currently in a main menu vs gameplay.
   in_main_menu_ = g_base->app_mode()->IsInMainMenu();
 
+  auto old_toolbar_visibility{root_widget_toolbar_visibility_};
+  auto old_toolbar_cancel_button_style{
+      root_widget_toolbar_cancel_button_style_};
+
   if (widget == nullptr) {
     root_widget_toolbar_visibility_ = ToolbarVisibility::kInGame;
     root_widget_toolbar_cancel_button_style_ = ToolbarCancelButtonStyle::kBack;
@@ -1592,7 +1596,21 @@ void RootWidget::UpdateForFocusedWindow_(Widget* widget) {
     root_widget_toolbar_cancel_button_style_ =
         widget->toolbar_cancel_button_style();
   }
-  MarkForUpdate();
+
+  // If anything has changed here, mark stuff as dirty and run an immediate
+  // step which should update selectable states for widgets. We want to keep
+  // those values precisely in sync with the focused window for when it
+  // saves/restores selections/etc.
+  if (root_widget_toolbar_visibility_ != old_toolbar_visibility
+      || root_widget_toolbar_cancel_button_style_
+             != old_toolbar_cancel_button_style) {
+    child_widgets_dirty_ = true;
+    MarkForUpdate();
+
+    // Run an immediate step to update things; (avoids jumpy positions if
+    // resizing game window))
+    StepChildWidgets_(0.0);
+  }
 }
 
 void RootWidget::StepChildWidgets_(seconds_t dt) {
@@ -1775,8 +1793,9 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
         y = base_scale_ * (b.y_smoothed - b.height * b.scale * 0.5f);
         break;
     }
-    b.widget->set_selectable(b.enabled && b.selectable);
-    b.widget->set_enabled(b.enabled && b.selectable);
+    bool selval{b.enabled && b.selectable};
+    b.widget->set_selectable(selval);
+    b.widget->set_enabled(selval);
     b.widget->set_translate(x, y);
     b.widget->set_width(b.width);
     b.widget->set_height(b.height);

@@ -1532,9 +1532,11 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
         } else {
           static bool printed = false;
           if (!printed) {
-            g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
-                                 "SelectWidget called on unselectable widget: "
-                                     + w->GetWidgetTypeName());
+            g_core->logging->Log(
+                LogName::kBa, LogLevel::kWarning,
+                "SelectWidget called on unselectable widget: (type='"
+                    + w->GetWidgetTypeName() + "', id '"
+                    + (w->id().has_value() ? *w->id() : "None") + "')");
             Python::PrintStackTrace();
             printed = true;
           }

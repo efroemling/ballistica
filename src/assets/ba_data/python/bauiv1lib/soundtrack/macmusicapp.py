@@ -109,6 +109,11 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # Todo: wire this up.
+        return False
+
     def _playlists_cb(self, playlists: list[str]) -> None:
         if self._column:
             for widget in self._column.get_children():

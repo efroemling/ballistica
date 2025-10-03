@@ -186,7 +186,7 @@ class PlayOptionsWindow(PopupWindow):
             on_activate_call=self._on_cancel_press,
             autoselect=True,
         )
-        bui.widget(edit=self._cancel_button, suppress_missing_id_warnings=True)
+        bui.widget(edit=self._cancel_button, allow_preserve_selection=False)
 
         h_offs_img = self._width * 0.5 - c_width_total * 0.5
         v_offs_img = self._height - 118 - scl * 125.0 + 50
@@ -250,7 +250,7 @@ class PlayOptionsWindow(PopupWindow):
                         mesh_transparent=mesh_transparent if owned else None,
                         mask_texture=mask_tex if owned else None,
                     )
-                    bui.widget(edit=btn, suppress_missing_id_warnings=True)
+                    bui.widget(edit=btn, allow_preserve_selection=False)
 
                     if row == 0 and col == 0:
                         bui.widget(edit=self._cancel_button, down_widget=btn)
@@ -323,7 +323,7 @@ class PlayOptionsWindow(PopupWindow):
             )
             bui.widget(
                 edit=self._custom_colors_names_button,
-                suppress_missing_id_warnings=True,
+                allow_preserve_selection=False,
             )
 
             assert bui.app.classic is not None
@@ -424,7 +424,7 @@ class PlayOptionsWindow(PopupWindow):
                 )
             ),
         )
-        bui.widget(edit=self._ok_button, suppress_missing_id_warnings=True)
+        bui.widget(edit=self._ok_button, allow_preserve_selection=False)
 
         bui.widget(
             edit=self._ok_button, up_widget=self._show_tutorial_check_box

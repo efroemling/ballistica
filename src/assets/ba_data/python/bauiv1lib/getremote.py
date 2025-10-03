@@ -20,7 +20,7 @@ class GetBSRemoteWindow(PopupWindow):
         scale = (
             2.3
             if uiscale is bui.UIScale.SMALL
-            else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
+            else 1.7 if uiscale is bui.UIScale.MEDIUM else 1.4
         )
         self._transitioning_out = False
         self._width = 570
@@ -54,7 +54,7 @@ class GetBSRemoteWindow(PopupWindow):
             size=(0, 0),
             h_align='center',
             v_align='center',
-            maxwidth=self._width * 0.9,
+            maxwidth=self._width * 0.8,
             position=(self._width * 0.5, 60),
             text=bui.Lstr(
                 resource='remoteAppInfoShortText',

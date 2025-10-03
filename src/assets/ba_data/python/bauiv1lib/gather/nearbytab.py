@@ -102,7 +102,7 @@ class NetScanner:
             # We don't give these ids since they pop in and out and it
             # doesn't make sense to save/restore selections for them.
             # But we need to suppress the warning from that.
-            bui.widget(edit=txt3, suppress_missing_id_warnings=True)
+            bui.widget(edit=txt3, allow_preserve_selection=False)
 
             if host == last_selected_host:
                 bui.containerwidget(

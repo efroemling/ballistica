@@ -2486,7 +2486,7 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* show_buffer_right_obj{Py_None};
   PyObject* depth_range_obj{Py_None};
   PyObject* autoselect_obj{Py_None};
-  PyObject* suppress_missing_id_warnings_obj{Py_None};
+  PyObject* allow_preserve_selection_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "up_widget",
@@ -2499,14 +2499,14 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
                                  "show_buffer_right",
                                  "depth_range",
                                  "autoselect",
-                                 "suppress_missing_id_warnings",
+                                 "allow_preserve_selection",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
           args, keywds, "O|OOOOOOOOOOO", const_cast<char**>(kwlist), &edit_obj,
           &up_widget_obj, &down_widget_obj, &left_widget_obj, &right_widget_obj,
           &show_buffer_top_obj, &show_buffer_bottom_obj, &show_buffer_left_obj,
           &show_buffer_right_obj, &depth_range_obj, &autoselect_obj,
-          &suppress_missing_id_warnings_obj))
+          &allow_preserve_selection_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2584,9 +2584,9 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
   if (autoselect_obj != Py_None) {
     widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
-  if (suppress_missing_id_warnings_obj != Py_None) {
-    widget->set_suppress_missing_id_warnings(
-        Python::GetBool(suppress_missing_id_warnings_obj));
+  if (allow_preserve_selection_obj != Py_None) {
+    widget->set_allow_preserve_selection(
+        Python::GetBool(allow_preserve_selection_obj));
   }
 
   // Run any calls built up by UI callbacks.
@@ -2613,7 +2613,7 @@ static PyMethodDef PyWidgetDef = {
     "  show_buffer_right: float | None = None,\n"
     "  depth_range: tuple[float, float] | None = None,\n"
     "  autoselect: bool | None = None,\n"
-    "  suppress_missing_id_warnings: bool | None = None,\n"
+    "  allow_preserve_selection: bool | None = None,\n"
     ") -> None\n"
     "\n"
     "Edit common attributes of any widget.\n"

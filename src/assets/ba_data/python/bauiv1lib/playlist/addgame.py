@@ -202,6 +202,10 @@ class PlaylistAddGameWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return False
+
     def _on_game_types_loaded(
         self, gametypes: list[type[bs.GameActivity]]
     ) -> None:

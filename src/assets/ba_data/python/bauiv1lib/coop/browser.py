@@ -161,6 +161,7 @@ class CoopBrowserWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(75, yoffs - 48.0),
                 size=(60, 50),
                 scale=1.2,
@@ -262,7 +263,6 @@ class CoopBrowserWindow(bui.MainWindow):
         self._fg_state = app.fg_state
 
         self._refresh()
-        self._restore_state()
 
         # Even though we might display cached tournament data immediately, we
         # don't consider it valid until we've pinged.
@@ -302,6 +302,10 @@ class CoopBrowserWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     @override
     def on_main_window_close(self) -> None:
@@ -528,6 +532,7 @@ class CoopBrowserWindow(bui.MainWindow):
         un_sel_textcolor = (0.6, 0.6, 0.6)
         self._easy_button = bui.buttonwidget(
             parent=parent_widget,
+            id=f'{self.main_window_id_prefix}|easy',
             position=(h + 30, v2 + 105),
             size=(120, 70),
             label=bui.Lstr(resource='difficultyEasyText'),
@@ -558,6 +563,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._hard_button = bui.buttonwidget(
             parent=parent_widget,
+            id=f'{self.main_window_id_prefix}|hard',
             position=(h + 30, v2 + 32),
             size=(120, 70),
             label=bui.Lstr(resource='difficultyHardText'),
@@ -782,6 +788,7 @@ class CoopBrowserWindow(bui.MainWindow):
         )
         self._tournament_info_button = bui.buttonwidget(
             parent=w_parent,
+            id=f'{self.main_window_id_prefix}|tourneyinfo',
             label='?',
             size=(20, 20),
             text_scale=0.6,
@@ -1189,39 +1196,10 @@ class CoopBrowserWindow(bui.MainWindow):
 
     def _save_state(self) -> None:
         cfg = bui.app.config
-        try:
-            sel = self._root_widget.get_selected_child()
-            if sel == self._back_button:
-                sel_name = 'Back'
-            elif sel == self._scrollwidget:
-                sel_name = 'Scroll'
-            else:
-                raise ValueError('unrecognized selection')
-            assert bui.app.classic is not None
-            bui.app.ui_v1.window_states[type(self)] = {'sel_name': sel_name}
-        except Exception:
-            logging.exception('Error saving state for %s.', self)
-
         cfg['Selected Coop Row'] = self._selected_row
         cfg['Selected Coop Custom Level'] = self._selected_custom_level
         cfg['Selected Coop Campaign Level'] = self._selected_campaign_level
         cfg.commit()
-
-    def _restore_state(self) -> None:
-        try:
-            assert bui.app.classic is not None
-            sel_name = bui.app.ui_v1.window_states.get(type(self), {}).get(
-                'sel_name'
-            )
-            if sel_name == 'Back':
-                sel = self._back_button
-            elif sel_name == 'Scroll':
-                sel = self._scrollwidget
-            else:
-                sel = self._scrollwidget
-            bui.containerwidget(edit=self._root_widget, selected_child=sel)
-        except Exception:
-            logging.exception('Error restoring state for %s.', self)
 
     def sel_change(self, row: str, game: str) -> None:
         """(internal)"""

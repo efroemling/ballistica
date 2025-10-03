@@ -73,6 +73,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(50, yoffs - 60),
                 size=(60, 60),
                 scale=0.8,
@@ -108,6 +109,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         v -= 60.0 * scl
         self._new_button = btn = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|new',
             position=(h, v),
             size=(100, 55.0 * scl),
             on_activate_call=self._new_soundtrack,
@@ -137,6 +139,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
         self._edit_button = btn = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|edit',
             position=(h, v),
             size=(100, 55.0 * scl),
             on_activate_call=self._edit_soundtrack,
@@ -165,6 +168,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
         self._duplicate_button = btn = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|duplicate',
             position=(h, v),
             size=(100, 55.0 * scl),
             on_activate_call=self._duplicate_soundtrack,
@@ -193,6 +197,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
         self._delete_button = btn = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|delete',
             position=(h, v),
             size=(100, 55.0 * scl),
             on_activate_call=self._delete_soundtrack,
@@ -268,6 +273,11 @@ class SoundtrackBrowserWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # Todo: wire this up.
+        return True
 
     @override
     def on_main_window_close(self) -> None:
@@ -483,6 +493,8 @@ class SoundtrackBrowserWindow(bui.MainWindow):
                 on_activate_call=self._edit_soundtrack_with_sound,
                 selectable=True,
             )
+            # Handling reselection of these manually, so no ids.
+            bui.widget(edit=txtw, allow_preserve_selection=False)
             if index == 0:
                 bui.widget(edit=txtw, up_widget=self._back_button)
             self._soundtrack_widgets.append(txtw)

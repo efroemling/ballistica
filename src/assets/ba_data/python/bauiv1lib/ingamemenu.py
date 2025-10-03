@@ -58,6 +58,10 @@ class InGameMenuWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
+
     def _refresh(self) -> None:
 
         # Clear everything that was there.
@@ -91,6 +95,7 @@ class InGameMenuWindow(bui.MainWindow):
         if bs.is_in_replay():
             self._end_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|end',
                 position=(h - self._button_width * 0.5 * scale, v),
                 scale=scale,
                 size=(self._button_width, self._button_height),
@@ -101,6 +106,7 @@ class InGameMenuWindow(bui.MainWindow):
         elif bs.get_foreground_host_session() is not None:
             self._end_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|end',
                 position=(h - self._button_width * 0.5 * scale, v),
                 scale=scale,
                 size=(self._button_width, self._button_height),
@@ -124,6 +130,7 @@ class InGameMenuWindow(bui.MainWindow):
             # button.
             self._end_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|end',
                 position=(h - self._button_width * 0.5 * scale, v),
                 scale=scale,
                 size=(self._button_width, self._button_height),
@@ -174,6 +181,7 @@ class InGameMenuWindow(bui.MainWindow):
             )
             btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|replayspeedminus',
                 position=(
                     h - b_size - b_buffer_1,
                     v - b_size - b_buffer_2 + v_offs,
@@ -199,6 +207,7 @@ class InGameMenuWindow(bui.MainWindow):
             )
             btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|replayspeedplus',
                 position=(h + b_buffer_1, v - b_size - b_buffer_2 + v_offs),
                 button_type='square',
                 size=(b_size, b_size),
@@ -221,6 +230,7 @@ class InGameMenuWindow(bui.MainWindow):
             )
             self._pause_resume_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|pauseresume',
                 position=(h - b_size * 0.5, v - b_size - b_buffer_2 + v_offs),
                 button_type='square',
                 size=(b_size, b_size),
@@ -234,6 +244,7 @@ class InGameMenuWindow(bui.MainWindow):
             )
             btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|rewind',
                 position=(
                     h - b_size * 1.5 - b_buffer_1 * 2,
                     v - b_size - b_buffer_2 + v_offs,
@@ -260,6 +271,7 @@ class InGameMenuWindow(bui.MainWindow):
             )
             btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|forward',
                 position=(
                     h + b_size * 0.5 + b_buffer_1 * 2,
                     v - b_size - b_buffer_2 + v_offs,
@@ -376,6 +388,7 @@ class InGameMenuWindow(bui.MainWindow):
         self._p_index += 1
         btn = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|resume',
             position=(h - self._button_width / 2, v),
             size=(self._button_width, self._button_height),
             scale=scale,
@@ -417,6 +430,7 @@ class InGameMenuWindow(bui.MainWindow):
             self._p_index += 1
             btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|leave',
                 position=(h - self._button_width / 2, v),
                 size=(self._button_width, self._button_height),
                 scale=scale,

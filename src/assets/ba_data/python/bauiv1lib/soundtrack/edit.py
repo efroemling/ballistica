@@ -242,6 +242,11 @@ class SoundtrackEditWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # Todo: wire this up.
+        return False
+
     def _refresh(self) -> None:
         for widget in self._col.get_children():
             widget.delete()

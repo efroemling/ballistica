@@ -1198,7 +1198,7 @@ class LeagueRankWindow(bui.MainWindow):
             )
             # Giving these ids doesn't work cleanly with sel
             # save/restore due to refreshing, so let's just not for now.
-            bui.widget(edit=txt, suppress_missing_id_warnings=True)
+            bui.widget(edit=txt, allow_preserve_selection=False)
             self._power_ranking_score_widgets.append(txt)
             bui.textwidget(
                 edit=txt,

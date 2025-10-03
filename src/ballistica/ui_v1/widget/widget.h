@@ -119,11 +119,11 @@ class Widget : public Object {
   void set_auto_select(bool enable) { auto_select_ = enable; }
   auto auto_select() const -> bool { return auto_select_; }
 
-  void set_suppress_missing_id_warnings(bool val) {
-    suppress_missing_id_warnings_ = val;
+  void set_allow_preserve_selection(bool val) {
+    allow_preserve_selection_ = val;
   }
-  auto suppress_missing_id_warnings() const -> bool {
-    return suppress_missing_id_warnings_;
+  auto allow_preserve_selection() const -> bool {
+    return allow_preserve_selection_;
   }
 
   // If neighbors are locked, calls to set the up/down/left/right widget
@@ -293,7 +293,7 @@ class Widget : public Object {
   bool neighbors_locked_{};
   bool auto_select_{};
   bool in_hierarchy_{};
-  bool suppress_missing_id_warnings_{};
+  bool allow_preserve_selection_{true};
 };
 
 }  // namespace ballistica::ui_v1

@@ -183,6 +183,11 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # Todo: wire this up.
+        return False
+
     def _on_mac_music_app_playlist_press(self) -> None:
         assert bui.app.classic is not None
         music = bui.app.classic.music

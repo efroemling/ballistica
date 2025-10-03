@@ -147,27 +147,38 @@ class MainWindow(Window):
             if sel is None:
                 selfin = None
             else:
-                selfin = sel.id
-                if selfin is not None:
-                    pre = f'{self.main_window_id_prefix}|'
-                    if selfin.startswith(pre):
-                        selfin = f'$(WIN)|{selfin.removeprefix(pre)}'
-                    babase.uilog.debug(
-                        "Saving ui selection from '%s': '%s'.",
-                        self.main_window_id_prefix,
-                        selfin,
-                    )
-                else:
-                    if not sel.suppress_missing_id_warnings:
+                if sel.allow_preserve_selection:
+                    selfin = sel.id
+                    if selfin is not None:
+                        pre = f'{self.main_window_id_prefix}|'
+                        if selfin.startswith(pre):
+                            selfin = f'$(WIN)|{selfin.removeprefix(pre)}'
+                        babase.uilog.debug(
+                            "Saving ui selection from '%s': '%s'.",
+                            self.main_window_id_prefix,
+                            selfin,
+                        )
+                    else:
+                        # if not sel.allow_preserve_selection:
                         babase.uilog.warning(
-                            'main_window_should_preserve_selection() returned'
-                            ' True for %s but no id was assigned to the'
-                            ' currently selected widget %s. All selectable'
-                            ' widgets must be assigned unique ids for'
-                            ' selection-preserving to work properly.',
+                            'main_window_should_preserve_selection()'
+                            ' returned True for %s but no id was assigned'
+                            ' to the currently selected widget %s. All'
+                            ' selectable widgets must be assigned unique'
+                            ' ids for selection-preserving to work'
+                            ' properly.',
                             self,
                             sel,
                         )
+                else:
+                    selfin = None
+                    babase.uilog.debug(
+                        "Not saving ui selection from '%s';"
+                        ' selected widget disallows it (%s).',
+                        self.main_window_id_prefix,
+                        sel,
+                    )
+
             shared_state['selection'] = selfin
 
         # Allow win to save any custom state. (Do this after selection
@@ -238,8 +249,16 @@ class MainWindow(Window):
                     )
                 widget = _bauiv1.widget_by_id(sel)
                 if widget is not None:
-                    widget.global_select()
-                    widget.scroll_into_view()
+                    if widget.selectable:
+                        widget.global_select()
+                        widget.scroll_into_view()
+                    else:
+                        babase.uilog.debug(
+                            "Unable to restore selection '%s';"
+                            ' widget is not selectable.',
+                            sel,
+                        )
+
                 else:
                     # We expect this to happen sometimes (windows may come
                     # up with different UIs visible/etc.). Let's note it but

@@ -79,6 +79,8 @@ class GameButton:
             show_buffer_top=50,
             show_buffer_left=400,
             show_buffer_right=200,
+            # We handle reselection manually for these so no ids.
+            allow_preserve_selection=False,
         )
         if select:
             bui.containerwidget(

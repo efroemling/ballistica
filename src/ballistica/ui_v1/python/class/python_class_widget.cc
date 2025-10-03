@@ -23,14 +23,13 @@ PyNumberMethods PythonClassWidget::as_number_;
 // Attrs we expose through our custom getattr/setattr.
 #define ATTR_TRANSITIONING_OUT "transitioning_out"
 #define ATTR_ID "id"
-#define ATTR_SUPPRESS_MISSING_ID_WARNINGS "suppress_missing_id_warnings"
+#define ATTR_ALLOW_PRESERVE_SELECTION "allow_preserve_selection"
+#define ATTR_SELECTABLE "selectable"
 
 // The set we expose via dir().
 static const char* extra_dir_attrs[] = {
-    ATTR_TRANSITIONING_OUT,
-    ATTR_ID,
-    ATTR_SUPPRESS_MISSING_ID_WARNINGS,
-    nullptr,
+    ATTR_TRANSITIONING_OUT, ATTR_ID, ATTR_ALLOW_PRESERVE_SELECTION,
+    ATTR_SELECTABLE,        nullptr,
 };
 
 auto PythonClassWidget::type_name() -> const char* { return "Widget"; }
@@ -60,9 +59,12 @@ void PythonClassWidget::SetupType(PyTypeObject* cls) {
       "    " ATTR_ID " (str | None):\n"
       "        ID for this widget (if any).\n"
      "\n"
-      "    " ATTR_SUPPRESS_MISSING_ID_WARNINGS " (bool):\n"
-      "        Whether this widget should suppress warnings about missing\n"
-      "        id values during auto selection save/restore operations.\n";
+      "    " ATTR_ALLOW_PRESERVE_SELECTION " (bool):\n"
+      "        Whether this widget should participate in auto selection\n"
+      "        save/restore.\n"
+      "\n"
+      "    " ATTR_SELECTABLE " (bool):\n"
+      "        Whether this widget can be selected.\n";
 
   // clang-format on
 
@@ -135,12 +137,22 @@ auto PythonClassWidget::tp_getattro(PythonClassWidget* self, PyObject* attr)
     }
     Py_RETURN_NONE;
   }
-  if (!strcmp(s, ATTR_SUPPRESS_MISSING_ID_WARNINGS)) {
+  if (!strcmp(s, ATTR_ALLOW_PRESERVE_SELECTION)) {
     Widget* w = self->widget_->get();
     if (!w) {
       throw Exception("Invalid Widget", PyExcType::kReference);
     }
-    if (w->suppress_missing_id_warnings()) {
+    if (w->allow_preserve_selection()) {
+      Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
+  }
+  if (!strcmp(s, ATTR_SELECTABLE)) {
+    Widget* w = self->widget_->get();
+    if (!w) {
+      throw Exception("Invalid Widget", PyExcType::kReference);
+    }
+    if (w->IsSelectable()) {
       Py_RETURN_TRUE;
     }
     Py_RETURN_FALSE;

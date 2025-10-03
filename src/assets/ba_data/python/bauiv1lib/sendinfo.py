@@ -178,8 +178,6 @@ class SendInfoWindow(bui.MainWindow):
         self._enter_button.activate()
 
     def _do_enter(self) -> None:
-        # pylint: disable=cyclic-import
-        # from bauiv1lib.settings.advanced import AdvancedSettingsWindow
 
         plus = bui.app.plus
         assert plus is not None

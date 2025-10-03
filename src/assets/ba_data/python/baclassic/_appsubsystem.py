@@ -833,6 +833,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 is_top_level=True,
                 back_state=None,
                 suppress_warning=True,
+                # Reset selections to default for consistency.
+                restore_shared_state=False,
             )
 
     def save_ui_state(self) -> None:

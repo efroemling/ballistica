@@ -133,7 +133,7 @@ class UIRow:
         # These are popping in and out too chaotically to try and do
         # auto-select-save/restore, so we don't supply ids for them. We
         # need to suppress the warning that comes with that though.
-        bui.widget(edit=self._name_widget, suppress_missing_id_warnings=True)
+        bui.widget(edit=self._name_widget, allow_preserve_selection=False)
 
         bui.widget(
             edit=self._name_widget,
@@ -173,9 +173,7 @@ class UIRow:
             # auto-select-save/restore, so we don't supply ids for them.
             # We need to suppress the warning that comes with that
             # though.
-            bui.widget(
-                edit=self._stats_button, suppress_missing_id_warnings=True
-            )
+            bui.widget(edit=self._stats_button, allow_preserve_selection=False)
 
             if existing_selection == Selection(
                 party.get_key(), SelectionComponent.STATS_BUTTON

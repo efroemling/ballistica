@@ -376,7 +376,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                 edit=txtw,
                 show_buffer_top=50,
                 show_buffer_bottom=50,
-                suppress_missing_id_warnings=True,
+                allow_preserve_selection=False,
             )
 
             # Hitting up from top widget should jump to 'back'.

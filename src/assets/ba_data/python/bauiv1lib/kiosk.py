@@ -375,6 +375,11 @@ class KioskWindow(bui.MainWindow):
         )
 
     @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # TODO: Wire this up.
+        return False
+
+    @override
     def on_main_window_close(self) -> None:
         self._save_state()
 

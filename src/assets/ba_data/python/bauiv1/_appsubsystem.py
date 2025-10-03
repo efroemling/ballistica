@@ -162,6 +162,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         is_top_level: bool = False,
         is_auxiliary: bool = False,
         suppress_warning: bool = False,
+        restore_shared_state: bool = True,
     ) -> None:
         """Set the current 'main' window.
 
@@ -174,6 +175,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         """
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-locals
         from bauiv1._window import MainWindow
 
         # If we haven't grabbed initial uiscale or screen size for
@@ -312,7 +314,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self._main_window_widget = window_widget
 
         # Now that we're all set up, restore any state.
-        window.main_window_restore_shared_state()
+        if restore_shared_state:
+            window.main_window_restore_shared_state()
 
     def has_main_window(self) -> bool:
         """Return whether a main menu window is present."""

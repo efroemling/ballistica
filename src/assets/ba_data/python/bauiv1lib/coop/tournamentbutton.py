@@ -60,6 +60,8 @@ class TournamentButton:
             show_buffer_top=50,
             show_buffer_left=400,
             show_buffer_right=200,
+            # We handle reselection manually for these so no ids.
+            allow_preserve_selection=False,
         )
         if select:
             bui.containerwidget(
@@ -331,6 +333,11 @@ class TournamentButton:
             color=value_color,
             flatness=1.0,
         )
+        # We handle reselection manually for these so no ids.
+        bui.widget(
+            edit=self.current_leader_name_text, allow_preserve_selection=False
+        )
+
         self.current_leader_score_text = bui.textwidget(
             parent=parent,
             draw_controller=btn,
@@ -357,6 +364,8 @@ class TournamentButton:
             text_scale=0.6,
             on_activate_call=bui.WeakCall(self._show_scores),
         )
+        # We handle reselection manually for these so no ids.
+        bui.widget(edit=self.more_scores_button, allow_preserve_selection=False)
         bui.widget(
             edit=self.current_leader_name_text,
             down_widget=self.more_scores_button,

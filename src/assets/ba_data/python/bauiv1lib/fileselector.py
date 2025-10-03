@@ -164,6 +164,11 @@ class FileSelectorWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # TODO - wire this up.
+        return False
+
     def _on_up_press(self) -> None:
         self._on_entry_activated('..')
 

@@ -110,6 +110,11 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # TODO: Wire this up.
+        return False
+
     def _build_gui(self) -> None:
         # pylint: disable=too-many-locals
         from bauiv1lib.config import ConfigNumberEdit, ConfigCheckBox
