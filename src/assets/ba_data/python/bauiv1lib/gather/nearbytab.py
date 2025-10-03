@@ -23,16 +23,23 @@ class NetScanner:
 
     def __init__(
         self,
+        *,
         tab: GatherTab,
         scrollwidget: bui.Widget,
         tab_button: bui.Widget,
         width: float,
+        idprefix: str,
     ):
+        self._idprefix = idprefix
         self._tab = weakref.ref(tab)
         self._scrollwidget = scrollwidget
         self._tab_button = tab_button
         self._columnwidget = bui.columnwidget(
-            parent=self._scrollwidget, border=2, margin=0, left_border=10
+            parent=self._scrollwidget,
+            id=f'{self._idprefix}|col',
+            border=2,
+            margin=0,
+            left_border=10,
         )
         bui.widget(edit=self._columnwidget, up_widget=tab_button)
         self._width = width
@@ -92,6 +99,11 @@ class NetScanner:
                 corner_scale=t_scale,
                 maxwidth=(self._width / t_scale) * 0.93,
             )
+            # We don't give these ids since they pop in and out and it
+            # doesn't make sense to save/restore selections for them.
+            # But we need to suppress the warning from that.
+            bui.widget(edit=txt3, suppress_missing_id_warnings=True)
+
             if host == last_selected_host:
                 bui.containerwidget(
                     edit=self._columnwidget,
@@ -107,6 +119,7 @@ class NearbyGatherTab(GatherTab):
 
     def __init__(self, window: GatherWindow) -> None:
         super().__init__(window)
+        self._idprefix = f'{window.main_window_id_prefix}|nearby'
         self._net_scanner: NetScanner | None = None
         self._container: bui.Widget | None = None
 
@@ -158,7 +171,11 @@ class NearbyGatherTab(GatherTab):
         )
 
         self._net_scanner = NetScanner(
-            self, scrollw, tab_button, width=sub_scroll_width
+            idprefix=self._idprefix,
+            tab=self,
+            scrollwidget=scrollw,
+            tab_button=tab_button,
+            width=sub_scroll_width,
         )
 
         bui.widget(edit=scrollw, autoselect=True, up_widget=tab_button)

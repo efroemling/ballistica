@@ -218,6 +218,14 @@ class ChestWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # This doesn't really benefit us since we do lots of widget
+        # creates/destroys throughout our lifetime and also we're an
+        # auxliary window so should never need to restore toolbar
+        # selections.
+        return False
+
     def _update_time_display(self, unlock_time: datetime.datetime) -> None:
         # Once our target text widget disappears, kill our timer.
         if not self._time_string_text:

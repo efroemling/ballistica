@@ -147,6 +147,7 @@ class GatherWindow(bui.MainWindow):
         else:
             self._back_button = btn = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|back',
                 position=(70, yoffs - 43),
                 size=(60, 60),
                 scale=1.1,
@@ -205,6 +206,7 @@ class GatherWindow(bui.MainWindow):
         self._tab_row = TabRow(
             self._root_widget,
             tabdefs,
+            idprefix=self.main_window_id_prefix,
             size=(self._scroll_width - 2.0 * tab_inset, 50),
             pos=(
                 self._scroll_left + tab_inset,
@@ -265,6 +267,10 @@ class GatherWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     @override
     def on_main_window_close(self) -> None:
@@ -334,25 +340,25 @@ class GatherWindow(bui.MainWindow):
             for tab in self._tabs.values():
                 tab.save_state()
 
-            sel = self._root_widget.get_selected_child()
-            selected_tab_ids = [
-                tab_id
-                for tab_id, tab in self._tab_row.tabs.items()
-                if sel == tab.button
-            ]
-            if sel == self._back_button:
-                sel_name = 'Back'
-            elif selected_tab_ids:
-                assert len(selected_tab_ids) == 1
-                sel_name = f'Tab:{selected_tab_ids[0].value}'
-            elif sel == self._tab_container:
-                sel_name = 'TabContainer'
-            else:
-                raise ValueError(f'unrecognized selection: \'{sel}\'')
-            assert bui.app.classic is not None
-            bui.app.ui_v1.window_states[type(self)] = {
-                'sel_name': sel_name,
-            }
+            # sel = self._root_widget.get_selected_child()
+            # selected_tab_ids = [
+            #     tab_id
+            #     for tab_id, tab in self._tab_row.tabs.items()
+            #     if sel == tab.button
+            # ]
+            # if sel == self._back_button:
+            #     sel_name = 'Back'
+            # elif selected_tab_ids:
+            #     assert len(selected_tab_ids) == 1
+            #     sel_name = f'Tab:{selected_tab_ids[0].value}'
+            # elif sel == self._tab_container:
+            #     sel_name = 'TabContainer'
+            # else:
+            #     raise ValueError(f'unrecognized selection: \'{sel}\'')
+            # assert bui.app.classic is not None
+            # bui.app.ui_v1.window_states[type(self)] = {
+            #     'sel_name': sel_name,
+            # }
         except Exception:
             logging.exception('Error saving state for %s.', self)
 
@@ -361,11 +367,12 @@ class GatherWindow(bui.MainWindow):
             for tab in self._tabs.values():
                 tab.restore_state()
 
-            sel: bui.Widget | None
-            assert bui.app.classic is not None
-            winstate = bui.app.ui_v1.window_states.get(type(self), {})
-            sel_name = winstate.get('sel_name', None)
-            assert isinstance(sel_name, (str, type(None)))
+            # sel: bui.Widget | None
+            # assert bui.app.classic is not None
+            # winstate = bui.app.ui_v1.window_states.get(type(self), {})
+
+            # sel_name = winstate.get('sel_name', None)
+            # assert isinstance(sel_name, (str, type(None)))
             current_tab = self.TabID.ABOUT
             gather_tab_val = bui.app.config.get('Gather Tab')
             try:
@@ -375,19 +382,19 @@ class GatherWindow(bui.MainWindow):
             except ValueError:
                 pass
             self._set_tab(current_tab)
-            if sel_name == 'Back':
-                sel = self._back_button
-            elif sel_name == 'TabContainer':
-                sel = self._tab_container
-            elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
-                try:
-                    sel_tab_id = self.TabID(sel_name.split(':')[-1])
-                except ValueError:
-                    sel_tab_id = self.TabID.ABOUT
-                sel = self._tab_row.tabs[sel_tab_id].button
-            else:
-                sel = self._tab_row.tabs[current_tab].button
-            bui.containerwidget(edit=self._root_widget, selected_child=sel)
+            # if sel_name == 'Back':
+            #     sel = self._back_button
+            # elif sel_name == 'TabContainer':
+            #     sel = self._tab_container
+            # elif isinstance(sel_name, str) and sel_name.startswith('Tab:'):
+            #     try:
+            #         sel_tab_id = self.TabID(sel_name.split(':')[-1])
+            #     except ValueError:
+            #         sel_tab_id = self.TabID.ABOUT
+            #     sel = self._tab_row.tabs[sel_tab_id].button
+            # else:
+            #     sel = self._tab_row.tabs[current_tab].button
+            # bui.containerwidget(edit=self._root_widget, selected_child=sel)
 
         except Exception:
             logging.exception('Error restoring state for %s.', self)

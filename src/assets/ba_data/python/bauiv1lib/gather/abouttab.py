@@ -27,10 +27,13 @@ class AboutGatherTab(GatherTab):
         region_bottom: float,
     ) -> bui.Widget:
         # pylint: disable=too-many-locals
+        # pylint: disable=too-many-statements
         # pylint: disable=too-many-positional-arguments
 
         plus = bui.app.plus
         assert plus is not None
+
+        idprefix = f'{self.window.main_window_id_prefix}|about'
 
         try_tickets = plus.get_v1_account_misc_read_val(
             'friendTryTickets', None
@@ -147,6 +150,7 @@ class AboutGatherTab(GatherTab):
             )
             invite_button = bui.buttonwidget(
                 parent=container,
+                id=f'{idprefix}|invitefriend',
                 position=(region_width * 0.59, y - 25),
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
@@ -179,6 +183,7 @@ class AboutGatherTab(GatherTab):
             )
             discord_button = bui.buttonwidget(
                 parent=container,
+                id=f'{idprefix}|discordjoin',
                 position=(region_width * 0.59, y - 25),
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),

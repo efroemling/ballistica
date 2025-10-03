@@ -291,7 +291,6 @@ class PlaylistEditWindow(bui.MainWindow):
 
     @override
     def main_window_should_preserve_selection(self) -> bool:
-        # FIXME: Wire this up.
         return False
 
     def _set_ui_selection(self, selection: str) -> None:

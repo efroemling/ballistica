@@ -130,6 +130,11 @@ class UIRow:
             h_align='left',
             v_align='center',
         )
+        # These are popping in and out too chaotically to try and do
+        # auto-select-save/restore, so we don't supply ids for them. We
+        # need to suppress the warning that comes with that though.
+        bui.widget(edit=self._name_widget, suppress_missing_id_warnings=True)
+
         bui.widget(
             edit=self._name_widget,
             left_widget=join_text,
@@ -164,6 +169,14 @@ class UIRow:
                 position=(sub_scroll_width - 270.0, 1 + vpos),
                 scale=0.9,
             )
+            # These are popping in and out too chaotically to try and do
+            # auto-select-save/restore, so we don't supply ids for them.
+            # We need to suppress the warning that comes with that
+            # though.
+            bui.widget(
+                edit=self._stats_button, suppress_missing_id_warnings=True
+            )
+
             if existing_selection == Selection(
                 party.get_key(), SelectionComponent.STATS_BUTTON
             ):
@@ -356,6 +369,7 @@ class PublicGatherTab(GatherTab):
 
     def __init__(self, window: GatherWindow) -> None:
         super().__init__(window)
+        self._idprefix = f'{window.main_window_id_prefix}|public'
         self._container: bui.Widget | None = None
         self._join_text: bui.Widget | None = None
         self._host_text: bui.Widget | None = None
@@ -428,6 +442,7 @@ class PublicGatherTab(GatherTab):
         v = c_height - 30
         self._join_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|jointab',
             position=(c_width * 0.5 - 245, v - 13),
             color=(0.6, 1.0, 0.6),
             scale=1.3,
@@ -451,6 +466,7 @@ class PublicGatherTab(GatherTab):
         )
         self._host_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|hosttab',
             position=(c_width * 0.5 + 45, v - 13),
             color=(0.6, 1.0, 0.6),
             scale=1.3,
@@ -593,6 +609,7 @@ class PublicGatherTab(GatherTab):
         filter_txt = bui.Lstr(resource='filterText')
         self._filter_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|filter',
             text=self._filter_value,
             size=(350, 45),
             position=(c_width * 0.5 - 150, v - 10),
@@ -755,6 +772,7 @@ class PublicGatherTab(GatherTab):
         )
         self._host_name_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|hostingname',
             editable=True,
             size=(535, 40),
             position=(230 + xoffs, v - 30),
@@ -795,6 +813,7 @@ class PublicGatherTab(GatherTab):
         )
         btn1 = self._host_max_party_size_minus_button = bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|maxsizeminus',
             size=(40, 40),
             on_activate_call=bui.WeakCall(
                 self._on_max_public_party_size_minus_press
@@ -805,6 +824,7 @@ class PublicGatherTab(GatherTab):
         )
         btn2 = self._host_max_party_size_plus_button = bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|maxsizeplus',
             size=(40, 40),
             on_activate_call=bui.WeakCall(
                 self._on_max_public_party_size_plus_press
@@ -827,6 +847,7 @@ class PublicGatherTab(GatherTab):
             )
         self._host_toggle_button = bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|hosttoggle',
             label=label,
             size=(400, 80),
             on_activate_call=(

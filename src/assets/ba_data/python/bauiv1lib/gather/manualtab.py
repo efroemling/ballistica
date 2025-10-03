@@ -81,6 +81,7 @@ class ManualGatherTab(GatherTab):
 
     def __init__(self, window: GatherWindow) -> None:
         super().__init__(window)
+        self._idprefix = f'{window.main_window_id_prefix}|manual'
         self._check_button: bui.Widget | None = None
         self._doing_access_check: bool | None = None
         self._access_check_count: int | None = None
@@ -135,6 +136,7 @@ class ManualGatherTab(GatherTab):
         v = c_height - 30
         self._join_by_address_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|joinbyaddress',
             position=(c_width * 0.5 - 245, v - 13),
             color=(0.6, 1.0, 0.6),
             scale=1.3,
@@ -156,6 +158,7 @@ class ManualGatherTab(GatherTab):
         )
         self._favorites_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|favorites',
             position=(c_width * 0.5 + 45, v - 13),
             color=(0.6, 1.0, 0.6),
             scale=1.3,
@@ -271,6 +274,7 @@ class ManualGatherTab(GatherTab):
         )
         txt = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|manualaddress',
             editable=True,
             description=bui.Lstr(resource='gatherWindow.' 'manualAddressText'),
             position=(c_width * 0.5 - 240 - 50, v - 30),
@@ -298,6 +302,7 @@ class ManualGatherTab(GatherTab):
         )
         txt2 = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|manualport',
             editable=True,
             description=bui.Lstr(resource='gatherWindow.' 'portText'),
             text=str(last_port),
@@ -313,6 +318,7 @@ class ManualGatherTab(GatherTab):
 
         btn = bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|manualconnect',
             size=(300, 70),
             label=bui.Lstr(resource='gatherWindow.' 'manualConnectText'),
             position=(c_width * 0.5 - 300, v),
@@ -321,6 +327,7 @@ class ManualGatherTab(GatherTab):
         )
         savebutton = bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|savefavorite',
             size=(300, 70),
             label=bui.Lstr(resource='gatherWindow.favoritesSaveText'),
             position=(c_width * 0.5 - 240 + 490 - 200, v),
@@ -336,6 +343,7 @@ class ManualGatherTab(GatherTab):
         self._check_button = bui.textwidget(
             parent=self._container,
             size=(250, 60),
+            id=f'{self._idprefix}|showmyaddress',
             text=bui.Lstr(resource='gatherWindow.showMyAddressText'),
             v_align='center',
             h_align='center',
@@ -408,6 +416,7 @@ class ManualGatherTab(GatherTab):
 
         self._favorites_connect_button = btn1 = bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|favoritesconnect',
             size=(b_width, b_height),
             position=(140 if uiscale is bui.UIScale.SMALL else 40, btnv),
             button_type='square',
@@ -426,6 +435,7 @@ class ManualGatherTab(GatherTab):
         btnv -= b_height + b_space_extra
         bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|favoritesedit',
             size=(b_width, b_height),
             position=(140 if uiscale is bui.UIScale.SMALL else 40, btnv),
             button_type='square',
@@ -439,6 +449,7 @@ class ManualGatherTab(GatherTab):
         btnv -= b_height + b_space_extra
         bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|favoritesdelete',
             size=(b_width, b_height),
             position=(140 if uiscale is bui.UIScale.SMALL else 40, btnv),
             button_type='square',
@@ -462,6 +473,7 @@ class ManualGatherTab(GatherTab):
         )
         self._columnwidget = bui.columnwidget(
             parent=scrlw,
+            id=f'{self._idprefix}|favoritescolumn',
             left_border=10,
             border=2,
             margin=0,
@@ -517,6 +529,7 @@ class ManualGatherTab(GatherTab):
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._favorite_edit_window = cnt = bui.containerwidget(
+            parent=bui.get_special_widget('overlay_stack'),
             scale=(
                 1.8
                 if uiscale is bui.UIScale.SMALL
@@ -524,6 +537,7 @@ class ManualGatherTab(GatherTab):
             ),
             size=(c_width, c_height),
             transition='in_scale',
+            darken_behind=True,
         )
 
         bui.textwidget(
@@ -735,6 +749,7 @@ class ManualGatherTab(GatherTab):
         for i, server in enumerate(servers):
             txt = bui.textwidget(
                 parent=self._columnwidget,
+                id=f'{self._idprefix}|favorite{i}',
                 size=(self._favorites_scroll_width / t_scale, 30),
                 selectable=True,
                 color=(1.0, 1, 0.4),

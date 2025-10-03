@@ -58,6 +58,7 @@ class PrivateGatherTab(GatherTab):
 
     def __init__(self, window: GatherWindow) -> None:
         super().__init__(window)
+        self._idprefix = f'{window.main_window_id_prefix}|private'
         self._container: bui.Widget | None = None
         self._state: State = State()
         self._last_datacode_refresh_time: float | None = None
@@ -115,6 +116,7 @@ class PrivateGatherTab(GatherTab):
         v = self._c_height - 30.0
         self._join_sub_tab_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|jointab',
             position=(self._c_width * 0.5 - 245, v - 13),
             color=(0.6, 1.0, 0.6),
             scale=1.3,
@@ -134,6 +136,7 @@ class PrivateGatherTab(GatherTab):
         )
         self._host_sub_tab_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|hosttab',
             position=(self._c_width * 0.5 + 45, v - 13),
             color=(0.6, 1.0, 0.6),
             scale=1.3,
@@ -526,6 +529,7 @@ class PrivateGatherTab(GatherTab):
 
         self._join_party_code_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|joinpartycode',
             position=(self._c_width * 0.5 - 150, self._c_height - 250),
             flatness=1.0,
             scale=1.5,
@@ -540,6 +544,7 @@ class PrivateGatherTab(GatherTab):
         )
         btn = bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|connect',
             size=(300, 70),
             label=bui.Lstr(resource='gatherWindow.manualConnectText'),
             position=(self._c_width * 0.5 - 150, self._c_height - 350),
@@ -667,6 +672,7 @@ class PrivateGatherTab(GatherTab):
             )
             self._host_playlist_button = bui.buttonwidget(
                 parent=self._container,
+                id=f'{self._idprefix}|host',
                 size=(400, 70),
                 color=(0.6, 0.5, 0.6),
                 textcolor=(0.8, 0.75, 0.8),
@@ -726,6 +732,7 @@ class PrivateGatherTab(GatherTab):
                 cbtnoffs = 10
                 self._host_copy_button = bui.buttonwidget(
                     parent=self._container,
+                    id=f'{self._idprefix}|hostcopy',
                     size=(140, 40),
                     color=(0.6, 0.5, 0.6),
                     textcolor=(0.8, 0.75, 0.8),
@@ -738,6 +745,7 @@ class PrivateGatherTab(GatherTab):
                 cbtnoffs = -70
             self._host_connect_button = bui.buttonwidget(
                 parent=self._container,
+                id=f'{self._idprefix}|hostconnect',
                 size=(140, 40),
                 color=(0.6, 0.5, 0.6),
                 textcolor=(0.8, 0.75, 0.8),
@@ -898,6 +906,7 @@ class PrivateGatherTab(GatherTab):
         waiting = self._waiting_for_start_stop_response
         self._host_start_stop_button = bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|hoststartstop',
             size=(400, 80),
             color=(
                 (0.6, 0.6, 0.6)
