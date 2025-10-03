@@ -20,6 +20,7 @@ class TeamNamesColorsWindow(PopupWindow):
     def __init__(self, scale_origin: tuple[float, float]):
         from bascenev1 import DEFAULT_TEAM_COLORS, DEFAULT_TEAM_NAMES
 
+        self._idprefix = bui.app.ui_v1.new_id_prefix('teamnamescolors')
         self._width = 500
         self._height = 330
         self._transitioning_out = False
@@ -56,6 +57,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
         resetbtn = bui.buttonwidget(
             parent=self.root_widget,
+            id=f'{self._idprefix}|reset',
             label=bui.Lstr(resource='settingsWindowAdvanced.resetText'),
             autoselect=True,
             scale=0.7,
@@ -68,6 +70,7 @@ class TeamNamesColorsWindow(PopupWindow):
             self._color_buttons.append(
                 bui.buttonwidget(
                     parent=self.root_widget,
+                    id=f'{self._idprefix}|colorbutton{i}',
                     autoselect=True,
                     position=(50, 0 + 195 - 90 * i),
                     on_activate_call=bui.Call(self._color_click, i),
@@ -80,6 +83,7 @@ class TeamNamesColorsWindow(PopupWindow):
             self._color_text_fields.append(
                 bui.textwidget(
                     parent=self.root_widget,
+                    id=f'{self._idprefix}|colortext{i}',
                     position=(135, 0 + 201 - 90 * i),
                     size=(280, 46),
                     text=self._names[i],
@@ -104,6 +108,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
         cancelbtn = bui.buttonwidget(
             parent=self.root_widget,
+            id=f'{self._idprefix}|cancel',
             label=bui.Lstr(resource='cancelText'),
             autoselect=True,
             on_activate_call=self._on_cancel_press,
@@ -112,6 +117,7 @@ class TeamNamesColorsWindow(PopupWindow):
         )
         okbtn = bui.buttonwidget(
             parent=self.root_widget,
+            id=f'{self._idprefix}|ok',
             label=bui.Lstr(resource='okText'),
             autoselect=True,
             on_activate_call=self._ok,

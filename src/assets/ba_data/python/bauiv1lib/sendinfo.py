@@ -72,6 +72,7 @@ class SendInfoWindow(bui.MainWindow):
         if uiscale is not bui.UIScale.SMALL:
             close_button = bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|close',
                 position=(25, yoffs - 35),
                 size=(60, 60),
                 scale=0.7,
@@ -114,6 +115,7 @@ class SendInfoWindow(bui.MainWindow):
 
         self._text_field = bui.textwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|desc',
             position=(width * 0.5 + txoffs + 125, v),
             size=(380, 46),
             text='',
@@ -134,6 +136,7 @@ class SendInfoWindow(bui.MainWindow):
         b_width = 200
         self._enter_button = btn2 = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self.main_window_id_prefix}|enter',
             position=(width * 0.5 - b_width * 0.5, v),
             size=(b_width, 60),
             scale=1.0,

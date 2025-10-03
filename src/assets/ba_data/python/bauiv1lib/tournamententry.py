@@ -39,6 +39,7 @@ class TournamentEntryWindow(PopupWindow):
         assert bui.app.plus
         bui.set_analytics_screen('Tournament Entry Window')
 
+        self._idprefix = bui.app.ui_v1.new_id_prefix('tournamententry')
         self._tournament_id = tournament_id
         self._tournament_info = bui.app.classic.accounts.tournament_info[
             self._tournament_id
@@ -126,6 +127,7 @@ class TournamentEntryWindow(PopupWindow):
 
         self._cancel_button = bui.buttonwidget(
             parent=self.root_widget,
+            id=f'{self._idprefix}|cancel',
             position=(40, self._height - 34),
             size=(60, 60),
             scale=0.5,
@@ -150,6 +152,7 @@ class TournamentEntryWindow(PopupWindow):
 
         btn = self._pay_with_tickets_button = bui.buttonwidget(
             parent=self.root_widget,
+            id=f'{self._idprefix}|paywithtickets',
             position=(30 + x_offs, 60 + off_p),
             autoselect=True,
             button_type='square',
@@ -196,6 +199,7 @@ class TournamentEntryWindow(PopupWindow):
         if self._do_ad_btn:
             btn = self._pay_with_ad_btn = bui.buttonwidget(
                 parent=self.root_widget,
+                id=f'{self._idprefix}|paywithad',
                 position=(190, 60 + off_p),
                 autoselect=True,
                 button_type='square',
@@ -274,6 +278,7 @@ class TournamentEntryWindow(PopupWindow):
         if self._do_practice:
             self._practice_button = bui.buttonwidget(
                 parent=self.root_widget,
+                id=f'{self._idprefix}|practice',
                 position=btn_pos,
                 autoselect=True,
                 size=btn_size,

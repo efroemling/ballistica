@@ -218,6 +218,7 @@ class PluginWindow(bui.MainWindow):
         sub_height = len(plugspecs) * plug_line_height
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
+            id=f'{self.main_window_id_prefix}|subc',
             size=(sub_width, sub_height),
             background=False,
         )

@@ -399,7 +399,7 @@ class InGameMenuWindow(bui.MainWindow):
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
         # Add any custom options defined by the current game.
-        for entry in custom_menu_entries:
+        for i, entry in enumerate(custom_menu_entries):
             h, v, scale = positions[self._p_index]
             self._p_index += 1
 
@@ -414,6 +414,7 @@ class InGameMenuWindow(bui.MainWindow):
 
             bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self.main_window_id_prefix}|custom{i}',
                 position=(h - self._button_width / 2, v),
                 size=(self._button_width, self._button_height),
                 scale=scale,

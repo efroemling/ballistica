@@ -437,6 +437,7 @@ class WatchWindow(bui.MainWindow):
         )
         self._my_replay_rename_text = txt = bui.textwidget(
             parent=cnt,
+            id=f'{self.main_window_id_prefix}|replayrenametext',
             size=(c_width * 0.8, 40),
             h_align='left',
             v_align='center',
@@ -450,6 +451,7 @@ class WatchWindow(bui.MainWindow):
         )
         cbtn = bui.buttonwidget(
             parent=cnt,
+            id=f'{self.main_window_id_prefix}|replayrenamecancel',
             label=bui.Lstr(resource='cancelText'),
             on_activate_call=bui.Call(
                 lambda c: bui.containerwidget(edit=c, transition='out_scale'),
@@ -461,6 +463,7 @@ class WatchWindow(bui.MainWindow):
         )
         okb = bui.buttonwidget(
             parent=cnt,
+            id=f'{self.main_window_id_prefix}|replayrename',
             label=bui.Lstr(resource=f'{self._r}.renameText'),
             size=(180, 60),
             position=(c_width - 230, 30),

@@ -357,6 +357,7 @@ class GetTokensWindow(bui.MainWindow):
             # We're affected by screen size only at small ui-scale.
             refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
+        bui.widget(edit=self._root_widget, allow_preserve_selection=False)
 
         if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(

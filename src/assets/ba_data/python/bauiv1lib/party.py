@@ -38,6 +38,7 @@ class PartyWindow(bui.Window):
             if uiscale is bui.UIScale.SMALL
             else 480 if uiscale is bui.UIScale.MEDIUM else 600
         )
+        self._idprefix = bui.app.ui_v1.new_id_prefix('party')
         self._display_old_msgs = True
         super().__init__(
             root_widget=bui.containerwidget(
@@ -68,6 +69,7 @@ class PartyWindow(bui.Window):
 
         self._cancel_button = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self._idprefix}|cancel',
             scale=0.7,
             position=(30, self._height - 47),
             size=(50, 50),
@@ -82,6 +84,7 @@ class PartyWindow(bui.Window):
 
         self._menu_button = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self._idprefix}|menu',
             scale=0.7,
             position=(self._width - 60, self._height - 47),
             size=(50, 50),
@@ -138,13 +141,18 @@ class PartyWindow(bui.Window):
         self._scroll_width = self._width - 50
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
+            id=f'{self._idprefix}|scroll',
             size=(self._scroll_width, self._height - 200),
             position=(30, 80),
             color=(0.4, 0.6, 0.3),
             border_opacity=0.6,
         )
         self._columnwidget = bui.columnwidget(
-            parent=self._scrollwidget, border=2, left_border=-200, margin=0
+            parent=self._scrollwidget,
+            id=f'{self._idprefix}|column',
+            border=2,
+            left_border=-200,
+            margin=0,
         )
         bui.widget(edit=self._menu_button, down_widget=self._columnwidget)
 
@@ -160,6 +168,7 @@ class PartyWindow(bui.Window):
 
         self._text_field = txt = bui.textwidget(
             parent=self._root_widget,
+            id=f'{self._idprefix}|messagetext',
             editable=True,
             size=(530, 40),
             position=(44, 39),
@@ -190,6 +199,7 @@ class PartyWindow(bui.Window):
 
         btn = bui.buttonwidget(
             parent=self._root_widget,
+            id=f'{self._idprefix}|send',
             size=(50, 35),
             label=bui.Lstr(resource=f'{self._r}.sendText'),
             button_type='square',
