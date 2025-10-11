@@ -72,3 +72,6 @@
 ### komasio71
 - Retired Discord server moderator
 - Small contributor
+
+### Dhextras
+- Added Small feature for modders
