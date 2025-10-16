@@ -685,6 +685,7 @@ class PublicGatherTab(GatherTab):
         )
         self._join_list_column = bui.containerwidget(
             parent=scrollw,
+            id=f'{self._idprefix}|joinlistcolumn',
             background=False,
             size=(400, 400),
             claims_left_right=True,

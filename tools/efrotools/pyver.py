@@ -12,8 +12,10 @@ from pathlib import Path
 PYVER = '3.13'
 PYVERNODOT = PYVER.replace('.', '')
 
-_checked_valid_sys_executable = False  # pylint: disable=invalid-name
+# pylint: disable=invalid-name
+_checked_valid_sys_executable = False
 _valid_sys_executable: str | None = None
+# pylint: enable=invalid-name
 
 
 def get_project_python_executable(projroot: Path | str) -> str:

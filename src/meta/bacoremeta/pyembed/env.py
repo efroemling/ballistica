@@ -94,7 +94,7 @@ def pre_finalize() -> None:
 # mobile device can take a bit of time.
 
 
-_g_warm_start_1_completed = False  # pylint: disable=invalid-name
+_g_warm_start_1_completed = False
 
 
 def warm_start_1() -> None:

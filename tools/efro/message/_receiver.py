@@ -136,6 +136,7 @@ class MessageReceiver:
 
         # This will contain NoneType for empty return cases, but we
         # expect it to be None.
+        # pylint: disable=unidiomatic-typecheck
         responsetypes = tuple(
             None if r is type(None) else r for r in responsetypes
         )

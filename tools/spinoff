@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
         else:
             src_spinoff_path = sys.argv[0]
-            dst_proj_root = None  # pylint: disable=invalid-name
+            dst_proj_root = None
 
         src_proj_root = os.path.abspath(
             os.path.join(os.path.dirname(src_spinoff_path), '..')

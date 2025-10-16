@@ -1,4 +1,4 @@
-### 1.7.53 (build 22573, api 9, 2025-10-03)
+### 1.7.53 (build 22575, api 9, 2025-10-16)
 
 ### 1.7.52 (build 22572, api 9, 2025-10-03)
 - Empty version number bump.

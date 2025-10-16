@@ -149,6 +149,7 @@ from _bauiv1 import (
     widget,
     widget_by_id,
 )
+from bauiv1._cloudui import show_cloud_ui_window
 from bauiv1._keyboard import Keyboard
 from bauiv1._uitypes import (
     uicleanupcheck,
@@ -278,6 +279,7 @@ __all__ = [
     'set_low_level_config_value',
     'set_party_window_open',
     'set_main_ui_input_device',
+    'show_cloud_ui_window',
     'shutdown_suppress_begin',
     'shutdown_suppress_end',
     'Sound',

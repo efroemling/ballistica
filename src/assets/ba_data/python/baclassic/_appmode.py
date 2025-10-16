@@ -971,4 +971,11 @@ class ClassicAppMode(AppMode):
         show_template_main_window()
 
     def _cloud_ui_test_press(self) -> None:
-        bui.screenmessage('NOT WIRED UP YET')
+        from bauiv1 import show_cloud_ui_window
+
+        # Unintuitively, swish sounds come from buttons, not windows.
+        # And dev-console buttons don't make sounds. So we need to
+        # explicitly do so here.
+        bui.getsound('swish').play()
+
+        show_cloud_ui_window()

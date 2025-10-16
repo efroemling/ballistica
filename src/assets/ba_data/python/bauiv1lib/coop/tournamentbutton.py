@@ -455,6 +455,10 @@ class TournamentButton:
 
     def _update_lock_state(self) -> None:
 
+        # no-op if our widget is dead.
+        if not self.button:
+            return
+
         if self.game is None:
             return
 

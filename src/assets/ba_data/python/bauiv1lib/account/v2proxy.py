@@ -23,6 +23,7 @@ class V2ProxySignInWindow(bui.Window):
         self._proxyid: str | None = None
         self._proxykey: str | None = None
         self._overlay_web_browser_open = False
+        self._idprefix = bui.app.ui_v1.new_id_prefix('resourcetypeinfo')
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -256,6 +257,7 @@ class V2ProxySignInWindow(bui.Window):
         if bui.is_browser_likely_available():
             bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self._idprefix}|address',
                 position=(
                     (self._width * 0.5 - button_width * 0.5),
                     self._height - 185,

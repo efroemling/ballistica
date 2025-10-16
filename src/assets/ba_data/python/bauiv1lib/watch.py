@@ -150,6 +150,7 @@ class WatchWindow(bui.MainWindow):
             ),
             size=(self._scroll_width - 2.0 * tab_bar_inset, 50),
             on_select_call=self._set_tab,
+            idprefix=self.main_window_id_prefix,
         )
 
         first_tab = self._tab_row.tabs[tabdefs[0][0]]
@@ -349,7 +350,11 @@ class WatchWindow(bui.MainWindow):
             )
             bui.containerwidget(edit=cnt, selected_child=scrlw)
             self._columnwidget = bui.columnwidget(
-                parent=scrlw, left_border=10, border=2, margin=0
+                parent=scrlw,
+                id=f'{self.main_window_id_prefix}|column',
+                left_border=10,
+                border=2,
+                margin=0,
             )
 
             bui.widget(

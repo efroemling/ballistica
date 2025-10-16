@@ -33,8 +33,6 @@ class TemplateMainWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
     ):
-        # pylint: disable=too-many-locals
-
         ui = bui.app.ui_v1
 
         # A simple number standing in for actual data (to show how we'd
@@ -65,15 +63,15 @@ class TemplateMainWindow(bui.MainWindow):
         # limited by the screen size in small mode and our backing size
         # otherwise.
         screensize = bui.get_virtual_screen_size()
-        vis_width = min(self._width - 100, screensize[0] / scale)
-        vis_height = min(self._height - 100, screensize[1] / scale)
-        vis_top = 0.5 * self._height + 0.5 * vis_height
-        vis_left = 0.5 * self._width - 0.5 * vis_width
+        self._vis_width = min(self._width - 100, screensize[0] / scale)
+        self._vis_height = min(self._height - 100, screensize[1] / scale)
+        self._vis_top = 0.5 * self._height + 0.5 * self._vis_height
+        self._vis_left = 0.5 * self._width - 0.5 * self._vis_width
 
         # Nudge our vis area up a bit when we can see the full backing
         # (visual fudge factor).
         if uiscale is not bui.UIScale.SMALL:
-            vis_top += 12.0
+            self._vis_top += 12.0
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -96,7 +94,7 @@ class TemplateMainWindow(bui.MainWindow):
         # Title.
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, vis_top - 20),
+            position=(self._width * 0.5, self._vis_top - 20),
             size=(0, 0),
             text=f'Template{self._dummy_data}',
             color=ui.title_color,
@@ -118,7 +116,7 @@ class TemplateMainWindow(bui.MainWindow):
                 parent=self._root_widget,
                 id=f'{self.main_window_id_prefix}|close',
                 scale=0.8,
-                position=(vis_left - 15, vis_top - 30),
+                position=(self._vis_left - 15, self._vis_top - 30),
                 size=(50, 50) if auxiliary_style else (60, 55),
                 extra_touch_border_scale=2.0,
                 button_type=None if auxiliary_style else 'backSmall',
@@ -139,7 +137,7 @@ class TemplateMainWindow(bui.MainWindow):
             if bool(False):
                 bui.textwidget(
                     parent=self._root_widget,
-                    position=(vis_left, vis_top),
+                    position=(self._vis_left, self._vis_top),
                     size=(0, 0),
                     color=(1, 1, 1, 0.5),
                     scale=0.5,
@@ -149,7 +147,7 @@ class TemplateMainWindow(bui.MainWindow):
                 )
             bui.textwidget(
                 parent=self._root_widget,
-                position=(vis_left + vis_width, vis_top),
+                position=(self._vis_left + self._vis_width, self._vis_top),
                 size=(0, 0),
                 color=(1, 1, 1, 0.5),
                 scale=0.5,
@@ -159,7 +157,7 @@ class TemplateMainWindow(bui.MainWindow):
             )
             bui.textwidget(
                 parent=self._root_widget,
-                position=(vis_left, vis_top - vis_height),
+                position=(self._vis_left, self._vis_top - self._vis_height),
                 size=(0, 0),
                 color=(1, 1, 1, 0.5),
                 scale=0.5,
@@ -169,7 +167,10 @@ class TemplateMainWindow(bui.MainWindow):
             )
             bui.textwidget(
                 parent=self._root_widget,
-                position=(vis_left + vis_width, vis_top - vis_height),
+                position=(
+                    self._vis_left + self._vis_width,
+                    self._vis_top - self._vis_height,
+                ),
                 size=(0, 0),
                 scale=0.5,
                 color=(1, 1, 1, 0.5),
@@ -181,7 +182,7 @@ class TemplateMainWindow(bui.MainWindow):
         # Description.
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, vis_top - 100),
+            position=(self._width * 0.5, self._vis_top - 100),
             size=(0, 0),
             scale=0.6,
             text=(
@@ -189,7 +190,8 @@ class TemplateMainWindow(bui.MainWindow):
                 f' a well-behaved MainWindow class or for\n'
                 'navigating between MainWindows. It lives at'
                 f' {self.__module__}.{type(self).__qualname__}.\n'
-                f'vis-size=({round(vis_width)}, {round(vis_height)})'
+                f'vis-size=({round(self._vis_width)},'
+                f' {round(self._vis_height)})'
             ),
             h_align='center',
             v_align='center',
@@ -205,7 +207,7 @@ class TemplateMainWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|button{i + 1}',
                 position=(
                     self._width * 0.5 - button_width * 0.5,
-                    vis_top - 230 - i * 80,
+                    self._vis_top - 230 - i * 80,
                 ),
                 autoselect=True,
                 size=(button_width, 60),
@@ -229,8 +231,8 @@ class TemplateMainWindow(bui.MainWindow):
         cls = type(self)
 
         # IMPORTANT - Pull values from self HERE; if we do it in the
-        # lambda below it'll keep self alive which will lead to
-        # 'ui-not-getting-cleaned-up' warnings and memory leaks.
+        # lambda below then the state will keep self alive which will
+        # lead to 'ui-not-getting-cleaned-up' warnings and memory leaks.
         dummy_data = self._dummy_data
         auxiliary_style = self._auxiliary_style
 
