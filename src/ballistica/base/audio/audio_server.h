@@ -67,6 +67,7 @@ class AudioServer {
   auto event_loop() const -> EventLoop* { return event_loop_; }
 
   void OnDeviceDisconnected();
+  void OnDefaultDeviceChanged();
   void OpenALSoftLogCallback(const std::string& msg);
 
  private:
@@ -95,6 +96,7 @@ class AudioServer {
   void Reset_();
   void Process_();
   void ProcessDeviceDisconnects_(seconds_t real_time_seconds);
+  void ProcessDefaultDeviceChange_();
 
   void UpdateTimerInterval_();
   void UpdateAvailableSources_();
@@ -117,6 +119,7 @@ class AudioServer {
   bool have_pending_loads_{};
   bool app_active_{true};
   bool suspended_{};
+  bool should_reopen_{};
   bool shutdown_completed_{};
   bool shutting_down_{};
   bool shipped_reconnect_logs_{};

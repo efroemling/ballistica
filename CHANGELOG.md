@@ -1,4 +1,8 @@
-### 1.7.53 (build 22575, api 9, 2025-10-16)
+### 1.7.53 (build 22576, api 9, 2025-10-16)
+- App audio output should now update when the default sound device changes
+  (plugging in headphones, etc). This applies to all platforms using OpenALSoft
+  (which should be most of them at this point). Though this is not yet enabled
+  on Linux because build machines are using older OpenALSoft versions.
 
 ### 1.7.52 (build 22572, api 9, 2025-10-03)
 - Empty version number bump.

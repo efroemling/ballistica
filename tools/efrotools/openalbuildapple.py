@@ -73,17 +73,21 @@ def gather_openal_mac() -> None:
     if not os.path.exists(srcpath):
         raise CleanError(f'Built OpenAL not found: {srcpath}')
 
-    outdir = 'src/external/openal-apple/macos'
-    subprocess.run(['rm', '-rf', outdir], check=True)
+    outdir_base = 'src/external/openal-apple'
+    outdir_lib = f'{outdir_base}/lib/macos'
+    outdir_include = f'{outdir_base}/include'
 
-    subprocess.run(['mkdir', '-p', outdir], check=True)
+    subprocess.run(['rm', '-rf', outdir_include], check=True)
+    subprocess.run(['rm', '-rf', outdir_lib], check=True)
 
-    # NOTE - should probably use these includes instead of Apple's.
-    # subprocess.run(
-    #     ['cp', '-r', f'{builddir}/include/AL', f'{outdir}/include'],
-    #     check=True,
-    # )
+    subprocess.run(['mkdir', '-p', outdir_include], check=True)
+    subprocess.run(['mkdir', '-p', outdir_lib], check=True)
 
-    subprocess.run(['cp', '-L', srcpath, outdir], check=True)
+    subprocess.run(
+        ['cp', '-r', f'{BUILD_DIR_MAC}/include/AL', outdir_include],
+        check=True,
+    )
+
+    subprocess.run(['cp', '-L', srcpath, outdir_lib], check=True)
 
     print('OpenAL gather successful!')

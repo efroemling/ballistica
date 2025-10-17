@@ -5,7 +5,7 @@
 
 #if BA_ENABLE_AUDIO
 
-#if BA_HAVE_FRAMEWORK_OPENAL
+#if BA_USE_FRAMEWORK_OPENAL
 #include <OpenAL/al.h>   // IWYU pragma: export
 #include <OpenAL/alc.h>  // IWYU pragma: export
 #else
