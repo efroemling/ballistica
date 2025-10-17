@@ -4,12 +4,15 @@
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, override, Annotated
 
+from efro.dataclassio import ioprepped, IOAttrs
 import babase
 from bauiv1._window import MainWindow, BasicMainWindowState
 import _bauiv1
+
 
 if TYPE_CHECKING:
     from bauiv1._window import MainWindowState
@@ -25,12 +28,35 @@ def show_cloud_ui_window() -> None:
     )
 
 
+@ioprepped
+@dataclass
+class CloudUIButton:
+    """Represents a button in a cloud-ui."""
+
+
+@ioprepped
+@dataclass
+class CloudUIRow:
+    """Represents a row in a cloud-ui."""
+
+    buttons: Annotated[list[CloudUIButton], IOAttrs('b')]
+
+
+@ioprepped
+@dataclass
+class CloudUIRoot:
+    """Represents an entire cloud-ui."""
+
+    title: Annotated[str, IOAttrs('t')]
+    rows: Annotated[list[CloudUIRow], IOAttrs('r')]
+
+
 class CloudUIWindow(MainWindow):
     """An example of a well-behaved main-window."""
 
     @dataclass
     class _State:
-        error: bool
+        root: CloudUIRoot | None
 
     def __init__(
         self,
@@ -199,15 +225,24 @@ class CloudUIWindow(MainWindow):
         if state is not None:
             self._set_state(state)
         else:
-            babase.apptimer(1.0, babase.WeakCall(self._on_error_response))
+            if random.random() < 0.3:
+                babase.apptimer(1.0, babase.WeakCall(self._on_error_response))
+            else:
+                babase.apptimer(1.0, babase.WeakCall(self._on_response))
 
     def _on_error_response(self) -> None:
-        self._set_state(self._State(error=True))
+        self._set_state(self._State(None))
 
     def _on_response(self) -> None:
-        self._set_state(self._State(error=False))
+        self._set_state(self._State(CloudUIRoot(title='Testing', rows=[])))
 
     def _set_state(self, state: _State) -> None:
+        """Set a final state (error or page contents).
+
+        This state may be instantly restored if the window is recreated
+        (depending on cache lifespan/etc.)
+        """
+
         assert self._state is None
         self._state = state
 
@@ -215,9 +250,11 @@ class CloudUIWindow(MainWindow):
             self._spinner.delete()
             self._spinner = None
 
-        if self._state.error:
-            self._title = _bauiv1.textwidget(
-                edit=self._title, text=babase.Lstr(resource='errorText')
+        if self._state.root is None:
+            _bauiv1.textwidget(
+                edit=self._title,
+                literal=False,  # Allow Lstr.
+                text=babase.Lstr(resource='errorText'),
             )
             _bauiv1.textwidget(
                 parent=self._root_widget,
@@ -230,6 +267,12 @@ class CloudUIWindow(MainWindow):
                 text=babase.Lstr(resource='store.loadErrorText'),
                 h_align='center',
                 v_align='center',
+            )
+        else:
+            _bauiv1.textwidget(
+                edit=self._title,
+                literal=True,  # Never interpret as Lstr.
+                text=self._state.root.title,
             )
 
     @override

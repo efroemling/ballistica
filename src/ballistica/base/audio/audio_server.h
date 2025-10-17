@@ -39,8 +39,6 @@ class AudioServer {
   void PushComponentUnloadCall(
       const std::vector<Object::Ref<Asset>*>& components);
 
-  void ClearSoundRefDeleteList();
-
   auto paused() const -> bool { return suspended_; }
 
   void Shutdown();
@@ -57,8 +55,8 @@ class AudioServer {
   void PushSourceStopCall(uint32_t play_id);
   void PushSourceEndCall(uint32_t play_id);
 
-  // Fade a playing sound out over the given time.  If it is already
-  // fading or does not exist, does nothing.
+  // Fade a playing sound out over the given time. If it is already fading
+  // or does not exist, does nothing.
   void FadeSoundOut(uint32_t play_id, uint32_t time);
 
   // Stop a sound from playing if it exists.
@@ -87,6 +85,7 @@ class AudioServer {
   void SetMusicVolume_(float volume);
   void SetSoundVolume_(float volume);
   void SetSoundPitch_(float pitch);
+  void ClearSoundRefDeleteList_();
 
   void CompleteShutdown_();
 
@@ -139,9 +138,10 @@ class AudioServer {
   millisecs_t last_stream_process_time_{};
   millisecs_t last_sanity_check_time_{};
 
-  // Holds refs to all sources.
-  // Use sources, not this, for faster iterating.
+  /// Holds refs to all sources. Use sources, not this, for faster
+  /// iterating.
   std::vector<Object::Ref<ThreadSource_>> sound_source_refs_;
+
   struct SoundFadeNode_;
 
   // NOTE: would use unordered_map here but gcc doesn't seem to allow

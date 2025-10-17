@@ -510,6 +510,11 @@ void TextWidget::set_res_scale(float res_scale) {
   res_scale_ = res_scale;
 }
 
+void TextWidget::SetLiteral(bool val) {
+  literal_ = val;
+  text_translation_dirty_ = true;
+}
+
 void TextWidget::SetText(const std::string& text_in_raw) {
   std::string text_in = Utils::GetValidUTF8(text_in_raw.c_str(), "twst1");
 
@@ -519,27 +524,27 @@ void TextWidget::SetText(const std::string& text_in_raw) {
   }
 
   // In some cases we want to make sure this is a valid resource-string
-  // since catching the error here is much more useful than if we catch
-  // it at draw-time.  However this is expensive so we only do it for debug
-  // mode or if the string looks suspicious.
+  // since catching the error here is much more useful than if we catch it
+  // at draw-time. However this is expensive so we only do it for debug mode
+  // or if the string looks suspicious.
   bool do_format_check{};
   bool print_false_positives{};
 
   // Only non-editable text support resource-strings.
-  if (!editable_) {
+  if (!(editable_ || literal_)) {
     if (g_buildconfig.debug_build()) {
       do_format_check = explicit_bool(true);
     } else {
       if (text_in_raw.size() > 1 && text_in_raw[0] == '{'
           && text_in_raw[text_in_raw.size() - 1] == '}') {
-        // Ok, its got bounds like json; now if its either missing quotes or a
-        // colon then let's check it.
+        // Ok, its got bounds like json; now if its either missing quotes or
+        // a colon then let's check it.
         if (!strstr(text_in_raw.c_str(), "\"")
             || !strstr(text_in_raw.c_str(), ":")) {
           do_format_check = true;
 
-          // We wanna avoid doing this check when we don't have to.
-          // so lets print if we get a false positive
+          // We wanna avoid doing this check when we don't have to. so lets
+          // print if we get a false positive
           print_false_positives = true;
         }
       }
@@ -560,7 +565,7 @@ void TextWidget::SetText(const std::string& text_in_raw) {
     }
   }
 
-  // Do our clamping in unicode-space.
+  // Do our clamping in unicode-char-space.
   if (Utils::UTF8StringLength(text_raw_.c_str()) > max_chars_) {
     std::vector<uint32_t> uni = Utils::UnicodeFromUTF8(text_raw_, "fjcoiwef");
     assert(max_chars_ >= 0);
@@ -957,8 +962,8 @@ void TextWidget::AddCharsToText_(const std::string& addchars) {
 void TextWidget::UpdateTranslation_() {
   // Apply subs/resources to get our actual text if need be.
   if (text_translation_dirty_) {
-    // We don't run translations on user-editable text.
-    if (editable()) {
+    // We don't run translations on user-editable text or text marked literal.
+    if (editable() || literal_) {
       text_translated_ = text_raw_;
     } else {
       text_translated_ = g_base->assets->CompileResourceString(text_raw_);

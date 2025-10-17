@@ -79,7 +79,6 @@ typedef int ssize_t;
 
 #if !BA_HEADLESS_BUILD
 #define BA_ENABLE_AUDIO 1
-#define BA_OPENAL_IS_SOFT 1
 #define BA_ENABLE_OPENGL 1
 #endif
 

@@ -2112,6 +2112,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* glow_type_obj{Py_None};
   PyObject* allow_clear_button_obj{Py_None};
   PyObject* id_obj{Py_None};
+  PyObject* literal_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2154,9 +2155,10 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "adapter_finished",
                                  "glow_type",
                                  "allow_clear_button",
+                                 "literal",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &text_obj, &v_align_obj, &h_align_obj,
           &editable_obj, &padding_obj, &on_return_press_call_obj,
@@ -2169,7 +2171,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &force_internal_editing_obj, &always_show_carat_obj, &big_obj,
           &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
           &query_description_obj, &adapter_finished_obj, &glow_type_obj,
-          &allow_clear_button_obj))
+          &allow_clear_button_obj, &literal_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2294,6 +2296,11 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->SetEditable(Python::GetBool(editable_obj));
   }
 
+  // Make sure to set literal *before* text, as it can affect how we interpret
+  // text.
+  if (literal_obj != Py_None) {
+    widget->SetLiteral(Python::GetBool(literal_obj));
+  }
   if (text_obj != Py_None) {
     widget->SetText(g_base->python->GetPyLString(text_obj));
   }
@@ -2460,6 +2467,7 @@ static PyMethodDef PyTextWidgetDef = {
     "  adapter_finished: bool | None = None,\n"
     "  glow_type: str | None = None,\n"
     "  allow_clear_button: bool | None = None,\n"
+    "  literal: bool | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"

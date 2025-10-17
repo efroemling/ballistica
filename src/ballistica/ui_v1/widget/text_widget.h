@@ -33,6 +33,7 @@ class TextWidget : public Widget {
   void set_max_width(float m) { max_width_ = m; }
   void set_max_height(float m) { max_height_ = m; }
   void set_rotate(float val) { rotate_ = val; }
+  void SetLiteral(bool val);
   void SetText(const std::string& text_in);
   void set_color(float r, float g, float b, float a) {
     color_r_ = r;
@@ -117,6 +118,7 @@ class TextWidget : public Widget {
   bool clear_mouse_over_{};
   bool implicit_clear_button_{true};
   bool allow_clear_button_{true};
+  bool literal_{};
   int carat_position_{9999};
   int max_chars_{99999};
   float res_scale_{1.0f};

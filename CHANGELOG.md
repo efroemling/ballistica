@@ -1,8 +1,12 @@
-### 1.7.53 (build 22576, api 9, 2025-10-16)
+### 1.7.53 (build 22584, api 9, 2025-10-17)
 - App audio output should now update when the default sound device changes
-  (plugging in headphones, etc). This applies to all platforms using OpenALSoft
-  (which should be most of them at this point). Though this is not yet enabled
-  on Linux because build machines are using older OpenALSoft versions.
+  (plugging in headphones, etc). This applies to all platforms using recent
+  builds of OpenALSoft which should be most of them at this point.
+- Added a 'literal' arg to `bauiv1.textwidget()`. If you pass False for this,
+  the widget will never interpret strings such as '{"v":"foo"}' as Lstr data
+  (This is how Lstr values work under the hood). Another way to protect literal
+  strings is to wrap them in Lstrs (`bui.Lstr(value='{IAmNotJSON}')`), but that
+  way is less efficient.
 
 ### 1.7.52 (build 22572, api 9, 2025-10-03)
 - Empty version number bump.
