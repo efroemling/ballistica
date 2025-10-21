@@ -140,4 +140,19 @@ auto PlayerSpec::GetDummyPlayerSpec(const std::string& name) -> PlayerSpec {
   return spec;
 }
 
+auto PlayerSpec::GetDummyHostSpec(const std::string& name) -> PlayerSpec {
+  PlayerSpec spec;
+  spec.name_ = Utils::GetValidUTF8(name.c_str(), "bsgdps1");
+  if (spec.name_.size() > 100) {
+    // FIXME should perhaps clamp this in unicode space
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "dummy player spec name too long: '" + spec.name_ + "'");
+    spec.name_.resize(100);
+    spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgdps2");
+  }
+  return spec;
+}
+
+
 }  // namespace ballistica::scene_v1

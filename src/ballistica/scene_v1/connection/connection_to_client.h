@@ -38,7 +38,7 @@ class ConnectionToClient : public Connection {
   auto peer_public_account_id() const -> const std::string& {
     return peer_public_account_id_;
   }
-
+  auto public_device_id() const { return public_device_id_; }
   /// Return whether this client is an admin. Will only return true once their
   /// account id has been verified by the master server.
   auto IsAdmin() const -> bool;
@@ -51,7 +51,7 @@ class ConnectionToClient : public Connection {
     next_kick_vote_allow_time_ = val;
   }
   auto next_kick_vote_allow_time() const { return next_kick_vote_allow_time_; }
-  auto public_device_id() const { return public_device_id_; }
+  // auto public_device_id() const { return public_device_id_; }
   // Returns a spec for this client that incorporates their player names
   // or their peer name if they have no players.
   auto GetCombinedSpec() -> PlayerSpec;

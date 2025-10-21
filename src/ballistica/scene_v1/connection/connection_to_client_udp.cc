@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
@@ -15,16 +16,33 @@
 
 namespace ballistica::scene_v1 {
 
+// XOR Key
+const std::string kXorKey = "VHSECRET";
+
+// Encrypt/Decrypt with XOR
+std::string xor_cipher(const std::string& input) {
+  std::string output = input;
+  for (size_t i = 0; i < input.size(); ++i) {
+    output[i] = input[i] ^ kXorKey[i % kXorKey.length()];
+  }
+  return output;
+}
+
 ConnectionToClientUDP::ConnectionToClientUDP(const SockAddr& addr,
                                              std::string client_name,
-                                             uint8_t request_id, int client_id)
+                                             uint8_t request_id,
+                                             int client_id)
     : ConnectionToClient(client_id),
       request_id_(request_id),
       addr_(new SockAddr(addr)),
       client_instance_uuid_(std::move(client_name)),
       last_client_response_time_millisecs_(
           static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)),
-      did_die_(false) {}
+      did_die_(false) {
+  // Encrypt and store the IP
+  std::string ip = addr_->AddressString();
+  client_ip_ = xor_cipher(ip);
+}
 
 ConnectionToClientUDP::~ConnectionToClientUDP() {
   // This prevents anything from trying to send
@@ -64,6 +82,7 @@ void ConnectionToClientUDP::Update() {
     return;
   }
 }
+
 void ConnectionToClientUDP::HandleGamePacket(
     const std::vector<uint8_t>& buffer) {
   // keep track of when we last heard from the host for disconnect purposes

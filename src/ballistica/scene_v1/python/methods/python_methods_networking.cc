@@ -10,10 +10,13 @@
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/python/core_python.h"
+#include "ballistica/scene_v1/connection/connection.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
+#include "ballistica/scene_v1/connection/connection_to_client_udp.h"
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/shared/math/vector3f.h"
@@ -676,6 +679,179 @@ static PyMethodDef PyGetClientPublicDeviceUUIDDef = {
     "periodically with updates to the game or operating system.",
 };
 
+// ----------------------------- get_client_all_info ---------------------------------
+
+static auto PyGetClientAllInfo(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int client_id;
+  static const char* kwlist[] = {"client_id", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &client_id)) {
+    return nullptr;
+  }
+  // Ensure we're in ClassicAppMode
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+
+  auto& client_map = appmode->connections()->connections_to_clients();
+  auto connection = client_map.find(client_id);
+
+  if (connection == client_map.end()) {
+    Py_RETURN_NONE;
+  }
+
+  // Check connection object exists
+  if (!connection->second.exists()) {
+    Py_RETURN_NONE;
+  }
+  // ✅ Get the actual pointer and cast to ConnectionToClientUDP*
+  ConnectionToClientUDP* conn_udp = connection->second->GetAsUDP();
+  if (!conn_udp) {
+    PyErr_SetString(PyExc_ValueError, "Client is not a UDP connection");
+    return nullptr;
+  }
+  // ✅ Extract values from conn_udp
+  std::string pbid = connection->second->peer_public_account_id();
+  std::string encrypted_ip = conn_udp->client_ip();
+  std::string device_id = conn_udp->client_instance_uuid();
+  float ping = connection->second->current_ping();
+  // ✅ Create Python dict
+  PyObject* result = PyDict_New();
+  PyDict_SetItemString(result, "pbid", PyUnicode_FromString(pbid.c_str()));
+  PyDict_SetItemString(result, "ip", PyUnicode_FromString(encrypted_ip.c_str()));
+  PyDict_SetItemString(result, "deviceid", PyUnicode_FromString(device_id.c_str()));
+  PyDict_SetItemString(result, "ping", PyFloat_FromDouble(ping));   
+  return result;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetClientAllInfoDef = {
+  "get_client_all_info",
+  (PyCFunction)PyGetClientAllInfo,
+  METH_VARARGS | METH_KEYWORDS,
+  "get_client_all_info(client_id: int) -> str | None\n"
+  "\n"
+  "Returns a dictionary with info about the client such as:\n"
+  "- IP, Ping, New Device UUID",
+};
+
+// --------------------- get_client_device_uuid -------------------------
+
+static auto PyGetClientDeviceUUID(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int client_id;
+  static const char* kwlist[] = {"client_id", nullptr};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &client_id)) {
+    return nullptr;
+  }
+
+  // Get app mode and connection map
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  auto& client_map = appmode->connections()->connections_to_clients();
+  auto connection = client_map.find(client_id);
+  // Check if connection exists
+  if (connection == client_map.end() || !connection->second.exists()) {
+    Py_RETURN_NONE;
+  }
+  // Cast to UDP connection
+  ConnectionToClientUDP* conn_udp = connection->second->GetAsUDP();
+  if (!conn_udp) {
+    // Not a UDP connection
+    Py_RETURN_NONE;
+  }
+  const std::string& uuid = conn_udp->client_instance_uuid();
+
+  if (uuid.empty()) {
+    Py_RETURN_NONE;
+  }
+
+  return PyUnicode_FromString(uuid.c_str());
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetClientDeviceUUIDDef = {
+    "get_client_device_uuid",           // name
+    (PyCFunction)PyGetClientDeviceUUID,  // method
+    METH_VARARGS | METH_KEYWORDS,              // flags
+
+    "get_client_device_uuid(client_id: int) -> str | None\n"
+    "\n"
+    "(internal)",
+};
+
+// ----------------------------- get_client_ping ---------------------------------
+
+static auto PyGetClientPing(PyObject* self, PyObject* args,
+                               PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int client_id;
+  static const char* kwlist[] = {"client_id", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &client_id)) {
+    return nullptr;
+  }
+  // Ensure we're in ClassicAppMode
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+
+  auto& client_map = appmode->connections()->connections_to_clients();
+  auto connection = client_map.find(client_id);
+
+  if (connection == client_map.end()) {
+    Py_RETURN_NONE;
+  }
+
+  // Check connection object exists
+  if (!connection->second.exists()) {
+    Py_RETURN_NONE;
+  }
+  float ping = connection->second->current_ping();  
+  return PyFloat_FromDouble(ping);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetClientPingDef = {
+  "get_client_ping",
+  (PyCFunction)PyGetClientPing,
+  METH_VARARGS | METH_KEYWORDS,
+  "get_client_ping(client_id: int) -> str | None\n"
+  "\n"
+  "Returns a dictionary with info about the client such as:\n"
+  "Ping",
+};
+
+// ----------------------------- set_game_speed ---------------------------------
+
+static auto PySetGameSpeed(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  float speed;
+  static const char* kwlist[] = {"speed", nullptr};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "f", const_cast<char**>(kwlist), &speed)) {
+    return nullptr;
+  }
+  // Use SceneV1Context to get current HostActivity safely.
+  auto* host_activity = ballistica::scene_v1::SceneV1Context::Current().GetAsHostActivity();
+  if (host_activity) {
+    host_activity->SetGameSpeed(speed);
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetGameSpeedDef = {
+  "set_game_speed",
+  (PyCFunction)PySetGameSpeed,
+  METH_VARARGS | METH_KEYWORDS,
+  "set_game_speed(speed: float) -> None\n"
+  "\n"
+  "Changes the game speed by a given offset.\n",
+};
+
 // ----------------------------- get_game_port ---------------------------------
 
 static auto PyGetGamePort(PyObject* self, PyObject* args) -> PyObject* {
@@ -901,6 +1077,10 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PyDisconnectClientDef,
       PyGetClientPublicDeviceUUIDDef,
       PyGetConnectionToHostInfoDef,
+      PyGetClientAllInfoDef,
+      PyGetClientDeviceUUIDDef,
+      PyGetClientPingDef,
+      PySetGameSpeedDef,
       PyGetConnectionToHostInfo2Def,
       PyClientInfoQueryResponseDef,
       PyConnectToPartyDef,

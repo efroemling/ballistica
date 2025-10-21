@@ -28,11 +28,13 @@ class ConnectionToClientUDP : public ConnectionToClient {
   void SendDisconnectRequest();
   void SendGamePacketCompressed(const std::vector<uint8_t>& data) override;
   auto addr() { return *addr_; }
+  auto client_ip() const { return client_ip_; }
 
  private:
   uint8_t request_id_;
   std::unique_ptr<SockAddr> addr_;
   std::string client_instance_uuid_;
+  std::string client_ip_;
   bool did_die_;
   millisecs_t last_client_response_time_millisecs_;
 };

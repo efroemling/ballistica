@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/logic/logic.h"
@@ -23,6 +24,7 @@
 namespace ballistica::scene_v1 {
 
 ConnectionSet::ConnectionSet() = default;
+constexpr int kMaxNameSize = classic::kMaxPartyNameCombinedSize;
 
 auto ConnectionSet::GetConnectionToHostUDP() -> ConnectionToHostUDP* {
   ConnectionToHost* h = connection_to_host_.get();
@@ -80,6 +82,30 @@ auto ConnectionSet::GetConnectedClientCount() const -> int {
   return count;
 }
 
+std::string GetNameFromFile(const std::string& filename, const std::string& fallback) {
+  std::ifstream f(filename);
+  std::string name = fallback;
+  if (f.is_open()) {
+    std::getline(f, name);
+    f.close();
+  }
+  if (name.empty()) name = fallback;
+
+  if (name.size() > kMaxNameSize) {
+    name.resize(kMaxNameSize);
+    name += "...";
+  }
+  return name;
+} 
+
+std::string GetShortNameFromFile() {
+  return GetNameFromFile("ShortName.txt", "\uE043VH\uE043");
+}
+
+std::string GetHostNameFromFile() {
+  return GetNameFromFile("HostName.txt", "\uE040VH-1.7.45");
+}
+
 void ConnectionSet::SendChatMessage(const std::string& message,
                                     const std::vector<int>* clients,
                                     const std::string* sender_override) {
@@ -97,7 +123,10 @@ void ConnectionSet::SendChatMessage(const std::string& message,
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   std::string our_spec_string;
-
+  // Read name from ShortName.txt
+  std::string GetShortNameFromFile();
+  // Read name from HostName.txt
+  std::string GetHostNameFromFile();
   if (sender_override != nullptr) {
     std::string override_final = *sender_override;
     if (override_final.size() > classic::kMaxPartyNameCombinedSize) {
@@ -114,7 +143,7 @@ void ConnectionSet::SendChatMessage(const std::string& message,
       // so once we know we're connected to a 30+ server we can start sending
       // blank strings as a client.
       // (not that it really matters; chat messages are tiny overall)
-      our_spec_string = PlayerSpec::GetAccountPlayerSpec().GetSpecString();
+      our_spec_string = PlayerSpec::GetDummyHostSpec(GetShortNameFromFile()).GetSpecString();
     } else {
       // As a host we want to do the equivalent of
       // ConnectionToClient::GetCombinedSpec() except for local connections (so
@@ -143,7 +172,7 @@ void ConnectionSet::SendChatMessage(const std::string& message,
         our_spec_string =
             PlayerSpec::GetDummyPlayerSpec(p_name_combined).GetSpecString();
       } else {
-        our_spec_string = PlayerSpec::GetAccountPlayerSpec().GetSpecString();
+        our_spec_string = PlayerSpec::GetDummyHostSpec(GetShortNameFromFile()).GetSpecString();
       }
     }
   }

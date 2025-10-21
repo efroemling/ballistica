@@ -45,6 +45,8 @@ class PlayerSpec {
   /// used for non-account player profiles, names for non-logged-in
   /// party hosts, etc.
   static auto GetDummyPlayerSpec(const std::string& name) -> PlayerSpec;
+  /// Return a custom host name 
+  static auto GetDummyHostSpec(const std::string& name) -> PlayerSpec;
 
   auto valid() const { return valid_; }
 

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <string>
+#include <fstream>
 #include <vector>
 
 #include "ballistica/base/audio/audio.h"
@@ -24,7 +25,9 @@
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
+#include "ballistica/scene_v1/connection/connection.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
+#include "ballistica/scene_v1/connection/connection_to_client_udp.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
 #include "ballistica/scene_v1/node/globals_node.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
@@ -678,6 +681,32 @@ base::ContextRef ClassicAppMode::GetForegroundContext() {
   }
 }
 
+// 🔧 Helper function: read from file, create if missing or empty
+std::string ReadTextFileOrCreate(const std::string& filename,
+                                 const std::string& default_value) {
+  std::ifstream file(filename);
+
+  if (!file.is_open()) {
+    std::ofstream create_file(filename);
+    create_file << default_value << std::endl;
+    create_file.close();
+    return default_value;
+  }
+
+  std::string content;
+  std::getline(file, content);
+  file.close();
+
+  if (content.empty()) {
+    std::ofstream overwrite(filename);
+    overwrite << default_value << std::endl;
+    overwrite.close();
+    return default_value;
+  }
+
+  return content;
+}
+
 void ClassicAppMode::UpdateGameRoster() {
   assert(g_base->InLogicThread());
 
@@ -690,25 +719,36 @@ void ClassicAppMode::UpdateGameRoster() {
   game_roster_ = cJSON_CreateArray();
 
   int total_party_size = 1;  // include ourself here..
-
+  
   // Add ourself first (that's currently how they know we're the party leader)
   // ..but only if we have a connected client (otherwise our party is
   // considered 'empty').
 
   bool include_self = (connections()->GetConnectedClientCount() > 0);
-
+  int player_id_counter = 2; // start from 2, since host is 0
   if (auto* hs = dynamic_cast<scene_v1::HostSession*>(GetForegroundSession())) {
     // Add our host-y self.
     if (include_self) {
       cJSON* client_dict = cJSON_CreateObject();
+      std::string name = ReadTextFileOrCreate("HostName.txt", "\uE030VH-1.7.45");
+      std::string player_name = ReadTextFileOrCreate("ShortName.txt", "\uE043VH\uE043");
+      std::string data = std::string("{\"n\":\"") + name +
+                         "\",\"a\":\"\",\"sn\":\"\"}";
       cJSON_AddItemToObject(
-          client_dict, "spec",
-          cJSON_CreateString(scene_v1::PlayerSpec::GetAccountPlayerSpec()
-                                 .GetSpecString()
-                                 .c_str()));
-
+          client_dict, "spec", 
+          cJSON_CreateString(data.c_str()));
       // Add our list of local players.
       cJSON* player_array = cJSON_CreateArray();
+
+      // Manually add a dummy host player: "VH"
+     {
+        cJSON* manual_player = cJSON_CreateObject();
+        cJSON_AddItemToObject(manual_player, "n", cJSON_CreateString(player_name.c_str()));
+        cJSON_AddItemToObject(manual_player, "nf", cJSON_CreateString(player_name.c_str()));
+        cJSON_AddItemToObject(manual_player, "i", cJSON_CreateNumber(0));
+        cJSON_AddItemToArray(player_array, manual_player);
+      }
+
       for (auto&& p : hs->players()) {
         auto* delegate = p->input_device_delegate();
         if (delegate == nullptr || !delegate->InputDeviceExists()) {
@@ -726,7 +766,7 @@ void ClassicAppMode::UpdateGameRoster() {
                                 cJSON_CreateString(p->GetName().c_str()));
           cJSON_AddItemToObject(player_dict, "nf",
                                 cJSON_CreateString(p->GetName(true).c_str()));
-          cJSON_AddItemToObject(player_dict, "i", cJSON_CreateNumber(p->id()));
+          cJSON_AddItemToObject(player_dict, "i", cJSON_CreateNumber(player_id_counter++));
           cJSON_AddItemToArray(player_array, player_dict);
         }
       }
@@ -775,7 +815,7 @@ void ClassicAppMode::UpdateGameRoster() {
                   player_dict, "nf",
                   cJSON_CreateString(p->GetName(true).c_str()));
               cJSON_AddItemToObject(player_dict, "i",
-                                    cJSON_CreateNumber(p->id()));
+                                    cJSON_CreateNumber(player_id_counter++));
               cJSON_AddItemToArray(player_array, player_dict);
             }
           }
