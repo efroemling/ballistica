@@ -212,7 +212,7 @@ class TemplateMainWindow(bui.MainWindow):
                 autoselect=True,
                 size=(button_width, 60),
                 label=f'Template{child_dummy_data}',
-                on_activate_call=bui.WeakCall(
+                on_activate_call=bui.WeakCallStrict(
                     self._child_press, child_dummy_data
                 ),
             )

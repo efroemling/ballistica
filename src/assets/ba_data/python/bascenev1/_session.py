@@ -338,7 +338,9 @@ class Session:
             with babase.ContextRef.empty():
                 self._waitlist_timers[identifier] = babase.AppTimer(
                     _g_player_rejoin_cooldown,
-                    babase.Call(self._remove_player_from_waitlist, identifier),
+                    babase.CallStrict(
+                        self._remove_player_from_waitlist, identifier
+                    ),
                 )
 
         if not sessionplayer.in_game:
@@ -498,7 +500,9 @@ class Session:
                 # Set a timer to set in motion this activity's demise.
                 self._activity_end_timer = _bascenev1.BaseTimer(
                     delay,
-                    babase.Call(self._complete_end_activity, activity, results),
+                    babase.CallStrict(
+                        self._complete_end_activity, activity, results
+                    ),
                 )
 
     def handlemessage(self, msg: Any) -> Any:

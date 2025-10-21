@@ -168,7 +168,7 @@ class MasterServerV1CallThread(threading.Thread):
 
         if self._callback is not None:
             babase.pushcall(
-                babase.Call(self._run_callback, response_data),
+                babase.CallStrict(self._run_callback, response_data),
                 from_other_thread=True,
             )
 

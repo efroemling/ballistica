@@ -213,7 +213,7 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
             assert self.initialplayerinfos is not None
             respawn_time = 2.0 + len(self.initialplayerinfos) * 1.0
             player.respawn_timer = bs.Timer(
-                respawn_time, bs.Call(self.spawn_player_if_exists, player)
+                respawn_time, bs.CallStrict(self.spawn_player_if_exists, player)
             )
             player.respawn_icon = RespawnIcon(player, respawn_time)
 

@@ -73,7 +73,7 @@ class TeamNamesColorsWindow(PopupWindow):
                     id=f'{self._idprefix}|colorbutton{i}',
                     autoselect=True,
                     position=(50, 0 + 195 - 90 * i),
-                    on_activate_call=bui.Call(self._color_click, i),
+                    on_activate_call=bui.CallStrict(self._color_click, i),
                     size=(70, 70),
                     color=self._colors[i],
                     label='',

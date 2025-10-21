@@ -54,7 +54,7 @@ class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
         babase.unlock_all_input()
         assert babase.app.plus is not None
 
-        call = babase.Call(_bascenev1.new_host_session, main_menu_session)
+        call = babase.CallStrict(_bascenev1.new_host_session, main_menu_session)
         if classic.can_show_interstitial():
             plus.ads.call_after_ad(call)
         else:
@@ -172,7 +172,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         # If we're still kicking at the end of our assign-delay, assign this
         # guy's input to trigger us.
         _bascenev1.timer(
-            time_till_assign, babase.WeakCall(self._safe_assign, player)
+            time_till_assign, babase.WeakCallStrict(self._safe_assign, player)
         )
 
     @override

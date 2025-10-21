@@ -811,7 +811,7 @@ class GamepadSettingsWindow(bui.MainWindow):
             self._textwidgets[button] = txt
             bui.buttonwidget(
                 edit=btn,
-                on_activate_call=bui.Call(
+                on_activate_call=bui.CallStrict(
                     AwaitGamepadInputWindow,
                     self._inputdevice,
                     button,
@@ -1037,9 +1037,11 @@ class AwaitGamepadInputWindow(bui.Window):
             text=str(self._counter),
         )
         self._decrement_timer: bui.AppTimer | None = bui.AppTimer(
-            1.0, bui.Call(self._decrement), repeat=True
+            1.0, bui.CallStrict(self._decrement), repeat=True
         )
-        bs.capture_game_controller_input(bui.WeakCall(self._event_callback))
+        bs.capture_game_controller_input(
+            bui.WeakCallPartial(self._event_callback)
+        )
 
     def die(self) -> None:
         """Kill the window."""

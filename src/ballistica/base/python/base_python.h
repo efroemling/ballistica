@@ -39,7 +39,7 @@ class BasePython {
     kGetResourceCall,
     kTranslateCall,
     kLStrClass,
-    kCallClass,
+    kCallPartialClass,
     kAppGCCollectCall,
     kConfig,
     kAppOnNativeBootstrappingCompleteCall,

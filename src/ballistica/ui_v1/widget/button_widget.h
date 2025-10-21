@@ -51,7 +51,8 @@ class ButtonWidget : public Widget {
   enum class Style : uint8_t { kRegular, kBack, kBackSmall, kTab, kSquare };
   auto set_style(Style s) { style_ = s; }
   enum class IconType : uint8_t { kNone, kCancel, kStart };
-  void set_text(const std::string& text);
+  void SetTextLiteral(bool val);
+  void SetText(const std::string& text);
   auto text() const -> std::string { return text_->text_raw(); }
   auto set_icon_type(IconType i) { icon_type_ = i; }
   auto set_repeat(bool repeat) { repeat_ = repeat; }

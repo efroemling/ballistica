@@ -491,7 +491,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
         """Spawn a player (override)."""
         actor = self.spawn_player_spaz(player, self._get_spawn_point(player))
         if not self._solo_mode:
-            bs.timer(0.3, bs.Call(self._print_lives, player))
+            bs.timer(0.3, bs.CallStrict(self._print_lives, player))
 
         # If we have any icons, update their state.
         for icon in player.icons:

@@ -26,7 +26,7 @@ class CloudDialog(IOMultiType[CloudDialogTypeID]):
 
     These take care of updating and/or dismissing themselves based on
     user input. Useful for things such as inbox messages. For more
-    complex UI construction, look at :class:`CloudUI`.
+    complex UI construction, look at :mod:`bacommon.cloudui`.
     """
 
     @override

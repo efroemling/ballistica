@@ -143,14 +143,14 @@ class ProfileUpgradeWindow(bui.Window):
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
                 bacommon.bs.GlobalProfileCheckMessage(self._name),
-                on_response=bui.WeakCall(
+                on_response=bui.WeakCallPartial(
                     self._on_global_profile_check_response
                 ),
             )
 
         self._status: str | None = 'waiting'
         self._update_timer = bui.AppTimer(
-            1.023, bui.WeakCall(self._update), repeat=True
+            1.023, bui.WeakCallStrict(self._update), repeat=True
         )
         self._update()
 

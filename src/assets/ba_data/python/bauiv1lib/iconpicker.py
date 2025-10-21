@@ -130,7 +130,7 @@ class IconPicker(PopupWindow):
                     text_scale=1.2,
                     label='',
                     color=(0.65, 0.65, 0.65),
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._select_icon, self._icons[index]
                     ),
                     position=pos,

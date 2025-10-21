@@ -9,6 +9,7 @@ import weakref
 import random
 import logging
 import inspect
+import warnings
 from typing import TYPE_CHECKING, TypeVar, Protocol, NewType, override
 
 from efro.terminal import Clr
@@ -17,7 +18,7 @@ import _babase
 
 if TYPE_CHECKING:
     import functools
-    from typing import Any
+    from typing import Any, Callable
 
 
 # Declare distinct types for different time measurements we use so the
@@ -93,158 +94,347 @@ def get_type_name(cls: type) -> str:
     return f'{cls.__module__}.{cls.__qualname__}'
 
 
-class _WeakCall:
-    """Wrap a callable and arguments into a single callable object.
+# Note: Something here is wonky with pylint, possibly related to our
+# custom pylint plugin. Disabling all checks seems to fix it.
+# pylint: disable=all
+if TYPE_CHECKING:
+    # For type-checking, we point WeakCall and Call at
+    # functools.partial. This gives decent type-checking considering the
+    # open-ended nature of these calls (args being supplied at create
+    # time and/or at call time). Just remember that we're slightly lying
+    # to the type-checker here.
+    WeakCallPartial = functools.partial
+    CallPartial = functools.partial
+    WeakCall = functools.partial
+    Call = functools.partial
+else:
 
-    When passed a bound method as the callable, the instance portion of
-    it is weak-referenced, meaning the underlying instance is free to
-    die if all other references to it go away. Should this occur,
-    calling the weak-call is simply a no-op.
+    class WeakCallPartial:
+        """Wrap a callable and arguments into a single callable object.
 
-    Think of this as a handy way to tell an object to do something at
-    some point in the future if it happens to still exist.
+        When passed a bound method as the callable, the instance portion of
+        it is weak-referenced, meaning the underlying instance is free to
+        die if all other references to it go away. Should this occur,
+        calling the weak-call is simply a no-op.
 
-    **EXAMPLE A:** This code will create a ``FooClass`` instance and
-    call its ``bar()`` method 5 seconds later; it will be kept alive
-    even though we overwrite its variable with None because the bound
-    method we pass as a timer callback (``foo.bar``) strong-references
-    it::
+        Think of this as a handy way to tell an object to do something at
+        some point in the future if it happens to still exist.
 
-        foo = FooClass()
-        babase.apptimer(5.0, foo.bar)
-        foo = None
+        **EXAMPLE A:** This code will create a ``FooClass`` instance and
+        call its ``bar()`` method 5 seconds later; it will be kept alive
+        even though we overwrite its variable with None because the bound
+        method we pass as a timer callback (``foo.bar``) strong-references
+        it::
 
-    **EXAMPLE B:** This code will *not* keep our object alive; it will
-    die when we overwrite it with ``None`` and the timer will be a no-op
-    when it fires::
+            foo = FooClass()
+            babase.apptimer(5.0, foo.bar)
+            foo = None
 
-        foo = FooClass()
-        babase.apptimer(5.0, ba.WeakCall(foo.bar))
-        foo = None
+        **EXAMPLE B:** This code will *not* keep our object alive; it will
+        die when we overwrite it with ``None`` and the timer will be a no-op
+        when it fires::
 
-    **EXAMPLE C:** Wrap a method call with some positional and keyword
-    args::
+            foo = FooClass()
+            babase.apptimer(5.0, ba.WeakCall(foo.bar))
+            foo = None
 
-        myweakcall = babase.WeakCall(self.dostuff, argval1,
-                                     namedarg=argval2)
+        **EXAMPLE C:** Wrap a method call with some positional and keyword
+        args::
 
-        # Now we have a single callable to run that whole mess.
-        # The same as calling myobj.dostuff(argval1, namedarg=argval2)
-        # (provided my_obj still exists; this will do nothing otherwise).
-        myweakcall()
+            myweakcall = babase.WeakCall(self.dostuff, argval1,
+                                         namedarg=argval2)
 
-    Note: additional args and keywords you provide to the weak-call
-    constructor are stored as regular strong-references; you'll need to
-    wrap them in weakrefs manually if desired.
+            # Now we have a single callable to run that whole mess.
+            # The same as calling myobj.dostuff(argval1, namedarg=argval2)
+            # (provided my_obj still exists; this will do nothing otherwise).
+            myweakcall()
+
+        Note: additional args and keywords you provide to the weak-call
+        constructor are stored as regular strong-references; you'll need to
+        wrap them in weakrefs manually if desired.
+        """
+
+        # Optimize performance a bit; we shouldn't need to be super dynamic.
+        __slots__ = ['_call', '_args', '_keywds']
+
+        _did_invalid_call_warning = False
+
+        def __init__(self, call: Any, /, *args: Any, **keywds: Any) -> None:
+            # Note: keeping _call, _args, _keywds private in this case
+            # since we sub functools.partial for ourself in
+            # type-checking so they will be unrecognized anyway. Use
+            # non-partial versions if you want to access those.
+            if hasattr(call, '__func__'):
+                self._call = WeakMethod(call)
+            else:
+                app = _babase.app
+                if not self._did_invalid_call_warning:
+                    logging.warning(
+                        'Warning: callable passed to WeakCall() is not'
+                        ' weak-referencable (%s); use regular Call() instead'
+                        ' to avoid this warning.',
+                        args[0],
+                        stack_info=True,
+                    )
+                    type(self)._did_invalid_call_warning = True
+                self._call = call
+            self._args = args
+            self._keywds = keywds
+
+        def __call__(self, *args_extra: Any, **keywds_extra: Any) -> Any:
+            # Fast path: no extra args or kwargs.
+            if not args_extra and not keywds_extra:
+                return self._call(*self._args, **self._keywds)
+
+            # Slightly slower path: handle extra args.
+            if not keywds_extra:
+                # Only extra positional args; skip dict merge.
+                return self._call(*(self._args + args_extra), **self._keywds)
+
+            # Handle kw overrides (call-time kwargs overriding stored).
+            merged = {**self._keywds, **keywds_extra}
+            return self._call(*(self._args + args_extra), **merged)
+
+        @override
+        def __repr__(self) -> str:
+            return (
+                f'<babase.WeakCall object; _call={self._call!r}'
+                f' _args={self._args!r} _keywds={self._keywds!r}>'
+            )
+
+    class CallPartial:
+        """Wraps a callable and args into a single callable object.
+
+        The callable is strong-referenced so it won't die until this
+        object does.
+
+        Note that a bound method (ex: ``myobj.dosomething``) contains a
+        reference to ``self`` (``myobj`` in that case), so you will be
+        keeping that object alive too. Use babase.WeakCall if you want
+        to pass a method to a callback without keeping its object alive.
+
+        Example: Wrap a method call with 1 positional and 1 keyword arg::
+
+            mycall = babase.Call(myobj.dostuff, argval, namedarg=argval2)
+
+            # Now we have a single callable to run that whole mess.
+            # ..the same as calling myobj.dostuff(argval, namedarg=argval2)
+            mycall()
+        """
+
+        # Optimize performance a bit; we shouldn't need to be super dynamic.
+        __slots__ = ['_call', '_args', '_keywds']
+
+        def __init__(self, call: Any, /, *args: Any, **keywds: Any):
+            # Note: keeping _call, _args, _keywds private in this case
+            # since we sub functools.partial for ourself in
+            # type-checking so they will be unrecognized anyway. Use
+            # non-partial versions if you want to access those.
+            self._call = call
+            self._args = args
+            self._keywds = keywds
+
+        def __call__(self, *args_extra: Any, **keywds_extra: Any) -> Any:
+            # Fast path: no extra args or kwargs.
+            if not args_extra and not keywds_extra:
+                return self._call(*self._args, **self._keywds)
+
+            # Slightly slower path: handle extra args.
+            if not keywds_extra:
+                # Only extra positional args; skip dict merge.
+                return self._call(*(self._args + args_extra), **self._keywds)
+
+            # Handle kw overrides (call-time kwargs overriding stored).
+            merged = {**self._keywds, **keywds_extra}
+            return self._call(*(self._args + args_extra), **merged)
+
+        @override
+        def __repr__(self) -> str:
+            return (
+                f'<babase.Call object; _call={self.call!r}'
+                f' _args={self.args!r} _keywds={self.keywds!r}>'
+            )
+
+    class WeakCall:
+        """Currently alias of :meth:`WeakCallPartial`."""
+
+        # Optimize performance a bit; we shouldn't need to be super dynamic.
+        __slots__ = ['_call', '_args', '_keywds']
+
+        _did_invalid_call_warning = False
+
+        def __init__(self, call: Any, /, *args: Any, **keywds: Any) -> None:
+            warnings.warn(
+                'WeakCall should be replaced with either WeakCallPartial'
+                ' (if passing extra args at call time) or WeakCallStrict'
+                ' (it not). Once API 9 support ends, WeakCall can again be'
+                ' used, but it will behave like WeakCallStrict instead of'
+                ' WeakCallPartial.',
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            # Note: keeping _call, _args, _keywds private in this case
+            # since we sub functools.partial for ourself in
+            # type-checking so they will be unrecognized anyway. Use
+            # non-partial versions if you want to access those.
+            if hasattr(call, '__func__'):
+                self._call = WeakMethod(call)
+            else:
+                app = _babase.app
+                if not self._did_invalid_call_warning:
+                    logging.warning(
+                        'Warning: callable passed to WeakCall() is not'
+                        ' weak-referencable (%s); use regular Call() instead'
+                        ' to avoid this warning.',
+                        args[0],
+                        stack_info=True,
+                    )
+                    type(self)._did_invalid_call_warning = True
+                    self._call = call
+            self._args = args
+            self._keywds = keywds
+
+        def __call__(self, *args_extra: Any, **keywds_extra: Any) -> Any:
+            # Fast path: no extra args or kwargs.
+            if not args_extra and not keywds_extra:
+                return self._call(*self._args, **self._keywds)
+
+            # Slightly slower path: handle extra args.
+            if not keywds_extra:
+                # Only extra positional args; skip dict merge.
+                return self._call(*(self._args + args_extra), **self._keywds)
+
+            # Handle kw overrides (call-time kwargs overriding stored).
+            merged = {**self._keywds, **keywds_extra}
+            return self._call(*(self._args + args_extra), **merged)
+
+        @override
+        def __repr__(self) -> str:
+            return (
+                f'<babase.WeakCall object; _call={self._call!r}'
+                f' _args={self._args!r} _keywds={self._keywds!r}>'
+            )
+
+    class Call:
+        """Currently alias of :meth:`CallPartial`."""
+
+        # Optimize performance a bit; we shouldn't need to be super dynamic.
+        __slots__ = ['_call', '_args', '_keywds']
+
+        def __init__(self, call: Any, /, *args: Any, **keywds: Any):
+            warnings.warn(
+                'Call should be replaced with either CallPartial'
+                ' (if passing extra args at call time) or CallStrict'
+                ' (it not). Once API 9 support ends, Call can again be'
+                ' used, but it will behave like CallStrict instead'
+                ' of CallPartial.',
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            # Note: keeping _call, _args, _keywds private in this case
+            # since we sub functools.partial for ourself in
+            # type-checking so they will be unrecognized anyway. Use
+            # non-partial versions if you want to access those.
+            self._call = call
+            self._args = args
+            self._keywds = keywds
+
+        def __call__(self, *args_extra: Any, **keywds_extra: Any) -> Any:
+            # Fast path: no extra args or kwargs.
+            if not args_extra and not keywds_extra:
+                return self._call(*self._args, **self._keywds)
+
+            # Slightly slower path: handle extra args.
+            if not keywds_extra:
+                # Only extra positional args; skip dict merge.
+                return self._call(*(self._args + args_extra), **self._keywds)
+
+            # Handle kw overrides (call-time kwargs overriding stored).
+            merged = {**self._keywds, **keywds_extra}
+            return self._call(*(self._args + args_extra), **merged)
+
+        @override
+        def __repr__(self) -> str:
+            return (
+                f'<babase.Call object; _call={self.call!r}'
+                f' _args={self.args!r} _keywds={self.keywds!r}>'
+            )
+
+
+# pylint: enable=all
+
+
+class CallStrict[**P, T]:
+    """Like :meth:`Call()` but disallows extra args at call time.
+
+    This allows more complete type checking to occur, so this is
+    recommended if you do not need extra args at call time.
     """
 
-    # Optimize performance a bit; we shouldn't need to be super dynamic.
-    __slots__ = ['_call', '_args', '_keywds']
+    __slots__ = ('call', 'args', 'kwargs')
+
+    def __init__(
+        self, call: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
+    ) -> None:
+        self.call = call
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self) -> T:
+        return self.call(*self.args, **self.kwargs)
+
+    @override
+    def __repr__(self) -> str:
+        return (
+            f'<babase.Call object; call={self.call!r},'
+            f' args={self.args!r}, kwargs={self.kwargs!r}>'
+        )
+
+
+class WeakCallStrict[**P, T]:
+    """Like :meth:`WeakCall()` but disallows extra args at call time.
+
+    This allows more complete type checking to occur, so this is
+    recommended if you do not need extra args at call time.
+    """
+
+    __slots__ = ('call', 'args', 'kwargs')
 
     _did_invalid_call_warning = False
 
-    def __init__(self, *args: Any, **keywds: Any) -> None:
-        if hasattr(args[0], '__func__'):
-            self._call = WeakMethod(args[0])
+    def __init__(
+        self, call: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
+    ) -> None:
+        # Note: keeping _call, _args, _keywds private in this case
+        # since we sub functools.partial for ourself in
+        # type-checking so they will be unrecognized anyway. Use
+        # non-partial versions if you want to access those.
+        if hasattr(call, '__func__'):
+            self.call: Any = WeakMethod(call)  # type: ignore
         else:
             app = _babase.app
             if not self._did_invalid_call_warning:
                 logging.warning(
-                    'Warning: callable passed to babase.WeakCall() is not'
-                    ' weak-referencable (%s); use functools.partial instead'
+                    'Warning: callable passed to WeakCall() is not'
+                    ' weak-referencable (%s); use regular Call() instead'
                     ' to avoid this warning.',
                     args[0],
                     stack_info=True,
                 )
                 type(self)._did_invalid_call_warning = True
-            self._call = args[0]
-        self._args = args[1:]
-        self._keywds = keywds
+            self.call = call
+        self.args = args
+        self.kwargs = kwargs
 
-    def __call__(self, *args_extra: Any) -> Any:
-        return self._call(*self._args + args_extra, **self._keywds)
-
-    @override
-    def __str__(self) -> str:
-        return (
-            '<ba.WeakCall object; _call='
-            + str(self._call)
-            + ' _args='
-            + str(self._args)
-            + ' _keywds='
-            + str(self._keywds)
-            + '>'
-        )
-
-
-class _Call:
-    """Wraps a callable and arguments into a single callable object.
-
-    The callable is strong-referenced so it won't die until this
-    object does.
-
-    Note that a bound method (ex: ``myobj.dosomething``) contains a reference
-    to ``self`` (``myobj`` in that case), so you will be keeping that object
-    alive too. Use babase.WeakCall if you want to pass a method to a callback
-    without keeping its object alive.
-
-    Example: Wrap a method call with 1 positional and 1 keyword arg::
-
-        mycall = babase.Call(myobj.dostuff, argval, namedarg=argval2)
-
-        # Now we have a single callable to run that whole mess.
-        # ..the same as calling myobj.dostuff(argval, namedarg=argval2)
-        mycall()
-    """
-
-    # Optimize performance a bit; we shouldn't need to be super dynamic.
-    __slots__ = ['_call', '_args', '_keywds']
-
-    def __init__(self, *args: Any, **keywds: Any):
-        self._call = args[0]
-        self._args = args[1:]
-        self._keywds = keywds
-
-    def __call__(self, *args_extra: Any) -> Any:
-        return self._call(*self._args + args_extra, **self._keywds)
+    def __call__(self) -> T:
+        return self.call(*self.args, **self.kwargs)  # type: ignore
 
     @override
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return (
-            '<ba.Call object; _call='
-            + str(self._call)
-            + ' _args='
-            + str(self._args)
-            + ' _keywds='
-            + str(self._keywds)
-            + '>'
+            f'<babase.WeakCall object; call={self.call!r},'
+            f' args={self.args!r}, kwargs={self.kwargs!r}>'
         )
-
-
-if TYPE_CHECKING:
-    # For type-checking, point at functools.partial which gives us full
-    # type checking on both positional and keyword arguments (as of mypy
-    # 1.11).
-
-    # FIXME: Actually, currently (as of Dec 2024) mypy doesn't fully
-    # type check partial. The partial() call itself is checked, but the
-    # resulting callable seems to be essentially untyped. We should
-    # probably revise this stuff so that Call and WeakCall are for 100%
-    # complete calls so we can fully type check them using ParamSpecs or
-    # whatnot. We could then write a weak_partial() call if we actually
-    # need that particular combination of functionality.
-
-    # Note: Something here is wonky with pylint, possibly related to our
-    # custom pylint plugin. Disabling all checks seems to fix it.
-    # pylint: disable=all
-
-    WeakCall = functools.partial
-    Call = functools.partial
-else:
-    WeakCall = _WeakCall
-    WeakCall.__name__ = 'WeakCall'
-    Call = _Call
-    Call.__name__ = 'Call'
 
 
 class WeakMethod:
@@ -255,22 +445,22 @@ class WeakMethod:
     """
 
     # Optimize performance a bit; we shouldn't need to be super dynamic.
-    __slots__ = ['_func', '_obj']
+    __slots__ = ['func', 'obj']
 
     def __init__(self, call: types.MethodType):
         assert isinstance(call, types.MethodType)
-        self._func = call.__func__
-        self._obj = weakref.ref(call.__self__)
+        self.func = call.__func__
+        self.obj = weakref.ref(call.__self__)
 
     def __call__(self, *args: Any, **keywds: Any) -> Any:
-        obj = self._obj()
+        obj = self.obj()
         if obj is None:
             return None
-        return self._func(*((obj,) + args), **keywds)
+        return self.func(*((obj,) + args), **keywds)
 
     @override
-    def __str__(self) -> str:
-        return '<ba.WeakMethod object; call=' + str(self._func) + '>'
+    def __repr__(self) -> str:
+        return f'<babase.WeakMethod object; func={self.func!r}>'
 
 
 def verify_object_death(obj: object) -> None:
@@ -292,7 +482,7 @@ def verify_object_death(obj: object) -> None:
     # Make this timer in an empty context; don't want it dying with the
     # scene/etc.
     with _babase.ContextRef.empty():
-        _babase.apptimer(delay, Call(_verify_object_death, ref))
+        _babase.apptimer(delay, CallStrict(_verify_object_death, ref))
 
 
 def _verify_object_death(wref: weakref.ref) -> None:

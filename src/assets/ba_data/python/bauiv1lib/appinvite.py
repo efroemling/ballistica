@@ -150,7 +150,7 @@ class ShowFriendCodeWindow(bui.Window):
                 position=(self._width * 0.5 - 100 + xoffs, 39),
                 autoselect=True,
                 label=bui.Lstr(resource='gatherWindow.emailItText'),
-                on_activate_call=bui.WeakCall(self._email),
+                on_activate_call=bui.WeakCallStrict(self._email),
             )
 
     def _email(self) -> None:

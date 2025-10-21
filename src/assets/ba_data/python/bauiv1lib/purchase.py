@@ -126,7 +126,7 @@ class PurchaseWindow(bui.Window):
             )
 
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
 
         self._cancel_button = bui.buttonwidget(

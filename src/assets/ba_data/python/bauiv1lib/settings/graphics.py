@@ -455,7 +455,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
         # Make a timer to update our controls in case the config changes
         # under us.
         self._update_timer = bui.AppTimer(
-            0.25, bui.WeakCall(self._update_controls), repeat=True
+            0.25, bui.WeakCallStrict(self._update_controls), repeat=True
         )
 
     @override

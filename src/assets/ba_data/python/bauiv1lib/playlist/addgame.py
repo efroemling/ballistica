@@ -252,7 +252,9 @@ class PlaylistAddGameWindow(bui.MainWindow):
                 v_align='center',
                 color=(0.8, 0.8, 0.8, 1.0),
                 maxwidth=self._scroll_width * 0.8,
-                on_select_call=bui.Call(self._set_selected_game_type, gametype),
+                on_select_call=bui.CallStrict(
+                    self._set_selected_game_type, gametype
+                ),
                 always_highlight=True,
                 selectable=True,
                 on_activate_call=_doit,

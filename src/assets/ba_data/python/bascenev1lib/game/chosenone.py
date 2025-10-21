@@ -168,7 +168,11 @@ class ChosenOneGame(bs.TeamGameActivity[Player, Team]):
             actions=(
                 ('modify_part_collision', 'collide', True),
                 ('modify_part_collision', 'physical', False),
-                ('call', 'at_connect', bs.WeakCall(self._handle_reset_collide)),
+                (
+                    'call',
+                    'at_connect',
+                    bs.WeakCallStrict(self._handle_reset_collide),
+                ),
             ),
         )
 

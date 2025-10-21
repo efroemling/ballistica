@@ -132,7 +132,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         bs.timer(
             tdelay + delay3,
-            bs.WeakCall(
+            bs.WeakCallStrict(
                 self._safe_animate,
                 title.position_combine,
                 'input0',
@@ -160,7 +160,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             bs.timer(
                 tdelay + delay2,
-                bs.WeakCall(
+                bs.WeakCallStrict(
                     self._safe_animate,
                     img.position_combine,
                     'input1',
@@ -172,7 +172,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             )
             bs.timer(
                 tdelay + delay3,
-                bs.WeakCall(
+                bs.WeakCallStrict(
                     self._safe_animate,
                     img.position_combine,
                     'input0',
@@ -198,7 +198,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             bs.timer(
                 tdelay + delay2,
-                bs.WeakCall(
+                bs.WeakCallStrict(
                     self._safe_animate,
                     txt.position_combine,
                     'input1',
@@ -210,7 +210,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             )
             bs.timer(
                 tdelay + delay3,
-                bs.WeakCall(
+                bs.WeakCallStrict(
                     self._safe_animate,
                     txt.position_combine,
                     'input0',
@@ -235,7 +235,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             bs.timer(
                 tdelay + delay3,
-                bs.WeakCall(
+                bs.WeakCallStrict(
                     self._safe_animate,
                     txt_num.position_combine,
                     'input0',
@@ -256,7 +256,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             )
             bs.timer(
                 tdelay + delay2,
-                bs.WeakCall(
+                bs.WeakCallStrict(
                     self._safe_animate,
                     s_txt.position_combine,
                     'input1',
@@ -268,7 +268,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             )
             bs.timer(
                 tdelay + delay3,
-                bs.WeakCall(
+                bs.WeakCallStrict(
                     self._safe_animate,
                     s_txt.position_combine,
                     'input0',
@@ -297,7 +297,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 )
                 bs.timer(
                     tdelay + delay2,
-                    bs.WeakCall(
+                    bs.WeakCallStrict(
                         self._safe_animate,
                         s_txt_2.position_combine,
                         'input1',
@@ -309,7 +309,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 )
                 bs.timer(
                     tdelay + delay3,
-                    bs.WeakCall(
+                    bs.WeakCallStrict(
                         self._safe_animate,
                         s_txt_2.position_combine,
                         'input0',
@@ -328,12 +328,14 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
                 bs.timer(
                     tdelay + delay1,
-                    bs.Call(_safesetattr, s_txt.node, 'color', (1, 1, 1, 1)),
+                    bs.CallStrict(
+                        _safesetattr, s_txt.node, 'color', (1, 1, 1, 1)
+                    ),
                 )
                 for j in range(score_change):
                     bs.timer(
                         (tdelay + delay1 + 0.15 * j),
-                        bs.Call(
+                        bs.CallStrict(
                             _safesetattr,
                             s_txt.node,
                             'text',

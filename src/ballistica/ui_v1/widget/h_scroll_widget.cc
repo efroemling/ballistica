@@ -329,6 +329,11 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         pass = false;
         has_momentum_ = static_cast<bool>(m.fval4);
 
+        // Don't scroll if everything is visible.
+        if (amount_visible_ >= 1.0f) {
+          break;
+        }
+
         // We only set velocity from events when not in momentum mode; we
         // handle momentum ourself.
         if (std::abs(m.fval3) > 0.001f && !has_momentum_) {
@@ -381,6 +386,12 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if ((x >= 0.0f) && (x < width()) && (y >= 0.0f) && (y < height())) {
         claimed = true;
         pass = false;
+
+        // Don't scroll if everything is visible.
+        if (amount_visible_ >= 1.0f) {
+          break;
+        }
+
         inertia_scroll_rate_ -= m.fval3 * 0.003f;
         MarkForUpdate();
       } else {
@@ -479,7 +490,9 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
   // Normal container event handling.
   if (pass) {
-    if (ContainerWidget::HandleMessage(m)) claimed = true;
+    if (ContainerWidget::HandleMessage(m)) {
+      claimed = true;
+    }
   }
 
   // If it was a mouse-down and we claimed it, set ourself as selected.

@@ -142,7 +142,7 @@ class RespawnIcon:
         self._dec_timer: bs.Timer | None = None
         self._update()
         self._timer: bs.Timer | None = bs.Timer(
-            1.0, bs.WeakCall(self._update), repeat=True
+            1.0, bs.WeakCallStrict(self._update), repeat=True
         )
 
     @property
@@ -211,7 +211,7 @@ class RespawnIcon:
                     # Start the timer to tick down.
                     self._dec_timer = bs.Timer(
                         0.25,
-                        bs.WeakCall(self._dec_step, ['..', '.', '']),
+                        bs.WeakCallStrict(self._dec_step, ['..', '.', '']),
                         repeat=True,
                     )
         else:

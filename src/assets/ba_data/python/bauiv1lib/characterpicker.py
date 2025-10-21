@@ -147,7 +147,7 @@ class CharacterPicker(PopupWindow):
                     color=(1, 1, 1),
                     tint_color=tint_color,
                     tint2_color=tint2_color,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._select_character, self._spazzes[index]
                     ),
                     position=pos,

@@ -192,7 +192,7 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             session = self._session()
             if session is not None:
                 babase.pushcall(
-                    babase.Call(
+                    babase.CallStrict(
                         session.transitioning_out_activity_was_freed,
                         self.can_show_ad_on_death,
                     )
@@ -286,7 +286,7 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             ref = weakref.ref(self)
             self._activity_death_check_timer = babase.AppTimer(
                 5.0,
-                babase.Call(self._check_activity_death, ref, [0]),
+                babase.CallStrict(self._check_activity_death, ref, [0]),
                 repeat=True,
             )
 

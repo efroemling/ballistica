@@ -185,7 +185,9 @@ class CoopSession(Session):
     def on_player_leave(self, sessionplayer: bascenev1.SessionPlayer) -> None:
         super().on_player_leave(sessionplayer)
 
-        _bascenev1.timer(2.0, babase.WeakCall(self._handle_empty_activity))
+        _bascenev1.timer(
+            2.0, babase.WeakCallStrict(self._handle_empty_activity)
+        )
 
     def _handle_empty_activity(self) -> None:
         """Handle cases where all players have left the current activity."""
@@ -358,7 +360,7 @@ class CoopSession(Session):
                             {
                                 'label': babase.Lstr(resource='restartText'),
                                 'resume_on_call': False,
-                                'call': babase.WeakCall(
+                                'call': babase.WeakCallPartial(
                                     self._on_tournament_restart_menu_press
                                 ),
                             }
@@ -367,7 +369,7 @@ class CoopSession(Session):
                         self._custom_menu_ui = [
                             {
                                 'label': babase.Lstr(resource='restartText'),
-                                'call': babase.WeakCall(self.restart),
+                                'call': babase.WeakCallStrict(self.restart),
                             }
                         ]
 

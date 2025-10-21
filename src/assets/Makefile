@@ -335,7 +335,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/batemplatefs/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_appsubsystem.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/_cloudui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
@@ -351,6 +350,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/appinvite.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/chest.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/confirm.py \
@@ -468,11 +468,13 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/bs/_chest.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bs/_clienteffect.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bs/_clouddialog.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/bs/_cloudui.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bs/_displayitem.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bs/_msg.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloud.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/cloudui/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/cloudui/_cloudui.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/cloudui/v1.py \
   $(BUILD_DIR)/ba_data/python/bacommon/locale.py \
   $(BUILD_DIR)/ba_data/python/bacommon/loggercontrol.py \
   $(BUILD_DIR)/ba_data/python/bacommon/logging.py \

@@ -398,6 +398,6 @@ class Target(bs.Actor):
                 1,
                 {0.9: self._nodes[2].size, 1.1: [0.0]},
             )
-            bs.timer(1.1, bs.Call(self.handlemessage, bs.DieMessage()))
+            bs.timer(1.1, bs.CallStrict(self.handlemessage, bs.DieMessage()))
 
         return bullseye

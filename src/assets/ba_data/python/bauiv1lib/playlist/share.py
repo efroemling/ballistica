@@ -67,7 +67,7 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
                 'expire_time': time.time() + 5,
                 'code': bui.textwidget(query=self._text_field),
             },
-            callback=bui.WeakCall(self._on_import_response),
+            callback=bui.WeakCallPartial(self._on_import_response),
         )
         plus.run_v1_account_transactions()
         bui.screenmessage(bui.Lstr(resource='importingText'))

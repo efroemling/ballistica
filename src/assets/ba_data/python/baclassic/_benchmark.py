@@ -130,9 +130,9 @@ def _start_stress_test(args: _StressTestArgs) -> None:
         appconfig['Team Tournament Playlist Randomize'] = 1
         babase.apptimer(
             1.0,
-            babase.Call(
+            babase.CallStrict(
                 babase.pushcall,
-                babase.Call(bascenev1.new_host_session, DualTeamSession),
+                babase.CallStrict(bascenev1.new_host_session, DualTeamSession),
             ),
         )
     else:
@@ -140,18 +140,22 @@ def _start_stress_test(args: _StressTestArgs) -> None:
         appconfig['Free-for-All Playlist Randomize'] = 1
         babase.apptimer(
             1.0,
-            babase.Call(
+            babase.CallStrict(
                 babase.pushcall,
-                babase.Call(bascenev1.new_host_session, FreeForAllSession),
+                babase.CallStrict(
+                    bascenev1.new_host_session, FreeForAllSession
+                ),
             ),
         )
     _baclassic.set_stress_testing(True, args.player_count, args.attract_mode)
     classic.stress_test_update_timer = babase.AppTimer(
-        args.round_duration, babase.Call(_reset_stress_test, args)
+        args.round_duration, babase.CallStrict(_reset_stress_test, args)
     )
     if args.attract_mode:
         classic.stress_test_update_timer_2 = babase.AppTimer(
-            0.48, babase.Call(_update_attract_mode_test, args), repeat=True
+            0.48,
+            babase.CallStrict(_update_attract_mode_test, args),
+            repeat=True,
         )
 
 
@@ -176,7 +180,7 @@ def _reset_stress_test(args: _StressTestArgs) -> None:
     # we just end back at the main menu. If things are idle there then
     # we'll get sent back to a new stress test.
     if not args.attract_mode:
-        babase.apptimer(1.0, babase.Call(_start_stress_test, args))
+        babase.apptimer(1.0, babase.CallStrict(_start_stress_test, args))
 
 
 def run_media_reload_benchmark() -> None:
@@ -200,8 +204,8 @@ def run_media_reload_benchmark() -> None:
                     color=(1, 1, 0),
                 )
 
-        babase.add_clean_frame_callback(babase.Call(doit, start_time))
+        babase.add_clean_frame_callback(babase.CallStrict(doit, start_time))
 
     # The reload starts (should add a completion callback to the reload
     # func to fix this).
-    babase.apptimer(0.05, babase.Call(delay_add, babase.apptime()))
+    babase.apptimer(0.05, babase.CallStrict(delay_add, babase.apptime()))

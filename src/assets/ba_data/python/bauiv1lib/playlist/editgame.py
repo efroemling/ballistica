@@ -153,7 +153,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             autoselect=True,
             scale=1.0 if is_add else 0.75,
             text_scale=1.3,
-            on_activate_call=bui.Call(self._cancel),
+            on_activate_call=bui.CallStrict(self._cancel),
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
@@ -248,7 +248,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             parent=self._subcontainer,
             size=(140, 60),
             position=(h + 448, v - 72),
-            on_activate_call=bui.Call(self._select_map),
+            on_activate_call=bui.CallStrict(self._select_map),
             scale=0.7,
             label=bui.Lstr(resource='mapSelectText'),
         )
@@ -359,7 +359,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     size=(28, 28),
                     label='<',
                     autoselect=True,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._choice_inc, setting.name, txt, setting, -1
                     ),
                     repeat=True,
@@ -370,7 +370,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     size=(28, 28),
                     label='>',
                     autoselect=True,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._choice_inc, setting.name, txt, setting, 1
                     ),
                     repeat=True,
@@ -410,7 +410,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     size=(28, 28),
                     label='-',
                     autoselect=True,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._inc,
                         txt,
                         min_value,
@@ -427,7 +427,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     size=(28, 28),
                     label='+',
                     autoselect=True,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._inc,
                         txt,
                         min_value,
@@ -476,7 +476,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     autoselect=True,
                     textcolor=(0.8, 0.8, 0.8),
                     value=value,
-                    on_value_change_call=bui.Call(
+                    on_value_change_call=bui.CallPartial(
                         self._check_value_change, setting.name, txt
                     ),
                 )
@@ -503,7 +503,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
                 'Error wiring up game-settings-select widget column.'
             )
 
-        bui.buttonwidget(edit=add_button, on_activate_call=bui.Call(self._add))
+        bui.buttonwidget(
+            edit=add_button, on_activate_call=bui.CallStrict(self._add)
+        )
         bui.containerwidget(
             edit=self._root_widget,
             selected_child=add_button,

@@ -114,7 +114,7 @@ class TournamentScoresWindow(PopupWindow):
                 'numScores': 50,
                 'source': 'scores window',
             },
-            callback=bui.WeakCall(self._on_tournament_query_response),
+            callback=bui.WeakCallPartial(self._on_tournament_query_response),
         )
 
     def _on_tournament_query_response(
@@ -200,7 +200,7 @@ class TournamentScoresWindow(PopupWindow):
 
                 bui.textwidget(
                     edit=txt,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._show_player_info, entry, txt
                     ),
                 )

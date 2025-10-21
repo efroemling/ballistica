@@ -237,7 +237,7 @@ class PlayerRecord:
         if name is not None:
             _bascenev1.timer(
                 0.3 + delay,
-                babase.Call(
+                babase.CallStrict(
                     _apply, name, score, showpoints, color, scale, sound
                 ),
             )

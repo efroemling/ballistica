@@ -41,7 +41,6 @@ from bacommon.bs._clouddialog import (
     CloudDialogWrapper,
     UnknownCloudDialog,
 )
-from bacommon.bs._cloudui import CloudUITypeID, CloudUI
 from bacommon.bs._displayitem import (
     ChestDisplayItem,
     DisplayItem,
@@ -108,8 +107,6 @@ __all__ = [
     'CloudDialogActionResponse',
     'CloudDialogTypeID',
     'CloudDialogWrapper',
-    'CloudUI',
-    'CloudUITypeID',
     'DisplayItem',
     'DisplayItemTypeID',
     'DisplayItemWrapper',

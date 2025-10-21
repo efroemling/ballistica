@@ -165,7 +165,7 @@ class PrivateGatherTab(GatherTab):
         )
 
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
 
         # Prevent taking any action until we've updated our state.
@@ -322,7 +322,7 @@ class PrivateGatherTab(GatherTab):
                                 'type': 'PRIVATE_PARTY_QUERY',
                                 'expire_time': time.time() + 20,
                             },
-                            callback=bui.WeakCall(
+                            callback=bui.WeakCallPartial(
                                 self._idle_hosting_state_response
                             ),
                         )
@@ -349,7 +349,7 @@ class PrivateGatherTab(GatherTab):
                                         > 30.0
                                     )
                                 ),
-                                on_response=bui.WeakCall(
+                                on_response=bui.WeakCallPartial(
                                     self._on_private_party_query_response
                                 ),
                             )
@@ -971,7 +971,7 @@ class PrivateGatherTab(GatherTab):
                 'expire_time': time.time() + 20,
                 'code': code,
             },
-            callback=bui.WeakCall(self._connect_response),
+            callback=bui.WeakCallPartial(self._connect_response),
         )
         plus.run_v1_account_transactions()
 
@@ -1029,7 +1029,7 @@ class PrivateGatherTab(GatherTab):
                     'expire_time': time.time() + 20,
                     'datacode': self._v2state.datacode,
                 },
-                callback=bui.WeakCall(self._hosting_state_response),
+                callback=bui.WeakCallPartial(self._hosting_state_response),
             )
             plus.run_v1_account_transactions()
 
@@ -1040,7 +1040,7 @@ class PrivateGatherTab(GatherTab):
                     'type': 'PRIVATE_PARTY_STOP',
                     'expire_time': time.time() + 20,
                 },
-                callback=bui.WeakCall(self._hosting_state_response),
+                callback=bui.WeakCallPartial(self._hosting_state_response),
             )
             plus.run_v1_account_transactions()
         bui.getsound('click01').play()

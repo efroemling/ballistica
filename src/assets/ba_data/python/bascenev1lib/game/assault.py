@@ -149,7 +149,7 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                 (
                     'call',
                     'at_connect',
-                    bs.Call(self._handle_base_collide, team),
+                    bs.CallStrict(self._handle_base_collide, team),
                 ),
             ),
         )
@@ -270,7 +270,7 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                             self._teleport(player, new_pos, random_num)
                             bs.timer(
                                 0.01,
-                                bs.Call(
+                                bs.CallStrict(
                                     self._teleport, player, new_pos, random_num
                                 ),
                             )

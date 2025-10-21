@@ -148,7 +148,7 @@ class AccountViewerWindow(PopupWindow):
                 'accountID': self._account_id,
                 'profileID': self._profile_id,
             },
-            callback=bui.WeakCall(self._on_query_response),
+            callback=bui.WeakCallPartial(self._on_query_response),
         )
 
     def popup_menu_selected_choice(

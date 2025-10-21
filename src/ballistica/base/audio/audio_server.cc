@@ -466,9 +466,19 @@ void AudioServer::Start_() {
       const ALchar* vendor = alGetString(AL_VENDOR);
       const ALchar* version = alGetString(AL_VERSION);
       const ALCchar* device_name = alcGetString(device, ALC_DEVICE_SPECIFIER);
-      return std::string("OpenAL inited.\n  renderer: ") + renderer
-             + "\n  vendor: " + vendor + "\n  version: " + version
-             + "\n  device: " + device_name + "";
+
+      // With OpenAL Soft on desktop, make a note that full OpenAL logs can
+      // be enabled by setting an env var.
+      const char* env_note = (renderer == std::string("OpenAL Soft")
+                              && (g_buildconfig.platform_windows()
+                                  || g_buildconfig.platform_linux()
+                                  || g_buildconfig.platform_macos()))
+                                 ? "\n  Set env-var ALSOFT_LOGLEVEL=3 for "
+                                   "detailed OpenAL logs on stderr."
+                                 : "";
+      return std::string("OpenAL inited.\n  Renderer: ") + renderer
+             + "\n  Vendor: " + vendor + "\n  Version: " + version
+             + "\n  Device: " + device_name + env_note;
     });
 
     alcDevicePauseSOFT = reinterpret_cast<LPALCDEVICEPAUSESOFT_>(

@@ -327,10 +327,10 @@ class SpazBot(Spaz):
                         self.node.jump_pressed = False
 
                         # Throws:
-                        bs.timer(0.1, bs.Call(_safe_pickup, self.node))
+                        bs.timer(0.1, bs.CallStrict(_safe_pickup, self.node))
                     else:
                         # Throws:
-                        bs.timer(0.1, bs.Call(_safe_pickup, self.node))
+                        bs.timer(0.1, bs.CallStrict(_safe_pickup, self.node))
 
                 if self.static:
                     if time_till_throw < 0.3:
@@ -945,7 +945,7 @@ class SpazBotSet:
             pt=pos,
             spawn_time=spawn_time,
             send_spawn_message=False,
-            spawn_callback=bs.Call(
+            spawn_callback=bs.CallStrict(
                 self._spawn_bot, bot_type, pos, on_spawn_call
             ),
         )
@@ -1040,7 +1040,7 @@ class SpazBotSet:
     def start_moving(self) -> None:
         """Start processing bot AI updates so they start doing their thing."""
         self._bot_update_timer = bs.Timer(
-            0.05, bs.WeakCall(self._update), repeat=True
+            0.05, bs.WeakCallStrict(self._update), repeat=True
         )
 
     def stop_moving(self) -> None:
@@ -1083,7 +1083,7 @@ class SpazBotSet:
                     bot.node.move_up_down = 0
                     bs.timer(
                         0.5 * random.random(),
-                        bs.Call(bot.handlemessage, bs.CelebrateMessage()),
+                        bs.CallStrict(bot.handlemessage, bs.CelebrateMessage()),
                     )
                     jump_duration = random.randrange(400, 500)
                     j = random.randrange(0, 200)
@@ -1093,15 +1093,15 @@ class SpazBotSet:
                         j += jump_duration
                     bs.timer(
                         random.uniform(0.0, 1.0),
-                        bs.Call(bot.node.handlemessage, 'attack_sound'),
+                        bs.CallStrict(bot.node.handlemessage, 'attack_sound'),
                     )
                     bs.timer(
                         random.uniform(1.0, 2.0),
-                        bs.Call(bot.node.handlemessage, 'attack_sound'),
+                        bs.CallStrict(bot.node.handlemessage, 'attack_sound'),
                     )
                     bs.timer(
                         random.uniform(2.0, 3.0),
-                        bs.Call(bot.node.handlemessage, 'attack_sound'),
+                        bs.CallStrict(bot.node.handlemessage, 'attack_sound'),
                     )
 
     def add_bot(self, bot: SpazBot) -> None:

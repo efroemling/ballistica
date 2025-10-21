@@ -214,7 +214,8 @@ class AudioSettingsWindow(bui.MainWindow):
                 color=(0.5, 1, 0.5),
             )
             bui.apptimer(
-                1.0, bui.Call(bui.request_permission, bui.Permission.STORAGE)
+                1.0,
+                bui.CallStrict(bui.request_permission, bui.Permission.STORAGE),
             )
             return
 

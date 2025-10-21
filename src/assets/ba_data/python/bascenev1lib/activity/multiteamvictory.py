@@ -54,9 +54,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         winning_sessionteam = self.settings_raw['winner']
 
         # Pause a moment before playing victory music.
-        bs.timer(0.6, bs.WeakCall(self._play_victory_music))
+        bs.timer(0.6, bs.WeakCallStrict(self._play_victory_music))
         bs.timer(
-            4.4, bs.WeakCall(self._show_winner, self.settings_raw['winner'])
+            4.4,
+            bs.WeakCallStrict(self._show_winner, self.settings_raw['winner']),
         )
         bs.timer(4.6, self._score_display_sound.play)
 
@@ -421,7 +422,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tdelay,
             ).autoretain()
 
-        bs.timer(15.0, bs.WeakCall(self._show_tips))
+        bs.timer(15.0, bs.WeakCallStrict(self._show_tips))
 
     def _show_tips(self) -> None:
         from bascenev1lib.actor.tipstext import TipsText

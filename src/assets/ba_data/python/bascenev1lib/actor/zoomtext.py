@@ -81,12 +81,14 @@ class ZoomText(bs.Actor):
             positionadjusted2 = (shiftposition[0], shiftposition[1] - 100)
             bs.timer(
                 shiftdelay,
-                bs.WeakCall(self._shift, positionadjusted, positionadjusted2),
+                bs.WeakCallStrict(
+                    self._shift, positionadjusted, positionadjusted2
+                ),
             )
             if jitter > 0.0:
                 bs.timer(
                     shiftdelay + 0.25,
-                    bs.WeakCall(
+                    bs.WeakCallStrict(
                         self._jitter, positionadjusted2, jitter * scale
                     ),
                 )
@@ -155,7 +157,9 @@ class ZoomText(bs.Actor):
 
         # if they give us a lifespan, kill ourself down the line
         if lifespan is not None:
-            bs.timer(lifespan, bs.WeakCall(self.handlemessage, bs.DieMessage()))
+            bs.timer(
+                lifespan, bs.WeakCallStrict(self.handlemessage, bs.DieMessage())
+            )
 
     @override
     def handlemessage(self, msg: Any) -> Any:

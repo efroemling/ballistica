@@ -62,7 +62,7 @@ class TabRow[T: Enum]:
                 size=size,
                 label=tab_label,
                 enable_sound=False,
-                on_activate_call=bui.Call(
+                on_activate_call=bui.CallStrict(
                     self._tick_and_call, on_select_call, tab_id
                 ),
             )

@@ -100,7 +100,7 @@ class WaitForConnectivityWindow(bui.Window):
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=cancel_button)
         self._update_timer = bui.AppTimer(
-            0.113, bui.WeakCall(self._update), repeat=True
+            0.113, bui.WeakCallStrict(self._update), repeat=True
         )
 
     def _update(self) -> None:

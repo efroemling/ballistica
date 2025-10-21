@@ -576,7 +576,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             for _i in range(4):
                 bs.timer(
                     delay,
-                    bs.Call(
+                    bs.CallStrict(
                         _safesetattr,
                         self._lives_text.node,
                         'color',
@@ -587,12 +587,14 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 assert self._lives_bg.node
                 bs.timer(
                     delay,
-                    bs.Call(_safesetattr, self._lives_bg.node, 'opacity', 0.5),
+                    bs.CallStrict(
+                        _safesetattr, self._lives_bg.node, 'opacity', 0.5
+                    ),
                 )
                 delay += 0.125
                 bs.timer(
                     delay,
-                    bs.Call(
+                    bs.CallStrict(
                         _safesetattr,
                         self._lives_text.node,
                         'color',
@@ -601,12 +603,14 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 )
                 bs.timer(
                     delay,
-                    bs.Call(_safesetattr, self._lives_bg.node, 'opacity', 1.0),
+                    bs.CallStrict(
+                        _safesetattr, self._lives_bg.node, 'opacity', 1.0
+                    ),
                 )
                 delay += 0.125
             bs.timer(
                 delay,
-                bs.Call(
+                bs.CallStrict(
                     _safesetattr,
                     self._lives_text.node,
                     'color',
@@ -666,7 +670,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             for i in range(len(points)):
                 bs.timer(
                     1.0 + i * 0.5,
-                    bs.Call(
+                    bs.CallStrict(
                         self._drop_powerup, i, force_first if i == 0 else None
                     ),
                 )
@@ -697,7 +701,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
     def end_game(self) -> None:
         # (Pylint Bug?) pylint: disable=missing-function-docstring
 
-        bs.pushcall(bs.Call(self.do_end, 'defeat'))
+        bs.pushcall(bs.CallStrict(self.do_end, 'defeat'))
         bs.setmusic(None)
         self._player_death_sound.play()
 
@@ -754,7 +758,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 bs.timer(0, self._cashregistersound.play)
                 bs.timer(
                     base_delay,
-                    bs.Call(self._award_time_bonus, self._time_bonus),
+                    bs.CallStrict(self._award_time_bonus, self._time_bonus),
                 )
                 base_delay += 1.0
 
@@ -800,7 +804,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 bs.cameraflash()
                 bs.setmusic(bs.MusicType.VICTORY)
                 self._game_over = True
-                bs.timer(base_delay, bs.Call(self.do_end, 'victory'))
+                bs.timer(base_delay, bs.CallStrict(self.do_end, 'victory'))
                 return
 
             self._wavenum += 1
@@ -1102,7 +1106,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             delay = base_delay
             delay /= self._get_bot_speed(bot_type)
             t_sec += delay * 0.5
-            tcall = bs.Call(
+            tcall = bs.CallStrict(
                 self.add_bot_at_point,
                 point,
                 bot_type,
@@ -1219,7 +1223,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             spaztype,
             pos=pos,
             spawn_time=spawn_time,
-            on_spawn_call=bs.Call(self._on_bot_spawn, path),
+            on_spawn_call=bs.CallPartial(self._on_bot_spawn, path),
         )
 
     def _update_time_bonus(self) -> None:
@@ -1347,7 +1351,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             assert self.initialplayerinfos is not None
             respawn_time = 2.0 + len(self.initialplayerinfos) * 1.0
             player.respawn_timer = bs.Timer(
-                respawn_time, bs.Call(self.spawn_player_if_exists, player)
+                respawn_time, bs.CallStrict(self.spawn_player_if_exists, player)
             )
             player.respawn_icon = RespawnIcon(player, respawn_time)
 

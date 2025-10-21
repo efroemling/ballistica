@@ -95,7 +95,7 @@ class _MacMusicAppThread(threading.Thread):
         def do_print() -> None:
             babase.apptimer(
                 0.5,
-                babase.Call(
+                babase.CallStrict(
                     babase.screenmessage,
                     babase.Lstr(resource='usingItunesText'),
                     (0, 1, 0),
@@ -198,7 +198,9 @@ class _MacMusicAppThread(threading.Thread):
         except Exception as exc:
             print('Error getting iTunes playlists:', exc)
             playlists = []
-        babase.pushcall(babase.Call(target, playlists), from_other_thread=True)
+        babase.pushcall(
+            babase.CallStrict(target, playlists), from_other_thread=True
+        )
 
     def _handle_play_command(self, target: str | None) -> None:
         if target is None:
@@ -246,7 +248,7 @@ class _MacMusicAppThread(threading.Thread):
                 pass
             else:
                 babase.pushcall(
-                    babase.Call(
+                    babase.CallStrict(
                         babase.screenmessage,
                         babase.app.lang.get_resource('playlistNotFoundText')
                         + ': \''

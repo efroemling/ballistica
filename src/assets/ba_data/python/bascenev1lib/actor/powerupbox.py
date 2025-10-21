@@ -265,11 +265,11 @@ class PowerupBox(bs.Actor):
         if expire:
             bs.timer(
                 DEFAULT_POWERUP_INTERVAL - 2.5,
-                bs.WeakCall(self._start_flashing),
+                bs.WeakCallStrict(self._start_flashing),
             )
             bs.timer(
                 DEFAULT_POWERUP_INTERVAL - 1.0,
-                bs.WeakCall(self.handlemessage, bs.DieMessage()),
+                bs.WeakCallStrict(self.handlemessage, bs.DieMessage()),
             )
 
     def _start_flashing(self) -> None:

@@ -106,7 +106,7 @@ class GamepadSelectWindow(bui.MainWindow):
             )
 
         bs.capture_game_controller_input(
-            bui.WeakCall(self.gamepad_configure_callback)
+            bui.WeakCallPartial(self.gamepad_configure_callback)
         )
 
     def __del__(self) -> None:

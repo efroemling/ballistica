@@ -534,7 +534,7 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
                 if team.flag_return_touches == 1:
                     team.touch_return_timer = bs.Timer(
                         0.1,
-                        call=bs.Call(self._touch_return_update, team),
+                        call=bs.CallStrict(self._touch_return_update, team),
                         repeat=True,
                     )
                     team.touch_return_timer_ticking = None
@@ -646,7 +646,9 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
 
         elif isinstance(msg, FlagDiedMessage):
             assert isinstance(msg.flag, CTFFlag)
-            bs.timer(0.1, bs.Call(self._spawn_flag_for_team, msg.flag.team))
+            bs.timer(
+                0.1, bs.CallStrict(self._spawn_flag_for_team, msg.flag.team)
+            )
 
         elif isinstance(msg, FlagPickedUpMessage):
             # Store the last player to hold the flag for scoring purposes.

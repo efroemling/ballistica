@@ -61,7 +61,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         for team in self.session.sessionteams:
             bs.timer(
                 i * 0.15 + 0.15,
-                bs.WeakCall(
+                bs.WeakCallStrict(
                     self._show_team_name,
                     vval - i * height,
                     team,
@@ -76,7 +76,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 delay = 1.2
                 bs.timer(
                     i * 0.150 + 0.2,
-                    bs.WeakCall(
+                    bs.WeakCallStrict(
                         self._show_team_old_score,
                         vval - i * height,
                         team,
@@ -87,7 +87,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
             bs.timer(
                 i * 0.150 + delay,
-                bs.WeakCall(
+                bs.WeakCallStrict(
                     self._show_team_score,
                     vval - i * height,
                     team,

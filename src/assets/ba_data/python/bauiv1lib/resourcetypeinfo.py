@@ -87,7 +87,9 @@ class ResourceTypeInfoWindow(PopupWindow):
                     label=bui.Lstr(resource='tokens.getTokensText'),
                     size=(bwidth, bheight),
                     autoselect=True,
-                    on_activate_call=bui.WeakCall(self._on_get_tokens_press),
+                    on_activate_call=bui.WeakCallStrict(
+                        self._on_get_tokens_press
+                    ),
                 )
 
         elif resource_type == 'trophies':

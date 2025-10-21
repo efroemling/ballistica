@@ -115,7 +115,7 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
             '             :pylsp_mypy (:enabled t\n'
             '                          :live_mode :json-false\n'
             '                          :report_progress t\n'
-            '                          :dmypy t))))))))\n',
+            '                          :dmypy :json-false))))))))\n',
         )
 
     # Stick project-root wherever they want.

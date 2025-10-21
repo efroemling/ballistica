@@ -53,7 +53,7 @@ class TipsText(bs.Actor):
         self._message_spacing = 3000
         self._change_timer = bs.Timer(
             0.001 * (self._message_duration + self._message_spacing),
-            bs.WeakCall(self.change_phrase),
+            bs.WeakCallStrict(self.change_phrase),
             repeat=True,
         )
         self._combine = bs.newnode(

@@ -103,9 +103,9 @@ class V2ProxySignInWindow(bui.Window):
         self._connection_wait_timeout_time = time.monotonic() + 10.0
 
         self._update_timer = bui.AppTimer(
-            0.371, bui.WeakCall(self._update), repeat=True
+            0.371, bui.WeakCallStrict(self._update), repeat=True
         )
-        bui.pushcall(bui.WeakCall(self._update))
+        bui.pushcall(bui.WeakCallStrict(self._update))
 
     def _update(self) -> None:
 
@@ -135,7 +135,7 @@ class V2ProxySignInWindow(bui.Window):
 
         plus.cloud.send_message_cb(
             bacommon.cloud.LoginProxyRequestMessage(),
-            on_response=bui.WeakCall(self._on_proxy_request_response),
+            on_response=bui.WeakCallPartial(self._on_proxy_request_response),
         )
         self._message_in_flight = True
 
@@ -221,7 +221,8 @@ class V2ProxySignInWindow(bui.Window):
         self._proxyid = response.proxyid
         self._proxykey = response.proxykey
         bui.apptimer(
-            STATUS_CHECK_INTERVAL_SECONDS, bui.WeakCall(self._ask_for_status)
+            STATUS_CHECK_INTERVAL_SECONDS,
+            bui.WeakCallStrict(self._ask_for_status),
         )
 
     def _show_overlay_sign_in_ui(
@@ -282,7 +283,9 @@ class V2ProxySignInWindow(bui.Window):
                 h_align='center',
                 v_align='center',
                 autoselect=True,
-                on_activate_call=bui.Call(self._copy_link, address_pretty),
+                on_activate_call=bui.CallStrict(
+                    self._copy_link, address_pretty
+                ),
                 selectable=True,
             )
             qroffs = 20.0
@@ -306,7 +309,7 @@ class V2ProxySignInWindow(bui.Window):
             bacommon.cloud.LoginProxyStateQueryMessage(
                 proxyid=self._proxyid, proxykey=self._proxykey
             ),
-            on_response=bui.WeakCall(self._got_status),
+            on_response=bui.WeakCallPartial(self._got_status),
         )
 
     def _got_status(
@@ -340,7 +343,9 @@ class V2ProxySignInWindow(bui.Window):
                     bacommon.cloud.LoginProxyCompleteMessage(
                         proxyid=self._proxyid
                     ),
-                    on_response=bui.WeakCall(self._proxy_complete_response),
+                    on_response=bui.WeakCallPartial(
+                        self._proxy_complete_response
+                    ),
                 )
             except CommunicationError:
                 pass
@@ -360,7 +365,7 @@ class V2ProxySignInWindow(bui.Window):
         ):
             bui.apptimer(
                 STATUS_CHECK_INTERVAL_SECONDS,
-                bui.WeakCall(self._ask_for_status),
+                bui.WeakCallStrict(self._ask_for_status),
             )
 
     def _proxy_complete_response(self, response: None | Exception) -> None:

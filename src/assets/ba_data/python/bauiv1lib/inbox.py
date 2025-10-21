@@ -286,7 +286,9 @@ class _ExpireTimeSection(_Section):
             h_align='center',
             v_align='center',
         )
-        self._timer = bui.AppTimer(1.0, bui.WeakCall(self._update), repeat=True)
+        self._timer = bui.AppTimer(
+            1.0, bui.WeakCallStrict(self._update), repeat=True
+        )
         self._update()
 
 
@@ -488,7 +490,9 @@ class InboxWindow(bui.MainWindow):
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
                 bacommon.bs.InboxRequestMessage(),
-                on_response=bui.WeakCall(self._on_inbox_request_response),
+                on_response=bui.WeakCallPartial(
+                    self._on_inbox_request_response
+                ),
             )
 
     @override
@@ -555,7 +559,7 @@ class InboxWindow(bui.MainWindow):
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
                 bacommon.bs.CloudDialogActionMessage(display.id, action),
-                on_response=bui.WeakCall(
+                on_response=bui.WeakCallPartial(
                     self._on_client_ui_action_response,
                     display_weak,
                     action,
@@ -579,7 +583,7 @@ class InboxWindow(bui.MainWindow):
             bui.spinnerwidget(edit=button_spinner, visible=True)
 
     def _close_soon_if_all_processed(self) -> None:
-        bui.apptimer(0.25, bui.WeakCall(self._close_if_all_processed))
+        bui.apptimer(0.25, bui.WeakCallStrict(self._close_if_all_processed))
 
     def _close_if_all_processed(self) -> None:
         if not all(m.processing_complete for m in self._entry_displays):
@@ -1116,7 +1120,7 @@ class InboxWindow(bui.MainWindow):
                 ),
                 color=entry_display.color,
                 textcolor=(0, 1, 0),
-                on_activate_call=bui.WeakCall(
+                on_activate_call=bui.WeakCallStrict(
                     self._on_entry_display_press,
                     entry_display_weak,
                     bacommon.bs.CloudDialogAction.BUTTON_PRESS_POSITIVE,
@@ -1151,7 +1155,7 @@ class InboxWindow(bui.MainWindow):
                     ),
                     color=(0.85, 0.5, 0.7),
                     textcolor=(1, 0.4, 0.4),
-                    on_activate_call=bui.WeakCall(
+                    on_activate_call=bui.WeakCallStrict(
                         self._on_entry_display_press,
                         entry_display_weak,
                         (bacommon.bs.CloudDialogAction).BUTTON_PRESS_NEGATIVE,

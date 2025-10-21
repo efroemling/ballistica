@@ -211,7 +211,7 @@ class Flag(bs.Actor):
         if self._dropped_timeout is not None:
             self._count = self._dropped_timeout
             self._tick_timer = bs.Timer(
-                1.0, call=bs.WeakCall(self._tick), repeat=True
+                1.0, call=bs.WeakCallStrict(self._tick), repeat=True
             )
             self._counter = bs.newnode(
                 'text',
@@ -314,7 +314,7 @@ class Flag(bs.Actor):
         self._score_text.color = bs.safecolor(self.node.color)
         bs.animate(self._score_text, 'scale', {0: start_scale, 0.2: 0.02})
         self._score_text_hide_timer = bs.Timer(
-            1.0, bs.WeakCall(self._hide_score_text)
+            1.0, bs.WeakCallStrict(self._hide_score_text)
         )
 
     @override

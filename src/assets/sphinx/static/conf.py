@@ -134,6 +134,11 @@ nitpick_ignore = [
     ('py:class', 'ExistableT'),
     ('py:class', 'PlayerT'),
     ('py:class', 'TeamT'),
+    ('py:class', 'P'),
+    ('py:class', 'P.args'),
+    ('py:class', 'P.kwargs'),
+    ('py:obj', 'typing.P'),
+    ('py:obj', 'typing.T'),
     #
     # Unexposed internal types (should possibly just make these public?).
     ('py:class', '_MissingType'),

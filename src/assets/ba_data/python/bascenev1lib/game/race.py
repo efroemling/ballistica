@@ -649,7 +649,8 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             pos[2] + random.uniform(*z_range),
         )
         bs.timer(
-            random.uniform(0.0, 2.0), bs.WeakCall(self._spawn_bomb_at_pos, pos)
+            random.uniform(0.0, 2.0),
+            bs.WeakCallStrict(self._spawn_bomb_at_pos, pos),
         )
 
     def _spawn_bomb_at_pos(self, pos: Sequence[float]) -> None:
@@ -690,7 +691,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
         assert rmine is not None
         if not rmine.mine:
             self._flash_mine(m_index)
-            bs.timer(0.95, bs.Call(self._make_mine, m_index))
+            bs.timer(0.95, bs.CallStrict(self._make_mine, m_index))
 
     @override
     def spawn_player(self, player: Player) -> bs.Actor:

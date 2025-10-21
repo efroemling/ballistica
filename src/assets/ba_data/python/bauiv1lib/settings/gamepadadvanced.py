@@ -415,7 +415,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
             label=bui.Lstr(resource=f'{self._r}.clearText'),
             size=(110, 50),
             scale=0.7,
-            on_activate_call=bui.Call(self._clear_control, control),
+            on_activate_call=bui.CallStrict(self._clear_control, control),
         )
         bui.widget(edit=btn, right_widget=btn2)
 
@@ -439,7 +439,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
             self._textwidgets[control] = txt
             bui.buttonwidget(
                 edit=btn,
-                on_activate_call=bui.Call(
+                on_activate_call=bui.CallStrict(
                     AwaitGamepadInputWindow,
                     self._parent_window.get_input(),
                     control,
@@ -509,7 +509,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
             position=(330 + x_offset, position[1] + 4),
             size=(28, 28),
             label='-',
-            on_activate_call=bui.Call(
+            on_activate_call=bui.CallStrict(
                 self._inc, control, min_val, max_val, -increment
             ),
             repeat=True,
@@ -521,7 +521,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
             position=(380 + x_offset, position[1] + 4),
             size=(28, 28),
             label='+',
-            on_activate_call=bui.Call(
+            on_activate_call=bui.CallStrict(
                 self._inc, control, min_val, max_val, increment
             ),
             repeat=True,

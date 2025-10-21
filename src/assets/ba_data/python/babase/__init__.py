@@ -15,7 +15,8 @@ functionality from here and reexpose it in a more focused way.
 # from other modules/packages. Code *within* this package should import
 # things from this package's submodules directly to reduce the chance of
 # dependency loops. The exception is TYPE_CHECKING blocks and
-# annotations since those aren't evaluated at runtime.
+# annotations - since those aren't evaluated at runtime, it is cleaner
+# looking to use top level names directly.
 
 import _babase
 from _babase import (
@@ -134,68 +135,71 @@ from babase._appsubsystem import AppSubsystem
 from babase._appmodeselector import AppModeSelector
 from babase._appconfig import AppConfig
 from babase._apputils import (
+    AppHealthSubsystem,
+    get_remote_app_name,
     handle_leftover_v1_cloud_log_file,
     is_browser_likely_available,
-    get_remote_app_name,
-    AppHealthSubsystem,
     utc_now_cloud,
 )
 from babase._cloud import CloudSubscription
 from babase._devconsole import (
     DevConsoleButtonDef,
+    DevConsoleSubsystem,
     DevConsoleTab,
     DevConsoleTabEntry,
-    DevConsoleSubsystem,
 )
 from babase._discord import DiscordSubsystem
 from babase._emptyappmode import EmptyAppMode
 from babase._error import (
+    ActivityNotFoundError,
+    ActorNotFoundError,
     ContextError,
+    DelegateNotFoundError,
+    InputDeviceNotFoundError,
+    MapNotFoundError,
+    NodeNotFoundError,
     NotFoundError,
     PlayerNotFoundError,
-    SessionPlayerNotFoundError,
-    NodeNotFoundError,
-    ActorNotFoundError,
-    InputDeviceNotFoundError,
-    WidgetNotFoundError,
-    ActivityNotFoundError,
-    TeamNotFoundError,
-    MapNotFoundError,
-    SessionTeamNotFoundError,
     SessionNotFoundError,
-    DelegateNotFoundError,
+    SessionPlayerNotFoundError,
+    SessionTeamNotFoundError,
+    TeamNotFoundError,
+    WidgetNotFoundError,
 )
 from babase._gc import GarbageCollectionSubsystem
 from babase._general import (
-    DisplayTime,
     AppTime,
-    WeakCall,
     Call,
-    existing,
+    CallPartial,
+    CallStrict,
+    DisplayTime,
     Existable,
-    verify_object_death,
-    storagename,
-    getclass,
+    WeakCall,
+    WeakCallPartial,
+    WeakCallStrict,
+    existing,
     get_type_name,
+    getclass,
+    storagename,
+    verify_object_death,
 )
-from babase._language import Lstr, LanguageSubsystem
+from babase._language import LanguageSubsystem, Lstr
 from babase._locale import LocaleSubsystem
 from babase._logging import (
-    balog,
     accountlog,
     applog,
+    balog,
     lifecyclelog,
     netlog,
     uilog,
 )
 from babase._login import LoginAdapter, LoginInfo
-
 from babase._mgen.enums import (
-    Permission,
-    SpecialChar,
     InputType,
-    UIScale,
+    Permission,
     QuitType,
+    SpecialChar,
+    UIScale,
 )
 from babase._math import normalized_color, is_point_in_box, vec3validate
 from babase._meta import MetadataSubsystem
@@ -242,6 +246,8 @@ __all__ = [
     'atexit',
     'balog',
     'Call',
+    'CallPartial',
+    'CallStrict',
     'fullscreen_control_available',
     'fullscreen_control_get',
     'fullscreen_control_key_shortcut',
@@ -391,6 +397,8 @@ __all__ = [
     'vec3validate',
     'verify_object_death',
     'WeakCall',
+    'WeakCallPartial',
+    'WeakCallStrict',
     'WidgetNotFoundError',
     'workspaces_in_use',
     'WorkspaceSubsystem',

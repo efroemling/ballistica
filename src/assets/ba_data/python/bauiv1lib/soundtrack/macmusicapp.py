@@ -126,7 +126,7 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
                     v_align='center',
                     maxwidth=self._width - 110,
                     selectable=True,
-                    on_activate_call=bui.Call(self._sel, playlist),
+                    on_activate_call=bui.CallStrict(self._sel, playlist),
                     click_activate=True,
                 )
                 bui.widget(edit=txt, show_buffer_top=40, show_buffer_bottom=40)

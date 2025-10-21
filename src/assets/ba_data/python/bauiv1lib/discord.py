@@ -114,7 +114,7 @@ class DiscordWindow(bui.Window):
             autoselect=True,
             label=bui.Lstr(resource='discordJoinText'),
             text_scale=1.0,
-            on_activate_call=bui.Call(
+            on_activate_call=bui.CallStrict(
                 bui.open_url, 'https://ballistica.net/discord'
             ),
         )

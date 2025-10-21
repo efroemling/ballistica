@@ -87,7 +87,7 @@ class ColorPicker(PopupWindow):
                     size=(35, 40),
                     label='',
                     button_type='square',
-                    on_activate_call=bui.WeakCall(self._select, x, y),
+                    on_activate_call=bui.WeakCallStrict(self._select, x, y),
                     autoselect=True,
                     color=color,
                     extra_touch_border_scale=0.0,
@@ -105,7 +105,7 @@ class ColorPicker(PopupWindow):
                 fallback_resource='coopSelectWindow.customText',
             ),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._select_other),
+            on_activate_call=bui.WeakCallStrict(self._select_other),
         )
 
         assert bui.app.classic is not None
@@ -282,7 +282,7 @@ class ColorPickerExact(PopupWindow):
                     label=b_label,
                     autoselect=True,
                     enable_sound=False,
-                    on_activate_call=bui.WeakCall(
+                    on_activate_call=bui.WeakCallStrict(
                         self._color_change_press, color_name, binc
                     ),
                 )
@@ -296,7 +296,7 @@ class ColorPickerExact(PopupWindow):
             color=(0.6, 0.6, 0.6),
             textcolor=(0.7, 0.7, 0.7),
             label=bui.Lstr(resource='doneText'),
-            on_activate_call=bui.WeakCall(self._transition_out),
+            on_activate_call=bui.WeakCallStrict(self._transition_out),
             autoselect=True,
         )
         bui.containerwidget(edit=self.root_widget, start_button=btn)

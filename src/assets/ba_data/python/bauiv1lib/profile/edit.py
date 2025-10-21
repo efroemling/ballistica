@@ -347,7 +347,7 @@ class EditProfileWindow(
                 editable=True,
                 padding=4,
                 color=(0.9, 0.9, 0.9, 1.0),
-                on_return_press_call=bui.Call(save_button.activate),
+                on_return_press_call=bui.CallStrict(save_button.activate),
             )
 
             # FIXME hard coded strings are bad
@@ -404,7 +404,7 @@ class EditProfileWindow(
 
         self._update_clipped_name()
         self._clipped_name_timer = bui.AppTimer(
-            0.333, bui.WeakCall(self._update_clipped_name), repeat=True
+            0.333, bui.WeakCallStrict(self._update_clipped_name), repeat=True
         )
 
         v -= spacing * 3.0
@@ -423,7 +423,9 @@ class EditProfileWindow(
         origin = self._color_button.get_screen_space_center()
         bui.buttonwidget(
             edit=self._color_button,
-            on_activate_call=bui.WeakCall(self._make_picker, 'color', origin),
+            on_activate_call=bui.WeakCallStrict(
+                self._make_picker, 'color', origin
+            ),
         )
         bui.textwidget(
             parent=self._root_widget,
@@ -493,7 +495,7 @@ class EditProfileWindow(
         origin = self._highlight_button.get_screen_space_center()
         bui.buttonwidget(
             edit=self._highlight_button,
-            on_activate_call=bui.WeakCall(
+            on_activate_call=bui.WeakCallStrict(
                 self._make_picker, 'highlight', origin
             ),
         )

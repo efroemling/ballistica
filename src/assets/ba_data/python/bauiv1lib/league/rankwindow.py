@@ -9,9 +9,9 @@ import copy
 import logging
 from typing import TYPE_CHECKING, override
 
+import bauiv1 as bui
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.popup import PopupMenu
-import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any
@@ -216,7 +216,7 @@ class LeagueRankWindow(bui.MainWindow):
             self._update_for_league_rank_data(info)
 
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
         self._update(show=info is None)
 
@@ -381,7 +381,9 @@ class LeagueRankWindow(bui.MainWindow):
             self._doing_power_ranking_query = True
             plus.power_ranking_query(
                 season=self._requested_season,
-                callback=bui.WeakCall(self._on_power_ranking_query_response),
+                callback=bui.WeakCallPartial(
+                    self._on_power_ranking_query_response
+                ),
             )
 
     def _refresh(self) -> None:
@@ -440,7 +442,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(200, 80),
             icon=bui.gettexture('achievementsIcon'),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._on_achievements_press),
+            on_activate_call=bui.WeakCallStrict(self._on_achievements_press),
             up_widget=self._back_button,
             left_widget=self._back_button,
             color=(0.5, 0.5, 0.6),
@@ -471,7 +473,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(200, 80),
             icon=bui.gettexture('medalSilver'),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._on_trophies_press),
+            on_activate_call=bui.WeakCallStrict(self._on_trophies_press),
             left_widget=self._back_button,
             color=(0.5, 0.5, 0.6),
             textcolor=(0.7, 0.7, 0.8),
@@ -518,7 +520,9 @@ class LeagueRankWindow(bui.MainWindow):
                 icon_color=(0.5, 0, 0.5),
                 label=bui.Lstr(resource='coopSelectWindow.activityText'),
                 autoselect=True,
-                on_activate_call=bui.WeakCall(self._on_activity_mult_press),
+                on_activate_call=bui.WeakCallStrict(
+                    self._on_activity_mult_press
+                ),
                 left_widget=self._back_button,
                 color=(0.5, 0.5, 0.6),
                 textcolor=(0.7, 0.7, 0.8),
@@ -550,7 +554,9 @@ class LeagueRankWindow(bui.MainWindow):
             icon_color=(0.3, 0, 0.3),
             label=bui.Lstr(resource='league.upToDateBonusText'),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._on_up_to_date_bonus_press),
+            on_activate_call=bui.WeakCallStrict(
+                self._on_up_to_date_bonus_press
+            ),
             left_widget=self._back_button,
             color=(0.5, 0.5, 0.6),
             textcolor=(0.7, 0.7, 0.8),
@@ -748,7 +754,7 @@ class LeagueRankWindow(bui.MainWindow):
             textcolor=(0.7, 0.7, 0.8),
             size=(230, 60),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._on_more_press),
+            on_activate_call=bui.WeakCallStrict(self._on_more_press),
         )
 
     def _on_more_press(self) -> None:
@@ -893,7 +899,9 @@ class LeagueRankWindow(bui.MainWindow):
                 width=150,
                 button_size=(200, 50),
                 choices=season_choices,
-                on_value_change_call=bui.WeakCall(self._on_season_change),
+                on_value_change_call=bui.WeakCallPartial(
+                    self._on_season_change
+                ),
                 choices_display=season_choices_display,
                 current_choice=self._season,
             )
@@ -1202,7 +1210,7 @@ class LeagueRankWindow(bui.MainWindow):
             self._power_ranking_score_widgets.append(txt)
             bui.textwidget(
                 edit=txt,
-                on_activate_call=bui.Call(
+                on_activate_call=bui.CallStrict(
                     self._show_account_info, score[4], txt
                 ),
             )

@@ -245,7 +245,9 @@ class OnScreenKeyboardWindow(Window):
                         textcolor=key_textcolor,
                         color=key_color_dark,
                         label=babase.Lstr(resource='spaceKeyText'),
-                        on_activate_call=babase.Call(self._type_char, ' '),
+                        on_activate_call=babase.CallStrict(
+                            self._type_char, ' '
+                        ),
                     )
 
                     # Show change instructions only if we have more than one
@@ -359,7 +361,7 @@ class OnScreenKeyboardWindow(Window):
             _bauiv1.buttonwidget(
                 edit=btn,
                 label=chars[i] if have_char else ' ',
-                on_activate_call=babase.Call(
+                on_activate_call=babase.CallStrict(
                     self._type_char, chars[i] if have_char else ' '
                 ),
             )

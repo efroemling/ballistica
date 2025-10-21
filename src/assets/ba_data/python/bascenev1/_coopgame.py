@@ -64,11 +64,11 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
         if not arcade_or_demo:
             _bascenev1.timer(
-                3.8, babase.WeakCall(self._show_remaining_achievements)
+                3.8, babase.WeakCallStrict(self._show_remaining_achievements)
             )
 
         # Preload achievement images in case we get some.
-        _bascenev1.timer(2.0, babase.WeakCall(self._preload_achievements))
+        _bascenev1.timer(2.0, babase.WeakCallStrict(self._preload_achievements))
 
     # FIXME: this is now redundant with activityutils.getscoreconfig();
     #  need to kill this.
@@ -232,7 +232,7 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         """Set up a beeping noise to play when any players are near death."""
         self._life_warning_beep = None
         self._life_warning_beep_timer = _bascenev1.Timer(
-            1.0, babase.WeakCall(self._update_life_warning), repeat=True
+            1.0, babase.WeakCallStrict(self._update_life_warning), repeat=True
         )
 
     def _update_life_warning(self) -> None:

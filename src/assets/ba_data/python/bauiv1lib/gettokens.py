@@ -433,7 +433,7 @@ class GetTokensWindow(bui.MainWindow):
         self._state = self.State.LOADING
 
         self._update_timer = bui.AppTimer(
-            0.789, bui.WeakCall(self._update), repeat=True
+            0.789, bui.WeakCallStrict(self._update), repeat=True
         )
         self._update()
 
@@ -470,7 +470,9 @@ class GetTokensWindow(bui.MainWindow):
             with plus.accounts.primary:
                 plus.cloud.send_message_cb(
                     bacommon.cloud.StoreQueryMessage(),
-                    on_response=bui.WeakCall(self._on_store_query_response),
+                    on_response=bui.WeakCallPartial(
+                        self._on_store_query_response
+                    ),
                 )
 
         # Can't do much until we get a store state.

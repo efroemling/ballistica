@@ -230,7 +230,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
                     mesh_transparent=mesh_transparent,
                     label='',
                     color=(1, 1, 1),
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._select_with_delay, self._maps[index][0]
                     ),
                     position=pos,
@@ -324,4 +324,4 @@ class PlaylistMapSelectWindow(bui.MainWindow):
     def _select_with_delay(self, map_name: str) -> None:
         bui.lock_all_input()
         bui.apptimer(0.1, bui.unlock_all_input)
-        bui.apptimer(0.1, bui.WeakCall(self._select, map_name))
+        bui.apptimer(0.1, bui.WeakCallStrict(self._select, map_name))

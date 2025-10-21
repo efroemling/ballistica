@@ -116,7 +116,7 @@ class PopupText(bs.Actor):
 
         # kill ourself
         self._die_timer = bs.Timer(
-            lifespan, bs.WeakCall(self.handlemessage, bs.DieMessage())
+            lifespan, bs.WeakCallStrict(self.handlemessage, bs.DieMessage())
         )
 
     @override

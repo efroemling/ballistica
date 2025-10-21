@@ -218,7 +218,7 @@ class MeteorShowerGame(bs.TeamGameActivity[Player, Team]):
                 random.uniform(-3.066, -4.12),
                 0,
             )
-            bs.timer(delay, bs.Call(self._drop_bomb, pos, vel))
+            bs.timer(delay, bs.CallStrict(self._drop_bomb, pos, vel))
             delay += 0.1
         self._set_meteor_timer()
 

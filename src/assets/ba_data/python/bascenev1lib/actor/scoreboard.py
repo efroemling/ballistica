@@ -189,7 +189,7 @@ class _Entry:
     def flash(self, countdown: bool, extra_flash: bool) -> None:
         """Flash momentarily."""
         self._flash_timer = bs.Timer(
-            0.1, bs.WeakCall(self._do_flash), repeat=True
+            0.1, bs.WeakCallStrict(self._do_flash), repeat=True
         )
         if countdown:
             self._flash_counter = 10
@@ -358,7 +358,7 @@ class _EntryProxy:
             return
 
         try:
-            bs.pushcall(bs.Call(scoreboard.remove_team, self._team_id))
+            bs.pushcall(bs.CallStrict(scoreboard.remove_team, self._team_id))
         except bs.ContextError:
             # This happens if we fire after the activity expires.
             # In that case we don't need to do anything.

@@ -52,7 +52,7 @@ values = [
     _hooks.get_v2_account_id,  # kGetV2AccountIdCall
     _hooks.copy_dev_console_history,  # kCopyDevConsoleHistoryCall
     _language.Lstr,  # kLStrClass
-    _general.Call,  # kCallClass
+    _general.CallPartial,  # kCallPartialClass
     _error.ContextError,  # kContextError
     _error.NotFoundError,  # kNotFoundError
     _error.NodeNotFoundError,  # kNodeNotFoundError

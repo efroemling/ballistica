@@ -447,7 +447,9 @@ class HelpWindow(bui.MainWindow):
             color=(1, 0.7, 0.3),
             selectable=False,
             enable_sound=False,
-            on_activate_call=bui.WeakCall(self._play_sound, 'spazAttack0', 4),
+            on_activate_call=bui.WeakCallStrict(
+                self._play_sound, 'spazAttack0', 4
+            ),
         )
 
         txt_scale = getres(f'{self._r}.punchInfoTextScale')
@@ -475,7 +477,9 @@ class HelpWindow(bui.MainWindow):
             color=(1, 0.3, 0.3),
             selectable=False,
             enable_sound=False,
-            on_activate_call=bui.WeakCall(self._play_sound, 'explosion0', 5),
+            on_activate_call=bui.WeakCallStrict(
+                self._play_sound, 'explosion0', 5
+            ),
         )
 
         txt = bui.Lstr(resource=f'{self._r}.bombInfoText').evaluate()
@@ -504,7 +508,9 @@ class HelpWindow(bui.MainWindow):
             color=(0.5, 0.5, 1),
             selectable=False,
             enable_sound=False,
-            on_activate_call=bui.WeakCall(self._play_sound, 'spazPickup0', 1),
+            on_activate_call=bui.WeakCallStrict(
+                self._play_sound, 'spazPickup0', 1
+            ),
         )
 
         txtl = bui.Lstr(resource=f'{self._r}.pickUpInfoText')
@@ -532,7 +538,9 @@ class HelpWindow(bui.MainWindow):
             color=(0.4, 1, 0.4),
             selectable=False,
             enable_sound=False,
-            on_activate_call=bui.WeakCall(self._play_sound, 'spazJump0', 4),
+            on_activate_call=bui.WeakCallStrict(
+                self._play_sound, 'spazJump0', 4
+            ),
         )
 
         txt = bui.Lstr(resource=f'{self._r}.jumpInfoText').evaluate()

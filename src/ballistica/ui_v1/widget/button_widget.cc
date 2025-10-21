@@ -20,7 +20,7 @@ ButtonWidget::ButtonWidget()
     : birth_time_millisecs_{
           static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)} {
   text_ = Object::New<TextWidget>();
-  set_text("Button");
+  SetText("Button");
   text_->SetVAlign(TextWidget::VAlign::kCenter);
   text_->SetHAlign(TextWidget::HAlign::kCenter);
   text_->SetWidth(0.0f);
@@ -35,7 +35,9 @@ void ButtonWidget::SetOnActivateCall(PyObject* call_obj) {
   on_activate_call_ = Object::New<base::PythonContextCall>(call_obj);
 }
 
-void ButtonWidget::set_text(const std::string& text_in) {
+void ButtonWidget::SetTextLiteral(bool val) { text_->SetLiteral(val); }
+
+void ButtonWidget::SetText(const std::string& text_in) {
   std::string text = Utils::GetValidUTF8(text_in.c_str(), "bwst");
   text_->SetText(text);
 

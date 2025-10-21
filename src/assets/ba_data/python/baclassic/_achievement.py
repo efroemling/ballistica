@@ -1520,5 +1520,7 @@ class Achievement:
         for actor in objs:
             bascenev1.timer(
                 out_time + 1.000,
-                babase.WeakCall(actor.handlemessage, bascenev1.DieMessage()),
+                babase.WeakCallStrict(
+                    actor.handlemessage, bascenev1.DieMessage()
+                ),
             )

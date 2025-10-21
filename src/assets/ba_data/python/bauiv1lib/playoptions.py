@@ -240,7 +240,7 @@ class PlayOptionsWindow(PopupWindow):
                         position=(h, v),
                         texture=bui.gettexture(tex_name if owned else 'empty'),
                         mesh_opaque=mesh_opaque if owned else None,
-                        on_activate_call=bui.Call(
+                        on_activate_call=bui.CallStrict(
                             bui.screenmessage, desc, desc_color
                         ),
                         label='',
@@ -316,7 +316,9 @@ class PlayOptionsWindow(PopupWindow):
                 parent=self.root_widget,
                 position=(100, 195 + y_offs),
                 size=(290, 35),
-                on_activate_call=bui.WeakCall(self._custom_colors_names_press),
+                on_activate_call=bui.WeakCallStrict(
+                    self._custom_colors_names_press
+                ),
                 autoselect=True,
                 textcolor=(0.8, 0.8, 0.8),
                 label=bui.Lstr(resource='teamNamesColorText'),
@@ -439,7 +441,7 @@ class PlayOptionsWindow(PopupWindow):
 
         # Update now and once per second.
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
         self._update()
 

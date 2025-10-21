@@ -150,7 +150,7 @@ class PluginWindow(bui.MainWindow):
             size=(130, 60),
             label=bui.Lstr(resource='allText'),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._show_category_options),
+            on_activate_call=bui.WeakCallStrict(self._show_category_options),
             color=(0.55, 0.73, 0.25),
             iconscale=1.2,
         )
@@ -378,7 +378,7 @@ class PluginWindow(bui.MainWindow):
                 ),
                 position=(10, item_y),
                 size=(self._scroll_width - 40, 50),
-                on_value_change_call=bui.Call(
+                on_value_change_call=bui.CallPartial(
                     self._check_value_changed, plugspec
                 ),
                 textcolor=(
@@ -402,7 +402,9 @@ class PluginWindow(bui.MainWindow):
                 )
                 bui.buttonwidget(
                     edit=button,
-                    on_activate_call=bui.Call(plugin.show_settings_ui, button),
+                    on_activate_call=bui.CallStrict(
+                        plugin.show_settings_ui, button
+                    ),
                 )
             else:
                 button = None

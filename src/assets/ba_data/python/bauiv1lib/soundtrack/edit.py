@@ -313,7 +313,7 @@ class SoundtrackEditWindow(bui.MainWindow):
                 size=(230, 32),
                 label=self._get_entry_button_display_name(entry),
                 text_scale=0.6,
-                on_activate_call=bui.Call(
+                on_activate_call=bui.CallStrict(
                     self._get_entry, song_type, entry, type_name
                 ),
                 icon=(
@@ -364,7 +364,9 @@ class SoundtrackEditWindow(bui.MainWindow):
                 size=(50, 32),
                 label=bui.Lstr(resource=f'{self._r}.testText'),
                 text_scale=0.6,
-                on_activate_call=bui.Call(self._test, bs.MusicType(song_type)),
+                on_activate_call=bui.CallStrict(
+                    self._test, bs.MusicType(song_type)
+                ),
                 up_widget=(
                     prev_test_button
                     if prev_test_button is not None
@@ -429,7 +431,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         }
         new_win = self.main_window_replace(
             lambda: music.get_music_player().select_entry(
-                bui.Call(self._restore_editor, state, song_type),
+                bui.CallPartial(self._restore_editor, state, song_type),
                 entry,
                 selection_target_name,
             )

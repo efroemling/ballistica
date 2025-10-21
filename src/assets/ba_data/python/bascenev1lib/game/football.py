@@ -733,7 +733,8 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
             spawnpoints = self.map.powerup_spawn_points
             for i, _point in enumerate(spawnpoints):
                 bs.timer(
-                    1.0 + i * 0.5, bs.Call(self._drop_powerup, i, poweruptype)
+                    1.0 + i * 0.5,
+                    bs.CallStrict(self._drop_powerup, i, poweruptype),
                 )
         else:
             point = (
@@ -837,7 +838,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
 
         bs.setmusic(None)
         self._bots.final_celebrate()
-        bs.timer(0.001, bs.Call(self.do_end, 'defeat'))
+        bs.timer(0.001, bs.CallStrict(self.do_end, 'defeat'))
 
     def update_scores(self) -> None:
         """update scoreboard and check for winners"""
@@ -940,13 +941,13 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
             assert self.initialplayerinfos is not None
             respawn_time = 2.0 + len(self.initialplayerinfos) * 1.0
             player.respawn_timer = bs.Timer(
-                respawn_time, bs.Call(self.spawn_player_if_exists, player)
+                respawn_time, bs.CallStrict(self.spawn_player_if_exists, player)
             )
             player.respawn_icon = RespawnIcon(player, respawn_time)
 
         elif isinstance(msg, SpazBotDiedMessage):
             # Every time a bad guy dies, spawn a new one.
-            bs.timer(3.0, bs.Call(self._spawn_bot, (type(msg.spazbot))))
+            bs.timer(3.0, bs.CallStrict(self._spawn_bot, (type(msg.spazbot))))
 
         elif isinstance(msg, SpazBotPunchedMessage):
             if self._preset in ['rookie', 'rookie_easy']:

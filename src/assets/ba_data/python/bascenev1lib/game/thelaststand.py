@@ -127,8 +127,8 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
 
         # Spit out a few powerups and start dropping more shortly.
         self._drop_powerups(standard_points=True)
-        bs.timer(2.0, bs.WeakCall(self._start_powerup_drops))
-        bs.timer(0.001, bs.WeakCall(self._start_bot_updates))
+        bs.timer(2.0, bs.WeakCallStrict(self._start_powerup_drops))
+        bs.timer(0.001, bs.WeakCallStrict(self._start_bot_updates))
         self.setup_low_life_warning_sound()
         self._update_scores()
         self._tntspawner = TNTSpawner(
@@ -155,7 +155,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         if len(self.players) > 3:
             self._update_bots()
         self._bot_update_timer = bs.Timer(
-            self._bot_update_interval, bs.WeakCall(self._update_bots)
+            self._bot_update_interval, bs.WeakCallStrict(self._update_bots)
         )
 
     def _drop_powerup(self, index: int, poweruptype: str | None = None) -> None:
@@ -170,7 +170,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
 
     def _start_powerup_drops(self) -> None:
         self._powerup_drop_timer = bs.Timer(
-            3.0, bs.WeakCall(self._drop_powerups), repeat=True
+            3.0, bs.WeakCallStrict(self._drop_powerups), repeat=True
         )
 
     def _drop_powerups(
@@ -184,7 +184,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
             for i in range(len(pts)):
                 bs.timer(
                     1.0 + i * 0.5,
-                    bs.WeakCall(
+                    bs.WeakCallStrict(
                         self._drop_powerup, i, force_first if i == 0 else None
                     ),
                 )
@@ -227,7 +227,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         assert self._bot_update_interval is not None
         self._bot_update_interval = max(0.5, self._bot_update_interval * 0.98)
         self._bot_update_timer = bs.Timer(
-            self._bot_update_interval, bs.WeakCall(self._update_bots)
+            self._bot_update_interval, bs.WeakCallStrict(self._update_bots)
         )
         botspawnpts: list[Sequence[float]] = [
             [-5.0, 5.5, -4.14],
@@ -346,7 +346,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         # Tell our bots to celebrate just to rub it in.
         self._bots.final_celebrate()
         bs.setmusic(None)
-        bs.pushcall(bs.WeakCall(self.do_end, 'defeat'))
+        bs.pushcall(bs.WeakCallStrict(self.do_end, 'defeat'))
 
     def _checkroundover(self) -> None:
         """End the round if conditions are met."""

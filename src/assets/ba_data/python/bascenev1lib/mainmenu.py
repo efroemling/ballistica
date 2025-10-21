@@ -203,7 +203,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         self._update()
 
         # Hopefully this won't hitch but lets space these out anyway.
-        bs.add_clean_frame_callback(bs.WeakCall(self._start_preloads))
+        bs.add_clean_frame_callback(bs.WeakCallStrict(self._start_preloads))
 
         random.seed()
 
@@ -721,7 +721,7 @@ class NewsDisplay:
         # If we're signed in, fetch news immediately. Otherwise wait
         # until we are signed in.
         self._fetch_timer: bs.Timer | None = bs.Timer(
-            1.0, bs.WeakCall(self._try_fetching_news), repeat=True
+            1.0, bs.WeakCallStrict(self._try_fetching_news), repeat=True
         )
         self._try_fetching_news()
 
@@ -835,7 +835,7 @@ class NewsDisplay:
             ]
             self._phrase_change_timer = bs.Timer(
                 (self._message_duration + self._message_spacing),
-                bs.WeakCall(self._change_phrase),
+                bs.WeakCallStrict(self._change_phrase),
                 repeat=True,
             )
 

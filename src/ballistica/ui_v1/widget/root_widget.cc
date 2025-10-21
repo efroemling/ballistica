@@ -1475,7 +1475,7 @@ auto RootWidget::AddButton_(const ButtonDef_& def) -> RootWidget::Button_* {
   b.widget->set_color(def.color_r, def.color_g, def.color_b);
   b.widget->set_opacity(def.opacity);
   b.widget->set_auto_select(true);
-  b.widget->set_text(def.label);
+  b.widget->SetText(def.label);
   b.widget->set_enabled(def.selectable);
   b.widget->set_selectable(def.selectable);
   b.widget->set_depth_range(def.depth_min, def.depth_max);

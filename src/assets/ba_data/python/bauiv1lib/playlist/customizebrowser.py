@@ -275,7 +275,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         # Keep our lock images up to date/etc.
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
         self._update()
 
@@ -365,8 +365,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                     else (0.85, 0.85, 0.85, 1)
                 ),
                 always_highlight=True,
-                on_select_call=bui.Call(self._select, pname, index),
-                on_activate_call=bui.Call(self._edit_button.activate),
+                on_select_call=bui.CallStrict(self._select, pname, index),
+                on_activate_call=bui.CallStrict(self._edit_button.activate),
                 selectable=True,
             )
             # We don't give these widgets ids because we handle
@@ -530,7 +530,9 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         share.SharePlaylistImportWindow(
             origin_widget=self._import_button,
-            on_success_callback=bui.WeakCall(self._on_playlist_import_success),
+            on_success_callback=bui.WeakCallStrict(
+                self._on_playlist_import_success
+            ),
         )
 
     def _on_playlist_import_success(self) -> None:
@@ -586,7 +588,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                 'playlistType': self._pvars.config_name,
                 'playlistName': self._selected_playlist_name,
             },
-            callback=bui.WeakCall(
+            callback=bui.WeakCallPartial(
                 self._on_share_playlist_response, self._selected_playlist_name
             ),
         )

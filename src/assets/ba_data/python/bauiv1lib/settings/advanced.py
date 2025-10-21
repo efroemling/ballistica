@@ -10,9 +10,9 @@ import logging
 from typing import TYPE_CHECKING, override
 
 from bacommon.locale import LocaleResolved
-from bauiv1lib.popup import PopupMenu
-from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
+from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
+from bauiv1lib.popup import PopupMenu
 
 if TYPE_CHECKING:
     from typing import Any
@@ -216,14 +216,14 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
         # Rebuild periodically to pick up language changes/additions/etc.
         self._rebuild_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._rebuild), repeat=True
+            1.0, bui.WeakCallStrict(self._rebuild), repeat=True
         )
 
         # Fetch the list of completed languages.
         bui.app.classic.master_server_v1_get(
             'bsLangGetCompleted',
             {'b': app.env.engine_build_number},
-            callback=bui.WeakCall(self._completed_langs_cb),
+            callback=bui.WeakCallPartial(self._completed_langs_cb),
         )
 
     @override
@@ -414,10 +414,10 @@ class AdvancedSettingsWindow(bui.MainWindow):
             button_id=f'{self.main_window_id_prefix}|language',
             position=(210, v - 19),
             width=250,
-            opening_call=bui.WeakCall(self._on_menu_open),
-            closing_call=bui.WeakCall(self._on_menu_close),
+            opening_call=bui.WeakCallStrict(self._on_menu_open),
+            closing_call=bui.WeakCallStrict(self._on_menu_close),
             autoselect=True,
-            on_value_change_call=bui.WeakCall(self._on_menu_choice),
+            on_value_change_call=bui.WeakCallPartial(self._on_menu_choice),
             choices=['Auto'] + available_languages,
             button_size=(300, 60),
             choices_display=(
@@ -478,7 +478,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
             ),
             autoselect=True,
-            on_activate_call=bui.Call(
+            on_activate_call=bui.CallStrict(
                 bui.open_url, 'https://legacy.ballistica.net/translate'
             ),
         )
@@ -509,7 +509,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             textcolor=(0.8, 0.8, 0.8),
             value=lang_inform,
             text=bui.Lstr(resource=f'{self._r}.translationInformMe'),
-            on_value_change_call=bui.WeakCall(
+            on_value_change_call=bui.WeakCallPartial(
                 self._on_lang_inform_value_change
             ),
         )
@@ -686,7 +686,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             autoselect=True,
             label=bui.Lstr(resource=f'{self._r}.moddingGuideText'),
             text_scale=1.0,
-            on_activate_call=bui.Call(
+            on_activate_call=bui.CallStrict(
                 bui.open_url, 'https://ballistica.net/wiki/modding-guide'
             ),
         )
@@ -913,7 +913,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
         self.main_window_save_shared_state()
 
-        bui.apptimer(0.1, bui.WeakCall(self._rebuild))
+        bui.apptimer(0.1, bui.WeakCallStrict(self._rebuild))
 
     def _completed_langs_cb(self, results: dict[str, Any] | None) -> None:
         if results is not None and results['langs'] is not None:
@@ -922,4 +922,4 @@ class AdvancedSettingsWindow(bui.MainWindow):
         else:
             self._complete_langs_list = None
             self._complete_langs_error = True
-        bui.apptimer(0.001, bui.WeakCall(self._update_lang_status))
+        bui.apptimer(0.001, bui.WeakCallStrict(self._update_lang_status))

@@ -169,7 +169,7 @@ class Image(bs.Actor):
         if transition_out_delay is not None:
             bs.timer(
                 transition_delay + transition_out_delay + 1.0,
-                bs.WeakCall(self.handlemessage, bs.DieMessage()),
+                bs.WeakCallStrict(self.handlemessage, bs.DieMessage()),
             )
 
     @override

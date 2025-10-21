@@ -133,12 +133,16 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
                 (
                     'call',
                     'at_connect',
-                    bs.Call(self._handle_player_flag_region_collide, True),
+                    bs.CallStrict(
+                        self._handle_player_flag_region_collide, True
+                    ),
                 ),
                 (
                     'call',
                     'at_disconnect',
-                    bs.Call(self._handle_player_flag_region_collide, False),
+                    bs.CallStrict(
+                        self._handle_player_flag_region_collide, False
+                    ),
                 ),
             ),
         )

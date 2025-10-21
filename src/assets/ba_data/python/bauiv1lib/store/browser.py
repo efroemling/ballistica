@@ -153,7 +153,7 @@ class StoreBrowserWindow(bui.MainWindow):
                 position=(self._width * 0.5 - 70, 16),
                 size=(230, 50),
                 scale=0.65,
-                on_activate_call=bui.WeakCall(self._restore_purchases),
+                on_activate_call=bui.WeakCallStrict(self._restore_purchases),
                 color=(0.35, 0.3, 0.4),
                 selectable=False,
                 textcolor=(0.55, 0.5, 0.6),
@@ -283,7 +283,7 @@ class StoreBrowserWindow(bui.MainWindow):
                 'sale_time_text': sale_time_text,
             }
         self._tab_update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update_tabs), repeat=True
+            1.0, bui.WeakCallStrict(self._update_tabs), repeat=True
         )
         self._update_tabs()
 
@@ -500,7 +500,7 @@ class StoreBrowserWindow(bui.MainWindow):
                 'buildNumber': app.env.engine_build_number,
                 'purchaseType': 'ticket' if is_ticket_purchase else 'real',
             },
-            callback=bui.WeakCall(
+            callback=bui.WeakCallPartial(
                 self._purchase_check_result, item, is_ticket_purchase
             ),
         )
@@ -657,7 +657,9 @@ class StoreBrowserWindow(bui.MainWindow):
                 title_color = (0.8, 0.7, 0.9, 1.0)
                 color = (0.63, 0.55, 0.78)
                 extra_image_opacity = 0.5
-                call = bui.WeakCall(self._print_already_own, b_info['name'])
+                call = bui.WeakCallStrict(
+                    self._print_already_own, b_info['name']
+                )
                 price_text = ''
                 price_text_left = ''
                 price_text_right = ''
@@ -1134,7 +1136,9 @@ class _Store:
             assert self._store_window.button_infos is not None
             for i, item_name in enumerate(section['items']):
                 item = self._store_window.button_infos[item_name] = {}
-                item['call'] = bui.WeakCall(self._store_window.buy, item_name)
+                item['call'] = bui.WeakCallStrict(
+                    self._store_window.buy, item_name
+                )
                 boffs_h2 = section.get('x_offs', 0.0)
                 boffs_v2 = section.get('y_offs', 0.0)
 
@@ -1207,7 +1211,7 @@ class _Store:
         # grey out, etc).
         self._store_window.update_buttons_timer = bui.AppTimer(
             0.5,
-            bui.WeakCall(self._store_window.update_buttons),
+            bui.WeakCallStrict(self._store_window.update_buttons),
             repeat=True,
         )
 
@@ -1221,7 +1225,7 @@ class _Request:
     ):
         self._window = weakref.ref(window)
         data = {'tab': tab_id.value}
-        bui.apptimer(0.1, bui.WeakCall(self._on_response, data))
+        bui.apptimer(0.1, bui.WeakCallStrict(self._on_response, data))
 
     def _on_response(self, data: dict[str, Any] | None) -> None:
         # FIXME: clean this up.

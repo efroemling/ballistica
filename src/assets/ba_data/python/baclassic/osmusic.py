@@ -151,7 +151,7 @@ class _PickFolderSongThread(threading.Thread):
                     ).evaluate()
                 )
             babase.pushcall(
-                babase.Call(self._callback, all_files, None),
+                babase.CallStrict(self._callback, all_files, None),
                 from_other_thread=True,
             )
         except Exception as exc:
@@ -162,6 +162,6 @@ class _PickFolderSongThread(threading.Thread):
             except Exception:
                 err_str = '<ENCERR4523>'
             babase.pushcall(
-                babase.Call(self._callback, self._path, err_str),
+                babase.CallStrict(self._callback, self._path, err_str),
                 from_other_thread=True,
             )

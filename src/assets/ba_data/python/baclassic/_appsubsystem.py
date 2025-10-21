@@ -408,7 +408,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # Otherwise just force the issue.
         else:
             babase.pushcall(
-                babase.Call(bascenev1.new_host_session, MainMenuSession)
+                babase.CallStrict(bascenev1.new_host_session, MainMenuSession)
             )
 
     def getmaps(self, playtype: str) -> list[str]:
@@ -702,7 +702,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         if sddata is not None:
             babase.apptimer(
                 delay,
-                babase.Call(ServerDialogWindow, sddata),
+                babase.CallStrict(ServerDialogWindow, sddata),
             )
 
     def show_url_window(self, address: str) -> None:

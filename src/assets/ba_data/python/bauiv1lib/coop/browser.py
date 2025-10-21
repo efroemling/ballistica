@@ -289,7 +289,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         # This will pull new data periodically, update timers, etc.
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
         self._update()
 
@@ -382,7 +382,9 @@ class CoopBrowserWindow(bui.MainWindow):
             self._doing_tournament_query = True
             plus.tournament_query(
                 args={'source': 'coop window refresh', 'numScores': 1},
-                callback=bui.WeakCall(self._on_tournament_query_response),
+                callback=bui.WeakCallPartial(
+                    self._on_tournament_query_response
+                ),
             )
 
         # Decrement time on our tournament buttons.
@@ -539,8 +541,12 @@ class CoopBrowserWindow(bui.MainWindow):
             button_type='square',
             autoselect=True,
             enable_sound=False,
-            on_activate_call=bui.Call(self._set_campaign_difficulty, 'easy'),
-            on_select_call=bui.Call(self.sel_change, 'campaign', 'easyButton'),
+            on_activate_call=bui.CallStrict(
+                self._set_campaign_difficulty, 'easy'
+            ),
+            on_select_call=bui.CallStrict(
+                self.sel_change, 'campaign', 'easyButton'
+            ),
             color=(
                 sel_color
                 if self._campaign_difficulty == 'easy'
@@ -570,8 +576,12 @@ class CoopBrowserWindow(bui.MainWindow):
             button_type='square',
             autoselect=True,
             enable_sound=False,
-            on_activate_call=bui.Call(self._set_campaign_difficulty, 'hard'),
-            on_select_call=bui.Call(self.sel_change, 'campaign', 'hardButton'),
+            on_activate_call=bui.CallStrict(
+                self._set_campaign_difficulty, 'hard'
+            ),
+            on_select_call=bui.CallStrict(
+                self.sel_change, 'campaign', 'hardButton'
+            ),
             color=(
                 sel_color_hard
                 if self._campaign_difficulty == 'hard'
@@ -842,7 +852,7 @@ class CoopBrowserWindow(bui.MainWindow):
                     highlight=False,
                     border_opacity=0.0,
                     color=(0.45, 0.4, 0.5),
-                    on_select_call=bui.Call(
+                    on_select_call=bui.CallStrict(
                         self._on_row_selected, 'tournament' + str(i + 1)
                     ),
                 )
@@ -873,7 +883,7 @@ class CoopBrowserWindow(bui.MainWindow):
                         h,
                         v2,
                         is_last_sel,
-                        on_pressed=bui.WeakCall(self.run_tournament),
+                        on_pressed=bui.WeakCallPartial(self.run_tournament),
                     )
                 )
                 v -= 200
@@ -927,7 +937,7 @@ class CoopBrowserWindow(bui.MainWindow):
             highlight=False,
             border_opacity=0.0,
             color=(0.45, 0.4, 0.5),
-            on_select_call=bui.Call(self._on_row_selected, 'custom'),
+            on_select_call=bui.CallStrict(self._on_row_selected, 'custom'),
         )
         bui.widget(
             edit=h_scroll,

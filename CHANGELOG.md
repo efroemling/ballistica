@@ -1,12 +1,25 @@
-### 1.7.53 (build 22584, api 9, 2025-10-17)
+### 1.7.53 (build 22588, api 9, 2025-10-21)
 - App audio output should now update when the default sound device changes
   (plugging in headphones, etc). This applies to all platforms using recent
   builds of OpenALSoft which should be most of them at this point.
-- Added a 'literal' arg to `bauiv1.textwidget()`. If you pass False for this,
+- Added a `literal` arg to `bauiv1.textwidget()`. If you pass False for this,
   the widget will never interpret strings such as '{"v":"foo"}' as Lstr data
   (This is how Lstr values work under the hood). Another way to protect literal
   strings is to wrap them in Lstrs (`bui.Lstr(value='{IAmNotJSON}')`), but that
   way is less efficient.
+- Added `text_literal` arg for `bauiv1.buttonwidget()` which does the same for
+  the button's label.
+- Added `babase.CallPartial` and `babase.WeakCallPartial` - these are the same
+  as `babase.Call` and `babase.WeakCall`, with the addition that they now
+  support extra keyword args at call time; not only positional args.
+- Added `babase.CallStrict` and `babase.WeakCallStrict` - these versions do not
+  allow extra args or keywords to be passed at call time, but in return they do
+  more complete type checking. You should prefer these when you are not passing
+  extra args at call time.
+- Added warnings for `babase.Call` and `babase.WeakCall` that they should be
+  replaced by either the explicit 'partial' or 'strict' versions. Once api 9
+  support ends, `babase.Call` and `babase.WeakCall` will behave like the strict
+  versions instead of the partial versions and the warning will be removed.
 
 ### 1.7.52 (build 22572, api 9, 2025-10-03)
 - Empty version number bump.

@@ -266,7 +266,9 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             size=(28, 28),
             label='-',
             autoselect=True,
-            on_activate_call=bui.Call(self._stress_test_player_count_decrement),
+            on_activate_call=bui.CallStrict(
+                self._stress_test_player_count_decrement
+            ),
             repeat=True,
             enable_sound=True,
         )
@@ -277,7 +279,9 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             size=(28, 28),
             label='+',
             autoselect=True,
-            on_activate_call=bui.Call(self._stress_test_player_count_increment),
+            on_activate_call=bui.CallStrict(
+                self._stress_test_player_count_increment
+            ),
             repeat=True,
             enable_sound=True,
         )
@@ -313,7 +317,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             size=(28, 28),
             label='-',
             autoselect=True,
-            on_activate_call=bui.Call(
+            on_activate_call=bui.CallStrict(
                 self._stress_test_round_duration_decrement
             ),
             repeat=True,
@@ -326,7 +330,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             size=(28, 28),
             label='+',
             autoselect=True,
-            on_activate_call=bui.Call(
+            on_activate_call=bui.CallStrict(
                 self._stress_test_round_duration_increment
             ),
             repeat=True,

@@ -114,7 +114,7 @@ class KioskWindow(bui.MainWindow):
             parent=self._root_widget,
             autoselect=True,
             size=(b_width, b_height),
-            on_activate_call=bui.Call(self._do_game, 'easy'),
+            on_activate_call=bui.CallStrict(self._do_game, 'easy'),
             transition_delay=tdelay,
             position=(h - b_width * 0.5, b_v),
             label='',
@@ -149,7 +149,7 @@ class KioskWindow(bui.MainWindow):
             parent=self._root_widget,
             autoselect=True,
             size=(b_width, b_height),
-            on_activate_call=bui.Call(self._do_game, 'medium'),
+            on_activate_call=bui.CallStrict(self._do_game, 'medium'),
             position=(h - b_width * 0.5, b_v),
             label='',
             button_type='square',
@@ -184,7 +184,7 @@ class KioskWindow(bui.MainWindow):
             parent=self._root_widget,
             autoselect=True,
             size=(b_width, b_height),
-            on_activate_call=bui.Call(self._do_game, 'hard'),
+            on_activate_call=bui.CallStrict(self._do_game, 'hard'),
             transition_delay=tdelay,
             position=(h - b_width * 0.5, b_v),
             label='',
@@ -239,7 +239,7 @@ class KioskWindow(bui.MainWindow):
                 parent=self._root_widget,
                 autoselect=True,
                 size=(b_width, b_height),
-                on_activate_call=bui.Call(self._do_game, 'ctf'),
+                on_activate_call=bui.CallStrict(self._do_game, 'ctf'),
                 transition_delay=tdelay,
                 position=(h - b_width * 0.5, b_v),
                 label='',
@@ -275,7 +275,7 @@ class KioskWindow(bui.MainWindow):
                 parent=self._root_widget,
                 autoselect=True,
                 size=(b_width, b_height),
-                on_activate_call=bui.Call(self._do_game, 'hockey'),
+                on_activate_call=bui.CallStrict(self._do_game, 'hockey'),
                 position=(h - b_width * 0.5, b_v),
                 label='',
                 button_type='square',
@@ -310,7 +310,7 @@ class KioskWindow(bui.MainWindow):
                 parent=self._root_widget,
                 autoselect=True,
                 size=(b_width, b_height),
-                on_activate_call=bui.Call(self._do_game, 'epic'),
+                on_activate_call=bui.CallStrict(self._do_game, 'epic'),
                 transition_delay=tdelay,
                 position=(h - b_width * 0.5, b_v),
                 label='',
@@ -361,7 +361,7 @@ class KioskWindow(bui.MainWindow):
         self._restore_state()
         self._update()
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
 
     @override
@@ -468,9 +468,11 @@ class KioskWindow(bui.MainWindow):
                 appconfig['Free-for-All Playlist Selection'] = 'Just Epic Elim'
                 bui.fade_screen(
                     False,
-                    endcall=bui.Call(
+                    endcall=bui.CallStrict(
                         bui.pushcall,
-                        bui.Call(bs.new_host_session, bs.FreeForAllSession),
+                        bui.CallStrict(
+                            bs.new_host_session, bs.FreeForAllSession
+                        ),
                     ),
                 )
             else:
@@ -507,9 +509,9 @@ class KioskWindow(bui.MainWindow):
                     )
                 bui.fade_screen(
                     False,
-                    endcall=bui.Call(
+                    endcall=bui.CallStrict(
                         bui.pushcall,
-                        bui.Call(bs.new_host_session, bs.DualTeamSession),
+                        bui.CallStrict(bs.new_host_session, bs.DualTeamSession),
                     ),
                 )
             bui.containerwidget(edit=self._root_widget, transition='out_left')

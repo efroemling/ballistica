@@ -249,7 +249,7 @@ class FileSelectorWindow(bui.MainWindow):
                 if duration < min_time:
                     time.sleep(min_time - duration)
                 bui.pushcall(
-                    bui.Call(self._callback, files, None),
+                    bui.CallStrict(self._callback, files, None),
                     from_other_thread=True,
                 )
             except Exception as exc:
@@ -258,7 +258,7 @@ class FileSelectorWindow(bui.MainWindow):
                     logging.exception('Error in fileselector refresh thread.')
                 nofiles: list[str] = []
                 bui.pushcall(
-                    bui.Call(self._callback, nofiles, str(exc)),
+                    bui.CallStrict(self._callback, nofiles, str(exc)),
                     from_other_thread=True,
                 )
 
@@ -431,7 +431,9 @@ class FileSelectorWindow(bui.MainWindow):
                     root_selectable=True,
                     background=False,
                     click_activate=True,
-                    on_activate_call=bui.Call(self._on_entry_activated, entry),
+                    on_activate_call=bui.CallStrict(
+                        self._on_entry_activated, entry
+                    ),
                 )
                 if num == 0:
                     bui.widget(edit=cnt, up_widget=self._back_button)

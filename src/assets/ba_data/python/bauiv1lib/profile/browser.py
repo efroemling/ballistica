@@ -419,12 +419,12 @@ class ProfileBrowserWindow(bui.MainWindow):
                 text=bui.Lstr(value=f'    {tval}'),
                 h_align='left',
                 v_align='center',
-                on_select_call=bui.WeakCall(self._select, p_name, index),
+                on_select_call=bui.WeakCallStrict(self._select, p_name, index),
                 maxwidth=self._scroll_width * 0.86,
                 corner_scale=scl,
                 color=bui.safecolor(color, 0.4),
                 always_highlight=True,
-                on_activate_call=bui.Call(self._edit_button.activate),
+                on_activate_call=bui.CallStrict(self._edit_button.activate),
                 selectable=True,
             )
             # We handle reselection of these manually; no need for ids.

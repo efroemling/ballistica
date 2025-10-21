@@ -171,7 +171,9 @@ class TestingWindow(bui.MainWindow):
                 left_widget=self._back_button,
                 button_type='square',
                 label='-',
-                on_activate_call=bui.Call(self._on_minus_press, entry['name']),
+                on_activate_call=bui.CallStrict(
+                    self._on_minus_press, entry['name']
+                ),
             )
             if i == 0:
                 bui.widget(edit=btn, up_widget=self._back_button)
@@ -192,7 +194,9 @@ class TestingWindow(bui.MainWindow):
                 repeat=True,
                 button_type='square',
                 label='+',
-                on_activate_call=bui.Call(self._on_plus_press, entry['name']),
+                on_activate_call=bui.CallStrict(
+                    self._on_plus_press, entry['name']
+                ),
             )
             if i == 0:
                 bui.widget(edit=btn, up_widget=self._back_button)

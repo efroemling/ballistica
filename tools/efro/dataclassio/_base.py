@@ -321,7 +321,7 @@ class IOAttrs:
                 and self.soft_default_factory is self.MISSING
             ):
                 raise TypeError(
-                    f'Field {field.name} of {cls} has'
+                    f'Field \'{field.name}\' of {cls} has'
                     f' neither a default nor a default_factory'
                     f' and IOAttrs contains neither a soft_default'
                     f' nor a soft_default_factory;'

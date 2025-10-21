@@ -361,7 +361,7 @@ class TournamentEntryWindow(PopupWindow):
         self._fg_state = bui.app.fg_state
         self._running_query = False
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
         self._update()
         self._restore_state()
@@ -433,7 +433,9 @@ class TournamentEntryWindow(PopupWindow):
                         else 'retry entry window'
                     )
                 },
-                callback=bui.WeakCall(self._on_tournament_query_response),
+                callback=bui.WeakCallPartial(
+                    self._on_tournament_query_response
+                ),
             )
             self._last_query_time = bui.apptime()
             self._running_query = True
@@ -751,7 +753,7 @@ class TournamentEntryWindow(PopupWindow):
             assert bui.app.plus is not None
             bui.app.plus.ads.show_ad_2(
                 'tournament_entry',
-                on_completion_call=bui.WeakCall(self._on_ad_complete),
+                on_completion_call=bui.WeakCallPartial(self._on_ad_complete),
             )
 
     def _on_practice_press(self) -> None:

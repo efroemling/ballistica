@@ -200,7 +200,7 @@ class ChestWindow(bui.MainWindow):
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
                 bacommon.bs.ChestInfoMessage(chest_id=str(self._index)),
-                on_response=bui.WeakCall(self._on_chest_info_response),
+                on_response=bui.WeakCallPartial(self._on_chest_info_response),
             )
 
     @override
@@ -391,7 +391,9 @@ class ChestWindow(bui.MainWindow):
             self._time_string_timer = bui.AppTimer(
                 1.0,
                 repeat=True,
-                call=bui.WeakCall(self._update_time_display, chest.unlock_time),
+                call=bui.WeakCallStrict(
+                    self._update_time_display, chest.unlock_time
+                ),
             )
 
         # Allow watching an ad IF the server tells us we can AND we have
@@ -418,7 +420,7 @@ class ChestWindow(bui.MainWindow):
             label='',
             button_type='square',
             autoselect=True,
-            on_activate_call=bui.WeakCall(
+            on_activate_call=bui.WeakCallStrict(
                 self._open_press, user_tokens, chest.unlock_tokens
             ),
             enable_sound=False,
@@ -531,7 +533,7 @@ class ChestWindow(bui.MainWindow):
                 label='',
                 button_type='square',
                 autoselect=True,
-                on_activate_call=bui.WeakCall(self._watch_ad_press),
+                on_activate_call=bui.WeakCallStrict(self._watch_ad_press),
                 enable_sound=False,
             )
             bui.imagewidget(
@@ -595,7 +597,7 @@ class ChestWindow(bui.MainWindow):
             self._open_me_flash_timer = bui.AppTimer(
                 0.05,
                 repeat=True,
-                call=bui.WeakCall(self._open_me_backing_update),
+                call=bui.WeakCallStrict(self._open_me_backing_update),
             )
             self._open_me_widgets.clear()
             self._open_me_widgets.append(self._open_me_backing)
@@ -644,7 +646,9 @@ class ChestWindow(bui.MainWindow):
                 color=(0.0, 0.8, 0.5),
                 autoselect=True,
                 text_flatness=1.0,
-                on_activate_call=bui.WeakCall(self._stop_showing_open_me_press),
+                on_activate_call=bui.WeakCallStrict(
+                    self._stop_showing_open_me_press
+                ),
             )
             # Avoid depth issues with the quote-bubble image.
             bui.widget(edit=btn, depth_range=(0.1, 1.0))
@@ -862,7 +866,7 @@ class ChestWindow(bui.MainWindow):
                     action=bacommon.bs.ChestActionMessage.Action.UNLOCK,
                     token_payment=token_payment,
                 ),
-                on_response=bui.WeakCall(self._on_chest_action_response),
+                on_response=bui.WeakCallPartial(self._on_chest_action_response),
             )
 
         # Convey that something is in progress.
@@ -898,7 +902,7 @@ class ChestWindow(bui.MainWindow):
         self._action_in_flight = True
         bui.app.plus.ads.show_ad_2(
             'reduce_chest_wait',
-            on_completion_call=bui.WeakCall(self._watch_ad_complete),
+            on_completion_call=bui.WeakCallPartial(self._watch_ad_complete),
         )
 
         # Convey that something is in progress.
@@ -942,7 +946,7 @@ class ChestWindow(bui.MainWindow):
                     action=bacommon.bs.ChestActionMessage.Action.AD,
                     token_payment=0,
                 ),
-                on_response=bui.WeakCall(self._on_chest_action_response),
+                on_response=bui.WeakCallPartial(self._on_chest_action_response),
             )
 
     def _reset(self) -> None:
@@ -1035,7 +1039,7 @@ class ChestWindow(bui.MainWindow):
             sign = -sign
             bui.apptimer(
                 toffs,
-                bui.Call(
+                bui.CallStrict(
                     _set_img,
                     x=(
                         20.0
@@ -1082,7 +1086,7 @@ class ChestWindow(bui.MainWindow):
         )
 
         toffsopen = toffs
-        bui.apptimer(toffs, bui.WeakCall(self._show_chest_opening))
+        bui.apptimer(toffs, bui.WeakCallStrict(self._show_chest_opening))
         toffs += tincr * 1.0
         width = xspacing * 0.95
 
@@ -1106,7 +1110,7 @@ class ChestWindow(bui.MainWindow):
             )
             xoffs += xspacing
         toffs += tincr
-        bui.apptimer(toffs, bui.WeakCall(self._show_done_button))
+        bui.apptimer(toffs, bui.WeakCallStrict(self._show_done_button))
 
         self._show_odds(initial_highlighted_row=-1)
 
@@ -1126,7 +1130,7 @@ class ChestWindow(bui.MainWindow):
             while toffs2 > 0.0:
                 bui.apptimer(
                     toffs2,
-                    bui.WeakCall(self._highlight_odds_row, i),
+                    bui.WeakCallStrict(self._highlight_odds_row, i),
                 )
                 toffs2 -= amt
                 if ease_out:
@@ -1184,7 +1188,7 @@ class ChestWindow(bui.MainWindow):
             # comes to rest before scale.
             bui.apptimer(
                 toffs,
-                bui.Call(
+                bui.CallStrict(
                     _set_img,
                     x=(
                         1.0

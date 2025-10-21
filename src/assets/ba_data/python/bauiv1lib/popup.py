@@ -234,7 +234,7 @@ class PopupMenuWindow(PopupWindow):
             wdg = bui.textwidget(
                 parent=self._columnwidget,
                 size=(self._width - 40, 28),
-                on_select_call=bui.Call(self._select, index),
+                on_select_call=bui.CallStrict(self._select, index),
                 click_activate=True,
                 color=(
                     (0.5, 0.5, 0.5, 0.5)
@@ -277,7 +277,7 @@ class PopupMenuWindow(PopupWindow):
         if delegate is not None:
             # Call this in a timer so it doesn't interfere with us killing
             # our widgets and whatnot.
-            call = bui.Call(
+            call = bui.CallStrict(
                 delegate.popup_menu_selected_choice, self, self._current_choice
             )
             bui.apptimer(0, call)

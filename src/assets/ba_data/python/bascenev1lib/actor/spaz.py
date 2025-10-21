@@ -172,7 +172,9 @@ class Spaz(bs.Actor):
                 if node:
                     setattr(node, attr, val)
 
-            bs.timer(1.0, bs.Call(_safesetattr, self.node, 'invincible', False))
+            bs.timer(
+                1.0, bs.CallStrict(_safesetattr, self.node, 'invincible', False)
+            )
         self.hitpoints = self.default_hitpoints
         self.hitpoints_max = self.default_hitpoints
         self.shield_hitpoints: int | None = None
@@ -376,7 +378,7 @@ class Spaz(bs.Actor):
 
         bs.animate(self._score_text, 'scale', {0.0: start_scale, 0.2: 0.02})
         self._score_text_hide_timer = bs.Timer(
-            1.0, bs.WeakCall(self._hide_score_text)
+            1.0, bs.WeakCallStrict(self._hide_score_text)
         )
 
     def on_jump_press(self) -> None:
@@ -462,7 +464,7 @@ class Spaz(bs.Actor):
             if not self.node.hold_node:
                 bs.timer(
                     0.1,
-                    bs.WeakCall(
+                    bs.WeakCallStrict(
                         self._safe_play_sound,
                         SpazFactory.get().swish_sound,
                         0.8,
@@ -629,7 +631,9 @@ class Spaz(bs.Actor):
                 )
                 self._curse_timer = bs.Timer(
                     self.curse_time,
-                    bs.WeakCall(self.handlemessage, CurseExplodeMessage()),
+                    bs.WeakCallStrict(
+                        self.handlemessage, CurseExplodeMessage()
+                    ),
                 )
 
     def equip_boxing_gloves(self) -> None:
@@ -671,7 +675,7 @@ class Spaz(bs.Actor):
 
         if self.shield_decay_rate > 0:
             self.shield_decay_timer = bs.Timer(
-                0.5, bs.WeakCall(self.shield_decay), repeat=True
+                0.5, bs.WeakCallStrict(self.shield_decay), repeat=True
             )
             # So user can see the decay.
             self.shield.always_show_health_bar = True
@@ -718,12 +722,12 @@ class Spaz(bs.Actor):
             # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
             # NOTE: should test to see if that's still the case.
-            bs.timer(0.001, bs.WeakCall(self.shatter))
+            bs.timer(0.001, bs.WeakCallStrict(self.shatter))
 
         elif isinstance(msg, bs.ImpactDamageMessage):
             # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
-            bs.timer(0.001, bs.WeakCall(self._hit_self, msg.intensity))
+            bs.timer(0.001, bs.WeakCallStrict(self._hit_self, msg.intensity))
 
         elif isinstance(msg, bs.PowerupMessage):
             if self._dead or not self.node:
@@ -744,11 +748,11 @@ class Spaz(bs.Actor):
                     )
                     self._multi_bomb_wear_off_flash_timer = bs.Timer(
                         (POWERUP_WEAR_OFF_TIME - 2000) / 1000.0,
-                        bs.WeakCall(self._multi_bomb_wear_off_flash),
+                        bs.WeakCallStrict(self._multi_bomb_wear_off_flash),
                     )
                     self._multi_bomb_wear_off_timer = bs.Timer(
                         POWERUP_WEAR_OFF_TIME / 1000.0,
-                        bs.WeakCall(self._multi_bomb_wear_off),
+                        bs.WeakCallStrict(self._multi_bomb_wear_off),
                     )
             elif msg.poweruptype == 'land_mines':
                 self.set_land_mine_count(min(self.land_mine_count + 3, 3))
@@ -766,11 +770,11 @@ class Spaz(bs.Actor):
                     )
                     self._bomb_wear_off_flash_timer = bs.Timer(
                         (POWERUP_WEAR_OFF_TIME - 2000) / 1000.0,
-                        bs.WeakCall(self._bomb_wear_off_flash),
+                        bs.WeakCallStrict(self._bomb_wear_off_flash),
                     )
                     self._bomb_wear_off_timer = bs.Timer(
                         POWERUP_WEAR_OFF_TIME / 1000.0,
-                        bs.WeakCall(self._bomb_wear_off),
+                        bs.WeakCallStrict(self._bomb_wear_off),
                     )
             elif msg.poweruptype == 'sticky_bombs':
                 self.bomb_type = 'sticky'
@@ -786,11 +790,11 @@ class Spaz(bs.Actor):
                     )
                     self._bomb_wear_off_flash_timer = bs.Timer(
                         (POWERUP_WEAR_OFF_TIME - 2000) / 1000.0,
-                        bs.WeakCall(self._bomb_wear_off_flash),
+                        bs.WeakCallStrict(self._bomb_wear_off_flash),
                     )
                     self._bomb_wear_off_timer = bs.Timer(
                         POWERUP_WEAR_OFF_TIME / 1000.0,
-                        bs.WeakCall(self._bomb_wear_off),
+                        bs.WeakCallStrict(self._bomb_wear_off),
                     )
             elif msg.poweruptype == 'punch':
                 tex = PowerupBoxFactory.get().tex_punch
@@ -807,11 +811,11 @@ class Spaz(bs.Actor):
                     )
                     self._boxing_gloves_wear_off_flash_timer = bs.Timer(
                         (POWERUP_WEAR_OFF_TIME - 2000) / 1000.0,
-                        bs.WeakCall(self._gloves_wear_off_flash),
+                        bs.WeakCallStrict(self._gloves_wear_off_flash),
                     )
                     self._boxing_gloves_wear_off_timer = bs.Timer(
                         POWERUP_WEAR_OFF_TIME / 1000.0,
-                        bs.WeakCall(self._gloves_wear_off),
+                        bs.WeakCallStrict(self._gloves_wear_off),
                     )
             elif msg.poweruptype == 'shield':
                 factory = SpazFactory.get()
@@ -834,11 +838,11 @@ class Spaz(bs.Actor):
                     )
                     self._bomb_wear_off_flash_timer = bs.Timer(
                         (POWERUP_WEAR_OFF_TIME - 2000) / 1000.0,
-                        bs.WeakCall(self._bomb_wear_off_flash),
+                        bs.WeakCallStrict(self._bomb_wear_off_flash),
                     )
                     self._bomb_wear_off_timer = bs.Timer(
                         POWERUP_WEAR_OFF_TIME / 1000.0,
-                        bs.WeakCall(self._bomb_wear_off),
+                        bs.WeakCallStrict(self._bomb_wear_off),
                     )
             elif msg.poweruptype == 'health':
                 if self._cursed:
@@ -885,7 +889,8 @@ class Spaz(bs.Actor):
                 self.frozen = True
                 self.node.frozen = True
                 bs.timer(
-                    msg.time, bs.WeakCall(self.handlemessage, bs.ThawMessage())
+                    msg.time,
+                    bs.WeakCallStrict(self.handlemessage, bs.ThawMessage()),
                 )
                 # Instantly shatter if we're already dead.
                 # (otherwise its hard to tell we're dead).
@@ -1165,7 +1170,7 @@ class Spaz(bs.Actor):
                 if self._cursed and damage > 0:
                     bs.timer(
                         0.05,
-                        bs.WeakCall(
+                        bs.WeakCallStrict(
                             self.curse_explode, msg.get_source_player(bs.Player)
                         ),
                     )
@@ -1384,7 +1389,7 @@ class Spaz(bs.Actor):
         if dropping_bomb:
             self.bomb_count -= 1
             bomb.node.add_death_action(
-                bs.WeakCall(self.handlemessage, BombDiedMessage())
+                bs.WeakCallStrict(self.handlemessage, BombDiedMessage())
             )
         self._pick_up(bomb.node)
 

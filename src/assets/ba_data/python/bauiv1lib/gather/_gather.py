@@ -212,7 +212,7 @@ class GatherWindow(bui.MainWindow):
                 self._scroll_left + tab_inset,
                 self._scroll_bottom + self._scroll_height - 4.0,
             ),
-            on_select_call=bui.WeakCall(self._set_tab),
+            on_select_call=bui.WeakCallPartial(self._set_tab),
         )
 
         # Now instantiate handlers for these tabs.
