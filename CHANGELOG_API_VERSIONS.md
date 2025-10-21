@@ -1,8 +1,9 @@
-This file documents changes occuring with api version bumps.
+This file documents past and future changes associated with api-version bumps.
 
-Ballistica's api-version system exists to allow user code to gracefully adapt to
-upcoming compatibility-breaking changes and to prevent older incompatible code
-from being loaded and causing problems.
+Although Ballistica strives to maintain backward compatibility when possible,
+breaking changes are sometimes necessary. Ballistica's api-version system exists
+to allow user code to gracefully adapt to these changes and to prevent older
+incompatible code from being loaded and causing problems.
 
 Note: For the next api version bump, the engine will be transitioning to an
 overlapped api-version system. This means at some point it will support both api
@@ -14,10 +15,9 @@ will repeat with api 10 and 11 coexisting for a while before 10 is dropped, etc.
 
 ### Upcoming changes when API 9 support ends (and how to prepare for them).
 - `ba*.Call()` will change to behave like `ba*.CallStrict()` instead of
-  `ba*.CallPartial()`. To prepare for this, change all of your `Call()` usage to
-  `CallPartial()` (or `CallStrict()` when applicable). Once API 9 is gone, you
-  can start using `Call()` in place of `CallStrict()` and `CallPartial()` in the
-  few cases where you need extra call-time args.
+  `ba*.CallPartial()`. To prepare
+  for this, change all of your existing `Call()` usage to `CallPartial()` to
+  retain existing behavior.
 - Same as above for `ba*.WeakCall()` (migrate to `WeakCallStrict()` or
   `WeakCallPartial()` for now).
 - `bauiv1.uicleanupcheck()` will be removed. To prepare for this, you should be

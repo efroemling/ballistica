@@ -313,12 +313,13 @@ class ProfileBrowserWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        # Go back to default selection.
-        type(self).selected_profile = None
-
         plus.add_v1_account_transaction(
             {'type': 'REMOVE_PLAYER_PROFILE', 'name': self.selected_profile}
         )
+
+        # Go back to default selection.
+        type(self).selected_profile = None
+
         plus.run_v1_account_transactions()
         bui.getsound('shieldDown').play()
         self._refresh()

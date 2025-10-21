@@ -365,7 +365,7 @@ else:
 
 
 class CallStrict[**P, T]:
-    """Like :meth:`Call()` but disallows extra args at call time.
+    """Like :meth:`CallPartial()` but disallows extra args at call time.
 
     This allows more complete type checking to occur, so this is
     recommended if you do not need extra args at call time.
@@ -392,7 +392,7 @@ class CallStrict[**P, T]:
 
 
 class WeakCallStrict[**P, T]:
-    """Like :meth:`WeakCall()` but disallows extra args at call time.
+    """Like :meth:`WeakCallPartial()` but disallows extra args at call time.
 
     This allows more complete type checking to occur, so this is
     recommended if you do not need extra args at call time.
