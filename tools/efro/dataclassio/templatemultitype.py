@@ -1,22 +1,20 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Template for an IOMultitype setup.
+"""Template for a multi-type class setup.
 
 To use this template, simply copy the contents of this module somewhere
-and then replace 'TemplateMultiType' with 'YourType'.
+and then replace 'TemplateMultiType' with 'MyAwesomeTypeName' or
+whatnot.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, assert_never, override
+from typing import assert_never, override
 
 from enum import Enum
 from dataclasses import dataclass
 
 from efro.dataclassio import ioprepped, IOMultiType
-
-if TYPE_CHECKING:
-    pass
 
 
 class TemplateMultiTypeTypeID(Enum):

@@ -284,7 +284,7 @@ else:
                 if not self._did_invalid_call_warning:
                     logging.warning(
                         'Warning: callable passed to WeakCall() is not'
-                        ' weak-referencable (%s); use regular Call() instead'
+                        ' weak-referencable (%r); use regular Call() instead'
                         ' to avoid this warning.',
                         args[0],
                         stack_info=True,
@@ -376,6 +376,9 @@ class CallStrict[**P, T]:
     def __init__(
         self, call: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
     ) -> None:
+        # Note: we allow access to these here since we don't use any
+        # tricks like pointing at functools.partial for type checking or
+        # whatnot that would break this.
         self.call = call
         self.args = args
         self.kwargs = kwargs
@@ -405,18 +408,17 @@ class WeakCallStrict[**P, T]:
     def __init__(
         self, call: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
     ) -> None:
-        # Note: keeping _call, _args, _keywds private in this case
-        # since we sub functools.partial for ourself in
-        # type-checking so they will be unrecognized anyway. Use
-        # non-partial versions if you want to access those.
+        # Note: we allow access to these here since we don't use any
+        # tricks like pointing at functools.partial for type checking or
+        # whatnot that would break this.
         if hasattr(call, '__func__'):
             self.call: Any = WeakMethod(call)  # type: ignore
         else:
             app = _babase.app
             if not self._did_invalid_call_warning:
                 logging.warning(
-                    'Warning: callable passed to WeakCall() is not'
-                    ' weak-referencable (%s); use regular Call() instead'
+                    'Warning: callable passed to WeakCallStrict() is not'
+                    ' weak-referencable (%r); use regular CallStrict() instead'
                     ' to avoid this warning.',
                     args[0],
                     stack_info=True,

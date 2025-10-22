@@ -102,7 +102,8 @@ class IOMultiType[EnumT: Enum]:
     inheriting from that registry class. Dataclassio will then do the
     right thing when that registry class is used in type annotations.
 
-    See tests/test_efro/test_dataclassio.py for examples.
+    For an example multitype class (useful to use as a starting point
+    for your own) see :class:`efro.dataclassio.templatemultitype`.
     """
 
     @classmethod

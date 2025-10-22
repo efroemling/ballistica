@@ -406,10 +406,11 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float y = m.fval2;
 
       // If its in our overall scroll region at all.
-      if ((y >= 0.0f) && (y < height()) && (x >= 0.0f) && (x < width())) {
-        // On touch devices, clicks begin scrolling, (and eventually can count
-        // as clicks if they don't move)
-        if (touch_mode_) {
+      if (y >= 0.0f && y < height() && x >= 0.0f && x < width()) {
+        // On touch devices, clicks begin scrolling, (and eventually can
+        // count as clicks if they don't move). Only if we're showing less
+        // than everything though.
+        if (touch_mode_ && amount_visible_ < 1.0f) {
           touch_held_ = true;
           auto click_count = static_cast<int>(m.fval3);
           touch_held_click_count_ = click_count;
@@ -445,19 +446,20 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           }
         }
 
-        // On desktop, allow clicking on the scrollbar.
+        // For mouse type devices, allow clicking on the scrollbar.
         if (!touch_mode_) {
           if (y <= scroll_bar_height_ + bottom_overlap) {
             claimed = true;
             pass = false;
 
-            float sRight = width() - border_width_;
-            float sLeft = border_width_;
+            float s_right = width() - border_width_;
+            float s_left = border_width_;
             float sb_thumb_width =
                 amount_visible_ * (width() - 2 * border_width_);
-            float sb_thumb_right = sRight
-                                   - child_offset_h_ / child_max_offset_
-                                         * (sRight - (sLeft + sb_thumb_width));
+            float sb_thumb_right =
+                s_right
+                - child_offset_h_ / child_max_offset_
+                      * (s_right - (s_left + sb_thumb_width));
 
             // To right of thumb (page-right).
             if (x >= sb_thumb_right) {
@@ -470,7 +472,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               mouse_held_thumb_ = true;
               thumb_click_start_h_ = x;
               thumb_click_start_child_offset_h_ = child_offset_h_;
-            } else if (x >= sLeft) {
+            } else if (x >= s_left) {
               // To left of thumb (page left).
               smoothing_amount_ = 1.0f;  // So we can see the transition.
               child_offset_h_ += (width() - 2 * (border_width_ + kHMargin));
@@ -508,37 +510,37 @@ void HScrollWidget::UpdateLayout() {
   // Move everything based on our offset.
   auto i = widgets().begin();
   if (i == widgets().end()) {
-    amount_visible_ = 0;
+    amount_visible_ = 0.0f;
     return;
   }
   float child_w = (**i).GetWidth();
-  child_max_offset_ = child_w - (width() - 2 * (border_width_ + kHMargin));
+  child_max_offset_ = child_w - (width() - 2.0f * (border_width_ + kHMargin));
   amount_visible_ = (width() - 2 * (border_width_ + kHMargin)) / child_w;
-  if (amount_visible_ > 1) {
-    amount_visible_ = 1;
+  if (amount_visible_ > 1.0f) {
+    amount_visible_ = 1.0f;
     if (center_small_content_) {
       center_offset_x_ = child_max_offset_ * 0.5f;
     } else {
-      center_offset_x_ = 0;
+      center_offset_x_ = 0.0f;
     }
   } else {
-    center_offset_x_ = 0;
+    center_offset_x_ = 0.0f;
   }
   if (mouse_held_thumb_) {
     if (child_offset_h_
-        > child_w - (width() - 2 * (border_width_ + kHMargin))) {
-      child_offset_h_ = child_w - (width() - 2 * (border_width_ + kHMargin));
-      inertia_scroll_rate_ = 0;
+        > child_w - (width() - 2.0f * (border_width_ + kHMargin))) {
+      child_offset_h_ = child_w - (width() - 2.0f * (border_width_ + kHMargin));
+      inertia_scroll_rate_ = 0.0f;
     }
-    if (child_offset_h_ < 0) {
-      child_offset_h_ = 0;
-      inertia_scroll_rate_ = 0;
+    if (child_offset_h_ < 0.0f) {
+      child_offset_h_ = 0.0f;
+      inertia_scroll_rate_ = 0.0f;
     }
   }
   (**i).set_translate(width() - (border_width_ + kHMargin)
                           + child_offset_h_smoothed_ - child_w
                           + center_offset_x_,
-                      4 + border_height_);
+                      4.0f + border_height_);
   thumb_dirty_ = true;
 }
 

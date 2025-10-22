@@ -40,19 +40,17 @@ class CloudUI(IOMultiType[CloudUITypeID]):
     def get_type(cls, type_id: CloudUITypeID) -> type[CloudUI]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
-        out: type[CloudUI]
 
         t = CloudUITypeID
         if type_id is t.UNKNOWN:
-            out = UnknownCloudUI
-        elif type_id is t.V1:
+            return UnknownCloudUI
+        if type_id is t.V1:
             from bacommon.cloudui.v1 import UI
 
-            out = UI
-        else:
-            # Important to make sure we provide all types.
-            assert_never(type_id)
-        return out
+            return UI
+
+        # Make sure we cover all types.
+        assert_never(type_id)
 
     @override
     @classmethod
@@ -60,6 +58,11 @@ class CloudUI(IOMultiType[CloudUITypeID]):
         # If we encounter some future type we don't know anything about,
         # drop in a placeholder.
         return UnknownCloudUI()
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return '_t'
 
 
 @ioprepped

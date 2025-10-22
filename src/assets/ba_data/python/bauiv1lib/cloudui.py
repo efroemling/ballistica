@@ -5,11 +5,12 @@
 from __future__ import annotations
 
 import random
+from functools import partial
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, override, assert_never
 
 import babase
-import bacommon.cloudui.v1 as cui
+import bacommon.cloudui.v1 as clui
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
 
@@ -27,10 +28,377 @@ def show_cloud_ui_window() -> None:
     )
 
 
+# Prep structures for our UI - we do all layout math and bake out
+# ready-to-run ui calls in a background thread so there's as little work
+# as possible to do in the ui thread.
+
+
 @dataclass
-class _RowInfo:
+class _ButtonPrep:
+    buttoncall: Callable[..., bui.Widget]
+    buttoneditcall: Callable | None
+    decorationcalls: list[Callable[..., bui.Widget]]
+
+
+@dataclass
+class _RowPrep:
     width: float
     height: float
+    titlecalls: list[Callable[..., bui.Widget]]
+    hscrollcall: Callable[..., bui.Widget] | None
+    hscrolleditcall: Callable | None
+    hsubcall: Callable[..., bui.Widget] | None
+    buttons: list[_ButtonPrep]
+
+
+@dataclass
+class _UIPrep:
+    rootcall: Callable[..., bui.Widget] | None
+    rows: list[_RowPrep]
+    width: float
+    height: float
+
+
+def _prep_ui(
+    ui: clui.UI, uiscale: babase.UIScale, scroll_width: float
+) -> _UIPrep:
+    """Prep a ui."""
+    # pylint: disable=too-many-statements
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+
+    # Ok; we've got some buttons. Build our full UI.
+    row_title_height = 30.0
+    row_subtitle_height = 30.0
+    top_buffer = 20.0
+    bot_buffer = 20.0
+    left_buffer = 0.0
+    right_buffer = 10.0  # Nudge a bit due to scrollbar.
+    title_inset = 35.0
+    default_button_width = 200.0
+    default_button_height = 200.0
+
+    if uiscale is babase.UIScale.SMALL:
+        top_bar_overlap = 70
+        bot_bar_overlap = 70
+        top_buffer += top_bar_overlap
+        bot_buffer += bot_bar_overlap
+    else:
+        top_bar_overlap = 0
+        bot_bar_overlap = 0
+
+    # Should look into why this is necessary.
+    fudge = 15.0
+    hscrollinset = 15.0
+
+    uiprep = _UIPrep(
+        rootcall=None,
+        rows=[],
+        width=scroll_width + fudge,
+        height=top_buffer + bot_buffer,
+    )
+
+    # Precalc basic row info like dimensions.
+    for row in ui.rows:
+        assert row.buttons
+        this_row_width = (
+            left_buffer
+            + right_buffer
+            + row.padding_left
+            + row.padding_right
+            + row.button_spacing * (len(row.buttons) - 1)
+        )
+        button_row_height = 0.0
+        for button in row.buttons:
+            if button.size is None:
+                bwidth = default_button_width
+                bheight = default_button_height
+            else:
+                bwidth = button.size[0]
+                bheight = button.size[1]
+            bscale = button.scale
+            bwidthfull = bwidth * bscale
+            bheightfull = bheight * bscale
+            # Include button padding when calcing full needed height.
+            button_row_height = max(
+                button_row_height,
+                bheightfull + button.padding_top + button.padding_bottom,
+            )
+            this_row_width += (
+                bwidthfull + button.padding_left + button.padding_right
+            )
+        this_row_height = (
+            row.padding_top + row.padding_bottom + button_row_height
+        )
+        uiprep.rows.append(
+            _RowPrep(
+                width=this_row_width,
+                height=this_row_height,
+                titlecalls=[],
+                hscrollcall=None,
+                hscrolleditcall=None,
+                hsubcall=None,
+                buttons=[],
+            )
+        )
+        assert this_row_height > 0.0
+        assert this_row_width > 0.0
+        if row.title is not None:
+            uiprep.height += row_title_height
+        if row.subtitle is not None:
+            uiprep.height += row_subtitle_height
+        uiprep.height += this_row_height
+
+    # Ok; we've got overall dimensions. Now prep a call to make the
+    # subcontainer and then fill in its rows.
+    uiprep.rootcall = partial(
+        bui.containerwidget,
+        size=(uiprep.width, uiprep.height),
+        claims_left_right=True,
+        background=False,
+    )
+    y = uiprep.height - top_buffer
+    for row, rowprep in zip(ui.rows, uiprep.rows, strict=True):
+        if row.title is not None:
+            rowprep.titlecalls.append(
+                partial(
+                    bui.textwidget,
+                    position=(
+                        left_buffer + title_inset,
+                        y - row_title_height * 0.5,
+                    ),
+                    size=(0, 0),
+                    text=row.title,
+                    color=(
+                        (0.85, 0.95, 0.89, 1.0)
+                        if row.title_color is None
+                        else row.title_color
+                    ),
+                    flatness=row.title_flatness,
+                    shadow=row.title_shadow,
+                    scale=1.0,
+                    maxwidth=(
+                        uiprep.width - left_buffer - right_buffer - title_inset
+                    ),
+                    h_align='left',
+                    v_align='center',
+                    literal=True,
+                )
+            )
+            y -= row_title_height
+        if row.subtitle is not None:
+            rowprep.titlecalls.append(
+                partial(
+                    bui.textwidget,
+                    position=(
+                        left_buffer + title_inset,
+                        y - row_subtitle_height * 0.5,
+                    ),
+                    size=(0, 0),
+                    text=row.subtitle,
+                    color=(
+                        (0.6, 0.74, 0.6)
+                        if row.subtitle_color is None
+                        else row.subtitle_color
+                    ),
+                    flatness=row.subtitle_flatness,
+                    shadow=row.subtitle_shadow,
+                    scale=0.7,
+                    maxwidth=(
+                        uiprep.width - left_buffer - right_buffer - title_inset
+                    ),
+                    h_align='left',
+                    v_align='center',
+                    literal=True,
+                )
+            )
+            y -= row_subtitle_height
+
+        y -= rowprep.height  # includes padding-top/bottom
+        rowprep.hscrollcall = partial(
+            bui.hscrollwidget,
+            size=(uiprep.width - hscrollinset, rowprep.height),
+            position=(hscrollinset, y),
+            claims_left_right=True,
+            highlight=False,
+            border_opacity=0.0,
+            center_small_content=row.center,
+            simple_culling_h=10.0,
+        )
+        rowprep.hsubcall = partial(
+            bui.containerwidget,
+            size=(
+                # Ideally we could just always use row-width, but
+                # currently that gets us right-aligned stuff when
+                # center-small-content is off.
+                (
+                    rowprep.width
+                    if row.center
+                    else max(uiprep.width - hscrollinset - fudge, rowprep.width)
+                ),
+                rowprep.height,
+            ),
+            background=False,
+        )
+        x = left_buffer + row.padding_left
+        # Calc height of buttons themselves (includes button padding but
+        # not row padding).
+        button_row_height = (
+            rowprep.height - row.padding_top - row.padding_bottom
+        )
+        for button in row.buttons:
+            x += button.padding_left
+            bscale = button.scale
+            if button.size is None:
+                bwidth = default_button_width
+                bheight = default_button_height
+            else:
+                bwidth = button.size[0]
+                bheight = button.size[1]
+            bwidthfull = bscale * bwidth
+            bheightfull = bscale * bheight
+            # Vertically center the button plus its padding.
+            to_button_plus_padding_bottom = (
+                button_row_height
+                - (bheightfull + button.padding_top + button.padding_bottom)
+            ) * 0.5
+            # Move up past bottom padding to get button bottom.
+            to_button_bottom = (
+                to_button_plus_padding_bottom + button.padding_bottom
+            )
+
+            center_x = x + bwidthfull * 0.5
+            center_y = row.padding_bottom + to_button_bottom + bheightfull * 0.5
+            buttonprep = _ButtonPrep(
+                buttoncall=partial(
+                    bui.buttonwidget,
+                    position=(x, row.padding_bottom + to_button_bottom),
+                    size=(bwidth, bheight),
+                    scale=bscale,
+                    color=button.color,
+                    textcolor=button.text_color,
+                    text_flatness=(button.text_flatness),
+                    text_scale=button.text_scale,
+                    button_type='square',
+                    label='' if button.label is None else button.label,
+                    text_literal=True,
+                    autoselect=True,
+                ),
+                buttoneditcall=partial(
+                    bui.widget,
+                    show_buffer_left=150,
+                    show_buffer_right=150,
+                ),
+                decorationcalls=[],
+            )
+            for decoration in button.decorations:
+                dectypeid = decoration.get_type_id()
+                if dectypeid is clui.DecorationTypeID.UNKNOWN:
+                    pass
+                elif dectypeid is clui.DecorationTypeID.TEXT:
+                    assert isinstance(decoration, clui.Text)
+                    buttonprep.decorationcalls.append(
+                        partial(
+                            bui.textwidget,
+                            position=(center_x, center_y),
+                            scale=bscale,
+                            maxwidth=bscale * decoration.max_width,
+                            flatness=decoration.flatness,
+                            shadow=decoration.shadow,
+                            h_align='center',
+                            v_align='center',
+                            size=(0, 0),
+                            color=(0.5, 0.5, 0.5, 1.0),
+                            text=decoration.text,
+                        )
+                    )
+                else:
+                    assert_never(dectypeid)
+
+            rowprep.buttons.append(buttonprep)
+
+            x += bwidthfull + button.padding_right + row.button_spacing
+
+        # Add an edit call for our new hscroll to give it proper
+        # show-buffers.
+
+        # Incorporate top buffer so we scroll all the way up
+        # when selecting the top row (and stay clear of
+        # toolbars).
+        show_buffer_top = top_buffer
+        show_buffer_bottom = bot_buffer
+
+        # Scroll so title/subtitle is in view when selecting.
+        # Note that we don't need to account for
+        # padding-top/bottom since the h-scroll that we're
+        # applying to encompasses both.
+        if row.title is not None:
+            show_buffer_top += row_title_height
+        if row.subtitle is not None:
+            show_buffer_top += row_subtitle_height
+
+        rowprep.hscrolleditcall = partial(
+            bui.widget,
+            show_buffer_top=show_buffer_top,
+            show_buffer_bottom=show_buffer_bottom,
+        )
+    return uiprep
+
+
+def _instantiate_ui(
+    uiprep: _UIPrep,
+    scrollwidget: bui.Widget,
+    backbutton: bui.Widget,
+    windowbackbutton: bui.Widget | None,
+) -> bui.Widget:
+    # pylint: disable=too-many-locals
+    outrows: list[tuple[bui.Widget, list[bui.Widget]]] = []
+
+    # Now go through and run our prepped ui calls to build our
+    # widgets, plugging in appropriate parent widgets args and
+    # whatnot as we go.
+    assert uiprep.rootcall is not None
+    subcontainer = uiprep.rootcall(parent=scrollwidget)
+    for rowprep in uiprep.rows:
+        for uicall in rowprep.titlecalls:
+            uicall(parent=subcontainer)
+        assert rowprep.hscrollcall is not None
+        hscroll = rowprep.hscrollcall(parent=subcontainer)
+        outrow: tuple[bui.Widget, list[bui.Widget]] = (hscroll, [])
+        assert rowprep.hsubcall is not None
+        hsub = rowprep.hsubcall(parent=hscroll)
+        for i, buttonprep in enumerate(rowprep.buttons):
+            btn = buttonprep.buttoncall(parent=hsub)
+            assert buttonprep.buttoneditcall is not None
+            buttonprep.buttoneditcall(edit=btn)
+            for deccall in buttonprep.decorationcalls:
+                deccall(parent=hsub, draw_controller=btn)
+
+            # Make sure row is scrolled so leftmost button is
+            # visible (though kinda seems like this should happen by
+            # default).
+            if i == 0:
+                bui.containerwidget(edit=hsub, visible_child=btn)
+            outrow[1].append(btn)
+
+        outrows.append(outrow)
+        assert rowprep.hscrolleditcall is not None
+        rowprep.hscrolleditcall(edit=hscroll)
+
+    # Ok; we've got all widgets. Now wire up directional nav between
+    # rows/buttons.
+    for i in range(0, len(outrows) - 1):
+        topscroll, topbuttons = outrows[i]
+        botscroll, botbuttons = outrows[i + 1]
+        for topbutton in topbuttons:
+            bui.widget(edit=topbutton, down_widget=botscroll)
+            if i == 0 and windowbackbutton is not None:
+                bui.widget(edit=topbutton, up_widget=windowbackbutton)
+        for botbutton in botbuttons:
+            bui.widget(edit=botbutton, up_widget=topscroll)
+        bui.widget(edit=topbuttons[0], left_widget=backbutton)
+        bui.widget(edit=botbuttons[0], left_widget=backbutton)
+    return subcontainer
 
 
 class CloudUIWindow(bui.MainWindow):
@@ -40,7 +408,7 @@ class CloudUIWindow(bui.MainWindow):
     class State:
         """Final state window can be set to show."""
 
-        ui: cui.UI | None
+        ui: clui.UI | None
 
     def __init__(
         self,
@@ -50,7 +418,6 @@ class CloudUIWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
     ):
-        # pylint: disable=too-many-statements
         ui = babase.app.ui_v1
 
         self._state: CloudUIWindow.State | None = None
@@ -110,9 +477,6 @@ class CloudUIWindow(bui.MainWindow):
             - self._scroll_height
         )
 
-        self._sub_width: float
-        self._sub_height: float
-
         # Nudge our vis area up a bit when we can see the full backing
         # (visual fudge factor).
         if uiscale is not babase.UIScale.SMALL:
@@ -138,10 +502,8 @@ class CloudUIWindow(bui.MainWindow):
         # Avoid complaints if nothing is selected under us.
         bui.widget(edit=self._root_widget, allow_preserve_selection=False)
 
-        self._scrollwidget: bui.Widget | None = None
         self._subcontainer: bui.Widget | None = None
 
-        assert self._scrollwidget is None
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
@@ -292,54 +654,78 @@ class CloudUIWindow(bui.MainWindow):
     def _on_response(self) -> None:
         self._set_state(
             self.State(
-                cui.UI(
+                clui.UI(
                     title='Testing',
                     rows=[
-                        cui.Row(
+                        clui.Row(
                             title='First Row',
-                            padding_left=0.0,
+                            padding_left=5.0,
                             buttons=[
-                                cui.Button(
+                                clui.Button(
                                     label='Test',
                                     size=(180, 200),
                                 ),
-                                cui.Button(
+                                clui.Button(
                                     label='Test2',
                                     size=(100, 100),
                                     color=(1, 0, 0),
                                     text_color=(1, 1, 1, 1),
+                                    padding_right=4,
+                                ),
+                                clui.Button(
+                                    label='TestS',
+                                    size=(180, 200),
+                                    scale=0.6,
+                                    padding_bottom=30,
                                 ),
                             ],
                         ),
-                        cui.Row(
+                        clui.Row(
                             title='Second Row',
                             subtitle='Second row subtitle.',
                             buttons=[
-                                cui.Button(size=(150, 100)),
-                                cui.Button(size=(150, 100)),
-                                cui.Button(size=(150, 100)),
-                                cui.Button(size=(150, 100)),
-                                cui.Button(size=(150, 100)),
-                                cui.Button(size=(150, 100)),
+                                clui.Button(
+                                    size=(150, 100),
+                                    decorations=[
+                                        clui.Text(
+                                            'DecorReallyLongTest',
+                                            max_width=150 * 0.8,
+                                            flatness=1.0,
+                                            shadow=0.0,
+                                        ),
+                                    ],
+                                ),
+                                clui.Button(size=(150, 100)),
+                                clui.Button(size=(150, 100)),
+                                clui.Button(size=(150, 100)),
+                                clui.Button(size=(150, 100)),
+                                clui.Button(size=(150, 100)),
                             ],
                         ),
-                        cui.Row(
+                        clui.Row(
                             buttons=[
-                                cui.Button(
+                                clui.Button(
                                     size=(100, 100),
                                     color=(0.8, 0.8, 0.8),
                                 ),
-                                cui.Button(
+                                clui.Button(
                                     size=(100, 100),
                                     color=(0.8, 0.8, 0.8),
                                 ),
                             ]
                         ),
-                        cui.Row(
+                        clui.Row(
                             title='Last Row',
+                            title_color=(0.5, 0.5, 1.0, 0.5),
+                            title_flatness=1.0,
+                            title_shadow=1.0,
+                            subtitle='Last Row Subtitle',
+                            subtitle_color=(1.0, 0.5, 1.0, 0.5),
+                            subtitle_flatness=1.0,
+                            subtitle_shadow=0.0,
                             center=True,
                             buttons=[
-                                cui.Button(
+                                clui.Button(
                                     size=(100, 100),
                                     color=(0.8, 0.8, 0.8),
                                 ),
@@ -356,9 +742,6 @@ class CloudUIWindow(bui.MainWindow):
         This state may be instantly restored if the window is recreated
         (depending on cache lifespan/etc.)
         """
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
 
         assert self._state is None
         self._state = state
@@ -421,241 +804,20 @@ class CloudUIWindow(bui.MainWindow):
             )
             return
 
-        # Ok; we've got some buttons. Build our full UI.
-        row_title_height = 30.0
-        row_subtitle_height = 30.0
-        top_buffer = 20.0
-        bot_buffer = 20.0
-        left_buffer = 20.0
-        right_buffer = 20.0
-        title_inset = 20.0
-        default_button_width = 200.0
-        default_button_height = 200.0
+        uiprep = _prep_ui(state.ui, uiscale, self._scroll_width)
 
-        if uiscale is babase.UIScale.SMALL:
-            top_bar_overlap = 70
-            bot_bar_overlap = 70
-            top_buffer += top_bar_overlap
-            bot_buffer += bot_bar_overlap
-        else:
-            top_bar_overlap = 0
-            bot_bar_overlap = 0
-
-        # This will no longer be empty so we can allow selecting it.
         bui.containerwidget(edit=self._scrollwidget, selectable=True)
 
-        # Should look into why this is necessary.
-        fudge = 15.0
-
-        self._sub_width = self._scroll_width + fudge
-        self._sub_height = top_buffer + bot_buffer
-
-        rowinfos: list[_RowInfo] = []
-
-        for row in state.ui.rows:
-            assert row.buttons
-            # Precalc various info for the row.
-            this_row_width = (
-                left_buffer
-                + right_buffer
-                + row.padding_left
-                + row.padding_right
-                + row.button_spacing * (len(row.buttons) - 1)
-            )
-            max_button_height = 0.0
-            for button in row.buttons:
-                if button.size is None:
-                    bwidth = default_button_width
-                    bheight = default_button_height
-                else:
-                    bwidth = button.size[0]
-                    bheight = button.size[1]
-                bscale = button.scale
-                bwidthfull = bwidth * bscale
-                bheightfull = bheight * bscale
-                max_button_height = max(max_button_height, bheightfull)
-                this_row_width += bwidthfull
-            this_row_height = (
-                row.padding_top + row.padding_bottom + max_button_height
-            )
-
-            rowinfos.append(
-                _RowInfo(width=this_row_width, height=this_row_height)
-            )
-            assert this_row_height > 0.0
-            assert this_row_width > 0.0
-
-            if row.title is not None:
-                self._sub_height += row_title_height
-            if row.subtitle is not None:
-                self._sub_height += row_subtitle_height
-            self._sub_height += this_row_height
-
-        self._subcontainer = bui.containerwidget(
-            parent=self._scrollwidget,
-            size=(self._sub_width, self._sub_height),
-            claims_left_right=True,
-            background=False,
-        )
-        # Final scroll-widget and buttons for all rows.
-        outrows: list[tuple[bui.Widget, list[bui.Widget]]] = []
-
-        y = self._sub_height - top_buffer
-        for row, rowinfo in zip(state.ui.rows, rowinfos, strict=True):
-            if row.title is not None:
-                bui.textwidget(
-                    parent=self._subcontainer,
-                    position=(
-                        left_buffer + title_inset,
-                        y - row_title_height * 0.5,
-                    ),
-                    size=(0, 0),
-                    text=row.title,
-                    color=(0.85, 0.95, 0.89),
-                    scale=1.0,
-                    maxwidth=(
-                        self._sub_width
-                        - left_buffer
-                        - right_buffer
-                        - title_inset
-                    ),
-                    h_align='left',
-                    v_align='center',
-                    literal=True,
-                )
-                y -= row_title_height
-            if row.subtitle is not None:
-                bui.textwidget(
-                    parent=self._subcontainer,
-                    position=(
-                        left_buffer + title_inset,
-                        y - row_subtitle_height * 0.5,
-                    ),
-                    size=(0, 0),
-                    text=row.subtitle,
-                    color=(0.6, 0.74, 0.6),
-                    scale=0.7,
-                    maxwidth=(
-                        self._sub_width
-                        - left_buffer
-                        - right_buffer
-                        - title_inset
-                    ),
-                    h_align='left',
-                    v_align='center',
-                    literal=True,
-                )
-                y -= row_subtitle_height
-
-            y -= rowinfo.height  # includes padding-top/bottom
-            hscroll = bui.hscrollwidget(
-                parent=self._subcontainer,
-                size=(self._sub_width, rowinfo.height),
-                position=(0.0, y),
-                claims_left_right=True,
-                highlight=False,
-                border_opacity=0.0,
-                center_small_content=row.center,
-                simple_culling_h=10.0,
-            )
-
-            outrow: tuple[bui.Widget, list[bui.Widget]] = (hscroll, [])
-
-            outrows.append(outrow)
-            hsub = bui.containerwidget(
-                parent=hscroll,
-                size=(
-                    # Ideally we could just always use row-width, but
-                    # currently that gets us right-aligned stuff when
-                    # center-small-content is off.
-                    (
-                        rowinfo.width
-                        if row.center
-                        else max(self._sub_width - fudge, rowinfo.width)
-                    ),
-                    rowinfo.height,
-                ),
-                background=False,
-            )
-            x = left_buffer + row.padding_left
-            max_button_height = (
-                rowinfo.height - row.padding_top - row.padding_bottom
-            )
-            for i, button in enumerate(row.buttons):
-                bscale = button.scale
-                if button.size is None:
-                    bwidth = default_button_width
-                    bheight = default_button_height
-                else:
-                    bwidth = button.size[0]
-                    bheight = button.size[1]
-                bwidthfull = bscale * bwidth
-                bheightfull = bscale * bheight
-                to_button_bottom = (max_button_height - bheightfull) * 0.5
-                btn = bui.buttonwidget(
-                    parent=hsub,
-                    size=(bwidth, bheight),
-                    scale=bscale,
-                    color=button.color,
-                    textcolor=button.text_color,
-                    text_flatness=(button.text_flatness),
-                    text_scale=button.text_scale,
-                    button_type='square',
-                    position=(x, row.padding_bottom + to_button_bottom),
-                    label='' if button.label is None else button.label,
-                    text_literal=True,
-                    autoselect=True,
-                )
-                bui.widget(
-                    edit=btn,
-                    show_buffer_left=150,
-                    show_buffer_right=150,
-                )
-                # Incorporate top buffer so we scroll all the way up
-                # when selecting the top row (and stay clear of
-                # toolbars).
-                show_buffer_top = top_buffer
-                show_buffer_bottom = bot_buffer
-
-                # Scroll so title/subtitle is in view when selecting.
-                # Note that we don't need to account for
-                # padding-top/bottom since the h-scroll that we're
-                # applying to encompasses both.
-                if row.title is not None:
-                    show_buffer_top += row_title_height
-                if row.subtitle is not None:
-                    show_buffer_top += row_subtitle_height
-
-                bui.widget(
-                    edit=hscroll,
-                    show_buffer_top=show_buffer_top,
-                    show_buffer_bottom=show_buffer_bottom,
-                )
-                outrow[1].append(btn)
-                x += bwidthfull + row.button_spacing
-                # Make sure row is scrolled so first item is visible.
-                if i == 0:
-                    bui.containerwidget(edit=hsub, visible_child=btn)
-
-        # Now wire up directional nav between rows/buttons.
-        for i in range(0, len(outrows) - 1):
-            topscroll, topbuttons = outrows[i]
-            botscroll, botbuttons = outrows[i + 1]
-            for topbutton in topbuttons:
-                bui.widget(edit=topbutton, down_widget=botscroll)
-                if i == 0 and self._back_button is not None:
-                    bui.widget(edit=topbutton, up_widget=self._back_button)
-            # if i == 0 and self._back_button is not None:
-            #     bui.widget(edit=self._back_button, down_widget=topscroll)
-            for botbutton in botbuttons:
-                bui.widget(edit=botbutton, up_widget=topscroll)
-            backbutton = (
+        self._subcontainer = _instantiate_ui(
+            uiprep,
+            self._scrollwidget,
+            backbutton=(
                 bui.get_special_widget('back_button')
                 if self._back_button is None
                 else self._back_button
-            )
-            bui.widget(edit=topbuttons[0], left_widget=backbutton)
-            bui.widget(edit=botbuttons[0], left_widget=backbutton)
+            ),
+            windowbackbutton=self._back_button,
+        )
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

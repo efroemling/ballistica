@@ -34,7 +34,6 @@ class Decoration(IOMultiType[DecorationTypeID]):
     @override
     @classmethod
     def get_type(cls, type_id: DecorationTypeID) -> type[Decoration]:
-        """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
 
         t = DecorationTypeID
@@ -52,6 +51,11 @@ class Decoration(IOMultiType[DecorationTypeID]):
         # If we encounter some future type we don't know anything about,
         # drop in a placeholder.
         return UnknownDecoration()
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return '_t'
 
 
 @ioprepped
@@ -75,7 +79,13 @@ class UnknownDecoration(Decoration):
 class Text(Decoration):
     """Text decoration."""
 
+    #: Note that cloud-ui accepts only raw :class:`str` values for text;
+    #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
+    #: support.
     text: Annotated[str, IOAttrs('t')]
+    max_width: Annotated[float, IOAttrs('w')]
+    flatness: Annotated[float | None, IOAttrs('f', store_default=False)] = None
+    shadow: Annotated[float | None, IOAttrs('s', store_default=False)] = None
 
     @override
     @classmethod
@@ -88,6 +98,9 @@ class Text(Decoration):
 class Button:
     """A button in our cloud ui."""
 
+    #: Note that cloud-ui accepts only raw :class:`str` values for text;
+    #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
+    #: support.
     label: Annotated[str | None, IOAttrs('l', store_default=False)] = None
     size: Annotated[
         tuple[float, float] | None, IOAttrs('sz', store_default=False)
@@ -105,10 +118,14 @@ class Button:
     text_scale: Annotated[float | None, IOAttrs('ts', store_default=False)] = (
         None
     )
+    scale: Annotated[float, IOAttrs('sc', store_default=False)] = 1.0
+    padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0
+    padding_top: Annotated[float, IOAttrs('pt', store_default=False)] = 0.0
+    padding_right: Annotated[float, IOAttrs('pr', store_default=False)] = 0.0
+    padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 0.0
     decorations: Annotated[
         list[Decoration], IOAttrs('c', store_default=False)
     ] = field(default_factory=list)
-    scale: Annotated[float, IOAttrs('sc', store_default=False)] = 1.0
 
 
 @ioprepped
@@ -117,20 +134,43 @@ class Row:
     """A row in our cloud ui."""
 
     buttons: Annotated[list[Button], IOAttrs('b')]
+    #: Note that cloud-ui accepts only raw :class:`str` values for text;
+    #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
+    #: support.
     title: Annotated[str | None, IOAttrs('t', store_default=False)] = None
+    title_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('tc', store_default=False),
+    ] = None
+    title_flatness: Annotated[
+        float | None, IOAttrs('tf', store_default=False)
+    ] = None
+    title_shadow: Annotated[
+        float | None, IOAttrs('ts', store_default=False)
+    ] = None
     subtitle: Annotated[str | None, IOAttrs('s', store_default=False)] = None
-    button_spacing: Annotated[float, IOAttrs('bs')] = 5.0
-    padding_left: Annotated[float, IOAttrs('pl')] = 10.0
-    padding_right: Annotated[float, IOAttrs('pr')] = 10.0
-    padding_top: Annotated[float, IOAttrs('pt')] = 10.0
-    padding_bottom: Annotated[float, IOAttrs('pb')] = 10.0
+    subtitle_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('sc', store_default=False),
+    ] = None
+    subtitle_flatness: Annotated[
+        float | None, IOAttrs('sf', store_default=False)
+    ] = None
+    subtitle_shadow: Annotated[
+        float | None, IOAttrs('ss', store_default=False)
+    ] = None
+    button_spacing: Annotated[float, IOAttrs('bs', store_default=False)] = 5.0
+    padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 10.0
+    padding_right: Annotated[float, IOAttrs('pr', store_default=False)] = 10.0
+    padding_top: Annotated[float, IOAttrs('pt', store_default=False)] = 10.0
+    padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 10.0
     center: Annotated[bool, IOAttrs('c', store_default=False)] = False
 
 
 @ioprepped
 @dataclass
 class UI(CloudUI):
-    """Version 1 of our cloud-defined UI type."""
+    """Cloud-UI version 1."""
 
     title: Annotated[str, IOAttrs('t')]
     rows: Annotated[list[Row], IOAttrs('r')]

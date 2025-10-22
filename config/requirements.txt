@@ -7,7 +7,7 @@ libcst==1.8.5
 mypy==1.18.2
 pbxproj==4.3.2
 pur==7.3.3
-pylint==4.0.1
+pylint==4.0.2
 pylsp-mypy==0.7.0
 pytest==8.4.2
 python-daemon==3.1.2
