@@ -1,4 +1,4 @@
-### 1.7.53 (build 22591, api 9, 2025-10-22)
+### 1.7.53 (build 22592, api 9, 2025-10-23)
 - Fixes an issue where deleting player profiles would error.
 - App audio output should now update when the default sound device changes
   (plugging in headphones, etc). This applies to all platforms using recent
