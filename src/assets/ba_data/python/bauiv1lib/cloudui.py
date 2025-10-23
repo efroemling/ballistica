@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """UIs provided by the cloud (similar-ish to html in concept)."""
 
 from __future__ import annotations
@@ -9,10 +10,10 @@ from functools import partial
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, override, assert_never
 
-import babase
 import bacommon.cloudui.v1 as clui
-from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
+
+from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -22,22 +23,29 @@ def show_cloud_ui_window() -> None:
     """Bust out a cloud-ui window."""
 
     # Pop up an auxiliary window wherever we are in the nav stack.
-    babase.app.ui_v1.auxiliary_window_activate(
+    bui.app.ui_v1.auxiliary_window_activate(
         win_type=CloudUIWindow,
         win_create_call=lambda: CloudUIWindow(state=None),
     )
 
 
-# Prep structures for our UI - we do all layout math and bake out
-# ready-to-run ui calls in a background thread so there's as little work
-# as possible to do in the ui thread.
+# Prep-structures for our UI - we do all layout math and bake out
+# partial ui calls in a background thread so there's as little work to
+# do in the ui thread as possible.
+
+
+@dataclass
+class _DecorationPrep:
+    call: Callable[..., bui.Widget]
+    textures: dict[str, str]
+    meshes: dict[str, str]
 
 
 @dataclass
 class _ButtonPrep:
     buttoncall: Callable[..., bui.Widget]
     buttoneditcall: Callable | None
-    decorationcalls: list[Callable[..., bui.Widget]]
+    decorations: list[_DecorationPrep]
 
 
 @dataclass
@@ -59,9 +67,7 @@ class _UIPrep:
     height: float
 
 
-def _prep_ui(
-    ui: clui.UI, uiscale: babase.UIScale, scroll_width: float
-) -> _UIPrep:
+def _prep_ui(ui: clui.UI, uiscale: bui.UIScale, scroll_width: float) -> _UIPrep:
     """Prep a ui."""
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
@@ -78,7 +84,7 @@ def _prep_ui(
     default_button_width = 200.0
     default_button_height = 200.0
 
-    if uiscale is babase.UIScale.SMALL:
+    if uiscale is bui.UIScale.SMALL:
         top_bar_overlap = 70
         bot_bar_overlap = 70
         top_buffer += top_bar_overlap
@@ -158,7 +164,9 @@ def _prep_ui(
         background=False,
     )
     y = uiprep.height - top_buffer
-    for row, rowprep in zip(ui.rows, uiprep.rows, strict=True):
+
+    for i, (row, rowprep) in enumerate(zip(ui.rows, uiprep.rows, strict=True)):
+        tdelaybase = 0.12 * (i + 1)
         if row.title is not None:
             rowprep.titlecalls.append(
                 partial(
@@ -183,6 +191,7 @@ def _prep_ui(
                     h_align='left',
                     v_align='center',
                     literal=True,
+                    transition_delay=tdelaybase + 0.1,
                 )
             )
             y -= row_title_height
@@ -210,6 +219,7 @@ def _prep_ui(
                     h_align='left',
                     v_align='center',
                     literal=True,
+                    transition_delay=tdelaybase + 0.2,
                 )
             )
             y -= row_subtitle_height
@@ -246,7 +256,13 @@ def _prep_ui(
         button_row_height = (
             rowprep.height - row.padding_top - row.padding_bottom
         )
-        for button in row.buttons:
+        bcount = len(row.buttons)
+        for j, button in enumerate(row.buttons):
+            # Calc amt 1 -> 0 across the row.
+            tdelayamt = 1.0 - (j / max(1, bcount - 1))
+            # Rightmost buttons slide in first.
+            tdelay = tdelaybase + tdelayamt * (0.03 * bcount)
+
             x += button.padding_left
             bscale = button.scale
             if button.size is None:
@@ -283,35 +299,43 @@ def _prep_ui(
                     label='' if button.label is None else button.label,
                     text_literal=True,
                     autoselect=True,
+                    transition_delay=tdelay,
                 ),
                 buttoneditcall=partial(
                     bui.widget,
                     show_buffer_left=150,
                     show_buffer_right=150,
                 ),
-                decorationcalls=[],
+                decorations=[],
             )
             for decoration in button.decorations:
                 dectypeid = decoration.get_type_id()
                 if dectypeid is clui.DecorationTypeID.UNKNOWN:
-                    pass
+                    if bui.do_once():
+                        bui.uilog.exception(
+                            'CloudUI receieved unknown decoration;'
+                            ' this is likely a server error.'
+                        )
                 elif dectypeid is clui.DecorationTypeID.TEXT:
                     assert isinstance(decoration, clui.Text)
-                    buttonprep.decorationcalls.append(
-                        partial(
-                            bui.textwidget,
-                            position=(center_x, center_y),
-                            scale=bscale,
-                            maxwidth=bscale * decoration.max_width,
-                            flatness=decoration.flatness,
-                            shadow=decoration.shadow,
-                            h_align='center',
-                            v_align='center',
-                            size=(0, 0),
-                            color=(0.5, 0.5, 0.5, 1.0),
-                            text=decoration.text,
-                        )
+                    _prep_text(
+                        decoration,
+                        (center_x, center_y),
+                        bscale,
+                        tdelay,
+                        buttonprep.decorations,
                     )
+
+                elif dectypeid is clui.DecorationTypeID.IMAGE:
+                    assert isinstance(decoration, clui.Image)
+                    _prep_image(
+                        decoration,
+                        (center_x, center_y),
+                        bscale,
+                        tdelay,
+                        buttonprep.decorations,
+                    )
+
                 else:
                     assert_never(dectypeid)
 
@@ -345,7 +369,157 @@ def _prep_ui(
     return uiprep
 
 
-def _instantiate_ui(
+def _prep_text(
+    text: clui.Text,
+    bcenter: tuple[float, float],
+    bscale: float,
+    tdelay: float,
+    decorations: list[_DecorationPrep],
+) -> None:
+    # pylint: disable=too-many-branches
+    xoffs = bcenter[0] + text.position[0] * bscale
+    yoffs = bcenter[1] + text.position[1] * bscale
+
+    if text.h_align is clui.HAlign.LEFT:
+        h_align = 'left'
+    elif text.h_align is clui.HAlign.CENTER:
+        h_align = 'center'
+    elif text.h_align is clui.HAlign.RIGHT:
+        h_align = 'right'
+    else:
+        assert_never(text.h_align)
+
+    if text.v_align is clui.VAlign.TOP:
+        v_align = 'top'
+    elif text.v_align is clui.VAlign.CENTER:
+        v_align = 'center'
+    elif text.v_align is clui.VAlign.BOTTOM:
+        v_align = 'bottom'
+    else:
+        assert_never(text.v_align)
+
+    decorations.append(
+        _DecorationPrep(
+            call=partial(
+                bui.textwidget,
+                position=(xoffs, yoffs),
+                scale=text.scale * bscale,
+                maxwidth=text.max_width * bscale,
+                max_height=text.max_height * bscale,
+                flatness=text.flatness,
+                shadow=text.shadow,
+                h_align=h_align,
+                v_align=v_align,
+                size=(0, 0),
+                color=(0.5, 0.5, 0.5, 1.0),
+                text=text.text,
+                transition_delay=tdelay,
+            ),
+            textures={},
+            meshes={},
+        )
+    )
+    # Draw square around max width/height in debug mode.
+    if text.debug:
+        mwfull = bscale * text.max_width
+        mhfull = bscale * text.max_height
+
+        if text.h_align is clui.HAlign.LEFT:
+            mwxoffs = xoffs
+        elif text.h_align is clui.HAlign.CENTER:
+            mwxoffs = xoffs - mwfull * 0.5
+        elif text.h_align is clui.HAlign.RIGHT:
+            mwxoffs = xoffs - mwfull
+        else:
+            assert_never(text.h_align)
+
+        if text.v_align is clui.VAlign.TOP:
+            mwyoffs = yoffs - mhfull
+        elif text.v_align is clui.VAlign.CENTER:
+            mwyoffs = yoffs - mhfull * 0.5
+        elif text.v_align is clui.VAlign.BOTTOM:
+            mwyoffs = yoffs
+        else:
+            assert_never(text.v_align)
+
+        decorations.append(
+            _DecorationPrep(
+                call=partial(
+                    bui.imagewidget,
+                    position=(mwxoffs, mwyoffs),
+                    size=(mwfull, mhfull),
+                    color=(1, 0, 0),
+                    opacity=0.25,
+                    transition_delay=tdelay,
+                ),
+                textures={'texture': 'white'},
+                meshes={},
+            )
+        )
+
+
+def _prep_image(
+    image: clui.Image,
+    bcenter: tuple[float, float],
+    bscale: float,
+    tdelay: float,
+    decorations: list[_DecorationPrep],
+) -> None:
+    xoffs = bcenter[0] + image.position[0] * bscale
+    yoffs = bcenter[1] + image.position[1] * bscale
+
+    widthfull = bscale * image.size[0]
+    heightfull = bscale * image.size[1]
+
+    if image.h_align is clui.HAlign.LEFT:
+        xoffsfin = xoffs
+    elif image.h_align is clui.HAlign.CENTER:
+        xoffsfin = xoffs - widthfull * 0.5
+    elif image.h_align is clui.HAlign.RIGHT:
+        xoffsfin = xoffs - widthfull
+    else:
+        assert_never(image.h_align)
+
+    if image.v_align is clui.VAlign.TOP:
+        yoffsfin = yoffs - heightfull
+    elif image.v_align is clui.VAlign.CENTER:
+        yoffsfin = yoffs - heightfull * 0.5
+    elif image.v_align is clui.VAlign.BOTTOM:
+        yoffsfin = yoffs
+    else:
+        assert_never(image.v_align)
+
+    textures: dict[str, str] = {'texture': image.texture}
+    if image.tint_texture is not None:
+        textures['tint_texture'] = image.tint_texture
+    if image.mask_texture is not None:
+        textures['mask_texture'] = image.mask_texture
+
+    meshes: dict[str, str] = {}
+    if image.mesh_opaque is not None:
+        meshes['mesh_opaque'] = image.mesh_opaque
+    if image.mesh_transparent is not None:
+        meshes['mesh_transparent'] = image.mesh_transparent
+
+    decorations.append(
+        _DecorationPrep(
+            call=partial(
+                bui.imagewidget,
+                position=(xoffsfin, yoffsfin),
+                size=(widthfull, heightfull),
+                color=image.color,
+                opacity=image.opacity,
+                tint_color=image.tint_color,
+                tint2_color=image.tint2_color,
+                transition_delay=tdelay,
+            ),
+            textures=textures,
+            meshes=meshes,
+        )
+    )
+
+
+def _instantiate_prepped_ui(
     uiprep: _UIPrep,
     scrollwidget: bui.Widget,
     backbutton: bui.Widget,
@@ -371,8 +545,13 @@ def _instantiate_ui(
             btn = buttonprep.buttoncall(parent=hsub)
             assert buttonprep.buttoneditcall is not None
             buttonprep.buttoneditcall(edit=btn)
-            for deccall in buttonprep.decorationcalls:
-                deccall(parent=hsub, draw_controller=btn)
+            for decoration in buttonprep.decorations:
+                kwds: dict = {'draw_controller': btn}
+                for texarg, texname in decoration.textures.items():
+                    kwds[texarg] = bui.gettexture(texname)
+                for mesharg, meshname in decoration.meshes.items():
+                    kwds[mesharg] = bui.getmesh(meshname)
+                decoration.call(parent=hsub, **kwds)
 
             # Make sure row is scrolled so leftmost button is
             # visible (though kinda seems like this should happen by
@@ -418,7 +597,7 @@ class CloudUIWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
     ):
-        ui = babase.app.ui_v1
+        ui = bui.app.ui_v1
 
         self._state: CloudUIWindow.State | None = None
 
@@ -436,24 +615,24 @@ class CloudUIWindow(bui.MainWindow):
         uiscale = ui.uiscale
         self._width = (
             1400
-            if uiscale is babase.UIScale.SMALL
-            else 800 if uiscale is babase.UIScale.MEDIUM else 900
+            if uiscale is bui.UIScale.SMALL
+            else 800 if uiscale is bui.UIScale.MEDIUM else 900
         )
         self._height = (
             1200
-            if uiscale is babase.UIScale.SMALL
-            else 520 if uiscale is babase.UIScale.MEDIUM else 600
+            if uiscale is bui.UIScale.SMALL
+            else 520 if uiscale is bui.UIScale.MEDIUM else 600
         )
         self._root_scale = (
             1.5
-            if uiscale is babase.UIScale.SMALL
-            else 1.25 if uiscale is babase.UIScale.MEDIUM else 1.0
+            if uiscale is bui.UIScale.SMALL
+            else 1.25 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
 
         # Do some fancy math to calculate our visible area; this will be
         # limited by the screen size in small mode and our backing size
         # otherwise.
-        screensize = babase.get_virtual_screen_size()
+        screensize = bui.get_virtual_screen_size()
         self._vis_width = min(
             self._width - 100, screensize[0] / self._root_scale
         )
@@ -469,17 +648,17 @@ class CloudUIWindow(bui.MainWindow):
         )
         # Go with full-screen scrollable aread in small ui.
         self._scroll_height = self._vis_height - (
-            -1 if uiscale is babase.UIScale.SMALL else 43
+            -1 if uiscale is bui.UIScale.SMALL else 43
         )
         self._scroll_bottom = (
             self._vis_top
-            - (-1 if uiscale is babase.UIScale.SMALL else 32)
+            - (-1 if uiscale is bui.UIScale.SMALL else 32)
             - self._scroll_height
         )
 
         # Nudge our vis area up a bit when we can see the full backing
         # (visual fudge factor).
-        if uiscale is not babase.UIScale.SMALL:
+        if uiscale is not bui.UIScale.SMALL:
             self._vis_top += 12.0
 
         super().__init__(
@@ -497,7 +676,7 @@ class CloudUIWindow(bui.MainWindow):
             # in other cases we assume our window remains fully visible
             # always (flip to windowed mode and resize the app window to
             # confirm this).
-            refresh_on_screen_size_changes=uiscale is babase.UIScale.SMALL,
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
         # Avoid complaints if nothing is selected under us.
         bui.widget(edit=self._root_widget, allow_preserve_selection=False)
@@ -519,7 +698,7 @@ class CloudUIWindow(bui.MainWindow):
 
         # With full-screen scrolling, fade content as it approaches
         # toolbars.
-        if uiscale is babase.UIScale.SMALL and bool(True):
+        if uiscale is bui.UIScale.SMALL and bool(True):
             scroll_fade_top(
                 self._root_widget,
                 self._width * 0.5 - self._scroll_width * 0.5,
@@ -542,9 +721,9 @@ class CloudUIWindow(bui.MainWindow):
             size=(0, 0),
             text='',
             color=ui.title_color,
-            scale=0.9 if uiscale is babase.UIScale.SMALL else 1.0,
+            scale=0.9 if uiscale is bui.UIScale.SMALL else 1.0,
             # Make sure we avoid overlapping meters in small mode.
-            maxwidth=(130 if uiscale is babase.UIScale.SMALL else 200),
+            maxwidth=(130 if uiscale is bui.UIScale.SMALL else 200),
             h_align='center',
             v_align='center',
         )
@@ -553,7 +732,7 @@ class CloudUIWindow(bui.MainWindow):
 
         # For small UI-scale we use the system back/close button;
         # otherwise we make our own.
-        if uiscale is babase.UIScale.SMALL:
+        if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
@@ -569,10 +748,10 @@ class CloudUIWindow(bui.MainWindow):
                 button_type=None if auxiliary_style else 'backSmall',
                 on_activate_call=self.main_window_back,
                 autoselect=True,
-                label=babase.charstr(
-                    babase.SpecialChar.CLOSE
+                label=bui.charstr(
+                    bui.SpecialChar.CLOSE
                     if auxiliary_style
-                    else babase.SpecialChar.BACK
+                    else bui.SpecialChar.BACK
                 ),
             )
             bui.containerwidget(
@@ -642,99 +821,235 @@ class CloudUIWindow(bui.MainWindow):
             self._set_state(state)
         else:
             if random.random() < 0.0:
-                babase.apptimer(
-                    1.0, babase.WeakCallStrict(self._on_error_response)
-                )
+                bui.apptimer(0.1, bui.WeakCallStrict(self._on_error_response))
             else:
-                babase.apptimer(1.0, babase.WeakCallStrict(self._on_response))
+                bui.apptimer(0.1, bui.WeakCallStrict(self._on_response))
 
     def _on_error_response(self) -> None:
         self._set_state(self.State(None))
 
     def _on_response(self) -> None:
-        self._set_state(
-            self.State(
-                clui.UI(
-                    title='Testing',
-                    rows=[
-                        clui.Row(
-                            title='First Row',
-                            padding_left=5.0,
-                            buttons=[
-                                clui.Button(
-                                    label='Test',
-                                    size=(180, 200),
+        ui = clui.UI(
+            title='Testing',
+            rows=[
+                clui.Row(
+                    title='First Row',
+                    padding_left=5.0,
+                    buttons=[
+                        clui.Button(
+                            label='Test',
+                            size=(180, 200),
+                            decorations=[
+                                clui.Image(
+                                    'powerupPunch',
+                                    position=(-70, 0),
+                                    size=(40, 40),
+                                    h_align=clui.HAlign.LEFT,
                                 ),
-                                clui.Button(
-                                    label='Test2',
-                                    size=(100, 100),
-                                    color=(1, 0, 0),
-                                    text_color=(1, 1, 1, 1),
-                                    padding_right=4,
+                                clui.Image(
+                                    'powerupSpeed',
+                                    position=(0, 75),
+                                    size=(35, 35),
+                                    v_align=clui.VAlign.TOP,
                                 ),
-                                clui.Button(
-                                    label='TestS',
-                                    size=(180, 200),
-                                    scale=0.6,
-                                    padding_bottom=30,
+                                clui.Text(
+                                    'TL',
+                                    position=(-70, 75),
+                                    max_width=50,
+                                    max_height=50,
+                                    h_align=clui.HAlign.LEFT,
+                                    v_align=clui.VAlign.TOP,
+                                    debug=True,
+                                ),
+                                clui.Text(
+                                    'TR',
+                                    position=(70, 75),
+                                    max_width=50,
+                                    max_height=50,
+                                    h_align=clui.HAlign.RIGHT,
+                                    v_align=clui.VAlign.TOP,
+                                    debug=True,
+                                ),
+                                clui.Text(
+                                    'BL',
+                                    position=(-70, -75),
+                                    max_width=50,
+                                    max_height=50,
+                                    h_align=clui.HAlign.LEFT,
+                                    v_align=clui.VAlign.BOTTOM,
+                                    debug=True,
+                                ),
+                                clui.Text(
+                                    'BR',
+                                    position=(70, -75),
+                                    max_width=50,
+                                    max_height=50,
+                                    h_align=clui.HAlign.RIGHT,
+                                    v_align=clui.VAlign.BOTTOM,
+                                    debug=True,
                                 ),
                             ],
                         ),
-                        clui.Row(
-                            title='Second Row',
-                            subtitle='Second row subtitle.',
-                            buttons=[
-                                clui.Button(
-                                    size=(150, 100),
-                                    decorations=[
-                                        clui.Text(
-                                            'DecorReallyLongTest',
-                                            max_width=150 * 0.8,
-                                            flatness=1.0,
-                                            shadow=0.0,
-                                        ),
-                                    ],
-                                ),
-                                clui.Button(size=(150, 100)),
-                                clui.Button(size=(150, 100)),
-                                clui.Button(size=(150, 100)),
-                                clui.Button(size=(150, 100)),
-                                clui.Button(size=(150, 100)),
-                            ],
+                        clui.Button(
+                            label='Test2',
+                            size=(100, 100),
+                            color=(1, 0, 0),
+                            text_color=(1, 1, 1, 1),
+                            padding_right=4,
                         ),
-                        clui.Row(
-                            buttons=[
-                                clui.Button(
-                                    size=(100, 100),
-                                    color=(0.8, 0.8, 0.8),
+                        # Should look like the first button but
+                        # scaled down.
+                        clui.Button(
+                            label='Test',
+                            size=(180, 200),
+                            scale=0.6,
+                            padding_bottom=30,  # Should nudge us up.
+                            decorations=[
+                                clui.Image(
+                                    'powerupPunch',
+                                    position=(-70, 0),
+                                    size=(40, 40),
+                                    h_align=clui.HAlign.LEFT,
                                 ),
-                                clui.Button(
-                                    size=(100, 100),
-                                    color=(0.8, 0.8, 0.8),
+                                clui.Image(
+                                    'powerupSpeed',
+                                    position=(0, 75),
+                                    size=(35, 35),
+                                    v_align=clui.VAlign.TOP,
                                 ),
-                            ]
-                        ),
-                        clui.Row(
-                            title='Last Row',
-                            title_color=(0.5, 0.5, 1.0, 0.5),
-                            title_flatness=1.0,
-                            title_shadow=1.0,
-                            subtitle='Last Row Subtitle',
-                            subtitle_color=(1.0, 0.5, 1.0, 0.5),
-                            subtitle_flatness=1.0,
-                            subtitle_shadow=0.0,
-                            center=True,
-                            buttons=[
-                                clui.Button(
-                                    size=(100, 100),
-                                    color=(0.8, 0.8, 0.8),
+                                clui.Text(
+                                    'TL',
+                                    position=(-70, 75),
+                                    max_width=50,
+                                    max_height=50,
+                                    h_align=clui.HAlign.LEFT,
+                                    v_align=clui.VAlign.TOP,
+                                    debug=True,
+                                ),
+                                clui.Text(
+                                    'TR',
+                                    position=(70, 75),
+                                    max_width=50,
+                                    max_height=50,
+                                    h_align=clui.HAlign.RIGHT,
+                                    v_align=clui.VAlign.TOP,
+                                    debug=True,
+                                ),
+                                clui.Text(
+                                    'BL',
+                                    position=(-70, -75),
+                                    max_width=50,
+                                    max_height=50,
+                                    h_align=clui.HAlign.LEFT,
+                                    v_align=clui.VAlign.BOTTOM,
+                                    debug=True,
+                                ),
+                                clui.Text(
+                                    'BR',
+                                    position=(70, -75),
+                                    max_width=50,
+                                    max_height=50,
+                                    h_align=clui.HAlign.RIGHT,
+                                    v_align=clui.VAlign.BOTTOM,
+                                    debug=True,
                                 ),
                             ],
                         ),
                     ],
-                )
-            )
+                ),
+                clui.Row(
+                    title='Second Row',
+                    subtitle='Second row subtitle.',
+                    buttons=[
+                        clui.Button(
+                            size=(150, 100),
+                            decorations=[
+                                clui.Text(
+                                    'MaxWidthTest',
+                                    position=(0, 25),
+                                    max_width=150 * 0.8,
+                                    flatness=1.0,
+                                    shadow=0.0,
+                                    debug=True,
+                                ),
+                                clui.Text(
+                                    'MaxHeightTest\nSecondLine',
+                                    position=(0, -20),
+                                    max_width=150 * 0.8,
+                                    max_height=40,
+                                    flatness=1.0,
+                                    shadow=0.0,
+                                    debug=True,
+                                ),
+                            ],
+                        ),
+                        clui.Button(
+                            size=(150, 100),
+                            decorations=[
+                                clui.Image(
+                                    'zoeIcon',
+                                    position=(0, 0),
+                                    size=(70, 70),
+                                    tint_texture='zoeIconColorMask',
+                                    tint_color=(1, 0, 0),
+                                    tint2_color=(0, 1, 0),
+                                    mask_texture='characterIconMask',
+                                ),
+                            ],
+                        ),
+                        clui.Button(
+                            size=(150, 100),
+                            decorations=[
+                                clui.Image(
+                                    'bridgitPreview',
+                                    position=(0, 10),
+                                    size=(120, 60),
+                                    mask_texture='mapPreviewMask',
+                                    mesh_opaque='level_select_button_opaque',
+                                    mesh_transparent=(
+                                        'level_select_button_transparent'
+                                    ),
+                                ),
+                            ],
+                        ),
+                        clui.Button(size=(150, 100)),
+                        clui.Button(size=(150, 100)),
+                        clui.Button(size=(150, 100)),
+                    ],
+                ),
+                clui.Row(
+                    buttons=[
+                        clui.Button(
+                            size=(100, 100),
+                            color=(0.8, 0.8, 0.8),
+                        ),
+                        clui.Button(
+                            size=(100, 100),
+                            color=(0.8, 0.8, 0.8),
+                        ),
+                    ]
+                ),
+                clui.Row(
+                    title='Last Row (Faded Title)',
+                    title_color=(0.6, 0.6, 1.0, 0.3),
+                    title_flatness=1.0,
+                    title_shadow=1.0,
+                    subtitle='Testing Centered Content',
+                    subtitle_color=(1.0, 0.5, 1.0, 0.5),
+                    subtitle_flatness=1.0,
+                    subtitle_shadow=0.0,
+                    center=True,
+                    buttons=[
+                        clui.Button(
+                            'Hello There!',
+                            size=(200, 120),
+                            color=(0.7, 0.7, 0.9),
+                        ),
+                    ],
+                ),
+            ],
         )
+        self._set_state(self.State(ui))
 
     def _set_state(self, state: State) -> None:
         """Set a final state (error or page contents).
@@ -746,7 +1061,7 @@ class CloudUIWindow(bui.MainWindow):
         assert self._state is None
         self._state = state
 
-        ui = babase.app.ui_v1
+        ui = bui.app.ui_v1
         uiscale = ui.uiscale
 
         if self._spinner:
@@ -757,7 +1072,7 @@ class CloudUIWindow(bui.MainWindow):
             bui.textwidget(
                 edit=self._title,
                 literal=False,  # Allow Lstr.
-                text=babase.Lstr(resource='errorText'),
+                text=bui.Lstr(resource='errorText'),
             )
             bui.textwidget(
                 parent=self._root_widget,
@@ -767,7 +1082,7 @@ class CloudUIWindow(bui.MainWindow):
                 ),
                 size=(0, 0),
                 scale=0.6,
-                text=babase.Lstr(resource='store.loadErrorText'),
+                text=bui.Lstr(resource='store.loadErrorText'),
                 h_align='center',
                 v_align='center',
             )
@@ -783,7 +1098,7 @@ class CloudUIWindow(bui.MainWindow):
         # Make sure there's at least one row and that all rows contain
         # at least one button. Otherwise show a 'nothing here' message.
         if not state.ui.rows or not all(row.buttons for row in state.ui.rows):
-            babase.uilog.exception(
+            bui.uilog.exception(
                 'Got invalid cloud-ui state;'
                 ' must contain at least one row'
                 ' and all rows must contain buttons.'
@@ -796,7 +1111,7 @@ class CloudUIWindow(bui.MainWindow):
                 ),
                 size=(0, 0),
                 scale=0.6,
-                text=babase.Lstr(
+                text=bui.Lstr(
                     translate=('serverResponses', 'There is nothing here.')
                 ),
                 h_align='center',
@@ -808,7 +1123,7 @@ class CloudUIWindow(bui.MainWindow):
 
         bui.containerwidget(edit=self._scrollwidget, selectable=True)
 
-        self._subcontainer = _instantiate_ui(
+        self._subcontainer = _instantiate_prepped_ui(
             uiprep,
             self._scrollwidget,
             backbutton=(

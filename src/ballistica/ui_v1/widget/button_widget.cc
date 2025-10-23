@@ -232,10 +232,17 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       // We currently only support non-1.0 opacity values when using
       // custom textures and no custom opaque mesh.
-      assert(opacity_ == 1.0f || (texture_.exists() && !mesh_opaque_.exists()));
-
+      float opacity;
+      if (opacity_ == 1.0f || (texture_.exists() && !mesh_opaque_.exists())) {
+        opacity = opacity_;
+      } else {
+        BA_LOG_ONCE(LogName::kBaUI, LogLevel::kWarning,
+                    "Button opacity < 1.0 only works with custom textures and "
+                    "no opaque meshes.");
+        opacity = 1.0f;
+      }
       c.SetColor(mult * color_red_, mult * color_green_, mult * color_blue_,
-                 opacity_);
+                 opacity);
 
       float l_border, r_border, b_border, t_border;
 

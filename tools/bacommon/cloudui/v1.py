@@ -13,11 +13,28 @@ from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 from bacommon.cloudui._cloudui import CloudUI, CloudUITypeID
 
 
+class HAlign(Enum):
+    """Horizontal alignment."""
+
+    LEFT = 'l'
+    CENTER = 'c'
+    RIGHT = 'r'
+
+
+class VAlign(Enum):
+    """Vertical alignment."""
+
+    TOP = 't'
+    CENTER = 'c'
+    BOTTOM = 'b'
+
+
 class DecorationTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     UNKNOWN = 'u'
     TEXT = 't'
+    IMAGE = 'i'
 
 
 class Decoration(IOMultiType[DecorationTypeID]):
@@ -41,6 +58,8 @@ class Decoration(IOMultiType[DecorationTypeID]):
             return UnknownDecoration
         if type_id is t.TEXT:
             return Text
+        if type_id is t.IMAGE:
+            return Image
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -83,14 +102,69 @@ class Text(Decoration):
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
     text: Annotated[str, IOAttrs('t')]
+    position: Annotated[tuple[float, float], IOAttrs('p')]
     max_width: Annotated[float, IOAttrs('w')]
+    max_height: Annotated[float, IOAttrs('h', store_default=False)] = 32.0
+    scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
+    h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
+        HAlign.CENTER
+    )
+    v_align: Annotated[VAlign, IOAttrs('va', store_default=False)] = (
+        VAlign.CENTER
+    )
     flatness: Annotated[float | None, IOAttrs('f', store_default=False)] = None
-    shadow: Annotated[float | None, IOAttrs('s', store_default=False)] = None
+    shadow: Annotated[float | None, IOAttrs('sh', store_default=False)] = None
+
+    #: Show max-width/height bounds; useful during development.
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
 
     @override
     @classmethod
     def get_type_id(cls) -> DecorationTypeID:
         return DecorationTypeID.TEXT
+
+
+@ioprepped
+@dataclass
+class Image(Decoration):
+    """Image decoration."""
+
+    texture: Annotated[str, IOAttrs('t')]
+    position: Annotated[tuple[float, float], IOAttrs('p')]
+    size: Annotated[tuple[float, float], IOAttrs('s')]
+    color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('c', store_default=False)
+    ] = None
+    opacity: Annotated[float | None, IOAttrs('o', store_default=False)] = None
+    h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
+        HAlign.CENTER
+    )
+    v_align: Annotated[VAlign, IOAttrs('va', store_default=False)] = (
+        VAlign.CENTER
+    )
+    tint_texture: Annotated[str | None, IOAttrs('tt', store_default=False)] = (
+        None
+    )
+    tint_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('tc1', store_default=False)
+    ] = None
+    tint2_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('tc2', store_default=False)
+    ] = None
+    mask_texture: Annotated[str | None, IOAttrs('mt', store_default=False)] = (
+        None
+    )
+    mesh_opaque: Annotated[str | None, IOAttrs('mo', store_default=False)] = (
+        None
+    )
+    mesh_transparent: Annotated[
+        str | None, IOAttrs('mn', store_default=False)
+    ] = None
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> DecorationTypeID:
+        return DecorationTypeID.IMAGE
 
 
 @ioprepped
@@ -172,6 +246,9 @@ class Row:
 class UI(CloudUI):
     """Cloud-UI version 1."""
 
+    #: Note that cloud-ui accepts only raw :class:`str` values for text;
+    #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
+    #: support.
     title: Annotated[str, IOAttrs('t')]
     rows: Annotated[list[Row], IOAttrs('r')]
 
