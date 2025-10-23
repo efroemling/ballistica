@@ -200,6 +200,7 @@ class Button:
     decorations: Annotated[
         list[Decoration], IOAttrs('c', store_default=False)
     ] = field(default_factory=list)
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
 
 
 @ioprepped
@@ -240,6 +241,11 @@ class Row:
     padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 10.0
     center: Annotated[bool, IOAttrs('c', store_default=False)] = False
 
+    #: If things disappear when scrolling left/right, turn this up.
+    simple_culling_h: Annotated[float, IOAttrs('sch', store_default=False)] = (
+        100.0
+    )
+
 
 @ioprepped
 @dataclass
@@ -251,6 +257,11 @@ class UI(CloudUI):
     #: support.
     title: Annotated[str, IOAttrs('t')]
     rows: Annotated[list[Row], IOAttrs('r')]
+
+    #: If things disappear when scrolling up and down, turn this up.
+    simple_culling_v: Annotated[float, IOAttrs('scv', store_default=False)] = (
+        100.0
+    )
 
     @override
     @classmethod

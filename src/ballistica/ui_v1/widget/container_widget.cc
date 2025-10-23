@@ -1714,7 +1714,9 @@ void ContainerWidget::SelectDownWidget() {
     if (!w && selected_widget_->auto_select()) {
       float our_x, our_y;
       selected_widget_->GetCenter(&our_x, &our_y);
-      w = GetClosestDownWidget(our_x, our_y, selected_widget_);
+      if (!selected_widget_->auto_select_toolbars_only()) {
+        w = GetClosestDownWidget(our_x, our_y, selected_widget_);
+      }
       if (!w) {
         // If we found no viable children and we're under the main window
         // stack, see if we should pass focus to a toolbar widget.
@@ -1780,7 +1782,9 @@ void ContainerWidget::SelectUpWidget() {
     if (!w && selected_widget_->auto_select()) {
       float our_x, our_y;
       selected_widget_->GetCenter(&our_x, &our_y);
-      w = GetClosestUpWidget(our_x, our_y, selected_widget_);
+      if (!selected_widget_->auto_select_toolbars_only()) {
+        w = GetClosestUpWidget(our_x, our_y, selected_widget_);
+      }
       if (!w) {
         // If we found no viable children and we're on the main window stack,
         // see if we should pass focus to a toolbar widget.
@@ -1846,7 +1850,9 @@ void ContainerWidget::SelectLeftWidget() {
     if (!w && selected_widget_->auto_select()) {
       float our_x, our_y;
       selected_widget_->GetCenter(&our_x, &our_y);
-      w = GetClosestLeftWidget(our_x, our_y, selected_widget_);
+      if (!selected_widget_->auto_select_toolbars_only()) {
+        w = GetClosestLeftWidget(our_x, our_y, selected_widget_);
+      }
       // When we find no viable targets for an autoselect widget we do
       // nothing.
       if (!w) {
@@ -1900,7 +1906,9 @@ void ContainerWidget::SelectRightWidget() {
     if (!w && selected_widget_->auto_select()) {
       float our_x, our_y;
       selected_widget_->GetCenter(&our_x, &our_y);
-      w = GetClosestRightWidget(our_x, our_y, selected_widget_);
+      if (!selected_widget_->auto_select_toolbars_only()) {
+        w = GetClosestRightWidget(our_x, our_y, selected_widget_);
+      }
 
       // For autoselect widgets, if we find no viable targets, we do nothing.
       if (!w) {

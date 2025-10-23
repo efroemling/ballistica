@@ -1,4 +1,4 @@
-### 1.7.53 (build 22592, api 9, 2025-10-23)
+### 1.7.53 (build 22594, api 9, 2025-10-23)
 - Fixes an issue where deleting player profiles would error.
 - App audio output should now update when the default sound device changes
   (plugging in headphones, etc). This applies to all platforms using recent
@@ -21,6 +21,13 @@
   replaced by either the explicit 'partial' or 'strict' versions. Once api 9
   support ends, `babase.Call` and `babase.WeakCall` will behave like the strict
   versions instead of the partial versions and the warning will be removed.
+- Added `auto_select_toolbars_only` bool arg to `bauiv1.widget()` (for editing
+  arbitrary widgets). When auto-select is on for a widget, this causes it to
+  *only* consider widgets in the top and bottom toolbars. This can be handy to
+  enable if you want to explicitly assign all other left/right/up/down widget
+  relationships in your window; this ensures that any directions you don't
+  assign will go to toolbars and not neighbor widgets (as sometimes auto-select
+  can make questionable choices).
 
 ### 1.7.52 (build 22572, api 9, 2025-10-03)
 - Empty version number bump.

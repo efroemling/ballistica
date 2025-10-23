@@ -57,6 +57,7 @@ class _RowPrep:
     hscrolleditcall: Callable | None
     hsubcall: Callable[..., bui.Widget] | None
     buttons: list[_ButtonPrep]
+    simple_culling_h: float
 
 
 @dataclass
@@ -65,9 +66,16 @@ class _UIPrep:
     rows: list[_RowPrep]
     width: float
     height: float
+    simple_culling_v: float
 
 
-def _prep_ui(ui: clui.UI, uiscale: bui.UIScale, scroll_width: float) -> _UIPrep:
+def _prep_ui(
+    ui: clui.UI,
+    uiscale: bui.UIScale,
+    scroll_width: float,
+    *,
+    immediate: bool = False,
+) -> _UIPrep:
     """Prep a ui."""
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
@@ -102,6 +110,7 @@ def _prep_ui(ui: clui.UI, uiscale: bui.UIScale, scroll_width: float) -> _UIPrep:
         rows=[],
         width=scroll_width + fudge,
         height=top_buffer + bot_buffer,
+        simple_culling_v=ui.simple_culling_v,
     )
 
     # Precalc basic row info like dimensions.
@@ -145,6 +154,7 @@ def _prep_ui(ui: clui.UI, uiscale: bui.UIScale, scroll_width: float) -> _UIPrep:
                 hscrolleditcall=None,
                 hsubcall=None,
                 buttons=[],
+                simple_culling_h=row.simple_culling_h,
             )
         )
         assert this_row_height > 0.0
@@ -191,7 +201,7 @@ def _prep_ui(ui: clui.UI, uiscale: bui.UIScale, scroll_width: float) -> _UIPrep:
                     h_align='left',
                     v_align='center',
                     literal=True,
-                    transition_delay=tdelaybase + 0.1,
+                    transition_delay=None if immediate else (tdelaybase + 0.1),
                 )
             )
             y -= row_title_height
@@ -219,7 +229,7 @@ def _prep_ui(ui: clui.UI, uiscale: bui.UIScale, scroll_width: float) -> _UIPrep:
                     h_align='left',
                     v_align='center',
                     literal=True,
-                    transition_delay=tdelaybase + 0.2,
+                    transition_delay=None if immediate else (tdelaybase + 0.2),
                 )
             )
             y -= row_subtitle_height
@@ -233,7 +243,7 @@ def _prep_ui(ui: clui.UI, uiscale: bui.UIScale, scroll_width: float) -> _UIPrep:
             highlight=False,
             border_opacity=0.0,
             center_small_content=row.center,
-            simple_culling_h=10.0,
+            simple_culling_h=row.simple_culling_h,
         )
         rowprep.hsubcall = partial(
             bui.containerwidget,
@@ -299,15 +309,25 @@ def _prep_ui(ui: clui.UI, uiscale: bui.UIScale, scroll_width: float) -> _UIPrep:
                     label='' if button.label is None else button.label,
                     text_literal=True,
                     autoselect=True,
-                    transition_delay=tdelay,
+                    transition_delay=None if immediate else tdelay,
                 ),
                 buttoneditcall=partial(
                     bui.widget,
                     show_buffer_left=150,
                     show_buffer_right=150,
+                    # We explicitly assign all neighbor selection;
+                    # anything left over should go to toolbars.
+                    auto_select_toolbars_only=True,
                 ),
                 decorations=[],
             )
+            if button.debug:
+                _prep_button_debug(
+                    (bwidthfull, bheightfull),
+                    (center_x, center_y),
+                    None if immediate else tdelay,
+                    buttonprep.decorations,
+                )
             for decoration in button.decorations:
                 dectypeid = decoration.get_type_id()
                 if dectypeid is clui.DecorationTypeID.UNKNOWN:
@@ -322,7 +342,7 @@ def _prep_ui(ui: clui.UI, uiscale: bui.UIScale, scroll_width: float) -> _UIPrep:
                         decoration,
                         (center_x, center_y),
                         bscale,
-                        tdelay,
+                        None if immediate else tdelay,
                         buttonprep.decorations,
                     )
 
@@ -332,7 +352,7 @@ def _prep_ui(ui: clui.UI, uiscale: bui.UIScale, scroll_width: float) -> _UIPrep:
                         decoration,
                         (center_x, center_y),
                         bscale,
-                        tdelay,
+                        None if immediate else tdelay,
                         buttonprep.decorations,
                     )
 
@@ -373,7 +393,7 @@ def _prep_text(
     text: clui.Text,
     bcenter: tuple[float, float],
     bscale: float,
-    tdelay: float,
+    tdelay: float | None,
     decorations: list[_DecorationPrep],
 ) -> None:
     # pylint: disable=too-many-branches
@@ -449,7 +469,7 @@ def _prep_text(
                     position=(mwxoffs, mwyoffs),
                     size=(mwfull, mhfull),
                     color=(1, 0, 0),
-                    opacity=0.25,
+                    opacity=0.2,
                     transition_delay=tdelay,
                 ),
                 textures={'texture': 'white'},
@@ -462,7 +482,7 @@ def _prep_image(
     image: clui.Image,
     bcenter: tuple[float, float],
     bscale: float,
-    tdelay: float,
+    tdelay: float | None,
     decorations: list[_DecorationPrep],
 ) -> None:
     xoffs = bcenter[0] + image.position[0] * bscale
@@ -519,6 +539,33 @@ def _prep_image(
     )
 
 
+def _prep_button_debug(
+    bsize: tuple[float, float],
+    bcenter: tuple[float, float],
+    tdelay: float | None,
+    decorations: list[_DecorationPrep],
+) -> None:
+    xoffs = bcenter[0] - bsize[0] * 0.5
+    yoffs = bcenter[1] - bsize[1] * 0.5
+
+    textures: dict[str, str] = {'texture': 'white'}
+
+    decorations.append(
+        _DecorationPrep(
+            call=partial(
+                bui.imagewidget,
+                position=(xoffs, yoffs),
+                size=bsize,
+                color=(0, 1, 0),
+                opacity=0.1,
+                transition_delay=tdelay,
+            ),
+            textures=textures,
+            meshes={},
+        )
+    )
+
+
 def _instantiate_prepped_ui(
     uiprep: _UIPrep,
     scrollwidget: bui.Widget,
@@ -526,6 +573,7 @@ def _instantiate_prepped_ui(
     windowbackbutton: bui.Widget | None,
 ) -> bui.Widget:
     # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
     outrows: list[tuple[bui.Widget, list[bui.Widget]]] = []
 
     # Now go through and run our prepped ui calls to build our
@@ -577,6 +625,13 @@ def _instantiate_prepped_ui(
             bui.widget(edit=botbutton, up_widget=topscroll)
         bui.widget(edit=topbuttons[0], left_widget=backbutton)
         bui.widget(edit=botbuttons[0], left_widget=backbutton)
+    for _scroll, buttons in outrows:
+        for i in range(0, len(buttons) - 1):
+            leftbutton = buttons[i]
+            rightbutton = buttons[i + 1]
+            bui.widget(edit=leftbutton, right_widget=rightbutton)
+            bui.widget(edit=rightbutton, left_widget=leftbutton)
+
     return subcontainer
 
 
@@ -616,17 +671,17 @@ class CloudUIWindow(bui.MainWindow):
         self._width = (
             1400
             if uiscale is bui.UIScale.SMALL
-            else 800 if uiscale is bui.UIScale.MEDIUM else 900
+            else 1100 if uiscale is bui.UIScale.MEDIUM else 1200
         )
         self._height = (
             1200
             if uiscale is bui.UIScale.SMALL
-            else 520 if uiscale is bui.UIScale.MEDIUM else 600
+            else 700 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._root_scale = (
             1.5
             if uiscale is bui.UIScale.SMALL
-            else 1.25 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
         )
 
         # Do some fancy math to calculate our visible area; this will be
@@ -634,10 +689,10 @@ class CloudUIWindow(bui.MainWindow):
         # otherwise.
         screensize = bui.get_virtual_screen_size()
         self._vis_width = min(
-            self._width - 100, screensize[0] / self._root_scale
+            self._width - 150, screensize[0] / self._root_scale
         )
         self._vis_height = min(
-            self._height - 70, screensize[1] / self._root_scale
+            self._height - 80, screensize[1] / self._root_scale
         )
         self._vis_top = 0.5 * self._height + 0.5 * self._vis_height
         self._vis_left = 0.5 * self._width - 0.5 * self._vis_width
@@ -691,7 +746,6 @@ class CloudUIWindow(bui.MainWindow):
             border_opacity=0.4,
             center_small_content_horizontally=True,
             claims_left_right=True,
-            simple_culling_v=10.0,
         )
         # Avoid having to deal with selecting this while its empty.
         bui.containerwidget(edit=self._scrollwidget, selectable=False)
@@ -818,7 +872,7 @@ class CloudUIWindow(bui.MainWindow):
         )
 
         if state is not None:
-            self._set_state(state)
+            self._set_state(state, immediate=True)
         else:
             if random.random() < 0.0:
                 bui.apptimer(0.1, bui.WeakCallStrict(self._on_error_response))
@@ -904,6 +958,7 @@ class CloudUIWindow(bui.MainWindow):
                             size=(180, 200),
                             scale=0.6,
                             padding_bottom=30,  # Should nudge us up.
+                            debug=True,  # Show bounds.
                             decorations=[
                                 clui.Image(
                                     'powerupPunch',
@@ -1051,7 +1106,7 @@ class CloudUIWindow(bui.MainWindow):
         )
         self._set_state(self.State(ui))
 
-    def _set_state(self, state: State) -> None:
+    def _set_state(self, state: State, immediate: bool = False) -> None:
         """Set a final state (error or page contents).
 
         This state may be instantly restored if the window is recreated
@@ -1119,9 +1174,14 @@ class CloudUIWindow(bui.MainWindow):
             )
             return
 
-        uiprep = _prep_ui(state.ui, uiscale, self._scroll_width)
+        uiprep = _prep_ui(
+            state.ui, uiscale, self._scroll_width, immediate=immediate
+        )
 
         bui.containerwidget(edit=self._scrollwidget, selectable=True)
+        bui.scrollwidget(
+            edit=self._scrollwidget, simple_culling_v=uiprep.simple_culling_v
+        )
 
         self._subcontainer = _instantiate_prepped_ui(
             uiprep,

@@ -2502,6 +2502,7 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* depth_range_obj{Py_None};
   PyObject* autoselect_obj{Py_None};
   PyObject* allow_preserve_selection_obj{Py_None};
+  PyObject* auto_select_toolbars_only_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "up_widget",
@@ -2515,13 +2516,14 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
                                  "depth_range",
                                  "autoselect",
                                  "allow_preserve_selection",
+                                 "auto_select_toolbars_only",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "O|OOOOOOOOOOO", const_cast<char**>(kwlist), &edit_obj,
+          args, keywds, "O|OOOOOOOOOOOO", const_cast<char**>(kwlist), &edit_obj,
           &up_widget_obj, &down_widget_obj, &left_widget_obj, &right_widget_obj,
           &show_buffer_top_obj, &show_buffer_bottom_obj, &show_buffer_left_obj,
           &show_buffer_right_obj, &depth_range_obj, &autoselect_obj,
-          &allow_preserve_selection_obj))
+          &allow_preserve_selection_obj, &auto_select_toolbars_only_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2603,6 +2605,10 @@ static auto PyWidgetCall(PyObject* self, PyObject* args, PyObject* keywds)
     widget->set_allow_preserve_selection(
         Python::GetBool(allow_preserve_selection_obj));
   }
+  if (auto_select_toolbars_only_obj != Py_None) {
+    widget->set_auto_select_toolbars_only(
+        Python::GetBool(auto_select_toolbars_only_obj));
+  }
 
   // Run any calls built up by UI callbacks.
   ui_op_context.Finish();
@@ -2629,6 +2635,7 @@ static PyMethodDef PyWidgetDef = {
     "  depth_range: tuple[float, float] | None = None,\n"
     "  autoselect: bool | None = None,\n"
     "  allow_preserve_selection: bool | None = None,\n"
+    "  auto_select_toolbars_only: bool | None = None,\n"
     ") -> None\n"
     "\n"
     "Edit common attributes of any widget.\n"

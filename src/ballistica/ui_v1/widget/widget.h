@@ -101,23 +101,28 @@ class Widget : public Object {
   virtual auto GetHeight() -> float { return 0.0f; }
 
   /// If this widget is in a container, return it.
-  auto parent_widget() const -> ContainerWidget* { return parent_widget_; }
+  auto parent_widget() const { return parent_widget_; }
 
   /// Return the container_widget containing this widget, or the
   /// owner-widget if there is no parent.
   auto GetOwnerWidget() const -> Widget*;
 
-  auto down_widget() const -> Widget* { return down_widget_.get(); }
+  auto down_widget() const { return down_widget_.get(); }
   void SetDownWidget(Widget* w);
-  auto up_widget() const -> Widget* { return up_widget_.get(); }
+  auto up_widget() const { return up_widget_.get(); }
   void SetUpWidget(Widget* w);
-  auto left_widget() const -> Widget* { return left_widget_.get(); }
+  auto left_widget() const { return left_widget_.get(); }
   void SetLeftWidget(Widget* w);
-  auto right_widget() const -> Widget* { return right_widget_.get(); }
+  auto right_widget() const { return right_widget_.get(); }
   void SetRightWidget(Widget* w);
 
   void set_auto_select(bool enable) { auto_select_ = enable; }
-  auto auto_select() const -> bool { return auto_select_; }
+  auto auto_select() const { return auto_select_; }
+
+  void set_auto_select_toolbars_only(bool enable) {
+    auto_select_toolbars_only_ = enable;
+  }
+  auto auto_select_toolbars_only() const { return auto_select_toolbars_only_; }
 
   void set_allow_preserve_selection(bool val) {
     allow_preserve_selection_ = val;
@@ -292,6 +297,7 @@ class Widget : public Object {
   bool visible_in_container_{true};
   bool neighbors_locked_{};
   bool auto_select_{};
+  bool auto_select_toolbars_only_{};
   bool in_hierarchy_{};
   bool allow_preserve_selection_{true};
 };
