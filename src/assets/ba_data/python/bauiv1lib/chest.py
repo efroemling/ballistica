@@ -38,6 +38,8 @@ class ChestWindow(bui.MainWindow):
         # pylint: disable=too-many-statements
         self._index = index
 
+        self._uiopenstate = bui.UIOpenState(f'classicchest{index}')
+
         # Get this loading before we need it.
         self._quote_bubble_tex = bui.gettexture('quoteBubble')
 

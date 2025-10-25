@@ -100,7 +100,10 @@ void UIV1FeatureSet::ActivatePartyIcon() {
   }
 }
 
-bool UIV1FeatureSet::IsPartyWindowOpen() { return party_window_open_; }
+bool UIV1FeatureSet::IsPartyWindowOpen() {
+  assert(g_base->InLogicThread());
+  return ui_open_counts_.find("classicparty") != ui_open_counts_.end();
+}
 
 void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
   base::RenderPass* overlay_flat_pass = frame_def->GetOverlayFlatPass();
@@ -245,6 +248,24 @@ void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
   }
 
   parent->AddWidget(w);
+}
+
+void UIV1FeatureSet::UIOpenStateChange(const std::string& tag, int increment) {
+  assert(g_base->InLogicThread());
+
+  auto& count = ui_open_counts_[tag];
+  count += increment;
+
+  // Remove the entry if the count is now zero (or less, for safety).
+  if (count <= 0) {
+    assert(count == 0);  // Should not be possible.
+    ui_open_counts_.erase(tag);
+  }
+
+  // Inform root ui that this changed.
+  if (auto* root_widget = root_widget_.get()) {
+    root_widget->OnUIOpenStateChange();
+  }
 }
 
 void UIV1FeatureSet::OnScreenSizeChange() {

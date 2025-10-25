@@ -7,9 +7,11 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/sound_asset.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_mesh.h"
 #include "ballistica/ui_v1/python/class/python_class_ui_sound.h"
@@ -1473,8 +1475,6 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
       val = Widget::ToolbarVisibility::kInGame;
     } else if (sval == "inherit") {
       val = Widget::ToolbarVisibility::kInherit;
-    } else if (sval == "get_tokens") {
-      val = Widget::ToolbarVisibility::kGetTokens;
     } else if (sval == "no_menu_minimal") {
       val = Widget::ToolbarVisibility::kNoMenuMinimal;
     } else {
@@ -1560,7 +1560,6 @@ static PyMethodDef PyContainerWidgetDef = {
     "                              'menu_store_no_back',\n"
     "                              'menu_in_game',\n"
     "                              'menu_tokens',\n"
-    "                              'get_tokens',\n"
     "                              'no_menu_minimal',\n"
     "                              'inherit',\n"
     "                             ] | None = None,\n"
@@ -2653,7 +2652,6 @@ auto PyUIBounds(PyObject* self, PyObject* args, PyObject* keywds) -> PyObject* {
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  assert(g_base->graphics);
   float x, virtual_res_y;
   x = 0.5f * base::kBaseVirtualResX;
   virtual_res_y = base::kBaseVirtualResY;
@@ -2674,35 +2672,6 @@ static PyMethodDef PyUIBoundsDef = {
     "This is the range of values that can be plugged into 'stack_offset' for\n"
     "a :meth:`bauiv1.containerwidget()` call while guaranteeing that its\n"
     "center remains onscreen.",
-};
-
-// ------------------------ set_party_window_open ------------------------------
-
-static auto PySetPartyWindowOpen(PyObject* self, PyObject* args,
-                                 PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  int value;
-  static const char* kwlist[] = {"value", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
-                                   const_cast<char**>(kwlist), &value)) {
-    return nullptr;
-  }
-  BA_PRECONDITION(g_base->InLogicThread());
-  assert(g_base->input);
-  assert(g_ui_v1);
-  g_ui_v1->set_party_window_open(static_cast<bool>(value));
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PySetPartyWindowOpenDef = {
-    "set_party_window_open",            // name
-    (PyCFunction)PySetPartyWindowOpen,  // method
-    METH_VARARGS | METH_KEYWORDS,       // flags
-
-    "set_party_window_open(value: bool) -> None\n"
-    "\n"
-    "(internal)",
 };
 
 // -------------------------- get_special_widget -------------------------------
@@ -2758,7 +2727,7 @@ static PyMethodDef PyGetSpecialWidgetDef = {
     "        'chest_3_button',\n"
     "    ]) -> bauiv1.Widget\n"
     "\n"
-    "(internal)",
+    "Return special widgets located in system toolbars.",
 };
 
 // ------------------------- get_selected_widget -------------------------------
@@ -2813,6 +2782,40 @@ static PyMethodDef PyWidgetByIDDef = {
     "widget_by_id(id: str) -> bauiv1.Widget | None\n"
     "\n"
     "Return a widget with the given ID, or None if there is none.",
+};
+
+// ---------------------- root_ui_open_state_change ----------------------------
+
+static auto PyUIOpenStateChange(PyObject* self, PyObject* args,
+                                PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  const char* tag;
+  int change;
+  static const char* kwlist[] = {"tag", "change", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "si",
+                                   const_cast<char**>(kwlist), &tag, &change)) {
+    return nullptr;
+  }
+
+  // We can be called from any thread; push to the logic thread.
+  base::g_base->logic->event_loop()->PushCall(
+      [tagstr = std::string(tag), change] {
+        g_ui_v1->UIOpenStateChange(tagstr, change);
+      });
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyUIOpenStateChangeDef = {
+    "ui_open_state_change",            // name
+    (PyCFunction)PyUIOpenStateChange,  // method
+    METH_VARARGS | METH_KEYWORDS,      // flags
+
+    "ui_open_state_change(tag: str, change: int) -> None\n"
+    "\n"
+    ":meta private:",
 };
 
 // -------------------------- root_ui_back_press -------------------------------
@@ -2957,11 +2960,11 @@ static PyMethodDef PyReloadHooksDef = {
 
 auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      PyUIOpenStateChangeDef,
       PyRootUIBackPressDef,
       PyGetSpecialWidgetDef,
       PyGetSelectedWidgetDef,
       PyWidgetByIDDef,
-      PySetPartyWindowOpenDef,
       PyButtonWidgetDef,
       PyCheckBoxWidgetDef,
       PyImageWidgetDef,

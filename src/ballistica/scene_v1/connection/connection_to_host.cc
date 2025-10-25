@@ -80,10 +80,6 @@ void ConnectionToHost::Update() {
   Connection::Update();
 }
 
-// Seems we get a false alarm here.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "LocalValueEscapesScope"
-
 void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
   // If we've errored, ignore everything; we're just a zombie.
   if (errored()) {
@@ -313,8 +309,6 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
       break;
   }
 }
-
-#pragma clang diagnostic pop
 
 void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
   assert(g_base->InLogicThread());

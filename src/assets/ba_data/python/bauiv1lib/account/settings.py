@@ -33,6 +33,8 @@ class AccountSettingsWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
+        self._uiopenstate = bui.UIOpenState('accountsettings')
+
         self._sign_in_v2_proxy_button: bui.Widget | None = None
         self._sign_in_device_button: bui.Widget | None = None
 

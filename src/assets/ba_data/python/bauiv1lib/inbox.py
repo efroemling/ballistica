@@ -322,6 +322,8 @@ class InboxWindow(bui.MainWindow):
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
 
+        self._uiopenstate = bui.UIOpenState('classicinbox')
+
         self._action_ui_pause: bui.RootUIUpdatePause | None = None
 
         self._entry_displays: list[_EntryDisplay] = []

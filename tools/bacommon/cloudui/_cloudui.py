@@ -14,14 +14,14 @@ if TYPE_CHECKING:
     pass
 
 
-class CloudUITypeID(Enum):
+class CloudUIPageTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     UNKNOWN = 'u'
     V1 = 'v1'
 
 
-class CloudUI(IOMultiType[CloudUITypeID]):
+class CloudUIPage(IOMultiType[CloudUIPageTypeID]):
     """UI defined by the cloud.
 
     Conceptually similar to a basic html page, except using app UI.
@@ -29,7 +29,7 @@ class CloudUI(IOMultiType[CloudUITypeID]):
 
     @override
     @classmethod
-    def get_type_id(cls) -> CloudUITypeID:
+    def get_type_id(cls) -> CloudUIPageTypeID:
         # Require child classes to supply this themselves. If we did a
         # full type registry/lookup here it would require us to import
         # everything and would prevent lazy loading.
@@ -37,27 +37,27 @@ class CloudUI(IOMultiType[CloudUITypeID]):
 
     @override
     @classmethod
-    def get_type(cls, type_id: CloudUITypeID) -> type[CloudUI]:
+    def get_type(cls, type_id: CloudUIPageTypeID) -> type[CloudUIPage]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
 
-        t = CloudUITypeID
+        t = CloudUIPageTypeID
         if type_id is t.UNKNOWN:
-            return UnknownCloudUI
+            return UnknownCloudUIPage
         if type_id is t.V1:
-            from bacommon.cloudui.v1 import UI
+            from bacommon.cloudui.v1 import Page
 
-            return UI
+            return Page
 
         # Make sure we cover all types.
         assert_never(type_id)
 
     @override
     @classmethod
-    def get_unknown_type_fallback(cls) -> CloudUI:
+    def get_unknown_type_fallback(cls) -> CloudUIPage:
         # If we encounter some future type we don't know anything about,
         # drop in a placeholder.
-        return UnknownCloudUI()
+        return UnknownCloudUIPage()
 
     @override
     @classmethod
@@ -67,7 +67,7 @@ class CloudUI(IOMultiType[CloudUITypeID]):
 
 @ioprepped
 @dataclass
-class UnknownCloudUI(CloudUI):
+class UnknownCloudUIPage(CloudUIPage):
     """Fallback type for unrecognized UI types.
 
     Will show the client a 'cannot display this UI' placeholder page.
@@ -75,5 +75,5 @@ class UnknownCloudUI(CloudUI):
 
     @override
     @classmethod
-    def get_type_id(cls) -> CloudUITypeID:
-        return CloudUITypeID.UNKNOWN
+    def get_type_id(cls) -> CloudUIPageTypeID:
+        return CloudUIPageTypeID.UNKNOWN

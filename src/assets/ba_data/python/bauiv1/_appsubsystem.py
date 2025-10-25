@@ -359,14 +359,13 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
     def save_current_main_window_state(self) -> MainWindowState | None:
         """Save state for the current window, if any."""
-        # Calc a back-state from the current window.
+        # Calc a state from the current window.
         current_main_win = self._main_window()
         if current_main_win is None:
-            # We currenty only hold weak refs to windows so that
-            # they are free to die on their own, but we expect
-            # the main menu window to keep itself alive as long
-            # as its the main one. Holler if that seems to not
-            # be happening.
+            # We currenty only hold weak refs to windows so that they
+            # are free to die on their own, but we expect the main menu
+            # window to keep itself alive as long as its the main one.
+            # Holler if that seems to not be happening.
             babase.uilog.warning(
                 'save_current_main_window_state: No old MainWindow found;'
                 ' this should not happen.'
@@ -518,7 +517,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             current_main_window.main_window_back()
             return
 
-        # If there's an ancestory auxiliary state *not* matching our
+        # If there's an ancestor auxiliary state *not* matching our
         # type, crop the state and swap in our new auxiliary UI
         # (example: poking settings, then poking account, then poking
         # back should end up where things were before the settings

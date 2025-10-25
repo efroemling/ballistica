@@ -56,6 +56,8 @@ class StoreBrowserWindow(bui.MainWindow):
         assert app.classic is not None
         uiscale = app.ui_v1.uiscale
 
+        self._uiopenstate = bui.UIOpenState('classicstore')
+
         bui.set_analytics_screen('Store Window')
 
         self.button_infos: dict[str, dict[str, Any]] | None = None

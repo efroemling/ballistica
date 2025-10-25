@@ -27,6 +27,8 @@ class AllSettingsWindow(bui.MainWindow):
         # have a visual hitch when the user taps them.
         bui.app.threadpool.submit_no_wait(self._preload_modules)
 
+        self._uiopenstate = bui.UIOpenState('settings')
+
         bui.set_analytics_screen('Settings Window')
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -242,11 +244,17 @@ class AllSettingsWindow(bui.MainWindow):
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
         cls = type(self)
-        return bui.BasicMainWindowState(
+        out = bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition, origin_widget=origin_widget
             )
         )
+        # Store a ui-open-state here. This means that as long as this
+        # state exists in the back-state-list we'll know we're under
+        # settings (and can highlight the settings toolbar button and
+        # whatnot).
+        setattr(out, '_uiopenstate', bui.UIOpenState('settings'))
+        return out
 
     @override
     def main_window_should_preserve_selection(self) -> bool:

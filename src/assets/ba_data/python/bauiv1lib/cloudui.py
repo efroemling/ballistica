@@ -70,7 +70,7 @@ class _UIPrep:
 
 
 def _prep_ui(
-    ui: clui.UI,
+    ui: clui.Page,
     uiscale: bui.UIScale,
     scroll_width: float,
     *,
@@ -642,7 +642,7 @@ class CloudUIWindow(bui.MainWindow):
     class State:
         """Final state window can be set to show."""
 
-        ui: clui.UI | None
+        page: clui.Page | None
 
     def __init__(
         self,
@@ -883,7 +883,7 @@ class CloudUIWindow(bui.MainWindow):
         self._set_state(self.State(None))
 
     def _on_response(self) -> None:
-        ui = clui.UI(
+        page = clui.Page(
             title='Testing',
             rows=[
                 clui.Row(
@@ -1104,7 +1104,7 @@ class CloudUIWindow(bui.MainWindow):
                 ),
             ],
         )
-        self._set_state(self.State(ui))
+        self._set_state(self.State(page))
 
     def _set_state(self, state: State, immediate: bool = False) -> None:
         """Set a final state (error or page contents).
@@ -1123,7 +1123,7 @@ class CloudUIWindow(bui.MainWindow):
             self._spinner.delete()
             self._spinner = None
 
-        if state.ui is None:
+        if state.page is None:
             bui.textwidget(
                 edit=self._title,
                 literal=False,  # Allow Lstr.
@@ -1147,12 +1147,14 @@ class CloudUIWindow(bui.MainWindow):
         bui.textwidget(
             edit=self._title,
             literal=True,  # Never interpret as Lstr.
-            text=state.ui.title,
+            text=state.page.title,
         )
 
         # Make sure there's at least one row and that all rows contain
         # at least one button. Otherwise show a 'nothing here' message.
-        if not state.ui.rows or not all(row.buttons for row in state.ui.rows):
+        if not state.page.rows or not all(
+            row.buttons for row in state.page.rows
+        ):
             bui.uilog.exception(
                 'Got invalid cloud-ui state;'
                 ' must contain at least one row'
@@ -1175,7 +1177,7 @@ class CloudUIWindow(bui.MainWindow):
             return
 
         uiprep = _prep_ui(
-            state.ui, uiscale, self._scroll_width, immediate=immediate
+            state.page, uiscale, self._scroll_width, immediate=immediate
         )
 
         bui.containerwidget(edit=self._scrollwidget, selectable=True)

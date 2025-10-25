@@ -370,27 +370,27 @@ void Input::UpdateInputDeviceCounts_() {
   have_non_touch_inputs_ = false;
   int total = 0;
   int controller_count = 0;
-  for (auto& input_device : input_devices_) {
-    // Ok, we now limit non-keyboard non-touchscreen devices to ones that
-    // have been active recently.. (we're starting to get lots of virtual
-    // devices and other cruft on android; don't wanna show controller UIs
-    // just due to those)
-    if (input_device.exists()
-        && ((*input_device).IsTouchScreen() || (*input_device).IsKeyboard()
-            || ((*input_device).last_active_time_millisecs() != 0
+  for (auto& input_device_ref : input_devices_) {
+    auto* input_device = input_device_ref.get();
+    // Ok, we now limit our count for non-keyboard non-touchscreen devices
+    // to ones that have been active recently.. (we're starting to get lots
+    // of virtual devices and other cruft on android).
+    if (input_device
+        && (input_device->IsTouchScreen() || input_device->IsKeyboard()
+            || (input_device->last_active_time_millisecs() != 0
                 && current_time_millisecs
-                           - (*input_device).last_active_time_millisecs()
+                           - input_device->last_active_time_millisecs()
                        < 60000))) {
       total++;
-      if (!(*input_device).IsTouchScreen()) {
+      if (!input_device->IsTouchScreen()) {
         have_non_touch_inputs_ = true;
       }
-      if ((*input_device).start_button_activates_default_widget()) {
+      if (input_device->start_button_activates_default_widget()) {
         have_start_activated_default_button_inputs_ = true;
       }
-      if ((*input_device).IsController()) {
+      if (input_device->IsController()) {
         have_button_using_inputs_ = true;
-        if (!(*input_device).IsUIOnly() && !(*input_device).IsTestInput()) {
+        if (!input_device->IsUIOnly() && !input_device->IsTestInput()) {
           controller_count++;
         }
       }

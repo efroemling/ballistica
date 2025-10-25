@@ -1,4 +1,4 @@
-### 1.7.53 (build 22594, api 9, 2025-10-23)
+### 1.7.53 (build 22595, api 9, 2025-10-24)
 - Fixes an issue where deleting player profiles would error.
 - App audio output should now update when the default sound device changes
   (plugging in headphones, etc). This applies to all platforms using recent
@@ -28,6 +28,9 @@
   relationships in your window; this ensures that any directions you don't
   assign will go to toolbars and not neighbor widgets (as sometimes auto-select
   can make questionable choices).
+- Toolbar nav buttons now glow while you are visiting them.
+- UI control can now be taken from another input device after it is idle for 15
+  seconds (down from 30). Please holler if this feels too chaotic.
 
 ### 1.7.52 (build 22572, api 9, 2025-10-03)
 - Empty version number bump.

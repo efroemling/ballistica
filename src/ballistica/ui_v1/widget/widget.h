@@ -31,10 +31,9 @@ class Widget : public Object {
     kMenuFullNoBack = 128,    // Everything minus back.
     kMenuFullRoot = 256,      // Obsolete.
     kInGame = 512,            // Menu, squad.
-    kGetTokens = 1024,        // Squad, tokens without plus.
-    kMenuInGame = 2048,       // Squad, settings.
-    kMenuTokens = 4096,       // Squad, tokens.
-    kNoMenuMinimal = 8192,    // Squad.
+    kMenuInGame = 1024,       // Squad, settings.
+    kMenuTokens = 2048,       // Squad, tokens.
+    kNoMenuMinimal = 4092,    // Squad.
   };
 
   enum class ToolbarCancelButtonStyle : uint8_t {

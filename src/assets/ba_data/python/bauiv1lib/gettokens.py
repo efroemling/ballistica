@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import time
 from enum import Enum
-from functools import partial
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never, override
 
@@ -73,6 +72,8 @@ class GetTokensWindow(bui.MainWindow):
         auxiliary_style: bool = True,
     ):
         # pylint: disable=too-many-locals
+
+        self._uiopenstate = bui.UIOpenState('gettokens')
         bwidthstd = 170
         bwidthwide = 300
         ycolor = (0, 0, 0.3)
@@ -344,7 +345,7 @@ class GetTokensWindow(bui.MainWindow):
                 color=(0.3, 0.23, 0.36),
                 scale=scale,
                 toolbar_visibility=(
-                    'get_tokens'
+                    'menu_tokens'
                     if uiscale is bui.UIScale.SMALL
                     else 'menu_full'
                 ),
@@ -617,7 +618,7 @@ class GetTokensWindow(bui.MainWindow):
             scale=0.8,
             color=(0.4, 0.25, 0.5),
             textcolor=self._textcolor,
-            on_activate_call=partial(
+            on_activate_call=bui.WeakCallStrict(
                 self._on_learn_more_press, response.token_info_url
             ),
         )
@@ -652,7 +653,7 @@ class GetTokensWindow(bui.MainWindow):
                 size=(buttondef.width, 275),
                 position=(x, -10 + yoffs),
                 button_type='square',
-                on_activate_call=partial(
+                on_activate_call=bui.WeakCallStrict(
                     self._purchase_press, buttondef.itemid
                 ),
             )

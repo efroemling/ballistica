@@ -10,7 +10,7 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
-from bacommon.cloudui._cloudui import CloudUI, CloudUITypeID
+from bacommon.cloudui._cloudui import CloudUIPage, CloudUIPageTypeID
 
 
 class HAlign(Enum):
@@ -249,8 +249,8 @@ class Row:
 
 @ioprepped
 @dataclass
-class UI(CloudUI):
-    """Cloud-UI version 1."""
+class Page(CloudUIPage):
+    """Cloud-UI page version 1."""
 
     #: Note that cloud-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
@@ -265,5 +265,5 @@ class UI(CloudUI):
 
     @override
     @classmethod
-    def get_type_id(cls) -> CloudUITypeID:
-        return CloudUITypeID.V1
+    def get_type_id(cls) -> CloudUIPageTypeID:
+        return CloudUIPageTypeID.V1

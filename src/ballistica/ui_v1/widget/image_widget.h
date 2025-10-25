@@ -48,6 +48,9 @@ class ImageWidget : public Widget {
     draw_controller_mult_ = std::max(0.0f, std::min(1.0f, val));
   }
   void set_opacity(float o) { opacity_ = o; }
+
+  void set_flatness(float val) { flatness_ = val; }
+
   void SetTexture(base::TextureAsset* val) { texture_ = val; }
   void SetTintTexture(base::TextureAsset* val) { tint_texture_ = val; }
   void SetMaskTexture(base::TextureAsset* val) { mask_texture_ = val; }
@@ -94,6 +97,7 @@ class ImageWidget : public Widget {
   float tint2_color_blue_{1.0f};
   float opacity_{1.0f};
   float draw_controller_mult_{1.0f};
+  float flatness_{0.0f};
 };
 
 }  // namespace ballistica::ui_v1

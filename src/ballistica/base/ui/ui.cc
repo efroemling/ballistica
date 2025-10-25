@@ -24,7 +24,7 @@
 
 namespace ballistica::base {
 
-static const int kUIOwnerTimeoutSeconds = 30;
+static const int kUIOwnerTimeoutSeconds = 15;
 
 /// We use this to gather up runnables triggered by UI elements in response
 /// to stuff happening (mouse clicks, elements being added or removed,
@@ -489,7 +489,7 @@ auto UI::RequestMainUIControl(InputDevice* input_device) -> bool {
           kUIOwnerTimeoutSeconds
           - (time - last_main_ui_input_device_use_time_) / 1000;
       std::string time_out_str;
-      if (timeout > 0 && timeout < (kUIOwnerTimeoutSeconds - 10)) {
+      if (timeout > 0 && timeout < (kUIOwnerTimeoutSeconds - 3)) {
         time_out_str = " " + g_base->assets->GetResourceString("timeOutText");
         Utils::StringReplaceOne(&time_out_str, "${TIME}",
                                 std::to_string(timeout));

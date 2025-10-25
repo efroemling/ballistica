@@ -21,11 +21,9 @@ if TYPE_CHECKING:
 class PartyWindow(bui.Window):
     """Party list/chat window."""
 
-    def __del__(self) -> None:
-        bui.set_party_window_open(False)
-
     def __init__(self, origin: Sequence[float] = (0, 0)):
-        bui.set_party_window_open(True)
+
+        self._uiopenstate = bui.UIOpenState('classicparty')
         self._r = 'partyWindow'
         self._popup_type: str | None = None
         self._popup_party_member_client_id: int | None = None

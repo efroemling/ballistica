@@ -22,6 +22,9 @@ class ResourceTypeInfoWindow(PopupWindow):
         origin_widget: bui.Widget,
     ):
         assert bui.app.classic is not None
+
+        self._uiopenstate = bui.UIOpenState(f'resourcetypeinfo{resource_type}')
+
         uiscale = bui.app.ui_v1.uiscale
         scale = (
             2.0

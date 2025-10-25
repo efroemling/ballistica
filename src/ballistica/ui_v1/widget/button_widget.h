@@ -47,6 +47,8 @@ class ButtonWidget : public Widget {
     icon_color_blue_ = b;
     icon_color_alpha_ = a;
   }
+  void set_flatness(float val) { flatness_ = val; }
+
   auto set_text_flatness(float f) { text_flatness_ = f; }
   enum class Style : uint8_t { kRegular, kBack, kBackSmall, kTab, kSquare };
   auto set_style(Style s) { style_ = s; }
@@ -122,6 +124,7 @@ class ButtonWidget : public Widget {
   float icon_color_alpha_{1.0f};
   float icon_scale_{1.0f};
   float opacity_{1.0f};
+  float flatness_{0.0f};
   float text_flatness_{0.5f};
   float text_color_r_{0.75f};
   float text_color_g_{1.0f};

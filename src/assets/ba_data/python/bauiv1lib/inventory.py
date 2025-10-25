@@ -19,6 +19,8 @@ class InventoryWindow(bui.MainWindow):
         auxiliary_style: bool = True,
     ):
 
+        self._uiopenstate = bui.UIOpenState('classicinventory')
+
         uiscale = bui.app.ui_v1.uiscale
         self._width = 1400 if uiscale is bui.UIScale.SMALL else 750
         self._height = (
@@ -143,11 +145,17 @@ class InventoryWindow(bui.MainWindow):
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
         cls = type(self)
-        return bui.BasicMainWindowState(
+        out = bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition, origin_widget=origin_widget
             )
         )
+        # Store a ui-open-state here. This means that as long as this
+        # state exists in the back-state-list we'll know we're under
+        # settings (and can highlight the settings toolbar button and
+        # whatnot).
+        setattr(out, '_uiopenstate', bui.UIOpenState('classicinventory'))
+        return out
 
     @override
     def main_window_should_preserve_selection(self) -> bool:

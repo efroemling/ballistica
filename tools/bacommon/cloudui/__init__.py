@@ -2,11 +2,15 @@
 #
 """Common CloudUI bits."""
 
-from bacommon.cloudui._cloudui import CloudUI, CloudUITypeID, UnknownCloudUI
+from bacommon.cloudui._cloudui import (
+    CloudUIPage,
+    CloudUIPageTypeID,
+    UnknownCloudUIPage,
+)
 
 
 __all__ = [
-    'CloudUI',
-    'CloudUITypeID',
-    'UnknownCloudUI',
+    'CloudUIPage',
+    'CloudUIPageTypeID',
+    'UnknownCloudUIPage',
 ]

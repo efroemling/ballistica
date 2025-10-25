@@ -243,6 +243,9 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
       c.SetColor(mult * color_red_, mult * color_green_, mult * color_blue_,
                  opacity);
+      if (flatness_ != 0.0f) {
+        c.SetFlatness(flatness_);
+      }
 
       float l_border, r_border, b_border, t_border;
 

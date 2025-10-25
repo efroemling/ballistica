@@ -35,6 +35,7 @@ class RootWidget : public ContainerWidget {
 
   /// Called when UIScale or screen dimensions change.
   void OnUIScaleChange();
+  void OnUIOpenStateChange();
 
   void OnLanguageChange() override;
   void UpdateLayout() override;
@@ -108,6 +109,8 @@ class RootWidget : public ContainerWidget {
   enum class MeterType_ { kLevel, kTrophy, kTickets, kTokens };
   enum class VAlign_ { kTop, kCenter, kBottom };
 
+  void UpdateTrophyMeterButtonColor_();
+  void UpdateTrophyIconColor_();
   auto GetTimeStr_(seconds_t diff, bool animating) -> std::string;
   void UpdateChests_();
   void UpdateTokensMeterText_();
@@ -124,6 +127,7 @@ class RootWidget : public ContainerWidget {
   void AddMeter_(MeterType_ type, float h_align, float r, float g, float b,
                  bool plus, const std::string& s, const std::string& widget_id);
   void UpdateTokensMeterTextColor_();
+  void UpdateAccountButtonColor_();
   void ShowTrophyMeterAnnotation_(const std::string& val,
                                   const Vector3f& color);
   void HideTrophyMeterAnnotation_();
@@ -152,6 +156,8 @@ class RootWidget : public ContainerWidget {
   std::vector<Button_*> top_right_buttons_;
   std::vector<Button_*> bottom_left_buttons_;
   std::vector<Button_*> bottom_right_buttons_;
+  Vector3f trophy_meter_mult_{1.0f, 1.0f, 1.0f};
+  Vector3f account_button_mult_{1.0f, 1.0f, 1.0f};
   StackWidget* screen_stack_widget_{};
   StackWidget* overlay_stack_widget_{};
   Button_* back_button_{};
@@ -198,6 +204,9 @@ class RootWidget : public ContainerWidget {
   float base_scale_{1.0f};
   float bottom_left_height_{};
   float league_rank_anim_val_{};
+  // float trophy_meter_mult_r_{1.0f};
+  // float trophy_meter_mult_g_{1.0f};
+  // float trophy_meter_mult_b_{1.0f};
   int league_rank_vis_value_{-1};
   int league_rank_value_{-1};
   int league_rank_anim_start_val_{};
@@ -236,6 +245,9 @@ class RootWidget : public ContainerWidget {
   bool tickets_meter_animating_{};
   bool tokens_meter_animating_{};
   bool highlight_potential_token_purchases_{};
+  bool ui_open_states_dirty_{true};
+  bool account_button_signed_in_{};
+  bool trophy_meter_open_{};
 
   static int update_pause_count_;
 };

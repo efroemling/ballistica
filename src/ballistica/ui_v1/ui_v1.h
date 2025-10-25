@@ -145,7 +145,6 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   auto always_use_internal_on_screen_keyboard() const {
     return always_use_internal_on_screen_keyboard_;
   }
-  auto set_party_window_open(bool value) { party_window_open_ = value; }
 
   void RegisterWidgetID(const std::string& id, Widget* w);
   void UnregisterWidgetID(const std::string& id, Widget* w);
@@ -155,8 +154,16 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
 
   auto WidgetByID(const std::string& val) -> Widget*;
 
+  void UIOpenStateChange(const std::string& tag, int increment);
+
+  const auto ui_open_counts() const {
+    assert(g_base->InLogicThread());
+    return ui_open_counts_;
+  }
+
  private:
   UIV1FeatureSet();
+  std::unordered_map<std::string, int> ui_open_counts_;
   Object::Ref<ContainerWidget> screen_root_widget_;
   Object::Ref<ContainerWidget> overlay_root_widget_;
   Object::Ref<RootWidget> root_widget_;
@@ -165,7 +172,6 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   int ui_write_lock_count_{};
   int language_state_{};
   bool always_use_internal_on_screen_keyboard_{};
-  bool party_window_open_{};
 };
 
 }  // namespace ballistica::ui_v1

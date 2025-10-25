@@ -30,6 +30,8 @@ class LeagueRankWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
+        self._uiopenstate = bui.UIOpenState('classicleaguerank')
+
         bui.set_analytics_screen('League Rank Window')
 
         self._league_rank_data: dict[str, Any] | None = None

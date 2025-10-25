@@ -143,7 +143,6 @@ from _bauiv1 import (
     root_ui_resume_updates,
     rowwidget,
     scrollwidget,
-    set_party_window_open,
     spinnerwidget,
     Sound,
     Texture,
@@ -157,6 +156,7 @@ from bauiv1._keyboard import Keyboard
 from bauiv1._uitypes import (
     uicleanupcheck,
     RootUIUpdatePause,
+    UIOpenState,
 )
 from bauiv1._appsubsystem import UIV1AppSubsystem
 from bauiv1._window import (
@@ -282,7 +282,6 @@ __all__ = [
     'scrollwidget',
     'set_analytics_screen',
     'set_low_level_config_value',
-    'set_party_window_open',
     'set_main_ui_input_device',
     'shutdown_suppress_begin',
     'shutdown_suppress_end',
@@ -298,6 +297,7 @@ __all__ = [
     'uibounds',
     'uicleanupcheck',
     'uilog',
+    'UIOpenState',
     'UIScale',
     'UIV1AppSubsystem',
     'unlock_all_input',
