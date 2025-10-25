@@ -345,7 +345,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         delay = 0.7 if (self._score is not None) else 0.0
 
         # If there's no players left in the game, lets not show the UI
-        # (that would allow restarting the game with zero players, etc).
+        # (it would allow restarting the game with zero players, etc).
         if not self.players:
             return
 

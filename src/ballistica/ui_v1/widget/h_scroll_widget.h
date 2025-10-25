@@ -98,7 +98,6 @@ class HScrollWidget : public ContainerWidget {
   bool touch_up_sent_{};
   bool new_scroll_touch_{};
   bool touch_held_{};
-  bool touch_mode_{};
   bool has_momentum_{true};
   bool trough_dirty_{true};
   bool shadow_dirty_{true};

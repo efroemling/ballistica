@@ -145,6 +145,10 @@ UI::UI() {
       uiscale_ = g_core->platform->GetDefaultUIScale();
     }
   }
+
+  // Set touch-mode. In the future we'll update this dynamically depending
+  // on whether touch events or mouse events come through/etc.
+  touch_mode_ = !g_core->platform->IsRunningOnDesktop();
 }
 void UI::SetUIScale(UIScale val) {
   BA_PRECONDITION(g_base->InLogicThread());
@@ -363,6 +367,10 @@ void UI::HandleMouseMotion(float x, float y) {
 void UI::SetMainUIInputDevice(InputDevice* device) {
   assert(g_base->InLogicThread());
 
+  // Any switch here resets mousing-in-main-ui mode. (otherwise sometimes
+  // highlighting doesn't start showing until second key press).
+  mousing_in_main_ui_ = false;
+
   if (device != main_ui_input_device_.get()) {
     g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug, [device] {
       return "Main UI InputDevice is now "
@@ -397,10 +405,9 @@ void UI::Reset() {
 }
 
 auto UI::ShouldHighlightWidgets() const -> bool {
-  // Show selection highlights only if we've got controllers connected and
-  // only when the main UI is visible (dont want a selection highlight for
-  // toolbar buttons during a game).
-  return g_base->input->have_non_touch_inputs() && IsMainUIVisible();
+  // Show selection highlights only when a main ui is up and we're
+  // getting inputs from something besides a mouse or touchscreen.
+  return IsMainUIVisible() && !mousing_in_main_ui_;
 }
 
 auto UI::SendWidgetMessage(const WidgetMessage& m) -> bool {
@@ -779,6 +786,29 @@ void UI::PushUIOperationRunnable(Runnable* runnable) {
 auto UI::InUIOperation() -> bool {
   assert(g_base->InLogicThread());
   return operation_context_ != nullptr;
+}
+
+void UI::OnClickOrTap() {
+  assert(g_base->InLogicThread());
+
+  // Note that the user seems to be tapping/clicking their way around.
+  if (IsMainUIVisible()) {
+    if (!mousing_in_main_ui_) {
+      mousing_in_main_ui_ = true;
+    }
+  }
+}
+
+void UI::OnInputDeviceActive(InputDevice* device) {
+  assert(g_base->InLogicThread());
+
+  // Any input associated with a device is *not* touch/mouse input.
+  // Note that the user seems to be navigating UI in that manner.
+  if (GetMainUIInputDevice() == device && IsMainUIVisible()) {
+    if (mousing_in_main_ui_) {
+      mousing_in_main_ui_ = false;
+    }
+  }
 }
 
 }  // namespace ballistica::base

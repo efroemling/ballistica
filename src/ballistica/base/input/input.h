@@ -116,7 +116,7 @@ class Input {
   void Draw(FrameDef* frame_def);
 
   /// Should be called whenever user-input of some form comes through.
-  auto MarkInputActive() { input_active_ = true; }
+  auto mark_input_active() { input_active_ = true; }
 
   // Return true if more than one non-keyboard non-touchscreen device has
   // been active recently. This is used to determine whether we need to have
@@ -132,7 +132,6 @@ class Input {
   auto HaveRemoteAppController() -> bool;
   auto keyboard_input() const -> KeyboardInput* { return keyboard_input_; }
   auto keyboard_input_2() const -> KeyboardInput* { return keyboard_input_2_; }
-  // void CreateTouchInput();
 
   void PushTextInputEvent(const std::string& text);
   void PushKeyPressEventSimple(int keycode);

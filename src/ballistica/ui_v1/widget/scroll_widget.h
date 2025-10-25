@@ -103,7 +103,6 @@ class ScrollWidget : public ContainerWidget {
   bool touch_is_scrolling_{};
   bool touch_down_sent_{};
   bool touch_up_sent_{};
-  bool touch_mode_{};
   bool has_momentum_{true};
   bool trough_dirty_{true};
   bool shadow_dirty_{true};

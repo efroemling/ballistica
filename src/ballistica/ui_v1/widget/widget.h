@@ -16,24 +16,24 @@ namespace ballistica::ui_v1 {
 // Base class for interface widgets.
 class Widget : public Object {
  public:
-  /// Only relevant for direct children of the main stack widget. Note that
-  /// these are bitmask values so that internal root elements can specific
-  /// the entire set of visibilities they apply to.
+  /// Only relevant for direct children of the main stack widget. These are
+  /// bitmask values so that internal root elements can specify the entire
+  /// set of visibilities they apply to.
   enum class ToolbarVisibility : uint16_t {
-    kInherit = 0,             // For popups and whatnot - leave toolbar as-is.
-    kMenuMinimal = 1,         // Menu, squad, back.
-    kMenuMinimalNoBack = 2,   // Menu, squad.
-    kMenuStore = 4,           // Menu, squad, level, and soft currency.
-    kMenuStoreNoBack = 8,     // Menu, squad, level, and soft currency.
-    kMenuReduced = 16,        // Menu, squad, account, inbox, settings, back.
-    kMenuReducedNoBack = 32,  // Menu, squad, account, inbox, settings.
-    kMenuFull = 64,           // Everything.
-    kMenuFullNoBack = 128,    // Everything minus back.
-    kMenuFullRoot = 256,      // Obsolete.
-    kInGame = 512,            // Menu, squad.
-    kMenuInGame = 1024,       // Squad, settings.
-    kMenuTokens = 2048,       // Squad, tokens.
-    kNoMenuMinimal = 4092,    // Squad.
+    kInherit = 0x00,           // For popups and whatnot - leave toolbar as-is.
+    kMenuMinimal = 0x01 << 0,  // Menu, squad, back.
+    kMenuMinimalNoBack = 0x01 << 1,  // Menu, squad.
+    kMenuStore = 0x01 << 2,          // Menu, squad, level, and soft currency.
+    kMenuStoreNoBack = 0x01 << 3,    // Menu, squad, level, and soft currency.
+    kMenuReduced = 0x01 << 4,  // Menu, squad, account, inbox, settings, back.
+    kMenuReducedNoBack = 0x01 << 5,  // Menu, squad, account, inbox, settings.
+    kMenuFull = 0x01 << 6,           // Everything.
+    kMenuFullNoBack = 0x01 << 7,     // Everything minus back.
+    kMenuFullRoot = 0x01 << 8,       // Obsolete.
+    kInGame = 0x01 << 9,             // Menu, squad.
+    kMenuInGame = 0x01 << 10,        // Squad, settings.
+    kMenuTokens = 0x01 << 11,        // Squad, tokens.
+    kNoMenuMinimal = 0x01 << 12,     // Squad.
   };
 
   enum class ToolbarCancelButtonStyle : uint8_t {

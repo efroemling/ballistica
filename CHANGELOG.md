@@ -1,4 +1,4 @@
-### 1.7.53 (build 22595, api 9, 2025-10-24)
+### 1.7.53 (build 22597, api 9, 2025-10-25)
 - Fixes an issue where deleting player profiles would error.
 - App audio output should now update when the default sound device changes
   (plugging in headphones, etc). This applies to all platforms using recent
@@ -31,6 +31,13 @@
 - Toolbar nav buttons now glow while you are visiting them.
 - UI control can now be taken from another input device after it is idle for 15
   seconds (down from 30). Please holler if this feels too chaotic.
+- Made UI selection highlighting behavior smarter and more consistent across
+  platforms. Highlighting is now disabled while clicks or taps are being used to
+  navigate the UI and enabled while any other devices (keyboards, game
+  controllers, etc.) are being used. Previously highlighting was either always
+  enabled or always disabled based on what devices were detected. This way
+  someone who plays with a keyboard or game controller but who taps/clicks their
+  way around the UI won't have to deal with confusing flashing buttons.
 
 ### 1.7.52 (build 22572, api 9, 2025-10-03)
 - Empty version number bump.

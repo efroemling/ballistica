@@ -1295,7 +1295,7 @@ void RootWidget::UpdateTrophyMeterButtonColor_() {
   assert(trophy_meter_button_);
   if (auto* btn = trophy_meter_button_) {
     if (trophy_meter_open_) {
-      btn->widget->set_color(0.4f, 1.4f, 0.4f);
+      btn->widget->set_color(0.3f, 0.8f, 0.3f);
     } else {
       btn->widget->set_color(kMeterColorR * trophy_meter_mult_.x,
                              kMeterColorG * trophy_meter_mult_.y,
@@ -1308,7 +1308,7 @@ void RootWidget::UpdateTrophyIconColor_() {
   assert(trophy_icon_);
   if (auto* img = trophy_icon_) {
     if (trophy_meter_open_) {
-      img->widget->set_color(0.4f, 1.4f, 0.4f);
+      img->widget->set_color(0.3f, 0.8f, 0.3f);
     } else {
       auto color{ColorForLeagueValue_(league_type_vis_value_)};
       img->widget->set_color(color.x, color.y, color.z);
@@ -1662,7 +1662,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Get-tokens button
     if (auto* btn = get_tokens_button_) {
       if (counts.find("gettokens") != counts.end()) {
-        btn->widget->set_color(0.25f, 1.1f, 0.25f);
+        btn->widget->set_color(0.25f, 0.9f, 0.25f);
         btn->widget->set_flatness(0.65f);
       } else {
         btn->widget->set_color(kGetTokensButtonColorR, kGetTokensButtonColorG,
@@ -1706,7 +1706,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Tickets meter
     if (auto* img = tickets_meter_icon_) {
       if (counts.find("resourcetypeinfotickets") != counts.end()) {
-        img->widget->set_color(0.4f, 1.4f, 0.4f);
+        img->widget->set_color(0.3f, 0.8f, 0.3f);
         img->widget->set_flatness(0.5f);
       } else {
         img->widget->set_color(1.0f, 1.0f, 1.0f);
@@ -1719,7 +1719,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     }
     if (auto* btn = tickets_meter_button_) {
       if (counts.find("resourcetypeinfotickets") != counts.end()) {
-        btn->widget->set_color(0.4f, 1.4f, 0.4f);
+        btn->widget->set_color(0.3f, 0.8f, 0.3f);
         btn->widget->set_flatness(0.5f);
       } else {
         btn->widget->set_color(kMeterColorR, kMeterColorG, kMeterColorB);
@@ -1733,7 +1733,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Tokens meter
     if (auto* img = tokens_meter_icon_) {
       if (counts.find("resourcetypeinfotokens") != counts.end()) {
-        img->widget->set_color(0.4f, 1.4f, 0.4f);
+        img->widget->set_color(0.3f, 0.8f, 0.3f);
         img->widget->set_flatness(0.5f);
       } else {
         img->widget->set_color(1.0f, 1.0f, 1.0f);
@@ -1746,7 +1746,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     }
     if (auto* btn = tokens_meter_button_) {
       if (counts.find("resourcetypeinfotokens") != counts.end()) {
-        btn->widget->set_color(0.4f, 1.4f, 0.4f);
+        btn->widget->set_color(0.3f, 0.8f, 0.3f);
         btn->widget->set_flatness(0.5f);
       } else {
         btn->widget->set_color(kMeterColorR, kMeterColorG, kMeterColorB);
@@ -1791,8 +1791,8 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Inbox
     if (auto* btn = inbox_button_) {
       if (counts.find("classicinbox") != counts.end()) {
-        btn->widget->set_color(kBotLeftColorR * 0.5f, kBotLeftColorG * 1.7f,
-                               kBotLeftColorB * 0.5f);
+        btn->widget->set_color(kBotLeftColorR * 0.4f, kBotLeftColorG * 1.6f,
+                               kBotLeftColorB * 0.4f);
         btn->widget->set_flatness(0.6f);
       } else {
         btn->widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
@@ -1806,8 +1806,8 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Achievements
     if (auto* btn = achievements_button_) {
       if (counts.find("classicachievements") != counts.end()) {
-        btn->widget->set_color(kBotLeftColorR * 0.5f, kBotLeftColorG * 1.7f,
-                               kBotLeftColorB * 0.5f);
+        btn->widget->set_color(kBotLeftColorR * 0.4f, kBotLeftColorG * 1.6f,
+                               kBotLeftColorB * 0.4f);
         btn->widget->set_flatness(0.6f);
       } else {
         btn->widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
@@ -1822,8 +1822,8 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Settings
     if (auto* btn = settings_button_) {
       if (counts.find("settings") != counts.end()) {
-        btn->widget->set_color(kBotLeftColorR * 0.5f, kBotLeftColorG * 1.7f,
-                               kBotLeftColorB * 0.5f);
+        btn->widget->set_color(kBotLeftColorR * 0.4f, kBotLeftColorG * 1.6f,
+                               kBotLeftColorB * 0.4f);
         btn->widget->set_flatness(0.6f);
       } else {
         btn->widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
@@ -1837,7 +1837,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Store
     if (auto* btn = store_button_) {
       if (counts.find("classicstore") != counts.end()) {
-        btn->widget->set_color(0.4f, 1.3f, 0.4f);
+        btn->widget->set_color(0.2f, 1.1f, 0.2f);
         btn->widget->set_flatness(0.6f);
       } else {
         btn->widget->set_color(1.0f, 1.0f, 1.0f);
@@ -1851,7 +1851,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Inventory
     if (auto* btn = inventory_button_) {
       if (counts.find("classicinventory") != counts.end()) {
-        btn->widget->set_color(0.4f, 1.3f, 0.4f);
+        btn->widget->set_color(0.2f, 1.1f, 0.2f);
         btn->widget->set_flatness(0.6f);
       } else {
         btn->widget->set_color(1.0f, 1.0f, 1.0f);
@@ -2251,15 +2251,11 @@ void RootWidget::SetAccountSignInState(bool signed_in,
       w->set_color(0.0f, 0.4f, 0.1f, 1.0f);
       w->set_shadow(0.2f);
       w->set_flatness(1.0f);
-      // wb->set_color(0.8f, 1.2f, 0.8f);
-      // wb->set_color(kAccountButtonSignedInR, kAccountButtonSignedInG,
-      //               kAccountButtonSignedInB);
     } else {
       w->SetText("{\"r\":\"notSignedInText\"}");
       w->set_color(1.0f, 0.2f, 0.2f, 1.0f);
       w->set_shadow(0.5f);
       w->set_flatness(1.0f);
-      // wb->set_color(0.45f, 0.4f, 0.4f);
     }
     UpdateAccountButtonColor_();
   }
@@ -2777,6 +2773,8 @@ void RootWidget::UpdateChests_() {
       slot.live_display_dirty = false;
     }
 
+    auto uiopen{counts.find(slot.uiopentag) != counts.end()};
+
     assert(slot.button);
     assert(slot.lock_icon);
     Object::Ref<base::TextureAsset> tex;
@@ -2799,8 +2797,8 @@ void RootWidget::UpdateChests_() {
       slot.needs_faster_refresh = false;
 
       // Show in flat green if ui is open.
-      if (counts.find(slot.uiopentag) != counts.end()) {
-        slot.button->widget->set_color(0.4f, 1.3f, 0.4f);
+      if (uiopen) {
+        slot.button->widget->set_color(0.2f, 1.1f, 0.2f);
         slot.button->widget->set_flatness(0.6f);
       } else {
         slot.button->widget->set_color(0.473f, 0.44f, 0.583f);
@@ -2837,8 +2835,8 @@ void RootWidget::UpdateChests_() {
       }
 
       // Show in flat green if ui is open.
-      if (counts.find(slot.uiopentag) != counts.end()) {
-        slot.button->widget->set_color(0.4f, 1.3f, 0.4f);
+      if (uiopen) {
+        slot.button->widget->set_color(0.2f, 1.1f, 0.2f);
         slot.button->widget->set_flatness(0.6f);
         slot.button->widget->SetTintTexture(nullptr);
       } else {
@@ -2871,8 +2869,19 @@ void RootWidget::UpdateChests_() {
                       && g_base->Plus()->HaveIncentivizedAd()};
 
         slot.lock_icon->visible = true;
-        // slot.text->visible = true;
         slot.tv_icon->visible = allow_ad;
+
+        if (uiopen) {
+          slot.lock_icon->widget->set_color(0.2f, 1.1f, 0.2f);
+          slot.lock_icon->widget->set_flatness(0.6f);
+          slot.tv_icon->widget->set_color(0.2f, 1.1f, 0.2f);
+          slot.tv_icon->widget->set_flatness(0.6f);
+        } else {
+          slot.lock_icon->widget->set_color(1.0f, 1.0f, 1.0f);
+          slot.lock_icon->widget->set_flatness(0.0f);
+          slot.tv_icon->widget->set_color(1.0f, 1.0f, 1.0f);
+          slot.tv_icon->widget->set_flatness(0.0f);
+        }
 
         // Special case - flash 'open me' if we have enough tokens to
         // unlock.

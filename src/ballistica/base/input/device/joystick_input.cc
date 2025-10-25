@@ -785,6 +785,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
   }
 
   // Anything that would go to ui also counts to mark us as 'recently-used'.
+  // (dont want things like joystick drift events to do so).
   if (would_go_to_ui) {
     if (!(allow_input_in_attract_mode() && g_base->input->attract_mode())) {
       UpdateLastActiveTime();

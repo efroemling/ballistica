@@ -10,14 +10,12 @@
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::ui_v1 {
 
 #define V_MARGIN 5
 
-ScrollWidget::ScrollWidget()
-    : touch_mode_(!g_core->platform->IsRunningOnDesktop()) {
+ScrollWidget::ScrollWidget() {
   set_background(false);  // Influences default event handling.
   set_draggable(false);
   set_claims_left_right(false);
@@ -50,15 +48,17 @@ void ScrollWidget::OnTouchDelayTimerExpired() {
 void ScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
   BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
+  auto touch_mode{g_base->ui->touch_mode()};
+
   bool is_scrolling;
-  if (touch_mode_) {
+  if (touch_mode) {
     is_scrolling = (touch_held_ || !has_momentum_);
   } else {
     is_scrolling = (!has_momentum_);
   }
   float strong_force;
   float weak_force;
-  if (touch_mode_) {
+  if (touch_mode) {
     strong_force = -0.12f;
     weak_force = -0.004f;
   } else {
@@ -113,10 +113,11 @@ void ScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
 
 auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
-  bool claimed = false;
-  bool pass = true;
-  float right_overlap = 0;
-  float left_overlap = 3;
+  bool claimed{false};
+  bool pass{true};
+  float right_overlap{0.0f};
+  float left_overlap{3.0f};
+
   switch (m.type) {
     case base::WidgetMessage::Type::kMoveUp:
       if (capture_arrows_) {
@@ -308,7 +309,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           && (y < height())) {
         // On touch devices, touches begin scrolling, (and eventually can
         // count as clicks if they don't move).
-        if (touch_mode_) {
+        if (g_base->ui->touch_mode()) {
           touch_held_ = true;
           auto click_count = static_cast<int>(m.fval3);
           touch_held_click_count_ = click_count;
@@ -349,7 +350,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         }
 
         // On desktop, allow clicking on the scrollbar.
-        if (!touch_mode_) {
+        if (!g_base->ui->touch_mode()) {
           if (x >= width() - scroll_bar_width_ - left_overlap) {
             claimed = true;
             pass = false;
@@ -407,7 +408,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (was_claimed) {
         mouse_over_thumb_ = false;
       } else {
-        if (touch_mode_) {
+        if (g_base->ui->touch_mode()) {
           if (touch_held_) {
             // If we have a child claiming this scrolling action for
             // themselves, just keep passing them the events as long as they
@@ -451,7 +452,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           }
         }
 
-        if (touch_mode_) {
+        if (g_base->ui->touch_mode()) {
           mouse_over_thumb_ = false;
         } else {
           float s_top = height() - border_height_;
@@ -497,7 +498,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       mouse_held_thumb_ = false;
       mouse_held_page_down_ = false;
       mouse_held_page_up_ = false;
-      if (touch_mode_) {
+      if (g_base->ui->touch_mode()) {
         if (touch_held_) {
           touch_held_ = false;
 
@@ -634,7 +635,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     while (current_time - inertia_scroll_update_time_ > 5) {
       inertia_scroll_update_time_ += 5;
 
-      if (touch_mode_) {
+      if (g_base->ui->touch_mode()) {
         if (touch_held_) {
           float diff = (touch_y_ - child_offset_v_) - touch_down_y_;
           float smoothing = 0.7f;

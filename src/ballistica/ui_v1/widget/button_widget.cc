@@ -89,6 +89,7 @@ auto ButtonWidget::GetHeight() -> float { return height_; }
 
 auto ButtonWidget::GetMult(millisecs_t current_time) const -> float {
   float mult = 1.0f;
+
   if ((pressed_ && mouse_over_)
       || (current_time - last_activate_time_millisecs_ < 200)) {
     if (pressed_ && mouse_over_) {
@@ -110,10 +111,10 @@ auto ButtonWidget::GetMult(millisecs_t current_time) const -> float {
       mult *= 2.0f;
     }
   } else {
-    // Slightly highlighting all buttons for mouse-over. Once we can
-    // differentiate between touch events and pointer events we should limit
-    // this to pointer events.
-    if (mouse_over_) {
+    // Slightly highlighting all buttons for idle hovering (but ONLY with a
+    // mouse; not touchscreen).
+    if (mouse_over_ && !g_base->ui->touch_mode()) {
+      // if (mouse_over_) {
       mult = 1.2f;
     }
   }

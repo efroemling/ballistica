@@ -159,6 +159,16 @@ class UI {
     bool ran_finish_{};
   };
 
+  /// Whether input is coming from a touchscreen as opposed to a mouse or
+  /// other pointing device. This can change dynamically depending on the
+  /// latest input (switching from a mouse to touchscreen on a single
+  /// device, etc.)
+  auto touch_mode() const { return touch_mode_; }
+
+  /// For keeping track of whether mouse/touch input is being actively used.
+  void OnClickOrTap();
+  void OnInputDeviceActive(InputDevice* device);
+
  private:
   void RequestMainUI_(InputDevice* device);
   auto DevConsoleButtonSize_() const -> float;
@@ -177,10 +187,12 @@ class UI {
   millisecs_t last_widget_input_reject_err_sound_time_{};
   UIScale uiscale_{UIScale::kLarge};
   int squad_size_label_{};
+  bool touch_mode_{};
   bool account_state_signed_in_{};
   bool force_scale_{};
   bool show_dev_console_button_{};
   bool dev_console_button_pressed_{};
+  bool mousing_in_main_ui_{};
 };
 
 }  // namespace ballistica::base

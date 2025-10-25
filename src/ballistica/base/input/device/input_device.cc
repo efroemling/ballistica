@@ -8,6 +8,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/ui/ui.h"
 
 namespace ballistica::base {
 
@@ -131,6 +132,8 @@ auto InputDevice::AttachedToPlayer() const -> bool {
 void InputDevice::DetachFromPlayer() { delegate_->DetachFromPlayer(); }
 
 void InputDevice::UpdateLastActiveTime() {
+  assert(g_base->InLogicThread());
+
   // Special case: in attract-mode, prevent our virtual test devices from
   // affecting input last-active times otherwise it'll kick us out of
   // attract mode.
@@ -143,7 +146,10 @@ void InputDevice::UpdateLastActiveTime() {
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
   // Mark input in general as active also.
-  g_base->input->MarkInputActive();
+  g_base->input->mark_input_active();
+
+  // Let UI know this particular device is active.
+  g_base->ui->OnInputDeviceActive(this);
 }
 
 void InputDevice::InputCommand(InputType type, float value) {

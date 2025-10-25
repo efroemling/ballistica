@@ -737,7 +737,7 @@ void Input::PushTextInputEvent(const std::string& text) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall([this, text] {
     // Mark as active even if input is locked.
-    MarkInputActive();
+    mark_input_active();
 
     if (IsInputLocked()) {
       return;
@@ -921,7 +921,12 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
+
+  // Also mark keyboard input as recently active.
+  if (keyboard_input_) {
+    keyboard_input_->UpdateLastActiveTime();
+  }
 
   if (IsInputLocked()) {
     return;
@@ -1103,7 +1108,7 @@ void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
 
   // Note: we want to let releases through even if input is locked.
 
-  MarkInputActive();
+  mark_input_active();
 
   // In some cases we may receive duplicate key-release events (if a
   // keyboard reset was run, it deals out key releases, but then the
@@ -1171,7 +1176,7 @@ void Input::HandleMouseScroll_(const Vector2f& amount) {
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
 
   if (IsInputLocked()) {
     return;
@@ -1209,7 +1214,7 @@ void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
 
   if (IsInputLocked()) {
     return;
@@ -1251,7 +1256,7 @@ void Input::HandleMouseMotion_(const Vector2f& position) {
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
 
   // Just noticed that blocking these events leads to the cursor freezing up
   // on fades and whatnot (when we're drawing the cursor at least). So gonna
@@ -1306,7 +1311,9 @@ void Input::HandleMouseDown_(int button, const Vector2f& position) {
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
+  // Also let UI know taps/clicks are occurring.
+  g_base->ui->OnClickOrTap();
 
   if (IsInputLocked()) {
     return;
@@ -1387,7 +1394,7 @@ static void ApplyMouseUpCancelToCamera(int button) {
 
 void Input::HandleMouseUp_(int button, const Vector2f& position) {
   assert(g_base->InLogicThread());
-  MarkInputActive();
+  mark_input_active();
 
   // Convert normalized view coords to our virtual ones.
   cursor_pos_x_ = g_base->graphics->PixelToVirtualX(
@@ -1410,7 +1417,7 @@ void Input::HandleMouseUp_(int button, const Vector2f& position) {
 
 void Input::HandleMouseCancel_(int button, const Vector2f& position) {
   assert(g_base->InLogicThread());
-  MarkInputActive();
+  mark_input_active();
 
   // Convert normalized view coords to our virtual ones.
   cursor_pos_x_ = g_base->graphics->PixelToVirtualX(
@@ -1446,7 +1453,7 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
   assert(g_base->graphics);
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
 
   if (IsInputLocked()) {
     return;

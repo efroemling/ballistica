@@ -9,15 +9,12 @@
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
 
 namespace ballistica::ui_v1 {
 
 const float kHMargin = 5.0f;
 
-HScrollWidget::HScrollWidget()
-    : touch_mode_(!g_core->platform->IsRunningOnDesktop()) {
+HScrollWidget::HScrollWidget() {
   set_draggable(false);
   set_claims_left_right(false);
 }
@@ -51,7 +48,7 @@ void HScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
   bool is_scrolling = (touch_held_ || !has_momentum_);
   float strong_force;
   float weak_force;
-  if (touch_mode_) {
+  if (g_base->ui->touch_mode()) {
     strong_force = -0.12f;
     weak_force = -0.004f;
   } else {
@@ -166,7 +163,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float y = m.fval2;
       bool claimed2 = (m.fval3 > 0.0f);
 
-      if (touch_mode_) {
+      if (g_base->ui->touch_mode()) {
         mouse_over_ = false;
       } else {
         mouse_over_ =
@@ -180,7 +177,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (claimed2) {
         mouse_over_thumb_ = false;
       } else {
-        if (touch_mode_) {
+        if (g_base->ui->touch_mode()) {
           if (touch_held_) {
             touch_x_ = x;
             touch_y_ = y;
@@ -229,7 +226,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           }
         }
 
-        if (touch_mode_) {
+        if (g_base->ui->touch_mode()) {
           mouse_over_thumb_ = false;
         } else {
           float s_right = width() - border_width_;
@@ -277,7 +274,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       mouse_held_page_down_ = false;
       mouse_held_page_up_ = false;
 
-      if (touch_mode_) {
+      if (g_base->ui->touch_mode()) {
         if (touch_held_) {
           bool m_claimed = (m.fval3 > 0.0f);
 
@@ -410,7 +407,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         // On touch devices, clicks begin scrolling, (and eventually can
         // count as clicks if they don't move). Only if we're showing less
         // than everything though.
-        if (touch_mode_ && amount_visible_ < 1.0f) {
+        if (g_base->ui->touch_mode() && amount_visible_ < 1.0f) {
           touch_held_ = true;
           auto click_count = static_cast<int>(m.fval3);
           touch_held_click_count_ = click_count;
@@ -447,7 +444,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         }
 
         // For mouse type devices, allow clicking on the scrollbar.
-        if (!touch_mode_) {
+        if (!g_base->ui->touch_mode()) {
           if (y <= scroll_bar_height_ + bottom_overlap) {
             claimed = true;
             pass = false;
@@ -561,7 +558,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     while (current_time_ms - inertia_scroll_update_time_ms_ > 5) {
       inertia_scroll_update_time_ms_ += 5;
 
-      if (touch_mode_) {
+      if (g_base->ui->touch_mode()) {
         if (touch_held_) {
           float diff = (touch_x_ - child_offset_h_) - touch_down_x_;
           float smoothing = 0.7f;
@@ -716,7 +713,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       bool smooth_diff =
           (std::abs(child_offset_h_smoothed_ - child_offset_h_) > 0.01f);
-      if (touch_mode_) {
+      if (g_base->ui->touch_mode()) {
         if (smooth_diff || (touch_held_ && touch_is_scrolling_)
             || std::abs(inertia_scroll_rate_) > 1.0f) {
           last_scroll_bar_show_time_ = frame_def->display_time();
