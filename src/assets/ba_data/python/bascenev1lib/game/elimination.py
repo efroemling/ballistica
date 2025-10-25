@@ -578,8 +578,9 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
 
             # In solo, put ourself at the back of the spawn order.
             if self._solo_mode:
-                player.team.spawn_order.remove(player)
-                player.team.spawn_order.append(player)
+                if player in player.team.spawn_order:
+                    player.team.spawn_order.remove(player)
+                    player.team.spawn_order.append(player)
 
     def _update(self) -> None:
         if self._solo_mode:
