@@ -15,7 +15,7 @@ from bauiv1lib.cloudui._prep import CloudUIPagePrep
 if TYPE_CHECKING:
     from typing import Callable
 
-    import bacommon.cloudui.v1 as clui
+    import bacommon.cloudui.v1
     from bauiv1lib.cloudui._controller import CloudUIController
 
 
@@ -27,7 +27,7 @@ class CloudUIWindow(bui.MainWindow):
         """Final state window can be set to show."""
 
         controller: CloudUIController
-        page: clui.Page
+        page: bacommon.cloudui.v1.Page
 
     def __init__(
         self,

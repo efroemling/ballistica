@@ -104,7 +104,7 @@ class Text(Decoration):
     text: Annotated[str, IOAttrs('t')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
 
-    #: Note: This effectively is max-width and max-height.
+    #: Note that this effectively is max-width and max-height.
     size: Annotated[tuple[float, float], IOAttrs('z')]
     scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
     h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
