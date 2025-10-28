@@ -232,6 +232,11 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float x = m.fval1;
       float y = m.fval2;
 
+      // Don't scroll if everything is visible.
+      if (amount_visible_ >= 1.0f) {
+        break;
+      }
+
       // Keep track of the average scrolling going on. (only update when we
       // get non-momentum events).
       if (std::abs(m.fval3) > 0.001f && !has_momentum_) {
@@ -314,6 +319,12 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if ((x >= 0.0f) && (x < width()) && (y >= 0.0f) && (y < height())) {
         claimed = true;
         pass = false;
+
+        // Don't scroll if everything is visible.
+        if (amount_visible_ >= 1.0f) {
+          break;
+        }
+
         inertia_scroll_rate_ -= m.fval3 * 0.003f;
         MarkForUpdate();
       } else {

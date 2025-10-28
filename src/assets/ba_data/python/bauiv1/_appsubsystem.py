@@ -558,9 +558,16 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         # Ok, no existing auxiliary stuff was found period. Just
         # navigate forward to this UI.
-        current_main_window.main_window_replace(
+        new_main_win = current_main_window.main_window_replace(
             win_create_call, is_auxiliary=True
         )
+
+        # We should always be allowed to replace the main win in this
+        # case.
+        assert new_main_win is not None
+
+        # Make sure what got made exactly matches the type we were passed.
+        assert type(new_main_win) is win_type
 
     def _schedule_main_win_recreate(self) -> None:
 

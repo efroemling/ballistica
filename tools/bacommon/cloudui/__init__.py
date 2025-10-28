@@ -3,14 +3,18 @@
 """Common CloudUI bits."""
 
 from bacommon.cloudui._cloudui import (
-    CloudUIPage,
-    CloudUIPageTypeID,
-    UnknownCloudUIPage,
+    CloudUIRequestMethod,
+    CloudUIRequest,
+    CloudUIResponse,
+    CloudUIResponseTypeID,
+    UnknownCloudUIResponse,
 )
 
 
 __all__ = [
-    'CloudUIPage',
-    'CloudUIPageTypeID',
-    'UnknownCloudUIPage',
+    'CloudUIRequestMethod',
+    'CloudUIRequest',
+    'CloudUIResponse',
+    'CloudUIResponseTypeID',
+    'UnknownCloudUIResponse',
 ]

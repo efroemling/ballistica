@@ -110,7 +110,7 @@ auto PythonClassContextCall::tp_repr(PythonClassContextCall* self)
   BA_PYTHON_TRY;
   assert(self->context_call_->exists());
   return PyUnicode_FromString(
-      ("<ba.ContextCall call="
+      ("<babase.ContextCall call="
        + (*(self->context_call_))->GetObjectDescription() + ">")
           .c_str());
   BA_PYTHON_CATCH;

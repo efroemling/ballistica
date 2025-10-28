@@ -10,7 +10,7 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
-from bacommon.cloudui._cloudui import CloudUIPage, CloudUIPageTypeID
+from bacommon.cloudui._cloudui import CloudUIResponse, CloudUIResponseTypeID
 
 
 class HAlign(Enum):
@@ -103,8 +103,9 @@ class Text(Decoration):
     #: support.
     text: Annotated[str, IOAttrs('t')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
-    max_width: Annotated[float, IOAttrs('w')]
-    max_height: Annotated[float, IOAttrs('h', store_default=False)] = 32.0
+
+    #: Note: This effectively is max-width and max-height.
+    size: Annotated[tuple[float, float], IOAttrs('z')]
     scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
     h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
         HAlign.CENTER
@@ -114,6 +115,10 @@ class Text(Decoration):
     )
     flatness: Annotated[float | None, IOAttrs('f', store_default=False)] = None
     shadow: Annotated[float | None, IOAttrs('sh', store_default=False)] = None
+
+    is_lstr: Annotated[bool, IOAttrs('l', store_default=False)] = False
+
+    highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
 
     #: Show max-width/height bounds; useful during development.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
@@ -160,6 +165,7 @@ class Image(Decoration):
     mesh_transparent: Annotated[
         str | None, IOAttrs('mn', store_default=False)
     ] = None
+    highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
 
     @override
     @classmethod
@@ -170,7 +176,21 @@ class Image(Decoration):
 @ioprepped
 @dataclass
 class Button:
-    """A button in our cloud ui."""
+    """A button in our cloud ui.
+
+    Note that size, padding, and all decorations are scaled consistently
+    with 'scale'.
+    """
+
+    class Style(Enum):
+        """Styles a button can be."""
+
+        SQUARE = 'q'
+        TAB = 't'
+        SMALL = 's'
+        MEDIUM = 'm'
+        LARGE = 'l'
+        LARGER = 'xl'
 
     #: Note that cloud-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
@@ -202,6 +222,10 @@ class Button:
     decorations: Annotated[
         list[Decoration], IOAttrs('c', store_default=False)
     ] = field(default_factory=list)
+    text_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
+    style: Annotated[Style, IOAttrs('y', store_default=False)] = Style.SQUARE
+
+    #: Draw bounds of the button.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
 
 
@@ -225,6 +249,7 @@ class Row:
     title_shadow: Annotated[
         float | None, IOAttrs('ts', store_default=False)
     ] = None
+    title_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
     subtitle: Annotated[str | None, IOAttrs('s', store_default=False)] = None
     subtitle_color: Annotated[
         tuple[float, float, float, float] | None,
@@ -236,6 +261,9 @@ class Row:
     subtitle_shadow: Annotated[
         float | None, IOAttrs('ss', store_default=False)
     ] = None
+    subtitle_is_lstr: Annotated[bool, IOAttrs('sl', store_default=False)] = (
+        False
+    )
     button_spacing: Annotated[float, IOAttrs('bs', store_default=False)] = 5.0
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 10.0
     padding_right: Annotated[float, IOAttrs('pr', store_default=False)] = 10.0
@@ -249,12 +277,17 @@ class Row:
         100.0
     )
 
+    #: Draw bounds of the overall row and individual button columns
+    #: (including padding). The UI will scroll to keep these areas
+    #: visible in their entirety when changing selection via directional
+    #: controls, so try to make sure all decorations for a button are
+    #: within these bounds.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
 
 
 @ioprepped
 @dataclass
-class Page(CloudUIPage):
+class Page:
     """Cloud-UI page version 1."""
 
     #: Note that cloud-ui accepts only raw :class:`str` values for text;
@@ -275,7 +308,28 @@ class Page(CloudUIPage):
         100.0
     )
 
+    #: Whether the title is a json dict representing an Lstr. Generally
+    #: cloud-ui translation should be handled server-side, but this can
+    #: allow client-side translation.
+    title_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
+
+
+class ResponseCode(Enum):
+    """The overall result of a request."""
+
+    SUCCESS = 0
+    UNKNOWN_ERROR = 1
+
+
+@ioprepped
+@dataclass
+class Response(CloudUIResponse):
+    """Full cloudui response."""
+
+    code: Annotated[ResponseCode, IOAttrs('c')]
+    page: Annotated[Page, IOAttrs('p')]
+
     @override
     @classmethod
-    def get_type_id(cls) -> CloudUIPageTypeID:
-        return CloudUIPageTypeID.V1
+    def get_type_id(cls) -> CloudUIResponseTypeID:
+        return CloudUIResponseTypeID.V1

@@ -15,7 +15,7 @@ auto PythonClassSceneDataAsset::tp_repr(PythonClassSceneDataAsset* self)
   BA_PYTHON_TRY;
   auto&& m = *self->data_;
   return Py_BuildValue(
-      "s", (std::string("<ba.Data ")
+      "s", (std::string("<bascenev1.Data ")
             + (m.exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;

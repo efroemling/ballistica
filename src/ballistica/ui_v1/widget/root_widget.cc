@@ -1678,10 +1678,8 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     if (auto* btn = account_button_) {
       if (counts.find("accountsettings") != counts.end()) {
         account_button_mult_ = {1.2f, 2.0f, 1.2f};
-        // btn->widget->set_flatness(0.75f); // Not currently supported.
       } else {
         account_button_mult_ = {1.0f, 1.0f, 1.0f};
-        // btn->widget->set_flatness(0.0f); // Not currently supported.
       }
       UpdateAccountButtonColor_();
     } else {
@@ -1791,9 +1789,9 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Inbox
     if (auto* btn = inbox_button_) {
       if (counts.find("classicinbox") != counts.end()) {
-        btn->widget->set_color(kBotLeftColorR * 0.2f, kBotLeftColorG * 1.1f,
-                               kBotLeftColorB * 0.2f);
-        btn->widget->set_flatness(0.7f);
+        btn->widget->set_color(kBotLeftColorR * 0.3f, kBotLeftColorG * 1.3f,
+                               kBotLeftColorB * 0.3f);
+        btn->widget->set_flatness(0.8f);
       } else {
         btn->widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
         btn->widget->set_flatness(0.0f);
@@ -1806,9 +1804,9 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Achievements
     if (auto* btn = achievements_button_) {
       if (counts.find("classicachievements") != counts.end()) {
-        btn->widget->set_color(kBotLeftColorR * 0.2f, kBotLeftColorG * 1.1f,
-                               kBotLeftColorB * 0.2f);
-        btn->widget->set_flatness(0.7f);
+        btn->widget->set_color(kBotLeftColorR * 0.3f, kBotLeftColorG * 1.3f,
+                               kBotLeftColorB * 0.3f);
+        btn->widget->set_flatness(0.8f);
       } else {
         btn->widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
         btn->widget->set_flatness(0.0f);
@@ -1822,9 +1820,9 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Settings
     if (auto* btn = settings_button_) {
       if (counts.find("settings") != counts.end()) {
-        btn->widget->set_color(kBotLeftColorR * 0.2f, kBotLeftColorG * 1.1f,
-                               kBotLeftColorB * 0.2f);
-        btn->widget->set_flatness(0.7f);
+        btn->widget->set_color(kBotLeftColorR * 0.3f, kBotLeftColorG * 1.3f,
+                               kBotLeftColorB * 0.3f);
+        btn->widget->set_flatness(0.8f);
       } else {
         btn->widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
         btn->widget->set_flatness(0.0f);
@@ -2802,8 +2800,8 @@ void RootWidget::UpdateChests_() {
 
       // Show in flat green if ui is open.
       if (uiopen) {
-        slot.button->widget->set_color(0.2f, 1.1f, 0.2f);
-        slot.button->widget->set_flatness(0.6f);
+        slot.button->widget->set_color(0.1f, 0.7f, 0.1f);
+        slot.button->widget->set_flatness(0.7f);
       } else {
         slot.button->widget->set_color(0.473f, 0.44f, 0.583f);
         slot.button->widget->set_flatness(0.0f);

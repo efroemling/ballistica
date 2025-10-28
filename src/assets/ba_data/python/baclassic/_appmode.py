@@ -971,11 +971,11 @@ class ClassicAppMode(AppMode):
         show_template_main_window()
 
     def _cloud_ui_test_press(self) -> None:
-        from bauiv1lib.cloudui import show_cloud_ui_window
+        from bauiv1lib.cloudui import show_test_cloud_ui_window
 
         # Unintuitively, swish sounds come from buttons, not windows.
         # And dev-console buttons don't make sounds. So we need to
         # explicitly do so here.
         bui.getsound('swish').play()
 
-        show_cloud_ui_window()
+        show_test_cloud_ui_window()

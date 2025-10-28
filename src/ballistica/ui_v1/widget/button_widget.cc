@@ -283,6 +283,19 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         base::SysMeshID mesh_id;
         base::SysTextureID tex_id;
 
+        // Regular style means pick based on our aspect ratio.
+        if (style_ == Style::kRegular) {
+          if ((r_orig - l_orig) / (t_orig - b_orig) < 50.0f / 30.0f) {
+            style_ = Style::kSmall;
+          } else if ((r_orig - l_orig) / (t_orig - b_orig) < 200.0f / 35.0f) {
+            style_ = Style::kMedium;
+          } else if ((r_orig - l_orig) / (t_orig - b_orig) < 300.0f / 35.0f) {
+            style_ = Style::kLarge;
+          } else {
+            style_ = Style::kLarger;
+          }
+        }
+
         switch (style_) {
           case Style::kBack: {
             tex_id = base::SysTextureID::kUIAtlas;
@@ -326,44 +339,50 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             t_border = 6;
             break;
           }
+          case Style::kLarger: {
+            tex_id = base::SysTextureID::kUIAtlas;
+            mesh_id = draw_transparent
+                          ? base::SysMeshID::kButtonLargerTransparent
+                          : base::SysMeshID::kButtonLargerOpaque;
+            l_border = 7;
+            r_border = 11;
+            b_border = 10;
+            t_border = 4;
+            break;
+          }
+          case Style::kLarge: {
+            tex_id = base::SysTextureID::kUIAtlas;
+            mesh_id = draw_transparent
+                          ? base::SysMeshID::kButtonLargeTransparent
+                          : base::SysMeshID::kButtonLargeOpaque;
+            l_border = 7;
+            r_border = 10;
+            b_border = 10;
+            t_border = 5;
+            break;
+          }
+          case Style::kMedium: {
+            tex_id = base::SysTextureID::kUIAtlas;
+            mesh_id = draw_transparent
+                          ? base::SysMeshID::kButtonMediumTransparent
+                          : base::SysMeshID::kButtonMediumOpaque;
+            l_border = 6;
+            r_border = 10;
+            b_border = 5;
+            t_border = 2;
+            break;
+          }
+
           default: {
-            if ((r_orig - l_orig) / (t_orig - b_orig) < 50.0f / 30.0f) {
-              tex_id = base::SysTextureID::kUIAtlas;
-              mesh_id = draw_transparent
-                            ? base::SysMeshID::kButtonSmallTransparent
-                            : base::SysMeshID::kButtonSmallOpaque;
-              l_border = 10;
-              r_border = 14;
-              b_border = 9;
-              t_border = 5;
-            } else if ((r_orig - l_orig) / (t_orig - b_orig) < 200.0f / 35.0f) {
-              tex_id = base::SysTextureID::kUIAtlas;
-              mesh_id = draw_transparent
-                            ? base::SysMeshID::kButtonMediumTransparent
-                            : base::SysMeshID::kButtonMediumOpaque;
-              l_border = 6;
-              r_border = 10;
-              b_border = 5;
-              t_border = 2;
-            } else if ((r_orig - l_orig) / (t_orig - b_orig) < 300.0f / 35.0f) {
-              tex_id = base::SysTextureID::kUIAtlas;
-              mesh_id = draw_transparent
-                            ? base::SysMeshID::kButtonLargeTransparent
-                            : base::SysMeshID::kButtonLargeOpaque;
-              l_border = 7;
-              r_border = 10;
-              b_border = 10;
-              t_border = 5;
-            } else {
-              tex_id = base::SysTextureID::kUIAtlas;
-              mesh_id = draw_transparent
-                            ? base::SysMeshID::kButtonLargerTransparent
-                            : base::SysMeshID::kButtonLargerOpaque;
-              l_border = 7;
-              r_border = 11;
-              b_border = 10;
-              t_border = 4;
-            }
+            assert(style_ == Style::kSmall);
+            tex_id = base::SysTextureID::kUIAtlas;
+            mesh_id = draw_transparent
+                          ? base::SysMeshID::kButtonSmallTransparent
+                          : base::SysMeshID::kButtonSmallOpaque;
+            l_border = 10;
+            r_border = 14;
+            b_border = 9;
+            t_border = 5;
             break;
           }
         }

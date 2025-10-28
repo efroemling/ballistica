@@ -224,7 +224,7 @@ class ChestWindow(bui.MainWindow):
     def main_window_should_preserve_selection(self) -> bool:
         # This doesn't really benefit us since we do lots of widget
         # creates/destroys throughout our lifetime and also we're an
-        # auxliary window so should never need to restore toolbar
+        # auxiliary window so should never need to restore toolbar
         # selections.
         return False
 
@@ -978,6 +978,10 @@ class ChestWindow(bui.MainWindow):
             text=bui.Lstr(resource='chests.slotDescriptionText'),
             color=(1, 1, 1),
         )
+        # This is somewhat redundant with the close button, but we need
+        # to have *something* selectable in our window for SMALL ui-mode
+        # otherwise we can be left unable to select anything.
+        self._show_done_button(use_ok_label=True)
 
     def _show_chest_contents(
         self, response: bacommon.bs.ChestActionResponse
@@ -1210,7 +1214,7 @@ class ChestWindow(bui.MainWindow):
             initial_highlighted_extra=True,
         )
 
-    def _show_done_button(self) -> None:
+    def _show_done_button(self, use_ok_label: bool = False) -> None:
         # No-op if our ui is dead.
         if not self._root_widget:
             return
@@ -1225,7 +1229,7 @@ class ChestWindow(bui.MainWindow):
                 self._yoffs - 350,
             ),
             size=(bwidth, bheight),
-            label=bui.Lstr(resource='doneText'),
+            label=bui.Lstr(resource='okText' if use_ok_label else 'doneText'),
             autoselect=True,
             on_activate_call=self.main_window_back,
         )

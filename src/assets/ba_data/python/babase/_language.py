@@ -561,7 +561,7 @@ class Lstr:
         You should avoid doing this as much as possible and instead pass
         and store ``Lstr`` values.
         """
-        return _babase.evaluate_lstr(self._get_json())
+        return _babase.evaluate_lstr(self.as_json())
 
     def is_flat_value(self) -> bool:
         """Return whether this instance represents a 'flat' value.
@@ -573,22 +573,13 @@ class Lstr:
         """
         return bool('v' in self.args and not self.args.get('s', []))
 
-    def _get_json(self) -> str:
-        try:
-            return json.dumps(self.args, separators=(',', ':'))
-        except Exception:
-            from babase import _error
-
-            applog.exception('_get_json failed for %s.', self.args)
-            return 'JSON_ERR'
-
-    @override
-    def __str__(self) -> str:
-        return f'<ba.Lstr: {self._get_json()}>'
+    def as_json(self) -> str:
+        """Return the json dict representation of the Lstr."""
+        return json.dumps(self.args, separators=(',', ':'))
 
     @override
     def __repr__(self) -> str:
-        return f'<ba.Lstr: {self._get_json()}>'
+        return f'<babase.Lstr: {self.as_json()}>'
 
     @staticmethod
     def from_json(json_string: str) -> babase.Lstr:

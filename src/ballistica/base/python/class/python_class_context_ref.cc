@@ -80,7 +80,7 @@ auto PythonClassContextRef::tp_repr(PythonClassContextRef* self) -> PyObject* {
   BA_PYTHON_TRY;
 
   auto context_str =
-      "<ba.Context (" + self->context_ref_->GetDescription() + ")>";
+      "<babase.Context (" + self->context_ref_->GetDescription() + ")>";
   return PyUnicode_FromString(context_str.c_str());
   BA_PYTHON_CATCH;
 }

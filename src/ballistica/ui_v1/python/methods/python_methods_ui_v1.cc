@@ -398,8 +398,16 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
       b->set_style(ButtonWidget::Style::kSquare);
     } else if (button_type == "tab") {
       b->set_style(ButtonWidget::Style::kTab);
+    } else if (button_type == "small") {
+      b->set_style(ButtonWidget::Style::kSmall);
+    } else if (button_type == "medium") {
+      b->set_style(ButtonWidget::Style::kMedium);
+    } else if (button_type == "large") {
+      b->set_style(ButtonWidget::Style::kLarge);
+    } else if (button_type == "larger") {
+      b->set_style(ButtonWidget::Style::kLarger);
     } else {
-      throw Exception("Invalid button type: " + button_type + ".",
+      throw Exception("Invalid button type: '" + button_type + "'.",
                       PyExcType::kValue);
     }
   }

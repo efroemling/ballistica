@@ -267,12 +267,12 @@ auto BasePython::GetPyLString(PyObject* o) -> std::string {
     if (result == 1) {
       // At this point its not a simple type error if something goes wonky.
       // Perhaps we should try to preserve any error type raised by
-      // the _get_json() call...
+      // the as_json() call...
       exctype = PyExcType::kRuntime;
-      PythonRef get_json_call(PyObject_GetAttrString(o, "_get_json"),
-                              PythonRef::kSteal);
-      if (get_json_call.CallableCheck()) {
-        PythonRef json = get_json_call.Call();
+      PythonRef as_json_call(PyObject_GetAttrString(o, "as_json"),
+                             PythonRef::kSteal);
+      if (as_json_call.CallableCheck()) {
+        PythonRef json = as_json_call.Call();
         if (PyUnicode_Check(json.get())) {
           return PyUnicode_AsUTF8(json.get());
         }

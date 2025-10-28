@@ -75,9 +75,7 @@ class MainMenuWindow(bui.MainWindow):
             create_call=lambda transition, origin_widget: cls(
                 transition=transition,
                 origin_widget=origin_widget,
-                # id_prefix=id_prefix,
             ),
-            # restore_selection=True,
         )
 
     @override

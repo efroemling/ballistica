@@ -50,7 +50,17 @@ class ButtonWidget : public Widget {
   void set_flatness(float val) { flatness_ = val; }
 
   auto set_text_flatness(float f) { text_flatness_ = f; }
-  enum class Style : uint8_t { kRegular, kBack, kBackSmall, kTab, kSquare };
+  enum class Style : uint8_t {
+    kRegular,
+    kBack,
+    kBackSmall,
+    kTab,
+    kSquare,
+    kSmall,
+    kMedium,
+    kLarge,
+    kLarger
+  };
   auto set_style(Style s) { style_ = s; }
   enum class IconType : uint8_t { kNone, kCancel, kStart };
   void SetTextLiteral(bool val);

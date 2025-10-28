@@ -350,7 +350,11 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/appinvite.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/characterpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/chest.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/_controller.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/_prep.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/_test.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/_window.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/confirm.py \
