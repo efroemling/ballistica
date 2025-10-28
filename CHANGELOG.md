@@ -1,3 +1,9 @@
+### 1.7.54 (build 22599, api 9, 2025-10-27)
+- `scrollwidget` and `hscrollwidget` now center selected items that are too
+  large to fit completely in view instead of unpredictably scrolling to the
+  beginning or end of them. This makes show-buffer values (which effectively
+  make things bigger in the scrollwidget's eyes) more intuitive to use.
+  
 ### 1.7.53 (build 22597, api 9, 2025-10-25)
 - Fixes an issue where deleting player profiles would error.
 - App audio output should now update when the default sound device changes

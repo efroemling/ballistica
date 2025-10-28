@@ -1295,7 +1295,7 @@ void RootWidget::UpdateTrophyMeterButtonColor_() {
   assert(trophy_meter_button_);
   if (auto* btn = trophy_meter_button_) {
     if (trophy_meter_open_) {
-      btn->widget->set_color(0.3f, 0.8f, 0.3f);
+      btn->widget->set_color(0.4f, 0.9f, 0.4f);
     } else {
       btn->widget->set_color(kMeterColorR * trophy_meter_mult_.x,
                              kMeterColorG * trophy_meter_mult_.y,
@@ -1308,7 +1308,7 @@ void RootWidget::UpdateTrophyIconColor_() {
   assert(trophy_icon_);
   if (auto* img = trophy_icon_) {
     if (trophy_meter_open_) {
-      img->widget->set_color(0.3f, 0.8f, 0.3f);
+      img->widget->set_color(0.4f, 0.9f, 0.4f);
     } else {
       auto color{ColorForLeagueValue_(league_type_vis_value_)};
       img->widget->set_color(color.x, color.y, color.z);
@@ -1706,7 +1706,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Tickets meter
     if (auto* img = tickets_meter_icon_) {
       if (counts.find("resourcetypeinfotickets") != counts.end()) {
-        img->widget->set_color(0.3f, 0.8f, 0.3f);
+        img->widget->set_color(0.4f, 0.9f, 0.4f);
         img->widget->set_flatness(0.5f);
       } else {
         img->widget->set_color(1.0f, 1.0f, 1.0f);
@@ -1719,7 +1719,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     }
     if (auto* btn = tickets_meter_button_) {
       if (counts.find("resourcetypeinfotickets") != counts.end()) {
-        btn->widget->set_color(0.3f, 0.8f, 0.3f);
+        btn->widget->set_color(0.4f, 0.9f, 0.4f);
         btn->widget->set_flatness(0.5f);
       } else {
         btn->widget->set_color(kMeterColorR, kMeterColorG, kMeterColorB);
@@ -1733,7 +1733,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Tokens meter
     if (auto* img = tokens_meter_icon_) {
       if (counts.find("resourcetypeinfotokens") != counts.end()) {
-        img->widget->set_color(0.3f, 0.8f, 0.3f);
+        img->widget->set_color(0.4f, 0.9f, 0.4f);
         img->widget->set_flatness(0.5f);
       } else {
         img->widget->set_color(1.0f, 1.0f, 1.0f);
@@ -1746,7 +1746,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     }
     if (auto* btn = tokens_meter_button_) {
       if (counts.find("resourcetypeinfotokens") != counts.end()) {
-        btn->widget->set_color(0.3f, 0.8f, 0.3f);
+        btn->widget->set_color(0.4f, 0.9f, 0.4f);
         btn->widget->set_flatness(0.5f);
       } else {
         btn->widget->set_color(kMeterColorR, kMeterColorG, kMeterColorB);
@@ -1762,7 +1762,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
       if (counts.find("classicleaguerank") != counts.end()) {
         trophy_meter_open_ = true;
         UpdateTrophyIconColor_();
-        img->widget->set_flatness(0.6f);
+        img->widget->set_flatness(0.5f);
       } else {
         trophy_meter_open_ = false;
         UpdateTrophyIconColor_();
@@ -1777,7 +1777,7 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
       if (counts.find("classicleaguerank") != counts.end()) {
         trophy_meter_open_ = true;
         UpdateTrophyMeterButtonColor_();
-        btn->widget->set_flatness(0.6f);
+        btn->widget->set_flatness(0.5f);
       } else {
         trophy_meter_open_ = false;
         UpdateTrophyMeterButtonColor_();
@@ -1791,9 +1791,9 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Inbox
     if (auto* btn = inbox_button_) {
       if (counts.find("classicinbox") != counts.end()) {
-        btn->widget->set_color(kBotLeftColorR * 0.4f, kBotLeftColorG * 1.6f,
-                               kBotLeftColorB * 0.4f);
-        btn->widget->set_flatness(0.6f);
+        btn->widget->set_color(kBotLeftColorR * 0.2f, kBotLeftColorG * 1.1f,
+                               kBotLeftColorB * 0.2f);
+        btn->widget->set_flatness(0.7f);
       } else {
         btn->widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
         btn->widget->set_flatness(0.0f);
@@ -1806,9 +1806,9 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Achievements
     if (auto* btn = achievements_button_) {
       if (counts.find("classicachievements") != counts.end()) {
-        btn->widget->set_color(kBotLeftColorR * 0.4f, kBotLeftColorG * 1.6f,
-                               kBotLeftColorB * 0.4f);
-        btn->widget->set_flatness(0.6f);
+        btn->widget->set_color(kBotLeftColorR * 0.2f, kBotLeftColorG * 1.1f,
+                               kBotLeftColorB * 0.2f);
+        btn->widget->set_flatness(0.7f);
       } else {
         btn->widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
         btn->widget->set_flatness(0.0f);
@@ -1822,9 +1822,9 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Settings
     if (auto* btn = settings_button_) {
       if (counts.find("settings") != counts.end()) {
-        btn->widget->set_color(kBotLeftColorR * 0.4f, kBotLeftColorG * 1.6f,
-                               kBotLeftColorB * 0.4f);
-        btn->widget->set_flatness(0.6f);
+        btn->widget->set_color(kBotLeftColorR * 0.2f, kBotLeftColorG * 1.1f,
+                               kBotLeftColorB * 0.2f);
+        btn->widget->set_flatness(0.7f);
       } else {
         btn->widget->set_color(kBotLeftColorR, kBotLeftColorG, kBotLeftColorB);
         btn->widget->set_flatness(0.0f);
@@ -1837,8 +1837,8 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Store
     if (auto* btn = store_button_) {
       if (counts.find("classicstore") != counts.end()) {
-        btn->widget->set_color(0.2f, 1.1f, 0.2f);
-        btn->widget->set_flatness(0.6f);
+        btn->widget->set_color(0.2f, 0.8f, 0.2f);
+        btn->widget->set_flatness(0.7f);
       } else {
         btn->widget->set_color(1.0f, 1.0f, 1.0f);
         btn->widget->set_flatness(0.0f);
@@ -1851,8 +1851,8 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
     // Inventory
     if (auto* btn = inventory_button_) {
       if (counts.find("classicinventory") != counts.end()) {
-        btn->widget->set_color(0.2f, 1.1f, 0.2f);
-        btn->widget->set_flatness(0.6f);
+        btn->widget->set_color(0.2f, 0.8f, 0.2f);
+        btn->widget->set_flatness(0.7f);
       } else {
         btn->widget->set_color(1.0f, 1.0f, 1.0f);
         btn->widget->set_flatness(0.0f);
@@ -2137,6 +2137,10 @@ void RootWidget::OnUIOpenStateChange() {
 
   ui_open_states_dirty_ = true;
   child_widgets_dirty_ = true;
+  for (auto&& chest_id : chest_ids) {
+    auto&& slot{chest_slots_[chest_id]};
+    slot.live_display_dirty = true;
+  }
 }
 
 auto RootWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
@@ -2153,8 +2157,8 @@ auto RootWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     }
 
     // Otherwise we want the cancel to go to whatever is in the main window
-    // stack. To do that we either send the event directly or we activate our
-    // global back button which does the same thing.
+    // stack. To do that we either send the event directly or we activate
+    // our global back button which does the same thing.
     if (back_button_ != nullptr && back_button_->widget->enabled()) {
       back_button_->widget->Activate();
       return true;
@@ -2836,8 +2840,8 @@ void RootWidget::UpdateChests_() {
 
       // Show in flat green if ui is open.
       if (uiopen) {
-        slot.button->widget->set_color(0.2f, 1.1f, 0.2f);
-        slot.button->widget->set_flatness(0.6f);
+        slot.button->widget->set_color(0.2f, 0.8f, 0.2f);
+        slot.button->widget->set_flatness(0.7f);
         slot.button->widget->SetTintTexture(nullptr);
       } else {
         slot.button->widget->set_flatness(0.0f);
@@ -2872,10 +2876,10 @@ void RootWidget::UpdateChests_() {
         slot.tv_icon->visible = allow_ad;
 
         if (uiopen) {
-          slot.lock_icon->widget->set_color(0.2f, 1.1f, 0.2f);
-          slot.lock_icon->widget->set_flatness(0.6f);
-          slot.tv_icon->widget->set_color(0.2f, 1.1f, 0.2f);
-          slot.tv_icon->widget->set_flatness(0.6f);
+          slot.lock_icon->widget->set_color(0.2f, 0.8f, 0.2f);
+          slot.lock_icon->widget->set_flatness(0.7f);
+          slot.tv_icon->widget->set_color(0.2f, 0.8f, 0.2f);
+          slot.tv_icon->widget->set_flatness(0.7f);
         } else {
           slot.lock_icon->widget->set_color(1.0f, 1.0f, 1.0f);
           slot.lock_icon->widget->set_flatness(0.0f);

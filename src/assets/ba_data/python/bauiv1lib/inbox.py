@@ -1053,9 +1053,7 @@ class InboxWindow(bui.MainWindow):
         if uiscale is bui.UIScale.SMALL:
             y -= 36
 
-        # for i, _wrapper in enumerate(response.wrappers):
         for entry_display in self._entry_displays:
-            # entry_display = self._entry_displays[i]
             entry_display_weak = weakref.ref(entry_display)
             bwidth = 140
             bheight = 40

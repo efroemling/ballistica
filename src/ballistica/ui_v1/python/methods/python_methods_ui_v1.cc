@@ -195,6 +195,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* text_flatness_obj{Py_None};
   PyObject* text_res_scale_obj{Py_None};
   PyObject* text_literal_obj{Py_None};
+  PyObject* opacity_obj{Py_None};
   PyObject* enabled_obj{Py_None};
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -235,9 +236,10 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "text_res_scale",
                                  "enabled",
                                  "text_literal",
+                                 "opacity",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &on_activate_call_obj, &label_obj, &color_obj,
           &down_widget_obj, &up_widget_obj, &left_widget_obj, &right_widget_obj,
@@ -248,7 +250,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &icon_obj, &icon_scale_obj, &icon_tint_obj, &icon_color_obj,
           &autoselect_obj, &mask_texture_obj, &tint_texture_obj,
           &tint_color_obj, &tint2_color_obj, &text_flatness_obj,
-          &text_res_scale_obj, &enabled_obj, &text_literal_obj))
+          &text_res_scale_obj, &enabled_obj, &text_literal_obj, &opacity_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -453,7 +455,9 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (enabled_obj != Py_None) {
     b->set_enabled(Python::GetBool(selectable_obj));
   }
-
+  if (opacity_obj != Py_None) {
+    b->set_opacity(Python::GetFloat(opacity_obj));
+  }
   // If making a new widget add it at the end.
   if (edit_obj == Py_None) {
     g_ui_v1->AddWidget(b.get(), parent_widget);
@@ -512,6 +516,7 @@ static PyMethodDef PyButtonWidgetDef = {
     "  text_res_scale: float | None = None,\n"
     "  enabled: bool | None = None,\n"
     "  text_literal: bool | None = None,\n"
+    "  opacity: float | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a button widget.\n"

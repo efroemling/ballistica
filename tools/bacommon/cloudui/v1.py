@@ -182,6 +182,7 @@ class Button:
     color: Annotated[
         tuple[float, float, float] | None, IOAttrs('cl', store_default=False)
     ] = None
+    opacity: Annotated[float | None, IOAttrs('o', store_default=False)] = None
     text_color: Annotated[
         tuple[float, float, float, float] | None,
         IOAttrs('tc', store_default=False),
@@ -192,6 +193,7 @@ class Button:
     text_scale: Annotated[float | None, IOAttrs('ts', store_default=False)] = (
         None
     )
+    texture: Annotated[str | None, IOAttrs('t', store_default=False)] = None
     scale: Annotated[float, IOAttrs('sc', store_default=False)] = 1.0
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0
     padding_top: Annotated[float, IOAttrs('pt', store_default=False)] = 0.0
@@ -239,12 +241,15 @@ class Row:
     padding_right: Annotated[float, IOAttrs('pr', store_default=False)] = 10.0
     padding_top: Annotated[float, IOAttrs('pt', store_default=False)] = 10.0
     padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 10.0
-    center: Annotated[bool, IOAttrs('c', store_default=False)] = False
+    center_content: Annotated[bool, IOAttrs('c', store_default=False)] = False
+    center_title: Annotated[bool, IOAttrs('ct', store_default=False)] = False
 
     #: If things disappear when scrolling left/right, turn this up.
     simple_culling_h: Annotated[float, IOAttrs('sch', store_default=False)] = (
         100.0
     )
+
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
 
 
 @ioprepped
@@ -257,6 +262,13 @@ class Page(CloudUIPage):
     #: support.
     title: Annotated[str, IOAttrs('t')]
     rows: Annotated[list[Row], IOAttrs('r')]
+
+    #: If True, content smaller than the available height will be
+    #: centered vertically. This can look natural for certain types of
+    #: content such as confirmation dialogs.
+    center_vertically: Annotated[bool, IOAttrs('cv', store_default=False)] = (
+        False
+    )
 
     #: If things disappear when scrolling up and down, turn this up.
     simple_culling_v: Annotated[float, IOAttrs('scv', store_default=False)] = (

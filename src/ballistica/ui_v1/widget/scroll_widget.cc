@@ -13,7 +13,7 @@
 
 namespace ballistica::ui_v1 {
 
-#define V_MARGIN 5
+static const float kMarginV{5.0f};
 
 ScrollWidget::ScrollWidget() {
   set_background(false);  // Influences default event handling.
@@ -77,12 +77,12 @@ void ScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
         inertia_scroll_rate_ *= 0.9f;
 
       } else if (child_offset_v_
-                 > child_h - (height() - 2 * (border_height_ + V_MARGIN))) {
+                 > child_h - (height() - 2.0f * (border_height_ + kMarginV))) {
         float diff =
             child_offset_v_
             - (child_h
                - std::min(child_h,
-                          (height() - 2 * (border_height_ + V_MARGIN))));
+                          (height() - 2.0f * (border_height_ + kMarginV))));
         inertia_scroll_rate_ +=
             diff * (is_scrolling ? strong_force : weak_force);
         inertia_scroll_rate_ *= 0.9f;
@@ -92,17 +92,17 @@ void ScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
     // Hard clipping if we're dragging the scrollbar.
     if (position_clamp) {
       if (child_offset_v_smoothed_
-          > child_h - (height() - 2 * (border_height_ + V_MARGIN))) {
+          > child_h - (height() - 2.0f * (border_height_ + kMarginV))) {
         child_offset_v_smoothed_ =
-            child_h - (height() - 2 * (border_height_ + V_MARGIN));
+            child_h - (height() - 2.0f * (border_height_ + kMarginV));
       }
-      if (child_offset_v_smoothed_ < 0) {
-        child_offset_v_smoothed_ = 0;
+      if (child_offset_v_smoothed_ < 0.0f) {
+        child_offset_v_smoothed_ = 0.0f;
       }
       if (child_offset_v_
-          > child_h - (height() - 2 * (border_height_ + V_MARGIN))) {
+          > child_h - (height() - 2.0f * (border_height_ + kMarginV))) {
         child_offset_v_ =
-            child_h - (height() - 2 * (border_height_ + V_MARGIN));
+            child_h - (height() - 2.0f * (border_height_ + kMarginV));
       }
       if (child_offset_v_ < 0) {
         child_offset_v_ = 0;
@@ -122,7 +122,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     case base::WidgetMessage::Type::kMoveUp:
       if (capture_arrows_) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
-        child_offset_v_ -= (60);
+        child_offset_v_ -= 60.0f;
         MarkForUpdate();
         ClampThumb_(false, true);
       }
@@ -131,7 +131,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     case base::WidgetMessage::Type::kMoveDown:
       if (capture_arrows_) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
-        child_offset_v_ += (60);
+        child_offset_v_ += 60.0f;
         MarkForUpdate();
         ClampThumb_(false, true);
       }
@@ -141,30 +141,49 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       claimed = true;
       pass = false;
       auto i = widgets().begin();
-      if (i == widgets().end()) break;
-      float child_h = (**i).GetHeight();
+      if (i == widgets().end()) {
+        break;
+      }
+      float scroll_child_height = (**i).GetHeight();
 
-      // See where we'd have to scroll to get selection at top and bottom.
-      float child_offset_bot =
-          child_h - m.fval2 - (height() - 2 * (border_height_ + V_MARGIN));
-      float child_offset_top = child_h - m.fval2 - m.fval4;
+      float target_y{m.fval2};
+      float target_height{m.fval4};
 
-      // If we're in the middle, dont do anything.
-      if (child_offset_v_ > child_offset_bot
-          && child_offset_v_ < child_offset_top) {
+      float vis_height{(height() - 2.0f * (border_height_ + kMarginV))};
+      bool changing{};
+
+      // See where we'd have to scroll to get target at top and bottom.
+      float child_offset_bot = scroll_child_height - target_y - vis_height;
+      float child_offset_top = scroll_child_height - target_y - target_height;
+
+      // If the area we're trying to show is bigger than the space we've got
+      // available, aim for the middle. Perhaps we should warn when this
+      // happens, but passing huge top+bottom show-buffers can also be a
+      // decent way to center the selection so maybe we shouldn't.
+      if (vis_height < target_height) {
+        child_offset_v_ = 0.5f * (child_offset_top + child_offset_bot);
+        changing = true;
       } else {
-        // Do whatever offset is less of a move.
-        if (std::abs(child_offset_bot - child_offset_v_)
-            < std::abs(child_offset_top - child_offset_v_)) {
-          child_offset_v_ = child_offset_bot;
+        // If its already fully visible, don't do anything.
+        if (child_offset_v_ > child_offset_bot
+            && child_offset_v_ < child_offset_top) {
         } else {
-          child_offset_v_ = child_offset_top;
+          // Do whichever offset is less of a move.
+          if (std::abs(child_offset_bot - child_offset_v_)
+              < std::abs(child_offset_top - child_offset_v_)) {
+            child_offset_v_ = child_offset_bot;
+          } else {
+            child_offset_v_ = child_offset_top;
+          }
+          changing = true;
         }
+      }
 
+      if (changing) {
         // If we're moving down, stop at the bottom.
         {
-          float max_val =
-              child_h - (height() - 2 * (border_height_ + V_MARGIN));
+          float max_val = scroll_child_height
+                          - (height() - 2.0f * (border_height_ + kMarginV));
           if (child_offset_v_ > max_val) {
             child_offset_v_ = max_val;
           }
@@ -172,8 +191,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
         // If we're moving up, stop at the top.
         {
-          if (child_offset_v_ < 0) {
-            child_offset_v_ = 0;
+          if (child_offset_v_ < 0.0f) {
+            child_offset_v_ = 0.0f;
           }
         }
       }
@@ -266,8 +285,9 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               float diff =
                   child_offset_v_
                   - (child_h
-                     - std::min(child_h,
-                                (height() - 2 * (border_height_ + V_MARGIN))));
+                     - std::min(
+                         child_h,
+                         (height() - 2.0f * (border_height_ + kMarginV))));
               if (diff > 0) past_end = true;
             }
             if (past_end) {
@@ -357,7 +377,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             float s_top = height() - border_height_;
             float s_bottom = border_height_;
             float sb_thumb_height =
-                amount_visible_ * (height() - 2 * border_height_);
+                amount_visible_ * (height() - 2.0f * border_height_);
             float sb_thumb_top = s_top
                                  - child_offset_v_ / child_max_offset_
                                        * (s_top - (s_bottom + sb_thumb_height));
@@ -365,7 +385,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             if (y >= sb_thumb_top) {
               // So we can see the transition.
               smoothing_amount_ = 1.0f;
-              child_offset_v_ -= (height() - 2 * (border_height_ + V_MARGIN));
+              child_offset_v_ -=
+                  (height() - 2.0f * (border_height_ + kMarginV));
               MarkForUpdate();
               ClampThumb_(false, true);
             } else if (y >= sb_thumb_top - sb_thumb_height) {
@@ -376,7 +397,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             } else if (y >= s_bottom) {
               // Below thumb (page down). So we can see the transition.
               smoothing_amount_ = 1.0f;
-              child_offset_v_ += (height() - 2 * (border_height_ + V_MARGIN));
+              child_offset_v_ +=
+                  (height() - 2.0f * (border_height_ + kMarginV));
               MarkForUpdate();
               ClampThumb_(false, true);
             }
@@ -588,8 +610,9 @@ void ScrollWidget::UpdateLayout() {
 
   float child_height = (**i).GetHeight();
   child_max_offset_ =
-      child_height - (height() - 2 * (border_height_ + V_MARGIN));
-  amount_visible_ = (height() - 2 * (border_height_ + V_MARGIN)) / child_height;
+      child_height - (height() - 2.0f * (border_height_ + kMarginV));
+  amount_visible_ =
+      (height() - 2.0f * (border_height_ + kMarginV)) / child_height;
   if (amount_visible_ > 1) {
     amount_visible_ = 1;
     if (center_small_content_) {
@@ -603,9 +626,9 @@ void ScrollWidget::UpdateLayout() {
 
   if (mouse_held_thumb_) {
     if (child_offset_v_
-        > child_height - (height() - 2 * (border_height_ + V_MARGIN))) {
+        > child_height - (height() - 2.0f * (border_height_ + kMarginV))) {
       child_offset_v_ =
-          child_height - (height() - 2 * (border_height_ + V_MARGIN));
+          child_height - (height() - 2.0f * (border_height_ + kMarginV));
       inertia_scroll_rate_ = 0;
     }
     if (child_offset_v_ < 0) {
@@ -613,7 +636,7 @@ void ScrollWidget::UpdateLayout() {
       inertia_scroll_rate_ = 0;
     }
   }
-  (**i).set_translate(xoffs, height() - (border_height_ + V_MARGIN)
+  (**i).set_translate(xoffs, height() - (border_height_ + kMarginV)
                                  + child_offset_v_smoothed_ - child_height
                                  + center_offset_y_);
   thumb_dirty_ = true;
@@ -688,13 +711,14 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   {
     base::EmptyComponent c(pass);
     c.SetTransparent(draw_transparent);
-    auto scissor = c.ScopedScissor({l + border_width_, b + border_height_ + 1,
-                                    l + (width() - border_width_),
-                                    b + (height() - border_height_) - 1});
+    auto scissor =
+        c.ScopedScissor({l + border_width_, b + border_height_ + 1.0f,
+                         l + (width() - border_width_),
+                         b + (height() - border_height_) - 1.0f});
     c.Submit();  // Get out of the way for children drawing.
 
-    set_simple_culling_bottom(b + border_height_ + 1);
-    set_simple_culling_top(b + (height() - border_height_) - 1);
+    set_simple_culling_bottom(b + border_height_ + 1.0f);
+    set_simple_culling_top(b + (height() - border_height_) - 1.0f);
 
     // Scroll trough (depth 0.05 to 0.15).
     if (explicit_bool(true)) {
@@ -707,8 +731,8 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           b2 = b + (border_height_);
           t2 = t - (border_height_);
           float l_border, r_border, b_border, t_border;
-          l_border = 3;
-          r_border = 0;
+          l_border = 3.0f;
+          r_border = 0.0f;
           b_border = height() * 0.006f;
           t_border = height() * 0.002f;
           trough_width_ = r2 - l2 + l_border + r_border;
@@ -745,7 +769,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       if (thumb_dirty_) {
         float sb_thumb_top =
             t - border_height_
-            - ((height() - (border_height_ * 2) - sb_thumb_height)
+            - ((height() - (border_height_ * 2.0f) - sb_thumb_height)
                * child_offset_v_smoothed_ / child_max_offset_);
         float r2 = l + width();
         float l2 = r2 - scroll_bar_width_;
@@ -784,7 +808,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
         {
           auto scissor =
-              c.ScopedScissor({l + border_width_, b + border_height_ + 1,
+              c.ScopedScissor({l + border_width_, b + border_height_ + 1.0f,
                                l + (width()), b + (height() * 0.995f)});
           auto xf = c.ScopedTransform();
           c.Translate(thumb_center_x_, thumb_center_y_, 0.8f);

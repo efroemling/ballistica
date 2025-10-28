@@ -46,6 +46,7 @@ class _ButtonPrep:
     buttoncall: Callable[..., bui.Widget]
     buttoneditcall: Callable | None
     decorations: list[_DecorationPrep]
+    textures: dict[str, str]
 
 
 @dataclass
@@ -58,10 +59,11 @@ class _RowPrep:
     hsubcall: Callable[..., bui.Widget] | None
     buttons: list[_ButtonPrep]
     simple_culling_h: float
+    decorations: list[_DecorationPrep]
 
 
 @dataclass
-class _UIPrep:
+class _PagePrep:
     rootcall: Callable[..., bui.Widget] | None
     rows: list[_RowPrep]
     width: float
@@ -69,13 +71,13 @@ class _UIPrep:
     simple_culling_v: float
 
 
-def _prep_ui(
+def _prep_page(
     ui: clui.Page,
     uiscale: bui.UIScale,
     scroll_width: float,
     *,
     immediate: bool = False,
-) -> _UIPrep:
+) -> _PagePrep:
     """Prep a ui."""
     # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
@@ -105,7 +107,7 @@ def _prep_ui(
     fudge = 15.0
     hscrollinset = 15.0
 
-    uiprep = _UIPrep(
+    uiprep = _PagePrep(
         rootcall=None,
         rows=[],
         width=scroll_width + fudge,
@@ -113,7 +115,7 @@ def _prep_ui(
         simple_culling_v=ui.simple_culling_v,
     )
 
-    # Precalc basic row info like dimensions.
+    # Precalc basic info like dimensions for all rows.
     for row in ui.rows:
         assert row.buttons
         this_row_width = (
@@ -155,6 +157,7 @@ def _prep_ui(
                 hsubcall=None,
                 buttons=[],
                 simple_culling_h=row.simple_culling_h,
+                decorations=[],
             )
         )
         assert this_row_height > 0.0
@@ -165,8 +168,8 @@ def _prep_ui(
             uiprep.height += row_subtitle_height
         uiprep.height += this_row_height
 
-    # Ok; we've got overall dimensions. Now prep a call to make the
-    # subcontainer and then fill in its rows.
+    # Ok; we've got all row dimensions. Now prep calls to make the
+    # subcontainers to fit everything and fill out all rows.
     uiprep.rootcall = partial(
         bui.containerwidget,
         size=(uiprep.width, uiprep.height),
@@ -182,8 +185,12 @@ def _prep_ui(
                 partial(
                     bui.textwidget,
                     position=(
-                        left_buffer + title_inset,
-                        y - row_title_height * 0.5,
+                        (
+                            ((uiprep.width - left_buffer - right_buffer) * 0.5)
+                            if row.center_title
+                            else (left_buffer + title_inset)
+                        ),
+                        y - row_subtitle_height * 0.5,
                     ),
                     size=(0, 0),
                     text=row.title,
@@ -196,9 +203,16 @@ def _prep_ui(
                     shadow=row.title_shadow,
                     scale=1.0,
                     maxwidth=(
-                        uiprep.width - left_buffer - right_buffer - title_inset
+                        (uiprep.width - left_buffer - right_buffer)
+                        if row.center_title
+                        else (
+                            uiprep.width
+                            - left_buffer
+                            - right_buffer
+                            - title_inset
+                        )
                     ),
-                    h_align='left',
+                    h_align='center' if row.center_title else 'left',
                     v_align='center',
                     literal=True,
                     transition_delay=None if immediate else (tdelaybase + 0.1),
@@ -210,7 +224,11 @@ def _prep_ui(
                 partial(
                     bui.textwidget,
                     position=(
-                        left_buffer + title_inset,
+                        (
+                            ((uiprep.width - left_buffer - right_buffer) * 0.5)
+                            if row.center_title
+                            else (left_buffer + title_inset)
+                        ),
                         y - row_subtitle_height * 0.5,
                     ),
                     size=(0, 0),
@@ -224,9 +242,16 @@ def _prep_ui(
                     shadow=row.subtitle_shadow,
                     scale=0.7,
                     maxwidth=(
-                        uiprep.width - left_buffer - right_buffer - title_inset
+                        (uiprep.width - left_buffer - right_buffer)
+                        if row.center_title
+                        else (
+                            uiprep.width
+                            - left_buffer
+                            - right_buffer
+                            - title_inset
+                        )
                     ),
-                    h_align='left',
+                    h_align='center' if row.center_title else 'left',
                     v_align='center',
                     literal=True,
                     transition_delay=None if immediate else (tdelaybase + 0.2),
@@ -235,6 +260,23 @@ def _prep_ui(
             y -= row_subtitle_height
 
         y -= rowprep.height  # includes padding-top/bottom
+
+        if row.debug:
+            rowheightfull = rowprep.height
+            if row.title is not None:
+                rowheightfull += row_title_height
+            if row.subtitle is not None:
+                rowheightfull += row_subtitle_height
+            _prep_row_debug(
+                (
+                    uiprep.width - left_buffer - right_buffer,
+                    rowheightfull,
+                ),
+                (left_buffer, y),
+                None if immediate else tdelaybase,
+                rowprep.decorations,
+            )
+
         rowprep.hscrollcall = partial(
             bui.hscrollwidget,
             size=(uiprep.width - hscrollinset, rowprep.height),
@@ -242,7 +284,7 @@ def _prep_ui(
             claims_left_right=True,
             highlight=False,
             border_opacity=0.0,
-            center_small_content=row.center,
+            center_small_content=row.center_content,
             simple_culling_h=row.simple_culling_h,
         )
         rowprep.hsubcall = partial(
@@ -253,7 +295,7 @@ def _prep_ui(
                 # center-small-content is off.
                 (
                     rowprep.width
-                    if row.center
+                    if row.center_content
                     else max(uiprep.width - hscrollinset - fudge, rowprep.width)
                 ),
                 rowprep.height,
@@ -273,6 +315,7 @@ def _prep_ui(
             # Rightmost buttons slide in first.
             tdelay = tdelaybase + tdelayamt * (0.03 * bcount)
 
+            xorig = x
             x += button.padding_left
             bscale = button.scale
             if button.size is None:
@@ -295,6 +338,7 @@ def _prep_ui(
 
             center_x = x + bwidthfull * 0.5
             center_y = row.padding_bottom + to_button_bottom + bheightfull * 0.5
+
             buttonprep = _ButtonPrep(
                 buttoncall=partial(
                     bui.buttonwidget,
@@ -306,6 +350,7 @@ def _prep_ui(
                     text_flatness=(button.text_flatness),
                     text_scale=button.text_scale,
                     button_type='square',
+                    opacity=button.opacity,
                     label='' if button.label is None else button.label,
                     text_literal=True,
                     autoselect=True,
@@ -313,6 +358,7 @@ def _prep_ui(
                 ),
                 buttoneditcall=partial(
                     bui.widget,
+                    # TODO: Calc left/right vals properly.
                     show_buffer_left=150,
                     show_buffer_right=150,
                     # We explicitly assign all neighbor selection;
@@ -320,7 +366,26 @@ def _prep_ui(
                     auto_select_toolbars_only=True,
                 ),
                 decorations=[],
+                textures={},
             )
+            if button.texture is not None:
+                buttonprep.textures['texture'] = button.texture
+
+            # With row-debug on, visualize the area we try to scroll to
+            # show when each button is selected. Note that we're clamped
+            # by the h-scroll here so we have to draw a separate box for
+            # the row title/subtitle.
+            if row.debug:
+                _prep_row_debug_button(
+                    (
+                        bwidthfull + button.padding_left + button.padding_right,
+                        rowprep.height,
+                    ),
+                    (xorig, 0.0),
+                    None if immediate else tdelay,
+                    buttonprep.decorations,
+                )
+
             if button.debug:
                 _prep_button_debug(
                     (bwidthfull, bheightfull),
@@ -539,6 +604,62 @@ def _prep_image(
     )
 
 
+def _prep_row_debug(
+    size: tuple[float, float],
+    pos: tuple[float, float],
+    tdelay: float | None,
+    decorations: list[_DecorationPrep],
+) -> None:
+
+    textures: dict[str, str] = {'texture': 'white'}
+
+    # Shrink the square we draw a tiny bit so rows butted up to
+    # eachother can be seen.
+    border_shrink = 1.0
+
+    decorations.append(
+        _DecorationPrep(
+            call=partial(
+                bui.imagewidget,
+                position=(pos[0], pos[1] + border_shrink),
+                size=(size[0], size[1] - 2.0 * border_shrink),
+                color=(1.0, 0.0, 1),
+                opacity=0.1,
+                transition_delay=tdelay,
+            ),
+            textures=textures,
+            meshes={},
+        )
+    )
+
+
+def _prep_row_debug_button(
+    bsize: tuple[float, float],
+    bcorner: tuple[float, float],
+    tdelay: float | None,
+    decorations: list[_DecorationPrep],
+) -> None:
+    xoffs = bcorner[0]
+    yoffs = bcorner[1]
+
+    textures: dict[str, str] = {'texture': 'white'}
+
+    decorations.append(
+        _DecorationPrep(
+            call=partial(
+                bui.imagewidget,
+                position=(xoffs, yoffs),
+                size=bsize,
+                color=(0.0, 0.0, 1),
+                opacity=0.15,
+                transition_delay=tdelay,
+            ),
+            textures=textures,
+            meshes={},
+        )
+    )
+
+
 def _prep_button_debug(
     bsize: tuple[float, float],
     bcenter: tuple[float, float],
@@ -566,8 +687,8 @@ def _prep_button_debug(
     )
 
 
-def _instantiate_prepped_ui(
-    uiprep: _UIPrep,
+def _instantiate_prepped_page(
+    pageprep: _PagePrep,
     scrollwidget: bui.Widget,
     backbutton: bui.Widget,
     windowbackbutton: bui.Widget | None,
@@ -579,27 +700,37 @@ def _instantiate_prepped_ui(
     # Now go through and run our prepped ui calls to build our
     # widgets, plugging in appropriate parent widgets args and
     # whatnot as we go.
-    assert uiprep.rootcall is not None
-    subcontainer = uiprep.rootcall(parent=scrollwidget)
-    for rowprep in uiprep.rows:
+    assert pageprep.rootcall is not None
+    subcontainer = pageprep.rootcall(parent=scrollwidget)
+    for rowprep in pageprep.rows:
         for uicall in rowprep.titlecalls:
             uicall(parent=subcontainer)
         assert rowprep.hscrollcall is not None
         hscroll = rowprep.hscrollcall(parent=subcontainer)
+        for decoration in rowprep.decorations:
+            kwds: dict = {'parent': subcontainer}
+            for texarg, texname in decoration.textures.items():
+                kwds[texarg] = bui.gettexture(texname)
+            for mesharg, meshname in decoration.meshes.items():
+                kwds[mesharg] = bui.getmesh(meshname)
+            decoration.call(**kwds)
         outrow: tuple[bui.Widget, list[bui.Widget]] = (hscroll, [])
         assert rowprep.hsubcall is not None
         hsub = rowprep.hsubcall(parent=hscroll)
         for i, buttonprep in enumerate(rowprep.buttons):
-            btn = buttonprep.buttoncall(parent=hsub)
+            kwds = {'parent': hsub}
+            for texarg, texname in buttonprep.textures.items():
+                kwds[texarg] = bui.gettexture(texname)
+            btn = buttonprep.buttoncall(**kwds)
             assert buttonprep.buttoneditcall is not None
             buttonprep.buttoneditcall(edit=btn)
             for decoration in buttonprep.decorations:
-                kwds: dict = {'draw_controller': btn}
+                kwds = {'parent': hsub, 'draw_controller': btn}
                 for texarg, texname in decoration.textures.items():
                     kwds[texarg] = bui.gettexture(texname)
                 for mesharg, meshname in decoration.meshes.items():
                     kwds[mesharg] = bui.getmesh(meshname)
-                decoration.call(parent=hsub, **kwds)
+                decoration.call(**kwds)
 
             # Make sure row is scrolled so leftmost button is
             # visible (though kinda seems like this should happen by
@@ -888,6 +1019,7 @@ class CloudUIWindow(bui.MainWindow):
             rows=[
                 clui.Row(
                     title='First Row',
+                    debug=True,
                     padding_left=5.0,
                     buttons=[
                         clui.Button(
@@ -1010,6 +1142,16 @@ class CloudUIWindow(bui.MainWindow):
                                 ),
                             ],
                         ),
+                        # Testing custom button images and opacity.
+                        clui.Button(
+                            label='Test3',
+                            texture='buttonSquareWide',
+                            padding_left=10.0,
+                            padding_right=10.0,
+                            color=(1, 1, 1),
+                            opacity=0.3,
+                            size=(200, 100),
+                        ),
                     ],
                 ),
                 clui.Row(
@@ -1082,18 +1224,19 @@ class CloudUIWindow(bui.MainWindow):
                             size=(100, 100),
                             color=(0.8, 0.8, 0.8),
                         ),
-                    ]
+                    ],
                 ),
                 clui.Row(
                     title='Last Row (Faded Title)',
                     title_color=(0.6, 0.6, 1.0, 0.3),
                     title_flatness=1.0,
                     title_shadow=1.0,
-                    subtitle='Testing Centered Content',
+                    subtitle='Testing Centered Title/Content',
                     subtitle_color=(1.0, 0.5, 1.0, 0.5),
                     subtitle_flatness=1.0,
                     subtitle_shadow=0.0,
-                    center=True,
+                    center_content=True,
+                    center_title=True,
                     buttons=[
                         clui.Button(
                             'Hello There!',
@@ -1176,17 +1319,19 @@ class CloudUIWindow(bui.MainWindow):
             )
             return
 
-        uiprep = _prep_ui(
+        pageprep = _prep_page(
             state.page, uiscale, self._scroll_width, immediate=immediate
         )
 
         bui.containerwidget(edit=self._scrollwidget, selectable=True)
         bui.scrollwidget(
-            edit=self._scrollwidget, simple_culling_v=uiprep.simple_culling_v
+            edit=self._scrollwidget,
+            simple_culling_v=pageprep.simple_culling_v,
+            center_small_content=state.page.center_vertically,
         )
 
-        self._subcontainer = _instantiate_prepped_ui(
-            uiprep,
+        self._subcontainer = _instantiate_prepped_page(
+            pageprep,
             self._scrollwidget,
             backbutton=(
                 bui.get_special_widget('back_button')

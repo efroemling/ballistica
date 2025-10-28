@@ -12,7 +12,7 @@
 
 namespace ballistica::ui_v1 {
 
-const float kHMargin = 5.0f;
+static const float kMarginH{5.0f};
 
 HScrollWidget::HScrollWidget() {
   set_draggable(false);
@@ -68,11 +68,11 @@ void HScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
         inertia_scroll_rate_ *= 0.9f;
 
       } else if (child_offset_h_
-                 > child_w - (width() - 2 * (border_width_ + kHMargin))) {
+                 > child_w - (width() - 2 * (border_width_ + kMarginH))) {
         float diff =
             child_offset_h_
             - (child_w
-               - std::min(child_w, (width() - 2 * (border_width_ + kHMargin))));
+               - std::min(child_w, (width() - 2 * (border_width_ + kMarginH))));
         inertia_scroll_rate_ +=
             diff * (is_scrolling ? strong_force : weak_force);
         inertia_scroll_rate_ *= 0.9f;
@@ -82,16 +82,16 @@ void HScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
     // Hard clipping if we're dragging the scrollbar.
     if (position_clamp) {
       if (child_offset_h_smoothed_
-          > child_w - (width() - 2 * (border_width_ + kHMargin))) {
+          > child_w - (width() - 2 * (border_width_ + kMarginH))) {
         child_offset_h_smoothed_ =
-            child_w - (width() - 2 * (border_width_ + kHMargin));
+            child_w - (width() - 2 * (border_width_ + kMarginH));
       }
       if (child_offset_h_smoothed_ < 0) {
         child_offset_h_smoothed_ = 0;
       }
       if (child_offset_h_
-          > child_w - (width() - 2 * (border_width_ + kHMargin))) {
-        child_offset_h_ = child_w - (width() - 2 * (border_width_ + kHMargin));
+          > child_w - (width() - 2 * (border_width_ + kMarginH))) {
+        child_offset_h_ = child_w - (width() - 2 * (border_width_ + kMarginH));
       }
       if (child_offset_h_ < 0) {
         child_offset_h_ = 0;
@@ -110,39 +110,61 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       claimed = true;
       pass = false;
       auto i = widgets().begin();
-      if (i == widgets().end()) break;
-      float child_w = (**i).GetWidth();
+      if (i == widgets().end()) {
+        break;
+      }
+      float scroll_child_width = (**i).GetWidth();
+
+      float target_x{m.fval1};
+      float target_width{m.fval3};
+
+      float vis_width{(width() - 2.0f * (border_width_ + kMarginH))};
+      bool changing{};
 
       // See where we'd have to scroll to get selection at left and right.
-      float child_offset_left =
-          child_w - m.fval1 - (width() - 2 * (border_width_ + kHMargin));
-      float child_offset_right = child_w - m.fval1 - m.fval3;
+      float child_offset_left = scroll_child_width - target_x - vis_width;
+      float child_offset_right = scroll_child_width - target_x - target_width;
 
-      // If we're in the middle, dont do anything.
-      if (child_offset_h_ > child_offset_left
-          && child_offset_h_ < child_offset_right) {
+      // If the area we're trying to show is bigger than the space we've got
+      // available, aim for the middle. Perhaps we should warn when this
+      // happens, but passing huge top+bottom show-buffers can also be a
+      // decent way to center the selection so maybe we shouldn't.
+      if (vis_width < target_width) {
+        child_offset_h_ = 0.5f * (child_offset_left + child_offset_right);
+        changing = true;
       } else {
-        float prev_child_offset = child_offset_h_;
-
-        // Do whatever offset is less of a move.
-        if (std::abs(child_offset_left - child_offset_h_)
-            < std::abs(child_offset_right - child_offset_h_)) {
-          child_offset_h_ = child_offset_left;
+        // If we're in the middle, dont do anything.
+        if (child_offset_h_ > child_offset_left
+            && child_offset_h_ < child_offset_right) {
         } else {
-          child_offset_h_ = child_offset_right;
-        }
+          // float prev_child_offset = child_offset_h_;
 
+          // Do whatever offset is less of a move.
+          if (std::abs(child_offset_left - child_offset_h_)
+              < std::abs(child_offset_right - child_offset_h_)) {
+            child_offset_h_ = child_offset_left;
+          } else {
+            child_offset_h_ = child_offset_right;
+          }
+          changing = true;
+        }
+      }
+
+      if (changing) {
         // If we're moving left, stop at the end.
         {
-          float max_val = child_w - (width() - 2 * (border_width_ + kHMargin));
+          float max_val = scroll_child_width
+                          - (width() - 2.0f * (border_width_ + kMarginH));
           if (child_offset_h_ > max_val) child_offset_h_ = max_val;
         }
 
-        // If we're moving right, stop at the top.
+        // If we're moving right, stop at the end.
         {
-          if (child_offset_h_ < prev_child_offset) {
-            if (child_offset_h_ < 0) child_offset_h_ = 0;
+          // if (child_offset_h_ < prev_child_offset) {
+          if (child_offset_h_ < 0.0f) {
+            child_offset_h_ = 0.0f;
           }
+          // }
         }
       }
 
@@ -356,7 +378,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                   child_offset_h_
                   - (child_h
                      - std::min(child_h,
-                                (width() - 2 * (border_width_ + kHMargin))));
+                                (width() - 2 * (border_width_ + kMarginH))));
               if (diff > 0) past_end = true;
             }
             if (past_end) {
@@ -461,7 +483,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             // To right of thumb (page-right).
             if (x >= sb_thumb_right) {
               smoothing_amount_ = 1.0f;  // So we can see the transition.
-              child_offset_h_ -= (width() - 2 * (border_width_ + kHMargin));
+              child_offset_h_ -= (width() - 2 * (border_width_ + kMarginH));
               MarkForUpdate();
               ClampThumb_(false, true);
             } else if (x >= sb_thumb_right - sb_thumb_width) {
@@ -472,7 +494,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             } else if (x >= s_left) {
               // To left of thumb (page left).
               smoothing_amount_ = 1.0f;  // So we can see the transition.
-              child_offset_h_ += (width() - 2 * (border_width_ + kHMargin));
+              child_offset_h_ += (width() - 2 * (border_width_ + kMarginH));
               MarkForUpdate();
               ClampThumb_(false, true);
             }
@@ -511,8 +533,8 @@ void HScrollWidget::UpdateLayout() {
     return;
   }
   float child_w = (**i).GetWidth();
-  child_max_offset_ = child_w - (width() - 2.0f * (border_width_ + kHMargin));
-  amount_visible_ = (width() - 2 * (border_width_ + kHMargin)) / child_w;
+  child_max_offset_ = child_w - (width() - 2.0f * (border_width_ + kMarginH));
+  amount_visible_ = (width() - 2 * (border_width_ + kMarginH)) / child_w;
   if (amount_visible_ > 1.0f) {
     amount_visible_ = 1.0f;
     if (center_small_content_) {
@@ -525,8 +547,8 @@ void HScrollWidget::UpdateLayout() {
   }
   if (mouse_held_thumb_) {
     if (child_offset_h_
-        > child_w - (width() - 2.0f * (border_width_ + kHMargin))) {
-      child_offset_h_ = child_w - (width() - 2.0f * (border_width_ + kHMargin));
+        > child_w - (width() - 2.0f * (border_width_ + kMarginH))) {
+      child_offset_h_ = child_w - (width() - 2.0f * (border_width_ + kMarginH));
       inertia_scroll_rate_ = 0.0f;
     }
     if (child_offset_h_ < 0.0f) {
@@ -534,7 +556,7 @@ void HScrollWidget::UpdateLayout() {
       inertia_scroll_rate_ = 0.0f;
     }
   }
-  (**i).set_translate(width() - (border_width_ + kHMargin)
+  (**i).set_translate(width() - (border_width_ + kMarginH)
                           + child_offset_h_smoothed_ - child_w
                           + center_offset_x_,
                       4.0f + border_height_);

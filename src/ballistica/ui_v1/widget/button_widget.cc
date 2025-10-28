@@ -231,8 +231,8 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(draw_transparent);
 
-      // We currently only support non-1.0 opacity values when using
-      // custom textures and no custom opaque mesh.
+      // We currently only support non-1.0 opacity values when using custom
+      // textures with no custom opaque mesh.
       float opacity;
       if (opacity_ == 1.0f || (texture_.exists() && !mesh_opaque_.exists())) {
         opacity = opacity_;
