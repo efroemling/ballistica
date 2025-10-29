@@ -6,25 +6,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from bacommon.cloudui import CloudUIRequest
 import bauiv1 as bui
 
 from bauiv1lib.cloudui._window import CloudUIWindow
 from bauiv1lib.cloudui._controller import CloudUIController
 
 if TYPE_CHECKING:
-    from bacommon.cloudui import CloudUIResponse
+    from bacommon.cloudui import CloudUIRequest, CloudUIResponse
     import bacommon.cloudui.v1
 
 
 def show_test_cloud_ui_window() -> None:
     """Bust out a cloud-ui window."""
+    import bacommon.cloudui.v1 as clui
 
     # Pop up an auxiliary window wherever we are in the nav stack.
     bui.app.ui_v1.auxiliary_window_activate(
         win_type=CloudUIWindow,
         win_create_call=bui.CallStrict(
-            TestCloudUIController().create_window, CloudUIRequest('/')
+            TestCloudUIController().create_window, clui.Request('/')
         ),
     )
 
@@ -61,6 +61,10 @@ def get_test_page() -> bacommon.cloudui.v1.Page:
                     clui.Button(
                         label='Test',
                         size=(180, 200),
+                        request=clui.Request('/test'),
+                        target=clui.Target(
+                            behavior=clui.TargetBehavior.REPLACE
+                        ),
                         decorations=[
                             clui.Image(
                                 'powerupPunch',

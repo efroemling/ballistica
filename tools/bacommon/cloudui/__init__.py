@@ -3,8 +3,9 @@
 """Common CloudUI bits."""
 
 from bacommon.cloudui._cloudui import (
-    CloudUIRequestMethod,
     CloudUIRequest,
+    CloudUIRequestTypeID,
+    UnknownCloudUIRequest,
     CloudUIResponse,
     CloudUIResponseTypeID,
     UnknownCloudUIResponse,
@@ -12,8 +13,9 @@ from bacommon.cloudui._cloudui import (
 
 
 __all__ = [
-    'CloudUIRequestMethod',
     'CloudUIRequest',
+    'CloudUIRequestTypeID',
+    'UnknownCloudUIRequest',
     'CloudUIResponse',
     'CloudUIResponseTypeID',
     'UnknownCloudUIResponse',

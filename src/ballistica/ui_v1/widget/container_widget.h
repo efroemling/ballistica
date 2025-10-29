@@ -218,8 +218,8 @@ class ContainerWidget : public Widget {
   Object::WeakRef<ButtonWidget> start_button_;
   Widget* selected_widget_{};
   Widget* prev_selected_widget_{};
-  base::SysMeshID bg_mesh_transparent_i_d_{};
-  base::SysMeshID bg_mesh_opaque_i_d_{};
+  base::SysMeshID bg_mesh_transparent_id_{};
+  base::SysMeshID bg_mesh_opaque_id_{};
   TransitionType transition_type_{};
   float width_{};
   float height_{};
@@ -244,6 +244,8 @@ class ContainerWidget : public Widget {
   float transition_start_offset_{};
   float transition_scale_{1.0f};
   float d_transition_scale_{};
+  float bg_center_fudge_x_{};
+  float bg_center_fudge_y_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t transition_start_time_{};
   millisecs_t dynamics_update_time_millisecs_{};

@@ -5,47 +5,78 @@
 from __future__ import annotations
 
 from enum import Enum
-from dataclasses import dataclass, field
-from typing import override, assert_never, TYPE_CHECKING, Annotated
+from dataclasses import dataclass
+from typing import override, assert_never, TYPE_CHECKING
 
-from efro.dataclassio import ioprepped, IOMultiType, IOAttrs
+from efro.dataclassio import ioprepped, IOMultiType
 
 if TYPE_CHECKING:
     pass
 
 
-class CloudUIRequestMethod(Enum):
-    """Typeof of requests that can be made to cloud-ui servers."""
+class CloudUIRequestTypeID(Enum):
+    """Type ID for each of our subclasses."""
 
-    #: An unknown request method. This can appear if a newer client is
-    #: requesting some method from an older server that is not known to
-    #: the server.
     UNKNOWN = 'u'
+    V1 = 'v1'
 
-    #: Fetch some resource. This can be retried and its results can
-    #: optionally be cached for some amount of time.
-    GET = 'g'
 
-    #: Change some resource. This cannot be implicitly retried (at least
-    #: without deduplication), nor can it be cached.
-    POST = 'p'
+class CloudUIRequest(IOMultiType[CloudUIRequestTypeID]):
+    """UI defined by the cloud.
+
+    Conceptually similar to a basic html request, except using app UI.
+    """
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> CloudUIRequestTypeID:
+        # Require child classes to supply this themselves. If we did a
+        # full type registry/lookup here it would require us to import
+        # everything and would prevent lazy loading.
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: CloudUIRequestTypeID) -> type[CloudUIRequest]:
+        """Return the subclass for each of our type-ids."""
+        # pylint: disable=cyclic-import
+
+        t = CloudUIRequestTypeID
+        if type_id is t.UNKNOWN:
+            return UnknownCloudUIRequest
+        if type_id is t.V1:
+            from bacommon.cloudui.v1 import Request
+
+            return Request
+
+        # Make sure we cover all types.
+        assert_never(type_id)
+
+    @override
+    @classmethod
+    def get_unknown_type_fallback(cls) -> CloudUIRequest:
+        # If we encounter some future type we don't know anything about,
+        # drop in a placeholder.
+        return UnknownCloudUIRequest()
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return '_t'
 
 
 @ioprepped
 @dataclass
-class CloudUIRequest:
-    """Full request to cloud-ui."""
+class UnknownCloudUIRequest(CloudUIRequest):
+    """Fallback type for unrecognized UI types.
 
-    path: Annotated[str, IOAttrs('p')]
-    method: Annotated[
-        CloudUIRequestMethod,
-        IOAttrs(
-            'm', store_default=False, enum_fallback=CloudUIRequestMethod.UNKNOWN
-        ),
-    ] = CloudUIRequestMethod.GET
-    params: Annotated[dict, IOAttrs('r', store_default=False)] = field(
-        default_factory=dict
-    )
+    Will show the client a 'cannot display this UI' placeholder request.
+    """
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> CloudUIRequestTypeID:
+        return CloudUIRequestTypeID.UNKNOWN
 
 
 class CloudUIResponseTypeID(Enum):

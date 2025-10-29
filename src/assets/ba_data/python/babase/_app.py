@@ -1059,8 +1059,12 @@ class App:
         task = asyncio.create_task(coro)
         try:
             await asyncio.wait_for(task, self.SHUTDOWN_TASK_TIMEOUT_SECONDS)
+        except TimeoutError:
+            # Log simple error message if it times out.
+            logging.error('Timed out waiting for shutdown task %s.', coro)
         except Exception:
-            logging.exception('Error in shutdown task (%s).', coro)
+            # Go with full ugly stack trace for anything unexpected.
+            logging.exception('Error in shutdown task %s.', coro)
 
     def _on_suspend(self) -> None:
         """Called when the app goes to a suspended state."""

@@ -10,7 +10,74 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
-from bacommon.cloudui._cloudui import CloudUIResponse, CloudUIResponseTypeID
+from bacommon.cloudui._cloudui import (
+    CloudUIRequest,
+    CloudUIRequestTypeID,
+    CloudUIResponse,
+    CloudUIResponseTypeID,
+)
+
+
+class RequestMethod(Enum):
+    """Typeof of requests that can be made to cloud-ui servers."""
+
+    #: An unknown request method. This can appear if a newer client is
+    #: requesting some method from an older server that is not known to
+    #: the server.
+    UNKNOWN = 'u'
+
+    #: Fetch some resource. This can be retried and its results can
+    #: optionally be cached for some amount of time.
+    GET = 'g'
+
+    #: Change some resource. This cannot be implicitly retried (at least
+    #: without deduplication), nor can it be cached.
+    POST = 'p'
+
+
+@ioprepped
+@dataclass
+class Request(CloudUIRequest):
+    """Full request to cloud-ui."""
+
+    path: Annotated[str, IOAttrs('p')]
+    method: Annotated[
+        RequestMethod,
+        IOAttrs('m', store_default=False, enum_fallback=RequestMethod.UNKNOWN),
+    ] = RequestMethod.GET
+    params: Annotated[dict, IOAttrs('r', store_default=False)] = field(
+        default_factory=dict
+    )
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> CloudUIRequestTypeID:
+        return CloudUIRequestTypeID.V1
+
+
+class TargetBehavior(Enum):
+    """How a cloud-ui request should be fulfilled."""
+
+    #: Default target - adds a new window to the nav stack and fulfills
+    #: the request there.
+    DEFAULT = 'd'
+
+    #: Immediately replaces the contents of the current window with no
+    #: transitions; used for dynamic UIs.
+    REPLACE = 'r'
+
+    #: Close the current window. Request is ignored.
+    CLOSE = 'c'
+
+
+@ioprepped
+@dataclass
+class Target:
+    """Defines where and how a request should be fulfilled."""
+
+    behavior: Annotated[TargetBehavior, IOAttrs('b', store_default=False)] = (
+        TargetBehavior.DEFAULT
+    )
 
 
 class HAlign(Enum):
@@ -196,6 +263,10 @@ class Button:
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
     label: Annotated[str | None, IOAttrs('l', store_default=False)] = None
+
+    request: Annotated[Request | None, IOAttrs('r', store_default=False)] = None
+    target: Annotated[Target | None, IOAttrs('t', store_default=False)] = None
+
     size: Annotated[
         tuple[float, float] | None, IOAttrs('sz', store_default=False)
     ] = None
@@ -213,7 +284,7 @@ class Button:
     text_scale: Annotated[float | None, IOAttrs('ts', store_default=False)] = (
         None
     )
-    texture: Annotated[str | None, IOAttrs('t', store_default=False)] = None
+    texture: Annotated[str | None, IOAttrs('tex', store_default=False)] = None
     scale: Annotated[float, IOAttrs('sc', store_default=False)] = 1.0
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0
     padding_top: Annotated[float, IOAttrs('pt', store_default=False)] = 0.0
