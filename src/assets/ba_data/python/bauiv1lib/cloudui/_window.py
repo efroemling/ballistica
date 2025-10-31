@@ -4,34 +4,28 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, override, assert_never
 
 import bauiv1 as bui
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
-from bauiv1lib.cloudui._prep import CloudUIPagePrep
 
 if TYPE_CHECKING:
     from typing import Callable
 
+    from bacommon.cloudui import CloudUIRequest, CloudUIResponse
     import bacommon.cloudui.v1
     from bauiv1lib.cloudui._controller import CloudUIController
+    from bauiv1lib.cloudui._prep import CloudUIPagePrep
 
 
 class CloudUIWindow(bui.MainWindow):
     """UI provided by the cloud."""
 
-    @dataclass
-    class State:
-        """Final state window can be set to show."""
-
-        controller: CloudUIController
-        page: bacommon.cloudui.v1.Page
-
     def __init__(
         self,
-        state: State | None,
+        controller: CloudUIController,
+        request: CloudUIRequest,
         *,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
@@ -39,7 +33,16 @@ class CloudUIWindow(bui.MainWindow):
     ):
         ui = bui.app.ui_v1
 
-        self._state: CloudUIWindow.State | None = None
+        self._locked = False
+
+        # Note: our windows and states both hold strong references to
+        # the controller, so we need to make sure the opposite is not
+        # true to avoid cycles.
+        self.controller = controller
+
+        self._request = request
+        self._last_response: CloudUIResponse | None = None
+        self._last_response_success: bool = False
 
         # We want to display differently whether we're an auxiliary
         # window or not, but unfortunately that value is not yet
@@ -247,7 +250,40 @@ class CloudUIWindow(bui.MainWindow):
                 v_align='bottom',
             )
 
-        self._spinner: bui.Widget | None = bui.spinnerwidget(
+        self._spinner: bui.Widget | None = None
+
+        # if request is not None:
+        #     print('WOULD DO SOMETHING WITH REQ')
+        # if state is not None:
+        #     self.set_state(state, immediate=True)
+
+    @property
+    def request(self) -> CloudUIRequest:
+        """The current request.
+
+        Should only be accessed from the logic thread while the ui is
+        unlocked.
+        """
+        assert bui.in_logic_thread()
+        if self._request is None:
+            raise RuntimeError('No request is set.')
+        return self._request
+
+    @request.setter
+    def request(self, val: CloudUIRequest) -> None:
+        assert bui.in_logic_thread()
+        self._request = val
+
+        # New requests immediately blow away existing responses.
+        self._last_response = None
+        self._last_response_success = False
+
+    def lock_ui(self) -> None:
+        """Stop UI interactions during some operation."""
+        assert bui.in_logic_thread()
+        assert not self._locked
+
+        self._spinner = bui.spinnerwidget(
             parent=self._root_widget,
             position=(
                 self._vis_left + self._vis_width * 0.5,
@@ -256,78 +292,115 @@ class CloudUIWindow(bui.MainWindow):
             size=48,
             style='bomb',
         )
+        self._locked = True
 
-        if state is not None:
-            self.set_state(state, immediate=True)
-
-    def set_state(self, state: State, immediate: bool = False) -> None:
-        """Set a final state (error or page contents).
-
-        This state may be instantly restored if the window is recreated
-        (depending on cache lifespan/etc.)
-        """
+    def unlock_ui(self) -> None:
+        """Resume normal UI interactions."""
         assert bui.in_logic_thread()
-
-        assert self._state is None
-        self._state = state
-
-        ui = bui.app.ui_v1
-        uiscale = ui.uiscale
+        assert self._locked
 
         if self._spinner:
             self._spinner.delete()
-            self._spinner = None
+        self._spinner = None
+        self._locked = False
 
-        # Ok; we've got content.
-        bui.textwidget(
-            edit=self._title,
-            literal=not state.page.title_is_lstr,
-            text=state.page.title,
-        )
+    @property
+    def scroll_width(self) -> float:
+        """Width of our scroll area."""
+        return self._scroll_width
 
-        # Make sure there's at least one row and that all rows contain
-        # at least one button. Otherwise show a 'nothing here' message.
-        if not state.page.rows or not all(
-            row.buttons for row in state.page.rows
-        ):
-            bui.uilog.exception(
-                'Got invalid cloud-ui state;'
-                ' must contain at least one row'
-                ' and all rows must contain buttons.'
-            )
-            bui.textwidget(
-                parent=self._root_widget,
-                position=(
-                    self._vis_left + 0.5 * self._vis_width,
-                    self._vis_top - 0.5 * self._vis_height,
-                ),
-                size=(0, 0),
-                scale=0.6,
-                text=bui.Lstr(
-                    translate=('serverResponses', 'There is nothing here.')
-                ),
-                h_align='center',
-                v_align='center',
+    def on_v1_button_press(
+        self, widgetid: str, action: bacommon.cloudui.v1.Action | None
+    ) -> None:
+        """Called when a button is pressed in a v1 ui."""
+        # pylint: disable=too-many-branches
+
+        import bacommon.cloudui.v1 as clui
+
+        # If locked, just beep.
+        if self._locked:
+            bui.getsound('error').play()
+            return
+
+        # Find the associated button.
+        widget = bui.widget_by_id(widgetid)
+        if widget is None:
+            bui.uilog.warning(
+                'CloudUI button press widget not found: %s (not expected)',
+                widgetid,
             )
             return
 
-        pageprep = CloudUIPagePrep(
-            state.page,
-            uiscale,
-            self._scroll_width,
-            immediate=immediate,
-            idprefix=self.main_window_id_prefix,
+        if action is None:
+            bui.getsound('click01').play()
+            return
+
+        action_type = action.get_type_id()
+
+        if action_type is clui.ActionTypeID.CLOSE:
+            bui.getsound('swish').play()
+            self.main_window_back()
+        elif action_type is clui.ActionTypeID.BROWSE:
+            assert isinstance(action, clui.Browse)
+            if action.default_sound:
+                bui.getsound('swish').play()
+            self.main_window_replace(
+                lambda: self.controller.create_window(
+                    action.request, origin_widget=widget, auxiliary_style=False
+                )
+            )
+            if bui.app.classic is not None and action.effects:
+                bui.app.classic.run_bs_client_effects(action.effects)
+        elif action_type is clui.ActionTypeID.REPLACE:
+            assert isinstance(action, clui.Replace)
+            if action.default_sound:
+                bui.getsound('click01').play()
+            # Force a selection save so if our UI is rebuilt with
+            # the same IDs we'll wind up in the same spot.
+            self.main_window_save_shared_state()
+            self.controller.replace(self, action.request)
+            if bui.app.classic is not None and action.effects:
+                bui.app.classic.run_bs_client_effects(action.effects)
+        elif action_type is clui.ActionTypeID.LOCAL:
+            assert isinstance(action, clui.Local)
+            if action.default_sound:
+                bui.getsound('click01').play()
+            if bui.app.classic is not None and action.effects:
+                bui.app.classic.run_bs_client_effects(action.effects)
+        else:
+            # Make sure we handle all options.
+            assert_never(action_type)
+
+    def set_last_response(
+        self, response: CloudUIResponse, success: bool
+    ) -> None:
+        """Set a response to a request."""
+        assert bui.in_logic_thread()
+        assert not self._locked
+        self._last_response = response
+        self._last_response_success = success
+
+    def instantiate_ui(self, pageprep: CloudUIPagePrep) -> None:
+        """Replace any current ui with provided prepped one."""
+        assert bui.in_logic_thread()
+
+        # Set title.
+        bui.textwidget(
+            edit=self._title,
+            literal=not pageprep.title_is_lstr,
+            text=pageprep.title,
         )
 
-        # We left highlighting on so the user could see something if
-        # selecting our empty window, but let's kill it now that we're
-        # no longer empty.
+        # Highlighting is initially on so the user can see something if
+        # selecting our empty window, but let's kill it now that we'll
+        # no longer be empty.
         bui.scrollwidget(edit=self._scrollwidget, highlight=False)
 
+        # Update culling/center/etc. based on what the new ui wants.
         bui.scrollwidget(
             edit=self._scrollwidget,
             simple_culling_v=pageprep.simple_culling_v,
-            center_small_content=state.page.center_vertically,
+            center_small_content=pageprep.center_vertically,
         )
 
         self._subcontainer = pageprep.instantiate(
@@ -338,6 +411,7 @@ class CloudUIWindow(bui.MainWindow):
                 else self._back_button
             ),
             windowbackbutton=self._back_button,
+            window=self,
         )
 
         # Most of our UI won't exist until this point so we need to
@@ -353,19 +427,31 @@ class CloudUIWindow(bui.MainWindow):
         # Support recreating our window for back/refresh purposes.
         cls = type(self)
 
+        assert bui.in_logic_thread()
+
         # IMPORTANT - Pull values from self HERE; if we do it in the
         # lambda below it'll keep self alive which will lead to
         # 'ui-not-getting-cleaned-up' warnings and memory leaks.
         auxiliary_style = self._auxiliary_style
-        state = self._state
+        controller = self.controller
+        request = self._request
+        last_response = self._last_response
+        last_response_success = self._last_response_success
 
         return bui.BasicMainWindowState(
-            create_call=lambda transition, origin_widget: cls(
-                state=state,
-                transition=transition,
-                origin_widget=origin_widget,
-                auxiliary_style=auxiliary_style,
-            ),
+            create_call=(
+                lambda transition, origin_widget: controller.restore(
+                    cls(
+                        controller=controller,
+                        request=request,
+                        transition=transition,
+                        origin_widget=origin_widget,
+                        auxiliary_style=auxiliary_style,
+                    ),
+                    last_response=last_response,
+                    last_response_success=last_response_success,
+                )
+            )
         )
 
     @override

@@ -86,11 +86,19 @@ class ClientEffectUnknown(ClientEffect):
 @ioprepped
 @dataclass
 class ClientEffectScreenMessage(ClientEffect):
-    """Display a screen-message."""
+    """Display a screen-message.
+
+    This will be processed as an Lstr with translation category
+    'serverResponses'.
+    """
 
     message: Annotated[str, IOAttrs('m')]
-    subs: Annotated[list[str], IOAttrs('s')] = field(default_factory=list)
-    color: Annotated[tuple[float, float, float], IOAttrs('c')] = (1.0, 1.0, 1.0)
+    subs: Annotated[list[str], IOAttrs('s', store_default=False)] = field(
+        default_factory=list
+    )
+    color: Annotated[
+        tuple[float, float, float], IOAttrs('c', store_default=False)
+    ] = (1.0, 1.0, 1.0)
 
     @override
     @classmethod
@@ -113,7 +121,7 @@ class ClientEffectSound(ClientEffect):
         GUN_COCKING = 'g'
 
     sound: Annotated[Sound, IOAttrs('s', enum_fallback=Sound.UNKNOWN)]
-    volume: Annotated[float, IOAttrs('v')] = 1.0
+    volume: Annotated[float, IOAttrs('v', store_default=False)] = 1.0
 
     @override
     @classmethod

@@ -10,6 +10,7 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
+from bacommon.bs import ClientEffect
 from bacommon.cloudui._cloudui import (
     CloudUIRequest,
     CloudUIRequestTypeID,
@@ -55,29 +56,110 @@ class Request(CloudUIRequest):
         return CloudUIRequestTypeID.V1
 
 
-class TargetBehavior(Enum):
-    """How a cloud-ui request should be fulfilled."""
+class ActionTypeID(Enum):
+    """Type ID for each of our subclasses."""
 
-    #: Default target - adds a new window to the nav stack and fulfills
-    #: the request there.
-    DEFAULT = 'd'
-
-    #: Immediately replaces the contents of the current window with no
-    #: transitions; used for dynamic UIs.
+    BROWSE = 'b'
     REPLACE = 'r'
-
-    #: Close the current window. Request is ignored.
     CLOSE = 'c'
+    LOCAL = 'l'
+
+
+class Action(IOMultiType[ActionTypeID]):
+    """Top level class for our multitype."""
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ActionTypeID:
+        # Require child classes to supply this themselves. If we did a
+        # full type registry/lookup here it would require us to import
+        # everything and would prevent lazy loading.
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: ActionTypeID) -> type[Action]:
+        """Return the subclass for each of our type-ids."""
+        # pylint: disable=cyclic-import
+
+        t = ActionTypeID
+        if type_id is t.BROWSE:
+            return Browse
+        if type_id is t.REPLACE:
+            return Replace
+        if type_id is t.CLOSE:
+            return Close
+        if type_id is t.LOCAL:
+            return Local
+
+        # Important to make sure we provide all types.
+        assert_never(type_id)
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return '_t'
 
 
 @ioprepped
 @dataclass
-class Target:
-    """Defines where and how a request should be fulfilled."""
+class Browse(Action):
+    """Browse to a new page in a new window."""
 
-    behavior: Annotated[TargetBehavior, IOAttrs('b', store_default=False)] = (
-        TargetBehavior.DEFAULT
-    )
+    request: Annotated[Request, IOAttrs('r')]
+    default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
+    effects: Annotated[
+        list[ClientEffect], IOAttrs('c', store_default=False)
+    ] = field(default_factory=list)
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ActionTypeID:
+        return ActionTypeID.BROWSE
+
+
+@ioprepped
+@dataclass
+class Replace(Action):
+    """Replace current page contents."""
+
+    request: Annotated[Request, IOAttrs('r')]
+    default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
+    effects: Annotated[
+        list[ClientEffect], IOAttrs('c', store_default=False)
+    ] = field(default_factory=list)
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ActionTypeID:
+        return ActionTypeID.REPLACE
+
+
+@ioprepped
+@dataclass
+class Close(Action):
+    """Close the current window."""
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ActionTypeID:
+        return ActionTypeID.CLOSE
+
+
+@ioprepped
+@dataclass
+class Local(Action):
+    """Perform local actions only."""
+
+    default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
+    effects: Annotated[
+        list[ClientEffect], IOAttrs('c', store_default=False)
+    ] = field(default_factory=list)
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ActionTypeID:
+        return ActionTypeID.LOCAL
 
 
 class HAlign(Enum):
@@ -240,6 +322,17 @@ class Image(Decoration):
         return DecorationTypeID.IMAGE
 
 
+class ButtonStyle(Enum):
+    """Styles a button can be."""
+
+    SQUARE = 'q'
+    TAB = 't'
+    SMALL = 's'
+    MEDIUM = 'm'
+    LARGE = 'l'
+    LARGER = 'xl'
+
+
 @ioprepped
 @dataclass
 class Button:
@@ -249,23 +342,12 @@ class Button:
     with 'scale'.
     """
 
-    class Style(Enum):
-        """Styles a button can be."""
-
-        SQUARE = 'q'
-        TAB = 't'
-        SMALL = 's'
-        MEDIUM = 'm'
-        LARGE = 'l'
-        LARGER = 'xl'
-
     #: Note that cloud-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
     label: Annotated[str | None, IOAttrs('l', store_default=False)] = None
 
-    request: Annotated[Request | None, IOAttrs('r', store_default=False)] = None
-    target: Annotated[Target | None, IOAttrs('t', store_default=False)] = None
+    action: Annotated[Action | None, IOAttrs('a', store_default=False)] = None
 
     size: Annotated[
         tuple[float, float] | None, IOAttrs('sz', store_default=False)
@@ -294,7 +376,9 @@ class Button:
         list[Decoration], IOAttrs('c', store_default=False)
     ] = field(default_factory=list)
     text_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
-    style: Annotated[Style, IOAttrs('y', store_default=False)] = Style.SQUARE
+    style: Annotated[ButtonStyle, IOAttrs('y', store_default=False)] = (
+        ButtonStyle.SQUARE
+    )
 
     #: Draw bounds of the button.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
@@ -383,6 +467,11 @@ class Page:
     #: cloud-ui translation should be handled server-side, but this can
     #: allow client-side translation.
     title_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
+
+    #: If provided, refuse to show on builds older than this.
+    minimum_engine_build: Annotated[
+        int | None, IOAttrs('b', store_default=False)
+    ] = None
 
 
 class ResponseCode(Enum):

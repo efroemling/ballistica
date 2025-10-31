@@ -12,12 +12,16 @@ from functools import partial
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never
 
+from efro.util import strict_partial
+
 import bacommon.cloudui.v1 as clui
 import bauiv1 as bui
 
 
 if TYPE_CHECKING:
     from typing import Callable
+
+    from bauiv1lib.cloudui._window import CloudUIWindow
 
 
 @dataclass
@@ -34,6 +38,8 @@ class _ButtonPrep:
     buttoneditcall: Callable | None
     decorations: list[_DecorationPrep]
     textures: dict[str, str]
+    widgetid: str
+    action: clui.Action | None
 
 
 @dataclass
@@ -97,6 +103,9 @@ class CloudUIPagePrep:
         self.width: float = scroll_width + fudge
         self.height: float = top_buffer + bot_buffer
         self.simple_culling_v: float = page.simple_culling_v
+        self.center_vertically: bool = page.center_vertically
+        self.title: str = page.title
+        self.title_is_lstr: bool = page.title_is_lstr
 
         nextbuttonid = 0
 
@@ -350,25 +359,26 @@ class CloudUIPagePrep:
                 )
 
                 bstyle: str
-                if button.style is clui.Button.Style.SQUARE:
+                if button.style is clui.ButtonStyle.SQUARE:
                     bstyle = 'square'
-                elif button.style is clui.Button.Style.TAB:
+                elif button.style is clui.ButtonStyle.TAB:
                     bstyle = 'tab'
-                elif button.style is clui.Button.Style.SMALL:
+                elif button.style is clui.ButtonStyle.SMALL:
                     bstyle = 'small'
-                elif button.style is clui.Button.Style.MEDIUM:
+                elif button.style is clui.ButtonStyle.MEDIUM:
                     bstyle = 'medium'
-                elif button.style is clui.Button.Style.LARGE:
+                elif button.style is clui.ButtonStyle.LARGE:
                     bstyle = 'large'
-                elif button.style is clui.Button.Style.LARGER:
+                elif button.style is clui.ButtonStyle.LARGER:
                     bstyle = 'larger'
                 else:
                     assert_never(button.style)
 
+                widgetid = f'{idprefix}|button{nextbuttonid}'
                 buttonprep = _ButtonPrep(
                     buttoncall=partial(
                         bui.buttonwidget,
-                        id=f'{idprefix}|button{nextbuttonid}',
+                        id=widgetid,
                         position=(x, row.padding_bottom + to_button_bottom),
                         size=(bwidth, bheight),
                         scale=bscale,
@@ -381,6 +391,7 @@ class CloudUIPagePrep:
                         label='' if button.label is None else button.label,
                         text_literal=not button.text_is_lstr,
                         autoselect=True,
+                        enable_sound=False,
                         transition_delay=None if immediate else tdelay,
                     ),
                     buttoneditcall=partial(
@@ -395,6 +406,8 @@ class CloudUIPagePrep:
                     ),
                     decorations=[],
                     textures={},
+                    widgetid=widgetid,
+                    action=button.action,
                 )
                 nextbuttonid += 1
                 if button.texture is not None:
@@ -492,6 +505,8 @@ class CloudUIPagePrep:
         scrollwidget: bui.Widget,
         backbutton: bui.Widget,
         windowbackbutton: bui.Widget | None,
+        window: CloudUIWindow,
+        # on_button_press: Callable[[], None],
     ) -> bui.Widget:
         """Create a UI using prepped data."""
         # pylint: disable=too-many-locals
@@ -523,7 +538,14 @@ class CloudUIPagePrep:
             assert rowprep.hsubcall is not None
             hsub = rowprep.hsubcall(parent=hscroll)
             for i, buttonprep in enumerate(rowprep.buttons):
-                kwds = {'parent': hsub}
+                kwds = {
+                    'parent': hsub,
+                    'on_activate_call': strict_partial(
+                        window.on_v1_button_press,
+                        buttonprep.widgetid,
+                        buttonprep.action,
+                    ),
+                }
                 for texarg, texname in buttonprep.textures.items():
                     kwds[texarg] = bui.gettexture(texname)
                 btn = buttonprep.buttoncall(**kwds)
@@ -540,8 +562,8 @@ class CloudUIPagePrep:
                     decoration.call(**kwds)
 
                 # Make sure row is scrolled so leftmost button is
-                # visible (though kinda seems like this should happen by
-                # default).
+                # visible (though it kinda seems like this should happen
+                # by default).
                 if i == 0:
                     bui.containerwidget(edit=hsub, visible_child=btn)
                 outrow[1].append(btn)
@@ -552,10 +574,27 @@ class CloudUIPagePrep:
 
         # Ok; we've got all widgets. Now wire up directional nav between
         # rows/buttons.
-        if windowbackbutton is not None and outrows:
+
+        # Up press on any top-row button should select window back button
+        # (if there is one).
+        if outrows and windowbackbutton is not None:
             _scroll, buttons = outrows[0]
             for button in buttons:
                 bui.widget(edit=button, up_widget=windowbackbutton)
+        for _scroll, buttons in outrows:
+            # Left press on first button in any row should select back
+            # button (either system one or window one).
+            if buttons:
+                bui.widget(edit=buttons[0], left_widget=backbutton)
+            # Left/right presses should select neighbor button in
+            # row (when there is one).
+            for i in range(0, len(buttons) - 1):
+                leftbutton = buttons[i]
+                rightbutton = buttons[i + 1]
+                bui.widget(edit=leftbutton, right_widget=rightbutton)
+                bui.widget(edit=rightbutton, left_widget=leftbutton)
+        # Down/up presses should select next/prev row (when there is
+        # one).
         for i in range(0, len(outrows) - 1):
             topscroll, topbuttons = outrows[i]
             botscroll, botbuttons = outrows[i + 1]
@@ -563,14 +602,6 @@ class CloudUIPagePrep:
                 bui.widget(edit=topbutton, down_widget=botscroll)
             for botbutton in botbuttons:
                 bui.widget(edit=botbutton, up_widget=topscroll)
-            bui.widget(edit=topbuttons[0], left_widget=backbutton)
-            bui.widget(edit=botbuttons[0], left_widget=backbutton)
-        for _scroll, buttons in outrows:
-            for i in range(0, len(buttons) - 1):
-                leftbutton = buttons[i]
-                rightbutton = buttons[i + 1]
-                bui.widget(edit=leftbutton, right_widget=rightbutton)
-                bui.widget(edit=rightbutton, left_widget=leftbutton)
 
         return subcontainer
 

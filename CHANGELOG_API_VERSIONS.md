@@ -1,33 +1,35 @@
 This file documents past and future changes associated with api-version bumps.
 
+## What is API Version?
 Although Ballistica strives to maintain backward compatibility when possible,
 breaking changes are sometimes necessary. Ballistica's api-version system exists
 to allow user code to gracefully adapt to these changes and to prevent older
 incompatible code from being loaded and causing problems.
 
 ## Overlapping API Versions
-In the past, api-version bumps required *all* mods to immediately update their
-target versions before they would load again, which resulted in large amounts of
-friction in the modding community. To avoid this problem, the engine will be
-transitioning to an overlapping api-version system for the next api-version
-bump. This means at some point it will support both api 9 and 10 at once. Mods
-targeting api 9 will still function but will get warnings about updating to 10
-and preparing for changes to occur with the removal of 9. Once enough time has
-passed to allow the mod ecosystem to prepare, api 9 support will end and the
-associated changes will occur. Later this process will repeat with api 10 and 11
-coexisting for a while before 10 is dropped, etc.
+In the past, api-version bumps required *all* mods to immediately make necessary
+changes and then update their target versions before they would load again,
+which resulted in large amounts of friction in the modding community. To avoid
+this problem, the engine will be transitioning to an overlapping api-version
+system for the next api-version bump. This means at some point it will support
+both api 9 and 10 at once. Mods targeting api 9 will still function but will get
+warnings about upgrading to 10 and preparing for changes to occur with the
+removal of 9. Once enough time has passed to allow the mod ecosystem to prepare,
+api 9 support will end and those changes will occur. Later this process will
+repeat with api 10 and 11 coexisting for a while before 10 is dropped, etc.
 
 To maintain a working mod, keep your `# ba_meta require api` lines targeting the
 newest api version 'X' and ensure that your code accounts for all upcoming
 changes to happen with the removal of 'X-1'. Generally the engine will issue
-warnings for such code, but it is important to check the list below to be sure.
+warnings when you are using deprecated functionality, but it is important to
+check the list below to be sure.
 
 Note that once api 'X' becomes available, no more changes will be scheduled for
 the 'X-1' removal. This means that if you update your code for 'X' and account
 for all listed 'X-1' changes, your code should remain functional for as long as
 'X' remains supported.
 
-Note also that the engine makes no guarantees of *forward* compatibility within
+Also note that the engine makes no guarantees of *forward* compatibility within
 api-versions. Changes and additions can happen at any time as long as they are
 backwards compatible, and code targeting those changes should only expect to
 work on builds newer than what they were built against; not older - even if the
@@ -43,8 +45,11 @@ available builds.
 - Same as above for `ba*.WeakCall()` (migrate to `WeakCallPartial()` or
   `WeakCallStrict()`).
 - `MainWindow.main_window_replace()` will no longer accept `MainWindow` objects
-  directly. To prepare for this, you should be passing callables to generate
-  `MainWindow` objects. Look at `bauiv1lib` for examples.
+  directly. Instead it expects a callable that generates a `MainWindow` object.
+  To prepare for this, code such as
+  `self.main_window_replace(MyNiftyWin(some_arg))` can generally just become
+  `self.main_window_replace(lambda: MyNiftyWin(some_arg))`. Look at `bauiv1lib`
+  for examples.
 - `bauiv1.uicleanupcheck()` will be removed. To prepare for this, use
   `ba*.app.ui_v1.add_use_cleanup_check()` instead.
 

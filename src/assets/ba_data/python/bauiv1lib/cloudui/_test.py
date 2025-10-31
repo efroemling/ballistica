@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
+from efro.error import CleanError
 import bauiv1 as bui
 
 from bauiv1lib.cloudui._window import CloudUIWindow
@@ -40,19 +41,114 @@ class TestCloudUIController(CloudUIController):
         """
         import bacommon.cloudui.v1 as clui
 
-        return clui.Response(
-            code=clui.ResponseCode.SUCCESS,
-            page=get_test_page(),
-        )
+        # We currently support v1 requests only.
+        if isinstance(request, clui.Request):
+            if request.path == '/':
+                return clui.Response(
+                    code=clui.ResponseCode.SUCCESS,
+                    page=_root_page(),
+                )
+            if request.path == '/test':
+                return clui.Response(
+                    code=clui.ResponseCode.SUCCESS,
+                    page=_test_page(),
+                )
+
+        raise CleanError('Invalid request.')
 
 
-def get_test_page() -> bacommon.cloudui.v1.Page:
-    """Return test page."""
+def _test_page() -> bacommon.cloudui.v1.Page:
+    """More testing."""
     import bacommon.cloudui.v1 as clui
 
     return clui.Page(
-        title='Testing',
+        title='Test',
         rows=[
+            clui.Row(
+                title='More Action Tests',
+                buttons=[
+                    clui.Button(
+                        'Browse',
+                        size=(120, 80),
+                        action=clui.Browse(clui.Request('/')),
+                    ),
+                    clui.Button(
+                        'Replace',
+                        size=(120, 80),
+                        action=clui.Replace(clui.Request('/')),
+                    ),
+                    clui.Button(
+                        'Close',
+                        size=(120, 80),
+                        action=clui.Close(),
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
+def _root_page() -> bacommon.cloudui.v1.Page:
+    """Return test page."""
+
+    import bacommon.bs
+    import bacommon.cloudui.v1 as clui
+
+    return clui.Page(
+        title='TestRoot',
+        rows=[
+            clui.Row(
+                title='Action Tests',
+                buttons=[
+                    clui.Button(
+                        'Browse',
+                        size=(120, 80),
+                        action=clui.Browse(clui.Request('/test')),
+                    ),
+                    clui.Button(
+                        'Replace',
+                        size=(120, 80),
+                        action=clui.Replace(clui.Request('/test')),
+                    ),
+                    clui.Button(
+                        'Close',
+                        size=(120, 80),
+                        action=clui.Close(),
+                    ),
+                    clui.Button(
+                        'NotFound',
+                        size=(120, 80),
+                        action=clui.Browse(clui.Request('/doesnotexist')),
+                    ),
+                    clui.Button(
+                        'Effects',
+                        size=(120, 80),
+                        action=clui.Local(
+                            effects=[
+                                bacommon.bs.ClientEffectScreenMessage(
+                                    'Hello From...',
+                                    color=(0, 1, 0),
+                                ),
+                                bacommon.bs.ClientEffectSound(
+                                    sound=(
+                                        bacommon.bs.ClientEffectSound
+                                    ).Sound.CASH_REGISTER
+                                ),
+                                bacommon.bs.ClientEffectDelay(1.0),
+                                bacommon.bs.ClientEffectScreenMessage(
+                                    '...Client Effects',
+                                    color=(0, 1, 0),
+                                ),
+                                bacommon.bs.ClientEffectSound(
+                                    sound=(
+                                        bacommon.bs.ClientEffectSound
+                                    ).Sound.CASH_REGISTER
+                                ),
+                            ]
+                        ),
+                    ),
+                ],
+            ),
             clui.Row(
                 title='First Row',
                 debug=True,
@@ -61,10 +157,6 @@ def get_test_page() -> bacommon.cloudui.v1.Page:
                     clui.Button(
                         label='Test',
                         size=(180, 200),
-                        request=clui.Request('/test'),
-                        target=clui.Target(
-                            behavior=clui.TargetBehavior.REPLACE
-                        ),
                         decorations=[
                             clui.Image(
                                 'powerupPunch',
@@ -187,8 +279,8 @@ def get_test_page() -> bacommon.cloudui.v1.Page:
                 ],
             ),
             clui.Row(
-                title='Second Row',
-                subtitle='Second row subtitle.',
+                title='Long Row Test',
+                subtitle='Look - a subtitle!',
                 buttons=[
                     clui.Button(
                         size=(150, 100),
@@ -248,17 +340,15 @@ def get_test_page() -> bacommon.cloudui.v1.Page:
             clui.Row(
                 buttons=[
                     clui.Button(
-                        size=(100, 100),
-                        color=(0.8, 0.8, 0.8),
-                    ),
-                    clui.Button(
-                        size=(100, 100),
+                        'No Title Test',
+                        size=(300, 100),
+                        style=clui.ButtonStyle.MEDIUM,
                         color=(0.8, 0.8, 0.8),
                     ),
                 ],
             ),
             clui.Row(
-                title='Last Row (Faded Title)',
+                title='Centered Content / Faded Title',
                 title_color=(0.6, 0.6, 1.0, 0.3),
                 title_flatness=1.0,
                 title_shadow=1.0,
