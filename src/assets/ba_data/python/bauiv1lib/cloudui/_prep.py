@@ -64,10 +64,11 @@ class CloudUIPagePrep:
     def __init__(
         self,
         page: clui.Page,
+        *,
         uiscale: bui.UIScale,
         scroll_width: float,
+        scroll_height: float,
         idprefix: str,
-        *,
         immediate: bool = False,
     ) -> None:
         # pylint: disable=too-many-statements
@@ -101,13 +102,22 @@ class CloudUIPagePrep:
         self.rootcall: Callable[..., bui.Widget] | None = None
         self.rows: list[_RowPrep] = []
         self.width: float = scroll_width + fudge
-        self.height: float = top_buffer + bot_buffer
+        self.height: float = (
+            top_buffer
+            + bot_buffer
+            + page.row_spacing * max(0, (len(page.rows) - 1))
+        )
         self.simple_culling_v: float = page.simple_culling_v
         self.center_vertically: bool = page.center_vertically
         self.title: str = page.title
         self.title_is_lstr: bool = page.title_is_lstr
 
+        # Called with root container after construction completes.
+        self.root_post_calls: list[Callable[[bui.Widget], None]] = []
+
         nextbuttonid = 0
+
+        have_start_button = False
 
         # Precalc basic info like dimensions for all rows.
         for row in page.rows:
@@ -179,6 +189,9 @@ class CloudUIPagePrep:
         for i, (row, rowprep) in enumerate(
             zip(page.rows, self.rows, strict=True)
         ):
+            if i != 0:
+                y -= page.row_spacing
+
             tdelaybase = 0.12 * (i + 1)
             if row.title is not None:
                 rowprep.titlecalls.append(
@@ -190,6 +203,7 @@ class CloudUIPagePrep:
                                     (self.width - left_buffer - right_buffer)
                                     * 0.5
                                 )
+                                + 7.0  # Fudge factor to match hscroll
                                 if row.center_title
                                 else (left_buffer + title_inset)
                             ),
@@ -234,6 +248,7 @@ class CloudUIPagePrep:
                                     (self.width - left_buffer - right_buffer)
                                     * 0.5
                                 )
+                                + 7.0  # Fudge factor to match hscroll
                                 if row.center_title
                                 else (left_buffer + title_inset)
                             ),
@@ -375,6 +390,19 @@ class CloudUIPagePrep:
                     assert_never(button.style)
 
                 widgetid = f'{idprefix}|button{nextbuttonid}'
+
+                if button.is_start_button:
+                    if have_start_button:
+                        bui.uilog.warning(
+                            'Multiple buttons flagged as is_start_button.'
+                            ' There can be only one per page.'
+                        )
+                    else:
+                        have_start_button = True
+                        self.root_post_calls.append(
+                            partial(self._set_start_button, widgetid)
+                        )
+
                 buttonprep = _ButtonPrep(
                     buttoncall=partial(
                         bui.buttonwidget,
@@ -393,6 +421,8 @@ class CloudUIPagePrep:
                         autoselect=True,
                         enable_sound=False,
                         transition_delay=None if immediate else tdelay,
+                        icon_color=button.icon_color,
+                        iconscale=button.icon_scale,
                     ),
                     buttoneditcall=partial(
                         bui.widget,
@@ -412,6 +442,9 @@ class CloudUIPagePrep:
                 nextbuttonid += 1
                 if button.texture is not None:
                     buttonprep.textures['texture'] = button.texture
+
+                if button.icon is not None:
+                    buttonprep.textures['icon'] = button.icon
 
                 # With row-debug on, visualize the area we try to scroll to
                 # show when each button is selected. Note that we're clamped
@@ -494,6 +527,23 @@ class CloudUIPagePrep:
             if row.subtitle is not None:
                 show_buffer_top += row_subtitle_height
 
+            # Calc the total height of what we're trying to keep on
+            # screen, and then nudge that towards the total visible
+            # height of the scroll area.
+            total_show_height = (
+                rowprep.height + show_buffer_top + show_buffer_bottom
+            )
+            # How much to push show-height towards full available space.
+            # 1.0 should lead to always perfect centering (but that
+            # might feel too aggressive).
+            amt = 0.5
+            buffer_extra = max(
+                0.0, (scroll_height - total_show_height) * 0.5 * amt
+            )
+
+            show_buffer_top += buffer_extra
+            show_buffer_bottom += buffer_extra
+
             rowprep.hscrolleditcall = partial(
                 bui.widget,
                 show_buffer_top=show_buffer_top,
@@ -502,11 +552,12 @@ class CloudUIPagePrep:
 
     def instantiate(
         self,
+        *,
+        rootwidget: bui.Widget,
         scrollwidget: bui.Widget,
         backbutton: bui.Widget,
         windowbackbutton: bui.Widget | None,
         window: CloudUIWindow,
-        # on_button_press: Callable[[], None],
     ) -> bui.Widget:
         """Create a UI using prepped data."""
         # pylint: disable=too-many-locals
@@ -572,6 +623,9 @@ class CloudUIPagePrep:
             assert rowprep.hscrolleditcall is not None
             rowprep.hscrolleditcall(edit=hscroll)
 
+        for root_post_call in self.root_post_calls:
+            root_post_call(rootwidget)
+
         # Ok; we've got all widgets. Now wire up directional nav between
         # rows/buttons.
 
@@ -604,6 +658,12 @@ class CloudUIPagePrep:
                 bui.widget(edit=botbutton, up_widget=topscroll)
 
         return subcontainer
+
+    @staticmethod
+    def _set_start_button(buttonid: str, root: bui.Widget) -> None:
+        widget = bui.widget_by_id(buttonid)
+        if widget:
+            bui.containerwidget(edit=root, start_button=widget)
 
 
 def _prep_text(
@@ -648,7 +708,7 @@ def _prep_text(
                 h_align=h_align,
                 v_align=v_align,
                 size=(0, 0),
-                color=(0.5, 0.5, 0.5, 1.0),
+                color=text.color,
                 text=text.text,
                 literal=not text.is_lstr,
                 transition_delay=tdelay,

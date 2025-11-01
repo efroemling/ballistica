@@ -257,10 +257,11 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           (g_core->AppTimeMillisecs() - last_sub_widget_h_scroll_claim_time_
            < 100);
       if (child_claimed_h_scroll_recently
-          && std::abs(avg_scroll_speed_h_) > std::abs(avg_scroll_speed_v_))
+          && std::abs(avg_scroll_speed_h_) > std::abs(avg_scroll_speed_v_)) {
         ignore_regular_scrolling = true;
+      }
 
-      if ((x >= 0.0f) && (x < width()) && (y >= 0.0f) && (y < height())
+      if (x >= 0.0f && x < width() && y >= 0.0f && y < height()
           && !ignore_regular_scrolling) {
         claimed = true;
         pass = false;
@@ -293,7 +294,9 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                      - std::min(
                          child_h,
                          (height() - 2.0f * (border_height_ + kMarginV))));
-              if (diff > 0) past_end = true;
+              if (diff > 0) {
+                past_end = true;
+              }
             }
             if (past_end) {
               new_val = scroll_speed * 0.1f * m.fval3;
@@ -316,7 +319,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     case base::WidgetMessage::Type::kMouseWheel: {
       float x = m.fval1;
       float y = m.fval2;
-      if ((x >= 0.0f) && (x < width()) && (y >= 0.0f) && (y < height())) {
+      if (x >= 0.0f && x < width() && y >= 0.0f && y < height()) {
         claimed = true;
         pass = false;
 
@@ -336,8 +339,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     case base::WidgetMessage::Type::kMouseDown: {
       float x = m.fval1;
       float y = m.fval2;
-      if ((x >= 0.0f) && (x < width() + right_overlap) && (y >= 0.0f)
-          && (y < height())) {
+      if (x >= 0.0f && x < (width() + right_overlap) && y >= 0.0f
+          && y < height()) {
         // On touch devices, touches begin scrolling, (and eventually can
         // count as clicks if they don't move).
         if (g_base->ui->touch_mode()) {

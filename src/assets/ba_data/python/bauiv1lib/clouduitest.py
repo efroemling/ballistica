@@ -4,17 +4,19 @@
 
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING, override
 
 from efro.error import CleanError
 import bauiv1 as bui
 
-from bauiv1lib.cloudui._window import CloudUIWindow
-from bauiv1lib.cloudui._controller import CloudUIController
+from bauiv1lib.cloudui import CloudUIWindow, CloudUIController
 
 if TYPE_CHECKING:
     from bacommon.cloudui import CloudUIRequest, CloudUIResponse
     import bacommon.cloudui.v1
+
+    from bauiv1lib.cloudui import CloudUILocalAction
 
 
 def show_test_cloud_ui_window() -> None:
@@ -39,30 +41,111 @@ class TestCloudUIController(CloudUIController):
 
         Will be called in a background thread.
         """
+        import bacommon.bs
         import bacommon.cloudui.v1 as clui
 
         # We currently support v1 requests only.
         if isinstance(request, clui.Request):
             if request.path == '/':
                 return clui.Response(
-                    code=clui.ResponseCode.SUCCESS,
-                    page=_root_page(),
+                    _test_page_root(),
+                    effects=(
+                        [
+                            bacommon.bs.ClientEffectLegacyScreenMessage(
+                                'Hello From...',
+                                color=(0, 1, 0),
+                            ),
+                            bacommon.bs.ClientEffectSound(
+                                sound=(
+                                    bacommon.bs.ClientEffectSound
+                                ).Sound.CASH_REGISTER
+                            ),
+                            bacommon.bs.ClientEffectDelay(1.0),
+                            bacommon.bs.ClientEffectLegacyScreenMessage(
+                                '...Response Client Effects',
+                                color=(0, 1, 0),
+                            ),
+                            bacommon.bs.ClientEffectSound(
+                                sound=(
+                                    bacommon.bs.ClientEffectSound
+                                ).Sound.CASH_REGISTER
+                            ),
+                        ]
+                        if request.params.get('test_effects', False)
+                        else []
+                    ),
                 )
-            if request.path == '/test':
-                return clui.Response(
-                    code=clui.ResponseCode.SUCCESS,
-                    page=_test_page(),
-                )
+            if request.path == '/test2':
+                return clui.Response(_test_page_2())
+            if request.path == '/slow':
+                return clui.Response(_test_page_long())
 
         raise CleanError('Invalid request.')
 
+    @override
+    def local_action(self, action: CloudUILocalAction) -> None:
+        bui.screenmessage(
+            f'Would do {action.name!r} with params {action.params!r}.'
+        )
 
-def _test_page() -> bacommon.cloudui.v1.Page:
+
+def _test_page_long() -> bacommon.cloudui.v1.Page:
+    """Testing a page that takes a bit of time to load."""
+    import bacommon.cloudui.v1 as clui
+
+    # Simulate a slow connection or whatnot.
+    time.sleep(3.0)
+
+    return clui.Page(
+        title='Test',
+        center_vertically=True,
+        rows=[
+            clui.Row(
+                title='That took a while',
+                center_title=True,
+                center_content=True,
+                buttons=[
+                    clui.Button(
+                        'Sure Did',
+                        size=(120, 80),
+                        action=clui.Local(close_window=True),
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
+def _test_page_effects() -> bacommon.cloudui.v1.Page:
+    """Testing effects after a page load."""
+    import bacommon.cloudui.v1 as clui
+
+    return clui.Page(
+        title='Effects',
+        center_vertically=True,
+        rows=[
+            clui.Row(
+                title='Have some lovely effects',
+                center_title=True,
+                center_content=True,
+                buttons=[
+                    clui.Button(
+                        'Nice!',
+                        size=(120, 80),
+                        action=clui.Local(close_window=True),
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
+def _test_page_2() -> bacommon.cloudui.v1.Page:
     """More testing."""
     import bacommon.cloudui.v1 as clui
 
     return clui.Page(
-        title='Test',
+        title='Test 2',
         rows=[
             clui.Row(
                 title='More Action Tests',
@@ -80,7 +163,7 @@ def _test_page() -> bacommon.cloudui.v1.Page:
                     clui.Button(
                         'Close',
                         size=(120, 80),
-                        action=clui.Close(),
+                        action=clui.Local(close_window=True),
                     ),
                 ],
             ),
@@ -88,14 +171,14 @@ def _test_page() -> bacommon.cloudui.v1.Page:
     )
 
 
-def _root_page() -> bacommon.cloudui.v1.Page:
+def _test_page_root() -> bacommon.cloudui.v1.Page:
     """Return test page."""
 
     import bacommon.bs
     import bacommon.cloudui.v1 as clui
 
     return clui.Page(
-        title='TestRoot',
+        title='Test Root',
         rows=[
             clui.Row(
                 title='Action Tests',
@@ -103,29 +186,29 @@ def _root_page() -> bacommon.cloudui.v1.Page:
                     clui.Button(
                         'Browse',
                         size=(120, 80),
-                        action=clui.Browse(clui.Request('/test')),
+                        action=clui.Browse(clui.Request('/test2')),
                     ),
                     clui.Button(
                         'Replace',
                         size=(120, 80),
-                        action=clui.Replace(clui.Request('/test')),
+                        action=clui.Replace(clui.Request('/test2')),
                     ),
                     clui.Button(
                         'Close',
                         size=(120, 80),
-                        action=clui.Close(),
+                        action=clui.Local(close_window=True),
                     ),
                     clui.Button(
-                        'NotFound',
+                        'Invalid\nRequest',
                         size=(120, 80),
-                        action=clui.Browse(clui.Request('/doesnotexist')),
+                        action=clui.Browse(clui.Request('/invalidrequest')),
                     ),
                     clui.Button(
-                        'Effects',
+                        'Local\nEffects',
                         size=(120, 80),
                         action=clui.Local(
                             effects=[
-                                bacommon.bs.ClientEffectScreenMessage(
+                                bacommon.bs.ClientEffectLegacyScreenMessage(
                                     'Hello From...',
                                     color=(0, 1, 0),
                                 ),
@@ -135,8 +218,8 @@ def _root_page() -> bacommon.cloudui.v1.Page:
                                     ).Sound.CASH_REGISTER
                                 ),
                                 bacommon.bs.ClientEffectDelay(1.0),
-                                bacommon.bs.ClientEffectScreenMessage(
-                                    '...Client Effects',
+                                bacommon.bs.ClientEffectLegacyScreenMessage(
+                                    '...Local Client Effects',
                                     color=(0, 1, 0),
                                 ),
                                 bacommon.bs.ClientEffectSound(
@@ -147,10 +230,40 @@ def _root_page() -> bacommon.cloudui.v1.Page:
                             ]
                         ),
                     ),
+                    clui.Button(
+                        'Response\nEffects',
+                        size=(120, 80),
+                        action=clui.Replace(
+                            clui.Request('/', params={'test_effects': True})
+                        ),
+                    ),
+                    clui.Button(
+                        'Local\nActions',
+                        size=(120, 80),
+                        action=clui.Local(
+                            action='testaction',
+                            action_params={'testparam': 123},
+                        ),
+                    ),
                 ],
             ),
             clui.Row(
-                title='First Row',
+                title='More Action Tests',
+                buttons=[
+                    clui.Button(
+                        'Slow\nBrowse',
+                        size=(120, 80),
+                        action=clui.Browse(clui.Request('/slow')),
+                    ),
+                    clui.Button(
+                        'Slow\nReplace',
+                        size=(120, 80),
+                        action=clui.Replace(clui.Request('/slow')),
+                    ),
+                ],
+            ),
+            clui.Row(
+                title='Layout Tests',
                 debug=True,
                 padding_left=5.0,
                 buttons=[
@@ -335,15 +448,20 @@ def _root_page() -> bacommon.cloudui.v1.Page:
                     clui.Button(size=(150, 100)),
                     clui.Button(size=(150, 100)),
                     clui.Button(size=(150, 100)),
+                    clui.Button(size=(150, 100)),
+                    clui.Button(size=(150, 100)),
                 ],
             ),
             clui.Row(
                 buttons=[
                     clui.Button(
-                        'No Title Test',
-                        size=(300, 100),
+                        'Row-With-No-Title Test',
+                        size=(300, 80),
                         style=clui.ButtonStyle.MEDIUM,
                         color=(0.8, 0.8, 0.8),
+                        icon='buttonPunch',
+                        icon_color=(0.5, 0.3, 1.0, 1.0),
+                        icon_scale=1.2,
                     ),
                 ],
             ),

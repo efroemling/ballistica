@@ -25,6 +25,8 @@ PyNumberMethods PythonClassWidget::as_number_;
 #define ATTR_ID "id"
 #define ATTR_ALLOW_PRESERVE_SELECTION "allow_preserve_selection"
 #define ATTR_SELECTABLE "selectable"
+#define ATTR_CENTER "center"
+#define ATTR_PARENT "parent"
 
 // The set we expose via dir().
 static const char* extra_dir_attrs[] = {
@@ -62,6 +64,12 @@ void PythonClassWidget::SetupType(PyTypeObject* cls) {
       "    " ATTR_ALLOW_PRESERVE_SELECTION " (bool):\n"
       "        Whether this widget should participate in auto selection\n"
       "        save/restore.\n"
+      "\n"
+      "    " ATTR_CENTER " (tuple[float, float]):\n"
+      "        The center of this widget in its parent widget's space.\n"
+      "\n"
+      "    " ATTR_PARENT " (bauiv1.Widget | None):\n"
+      "        The parent widget (if any).\n"
       "\n"
       "    " ATTR_SELECTABLE " (bool):\n"
       "        Whether this widget can be selected.\n";
@@ -156,6 +164,25 @@ auto PythonClassWidget::tp_getattro(PythonClassWidget* self, PyObject* attr)
       Py_RETURN_TRUE;
     }
     Py_RETURN_FALSE;
+  }
+  if (!strcmp(s, ATTR_CENTER)) {
+    Widget* w = self->widget_->get();
+    if (!w) {
+      throw Exception("Invalid Widget", PyExcType::kReference);
+    }
+    float x, y;
+    w->GetCenter(&x, &y);
+    return Py_BuildValue("(ff)", x, y);
+  }
+  if (!strcmp(s, ATTR_PARENT)) {
+    Widget* w = self->widget_->get();
+    if (!w) {
+      throw Exception("Invalid Widget", PyExcType::kReference);
+    }
+    if (Widget* parent = w->parent_widget()) {
+      return parent->NewPyRef();
+    }
+    Py_RETURN_NONE;
   }
 
   // Fall back to generic behavior.

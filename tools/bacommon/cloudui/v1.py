@@ -61,7 +61,6 @@ class ActionTypeID(Enum):
 
     BROWSE = 'b'
     REPLACE = 'r'
-    CLOSE = 'c'
     LOCAL = 'l'
 
 
@@ -87,8 +86,6 @@ class Action(IOMultiType[ActionTypeID]):
             return Browse
         if type_id is t.REPLACE:
             return Replace
-        if type_id is t.CLOSE:
-            return Close
         if type_id is t.LOCAL:
             return Local
 
@@ -109,7 +106,7 @@ class Browse(Action):
     request: Annotated[Request, IOAttrs('r')]
     default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
     effects: Annotated[
-        list[ClientEffect], IOAttrs('c', store_default=False)
+        list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
 
     @override
@@ -121,12 +118,18 @@ class Browse(Action):
 @ioprepped
 @dataclass
 class Replace(Action):
-    """Replace current page contents."""
+    """Replace current page contents.
+
+    Should be used to effectively 'modify' existing UIs by replacing
+    them with something slightly different. Things like scroll position
+    and selection will be carried across to the new layout when possible
+    to make for a seamless transition.
+    """
 
     request: Annotated[Request, IOAttrs('r')]
     default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
     effects: Annotated[
-        list[ClientEffect], IOAttrs('c', store_default=False)
+        list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
 
     @override
@@ -137,24 +140,23 @@ class Replace(Action):
 
 @ioprepped
 @dataclass
-class Close(Action):
-    """Close the current window."""
-
-    @override
-    @classmethod
-    def get_type_id(cls) -> ActionTypeID:
-        return ActionTypeID.CLOSE
-
-
-@ioprepped
-@dataclass
 class Local(Action):
-    """Perform local actions only."""
+    """Perform purely local actions."""
 
+    close_window: Annotated[bool, IOAttrs('c', store_default=False)] = False
+
+    #: Plays a swish if closing the window or a click otherwise.
     default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
     effects: Annotated[
-        list[ClientEffect], IOAttrs('c', store_default=False)
+        list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
+
+    #: Named local action to run. Will be handled by
+    #: :meth:`bauiv1lib.cloudui.CloudUIController.local_action()`.
+    action: Annotated[str | None, IOAttrs('a', store_default=False)] = None
+    action_params: Annotated[
+        dict | None, IOAttrs('aa', store_default=False)
+    ] = None
 
     @override
     @classmethod
@@ -262,6 +264,10 @@ class Text(Decoration):
     v_align: Annotated[VAlign, IOAttrs('va', store_default=False)] = (
         VAlign.CENTER
     )
+    color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('c', store_default=False),
+    ] = None
     flatness: Annotated[float | None, IOAttrs('f', store_default=False)] = None
     shadow: Annotated[float | None, IOAttrs('sh', store_default=False)] = None
 
@@ -379,6 +385,16 @@ class Button:
     style: Annotated[ButtonStyle, IOAttrs('y', store_default=False)] = (
         ButtonStyle.SQUARE
     )
+    is_start_button: Annotated[bool, IOAttrs('st', store_default=False)] = False
+
+    icon: Annotated[str | None, IOAttrs('icn', store_default=False)] = None
+    icon_scale: Annotated[float | None, IOAttrs('is', store_default=False)] = (
+        None
+    )
+    icon_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('ic', store_default=False),
+    ] = None
 
     #: Draw bounds of the button.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
@@ -458,6 +474,8 @@ class Page:
         False
     )
 
+    row_spacing: Annotated[float, IOAttrs('s', store_default=False)] = 10.0
+
     #: If things disappear when scrolling up and down, turn this up.
     simple_culling_v: Annotated[float, IOAttrs('scv', store_default=False)] = (
         100.0
@@ -474,7 +492,7 @@ class Page:
     ] = None
 
 
-class ResponseCode(Enum):
+class StatusCode(Enum):
     """The overall result of a request."""
 
     SUCCESS = 0
@@ -486,8 +504,23 @@ class ResponseCode(Enum):
 class Response(CloudUIResponse):
     """Full cloudui response."""
 
-    code: Annotated[ResponseCode, IOAttrs('c')]
     page: Annotated[Page, IOAttrs('p')]
+    status: Annotated[StatusCode, IOAttrs('s', store_default=False)] = (
+        StatusCode.SUCCESS
+    )
+    effects: Annotated[
+        list[ClientEffect], IOAttrs('fx', store_default=False)
+    ] = field(default_factory=list)
+
+    # The client maintains some persistent state (namely widget
+    # selection) for all pages viewed. The default index for these
+    # states is the path of the request. If a server returns
+    # significantly different responses for a single path, however,
+    # (based on params, etc) then it may make sense for the server to
+    # provide explicit state ids for those different configurations.
+    shared_state_id: Annotated[
+        str | None, IOAttrs('t', store_default=False)
+    ] = None
 
     @override
     @classmethod

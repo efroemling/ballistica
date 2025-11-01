@@ -27,8 +27,10 @@ def run_bs_client_effects(
 
     for effect in effects:
         effecttype = effect.get_type_id()
-        if effecttype is ClientEffectTypeID.SCREEN_MESSAGE:
-            assert isinstance(effect, bacommon.bs.ClientEffectScreenMessage)
+        if effecttype is ClientEffectTypeID.LEGACY_SCREEN_MESSAGE:
+            assert isinstance(
+                effect, bacommon.bs.ClientEffectLegacyScreenMessage
+            )
             textfin = bauiv1.Lstr(
                 translate=('serverResponses', effect.message)
             ).evaluate()

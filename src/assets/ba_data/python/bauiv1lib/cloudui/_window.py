@@ -6,8 +6,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override, assert_never
 
+# from efro.dataclassio import dataclass_hash
 import bauiv1 as bui
 
+from bacommon.cloudui import CloudUIRequestTypeID, CloudUIResponseTypeID
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 
 if TYPE_CHECKING:
@@ -41,8 +43,12 @@ class CloudUIWindow(bui.MainWindow):
         self.controller = controller
 
         self._request = request
+        # self._request_hash = dataclass_hash(request)
+        self._request_state_id = self._default_state_id(request)
+
         self._last_response: CloudUIResponse | None = None
         self._last_response_success: bool = False
+        self._last_response_shared_state_id: str | None = None
 
         # We want to display differently whether we're an auxiliary
         # window or not, but unfortunately that value is not yet
@@ -270,28 +276,57 @@ class CloudUIWindow(bui.MainWindow):
         return self._request
 
     @request.setter
-    def request(self, val: CloudUIRequest) -> None:
+    def request(self, request: CloudUIRequest) -> None:
         assert bui.in_logic_thread()
-        self._request = val
+        self._request = request
+        self._request_state_id = self._default_state_id(request)
+
+        # self._request_hash = dataclass_hash(request)
 
         # New requests immediately blow away existing responses.
         self._last_response = None
         self._last_response_success = False
+        self._last_response_shared_state_id = None
 
-    def lock_ui(self) -> None:
+    @classmethod
+    def _default_state_id(cls, request: CloudUIRequest) -> str:
+        # Calc a default state id for the request.
+        # Grab any custom shared-state-id included in this response.
+        requesttypeid = request.get_type_id()
+        if requesttypeid is CloudUIRequestTypeID.V1:
+            import bacommon.cloudui.v1 as clui1
+
+            assert isinstance(request, clui1.Request)
+            return request.path
+        if requesttypeid is CloudUIRequestTypeID.UNKNOWN:
+            return 'unknown'
+        assert_never(requesttypeid)
+
+    def lock_ui(self, origin_widget: bui.Widget | None = None) -> None:
         """Stop UI interactions during some operation."""
         assert bui.in_logic_thread()
         assert not self._locked
 
-        self._spinner = bui.spinnerwidget(
-            parent=self._root_widget,
-            position=(
-                self._vis_left + self._vis_width * 0.5,
-                self._vis_top - self._vis_height * 0.5,
-            ),
-            size=48,
-            style='bomb',
-        )
+        # If a spinner-position is provided, make the spinner in our
+        # subcontainer at the provided spot.
+        parent = None if origin_widget is None else origin_widget.parent
+        if parent is not None:
+            assert origin_widget is not None
+            self._spinner = bui.spinnerwidget(
+                parent=parent, position=origin_widget.center, size=48
+            )
+        else:
+            # Otherwise do one at the center of our window (not in our
+            # subcontainer).
+            self._spinner = bui.spinnerwidget(
+                parent=self._root_widget,
+                position=(
+                    self._vis_left + self._vis_width * 0.5,
+                    self._vis_top - self._vis_height * 0.5,
+                ),
+                size=48,
+                style='bomb',
+            )
         self._locked = True
 
     def unlock_ui(self) -> None:
@@ -309,11 +344,17 @@ class CloudUIWindow(bui.MainWindow):
         """Width of our scroll area."""
         return self._scroll_width
 
+    @property
+    def scroll_height(self) -> float:
+        """Height of our scroll area."""
+        return self._scroll_height
+
     def on_v1_button_press(
         self, widgetid: str, action: bacommon.cloudui.v1.Action | None
     ) -> None:
         """Called when a button is pressed in a v1 ui."""
         # pylint: disable=too-many-branches
+        # pylint: disable=cyclic-import
 
         import bacommon.cloudui.v1 as clui
 
@@ -337,10 +378,7 @@ class CloudUIWindow(bui.MainWindow):
 
         action_type = action.get_type_id()
 
-        if action_type is clui.ActionTypeID.CLOSE:
-            bui.getsound('swish').play()
-            self.main_window_back()
-        elif action_type is clui.ActionTypeID.BROWSE:
+        if action_type is clui.ActionTypeID.BROWSE:
             assert isinstance(action, clui.Browse)
             if action.default_sound:
                 bui.getsound('swish').play()
@@ -358,15 +396,39 @@ class CloudUIWindow(bui.MainWindow):
             # Force a selection save so if our UI is rebuilt with
             # the same IDs we'll wind up in the same spot.
             self.main_window_save_shared_state()
-            self.controller.replace(self, action.request)
+            self.controller.replace(self, action.request, origin_widget=widget)
             if bui.app.classic is not None and action.effects:
                 bui.app.classic.run_bs_client_effects(action.effects)
         elif action_type is clui.ActionTypeID.LOCAL:
+            from bauiv1lib.cloudui._controller import CloudUILocalAction
+
             assert isinstance(action, clui.Local)
             if action.default_sound:
-                bui.getsound('click01').play()
+                bui.getsound(
+                    'swish' if action.close_window else 'click01'
+                ).play()
             if bui.app.classic is not None and action.effects:
                 bui.app.classic.run_bs_client_effects(action.effects)
+            if action.close_window:
+                self.main_window_back()
+            if action.action is not None:
+                try:
+                    self.controller.local_action(
+                        CloudUILocalAction(
+                            name=action.action,
+                            params=(
+                                {}
+                                if action.action_params is None
+                                else action.action_params
+                            ),
+                            widget=widget,
+                            window=self,
+                        )
+                    )
+                except Exception:
+                    bui.uilog.exception(
+                        'Error running local-action %s.', action.action
+                    )
         else:
             # Make sure we handle all options.
             assert_never(action_type)
@@ -379,6 +441,18 @@ class CloudUIWindow(bui.MainWindow):
         assert not self._locked
         self._last_response = response
         self._last_response_success = success
+
+        # Grab any custom shared-state-id included in this response.
+        responsetypeid = response.get_type_id()
+        if responsetypeid is CloudUIResponseTypeID.V1:
+            import bacommon.cloudui.v1 as clui1
+
+            assert isinstance(response, clui1.Response)
+            self._last_response_shared_state_id = response.shared_state_id
+        elif responsetypeid is CloudUIResponseTypeID.UNKNOWN:
+            self._last_response_shared_state_id = None
+        else:
+            assert_never(responsetypeid)
 
     def instantiate_ui(self, pageprep: CloudUIPagePrep) -> None:
         """Replace any current ui with provided prepped one."""
@@ -404,7 +478,8 @@ class CloudUIWindow(bui.MainWindow):
         )
 
         self._subcontainer = pageprep.instantiate(
-            self._scrollwidget,
+            rootwidget=self._root_widget,
+            scrollwidget=self._scrollwidget,
             backbutton=(
                 bui.get_special_widget('back_button')
                 if self._back_button is None
@@ -460,4 +535,14 @@ class CloudUIWindow(bui.MainWindow):
 
     @override
     def get_main_window_shared_state_id(self) -> str | None:
-        return 'cloudui'
+        base_id = (
+            self._request_state_id
+            if self._last_response_shared_state_id is None
+            else self._last_response_shared_state_id
+        )
+
+        # Each controller has its own unique domain, so include that in
+        # the id.
+        ctp = type(self.controller)
+        out = f'{ctp.__module__}.{ctp.__qualname__}:{base_id}'
+        return out

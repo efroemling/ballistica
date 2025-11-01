@@ -16,7 +16,7 @@ class ClientEffectTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     UNKNOWN = 'u'
-    SCREEN_MESSAGE = 'm'
+    LEGACY_SCREEN_MESSAGE = 'm'
     SOUND = 's'
     DELAY = 'd'
     CHEST_WAIT_TIME_ANIMATION = 't'
@@ -48,8 +48,8 @@ class ClientEffect(IOMultiType[ClientEffectTypeID]):
         t = ClientEffectTypeID
         if type_id is t.UNKNOWN:
             return ClientEffectUnknown
-        if type_id is t.SCREEN_MESSAGE:
-            return ClientEffectScreenMessage
+        if type_id is t.LEGACY_SCREEN_MESSAGE:
+            return ClientEffectLegacyScreenMessage
         if type_id is t.SOUND:
             return ClientEffectSound
         if type_id is t.DELAY:
@@ -85,7 +85,7 @@ class ClientEffectUnknown(ClientEffect):
 
 @ioprepped
 @dataclass
-class ClientEffectScreenMessage(ClientEffect):
+class ClientEffectLegacyScreenMessage(ClientEffect):
     """Display a screen-message.
 
     This will be processed as an Lstr with translation category
@@ -103,7 +103,7 @@ class ClientEffectScreenMessage(ClientEffect):
     @override
     @classmethod
     def get_type_id(cls) -> ClientEffectTypeID:
-        return ClientEffectTypeID.SCREEN_MESSAGE
+        return ClientEffectTypeID.LEGACY_SCREEN_MESSAGE
 
 
 @ioprepped
