@@ -16,7 +16,8 @@ namespace ballistica::core {
 class BaseSoftInterface {
  public:
   virtual void ScreenMessage(const std::string& s,
-                             const Vector3f& color = {1.0f, 1.0f, 1.0f}) = 0;
+                             const Vector3f& color = {1.0f, 1.0f, 1.0f},
+                             bool literal = false) = 0;
   virtual auto IsUnmodifiedBlessedBuild() -> bool = 0;
   virtual void StartApp() = 0;
   virtual auto AppManagesMainThreadEventLoop() -> bool = 0;

@@ -17,6 +17,7 @@ class ClientEffectTypeID(Enum):
 
     UNKNOWN = 'u'
     LEGACY_SCREEN_MESSAGE = 'm'
+    SCREEN_MESSAGE = 'sm'
     SOUND = 's'
     DELAY = 'd'
     CHEST_WAIT_TIME_ANIMATION = 't'
@@ -50,6 +51,8 @@ class ClientEffect(IOMultiType[ClientEffectTypeID]):
             return ClientEffectUnknown
         if type_id is t.LEGACY_SCREEN_MESSAGE:
             return ClientEffectLegacyScreenMessage
+        if type_id is t.SCREEN_MESSAGE:
+            return ClientEffectScreenMessage
         if type_id is t.SOUND:
             return ClientEffectSound
         if type_id is t.DELAY:
@@ -86,10 +89,12 @@ class ClientEffectUnknown(ClientEffect):
 @ioprepped
 @dataclass
 class ClientEffectLegacyScreenMessage(ClientEffect):
-    """Display a screen-message.
+    """Display a screen-message (Legacy version).
 
     This will be processed as an Lstr with translation category
     'serverResponses'.
+
+    When possible, migrate to using :class:`ClientEffectScreenMessage`.
     """
 
     message: Annotated[str, IOAttrs('m')]
@@ -104,6 +109,30 @@ class ClientEffectLegacyScreenMessage(ClientEffect):
     @classmethod
     def get_type_id(cls) -> ClientEffectTypeID:
         return ClientEffectTypeID.LEGACY_SCREEN_MESSAGE
+
+
+@ioprepped
+@dataclass
+class ClientEffectScreenMessage(ClientEffect):
+    """Display a screen-message.
+
+    Supported on engine build 22606 or newer.
+
+    This version does no translation by default (expecting translation
+    to happen server-side). Pass a Lstr json string and set is_lstr=True
+    for client-side translation.
+    """
+
+    message: Annotated[str, IOAttrs('m')]
+    color: Annotated[
+        tuple[float, float, float], IOAttrs('c', store_default=False)
+    ] = (1.0, 1.0, 1.0)
+    is_lstr: Annotated[bool, IOAttrs('l', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ClientEffectTypeID:
+        return ClientEffectTypeID.SCREEN_MESSAGE
 
 
 @ioprepped

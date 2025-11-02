@@ -20,11 +20,12 @@ const float kScreenMessageZDepth{-0.06f};
 
 class ScreenMessages::ScreenMessageEntry {
  public:
-  ScreenMessageEntry(std::string text, bool top_style, uint32_t c,
+  ScreenMessageEntry(std::string text, bool literal, bool top_style, uint32_t c,
                      const Vector3f& color, TextureAsset* texture,
                      TextureAsset* tint_texture, const Vector3f& tint,
                      const Vector3f& tint2)
-      : top_style(top_style),
+      : literal(literal),
+        top_style(top_style),
         creation_time(c),
         s_raw(std::move(text)),
         color(color),
@@ -34,6 +35,7 @@ class ScreenMessages::ScreenMessageEntry {
         tint2(tint2) {}
   auto GetText() -> TextGroup&;
   void UpdateTranslation();
+  bool literal;
   bool top_style;
   uint32_t creation_time;
   Vector3f color;
@@ -448,7 +450,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
   }
 }
 
-void ScreenMessages::AddScreenMessage(const std::string& msg,
+void ScreenMessages::AddScreenMessage(const std::string& msg, bool literal,
                                       const Vector3f& color, bool top,
                                       TextureAsset* texture,
                                       TextureAsset* tint_texture,
@@ -466,13 +468,13 @@ void ScreenMessages::AddScreenMessage(const std::string& msg,
           start_v,
           std::max(-100.0f, screen_messages_top_.back().v_smoothed - 25.0f));
     }
-    screen_messages_top_.emplace_back(m, true, g_core->AppTimeMillisecs(),
-                                      color, texture, tint_texture, tint,
-                                      tint2);
+    screen_messages_top_.emplace_back(m, literal, true,
+                                      g_core->AppTimeMillisecs(), color,
+                                      texture, tint_texture, tint, tint2);
     screen_messages_top_.back().v_smoothed = start_v;
   } else {
-    screen_messages_.emplace_back(m, false, g_core->AppTimeMillisecs(), color,
-                                  texture, tint_texture, tint, tint2);
+    screen_messages_.emplace_back(m, literal, false, g_core->AppTimeMillisecs(),
+                                  color, texture, tint_texture, tint, tint2);
   }
 }
 
@@ -534,7 +536,11 @@ auto ScreenMessages::ScreenMessageEntry::GetText() -> TextGroup& {
 
 void ScreenMessages::ScreenMessageEntry::UpdateTranslation() {
   if (translation_dirty) {
-    s_translated = g_base->assets->CompileResourceString(s_raw);
+    if (literal) {
+      s_translated = s_raw;
+    } else {
+      s_translated = g_base->assets->CompileResourceString(s_raw);
+    }
     translation_dirty = false;
     mesh_dirty = true;
   }

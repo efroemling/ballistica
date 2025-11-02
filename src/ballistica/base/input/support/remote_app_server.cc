@@ -168,7 +168,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
           Utils::StringReplaceOne(&s, "${CONTROLLER}", m);
           g_base->logic->event_loop()->PushCall([s] {
             g_base->graphics->screenmessages->AddScreenMessage(
-                s, Vector3f(1, 1, 1));
+                s, false, Vector3f(1, 1, 1));
           });
           g_base->logic->event_loop()->PushCall(
               [] { g_base->audio->SafePlaySysSound(SysSoundID::kCorkPop); });
@@ -375,7 +375,7 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
             g_base->assets->GetResourceString("controllerReconnectedText");
         Utils::StringReplaceOne(&s, "${CONTROLLER}", m);
         g_base->logic->event_loop()->PushCall([s] {
-          g_base->graphics->screenmessages->AddScreenMessage(s,
+          g_base->graphics->screenmessages->AddScreenMessage(s, false,
                                                              Vector3f(1, 1, 1));
         });
         g_base->logic->event_loop()->PushCall([] {
@@ -425,7 +425,7 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
           g_base->assets->GetResourceString("controllerConnectedText");
       Utils::StringReplaceOne(&s, "${CONTROLLER}", m);
       g_base->logic->event_loop()->PushCall([s] {
-        g_base->graphics->screenmessages->AddScreenMessage(s,
+        g_base->graphics->screenmessages->AddScreenMessage(s, false,
                                                            Vector3f(1, 1, 1));
       });
 

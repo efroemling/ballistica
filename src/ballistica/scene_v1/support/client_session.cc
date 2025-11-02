@@ -827,9 +827,9 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           float f[9];
           ReadFloats(9, f);
           g_base->graphics->screenmessages->AddScreenMessage(
-              s, Vector3f(f[0], f[1], f[2]), true, texture->texture_data(),
-              tint_texture->texture_data(), Vector3f(f[3], f[4], f[5]),
-              Vector3f(f[6], f[7], f[8]));
+              s, false, Vector3f(f[0], f[1], f[2]), true,
+              texture->texture_data(), tint_texture->texture_data(),
+              Vector3f(f[3], f[4], f[5]), Vector3f(f[6], f[7], f[8]));
           break;
         }
         case SessionCommand::kPlaySoundAtPosition: {

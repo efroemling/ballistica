@@ -256,7 +256,7 @@ class Text(Decoration):
     position: Annotated[tuple[float, float], IOAttrs('p')]
 
     #: Note that this effectively is max-width and max-height.
-    size: Annotated[tuple[float, float], IOAttrs('z')]
+    size: Annotated[tuple[float, float], IOAttrs('i')]
     scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
     h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
         HAlign.CENTER
@@ -274,6 +274,7 @@ class Text(Decoration):
     is_lstr: Annotated[bool, IOAttrs('l', store_default=False)] = False
 
     highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
+    depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
 
     #: Show max-width/height bounds; useful during development.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
@@ -321,6 +322,7 @@ class Image(Decoration):
         str | None, IOAttrs('mn', store_default=False)
     ] = None
     highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
+    depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
 
     @override
     @classmethod
@@ -395,6 +397,7 @@ class Button:
         tuple[float, float, float, float] | None,
         IOAttrs('ic', store_default=False),
     ] = None
+    depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
 
     #: Draw bounds of the button.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False

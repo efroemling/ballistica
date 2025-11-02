@@ -176,14 +176,21 @@ static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* color_obj = Py_None;
   PyObject* message_obj;
   int log{};
-  static const char* kwlist[] = {"message", "color", "log", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|Op",
+  int literal{};
+  static const char* kwlist[] = {"message", "color", "log", "literal", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|Opp",
                                    const_cast<char**>(kwlist), &message_obj,
-                                   &color_obj, &log)) {
+                                   &color_obj, &log, &literal)) {
     return nullptr;
   }
 
-  std::string message_str = g_base->python->GetPyLString(message_obj);
+  std::string message_str;
+
+  if (literal) {
+    message_str = Python::GetString(message_obj);
+  } else {
+    message_str = g_base->python->GetPyLString(message_obj);
+  }
   Vector3f color{1, 1, 1};
   if (color_obj != Py_None) {
     color = BasePython::GetPyVector3f(color_obj);
@@ -193,7 +200,7 @@ static auto PyScreenMessage(PyObject* self, PyObject* args, PyObject* keywds)
   }
 
   // This version simply displays it locally.
-  g_base->ScreenMessage(message_str, color);
+  g_base->ScreenMessage(message_str, color, literal);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -206,8 +213,9 @@ static PyMethodDef PyScreenMessageDef = {
 
     "screenmessage(message: str | babase.Lstr,\n"
     "  color: Sequence[float] | None = None,\n"
-    "  log: bool = False)\n"
-    " -> None\n"
+    "  log: bool = False,\n"
+    "  literal: bool = False,\n"
+    ") -> None\n"
     "\n"
     "Print a message to the local client's screen in a given color.\n"
     "\n"

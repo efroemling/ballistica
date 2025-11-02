@@ -755,7 +755,7 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
 
     // Now display it locally.
     g_base->graphics->screenmessages->AddScreenMessage(
-        message, color, static_cast<bool>(top),
+        message, false, color, static_cast<bool>(top),
         texture ? texture->texture_data() : nullptr,
         tint_texture ? tint_texture->texture_data() : nullptr, tint_color,
         tint2_color);

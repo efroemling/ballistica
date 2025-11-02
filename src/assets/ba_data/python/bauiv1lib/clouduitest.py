@@ -51,8 +51,8 @@ class TestCloudUIController(CloudUIController):
                     _test_page_root(),
                     effects=(
                         [
-                            bacommon.bs.ClientEffectLegacyScreenMessage(
-                                'Hello From...',
+                            bacommon.bs.ClientEffectScreenMessage(
+                                'Hello From Response Client Effects',
                                 color=(0, 1, 0),
                             ),
                             bacommon.bs.ClientEffectSound(
@@ -61,8 +61,9 @@ class TestCloudUIController(CloudUIController):
                                 ).Sound.CASH_REGISTER
                             ),
                             bacommon.bs.ClientEffectDelay(1.0),
-                            bacommon.bs.ClientEffectLegacyScreenMessage(
-                                '...Response Client Effects',
+                            bacommon.bs.ClientEffectScreenMessage(
+                                '{"r":"successText"}',
+                                is_lstr=True,
                                 color=(0, 1, 0),
                             ),
                             bacommon.bs.ClientEffectSound(
@@ -108,7 +109,7 @@ def _test_page_long() -> bacommon.cloudui.v1.Page:
                     clui.Button(
                         'Sure Did',
                         size=(120, 80),
-                        action=clui.Local(close_window=True),
+                        action=clui.Browse(clui.Request('/')),
                     ),
                 ],
             ),
@@ -208,8 +209,8 @@ def _test_page_root() -> bacommon.cloudui.v1.Page:
                         size=(120, 80),
                         action=clui.Local(
                             effects=[
-                                bacommon.bs.ClientEffectLegacyScreenMessage(
-                                    'Hello From...',
+                                bacommon.bs.ClientEffectScreenMessage(
+                                    'Hello From Local Client Effects',
                                     color=(0, 1, 0),
                                 ),
                                 bacommon.bs.ClientEffectSound(
@@ -218,8 +219,9 @@ def _test_page_root() -> bacommon.cloudui.v1.Page:
                                     ).Sound.CASH_REGISTER
                                 ),
                                 bacommon.bs.ClientEffectDelay(1.0),
-                                bacommon.bs.ClientEffectLegacyScreenMessage(
-                                    '...Local Client Effects',
+                                bacommon.bs.ClientEffectScreenMessage(
+                                    '{"r":"successText"}',
+                                    is_lstr=True,
                                     color=(0, 1, 0),
                                 ),
                                 bacommon.bs.ClientEffectSound(

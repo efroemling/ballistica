@@ -19,7 +19,7 @@ class ScreenMessages {
   void ClearScreenMessageTranslations();
 
   /// Add a screen-message. Must be called from the logic thread.
-  void AddScreenMessage(const std::string& msg,
+  void AddScreenMessage(const std::string& msg, bool literal = false,
                         const Vector3f& color = {1, 1, 1}, bool top = false,
                         TextureAsset* texture = nullptr,
                         TextureAsset* tint_texture = nullptr,

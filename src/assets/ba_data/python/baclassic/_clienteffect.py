@@ -48,6 +48,17 @@ def run_bs_client_effects(
                     bauiv1.screenmessage, textfin, color=effect.color
                 ),
             )
+        elif effecttype is ClientEffectTypeID.SCREEN_MESSAGE:
+            assert isinstance(effect, bacommon.bs.ClientEffectScreenMessage)
+            bauiv1.apptimer(
+                delay,
+                strict_partial(
+                    bauiv1.screenmessage,
+                    effect.message,
+                    color=effect.color,
+                    literal=not effect.is_lstr,
+                ),
+            )
 
         elif effecttype is ClientEffectTypeID.SOUND:
             assert isinstance(effect, bacommon.bs.ClientEffectSound)

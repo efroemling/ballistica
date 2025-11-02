@@ -430,6 +430,7 @@ class CloudUIPagePrep:
                         # our size and padding.
                         show_buffer_left=150,
                         show_buffer_right=150,
+                        depth_range=button.depth_range,
                         # We explicitly assign all neighbor selection;
                         # anything left over should go to toolbars.
                         auto_select_toolbars_only=True,
@@ -712,6 +713,7 @@ def _prep_text(
                 text=text.text,
                 literal=not text.is_lstr,
                 transition_delay=tdelay,
+                depth_range=text.depth_range,
             ),
             textures={},
             meshes={},
@@ -812,6 +814,7 @@ def _prep_image(
                 tint_color=image.tint_color,
                 tint2_color=image.tint2_color,
                 transition_delay=tdelay,
+                depth_range=image.depth_range,
             ),
             textures=textures,
             meshes=meshes,

@@ -739,6 +739,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* mask_texture_obj{Py_None};
   PyObject* radial_amount_obj{Py_None};
   PyObject* draw_controller_mult_obj{Py_None};
+  PyObject* depth_range_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -759,15 +760,16 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "mask_texture",
                                  "radial_amount",
                                  "draw_controller_mult",
+                                 "depth_range",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &color_obj, &texture_obj,
           &opacity_obj, &mesh_transparent_obj, &mesh_opaque_obj,
           &has_alpha_channel_obj, &tint_texture_obj, &tint_color_obj,
           &transition_delay_obj, &draw_controller_obj, &tint2_color_obj,
           &tilt_scale_obj, &mask_texture_obj, &radial_amount_obj,
-          &draw_controller_mult_obj))
+          &draw_controller_mult_obj, &depth_range_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -871,7 +873,21 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (draw_controller_mult_obj != Py_None) {
     b->set_draw_controller_mult(Python::GetFloat(draw_controller_mult_obj));
   }
-
+  if (depth_range_obj != Py_None) {
+    auto depth_range = Python::GetFloats(depth_range_obj);
+    if (depth_range.size() != 2) {
+      throw Exception("Expected 2 float values.", PyExcType::kValue);
+    }
+    if (depth_range[0] < 0.0f || depth_range[1] > 1.0f
+        || depth_range[1] <= depth_range[0]) {
+      throw Exception(
+          "Invalid depth range values;"
+          " values must be between 0 and 1 and second value must be larger "
+          "than first.",
+          PyExcType::kValue);
+    }
+    b->set_depth_range(depth_range[0], depth_range[1]);
+  }
   // if making a new widget add it at the end
   if (edit_obj == Py_None) {
     g_ui_v1->AddWidget(b.get(), parent_widget);
@@ -908,8 +924,9 @@ static PyMethodDef PyImageWidgetDef = {
     "  tilt_scale: float | None = None,\n"
     "  mask_texture: bauiv1.Texture | None = None,\n"
     "  radial_amount: float | None = None,\n"
-    "  draw_controller_mult: float | None = None)\n"
-    "  -> bauiv1.Widget\n"
+    "  draw_controller_mult: float | None = None,\n"
+    "  depth_range: tuple[float, float] | None = None,\n"
+    ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit an image widget.\n"
     "\n"
@@ -2132,6 +2149,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* allow_clear_button_obj{Py_None};
   PyObject* id_obj{Py_None};
   PyObject* literal_obj{Py_None};
+  PyObject* depth_range_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2175,9 +2193,10 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "glow_type",
                                  "allow_clear_button",
                                  "literal",
+                                 "depth_range",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &text_obj, &v_align_obj, &h_align_obj,
           &editable_obj, &padding_obj, &on_return_press_call_obj,
@@ -2190,7 +2209,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &force_internal_editing_obj, &always_show_carat_obj, &big_obj,
           &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
           &query_description_obj, &adapter_finished_obj, &glow_type_obj,
-          &allow_clear_button_obj, &literal_obj))
+          &allow_clear_button_obj, &literal_obj, &depth_range_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2425,6 +2444,21 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (id_obj != Py_None) {
     widget->SetID(Python::GetString(id_obj));
   }
+  if (depth_range_obj != Py_None) {
+    auto depth_range = Python::GetFloats(depth_range_obj);
+    if (depth_range.size() != 2) {
+      throw Exception("Expected 2 float values.", PyExcType::kValue);
+    }
+    if (depth_range[0] < 0.0f || depth_range[1] > 1.0f
+        || depth_range[1] <= depth_range[0]) {
+      throw Exception(
+          "Invalid depth range values;"
+          " values must be between 0 and 1 and second value must be larger "
+          "than first.",
+          PyExcType::kValue);
+    }
+    widget->set_depth_range(depth_range[0], depth_range[1]);
+  }
 
   // If making a new widget, add it at the end.
   if (edit_obj == Py_None) {
@@ -2487,6 +2521,7 @@ static PyMethodDef PyTextWidgetDef = {
     "  glow_type: str | None = None,\n"
     "  allow_clear_button: bool | None = None,\n"
     "  literal: bool | None = None,\n"
+    "  depth_range: tuple[float, float] | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"

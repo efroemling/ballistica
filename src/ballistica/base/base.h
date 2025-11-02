@@ -740,7 +740,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   /// High level screen-message call. Can be called from any thread.
   void ScreenMessage(const std::string& s,
-                     const Vector3f& color = {1.0f, 1.0f, 1.0f}) override;
+                     const Vector3f& color = {1.0f, 1.0f, 1.0f},
+                     bool literal = false) override;
 
   /// Has the app bootstrapping phase completed? The bootstrapping phase
   /// involves initial screen/graphics setup. Asset loading is not allowed
