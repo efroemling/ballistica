@@ -94,6 +94,8 @@ class SpazFactory:
             PickupMessage,
             PunchHitMessage,
             CurseExplodeMessage,
+            FootConnectMessage,
+            FootDisconnectMessage,
         )
 
         shared = SharedObjects.get()
@@ -139,16 +141,16 @@ class SpazFactory:
         self.roller_material.add_actions(
             conditions=('they_have_material', footing_material),
             actions=(
-                ('message', 'our_node', 'at_connect', 'footing', 1),
-                ('message', 'our_node', 'at_disconnect', 'footing', -1),
+                ('message', 'our_node', 'at_connect', FootConnectMessage()),
+                ('message', 'our_node', 'at_disconnect', FootDisconnectMessage()),
             ),
         )
 
         self.spaz_material.add_actions(
             conditions=('they_have_material', footing_material),
             actions=(
-                ('message', 'our_node', 'at_connect', 'footing', 1),
-                ('message', 'our_node', 'at_disconnect', 'footing', -1),
+                ('message', 'our_node', 'at_connect', FootConnectMessage()),
+                ('message', 'our_node', 'at_disconnect', FootDisconnectMessage()),
             ),
         )
 

@@ -42,6 +42,14 @@ class BombDiedMessage:
     """A bomb has died and thus can be recycled."""
 
 
+class FootConnectMessage:
+    """We're touching the ground."""
+
+
+class FootDisconnectMessage:
+    """We're not touching the ground."""
+
+
 class Spaz(bs.Actor):
     """
     Base class for various Spazzes.
@@ -109,6 +117,7 @@ class Spaz(bs.Actor):
             self._hockey = False
         self._punched_nodes: set[bs.Node] = set()
         self._cursed = False
+        self._footing = False
         self._connected_to_player: bs.Player | None = None
         materials = [
             factory.spaz_material,
@@ -1349,6 +1358,14 @@ class Spaz(bs.Actor):
         elif isinstance(msg, bs.CelebrateMessage):
             if self.node:
                 self.node.handlemessage('celebrate', int(msg.duration * 1000))
+        elif isinstance(msg, FootConnectMessage):
+            if not self._footing and self.node:
+                self._footing = True
+                self.node.handlemessage('footing', 1)
+        elif isinstance(msg, FootDisconnectMessage):
+            if self._footing and self.node:
+                self._footing = False
+                self.node.handlemessage('footing' -1)
 
         else:
             return super().handlemessage(msg)
