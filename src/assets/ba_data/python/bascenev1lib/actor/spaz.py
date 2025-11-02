@@ -1365,7 +1365,7 @@ class Spaz(bs.Actor):
         elif isinstance(msg, FootDisconnectMessage):
             if self._footing and self.node:
                 self._footing = False
-                self.node.handlemessage('footing' -1)
+                self.node.handlemessage('footing', -1)
 
         else:
             return super().handlemessage(msg)
