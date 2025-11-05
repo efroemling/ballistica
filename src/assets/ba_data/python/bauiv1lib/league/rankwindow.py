@@ -1152,7 +1152,7 @@ class LeagueRankWindow(bui.MainWindow):
             widget.delete()
         self._power_ranking_score_widgets = []
 
-        scores = data['scores'] if data is not None else []
+        scores: list = data['scores'] if data is not None else []
         tally_color = (0.5, 0.6, 0.8)
         w_parent = self._subcontainer
         v2 = self._power_ranking_score_v

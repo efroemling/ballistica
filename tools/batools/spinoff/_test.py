@@ -149,16 +149,13 @@ def spinoff_test(args: list[str]) -> None:
         # then check the assembled set of Python scripts. If all that
         # goes through it tells us that this spinoff project is at least
         # basically functional.
-        subprocess.run(
-            ['make', 'mypy'],
-            cwd=path,
-            env=dict(
-                os.environ,
-                BA_APP_RUN_ENABLE_BUILDS='1',
-                BA_APP_RUN_BUILD_HEADLESS='1',
-            ),
-            check=True,
+
+        env: dict[str, str] = os.environ.copy()
+        env.update(
+            BA_APP_RUN_ENABLE_BUILDS='1',
+            BA_APP_RUN_BUILD_HEADLESS='1',
         )
+        subprocess.run(['make', 'mypy'], cwd=path, env=env, check=True)
 
         # Run the binary with a --help arg and make sure it spits
         # out what we expect it to.

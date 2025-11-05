@@ -4,14 +4,14 @@
 
 from __future__ import annotations
 
-from typing import override, TYPE_CHECKING
+from typing import override, TYPE_CHECKING, Any, cast
 
 import bascenev1 as bs
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
 if TYPE_CHECKING:
-    from typing import Any
+    pass
 
 
 class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
@@ -77,9 +77,9 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                     )
             player_entries.sort(reverse=True, key=lambda x: x[0])
             if len(player_entries) > 0:
-                # Store some info for the top ffa player so we can
-                # show winner info even if they leave.
-                self._ffa_top_player_info = list(player_entries[0])
+                # Store some info for the top ffa player so we can show
+                # winner info even if they leave.
+                self._ffa_top_player_info = cast(Any, list(player_entries[0]))
                 self._ffa_top_player_info[1] = self._ffa_top_player_info[
                     2
                 ].getname()
@@ -179,6 +179,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             transition_delay=t_incr * 4,
         ).autoretain()
 
+        assert isinstance(session, bs.MultiTeamSession)
         win_score = (session.get_series_length() - 1) // 2 + 1
         lose_score = 0
         for team in self.teams:

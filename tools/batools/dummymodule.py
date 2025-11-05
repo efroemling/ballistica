@@ -979,6 +979,7 @@ class Generator:
 def generate_dummy_modules(projroot: str) -> None:
     """Generate all dummy-modules."""
     # pylint: disable=cyclic-import
+    # pylint: disable=too-many-locals
 
     from batools.featureset import FeatureSet
     from batools import apprun
@@ -1043,16 +1044,13 @@ def generate_dummy_modules(projroot: str) -> None:
         # Also pass our .venv path so any recursive invocations of Python
         # will properly pick up our modules (for things like black formatting).
 
-        # pylint: disable=inconsistent-quotes
-        subprocess.run(
-            [binary_path, '--command', pycmd],
-            env=dict(
-                os.environ,
-                PYTHONDONTWRITEBYTECODE='1',
-                PATH=f'.venv/bin:{os.environ["PATH"]}',
-            ),
-            check=True,
+        env: dict[str, str] = os.environ.copy()
+        env.update(
+            PYTHONDONTWRITEBYTECODE='1',
+            PATH=f'.venv/bin:{os.environ['PATH']}',
         )
+        subprocess.run([binary_path, '--command', pycmd], env=env, check=True)
+
         print(
             f'{Clr.BLD}{Clr.BLU}Generated {gencount} dummy-modules'
             f' {Clr.RST}(in {builddir}){Clr.RST}{Clr.BLD}{Clr.BLU}.{Clr.RST}',

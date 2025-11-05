@@ -569,7 +569,7 @@ class StoreSubsystem:
     def get_unowned_maps(self) -> list[str]:
         """Return the list of local maps not owned by the current account."""
         classic = babase.app.classic
-        purchases = classic.purchases if classic is not None else set()
+        purchases = classic.purchases if classic is not None else frozenset()
         unowned_maps: set[str] = set()
         if babase.app.env.gui:
             for map_section in self.get_store_layout()['maps']:
@@ -583,7 +583,9 @@ class StoreSubsystem:
         """Return present game types not owned by the current account."""
         try:
             classic = babase.app.classic
-            purchases = classic.purchases if classic is not None else set()
+            purchases = (
+                classic.purchases if classic is not None else frozenset()
+            )
             unowned_games: set[type[bascenev1.GameActivity]] = set()
             if babase.app.env.gui:
                 for section in self.get_store_layout()['minigames']:

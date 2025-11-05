@@ -293,7 +293,7 @@ def generate_sphinx_docs() -> None:
             '--maxdepth',
             module_list_max_depth,
             '-f',
-            ba_data_filtered_dir,
+            str(ba_data_filtered_dir),
         ],
         check=True,
         env=environ,

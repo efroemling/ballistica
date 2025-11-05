@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override, assert_never
 
-# from efro.dataclassio import dataclass_hash
 import bauiv1 as bui
 
 from bacommon.cloudui import CloudUIRequestTypeID, CloudUIResponseTypeID
@@ -32,10 +31,13 @@ class CloudUIWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
+        restored: bool = False,
     ):
         ui = bui.app.ui_v1
 
         self._locked = False
+
+        self._restored = restored
 
         # Note: our windows and states both hold strong references to
         # the controller, so we need to make sure the opposite is not
@@ -43,7 +45,6 @@ class CloudUIWindow(bui.MainWindow):
         self.controller = controller
 
         self._request = request
-        # self._request_hash = dataclass_hash(request)
         self._request_state_id = self._default_state_id(request)
 
         self._last_response: CloudUIResponse | None = None
@@ -258,11 +259,6 @@ class CloudUIWindow(bui.MainWindow):
 
         self._spinner: bui.Widget | None = None
 
-        # if request is not None:
-        #     print('WOULD DO SOMETHING WITH REQ')
-        # if state is not None:
-        #     self.set_state(state, immediate=True)
-
     @property
     def request(self) -> CloudUIRequest:
         """The current request.
@@ -281,8 +277,6 @@ class CloudUIWindow(bui.MainWindow):
         self._request = request
         self._request_state_id = self._default_state_id(request)
 
-        # self._request_hash = dataclass_hash(request)
-
         # New requests immediately blow away existing responses.
         self._last_response = None
         self._last_response_success = False
@@ -290,12 +284,12 @@ class CloudUIWindow(bui.MainWindow):
 
     @classmethod
     def _default_state_id(cls, request: CloudUIRequest) -> str:
-        # Calc a default state id for the request.
-        # Grab any custom shared-state-id included in this response.
+        """Calc a default state id for a request."""
         requesttypeid = request.get_type_id()
         if requesttypeid is CloudUIRequestTypeID.V1:
             import bacommon.cloudui.v1 as clui1
 
+            # One state per path seems like a reasonable default.
             assert isinstance(request, clui1.Request)
             return request.path
         if requesttypeid is CloudUIRequestTypeID.UNKNOWN:
@@ -325,7 +319,10 @@ class CloudUIWindow(bui.MainWindow):
                     self._vis_top - self._vis_height * 0.5,
                 ),
                 size=48,
-                style='bomb',
+                # With restored windows we're likely to have stuff under
+                # the spinner. Bomb looks nicer but simple is more
+                # readable in those cases.
+                style='simple' if self._restored else 'bomb',
             )
         self._locked = True
 
@@ -340,6 +337,12 @@ class CloudUIWindow(bui.MainWindow):
         self._locked = False
 
     @property
+    def locked(self) -> bool:
+        """Are we locked?"""
+        assert bui.in_logic_thread()
+        return self._locked
+
+    @property
     def scroll_width(self) -> float:
         """Width of our scroll area."""
         return self._scroll_width
@@ -348,90 +351,6 @@ class CloudUIWindow(bui.MainWindow):
     def scroll_height(self) -> float:
         """Height of our scroll area."""
         return self._scroll_height
-
-    def on_v1_button_press(
-        self, widgetid: str, action: bacommon.cloudui.v1.Action | None
-    ) -> None:
-        """Called when a button is pressed in a v1 ui."""
-        # pylint: disable=too-many-branches
-        # pylint: disable=cyclic-import
-
-        import bacommon.cloudui.v1 as clui
-
-        # If locked, just beep.
-        if self._locked:
-            bui.getsound('error').play()
-            return
-
-        # Find the associated button.
-        widget = bui.widget_by_id(widgetid)
-        if widget is None:
-            bui.uilog.warning(
-                'CloudUI button press widget not found: %s (not expected)',
-                widgetid,
-            )
-            return
-
-        if action is None:
-            bui.getsound('click01').play()
-            return
-
-        action_type = action.get_type_id()
-
-        if action_type is clui.ActionTypeID.BROWSE:
-            assert isinstance(action, clui.Browse)
-            if action.default_sound:
-                bui.getsound('swish').play()
-            self.main_window_replace(
-                lambda: self.controller.create_window(
-                    action.request, origin_widget=widget, auxiliary_style=False
-                )
-            )
-            if bui.app.classic is not None and action.effects:
-                bui.app.classic.run_bs_client_effects(action.effects)
-        elif action_type is clui.ActionTypeID.REPLACE:
-            assert isinstance(action, clui.Replace)
-            if action.default_sound:
-                bui.getsound('click01').play()
-            # Force a selection save so if our UI is rebuilt with
-            # the same IDs we'll wind up in the same spot.
-            self.main_window_save_shared_state()
-            self.controller.replace(self, action.request, origin_widget=widget)
-            if bui.app.classic is not None and action.effects:
-                bui.app.classic.run_bs_client_effects(action.effects)
-        elif action_type is clui.ActionTypeID.LOCAL:
-            from bauiv1lib.cloudui._controller import CloudUILocalAction
-
-            assert isinstance(action, clui.Local)
-            if action.default_sound:
-                bui.getsound(
-                    'swish' if action.close_window else 'click01'
-                ).play()
-            if bui.app.classic is not None and action.effects:
-                bui.app.classic.run_bs_client_effects(action.effects)
-            if action.close_window:
-                self.main_window_back()
-            if action.action is not None:
-                try:
-                    self.controller.local_action(
-                        CloudUILocalAction(
-                            name=action.action,
-                            params=(
-                                {}
-                                if action.action_params is None
-                                else action.action_params
-                            ),
-                            widget=widget,
-                            window=self,
-                        )
-                    )
-                except Exception:
-                    bui.uilog.exception(
-                        'Error running local-action %s.', action.action
-                    )
-        else:
-            # Make sure we handle all options.
-            assert_never(action_type)
 
     def set_last_response(
         self, response: CloudUIResponse, success: bool
@@ -511,7 +430,6 @@ class CloudUIWindow(bui.MainWindow):
         controller = self.controller
         request = self._request
         last_response = self._last_response
-        last_response_success = self._last_response_success
 
         return bui.BasicMainWindowState(
             create_call=(
@@ -522,9 +440,9 @@ class CloudUIWindow(bui.MainWindow):
                         transition=transition,
                         origin_widget=origin_widget,
                         auxiliary_style=auxiliary_style,
+                        restored=True,
                     ),
                     last_response=last_response,
-                    last_response_success=last_response_success,
                 )
             )
         )

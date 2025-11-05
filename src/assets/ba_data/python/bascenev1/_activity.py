@@ -14,7 +14,7 @@ from bascenev1._messages import UNHANDLED
 
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Self
     import bascenev1
 
 
@@ -722,7 +722,7 @@ class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
     @classmethod
     def _check_activity_death(
-        cls, activity_ref: weakref.ref[Activity], counter: list[int]
+        cls, activity_ref: weakref.ref[Self], counter: list[int]
     ) -> None:
         """Sanity check to make sure an Activity was destroyed properly.
 

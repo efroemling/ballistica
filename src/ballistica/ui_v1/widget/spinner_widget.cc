@@ -93,7 +93,10 @@ void SpinnerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   {
     auto xf = c.ScopedTransform();
-    c.Scale(size_, size_, 1.0f);
+
+    // Draw at depth range 0.9-1 (mostly want to cover other things).
+    c.Translate(0.0f, 0.0f, 0.9f);
+    c.Scale(size_, size_, 0.1f);
     if (style_ == Style::kSimple) {
       c.Rotate(-360.0f * std::fmod(current_time * 2.0, 1.0), 0.0f, 0.0f, 1.0f);
     }

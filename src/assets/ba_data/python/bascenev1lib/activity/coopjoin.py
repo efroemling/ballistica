@@ -63,10 +63,10 @@ class CoopJoinActivity(bs.JoinActivity):
         vpos = -140.0
 
         # Now list our remaining achievements for this level.
-        assert self.session.campaign is not None
         assert isinstance(self.session, bs.CoopSession)
+        assert self.session.campaign is not None
         levelname = (
-            self.session.campaign.name + ':' + self.session.campaign_level_name
+            f'{self.session.campaign.name}:{self.session.campaign_level_name}'
         )
         ts_h_offs = 60
 

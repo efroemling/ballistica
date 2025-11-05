@@ -25,6 +25,8 @@ from efrotools.pcommands import (
     cpplint,
     pylint,
     pylint_files,
+    zmypy,
+    zmypy_files,
     mypy,
     mypy_files,
     dmypy,

@@ -773,6 +773,43 @@ def _filter_module_name(mpath: str) -> str:
     return mpath[:-9] if mpath.endswith('.__init__') else mpath
 
 
+def zmypy_files(
+    projroot: Path, filenames: list[str], full: bool = False, check: bool = True
+) -> None:
+    """Run zuban mypy on provided filenames."""
+
+    args = [
+        # sys.executable,
+        # '-m',
+        'zmypy',
+        '--pretty',
+        '--no-error-summary',
+        '--config-file',
+        str(Path(projroot, '.mypy.ini')),
+    ] + filenames
+    if full:
+        args.insert(args.index('zmypy') + 1, '--no-incremental')
+    subprocess.run(args, check=check)
+
+
+def zmypy(projroot: Path, full: bool) -> None:
+    """Type check all of our scripts using mypy."""
+    from efro.terminal import Clr
+
+    filenames = get_script_filenames(projroot)
+    desc = '(full)' if full else '(incremental)'
+    print(f'{Clr.BLU}Running Zmypy {desc}...{Clr.RST}', flush=True)
+    starttime = time.monotonic()
+    try:
+        zmypy_files(projroot, filenames, full)
+    except Exception as exc:
+        raise CleanError('Zmypy failed.') from exc
+    duration = time.monotonic() - starttime
+    print(
+        f'{Clr.GRN}Zmypy passed in {duration:.1f} seconds.{Clr.RST}', flush=True
+    )
+
+
 def mypy_files(
     projroot: Path, filenames: list[str], full: bool = False, check: bool = True
 ) -> None:

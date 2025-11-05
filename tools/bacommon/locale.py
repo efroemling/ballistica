@@ -87,7 +87,7 @@ class Locale(Enum):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-return-statements
 
-        cls = type(self)
+        cls = Locale
 
         if self is cls.ENGLISH:
             return 'English'
@@ -206,7 +206,7 @@ class Locale(Enum):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-return-statements
 
-        cls = type(self)
+        cls = Locale
 
         if self is cls.ENGLISH:
             return 'English'
@@ -306,7 +306,7 @@ class Locale(Enum):
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
 
-        cls = type(self)
+        cls = Locale
         R = LocaleResolved
 
         if self is cls.ENGLISH:
@@ -464,7 +464,7 @@ class LocaleResolved(Enum):
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
 
-        cls = type(self)
+        cls = LocaleResolved
 
         if self is cls.ENGLISH:
             return Locale.ENGLISH
@@ -561,7 +561,7 @@ class LocaleResolved(Enum):
         """
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
-        cls = type(self)
+        cls = LocaleResolved
 
         val: str | None = None
 
@@ -668,9 +668,9 @@ class LocaleResolved(Enum):
 
         return val
 
-    @classmethod
+    @staticmethod
     @lru_cache(maxsize=128)
-    def from_tag(cls, tag: str) -> LocaleResolved:
+    def from_tag(tag: str) -> LocaleResolved:
         """Return a locale for a given string tag.
 
         Tags can be provided in BCP 47 form ('en-US') or POSIX locale
@@ -679,6 +679,8 @@ class LocaleResolved(Enum):
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-return-statements
+
+        cls = LocaleResolved
 
         # POSIX locale strings can contain a dot followed by an
         # encoding. Strip that off.

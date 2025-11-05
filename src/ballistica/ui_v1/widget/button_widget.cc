@@ -178,7 +178,9 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
     if ((string_width * string_scale) > s_width_available) {
       float squish_scale = s_width_available / (string_width * string_scale);
-      if (squish_scale < 0.2f) string_too_small_to_draw = true;
+      if (squish_scale < 0.2f) {
+        string_too_small_to_draw = true;
+      }
       string_scale *= squish_scale;
     }
   } else {

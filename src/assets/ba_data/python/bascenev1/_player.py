@@ -35,7 +35,8 @@ class StandLocation:
     angle: float | None = None
 
 
-class Player[TeamT: bascenev1.Team]:
+# class Player[TeamT: bascenev1.Team]:
+class Player[TeamT]:
     """A player in a specific bascenev1.Activity.
 
     These correspond to bascenev1.SessionPlayer objects, but are associated

@@ -19,10 +19,13 @@ def show_display_item(
     parent: bauiv1.Widget,
     pos: tuple[float, float],
     width: float,
+    debug: bool = False,
 ) -> None:
     """Create ui to depict a display-item."""
+    # pylint: disable=too-many-locals
 
-    height = width * 0.666
+    # Let's go with 4:3 aspect ratio.
+    height = width * 0.75
 
     # Silent no-op if our parent ui is dead.
     if not parent:
@@ -64,8 +67,7 @@ def show_display_item(
             tint2_color=c_info.tint2,
         )
 
-    # Enable this for testing spacing.
-    if bool(False):
+    if debug:
         bauiv1.imagewidget(
             parent=parent,
             position=(

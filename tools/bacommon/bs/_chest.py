@@ -24,7 +24,7 @@ class ClassicChestAppearance(Enum):
     def pretty_name(self) -> str:
         """Pretty name for the chest in English."""
         # pylint: disable=too-many-return-statements
-        cls = type(self)
+        cls = ClassicChestAppearance
 
         if self is cls.UNKNOWN:
             return 'Unknown Chest'

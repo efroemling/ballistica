@@ -848,6 +848,10 @@ pylint-full: py_check_prepass
 mypy: py_check_prepass
 	@$(PCOMMAND) mypy
 
+# Run Mypy checks on all Python code.
+zmypy: py_check_prepass
+	@$(PCOMMAND) zmypy
+
 # Run Mypy checks without caching (all files are checked).
 mypy-full: py_check_prepass
 	@$(PCOMMAND) mypy -full

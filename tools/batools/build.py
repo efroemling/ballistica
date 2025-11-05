@@ -49,10 +49,8 @@ class PrefabPlatform(Enum):
     LINUX_X86_64 = 'linux_x86_64'
     LINUX_ARM64 = 'linux_arm64'
 
-    @classmethod
-    def get_current(
-        cls, wsl_targets_windows: bool | None = None
-    ) -> PrefabPlatform:
+    @staticmethod
+    def get_current(wsl_targets_windows: bool | None = None) -> PrefabPlatform:
         """Get an identifier for the platform running this build.
 
         Pass a bool `wsl_targets_windows` value to cause WSL to target
@@ -63,6 +61,8 @@ class PrefabPlatform(Enum):
         Throws a RuntimeError on unsupported platforms.
         """
         import platform
+
+        cls = PrefabPlatform
 
         if wsl_targets_windows is None:
             wsl_targets_windows = (

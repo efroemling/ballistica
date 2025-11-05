@@ -344,11 +344,7 @@ class ChestWindow(bui.MainWindow):
             tint2_color=self._chestdisplayinfo.tint2,
         )
 
-        # Store the prize-sets so we can display odds/etc. Sort them
-        # with smallest weights first (higher visually == better).
-        # self._prizesets = sorted(
-        #     chest.prizesets, key=lambda s: s.weight, reverse=True
-        # )
+        # Store the prize-sets so we can display odds/etc.
         self._prizesets = chest.prizesets
 
         if chest.unlock_tokens > 0:
@@ -813,7 +809,7 @@ class ChestWindow(bui.MainWindow):
                     descfin = bui.Lstr(
                         translate=('serverResponses', item.description)
                     ).evaluate()
-                    subs = (
+                    subs: list[str] = (
                         []
                         if item.description_subs is None
                         else item.description_subs
@@ -980,7 +976,8 @@ class ChestWindow(bui.MainWindow):
         )
         # This is somewhat redundant with the close button, but we need
         # to have *something* selectable in our window for SMALL ui-mode
-        # otherwise we can be left unable to select anything.
+        # (when we don't have our own close button) otherwise we can be
+        # left unable to select anything.
         self._show_done_button(use_ok_label=True)
 
     def _show_chest_contents(
@@ -1112,6 +1109,7 @@ class ChestWindow(bui.MainWindow):
                         self._yoffs - 250.0,
                     ),
                     width=width,
+                    debug=False,
                 ),
             )
             xoffs += xspacing

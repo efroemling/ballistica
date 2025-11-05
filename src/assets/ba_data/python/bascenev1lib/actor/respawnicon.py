@@ -66,6 +66,7 @@ class RespawnIcon:
             )
         )
 
+        assert self._image
         assert self._image.node
         bs.animate(self._image.node, 'opacity', {0.0: 0, 0.2: 0.7})
 
@@ -89,6 +90,7 @@ class RespawnIcon:
             )
         )
 
+        assert self._name
         assert self._name.node
         bs.animate(self._name.node, 'scale', {0: 0, 0.1: 0.5})
 
@@ -133,6 +135,7 @@ class RespawnIcon:
                 )
             )
 
+        assert self._text
         assert self._text.node
         bs.animate(self._text.node, 'scale', {0: 0, 0.1: 0.9})
         if self._dec_text:

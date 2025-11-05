@@ -224,8 +224,8 @@ def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
     # Extract and stage the file in a temp dir before doing a final move
     # to the target location to be as atomic as possible.
     with tempfile.TemporaryDirectory() as tmpdir:
-        with open(local_cache_path, 'rb') as infile:
-            data = infile.read()
+        with open(local_cache_path, 'rb') as infileb:
+            data = infileb.read()
         header = data[:4]
         if header != CACHE_HEADER:
             raise RuntimeError('Invalid cache header.')

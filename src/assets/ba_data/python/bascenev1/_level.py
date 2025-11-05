@@ -118,10 +118,11 @@ class Level:
     def get_high_scores(self) -> dict:
         """Return the current high scores for this level."""
         config = self._get_config_dict()
-        high_scores_key = 'High Scores' + self.get_score_version_string()
-        if high_scores_key not in config:
-            return {}
-        return copy.deepcopy(config[high_scores_key])
+        high_scores_key = f'High Scores{self.get_score_version_string()}'
+        val = config.get(high_scores_key)
+        if isinstance(val, dict):
+            return copy.deepcopy(val)
+        return {}
 
     def set_high_scores(self, high_scores: dict) -> None:
         """Set high scores for this level."""

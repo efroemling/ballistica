@@ -1763,6 +1763,7 @@ class SpinoffContext:
         is_project_file: bool,
     ) -> DstEntity:
         # pylint: disable=too-many-positional-arguments
+        # pylint: disable=too-many-locals
 
         # If this is a project file, we already fed the filtered
         # src into our ProjectUpdater instance, so all we do here is
@@ -1785,8 +1786,8 @@ class SpinoffContext:
             if not self._should_filter_src_file(src_path):
                 with open(src_path_full, 'rb') as infile:
                     data = infile.read()
-                with open(dst_path_full, 'wb') as outfile:
-                    outfile.write(data)
+                with open(dst_path_full, 'wb') as outfileb:
+                    outfileb.write(data)
             else:
                 with open(src_path_full, 'rb') as infile:
                     encoding = self._encoding_for_file(src_path_full)
@@ -1796,8 +1797,8 @@ class SpinoffContext:
                         print(f"Error decoding file: '{src_path}'.")
                         raise
                     contents_out = self._filter_file(src_path, contents_in)
-                    with open(dst_path_full, 'wb') as outfile:
-                        outfile.write(contents_out.encode(encoding))
+                    with open(dst_path_full, 'wb') as outfileb:
+                        outfileb.write(contents_out.encode(encoding))
 
         return DstEntity(
             entity_type=src_entity.entity_type,

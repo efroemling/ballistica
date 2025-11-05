@@ -118,6 +118,7 @@ class CloudUIPagePrep:
         nextbuttonid = 0
 
         have_start_button = False
+        have_selected_button = False
 
         # Precalc basic info like dimensions for all rows.
         for row in page.rows:
@@ -391,16 +392,27 @@ class CloudUIPagePrep:
 
                 widgetid = f'{idprefix}|button{nextbuttonid}'
 
-                if button.is_start_button:
+                if button.default:
                     if have_start_button:
                         bui.uilog.warning(
-                            'Multiple buttons flagged as is_start_button.'
+                            'Multiple buttons flagged as default.'
                             ' There can be only one per page.'
                         )
                     else:
                         have_start_button = True
                         self.root_post_calls.append(
                             partial(self._set_start_button, widgetid)
+                        )
+                if button.selected:
+                    if have_selected_button:
+                        bui.uilog.warning(
+                            'Multiple buttons flagged as selected.'
+                            ' There can be only one per page.'
+                        )
+                    else:
+                        have_selected_button = True
+                        self.root_post_calls.append(
+                            partial(self._set_selected_button, widgetid)
                         )
 
                 buttonprep = _ButtonPrep(
@@ -593,7 +605,8 @@ class CloudUIPagePrep:
                 kwds = {
                     'parent': hsub,
                     'on_activate_call': strict_partial(
-                        window.on_v1_button_press,
+                        window.controller.run_action,
+                        window,
                         buttonprep.widgetid,
                         buttonprep.action,
                     ),
@@ -665,6 +678,13 @@ class CloudUIPagePrep:
         widget = bui.widget_by_id(buttonid)
         if widget:
             bui.containerwidget(edit=root, start_button=widget)
+
+    @staticmethod
+    def _set_selected_button(buttonid: str, root: bui.Widget) -> None:
+        del root  # Unused.
+        widget = bui.widget_by_id(buttonid)
+        if widget:
+            widget.global_select()
 
 
 def _prep_text(

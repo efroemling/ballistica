@@ -48,6 +48,9 @@ class DirectoryManifest:
 
         if path.is_dir():
             # Build the full list of relative paths.
+            # basename: str
+            # _dirnames: list[str]
+            # filenames: list[str]
             for basename, _dirnames, filenames in os.walk(path):
                 for filename in filenames:
                     fullname = os.path.join(basename, filename)

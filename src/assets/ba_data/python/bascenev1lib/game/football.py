@@ -518,8 +518,9 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def on_begin(self) -> None:
-        # FIXME: Split this up a bit.
+        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
+
         from bascenev1lib.actor import controlsguide
 
         super().on_begin()
@@ -572,11 +573,10 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
             )
             abot = BrawlerBot if self._preset == 'pro' else BrawlerBotLite
             typed_bot_list: list[type[SpazBot]] = []
-            self._bot_types_7 = (
-                typed_bot_list
-                + [abot]
-                + [BomberBot] * (1 if len(self.initialplayerinfos) < 3 else 2)
+            bomberbots: list[type[SpazBot]] = [BomberBot] * (
+                1 if len(self.initialplayerinfos) < 3 else 2
             )
+            self._bot_types_7 = typed_bot_list + [abot] + bomberbots
             bbot = TriggerBotPro if self._preset == 'pro' else TriggerBot
             self._bot_types_14 = [bbot] * (
                 1 if len(self.initialplayerinfos) < 3 else 2
@@ -587,11 +587,9 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
             abot = BrawlerBotPro if self._preset == 'uber' else BrawlerBot
             bbot = TriggerBotPro if self._preset == 'uber' else TriggerBot
             typed_bot_list_2: list[type[SpazBot]] = []
-            self._bot_types_initial = (
-                typed_bot_list_2
-                + [StickyBot]
-                + [abot] * len(self.initialplayerinfos)
-            )
+            stickybots: list[type[SpazBot]] = [StickyBot]
+            abots: list[type[SpazBot]] = [abot] * len(self.initialplayerinfos)
+            self._bot_types_initial = typed_bot_list_2 + stickybots + abots
             self._bot_types_7 = [bbot] * (
                 1 if len(self.initialplayerinfos) < 3 else 2
             )

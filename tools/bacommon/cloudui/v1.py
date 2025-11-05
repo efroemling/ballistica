@@ -104,8 +104,10 @@ class Browse(Action):
     """Browse to a new page in a new window."""
 
     request: Annotated[Request, IOAttrs('r')]
+
+    #: Plays a swish.
     default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
-    effects: Annotated[
+    immediate_effects: Annotated[
         list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
 
@@ -118,7 +120,7 @@ class Browse(Action):
 @ioprepped
 @dataclass
 class Replace(Action):
-    """Replace current page contents.
+    """Replace current page with a new one.
 
     Should be used to effectively 'modify' existing UIs by replacing
     them with something slightly different. Things like scroll position
@@ -127,10 +129,24 @@ class Replace(Action):
     """
 
     request: Annotated[Request, IOAttrs('r')]
+
+    #: Plays a click if triggered by a button press.
     default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
-    effects: Annotated[
+
+    #: Client-effects to run immediately when the button is pressed.
+    immediate_client_effects: Annotated[
         list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
+
+    #: Local action to run immediately when the button is pressed. Will
+    #: be handled by
+    #: :meth:`bauiv1lib.cloudui.CloudUIController.local_action()`.
+    immediate_local_action: Annotated[
+        str | None, IOAttrs('a', store_default=False)
+    ] = None
+    immediate_local_action_params: Annotated[
+        dict | None, IOAttrs('ap', store_default=False)
+    ] = None
 
     @override
     @classmethod
@@ -141,21 +157,27 @@ class Replace(Action):
 @ioprepped
 @dataclass
 class Local(Action):
-    """Perform purely local actions."""
+    """Perform only local actions; no new requests or page changes."""
 
     close_window: Annotated[bool, IOAttrs('c', store_default=False)] = False
 
-    #: Plays a swish if closing the window or a click otherwise.
+    #: Plays a swish if closing the window or a click if triggered by a
+    #: button press.
     default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
-    effects: Annotated[
+
+    #: Client-effects to run immediately when the button is pressed.
+    immediate_client_effects: Annotated[
         list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
 
-    #: Named local action to run. Will be handled by
+    #: Local action to run immediately when the button is pressed. Will
+    #: be handled by
     #: :meth:`bauiv1lib.cloudui.CloudUIController.local_action()`.
-    action: Annotated[str | None, IOAttrs('a', store_default=False)] = None
-    action_params: Annotated[
-        dict | None, IOAttrs('aa', store_default=False)
+    immediate_local_action: Annotated[
+        str | None, IOAttrs('a', store_default=False)
+    ] = None
+    immediate_local_action_params: Annotated[
+        dict | None, IOAttrs('ap', store_default=False)
     ] = None
 
     @override
@@ -387,7 +409,8 @@ class Button:
     style: Annotated[ButtonStyle, IOAttrs('y', store_default=False)] = (
         ButtonStyle.SQUARE
     )
-    is_start_button: Annotated[bool, IOAttrs('st', store_default=False)] = False
+    default: Annotated[bool, IOAttrs('df', store_default=False)] = False
+    selected: Annotated[bool, IOAttrs('sel', store_default=False)] = False
 
     icon: Annotated[str | None, IOAttrs('icn', store_default=False)] = None
     icon_scale: Annotated[float | None, IOAttrs('is', store_default=False)] = (
@@ -489,11 +512,6 @@ class Page:
     #: allow client-side translation.
     title_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
 
-    #: If provided, refuse to show on builds older than this.
-    minimum_engine_build: Annotated[
-        int | None, IOAttrs('b', store_default=False)
-    ] = None
-
 
 class StatusCode(Enum):
     """The overall result of a request."""
@@ -511,16 +529,49 @@ class Response(CloudUIResponse):
     status: Annotated[StatusCode, IOAttrs('s', store_default=False)] = (
         StatusCode.SUCCESS
     )
-    effects: Annotated[
+
+    #: Effects to run on the client when this response is initially
+    #: received. Note that these effects will not re-run if the page is
+    #: automatically refreshed later (due to window resizing, back
+    #: navigation, etc).
+    client_effects: Annotated[
         list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
 
-    # The client maintains some persistent state (namely widget
-    # selection) for all pages viewed. The default index for these
-    # states is the path of the request. If a server returns
-    # significantly different responses for a single path, however,
-    # (based on params, etc) then it may make sense for the server to
-    # provide explicit state ids for those different configurations.
+    #: Local action to run after this response is initially received.
+    #: Will be handled by
+    #: :meth:`bauiv1lib.cloudui.CloudUIController.local_action()`. Note
+    #: that these actions will not re-run if the page is automatically
+    #: refreshed later (due to window resizing, back navigation, etc).
+    local_action: Annotated[str | None, IOAttrs('a', store_default=False)] = (
+        None
+    )
+    local_action_params: Annotated[
+        dict | None, IOAttrs('ap', store_default=False)
+    ] = None
+
+    #: New overall action to have the client schedule after this response
+    #: is received. Useful for redirecting to other pages or closing the
+    #: cloud-ui window.
+    timed_action: Annotated[
+        Action | None, IOAttrs('ta', store_default=False)
+    ] = None
+    timed_action_delay: Annotated[
+        float, IOAttrs('tad', store_default=False)
+    ] = 0.0
+
+    #: If provided, error on builds older than this (can be used to gate
+    #: functionality without bumping entire cloudui version).
+    minimum_engine_build: Annotated[
+        int | None, IOAttrs('b', store_default=False)
+    ] = None
+
+    #: The client maintains some persistent state (such as widget
+    #: selection) for all pages viewed. The default index for these
+    #: states is the path of the request. If a server returns a
+    #: significant variety of responses for a single path, however,
+    #: (based on params, etc) then it may make sense for the server to
+    #: provide explicit state ids for those different variations.
     shared_state_id: Annotated[
         str | None, IOAttrs('t', store_default=False)
     ] = None

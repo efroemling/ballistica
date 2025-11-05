@@ -266,176 +266,180 @@ class PrepSession:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
 
-        if recursion_level > MAX_RECURSION:
-            raise RuntimeError('Max recursion exceeded.')
+        if not TYPE_CHECKING:
 
-        origin = _get_origin(anntype)
+            if recursion_level > MAX_RECURSION:
+                raise RuntimeError('Max recursion exceeded.')
 
-        # If we inherit from IOMultiType, we use its type map to
-        # determine which type we're going to instead of the annotation.
-        # And we can't really check those types because they are
-        # lazy-loaded. So I guess we're done here.
-        if issubclass(origin, IOMultiType):
-            return
+            origin = _get_origin(anntype)
 
-        if origin is typing.Union or origin is types.UnionType:
-            self.prep_union(
-                cls, attrname, anntype, recursion_level=recursion_level + 1
-            )
-            return
+            # If we inherit from IOMultiType, we use its type map to
+            # determine which type we're going to instead of the
+            # annotation. And we can't really check those types because
+            # they are lazy-loaded. So I guess we're done here.
+            if issubclass(origin, IOMultiType):
+                return
 
-        if anntype is typing.Any:
-            return
+            if origin is typing.Union or origin is types.UnionType:
+                self.prep_union(
+                    cls, attrname, anntype, recursion_level=recursion_level + 1
+                )
+                return
 
-        # Everything below this point assumes the annotation type
-        # resolves to a concrete type.
-        if not isinstance(origin, type):
-            raise TypeError(
-                f'Unsupported type found for \'{attrname}\' on {cls}:'
-                f' {anntype}'
-            )
+            if anntype is typing.Any:
+                return
 
-        # If a soft_default value/factory was passed, we do some basic
-        # type checking on the top-level value here. We also run full
-        # recursive validation on values later during inputting, but
-        # this should catch at least some errors early on, which can be
-        # useful since soft_defaults are not static type checked.
-        if ioattrs is not None:
-            have_soft_default = False
-            soft_default: Any = None
-            if ioattrs.soft_default is not ioattrs.MISSING:
-                have_soft_default = True
-                soft_default = ioattrs.soft_default
-            elif ioattrs.soft_default_factory is not ioattrs.MISSING:
-                assert callable(ioattrs.soft_default_factory)
-                have_soft_default = True
-                soft_default = ioattrs.soft_default_factory()
+            # Everything below this point assumes the annotation type
+            # resolves to a concrete type.
+            if not isinstance(origin, type):
+                raise TypeError(
+                    f'Unsupported type found for \'{attrname}\' on {cls}:'
+                    f' {anntype}'
+                )
 
-            # Do a simple type check for the top level to catch basic
-            # soft_default mismatches early; full check will happen at
-            # input time.
-            if have_soft_default:
-                if not isinstance(soft_default, origin):
+            # If a soft_default value/factory was passed, we do some
+            # basic type checking on the top-level value here. We also
+            # run full recursive validation on values later during
+            # inputting, but this should catch at least some errors
+            # early on, which can be useful since soft_defaults are not
+            # static type checked.
+            if ioattrs is not None:
+                have_soft_default = False
+                soft_default: Any = None
+                if ioattrs.soft_default is not ioattrs.MISSING:
+                    have_soft_default = True
+                    soft_default = ioattrs.soft_default
+                elif ioattrs.soft_default_factory is not ioattrs.MISSING:
+                    assert callable(ioattrs.soft_default_factory)
+                    have_soft_default = True
+                    soft_default = ioattrs.soft_default_factory()
+
+                # Do a simple type check for the top level to catch basic
+                # soft_default mismatches early; full check will happen at
+                # input time.
+                if have_soft_default:
+                    if not isinstance(soft_default, origin):
+                        raise TypeError(
+                            f'{cls} attr {attrname} has type {origin}'
+                            f' but soft_default value is type'
+                            f' {type(soft_default)}'
+                        )
+
+            if origin in SIMPLE_TYPES:
+                return
+
+            # For sets and lists, check out their single contained type (if
+            # any).
+            if origin in (list, set):
+                childtypes = typing.get_args(anntype)
+                if len(childtypes) == 0:
+                    # This is equivalent to Any; nothing else needs
+                    # checking.
+                    return
+                if len(childtypes) > 1:
                     raise TypeError(
-                        f'{cls} attr {attrname} has type {origin}'
-                        f' but soft_default value is type {type(soft_default)}'
+                        f'Unrecognized typing arg count {len(childtypes)}'
+                        f" for {anntype} attr '{attrname}' on {cls}"
+                    )
+                self.prep_type(
+                    cls,
+                    attrname,
+                    childtypes[0],
+                    ioattrs=None,
+                    recursion_level=recursion_level + 1,
+                )
+                return
+
+            if origin is dict:
+                childtypes = typing.get_args(anntype)
+                assert len(childtypes) in (0, 2)
+
+                # For key types we support Any, str, int,
+                # and Enums with uniform str/int values.
+                if not childtypes or childtypes[0] is typing.Any:
+                    # 'Any' needs no further checks (just checked
+                    # per-instance).
+                    pass
+                elif childtypes[0] in (str, int):
+                    # str and int are all good as keys.
+                    pass
+                elif issubclass(childtypes[0], Enum):
+                    # Allow our usual str or int enum types as keys.
+                    self.prep_enum(childtypes[0], ioattrs=None)
+                else:
+                    raise TypeError(
+                        f'Dict key type {childtypes[0]} for \'{attrname}\''
+                        f' on {cls.__name__} is not supported by dataclassio.'
                     )
 
-        if origin in SIMPLE_TYPES:
-            return
-
-        # For sets and lists, check out their single contained type (if
-        # any).
-        if origin in (list, set):
-            childtypes = typing.get_args(anntype)
-            if len(childtypes) == 0:
-                # This is equivalent to Any; nothing else needs
-                # checking.
+                # For value types we support any of our normal types.
+                if not childtypes or _get_origin(childtypes[1]) is typing.Any:
+                    # 'Any' needs no further checks (just checked
+                    # per-instance).
+                    pass
+                else:
+                    self.prep_type(
+                        cls,
+                        attrname,
+                        childtypes[1],
+                        ioattrs=None,
+                        recursion_level=recursion_level + 1,
+                    )
                 return
-            if len(childtypes) > 1:
-                raise TypeError(
-                    f'Unrecognized typing arg count {len(childtypes)}'
-                    f" for {anntype} attr '{attrname}' on {cls}"
-                )
-            self.prep_type(
-                cls,
-                attrname,
-                childtypes[0],
-                ioattrs=None,
-                recursion_level=recursion_level + 1,
+
+            # For Tuples, simply check individual member types. (and, for
+            # now, explicitly disallow zero member types or usage of
+            # ellipsis)
+            if origin is tuple:
+                childtypes = typing.get_args(anntype)
+                if not childtypes:
+                    raise TypeError(
+                        f'Tuple at \'{attrname}\''
+                        f' has no type args; dataclassio requires type args.'
+                    )
+                if childtypes[-1] is ...:
+                    raise TypeError(
+                        f'Found ellipsis as part of type for'
+                        f' \'{attrname}\' on {cls.__name__};'
+                        f' these are not'
+                        f' supported by dataclassio.'
+                    )
+                for childtype in childtypes:
+                    self.prep_type(
+                        cls,
+                        attrname,
+                        childtype,
+                        ioattrs=None,
+                        recursion_level=recursion_level + 1,
+                    )
+                return
+
+            if issubclass(origin, Enum):
+                self.prep_enum(origin, ioattrs=ioattrs)
+                return
+
+            # We allow datetime objects (and google's extended subclass of
+            # them used in firestore, which is why we don't look for exact
+            # type here).
+            if issubclass(origin, datetime.datetime):
+                return
+
+            # We support datetime.timedelta.
+            if issubclass(origin, datetime.timedelta):
+                return
+
+            if dataclasses.is_dataclass(origin):
+                self.prep_dataclass(origin, recursion_level=recursion_level + 1)
+                return
+
+            if origin is bytes:
+                return
+
+            raise TypeError(
+                f"Attr '{attrname}' on {cls.__name__} contains"
+                f" type '{anntype}'"
+                f' which is not supported by dataclassio.'
             )
-            return
-
-        if origin is dict:
-            childtypes = typing.get_args(anntype)
-            assert len(childtypes) in (0, 2)
-
-            # For key types we support Any, str, int,
-            # and Enums with uniform str/int values.
-            if not childtypes or childtypes[0] is typing.Any:
-                # 'Any' needs no further checks (just checked
-                # per-instance).
-                pass
-            elif childtypes[0] in (str, int):
-                # str and int are all good as keys.
-                pass
-            elif issubclass(childtypes[0], Enum):
-                # Allow our usual str or int enum types as keys.
-                self.prep_enum(childtypes[0], ioattrs=None)
-            else:
-                raise TypeError(
-                    f'Dict key type {childtypes[0]} for \'{attrname}\''
-                    f' on {cls.__name__} is not supported by dataclassio.'
-                )
-
-            # For value types we support any of our normal types.
-            if not childtypes or _get_origin(childtypes[1]) is typing.Any:
-                # 'Any' needs no further checks (just checked
-                # per-instance).
-                pass
-            else:
-                self.prep_type(
-                    cls,
-                    attrname,
-                    childtypes[1],
-                    ioattrs=None,
-                    recursion_level=recursion_level + 1,
-                )
-            return
-
-        # For Tuples, simply check individual member types. (and, for
-        # now, explicitly disallow zero member types or usage of
-        # ellipsis)
-        if origin is tuple:
-            childtypes = typing.get_args(anntype)
-            if not childtypes:
-                raise TypeError(
-                    f'Tuple at \'{attrname}\''
-                    f' has no type args; dataclassio requires type args.'
-                )
-            if childtypes[-1] is ...:
-                raise TypeError(
-                    f'Found ellipsis as part of type for'
-                    f' \'{attrname}\' on {cls.__name__};'
-                    f' these are not'
-                    f' supported by dataclassio.'
-                )
-            for childtype in childtypes:
-                self.prep_type(
-                    cls,
-                    attrname,
-                    childtype,
-                    ioattrs=None,
-                    recursion_level=recursion_level + 1,
-                )
-            return
-
-        if issubclass(origin, Enum):
-            self.prep_enum(origin, ioattrs=ioattrs)
-            return
-
-        # We allow datetime objects (and google's extended subclass of
-        # them used in firestore, which is why we don't look for exact
-        # type here).
-        if issubclass(origin, datetime.datetime):
-            return
-
-        # We support datetime.timedelta.
-        if issubclass(origin, datetime.timedelta):
-            return
-
-        if dataclasses.is_dataclass(origin):
-            self.prep_dataclass(origin, recursion_level=recursion_level + 1)
-            return
-
-        if origin is bytes:
-            return
-
-        raise TypeError(
-            f"Attr '{attrname}' on {cls.__name__} contains"
-            f" type '{anntype}'"
-            f' which is not supported by dataclassio.'
-        )
 
     def prep_union(
         self, cls: type, attrname: str, anntype: Any, recursion_level: int

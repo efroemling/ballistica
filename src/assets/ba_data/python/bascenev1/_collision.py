@@ -19,7 +19,9 @@ class Collision:
     @property
     def position(self) -> bascenev1.Vec3:
         """The position of the current collision."""
-        return babase.Vec3(_bascenev1.get_collision_info('position'))
+        out = babase.Vec3(_bascenev1.get_collision_info('position'))
+        assert isinstance(out, babase.Vec3)
+        return out
 
     @property
     def sourcenode(self) -> bascenev1.Node:

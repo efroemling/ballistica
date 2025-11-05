@@ -348,36 +348,39 @@ def dispatchmethod[ArgT, RetT](
     """
     from functools import singledispatch, update_wrapper
 
-    origwrapper: Any = singledispatch(func)
-
-    # Pull this out so hopefully origwrapper can die,
-    # otherwise we reference origwrapper in our wrapper.
-    dispatch = origwrapper.dispatch
-
-    # All we do here is recreate the end of functools.singledispatch
-    # where it returns a wrapper except instead of the wrapper using the
-    # first arg to the function ours uses the second (to skip 'self').
-    # This was made against Python 3.7; we should probably check up on
-    # this in later versions in case anything has changed.
-    # (or hopefully they'll add this functionality to their version)
-    # NOTE: sounds like we can use functools singledispatchmethod in 3.8
-    def wrapper(*args: Any, **kw: Any) -> Any:
-        if not args or len(args) < 2:
-            raise TypeError(
-                f'{funcname} requires at least ' '2 positional arguments'
-            )
-
-        return dispatch(args[1].__class__)(*args, **kw)
-
-    funcname = getattr(func, '__name__', 'dispatchmethod method')
-    wrapper.register = origwrapper.register  # type: ignore
-    wrapper.dispatch = dispatch  # type: ignore
-    wrapper.registry = origwrapper.registry  # type: ignore
     # pylint: disable=protected-access
-    wrapper._clear_cache = origwrapper._clear_cache  # type: ignore
-    update_wrapper(wrapper, func)
-    # pylint: enable=protected-access
-    return cast(DispatchMethodWrapper, wrapper)
+    # pylint: disable=no-else-return
+
+    if TYPE_CHECKING:
+        return cast(DispatchMethodWrapper, None)
+    else:
+        origwrapper: Any = singledispatch(func)
+
+        # Pull this out so hopefully origwrapper can die,
+        # otherwise we reference origwrapper in our wrapper.
+        dispatch = origwrapper.dispatch
+
+        # All we do here is recreate the end of functools.singledispatch
+        # where it returns a wrapper except instead of the wrapper using the
+        # first arg to the function ours uses the second (to skip 'self').
+        # This was made against Python 3.7; we should probably check up on
+        # this in later versions in case anything has changed.
+        # (or hopefully they'll add this functionality to their version)
+        # NOTE: sounds like we can use functools singledispatchmethod in 3.8
+        def wrapper(*args: Any, **kw: Any) -> Any:
+            if not args or len(args) < 2:
+                raise TypeError(
+                    f'{funcname} requires at least ' '2 positional arguments'
+                )
+            return dispatch(args[1].__class__)(*args, **kw)
+
+        funcname = getattr(func, '__name__', 'dispatchmethod method')
+        wrapper.register = origwrapper.register
+        wrapper.dispatch = dispatch
+        wrapper.registry = origwrapper.registry
+        wrapper._clear_cache = origwrapper._clear_cache
+        update_wrapper(wrapper, func)
+        return cast(DispatchMethodWrapper, wrapper)
 
 
 def valuedispatch[ValT, RetT](
@@ -1008,7 +1011,8 @@ def weighted_choice[T](*args: tuple[T, float]) -> T:
     items: tuple[T]
     weights: tuple[float]
     items, weights = zip(*args)
-    return random.choices(items, weights=weights)[0]
+    val: T = random.choices(items, weights=weights)[0]
+    return val
 
 
 def prune_empty_dirs(prunedir: str) -> None:

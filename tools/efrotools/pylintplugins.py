@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import astroid
 import astroid.nodes
 
 # from pylint.checkers import BaseChecker

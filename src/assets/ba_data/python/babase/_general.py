@@ -455,7 +455,7 @@ class WeakMethod:
         self.obj = weakref.ref(call.__self__)
 
     def __call__(self, *args: Any, **keywds: Any) -> Any:
-        obj = self.obj()
+        obj: Any = self.obj()
         if obj is None:
             return None
         return self.func(*((obj,) + args), **keywds)
