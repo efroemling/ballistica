@@ -59,7 +59,7 @@ class TestCloudUIController(CloudUIController):
 
         # Ship '/webtest/*' off to some server to handle.
         if request.path.startswith('/webtest/'):
-            return self.fulfill_request_http(
+            return self.fulfill_request_web(
                 request, 'https://www.ballistica.net/clouduitest'
             )
 
@@ -239,7 +239,7 @@ def _test_page_root(
                     ],
                     header_decorations_center=[
                         clui.Text(
-                            'Look, a row header!',
+                            'Hello From CloudUI!',
                             position=(0, 10 + 20),
                             size=(300, 30),
                             debug=debug,
@@ -248,7 +248,7 @@ def _test_page_root(
                             (
                                 'Use this as reference for building'
                                 ' UIs with CloudUI.'
-                                ' It lives at bauiv1lib.clouduitest'
+                                ' Its code lives at bauiv1lib.clouduitest'
                             ),
                             scale=0.5,
                             position=(0, -18 + 20),

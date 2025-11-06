@@ -6,9 +6,10 @@ from __future__ import annotations
 
 from enum import Enum
 from dataclasses import dataclass
-from typing import override, assert_never, TYPE_CHECKING
+from typing import override, assert_never, TYPE_CHECKING, Annotated
 
-from efro.dataclassio import ioprepped, IOMultiType
+from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
+from bacommon.locale import Locale
 
 if TYPE_CHECKING:
     pass
@@ -142,3 +143,36 @@ class UnknownCloudUIResponse(CloudUIResponse):
     @classmethod
     def get_type_id(cls) -> CloudUIResponseTypeID:
         return CloudUIResponseTypeID.UNKNOWN
+
+
+@ioprepped
+@dataclass
+class CloudUIWebRequest:
+    """Complete data sent for cloud-ui http requests."""
+
+    #: The wrapped cloud-ui request.
+    cloud_ui_request: Annotated[CloudUIRequest, IOAttrs('r')]
+
+    #: The current locale of the client. Cloud-ui generally deals in raw
+    #: strings and expects localization to happen on the server.
+    locale: Annotated[Locale, IOAttrs('l')]
+
+    #: Engine build number. In some cases it may make sense to adjust
+    #: responses depending on available engine features.
+    engine_build_number: Annotated[int, IOAttrs('b')]
+
+
+@ioprepped
+@dataclass
+class CloudUIWebResponse:
+    """Complete data returned for cloud-ui http requests."""
+
+    #: Human readable error string (if an error occurs). Either this or
+    #: cloud_ui_response should be set; not both.
+    error: Annotated[str | None, IOAttrs('e', store_default=False)] = None
+
+    #: Cloud-ui response. Either this or error should be set; not both.
+    cloud_ui_response: Annotated[
+        CloudUIResponse | None,
+        IOAttrs('r', store_default=False),
+    ] = None

@@ -9,6 +9,8 @@ from bacommon.cloudui._cloudui import (
     CloudUIResponse,
     CloudUIResponseTypeID,
     UnknownCloudUIResponse,
+    CloudUIWebRequest,
+    CloudUIWebResponse,
 )
 
 
@@ -19,4 +21,6 @@ __all__ = [
     'CloudUIResponse',
     'CloudUIResponseTypeID',
     'UnknownCloudUIResponse',
+    'CloudUIWebRequest',
+    'CloudUIWebResponse',
 ]

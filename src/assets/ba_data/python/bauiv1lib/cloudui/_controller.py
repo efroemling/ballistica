@@ -4,24 +4,20 @@
 
 from __future__ import annotations
 
-import json
 from typing import TYPE_CHECKING, assert_never
 from dataclasses import dataclass
 from enum import Enum
 import weakref
 
 from efro.error import CleanError
-from efro.dataclassio import (
-    dataclass_to_dict,
-    dataclass_from_dict,
-    dataclass_to_json,
-)
+from efro.dataclassio import dataclass_to_json, dataclass_from_json
 from bacommon.cloudui import (
-    CloudUIResponse,
     CloudUIRequestTypeID,
     UnknownCloudUIRequest,
     CloudUIResponseTypeID,
     UnknownCloudUIResponse,
+    CloudUIWebRequest,
+    CloudUIWebResponse,
 )
 import bauiv1 as bui
 
@@ -32,7 +28,7 @@ if TYPE_CHECKING:
     from typing import Callable
 
     import bacommon.cloudui.v1
-    from bacommon.cloudui import CloudUIRequest
+    from bacommon.cloudui import CloudUIRequest, CloudUIResponse
     from bacommon.bs import ClientEffect
 
 
@@ -88,7 +84,7 @@ class CloudUIController:
         good candidates for local actions.
         """
 
-    def fulfill_request_http(
+    def fulfill_request_web(
         self, request: CloudUIRequest, url: str
     ) -> CloudUIResponse:
         """Fulfill a request by sending it to a webserver."""
@@ -104,6 +100,14 @@ class CloudUIController:
         # Allow compressed results.
         headers = urllib3.util.make_headers(accept_encoding=True)
 
+        # Bundle our cloud-ui request with some extra stuff that might
+        # be relevant to a remote server (language we're using, etc.).
+        webrequest = CloudUIWebRequest(
+            cloud_ui_request=request,
+            locale=bui.app.locale.current_locale,
+            engine_build_number=bui.app.env.engine_build_number,
+        )
+
         try:
             # Map cloudui GET requests to http GET and POST to POST.
             if request.method is clui1.RequestMethod.GET:
@@ -111,56 +115,65 @@ class CloudUIController:
                 raw_response = upool.request(
                     'GET',
                     url,
-                    fields={'cloud_ui_request': dataclass_to_json(request)},
+                    fields={
+                        'cloud_ui_web_request': dataclass_to_json(webrequest)
+                    },
                     headers=headers,
                 )
 
             elif request.method is clui1.RequestMethod.POST:
-                # for POST we embed the request into a json dict we send
-                # as body.
-                data = {'cloud_ui_request': dataclass_to_dict(request)}
-                datastr = json.dumps(data, separators=(',', ':'))
+                # for POST we send the webrequest as json in body.
                 headers['Content-Type'] = 'application/json'
                 raw_response = upool.request(
                     'POST',
                     url,
                     headers=headers,
-                    body=datastr,
+                    body=dataclass_to_json(webrequest),
                 )
             elif request.method is clui1.RequestMethod.UNKNOWN:
                 raise RuntimeError('Unknown request method.')
             else:
                 assert_never(request.method)
 
-            # We expect a json dict as response even in error cases. It
-            # should contain an 'error' string or a 'cloud_ui_response'
-            # dict.
-            raw_data = json.loads(raw_response.data.decode())
-            if not isinstance(raw_data, dict):
-                raise RuntimeError('Got non-dict response data.')
+            # We expect web-response json even in error cases.
+            try:
+                webresponse = dataclass_from_json(
+                    CloudUIWebResponse, raw_response.data.decode()
+                )
+                if (
+                    webresponse.error is None
+                    and webresponse.cloud_ui_response is None
+                ):
+                    raise RuntimeError(
+                        'Invalid webresponse includes neither error'
+                        ' nor cloud-ui-response.'
+                    )
+            except Exception as exc:
+                bui.netlog.info(
+                    'Error reading cloudui web-response.', exc_info=True
+                )
+                raise RuntimeError(
+                    'Error reading cloudui web-response.'
+                ) from exc
 
             # For now, show all http errors as communication error. We
             # can probably get more specific in the future.
             if raw_response.status != 200:
 
                 # If the response bundled an error, log it.
-                error = raw_data.get('error')
-                if isinstance(error, str):
+                if webresponse.error is not None:
                     bui.netlog.info(
-                        'Cloud-ui http request returned error: %s', error
+                        'Cloud-ui http request returned error: %s',
+                        webresponse.error,
                     )
                 return self.error_response(self.ErrorType.COMMUNICATION_ERROR)
-
-            response_data = raw_data.get('cloud_ui_response')
-            if not isinstance(response_data, dict):
-                raise RuntimeError('cloud_ui_response dict not found.')
-            response = dataclass_from_dict(CloudUIResponse, response_data)
 
         except Exception:
             bui.netlog.info('Error in cloudui http request.', exc_info=True)
             return self.error_response(self.ErrorType.GENERIC)
 
-        return response
+        assert webresponse.cloud_ui_response is not None
+        return webresponse.cloud_ui_response
 
     def error_response(
         self,
