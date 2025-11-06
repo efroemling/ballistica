@@ -580,6 +580,7 @@ class CloudUIPagePrep:
             # Note that we don't need to account for
             # padding-top/bottom since the h-scroll that we're
             # applying to encompasses both.
+            show_buffer_top += row.header_height * row.header_scale
             if row.title is not None:
                 show_buffer_top += row_title_height
             if row.subtitle is not None:

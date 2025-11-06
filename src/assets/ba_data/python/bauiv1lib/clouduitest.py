@@ -230,7 +230,7 @@ def _test_page_root(
                     header_decorations_left=[
                         clui.Text(
                             'HeaderLeft',
-                            position=(0, 10),
+                            position=(0, 10 + 20),
                             color=(1, 1, 1, 0.3),
                             size=(150, 30),
                             h_align=clui.HAlign.LEFT,
@@ -240,16 +240,29 @@ def _test_page_root(
                     header_decorations_center=[
                         clui.Text(
                             'Look, a row header!',
-                            position=(0, 10),
-                            size=(300, 40),
+                            position=(0, 10 + 20),
+                            size=(300, 30),
                             debug=debug,
                         ),
-                        clui.Image('nub', position=(0, -35), size=(60, 60)),
+                        clui.Text(
+                            (
+                                'Use this as reference for building'
+                                ' UIs with CloudUI.'
+                                ' It lives at bauiv1lib.clouduitest'
+                            ),
+                            scale=0.5,
+                            position=(0, -18 + 20),
+                            size=(600, 23),
+                            debug=debug,
+                        ),
+                        clui.Image(
+                            'nub', position=(0, -58 + 20), size=(60, 60)
+                        ),
                     ],
                     header_decorations_right=[
                         clui.Text(
                             'HeaderRight',
-                            position=(0, 10),
+                            position=(0, 10 + 20),
                             color=(1, 1, 1, 0.3),
                             size=(150, 30),
                             h_align=clui.HAlign.RIGHT,
