@@ -10,6 +10,8 @@ import threading
 from typing import TYPE_CHECKING, ParamSpec
 from concurrent.futures import ThreadPoolExecutor
 
+from efro.util import strip_exception_tracebacks
+
 if TYPE_CHECKING:
     from typing import Any, Callable
     from concurrent.futures import Future
@@ -83,5 +85,8 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
             self.no_wait_count -= 1
         try:
             fut.result()
-        except Exception:
+        except Exception as exc:
             logger.exception('Error in work submitted via submit_no_wait().')
+            # We're done with this exception, so strip its traceback to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)

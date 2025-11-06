@@ -60,7 +60,7 @@ class TestCloudUIController(CloudUIController):
         # Ship '/webtest/*' off to some server to handle.
         if request.path.startswith('/webtest/'):
             return self.fulfill_request_http(
-                request, 'https://dev.ballistica.net/clouduitest'
+                request, 'https://www.ballistica.net/clouduitest'
             )
 
         raise CleanError('Invalid request path.')
@@ -68,7 +68,7 @@ class TestCloudUIController(CloudUIController):
     @override
     def local_action(self, action: CloudUILocalAction) -> None:
         bui.screenmessage(
-            f'Would do {action.name!r} with params {action.params!r}.'
+            f'Would do {action.name!r} with args {action.args!r}.'
         )
 
 
@@ -111,7 +111,7 @@ def _test_page_timed_actions(
     """Testing a page that takes a bit of time to load."""
     import bacommon.cloudui.v1 as clui
 
-    val = request.params.get('val')
+    val = request.args.get('val')
     if not isinstance(val, int):
         val = 5
 
@@ -139,7 +139,7 @@ def _test_page_timed_actions(
         # Refresh this page with a countdown until we hit zero and then
         # close the window.
         timed_action=(
-            clui.Replace(clui.Request('/timedactions', params={'val': val - 1}))
+            clui.Replace(clui.Request('/timedactions', args={'val': val - 1}))
             if (val - 1) > 0
             else clui.Local(close_window=True)
         ),
@@ -217,11 +217,45 @@ def _test_page_root(
     import bacommon.bs
     import bacommon.cloudui.v1 as clui
 
+    # Show some specific debug bits if they ask us to.
+    debug = bool(request.args.get('debug', False))
+
     response = clui.Response(
         page=clui.Page(
             title='Test Root',
             rows=[
                 clui.Row(
+                    debug=debug,
+                    header_height=100,
+                    header_decorations_left=[
+                        clui.Text(
+                            'HeaderLeft',
+                            position=(0, 10),
+                            color=(1, 1, 1, 0.3),
+                            size=(150, 30),
+                            h_align=clui.HAlign.LEFT,
+                            debug=debug,
+                        ),
+                    ],
+                    header_decorations_center=[
+                        clui.Text(
+                            'Look, a row header!',
+                            position=(0, 10),
+                            size=(300, 40),
+                            debug=debug,
+                        ),
+                        clui.Image('nub', position=(0, -35), size=(60, 60)),
+                    ],
+                    header_decorations_right=[
+                        clui.Text(
+                            'HeaderRight',
+                            position=(0, 10),
+                            color=(1, 1, 1, 0.3),
+                            size=(150, 30),
+                            h_align=clui.HAlign.RIGHT,
+                            debug=debug,
+                        ),
+                    ],
                     title='Action Tests',
                     buttons=[
                         clui.Button(
@@ -276,7 +310,7 @@ def _test_page_root(
                             'Response\nClientEffects',
                             size=(120, 80),
                             action=clui.Browse(
-                                clui.Request('/', params={'test_effects': True})
+                                clui.Request('/', args={'test_effects': True})
                             ),
                         ),
                         clui.Button(
@@ -284,16 +318,14 @@ def _test_page_root(
                             size=(120, 80),
                             action=clui.Local(
                                 immediate_local_action='testaction',
-                                immediate_local_action_params={
-                                    'testparam': 123
-                                },
+                                immediate_local_action_args={'testparam': 123},
                             ),
                         ),
                         clui.Button(
                             'Response\nLocalAction',
                             size=(120, 80),
                             action=clui.Browse(
-                                clui.Request('/', params={'test_action': True})
+                                clui.Request('/', args={'test_action': True})
                             ),
                         ),
                     ],
@@ -301,6 +333,13 @@ def _test_page_root(
                 clui.Row(
                     title='Other Tests',
                     buttons=[
+                        clui.Button(
+                            'Hide\nDebug' if debug else 'Show\nDebug',
+                            size=(120, 80),
+                            action=clui.Replace(
+                                clui.Request('/', args={'debug': not debug})
+                            ),
+                        ),
                         clui.Button(
                             'Slow\nBrowse',
                             size=(120, 80),
@@ -335,7 +374,7 @@ def _test_page_root(
                 ),
                 clui.Row(
                     title='Layout Tests',
-                    debug=True,
+                    debug=debug,
                     padding_left=5.0,
                     buttons=[
                         clui.Button(
@@ -360,7 +399,7 @@ def _test_page_root(
                                     size=(50, 50),
                                     h_align=clui.HAlign.LEFT,
                                     v_align=clui.VAlign.TOP,
-                                    debug=True,
+                                    debug=debug,
                                 ),
                                 clui.Text(
                                     'TR',
@@ -368,7 +407,7 @@ def _test_page_root(
                                     size=(50, 50),
                                     h_align=clui.HAlign.RIGHT,
                                     v_align=clui.VAlign.TOP,
-                                    debug=True,
+                                    debug=debug,
                                 ),
                                 clui.Text(
                                     'BL',
@@ -376,7 +415,7 @@ def _test_page_root(
                                     size=(50, 50),
                                     h_align=clui.HAlign.LEFT,
                                     v_align=clui.VAlign.BOTTOM,
-                                    debug=True,
+                                    debug=debug,
                                 ),
                                 clui.Text(
                                     'BR',
@@ -384,7 +423,7 @@ def _test_page_root(
                                     size=(50, 50),
                                     h_align=clui.HAlign.RIGHT,
                                     v_align=clui.VAlign.BOTTOM,
-                                    debug=True,
+                                    debug=debug,
                                 ),
                             ],
                         ),
@@ -402,7 +441,7 @@ def _test_page_root(
                             size=(180, 200),
                             scale=0.6,
                             padding_bottom=30,  # Should nudge us up.
-                            debug=True,  # Show bounds.
+                            debug=debug,  # Show bounds.
                             decorations=[
                                 clui.Image(
                                     'powerupPunch',
@@ -422,7 +461,7 @@ def _test_page_root(
                                     size=(50, 50),
                                     h_align=clui.HAlign.LEFT,
                                     v_align=clui.VAlign.TOP,
-                                    debug=True,
+                                    debug=debug,
                                 ),
                                 clui.Text(
                                     'TR',
@@ -430,7 +469,7 @@ def _test_page_root(
                                     size=(50, 50),
                                     h_align=clui.HAlign.RIGHT,
                                     v_align=clui.VAlign.TOP,
-                                    debug=True,
+                                    debug=debug,
                                 ),
                                 clui.Text(
                                     'BL',
@@ -438,7 +477,7 @@ def _test_page_root(
                                     size=(50, 50),
                                     h_align=clui.HAlign.LEFT,
                                     v_align=clui.VAlign.BOTTOM,
-                                    debug=True,
+                                    debug=debug,
                                 ),
                                 clui.Text(
                                     'BR',
@@ -446,7 +485,7 @@ def _test_page_root(
                                     size=(50, 50),
                                     h_align=clui.HAlign.RIGHT,
                                     v_align=clui.VAlign.BOTTOM,
-                                    debug=True,
+                                    debug=debug,
                                 ),
                             ],
                         ),
@@ -475,7 +514,7 @@ def _test_page_root(
                                     size=(150 * 0.8, 32.0),
                                     flatness=1.0,
                                     shadow=0.0,
-                                    debug=True,
+                                    debug=debug,
                                 ),
                                 clui.Text(
                                     'MaxHeightTest\nSecondLine',
@@ -483,7 +522,7 @@ def _test_page_root(
                                     size=(150 * 0.8, 40),
                                     flatness=1.0,
                                     shadow=0.0,
-                                    debug=True,
+                                    debug=debug,
                                 ),
                             ],
                         ),
@@ -560,7 +599,7 @@ def _test_page_root(
     )
 
     # Include some client effects if they ask.
-    if request.params.get('test_effects', False):
+    if request.args.get('test_effects', False):
         response.client_effects = [
             bacommon.bs.ClientEffectScreenMessage(
                 'Hello From Response Client Effects',
@@ -581,8 +620,8 @@ def _test_page_root(
         ]
 
     # Include a local-action if they ask.
-    if request.params.get('test_action', False):
+    if request.args.get('test_action', False):
         response.local_action = 'testaction'
-        response.local_action_params = {'testparam': 234}
+        response.local_action_args = {'testparam': 234}
 
     return response

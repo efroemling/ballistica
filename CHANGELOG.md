@@ -1,4 +1,4 @@
-### 1.7.54 (build 22609, api 9, 2025-11-05)
+### 1.7.54 (build 22610, api 9, 2025-11-05)
 - `scrollwidget` and `hscrollwidget` now center selected items that are too
   large to fit completely in view instead of unpredictably scrolling to the
   beginning or end of them. This makes show-buffer values (which effectively

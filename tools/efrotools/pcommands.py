@@ -91,7 +91,7 @@ def requirements_upgrade() -> None:
         # to one exact version and thus shouldn't apply to later ones.
         filterlines: list[tuple[str, str]] = [
             # Fails to build on bastaging (submitted fix).
-            ('pyicu==2.15.3', 'pyicu==2.15.2'),
+            ('pyicu==2.16', 'pyicu==2.15.2'),
         ]
         for fsrc, fdst in filterlines:
             if fsrc in reqs_new:

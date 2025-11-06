@@ -46,7 +46,7 @@ class Request(CloudUIRequest):
         RequestMethod,
         IOAttrs('m', store_default=False, enum_fallback=RequestMethod.UNKNOWN),
     ] = RequestMethod.GET
-    params: Annotated[dict, IOAttrs('r', store_default=False)] = field(
+    args: Annotated[dict, IOAttrs('r', store_default=False)] = field(
         default_factory=dict
     )
 
@@ -144,8 +144,8 @@ class Replace(Action):
     immediate_local_action: Annotated[
         str | None, IOAttrs('a', store_default=False)
     ] = None
-    immediate_local_action_params: Annotated[
-        dict | None, IOAttrs('ap', store_default=False)
+    immediate_local_action_args: Annotated[
+        dict | None, IOAttrs('aa', store_default=False)
     ] = None
 
     @override
@@ -176,8 +176,8 @@ class Local(Action):
     immediate_local_action: Annotated[
         str | None, IOAttrs('a', store_default=False)
     ] = None
-    immediate_local_action_params: Annotated[
-        dict | None, IOAttrs('ap', store_default=False)
+    immediate_local_action_args: Annotated[
+        dict | None, IOAttrs('aa', store_default=False)
     ] = None
 
     @override
@@ -403,8 +403,8 @@ class Button:
     padding_right: Annotated[float, IOAttrs('pr', store_default=False)] = 0.0
     padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 0.0
     decorations: Annotated[
-        list[Decoration], IOAttrs('c', store_default=False)
-    ] = field(default_factory=list)
+        list[Decoration] | None, IOAttrs('c', store_default=False)
+    ] = None
     text_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
     style: Annotated[ButtonStyle, IOAttrs('y', store_default=False)] = (
         ButtonStyle.SQUARE
@@ -432,6 +432,19 @@ class Row:
     """A row in our cloud ui."""
 
     buttons: Annotated[list[Button], IOAttrs('b')]
+
+    header_height: Annotated[float, IOAttrs('h', store_default=False)] = 0.0
+    header_scale: Annotated[float, IOAttrs('hs', store_default=False)] = 1.0
+    header_decorations_left: Annotated[
+        list[Decoration] | None, IOAttrs('hdl', store_default=False)
+    ] = None
+    header_decorations_center: Annotated[
+        list[Decoration] | None, IOAttrs('hdc', store_default=False)
+    ] = None
+    header_decorations_right: Annotated[
+        list[Decoration] | None, IOAttrs('hdr', store_default=False)
+    ] = None
+
     #: Note that cloud-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
@@ -546,8 +559,8 @@ class Response(CloudUIResponse):
     local_action: Annotated[str | None, IOAttrs('a', store_default=False)] = (
         None
     )
-    local_action_params: Annotated[
-        dict | None, IOAttrs('ap', store_default=False)
+    local_action_args: Annotated[
+        dict | None, IOAttrs('aa', store_default=False)
     ] = None
 
     #: New overall action to have the client schedule after this response
@@ -570,7 +583,7 @@ class Response(CloudUIResponse):
     #: selection) for all pages viewed. The default index for these
     #: states is the path of the request. If a server returns a
     #: significant variety of responses for a single path, however,
-    #: (based on params, etc) then it may make sense for the server to
+    #: (based on args, etc) then it may make sense for the server to
     #: provide explicit state ids for those different variations.
     shared_state_id: Annotated[
         str | None, IOAttrs('t', store_default=False)

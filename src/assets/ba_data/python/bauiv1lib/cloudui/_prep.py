@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Prep functionality for our UI.
 
 We do all layout math and bake out partial ui calls in a background
@@ -78,11 +79,17 @@ class CloudUIPagePrep:
         # Ok; we've got some buttons. Build our full UI.
         row_title_height = 30.0
         row_subtitle_height = 30.0
+
+        # Buffers for *everything*.
         top_buffer = 20.0
         bot_buffer = 20.0
         left_buffer = 0.0
         right_buffer = 10.0  # Nudge a bit due to scrollbar.
-        title_inset = 35.0
+
+        # Extra buffers for title/headers stuff (not in h-scroll).
+        header_inset_left = 35.0
+        header_inset_right = 20.0
+
         default_button_width = 200.0
         default_button_height = 200.0
 
@@ -153,6 +160,8 @@ class CloudUIPagePrep:
                     + (button.padding_left + button.padding_right)
                     * button.scale
                 )
+            # Note: this includes everything in the *scrollable* part of
+            # the row.
             this_row_height = (
                 row.padding_top + row.padding_bottom + button_row_height
             )
@@ -171,6 +180,9 @@ class CloudUIPagePrep:
             )
             assert this_row_height > 0.0
             assert this_row_width > 0.0
+
+            # Add height that is *not* part of the h-scrollable area.
+            self.height += row.header_height * row.header_scale
             if row.title is not None:
                 self.height += row_title_height
             if row.subtitle is not None:
@@ -190,10 +202,57 @@ class CloudUIPagePrep:
         for i, (row, rowprep) in enumerate(
             zip(page.rows, self.rows, strict=True)
         ):
+            tdelaybase = 0.12 * (i + 1)
+
             if i != 0:
                 y -= page.row_spacing
 
-            tdelaybase = 0.12 * (i + 1)
+            # Header decorations.
+            header_height_full = row.header_height * row.header_scale
+            y -= header_height_full
+            hdecs_l = (
+                []
+                if row.header_decorations_left is None
+                else row.header_decorations_left
+            )
+            _prep_decorations(
+                hdecs_l,
+                left_buffer + header_inset_left,
+                y + header_height_full * 0.5,
+                row.header_scale,
+                tdelay=None if immediate else (tdelaybase + 0.1),
+                highlight=False,
+                decorationpreps=rowprep.decorations,
+            )
+            hdecs_c = (
+                []
+                if row.header_decorations_center is None
+                else row.header_decorations_center
+            )
+            _prep_decorations(
+                hdecs_c,
+                self.width * 0.5,
+                y + header_height_full * 0.5,
+                row.header_scale,
+                tdelay=None if immediate else (tdelaybase + 0.1),
+                highlight=False,
+                decorationpreps=rowprep.decorations,
+            )
+            hdecs_r = (
+                []
+                if row.header_decorations_right is None
+                else row.header_decorations_right
+            )
+            _prep_decorations(
+                hdecs_r,
+                self.width - right_buffer - header_inset_right,
+                y + header_height_full * 0.5,
+                row.header_scale,
+                tdelay=None if immediate else (tdelaybase + 0.1),
+                highlight=False,
+                decorationpreps=rowprep.decorations,
+            )
+
             if row.title is not None:
                 rowprep.titlecalls.append(
                     partial(
@@ -206,7 +265,7 @@ class CloudUIPagePrep:
                                 )
                                 + 7.0  # Fudge factor to match hscroll
                                 if row.center_title
-                                else (left_buffer + title_inset)
+                                else (left_buffer + header_inset_left)
                             ),
                             y - row_subtitle_height * 0.5,
                         ),
@@ -227,14 +286,15 @@ class CloudUIPagePrep:
                                 self.width
                                 - left_buffer
                                 - right_buffer
-                                - title_inset
+                                - header_inset_left
+                                - header_inset_right
                             )
                         ),
                         h_align='center' if row.center_title else 'left',
                         v_align='center',
                         literal=not row.title_is_lstr,
                         transition_delay=(
-                            None if immediate else (tdelaybase + 0.1)
+                            None if immediate else (tdelaybase + 0.2)
                         ),
                     )
                 )
@@ -251,7 +311,7 @@ class CloudUIPagePrep:
                                 )
                                 + 7.0  # Fudge factor to match hscroll
                                 if row.center_title
-                                else (left_buffer + title_inset)
+                                else (left_buffer + header_inset_left)
                             ),
                             y - row_subtitle_height * 0.5,
                         ),
@@ -272,14 +332,15 @@ class CloudUIPagePrep:
                                 self.width
                                 - left_buffer
                                 - right_buffer
-                                - title_inset
+                                - header_inset_left
+                                - header_inset_right
                             )
                         ),
                         h_align='center' if row.center_title else 'left',
                         v_align='center',
                         literal=not row.subtitle_is_lstr,
                         transition_delay=(
-                            None if immediate else (tdelaybase + 0.2)
+                            None if immediate else (tdelaybase + 0.3)
                         ),
                     )
                 )
@@ -288,7 +349,9 @@ class CloudUIPagePrep:
             y -= rowprep.height  # includes padding-top/bottom
 
             if row.debug:
-                rowheightfull = rowprep.height
+                rowheightfull = (
+                    rowprep.height + row.header_height * row.header_scale
+                )
                 if row.title is not None:
                     rowheightfull += row_title_height
                 if row.subtitle is not None:
@@ -483,36 +546,18 @@ class CloudUIPagePrep:
                         None if immediate else tdelay,
                         buttonprep.decorations,
                     )
-                for decoration in button.decorations:
-                    dectypeid = decoration.get_type_id()
-                    if dectypeid is clui.DecorationTypeID.UNKNOWN:
-                        if bui.do_once():
-                            bui.uilog.exception(
-                                'CloudUI receieved unknown decoration;'
-                                ' this is likely a server error.'
-                            )
-                    elif dectypeid is clui.DecorationTypeID.TEXT:
-                        assert isinstance(decoration, clui.Text)
-                        _prep_text(
-                            decoration,
-                            (center_x, center_y),
-                            bscale,
-                            None if immediate else tdelay,
-                            buttonprep.decorations,
-                        )
-
-                    elif dectypeid is clui.DecorationTypeID.IMAGE:
-                        assert isinstance(decoration, clui.Image)
-                        _prep_image(
-                            decoration,
-                            (center_x, center_y),
-                            bscale,
-                            None if immediate else tdelay,
-                            buttonprep.decorations,
-                        )
-
-                    else:
-                        assert_never(dectypeid)
+                decorations = (
+                    [] if button.decorations is None else button.decorations
+                )
+                _prep_decorations(
+                    decorations,
+                    center_x,
+                    center_y,
+                    bscale,
+                    None if immediate else tdelay,
+                    highlight=True,
+                    decorationpreps=buttonprep.decorations,
+                )
 
                 rowprep.buttons.append(buttonprep)
 
@@ -693,6 +738,8 @@ def _prep_text(
     bscale: float,
     tdelay: float | None,
     decorations: list[_DecorationPrep],
+    *,
+    highlight: bool,
 ) -> None:
     # pylint: disable=too-many-branches
     xoffs = bcenter[0] + text.position[0] * bscale
@@ -737,7 +784,7 @@ def _prep_text(
             ),
             textures={},
             meshes={},
-            highlight=text.highlight,
+            highlight=highlight and text.highlight,
         )
     )
     # Draw square around max width/height in debug mode.
@@ -780,12 +827,57 @@ def _prep_text(
         )
 
 
+def _prep_decorations(
+    decorations: list[clui.Decoration],
+    center_x: float,
+    center_y: float,
+    scale: float,
+    tdelay: float | None,
+    *,
+    highlight: bool,
+    decorationpreps: list[_DecorationPrep],
+) -> None:
+    for decoration in decorations:
+        dectypeid = decoration.get_type_id()
+        if dectypeid is clui.DecorationTypeID.UNKNOWN:
+            if bui.do_once():
+                bui.uilog.exception(
+                    'CloudUI receieved unknown decoration;'
+                    ' this is likely a server error.'
+                )
+        elif dectypeid is clui.DecorationTypeID.TEXT:
+            assert isinstance(decoration, clui.Text)
+            _prep_text(
+                decoration,
+                (center_x, center_y),
+                scale,
+                tdelay,
+                decorationpreps,
+                highlight=highlight,
+            )
+
+        elif dectypeid is clui.DecorationTypeID.IMAGE:
+            assert isinstance(decoration, clui.Image)
+            _prep_image(
+                decoration,
+                (center_x, center_y),
+                scale,
+                tdelay,
+                decorationpreps,
+                highlight=highlight,
+            )
+        else:
+            assert_never(dectypeid)
+
+
 def _prep_image(
     image: clui.Image,
     bcenter: tuple[float, float],
     bscale: float,
     tdelay: float | None,
     decorations: list[_DecorationPrep],
+    *,
+    highlight: bool,
 ) -> None:
     xoffs = bcenter[0] + image.position[0] * bscale
     yoffs = bcenter[1] + image.position[1] * bscale
@@ -838,7 +930,7 @@ def _prep_image(
             ),
             textures=textures,
             meshes=meshes,
-            highlight=image.highlight,
+            highlight=highlight and image.highlight,
         )
     )
 
@@ -862,8 +954,8 @@ def _prep_row_debug(
                 bui.imagewidget,
                 position=(pos[0], pos[1] + border_shrink),
                 size=(size[0], size[1] - 2.0 * border_shrink),
-                color=(0.0, 1.0, 1.0),
-                opacity=0.06,
+                color=(0, 0, 1.0),
+                opacity=0.1,
                 transition_delay=tdelay,
             ),
             textures=textures,

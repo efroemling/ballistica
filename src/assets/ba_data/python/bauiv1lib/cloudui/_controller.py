@@ -11,8 +11,13 @@ from enum import Enum
 import weakref
 
 from efro.error import CleanError
-from efro.dataclassio import dataclass_to_dict
+from efro.dataclassio import (
+    dataclass_to_dict,
+    dataclass_from_dict,
+    dataclass_to_json,
+)
 from bacommon.cloudui import (
+    CloudUIResponse,
     CloudUIRequestTypeID,
     UnknownCloudUIRequest,
     CloudUIResponseTypeID,
@@ -27,7 +32,7 @@ if TYPE_CHECKING:
     from typing import Callable
 
     import bacommon.cloudui.v1
-    from bacommon.cloudui import CloudUIRequest, CloudUIResponse
+    from bacommon.cloudui import CloudUIRequest
     from bacommon.bs import ClientEffect
 
 
@@ -99,30 +104,63 @@ class CloudUIController:
         # Allow compressed results.
         headers = urllib3.util.make_headers(accept_encoding=True)
 
-        # Map cloudui GET requests to http GET and POST to POST.
-        if request.method is clui1.RequestMethod.GET:
-            httpmeth = 'GET'
-        elif request.method is clui1.RequestMethod.POST:
-            httpmeth = 'POST'
-        elif request.method is clui1.RequestMethod.UNKNOWN:
-            raise RuntimeError('Unknown request method.')
-        else:
-            assert_never(request.method)
+        try:
+            # Map cloudui GET requests to http GET and POST to POST.
+            if request.method is clui1.RequestMethod.GET:
+                # For GET we embed the request into a url param.
+                raw_response = upool.request(
+                    'GET',
+                    url,
+                    fields={'cloud_ui_request': dataclass_to_json(request)},
+                    headers=headers,
+                )
 
-        # Stuff our request (and possibly other stuff) into a dict and
-        # ship it to the server as json.
-        data = {'r': dataclass_to_dict(request)}
-        datastr = json.dumps(data, separators=(',', ':'))
-        headers['Content-Type'] = 'application/json'
+            elif request.method is clui1.RequestMethod.POST:
+                # for POST we embed the request into a json dict we send
+                # as body.
+                data = {'cloud_ui_request': dataclass_to_dict(request)}
+                datastr = json.dumps(data, separators=(',', ':'))
+                headers['Content-Type'] = 'application/json'
+                raw_response = upool.request(
+                    'POST',
+                    url,
+                    headers=headers,
+                    body=datastr,
+                )
+            elif request.method is clui1.RequestMethod.UNKNOWN:
+                raise RuntimeError('Unknown request method.')
+            else:
+                assert_never(request.method)
 
-        raw_response = upool.request(
-            httpmeth, url, body=datastr, headers=headers
-        )
-        print('GOT STATUS:', raw_response.status)
-        if raw_response.status != 200:
-            return self.error_response(self.ErrorType.COMMUNICATION_ERROR)
+            # We expect a json dict as response even in error cases. It
+            # should contain an 'error' string or a 'cloud_ui_response'
+            # dict.
+            raw_data = json.loads(raw_response.data.decode())
+            if not isinstance(raw_data, dict):
+                raise RuntimeError('Got non-dict response data.')
 
-        return self.error_response(self.ErrorType.UNDER_CONSTRUCTION)
+            # For now, show all http errors as communication error. We
+            # can probably get more specific in the future.
+            if raw_response.status != 200:
+
+                # If the response bundled an error, log it.
+                error = raw_data.get('error')
+                if isinstance(error, str):
+                    bui.netlog.info(
+                        'Cloud-ui http request returned error: %s', error
+                    )
+                return self.error_response(self.ErrorType.COMMUNICATION_ERROR)
+
+            response_data = raw_data.get('cloud_ui_response')
+            if not isinstance(response_data, dict):
+                raise RuntimeError('cloud_ui_response dict not found.')
+            response = dataclass_from_dict(CloudUIResponse, response_data)
+
+        except Exception:
+            bui.netlog.info('Error in cloudui http request.', exc_info=True)
+            return self.error_response(self.ErrorType.GENERIC)
+
+        return response
 
     def error_response(
         self,
@@ -447,7 +485,7 @@ class CloudUIController:
             self._run_immediate_effects_and_actions(
                 client_effects=action.immediate_client_effects,
                 local_action=action.immediate_local_action,
-                local_action_params=action.immediate_local_action_params,
+                local_action_args=action.immediate_local_action_args,
                 widget=widget,
                 window=window,
                 is_timed=is_timed,
@@ -470,7 +508,7 @@ class CloudUIController:
             self._run_immediate_effects_and_actions(
                 client_effects=action.immediate_client_effects,
                 local_action=action.immediate_local_action,
-                local_action_params=action.immediate_local_action_params,
+                local_action_args=action.immediate_local_action_args,
                 widget=widget,
                 window=window,
                 is_timed=is_timed,
@@ -484,7 +522,7 @@ class CloudUIController:
         *,
         client_effects: list[ClientEffect],
         local_action: str | None,
-        local_action_params: dict | None,
+        local_action_args: dict | None,
         widget: bui.Widget | None,
         window: CloudUIWindow,
         is_timed: bool,
@@ -513,10 +551,10 @@ class CloudUIController:
                 self.local_action(
                     CloudUILocalAction(
                         name=local_action,
-                        params=(
+                        args=(
                             {}
-                            if local_action_params is None
-                            else local_action_params
+                            if local_action_args is None
+                            else local_action_args
                         ),
                         widget=widget,
                         window=window,
@@ -705,10 +743,10 @@ class CloudUIController:
                     self.local_action(
                         CloudUILocalAction(
                             name=response.local_action,
-                            params=(
+                            args=(
                                 {}
-                                if response.local_action_params is None
-                                else response.local_action_params
+                                if response.local_action_args is None
+                                else response.local_action_args
                             ),
                             widget=None,
                             window=win,
@@ -795,6 +833,6 @@ class CloudUILocalAction:
     """Context for a local-action."""
 
     name: str
-    params: dict
+    args: dict
     widget: bui.Widget | None
     window: CloudUIWindow
