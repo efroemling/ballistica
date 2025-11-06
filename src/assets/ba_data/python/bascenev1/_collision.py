@@ -32,7 +32,7 @@ class Collision:
         start of the collision callback).
         """
         node = _bascenev1.get_collision_info('sourcenode')
-        assert isinstance(node, (_bascenev1.Node, type(None)))
+        assert isinstance(node, _bascenev1.Node | None)
         if not node:
             raise babase.NodeNotFoundError()
         return node
@@ -47,7 +47,7 @@ class Collision:
         currently-colliding node.
         """
         node = _bascenev1.get_collision_info('opposingnode')
-        assert isinstance(node, (_bascenev1.Node, type(None)))
+        assert isinstance(node, _bascenev1.Node | None)
         if not node:
             raise babase.NodeNotFoundError()
         return node

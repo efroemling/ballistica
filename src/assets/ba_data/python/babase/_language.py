@@ -607,7 +607,7 @@ def _add_to_attr_dict(dst: AttrDict, src: dict) -> None:
                 )
             _add_to_attr_dict(dst_dict, value)
         else:
-            if not isinstance(value, (float, int, bool, str, str, type(None))):
+            if not isinstance(value, float | int | bool | str | None):
                 raise TypeError(
                     "invalid value type for res '"
                     + key

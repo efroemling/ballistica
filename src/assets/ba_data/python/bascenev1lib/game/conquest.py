@@ -50,7 +50,7 @@ class Player(bs.Player['Team']):
     def respawn_timer(self) -> bs.Timer | None:
         """Type safe access to standard respawn timer."""
         val = self.customdata.get('respawn_timer', None)
-        assert isinstance(val, (bs.Timer, type(None)))
+        assert isinstance(val, bs.Timer | None)
         return val
 
     @respawn_timer.setter
@@ -61,7 +61,7 @@ class Player(bs.Player['Team']):
     def respawn_icon(self) -> RespawnIcon | None:
         """Type safe access to standard respawn icon."""
         val = self.customdata.get('respawn_icon', None)
-        assert isinstance(val, (RespawnIcon, type(None)))
+        assert isinstance(val, RespawnIcon | None)
         return val
 
     @respawn_icon.setter

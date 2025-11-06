@@ -585,8 +585,8 @@ class GamepadSettingsWindow(bui.MainWindow):
                 if 'analogStickUD' + self._ext in self._settings
                 else 6 if self._is_secondary else None
             )
-            assert isinstance(sval1, (int, type(None)))
-            assert isinstance(sval2, (int, type(None)))
+            assert isinstance(sval1, int | None)
+            assert isinstance(sval2, int | None)
             if sval1 is not None and sval2 is not None:
                 return (
                     self._inputdevice.get_axis_name(sval1)
@@ -630,7 +630,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                 if 'dpad' + self._ext in self._settings
                 else 2 if self._is_secondary else None
             )
-            assert isinstance(dpadnum, (int, type(None)))
+            assert isinstance(dpadnum, int | None)
             if dpadnum is not None:
                 return bui.Lstr(
                     value='${A} ${B}',

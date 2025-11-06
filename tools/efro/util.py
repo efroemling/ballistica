@@ -582,7 +582,7 @@ def asserttype_o[T](obj: Any, typ: type[T]) -> T | None:
     failures are not expected. Otherwise use checktype.
     """
     assert isinstance(typ, type), 'only actual types accepted'
-    assert isinstance(obj, (typ, type(None)))
+    assert isinstance(obj, typ | None)
     return obj
 
 
@@ -605,7 +605,7 @@ def checktype_o[T](obj: Any, typ: type[T]) -> T | None:
     on failure. Use asserttype for more efficient (but less safe) equivalent.
     """
     assert isinstance(typ, type), 'only actual types accepted'
-    if not isinstance(obj, (typ, type(None))):
+    if not isinstance(obj, typ | None):
         raise TypeError(f'Expected a {typ} or None; got a {type(obj)}.')
     return obj
 
@@ -631,7 +631,7 @@ def warntype_o[T](obj: Any, typ: type[T]) -> T | None:
     not what is expected.
     """
     assert isinstance(typ, type), 'only actual types accepted'
-    if not isinstance(obj, (typ, type(None))):
+    if not isinstance(obj, typ | None):
         import logging
 
         logging.warning(

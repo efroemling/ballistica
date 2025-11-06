@@ -316,5 +316,5 @@ def playercast_o[PlayerT: bascenev1.Player](
     totype: type[PlayerT], player: bascenev1.Player | None
 ) -> PlayerT | None:
     """A variant of bascenev1.playercast() for optional Player values."""
-    assert isinstance(player, (totype, type(None)))
+    assert isinstance(player, totype | None)
     return player

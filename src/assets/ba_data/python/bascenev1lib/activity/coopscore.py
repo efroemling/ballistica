@@ -133,10 +133,10 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         assert all(isinstance(i, bs.PlayerInfo) for i in self._playerinfos)
 
         self._score: int | None = settings['score']
-        assert isinstance(self._score, (int, type(None)))
+        assert isinstance(self._score, int | None)
 
         self._fail_message: bs.Lstr | None = settings['fail_message']
-        assert isinstance(self._fail_message, (bs.Lstr, type(None)))
+        assert isinstance(self._fail_message, bs.Lstr | None)
 
         self._begin_time: float | None = None
 

@@ -374,7 +374,7 @@ class Session:
 
             # Grab their activity-specific player instance.
             player = sessionplayer.activityplayer
-            assert isinstance(player, (Player, type(None)))
+            assert isinstance(player, Player | None)
 
             # Remove them from any current Activity.
             if player is not None and activity is not None:

@@ -1160,7 +1160,7 @@ class PublicGatherTab(GatherTab):
 
             # Now, new or not, update its values.
             party.queue = party_in.get('q')
-            assert isinstance(party.queue, (str, type(None)))
+            assert isinstance(party.queue, str | None)
             party.port = port
             party.name = party_in['n']
             assert isinstance(party.name, str)
@@ -1173,7 +1173,7 @@ class PublicGatherTab(GatherTab):
             party.ping_interval = 0.001 * party_in['pi']
             assert isinstance(party.ping_interval, float)
             party.stats_addr = party_in['sa']
-            assert isinstance(party.stats_addr, (str, type(None)))
+            assert isinstance(party.stats_addr, str | None)
 
             # Make sure the party's UI gets updated.
             party.clean_display_index = None

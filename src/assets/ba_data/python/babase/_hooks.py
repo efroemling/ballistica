@@ -42,7 +42,7 @@ def get_v2_account_id() -> str | None:
             if account is not None:
                 accountid = account.accountid
                 # (Avoids mypy complaints when plus is not present)
-                assert isinstance(accountid, (str, type(None)))
+                assert isinstance(accountid, str | None)
                 return accountid
         return None
     except Exception:

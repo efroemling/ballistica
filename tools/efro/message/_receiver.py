@@ -118,14 +118,14 @@ class MessageReceiver:
         # Return types can be a single type or a union of types.
         if isinstance(ret, (_GenericAlias, types.UnionType)):
             targs = get_args(ret)
-            if not all(isinstance(a, (type, type(None))) for a in targs):
+            if not all(isinstance(a, type | None) for a in targs):
                 raise TypeError(
                     f'expected only types for "return" annotation;'
                     f' got {targs}.'
                 )
             responsetypes = targs
         else:
-            if not isinstance(ret, (type, type(None))):
+            if not isinstance(ret, type | None):
                 raise TypeError(
                     f'expected one or more types for'
                     f' "return" annotation; got a {type(ret)}.'
