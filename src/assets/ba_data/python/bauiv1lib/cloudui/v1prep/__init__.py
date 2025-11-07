@@ -1,8 +1,10 @@
 # Released under the MIT License. See LICENSE for details.
-"""Functionality related to prepping a v1 cloud ui.
+"""Functionality related to prepping a v1 cloud UI.
 
-This is an internal api and subject to change at any time. Do not use it
-in mod code.
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
 """
 
 from bauiv1lib.cloudui.v1prep._types import (
@@ -11,7 +13,7 @@ from bauiv1lib.cloudui.v1prep._types import (
     RowPrep,
     PagePrep,
 )
-from bauiv1lib.cloudui.v1prep._calls import cloud_ui_v1_prep_page
+from bauiv1lib.cloudui.v1prep._calls import prep_page
 from bauiv1lib.cloudui.v1prep._calls2 import (
     prep_text,
     prep_decorations,
@@ -27,7 +29,7 @@ __all__ = [
     'ButtonPrep',
     'RowPrep',
     'PagePrep',
-    'cloud_ui_v1_prep_page',
+    'prep_page',
     'prep_text',
     'prep_decorations',
     'prep_image',

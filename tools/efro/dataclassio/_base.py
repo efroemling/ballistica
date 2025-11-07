@@ -93,14 +93,14 @@ class IOMultiType[EnumT: Enum]:
     """A base class for types that can map to multiple dataclass types.
 
     This enables usage of high level base classes (for example a
-    'Message' type) in annotations, with dataclassio automatically
-    serializing & deserializing dataclass subclasses based on their type
-    ('MessagePing', 'MessageChat', etc.)
+    ``Message`` type) in annotations, with dataclassio automatically
+    serializing & deserializing type-specific data for subclasses
+    (``MessagePing``, ``MessageChat``, etc.)
 
-    Standard usage involves creating a class which inherits from this
-    one which acts as a 'registry', and then creating dataclass classes
-    inheriting from that registry class. Dataclassio will then do the
-    right thing when that registry class is used in type annotations.
+    Standard usage involves a 'registry' class inheriting from this one
+    and dataclass classes inheriting from that registry class.
+    Dataclassio will then do the right thing when that registry class is
+    used in type annotations.
 
     For an example multitype class (useful to use as a starting point
     for your own) see :class:`efro.dataclassio.templatemultitype`.

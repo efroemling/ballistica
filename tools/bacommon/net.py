@@ -4,9 +4,8 @@
 
 .. warning::
 
-  This module is considered an implementation detail of Ballistica's
-  cloud functionality. Anything in this module is liable to change at
-  any time without notice.
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
 """
 
 from __future__ import annotations

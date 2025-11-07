@@ -94,8 +94,14 @@ rst_epilog = """
 nitpicky = True
 nitpick_ignore = [
     #
-    # Stuff we've explicitly made private.
+    # Stuff that is part of 'private' apis that we've intentionally
+    # hidden despite having public naming. See 'skip_prefixes' below.
     ('py:class', 'v1prep.PagePrep'),
+    ('py:class', 'bacommon.displayitem.DisplayItemWrapper'),
+    ('py:class', 'bacommon.displayitem.DisplayItem'),
+    ('py:class', 'bacommon.displayitem.DisplayItemTypeID'),
+    ('py:class', 'bacommon.bs.ClientEffect'),
+    ('py:class', 'bacommon.bs._clienteffect.ClientEffect'),
     #
     # Stuff that seems like we could fix (presumably issues due to not
     # importing things at runtime (only if TYPE_CHECKING), etc.)
@@ -265,7 +271,20 @@ _wrangle_logging()
 # listed under their parent package's page, but the only thing visible
 # in them will be their module docstring (which should explain that they
 # are private).
-skip_prefixes = ['bauiv1lib.cloudui.v1prep']
+skip_prefixes = [
+    'bauiv1lib.cloudui.v1prep.',
+    'bacommon.displayitem.',
+    'bacommon.net.',
+    'bacommon.cloud.',
+    'bacommon.transfer.',
+    'bacommon.build.',
+    'bacommon.bacloud.',
+    'bacommon.assets.',
+    'bacommon.bs.',
+]
+
+# Make sure we don't unintentionally skip 'foo.bar' by adding 'foo.b'
+assert all(p.endswith('.') for p in skip_prefixes)
 
 
 def skip_private_submodules(

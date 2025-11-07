@@ -1,9 +1,10 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Prep functionality for our UI.
+"""Types used in prepping v1 cloud-ui.
 
-We do all layout math and bake out partial ui calls in a background
-thread so there's as little work to do in the ui thread as possible.
+Prepping involves doing as much math and layout work as possible in a
+pre-pass (generally run in a background thread) so that the actual calls
+made to instantiate the ui are as fast and minimal as possible.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ if TYPE_CHECKING:
     from typing import Callable
 
     import bacommon.cloudui.v1
-    import bauiv1 as bui
+    import bauiv1
 
     from bauiv1lib.cloudui._window import CloudUIWindow
 
@@ -25,7 +26,7 @@ if TYPE_CHECKING:
 class DecorationPrep:
     """Prep for a decoration in a v1 cloud-ui"""
 
-    call: Callable[..., bui.Widget]
+    call: Callable[..., bauiv1.Widget]
     textures: dict[str, str]
     meshes: dict[str, str]
     highlight: bool
@@ -35,7 +36,7 @@ class DecorationPrep:
 class ButtonPrep:
     """Prep for a button in a v1 cloud-ui"""
 
-    buttoncall: Callable[..., bui.Widget]
+    buttoncall: Callable[..., bauiv1.Widget]
     buttoneditcall: Callable | None
     decorations: list[DecorationPrep]
     textures: dict[str, str]
@@ -49,10 +50,10 @@ class RowPrep:
 
     width: float
     height: float
-    titlecalls: list[Callable[..., bui.Widget]]
-    hscrollcall: Callable[..., bui.Widget] | None
+    titlecalls: list[Callable[..., bauiv1.Widget]]
+    hscrollcall: Callable[..., bauiv1.Widget] | None
     hscrolleditcall: Callable | None
-    hsubcall: Callable[..., bui.Widget] | None
+    hsubcall: Callable[..., bauiv1.Widget] | None
     buttons: list[ButtonPrep]
     simple_culling_h: float
     decorations: list[DecorationPrep]
@@ -62,7 +63,7 @@ class RowPrep:
 class PagePrep:
     """Prep for a page in a v1 cloud-ui"""
 
-    rootcall: Callable[..., bui.Widget] | None
+    rootcall: Callable[..., bauiv1.Widget] | None
     rows: list[RowPrep]
     width: float
     height: float
@@ -70,4 +71,4 @@ class PagePrep:
     center_vertically: bool
     title: str
     title_is_lstr: bool
-    root_post_calls: list[Callable[[bui.Widget], None]]
+    root_post_calls: list[Callable[[bauiv1.Widget], None]]

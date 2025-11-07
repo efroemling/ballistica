@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from bauiv1lib.cloudui import CloudUIWindow
 
 
-def cloud_ui_v1_prep_page(
+def prep_page(
     page: clui1.Page,
     *,
     uiscale: bui.UIScale,

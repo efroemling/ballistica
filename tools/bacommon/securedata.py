@@ -1,6 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Functionality related to verifying ballistica server generated data."""
+"""Functionality related to verifying server generated data.
+
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+"""
 
 import datetime
 from dataclasses import dataclass

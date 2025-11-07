@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Full UIs defined in the cloud - similar to a basic form of html"""
+"""Version 1 of our cloud-ui system."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ class CloudUIRequestTypeID(Enum):
 class CloudUIRequest(IOMultiType[CloudUIRequestTypeID]):
     """UI defined by the cloud.
 
-    Conceptually similar to a basic html request, except using app UI.
+    Conceptually similar to web pages, except using app UI.
     """
 
     @override

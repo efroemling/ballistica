@@ -36,6 +36,8 @@ class CloudSubsystem(babase.AppSubsystem):
     """
 
     #: General engine config values provided by the cloud.
+    #:
+    #: :meta private:
     vals: bacommon.cloud.CloudVals
 
     def __init__(self) -> None:
@@ -385,7 +387,10 @@ class CloudSubsystem(babase.AppSubsystem):
         self,
         updatecall: Callable[[bacommon.bs.ClassicAccountLiveData], None],
     ) -> babase.CloudSubscription:
-        """Subscribe to classic account data."""
+        """Subscribe to classic account data.
+
+        :meta private:
+        """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
         )

@@ -910,7 +910,10 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def basic_client_ui_button_label_str(
         label: bacommon.bs.BasicCloudDialog.ButtonLabel,
     ) -> babase.Lstr:
-        """Given a client-ui label, return an Lstr."""
+        """Given a client-ui label, return an Lstr.
+
+        :meta private:
+        """
         import bacommon.bs
 
         cls = bacommon.bs.BasicCloudDialog.ButtonLabel

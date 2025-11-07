@@ -2,10 +2,10 @@
 #
 """Public types for assets-v1 workspaces.
 
-These types may only be used server-side, but they are exposed here
-for reference when setting workspace config data by hand or for use
-in client-side workspace modification tools. There may be advanced
-settings that are not accessible through the UI/etc.
+While this module is currently only used server-side, its source code
+can be useful as reference when setting workspace config data by hand or
+for use in client-side workspace modification tools. There may be
+advanced settings that are not accessible through the UI/etc.
 """
 
 from __future__ import annotations

@@ -616,7 +616,7 @@ class CloudUIController:
         """
         # pylint: disable=too-many-locals
         import bacommon.cloudui.v1 as clui1
-        from bauiv1lib.cloudui.v1prep._calls import cloud_ui_v1_prep_page
+        from bauiv1lib.cloudui import v1prep
 
         assert not bui.in_logic_thread()
 
@@ -693,7 +693,7 @@ class CloudUIController:
         # Currently must be v1 if it made it to here.
         assert isinstance(response, clui1.Response)
 
-        pageprep = cloud_ui_v1_prep_page(
+        pageprep = v1prep.prep_page(
             response.page,
             uiscale=uiscale,
             scroll_width=scroll_width,
