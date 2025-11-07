@@ -5,7 +5,11 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import assert_never
+from typing import assert_never, Annotated, override
+from dataclasses import dataclass
+
+from efro.dataclassio import ioprepped, IOAttrs
+from bacommon.displayitem import DisplayItem, DisplayItemTypeID
 
 
 class ClassicChestAppearance(Enum):
@@ -44,3 +48,20 @@ class ClassicChestAppearance(Enum):
             return 'L6 Chest'
 
         assert_never(self)
+
+
+@ioprepped
+@dataclass
+class ClassicChestDisplayItem(DisplayItem):
+    """Display a chest."""
+
+    appearance: Annotated[ClassicChestAppearance, IOAttrs('a')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> DisplayItemTypeID:
+        return DisplayItemTypeID.CHEST
+
+    @override
+    def get_description(self) -> tuple[str, list[tuple[str, str]]]:
+        return self.appearance.pretty_name, []

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from efro.util import pairs_from_flat
 import bacommon.bs
+import bacommon.displayitem
 import bauiv1
 
 
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 
 
 def show_display_item(
-    itemwrapper: bacommon.bs.DisplayItemWrapper,
+    itemwrapper: bacommon.displayitem.DisplayItemWrapper,
     parent: bauiv1.Widget,
     pos: tuple[float, float],
     width: float,
@@ -36,15 +37,15 @@ def show_display_item(
     text_y_offs = 0.0
     show_text = True
 
-    if isinstance(itemwrapper.item, bacommon.bs.TicketsDisplayItem):
+    if isinstance(itemwrapper.item, bacommon.displayitem.TicketsDisplayItem):
         img = 'tickets'
         img_y_offs = width * 0.11
         text_y_offs = width * -0.15
-    elif isinstance(itemwrapper.item, bacommon.bs.TokensDisplayItem):
+    elif isinstance(itemwrapper.item, bacommon.displayitem.TokensDisplayItem):
         img = 'coin'
         img_y_offs = width * 0.11
         text_y_offs = width * -0.15
-    elif isinstance(itemwrapper.item, bacommon.bs.ChestDisplayItem):
+    elif isinstance(itemwrapper.item, bacommon.bs.ClassicChestDisplayItem):
         from baclassic._chest import (
             CHEST_APPEARANCE_DISPLAY_INFOS,
             CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,

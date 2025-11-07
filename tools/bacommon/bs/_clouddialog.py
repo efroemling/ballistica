@@ -11,7 +11,7 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
-from bacommon.bs._displayitem import DisplayItemWrapper
+from bacommon.displayitem import DisplayItemWrapper
 
 
 class CloudDialogTypeID(Enum):

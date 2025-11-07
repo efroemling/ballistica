@@ -56,6 +56,8 @@ class TestCloudUIController(CloudUIController):
             return _test_page_long(request)
         if request.path == '/timedactions':
             return _test_page_timed_actions(request)
+        if request.path == '/displayitems':
+            return _test_page_display_items(request)
 
         # Ship '/webtest/*' off to some server to handle.
         if request.path.startswith('/webtest/'):
@@ -383,6 +385,11 @@ def _test_page_root(
                                 )
                             ),
                         ),
+                        clui.Button(
+                            'DisplayItems',
+                            size=(120, 80),
+                            action=clui.Browse(clui.Request('/displayitems')),
+                        ),
                     ],
                 ),
                 clui.Row(
@@ -638,3 +645,32 @@ def _test_page_root(
         response.local_action_args = {'testparam': 234}
 
     return response
+
+
+def _test_page_display_items(
+    request: bacommon.cloudui.v1.Request,
+) -> bacommon.cloudui.v1.Response:
+    """Testing display-items."""
+    import bacommon.cloudui.v1 as clui
+
+    del request  # Unused.
+
+    return clui.Response(
+        page=clui.Page(
+            padding_left=50,
+            padding_top=50,
+            padding_right=50,
+            padding_bottom=50,
+            title='DisplayItems',
+            rows=[
+                clui.Row(
+                    debug=True,
+                    padding_left=-10,
+                    title='Display Item Tests',
+                    buttons=[
+                        clui.Button(size=(300, 300)),
+                    ],
+                ),
+            ],
+        )
+    )

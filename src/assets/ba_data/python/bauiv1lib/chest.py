@@ -11,6 +11,7 @@ from typing import override, TYPE_CHECKING
 
 from efro.util import strict_partial
 import bacommon.bs
+import bacommon.displayitem
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -796,10 +797,14 @@ class ChestWindow(bui.MainWindow):
 
             for item in p.contents:
                 x += 5.0
-                if isinstance(item.item, bacommon.bs.TicketsDisplayItem):
+                if isinstance(
+                    item.item, bacommon.displayitem.TicketsDisplayItem
+                ):
                     _mktxt(str(item.item.count))
                     _mkicon('tickets')
-                elif isinstance(item.item, bacommon.bs.TokensDisplayItem):
+                elif isinstance(
+                    item.item, bacommon.displayitem.TokensDisplayItem
+                ):
                     _mktxt(str(item.item.count))
                     _mkicon('coin')
                 else:
@@ -997,8 +1002,8 @@ class ChestWindow(bui.MainWindow):
         # Insert test items for testing.
         if bool(False):
             response.contents += [
-                bacommon.bs.DisplayItemWrapper.for_display_item(
-                    bacommon.bs.TestDisplayItem()
+                bacommon.displayitem.DisplayItemWrapper.for_display_item(
+                    bacommon.displayitem.TestDisplayItem()
                 )
             ]
 

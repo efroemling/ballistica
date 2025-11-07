@@ -80,11 +80,13 @@ class CloudUIPagePrep:
         row_title_height = 30.0
         row_subtitle_height = 30.0
 
-        # Buffers for *everything*.
-        top_buffer = 20.0
-        bot_buffer = 20.0
-        left_buffer = 0.0
-        right_buffer = 10.0  # Nudge a bit due to scrollbar.
+        # Buffers for *everything*. Set bases here that look decent
+        # and allow page to offset them.
+        top_buffer = 20.0 + page.padding_top
+        bot_buffer = 20.0 + page.padding_bottom
+        left_buffer = 0.0 + page.padding_left
+        # Nudge a bit due to scrollbar.
+        right_buffer = 10.0 + page.padding_right
 
         # Extra buffers for title/headers stuff (not in h-scroll).
         header_inset_left = 35.0
@@ -867,6 +869,9 @@ def _prep_decorations(
                 decorationpreps,
                 highlight=highlight,
             )
+        elif dectypeid is clui.DecorationTypeID.DISPLAY_ITEM:
+            assert isinstance(decoration, clui.DisplayItem)
+            print('WOULD PREP DISPLAY ITEM')
         else:
             assert_never(dectypeid)
 

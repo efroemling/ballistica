@@ -164,7 +164,7 @@ class _DisplayItemsSection(_Section):
         self,
         *,
         sub_width: float,
-        items: list[bacommon.bs.DisplayItemWrapper],
+        items: list[bacommon.displayitem.DisplayItemWrapper],
         width: float = 100.0,
         spacing_top: float = 0.0,
         spacing_bottom: float = 0.0,

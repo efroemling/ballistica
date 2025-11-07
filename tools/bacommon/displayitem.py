@@ -1,6 +1,13 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""DisplayItem related functionality."""
+"""DisplayItem related functionality.
+
+.. warning::
+
+  This module is considered an implementation detail of Ballistica's
+  cloud functionality. Anything in this module is liable to change at
+  any time without notice.
+"""
 
 from __future__ import annotations
 
@@ -10,8 +17,6 @@ from typing import Annotated, override, assert_never
 
 from efro.util import pairs_to_flat
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
-
-from bacommon.bs._chest import ClassicChestAppearance
 
 
 class DisplayItemTypeID(Enum):
@@ -54,7 +59,9 @@ class DisplayItem(IOMultiType[DisplayItemTypeID]):
         if type_id is t.TEST:
             return TestDisplayItem
         if type_id is t.CHEST:
-            return ChestDisplayItem
+            from bacommon.bs._chest import ClassicChestDisplayItem
+
+            return ClassicChestDisplayItem
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -147,23 +154,6 @@ class TestDisplayItem(DisplayItem):
     @override
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:
         return 'Test Display Item Here', []
-
-
-@ioprepped
-@dataclass
-class ChestDisplayItem(DisplayItem):
-    """Display a chest."""
-
-    appearance: Annotated[ClassicChestAppearance, IOAttrs('a')]
-
-    @override
-    @classmethod
-    def get_type_id(cls) -> DisplayItemTypeID:
-        return DisplayItemTypeID.CHEST
-
-    @override
-    def get_description(self) -> tuple[str, list[tuple[str, str]]]:
-        return self.appearance.pretty_name, []
 
 
 @ioprepped

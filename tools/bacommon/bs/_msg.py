@@ -12,7 +12,7 @@ from typing import Annotated, override
 from efro.dataclassio import ioprepped, IOAttrs
 from efro.message import Message, Response
 
-from bacommon.bs._displayitem import DisplayItemWrapper
+from bacommon.displayitem import DisplayItemWrapper
 from bacommon.bs._clienteffect import ClientEffect
 from bacommon.bs._clouddialog import CloudDialogAction, CloudDialogWrapper
 from bacommon.bs._chest import ClassicChestAppearance

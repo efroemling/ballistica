@@ -1,6 +1,13 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Network related data and functionality."""
+"""Network related data and functionality.
+
+.. warning::
+
+  This module is considered an implementation detail of Ballistica's
+  cloud functionality. Anything in this module is liable to change at
+  any time without notice.
+"""
 
 from __future__ import annotations
 

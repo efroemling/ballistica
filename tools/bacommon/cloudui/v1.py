@@ -208,6 +208,7 @@ class DecorationTypeID(Enum):
     UNKNOWN = 'u'
     TEXT = 't'
     IMAGE = 'i'
+    DISPLAY_ITEM = 'd'
 
 
 class Decoration(IOMultiType[DecorationTypeID]):
@@ -233,6 +234,8 @@ class Decoration(IOMultiType[DecorationTypeID]):
             return Text
         if type_id is t.IMAGE:
             return Image
+        if type_id is t.DISPLAY_ITEM:
+            return DisplayItem
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -350,6 +353,19 @@ class Image(Decoration):
     @classmethod
     def get_type_id(cls) -> DecorationTypeID:
         return DecorationTypeID.IMAGE
+
+
+@ioprepped
+@dataclass
+class DisplayItem(Decoration):
+    """DisplayItem decoration."""
+
+    # item: Annotated[bacommon.bs.DisplayItem]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> DecorationTypeID:
+        return DecorationTypeID.DISPLAY_ITEM
 
 
 class ButtonStyle(Enum):
@@ -524,6 +540,11 @@ class Page:
     #: cloud-ui translation should be handled server-side, but this can
     #: allow client-side translation.
     title_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
+
+    padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 0.0
+    padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0
+    padding_top: Annotated[float, IOAttrs('pt', store_default=False)] = 0.0
+    padding_right: Annotated[float, IOAttrs('pr', store_default=False)] = 0.0
 
 
 class StatusCode(Enum):
