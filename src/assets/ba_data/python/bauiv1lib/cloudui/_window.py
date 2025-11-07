@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from bacommon.cloudui import CloudUIRequest, CloudUIResponse
     import bacommon.cloudui.v1
     from bauiv1lib.cloudui._controller import CloudUIController
-    from bauiv1lib.cloudui._prep import CloudUIPagePrep
+    from bauiv1lib.cloudui import v1prep
 
 
 class CloudUIWindow(bui.MainWindow):
@@ -373,8 +373,15 @@ class CloudUIWindow(bui.MainWindow):
         else:
             assert_never(responsetypeid)
 
-    def instantiate_ui(self, pageprep: CloudUIPagePrep) -> None:
-        """Replace any current ui with provided prepped one."""
+    def instantiate_ui(self, pageprep: v1prep.PagePrep) -> None:
+        """Replace any current ui with provided prepped one.
+
+        :meta private:
+        """
+        from bauiv1lib.cloudui.v1prep._calls import (
+            cloud_ui_v1_instantiate_page_prep,
+        )
+
         assert bui.in_logic_thread()
 
         # Set title.
@@ -396,7 +403,8 @@ class CloudUIWindow(bui.MainWindow):
             center_small_content=pageprep.center_vertically,
         )
 
-        self._subcontainer = pageprep.instantiate(
+        self._subcontainer = cloud_ui_v1_instantiate_page_prep(
+            pageprep,
             rootwidget=self._root_widget,
             scrollwidget=self._scrollwidget,
             backbutton=(

@@ -352,8 +352,11 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/chest.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/_controller.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/_prep.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/_window.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/v1prep/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/v1prep/_calls.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/v1prep/_calls2.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/cloudui/v1prep/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/clouduitest.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/colorpicker.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/config.py \

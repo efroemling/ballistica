@@ -21,7 +21,6 @@ from bacommon.cloudui import (
 )
 import bauiv1 as bui
 
-from bauiv1lib.cloudui._prep import CloudUIPagePrep
 from bauiv1lib.cloudui._window import CloudUIWindow
 
 if TYPE_CHECKING:
@@ -30,6 +29,8 @@ if TYPE_CHECKING:
     import bacommon.cloudui.v1
     from bacommon.cloudui import CloudUIRequest, CloudUIResponse
     from bacommon.bs import ClientEffect
+
+    from bauiv1lib.cloudui import v1prep
 
 
 class CloudUIController:
@@ -615,6 +616,7 @@ class CloudUIController:
         """
         # pylint: disable=too-many-locals
         import bacommon.cloudui.v1 as clui1
+        from bauiv1lib.cloudui.v1prep._calls import cloud_ui_v1_prep_page
 
         assert not bui.in_logic_thread()
 
@@ -691,7 +693,7 @@ class CloudUIController:
         # Currently must be v1 if it made it to here.
         assert isinstance(response, clui1.Response)
 
-        pageprep = CloudUIPagePrep(
+        pageprep = cloud_ui_v1_prep_page(
             response.page,
             uiscale=uiscale,
             scroll_width=scroll_width,
@@ -719,7 +721,7 @@ class CloudUIController:
         self,
         response: CloudUIResponse,
         weakwin: weakref.ref[CloudUIWindow],
-        pageprep: CloudUIPagePrep,
+        pageprep: v1prep.PagePrep,
     ) -> None:
         import bacommon.cloudui.v1 as clui1
 

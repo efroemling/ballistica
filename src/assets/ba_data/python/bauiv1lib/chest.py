@@ -466,38 +466,41 @@ class ChestWindow(bui.MainWindow):
                     v_align='center',
                 )
             )
-            self._open_now_images.append(
-                bui.imagewidget(
-                    parent=self._root_widget,
-                    size=(iconsize, iconsize),
-                    position=(
-                        self._width * 0.5 - iconsize * 0.5 + boffsx,
-                        self._yoffs + bposy + bheight * 0.35,
-                    ),
-                    draw_controller=self._open_now_button,
-                    texture=bui.gettexture('coin'),
+            if bool(False):
+                pass
+            else:
+                self._open_now_images.append(
+                    bui.imagewidget(
+                        parent=self._root_widget,
+                        size=(iconsize, iconsize),
+                        position=(
+                            self._width * 0.5 - iconsize * 0.5 + boffsx,
+                            self._yoffs + bposy + bheight * 0.35,
+                        ),
+                        draw_controller=self._open_now_button,
+                        texture=bui.gettexture('coin'),
+                    )
                 )
-            )
-            self._open_now_texts.append(
-                bui.textwidget(
-                    parent=self._root_widget,
-                    text=bui.Lstr(
-                        resource='tokens.numTokensText',
-                        subs=[('${COUNT}', str(chest.unlock_tokens))],
-                    ),
-                    position=(
-                        self._width * 0.5 + boffsx,
-                        self._yoffs + bposy + bheight * 0.25,
-                    ),
-                    scale=0.65,
-                    color=(0, 1, 0),
-                    draw_controller=self._open_now_button,
-                    maxwidth=bwidth * 0.8,
-                    size=(0, 0),
-                    h_align='center',
-                    v_align='center',
+                self._open_now_texts.append(
+                    bui.textwidget(
+                        parent=self._root_widget,
+                        text=bui.Lstr(
+                            resource='tokens.numTokensText',
+                            subs=[('${COUNT}', str(chest.unlock_tokens))],
+                        ),
+                        position=(
+                            self._width * 0.5 + boffsx,
+                            self._yoffs + bposy + bheight * 0.25,
+                        ),
+                        scale=0.65,
+                        color=(0, 1, 0),
+                        draw_controller=self._open_now_button,
+                        maxwidth=bwidth * 0.8,
+                        size=(0, 0),
+                        h_align='center',
+                        v_align='center',
+                    )
                 )
-            )
         self._open_now_spinner = bui.spinnerwidget(
             parent=self._root_widget,
             position=(
@@ -609,7 +612,6 @@ class ChestWindow(bui.MainWindow):
                         value='*${A}',
                         subs=[('${A}', bui.Lstr(resource='openMeText'))],
                     ),
-                    # text=bui.Lstr(resource='openMeText'),
                     maxwidth=175,
                     scale=0.7,
                     color=(0, 1.0, 0.7, 1),

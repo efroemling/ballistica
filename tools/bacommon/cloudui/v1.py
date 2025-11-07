@@ -319,9 +319,9 @@ class Image(Decoration):
     position: Annotated[tuple[float, float], IOAttrs('p')]
     size: Annotated[tuple[float, float], IOAttrs('s')]
     color: Annotated[
-        tuple[float, float, float] | None, IOAttrs('c', store_default=False)
+        tuple[float, float, float, float] | None,
+        IOAttrs('c', store_default=False),
     ] = None
-    opacity: Annotated[float | None, IOAttrs('o', store_default=False)] = None
     h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
         HAlign.CENTER
     )
@@ -360,6 +360,10 @@ class Image(Decoration):
 class DisplayItem(Decoration):
     """DisplayItem decoration."""
 
+    position: Annotated[tuple[float, float], IOAttrs('p')]
+    size: Annotated[tuple[float, float], IOAttrs('s')]
+    highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
     # item: Annotated[bacommon.bs.DisplayItem]
 
     @override
@@ -399,9 +403,9 @@ class Button:
         tuple[float, float] | None, IOAttrs('sz', store_default=False)
     ] = None
     color: Annotated[
-        tuple[float, float, float] | None, IOAttrs('cl', store_default=False)
+        tuple[float, float, float, float] | None,
+        IOAttrs('cl', store_default=False),
     ] = None
-    opacity: Annotated[float | None, IOAttrs('o', store_default=False)] = None
     text_color: Annotated[
         tuple[float, float, float, float] | None,
         IOAttrs('tc', store_default=False),

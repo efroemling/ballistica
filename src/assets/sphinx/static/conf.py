@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import os
+import types
 import logging
 from typing import TYPE_CHECKING, override
 
@@ -93,6 +94,9 @@ rst_epilog = """
 nitpicky = True
 nitpick_ignore = [
     #
+    # Stuff we've explicitly made private.
+    ('py:class', 'v1prep.PagePrep'),
+    #
     # Stuff that seems like we could fix (presumably issues due to not
     # importing things at runtime (only if TYPE_CHECKING), etc.)
     ('py:class', 'Enum'),
@@ -173,7 +177,11 @@ toc_object_entries_show_parents = 'hide'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files. This pattern also
 # affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+]
 
 
 def _wrangle_logging() -> None:
@@ -251,13 +259,41 @@ def _wrangle_logging() -> None:
 
 _wrangle_logging()
 
-# def _cb(app: Sphinx, *args: Any) -> None:
-#     logger = logging.getLogger('sphinx')  # Get the root logger
-#     handlers = logger.handlers  # Get the list of handlers
-#     print(f'HELLO; Current logging handlers2: {handlers}', flush=True)
 
-# _cb(None)
-# def setup(app: Sphinx) -> None:
-#     """Do the thing."""
-#     # app.connect('autodoc-skip-member', skip_duplicate)
-#     app.connect('config-inited', _cb)
+# Prevent docs generation for particular packages that we consider
+# 'private' despite having public naming. Note that these will still be
+# listed under their parent package's page, but the only thing visible
+# in them will be their module docstring (which should explain that they
+# are private).
+skip_prefixes = ['bauiv1lib.cloudui.v1prep']
+
+
+def skip_private_submodules(
+    app: Sphinx, what: str, name: str, obj: Any, skip: bool, options: Any
+) -> bool | None:
+    """Skip submodules we consider private despite looking public."""
+    # pylint: disable=too-many-positional-arguments
+    del app, options  # Unused.
+
+    # If this member is an actual module object
+    if what == 'module' and isinstance(obj, types.ModuleType):
+        fqname = obj.__name__
+    # For everything else (functions, classes, etc.)
+    else:
+        modname = getattr(obj, '__module__', None)
+        fqname = f'{modname}.{name}' if modname else name
+
+    if any(fqname.startswith(p) for p in skip_prefixes):
+        return True
+
+    return skip
+
+
+def setup(app: Sphinx) -> Any:
+    """Do the thing."""
+    app.connect('autodoc-skip-member', skip_private_submodules)
+    return {
+        'version': '1.0',
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }

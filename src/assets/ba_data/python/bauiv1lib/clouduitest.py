@@ -450,7 +450,7 @@ def _test_page_root(
                         clui.Button(
                             label='Test2',
                             size=(100, 100),
-                            color=(1, 0, 0),
+                            color=(1, 0, 0, 1),
                             text_color=(1, 1, 1, 1),
                             padding_right=4,
                         ),
@@ -515,8 +515,7 @@ def _test_page_root(
                             texture='buttonSquareWide',
                             padding_left=10.0,
                             padding_right=10.0,
-                            color=(1, 1, 1),
-                            opacity=0.3,
+                            color=(1, 1, 1, 0.3),
                             size=(200, 100),
                         ),
                     ],
@@ -588,7 +587,7 @@ def _test_page_root(
                             'Row-With-No-Title Test',
                             size=(300, 80),
                             style=clui.ButtonStyle.MEDIUM,
-                            color=(0.8, 0.8, 0.8),
+                            color=(0.8, 0.8, 0.8, 1),
                             icon='buttonPunch',
                             icon_color=(0.5, 0.3, 1.0, 1.0),
                             icon_scale=1.2,
@@ -610,7 +609,7 @@ def _test_page_root(
                         clui.Button(
                             'Hello There!',
                             size=(200, 120),
-                            color=(0.7, 0.7, 0.9),
+                            color=(0.7, 0.7, 0.9, 1),
                         ),
                     ],
                 ),
@@ -668,7 +667,22 @@ def _test_page_display_items(
                     padding_left=-10,
                     title='Display Item Tests',
                     buttons=[
-                        clui.Button(size=(300, 300)),
+                        clui.Button(
+                            size=(300, 300),
+                            decorations=[
+                                clui.Image(
+                                    'white',
+                                    position=(0, 55),
+                                    size=(100, 100),
+                                    color=(1, 1, 1, 0.2),
+                                ),
+                                clui.DisplayItem(
+                                    position=(0, -55),
+                                    size=(100, 100),
+                                    debug=True,
+                                ),
+                            ],
+                        ),
                     ],
                 ),
             ],
