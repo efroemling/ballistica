@@ -142,8 +142,6 @@ class CloudUIWindow(bui.MainWindow):
             center_small_content_horizontally=True,
             claims_left_right=True,
         )
-        # Avoid having to deal with selecting this while its empty.
-        # bui.containerwidget(edit=self._scrollwidget, selectable=False)
         bui.widget(edit=self._scrollwidget, autoselect=True)
 
         # With full-screen scrolling, fade content as it approaches
@@ -391,30 +389,52 @@ class CloudUIWindow(bui.MainWindow):
             text=pageprep.title,
         )
 
-        # Highlighting is initially on so the user can see something if
-        # selecting our empty window, but let's kill it now that we'll
-        # no longer be empty.
-        bui.scrollwidget(edit=self._scrollwidget, highlight=False)
+        # Clear any existing children.
+        for child in self._scrollwidget.get_children():
+            child.delete()
 
-        # Update culling/center/etc. based on what the new ui wants.
-        bui.scrollwidget(
-            edit=self._scrollwidget,
-            simple_culling_v=pageprep.simple_culling_v,
-            center_small_content=pageprep.center_vertically,
-        )
+        if pageprep.rows:
+            # Stop showing scroll-widget highlights now that we've got
+            # child stuff to be highlighted.
+            bui.scrollwidget(
+                edit=self._scrollwidget,
+                highlight=False,
+                simple_culling_v=pageprep.simple_culling_v,
+                center_small_content=(pageprep.center_vertically),
+            )
+            self._subcontainer = cloud_ui_v1_instantiate_page_prep(
+                pageprep,
+                rootwidget=self._root_widget,
+                scrollwidget=self._scrollwidget,
+                backbutton=(
+                    bui.get_special_widget('back_button')
+                    if self._back_button is None
+                    else self._back_button
+                ),
+                windowbackbutton=self._back_button,
+                window=self,
+            )
+        else:
+            # No child stuff to show so let the scroll-widget highlight.
+            bui.scrollwidget(
+                edit=self._scrollwidget,
+                highlight=True,
+                simple_culling_v=0.0,
+                center_small_content=True,
+            )
+            self._subcontainer = None
 
-        self._subcontainer = cloud_ui_v1_instantiate_page_prep(
-            pageprep,
-            rootwidget=self._root_widget,
-            scrollwidget=self._scrollwidget,
-            backbutton=(
-                bui.get_special_widget('back_button')
-                if self._back_button is None
-                else self._back_button
-            ),
-            windowbackbutton=self._back_button,
-            window=self,
-        )
+            bui.textwidget(
+                parent=self._scrollwidget,
+                h_align='center',
+                v_align='center',
+                text=bui.Lstr(
+                    translate=('serverResponses', 'There is nothing here.')
+                ),
+                scale=0.75,
+                color=(1, 1, 1, 0.5),
+                size=(0, 0),
+            )
 
         # Most of our UI won't exist until this point so we need to
         # explicitly restore state for selection restore to work.

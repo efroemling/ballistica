@@ -221,12 +221,12 @@ class CloudUIController:
                 title_is_lstr=True,
                 center_vertically=True,
                 rows=[
-                    clui1.Row(
+                    clui1.ButtonRow(
                         buttons=[
                             clui1.Button(
                                 bui.Lstr(resource='okText').as_json(),
                                 clui1.Local(close_window=True),
-                                text_is_lstr=True,
+                                label_is_lstr=True,
                                 default=True,
                                 style=clui1.ButtonStyle.MEDIUM,
                                 size=(130, 50),
@@ -533,6 +533,10 @@ class CloudUIController:
                 window=window,
                 is_timed=is_timed,
             )
+        elif action_type is clui.ActionTypeID.UNKNOWN:
+            assert isinstance(action, clui.UnknownAction)
+            bui.screenmessage('Unknown action.', color=(1, 0, 0))
+            bui.getsound('error').play()
         else:
             # Make sure we handle all options.
             assert_never(action_type)
@@ -621,6 +625,7 @@ class CloudUIController:
         This will always return a response, even on error conditions.
         """
         # pylint: disable=too-many-locals
+        # pylint: disable=cyclic-import
         import bacommon.cloudui.v1 as clui1
         from bauiv1lib.cloudui import v1prep
 
@@ -669,18 +674,25 @@ class CloudUIController:
                 ):
                     error = self.ErrorType.NEED_UPDATE
                 else:
-
-                    # Make sure there's at least one row and that all rows
-                    # contain at least one button.
-                    if not response.page.rows or not all(
-                        row.buttons for row in response.page.rows
-                    ):
-                        bui.uilog.exception(
-                            'Got invalid cloud-ui response;'
-                            ' page must contain at least one row'
-                            ' and all rows must contain buttons.'
-                        )
-                        error = self.ErrorType.GENERIC
+                    # Sanity check - make sure all provided button-rows
+                    # contain buttons.
+                    #
+                    pass
+                    # We used to check to make sure there was at least one
+                    # row here and that all rows contained buttons.
+                    # For now, make sure there's at least one button-row
+                    # and that all button-rows contain at least one
+                    # button. Will need to revisit this when we have new
+                    # row types.
+                    # if not response.page.rows or not all(
+                    #     row.buttons for row in response.page.rows
+                    # ):
+                    #     bui.uilog.exception(
+                    #         'Got invalid cloud-ui response;'
+                    #         ' page must contain at least one row'
+                    #         ' and all rows must contain buttons.'
+                    #     )
+                    #     error = self.ErrorType.GENERIC
 
             elif responsetype is CloudUIResponseTypeID.UNKNOWN:
                 assert isinstance(response, UnknownCloudUIResponse)

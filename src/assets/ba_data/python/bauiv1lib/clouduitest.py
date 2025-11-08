@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import time
+import copy
 from typing import TYPE_CHECKING, override
 
 from efro.error import CleanError
@@ -41,6 +42,8 @@ class TestCloudUIController(CloudUIController):
 
         Will be called in a background thread.
         """
+        # pylint: disable=too-many-return-statements
+
         import bacommon.cloudui.v1 as clui
 
         # We currently support v1 requests only.
@@ -58,6 +61,8 @@ class TestCloudUIController(CloudUIController):
             return _test_page_timed_actions(request)
         if request.path == '/displayitems':
             return _test_page_display_items(request)
+        if request.path == '/emptypage':
+            return _test_page_empty(request)
 
         # Ship '/webtest/*' off to some server to handle.
         if request.path.startswith('/webtest/'):
@@ -90,7 +95,7 @@ def _test_page_long(
             title='Test',
             center_vertically=True,
             rows=[
-                clui.Row(
+                clui.ButtonRow(
                     title='That took a while',
                     center_title=True,
                     center_content=True,
@@ -122,7 +127,7 @@ def _test_page_timed_actions(
             title='Test',
             center_vertically=True,
             rows=[
-                clui.Row(
+                clui.ButtonRow(
                     title=f'Hello there {val}',
                     subtitle='Each change here is a new request/response.',
                     center_title=True,
@@ -157,7 +162,7 @@ def _test_page_effects() -> bacommon.cloudui.v1.Page:
         title='Effects',
         center_vertically=True,
         rows=[
-            clui.Row(
+            clui.ButtonRow(
                 title='Have some lovely effects',
                 center_title=True,
                 center_content=True,
@@ -185,7 +190,7 @@ def _test_page_2(
         page=clui.Page(
             title='Test 2',
             rows=[
-                clui.Row(
+                clui.ButtonRow(
                     title='More Tests',
                     buttons=[
                         clui.Button(
@@ -226,7 +231,7 @@ def _test_page_root(
         page=clui.Page(
             title='Test Root',
             rows=[
-                clui.Row(
+                clui.ButtonRow(
                     debug=debug,
                     header_height=100,
                     header_decorations_left=[
@@ -345,7 +350,7 @@ def _test_page_root(
                         ),
                     ],
                 ),
-                clui.Row(
+                clui.ButtonRow(
                     title='Other Tests',
                     buttons=[
                         clui.Button(
@@ -390,9 +395,15 @@ def _test_page_root(
                             size=(120, 80),
                             action=clui.Browse(clui.Request('/displayitems')),
                         ),
+                        clui.Button(
+                            'Empty\nPage',
+                            size=(120, 80),
+                            action=clui.Browse(clui.Request('/emptypage')),
+                        ),
                     ],
                 ),
-                clui.Row(
+                clui.ButtonRow(title='Empty Row', buttons=[]),
+                clui.ButtonRow(
                     title='Layout Tests',
                     debug=debug,
                     padding_left=5.0,
@@ -451,7 +462,7 @@ def _test_page_root(
                             label='Test2',
                             size=(100, 100),
                             color=(1, 0, 0, 1),
-                            text_color=(1, 1, 1, 1),
+                            label_color=(1, 1, 1, 1),
                             padding_right=4,
                         ),
                         # Should look like the first button but
@@ -520,7 +531,7 @@ def _test_page_root(
                         ),
                     ],
                 ),
-                clui.Row(
+                clui.ButtonRow(
                     title='Long Row Test',
                     subtitle='Look - a subtitle!',
                     buttons=[
@@ -581,7 +592,7 @@ def _test_page_root(
                         clui.Button(size=(150, 100)),
                     ],
                 ),
-                clui.Row(
+                clui.ButtonRow(
                     buttons=[
                         clui.Button(
                             'Row-With-No-Title Test',
@@ -594,7 +605,7 @@ def _test_page_root(
                         ),
                     ],
                 ),
-                clui.Row(
+                clui.ButtonRow(
                     title='Centered Content / Faded Title',
                     title_color=(0.6, 0.6, 1.0, 0.3),
                     title_flatness=1.0,
@@ -646,14 +657,71 @@ def _test_page_root(
     return response
 
 
+def _test_page_empty(
+    request: bacommon.cloudui.v1.Request,
+) -> bacommon.cloudui.v1.Response:
+    import bacommon.cloudui.v1 as clui
+
+    del request  # Unused.
+
+    return clui.Response(page=clui.Page(title='EmptyPage', rows=[]))
+
+
 def _test_page_display_items(
     request: bacommon.cloudui.v1.Request,
 ) -> bacommon.cloudui.v1.Response:
     """Testing display-items."""
+    from bacommon.bs import ClassicChestAppearance, ClassicChestDisplayItem
     import bacommon.cloudui.v1 as clui
-    import bacommon.displayitem
+    import bacommon.displayitem as ditm
 
-    del request  # Unused.
+    # Show some specific debug bits if they ask us to.
+    debug = bool(request.args.get('debug', False))
+
+    def _make_test_button(
+        scale: float,
+        wrapper: ditm.DisplayItemWrapper,
+    ) -> clui.Button:
+
+        # See how this looks when unrecognized (relying on wrapper info
+        # only).
+        uwrapper = copy.deepcopy(wrapper)
+        uwrapper.item = ditm.UnknownDisplayItem()
+
+        return clui.Button(
+            size=(300, 300),
+            scale=scale,
+            decorations=[
+                clui.DisplayItem(
+                    wrapper=wrapper,
+                    style=clui.DisplayItemStyle.FULL,
+                    position=(-62, 55),
+                    size=(120, 120),
+                    debug=debug,
+                ),
+                clui.DisplayItem(
+                    wrapper=uwrapper,
+                    style=clui.DisplayItemStyle.FULL,
+                    position=(62, 55),
+                    size=(120, 120),
+                    debug=debug,
+                ),
+                clui.DisplayItem(
+                    wrapper=wrapper,
+                    style=clui.DisplayItemStyle.COMPACT,
+                    position=(-55, -55),
+                    size=(80, 80),
+                    debug=debug,
+                ),
+                clui.DisplayItem(
+                    wrapper=uwrapper,
+                    style=clui.DisplayItemStyle.COMPACT,
+                    position=(55, -55),
+                    size=(80, 80),
+                    debug=debug,
+                ),
+            ],
+        )
 
     return clui.Response(
         page=clui.Page(
@@ -663,59 +731,66 @@ def _test_page_display_items(
             padding_bottom=50,
             title='DisplayItems',
             rows=[
-                clui.Row(
-                    debug=True,
+                clui.ButtonRow(
+                    debug=debug,
                     padding_left=-10,
                     title='Display Item Tests',
+                    subtitle=(
+                        'top=FULL, bottom=COMPACT, left=regular, right=unknown'
+                    ),
+                    buttons=[
+                        _make_test_button(
+                            1.0,
+                            ditm.DisplayItemWrapper.for_item(
+                                ditm.TicketsDisplayItem(count=213)
+                            ),
+                        ),
+                        _make_test_button(
+                            0.47,
+                            ditm.DisplayItemWrapper.for_item(
+                                ditm.TicketsDisplayItem(count=213)
+                            ),
+                        ),
+                        _make_test_button(
+                            1.0,
+                            ditm.DisplayItemWrapper.for_item(
+                                ClassicChestDisplayItem(
+                                    appearance=ClassicChestAppearance.L3
+                                )
+                            ),
+                        ),
+                        _make_test_button(
+                            1.0,
+                            ditm.DisplayItemWrapper.for_item(
+                                ditm.TokensDisplayItem(count=3)
+                            ),
+                        ),
+                        _make_test_button(
+                            1.0,
+                            ditm.DisplayItemWrapper.for_item(
+                                ditm.TokensDisplayItem(count=1414287)
+                            ),
+                        ),
+                        _make_test_button(
+                            1.0,
+                            ditm.DisplayItemWrapper.for_item(
+                                ditm.TestDisplayItem()
+                            ),
+                        ),
+                    ],
+                ),
+                clui.ButtonRow(
                     buttons=[
                         clui.Button(
-                            size=(300, 300),
-                            decorations=[
-                                clui.Image(
-                                    'white',
-                                    position=(0, 55),
-                                    size=(100, 100),
-                                    color=(1, 1, 1, 0.2),
-                                ),
-                                clui.DisplayItem(
-                                    item=(
-                                        bacommon.displayitem
-                                    ).DisplayItemWrapper.for_display_item(
-                                        bacommon.displayitem.TicketsDisplayItem(
-                                            count=100
-                                        )
-                                    ),
-                                    position=(0, -55),
-                                    size=(100, 100),
-                                    debug=True,
-                                ),
-                            ],
-                        ),
-                        # Test scaling.
-                        clui.Button(
-                            size=(300, 300),
-                            scale=0.47,
-                            decorations=[
-                                clui.Image(
-                                    'white',
-                                    position=(0, 55),
-                                    size=(100, 100),
-                                    color=(1, 1, 1, 0.2),
-                                ),
-                                clui.DisplayItem(
-                                    item=(
-                                        bacommon.displayitem
-                                    ).DisplayItemWrapper.for_display_item(
-                                        bacommon.displayitem.TicketsDisplayItem(
-                                            count=100
-                                        )
-                                    ),
-                                    position=(0, -55),
-                                    size=(100, 100),
-                                    debug=True,
-                                ),
-                            ],
-                        ),
+                            'Hide Debug' if debug else 'Show Debug',
+                            style=clui.ButtonStyle.LARGE,
+                            size=(240, 40),
+                            action=clui.Replace(
+                                clui.Request(
+                                    request.path, args={'debug': not debug}
+                                )
+                            ),
+                        )
                     ],
                 ),
             ],

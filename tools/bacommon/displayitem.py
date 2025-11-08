@@ -155,7 +155,7 @@ class TestDisplayItem(DisplayItem):
 
     @override
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:
-        return 'Test Display Item Here', []
+        return 'TestDisplayItem', []
 
 
 @ioprepped
@@ -172,7 +172,7 @@ class DisplayItemWrapper:
     description_subs: Annotated[list[str] | None, IOAttrs('s')]
 
     @classmethod
-    def for_display_item(cls, item: DisplayItem) -> DisplayItemWrapper:
+    def for_item(cls, item: DisplayItem) -> DisplayItemWrapper:
         """Convenience method to wrap a DisplayItem."""
         desc, subs = item.get_description()
         return DisplayItemWrapper(item, desc, pairs_to_flat(subs))

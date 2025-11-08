@@ -8,6 +8,7 @@ thread so there's as little work to do in the ui thread as possible.
 
 from __future__ import annotations
 
+import copy
 from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
@@ -16,7 +17,6 @@ import bacommon.cloudui.v1 as clui1
 import bauiv1 as bui
 
 from bauiv1lib.cloudui.v1prep._types import PagePrep, RowPrep, ButtonPrep
-import bauiv1lib.cloudui.v1prep._calls2 as prepcalls2
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -38,6 +38,34 @@ def prep_page(
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     # pylint: disable=cyclic-import
+
+    import bauiv1lib.cloudui.v1prep._calls2 as prepcalls2
+
+    # Create a filtered list of rows we know how to display.
+    page_rows_filtered: list[clui1.ButtonRow] = []
+    for pagerow in page.rows:
+        if isinstance(pagerow, clui1.ButtonRow):
+            if not pagerow.buttons:
+                pagerow = copy.deepcopy(pagerow)
+                pagerow.buttons.append(
+                    clui1.Button(
+                        label=bui.Lstr(
+                            translate=(
+                                'serverResponses',
+                                'There is nothing here.',
+                            )
+                        ).as_json(),
+                        label_color=(1, 1, 1, 0.3),
+                        label_is_lstr=True,
+                        size=(200, 100),
+                        texture='buttonSquareWide',
+                        color=(1, 1, 1, 0.1),
+                        action=clui1.Local(default_sound=False),
+                    )
+                )
+            page_rows_filtered.append(pagerow)
+    if len(page_rows_filtered) != len(page.rows):
+        bui.uilog.error('Got unknown row type(s) in cloud-ui; ignoring.')
 
     # Ok; we've got some buttons. Build our full UI.
     row_title_height = 30.0
@@ -77,7 +105,7 @@ def prep_page(
     height: float = (
         top_buffer
         + bot_buffer
-        + page.row_spacing * max(0, (len(page.rows) - 1))
+        + page.row_spacing * max(0, (len(page_rows_filtered) - 1))
     )
     simple_culling_v: float = page.simple_culling_v
     center_vertically: bool = page.center_vertically
@@ -93,8 +121,9 @@ def prep_page(
     have_selected_button = False
 
     # Precalc basic info like dimensions for all rows.
-    for row in page.rows:
-        assert row.buttons
+    for row in page_rows_filtered:
+
+        # assert row.buttons
         this_row_width = (
             left_buffer
             + right_buffer
@@ -102,7 +131,7 @@ def prep_page(
             + row.padding_right
             + row.button_spacing * (len(row.buttons) - 1)
         )
-        button_row_height = 0.0
+        button_row_height = 30.0
         for button in row.buttons:
             if button.size is None:
                 bwidth = default_button_width
@@ -162,7 +191,9 @@ def prep_page(
     )
     y = height - top_buffer
 
-    for i, (row, rowprep) in enumerate(zip(page.rows, rows, strict=True)):
+    for i, (row, rowprep) in enumerate(
+        zip(page_rows_filtered, rows, strict=True)
+    ):
         tdelaybase = 0.12 * (i + 1)
 
         if i != 0:
@@ -435,13 +466,13 @@ def prep_page(
                     size=(bwidth, bheight),
                     scale=bscale,
                     color=(None if button.color is None else button.color[:3]),
-                    textcolor=button.text_color,
-                    text_flatness=(button.text_flatness),
-                    text_scale=button.text_scale,
+                    textcolor=button.label_color,
+                    text_flatness=(button.label_flatness),
+                    text_scale=button.label_scale,
                     button_type=bstyle,
                     opacity=(1.0 if button.color is None else button.color[3]),
                     label='' if button.label is None else button.label,
-                    text_literal=not button.text_is_lstr,
+                    text_literal=not button.label_is_lstr,
                     autoselect=True,
                     enable_sound=False,
                     transition_delay=None if immediate else tdelay,
@@ -581,10 +612,6 @@ def cloud_ui_v1_instantiate_page_prep(
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
     outrows: list[tuple[bui.Widget, list[bui.Widget]]] = []
-
-    # Clear any existing children.
-    for child in scrollwidget.get_children():
-        child.delete()
 
     # Now go through and run our prepped ui calls to build our
     # widgets, plugging in appropriate parent widgets args and

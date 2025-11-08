@@ -1004,7 +1004,7 @@ class ChestWindow(bui.MainWindow):
         # Insert test items for testing.
         if bool(False):
             response.contents += [
-                bacommon.displayitem.DisplayItemWrapper.for_display_item(
+                bacommon.displayitem.DisplayItemWrapper.for_item(
                     bacommon.displayitem.TestDisplayItem()
                 )
             ]

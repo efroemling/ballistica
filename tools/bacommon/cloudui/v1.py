@@ -63,6 +63,7 @@ class ActionTypeID(Enum):
     BROWSE = 'b'
     REPLACE = 'r'
     LOCAL = 'l'
+    UNKNOWN = 'u'
 
 
 class Action(IOMultiType[ActionTypeID]):
@@ -89,6 +90,8 @@ class Action(IOMultiType[ActionTypeID]):
             return Replace
         if type_id is t.LOCAL:
             return Local
+        if type_id is t.UNKNOWN:
+            return UnknownAction
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -97,6 +100,24 @@ class Action(IOMultiType[ActionTypeID]):
     @classmethod
     def get_type_id_storage_name(cls) -> str:
         return '_t'
+
+    @override
+    @classmethod
+    def get_unknown_type_fallback(cls) -> Action:
+        # If we encounter some future type we don't know anything about,
+        # drop in a placeholder.
+        return UnknownAction()
+
+
+@ioprepped
+@dataclass
+class UnknownAction(Action):
+    """Action type we don't recognize."""
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ActionTypeID:
+        return ActionTypeID.UNKNOWN
 
 
 @ioprepped
@@ -374,14 +395,27 @@ class Image(Decoration):
         return DecorationTypeID.IMAGE
 
 
+class DisplayItemStyle(Enum):
+    """Styles a display-item can be drawn in."""
+
+    FULL = 'f'
+    COMPACT = 'c'
+
+
 @ioprepped
 @dataclass
 class DisplayItem(Decoration):
     """DisplayItem decoration."""
 
-    item: Annotated[DisplayItemWrapper, IOAttrs('i')]
+    wrapper: Annotated[DisplayItemWrapper, IOAttrs('w')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
     size: Annotated[tuple[float, float], IOAttrs('s')]
+    style: Annotated[DisplayItemStyle, IOAttrs('t', store_default=False)] = (
+        DisplayItemStyle.FULL
+    )
+    text_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('c', store_default=False)
+    ] = None
     highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
     depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
@@ -426,16 +460,17 @@ class Button:
         tuple[float, float, float, float] | None,
         IOAttrs('cl', store_default=False),
     ] = None
-    text_color: Annotated[
+    label_color: Annotated[
         tuple[float, float, float, float] | None,
-        IOAttrs('tc', store_default=False),
+        IOAttrs('lc', store_default=False),
     ] = None
-    text_flatness: Annotated[
-        float | None, IOAttrs('tf', store_default=False)
+    label_flatness: Annotated[
+        float | None, IOAttrs('lf', store_default=False)
     ] = None
-    text_scale: Annotated[float | None, IOAttrs('ts', store_default=False)] = (
+    label_scale: Annotated[float | None, IOAttrs('ls', store_default=False)] = (
         None
     )
+    label_is_lstr: Annotated[bool, IOAttrs('ll', store_default=False)] = False
     texture: Annotated[str | None, IOAttrs('tex', store_default=False)] = None
     scale: Annotated[float, IOAttrs('sc', store_default=False)] = 1.0
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0
@@ -445,7 +480,6 @@ class Button:
     decorations: Annotated[
         list[Decoration] | None, IOAttrs('c', store_default=False)
     ] = None
-    text_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
     style: Annotated[ButtonStyle, IOAttrs('y', store_default=False)] = (
         ButtonStyle.SQUARE
     )
@@ -466,10 +500,67 @@ class Button:
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
 
 
+class RowTypeID(Enum):
+    """Type ID for each of our subclasses."""
+
+    BUTTON_ROW = 'b'
+    UNKNOWN = 'u'
+
+
+class Row(IOMultiType[RowTypeID]):
+    """Top level class for our multitype."""
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> RowTypeID:
+        # Require child classes to supply this themselves. If we did a
+        # full type registry/lookup here it would require us to import
+        # everything and would prevent lazy loading.
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: RowTypeID) -> type[Row]:
+        """Return the subclass for each of our type-ids."""
+        # pylint: disable=cyclic-import
+
+        t = RowTypeID
+        if type_id is t.UNKNOWN:
+            return UnknownRow
+        if type_id is t.BUTTON_ROW:
+            return ButtonRow
+
+        # Important to make sure we provide all types.
+        assert_never(type_id)
+
+    @override
+    @classmethod
+    def get_unknown_type_fallback(cls) -> Row:
+        # If we encounter some future type we don't know anything about,
+        # drop in a placeholder.
+        return UnknownRow()
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return '_t'
+
+
 @ioprepped
 @dataclass
-class Row:
-    """A row in our cloud ui."""
+class UnknownRow(Row):
+    """A row type we don't have."""
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> RowTypeID:
+        return RowTypeID.UNKNOWN
+
+
+@ioprepped
+@dataclass
+class ButtonRow(Row):
+    """A row consisting of buttons."""
 
     buttons: Annotated[list[Button], IOAttrs('b')]
 
@@ -533,6 +624,11 @@ class Row:
     #: controls, so try to make sure all decorations for a button are
     #: within these bounds.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> RowTypeID:
+        return RowTypeID.BUTTON_ROW
 
 
 @ioprepped

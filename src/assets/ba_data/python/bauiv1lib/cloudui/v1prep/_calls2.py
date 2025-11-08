@@ -11,6 +11,8 @@ from __future__ import annotations
 from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
+from efro.util import pairs_from_flat
+import bacommon.displayitem as ditm
 import bacommon.cloudui.v1 as clui1
 import bauiv1 as bui
 
@@ -64,7 +66,6 @@ def prep_decorations(
             )
         elif dectypeid is clui1.DecorationTypeID.DISPLAY_ITEM:
             assert isinstance(decoration, clui1.DisplayItem)
-
             prep_display_item(
                 decoration,
                 (center_x, center_y),
@@ -73,7 +74,6 @@ def prep_decorations(
                 out_decoration_preps,
                 highlight=highlight,
             )
-            print('WOULD PREP DISPLAY ITEM')
         else:
             assert_never(dectypeid)
 
@@ -339,6 +339,9 @@ def prep_display_item(
     highlight: bool,
 ) -> None:
     """Prep decorations for a display-item."""
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
+    # pylint: disable=too-many-locals
 
     # Calc center and size of our bounds based on parent.
     our_center = (
@@ -350,8 +353,12 @@ def prep_display_item(
         parent_scale * display_item.size[1],
     )
 
-    # Draw our bounds if debug mode is enabled.
-    if display_item.debug:
+    wrapper = display_item.wrapper
+    item = wrapper.item
+    itemtype = item.get_type_id()
+
+    # Draw our bounds if debug mode is enabled (or we're a test-item).
+    if display_item.debug or itemtype is ditm.DisplayItemTypeID.TEST:
         out_decoration_preps.append(
             DecorationPrep(
                 call=partial(
@@ -371,12 +378,26 @@ def prep_display_item(
             )
         )
 
+    text_flatness: float | None
+    text_shadow: float | None
+
     # Calc our width and height based on our aspect ratio so we fit in
     # the provided bounds.
-    aspect_ratio = 0.75  # Bit less tall than wide.
+    if display_item.style is clui1.DisplayItemStyle.FULL:
+        aspect_ratio = 0.75  # Bit less tall than wide (graphic centric).
+        text_flatness = 1.0
+        text_shadow = 1.0
+        compact = False
+    elif display_item.style is clui1.DisplayItemStyle.COMPACT:
+        aspect_ratio = 0.5  # Significantly wider (text centric)
+        text_flatness = 1.0
+        text_shadow = 1.0
+        compact = True
+    else:
+        # Make sure we cover all possibilities.
+        assert_never(display_item.style)
 
     if bounds_size[0] * aspect_ratio > bounds_size[1]:
-        print('size to height')
         height = bounds_size[1]
         width = height / aspect_ratio
     else:
@@ -384,7 +405,7 @@ def prep_display_item(
         height = width * aspect_ratio
 
     # Show our constrained bounds in debug mode.
-    if display_item.debug:
+    if display_item.debug or itemtype is ditm.DisplayItemTypeID.TEST:
         out_decoration_preps.append(
             DecorationPrep(
                 call=partial(
@@ -399,6 +420,171 @@ def prep_display_item(
                     transition_delay=tdelay,
                 ),
                 textures={'texture': 'white'},
+                meshes={},
+                highlight=highlight and display_item.highlight,
+            )
+        )
+
+    img: str | None = None
+    img_x_offs = 0.0
+    img_y_offs = 0.0
+    imgsize = width * (0.5 if compact else 0.33)
+
+    show_text = True
+    text_mult = 0.006
+    text: str | None = None  # Uses default if None
+    text_x_offs = 0.0
+    text_y_offs = 0.0
+    text_align = 'center'
+    text_max_width: float | None = width * 0.9
+
+    if itemtype is ditm.DisplayItemTypeID.CHEST:
+        from baclassic import (
+            CHEST_APPEARANCE_DISPLAY_INFOS,
+            CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
+        )
+        import bacommon.bs
+
+        assert isinstance(item, bacommon.bs.ClassicChestDisplayItem)
+
+        img = None
+        show_text = False
+        c_info = CHEST_APPEARANCE_DISPLAY_INFOS.get(
+            item.appearance, CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT
+        )
+        c_size = width * (0.66 if compact else 0.85)
+        out_decoration_preps.append(
+            DecorationPrep(
+                call=partial(
+                    bui.imagewidget,
+                    position=(
+                        our_center[0] - c_size * 0.5,
+                        our_center[1] - c_size * 0.5,
+                    ),
+                    size=(c_size, c_size),
+                    transition_delay=tdelay,
+                    tint_color=c_info.tint,
+                    tint2_color=c_info.tint2,
+                    depth_range=display_item.depth_range,
+                ),
+                textures={
+                    'texture': c_info.texclosed,
+                    'tint_texture': c_info.texclosedtint,
+                },
+                meshes={},
+                highlight=highlight and display_item.highlight,
+            )
+        )
+    elif itemtype is ditm.DisplayItemTypeID.TEST:
+        assert isinstance(item, ditm.TestDisplayItem)
+        # Nothing to do here. This is just another way to enable debug
+        # drawing.
+
+    elif (
+        itemtype is ditm.DisplayItemTypeID.TOKENS
+        or itemtype is ditm.DisplayItemTypeID.TICKETS
+    ):
+        if itemtype is ditm.DisplayItemTypeID.TOKENS:
+            assert isinstance(item, ditm.TokensDisplayItem)
+            img = 'coin'
+            if compact:
+                text = str(item.count)
+        elif itemtype is ditm.DisplayItemTypeID.TICKETS:
+            assert isinstance(item, ditm.TicketsDisplayItem)
+            img = 'tickets'
+            if compact:
+                text = str(item.count)
+        else:
+            assert_never(itemtype)
+
+        if compact:
+            imgamt = 0.85  # How much of img dimensions we measure.
+
+            assert text is not None
+            text_mult = 0.01
+            strwidth = (
+                width
+                * bui.get_string_width(text, suppress_warning=True)
+                * text_mult
+            )
+            totwidth = strwidth + imgsize * imgamt
+
+            maxwidth = width * 0.95
+            if totwidth > maxwidth:
+                mult = maxwidth / totwidth
+                text_mult *= mult
+                strwidth *= mult
+                totwidth *= mult
+                imgsize *= mult
+
+            text_max_width = None  # We calc this fully ourself.
+            # Move to right and then left by half img width.
+            img_x_offs = totwidth * 0.5 - imgsize * imgamt * 0.5
+            # Move to left and then right by half text width.
+            text_x_offs = totwidth * -0.5 + strwidth * 0.5
+        else:
+            img_y_offs = width * 0.11
+            text_y_offs = width * -0.15
+    elif itemtype is ditm.DisplayItemTypeID.UNKNOWN:
+        assert isinstance(item, ditm.UnknownDisplayItem)
+        # Just do default text here.
+    else:
+        # Make sure we cover all possibilities.
+        assert_never(itemtype)
+
+    if img is not None:
+        out_decoration_preps.append(
+            DecorationPrep(
+                call=partial(
+                    bui.imagewidget,
+                    position=(
+                        our_center[0] - imgsize * 0.5 + img_x_offs,
+                        our_center[1] - imgsize * 0.5 + img_y_offs,
+                    ),
+                    size=(imgsize, imgsize),
+                    transition_delay=tdelay,
+                    depth_range=display_item.depth_range,
+                ),
+                textures={'texture': img},
+                meshes={},
+                highlight=highlight and display_item.highlight,
+            )
+        )
+    if show_text:
+        if text is None:
+            subs = wrapper.description_subs
+            if subs is None:
+                subs = []
+            text = bui.Lstr(
+                translate=('displayItemNames', wrapper.description),
+                subs=pairs_from_flat(subs),
+            ).as_json()
+        out_decoration_preps.append(
+            DecorationPrep(
+                call=partial(
+                    bui.textwidget,
+                    position=(
+                        our_center[0] + text_x_offs,
+                        our_center[1] + text_y_offs,
+                    ),
+                    scale=width * text_mult,
+                    maxwidth=text_max_width,
+                    h_align=text_align,
+                    v_align='center',
+                    size=(0, 0),
+                    color=(
+                        (1, 1, 1)
+                        if display_item.text_color is None
+                        else display_item.text_color
+                    ),
+                    text=text,
+                    flatness=text_flatness,
+                    shadow=text_shadow,
+                    literal=False,
+                    transition_delay=tdelay,
+                    depth_range=display_item.depth_range,
+                ),
+                textures={},
                 meshes={},
                 highlight=highlight and display_item.highlight,
             )
