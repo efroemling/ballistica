@@ -22,16 +22,72 @@ if TYPE_CHECKING:
     from bauiv1lib.cloudui import CloudUIWindow
 
 
+def prep_decorations(
+    decorations: list[clui1.Decoration],
+    center_x: float,
+    center_y: float,
+    scale: float,
+    tdelay: float | None,
+    *,
+    highlight: bool,
+    out_decoration_preps: list[DecorationPrep],
+) -> None:
+    """Prep appropriate decoration types for a list of decorations."""
+    for decoration in decorations:
+        dectypeid = decoration.get_type_id()
+        if dectypeid is clui1.DecorationTypeID.UNKNOWN:
+            if bui.do_once():
+                bui.uilog.exception(
+                    'CloudUI receieved unknown decoration;'
+                    ' this is likely a server error.'
+                )
+        elif dectypeid is clui1.DecorationTypeID.TEXT:
+            assert isinstance(decoration, clui1.Text)
+            prep_text(
+                decoration,
+                (center_x, center_y),
+                scale,
+                tdelay,
+                out_decoration_preps,
+                highlight=highlight,
+            )
+
+        elif dectypeid is clui1.DecorationTypeID.IMAGE:
+            assert isinstance(decoration, clui1.Image)
+            prep_image(
+                decoration,
+                (center_x, center_y),
+                scale,
+                tdelay,
+                out_decoration_preps,
+                highlight=highlight,
+            )
+        elif dectypeid is clui1.DecorationTypeID.DISPLAY_ITEM:
+            assert isinstance(decoration, clui1.DisplayItem)
+
+            prep_display_item(
+                decoration,
+                (center_x, center_y),
+                scale,
+                tdelay,
+                out_decoration_preps,
+                highlight=highlight,
+            )
+            print('WOULD PREP DISPLAY ITEM')
+        else:
+            assert_never(dectypeid)
+
+
 def prep_text(
     text: clui1.Text,
     bcenter: tuple[float, float],
     bscale: float,
     tdelay: float | None,
-    decorations: list[DecorationPrep],
+    out_decoration_preps: list[DecorationPrep],
     *,
     highlight: bool,
 ) -> None:
-    """Prep cloud-ui-v1 text."""
+    """Prep decorations for text."""
     # pylint: disable=too-many-branches
     xoffs = bcenter[0] + text.position[0] * bscale
     yoffs = bcenter[1] + text.position[1] * bscale
@@ -54,7 +110,7 @@ def prep_text(
     else:
         assert_never(text.v_align)
 
-    decorations.append(
+    out_decoration_preps.append(
         DecorationPrep(
             call=partial(
                 bui.textwidget,
@@ -101,7 +157,7 @@ def prep_text(
         else:
             assert_never(text.v_align)
 
-        decorations.append(
+        out_decoration_preps.append(
             DecorationPrep(
                 call=partial(
                     bui.imagewidget,
@@ -118,72 +174,16 @@ def prep_text(
         )
 
 
-def prep_decorations(
-    decorations: list[clui1.Decoration],
-    center_x: float,
-    center_y: float,
-    scale: float,
-    tdelay: float | None,
-    *,
-    highlight: bool,
-    decorationpreps: list[DecorationPrep],
-) -> None:
-    """Prep cloud-ui-v1 decorations."""
-    for decoration in decorations:
-        dectypeid = decoration.get_type_id()
-        if dectypeid is clui1.DecorationTypeID.UNKNOWN:
-            if bui.do_once():
-                bui.uilog.exception(
-                    'CloudUI receieved unknown decoration;'
-                    ' this is likely a server error.'
-                )
-        elif dectypeid is clui1.DecorationTypeID.TEXT:
-            assert isinstance(decoration, clui1.Text)
-            prep_text(
-                decoration,
-                (center_x, center_y),
-                scale,
-                tdelay,
-                decorationpreps,
-                highlight=highlight,
-            )
-
-        elif dectypeid is clui1.DecorationTypeID.IMAGE:
-            assert isinstance(decoration, clui1.Image)
-            prep_image(
-                decoration,
-                (center_x, center_y),
-                scale,
-                tdelay,
-                decorationpreps,
-                highlight=highlight,
-            )
-        elif dectypeid is clui1.DecorationTypeID.DISPLAY_ITEM:
-            assert isinstance(decoration, clui1.DisplayItem)
-
-            prep_display_item(
-                decoration,
-                (center_x, center_y),
-                scale,
-                tdelay,
-                decorationpreps,
-                highlight=highlight,
-            )
-            print('WOULD PREP DISPLAY ITEM')
-        else:
-            assert_never(dectypeid)
-
-
 def prep_image(
     image: clui1.Image,
     bcenter: tuple[float, float],
     bscale: float,
     tdelay: float | None,
-    decorations: list[DecorationPrep],
+    out_decoration_preps: list[DecorationPrep],
     *,
     highlight: bool,
 ) -> None:
-    """Prep cloud-ui-v1 image."""
+    """Prep decorations for an image."""
     xoffs = bcenter[0] + image.position[0] * bscale
     yoffs = bcenter[1] + image.position[1] * bscale
 
@@ -220,7 +220,7 @@ def prep_image(
     if image.mesh_transparent is not None:
         meshes['mesh_transparent'] = image.mesh_transparent
 
-    decorations.append(
+    out_decoration_preps.append(
         DecorationPrep(
             call=partial(
                 bui.imagewidget,
@@ -244,9 +244,9 @@ def prep_row_debug(
     size: tuple[float, float],
     pos: tuple[float, float],
     tdelay: float | None,
-    decorations: list[DecorationPrep],
+    out_decoration_preps: list[DecorationPrep],
 ) -> None:
-    """Prep cloud-ui-v1 row debug bits."""
+    """Prep debug decorations for a row."""
 
     textures: dict[str, str] = {'texture': 'white'}
 
@@ -254,7 +254,7 @@ def prep_row_debug(
     # eachother can be seen.
     border_shrink = 1.0
 
-    decorations.append(
+    out_decoration_preps.append(
         DecorationPrep(
             call=partial(
                 bui.imagewidget,
@@ -275,15 +275,15 @@ def prep_row_debug_button(
     bsize: tuple[float, float],
     bcorner: tuple[float, float],
     tdelay: float | None,
-    decorations: list[DecorationPrep],
+    out_decoration_preps: list[DecorationPrep],
 ) -> None:
-    """Prep cloud-ui-v1 button debug bits for a row."""
+    """Prep debug decorations for a button."""
     xoffs = bcorner[0]
     yoffs = bcorner[1]
 
     textures: dict[str, str] = {'texture': 'white'}
 
-    decorations.append(
+    out_decoration_preps.append(
         DecorationPrep(
             call=partial(
                 bui.imagewidget,
@@ -304,12 +304,12 @@ def prep_button_debug(
     bsize: tuple[float, float],
     bcenter: tuple[float, float],
     tdelay: float | None,
-    decorations: list[DecorationPrep],
+    out_decoration_preps: list[DecorationPrep],
 ) -> None:
-    """Prep cloud-ui-v1 button debug bits."""
+    """Prep debug decorations for a button."""
     textures: dict[str, str] = {'texture': 'white'}
 
-    decorations.append(
+    out_decoration_preps.append(
         DecorationPrep(
             call=partial(
                 bui.imagewidget,
@@ -331,37 +331,74 @@ def prep_button_debug(
 
 def prep_display_item(
     display_item: clui1.DisplayItem,
-    bcenter: tuple[float, float],
-    bscale: float,
+    parent_center: tuple[float, float],
+    parent_scale: float,
     tdelay: float | None,
-    decorations: list[DecorationPrep],
+    out_decoration_preps: list[DecorationPrep],
     *,
     highlight: bool,
 ) -> None:
-    """Prep cloud-ui-v1 display-item."""
-    xoffs = bcenter[0] + display_item.position[0] * bscale
-    yoffs = bcenter[1] + display_item.position[1] * bscale
+    """Prep decorations for a display-item."""
 
-    widthfull = bscale * display_item.size[0]
-    heightfull = bscale * display_item.size[1]
+    # Calc center and size of our bounds based on parent.
+    our_center = (
+        parent_center[0] + display_item.position[0] * parent_scale,
+        parent_center[1] + display_item.position[1] * parent_scale,
+    )
+    bounds_size = (
+        parent_scale * display_item.size[0],
+        parent_scale * display_item.size[1],
+    )
 
-    xoffsfin = xoffs - widthfull * 0.5
-    yoffsfin = yoffs - heightfull * 0.5
-
-    textures: dict[str, str] = {'texture': 'white'}
-
+    # Draw our bounds if debug mode is enabled.
     if display_item.debug:
-        decorations.append(
+        out_decoration_preps.append(
             DecorationPrep(
                 call=partial(
                     bui.imagewidget,
                     color=(1, 1, 0),
-                    opacity=0.2,
-                    position=(xoffsfin, yoffsfin),
-                    size=(widthfull, heightfull),
+                    opacity=0.1,
+                    position=(
+                        our_center[0] - bounds_size[0] * 0.5,
+                        our_center[1] - bounds_size[1] * 0.5,
+                    ),
+                    size=bounds_size,
                     transition_delay=tdelay,
                 ),
-                textures=textures,
+                textures={'texture': 'white'},
+                meshes={},
+                highlight=highlight and display_item.highlight,
+            )
+        )
+
+    # Calc our width and height based on our aspect ratio so we fit in
+    # the provided bounds.
+    aspect_ratio = 0.75  # Bit less tall than wide.
+
+    if bounds_size[0] * aspect_ratio > bounds_size[1]:
+        print('size to height')
+        height = bounds_size[1]
+        width = height / aspect_ratio
+    else:
+        width = bounds_size[0]
+        height = width * aspect_ratio
+
+    # Show our constrained bounds in debug mode.
+    if display_item.debug:
+        out_decoration_preps.append(
+            DecorationPrep(
+                call=partial(
+                    bui.imagewidget,
+                    color=(1, 0.5, 0),
+                    opacity=0.2,
+                    position=(
+                        our_center[0] - width * 0.5,
+                        our_center[1] - height * 0.5,
+                    ),
+                    size=(width, height),
+                    transition_delay=tdelay,
+                ),
+                textures={'texture': 'white'},
                 meshes={},
                 highlight=highlight and display_item.highlight,
             )

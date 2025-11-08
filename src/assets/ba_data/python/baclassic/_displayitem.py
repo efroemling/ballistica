@@ -3,16 +3,10 @@
 """Display-item related functionality."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from efro.util import pairs_from_flat
 import bacommon.bs
 import bacommon.displayitem
 import bauiv1
-
-
-if TYPE_CHECKING:
-    pass
 
 
 def show_display_item(

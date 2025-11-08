@@ -68,10 +68,13 @@ class DisplayItem(IOMultiType[DisplayItemTypeID]):
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:
         """Return a string description and subs for the item.
 
+        Will be translated on the client using the 'displayItemNames'
+        Lstr category.
+
         These decriptions are baked into the DisplayItemWrapper and
         should be accessed from there when available. This allows
-        clients to give descriptions even for newer display items they
-        don't recognize.
+        clients to give descriptions even for newer display item types
+        they don't recognize.
         """
         raise NotImplementedError()
 
@@ -158,7 +161,11 @@ class TestDisplayItem(DisplayItem):
 @ioprepped
 @dataclass
 class DisplayItemWrapper:
-    """Wraps a DisplayItem and common info."""
+    """Wraps a DisplayItem and some baked out info.
+
+    This allows clients to at least give descriptions of new
+    display-item types they may not have locally.
+    """
 
     item: Annotated[DisplayItem, IOAttrs('i')]
     description: Annotated[str, IOAttrs('d')]

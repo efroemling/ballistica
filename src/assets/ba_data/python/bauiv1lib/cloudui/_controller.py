@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
     import bacommon.cloudui.v1
     from bacommon.cloudui import CloudUIRequest, CloudUIResponse
-    from bacommon.bs import ClientEffect
+    from bacommon.clienteffect import ClientEffect
 
     from bauiv1lib.cloudui import v1prep
 
@@ -479,10 +479,16 @@ class CloudUIController:
                         auxiliary_style=False,
                     )
                 )
-                if bui.app.classic is not None and action.immediate_effects:
-                    bui.app.classic.run_bs_client_effects(
-                        action.immediate_effects
-                    )
+
+                self._run_immediate_effects_and_actions(
+                    client_effects=action.immediate_client_effects,
+                    local_action=action.immediate_local_action,
+                    local_action_args=action.immediate_local_action_args,
+                    widget=widget,
+                    window=window,
+                    is_timed=is_timed,
+                )
+
         elif action_type is clui.ActionTypeID.REPLACE:
             assert isinstance(action, clui.Replace)
 

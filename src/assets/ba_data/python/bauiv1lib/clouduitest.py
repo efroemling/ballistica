@@ -216,7 +216,7 @@ def _test_page_root(
 ) -> bacommon.cloudui.v1.Response:
     """Return test page."""
 
-    import bacommon.bs
+    import bacommon.clienteffect as clfx
     import bacommon.cloudui.v1 as clui
 
     # Show some specific debug bits if they ask us to.
@@ -298,24 +298,24 @@ def _test_page_root(
                             size=(120, 80),
                             action=clui.Local(
                                 immediate_client_effects=[
-                                    bacommon.bs.ClientEffectScreenMessage(
+                                    clfx.ClientEffectScreenMessage(
                                         'Hello From Immediate Client Effects',
                                         color=(0, 1, 0),
                                     ),
-                                    bacommon.bs.ClientEffectSound(
+                                    clfx.ClientEffectSound(
                                         sound=(
-                                            bacommon.bs.ClientEffectSound
+                                            clfx.ClientEffectSound
                                         ).Sound.CASH_REGISTER
                                     ),
-                                    bacommon.bs.ClientEffectDelay(1.0),
-                                    bacommon.bs.ClientEffectScreenMessage(
+                                    clfx.ClientEffectDelay(1.0),
+                                    clfx.ClientEffectScreenMessage(
                                         '{"r":"successText"}',
                                         is_lstr=True,
                                         color=(0, 1, 0),
                                     ),
-                                    bacommon.bs.ClientEffectSound(
+                                    clfx.ClientEffectSound(
                                         sound=(
-                                            bacommon.bs.ClientEffectSound
+                                            clfx.ClientEffectSound
                                         ).Sound.CASH_REGISTER
                                     ),
                                 ]
@@ -620,21 +620,21 @@ def _test_page_root(
     # Include some client effects if they ask.
     if request.args.get('test_effects', False):
         response.client_effects = [
-            bacommon.bs.ClientEffectScreenMessage(
+            clfx.ClientEffectScreenMessage(
                 'Hello From Response Client Effects',
                 color=(0, 1, 0),
             ),
-            bacommon.bs.ClientEffectSound(
-                sound=(bacommon.bs.ClientEffectSound).Sound.CASH_REGISTER
+            clfx.ClientEffectSound(
+                sound=clfx.ClientEffectSound.Sound.CASH_REGISTER
             ),
-            bacommon.bs.ClientEffectDelay(1.0),
-            bacommon.bs.ClientEffectScreenMessage(
+            clfx.ClientEffectDelay(1.0),
+            clfx.ClientEffectScreenMessage(
                 '{"r":"successText"}',
                 is_lstr=True,
                 color=(0, 1, 0),
             ),
-            bacommon.bs.ClientEffectSound(
-                sound=(bacommon.bs.ClientEffectSound).Sound.CASH_REGISTER
+            clfx.ClientEffectSound(
+                sound=(clfx.ClientEffectSound).Sound.CASH_REGISTER
             ),
         ]
 
@@ -651,6 +651,7 @@ def _test_page_display_items(
 ) -> bacommon.cloudui.v1.Response:
     """Testing display-items."""
     import bacommon.cloudui.v1 as clui
+    import bacommon.displayitem
 
     del request  # Unused.
 
@@ -677,6 +678,38 @@ def _test_page_display_items(
                                     color=(1, 1, 1, 0.2),
                                 ),
                                 clui.DisplayItem(
+                                    item=(
+                                        bacommon.displayitem
+                                    ).DisplayItemWrapper.for_display_item(
+                                        bacommon.displayitem.TicketsDisplayItem(
+                                            count=100
+                                        )
+                                    ),
+                                    position=(0, -55),
+                                    size=(100, 100),
+                                    debug=True,
+                                ),
+                            ],
+                        ),
+                        # Test scaling.
+                        clui.Button(
+                            size=(300, 300),
+                            scale=0.47,
+                            decorations=[
+                                clui.Image(
+                                    'white',
+                                    position=(0, 55),
+                                    size=(100, 100),
+                                    color=(1, 1, 1, 0.2),
+                                ),
+                                clui.DisplayItem(
+                                    item=(
+                                        bacommon.displayitem
+                                    ).DisplayItemWrapper.for_display_item(
+                                        bacommon.displayitem.TicketsDisplayItem(
+                                            count=100
+                                        )
+                                    ),
                                     position=(0, -55),
                                     size=(100, 100),
                                     debug=True,

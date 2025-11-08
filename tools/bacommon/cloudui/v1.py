@@ -10,7 +10,8 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
-from bacommon.bs import ClientEffect
+from bacommon.displayitem import DisplayItemWrapper
+from bacommon.clienteffect import ClientEffect
 from bacommon.cloudui._cloudui import (
     CloudUIRequest,
     CloudUIRequestTypeID,
@@ -107,9 +108,23 @@ class Browse(Action):
 
     #: Plays a swish.
     default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
-    immediate_effects: Annotated[
+
+    #: Client-effects to run immediately when the button is pressed.
+    #:
+    #: :meta private:
+    immediate_client_effects: Annotated[
         list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
+
+    #: Local action to run immediately when the button is pressed. Will
+    #: be handled by
+    #: :meth:`bauiv1lib.cloudui.CloudUIController.local_action()`.
+    immediate_local_action: Annotated[
+        str | None, IOAttrs('a', store_default=False)
+    ] = None
+    immediate_local_action_args: Annotated[
+        dict | None, IOAttrs('aa', store_default=False)
+    ] = None
 
     @override
     @classmethod
@@ -134,6 +149,8 @@ class Replace(Action):
     default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
 
     #: Client-effects to run immediately when the button is pressed.
+    #:
+    #: :meta private:
     immediate_client_effects: Annotated[
         list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
@@ -166,6 +183,8 @@ class Local(Action):
     default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
 
     #: Client-effects to run immediately when the button is pressed.
+    #:
+    #: :meta private:
     immediate_client_effects: Annotated[
         list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
@@ -360,11 +379,12 @@ class Image(Decoration):
 class DisplayItem(Decoration):
     """DisplayItem decoration."""
 
+    item: Annotated[DisplayItemWrapper, IOAttrs('i')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
     size: Annotated[tuple[float, float], IOAttrs('s')]
     highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
+    depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
-    # item: Annotated[bacommon.bs.DisplayItem]
 
     @override
     @classmethod
@@ -572,6 +592,8 @@ class Response(CloudUIResponse):
     #: received. Note that these effects will not re-run if the page is
     #: automatically refreshed later (due to window resizing, back
     #: navigation, etc).
+    #:
+    #: :meta private:
     client_effects: Annotated[
         list[ClientEffect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)

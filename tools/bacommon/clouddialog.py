@@ -1,6 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Simple cloud-defined UIs for things like notifications."""
+"""Simple cloud-defined UIs for things like notifications.
+
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +16,9 @@ from dataclasses import dataclass, field
 from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
+from efro.message import Message, Response
 
+from bacommon.clienteffect import ClientEffect
 from bacommon.displayitem import DisplayItemWrapper
 
 
@@ -306,3 +314,46 @@ class CloudDialogAction(Enum):
 
     BUTTON_PRESS_POSITIVE = 'p'
     BUTTON_PRESS_NEGATIVE = 'n'
+
+
+@ioprepped
+@dataclass
+class CloudDialogActionMessage(Message):
+    """Do something to a client ui."""
+
+    id: Annotated[str, IOAttrs('i')]
+    action: Annotated[CloudDialogAction, IOAttrs('a')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [CloudDialogActionResponse]
+
+
+@ioprepped
+@dataclass
+class CloudDialogActionResponse(Response):
+    """Did something to that inbox entry, boss."""
+
+    class ErrorType(Enum):
+        """Types of errors that may have occurred."""
+
+        # Probably a future error type we don't recognize.
+        UNKNOWN = 'u'
+
+        # Something went wrong on the server, but specifics are not
+        # relevant.
+        INTERNAL = 'i'
+
+        # The entry expired on the server. In various cases such as 'ok'
+        # buttons this can generally be ignored.
+        EXPIRED = 'e'
+
+    error_type: Annotated[
+        ErrorType | None, IOAttrs('et', enum_fallback=ErrorType.UNKNOWN)
+    ]
+
+    # User facing error message in the case of errors.
+    error_message: Annotated[str | None, IOAttrs('em')]
+
+    effects: Annotated[list[ClientEffect], IOAttrs('fx')]

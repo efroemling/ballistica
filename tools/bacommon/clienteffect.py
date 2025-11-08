@@ -1,6 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""ClientEffect related functionality."""
+"""ClientEffect related functionality.
+
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+"""
 
 from __future__ import annotations
 

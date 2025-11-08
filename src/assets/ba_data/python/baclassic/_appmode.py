@@ -11,6 +11,7 @@ from functools import partial
 from typing import TYPE_CHECKING, override
 
 from efro.error import CommunicationError
+import bacommon.clienteffect as clfx
 import bacommon.bs
 from babase import AppMode
 import bauiv1 as bui
@@ -257,20 +258,20 @@ class ClassicAppMode(AppMode):
                 )
 
             assert bui.app.classic is not None
-            effects: list[bacommon.bs.ClientEffect] = [
-                bacommon.bs.ClientEffectTokensAnimation(
+            effects: list[clfx.ClientEffect] = [
+                clfx.ClientEffectTokensAnimation(
                     duration=anim_time,
                     startvalue=self._last_tokens_value,
                     endvalue=self._last_tokens_value + tokens,
                 ),
-                bacommon.bs.ClientEffectDelay(anim_time),
-                bacommon.bs.ClientEffectLegacyScreenMessage(
+                clfx.ClientEffectDelay(anim_time),
+                clfx.ClientEffectLegacyScreenMessage(
                     message='You got ${COUNT} tokens!',
                     subs=['${COUNT}', tokens_str],
                     color=(0, 1, 0),
                 ),
-                bacommon.bs.ClientEffectSound(
-                    sound=bacommon.bs.ClientEffectSound.Sound.CASH_REGISTER
+                clfx.ClientEffectSound(
+                    sound=clfx.ClientEffectSound.Sound.CASH_REGISTER
                 ),
             ]
             bui.app.classic.run_bs_client_effects(effects)

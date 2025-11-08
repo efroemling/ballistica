@@ -281,6 +281,8 @@ skip_prefixes = [
     'bacommon.bacloud.',
     'bacommon.assets.',
     'bacommon.bs.',
+    'bacommon.clouddialog.',
+    'bacommon.clienteffect.',
 ]
 
 # Make sure we don't unintentionally skip 'foo.bar' by adding 'foo.b'

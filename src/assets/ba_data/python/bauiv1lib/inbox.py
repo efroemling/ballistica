@@ -12,6 +12,7 @@ from typing import override, assert_never, TYPE_CHECKING
 
 from efro.util import strict_partial, pairs_from_flat
 from efro.error import CommunicationError
+import bacommon.clouddialog as cdlg
 import bacommon.bs
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
@@ -294,9 +295,9 @@ class _ExpireTimeSection(_Section):
 
 @dataclass
 class _EntryDisplay:
-    interaction_style: bacommon.bs.BasicCloudDialog.InteractionStyle
-    button_label_positive: bacommon.bs.BasicCloudDialog.ButtonLabel
-    button_label_negative: bacommon.bs.BasicCloudDialog.ButtonLabel
+    interaction_style: cdlg.BasicCloudDialog.InteractionStyle
+    button_label_positive: cdlg.BasicCloudDialog.ButtonLabel
+    button_label_negative: cdlg.BasicCloudDialog.ButtonLabel
     sections: list[_Section]
     id: str
     total_height: float
@@ -523,7 +524,7 @@ class InboxWindow(bui.MainWindow):
     def _on_entry_display_press(
         self,
         display_weak: weakref.ReferenceType[_EntryDisplay],
-        action: bacommon.bs.CloudDialogAction,
+        action: cdlg.CloudDialogAction,
     ) -> None:
         display = display_weak()
         if display is None:
@@ -537,7 +538,7 @@ class InboxWindow(bui.MainWindow):
         # interaction types.
         if (
             display.interaction_style
-            is bacommon.bs.BasicCloudDialog.InteractionStyle.UNKNOWN
+            is cdlg.BasicCloudDialog.InteractionStyle.UNKNOWN
         ):
             display.processing_complete = True
             self._close_soon_if_all_processed()
@@ -560,7 +561,9 @@ class InboxWindow(bui.MainWindow):
         # Ask the master-server to run our action.
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
-                bacommon.bs.CloudDialogActionMessage(display.id, action),
+                bacommon.clouddialog.CloudDialogActionMessage(
+                    display.id, action
+                ),
                 on_response=bui.WeakCallPartial(
                     self._on_client_ui_action_response,
                     display_weak,
@@ -571,12 +574,12 @@ class InboxWindow(bui.MainWindow):
         # Tweak the UI to show that things are in motion.
         button = (
             display.button_positive
-            if action is bacommon.bs.CloudDialogAction.BUTTON_PRESS_POSITIVE
+            if action is cdlg.CloudDialogAction.BUTTON_PRESS_POSITIVE
             else display.button_negative
         )
         button_spinner = (
             display.button_spinner_positive
-            if action is bacommon.bs.CloudDialogAction.BUTTON_PRESS_POSITIVE
+            if action is cdlg.CloudDialogAction.BUTTON_PRESS_POSITIVE
             else display.button_spinner_negative
         )
         if button is not None:
@@ -615,8 +618,8 @@ class InboxWindow(bui.MainWindow):
     def _on_client_ui_action_response(
         self,
         display_weak: weakref.ReferenceType[_EntryDisplay],
-        action: bacommon.bs.CloudDialogAction,
-        response: bacommon.bs.CloudDialogActionResponse | Exception,
+        action: cdlg.CloudDialogAction,
+        response: bacommon.clouddialog.CloudDialogActionResponse | Exception,
     ) -> None:
         # pylint: disable=too-many-branches
 
@@ -639,12 +642,12 @@ class InboxWindow(bui.MainWindow):
         # Tweak the button to show results.
         button = (
             display.button_positive
-            if action is bacommon.bs.CloudDialogAction.BUTTON_PRESS_POSITIVE
+            if action is cdlg.CloudDialogAction.BUTTON_PRESS_POSITIVE
             else display.button_negative
         )
         button_spinner = (
             display.button_spinner_positive
-            if action is bacommon.bs.CloudDialogAction.BUTTON_PRESS_POSITIVE
+            if action is cdlg.CloudDialogAction.BUTTON_PRESS_POSITIVE
             else display.button_spinner_negative
         )
         # Always hide spinner at this point.
@@ -765,9 +768,9 @@ class InboxWindow(bui.MainWindow):
             # textfin: str
             color: tuple[float, float, float]
 
-            interaction_style: bacommon.bs.BasicCloudDialog.InteractionStyle
-            button_label_positive: bacommon.bs.BasicCloudDialog.ButtonLabel
-            button_label_negative: bacommon.bs.BasicCloudDialog.ButtonLabel
+            interaction_style: cdlg.BasicCloudDialog.InteractionStyle
+            button_label_positive: cdlg.BasicCloudDialog.ButtonLabel
+            button_label_negative: cdlg.BasicCloudDialog.ButtonLabel
 
             sections: list[_Section] = []
             total_height = 80.0
@@ -775,7 +778,7 @@ class InboxWindow(bui.MainWindow):
             # Display only entries where we recognize all style/label
             # values and ui component types.
             if (
-                isinstance(wrapper.ui, bacommon.bs.BasicCloudDialog)
+                isinstance(wrapper.ui, cdlg.BasicCloudDialog)
                 and not wrapper.ui.contains_unknown_elements()
             ):
                 color = (0.55, 0.5, 0.7)
@@ -783,14 +786,14 @@ class InboxWindow(bui.MainWindow):
                 button_label_positive = wrapper.ui.button_label_positive
                 button_label_negative = wrapper.ui.button_label_negative
 
-                idcls = bacommon.bs.BasicCloudDialogComponentTypeID
+                idcls = cdlg.BasicCloudDialogComponentTypeID
                 for component in wrapper.ui.components:
                     ctypeid = component.get_type_id()
                     section: _Section
 
                     if ctypeid is idcls.TEXT:
                         assert isinstance(
-                            component, bacommon.bs.BasicCloudDialogComponentText
+                            component, cdlg.BasicCloudDialogComponentText
                         )
                         section = _TextSection(
                             sub_width=sub_width,
@@ -808,7 +811,7 @@ class InboxWindow(bui.MainWindow):
 
                     elif ctypeid is idcls.LINK:
                         assert isinstance(
-                            component, bacommon.bs.BasicCloudDialogComponentLink
+                            component, cdlg.BasicCloudDialogComponentLink
                         )
 
                         def _do_open_url(url: str, sec: _ButtonSection) -> None:
@@ -833,7 +836,7 @@ class InboxWindow(bui.MainWindow):
                     elif ctypeid is idcls.DISPLAY_ITEMS:
                         assert isinstance(
                             component,
-                            bacommon.bs.BasicCloudDialogDisplayItems,
+                            cdlg.BasicCloudDialogDisplayItems,
                         )
                         section = _DisplayItemsSection(
                             sub_width=sub_width,
@@ -850,7 +853,7 @@ class InboxWindow(bui.MainWindow):
 
                         assert isinstance(
                             component,
-                            bacommon.bs.BasicCloudDialogBsClassicTourneyResult,
+                            cdlg.BasicCloudDialogBsClassicTourneyResult,
                         )
                         campaignname, levelname = component.game.split(':')
                         assert bui.app.classic is not None
@@ -975,7 +978,7 @@ class InboxWindow(bui.MainWindow):
 
                     elif ctypeid is idcls.EXPIRE_TIME:
                         assert isinstance(
-                            component, bacommon.bs.BasicCloudDialogExpireTime
+                            component, cdlg.BasicCloudDialogExpireTime
                         )
                         section = _ExpireTimeSection(
                             sub_width=sub_width,
@@ -998,14 +1001,10 @@ class InboxWindow(bui.MainWindow):
                 # 'upgrade your app to see this' message.
                 color = (0.6, 0.6, 0.6)
                 interaction_style = (
-                    bacommon.bs.BasicCloudDialog.InteractionStyle.UNKNOWN
+                    cdlg.BasicCloudDialog.InteractionStyle.UNKNOWN
                 )
-                button_label_positive = (
-                    bacommon.bs.BasicCloudDialog.ButtonLabel.OK
-                )
-                button_label_negative = (
-                    bacommon.bs.BasicCloudDialog.ButtonLabel.CANCEL
-                )
+                button_label_positive = cdlg.BasicCloudDialog.ButtonLabel.OK
+                button_label_negative = cdlg.BasicCloudDialog.ButtonLabel.CANCEL
 
                 section = _TextSection(
                     sub_width=sub_width,
@@ -1094,7 +1093,7 @@ class InboxWindow(bui.MainWindow):
             have_negative_button = (
                 entry_display.interaction_style
                 is (
-                    bacommon.bs.BasicCloudDialog
+                    cdlg.BasicCloudDialog
                 ).InteractionStyle.BUTTON_POSITIVE_NEGATIVE
             )
 
@@ -1123,7 +1122,7 @@ class InboxWindow(bui.MainWindow):
                 on_activate_call=bui.WeakCallStrict(
                     self._on_entry_display_press,
                     entry_display_weak,
-                    bacommon.bs.CloudDialogAction.BUTTON_PRESS_POSITIVE,
+                    cdlg.CloudDialogAction.BUTTON_PRESS_POSITIVE,
                 ),
                 enable_sound=False,
             )
@@ -1158,7 +1157,7 @@ class InboxWindow(bui.MainWindow):
                     on_activate_call=bui.WeakCallStrict(
                         self._on_entry_display_press,
                         entry_display_weak,
-                        (bacommon.bs.CloudDialogAction).BUTTON_PRESS_NEGATIVE,
+                        (cdlg.CloudDialogAction).BUTTON_PRESS_NEGATIVE,
                     ),
                     enable_sound=False,
                 )

@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
     from efro.message import Message, Response, BoolResponse
     import bacommon.bs
+    import bacommon.clouddialog
 
 
 # TODO: Should make it possible to define a protocol in bacommon.cloud and
@@ -252,9 +253,9 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.bs.CloudDialogActionMessage,
+        msg: bacommon.clouddialog.CloudDialogActionMessage,
         on_response: Callable[
-            [bacommon.bs.CloudDialogActionResponse | Exception], None
+            [bacommon.clouddialog.CloudDialogActionResponse | Exception], None
         ],
     ) -> None: ...
 
@@ -270,9 +271,9 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.bs.ChestActionMessage,
+        msg: bacommon.cloud.ChestActionMessage,
         on_response: Callable[
-            [bacommon.bs.ChestActionResponse | Exception], None
+            [bacommon.cloud.ChestActionResponse | Exception], None
         ],
     ) -> None: ...
 

@@ -9,28 +9,25 @@ from typing import TYPE_CHECKING, assert_never
 
 from efro.util import strict_partial
 
-import bacommon.bs
 import bauiv1
 
 import _baclassic
 
 if TYPE_CHECKING:
-    pass
+    import bacommon.clienteffect
 
 
 def run_bs_client_effects(
-    effects: list[bacommon.bs.ClientEffect], delay: float = 0.0
+    effects: list[bacommon.clienteffect.ClientEffect], delay: float = 0.0
 ) -> None:
     """Run effects."""
     # pylint: disable=too-many-branches
-    from bacommon.bs import ClientEffectTypeID
+    import bacommon.clienteffect as clfx
 
     for effect in effects:
         effecttype = effect.get_type_id()
-        if effecttype is ClientEffectTypeID.LEGACY_SCREEN_MESSAGE:
-            assert isinstance(
-                effect, bacommon.bs.ClientEffectLegacyScreenMessage
-            )
+        if effecttype is clfx.ClientEffectTypeID.LEGACY_SCREEN_MESSAGE:
+            assert isinstance(effect, clfx.ClientEffectLegacyScreenMessage)
             textfin = bauiv1.Lstr(
                 translate=('serverResponses', effect.message)
             ).evaluate()
@@ -48,8 +45,8 @@ def run_bs_client_effects(
                     bauiv1.screenmessage, textfin, color=effect.color
                 ),
             )
-        elif effecttype is ClientEffectTypeID.SCREEN_MESSAGE:
-            assert isinstance(effect, bacommon.bs.ClientEffectScreenMessage)
+        elif effecttype is clfx.ClientEffectTypeID.SCREEN_MESSAGE:
+            assert isinstance(effect, clfx.ClientEffectScreenMessage)
             bauiv1.apptimer(
                 delay,
                 strict_partial(
@@ -60,9 +57,9 @@ def run_bs_client_effects(
                 ),
             )
 
-        elif effecttype is ClientEffectTypeID.SOUND:
-            assert isinstance(effect, bacommon.bs.ClientEffectSound)
-            smcls = bacommon.bs.ClientEffectSound.Sound
+        elif effecttype is clfx.ClientEffectTypeID.SOUND:
+            assert isinstance(effect, clfx.ClientEffectSound)
+            smcls = clfx.ClientEffectSound.Sound
             soundfile: str | None = None
             if effect.sound is smcls.UNKNOWN:
                 # Server should avoid sending us sounds we don't
@@ -86,14 +83,12 @@ def run_bs_client_effects(
                     ),
                 )
 
-        elif effecttype is ClientEffectTypeID.DELAY:
-            assert isinstance(effect, bacommon.bs.ClientEffectDelay)
+        elif effecttype is clfx.ClientEffectTypeID.DELAY:
+            assert isinstance(effect, clfx.ClientEffectDelay)
             delay += effect.seconds
 
-        elif effecttype is ClientEffectTypeID.CHEST_WAIT_TIME_ANIMATION:
-            assert isinstance(
-                effect, bacommon.bs.ClientEffectChestWaitTimeAnimation
-            )
+        elif effecttype is clfx.ClientEffectTypeID.CHEST_WAIT_TIME_ANIMATION:
+            assert isinstance(effect, clfx.ClientEffectChestWaitTimeAnimation)
             bauiv1.apptimer(
                 delay,
                 strict_partial(
@@ -105,8 +100,8 @@ def run_bs_client_effects(
                 ),
             )
 
-        elif effecttype is ClientEffectTypeID.TICKETS_ANIMATION:
-            assert isinstance(effect, bacommon.bs.ClientEffectTicketsAnimation)
+        elif effecttype is clfx.ClientEffectTypeID.TICKETS_ANIMATION:
+            assert isinstance(effect, clfx.ClientEffectTicketsAnimation)
             bauiv1.apptimer(
                 delay,
                 strict_partial(
@@ -117,8 +112,8 @@ def run_bs_client_effects(
                 ),
             )
 
-        elif effecttype is ClientEffectTypeID.TOKENS_ANIMATION:
-            assert isinstance(effect, bacommon.bs.ClientEffectTokensAnimation)
+        elif effecttype is clfx.ClientEffectTypeID.TOKENS_ANIMATION:
+            assert isinstance(effect, clfx.ClientEffectTokensAnimation)
             bauiv1.apptimer(
                 delay,
                 strict_partial(
@@ -129,7 +124,7 @@ def run_bs_client_effects(
                 ),
             )
 
-        elif effecttype is ClientEffectTypeID.UNKNOWN:
+        elif effecttype is clfx.ClientEffectTypeID.UNKNOWN:
             # Server should not send us stuff we can't digest. Make
             # some noise if it happens.
             logging.error(

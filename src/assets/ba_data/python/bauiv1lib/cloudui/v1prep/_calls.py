@@ -183,7 +183,7 @@ def prep_page(
             row.header_scale,
             tdelay=None if immediate else (tdelaybase + 0.1),
             highlight=False,
-            decorationpreps=rowprep.decorations,
+            out_decoration_preps=rowprep.decorations,
         )
         hdecs_c = (
             []
@@ -197,7 +197,7 @@ def prep_page(
             row.header_scale,
             tdelay=None if immediate else (tdelaybase + 0.1),
             highlight=False,
-            decorationpreps=rowprep.decorations,
+            out_decoration_preps=rowprep.decorations,
         )
         hdecs_r = (
             []
@@ -211,7 +211,7 @@ def prep_page(
             row.header_scale,
             tdelay=None if immediate else (tdelaybase + 0.1),
             highlight=False,
-            decorationpreps=rowprep.decorations,
+            out_decoration_preps=rowprep.decorations,
         )
 
         if row.title is not None:
@@ -505,7 +505,7 @@ def prep_page(
                 bscale,
                 None if immediate else tdelay,
                 highlight=True,
-                decorationpreps=buttonprep.decorations,
+                out_decoration_preps=buttonprep.decorations,
             )
 
             rowprep.buttons.append(buttonprep)

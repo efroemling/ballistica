@@ -264,7 +264,7 @@ class ChestWindow(bui.MainWindow):
         self._show_chest_actions(response.user_tokens, response.chest)
 
     def _on_chest_action_response(
-        self, response: bacommon.bs.ChestActionResponse | Exception
+        self, response: bacommon.cloud.ChestActionResponse | Exception
     ) -> None:
         assert self._action_in_flight  # Should be us.
         self._action_in_flight = False
@@ -866,9 +866,9 @@ class ChestWindow(bui.MainWindow):
 
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
-                bacommon.bs.ChestActionMessage(
+                bacommon.cloud.ChestActionMessage(
                     chest_id=str(self._index),
-                    action=bacommon.bs.ChestActionMessage.Action.UNLOCK,
+                    action=bacommon.cloud.ChestActionMessage.Action.UNLOCK,
                     token_payment=token_payment,
                 ),
                 on_response=bui.WeakCallPartial(self._on_chest_action_response),
@@ -946,9 +946,9 @@ class ChestWindow(bui.MainWindow):
 
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
-                bacommon.bs.ChestActionMessage(
+                bacommon.cloud.ChestActionMessage(
                     chest_id=str(self._index),
-                    action=bacommon.bs.ChestActionMessage.Action.AD,
+                    action=bacommon.cloud.ChestActionMessage.Action.AD,
                     token_payment=0,
                 ),
                 on_response=bui.WeakCallPartial(self._on_chest_action_response),
@@ -988,7 +988,7 @@ class ChestWindow(bui.MainWindow):
         self._show_done_button(use_ok_label=True)
 
     def _show_chest_contents(
-        self, response: bacommon.bs.ChestActionResponse
+        self, response: bacommon.cloud.ChestActionResponse
     ) -> float:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
