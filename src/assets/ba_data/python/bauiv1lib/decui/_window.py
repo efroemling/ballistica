@@ -375,7 +375,7 @@ class DecUIWindow(bui.MainWindow):
         :meta private:
         """
         from bauiv1lib.decui.v1prep._calls import (
-            cloud_ui_v1_instantiate_page_prep,
+            dec_ui_v1_instantiate_page_prep,
         )
 
         assert bui.in_logic_thread()
@@ -400,7 +400,7 @@ class DecUIWindow(bui.MainWindow):
                 simple_culling_v=pageprep.simple_culling_v,
                 center_small_content=(pageprep.center_vertically),
             )
-            self._subcontainer = cloud_ui_v1_instantiate_page_prep(
+            self._subcontainer = dec_ui_v1_instantiate_page_prep(
                 pageprep,
                 rootwidget=self._root_widget,
                 scrollwidget=self._scrollwidget,

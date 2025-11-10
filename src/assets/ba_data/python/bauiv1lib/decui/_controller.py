@@ -104,7 +104,7 @@ class DecUIController:
         # Bundle our dec-ui request with some extra stuff that might
         # be relevant to a remote server (language we're using, etc.).
         webrequest = DecUIWebRequest(
-            cloud_ui_request=request,
+            dec_ui_request=request,
             locale=bui.app.locale.current_locale,
             engine_build_number=bui.app.env.engine_build_number,
         )
@@ -117,7 +117,7 @@ class DecUIController:
                     'GET',
                     url,
                     fields={
-                        'cloud_ui_web_request': dataclass_to_json(webrequest)
+                        'dec_ui_web_request': dataclass_to_json(webrequest)
                     },
                     headers=headers,
                 )
@@ -137,12 +137,15 @@ class DecUIController:
                 assert_never(request.method)
 
             try:
+                # We use 'lossy' here so response versions or elements
+                # that we don't know about will come through as
+                # 'Unknown' types instead of erroring completely.
                 webresponse = dataclass_from_json(
-                    DecUIWebResponse, raw_response.data.decode()
+                    DecUIWebResponse, raw_response.data.decode(), lossy=True
                 )
                 if (
                     webresponse.error is None
-                    and webresponse.cloud_ui_response is None
+                    and webresponse.dec_ui_response is None
                 ):
                     raise RuntimeError(
                         'Invalid webresponse includes neither error'
@@ -170,8 +173,8 @@ class DecUIController:
             bui.netlog.info('Error in decui http request.', exc_info=True)
             return self.error_response(self.ErrorType.GENERIC)
 
-        assert webresponse.cloud_ui_response is not None
-        return webresponse.cloud_ui_response
+        assert webresponse.dec_ui_response is not None
+        return webresponse.dec_ui_response
 
     def fulfill_request_cloud(
         self, request: DecUIRequest, domain: str
@@ -201,6 +204,7 @@ class DecUIController:
                         request=request, domain=domain
                     )
                 )
+            assert isinstance(mresponse, bacommon.cloud.FulfillDecUIResponse)
 
             return mresponse.response
         except Exception:

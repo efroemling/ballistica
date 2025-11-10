@@ -151,7 +151,7 @@ class DecUIWebRequest:
     """Complete data sent for dec-ui http requests."""
 
     #: The wrapped dec-ui request.
-    cloud_ui_request: Annotated[DecUIRequest, IOAttrs('r')]
+    dec_ui_request: Annotated[DecUIRequest, IOAttrs('r')]
 
     #: The current locale of the client. Dec-ui generally deals in raw
     #: strings and expects localization to happen on the server.
@@ -168,11 +168,11 @@ class DecUIWebResponse:
     """Complete data returned for dec-ui http requests."""
 
     #: Human readable error string (if an error occurs). Either this or
-    #: cloud_ui_response should be set; not both.
+    #: dec_ui_response should be set; not both.
     error: Annotated[str | None, IOAttrs('e', store_default=False)] = None
 
     #: Dec-ui response. Either this or error should be set; not both.
-    cloud_ui_response: Annotated[
+    dec_ui_response: Annotated[
         DecUIResponse | None,
         IOAttrs('r', store_default=False),
     ] = None

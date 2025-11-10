@@ -830,7 +830,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
         while (display_time_ms - dynamics_update_time_millisecs_ > 5) {
           dynamics_update_time_millisecs_ += 5;
-          transition_scale_ -= 0.03f;
+          // transition_scale_ -= 0.03f;
+          transition_scale_ -= 0.025f;
           if (transition_scale_ <= 0.0f) {
             transition_scale_ = 0.0f;
 

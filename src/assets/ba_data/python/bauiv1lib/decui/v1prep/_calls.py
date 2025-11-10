@@ -599,7 +599,7 @@ def prep_page(
     )
 
 
-def cloud_ui_v1_instantiate_page_prep(
+def dec_ui_v1_instantiate_page_prep(
     pageprep: PagePrep,
     *,
     rootwidget: bui.Widget,
