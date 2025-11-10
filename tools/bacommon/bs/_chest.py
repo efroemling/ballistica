@@ -9,7 +9,7 @@ from typing import assert_never, Annotated, override
 from dataclasses import dataclass
 
 from efro.dataclassio import ioprepped, IOAttrs
-from bacommon.displayitem import DisplayItem, DisplayItemTypeID
+import bacommon.displayitem as ditm
 
 
 class ClassicChestAppearance(Enum):
@@ -52,15 +52,15 @@ class ClassicChestAppearance(Enum):
 
 @ioprepped
 @dataclass
-class ClassicChestDisplayItem(DisplayItem):
+class ClassicChestDisplayItem(ditm.Item):
     """Display a chest."""
 
     appearance: Annotated[ClassicChestAppearance, IOAttrs('a')]
 
     @override
     @classmethod
-    def get_type_id(cls) -> DisplayItemTypeID:
-        return DisplayItemTypeID.CHEST
+    def get_type_id(cls) -> ditm.ItemTypeID:
+        return ditm.ItemTypeID.CHEST
 
     @override
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:

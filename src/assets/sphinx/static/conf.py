@@ -97,11 +97,9 @@ nitpick_ignore = [
     # Stuff that is part of 'private' apis that we've intentionally
     # hidden despite having public naming. See 'skip_prefixes' below.
     ('py:class', 'v1prep.PagePrep'),
-    ('py:class', 'bacommon.displayitem.DisplayItemWrapper'),
-    ('py:class', 'bacommon.displayitem.DisplayItem'),
-    ('py:class', 'bacommon.displayitem.DisplayItemTypeID'),
-    ('py:class', 'bacommon.bs.ClientEffect'),
-    ('py:class', 'bacommon.bs._clienteffect.ClientEffect'),
+    ('py:class', 'bacommon.displayitem.Wrapper'),
+    ('py:class', 'bacommon.displayitem.Item'),
+    ('py:class', 'bacommon.displayitem.ItemTypeID'),
     #
     # Stuff that seems like we could fix (presumably issues due to not
     # importing things at runtime (only if TYPE_CHECKING), etc.)

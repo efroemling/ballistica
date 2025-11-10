@@ -18,7 +18,7 @@ from typing import Annotated, override, assert_never
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
 
-class ClientEffectTypeID(Enum):
+class EffectTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     UNKNOWN = 'u'
@@ -31,7 +31,7 @@ class ClientEffectTypeID(Enum):
     TOKENS_ANIMATION = 'toa'
 
 
-class ClientEffect(IOMultiType[ClientEffectTypeID]):
+class Effect(IOMultiType[EffectTypeID]):
     """Something that can happen on the client.
 
     This can include screen messages, sounds, visual effects, etc.
@@ -39,7 +39,7 @@ class ClientEffect(IOMultiType[ClientEffectTypeID]):
 
     @override
     @classmethod
-    def get_type_id(cls) -> ClientEffectTypeID:
+    def get_type_id(cls) -> EffectTypeID:
         # Require child classes to supply this themselves. If we did a
         # full type registry/lookup here it would require us to import
         # everything and would prevent lazy loading.
@@ -47,60 +47,60 @@ class ClientEffect(IOMultiType[ClientEffectTypeID]):
 
     @override
     @classmethod
-    def get_type(cls, type_id: ClientEffectTypeID) -> type[ClientEffect]:
+    def get_type(cls, type_id: EffectTypeID) -> type[Effect]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-return-statements
 
-        t = ClientEffectTypeID
+        t = EffectTypeID
         if type_id is t.UNKNOWN:
-            return ClientEffectUnknown
+            return Unknown
         if type_id is t.LEGACY_SCREEN_MESSAGE:
-            return ClientEffectLegacyScreenMessage
+            return LegacyScreenMessage
         if type_id is t.SCREEN_MESSAGE:
-            return ClientEffectScreenMessage
+            return ScreenMessage
         if type_id is t.SOUND:
-            return ClientEffectSound
+            return PlaySound
         if type_id is t.DELAY:
-            return ClientEffectDelay
+            return Delay
         if type_id is t.CHEST_WAIT_TIME_ANIMATION:
-            return ClientEffectChestWaitTimeAnimation
+            return ChestWaitTimeAnimation
         if type_id is t.TICKETS_ANIMATION:
-            return ClientEffectTicketsAnimation
+            return TicketsAnimation
         if type_id is t.TOKENS_ANIMATION:
-            return ClientEffectTokensAnimation
+            return TokensAnimation
 
         # Important to make sure we provide all types.
         assert_never(type_id)
 
     @override
     @classmethod
-    def get_unknown_type_fallback(cls) -> ClientEffect:
+    def get_unknown_type_fallback(cls) -> Effect:
         # If we encounter some future message type we don't know
         # anything about, drop in a placeholder.
-        return ClientEffectUnknown()
+        return Unknown()
 
 
 @ioprepped
 @dataclass
-class ClientEffectUnknown(ClientEffect):
+class Unknown(Effect):
     """Fallback substitute for types we don't recognize."""
 
     @override
     @classmethod
-    def get_type_id(cls) -> ClientEffectTypeID:
-        return ClientEffectTypeID.UNKNOWN
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.UNKNOWN
 
 
 @ioprepped
 @dataclass
-class ClientEffectLegacyScreenMessage(ClientEffect):
+class LegacyScreenMessage(Effect):
     """Display a screen-message (Legacy version).
 
     This will be processed as an Lstr with translation category
     'serverResponses'.
 
-    When possible, migrate to using :class:`ClientEffectScreenMessage`.
+    When possible, migrate to using :class:`ScreenMessage`.
     """
 
     message: Annotated[str, IOAttrs('m')]
@@ -113,13 +113,13 @@ class ClientEffectLegacyScreenMessage(ClientEffect):
 
     @override
     @classmethod
-    def get_type_id(cls) -> ClientEffectTypeID:
-        return ClientEffectTypeID.LEGACY_SCREEN_MESSAGE
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.LEGACY_SCREEN_MESSAGE
 
 
 @ioprepped
 @dataclass
-class ClientEffectScreenMessage(ClientEffect):
+class ScreenMessage(Effect):
     """Display a screen-message.
 
     Supported on engine build 22606 or newer.
@@ -137,36 +137,37 @@ class ClientEffectScreenMessage(ClientEffect):
 
     @override
     @classmethod
-    def get_type_id(cls) -> ClientEffectTypeID:
-        return ClientEffectTypeID.SCREEN_MESSAGE
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.SCREEN_MESSAGE
+
+
+class Sound(Enum):
+    """Sounds that can be played."""
+
+    UNKNOWN = 'u'
+    CASH_REGISTER = 'c'
+    ERROR = 'e'
+    POWER_DOWN = 'p'
+    GUN_COCKING = 'g'
 
 
 @ioprepped
 @dataclass
-class ClientEffectSound(ClientEffect):
+class PlaySound(Effect):
     """Play a sound."""
-
-    class Sound(Enum):
-        """Sounds that can be made alongside the message."""
-
-        UNKNOWN = 'u'
-        CASH_REGISTER = 'c'
-        ERROR = 'e'
-        POWER_DOWN = 'p'
-        GUN_COCKING = 'g'
 
     sound: Annotated[Sound, IOAttrs('s', enum_fallback=Sound.UNKNOWN)]
     volume: Annotated[float, IOAttrs('v', store_default=False)] = 1.0
 
     @override
     @classmethod
-    def get_type_id(cls) -> ClientEffectTypeID:
-        return ClientEffectTypeID.SOUND
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.SOUND
 
 
 @ioprepped
 @dataclass
-class ClientEffectChestWaitTimeAnimation(ClientEffect):
+class ChestWaitTimeAnimation(Effect):
     """Animate chest wait time changing."""
 
     chestid: Annotated[str, IOAttrs('c')]
@@ -176,13 +177,13 @@ class ClientEffectChestWaitTimeAnimation(ClientEffect):
 
     @override
     @classmethod
-    def get_type_id(cls) -> ClientEffectTypeID:
-        return ClientEffectTypeID.CHEST_WAIT_TIME_ANIMATION
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.CHEST_WAIT_TIME_ANIMATION
 
 
 @ioprepped
 @dataclass
-class ClientEffectTicketsAnimation(ClientEffect):
+class TicketsAnimation(Effect):
     """Animate tickets count."""
 
     duration: Annotated[float, IOAttrs('u')]
@@ -191,13 +192,13 @@ class ClientEffectTicketsAnimation(ClientEffect):
 
     @override
     @classmethod
-    def get_type_id(cls) -> ClientEffectTypeID:
-        return ClientEffectTypeID.TICKETS_ANIMATION
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.TICKETS_ANIMATION
 
 
 @ioprepped
 @dataclass
-class ClientEffectTokensAnimation(ClientEffect):
+class TokensAnimation(Effect):
     """Animate tokens count."""
 
     duration: Annotated[float, IOAttrs('u')]
@@ -206,18 +207,18 @@ class ClientEffectTokensAnimation(ClientEffect):
 
     @override
     @classmethod
-    def get_type_id(cls) -> ClientEffectTypeID:
-        return ClientEffectTypeID.TOKENS_ANIMATION
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.TOKENS_ANIMATION
 
 
 @ioprepped
 @dataclass
-class ClientEffectDelay(ClientEffect):
+class Delay(Effect):
     """Delay effect processing."""
 
     seconds: Annotated[float, IOAttrs('s')]
 
     @override
     @classmethod
-    def get_type_id(cls) -> ClientEffectTypeID:
-        return ClientEffectTypeID.DELAY
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.DELAY

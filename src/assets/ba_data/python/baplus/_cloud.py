@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
     from efro.message import Message, Response, BoolResponse
     import bacommon.bs
-    import bacommon.clouddialog
+    import bacommon.clouddialog as cdlg
 
 
 # TODO: Should make it possible to define a protocol in bacommon.cloud and
@@ -253,10 +253,8 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.clouddialog.CloudDialogActionMessage,
-        on_response: Callable[
-            [bacommon.clouddialog.CloudDialogActionResponse | Exception], None
-        ],
+        msg: cdlg.ActionMessage,
+        on_response: Callable[[cdlg.ActionResponse | Exception], None],
     ) -> None: ...
 
     @overload
@@ -344,6 +342,11 @@ class CloudSubsystem(babase.AppSubsystem):
     def send_message(
         self, msg: bacommon.bs.LegacyRequest
     ) -> bacommon.bs.LegacyResponse: ...
+
+    @overload
+    def send_message(
+        self, msg: bacommon.cloud.FulfillCloudUIRequest
+    ) -> bacommon.cloud.FulfillCloudUIResponse: ...
 
     def send_message(self, msg: Message) -> Response | None:
         """Synchronously send a message to the cloud.

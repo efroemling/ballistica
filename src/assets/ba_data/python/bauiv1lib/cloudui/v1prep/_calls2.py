@@ -358,7 +358,7 @@ def prep_display_item(
     itemtype = item.get_type_id()
 
     # Draw our bounds if debug mode is enabled (or we're a test-item).
-    if display_item.debug or itemtype is ditm.DisplayItemTypeID.TEST:
+    if display_item.debug or itemtype is ditm.ItemTypeID.TEST:
         out_decoration_preps.append(
             DecorationPrep(
                 call=partial(
@@ -405,7 +405,7 @@ def prep_display_item(
         height = width * aspect_ratio
 
     # Show our constrained bounds in debug mode.
-    if display_item.debug or itemtype is ditm.DisplayItemTypeID.TEST:
+    if display_item.debug or itemtype is ditm.ItemTypeID.TEST:
         out_decoration_preps.append(
             DecorationPrep(
                 call=partial(
@@ -438,7 +438,7 @@ def prep_display_item(
     text_align = 'center'
     text_max_width: float | None = width * 0.9
 
-    if itemtype is ditm.DisplayItemTypeID.CHEST:
+    if itemtype is ditm.ItemTypeID.CHEST:
         from baclassic import (
             CHEST_APPEARANCE_DISPLAY_INFOS,
             CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
@@ -475,22 +475,22 @@ def prep_display_item(
                 highlight=highlight and display_item.highlight,
             )
         )
-    elif itemtype is ditm.DisplayItemTypeID.TEST:
-        assert isinstance(item, ditm.TestDisplayItem)
+    elif itemtype is ditm.ItemTypeID.TEST:
+        assert isinstance(item, ditm.Test)
         # Nothing to do here. This is just another way to enable debug
         # drawing.
 
     elif (
-        itemtype is ditm.DisplayItemTypeID.TOKENS
-        or itemtype is ditm.DisplayItemTypeID.TICKETS
+        itemtype is ditm.ItemTypeID.TOKENS
+        or itemtype is ditm.ItemTypeID.TICKETS
     ):
-        if itemtype is ditm.DisplayItemTypeID.TOKENS:
-            assert isinstance(item, ditm.TokensDisplayItem)
+        if itemtype is ditm.ItemTypeID.TOKENS:
+            assert isinstance(item, ditm.Tokens)
             img = 'coin'
             if compact:
                 text = str(item.count)
-        elif itemtype is ditm.DisplayItemTypeID.TICKETS:
-            assert isinstance(item, ditm.TicketsDisplayItem)
+        elif itemtype is ditm.ItemTypeID.TICKETS:
+            assert isinstance(item, ditm.Tickets)
             img = 'tickets'
             if compact:
                 text = str(item.count)
@@ -525,8 +525,8 @@ def prep_display_item(
         else:
             img_y_offs = width * 0.11
             text_y_offs = width * -0.15
-    elif itemtype is ditm.DisplayItemTypeID.UNKNOWN:
-        assert isinstance(item, ditm.UnknownDisplayItem)
+    elif itemtype is ditm.ItemTypeID.UNKNOWN:
+        assert isinstance(item, ditm.Unknown)
         # Just do default text here.
     else:
         # Make sure we cover all possibilities.

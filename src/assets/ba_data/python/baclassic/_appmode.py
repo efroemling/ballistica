@@ -258,21 +258,19 @@ class ClassicAppMode(AppMode):
                 )
 
             assert bui.app.classic is not None
-            effects: list[clfx.ClientEffect] = [
-                clfx.ClientEffectTokensAnimation(
+            effects: list[clfx.Effect] = [
+                clfx.TokensAnimation(
                     duration=anim_time,
                     startvalue=self._last_tokens_value,
                     endvalue=self._last_tokens_value + tokens,
                 ),
-                clfx.ClientEffectDelay(anim_time),
-                clfx.ClientEffectLegacyScreenMessage(
+                clfx.Delay(anim_time),
+                clfx.LegacyScreenMessage(
                     message='You got ${COUNT} tokens!',
                     subs=['${COUNT}', tokens_str],
                     color=(0, 1, 0),
                 ),
-                clfx.ClientEffectSound(
-                    sound=clfx.ClientEffectSound.Sound.CASH_REGISTER
-                ),
+                clfx.PlaySound(clfx.Sound.CASH_REGISTER),
             ]
             bui.app.classic.run_bs_client_effects(effects)
 

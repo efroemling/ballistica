@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
     import bacommon.cloudui.v1
     from bacommon.cloudui import CloudUIRequest, CloudUIResponse
-    from bacommon.clienteffect import ClientEffect
+    import bacommon.clienteffect as clfx
 
     from bauiv1lib.cloudui import v1prep
 
@@ -136,7 +136,6 @@ class CloudUIController:
             else:
                 assert_never(request.method)
 
-            # We expect web-response json even in error cases.
             try:
                 webresponse = dataclass_from_json(
                     CloudUIWebResponse, raw_response.data.decode()
@@ -175,6 +174,39 @@ class CloudUIController:
 
         assert webresponse.cloud_ui_response is not None
         return webresponse.cloud_ui_response
+
+    def fulfill_request_cloud(
+        self, request: CloudUIRequest, domain: str
+    ) -> CloudUIResponse:
+        """Fulfill a request by sending it to ballistica's cloud.
+
+        :meta private:
+        """
+        import bacommon.cloud
+
+        try:
+            plus = bui.app.plus
+            if plus is None:
+                raise RuntimeError('Plus not available.')
+
+            account = plus.accounts.primary
+            if account is not None:
+                with account:
+                    mresponse = plus.cloud.send_message(
+                        bacommon.cloud.FulfillCloudUIRequest(
+                            request=request, domain=domain
+                        )
+                    )
+            else:
+                mresponse = plus.cloud.send_message(
+                    bacommon.cloud.FulfillCloudUIRequest(
+                        request=request, domain=domain
+                    )
+                )
+
+            return mresponse.response
+        except Exception:
+            return self.error_response()
 
     def error_response(
         self,
@@ -544,7 +576,7 @@ class CloudUIController:
     def _run_immediate_effects_and_actions(
         self,
         *,
-        client_effects: list[ClientEffect],
+        client_effects: list[clfx.Effect],
         local_action: str | None,
         local_action_args: dict | None,
         widget: bui.Widget | None,

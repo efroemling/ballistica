@@ -10,8 +10,8 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
-from bacommon.displayitem import DisplayItemWrapper
-from bacommon.clienteffect import ClientEffect
+import bacommon.displayitem as ditm
+import bacommon.clienteffect as clfx
 from bacommon.cloudui._cloudui import (
     CloudUIRequest,
     CloudUIRequestTypeID,
@@ -134,7 +134,7 @@ class Browse(Action):
     #:
     #: :meta private:
     immediate_client_effects: Annotated[
-        list[ClientEffect], IOAttrs('fx', store_default=False)
+        list[clfx.Effect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
 
     #: Local action to run immediately when the button is pressed. Will
@@ -173,7 +173,7 @@ class Replace(Action):
     #:
     #: :meta private:
     immediate_client_effects: Annotated[
-        list[ClientEffect], IOAttrs('fx', store_default=False)
+        list[clfx.Effect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
 
     #: Local action to run immediately when the button is pressed. Will
@@ -207,7 +207,7 @@ class Local(Action):
     #:
     #: :meta private:
     immediate_client_effects: Annotated[
-        list[ClientEffect], IOAttrs('fx', store_default=False)
+        list[clfx.Effect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
 
     #: Local action to run immediately when the button is pressed. Will
@@ -407,7 +407,7 @@ class DisplayItemStyle(Enum):
 class DisplayItem(Decoration):
     """DisplayItem decoration."""
 
-    wrapper: Annotated[DisplayItemWrapper, IOAttrs('w')]
+    wrapper: Annotated[ditm.Wrapper, IOAttrs('w')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
     size: Annotated[tuple[float, float], IOAttrs('s')]
     style: Annotated[DisplayItemStyle, IOAttrs('t', store_default=False)] = (
@@ -691,7 +691,7 @@ class Response(CloudUIResponse):
     #:
     #: :meta private:
     client_effects: Annotated[
-        list[ClientEffect], IOAttrs('fx', store_default=False)
+        list[clfx.Effect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
 
     #: Local action to run after this response is initially received.

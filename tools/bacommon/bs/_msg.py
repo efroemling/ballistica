@@ -11,9 +11,9 @@ from typing import Annotated, override
 from efro.dataclassio import ioprepped, IOAttrs
 from efro.message import Message, Response
 
-from bacommon.displayitem import DisplayItemWrapper
-from bacommon.clouddialog import CloudDialogWrapper
-from bacommon.clienteffect import ClientEffect
+import bacommon.displayitem as ditm
+import bacommon.clouddialog as cdlg
+import bacommon.clienteffect as clfx
 from bacommon.bs._chest import ClassicChestAppearance
 
 
@@ -74,7 +74,7 @@ class InboxRequestMessage(Message):
 class InboxRequestResponse(Response):
     """Here's that inbox contents you asked for, boss."""
 
-    wrappers: Annotated[list[CloudDialogWrapper], IOAttrs('w')]
+    wrappers: Annotated[list[cdlg.Wrapper], IOAttrs('w')]
 
     # Printable error if something goes wrong.
     error: Annotated[str | None, IOAttrs('e')] = None
@@ -132,7 +132,7 @@ class ChestInfoResponse(Response):
             """A possible set of prizes for this chest."""
 
             weight: Annotated[float, IOAttrs('w')]
-            contents: Annotated[list[DisplayItemWrapper], IOAttrs('c')]
+            contents: Annotated[list[ditm.Wrapper], IOAttrs('c')]
 
         appearance: Annotated[
             ClassicChestAppearance,
@@ -198,7 +198,7 @@ class ScoreSubmitResponse(Response):
     """Did something to that inbox entry, boss."""
 
     # Things we should show on our end.
-    effects: Annotated[list[ClientEffect], IOAttrs('fx')]
+    effects: Annotated[list[clfx.Effect], IOAttrs('fx')]
 
 
 @ioprepped
@@ -221,7 +221,7 @@ class SendInfoResponse(Response):
 
     handled: Annotated[bool, IOAttrs('v')]
     message: Annotated[str | None, IOAttrs('m', store_default=False)] = None
-    effects: Annotated[
-        list[ClientEffect], IOAttrs('e', store_default=False)
-    ] = field(default_factory=list)
+    effects: Annotated[list[clfx.Effect], IOAttrs('e', store_default=False)] = (
+        field(default_factory=list)
+    )
     legacy_code: Annotated[str | None, IOAttrs('l', store_default=False)] = None

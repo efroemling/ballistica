@@ -19,8 +19,9 @@ from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.securedata import SecureDataChecker
 from bacommon.transfer import DirectoryManifest
 from bacommon.login import LoginType
-from bacommon.displayitem import DisplayItemWrapper
-from bacommon.clienteffect import ClientEffect
+from bacommon.cloudui import CloudUIRequest, CloudUIResponse
+import bacommon.displayitem as ditm
+import bacommon.clienteffect as clfx
 
 if TYPE_CHECKING:
     pass
@@ -404,7 +405,7 @@ class ChestActionResponse(Response):
 
     # If present, signifies the chest has been opened and we should show
     # the user this stuff that was in it.
-    contents: Annotated[list[DisplayItemWrapper] | None, IOAttrs('c')] = None
+    contents: Annotated[list[ditm.Wrapper] | None, IOAttrs('c')] = None
 
     # If contents are present, which of the chest's prize-sets they
     # represent.
@@ -428,5 +429,27 @@ class ChestActionResponse(Response):
     # Effects to show on the client. Replaces warning and success_msg in
     # build 22311 or newer.
     effects: Annotated[
-        list[ClientEffect], IOAttrs('fx', store_default=False)
+        list[clfx.Effect], IOAttrs('fx', store_default=False)
     ] = field(default_factory=list)
+
+
+@ioprepped
+@dataclass
+class FulfillCloudUIRequest(Message):
+    """Can a fella get a cloud-ui round here?"""
+
+    request: Annotated[CloudUIRequest, IOAttrs('r')]
+    domain: Annotated[str, IOAttrs('d')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [FulfillCloudUIResponse]
+
+
+@ioprepped
+@dataclass
+class FulfillCloudUIResponse(Response):
+    """Here's that cloud-ui you asked for, boss."""
+
+    response: Annotated[CloudUIResponse, IOAttrs('r')]

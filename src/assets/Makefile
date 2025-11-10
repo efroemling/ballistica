@@ -477,7 +477,9 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/clienteffect.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloud.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/clouddialog.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/_clouddialog.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/basic.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloudui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloudui/_cloudui.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloudui/v1.py \

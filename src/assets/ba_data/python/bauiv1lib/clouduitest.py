@@ -64,11 +64,15 @@ class TestCloudUIController(CloudUIController):
         if request.path == '/emptypage':
             return _test_page_empty(request)
 
-        # Ship '/webtest/*' off to some server to handle.
+        # Ship '/webtest/*' off to some webserver to handle.
         if request.path.startswith('/webtest/'):
             return self.fulfill_request_web(
                 request, 'https://www.ballistica.net/clouduitest'
             )
+
+        # Ship '/cloudmsgtest/*' through our cloud connection to handle.
+        if request.path.startswith('/cloudmsgtest/'):
+            return self.fulfill_request_cloud(request, 'test')
 
         raise CleanError('Invalid request path.')
 
@@ -276,7 +280,7 @@ def _test_page_root(
                             debug=debug,
                         ),
                     ],
-                    title='Action Tests',
+                    title='Some Tests',
                     buttons=[
                         clui.Button(
                             'Browse',
@@ -303,26 +307,18 @@ def _test_page_root(
                             size=(120, 80),
                             action=clui.Local(
                                 immediate_client_effects=[
-                                    clfx.ClientEffectScreenMessage(
+                                    clfx.ScreenMessage(
                                         'Hello From Immediate Client Effects',
                                         color=(0, 1, 0),
                                     ),
-                                    clfx.ClientEffectSound(
-                                        sound=(
-                                            clfx.ClientEffectSound
-                                        ).Sound.CASH_REGISTER
-                                    ),
-                                    clfx.ClientEffectDelay(1.0),
-                                    clfx.ClientEffectScreenMessage(
+                                    clfx.PlaySound(clfx.Sound.CASH_REGISTER),
+                                    clfx.Delay(1.0),
+                                    clfx.ScreenMessage(
                                         '{"r":"successText"}',
                                         is_lstr=True,
                                         color=(0, 1, 0),
                                     ),
-                                    clfx.ClientEffectSound(
-                                        sound=(
-                                            clfx.ClientEffectSound
-                                        ).Sound.CASH_REGISTER
-                                    ),
+                                    clfx.PlaySound(clfx.Sound.CASH_REGISTER),
                                 ]
                             ),
                         ),
@@ -351,7 +347,7 @@ def _test_page_root(
                     ],
                 ),
                 clui.ButtonRow(
-                    title='Other Tests',
+                    title='A Few More Tests',
                     buttons=[
                         clui.Button(
                             'Hide\nDebug' if debug else 'Show\nDebug',
@@ -399,6 +395,28 @@ def _test_page_root(
                             'Empty\nPage',
                             size=(120, 80),
                             action=clui.Browse(clui.Request('/emptypage')),
+                        ),
+                    ],
+                ),
+                clui.ButtonRow(
+                    title='Even More Tests',
+                    buttons=[
+                        clui.Button(
+                            'Cloud-Msg\nGET',
+                            size=(120, 80),
+                            action=clui.Browse(
+                                clui.Request('/cloudmsgtest/get')
+                            ),
+                        ),
+                        clui.Button(
+                            'Cloud-Msg\nPOST',
+                            size=(120, 80),
+                            action=clui.Browse(
+                                clui.Request(
+                                    '/cloudmsgtest/post',
+                                    method=clui.RequestMethod.POST,
+                                )
+                            ),
                         ),
                     ],
                 ),
@@ -631,22 +649,15 @@ def _test_page_root(
     # Include some client effects if they ask.
     if request.args.get('test_effects', False):
         response.client_effects = [
-            clfx.ClientEffectScreenMessage(
-                'Hello From Response Client Effects',
-                color=(0, 1, 0),
+            clfx.ScreenMessage(
+                'Hello From Response Client Effects', color=(0, 1, 0)
             ),
-            clfx.ClientEffectSound(
-                sound=clfx.ClientEffectSound.Sound.CASH_REGISTER
+            clfx.PlaySound(clfx.Sound.CASH_REGISTER),
+            clfx.Delay(1.0),
+            clfx.ScreenMessage(
+                '{"r":"successText"}', is_lstr=True, color=(0, 1, 0)
             ),
-            clfx.ClientEffectDelay(1.0),
-            clfx.ClientEffectScreenMessage(
-                '{"r":"successText"}',
-                is_lstr=True,
-                color=(0, 1, 0),
-            ),
-            clfx.ClientEffectSound(
-                sound=(clfx.ClientEffectSound).Sound.CASH_REGISTER
-            ),
+            clfx.PlaySound(clfx.Sound.CASH_REGISTER),
         ]
 
     # Include a local-action if they ask.
@@ -680,13 +691,13 @@ def _test_page_display_items(
 
     def _make_test_button(
         scale: float,
-        wrapper: ditm.DisplayItemWrapper,
+        wrapper: ditm.Wrapper,
     ) -> clui.Button:
 
         # See how this looks when unrecognized (relying on wrapper info
         # only).
         uwrapper = copy.deepcopy(wrapper)
-        uwrapper.item = ditm.UnknownDisplayItem()
+        uwrapper.item = ditm.Unknown()
 
         return clui.Button(
             size=(300, 300),
@@ -741,19 +752,15 @@ def _test_page_display_items(
                     buttons=[
                         _make_test_button(
                             1.0,
-                            ditm.DisplayItemWrapper.for_item(
-                                ditm.TicketsDisplayItem(count=213)
-                            ),
+                            ditm.Wrapper.for_item(ditm.Tickets(count=213)),
                         ),
                         _make_test_button(
                             0.47,
-                            ditm.DisplayItemWrapper.for_item(
-                                ditm.TicketsDisplayItem(count=213)
-                            ),
+                            ditm.Wrapper.for_item(ditm.Tickets(count=213)),
                         ),
                         _make_test_button(
                             1.0,
-                            ditm.DisplayItemWrapper.for_item(
+                            ditm.Wrapper.for_item(
                                 ClassicChestDisplayItem(
                                     appearance=ClassicChestAppearance.L3
                                 )
@@ -761,21 +768,15 @@ def _test_page_display_items(
                         ),
                         _make_test_button(
                             1.0,
-                            ditm.DisplayItemWrapper.for_item(
-                                ditm.TokensDisplayItem(count=3)
-                            ),
+                            ditm.Wrapper.for_item(ditm.Tokens(count=3)),
                         ),
                         _make_test_button(
                             1.0,
-                            ditm.DisplayItemWrapper.for_item(
-                                ditm.TokensDisplayItem(count=1414287)
-                            ),
+                            ditm.Wrapper.for_item(ditm.Tokens(count=1414287)),
                         ),
                         _make_test_button(
                             1.0,
-                            ditm.DisplayItemWrapper.for_item(
-                                ditm.TestDisplayItem()
-                            ),
+                            ditm.Wrapper.for_item(ditm.Test()),
                         ),
                     ],
                 ),

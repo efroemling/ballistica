@@ -18,7 +18,7 @@ from efro.util import pairs_to_flat
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
 
-class DisplayItemTypeID(Enum):
+class ItemTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     UNKNOWN = 'u'
@@ -28,7 +28,7 @@ class DisplayItemTypeID(Enum):
     CHEST = 'c'
 
 
-class DisplayItem(IOMultiType[DisplayItemTypeID]):
+class Item(IOMultiType[ItemTypeID]):
     """Some amount of something that can be shown or described.
 
     Used to depict chest contents, inventory, rewards, etc.
@@ -36,7 +36,7 @@ class DisplayItem(IOMultiType[DisplayItemTypeID]):
 
     @override
     @classmethod
-    def get_type_id(cls) -> DisplayItemTypeID:
+    def get_type_id(cls) -> ItemTypeID:
         # Require child classes to supply this themselves. If we did a
         # full type registry/lookup here it would require us to import
         # everything and would prevent lazy loading.
@@ -44,19 +44,19 @@ class DisplayItem(IOMultiType[DisplayItemTypeID]):
 
     @override
     @classmethod
-    def get_type(cls, type_id: DisplayItemTypeID) -> type[DisplayItem]:
+    def get_type(cls, type_id: ItemTypeID) -> type[Item]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
 
-        t = DisplayItemTypeID
+        t = ItemTypeID
         if type_id is t.UNKNOWN:
-            return UnknownDisplayItem
+            return Unknown
         if type_id is t.TICKETS:
-            return TicketsDisplayItem
+            return Tickets
         if type_id is t.TOKENS:
-            return TokensDisplayItem
+            return Tokens
         if type_id is t.TEST:
-            return TestDisplayItem
+            return Test
         if type_id is t.CHEST:
             from bacommon.bs._chest import ClassicChestDisplayItem
 
@@ -71,7 +71,7 @@ class DisplayItem(IOMultiType[DisplayItemTypeID]):
         Will be translated on the client using the 'displayItemNames'
         Lstr category.
 
-        These decriptions are baked into the DisplayItemWrapper and
+        These decriptions are baked into the display-item wrapper and
         should be accessed from there when available. This allows
         clients to give descriptions even for newer display item types
         they don't recognize.
@@ -79,23 +79,23 @@ class DisplayItem(IOMultiType[DisplayItemTypeID]):
         raise NotImplementedError()
 
     # Implement fallbacks so client can digest item lists even if they
-    # contain unrecognized stuff. DisplayItemWrapper contains basic
+    # contain unrecognized stuff. The wrapper contains basic
     # baked down info that they can still use in such cases.
     @override
     @classmethod
-    def get_unknown_type_fallback(cls) -> DisplayItem:
-        return UnknownDisplayItem()
+    def get_unknown_type_fallback(cls) -> Item:
+        return Unknown()
 
 
 @ioprepped
 @dataclass
-class UnknownDisplayItem(DisplayItem):
+class Unknown(Item):
     """Something we don't know how to display."""
 
     @override
     @classmethod
-    def get_type_id(cls) -> DisplayItemTypeID:
-        return DisplayItemTypeID.UNKNOWN
+    def get_type_id(cls) -> ItemTypeID:
+        return ItemTypeID.UNKNOWN
 
     @override
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:
@@ -103,23 +103,23 @@ class UnknownDisplayItem(DisplayItem):
 
         # Make noise but don't break.
         logging.exception(
-            'UnknownDisplayItem.get_description() should never be called.'
-            ' Always access descriptions on the DisplayItemWrapper.'
+            'Unknown.get_description() should never be called.'
+            ' Always access descriptions on the display-item wrapper.'
         )
         return 'Unknown', []
 
 
 @ioprepped
 @dataclass
-class TicketsDisplayItem(DisplayItem):
+class Tickets(Item):
     """Some amount of tickets."""
 
     count: Annotated[int, IOAttrs('c')]
 
     @override
     @classmethod
-    def get_type_id(cls) -> DisplayItemTypeID:
-        return DisplayItemTypeID.TICKETS
+    def get_type_id(cls) -> ItemTypeID:
+        return ItemTypeID.TICKETS
 
     @override
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:
@@ -128,15 +128,15 @@ class TicketsDisplayItem(DisplayItem):
 
 @ioprepped
 @dataclass
-class TokensDisplayItem(DisplayItem):
+class Tokens(Item):
     """Some amount of tokens."""
 
     count: Annotated[int, IOAttrs('c')]
 
     @override
     @classmethod
-    def get_type_id(cls) -> DisplayItemTypeID:
-        return DisplayItemTypeID.TOKENS
+    def get_type_id(cls) -> ItemTypeID:
+        return ItemTypeID.TOKENS
 
     @override
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:
@@ -145,34 +145,34 @@ class TokensDisplayItem(DisplayItem):
 
 @ioprepped
 @dataclass
-class TestDisplayItem(DisplayItem):
+class Test(Item):
     """Fills usable space for a display-item - good for calibration."""
 
     @override
     @classmethod
-    def get_type_id(cls) -> DisplayItemTypeID:
-        return DisplayItemTypeID.TEST
+    def get_type_id(cls) -> ItemTypeID:
+        return ItemTypeID.TEST
 
     @override
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:
-        return 'TestDisplayItem', []
+        return 'Test', []
 
 
 @ioprepped
 @dataclass
-class DisplayItemWrapper:
-    """Wraps a DisplayItem and some baked out info.
+class Wrapper:
+    """Wraps a display-item and some baked out info.
 
     This allows clients to at least give descriptions of new
     display-item types they may not have locally.
     """
 
-    item: Annotated[DisplayItem, IOAttrs('i')]
+    item: Annotated[Item, IOAttrs('i')]
     description: Annotated[str, IOAttrs('d')]
     description_subs: Annotated[list[str] | None, IOAttrs('s')]
 
     @classmethod
-    def for_item(cls, item: DisplayItem) -> DisplayItemWrapper:
-        """Convenience method to wrap a DisplayItem."""
+    def for_item(cls, item: Item) -> Wrapper:
+        """Convenience method to wrap a display-item."""
         desc, subs = item.get_description()
-        return DisplayItemWrapper(item, desc, pairs_to_flat(subs))
+        return Wrapper(item, desc, pairs_to_flat(subs))

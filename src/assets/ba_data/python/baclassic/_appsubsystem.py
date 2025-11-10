@@ -28,7 +28,8 @@ if TYPE_CHECKING:
     from typing import Callable, Any, Sequence
 
     import bacommon.bs
-    import bacommon.clienteffect
+    import bacommon.clienteffect as clfx
+    import bacommon.clouddialog.basic as bcdlg
     from bascenev1lib.actor import spazappearance
     from bauiv1lib.party import PartyWindow
 
@@ -900,7 +901,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
     @staticmethod
     def run_bs_client_effects(
-        effects: list[bacommon.clienteffect.ClientEffect], delay: float = 0.0
+        effects: list[clfx.Effect], delay: float = 0.0
     ) -> None:
         """Run client effects sent from the master server.
 
@@ -912,15 +913,15 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
     @staticmethod
     def basic_client_ui_button_label_str(
-        label: bacommon.clouddialog.BasicCloudDialog.ButtonLabel,
+        label: bcdlg.ButtonLabel,
     ) -> babase.Lstr:
         """Given a client-ui label, return an Lstr.
 
         :meta private:
         """
-        import bacommon.clouddialog
+        import bacommon.clouddialog.basic as bcdlg
 
-        cls = bacommon.clouddialog.BasicCloudDialog.ButtonLabel
+        cls = bcdlg.ButtonLabel
         if label is cls.UNKNOWN:
             # Server should not be sending us unknown stuff; make noise
             # if they do.
