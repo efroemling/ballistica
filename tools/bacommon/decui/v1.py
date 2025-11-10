@@ -12,16 +12,16 @@ from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
 import bacommon.displayitem as ditm
 import bacommon.clienteffect as clfx
-from bacommon.cloudui._cloudui import (
-    CloudUIRequest,
-    CloudUIRequestTypeID,
-    CloudUIResponse,
-    CloudUIResponseTypeID,
+from bacommon.decui._decui import (
+    DecUIRequest,
+    DecUIRequestTypeID,
+    DecUIResponse,
+    DecUIResponseTypeID,
 )
 
 
 class RequestMethod(Enum):
-    """Typeof of requests that can be made to cloud-ui servers."""
+    """Typeof of requests that can be made to dec-ui servers."""
 
     #: An unknown request method. This can appear if a newer client is
     #: requesting some method from an older server that is not known to
@@ -39,8 +39,8 @@ class RequestMethod(Enum):
 
 @ioprepped
 @dataclass
-class Request(CloudUIRequest):
-    """Full request to cloud-ui."""
+class Request(DecUIRequest):
+    """Full request to dec-ui."""
 
     path: Annotated[str, IOAttrs('p')]
     method: Annotated[
@@ -53,8 +53,8 @@ class Request(CloudUIRequest):
 
     @override
     @classmethod
-    def get_type_id(cls) -> CloudUIRequestTypeID:
-        return CloudUIRequestTypeID.V1
+    def get_type_id(cls) -> DecUIRequestTypeID:
+        return DecUIRequestTypeID.V1
 
 
 class ActionTypeID(Enum):
@@ -139,7 +139,7 @@ class Browse(Action):
 
     #: Local action to run immediately when the button is pressed. Will
     #: be handled by
-    #: :meth:`bauiv1lib.cloudui.CloudUIController.local_action()`.
+    #: :meth:`bauiv1lib.decui.DecUIController.local_action()`.
     immediate_local_action: Annotated[
         str | None, IOAttrs('a', store_default=False)
     ] = None
@@ -178,7 +178,7 @@ class Replace(Action):
 
     #: Local action to run immediately when the button is pressed. Will
     #: be handled by
-    #: :meth:`bauiv1lib.cloudui.CloudUIController.local_action()`.
+    #: :meth:`bauiv1lib.decui.DecUIController.local_action()`.
     immediate_local_action: Annotated[
         str | None, IOAttrs('a', store_default=False)
     ] = None
@@ -212,7 +212,7 @@ class Local(Action):
 
     #: Local action to run immediately when the button is pressed. Will
     #: be handled by
-    #: :meth:`bauiv1lib.cloudui.CloudUIController.local_action()`.
+    #: :meth:`bauiv1lib.decui.DecUIController.local_action()`.
     immediate_local_action: Annotated[
         str | None, IOAttrs('a', store_default=False)
     ] = None
@@ -314,7 +314,7 @@ class UnknownDecoration(Decoration):
 class Text(Decoration):
     """Text decoration."""
 
-    #: Note that cloud-ui accepts only raw :class:`str` values for text;
+    #: Note that dec-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
     text: Annotated[str, IOAttrs('t')]
@@ -446,7 +446,7 @@ class Button:
     with 'scale'.
     """
 
-    #: Note that cloud-ui accepts only raw :class:`str` values for text;
+    #: Note that dec-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
     label: Annotated[str | None, IOAttrs('l', store_default=False)] = None
@@ -576,7 +576,7 @@ class ButtonRow(Row):
         list[Decoration] | None, IOAttrs('hdr', store_default=False)
     ] = None
 
-    #: Note that cloud-ui accepts only raw :class:`str` values for text;
+    #: Note that dec-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
     title: Annotated[str | None, IOAttrs('t', store_default=False)] = None
@@ -634,9 +634,9 @@ class ButtonRow(Row):
 @ioprepped
 @dataclass
 class Page:
-    """Cloud-UI page version 1."""
+    """Dec-UI page version 1."""
 
-    #: Note that cloud-ui accepts only raw :class:`str` values for text;
+    #: Note that dec-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
     title: Annotated[str, IOAttrs('t')]
@@ -657,7 +657,7 @@ class Page:
     )
 
     #: Whether the title is a json dict representing an Lstr. Generally
-    #: cloud-ui translation should be handled server-side, but this can
+    #: dec-ui translation should be handled server-side, but this can
     #: allow client-side translation.
     title_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
 
@@ -676,8 +676,8 @@ class StatusCode(Enum):
 
 @ioprepped
 @dataclass
-class Response(CloudUIResponse):
-    """Full cloudui response."""
+class Response(DecUIResponse):
+    """Full decui response."""
 
     page: Annotated[Page, IOAttrs('p')]
     status: Annotated[StatusCode, IOAttrs('s', store_default=False)] = (
@@ -696,7 +696,7 @@ class Response(CloudUIResponse):
 
     #: Local action to run after this response is initially received.
     #: Will be handled by
-    #: :meth:`bauiv1lib.cloudui.CloudUIController.local_action()`. Note
+    #: :meth:`bauiv1lib.decui.DecUIController.local_action()`. Note
     #: that these actions will not re-run if the page is automatically
     #: refreshed later (due to window resizing, back navigation, etc).
     local_action: Annotated[str | None, IOAttrs('a', store_default=False)] = (
@@ -708,7 +708,7 @@ class Response(CloudUIResponse):
 
     #: New overall action to have the client schedule after this response
     #: is received. Useful for redirecting to other pages or closing the
-    #: cloud-ui window.
+    #: dec-ui window.
     timed_action: Annotated[
         Action | None, IOAttrs('ta', store_default=False)
     ] = None
@@ -717,7 +717,7 @@ class Response(CloudUIResponse):
     ] = 0.0
 
     #: If provided, error on builds older than this (can be used to gate
-    #: functionality without bumping entire cloudui version).
+    #: functionality without bumping entire decui version).
     minimum_engine_build: Annotated[
         int | None, IOAttrs('b', store_default=False)
     ] = None
@@ -734,5 +734,5 @@ class Response(CloudUIResponse):
 
     @override
     @classmethod
-    def get_type_id(cls) -> CloudUIResponseTypeID:
-        return CloudUIResponseTypeID.V1
+    def get_type_id(cls) -> DecUIResponseTypeID:
+        return DecUIResponseTypeID.V1

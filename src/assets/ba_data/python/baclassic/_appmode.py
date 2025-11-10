@@ -955,7 +955,7 @@ class ClassicAppMode(AppMode):
                 bui.WeakCallStrict(self._main_win_template_press),
             ),
             bui.DevConsoleButtonDef(
-                'CloudUI Test', bui.WeakCallStrict(self._cloud_ui_test_press)
+                'DecUI Test', bui.WeakCallStrict(self._cloud_ui_test_press)
             ),
         ]
 
@@ -970,7 +970,7 @@ class ClassicAppMode(AppMode):
         show_template_main_window()
 
     def _cloud_ui_test_press(self) -> None:
-        from bauiv1lib.clouduitest import show_test_cloud_ui_window
+        from bauiv1lib.decuitest import show_test_cloud_ui_window
 
         # Unintuitively, swish sounds come from buttons, not windows.
         # And dev-console buttons don't make sounds. So we need to

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     pass
 
 
-# FIXME - migrate to use the cloud-ui rendering for these instead.
+# FIXME - migrate to use the dec-ui rendering for these instead.
 def show_display_item(
     itemwrapper: ditm.Wrapper,
     parent: bauiv1.Widget,

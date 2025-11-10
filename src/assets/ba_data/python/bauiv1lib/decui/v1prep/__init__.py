@@ -7,14 +7,14 @@
   it in mod code.
 """
 
-from bauiv1lib.cloudui.v1prep._types import (
+from bauiv1lib.decui.v1prep._types import (
     DecorationPrep,
     ButtonPrep,
     RowPrep,
     PagePrep,
 )
-from bauiv1lib.cloudui.v1prep._calls import prep_page
-from bauiv1lib.cloudui.v1prep._calls2 import (
+from bauiv1lib.decui.v1prep._calls import prep_page
+from bauiv1lib.decui.v1prep._calls2 import (
     prep_text,
     prep_decorations,
     prep_image,

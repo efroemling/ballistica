@@ -1,4 +1,4 @@
-### 1.7.54 (build 22618, api 9, 2025-11-08)
+### 1.7.54 (build 22619, api 9, 2025-11-09)
 - `scrollwidget` and `hscrollwidget` now center selected items that are too
   large to fit completely in view instead of unpredictably scrolling to the
   beginning or end of them. This makes show-buffer values (which effectively
@@ -7,6 +7,15 @@
   'large', and 'larger'. These correspond to the styles that are normally
   selected based on button dimensions; you can now choose them explicitly if you
   like.
+- Added `DecUI` (short for Declarative UI) - a high level layer built on top of
+  `bauiv1` which allows defining a UI as a dataclass structure. This system aims
+  to makes it easier to create elegant 'bullet-proof' UIs that work at any UI
+  scale and also makes it possible to serve UIs through a webserver or other
+  means. Originally this was called `CloudUI` due to that feature being my
+  primary motivation for making it, but I renamed it to `DecUI` after feedback
+  and further thought. I want it to be clear that it is also useful for purely
+  local UI creation; not just cloud based stuff. To learn more, poke the `DecUI
+  Test` button in the `UI` dev-console tab.
   
 ### 1.7.53 (build 22597, api 9, 2025-10-25)
 - Fixes an issue where deleting player profiles would error.

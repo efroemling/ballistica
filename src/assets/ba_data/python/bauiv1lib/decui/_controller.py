@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Controller functionality for CloudUI."""
+"""Controller functionality for DecUI."""
 
 from __future__ import annotations
 
@@ -11,30 +11,30 @@ import weakref
 
 from efro.error import CleanError
 from efro.dataclassio import dataclass_to_json, dataclass_from_json
-from bacommon.cloudui import (
-    CloudUIRequestTypeID,
-    UnknownCloudUIRequest,
-    CloudUIResponseTypeID,
-    UnknownCloudUIResponse,
-    CloudUIWebRequest,
-    CloudUIWebResponse,
+from bacommon.decui import (
+    DecUIRequestTypeID,
+    UnknownDecUIRequest,
+    DecUIResponseTypeID,
+    UnknownDecUIResponse,
+    DecUIWebRequest,
+    DecUIWebResponse,
 )
 import bauiv1 as bui
 
-from bauiv1lib.cloudui._window import CloudUIWindow
+from bauiv1lib.decui._window import DecUIWindow
 
 if TYPE_CHECKING:
     from typing import Callable
 
-    import bacommon.cloudui.v1
-    from bacommon.cloudui import CloudUIRequest, CloudUIResponse
+    import bacommon.decui.v1
+    from bacommon.decui import DecUIRequest, DecUIResponse
     import bacommon.clienteffect as clfx
 
-    from bauiv1lib.cloudui import v1prep
+    from bauiv1lib.decui import v1prep
 
 
-class CloudUIController:
-    """Manages interactions between CloudUI clients and servers.
+class DecUIController:
+    """Manages interactions between DecUI clients and servers.
 
     Can include logic to handle all requests locally or can submit them
     to be handled by some server or can do some combination thereof.
@@ -48,7 +48,7 @@ class CloudUIController:
         COMMUNICATION_ERROR = 'communication'
         NEED_UPDATE = 'need_update'
 
-    def fulfill_request(self, request: CloudUIRequest) -> CloudUIResponse:
+    def fulfill_request(self, request: DecUIRequest) -> DecUIResponse:
         """Handle request fulfillment.
 
         Expected to be overridden by child classes.
@@ -68,11 +68,11 @@ class CloudUIController:
         """
         raise NotImplementedError()
 
-    def local_action(self, action: CloudUILocalAction) -> None:
-        """Do something locally on behalf of the cloud-ui.
+    def local_action(self, action: DecUILocalAction) -> None:
+        """Do something locally on behalf of the dec-ui.
 
         Controller classes can override this to expose named actions
-        that can be triggered by cloud-ui button presses, responses,
+        that can be triggered by dec-ui button presses, responses,
         etc.
 
         Of course controllers can also perform arbitrary local actions
@@ -80,38 +80,38 @@ class CloudUIController:
         to do so without needing to provide actual ui pages alongside.
 
         Be *very* careful and focused with what you expose here,
-        especially if your cloud-ui pages are coming from untrusted
+        especially if your dec-ui pages are coming from untrusted
         sources. Generally things like launching or joining games are
         good candidates for local actions.
         """
 
     def fulfill_request_web(
-        self, request: CloudUIRequest, url: str
-    ) -> CloudUIResponse:
+        self, request: DecUIRequest, url: str
+    ) -> DecUIResponse:
         """Fulfill a request by sending it to a webserver."""
-        import bacommon.cloudui.v1 as clui1
+        import bacommon.decui.v1 as dui1
 
         import urllib3.util
 
-        if not isinstance(request, clui1.Request):
-            raise RuntimeError(f'Unsupported cloudui request: {type(request)}')
+        if not isinstance(request, dui1.Request):
+            raise RuntimeError(f'Unsupported decui request: {type(request)}')
 
         upool = bui.app.net.urllib3pool
 
         # Allow compressed results.
         headers = urllib3.util.make_headers(accept_encoding=True)
 
-        # Bundle our cloud-ui request with some extra stuff that might
+        # Bundle our dec-ui request with some extra stuff that might
         # be relevant to a remote server (language we're using, etc.).
-        webrequest = CloudUIWebRequest(
+        webrequest = DecUIWebRequest(
             cloud_ui_request=request,
             locale=bui.app.locale.current_locale,
             engine_build_number=bui.app.env.engine_build_number,
         )
 
         try:
-            # Map cloudui GET requests to http GET and POST to POST.
-            if request.method is clui1.RequestMethod.GET:
+            # Map decui GET requests to http GET and POST to POST.
+            if request.method is dui1.RequestMethod.GET:
                 # For GET we embed the request into a url param.
                 raw_response = upool.request(
                     'GET',
@@ -122,7 +122,7 @@ class CloudUIController:
                     headers=headers,
                 )
 
-            elif request.method is clui1.RequestMethod.POST:
+            elif request.method is dui1.RequestMethod.POST:
                 # for POST we send the webrequest as json in body.
                 headers['Content-Type'] = 'application/json'
                 raw_response = upool.request(
@@ -131,14 +131,14 @@ class CloudUIController:
                     headers=headers,
                     body=dataclass_to_json(webrequest),
                 )
-            elif request.method is clui1.RequestMethod.UNKNOWN:
+            elif request.method is dui1.RequestMethod.UNKNOWN:
                 raise RuntimeError('Unknown request method.')
             else:
                 assert_never(request.method)
 
             try:
                 webresponse = dataclass_from_json(
-                    CloudUIWebResponse, raw_response.data.decode()
+                    DecUIWebResponse, raw_response.data.decode()
                 )
                 if (
                     webresponse.error is None
@@ -146,15 +146,13 @@ class CloudUIController:
                 ):
                     raise RuntimeError(
                         'Invalid webresponse includes neither error'
-                        ' nor cloud-ui-response.'
+                        ' nor dec-ui-response.'
                     )
             except Exception as exc:
                 bui.netlog.info(
-                    'Error reading cloudui web-response.', exc_info=True
+                    'Error reading decui web-response.', exc_info=True
                 )
-                raise RuntimeError(
-                    'Error reading cloudui web-response.'
-                ) from exc
+                raise RuntimeError('Error reading decui web-response.') from exc
 
             # For now, show all http errors as communication error. We
             # can probably get more specific in the future.
@@ -163,21 +161,21 @@ class CloudUIController:
                 # If the response bundled an error, log it.
                 if webresponse.error is not None:
                     bui.netlog.info(
-                        'Cloud-ui http request returned error: %s',
+                        'dec-ui http request returned error: %s',
                         webresponse.error,
                     )
                 return self.error_response(self.ErrorType.COMMUNICATION_ERROR)
 
         except Exception:
-            bui.netlog.info('Error in cloudui http request.', exc_info=True)
+            bui.netlog.info('Error in decui http request.', exc_info=True)
             return self.error_response(self.ErrorType.GENERIC)
 
         assert webresponse.cloud_ui_response is not None
         return webresponse.cloud_ui_response
 
     def fulfill_request_cloud(
-        self, request: CloudUIRequest, domain: str
-    ) -> CloudUIResponse:
+        self, request: DecUIRequest, domain: str
+    ) -> DecUIResponse:
         """Fulfill a request by sending it to ballistica's cloud.
 
         :meta private:
@@ -193,13 +191,13 @@ class CloudUIController:
             if account is not None:
                 with account:
                     mresponse = plus.cloud.send_message(
-                        bacommon.cloud.FulfillCloudUIRequest(
+                        bacommon.cloud.FulfillDecUIRequest(
                             request=request, domain=domain
                         )
                     )
             else:
                 mresponse = plus.cloud.send_message(
-                    bacommon.cloud.FulfillCloudUIRequest(
+                    bacommon.cloud.FulfillDecUIRequest(
                         request=request, domain=domain
                     )
                 )
@@ -212,7 +210,7 @@ class CloudUIController:
         self,
         error_type: ErrorType = ErrorType.GENERIC,
         custom_message: str | None = None,
-    ) -> CloudUIResponse:
+    ) -> DecUIResponse:
         """Build a simple error message page.
 
         A message is included based on ``error_type``. Pass
@@ -221,7 +219,7 @@ class CloudUIController:
         Messages will be translated to the client language using the
         'serverResponses' Lstr translation category.
         """
-        import bacommon.cloudui.v1 as clui1
+        import bacommon.decui.v1 as dui1
 
         error_msg: bui.Lstr | None = None
         error_msg_simple: str | None = None
@@ -246,27 +244,27 @@ class CloudUIController:
         assert error_msg is not None
 
         debug = False
-        return clui1.Response(
-            status=clui1.StatusCode.UNKNOWN_ERROR,
-            page=clui1.Page(
+        return dui1.Response(
+            status=dui1.StatusCode.UNKNOWN_ERROR,
+            page=dui1.Page(
                 title=bui.Lstr(resource='errorText').as_json(),
                 title_is_lstr=True,
                 center_vertically=True,
                 rows=[
-                    clui1.ButtonRow(
+                    dui1.ButtonRow(
                         buttons=[
-                            clui1.Button(
+                            dui1.Button(
                                 bui.Lstr(resource='okText').as_json(),
-                                clui1.Local(close_window=True),
+                                dui1.Local(close_window=True),
                                 label_is_lstr=True,
                                 default=True,
-                                style=clui1.ButtonStyle.MEDIUM,
+                                style=dui1.ButtonStyle.MEDIUM,
                                 size=(130, 50),
                                 padding_left=200,
                                 padding_right=200,
                                 padding_top=100,
                                 decorations=[
-                                    clui1.Text(
+                                    dui1.Text(
                                         error_msg.as_json(),
                                         is_lstr=True,
                                         position=(0, 80),
@@ -287,16 +285,16 @@ class CloudUIController:
 
     def create_window(
         self,
-        request: CloudUIRequest,
+        request: DecUIRequest,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
-    ) -> CloudUIWindow:
+    ) -> DecUIWindow:
         """Create a new window to handle a request."""
         assert bui.in_logic_thread()
 
         # Create a shiny new window.
-        win = CloudUIWindow(
+        win = DecUIWindow(
             self,
             request,
             transition=transition,
@@ -323,21 +321,21 @@ class CloudUIController:
 
     def restore(
         self,
-        win: CloudUIWindow,
+        win: DecUIWindow,
         *,
-        last_response: CloudUIResponse | None,
-    ) -> CloudUIWindow:
+        last_response: DecUIResponse | None,
+    ) -> DecUIWindow:
         """Restore a window from previous state.
 
         May immediately display old results or may kick off a new
         request.
         """
-        import bacommon.cloudui.v1 as clui1
+        import bacommon.decui.v1 as dui1
 
         assert bui.in_logic_thread()
 
-        explicit_response: CloudUIResponse | None = None
-        explicit_error: CloudUIController.ErrorType | None = None
+        explicit_response: DecUIResponse | None = None
+        explicit_error: DecUIController.ErrorType | None = None
 
         if last_response is not None:
             # Re-prep our restored response so we have something to show
@@ -349,8 +347,8 @@ class CloudUIController:
 
             # If the current request is a POST, never auto-refetch. Just
             # build an error response.
-            assert isinstance(win.request, clui1.Request)
-            if win.request.method is clui1.RequestMethod.POST:
+            assert isinstance(win.request, dui1.Request)
+            if win.request.method is dui1.RequestMethod.POST:
                 # Do we want a specific error for this? Though this case
                 # should be rare I think.
                 explicit_error = self.ErrorType.GENERIC
@@ -386,14 +384,14 @@ class CloudUIController:
 
     def replace(
         self,
-        win: CloudUIWindow,
-        request: CloudUIRequest,
+        win: DecUIWindow,
+        request: DecUIRequest,
         *,
         origin_widget: bui.Widget | None = None,
         is_refresh: bool = False,
     ) -> None:
         """Kick off a request to replace existing window contents."""
-        import bacommon.cloudui.v1 as clui1
+        import bacommon.decui.v1 as dui1
 
         assert bui.in_logic_thread()
 
@@ -401,8 +399,8 @@ class CloudUIController:
 
         requesttype = request.get_type_id()
 
-        if requesttype is CloudUIRequestTypeID.V1:
-            assert isinstance(win.request, clui1.Request)
+        if requesttype is DecUIRequestTypeID.V1:
+            assert isinstance(win.request, dui1.Request)
 
             self._set_win_state(
                 win,
@@ -427,8 +425,8 @@ class CloudUIController:
                     immediate=True,
                 )
             )
-        elif requesttype is CloudUIRequestTypeID.UNKNOWN:
-            assert isinstance(win.request, UnknownCloudUIRequest)
+        elif requesttype is DecUIRequestTypeID.UNKNOWN:
+            assert isinstance(win.request, UnknownDecUIRequest)
             # Got a request type we don't know. Show a 'need a newer
             # build' error.
 
@@ -454,16 +452,16 @@ class CloudUIController:
 
     def run_action(
         self,
-        window: CloudUIWindow,
+        window: DecUIWindow,
         widgetid: str | None,
-        action: bacommon.cloudui.v1.Action | None,
+        action: bacommon.decui.v1.Action | None,
         is_timed: bool = False,
     ) -> None:
         """Called when a button is pressed in a v1 ui."""
         # pylint: disable=too-many-branches
         # pylint: disable=cyclic-import
 
-        import bacommon.cloudui.v1 as clui
+        import bacommon.decui.v1 as dui
 
         assert bui.in_logic_thread()
 
@@ -479,7 +477,7 @@ class CloudUIController:
             widget = bui.widget_by_id(widgetid)
             if widget is None:
                 bui.uilog.warning(
-                    'CloudUI button press widget not found: %s (not expected)',
+                    'DecUI button press widget not found: %s (not expected)',
                     widgetid,
                 )
                 return
@@ -493,8 +491,8 @@ class CloudUIController:
 
         action_type = action.get_type_id()
 
-        if action_type is clui.ActionTypeID.BROWSE:
-            assert isinstance(action, clui.Browse)
+        if action_type is dui.ActionTypeID.BROWSE:
+            assert isinstance(action, dui.Browse)
             if is_timed:
                 # Don't let timers pop up new windows. Untrusted servers
                 # would have a field-day with this.
@@ -521,8 +519,8 @@ class CloudUIController:
                     is_timed=is_timed,
                 )
 
-        elif action_type is clui.ActionTypeID.REPLACE:
-            assert isinstance(action, clui.Replace)
+        elif action_type is dui.ActionTypeID.REPLACE:
+            assert isinstance(action, dui.Replace)
 
             # Play default click sound only if this is coming from a
             # button.
@@ -543,8 +541,8 @@ class CloudUIController:
                 is_timed=is_timed,
             )
 
-        elif action_type is clui.ActionTypeID.LOCAL:
-            assert isinstance(action, clui.Local)
+        elif action_type is dui.ActionTypeID.LOCAL:
+            assert isinstance(action, dui.Local)
             if action.default_sound:
                 if action.close_window:
                     # Always play close-window swish, even if we don't have
@@ -565,8 +563,8 @@ class CloudUIController:
                 window=window,
                 is_timed=is_timed,
             )
-        elif action_type is clui.ActionTypeID.UNKNOWN:
-            assert isinstance(action, clui.UnknownAction)
+        elif action_type is dui.ActionTypeID.UNKNOWN:
+            assert isinstance(action, dui.UnknownAction)
             bui.screenmessage('Unknown action.', color=(1, 0, 0))
             bui.getsound('error').play()
         else:
@@ -580,7 +578,7 @@ class CloudUIController:
         local_action: str | None,
         local_action_args: dict | None,
         widget: bui.Widget | None,
-        window: CloudUIWindow,
+        window: DecUIWindow,
         is_timed: bool,
     ) -> None:
         # We don't allow timed actions to trigger immediate
@@ -605,7 +603,7 @@ class CloudUIController:
         if local_action is not None:
             try:
                 self.local_action(
-                    CloudUILocalAction(
+                    DecUILocalAction(
                         name=local_action,
                         args=(
                             {}
@@ -631,26 +629,26 @@ class CloudUIController:
         ERRORED = 3
         IDLE = 4
 
-    def _get_win_state(self, window: CloudUIWindow) -> _WinState:
+    def _get_win_state(self, window: DecUIWindow) -> _WinState:
         val = getattr(window, '_cstate')
         assert isinstance(val, self._WinState)
         return val
 
-    def _set_win_state(self, window: CloudUIWindow, state: _WinState) -> None:
+    def _set_win_state(self, window: DecUIWindow, state: _WinState) -> None:
         setattr(window, '_cstate', state)
 
     def _process_request_in_bg(
         self,
-        request: CloudUIRequest,
+        request: DecUIRequest,
         *,
-        weakwin: weakref.ref[CloudUIWindow],
+        weakwin: weakref.ref[DecUIWindow],
         uiscale: bui.UIScale,
         scroll_width: float,
         scroll_height: float,
         idprefix: str,
         immediate: bool,
         explicit_error: ErrorType | None = None,
-        explicit_response: CloudUIResponse | None = None,
+        explicit_response: DecUIResponse | None = None,
     ) -> None:
         """Wrangle a request from within a background thread.
 
@@ -658,13 +656,13 @@ class CloudUIController:
         """
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
-        import bacommon.cloudui.v1 as clui1
-        from bauiv1lib.cloudui import v1prep
+        import bacommon.decui.v1 as dui1
+        from bauiv1lib.decui import v1prep
 
         assert not bui.in_logic_thread()
 
-        response: CloudUIResponse | None = None
-        error: CloudUIController.ErrorType | None = None
+        response: DecUIResponse | None = None
+        error: DecUIController.ErrorType | None = None
 
         if explicit_error is not None:
             error = explicit_error
@@ -694,9 +692,9 @@ class CloudUIController:
             assert error is None
             responsetype = response.get_type_id()
 
-            if responsetype is CloudUIResponseTypeID.V1:
+            if responsetype is DecUIResponseTypeID.V1:
 
-                assert isinstance(response, clui1.Response)
+                assert isinstance(response, dui1.Response)
 
                 # If they require a build-number newer than us, say so.
                 minbuild = response.minimum_engine_build
@@ -720,16 +718,16 @@ class CloudUIController:
                     #     row.buttons for row in response.page.rows
                     # ):
                     #     bui.uilog.exception(
-                    #         'Got invalid cloud-ui response;'
+                    #         'Got invalid dec-ui response;'
                     #         ' page must contain at least one row'
                     #         ' and all rows must contain buttons.'
                     #     )
                     #     error = self.ErrorType.GENERIC
 
-            elif responsetype is CloudUIResponseTypeID.UNKNOWN:
-                assert isinstance(response, UnknownCloudUIResponse)
+            elif responsetype is DecUIResponseTypeID.UNKNOWN:
+                assert isinstance(response, UnknownDecUIResponse)
                 bui.uilog.debug(
-                    'Got unsupported cloudui response.', exc_info=True
+                    'Got unsupported decui response.', exc_info=True
                 )
                 error = self.ErrorType.NEED_UPDATE
                 response = None
@@ -741,7 +739,7 @@ class CloudUIController:
             response = self.error_response(error)
 
         # Currently must be v1 if it made it to here.
-        assert isinstance(response, clui1.Response)
+        assert isinstance(response, dui1.Response)
 
         pageprep = v1prep.prep_page(
             response.page,
@@ -769,11 +767,11 @@ class CloudUIController:
 
     def _handle_response_in_ui_thread(
         self,
-        response: CloudUIResponse,
-        weakwin: weakref.ref[CloudUIWindow],
+        response: DecUIResponse,
+        weakwin: weakref.ref[DecUIWindow],
         pageprep: v1prep.PagePrep,
     ) -> None:
-        import bacommon.cloudui.v1 as clui1
+        import bacommon.decui.v1 as dui1
 
         assert bui.in_logic_thread()
 
@@ -784,12 +782,12 @@ class CloudUIController:
             return
 
         # Currently should only be sending ourself v1 responses here.
-        assert isinstance(response, clui1.Response)
+        assert isinstance(response, dui1.Response)
 
         win.unlock_ui()
         win.set_last_response(
             response,
-            response.status == clui1.StatusCode.SUCCESS,
+            response.status == dui1.StatusCode.SUCCESS,
         )
 
         # Set the UI.
@@ -806,7 +804,7 @@ class CloudUIController:
             if response.local_action is not None:
                 try:
                     self.local_action(
-                        CloudUILocalAction(
+                        DecUILocalAction(
                             name=response.local_action,
                             args=(
                                 {}
@@ -829,12 +827,12 @@ class CloudUIController:
             # as we go (don't want to repeat POST effects), but for GET
             # we can now kick off a refresh to swap in the latest
             # version of the page.
-            assert isinstance(win.request, clui1.Request)
-            if win.request.method is clui1.RequestMethod.GET:
+            assert isinstance(win.request, dui1.Request)
+            if win.request.method is dui1.RequestMethod.GET:
                 self.replace(win, win.request, is_refresh=True)
             elif (
-                win.request.method is clui1.RequestMethod.POST
-                or win.request.method is clui1.RequestMethod.UNKNOWN
+                win.request.method is dui1.RequestMethod.POST
+                or win.request.method is dui1.RequestMethod.UNKNOWN
             ):
                 self._set_idle_and_schedule_timed_action(response, weakwin)
             else:
@@ -851,14 +849,14 @@ class CloudUIController:
             assert_never(state)
 
     def _set_idle_and_schedule_timed_action(
-        self, response: CloudUIResponse, weakwin: weakref.ref[CloudUIWindow]
+        self, response: DecUIResponse, weakwin: weakref.ref[DecUIWindow]
     ) -> None:
-        import bacommon.cloudui.v1 as clui1
+        import bacommon.decui.v1 as dui1
 
         win = weakwin()
         assert win is not None
         assert self._get_win_state(win) is not self._WinState.IDLE
-        assert isinstance(response, clui1.Response)
+        assert isinstance(response, dui1.Response)
 
         self._set_win_state(win, self._WinState.IDLE)
         if response.timed_action is not None:
@@ -876,8 +874,8 @@ class CloudUIController:
 
     def _run_timed_action(
         self,
-        weakwin: weakref.ref[CloudUIWindow],
-        action: bacommon.cloudui.v1.Action,
+        weakwin: weakref.ref[DecUIWindow],
+        action: bacommon.decui.v1.Action,
     ) -> None:
         # If our target window died since we set this timer, no biggie.
         win = weakwin()
@@ -894,10 +892,10 @@ class CloudUIController:
 
 
 @dataclass
-class CloudUILocalAction:
+class DecUILocalAction:
     """Context for a local-action."""
 
     name: str
     args: dict
     widget: bui.Widget | None
-    window: CloudUIWindow
+    window: DecUIWindow

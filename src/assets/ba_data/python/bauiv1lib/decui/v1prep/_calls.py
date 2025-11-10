@@ -13,19 +13,19 @@ from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
 from efro.util import strict_partial
-import bacommon.cloudui.v1 as clui1
+import bacommon.decui.v1 as dui1
 import bauiv1 as bui
 
-from bauiv1lib.cloudui.v1prep._types import PagePrep, RowPrep, ButtonPrep
+from bauiv1lib.decui.v1prep._types import PagePrep, RowPrep, ButtonPrep
 
 if TYPE_CHECKING:
     from typing import Callable
 
-    from bauiv1lib.cloudui import CloudUIWindow
+    from bauiv1lib.decui import DecUIWindow
 
 
 def prep_page(
-    page: clui1.Page,
+    page: dui1.Page,
     *,
     uiscale: bui.UIScale,
     scroll_width: float,
@@ -39,16 +39,16 @@ def prep_page(
     # pylint: disable=too-many-locals
     # pylint: disable=cyclic-import
 
-    import bauiv1lib.cloudui.v1prep._calls2 as prepcalls2
+    import bauiv1lib.decui.v1prep._calls2 as prepcalls2
 
     # Create a filtered list of rows we know how to display.
-    page_rows_filtered: list[clui1.ButtonRow] = []
+    page_rows_filtered: list[dui1.ButtonRow] = []
     for pagerow in page.rows:
-        if isinstance(pagerow, clui1.ButtonRow):
+        if isinstance(pagerow, dui1.ButtonRow):
             if not pagerow.buttons:
                 pagerow = copy.deepcopy(pagerow)
                 pagerow.buttons.append(
-                    clui1.Button(
+                    dui1.Button(
                         label=bui.Lstr(
                             translate=(
                                 'serverResponses',
@@ -60,12 +60,12 @@ def prep_page(
                         size=(200, 100),
                         texture='buttonSquareWide',
                         color=(1, 1, 1, 0.1),
-                        action=clui1.Local(default_sound=False),
+                        action=dui1.Local(default_sound=False),
                     )
                 )
             page_rows_filtered.append(pagerow)
     if len(page_rows_filtered) != len(page.rows):
-        bui.uilog.error('Got unknown row type(s) in cloud-ui; ignoring.')
+        bui.uilog.error('Got unknown row type(s) in dec-ui; ignoring.')
 
     # Ok; we've got some buttons. Build our full UI.
     row_title_height = 30.0
@@ -420,17 +420,17 @@ def prep_page(
             center_y = row.padding_bottom + to_button_bottom + bheightfull * 0.5
 
             bstyle: str
-            if button.style is clui1.ButtonStyle.SQUARE:
+            if button.style is dui1.ButtonStyle.SQUARE:
                 bstyle = 'square'
-            elif button.style is clui1.ButtonStyle.TAB:
+            elif button.style is dui1.ButtonStyle.TAB:
                 bstyle = 'tab'
-            elif button.style is clui1.ButtonStyle.SMALL:
+            elif button.style is dui1.ButtonStyle.SMALL:
                 bstyle = 'small'
-            elif button.style is clui1.ButtonStyle.MEDIUM:
+            elif button.style is dui1.ButtonStyle.MEDIUM:
                 bstyle = 'medium'
-            elif button.style is clui1.ButtonStyle.LARGE:
+            elif button.style is dui1.ButtonStyle.LARGE:
                 bstyle = 'large'
-            elif button.style is clui1.ButtonStyle.LARGER:
+            elif button.style is dui1.ButtonStyle.LARGER:
                 bstyle = 'larger'
             else:
                 assert_never(button.style)
@@ -606,7 +606,7 @@ def cloud_ui_v1_instantiate_page_prep(
     scrollwidget: bui.Widget,
     backbutton: bui.Widget,
     windowbackbutton: bui.Widget | None,
-    window: CloudUIWindow,
+    window: DecUIWindow,
 ) -> bui.Widget:
     """Create a UI using prepped data."""
     # pylint: disable=too-many-locals

@@ -8,25 +8,25 @@ from typing import TYPE_CHECKING, override, assert_never
 
 import bauiv1 as bui
 
-from bacommon.cloudui import CloudUIRequestTypeID, CloudUIResponseTypeID
+from bacommon.decui import DecUIRequestTypeID, DecUIResponseTypeID
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 
 if TYPE_CHECKING:
     from typing import Callable
 
-    from bacommon.cloudui import CloudUIRequest, CloudUIResponse
-    import bacommon.cloudui.v1
-    from bauiv1lib.cloudui._controller import CloudUIController
-    from bauiv1lib.cloudui import v1prep
+    from bacommon.decui import DecUIRequest, DecUIResponse
+    import bacommon.decui.v1
+    from bauiv1lib.decui._controller import DecUIController
+    from bauiv1lib.decui import v1prep
 
 
-class CloudUIWindow(bui.MainWindow):
+class DecUIWindow(bui.MainWindow):
     """UI provided by the cloud."""
 
     def __init__(
         self,
-        controller: CloudUIController,
-        request: CloudUIRequest,
+        controller: DecUIController,
+        request: DecUIRequest,
         *,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
@@ -47,7 +47,7 @@ class CloudUIWindow(bui.MainWindow):
         self._request = request
         self._request_state_id = self._default_state_id(request)
 
-        self._last_response: CloudUIResponse | None = None
+        self._last_response: DecUIResponse | None = None
         self._last_response_success: bool = False
         self._last_response_shared_state_id: str | None = None
 
@@ -258,7 +258,7 @@ class CloudUIWindow(bui.MainWindow):
         self._spinner: bui.Widget | None = None
 
     @property
-    def request(self) -> CloudUIRequest:
+    def request(self) -> DecUIRequest:
         """The current request.
 
         Should only be accessed from the logic thread while the ui is
@@ -270,7 +270,7 @@ class CloudUIWindow(bui.MainWindow):
         return self._request
 
     @request.setter
-    def request(self, request: CloudUIRequest) -> None:
+    def request(self, request: DecUIRequest) -> None:
         assert bui.in_logic_thread()
         self._request = request
         self._request_state_id = self._default_state_id(request)
@@ -281,16 +281,16 @@ class CloudUIWindow(bui.MainWindow):
         self._last_response_shared_state_id = None
 
     @classmethod
-    def _default_state_id(cls, request: CloudUIRequest) -> str:
+    def _default_state_id(cls, request: DecUIRequest) -> str:
         """Calc a default state id for a request."""
         requesttypeid = request.get_type_id()
-        if requesttypeid is CloudUIRequestTypeID.V1:
-            import bacommon.cloudui.v1 as clui1
+        if requesttypeid is DecUIRequestTypeID.V1:
+            import bacommon.decui.v1 as dui1
 
             # One state per path seems like a reasonable default.
-            assert isinstance(request, clui1.Request)
+            assert isinstance(request, dui1.Request)
             return request.path
-        if requesttypeid is CloudUIRequestTypeID.UNKNOWN:
+        if requesttypeid is DecUIRequestTypeID.UNKNOWN:
             return 'unknown'
         assert_never(requesttypeid)
 
@@ -350,9 +350,7 @@ class CloudUIWindow(bui.MainWindow):
         """Height of our scroll area."""
         return self._scroll_height
 
-    def set_last_response(
-        self, response: CloudUIResponse, success: bool
-    ) -> None:
+    def set_last_response(self, response: DecUIResponse, success: bool) -> None:
         """Set a response to a request."""
         assert bui.in_logic_thread()
         assert not self._locked
@@ -361,12 +359,12 @@ class CloudUIWindow(bui.MainWindow):
 
         # Grab any custom shared-state-id included in this response.
         responsetypeid = response.get_type_id()
-        if responsetypeid is CloudUIResponseTypeID.V1:
-            import bacommon.cloudui.v1 as clui1
+        if responsetypeid is DecUIResponseTypeID.V1:
+            import bacommon.decui.v1 as dui1
 
-            assert isinstance(response, clui1.Response)
+            assert isinstance(response, dui1.Response)
             self._last_response_shared_state_id = response.shared_state_id
-        elif responsetypeid is CloudUIResponseTypeID.UNKNOWN:
+        elif responsetypeid is DecUIResponseTypeID.UNKNOWN:
             self._last_response_shared_state_id = None
         else:
             assert_never(responsetypeid)
@@ -376,7 +374,7 @@ class CloudUIWindow(bui.MainWindow):
 
         :meta private:
         """
-        from bauiv1lib.cloudui.v1prep._calls import (
+        from bauiv1lib.decui.v1prep._calls import (
             cloud_ui_v1_instantiate_page_prep,
         )
 

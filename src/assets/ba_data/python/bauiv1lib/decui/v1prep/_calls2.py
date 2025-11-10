@@ -13,19 +13,19 @@ from typing import TYPE_CHECKING, assert_never
 
 from efro.util import pairs_from_flat
 import bacommon.displayitem as ditm
-import bacommon.cloudui.v1 as clui1
+import bacommon.decui.v1 as dui1
 import bauiv1 as bui
 
-from bauiv1lib.cloudui.v1prep._types import DecorationPrep
+from bauiv1lib.decui.v1prep._types import DecorationPrep
 
 if TYPE_CHECKING:
     from typing import Callable
 
-    from bauiv1lib.cloudui import CloudUIWindow
+    from bauiv1lib.decui import DecUIWindow
 
 
 def prep_decorations(
-    decorations: list[clui1.Decoration],
+    decorations: list[dui1.Decoration],
     center_x: float,
     center_y: float,
     scale: float,
@@ -37,14 +37,14 @@ def prep_decorations(
     """Prep appropriate decoration types for a list of decorations."""
     for decoration in decorations:
         dectypeid = decoration.get_type_id()
-        if dectypeid is clui1.DecorationTypeID.UNKNOWN:
+        if dectypeid is dui1.DecorationTypeID.UNKNOWN:
             if bui.do_once():
                 bui.uilog.exception(
-                    'CloudUI receieved unknown decoration;'
+                    'DecUI receieved unknown decoration;'
                     ' this is likely a server error.'
                 )
-        elif dectypeid is clui1.DecorationTypeID.TEXT:
-            assert isinstance(decoration, clui1.Text)
+        elif dectypeid is dui1.DecorationTypeID.TEXT:
+            assert isinstance(decoration, dui1.Text)
             prep_text(
                 decoration,
                 (center_x, center_y),
@@ -54,8 +54,8 @@ def prep_decorations(
                 highlight=highlight,
             )
 
-        elif dectypeid is clui1.DecorationTypeID.IMAGE:
-            assert isinstance(decoration, clui1.Image)
+        elif dectypeid is dui1.DecorationTypeID.IMAGE:
+            assert isinstance(decoration, dui1.Image)
             prep_image(
                 decoration,
                 (center_x, center_y),
@@ -64,8 +64,8 @@ def prep_decorations(
                 out_decoration_preps,
                 highlight=highlight,
             )
-        elif dectypeid is clui1.DecorationTypeID.DISPLAY_ITEM:
-            assert isinstance(decoration, clui1.DisplayItem)
+        elif dectypeid is dui1.DecorationTypeID.DISPLAY_ITEM:
+            assert isinstance(decoration, dui1.DisplayItem)
             prep_display_item(
                 decoration,
                 (center_x, center_y),
@@ -79,7 +79,7 @@ def prep_decorations(
 
 
 def prep_text(
-    text: clui1.Text,
+    text: dui1.Text,
     bcenter: tuple[float, float],
     bscale: float,
     tdelay: float | None,
@@ -92,20 +92,20 @@ def prep_text(
     xoffs = bcenter[0] + text.position[0] * bscale
     yoffs = bcenter[1] + text.position[1] * bscale
 
-    if text.h_align is clui1.HAlign.LEFT:
+    if text.h_align is dui1.HAlign.LEFT:
         h_align = 'left'
-    elif text.h_align is clui1.HAlign.CENTER:
+    elif text.h_align is dui1.HAlign.CENTER:
         h_align = 'center'
-    elif text.h_align is clui1.HAlign.RIGHT:
+    elif text.h_align is dui1.HAlign.RIGHT:
         h_align = 'right'
     else:
         assert_never(text.h_align)
 
-    if text.v_align is clui1.VAlign.TOP:
+    if text.v_align is dui1.VAlign.TOP:
         v_align = 'top'
-    elif text.v_align is clui1.VAlign.CENTER:
+    elif text.v_align is dui1.VAlign.CENTER:
         v_align = 'center'
-    elif text.v_align is clui1.VAlign.BOTTOM:
+    elif text.v_align is dui1.VAlign.BOTTOM:
         v_align = 'bottom'
     else:
         assert_never(text.v_align)
@@ -139,20 +139,20 @@ def prep_text(
         mwfull = bscale * text.size[0]
         mhfull = bscale * text.size[1]
 
-        if text.h_align is clui1.HAlign.LEFT:
+        if text.h_align is dui1.HAlign.LEFT:
             mwxoffs = xoffs
-        elif text.h_align is clui1.HAlign.CENTER:
+        elif text.h_align is dui1.HAlign.CENTER:
             mwxoffs = xoffs - mwfull * 0.5
-        elif text.h_align is clui1.HAlign.RIGHT:
+        elif text.h_align is dui1.HAlign.RIGHT:
             mwxoffs = xoffs - mwfull
         else:
             assert_never(text.h_align)
 
-        if text.v_align is clui1.VAlign.TOP:
+        if text.v_align is dui1.VAlign.TOP:
             mwyoffs = yoffs - mhfull
-        elif text.v_align is clui1.VAlign.CENTER:
+        elif text.v_align is dui1.VAlign.CENTER:
             mwyoffs = yoffs - mhfull * 0.5
-        elif text.v_align is clui1.VAlign.BOTTOM:
+        elif text.v_align is dui1.VAlign.BOTTOM:
             mwyoffs = yoffs
         else:
             assert_never(text.v_align)
@@ -175,7 +175,7 @@ def prep_text(
 
 
 def prep_image(
-    image: clui1.Image,
+    image: dui1.Image,
     bcenter: tuple[float, float],
     bscale: float,
     tdelay: float | None,
@@ -190,20 +190,20 @@ def prep_image(
     widthfull = bscale * image.size[0]
     heightfull = bscale * image.size[1]
 
-    if image.h_align is clui1.HAlign.LEFT:
+    if image.h_align is dui1.HAlign.LEFT:
         xoffsfin = xoffs
-    elif image.h_align is clui1.HAlign.CENTER:
+    elif image.h_align is dui1.HAlign.CENTER:
         xoffsfin = xoffs - widthfull * 0.5
-    elif image.h_align is clui1.HAlign.RIGHT:
+    elif image.h_align is dui1.HAlign.RIGHT:
         xoffsfin = xoffs - widthfull
     else:
         assert_never(image.h_align)
 
-    if image.v_align is clui1.VAlign.TOP:
+    if image.v_align is dui1.VAlign.TOP:
         yoffsfin = yoffs - heightfull
-    elif image.v_align is clui1.VAlign.CENTER:
+    elif image.v_align is dui1.VAlign.CENTER:
         yoffsfin = yoffs - heightfull * 0.5
-    elif image.v_align is clui1.VAlign.BOTTOM:
+    elif image.v_align is dui1.VAlign.BOTTOM:
         yoffsfin = yoffs
     else:
         assert_never(image.v_align)
@@ -330,7 +330,7 @@ def prep_button_debug(
 
 
 def prep_display_item(
-    display_item: clui1.DisplayItem,
+    display_item: dui1.DisplayItem,
     parent_center: tuple[float, float],
     parent_scale: float,
     tdelay: float | None,
@@ -383,12 +383,12 @@ def prep_display_item(
 
     # Calc our width and height based on our aspect ratio so we fit in
     # the provided bounds.
-    if display_item.style is clui1.DisplayItemStyle.FULL:
+    if display_item.style is dui1.DisplayItemStyle.FULL:
         aspect_ratio = 0.75  # Bit less tall than wide (graphic centric).
         text_flatness = 1.0
         text_shadow = 1.0
         compact = False
-    elif display_item.style is clui1.DisplayItemStyle.COMPACT:
+    elif display_item.style is dui1.DisplayItemStyle.COMPACT:
         aspect_ratio = 0.5  # Significantly wider (text centric)
         text_flatness = 1.0
         text_shadow = 1.0

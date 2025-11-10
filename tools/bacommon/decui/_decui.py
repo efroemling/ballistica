@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Version 1 of our cloud-ui system."""
+"""Version 1 of our dec-ui system."""
 
 from __future__ import annotations
 
@@ -15,14 +15,14 @@ if TYPE_CHECKING:
     pass
 
 
-class CloudUIRequestTypeID(Enum):
+class DecUIRequestTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     UNKNOWN = 'u'
     V1 = 'v1'
 
 
-class CloudUIRequest(IOMultiType[CloudUIRequestTypeID]):
+class DecUIRequest(IOMultiType[DecUIRequestTypeID]):
     """UI defined by the cloud.
 
     Conceptually similar to web pages, except using app UI.
@@ -30,7 +30,7 @@ class CloudUIRequest(IOMultiType[CloudUIRequestTypeID]):
 
     @override
     @classmethod
-    def get_type_id(cls) -> CloudUIRequestTypeID:
+    def get_type_id(cls) -> DecUIRequestTypeID:
         # Require child classes to supply this themselves. If we did a
         # full type registry/lookup here it would require us to import
         # everything and would prevent lazy loading.
@@ -38,15 +38,15 @@ class CloudUIRequest(IOMultiType[CloudUIRequestTypeID]):
 
     @override
     @classmethod
-    def get_type(cls, type_id: CloudUIRequestTypeID) -> type[CloudUIRequest]:
+    def get_type(cls, type_id: DecUIRequestTypeID) -> type[DecUIRequest]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
 
-        t = CloudUIRequestTypeID
+        t = DecUIRequestTypeID
         if type_id is t.UNKNOWN:
-            return UnknownCloudUIRequest
+            return UnknownDecUIRequest
         if type_id is t.V1:
-            from bacommon.cloudui.v1 import Request
+            from bacommon.decui.v1 import Request
 
             return Request
 
@@ -55,10 +55,10 @@ class CloudUIRequest(IOMultiType[CloudUIRequestTypeID]):
 
     @override
     @classmethod
-    def get_unknown_type_fallback(cls) -> CloudUIRequest:
+    def get_unknown_type_fallback(cls) -> DecUIRequest:
         # If we encounter some future type we don't know anything about,
         # drop in a placeholder.
-        return UnknownCloudUIRequest()
+        return UnknownDecUIRequest()
 
     @override
     @classmethod
@@ -68,7 +68,7 @@ class CloudUIRequest(IOMultiType[CloudUIRequestTypeID]):
 
 @ioprepped
 @dataclass
-class UnknownCloudUIRequest(CloudUIRequest):
+class UnknownDecUIRequest(DecUIRequest):
     """Fallback type for unrecognized UI types.
 
     Will show the client a 'cannot display this UI' placeholder request.
@@ -76,18 +76,18 @@ class UnknownCloudUIRequest(CloudUIRequest):
 
     @override
     @classmethod
-    def get_type_id(cls) -> CloudUIRequestTypeID:
-        return CloudUIRequestTypeID.UNKNOWN
+    def get_type_id(cls) -> DecUIRequestTypeID:
+        return DecUIRequestTypeID.UNKNOWN
 
 
-class CloudUIResponseTypeID(Enum):
+class DecUIResponseTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     UNKNOWN = 'u'
     V1 = 'v1'
 
 
-class CloudUIResponse(IOMultiType[CloudUIResponseTypeID]):
+class DecUIResponse(IOMultiType[DecUIResponseTypeID]):
     """UI defined by the cloud.
 
     Conceptually similar to a basic html response, except using app UI.
@@ -95,7 +95,7 @@ class CloudUIResponse(IOMultiType[CloudUIResponseTypeID]):
 
     @override
     @classmethod
-    def get_type_id(cls) -> CloudUIResponseTypeID:
+    def get_type_id(cls) -> DecUIResponseTypeID:
         # Require child classes to supply this themselves. If we did a
         # full type registry/lookup here it would require us to import
         # everything and would prevent lazy loading.
@@ -103,15 +103,15 @@ class CloudUIResponse(IOMultiType[CloudUIResponseTypeID]):
 
     @override
     @classmethod
-    def get_type(cls, type_id: CloudUIResponseTypeID) -> type[CloudUIResponse]:
+    def get_type(cls, type_id: DecUIResponseTypeID) -> type[DecUIResponse]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
 
-        t = CloudUIResponseTypeID
+        t = DecUIResponseTypeID
         if type_id is t.UNKNOWN:
-            return UnknownCloudUIResponse
+            return UnknownDecUIResponse
         if type_id is t.V1:
-            from bacommon.cloudui.v1 import Response
+            from bacommon.decui.v1 import Response
 
             return Response
 
@@ -120,10 +120,10 @@ class CloudUIResponse(IOMultiType[CloudUIResponseTypeID]):
 
     @override
     @classmethod
-    def get_unknown_type_fallback(cls) -> CloudUIResponse:
+    def get_unknown_type_fallback(cls) -> DecUIResponse:
         # If we encounter some future type we don't know anything about,
         # drop in a placeholder.
-        return UnknownCloudUIResponse()
+        return UnknownDecUIResponse()
 
     @override
     @classmethod
@@ -133,7 +133,7 @@ class CloudUIResponse(IOMultiType[CloudUIResponseTypeID]):
 
 @ioprepped
 @dataclass
-class UnknownCloudUIResponse(CloudUIResponse):
+class UnknownDecUIResponse(DecUIResponse):
     """Fallback type for unrecognized UI types.
 
     Will show the client a 'cannot display this UI' placeholder response.
@@ -141,19 +141,19 @@ class UnknownCloudUIResponse(CloudUIResponse):
 
     @override
     @classmethod
-    def get_type_id(cls) -> CloudUIResponseTypeID:
-        return CloudUIResponseTypeID.UNKNOWN
+    def get_type_id(cls) -> DecUIResponseTypeID:
+        return DecUIResponseTypeID.UNKNOWN
 
 
 @ioprepped
 @dataclass
-class CloudUIWebRequest:
-    """Complete data sent for cloud-ui http requests."""
+class DecUIWebRequest:
+    """Complete data sent for dec-ui http requests."""
 
-    #: The wrapped cloud-ui request.
-    cloud_ui_request: Annotated[CloudUIRequest, IOAttrs('r')]
+    #: The wrapped dec-ui request.
+    cloud_ui_request: Annotated[DecUIRequest, IOAttrs('r')]
 
-    #: The current locale of the client. Cloud-ui generally deals in raw
+    #: The current locale of the client. Dec-ui generally deals in raw
     #: strings and expects localization to happen on the server.
     locale: Annotated[Locale, IOAttrs('l')]
 
@@ -164,15 +164,15 @@ class CloudUIWebRequest:
 
 @ioprepped
 @dataclass
-class CloudUIWebResponse:
-    """Complete data returned for cloud-ui http requests."""
+class DecUIWebResponse:
+    """Complete data returned for dec-ui http requests."""
 
     #: Human readable error string (if an error occurs). Either this or
     #: cloud_ui_response should be set; not both.
     error: Annotated[str | None, IOAttrs('e', store_default=False)] = None
 
-    #: Cloud-ui response. Either this or error should be set; not both.
+    #: Dec-ui response. Either this or error should be set; not both.
     cloud_ui_response: Annotated[
-        CloudUIResponse | None,
+        DecUIResponse | None,
         IOAttrs('r', store_default=False),
     ] = None
