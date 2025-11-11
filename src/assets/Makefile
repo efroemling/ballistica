@@ -361,15 +361,15 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/level.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/tournamentbutton.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/credits.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/decui/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/decui/_controller.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/decui/_window.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/decui/v1prep/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/decui/v1prep/_calls.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/decui/v1prep/_calls2.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/decui/v1prep/_types.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/decuitest.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_window.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_calls.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_calls2.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_types.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitest.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/_gather.py \
@@ -480,10 +480,10 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/_clouddialog.py \
   $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/basic.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/decui/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/decui/_decui.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/decui/v1.py \
   $(BUILD_DIR)/ba_data/python/bacommon/displayitem.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/_docui.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/v1.py \
   $(BUILD_DIR)/ba_data/python/bacommon/locale.py \
   $(BUILD_DIR)/ba_data/python/bacommon/loggercontrol.py \
   $(BUILD_DIR)/ba_data/python/bacommon/logging.py \

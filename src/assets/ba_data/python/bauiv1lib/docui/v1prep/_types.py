@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Types used in prepping v1 dec-ui.
+"""Types used in prepping v1 doc-ui.
 
 Prepping involves doing as much math and layout work as possible in a
 pre-pass (generally run in a background thread) so that the actual calls
@@ -16,15 +16,15 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Callable
 
-    import bacommon.decui.v1
+    import bacommon.docui.v1
     import bauiv1
 
-    from bauiv1lib.decui._window import DecUIWindow
+    from bauiv1lib.docui._window import DocUIWindow
 
 
 @dataclass
 class DecorationPrep:
-    """Prep for a decoration in a v1 dec-ui"""
+    """Prep for a decoration in a v1 doc-ui"""
 
     call: Callable[..., bauiv1.Widget]
     textures: dict[str, str]
@@ -34,19 +34,19 @@ class DecorationPrep:
 
 @dataclass
 class ButtonPrep:
-    """Prep for a button in a v1 dec-ui"""
+    """Prep for a button in a v1 doc-ui"""
 
     buttoncall: Callable[..., bauiv1.Widget]
     buttoneditcall: Callable | None
     decorations: list[DecorationPrep]
     textures: dict[str, str]
     widgetid: str
-    action: bacommon.decui.v1.Action | None
+    action: bacommon.docui.v1.Action | None
 
 
 @dataclass
 class RowPrep:
-    """Prep for a row in a v1 dec-ui"""
+    """Prep for a row in a v1 doc-ui"""
 
     width: float
     height: float
@@ -61,7 +61,7 @@ class RowPrep:
 
 @dataclass
 class PagePrep:
-    """Prep for a page in a v1 dec-ui"""
+    """Prep for a page in a v1 doc-ui"""
 
     rootcall: Callable[..., bauiv1.Widget] | None
     rows: list[RowPrep]

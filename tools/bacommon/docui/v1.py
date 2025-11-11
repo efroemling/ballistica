@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Full UIs defined in the cloud - similar to a basic form of html"""
+"""Version 1 doc-ui types."""
 
 from __future__ import annotations
 
@@ -12,16 +12,16 @@ from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
 import bacommon.displayitem as ditm
 import bacommon.clienteffect as clfx
-from bacommon.decui._decui import (
-    DecUIRequest,
-    DecUIRequestTypeID,
-    DecUIResponse,
-    DecUIResponseTypeID,
+from bacommon.docui._docui import (
+    DocUIRequest,
+    DocUIRequestTypeID,
+    DocUIResponse,
+    DocUIResponseTypeID,
 )
 
 
 class RequestMethod(Enum):
-    """Typeof of requests that can be made to dec-ui servers."""
+    """Typeof of requests that can be made to doc-ui servers."""
 
     #: An unknown request method. This can appear if a newer client is
     #: requesting some method from an older server that is not known to
@@ -39,8 +39,8 @@ class RequestMethod(Enum):
 
 @ioprepped
 @dataclass
-class Request(DecUIRequest):
-    """Full request to dec-ui."""
+class Request(DocUIRequest):
+    """Full request to doc-ui."""
 
     path: Annotated[str, IOAttrs('p')]
     method: Annotated[
@@ -53,8 +53,8 @@ class Request(DecUIRequest):
 
     @override
     @classmethod
-    def get_type_id(cls) -> DecUIRequestTypeID:
-        return DecUIRequestTypeID.V1
+    def get_type_id(cls) -> DocUIRequestTypeID:
+        return DocUIRequestTypeID.V1
 
 
 class ActionTypeID(Enum):
@@ -139,7 +139,7 @@ class Browse(Action):
 
     #: Local action to run immediately when the button is pressed. Will
     #: be handled by
-    #: :meth:`bauiv1lib.decui.DecUIController.local_action()`.
+    #: :meth:`bauiv1lib.docui.DocUIController.local_action()`.
     immediate_local_action: Annotated[
         str | None, IOAttrs('a', store_default=False)
     ] = None
@@ -178,7 +178,7 @@ class Replace(Action):
 
     #: Local action to run immediately when the button is pressed. Will
     #: be handled by
-    #: :meth:`bauiv1lib.decui.DecUIController.local_action()`.
+    #: :meth:`bauiv1lib.docui.DocUIController.local_action()`.
     immediate_local_action: Annotated[
         str | None, IOAttrs('a', store_default=False)
     ] = None
@@ -212,7 +212,7 @@ class Local(Action):
 
     #: Local action to run immediately when the button is pressed. Will
     #: be handled by
-    #: :meth:`bauiv1lib.decui.DecUIController.local_action()`.
+    #: :meth:`bauiv1lib.docui.DocUIController.local_action()`.
     immediate_local_action: Annotated[
         str | None, IOAttrs('a', store_default=False)
     ] = None
@@ -314,7 +314,7 @@ class UnknownDecoration(Decoration):
 class Text(Decoration):
     """Text decoration."""
 
-    #: Note that dec-ui accepts only raw :class:`str` values for text;
+    #: Note that doc-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
     text: Annotated[str, IOAttrs('t')]
@@ -435,18 +435,21 @@ class ButtonStyle(Enum):
     MEDIUM = 'm'
     LARGE = 'l'
     LARGER = 'xl'
+    BACK = 'b'
+    BACK_SMALL = 'bs'
+    SQUARE_WIDE = 'w'
 
 
 @ioprepped
 @dataclass
 class Button:
-    """A button in our cloud ui.
+    """A button in our doc-ui.
 
     Note that size, padding, and all decorations are scaled consistently
     with 'scale'.
     """
 
-    #: Note that dec-ui accepts only raw :class:`str` values for text;
+    #: Note that doc-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
     label: Annotated[str | None, IOAttrs('l', store_default=False)] = None
@@ -576,7 +579,7 @@ class ButtonRow(Row):
         list[Decoration] | None, IOAttrs('hdr', store_default=False)
     ] = None
 
-    #: Note that dec-ui accepts only raw :class:`str` values for text;
+    #: Note that doc-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
     title: Annotated[str | None, IOAttrs('t', store_default=False)] = None
@@ -634,9 +637,9 @@ class ButtonRow(Row):
 @ioprepped
 @dataclass
 class Page:
-    """Dec-UI page version 1."""
+    """Doc-UI page version 1."""
 
-    #: Note that dec-ui accepts only raw :class:`str` values for text;
+    #: Note that doc-ui accepts only raw :class:`str` values for text;
     #: use :meth:`babase.Lstr.evaluate()` or whatnot for multi-language
     #: support.
     title: Annotated[str, IOAttrs('t')]
@@ -657,7 +660,7 @@ class Page:
     )
 
     #: Whether the title is a json dict representing an Lstr. Generally
-    #: dec-ui translation should be handled server-side, but this can
+    #: doc-ui translation should be handled server-side, but this can
     #: allow client-side translation.
     title_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
 
@@ -676,8 +679,8 @@ class StatusCode(Enum):
 
 @ioprepped
 @dataclass
-class Response(DecUIResponse):
-    """Full decui response."""
+class Response(DocUIResponse):
+    """Full docui response."""
 
     page: Annotated[Page, IOAttrs('p')]
     status: Annotated[StatusCode, IOAttrs('s', store_default=False)] = (
@@ -696,7 +699,7 @@ class Response(DecUIResponse):
 
     #: Local action to run after this response is initially received.
     #: Will be handled by
-    #: :meth:`bauiv1lib.decui.DecUIController.local_action()`. Note
+    #: :meth:`bauiv1lib.docui.DocUIController.local_action()`. Note
     #: that these actions will not re-run if the page is automatically
     #: refreshed later (due to window resizing, back navigation, etc).
     local_action: Annotated[str | None, IOAttrs('a', store_default=False)] = (
@@ -708,7 +711,7 @@ class Response(DecUIResponse):
 
     #: New overall action to have the client schedule after this response
     #: is received. Useful for redirecting to other pages or closing the
-    #: dec-ui window.
+    #: doc-ui window.
     timed_action: Annotated[
         Action | None, IOAttrs('ta', store_default=False)
     ] = None
@@ -717,7 +720,7 @@ class Response(DecUIResponse):
     ] = 0.0
 
     #: If provided, error on builds older than this (can be used to gate
-    #: functionality without bumping entire decui version).
+    #: functionality without bumping entire docui version).
     minimum_engine_build: Annotated[
         int | None, IOAttrs('b', store_default=False)
     ] = None
@@ -734,5 +737,5 @@ class Response(DecUIResponse):
 
     @override
     @classmethod
-    def get_type_id(cls) -> DecUIResponseTypeID:
-        return DecUIResponseTypeID.V1
+    def get_type_id(cls) -> DocUIResponseTypeID:
+        return DocUIResponseTypeID.V1

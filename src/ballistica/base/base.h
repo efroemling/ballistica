@@ -495,6 +495,7 @@ enum class SysTextureID : uint8_t {
   kSpinner10,
   kSpinner11,
   kCircleSoft,
+  kButtonSquareWide,
 };
 
 enum class SysCubeMapTextureID : uint8_t {
@@ -682,6 +683,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// Run app event loop to completion (only applies to flavors which manage
   /// their own event loop).
   void RunAppToCompletion() override;
+
+  void HandleInterruptSignal() override;
+  void HandleTerminateSignal() override;
 
   auto CurrentContext() -> const ContextRef& {
     assert(InLogicThread());  // Up to caller to ensure this.

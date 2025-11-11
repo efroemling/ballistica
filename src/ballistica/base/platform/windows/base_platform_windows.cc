@@ -48,13 +48,8 @@ void BasePlatformWindows::DoOpenURL(const std::string& url) {
 BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
   switch (fdwCtrlType) {
     case CTRL_C_EVENT:
-      if (g_base && g_base->logic) {
-        g_base->logic->event_loop()->PushCall(
-            [] { g_base->logic->HandleInterruptSignal(); });
-      } else {
-        g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                             "SigInt handler called before g_logic exists.");
-      }
+      // For safety, do nothing but set a simple flag here.
+      g_event_loop_got_ctrl_c = true;
       return TRUE;
 
     default:

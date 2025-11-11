@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Controller functionality for DecUI."""
+"""Controller functionality for DocUI."""
 
 from __future__ import annotations
 
@@ -11,30 +11,30 @@ import weakref
 
 from efro.error import CleanError
 from efro.dataclassio import dataclass_to_json, dataclass_from_json
-from bacommon.decui import (
-    DecUIRequestTypeID,
-    UnknownDecUIRequest,
-    DecUIResponseTypeID,
-    UnknownDecUIResponse,
-    DecUIWebRequest,
-    DecUIWebResponse,
+from bacommon.docui import (
+    DocUIRequestTypeID,
+    UnknownDocUIRequest,
+    DocUIResponseTypeID,
+    UnknownDocUIResponse,
+    DocUIWebRequest,
+    DocUIWebResponse,
 )
 import bauiv1 as bui
 
-from bauiv1lib.decui._window import DecUIWindow
+from bauiv1lib.docui._window import DocUIWindow
 
 if TYPE_CHECKING:
     from typing import Callable
 
-    import bacommon.decui.v1
-    from bacommon.decui import DecUIRequest, DecUIResponse
+    import bacommon.docui.v1
+    from bacommon.docui import DocUIRequest, DocUIResponse
     import bacommon.clienteffect as clfx
 
-    from bauiv1lib.decui import v1prep
+    from bauiv1lib.docui import v1prep
 
 
-class DecUIController:
-    """Manages interactions between DecUI clients and servers.
+class DocUIController:
+    """Manages interactions between DocUI clients and servers.
 
     Can include logic to handle all requests locally or can submit them
     to be handled by some server or can do some combination thereof.
@@ -48,7 +48,7 @@ class DecUIController:
         COMMUNICATION_ERROR = 'communication'
         NEED_UPDATE = 'need_update'
 
-    def fulfill_request(self, request: DecUIRequest) -> DecUIResponse:
+    def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
         """Handle request fulfillment.
 
         Expected to be overridden by child classes.
@@ -68,11 +68,11 @@ class DecUIController:
         """
         raise NotImplementedError()
 
-    def local_action(self, action: DecUILocalAction) -> None:
-        """Do something locally on behalf of the dec-ui.
+    def local_action(self, action: DocUILocalAction) -> None:
+        """Do something locally on behalf of the doc-ui.
 
         Controller classes can override this to expose named actions
-        that can be triggered by dec-ui button presses, responses,
+        that can be triggered by doc-ui button presses, responses,
         etc.
 
         Of course controllers can also perform arbitrary local actions
@@ -80,44 +80,44 @@ class DecUIController:
         to do so without needing to provide actual ui pages alongside.
 
         Be *very* careful and focused with what you expose here,
-        especially if your dec-ui pages are coming from untrusted
+        especially if your doc-ui pages are coming from untrusted
         sources. Generally things like launching or joining games are
         good candidates for local actions.
         """
 
     def fulfill_request_web(
-        self, request: DecUIRequest, url: str
-    ) -> DecUIResponse:
+        self, request: DocUIRequest, url: str
+    ) -> DocUIResponse:
         """Fulfill a request by sending it to a webserver."""
-        import bacommon.decui.v1 as dui1
+        import bacommon.docui.v1 as dui1
 
         import urllib3.util
 
         if not isinstance(request, dui1.Request):
-            raise RuntimeError(f'Unsupported decui request: {type(request)}')
+            raise RuntimeError(f'Unsupported docui request: {type(request)}')
 
         upool = bui.app.net.urllib3pool
 
         # Allow compressed results.
         headers = urllib3.util.make_headers(accept_encoding=True)
 
-        # Bundle our dec-ui request with some extra stuff that might
+        # Bundle our doc-ui request with some extra stuff that might
         # be relevant to a remote server (language we're using, etc.).
-        webrequest = DecUIWebRequest(
-            dec_ui_request=request,
+        webrequest = DocUIWebRequest(
+            doc_ui_request=request,
             locale=bui.app.locale.current_locale,
             engine_build_number=bui.app.env.engine_build_number,
         )
 
         try:
-            # Map decui GET requests to http GET and POST to POST.
+            # Map docui GET requests to http GET and POST to POST.
             if request.method is dui1.RequestMethod.GET:
                 # For GET we embed the request into a url param.
                 raw_response = upool.request(
                     'GET',
                     url,
                     fields={
-                        'dec_ui_web_request': dataclass_to_json(webrequest)
+                        'doc_ui_web_request': dataclass_to_json(webrequest)
                     },
                     headers=headers,
                 )
@@ -141,21 +141,21 @@ class DecUIController:
                 # that we don't know about will come through as
                 # 'Unknown' types instead of erroring completely.
                 webresponse = dataclass_from_json(
-                    DecUIWebResponse, raw_response.data.decode(), lossy=True
+                    DocUIWebResponse, raw_response.data.decode(), lossy=True
                 )
                 if (
                     webresponse.error is None
-                    and webresponse.dec_ui_response is None
+                    and webresponse.doc_ui_response is None
                 ):
                     raise RuntimeError(
                         'Invalid webresponse includes neither error'
-                        ' nor dec-ui-response.'
+                        ' nor doc-ui-response.'
                     )
             except Exception as exc:
                 bui.netlog.info(
-                    'Error reading decui web-response.', exc_info=True
+                    'Error reading docui web-response.', exc_info=True
                 )
-                raise RuntimeError('Error reading decui web-response.') from exc
+                raise RuntimeError('Error reading docui web-response.') from exc
 
             # For now, show all http errors as communication error. We
             # can probably get more specific in the future.
@@ -164,21 +164,21 @@ class DecUIController:
                 # If the response bundled an error, log it.
                 if webresponse.error is not None:
                     bui.netlog.info(
-                        'dec-ui http request returned error: %s',
+                        'doc-ui http request returned error: %s',
                         webresponse.error,
                     )
                 return self.error_response(self.ErrorType.COMMUNICATION_ERROR)
 
         except Exception:
-            bui.netlog.info('Error in decui http request.', exc_info=True)
+            bui.netlog.info('Error in docui http request.', exc_info=True)
             return self.error_response(self.ErrorType.GENERIC)
 
-        assert webresponse.dec_ui_response is not None
-        return webresponse.dec_ui_response
+        assert webresponse.doc_ui_response is not None
+        return webresponse.doc_ui_response
 
     def fulfill_request_cloud(
-        self, request: DecUIRequest, domain: str
-    ) -> DecUIResponse:
+        self, request: DocUIRequest, domain: str
+    ) -> DocUIResponse:
         """Fulfill a request by sending it to ballistica's cloud.
 
         :meta private:
@@ -194,17 +194,17 @@ class DecUIController:
             if account is not None:
                 with account:
                     mresponse = plus.cloud.send_message(
-                        bacommon.cloud.FulfillDecUIRequest(
+                        bacommon.cloud.FulfillDocUIRequest(
                             request=request, domain=domain
                         )
                     )
             else:
                 mresponse = plus.cloud.send_message(
-                    bacommon.cloud.FulfillDecUIRequest(
+                    bacommon.cloud.FulfillDocUIRequest(
                         request=request, domain=domain
                     )
                 )
-            assert isinstance(mresponse, bacommon.cloud.FulfillDecUIResponse)
+            assert isinstance(mresponse, bacommon.cloud.FulfillDocUIResponse)
 
             return mresponse.response
         except Exception:
@@ -214,7 +214,7 @@ class DecUIController:
         self,
         error_type: ErrorType = ErrorType.GENERIC,
         custom_message: str | None = None,
-    ) -> DecUIResponse:
+    ) -> DocUIResponse:
         """Build a simple error message page.
 
         A message is included based on ``error_type``. Pass
@@ -223,7 +223,7 @@ class DecUIController:
         Messages will be translated to the client language using the
         'serverResponses' Lstr translation category.
         """
-        import bacommon.decui.v1 as dui1
+        import bacommon.docui.v1 as dui1
 
         error_msg: bui.Lstr | None = None
         error_msg_simple: str | None = None
@@ -289,16 +289,16 @@ class DecUIController:
 
     def create_window(
         self,
-        request: DecUIRequest,
+        request: DocUIRequest,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
-    ) -> DecUIWindow:
+    ) -> DocUIWindow:
         """Create a new window to handle a request."""
         assert bui.in_logic_thread()
 
         # Create a shiny new window.
-        win = DecUIWindow(
+        win = DocUIWindow(
             self,
             request,
             transition=transition,
@@ -323,23 +323,34 @@ class DecUIController:
         )
         return win
 
+    @classmethod
+    def get_window_extra_type_id(cls) -> str:
+        """Return a string suitable for the ``window_extra_type_id`` arg to
+        :meth:`~bauiv1.UIV1AppSubsystem.auxiliary_window_activate()`.
+
+        This ensures your doc-ui window is identified distinctly from
+        other doc-ui windows for navigation purposes.
+        """
+        # Include the full path of our controller class.
+        return f'docui:{cls.__module__}.{cls.__qualname__}'
+
     def restore(
         self,
-        win: DecUIWindow,
+        win: DocUIWindow,
         *,
-        last_response: DecUIResponse | None,
-    ) -> DecUIWindow:
+        last_response: DocUIResponse | None,
+    ) -> DocUIWindow:
         """Restore a window from previous state.
 
         May immediately display old results or may kick off a new
         request.
         """
-        import bacommon.decui.v1 as dui1
+        import bacommon.docui.v1 as dui1
 
         assert bui.in_logic_thread()
 
-        explicit_response: DecUIResponse | None = None
-        explicit_error: DecUIController.ErrorType | None = None
+        explicit_response: DocUIResponse | None = None
+        explicit_error: DocUIController.ErrorType | None = None
 
         if last_response is not None:
             # Re-prep our restored response so we have something to show
@@ -388,14 +399,14 @@ class DecUIController:
 
     def replace(
         self,
-        win: DecUIWindow,
-        request: DecUIRequest,
+        win: DocUIWindow,
+        request: DocUIRequest,
         *,
         origin_widget: bui.Widget | None = None,
         is_refresh: bool = False,
     ) -> None:
         """Kick off a request to replace existing window contents."""
-        import bacommon.decui.v1 as dui1
+        import bacommon.docui.v1 as dui1
 
         assert bui.in_logic_thread()
 
@@ -403,7 +414,7 @@ class DecUIController:
 
         requesttype = request.get_type_id()
 
-        if requesttype is DecUIRequestTypeID.V1:
+        if requesttype is DocUIRequestTypeID.V1:
             assert isinstance(win.request, dui1.Request)
 
             self._set_win_state(
@@ -429,8 +440,8 @@ class DecUIController:
                     immediate=True,
                 )
             )
-        elif requesttype is DecUIRequestTypeID.UNKNOWN:
-            assert isinstance(win.request, UnknownDecUIRequest)
+        elif requesttype is DocUIRequestTypeID.UNKNOWN:
+            assert isinstance(win.request, UnknownDocUIRequest)
             # Got a request type we don't know. Show a 'need a newer
             # build' error.
 
@@ -456,16 +467,16 @@ class DecUIController:
 
     def run_action(
         self,
-        window: DecUIWindow,
+        window: DocUIWindow,
         widgetid: str | None,
-        action: bacommon.decui.v1.Action | None,
+        action: bacommon.docui.v1.Action | None,
         is_timed: bool = False,
     ) -> None:
         """Called when a button is pressed in a v1 ui."""
         # pylint: disable=too-many-branches
         # pylint: disable=cyclic-import
 
-        import bacommon.decui.v1 as dui
+        import bacommon.docui.v1 as dui
 
         assert bui.in_logic_thread()
 
@@ -481,7 +492,7 @@ class DecUIController:
             widget = bui.widget_by_id(widgetid)
             if widget is None:
                 bui.uilog.warning(
-                    'DecUI button press widget not found: %s (not expected)',
+                    'DocUI button press widget not found: %s (not expected)',
                     widgetid,
                 )
                 return
@@ -582,7 +593,7 @@ class DecUIController:
         local_action: str | None,
         local_action_args: dict | None,
         widget: bui.Widget | None,
-        window: DecUIWindow,
+        window: DocUIWindow,
         is_timed: bool,
     ) -> None:
         # We don't allow timed actions to trigger immediate
@@ -607,7 +618,7 @@ class DecUIController:
         if local_action is not None:
             try:
                 self.local_action(
-                    DecUILocalAction(
+                    DocUILocalAction(
                         name=local_action,
                         args=(
                             {}
@@ -633,26 +644,26 @@ class DecUIController:
         ERRORED = 3
         IDLE = 4
 
-    def _get_win_state(self, window: DecUIWindow) -> _WinState:
+    def _get_win_state(self, window: DocUIWindow) -> _WinState:
         val = getattr(window, '_cstate')
         assert isinstance(val, self._WinState)
         return val
 
-    def _set_win_state(self, window: DecUIWindow, state: _WinState) -> None:
+    def _set_win_state(self, window: DocUIWindow, state: _WinState) -> None:
         setattr(window, '_cstate', state)
 
     def _process_request_in_bg(
         self,
-        request: DecUIRequest,
+        request: DocUIRequest,
         *,
-        weakwin: weakref.ref[DecUIWindow],
+        weakwin: weakref.ref[DocUIWindow],
         uiscale: bui.UIScale,
         scroll_width: float,
         scroll_height: float,
         idprefix: str,
         immediate: bool,
         explicit_error: ErrorType | None = None,
-        explicit_response: DecUIResponse | None = None,
+        explicit_response: DocUIResponse | None = None,
     ) -> None:
         """Wrangle a request from within a background thread.
 
@@ -660,13 +671,13 @@ class DecUIController:
         """
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
-        import bacommon.decui.v1 as dui1
-        from bauiv1lib.decui import v1prep
+        import bacommon.docui.v1 as dui1
+        from bauiv1lib.docui import v1prep
 
         assert not bui.in_logic_thread()
 
-        response: DecUIResponse | None = None
-        error: DecUIController.ErrorType | None = None
+        response: DocUIResponse | None = None
+        error: DocUIController.ErrorType | None = None
 
         if explicit_error is not None:
             error = explicit_error
@@ -696,7 +707,7 @@ class DecUIController:
             assert error is None
             responsetype = response.get_type_id()
 
-            if responsetype is DecUIResponseTypeID.V1:
+            if responsetype is DocUIResponseTypeID.V1:
 
                 assert isinstance(response, dui1.Response)
 
@@ -722,16 +733,16 @@ class DecUIController:
                     #     row.buttons for row in response.page.rows
                     # ):
                     #     bui.uilog.exception(
-                    #         'Got invalid dec-ui response;'
+                    #         'Got invalid doc-ui response;'
                     #         ' page must contain at least one row'
                     #         ' and all rows must contain buttons.'
                     #     )
                     #     error = self.ErrorType.GENERIC
 
-            elif responsetype is DecUIResponseTypeID.UNKNOWN:
-                assert isinstance(response, UnknownDecUIResponse)
+            elif responsetype is DocUIResponseTypeID.UNKNOWN:
+                assert isinstance(response, UnknownDocUIResponse)
                 bui.uilog.debug(
-                    'Got unsupported decui response.', exc_info=True
+                    'Got unsupported docui response.', exc_info=True
                 )
                 error = self.ErrorType.NEED_UPDATE
                 response = None
@@ -771,11 +782,11 @@ class DecUIController:
 
     def _handle_response_in_ui_thread(
         self,
-        response: DecUIResponse,
-        weakwin: weakref.ref[DecUIWindow],
+        response: DocUIResponse,
+        weakwin: weakref.ref[DocUIWindow],
         pageprep: v1prep.PagePrep,
     ) -> None:
-        import bacommon.decui.v1 as dui1
+        import bacommon.docui.v1 as dui1
 
         assert bui.in_logic_thread()
 
@@ -808,7 +819,7 @@ class DecUIController:
             if response.local_action is not None:
                 try:
                     self.local_action(
-                        DecUILocalAction(
+                        DocUILocalAction(
                             name=response.local_action,
                             args=(
                                 {}
@@ -853,9 +864,9 @@ class DecUIController:
             assert_never(state)
 
     def _set_idle_and_schedule_timed_action(
-        self, response: DecUIResponse, weakwin: weakref.ref[DecUIWindow]
+        self, response: DocUIResponse, weakwin: weakref.ref[DocUIWindow]
     ) -> None:
-        import bacommon.decui.v1 as dui1
+        import bacommon.docui.v1 as dui1
 
         win = weakwin()
         assert win is not None
@@ -878,8 +889,8 @@ class DecUIController:
 
     def _run_timed_action(
         self,
-        weakwin: weakref.ref[DecUIWindow],
-        action: bacommon.decui.v1.Action,
+        weakwin: weakref.ref[DocUIWindow],
+        action: bacommon.docui.v1.Action,
     ) -> None:
         # If our target window died since we set this timer, no biggie.
         win = weakwin()
@@ -896,10 +907,10 @@ class DecUIController:
 
 
 @dataclass
-class DecUILocalAction:
+class DocUILocalAction:
     """Context for a local-action."""
 
     name: str
     args: dict
     widget: bui.Widget | None
-    window: DecUIWindow
+    window: DocUIWindow

@@ -181,6 +181,7 @@ void Assets::StartLoading() {
   LoadSystemTexture(SysTextureID::kSpinner10, "spinner10");
   LoadSystemTexture(SysTextureID::kSpinner11, "spinner11");
   LoadSystemTexture(SysTextureID::kCircleSoft, "circleSoft");
+  LoadSystemTexture(SysTextureID::kButtonSquareWide, "buttonSquareWide");
 
   // System cube map textures:
   LoadSystemCubeMapTexture(SysCubeMapTextureID::kReflectionChar,

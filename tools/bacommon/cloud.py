@@ -19,7 +19,7 @@ from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.securedata import SecureDataChecker
 from bacommon.transfer import DirectoryManifest
 from bacommon.login import LoginType
-from bacommon.decui import DecUIRequest, DecUIResponse
+from bacommon.docui import DocUIRequest, DocUIResponse
 import bacommon.displayitem as ditm
 import bacommon.clienteffect as clfx
 
@@ -435,21 +435,21 @@ class ChestActionResponse(Response):
 
 @ioprepped
 @dataclass
-class FulfillDecUIRequest(Message):
-    """Can a fella get a dec-ui round here?"""
+class FulfillDocUIRequest(Message):
+    """Can a fella get a doc-ui round here?"""
 
-    request: Annotated[DecUIRequest, IOAttrs('r')]
+    request: Annotated[DocUIRequest, IOAttrs('r')]
     domain: Annotated[str, IOAttrs('d')]
 
     @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
-        return [FulfillDecUIResponse]
+        return [FulfillDocUIResponse]
 
 
 @ioprepped
 @dataclass
-class FulfillDecUIResponse(Response):
-    """Here's that dec-ui you asked for, boss."""
+class FulfillDocUIResponse(Response):
+    """Here's that doc-ui you asked for, boss."""
 
-    response: Annotated[DecUIResponse, IOAttrs('r')]
+    response: Annotated[DocUIResponse, IOAttrs('r')]

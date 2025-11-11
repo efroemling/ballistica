@@ -1,4 +1,4 @@
-### 1.7.54 (build 22621, api 9, 2025-11-10)
+### 1.7.54 (build 22625, api 9, 2025-11-10)
 - `scrollwidget` and `hscrollwidget` now center selected items that are too
   large to fit completely in view instead of unpredictably scrolling to the
   beginning or end of them. This makes show-buffer values (which effectively
@@ -7,15 +7,24 @@
   'large', and 'larger'. These correspond to the styles that are normally
   selected based on button dimensions; you can now choose them explicitly if you
   like.
-- Added `DecUI` (short for Declarative UI) - a high level layer built on top of
+- Added `DocUI` (short for Declarative UI) - a high level layer built on top of
   `bauiv1` which allows defining a UI as a dataclass structure. This system aims
   to makes it easier to create elegant 'bullet-proof' UIs that work at any UI
   scale and also makes it possible to serve UIs through a webserver or other
   means. Originally this was called `CloudUI` due to that feature being my
-  primary motivation for making it, but I renamed it to `DecUI` after feedback
+  primary motivation for making it, but I renamed it to `DocUI` after feedback
   and further thought. I want it to be clear that it is also useful for purely
-  local UI creation; not just cloud based stuff. To learn more, poke the `DecUI
+  local UI creation; not just cloud based stuff. To learn more, poke the `DocUI
   Test` button in the `UI` dev-console tab.
+- Added a `better_bg_fit` arg to `bauiv1.buttonwidget()`. When set to True,
+  button widgets do a better job of fitting their background images to their
+  widget bounds. The old fitting code did not scale consistently, meaning a
+  200x50 size button might fit button bounds nicely while a 400x100 button would
+  not. With this new setting, scaling is consistent and tightly calibrated to
+  fit bounds. It is enabled by default for doc-ui buttons. See the 'Bounds
+  Tests' page in the dev-console's doc-ui test page for more.
+- Added a 'squareWide' `button_type` option in `bauiv1.buttonwidget()` and a
+  corresponding `ButtonType.SQUARE_WIDE` in doc-ui.
   
 ### 1.7.53 (build 22597, api 9, 2025-10-25)
 - Fixes an issue where deleting player profiles would error.

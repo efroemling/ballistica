@@ -251,8 +251,11 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
 
       float l_border, r_border, b_border, t_border;
+      float bg_scale_center_x, bg_scale_center_y;
+      float bg_scale_x, bg_scale_y;
 
-      bool do_draw = true;
+      bool do_draw{true};
+      bool do_draw_better_fit{};
 
       base::MeshAsset* mesh;
 
@@ -280,6 +283,17 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         }
         l_border = r_border = 0.04f * width_;
         b_border = t_border = 0.04f * height_;
+
+        if (better_bg_fit_) {
+          // Just fit exactly to the widget bounds. If we need adjustments
+          // we can expose args.
+          bg_scale_center_x = 0.5f;
+          bg_scale_center_y = 0.5f;
+          bg_scale_x = 1.0f;
+          bg_scale_y = 1.0f;
+          do_draw_better_fit = true;
+        }
+
       } else {
         // Standard button texture.
         base::SysMeshID mesh_id;
@@ -303,10 +317,18 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             tex_id = base::SysTextureID::kUIAtlas;
             mesh_id = draw_transparent ? base::SysMeshID::kButtonBackTransparent
                                        : base::SysMeshID::kButtonBackOpaque;
-            l_border = 10;
-            r_border = 6;
-            b_border = 6;
-            t_border = -1;
+            if (better_bg_fit_) {
+              bg_scale_center_x = 0.523f;
+              bg_scale_center_y = 0.46f;
+              bg_scale_x = 1.01f;
+              bg_scale_y = 1.2f;
+              do_draw_better_fit = true;
+            } else {
+              l_border = 10;
+              r_border = 6;
+              b_border = 6;
+              t_border = -1;
+            }
             break;
           }
           case Style::kBackSmall: {
@@ -314,20 +336,36 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_id = draw_transparent
                           ? base::SysMeshID::kButtonBackSmallTransparent
                           : base::SysMeshID::kButtonBackSmallOpaque;
-            l_border = 10;
-            r_border = 14;
-            b_border = 9;
-            t_border = 5;
+            if (better_bg_fit_) {
+              bg_scale_center_x = 0.624f;
+              bg_scale_center_y = 0.488f;
+              bg_scale_x = 1.35f;
+              bg_scale_y = 1.28f;
+              do_draw_better_fit = true;
+            } else {
+              l_border = 10;
+              r_border = 14;
+              b_border = 9;
+              t_border = 5;
+            }
             break;
           }
           case Style::kTab: {
             tex_id = base::SysTextureID::kUIAtlas2;
             mesh_id = draw_transparent ? base::SysMeshID::kButtonTabTransparent
                                        : base::SysMeshID::kButtonTabOpaque;
-            l_border = 6;
-            r_border = 10;
-            b_border = 5;
-            t_border = 2;
+            if (better_bg_fit_) {
+              bg_scale_center_x = 0.5f;
+              bg_scale_center_y = 0.5f;
+              bg_scale_x = 1.04f;
+              bg_scale_y = 1.1f;
+              do_draw_better_fit = true;
+            } else {
+              l_border = 6;
+              r_border = 10;
+              b_border = 5;
+              t_border = 2;
+            }
             break;
           }
           case Style::kSquare: {
@@ -335,10 +373,32 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_id = draw_transparent
                           ? base::SysMeshID::kButtonSquareTransparent
                           : base::SysMeshID::kButtonSquareOpaque;
-            l_border = 6;
-            r_border = 9;
-            b_border = 6;
-            t_border = 6;
+            if (better_bg_fit_) {
+              bg_scale_center_x = 0.521f;
+              bg_scale_center_y = 0.495f;
+              bg_scale_x = 1.155f;
+              bg_scale_y = 1.169f;
+              do_draw_better_fit = true;
+            } else {
+              l_border = 6;
+              r_border = 9;
+              b_border = 6;
+              t_border = 6;
+            }
+
+            break;
+          }
+          case Style::kSquareWide: {
+            tex_id = base::SysTextureID::kButtonSquareWide;
+            mesh_id = base::SysMeshID::kImage1x1;
+            do_draw = draw_transparent;
+
+            bg_scale_center_x = 0.505f;
+            bg_scale_center_y = 0.49f;
+            bg_scale_x = 1.06f;
+            bg_scale_y = 1.17f;
+            do_draw_better_fit = true;
+
             break;
           }
           case Style::kLarger: {
@@ -346,10 +406,18 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_id = draw_transparent
                           ? base::SysMeshID::kButtonLargerTransparent
                           : base::SysMeshID::kButtonLargerOpaque;
-            l_border = 7;
-            r_border = 11;
-            b_border = 10;
-            t_border = 4;
+            if (better_bg_fit_) {
+              bg_scale_center_x = 0.506f;
+              bg_scale_center_y = 0.47f;
+              bg_scale_x = 1.055f;
+              bg_scale_y = 1.27f;
+              do_draw_better_fit = true;
+            } else {
+              l_border = 7;
+              r_border = 11;
+              b_border = 10;
+              t_border = 4;
+            }
             break;
           }
           case Style::kLarge: {
@@ -357,10 +425,18 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_id = draw_transparent
                           ? base::SysMeshID::kButtonLargeTransparent
                           : base::SysMeshID::kButtonLargeOpaque;
-            l_border = 7;
-            r_border = 10;
-            b_border = 10;
-            t_border = 5;
+            if (better_bg_fit_) {
+              bg_scale_center_x = 0.503f;
+              bg_scale_center_y = 0.452f;
+              bg_scale_x = 1.06f;
+              bg_scale_y = 1.22f;
+              do_draw_better_fit = true;
+            } else {
+              l_border = 7;
+              r_border = 10;
+              b_border = 10;
+              t_border = 5;
+            }
             break;
           }
           case Style::kMedium: {
@@ -368,10 +444,19 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_id = draw_transparent
                           ? base::SysMeshID::kButtonMediumTransparent
                           : base::SysMeshID::kButtonMediumOpaque;
-            l_border = 6;
-            r_border = 10;
-            b_border = 5;
-            t_border = 2;
+            if (better_bg_fit_) {
+              bg_scale_center_x = 0.5f;
+              bg_scale_center_y = 0.48f;
+              bg_scale_x = 1.05f;
+              bg_scale_y = 1.16f;
+              do_draw_better_fit = true;
+            } else {
+              l_border = 6;
+              r_border = 10;
+              b_border = 5;
+              t_border = 2;
+            }
+
             break;
           }
 
@@ -381,10 +466,18 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             mesh_id = draw_transparent
                           ? base::SysMeshID::kButtonSmallTransparent
                           : base::SysMeshID::kButtonSmallOpaque;
-            l_border = 10;
-            r_border = 14;
-            b_border = 9;
-            t_border = 5;
+            if (better_bg_fit_) {
+              bg_scale_center_x = 0.5f;
+              bg_scale_center_y = 0.49f;
+              bg_scale_x = 1.158f;
+              bg_scale_y = 1.16f;
+              do_draw_better_fit = true;
+            } else {
+              l_border = 10;
+              r_border = 14;
+              b_border = 9;
+              t_border = 5;
+            }
             break;
           }
         }
@@ -392,11 +485,24 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         mesh = g_base->assets->SysMesh(mesh_id);
       }
       if (do_draw) {
-        auto xf = c.ScopedTransform();
-        c.Translate((l - l_border + r + r_border) * 0.5f + extra_offs_x,
-                    (b - b_border + t + t_border) * 0.5f + extra_offs_y, 0);
-        c.Scale(r - l + l_border + r_border, t - b + b_border + t_border, 1.0f);
-        c.DrawMeshAsset(mesh);
+        if (do_draw_better_fit) {
+          // This math scales properly with widget size.
+          auto xf = c.ScopedTransform();
+          c.Translate(l + bg_scale_center_x * (r - l) + extra_offs_x,
+                      b + bg_scale_center_y * (t - b) + extra_offs_y, 0);
+          c.Scale((r - l) * bg_scale_x, (t - b) * bg_scale_y, 1.0f);
+          c.DrawMeshAsset(mesh);
+        } else {
+          // This math is old and dumb and scales wonky, meaning bigger
+          // widgets need different spacing. Ew. Leaving it for backwards
+          // compat though.
+          auto xf = c.ScopedTransform();
+          c.Translate((l - l_border + r + r_border) * 0.5f + extra_offs_x,
+                      (b - b_border + t + t_border) * 0.5f + extra_offs_y, 0);
+          c.Scale(r - l + l_border + r_border, t - b + b_border + t_border,
+                  1.0f);
+          c.DrawMeshAsset(mesh);
+        }
       }
 
       // Draw icon.
@@ -464,7 +570,11 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       // Special case - fudge text centering for small back buttons.
       if (style_ == Style::kBackSmall) {
-        c.Translate(width_ * 0.4f, height_ * 0.48f);
+        if (better_bg_fit_) {
+          c.Translate(width_ * 0.55, height_ * 0.5f);
+        } else {
+          c.Translate(width_ * 0.4f, height_ * 0.48f);
+        }
       } else {
         c.Translate(width_ * 0.5f, height_ * 0.5f);
       }

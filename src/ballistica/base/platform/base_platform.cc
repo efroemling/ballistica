@@ -193,24 +193,12 @@ void BasePlatform::DoOverlayWebBrowserClose() {
 
 #if !BA_PLATFORM_WINDOWS
 static void HandleSIGINT(int s) {
-  if (g_base && g_base->logic->event_loop()) {
-    g_base->logic->event_loop()->PushCall(
-        [] { g_base->logic->HandleInterruptSignal(); });
-  } else {
-    g_core->logging->Log(
-        LogName::kBa, LogLevel::kError,
-        "SigInt handler called before g_base->logic->event_loop exists.");
-  }
+  // For safety, do nothing but set a simple flag here.
+  g_event_loop_got_sigint = 1;
 }
 static void HandleSIGTERM(int s) {
-  if (g_base && g_base->logic->event_loop()) {
-    g_base->logic->event_loop()->PushCall(
-        [] { g_base->logic->HandleTerminateSignal(); });
-  } else {
-    g_core->logging->Log(
-        LogName::kBa, LogLevel::kError,
-        "SigInt handler called before g_base->logic->event_loop exists.");
-  }
+  // For safety, do nothing but set a simple flag here.
+  g_event_loop_got_sigterm = 1;
 }
 #endif
 

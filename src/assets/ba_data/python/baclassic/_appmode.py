@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Contains ClassicAppMode."""
 
 from __future__ import annotations
@@ -799,15 +800,32 @@ class ClassicAppMode(AppMode):
         )
 
     def _root_ui_inventory_press(self) -> None:
-        from bauiv1lib.inventory import InventoryWindow
+        self._do_intentory_new()
+
+    def _do_intentory_old(self) -> None:
+        from bauiv1lib.inventory import OldInventoryWindow
 
         if not self._ensure_signed_in_v1():
             return
 
         bui.app.ui_v1.auxiliary_window_activate(
-            win_type=InventoryWindow,
-            win_create_call=lambda: InventoryWindow(
+            win_type=OldInventoryWindow,
+            win_create_call=lambda: OldInventoryWindow(
                 origin_widget=bui.get_special_widget('inventory_button')
+            ),
+        )
+
+    def _do_intentory_new(self) -> None:
+        import bacommon.docui.v1 as dui1
+
+        from bauiv1lib.docui import DocUIWindow
+        from bauiv1lib.inventory import InventoryController
+
+        # Pop up an auxiliary window wherever we are in the nav stack.
+        bui.app.ui_v1.auxiliary_window_activate(
+            win_type=DocUIWindow,
+            win_create_call=bui.CallStrict(
+                InventoryController().create_window, dui1.Request('/')
             ),
         )
 
@@ -849,12 +867,12 @@ class ClassicAppMode(AppMode):
         )
 
     def _root_ui_chest_slot_pressed(self, index: int) -> None:
-        from bauiv1lib.chest import (
-            ChestWindow0,
-            ChestWindow1,
-            ChestWindow2,
-            ChestWindow3,
-        )
+        from bauiv1lib.chest import ChestWindow
+
+        #     ChestWindow1,
+        #     ChestWindow2,
+        #     ChestWindow3,
+        # )
 
         widgetid: Literal[
             'chest_0_button',
@@ -865,16 +883,20 @@ class ClassicAppMode(AppMode):
         winclass: type[ChestWindow]
         if index == 0:
             widgetid = 'chest_0_button'
-            winclass = ChestWindow0
+            winclass = ChestWindow
+            extratypeid = '0'
         elif index == 1:
             widgetid = 'chest_1_button'
-            winclass = ChestWindow1
+            winclass = ChestWindow
+            extratypeid = '1'
         elif index == 2:
             widgetid = 'chest_2_button'
-            winclass = ChestWindow2
+            winclass = ChestWindow
+            extratypeid = '2'
         elif index == 3:
             widgetid = 'chest_3_button'
-            winclass = ChestWindow3
+            winclass = ChestWindow
+            extratypeid = '3'
         else:
             raise RuntimeError(f'Invalid index {index}')
 
@@ -885,6 +907,7 @@ class ClassicAppMode(AppMode):
                     index=index,
                     origin_widget=bui.get_special_widget(widgetid),
                 ),
+                win_extra_type_id=extratypeid,
             )
         )
 
@@ -955,7 +978,7 @@ class ClassicAppMode(AppMode):
                 bui.WeakCallStrict(self._main_win_template_press),
             ),
             bui.DevConsoleButtonDef(
-                'DecUI Test', bui.WeakCallStrict(self._dec_ui_test_press)
+                'DocUI Test', bui.WeakCallStrict(self._doc_ui_test_press)
             ),
         ]
 
@@ -969,12 +992,12 @@ class ClassicAppMode(AppMode):
 
         show_template_main_window()
 
-    def _dec_ui_test_press(self) -> None:
-        from bauiv1lib.decuitest import show_test_dec_ui_window
+    def _doc_ui_test_press(self) -> None:
+        from bauiv1lib.docuitest import show_test_doc_ui_window
 
         # Unintuitively, swish sounds come from buttons, not windows.
         # And dev-console buttons don't make sounds. So we need to
         # explicitly do so here.
         bui.getsound('swish').play()
 
-        show_test_dec_ui_window()
+        show_test_doc_ui_window()

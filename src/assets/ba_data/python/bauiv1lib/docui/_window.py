@@ -8,25 +8,25 @@ from typing import TYPE_CHECKING, override, assert_never
 
 import bauiv1 as bui
 
-from bacommon.decui import DecUIRequestTypeID, DecUIResponseTypeID
+from bacommon.docui import DocUIRequestTypeID, DocUIResponseTypeID
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 
 if TYPE_CHECKING:
     from typing import Callable
 
-    from bacommon.decui import DecUIRequest, DecUIResponse
-    import bacommon.decui.v1
-    from bauiv1lib.decui._controller import DecUIController
-    from bauiv1lib.decui import v1prep
+    from bacommon.docui import DocUIRequest, DocUIResponse
+    import bacommon.docui.v1
+    from bauiv1lib.docui._controller import DocUIController
+    from bauiv1lib.docui import v1prep
 
 
-class DecUIWindow(bui.MainWindow):
-    """UI provided by the cloud."""
+class DocUIWindow(bui.MainWindow):
+    """Window showing doc-ui content."""
 
     def __init__(
         self,
-        controller: DecUIController,
-        request: DecUIRequest,
+        controller: DocUIController,
+        request: DocUIRequest,
         *,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
@@ -47,7 +47,7 @@ class DecUIWindow(bui.MainWindow):
         self._request = request
         self._request_state_id = self._default_state_id(request)
 
-        self._last_response: DecUIResponse | None = None
+        self._last_response: DocUIResponse | None = None
         self._last_response_success: bool = False
         self._last_response_shared_state_id: str | None = None
 
@@ -258,7 +258,7 @@ class DecUIWindow(bui.MainWindow):
         self._spinner: bui.Widget | None = None
 
     @property
-    def request(self) -> DecUIRequest:
+    def request(self) -> DocUIRequest:
         """The current request.
 
         Should only be accessed from the logic thread while the ui is
@@ -270,7 +270,7 @@ class DecUIWindow(bui.MainWindow):
         return self._request
 
     @request.setter
-    def request(self, request: DecUIRequest) -> None:
+    def request(self, request: DocUIRequest) -> None:
         assert bui.in_logic_thread()
         self._request = request
         self._request_state_id = self._default_state_id(request)
@@ -281,16 +281,16 @@ class DecUIWindow(bui.MainWindow):
         self._last_response_shared_state_id = None
 
     @classmethod
-    def _default_state_id(cls, request: DecUIRequest) -> str:
+    def _default_state_id(cls, request: DocUIRequest) -> str:
         """Calc a default state id for a request."""
         requesttypeid = request.get_type_id()
-        if requesttypeid is DecUIRequestTypeID.V1:
-            import bacommon.decui.v1 as dui1
+        if requesttypeid is DocUIRequestTypeID.V1:
+            import bacommon.docui.v1 as dui1
 
             # One state per path seems like a reasonable default.
             assert isinstance(request, dui1.Request)
             return request.path
-        if requesttypeid is DecUIRequestTypeID.UNKNOWN:
+        if requesttypeid is DocUIRequestTypeID.UNKNOWN:
             return 'unknown'
         assert_never(requesttypeid)
 
@@ -350,7 +350,7 @@ class DecUIWindow(bui.MainWindow):
         """Height of our scroll area."""
         return self._scroll_height
 
-    def set_last_response(self, response: DecUIResponse, success: bool) -> None:
+    def set_last_response(self, response: DocUIResponse, success: bool) -> None:
         """Set a response to a request."""
         assert bui.in_logic_thread()
         assert not self._locked
@@ -359,12 +359,12 @@ class DecUIWindow(bui.MainWindow):
 
         # Grab any custom shared-state-id included in this response.
         responsetypeid = response.get_type_id()
-        if responsetypeid is DecUIResponseTypeID.V1:
-            import bacommon.decui.v1 as dui1
+        if responsetypeid is DocUIResponseTypeID.V1:
+            import bacommon.docui.v1 as dui1
 
             assert isinstance(response, dui1.Response)
             self._last_response_shared_state_id = response.shared_state_id
-        elif responsetypeid is DecUIResponseTypeID.UNKNOWN:
+        elif responsetypeid is DocUIResponseTypeID.UNKNOWN:
             self._last_response_shared_state_id = None
         else:
             assert_never(responsetypeid)
@@ -374,8 +374,8 @@ class DecUIWindow(bui.MainWindow):
 
         :meta private:
         """
-        from bauiv1lib.decui.v1prep._calls import (
-            dec_ui_v1_instantiate_page_prep,
+        from bauiv1lib.docui.v1prep._calls import (
+            doc_ui_v1_instantiate_page_prep,
         )
 
         assert bui.in_logic_thread()
@@ -400,7 +400,7 @@ class DecUIWindow(bui.MainWindow):
                 simple_culling_v=pageprep.simple_culling_v,
                 center_small_content=(pageprep.center_vertically),
             )
-            self._subcontainer = dec_ui_v1_instantiate_page_prep(
+            self._subcontainer = doc_ui_v1_instantiate_page_prep(
                 pageprep,
                 rootwidget=self._root_widget,
                 scrollwidget=self._scrollwidget,

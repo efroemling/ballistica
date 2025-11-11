@@ -13,15 +13,15 @@ from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
 from efro.util import strict_partial
-import bacommon.decui.v1 as dui1
+import bacommon.docui.v1 as dui1
 import bauiv1 as bui
 
-from bauiv1lib.decui.v1prep._types import PagePrep, RowPrep, ButtonPrep
+from bauiv1lib.docui.v1prep._types import PagePrep, RowPrep, ButtonPrep
 
 if TYPE_CHECKING:
     from typing import Callable
 
-    from bauiv1lib.decui import DecUIWindow
+    from bauiv1lib.docui import DocUIWindow
 
 
 def prep_page(
@@ -39,7 +39,7 @@ def prep_page(
     # pylint: disable=too-many-locals
     # pylint: disable=cyclic-import
 
-    import bauiv1lib.decui.v1prep._calls2 as prepcalls2
+    import bauiv1lib.docui.v1prep._calls2 as prepcalls2
 
     # Create a filtered list of rows we know how to display.
     page_rows_filtered: list[dui1.ButtonRow] = []
@@ -65,14 +65,14 @@ def prep_page(
                 )
             page_rows_filtered.append(pagerow)
     if len(page_rows_filtered) != len(page.rows):
-        bui.uilog.error('Got unknown row type(s) in dec-ui; ignoring.')
+        bui.uilog.error('Got unknown row type(s) in doc-ui; ignoring.')
 
     # Ok; we've got some buttons. Build our full UI.
     row_title_height = 30.0
     row_subtitle_height = 30.0
 
-    # Buffers for *everything*. Set bases here that look decent
-    # and allow page to offset them.
+    # Buffers for *everything*. Set bases here that look decent and
+    # allow page to offset them.
     top_buffer = 20.0 + page.padding_top
     bot_buffer = 20.0 + page.padding_bottom
     left_buffer = 0.0 + page.padding_left
@@ -83,8 +83,8 @@ def prep_page(
     header_inset_left = 35.0
     header_inset_right = 20.0
 
-    default_button_width = 200.0
-    default_button_height = 200.0
+    default_button_width = 150.0
+    default_button_height = 100.0
 
     if uiscale is bui.UIScale.SMALL:
         top_bar_overlap = 70
@@ -194,7 +194,7 @@ def prep_page(
     for i, (row, rowprep) in enumerate(
         zip(page_rows_filtered, rows, strict=True)
     ):
-        tdelaybase = 0.12 * (i + 1)
+        tdelaybase = 0.06 * (i + 1)
 
         if i != 0:
             y -= page.row_spacing
@@ -212,7 +212,7 @@ def prep_page(
             left_buffer + header_inset_left,
             y + header_height_full * 0.5,
             row.header_scale,
-            tdelay=None if immediate else (tdelaybase + 0.1),
+            tdelay=None if immediate else (tdelaybase + 0.05),
             highlight=False,
             out_decoration_preps=rowprep.decorations,
         )
@@ -226,7 +226,7 @@ def prep_page(
             width * 0.5,
             y + header_height_full * 0.5,
             row.header_scale,
-            tdelay=None if immediate else (tdelaybase + 0.1),
+            tdelay=None if immediate else (tdelaybase + 0.05),
             highlight=False,
             out_decoration_preps=rowprep.decorations,
         )
@@ -240,7 +240,7 @@ def prep_page(
             width - right_buffer - header_inset_right,
             y + header_height_full * 0.5,
             row.header_scale,
-            tdelay=None if immediate else (tdelaybase + 0.1),
+            tdelay=None if immediate else (tdelaybase + 0.05),
             highlight=False,
             out_decoration_preps=rowprep.decorations,
         )
@@ -283,7 +283,7 @@ def prep_page(
                     v_align='center',
                     literal=not row.title_is_lstr,
                     transition_delay=(
-                        None if immediate else (tdelaybase + 0.2)
+                        None if immediate else (tdelaybase + 0.1)
                     ),
                 )
             )
@@ -326,7 +326,7 @@ def prep_page(
                     v_align='center',
                     literal=not row.subtitle_is_lstr,
                     transition_delay=(
-                        None if immediate else (tdelaybase + 0.3)
+                        None if immediate else (tdelaybase + 0.2)
                     ),
                 )
             )
@@ -432,6 +432,12 @@ def prep_page(
                 bstyle = 'large'
             elif button.style is dui1.ButtonStyle.LARGER:
                 bstyle = 'larger'
+            elif button.style is dui1.ButtonStyle.BACK:
+                bstyle = 'back'
+            elif button.style is dui1.ButtonStyle.BACK_SMALL:
+                bstyle = 'backSmall'
+            elif button.style is dui1.ButtonStyle.SQUARE_WIDE:
+                bstyle = 'squareWide'
             else:
                 assert_never(button.style)
 
@@ -478,6 +484,7 @@ def prep_page(
                     transition_delay=None if immediate else tdelay,
                     icon_color=button.icon_color,
                     iconscale=button.icon_scale,
+                    better_bg_fit=True,
                 ),
                 buttoneditcall=partial(
                     bui.widget,
@@ -599,14 +606,14 @@ def prep_page(
     )
 
 
-def dec_ui_v1_instantiate_page_prep(
+def doc_ui_v1_instantiate_page_prep(
     pageprep: PagePrep,
     *,
     rootwidget: bui.Widget,
     scrollwidget: bui.Widget,
     backbutton: bui.Widget,
     windowbackbutton: bui.Widget | None,
-    window: DecUIWindow,
+    window: DocUIWindow,
 ) -> bui.Widget:
     """Create a UI using prepped data."""
     # pylint: disable=too-many-locals

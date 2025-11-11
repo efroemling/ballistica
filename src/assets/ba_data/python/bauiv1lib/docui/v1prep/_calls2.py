@@ -13,15 +13,15 @@ from typing import TYPE_CHECKING, assert_never
 
 from efro.util import pairs_from_flat
 import bacommon.displayitem as ditm
-import bacommon.decui.v1 as dui1
+import bacommon.docui.v1 as dui1
 import bauiv1 as bui
 
-from bauiv1lib.decui.v1prep._types import DecorationPrep
+from bauiv1lib.docui.v1prep._types import DecorationPrep
 
 if TYPE_CHECKING:
     from typing import Callable
 
-    from bauiv1lib.decui import DecUIWindow
+    from bauiv1lib.docui import DocUIWindow
 
 
 def prep_decorations(
@@ -40,7 +40,7 @@ def prep_decorations(
         if dectypeid is dui1.DecorationTypeID.UNKNOWN:
             if bui.do_once():
                 bui.uilog.exception(
-                    'DecUI receieved unknown decoration;'
+                    'DocUI receieved unknown decoration;'
                     ' this is likely a server error.'
                 )
         elif dectypeid is dui1.DecorationTypeID.TEXT:

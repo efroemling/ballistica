@@ -1041,5 +1041,7 @@ void BaseFeatureSet::SetUIScale(UIScale scale) {
   // Let interested parties know that it has changed.
   graphics->OnUIScaleChange();
 }
+void BaseFeatureSet::HandleInterruptSignal() { logic->HandleInterruptSignal(); }
+void BaseFeatureSet::HandleTerminateSignal() { logic->HandleTerminateSignal(); }
 
 }  // namespace ballistica::base

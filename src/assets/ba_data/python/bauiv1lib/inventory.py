@@ -4,12 +4,33 @@
 
 from __future__ import annotations
 
-from typing import override
+from typing import override, TYPE_CHECKING
 
 import bauiv1 as bui
 
+from bauiv1lib.docui import DocUIController
 
-class InventoryWindow(bui.MainWindow):
+if TYPE_CHECKING:
+    from bacommon.docui import DocUIRequest, DocUIResponse
+
+    from bauiv1lib.docui import DocUILocalAction
+
+
+class InventoryController(DocUIController):
+    """DocUI setup for inventory."""
+
+    @override
+    def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
+        return self.fulfill_request_cloud(request, 'classicstore')
+
+    @override
+    def local_action(self, action: DocUILocalAction) -> None:
+        bui.screenmessage(
+            f'Would do {action.name!r} with args {action.args!r}.'
+        )
+
+
+class OldInventoryWindow(bui.MainWindow):
     """Shows what you got."""
 
     def __init__(

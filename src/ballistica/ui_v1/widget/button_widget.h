@@ -59,8 +59,10 @@ class ButtonWidget : public Widget {
     kSmall,
     kMedium,
     kLarge,
-    kLarger
+    kLarger,
+    kSquareWide,
   };
+  void set_better_bg_fit(bool val) { better_bg_fit_ = val; }
   auto set_style(Style s) { style_ = s; }
   enum class IconType : uint8_t { kNone, kCancel, kStart };
   void SetTextLiteral(bool val);
@@ -116,6 +118,7 @@ class ButtonWidget : public Widget {
   bool mouse_over_{};
   bool repeat_{};
   bool pressed_{};
+  bool better_bg_fit_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t birth_time_millisecs_{};
   millisecs_t transition_delay_{};

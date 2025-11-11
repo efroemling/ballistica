@@ -270,7 +270,7 @@ _wrangle_logging()
 # in them will be their module docstring (which should explain that they
 # are private).
 skip_prefixes = [
-    'bauiv1lib.decui.v1prep.',
+    'bauiv1lib.docui.v1prep.',
     'bacommon.displayitem.',
     'bacommon.net.',
     'bacommon.cloud.',

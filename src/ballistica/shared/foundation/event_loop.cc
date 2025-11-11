@@ -17,6 +17,14 @@
 
 namespace ballistica {
 
+// Special flags we can safely access from interrupt/ctrl handlers.
+#if BA_PLATFORM_WINDOWS
+std::atomic<bool> g_event_loop_got_ctrl_c{false};
+#else
+volatile sig_atomic_t g_event_loop_got_sigint = 0;
+volatile sig_atomic_t g_event_loop_got_sigterm = 0;
+#endif
+
 // Note: implicitly using core here so will fail spectacularly if that has
 // not been imported by someone.
 using core::g_base_soft;
@@ -239,35 +247,15 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
   }
 }
 
-// Note to self (Oct '23): can probably kill this at some point,
-// but am still using some non-ARC objc stuff from logic thread
-// so should keep it around just a bit longer just in case.
-// void EventLoop::LoopUpkeep_(bool single_cycle) {
-//  assert(g_core);
-//  // Keep our autorelease pool clean on mac/ios
-//  // FIXME: Should define a CorePlatform::ThreadHelper or something
-//  //  so we don't have platform-specific code here.
-// #if BA_XCODE_BUILD
-//  // Let's not do autorelease pools when being called ad-hoc,
-//  // since in that case we're part of another run loop
-//  // (and its crashing on drain for some reason)
-//  if (!single_cycle) {
-//    if (auto_release_pool_) {
-//      g_core->platform->DrainAutoReleasePool(auto_release_pool_);
-//      auto_release_pool_ = nullptr;
-//    }
-//    auto_release_pool_ = g_core->platform->NewAutoReleasePool();
-//  }
-// #endif
-//}
-
 void EventLoop::RunToCompletion() { Run_(false); }
 void EventLoop::RunSingleCycle() { Run_(true); }
 
 void EventLoop::Run_(bool single_cycle) {
   assert(g_core);
   while (true) {
-    // LoopUpkeep_(single_cycle);
+    if (identifier_ == EventLoopID::kLogic) {
+      CheckInterrupts_();
+    }
 
     WaitForNextEvent_(single_cycle);
 
@@ -316,6 +304,30 @@ void EventLoop::Run_(bool single_cycle) {
       break;
     }
   }
+}
+
+void EventLoop::CheckInterrupts_() {
+  // This might get called once or twice before we've been assigned as
+  // the logic-thread; avoid until that point.
+  if (!g_base_soft || !g_base_soft->InLogicThread()) {
+    return;
+  }
+
+#if BA_PLATFORM_WINDOWS
+  if (g_event_loop_got_ctrl_c) {
+    PushCall([] { g_base_soft->HandleInterruptSignal(); });
+    g_event_loop_got_ctrl_c = false;
+  }
+#else
+  if (g_event_loop_got_sigint) {
+    PushCall([] { g_base_soft->HandleInterruptSignal(); });
+    g_event_loop_got_sigint = 0;
+  }
+  if (g_event_loop_got_sigterm) {
+    PushCall([] { g_base_soft->HandleTerminateSignal(); });
+    g_event_loop_got_sigterm = 0;
+  }
+#endif
 }
 
 void EventLoop::GetThreadMessages_(std::list<ThreadMessage_>* messages) {

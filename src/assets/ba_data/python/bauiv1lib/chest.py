@@ -1233,26 +1233,3 @@ class ChestWindow(bui.MainWindow):
         bui.containerwidget(
             edit=self._root_widget, selected_child=btn, start_button=btn
         )
-
-
-# Slight hack: we define window different classes for our different
-# chest slots so that the default UI behavior is to replace each other
-# when different ones are pressed. If they are all the same window class
-# then the default behavior for such presses is to toggle the existing
-# one back off.
-
-
-class ChestWindow0(ChestWindow):
-    """Child class of ChestWindow for slighty hackish reasons."""
-
-
-class ChestWindow1(ChestWindow):
-    """Child class of ChestWindow for slighty hackish reasons."""
-
-
-class ChestWindow2(ChestWindow):
-    """Child class of ChestWindow for slighty hackish reasons."""
-
-
-class ChestWindow3(ChestWindow):
-    """Child class of ChestWindow for slighty hackish reasons."""

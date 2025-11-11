@@ -345,8 +345,8 @@ class CloudSubsystem(babase.AppSubsystem):
 
     @overload
     def send_message(
-        self, msg: bacommon.cloud.FulfillDecUIRequest
-    ) -> bacommon.cloud.FulfillDecUIResponse: ...
+        self, msg: bacommon.cloud.FulfillDocUIRequest
+    ) -> bacommon.cloud.FulfillDocUIResponse: ...
 
     def send_message(self, msg: Message) -> Response | None:
         """Synchronously send a message to the cloud.

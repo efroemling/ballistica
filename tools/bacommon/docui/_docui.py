@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Version 1 of our dec-ui system."""
+"""Version 1 of our doc-ui system."""
 
 from __future__ import annotations
 
@@ -15,22 +15,19 @@ if TYPE_CHECKING:
     pass
 
 
-class DecUIRequestTypeID(Enum):
+class DocUIRequestTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     UNKNOWN = 'u'
     V1 = 'v1'
 
 
-class DecUIRequest(IOMultiType[DecUIRequestTypeID]):
-    """UI defined by the cloud.
-
-    Conceptually similar to web pages, except using app UI.
-    """
+class DocUIRequest(IOMultiType[DocUIRequestTypeID]):
+    """A request for some UI."""
 
     @override
     @classmethod
-    def get_type_id(cls) -> DecUIRequestTypeID:
+    def get_type_id(cls) -> DocUIRequestTypeID:
         # Require child classes to supply this themselves. If we did a
         # full type registry/lookup here it would require us to import
         # everything and would prevent lazy loading.
@@ -38,15 +35,15 @@ class DecUIRequest(IOMultiType[DecUIRequestTypeID]):
 
     @override
     @classmethod
-    def get_type(cls, type_id: DecUIRequestTypeID) -> type[DecUIRequest]:
+    def get_type(cls, type_id: DocUIRequestTypeID) -> type[DocUIRequest]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
 
-        t = DecUIRequestTypeID
+        t = DocUIRequestTypeID
         if type_id is t.UNKNOWN:
-            return UnknownDecUIRequest
+            return UnknownDocUIRequest
         if type_id is t.V1:
-            from bacommon.decui.v1 import Request
+            from bacommon.docui.v1 import Request
 
             return Request
 
@@ -55,10 +52,10 @@ class DecUIRequest(IOMultiType[DecUIRequestTypeID]):
 
     @override
     @classmethod
-    def get_unknown_type_fallback(cls) -> DecUIRequest:
+    def get_unknown_type_fallback(cls) -> DocUIRequest:
         # If we encounter some future type we don't know anything about,
         # drop in a placeholder.
-        return UnknownDecUIRequest()
+        return UnknownDocUIRequest()
 
     @override
     @classmethod
@@ -68,7 +65,7 @@ class DecUIRequest(IOMultiType[DecUIRequestTypeID]):
 
 @ioprepped
 @dataclass
-class UnknownDecUIRequest(DecUIRequest):
+class UnknownDocUIRequest(DocUIRequest):
     """Fallback type for unrecognized UI types.
 
     Will show the client a 'cannot display this UI' placeholder request.
@@ -76,26 +73,23 @@ class UnknownDecUIRequest(DecUIRequest):
 
     @override
     @classmethod
-    def get_type_id(cls) -> DecUIRequestTypeID:
-        return DecUIRequestTypeID.UNKNOWN
+    def get_type_id(cls) -> DocUIRequestTypeID:
+        return DocUIRequestTypeID.UNKNOWN
 
 
-class DecUIResponseTypeID(Enum):
+class DocUIResponseTypeID(Enum):
     """Type ID for each of our subclasses."""
 
     UNKNOWN = 'u'
     V1 = 'v1'
 
 
-class DecUIResponse(IOMultiType[DecUIResponseTypeID]):
-    """UI defined by the cloud.
-
-    Conceptually similar to a basic html response, except using app UI.
-    """
+class DocUIResponse(IOMultiType[DocUIResponseTypeID]):
+    """A UI provied in response to a :class:`DocUIRequest`."""
 
     @override
     @classmethod
-    def get_type_id(cls) -> DecUIResponseTypeID:
+    def get_type_id(cls) -> DocUIResponseTypeID:
         # Require child classes to supply this themselves. If we did a
         # full type registry/lookup here it would require us to import
         # everything and would prevent lazy loading.
@@ -103,15 +97,15 @@ class DecUIResponse(IOMultiType[DecUIResponseTypeID]):
 
     @override
     @classmethod
-    def get_type(cls, type_id: DecUIResponseTypeID) -> type[DecUIResponse]:
+    def get_type(cls, type_id: DocUIResponseTypeID) -> type[DocUIResponse]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
 
-        t = DecUIResponseTypeID
+        t = DocUIResponseTypeID
         if type_id is t.UNKNOWN:
-            return UnknownDecUIResponse
+            return UnknownDocUIResponse
         if type_id is t.V1:
-            from bacommon.decui.v1 import Response
+            from bacommon.docui.v1 import Response
 
             return Response
 
@@ -120,10 +114,10 @@ class DecUIResponse(IOMultiType[DecUIResponseTypeID]):
 
     @override
     @classmethod
-    def get_unknown_type_fallback(cls) -> DecUIResponse:
+    def get_unknown_type_fallback(cls) -> DocUIResponse:
         # If we encounter some future type we don't know anything about,
         # drop in a placeholder.
-        return UnknownDecUIResponse()
+        return UnknownDocUIResponse()
 
     @override
     @classmethod
@@ -133,7 +127,7 @@ class DecUIResponse(IOMultiType[DecUIResponseTypeID]):
 
 @ioprepped
 @dataclass
-class UnknownDecUIResponse(DecUIResponse):
+class UnknownDocUIResponse(DocUIResponse):
     """Fallback type for unrecognized UI types.
 
     Will show the client a 'cannot display this UI' placeholder response.
@@ -141,19 +135,19 @@ class UnknownDecUIResponse(DecUIResponse):
 
     @override
     @classmethod
-    def get_type_id(cls) -> DecUIResponseTypeID:
-        return DecUIResponseTypeID.UNKNOWN
+    def get_type_id(cls) -> DocUIResponseTypeID:
+        return DocUIResponseTypeID.UNKNOWN
 
 
 @ioprepped
 @dataclass
-class DecUIWebRequest:
-    """Complete data sent for dec-ui http requests."""
+class DocUIWebRequest:
+    """Complete data sent for doc-ui http requests."""
 
-    #: The wrapped dec-ui request.
-    dec_ui_request: Annotated[DecUIRequest, IOAttrs('r')]
+    #: The wrapped doc-ui request.
+    doc_ui_request: Annotated[DocUIRequest, IOAttrs('r')]
 
-    #: The current locale of the client. Dec-ui generally deals in raw
+    #: The current locale of the client. doc-ui generally deals in raw
     #: strings and expects localization to happen on the server.
     locale: Annotated[Locale, IOAttrs('l')]
 
@@ -164,15 +158,15 @@ class DecUIWebRequest:
 
 @ioprepped
 @dataclass
-class DecUIWebResponse:
-    """Complete data returned for dec-ui http requests."""
+class DocUIWebResponse:
+    """Complete data returned for doc-ui http requests."""
 
     #: Human readable error string (if an error occurs). Either this or
-    #: dec_ui_response should be set; not both.
+    #: doc_ui_response should be set; not both.
     error: Annotated[str | None, IOAttrs('e', store_default=False)] = None
 
-    #: Dec-ui response. Either this or error should be set; not both.
-    dec_ui_response: Annotated[
-        DecUIResponse | None,
+    #: doc-ui response. Either this or error should be set; not both.
+    doc_ui_response: Annotated[
+        DocUIResponse | None,
         IOAttrs('r', store_default=False),
     ] = None
