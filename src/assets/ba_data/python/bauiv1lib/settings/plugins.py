@@ -320,8 +320,7 @@ class PluginWindow(bui.MainWindow):
         )
 
         for _classpath, plugspec in plugspecs_sorted:
-            # counting number of enabled and disabled plugins
-            # plugstate = plugstates.setdefault(plugspec[0], {})
+            # Counting number of enabled and disabled plugins
             if plugspec.enabled:
                 num_enabled += 1
             else:
@@ -361,6 +360,20 @@ class PluginWindow(bui.MainWindow):
                 assert_never(self._category)
 
             if not show:
+                continue
+
+            # Detect and handle invalid plugin names with spaces
+            if ' ' in classpath:
+                fixed_name = classpath.replace(' ', '_')
+                msg = (
+                    f"Invalid plugin name '{classpath}'. "
+                    f"Please rename it to '{fixed_name}' to avoid errors."
+                )
+                bui.screenmessage(
+                    msg,
+                    color=(1.0, 0.3, 0.3),
+                )
+                #f"[PluginWindow] Skipped plugin with invalid name: '{classpath}' "  # pylint: disable=line-too-long
                 continue
 
             item_y = sub_height - (num_shown + 1) * plug_line_height
@@ -423,7 +436,7 @@ class PluginWindow(bui.MainWindow):
                     bui.widget(edit=button, up_widget=self._back_button)
 
             # Make sure we scroll all the way to the end when using
-            # keyboard/button nav.
+            # keyboard/button navigation.
             bui.widget(edit=check, show_buffer_top=40, show_buffer_bottom=40)
             num_shown += 1
 
