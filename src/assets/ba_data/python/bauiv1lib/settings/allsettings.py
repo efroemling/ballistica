@@ -244,17 +244,14 @@ class AllSettingsWindow(bui.MainWindow):
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
         cls = type(self)
-        out = bui.BasicMainWindowState(
+        return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
                 transition=transition, origin_widget=origin_widget
-            )
+            ),
+            # Keeps our icon glowing as long as this is in the back
+            # stack.
+            uiopenstate=self._uiopenstate,
         )
-        # Store a ui-open-state here. This means that as long as this
-        # state exists in the back-state-list we'll know we're under
-        # settings (and can highlight the settings toolbar button and
-        # whatnot).
-        setattr(out, '_uiopenstate', bui.UIOpenState('settings'))
-        return out
 
     @override
     def main_window_should_preserve_selection(self) -> bool:

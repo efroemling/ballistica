@@ -398,8 +398,21 @@ class Image(Decoration):
 class DisplayItemStyle(Enum):
     """Styles a display-item can be drawn in."""
 
+    #: Shows graphics and/or text fully conveying what the item is.
+    #: Fits in to a 4:3 box and works best with large-ish displays.
     FULL = 'f'
+
+    #: Graphics and/or text fully conveying what the item is, but
+    #: condensed to fit in a 2:1 box displayed at small sizes.
     COMPACT = 'c'
+
+    #: A graphics-only representation of the item (though text may be
+    #: used in fallback cases). Does not fully convey what the item is,
+    #: but instead is intended to be used alongside the item's textual
+    #: description. For example, some number of coins may simply display a
+    #: coin graphic here without the number. Draws in a 1:1 box and works
+    #: for large or small display.
+    ICON = 'i'
 
 
 @ioprepped

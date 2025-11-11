@@ -25,6 +25,9 @@
   Tests' page in the dev-console's doc-ui test page for more.
 - Added a 'squareWide' `button_type` option in `bauiv1.buttonwidget()` and a
   corresponding `ButtonType.SQUARE_WIDE` in doc-ui.
+- The store has been replaced with a shiny new one that uses DocUI. At the time
+  of this writing, the back-end is still giving a 'down for maintenance' page,
+  but I expect it to start functioning very soon.
   
 ### 1.7.53 (build 22597, api 9, 2025-10-25)
 - Fixes an issue where deleting player profiles would error.

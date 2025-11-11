@@ -578,9 +578,14 @@ class BasicMainWindowState(MainWindowState):
             ],
             bauiv1.MainWindow,
         ],
+        uiopenstate: bauiv1.UIOpenState | None = None,
     ) -> None:
         super().__init__()
         self.create_call = create_call
+
+        # We simply need to hold on to this to keep the ui-open-state
+        # alive.
+        self.uiopenstate = uiopenstate
 
     @override
     def create_window(

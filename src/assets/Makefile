@@ -443,6 +443,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/browser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/store/item.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/newstore.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/tabs.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/teamnamescolors.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/template.py \

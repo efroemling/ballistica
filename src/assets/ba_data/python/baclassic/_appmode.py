@@ -100,10 +100,10 @@ class ClassicAppMode(AppMode):
             self._root_ui_settings_press
         )
         ui.root_ui_calls[ui.RootUIElement.STORE_BUTTON] = (
-            self._root_ui_store_press
+            self._root_ui_store_press_new
         )
         ui.root_ui_calls[ui.RootUIElement.INVENTORY_BUTTON] = (
-            self._root_ui_inventory_press
+            self._root_ui_inventory_press_old
         )
         ui.root_ui_calls[ui.RootUIElement.GET_TOKENS_BUTTON] = (
             self._root_ui_get_tokens_press
@@ -750,7 +750,7 @@ class ClassicAppMode(AppMode):
             )
         )
 
-    def _root_ui_store_press(self) -> None:
+    def _root_ui_store_press_old(self) -> None:
         from bauiv1lib.store.browser import StoreBrowserWindow
 
         if not self._ensure_signed_in_v1():
@@ -763,6 +763,24 @@ class ClassicAppMode(AppMode):
                     origin_widget=bui.get_special_widget('store_button')
                 ),
             )
+        )
+
+    def _root_ui_store_press_new(self) -> None:
+        import bacommon.docui.v1 as dui1
+
+        from bauiv1lib.docui import DocUIWindow
+        from bauiv1lib.inventory import InventoryUIController
+
+        # Pop up an auxiliary window wherever we are in the nav stack.
+        bui.app.ui_v1.auxiliary_window_activate(
+            win_type=DocUIWindow,
+            win_create_call=bui.CallStrict(
+                InventoryUIController().create_window,
+                dui1.Request('/'),
+                origin_widget=bui.get_special_widget('store_button'),
+                uiopenstateid='classicstore',
+            ),
+            win_extra_type_id=InventoryUIController.get_window_extra_type_id(),
         )
 
     def _root_ui_tickets_meter_press(self) -> None:
@@ -799,10 +817,7 @@ class ClassicAppMode(AppMode):
             'xp', origin_widget=bui.get_special_widget('level_meter')
         )
 
-    def _root_ui_inventory_press(self) -> None:
-        self._do_intentory_old()
-
-    def _do_intentory_old(self) -> None:
+    def _root_ui_inventory_press_old(self) -> None:
         from bauiv1lib.inventory import OldInventoryWindow
 
         if not self._ensure_signed_in_v1():
@@ -815,18 +830,22 @@ class ClassicAppMode(AppMode):
             ),
         )
 
-    def _do_intentory_new(self) -> None:
+    def _root_ui_inventory_press_new(self) -> None:
         import bacommon.docui.v1 as dui1
 
         from bauiv1lib.docui import DocUIWindow
-        from bauiv1lib.inventory import InventoryController
+        from bauiv1lib.inventory import InventoryUIController
 
         # Pop up an auxiliary window wherever we are in the nav stack.
         bui.app.ui_v1.auxiliary_window_activate(
             win_type=DocUIWindow,
             win_create_call=bui.CallStrict(
-                InventoryController().create_window, dui1.Request('/')
+                InventoryUIController().create_window,
+                dui1.Request('/'),
+                origin_widget=bui.get_special_widget('inventory_button'),
+                uiopenstateid='classicinventory',
             ),
+            win_extra_type_id=InventoryUIController.get_window_extra_type_id(),
         )
 
     def _ensure_signed_in(self) -> bool:

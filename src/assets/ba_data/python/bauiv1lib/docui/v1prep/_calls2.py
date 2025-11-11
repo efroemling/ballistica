@@ -378,21 +378,20 @@ def prep_display_item(
             )
         )
 
-    text_flatness: float | None
-    text_shadow: float | None
-
     # Calc our width and height based on our aspect ratio so we fit in
     # the provided bounds.
     if display_item.style is dui1.DisplayItemStyle.FULL:
         aspect_ratio = 0.75  # Bit less tall than wide (graphic centric).
-        text_flatness = 1.0
-        text_shadow = 1.0
         compact = False
+        icon = False
     elif display_item.style is dui1.DisplayItemStyle.COMPACT:
         aspect_ratio = 0.5  # Significantly wider (text centric)
-        text_flatness = 1.0
-        text_shadow = 1.0
         compact = True
+        icon = False
+    elif display_item.style is dui1.DisplayItemStyle.ICON:
+        aspect_ratio = 1.0  # Square
+        compact = False
+        icon = True
     else:
         # Make sure we cover all possibilities.
         assert_never(display_item.style)
@@ -428,7 +427,7 @@ def prep_display_item(
     img: str | None = None
     img_x_offs = 0.0
     img_y_offs = 0.0
-    imgsize = width * (0.5 if compact else 0.33)
+    imgsize = width * (0.5 if compact else 1.0 if icon else 0.33)
 
     show_text = True
     text_mult = 0.006
@@ -452,7 +451,7 @@ def prep_display_item(
         c_info = CHEST_APPEARANCE_DISPLAY_INFOS.get(
             item.appearance, CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT
         )
-        c_size = width * (0.66 if compact else 0.85)
+        c_size = width * (0.66 if compact else 1.05 if icon else 0.83)
         out_decoration_preps.append(
             DecorationPrep(
                 call=partial(
@@ -479,6 +478,8 @@ def prep_display_item(
         assert isinstance(item, ditm.Test)
         # Nothing to do here. This is just another way to enable debug
         # drawing.
+        if icon or compact:
+            text_mult = 0.02  # Very large text.
 
     elif (
         itemtype is ditm.ItemTypeID.TOKENS
@@ -522,12 +523,17 @@ def prep_display_item(
             img_x_offs = totwidth * 0.5 - imgsize * imgamt * 0.5
             # Move to left and then right by half text width.
             text_x_offs = totwidth * -0.5 + strwidth * 0.5
+        elif icon:
+            img_y_offs = 0.0
+            show_text = False
         else:
             img_y_offs = width * 0.11
             text_y_offs = width * -0.15
     elif itemtype is ditm.ItemTypeID.UNKNOWN:
         assert isinstance(item, ditm.Unknown)
         # Just do default text here.
+        if icon:
+            text_mult = 0.02  # Very large text.
     else:
         # Make sure we cover all possibilities.
         assert_never(itemtype)
@@ -559,6 +565,7 @@ def prep_display_item(
                 translate=('displayItemNames', wrapper.description),
                 subs=pairs_from_flat(subs),
             ).as_json()
+
         out_decoration_preps.append(
             DecorationPrep(
                 call=partial(
@@ -578,8 +585,8 @@ def prep_display_item(
                         else display_item.text_color
                     ),
                     text=text,
-                    flatness=text_flatness,
-                    shadow=text_shadow,
+                    flatness=1.0,
+                    shadow=1.0,
                     literal=False,
                     transition_delay=tdelay,
                     depth_range=display_item.depth_range,

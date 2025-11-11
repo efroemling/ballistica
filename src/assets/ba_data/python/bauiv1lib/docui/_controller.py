@@ -290,9 +290,12 @@ class DocUIController:
     def create_window(
         self,
         request: DocUIRequest,
+        *,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
+        uiopenstateid: str | None = None,
+        suppress_ui_open_state_warning: bool = False,
     ) -> DocUIWindow:
         """Create a new window to handle a request."""
         assert bui.in_logic_thread()
@@ -304,6 +307,8 @@ class DocUIController:
             transition=transition,
             origin_widget=origin_widget,
             auxiliary_style=auxiliary_style,
+            uiopenstateid=uiopenstateid,
+            suppress_ui_open_state_warning=suppress_ui_open_state_warning,
         )
         self._set_win_state(win, self._WinState.FETCHING_FRESH_REQUEST)
 
@@ -522,6 +527,7 @@ class DocUIController:
                         action.request,
                         origin_widget=widget,
                         auxiliary_style=False,
+                        suppress_ui_open_state_warning=True,
                     )
                 )
 

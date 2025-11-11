@@ -312,6 +312,7 @@
  "ba_data/python/bauiv1lib/store/__init__.py",
  "ba_data/python/bauiv1lib/store/browser.py",
  "ba_data/python/bauiv1lib/store/item.py",
+ "ba_data/python/bauiv1lib/store/newstore.py",
  "ba_data/python/bauiv1lib/tabs.py",
  "ba_data/python/bauiv1lib/teamnamescolors.py",
  "ba_data/python/bauiv1lib/template.py",

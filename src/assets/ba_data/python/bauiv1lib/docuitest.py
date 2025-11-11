@@ -717,35 +717,49 @@ def _test_page_display_items(
         uwrapper.item = ditm.Unknown()
 
         return dui1.Button(
-            size=(300, 300),
+            size=(300, 400),
             scale=scale,
             decorations=[
                 dui1.DisplayItem(
                     wrapper=wrapper,
                     style=dui1.DisplayItemStyle.FULL,
-                    position=(-62, 55),
+                    position=(-62, 100),
                     size=(120, 120),
                     debug=debug,
                 ),
                 dui1.DisplayItem(
                     wrapper=uwrapper,
                     style=dui1.DisplayItemStyle.FULL,
-                    position=(62, 55),
+                    position=(62, 100),
                     size=(120, 120),
                     debug=debug,
                 ),
                 dui1.DisplayItem(
                     wrapper=wrapper,
                     style=dui1.DisplayItemStyle.COMPACT,
-                    position=(-55, -55),
+                    position=(-55, -20),
                     size=(80, 80),
                     debug=debug,
                 ),
                 dui1.DisplayItem(
                     wrapper=uwrapper,
                     style=dui1.DisplayItemStyle.COMPACT,
-                    position=(55, -55),
+                    position=(55, -20),
                     size=(80, 80),
+                    debug=debug,
+                ),
+                dui1.DisplayItem(
+                    wrapper=wrapper,
+                    style=dui1.DisplayItemStyle.ICON,
+                    position=(-55, -120),
+                    size=(100, 80),
+                    debug=debug,
+                ),
+                dui1.DisplayItem(
+                    wrapper=uwrapper,
+                    style=dui1.DisplayItemStyle.ICON,
+                    position=(55, -120),
+                    size=(100, 80),
                     debug=debug,
                 ),
             ],
@@ -754,9 +768,7 @@ def _test_page_display_items(
     return dui1.Response(
         page=dui1.Page(
             padding_left=20,
-            # padding_top=20,
             padding_right=20,
-            # padding_bottom=20,
             title='DisplayItems',
             rows=[
                 dui1.ButtonRow(
@@ -764,7 +776,8 @@ def _test_page_display_items(
                     padding_left=-10,
                     title='Display Item Tests',
                     subtitle=(
-                        'top=FULL, bottom=COMPACT, left=regular, right=unknown'
+                        'top=FULL, center=COMPACT, bottom=ICON;'
+                        ' left=regular, right=unknown'
                     ),
                     buttons=[
                         _make_test_button(
@@ -801,8 +814,9 @@ def _test_page_display_items(
                     buttons=[
                         dui1.Button(
                             'Hide Debug' if debug else 'Show Debug',
-                            style=dui1.ButtonStyle.LARGE,
-                            size=(240, 40),
+                            style=dui1.ButtonStyle.MEDIUM,
+                            size=(240, 60),
+                            color=(0.6, 0.4, 0.8, 1.0),
                             action=dui1.Replace(
                                 dui1.Request(
                                     request.path, args={'debug': not debug}

@@ -32,8 +32,15 @@ class DocUIWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
         restored: bool = False,
+        uiopenstateid: str | None = None,
+        suppress_ui_open_state_warning: bool = False,
     ):
+        # pylint: disable=too-many-statements
         ui = bui.app.ui_v1
+
+        self._uiopenstate = (
+            None if uiopenstateid is None else bui.UIOpenState(uiopenstateid)
+        )
 
         self._locked = False
 
@@ -257,6 +264,22 @@ class DocUIWindow(bui.MainWindow):
 
         self._spinner: bui.Widget | None = None
 
+        if not suppress_ui_open_state_warning:
+            bui.pushcall(bui.WeakCallStrict(self._sanity_check_win_extra_type))
+
+    def _sanity_check_win_extra_type(self) -> None:
+        # There will be lots of windows with this same type, so we really
+        # need the user to provide extra-type-ids so our logic can tell
+        # all of us apart for navigation purposes.
+        if not self.main_window_extra_type_id:
+            bui.uilog.warning(
+                '%s created by %s was not assigned an extra-type-id.'
+                ' Always pass a "win_extra_type_id" when calling'
+                ' `auxiliary_window_activate()` with doc-ui windows.',
+                type(self).__name__,
+                type(self.controller),
+            )
+
     @property
     def request(self) -> DocUIRequest:
         """The current request.
@@ -470,7 +493,8 @@ class DocUIWindow(bui.MainWindow):
                     ),
                     last_response=last_response,
                 )
-            )
+            ),
+            uiopenstate=self._uiopenstate,
         )
 
     @override
