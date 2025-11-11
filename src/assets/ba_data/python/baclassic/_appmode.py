@@ -800,7 +800,7 @@ class ClassicAppMode(AppMode):
         )
 
     def _root_ui_inventory_press(self) -> None:
-        self._do_intentory_new()
+        self._do_intentory_old()
 
     def _do_intentory_old(self) -> None:
         from bauiv1lib.inventory import OldInventoryWindow

@@ -831,7 +831,7 @@ def _test_bounds(
             title='BoundsTests',
             rows=[
                 dui1.ButtonRow(
-                    title='Square',
+                    title=_nm(dui1.ButtonStyle.SQUARE),
                     buttons=[
                         dui1.Button('Hello', size=(300, 300), debug=True),
                         dui1.Button('Hello', size=(200, 200), debug=True),
