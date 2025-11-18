@@ -82,6 +82,7 @@
  "ba_data/python/bacommon/net.py",
  "ba_data/python/bacommon/securedata.py",
  "ba_data/python/bacommon/servermanager.py",
+ "ba_data/python/bacommon/text.py",
  "ba_data/python/bacommon/transfer.py",
  "ba_data/python/bacommon/workspace/__init__.py",
  "ba_data/python/bacommon/workspace/assetsv1.py",

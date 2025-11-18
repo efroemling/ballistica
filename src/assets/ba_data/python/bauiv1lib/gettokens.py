@@ -820,16 +820,15 @@ def show_get_tokens_prompt() -> None:
 def show_get_tokens_window(origin_widget: bui.Widget | None = None) -> None:
     """Transition to the get-tokens main-window from anywhere."""
 
-    # NOTE TO USERS: The code below is not the proper way to do things;
+    # NOTE TO USERS: The code below is not the standard way to do things;
     # whenever possible one should use a MainWindow's
     # main_window_replace() or main_window_back() methods or
     # bauiv1.auxiliary_window_activate(). We just need to do things a
     # bit more manually in this particular case.
 
-    # Basically we want to pop up our auxiliary window but we don't want
-    # to replace any existing auxiliary windows; we want our close
-    # button to go back to whatever was there already, no matter whether
-    # it was an auxiliary window or not.
+    # Basically we want to push our window on to the stack from
+    # anywhere so we can go back to where we were once done even if it
+    # was an auxiliary window.
 
     prev_main_window = bui.app.ui_v1.get_main_window()
 
@@ -838,15 +837,17 @@ def show_get_tokens_window(origin_widget: bui.Widget | None = None) -> None:
         return
 
     ui = bui.app.ui_v1
-    # Set our new main window.
+    # Set our new main window. Note that we pass auxiliary_style=False
+    # so that we get a back button instead of a close button.
     ui.set_main_window(
-        GetTokensWindow(origin_widget=origin_widget),
+        GetTokensWindow(origin_widget=origin_widget, auxiliary_style=False),
         from_window=False,  # Don't check where we're coming from.
         back_state=ui.save_current_main_window_state(),
-        is_auxiliary=True,
+        is_auxiliary=False,
         suppress_warning=True,
+        extra_type_id='',
     )
 
     # Transition out any previous main window.
     if prev_main_window is not None:
-        prev_main_window.main_window_close()
+        prev_main_window.main_window_close(transition='out_left')

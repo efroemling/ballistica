@@ -259,6 +259,29 @@ class XCodeBuild:
         return FileLock(path)
 
     def _set_up_keychain(self) -> None:
+
+        # NOTE TO FUTURE SELF:
+        #
+        # I go through this pain once a year when my dev signing config
+        # expires. This manifests as sudden signing errors for all apple
+        # cloud builds. Just making note what I had to do this year
+        # (2025) to get it working again.
+        #
+        # - Under 'Manage Certificates' in xcode, hover over existing
+        #   one (currently called MacBook Fro) and see that it has
+        #   expired.
+        #
+        # - Create new 'Apple Development' cert. Save it with existing
+        #   name and password for mac-dev from localconfig.
+        #
+        # - After this synced to FroMini, seems I needed to sign-in to
+        #   my apple account again for whatever reason in xcode. After
+        #   doing that and building things in the gui there, cloud
+        #   builds started working again.
+        #
+        # - NOTE TO SELF - looks like my dev-id certificate is set to
+        #   expire Jan 2027 so I'll need to make a new one.
+
         # If we're specifying a signing configuration, this sets it up
         # via a temporary keychain.
         # As seen in https://github.com/Apple-Actions/import-codesign-certs

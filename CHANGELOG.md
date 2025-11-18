@@ -1,4 +1,4 @@
-### 1.7.54 (build 22626, api 9, 2025-11-10)
+### 1.7.54 (build 22628, api 9, 2025-11-18)
 - `scrollwidget` and `hscrollwidget` now center selected items that are too
   large to fit completely in view instead of unpredictably scrolling to the
   beginning or end of them. This makes show-buffer values (which effectively
@@ -28,6 +28,8 @@
 - The store has been replaced with a shiny new one that uses DocUI. At the time
   of this writing, the back-end is still giving a 'down for maintenance' page,
   but I expect it to start functioning very soon.
+- Added a `fade` arg to `bauiv1.spinnerwidget()`. Pass `False` to make the
+  spinner appear/disappear immediately instead of fading.
   
 ### 1.7.53 (build 22597, api 9, 2025-10-25)
 - Fixes an issue where deleting player profiles would error.

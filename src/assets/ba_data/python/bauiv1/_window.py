@@ -367,6 +367,7 @@ class MainWindow(Window):
                 is_back=True,
                 back_state=back_state,
                 suppress_warning=True,
+                extra_type_id=back_state.extra_type_id,
             )
 
     def main_window_replace(

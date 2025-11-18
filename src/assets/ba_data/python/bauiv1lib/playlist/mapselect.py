@@ -288,8 +288,11 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             )
 
     def _on_store_press(self) -> None:
+        import bacommon.docui.v1 as dui1
+
+        from bauiv1lib.connectivity import wait_for_connectivity
+        from bauiv1lib.store.newstore import StoreUIController
         from bauiv1lib.account.signin import show_sign_in_prompt
-        from bauiv1lib.store.browser import StoreBrowserWindow
 
         # No-op if we're not in control.
         if not self.main_window_has_control():
@@ -298,17 +301,25 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             show_sign_in_prompt()
             return
 
         self._selected_get_more_maps = True
 
-        self.main_window_replace(
-            lambda: StoreBrowserWindow(
-                show_tab=StoreBrowserWindow.TabID.MAPS,
-                origin_widget=self._get_more_maps_button,
-                minimal_toolbars=True,
+        # Set this up as a non-auxiliary window so we can nav back to
+        # char editing (otherwise it would replace the whole inventory
+        # stack). Also don't set uiopenstateid in this case since we don't
+        # want store button to glow (since inventory button already is).
+        wait_for_connectivity(
+            on_connected=lambda: self.main_window_replace(
+                bui.CallStrict(
+                    StoreUIController().create_window,
+                    dui1.Request('/'),
+                    origin_widget=bui.get_special_widget('store_button'),
+                    auxiliary_style=False,
+                ),
+                extra_type_id=StoreUIController.get_window_extra_type_id(),
             )
         )
 

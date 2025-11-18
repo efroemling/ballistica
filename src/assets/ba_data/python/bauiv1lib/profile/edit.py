@@ -10,6 +10,7 @@ from typing import cast, override
 from bauiv1lib.colorpicker import ColorPicker
 from bauiv1lib.characterpicker import CharacterPickerDelegate
 from bauiv1lib.iconpicker import IconPickerDelegate
+from bauiv1lib.connectivity import wait_for_connectivity
 import bauiv1 as bui
 import bascenev1 as bs
 
@@ -650,12 +651,28 @@ class EditProfileWindow(
     @override
     def on_icon_picker_get_more_press(self) -> None:
         """User wants to get more icons."""
-        from bauiv1lib.store.browser import StoreBrowserWindow
+        import bacommon.docui.v1 as dui1
 
-        self.main_window_replace(
-            lambda: StoreBrowserWindow(
-                minimal_toolbars=True,
-                show_tab=StoreBrowserWindow.TabID.ICONS,
+        from bauiv1lib.store.newstore import StoreUIController
+
+        if not self._ensure_signed_in(
+            origin_widget=bui.get_special_widget('store_button')
+        ):
+            return
+
+        # Set this up as a non-auxiliary window so we can nav back to
+        # char editing (otherwise it would replace the whole inventory
+        # stack). Also don't set uiopenstateid in this case since we don't
+        # want store button to glow (since inventory button already is).
+        wait_for_connectivity(
+            on_connected=lambda: self.main_window_replace(
+                bui.CallStrict(
+                    StoreUIController().create_window,
+                    dui1.Request('/'),
+                    origin_widget=bui.get_special_widget('store_button'),
+                    auxiliary_style=False,
+                ),
+                extra_type_id=StoreUIController.get_window_extra_type_id(),
             )
         )
 
@@ -673,14 +690,46 @@ class EditProfileWindow(
         )
         self._update_character()
 
+    def _ensure_signed_in(
+        self, *, origin_widget: bui.Widget | None = None
+    ) -> bool:
+        """Make sure we're signed in (requiring modern v2 accounts)."""
+        from bauiv1lib.account.signin import show_sign_in_prompt
+
+        plus = bui.app.plus
+        if plus is None:
+            bui.screenmessage('This requires plus.', color=(1, 0, 0))
+            bui.getsound('error').play()
+            return False
+        if plus.accounts.primary is None:
+            show_sign_in_prompt(origin_widget=origin_widget)
+            return False
+        return True
+
     @override
     def on_character_picker_get_more_press(self) -> None:
-        from bauiv1lib.store.browser import StoreBrowserWindow
+        import bacommon.docui.v1 as dui1
 
-        self.main_window_replace(
-            lambda: StoreBrowserWindow(
-                minimal_toolbars=True,
-                show_tab=StoreBrowserWindow.TabID.CHARACTERS,
+        from bauiv1lib.store.newstore import StoreUIController
+
+        if not self._ensure_signed_in(
+            origin_widget=bui.get_special_widget('store_button')
+        ):
+            return
+
+        # Set this up as a non-auxiliary window so we can nav back to
+        # char editing (otherwise it would replace the whole inventory
+        # stack). Also don't set uiopenstateid in this case since we don't
+        # want store button to glow (since inventory button already is).
+        wait_for_connectivity(
+            on_connected=lambda: self.main_window_replace(
+                bui.CallStrict(
+                    StoreUIController().create_window,
+                    dui1.Request('/'),
+                    origin_widget=bui.get_special_widget('store_button'),
+                    auxiliary_style=False,
+                ),
+                extra_type_id=StoreUIController.get_window_extra_type_id(),
             )
         )
 

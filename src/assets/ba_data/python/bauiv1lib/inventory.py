@@ -23,12 +23,6 @@ class InventoryUIController(DocUIController):
     def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
         return self.fulfill_request_cloud(request, 'classicstore')
 
-    @override
-    def local_action(self, action: DocUILocalAction) -> None:
-        bui.screenmessage(
-            f'Would do {action.name!r} with args {action.args!r}.'
-        )
-
 
 class OldInventoryWindow(bui.MainWindow):
     """Shows what you got."""

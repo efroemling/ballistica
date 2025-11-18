@@ -157,13 +157,13 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         window: bauiv1.MainWindow,
         *,
         back_state: MainWindowState | None,
+        extra_type_id: str = '',
         from_window: bauiv1.MainWindow | None | bool = True,
         is_back: bool = False,
         is_top_level: bool = False,
         is_auxiliary: bool = False,
         suppress_warning: bool = False,
         restore_shared_state: bool = True,
-        extra_type_id: str = '',
     ) -> None:
         """Set the current 'main' window.
 
@@ -399,6 +399,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             is_auxiliary=state.is_auxiliary,
             back_state=state.parent,
             suppress_warning=True,
+            extra_type_id=state.extra_type_id,
         )
 
     def should_suppress_window_recreates(self) -> bool:
@@ -543,6 +544,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 back_state=aux_state.parent,
                 suppress_warning=True,
                 is_auxiliary=True,
+                extra_type_id=win_extra_type_id,
             )
             return
 
@@ -574,7 +576,9 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # Ok, no existing auxiliary stuff was found period. Just
         # navigate forward to this UI.
         new_main_win = current_main_window.main_window_replace(
-            win_create_call, is_auxiliary=True, extra_type_id=win_extra_type_id
+            win_create_call,
+            is_auxiliary=True,
+            extra_type_id=win_extra_type_id,
         )
 
         # We should always be allowed to replace the main win in this

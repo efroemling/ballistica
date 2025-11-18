@@ -17,7 +17,6 @@ import bacommon.bs
 from babase import AppMode
 import bauiv1 as bui
 from bauiv1lib.connectivity import wait_for_connectivity
-from bauiv1lib.account.signin import show_sign_in_prompt
 
 import _baclassic
 
@@ -100,7 +99,7 @@ class ClassicAppMode(AppMode):
             self._root_ui_settings_press
         )
         ui.root_ui_calls[ui.RootUIElement.STORE_BUTTON] = (
-            self._root_ui_store_press_new
+            self._root_ui_store_press
         )
         ui.root_ui_calls[ui.RootUIElement.INVENTORY_BUTTON] = (
             self._root_ui_inventory_press_old
@@ -723,7 +722,7 @@ class ClassicAppMode(AppMode):
     def _root_ui_achievements_press(self) -> None:
         from bauiv1lib.achievements import AchievementsWindow
 
-        if not self._ensure_signed_in_v1():
+        if not self._ensure_signed_in():
             return
 
         wait_for_connectivity(
@@ -750,37 +749,31 @@ class ClassicAppMode(AppMode):
             )
         )
 
-    def _root_ui_store_press_old(self) -> None:
-        from bauiv1lib.store.browser import StoreBrowserWindow
-
-        if not self._ensure_signed_in_v1():
-            return
-
-        wait_for_connectivity(
-            on_connected=lambda: bui.app.ui_v1.auxiliary_window_activate(
-                win_type=StoreBrowserWindow,
-                win_create_call=lambda: StoreBrowserWindow(
-                    origin_widget=bui.get_special_widget('store_button')
-                ),
-            )
-        )
-
-    def _root_ui_store_press_new(self) -> None:
+    def _root_ui_store_press(self) -> None:
         import bacommon.docui.v1 as dui1
 
         from bauiv1lib.docui import DocUIWindow
-        from bauiv1lib.inventory import InventoryUIController
+        from bauiv1lib.store.newstore import StoreUIController
+
+        if not self._ensure_signed_in(
+            origin_widget=bui.get_special_widget('store_button')
+        ):
+            return
 
         # Pop up an auxiliary window wherever we are in the nav stack.
-        bui.app.ui_v1.auxiliary_window_activate(
-            win_type=DocUIWindow,
-            win_create_call=bui.CallStrict(
-                InventoryUIController().create_window,
-                dui1.Request('/'),
-                origin_widget=bui.get_special_widget('store_button'),
-                uiopenstateid='classicstore',
-            ),
-            win_extra_type_id=InventoryUIController.get_window_extra_type_id(),
+        wait_for_connectivity(
+            on_connected=lambda: bui.app.ui_v1.auxiliary_window_activate(
+                win_type=DocUIWindow,
+                win_create_call=bui.CallStrict(
+                    StoreUIController().create_window,
+                    dui1.Request('/'),
+                    origin_widget=bui.get_special_widget('store_button'),
+                    uiopenstateid='classicstore',
+                ),
+                win_extra_type_id=(
+                    StoreUIController.get_window_extra_type_id()
+                ),
+            )
         )
 
     def _root_ui_tickets_meter_press(self) -> None:
@@ -800,7 +793,7 @@ class ClassicAppMode(AppMode):
     def _root_ui_trophy_meter_press(self) -> None:
         from bauiv1lib.league.rankwindow import LeagueRankWindow
 
-        if not self._ensure_signed_in_v1():
+        if not self._ensure_signed_in():
             return
 
         bui.app.ui_v1.auxiliary_window_activate(
@@ -820,7 +813,7 @@ class ClassicAppMode(AppMode):
     def _root_ui_inventory_press_old(self) -> None:
         from bauiv1lib.inventory import OldInventoryWindow
 
-        if not self._ensure_signed_in_v1():
+        if not self._ensure_signed_in():
             return
 
         bui.app.ui_v1.auxiliary_window_activate(
@@ -848,27 +841,19 @@ class ClassicAppMode(AppMode):
             win_extra_type_id=InventoryUIController.get_window_extra_type_id(),
         )
 
-    def _ensure_signed_in(self) -> bool:
+    def _ensure_signed_in(
+        self, *, origin_widget: bui.Widget | None = None
+    ) -> bool:
         """Make sure we're signed in (requiring modern v2 accounts)."""
+        from bauiv1lib.account.signin import show_sign_in_prompt
+
         plus = bui.app.plus
         if plus is None:
             bui.screenmessage('This requires plus.', color=(1, 0, 0))
             bui.getsound('error').play()
             return False
         if plus.accounts.primary is None:
-            show_sign_in_prompt()
-            return False
-        return True
-
-    def _ensure_signed_in_v1(self) -> bool:
-        """Make sure we're signed in (allowing legacy v1-only accounts)."""
-        plus = bui.app.plus
-        if plus is None:
-            bui.screenmessage('This requires plus.', color=(1, 0, 0))
-            bui.getsound('error').play()
-            return False
-        if plus.get_v1_account_state() != 'signed_in':
-            show_sign_in_prompt()
+            show_sign_in_prompt(origin_widget=origin_widget)
             return False
         return True
 
@@ -887,11 +872,6 @@ class ClassicAppMode(AppMode):
 
     def _root_ui_chest_slot_pressed(self, index: int) -> None:
         from bauiv1lib.chest import ChestWindow
-
-        #     ChestWindow1,
-        #     ChestWindow2,
-        #     ChestWindow3,
-        # )
 
         widgetid: Literal[
             'chest_0_button',

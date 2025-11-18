@@ -52,4 +52,8 @@ available builds.
   for examples.
 - `bauiv1.uicleanupcheck()` will be removed. To prepare for this, use
   `ba*.app.ui_v1.add_use_cleanup_check()` instead.
+- The `extra_type_id` arg to `ba*.app.ui_v1.set_main_window()` will no longer
+  have a default value. If you are using this method (generally you should not),
+  make sure you are passing this. It is mainly for use with DocUI windows; in
+  most other cases it can be an empty string.
 

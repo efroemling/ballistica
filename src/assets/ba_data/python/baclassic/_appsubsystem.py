@@ -776,6 +776,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             is_top_level=True,
             back_state=None,
             suppress_warning=True,
+            extra_type_id='',
         )
 
     def preload_map_preview_media(self) -> None:
@@ -837,6 +838,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 suppress_warning=True,
                 # Reset selections to default for consistency.
                 restore_shared_state=False,
+                extra_type_id='',
             )
 
     def save_ui_state(self) -> None:
@@ -878,6 +880,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                         is_top_level=True,
                         back_state=None,
                         suppress_warning=True,
+                        extra_type_id='',
                     )
                 else:
                     # If there's a saved ui state, restore that.
@@ -897,6 +900,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                             is_top_level=True,
                             back_state=None,
                             suppress_warning=True,
+                            extra_type_id='',
                         )
 
     @staticmethod

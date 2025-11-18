@@ -956,12 +956,14 @@ static auto PySpinnerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* pos_obj{Py_None};
   PyObject* visible_obj{Py_None};
   PyObject* style_obj{Py_None};
+  PyObject* fade_obj{Py_None};
 
   static const char* kwlist[] = {"edit",    "parent", "size", "position",
-                                 "visible", "style",  nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOO", const_cast<char**>(kwlist), &edit_obj,
-          &parent_obj, &size_obj, &pos_obj, &visible_obj, &style_obj))
+                                 "visible", "style",  "fade", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OOOOOOO",
+                                   const_cast<char**>(kwlist), &edit_obj,
+                                   &parent_obj, &size_obj, &pos_obj,
+                                   &visible_obj, &style_obj, &fade_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -1001,6 +1003,9 @@ static auto PySpinnerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (visible_obj != Py_None) {
     b->set_visible(Python::GetBool(visible_obj));
   }
+  if (fade_obj != Py_None) {
+    b->set_fade(Python::GetBool(fade_obj));
+  }
   if (style_obj != Py_None) {
     auto style_str = Python::GetString(style_obj);
     if (style_str == "bomb") {
@@ -1036,8 +1041,8 @@ static PyMethodDef PySpinnerWidgetDef = {
     "  position: Sequence[float] | None = None,\n"
     "  style: Literal['bomb', 'simple'] | None = None,\n"
     "  visible: bool | None = None,\n"
-    ")\n"
-    "  -> bauiv1.Widget\n"
+    "  fade: bool | None = None,\n"
+    ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a spinner widget.\n"
     "\n"

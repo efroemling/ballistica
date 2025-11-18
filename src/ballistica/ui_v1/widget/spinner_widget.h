@@ -25,6 +25,8 @@ class SpinnerWidget : public Widget {
   /// gradually when made visible. Setting visible-in-container will not
   /// have this effect.
   void set_visible(bool val) { visible_ = val; }
+
+  void set_fade(bool val) { fade_ = val; }
   auto GetWidth() -> float override;
   auto GetHeight() -> float override;
   auto GetWidgetTypeName() -> std::string override { return "spinner"; }
@@ -36,6 +38,7 @@ class SpinnerWidget : public Widget {
   float presence_{};
   Style style_{Style::kSimple};
   bool visible_{true};
+  bool fade_{true};
 };
 
 }  // namespace ballistica::ui_v1

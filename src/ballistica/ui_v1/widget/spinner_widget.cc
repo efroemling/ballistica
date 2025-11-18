@@ -27,11 +27,19 @@ void SpinnerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   // Fade presence in any time we're visible and out any time we're not.
   if (visible_) {
-    presence_ = std::min(
-        1.0, presence_ + pass->frame_def()->display_time_elapsed() * 1.0);
+    if (fade_) {
+      presence_ = std::min(
+          1.0, presence_ + pass->frame_def()->display_time_elapsed() * 1.0);
+    } else {
+      presence_ = 1.0f;
+    }
   } else {
-    presence_ = std::max(
-        0.0, presence_ - pass->frame_def()->display_time_elapsed() * 2.0);
+    if (fade_) {
+      presence_ = std::max(
+          0.0, presence_ - pass->frame_def()->display_time_elapsed() * 2.0);
+    } else {
+      presence_ = 0.0f;
+    }
     // Also don't draw anything in this case.
     return;
   }

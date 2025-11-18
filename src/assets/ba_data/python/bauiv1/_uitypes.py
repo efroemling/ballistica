@@ -87,11 +87,11 @@ class UIOpenState:
     tally.
     """
 
-    __slots__ = ['_tag']
+    __slots__ = ['stateid']
 
-    def __init__(self, tag: str) -> None:
-        self._tag = tag
-        _bauiv1.ui_open_state_change(self._tag, 1)
+    def __init__(self, stateid: str) -> None:
+        self.stateid = stateid
+        _bauiv1.ui_open_state_change(self.stateid, 1)
 
     def __del__(self) -> None:
-        _bauiv1.ui_open_state_change(self._tag, -1)
+        _bauiv1.ui_open_state_change(self.stateid, -1)

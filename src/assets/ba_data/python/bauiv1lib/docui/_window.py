@@ -33,7 +33,7 @@ class DocUIWindow(bui.MainWindow):
         auxiliary_style: bool = True,
         restored: bool = False,
         uiopenstateid: str | None = None,
-        suppress_ui_open_state_warning: bool = False,
+        suppress_win_extra_type_warning: bool = False,
     ):
         # pylint: disable=too-many-statements
         ui = bui.app.ui_v1
@@ -51,6 +51,7 @@ class DocUIWindow(bui.MainWindow):
         # true to avoid cycles.
         self.controller = controller
 
+        self._suppress_win_extra_type_warning = suppress_win_extra_type_warning
         self._request = request
         self._request_state_id = self._default_state_id(request)
 
@@ -264,7 +265,7 @@ class DocUIWindow(bui.MainWindow):
 
         self._spinner: bui.Widget | None = None
 
-        if not suppress_ui_open_state_warning:
+        if not suppress_win_extra_type_warning:
             bui.pushcall(bui.WeakCallStrict(self._sanity_check_win_extra_type))
 
     def _sanity_check_win_extra_type(self) -> None:
@@ -275,7 +276,7 @@ class DocUIWindow(bui.MainWindow):
             bui.uilog.warning(
                 '%s created by %s was not assigned an extra-type-id.'
                 ' Always pass a "win_extra_type_id" when calling'
-                ' `auxiliary_window_activate()` with doc-ui windows.',
+                ' `auxiliary_window_activate()` with a DocUIWindow.',
                 type(self).__name__,
                 type(self.controller),
             )
@@ -323,12 +324,17 @@ class DocUIWindow(bui.MainWindow):
         assert not self._locked
 
         # If a spinner-position is provided, make the spinner in our
-        # subcontainer at the provided spot.
+        # subcontainer at the provided spot and have it appear
+        # immediately instead of fading (Makes button presses feel more
+        # responsive).
         parent = None if origin_widget is None else origin_widget.parent
         if parent is not None:
             assert origin_widget is not None
             self._spinner = bui.spinnerwidget(
-                parent=parent, position=origin_widget.center, size=48
+                parent=parent,
+                position=origin_widget.center,
+                size=48,
+                fade=False,
             )
         else:
             # Otherwise do one at the center of our window (not in our
@@ -479,6 +485,10 @@ class DocUIWindow(bui.MainWindow):
         controller = self.controller
         request = self._request
         last_response = self._last_response
+        uiopenstateid = (
+            None if self._uiopenstate is None else self._uiopenstate.stateid
+        )
+        suppress_win_extra_type_warning = self._suppress_win_extra_type_warning
 
         return bui.BasicMainWindowState(
             create_call=(
@@ -489,6 +499,10 @@ class DocUIWindow(bui.MainWindow):
                         transition=transition,
                         origin_widget=origin_widget,
                         auxiliary_style=auxiliary_style,
+                        uiopenstateid=uiopenstateid,
+                        suppress_win_extra_type_warning=(
+                            suppress_win_extra_type_warning
+                        ),
                         restored=True,
                     ),
                     last_response=last_response,
