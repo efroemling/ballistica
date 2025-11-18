@@ -474,6 +474,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/bs/_account.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bs/_bs.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bs/_chest.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/bs/_displayitem.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bs/_msg.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/clienteffect.py \

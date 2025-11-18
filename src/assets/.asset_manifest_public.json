@@ -64,6 +64,7 @@
  "ba_data/python/bacommon/bs/_account.py",
  "ba_data/python/bacommon/bs/_bs.py",
  "ba_data/python/bacommon/bs/_chest.py",
+ "ba_data/python/bacommon/bs/_displayitem.py",
  "ba_data/python/bacommon/bs/_msg.py",
  "ba_data/python/bacommon/build.py",
  "ba_data/python/bacommon/clienteffect.py",

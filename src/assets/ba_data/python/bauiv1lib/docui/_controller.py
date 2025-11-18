@@ -57,8 +57,9 @@ class DocUIController:
         Be aware that this will always be called in a background thread.
 
         This method is expected to always return a response, even in the
-        case of errors. Use :meth:`error_response()` to translate error
-        conditions to responses.
+        case of errors. Use
+        :meth:`~bauiv1lib.docui.DocUIController.error_response()` to
+        translate error conditions to responses.
 
         The one exception to this rule (no pun intended) is the
         :class:`efro.error.CleanError` exception. This can be raised as a
