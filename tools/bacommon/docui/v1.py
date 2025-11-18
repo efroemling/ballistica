@@ -398,8 +398,8 @@ class Image(Decoration):
 class DisplayItemStyle(Enum):
     """Styles a display-item can be drawn in."""
 
-    #: Shows graphics and/or text fully conveying what the item is.
-    #: Fits in to a 4:3 box and works best with large-ish displays.
+    #: Shows graphics and/or text fully conveying what the item is. Fits
+    #: in to a 4:3 box and works best with large-ish displays.
     FULL = 'f'
 
     #: Graphics and/or text fully conveying what the item is, but
@@ -409,9 +409,9 @@ class DisplayItemStyle(Enum):
     #: A graphics-only representation of the item (though text may be
     #: used in fallback cases). Does not fully convey what the item is,
     #: but instead is intended to be used alongside the item's textual
-    #: description. For example, some number of coins may simply display a
-    #: coin graphic here without the number. Draws in a 1:1 box and works
-    #: for large or small display.
+    #: description. For example, some number of coins may simply display
+    #: a coin graphic here without the number. Draws in a 1:1 box and
+    #: works for large or small display.
     ICON = 'i'
 
 
@@ -687,7 +687,13 @@ class StatusCode(Enum):
     """The overall result of a request."""
 
     SUCCESS = 0
+
+    #! Something went wrong. That's all we know.
     UNKNOWN_ERROR = 1
+
+    #: Something went wrong talking to the server. A 'Retry' button may
+    #: be appropriate to show here (for GET requests at least).
+    COMMUNICATION_ERROR = 2
 
 
 @ioprepped
@@ -712,8 +718,8 @@ class Response(DocUIResponse):
 
     #: Local action to run after this response is initially received.
     #: Will be handled by
-    #: :meth:`bauiv1lib.docui.DocUIController.local_action()`. Note
-    #: that these actions will not re-run if the page is automatically
+    #: :meth:`bauiv1lib.docui.DocUIController.local_action()`. Note that
+    #: these actions will not re-run if the page is automatically
     #: refreshed later (due to window resizing, back navigation, etc).
     local_action: Annotated[str | None, IOAttrs('a', store_default=False)] = (
         None
@@ -722,9 +728,9 @@ class Response(DocUIResponse):
         dict | None, IOAttrs('aa', store_default=False)
     ] = None
 
-    #: New overall action to have the client schedule after this response
-    #: is received. Useful for redirecting to other pages or closing the
-    #: doc-ui window.
+    #: New overall action to have the client schedule after this
+    #: response is received. Useful for redirecting to other pages or
+    #: closing the doc-ui window.
     timed_action: Annotated[
         Action | None, IOAttrs('ta', store_default=False)
     ] = None

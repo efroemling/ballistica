@@ -9,7 +9,8 @@ from dataclasses import dataclass
 from enum import Enum
 import weakref
 
-from efro.error import CleanError
+from efro.util import asserttype
+from efro.error import CleanError, CommunicationError
 from efro.dataclassio import dataclass_to_json, dataclass_from_json
 from bacommon.docui import (
     DocUIRequestTypeID,
@@ -157,8 +158,10 @@ class DocUIController:
                 )
                 raise RuntimeError('Error reading docui web-response.') from exc
 
-            # For now, show all http errors as communication error. We
-            # can probably get more specific in the future.
+            # For now, consider all errors communication errors (should
+            # result in retry buttons in some cases). Can get more
+            # specific in the future for cases where retries would not
+            # help.
             if raw_response.status != 200:
 
                 # If the response bundled an error, log it.
@@ -167,11 +170,19 @@ class DocUIController:
                         'doc-ui http request returned error: %s',
                         webresponse.error,
                     )
-                return self.error_response(self.ErrorType.COMMUNICATION_ERROR)
+                return self.error_response(
+                    request, self.ErrorType.COMMUNICATION_ERROR
+                )
 
         except Exception:
+            # For now, consider all errors communication errors (should
+            # result in retry buttons in some cases). Can get more
+            # specific in the future for cases where retries would not
+            # help.
             bui.netlog.info('Error in docui http request.', exc_info=True)
-            return self.error_response(self.ErrorType.GENERIC)
+            return self.error_response(
+                request, self.ErrorType.COMMUNICATION_ERROR
+            )
 
         assert webresponse.doc_ui_response is not None
         return webresponse.doc_ui_response
@@ -207,11 +218,18 @@ class DocUIController:
             assert isinstance(mresponse, bacommon.cloud.FulfillDocUIResponse)
 
             return mresponse.response
+
+        except CommunicationError:
+            # Label comm-errors so we can possibly show retry buttons.
+            return self.error_response(
+                request, self.ErrorType.COMMUNICATION_ERROR
+            )
         except Exception:
-            return self.error_response()
+            return self.error_response(request)
 
     def error_response(
         self,
+        request: DocUIRequest,
         error_type: ErrorType = ErrorType.GENERIC,
         custom_message: str | None = None,
     ) -> DocUIResponse:
@@ -228,6 +246,8 @@ class DocUIController:
         error_msg: bui.Lstr | None = None
         error_msg_simple: str | None = None
 
+        status_code = dui1.StatusCode.UNKNOWN_ERROR
+
         if custom_message is not None:
             error_msg_simple = custom_message
         else:
@@ -238,6 +258,7 @@ class DocUIController:
             elif error_type is self.ErrorType.UNDER_CONSTRUCTION:
                 error_msg_simple = 'Under construction - check back soon.'
             elif error_type is self.ErrorType.COMMUNICATION_ERROR:
+                status_code = dui1.StatusCode.COMMUNICATION_ERROR
                 error_msg_simple = 'Error talking to server.'
             else:
                 assert_never(error_type)
@@ -248,8 +269,18 @@ class DocUIController:
         assert error_msg is not None
 
         debug = False
+
+        # Give a retry button for comm-errors on GET requests (POSTs may
+        # have unintentional side-effects so holding off on those for
+        # now).
+        do_retry = (
+            isinstance(request, dui1.Request)
+            and request.method is dui1.RequestMethod.GET
+            and status_code is dui1.StatusCode.COMMUNICATION_ERROR
+        )
+
         return dui1.Response(
-            status=dui1.StatusCode.UNKNOWN_ERROR,
+            status=status_code,
             page=dui1.Page(
                 title=bui.Lstr(resource='errorText').as_json(),
                 title_is_lstr=True,
@@ -258,8 +289,18 @@ class DocUIController:
                     dui1.ButtonRow(
                         buttons=[
                             dui1.Button(
-                                bui.Lstr(resource='okText').as_json(),
-                                dui1.Local(close_window=True),
+                                bui.Lstr(
+                                    resource=(
+                                        'retryText' if do_retry else 'okText'
+                                    )
+                                ).as_json(),
+                                (
+                                    dui1.Replace(
+                                        asserttype(request, dui1.Request)
+                                    )
+                                    if do_retry
+                                    else dui1.Local(close_window=True)
+                                ),
                                 label_is_lstr=True,
                                 default=True,
                                 style=dui1.ButtonStyle.MEDIUM,
@@ -695,7 +736,7 @@ class DocUIController:
             except CleanError as exc:
                 # The one exception case we officially handle. Translate
                 # this to an error response with a custom message.
-                response = self.error_response(custom_message=str(exc))
+                response = self.error_response(request, custom_message=str(exc))
 
             except Exception:
                 # fulfill_request is expected to gracefully return even
@@ -724,26 +765,6 @@ class DocUIController:
                     and minbuild > bui.app.env.engine_build_number
                 ):
                     error = self.ErrorType.NEED_UPDATE
-                else:
-                    # Sanity check - make sure all provided button-rows
-                    # contain buttons.
-                    #
-                    pass
-                    # We used to check to make sure there was at least one
-                    # row here and that all rows contained buttons.
-                    # For now, make sure there's at least one button-row
-                    # and that all button-rows contain at least one
-                    # button. Will need to revisit this when we have new
-                    # row types.
-                    # if not response.page.rows or not all(
-                    #     row.buttons for row in response.page.rows
-                    # ):
-                    #     bui.uilog.exception(
-                    #         'Got invalid doc-ui response;'
-                    #         ' page must contain at least one row'
-                    #         ' and all rows must contain buttons.'
-                    #     )
-                    #     error = self.ErrorType.GENERIC
 
             elif responsetype is DocUIResponseTypeID.UNKNOWN:
                 assert isinstance(response, UnknownDocUIResponse)
@@ -757,7 +778,7 @@ class DocUIController:
                 assert_never(responsetype)
 
         if error is not None:
-            response = self.error_response(error)
+            response = self.error_response(request, error)
 
         # Currently must be v1 if it made it to here.
         assert isinstance(response, dui1.Response)
