@@ -180,6 +180,7 @@ def prep_page(
         if row.subtitle is not None:
             height += row_subtitle_height
         height += this_row_height
+        height += row.spacing_top + row.spacing_bottom
 
     # Ok; we've got all row dimensions. Now prep calls to make the
     # subcontainers to fit everything and fill out all rows.
@@ -195,6 +196,8 @@ def prep_page(
         zip(page_rows_filtered, rows, strict=True)
     ):
         tdelaybase = 0.06 * (i + 1)
+
+        y -= row.spacing_top
 
         if i != 0:
             y -= page.row_spacing
@@ -384,11 +387,14 @@ def prep_page(
             rowprep.height - row.padding_top - row.padding_bottom
         )
         bcount = len(row.buttons)
+
+        # Clamp or max delay if we've got lots of buttons.
+        bdelaymax = min(0.5, 0.03 * bcount)
         for j, button in enumerate(row.buttons):
             # Calc amt 1 -> 0 across the row.
             tdelayamt = 1.0 - (j / max(1, bcount - 1))
             # Rightmost buttons slide in first.
-            tdelay = tdelaybase + tdelayamt * (0.03 * bcount)
+            tdelay = tdelaybase + tdelayamt * bdelaymax
 
             xorig = x
             x += button.padding_left * button.scale
@@ -441,7 +447,12 @@ def prep_page(
             else:
                 assert_never(button.style)
 
-            widgetid = f'{idprefix}|button{nextbuttonid}'
+            widgetid: str
+            if button.widget_id is None:
+                widgetid = f'{idprefix}|button{nextbuttonid}'
+                nextbuttonid += 1
+            else:
+                widgetid = f'{idprefix}|{button.widget_id}'
 
             if button.default:
                 if have_start_button:
@@ -463,6 +474,26 @@ def prep_page(
                     root_post_calls.append(
                         partial(_set_selected_button, widgetid)
                     )
+
+            show_buffer_left = button.padding_left * bscale
+            show_buffer_right = button.padding_right * bscale
+
+            # Calc the total height of what we're trying to keep on
+            # screen, and then nudge that towards the total visible
+            # height of the scroll area.
+            total_show_width = (
+                bwidth + button.padding_left + button.padding_right
+            ) * bscale
+
+            # How much to push show-height towards full available space.
+            # 1.0 should lead to always perfect centering (but that
+            # might feel too aggressive).
+            amt = 0.6
+            buffer_extra = max(
+                0.0, (scroll_width - total_show_width) * 0.5 * amt
+            )
+            show_buffer_left += buffer_extra
+            show_buffer_right += buffer_extra
 
             buttonprep = ButtonPrep(
                 buttoncall=partial(
@@ -490,8 +521,8 @@ def prep_page(
                     bui.widget,
                     # TODO: Calc left/right vals properly based on
                     # our size and padding.
-                    show_buffer_left=150,
-                    show_buffer_right=150,
+                    show_buffer_left=show_buffer_left,
+                    show_buffer_right=show_buffer_right,
                     depth_range=button.depth_range,
                     # We explicitly assign all neighbor selection;
                     # anything left over should go to toolbars.
@@ -502,7 +533,6 @@ def prep_page(
                 widgetid=widgetid,
                 action=button.action,
             )
-            nextbuttonid += 1
             if button.texture is not None:
                 buttonprep.textures['texture'] = button.texture
 
@@ -593,6 +623,8 @@ def prep_page(
             show_buffer_top=show_buffer_top,
             show_buffer_bottom=show_buffer_bottom,
         )
+        y -= row.spacing_bottom
+
     return PagePrep(
         rootcall=rootcall,
         rows=rows,

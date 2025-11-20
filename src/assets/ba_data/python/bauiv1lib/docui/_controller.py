@@ -247,7 +247,7 @@ class DocUIController:
         error_msg: bui.Lstr | None = None
         error_msg_simple: str | None = None
 
-        status_code = dui1.StatusCode.UNKNOWN_ERROR
+        status_code = dui1.ResponseStatus.UNKNOWN_ERROR
 
         if custom_message is not None:
             error_msg_simple = custom_message
@@ -259,7 +259,7 @@ class DocUIController:
             elif error_type is self.ErrorType.UNDER_CONSTRUCTION:
                 error_msg_simple = 'Under construction - check back soon.'
             elif error_type is self.ErrorType.COMMUNICATION_ERROR:
-                status_code = dui1.StatusCode.COMMUNICATION_ERROR
+                status_code = dui1.ResponseStatus.COMMUNICATION_ERROR
                 error_msg_simple = 'Error talking to server.'
             else:
                 assert_never(error_type)
@@ -277,7 +277,7 @@ class DocUIController:
         do_retry = (
             isinstance(request, dui1.Request)
             and request.method is dui1.RequestMethod.GET
-            and status_code is dui1.StatusCode.COMMUNICATION_ERROR
+            and status_code is dui1.ResponseStatus.COMMUNICATION_ERROR
         )
 
         return dui1.Response(
@@ -369,6 +369,18 @@ class DocUIController:
             )
         )
         return win
+
+    def save_window_shared_state(
+        self, window: DocUIWindow, state: dict
+    ) -> None:
+        """Called when a window shared state is being saved."""
+        del window, state  # Unused.
+
+    def restore_window_shared_state(
+        self, window: DocUIWindow, state: dict
+    ) -> None:
+        """Called when a window shared state is being restored."""
+        del window, state  # Unused.
 
     @classmethod
     def get_window_extra_type_id(cls) -> str:
@@ -830,7 +842,7 @@ class DocUIController:
         win.unlock_ui()
         win.set_last_response(
             response,
-            response.status == dui1.StatusCode.SUCCESS,
+            response.status == dui1.ResponseStatus.SUCCESS,
         )
 
         # Set the UI.

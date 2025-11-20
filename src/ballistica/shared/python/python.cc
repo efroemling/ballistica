@@ -80,6 +80,7 @@ void Python::SetPythonException(const Exception& exc) {
     pytype = PyExc_RuntimeError;
   }
   assert(pytype != nullptr && PyType_Check(pytype));
+
   PyErr_SetString(pytype, description);
 }
 

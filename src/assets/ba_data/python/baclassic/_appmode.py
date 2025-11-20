@@ -1,6 +1,5 @@
 # Released under the MIT License. See LICENSE for details.
 #
-# pylint: disable=too-many-lines
 """Contains ClassicAppMode."""
 
 from __future__ import annotations
@@ -102,7 +101,7 @@ class ClassicAppMode(AppMode):
             self._root_ui_store_press
         )
         ui.root_ui_calls[ui.RootUIElement.INVENTORY_BUTTON] = (
-            self._root_ui_inventory_press_old
+            self._root_ui_inventory_press
         )
         ui.root_ui_calls[ui.RootUIElement.GET_TOKENS_BUTTON] = (
             self._root_ui_get_tokens_press
@@ -722,30 +721,30 @@ class ClassicAppMode(AppMode):
     def _root_ui_achievements_press(self) -> None:
         from bauiv1lib.achievements import AchievementsWindow
 
-        if not self._ensure_signed_in():
+        btn = bui.get_special_widget('achievements_button')
+
+        if not self._ensure_signed_in(origin_widget=btn):
             return
 
         wait_for_connectivity(
             on_connected=lambda: bui.app.ui_v1.auxiliary_window_activate(
                 win_type=AchievementsWindow,
-                win_create_call=lambda: AchievementsWindow(
-                    origin_widget=bui.get_special_widget('achievements_button')
-                ),
+                win_create_call=lambda: AchievementsWindow(origin_widget=btn),
             )
         )
 
     def _root_ui_inbox_press(self) -> None:
         from bauiv1lib.inbox import InboxWindow
 
-        if not self._ensure_signed_in():
+        btn = bui.get_special_widget('inbox_button')
+
+        if not self._ensure_signed_in(origin_widget=btn):
             return
 
         wait_for_connectivity(
             on_connected=lambda: bui.app.ui_v1.auxiliary_window_activate(
                 win_type=InboxWindow,
-                win_create_call=lambda: InboxWindow(
-                    origin_widget=bui.get_special_widget('inbox_button')
-                ),
+                win_create_call=lambda: InboxWindow(origin_widget=btn),
             )
         )
 
@@ -755,9 +754,9 @@ class ClassicAppMode(AppMode):
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.store.newstore import StoreUIController
 
-        if not self._ensure_signed_in(
-            origin_widget=bui.get_special_widget('store_button')
-        ):
+        btn = bui.get_special_widget('store_button')
+
+        if not self._ensure_signed_in(origin_widget=btn):
             return
 
         # Pop up an auxiliary window wherever we are in the nav stack.
@@ -767,7 +766,7 @@ class ClassicAppMode(AppMode):
                 win_create_call=bui.CallStrict(
                     StoreUIController().create_window,
                     dui1.Request('/'),
-                    origin_widget=bui.get_special_widget('store_button'),
+                    origin_widget=btn,
                     uiopenstateid='classicstore',
                 ),
                 win_extra_type_id=(
@@ -793,37 +792,27 @@ class ClassicAppMode(AppMode):
     def _root_ui_trophy_meter_press(self) -> None:
         from bauiv1lib.league.rankwindow import LeagueRankWindow
 
-        if not self._ensure_signed_in():
+        btn = bui.get_special_widget('trophy_meter')
+
+        if not self._ensure_signed_in(origin_widget=btn):
             return
 
         bui.app.ui_v1.auxiliary_window_activate(
             win_type=LeagueRankWindow,
-            win_create_call=lambda: LeagueRankWindow(
-                origin_widget=bui.get_special_widget('trophy_meter')
-            ),
+            win_create_call=lambda: LeagueRankWindow(origin_widget=btn),
         )
 
     def _root_ui_level_meter_press(self) -> None:
         from bauiv1lib.resourcetypeinfo import ResourceTypeInfoWindow
 
-        ResourceTypeInfoWindow(
-            'xp', origin_widget=bui.get_special_widget('level_meter')
-        )
+        btn = bui.get_special_widget('level_meter')
 
-    def _root_ui_inventory_press_old(self) -> None:
-        from bauiv1lib.inventory import OldInventoryWindow
-
-        if not self._ensure_signed_in():
+        if not self._ensure_signed_in(origin_widget=btn):
             return
 
-        bui.app.ui_v1.auxiliary_window_activate(
-            win_type=OldInventoryWindow,
-            win_create_call=lambda: OldInventoryWindow(
-                origin_widget=bui.get_special_widget('inventory_button')
-            ),
-        )
+        ResourceTypeInfoWindow('xp', origin_widget=btn)
 
-    def _root_ui_inventory_press_new(self) -> None:
+    def _root_ui_inventory_press(self) -> None:
         import bacommon.docui.v1 as dui1
 
         from bauiv1lib.docui import DocUIWindow
@@ -841,9 +830,7 @@ class ClassicAppMode(AppMode):
             win_extra_type_id=InventoryUIController.get_window_extra_type_id(),
         )
 
-    def _ensure_signed_in(
-        self, *, origin_widget: bui.Widget | None = None
-    ) -> bool:
+    def _ensure_signed_in(self, *, origin_widget: bui.Widget | None) -> bool:
         """Make sure we're signed in (requiring modern v2 accounts)."""
         from bauiv1lib.account.signin import show_sign_in_prompt
 
@@ -860,14 +847,14 @@ class ClassicAppMode(AppMode):
     def _root_ui_get_tokens_press(self) -> None:
         from bauiv1lib.gettokens import GetTokensWindow
 
-        if not self._ensure_signed_in():
+        btn = bui.get_special_widget('get_tokens_button')
+
+        if not self._ensure_signed_in(origin_widget=btn):
             return
 
         bui.app.ui_v1.auxiliary_window_activate(
             win_type=GetTokensWindow,
-            win_create_call=lambda: GetTokensWindow(
-                origin_widget=bui.get_special_widget('get_tokens_button')
-            ),
+            win_create_call=lambda: GetTokensWindow(origin_widget=btn),
         )
 
     def _root_ui_chest_slot_pressed(self, index: int) -> None:

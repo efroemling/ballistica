@@ -512,6 +512,16 @@ class DocUIWindow(bui.MainWindow):
         )
 
     @override
+    def main_window_do_save_shared_state(self, state: dict) -> None:
+        # Give our controller a stab at this.
+        self.controller.save_window_shared_state(self, state)
+
+    @override
+    def main_window_do_restore_shared_state(self, state: dict) -> None:
+        # Give our controller a stab at this.
+        self.controller.restore_window_shared_state(self, state)
+
+    @override
     def main_window_should_preserve_selection(self) -> bool:
         return True
 

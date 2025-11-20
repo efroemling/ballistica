@@ -1495,8 +1495,8 @@ void ContainerWidget::ShowWidget(Widget* w) {
   float buffer_left = w->show_buffer_left();
   float tx = (w->tx() - buffer_left) * s;
   float ty = (w->ty() - buffer_bottom) * s;
-  float width = (w->GetWidth() + buffer_left + buffer_right) * s;
-  float height = (w->GetHeight() + buffer_bottom + buffer_top) * s;
+  float width = (w->GetWidth() * w->scale() + buffer_left + buffer_right) * s;
+  float height = (w->GetHeight() * w->scale() + buffer_bottom + buffer_top) * s;
   HandleMessage(base::WidgetMessage(base::WidgetMessage::Type::kShow, nullptr,
                                     tx, ty, width, height));
 }

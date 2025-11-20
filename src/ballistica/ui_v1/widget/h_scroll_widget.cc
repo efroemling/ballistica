@@ -734,13 +734,14 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       bool smooth_diff =
           (std::abs(child_offset_h_smoothed_ - child_offset_h_) > 0.01f);
+
       if (g_base->ui->touch_mode()) {
         if (smooth_diff || (touch_held_ && touch_is_scrolling_)
             || std::abs(inertia_scroll_rate_) > 1.0f) {
           last_scroll_bar_show_time_ = frame_def->display_time();
         }
       } else {
-        if (smooth_diff || (touch_held_ && touch_is_scrolling_)
+        if (smooth_diff || mouse_held_thumb_
             || std::abs(inertia_scroll_rate_) > 1.0f
             || (mouse_over_
                 && frame_def->display_time() - last_mouse_move_time_ < 0.1f)) {

@@ -200,6 +200,7 @@ class CharacterPicker(PopupWindow):
 
         if plus.accounts.primary is None:
             show_sign_in_prompt()
+            self._transition_out()
             return
 
         if self._delegate is not None:

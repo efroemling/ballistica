@@ -1,11 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Provides UI to edit a player profile."""
 
 from __future__ import annotations
 
 import random
-from typing import cast, override
+from typing import cast, override, TYPE_CHECKING
 
 from bauiv1lib.colorpicker import ColorPicker
 from bauiv1lib.characterpicker import CharacterPickerDelegate
@@ -13,6 +14,9 @@ from bauiv1lib.iconpicker import IconPickerDelegate
 from bauiv1lib.connectivity import wait_for_connectivity
 import bauiv1 as bui
 import bascenev1 as bs
+
+if TYPE_CHECKING:
+    from typing import Callable
 
 
 class EditProfileWindow(
@@ -33,8 +37,11 @@ class EditProfileWindow(
     def __init__(
         self,
         existing_profile: str | None,
+        *,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        on_profile_save: Callable[[str], None] | None = None,
+        on_profile_delete: Callable[[str], None] | None = None,
     ):
         # FIXME: Tidy this up a bit.
         # pylint: disable=too-many-branches
@@ -52,6 +59,8 @@ class EditProfileWindow(
         self._spazzes: list[str] = []
         self._icon_textures: list[bui.Texture] = []
         self._icon_tint_textures: list[bui.Texture] = []
+        self._on_profile_save = on_profile_save
+        self._on_profile_delete = on_profile_delete
 
         # Grab profile colors or pick random ones.
         (
@@ -59,17 +68,17 @@ class EditProfileWindow(
             self._highlight,
         ) = bui.app.classic.get_player_profile_colors(existing_profile)
         uiscale = bui.app.ui_v1.uiscale
-        self._width = width = 880.0 if uiscale is bui.UIScale.SMALL else 680.0
-        self._x_inset = x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
+        self._width = width = 1000.0 if uiscale is bui.UIScale.SMALL else 680.0
+        self._x_inset = x_inset = 140.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = height = (
             500.0
             if uiscale is bui.UIScale.SMALL
-            else 400.0 if uiscale is bui.UIScale.MEDIUM else 450.0
+            else 450.0 if uiscale is bui.UIScale.MEDIUM else 450.0
         )
-        yoffs = -42 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = 2 if uiscale is bui.UIScale.SMALL else 0
         spacing = 40
         self._base_scale = (
-            2.0
+            1.72
             if uiscale is bui.UIScale.SMALL
             else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
@@ -102,6 +111,7 @@ class EditProfileWindow(
             scale=0.8,
             label=bui.Lstr(resource='saveText'),
         )
+
         bui.widget(edit=save_button, left_widget=cancel_button)
         bui.widget(edit=cancel_button, right_widget=save_button)
         bui.containerwidget(edit=self._root_widget, start_button=btn)
@@ -512,7 +522,80 @@ class EditProfileWindow(
             color=bui.app.ui_v1.title_color,
             maxwidth=120,
         )
+
+        if existing_profile is not None:
+            bui.buttonwidget(
+                parent=self._root_widget,
+                position=(self._width * 0.5 - 43, v - 185),
+                size=(140, 60),
+                autoselect=True,
+                scale=0.6,
+                color=(
+                    (0.5, 0.5, 0.5)
+                    if self._is_account_profile
+                    else (0.65, 0.45, 0.5)
+                ),
+                textcolor=(
+                    (0.5, 0.5, 0.5)
+                    if self._is_account_profile
+                    else (1.0, 0.5, 0.5)
+                ),
+                label=bui.Lstr(resource='deleteText'),
+                on_activate_call=bui.WeakCallStrict(self._delete_press),
+                enable_sound=not self._is_account_profile,
+            )
+
         self._update_character()
+
+    def _delete_press(self) -> None:
+        # pylint: disable=cyclic-import
+        from bauiv1lib.confirm import ConfirmWindow
+
+        if self._is_account_profile:
+            bui.getsound('error').play()
+            bui.screenmessage(
+                bui.Lstr(
+                    resource='playerProfilesWindow.cantDeleteAccountProfileText'
+                ),
+                color=(1, 0, 0),
+            )
+            return
+
+        if self._existing_profile is None:
+            bui.getsound('error').play()
+            bui.screenmessage(
+                bui.Lstr(resource='nothingIsSelectedErrorText'), color=(1, 0, 0)
+            )
+            return
+        ConfirmWindow(
+            bui.Lstr(
+                resource='playerProfilesWindow.deleteConfirmText',
+                subs=[('${PROFILE}', self._existing_profile)],
+            ),
+            self._do_delete_profile,
+            width=350,
+        )
+
+    def _do_delete_profile(self) -> None:
+        plus = bui.app.plus
+        assert plus is not None
+
+        assert self._existing_profile is not None
+
+        plus.add_v1_account_transaction(
+            {'type': 'REMOVE_PLAYER_PROFILE', 'name': self._existing_profile}
+        )
+
+        plus.run_v1_account_transactions()
+        bui.getsound('shieldDown').play()
+
+        if self._on_profile_delete is not None:
+            try:
+                self._on_profile_delete(self._existing_profile)
+            except Exception:
+                bui.balog.exception('Error in _on_profile_delete cb.')
+
+        self.main_window_back()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -875,9 +958,6 @@ class EditProfileWindow(
 
     def save(self, transition_out: bool = True) -> bool:
         """Save has been selected."""
-        # pylint: disable=cyclic-import
-
-        from bauiv1lib.profile.browser import ProfileBrowserWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -902,8 +982,11 @@ class EditProfileWindow(
             bui.getsound('error').play()
             return False
 
-        # Set the profile-browser to have this one selected by default.
-        ProfileBrowserWindow.selected_profile = new_name
+        if self._on_profile_save is not None:
+            try:
+                self._on_profile_save(new_name)
+            except Exception:
+                bui.balog.exception('Error in _on_profile_save cb.')
 
         if transition_out:
             bui.getsound('gunCocking').play()

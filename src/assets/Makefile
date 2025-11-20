@@ -406,7 +406,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playoptions.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/popup.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/browser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/edit.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/upgrade.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/purchase.py \

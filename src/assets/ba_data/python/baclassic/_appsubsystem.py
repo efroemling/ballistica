@@ -753,10 +753,13 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self,
         transition: str = 'in_right',
         origin_widget: bauiv1.Widget | None = None,
-        selected_profile: str | None = None,
+        # selected_profile: str | None = None,
     ) -> None:
         """Pop up a browser window from within a game."""
-        from bauiv1lib.profile.browser import ProfileBrowserWindow
+        import bacommon.docui.v1 as dui1
+
+        # from bauiv1lib.profile.browser import ProfileBrowserWindow
+        from bauiv1lib.inventory import InventoryUIController
 
         main_window = babase.app.ui_v1.get_main_window()
         if main_window is not None:
@@ -767,16 +770,16 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             return
 
         babase.app.ui_v1.set_main_window(
-            ProfileBrowserWindow(
+            InventoryUIController(player_profiles_only=True).create_window(
+                dui1.Request('/'),
+                uiopenstateid='classicinventory',
                 transition=transition,
-                selected_profile=selected_profile,
                 origin_widget=origin_widget,
-                minimal_toolbar=True,
             ),
             is_top_level=True,
             back_state=None,
             suppress_warning=True,
-            extra_type_id='',
+            extra_type_id=InventoryUIController.get_window_extra_type_id(),
         )
 
     def preload_map_preview_media(self) -> None:

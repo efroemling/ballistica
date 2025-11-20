@@ -277,7 +277,6 @@
  "ba_data/python/bauiv1lib/playoptions.py",
  "ba_data/python/bauiv1lib/popup.py",
  "ba_data/python/bauiv1lib/profile/__init__.py",
- "ba_data/python/bauiv1lib/profile/browser.py",
  "ba_data/python/bauiv1lib/profile/edit.py",
  "ba_data/python/bauiv1lib/profile/upgrade.py",
  "ba_data/python/bauiv1lib/purchase.py",

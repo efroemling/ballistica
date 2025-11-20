@@ -2616,8 +2616,8 @@ void RootWidget::SetHaveLiveValues(bool have_live_values) {
   assert(store_button_);
   store_button_->widget->set_opacity(oval2);
 
-  assert(inventory_button_);
-  inventory_button_->widget->set_opacity(oval2);
+  // assert(inventory_button_);
+  // inventory_button_->widget->set_opacity(oval2);
 
   assert(get_tokens_button_);
   get_tokens_button_->widget->set_opacity(oval2);

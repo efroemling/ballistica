@@ -510,7 +510,13 @@ class Button:
         tuple[float, float, float, float] | None,
         IOAttrs('ic', store_default=False),
     ] = None
-    depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
+    depth_range: Annotated[
+        tuple[float, float] | None, IOAttrs('z', store_default=None)
+    ] = None
+
+    #: Custom widget id. Will be prefixed with window id, but must be
+    #: unique within the window.
+    widget_id: Annotated[str | None, IOAttrs('i', store_default=False)] = None
 
     #: Draw bounds of the button.
     debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
@@ -621,11 +627,25 @@ class ButtonRow(Row):
     subtitle_is_lstr: Annotated[bool, IOAttrs('sl', store_default=False)] = (
         False
     )
+
+    #: Spacing between all buttons in the row.
     button_spacing: Annotated[float, IOAttrs('bs', store_default=False)] = 5.0
+
+    #: Padding on the left of the row's horizonally-scrollable area.
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 10.0
+    #: Padding on the right of the row's horizonally-scrollable area.
     padding_right: Annotated[float, IOAttrs('pr', store_default=False)] = 10.0
+    #: Padding on the top of the row's horizonally-scrollable area.
     padding_top: Annotated[float, IOAttrs('pt', store_default=False)] = 10.0
+    #: Padding on the bottom of the row's horizonally-scrollable area.
     padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 10.0
+
+    #: Extra space below the row's horizontally-scrollable area.
+    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
+
+    #: Extra space below the row's horizontally-scrollable area.
+    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
+
     center_content: Annotated[bool, IOAttrs('c', store_default=False)] = False
     center_title: Annotated[bool, IOAttrs('ct', store_default=False)] = False
 
@@ -683,17 +703,20 @@ class Page:
     padding_right: Annotated[float, IOAttrs('pr', store_default=False)] = 0.0
 
 
-class StatusCode(Enum):
+class ResponseStatus(Enum):
     """The overall result of a request."""
 
     SUCCESS = 0
 
-    #! Something went wrong. That's all we know.
+    #: Something went wrong. That's all we know.
     UNKNOWN_ERROR = 1
 
     #: Something went wrong talking to the server. A 'Retry' button may
     #: be appropriate to show here (for GET requests at least).
     COMMUNICATION_ERROR = 2
+
+    #: This requires the user to be signed in, and they aint.
+    NOT_SIGNED_IN_ERROR = 3
 
 
 @ioprepped
@@ -702,8 +725,8 @@ class Response(DocUIResponse):
     """Full docui response."""
 
     page: Annotated[Page, IOAttrs('p')]
-    status: Annotated[StatusCode, IOAttrs('s', store_default=False)] = (
-        StatusCode.SUCCESS
+    status: Annotated[ResponseStatus, IOAttrs('s', store_default=False)] = (
+        ResponseStatus.SUCCESS
     )
 
     #: Effects to run on the client when this response is initially

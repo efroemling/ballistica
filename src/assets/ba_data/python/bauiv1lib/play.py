@@ -603,7 +603,7 @@ class PlayWindow(bui.MainWindow):
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
-            show_sign_in_prompt()
+            show_sign_in_prompt(origin_widget=self._coop_button)
             return
 
         self.main_window_replace(
