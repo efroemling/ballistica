@@ -68,20 +68,21 @@ def prep_page(
         bui.uilog.error('Got unknown row type(s) in doc-ui; ignoring.')
 
     # Ok; we've got some buttons. Build our full UI.
-    row_title_height = 30.0
+    row_title_height_with_subtitle = 30.0
+    row_title_height_no_subtitle = 38.0
     row_subtitle_height = 30.0
 
     # Buffers for *everything*. Set bases here that look decent and
     # allow page to offset them.
     top_buffer = 20.0 + page.padding_top
     bot_buffer = 20.0 + page.padding_bottom
-    left_buffer = 0.0 + page.padding_left
+    left_buffer = 10.0 + page.padding_left
     # Nudge a bit due to scrollbar.
-    right_buffer = 10.0 + page.padding_right
+    right_buffer = 20.0 + page.padding_right
 
     # Extra buffers for title/headers stuff (not in h-scroll).
-    header_inset_left = 35.0
-    header_inset_right = 20.0
+    header_inset_left = 45.0
+    header_inset_right = 30.0
 
     default_button_width = 150.0
     default_button_height = 100.0
@@ -176,7 +177,11 @@ def prep_page(
         # Add height that is *not* part of the h-scrollable area.
         height += row.header_height * row.header_scale
         if row.title is not None:
-            height += row_title_height
+            height += (
+                row_title_height_no_subtitle
+                if row.subtitle is None
+                else row_title_height_with_subtitle
+            )
         if row.subtitle is not None:
             height += row_subtitle_height
         height += this_row_height
@@ -290,7 +295,11 @@ def prep_page(
                     ),
                 )
             )
-            y -= row_title_height
+            y -= (
+                row_title_height_no_subtitle
+                if row.subtitle is None
+                else row_title_height_with_subtitle
+            )
         if row.subtitle is not None:
             rowprep.titlecalls.append(
                 partial(
@@ -342,7 +351,11 @@ def prep_page(
                 rowprep.height + row.header_height * row.header_scale
             )
             if row.title is not None:
-                rowheightfull += row_title_height
+                rowheightfull += (
+                    row_title_height_no_subtitle
+                    if row.subtitle is None
+                    else row_title_height_with_subtitle
+                )
             if row.subtitle is not None:
                 rowheightfull += row_subtitle_height
             prepcalls2.prep_row_debug(
@@ -599,7 +612,11 @@ def prep_page(
         # applying to encompasses both.
         show_buffer_top += row.header_height * row.header_scale
         if row.title is not None:
-            show_buffer_top += row_title_height
+            show_buffer_top += (
+                row_title_height_no_subtitle
+                if row.subtitle is None
+                else row_title_height_with_subtitle
+            )
         if row.subtitle is not None:
             show_buffer_top += row_subtitle_height
 
