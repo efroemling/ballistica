@@ -146,6 +146,9 @@ class InventoryUIController(DocUIController):
         if not isinstance(window.request, dui1.Request):
             return
 
+        # If desired, set the profile button that will be selected in
+        # the new window. We do this when coming back from creating a
+        # new profile/etc.
         if (
             window.request.path == '/'
             and self._next_selected_profile is not None
@@ -157,20 +160,14 @@ class InventoryUIController(DocUIController):
             self._next_selected_profile = None
 
     def _on_profile_save(self, name: str) -> None:
+        # An editor we launched tells us it saved a profile.
+
         # Have this one selected when we go back to the listing.
         self._next_selected_profile = name
         bui.pushcall(self._notify_profiles_changed)
 
-    def _notify_profiles_changed(self) -> None:
-        import bascenev1 as bs
-
-        # If there's a team-chooser in existence, tell it the profile-list
-        # has probably changed.
-        session = bs.get_foreground_host_session()
-        if session is not None:
-            session.handlemessage(bs.PlayerProfilesChangedMessage())
-
     def _on_profile_delete(self, name: str) -> None:
+        # An editor we launched tells us it deleted a profile.
 
         # Ask the inventory list to select/show the profile right before
         # the one we're deleting.
@@ -191,6 +188,15 @@ class InventoryUIController(DocUIController):
             self._next_selected_profile = prevname
 
         self._notify_profiles_changed()
+
+    def _notify_profiles_changed(self) -> None:
+        import bascenev1 as bs
+
+        # If there's a team-chooser in existence, tell it the profile-list
+        # has probably changed.
+        session = bs.get_foreground_host_session()
+        if session is not None:
+            session.handlemessage(bs.PlayerProfilesChangedMessage())
 
     def _get_profile_buttons(self) -> list[dui1.Button]:
         # pylint: disable=too-many-locals
@@ -275,10 +281,6 @@ class InventoryUIController(DocUIController):
 
         bui.getsound('swish').play()
 
-        # No-op if we're not the in-control main window.
-        if not action.window.main_window_has_control():
-            return
-
         plus = bui.app.plus
         assert plus is not None
 
@@ -311,10 +313,6 @@ class InventoryUIController(DocUIController):
         from bauiv1lib.profile.edit import EditProfileWindow
 
         bui.getsound('swish').play()
-
-        # No-op if we're not in control.
-        if not action.window.main_window_has_control():
-            return
 
         profile = action.args.get('profile')
         assert isinstance(profile, str)

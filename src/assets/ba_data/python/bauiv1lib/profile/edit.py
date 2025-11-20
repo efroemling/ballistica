@@ -24,16 +24,6 @@ class EditProfileWindow(
 ):
     """Window for editing a player profile."""
 
-    def reload_window(self) -> None:
-        """Transitions out and recreates ourself."""
-
-        # Replace ourself with ourself, but keep the same back location.
-        assert self.main_window_back_state is not None
-        self.main_window_replace(
-            lambda: EditProfileWindow(self.getname()),
-            back_state=self.main_window_back_state,
-        )
-
     def __init__(
         self,
         existing_profile: str | None,
@@ -43,13 +33,11 @@ class EditProfileWindow(
         on_profile_save: Callable[[str], None] | None = None,
         on_profile_delete: Callable[[str], None] | None = None,
     ):
-        # FIXME: Tidy this up a bit.
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
 
         assert bui.app.classic is not None
-        # print(f'EditProfileWindow({id(self)})')
 
         plus = bui.app.plus
         assert plus is not None
@@ -547,6 +535,16 @@ class EditProfileWindow(
 
         self._update_character()
 
+    def reload_window(self) -> None:
+        """Transitions out and recreates ourself."""
+
+        # Replace ourself with ourself, but keep the same back location.
+        assert self.main_window_back_state is not None
+        self.main_window_replace(
+            lambda: EditProfileWindow(self.getname()),
+            back_state=self.main_window_back_state,
+        )
+
     def _delete_press(self) -> None:
         # pylint: disable=cyclic-import
         from bauiv1lib.confirm import ConfirmWindow
@@ -604,6 +602,8 @@ class EditProfileWindow(
 
         # Pull things out of self here; if we do it within the lambda
         # we'll keep ourself alive which is bad.
+        on_profile_save = self._on_profile_save
+        on_profile_delete = self._on_profile_delete
 
         existing_profile = self._existing_profile
         return bui.BasicMainWindowState(
@@ -611,6 +611,8 @@ class EditProfileWindow(
                 transition=transition,
                 origin_widget=origin_widget,
                 existing_profile=existing_profile,
+                on_profile_save=on_profile_save,
+                on_profile_delete=on_profile_delete,
             )
         )
 
