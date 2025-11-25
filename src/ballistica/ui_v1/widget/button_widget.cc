@@ -626,6 +626,8 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float x = m.fval1;
       float y = m.fval2;
       bool claimed = (m.fval3 > 0.0f);
+      auto old_mouse_over{mouse_over_};
+
       if (claimed || !enabled_) {
         mouse_over_ = false;
       } else {

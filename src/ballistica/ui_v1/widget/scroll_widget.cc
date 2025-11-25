@@ -383,7 +383,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           }
         }
 
-        // On desktop, allow clicking on the scrollbar.
+        // For mouse type devices, allow clicking on the scrollbar.
         if (!g_base->ui->touch_mode()) {
           if (x >= width() - scroll_bar_width_ - left_overlap) {
             claimed = true;
@@ -401,7 +401,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               smoothing_amount_ = 1.0f;
               child_offset_v_ -=
                   (height() - 2.0f * (border_height_ + kMarginV));
-              MarkForUpdate();
+              // MarkForUpdate();
               ClampThumb_(false, true);
             } else if (y >= sb_thumb_top - sb_thumb_height) {
               // On thumb.
@@ -413,7 +413,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               smoothing_amount_ = 1.0f;
               child_offset_v_ +=
                   (height() - 2.0f * (border_height_ + kMarginV));
-              MarkForUpdate();
+              // MarkForUpdate();
               ClampThumb_(false, true);
             }
           }
@@ -436,13 +436,23 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       // would claim the move and the button would lose its
       // mouse-over-highlight; ew.) There may be some case where we *would*
       // want to pass this though.
-      if (!((x >= 0.0f) && (x < width() + right_overlap) && (y >= 0.0f)
-            && (y < height()))) {
+      auto in_bounds = ((x >= 0.0f) && (x < width() + right_overlap)
+                        && (y >= 0.0f) && (y < height()));
+
+      auto repeat_out_of_bounds = !last_mouse_move_in_bounds_ && !in_bounds;
+      auto just_exited_bounds = last_mouse_move_in_bounds_ && !in_bounds;
+      last_mouse_move_in_bounds_ = in_bounds;
+
+      // If we weren't in bounds before and still aren't, don't bother
+      // passing to our children (a single already-claimed move should be
+      // enough for them to cancel hovers/etc).
+      if (repeat_out_of_bounds) {
         pass = false;
       }
 
       if (was_claimed) {
-        mouse_over_thumb_ = false;
+        // No hovering if someone above us claimed this.
+        hovering_thumb_ = false;
       } else {
         if (g_base->ui->touch_mode()) {
           if (touch_held_) {
@@ -489,7 +499,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         }
 
         if (g_base->ui->touch_mode()) {
-          mouse_over_thumb_ = false;
+          hovering_thumb_ = false;
         } else {
           float s_top = height() - border_height_;
           float s_bottom = border_height_;
@@ -499,32 +509,46 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                                - child_offset_v_ / child_max_offset_
                                      * (s_top - (s_bottom + sb_thumb_height));
 
-          mouse_over_thumb_ =
+          hovering_thumb_ =
               (((x >= width() - scroll_bar_width_ - left_overlap)
                 && (x < width() + right_overlap) && y < sb_thumb_top
                 && y >= sb_thumb_top - sb_thumb_height));
         }
       }
 
-      // If we're dragging.
+      // If we're dragging the thumb.
       if (mouse_held_thumb_) {
+        claimed = true;  // We own this; noone below us should highlight.u
+
         auto i = widgets().begin();
-        if (i == widgets().end()) {
-          break;
+        if (i != widgets().end()) {
+          float child_h = (**i).GetHeight();
+          float s_top = height() - border_height_;
+          float s_bottom = border_height_;
+          // Note: need a max on denominator here or we can get nan due to
+          // divide-by-zero.
+          float rate = (child_h - (s_top - s_bottom))
+                       / std::max(1.0f, ((1.0f - ((s_top - s_bottom) / child_h))
+                                         * (s_top - s_bottom)));
+          child_offset_v_ = thumb_click_start_child_offset_v_
+                            - rate * (y - thumb_click_start_v_);
+          ClampThumb_(false, true);
+          MarkForUpdate();
         }
-        float child_h = (**i).GetHeight();
-        float s_top = height() - border_height_;
-        float s_bottom = border_height_;
-        // Note: need a max on denominator here or we can get nan due to
-        // divide-by-zero.
-        float rate = (child_h - (s_top - s_bottom))
-                     / std::max(1.0f, ((1.0f - ((s_top - s_bottom) / child_h))
-                                       * (s_top - s_bottom)));
-        child_offset_v_ = thumb_click_start_child_offset_v_
-                          - rate * (y - thumb_click_start_v_);
-        ClampThumb_(false, true);
-        MarkForUpdate();
       }
+
+      // If we're hovering over or dragging the thumb or we just exited our
+      // bounds, send the event to children but with claimed marked as true
+      // so they know to kill hover effects/etc.
+      if (mouse_held_thumb_ || hovering_thumb_ || just_exited_bounds) {
+        // Handle passing this to children ourselves so we can mark as
+        // claimed.
+        pass = false;
+        auto m2{m};
+        m2.fval3 = 1.0f;  // Mark claimed.
+        ContainerWidget::HandleMessage(m2);
+      }
+
       break;
     }
     case base::WidgetMessage::Type::kMouseUp:
@@ -699,9 +723,9 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       if (std::abs(diff) < 1.0f) {
         child_offset_v_smoothed_ = child_offset_v_;
       } else {
-        child_offset_v_smoothed_ += (1.0f - 0.95f * smoothing_amount_) * diff;
+        child_offset_v_smoothed_ += (1.0f - smoothing_amount_) * diff;
       }
-      smoothing_amount_ = std::max(0.0f, smoothing_amount_ - 0.005f);
+      smoothing_amount_ = std::max(0.0f, smoothing_amount_ - 0.0025f);
     }
 
     // Only re-layout our widgets if we've moved a significant amount.
@@ -812,7 +836,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         float c_scale = 1.0f;
         if (mouse_held_thumb_) {
           c_scale = 1.8f;
-        } else if (mouse_over_thumb_) {
+        } else if (hovering_thumb_) {
           c_scale = 1.25f;
         }
 

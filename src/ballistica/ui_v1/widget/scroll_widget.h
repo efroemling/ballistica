@@ -99,7 +99,7 @@ class ScrollWidget : public ContainerWidget {
   float inertia_scroll_rate_{};
   bool mouse_held_page_down_{};
   bool mouse_held_page_up_{};
-  bool mouse_over_thumb_{};
+  bool hovering_thumb_{};
   bool touch_is_scrolling_{};
   bool touch_down_sent_{};
   bool touch_up_sent_{};
@@ -120,6 +120,7 @@ class ScrollWidget : public ContainerWidget {
   bool touch_down_passed_{};
   bool child_is_scrolling_{};
   bool child_disowned_scroll_{};
+  bool last_mouse_move_in_bounds_{};
 };
 
 }  // namespace ballistica::ui_v1

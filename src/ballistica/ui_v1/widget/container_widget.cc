@@ -456,6 +456,13 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     case base::WidgetMessage::Type::kMouseMove: {
       CheckLayout();
 
+      // Make sure our child widgets know if someone above already claimed
+      // this.
+      bool was_claimed = (m.fval3 > 0.0f);
+      if (was_claimed) {
+        claimed = true;
+      }
+
       // Ignore mouse stuff while transitioning out.
       if (transitioning_ && transitioning_out_) {
         break;

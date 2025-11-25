@@ -1,9 +1,12 @@
-### 1.7.55 (build 22638, api 9, 2025-11-24)
+### 1.7.55 (build 22639, api 9, 2025-11-25)
 - The 'get-tokens' plus button now allows going back to whatever window one was
   on before, even auxiliary windows. Previously it was an auxiliary window
   itself so it would replace other auxiliary windows.
 - Fixed an issue where the 'get more games' button in the playlist editor would
   go to the old store UI instead of the new one.
+- Added page left/right buttons to help navigate long h-scroll lines.
+- Tightened up some UI highlighting logic. Hovering over a scrollbar thumb
+  should no longer highlight buttons behind the thumb, etc.
 
 ### 1.7.54 (build 22634, api 9, 2025-11-20)
 - `scrollwidget` and `hscrollwidget` now center selected items that are too

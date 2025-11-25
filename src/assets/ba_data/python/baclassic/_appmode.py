@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Contains ClassicAppMode."""
 
 from __future__ import annotations
@@ -974,6 +975,16 @@ class ClassicAppMode(AppMode):
     def _main_win_template_press(self) -> None:
         from bauiv1lib.template import show_template_main_window
 
+        # This only works if a main ui is up.
+        if bui.app.ui_v1.get_main_window() is None:
+            bui.screenmessage(
+                'This requires a main-window to be present.'
+                ' Open a menu or whatnot first.',
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
+
         # Unintuitively, swish sounds come from buttons, not windows.
         # And dev-console buttons don't make sounds. So we need to
         # explicitly do so here.
@@ -983,6 +994,16 @@ class ClassicAppMode(AppMode):
 
     def _doc_ui_test_press(self) -> None:
         from bauiv1lib.docuitest import show_test_doc_ui_window
+
+        # This only works if a main ui is up.
+        if bui.app.ui_v1.get_main_window() is None:
+            bui.screenmessage(
+                'This requires a main-window to be present.'
+                ' Open a menu or whatnot first.',
+                color=(1, 0, 0),
+            )
+            bui.getsound('error').play()
+            return
 
         # Unintuitively, swish sounds come from buttons, not windows.
         # And dev-console buttons don't make sounds. So we need to

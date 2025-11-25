@@ -258,7 +258,7 @@ void UIV1FeatureSet::UIOpenStateChange(const std::string& tag, int increment) {
 
   // Remove the entry if the count is now zero (or less, for safety).
   if (count <= 0) {
-    assert(count == 0);  // Should not be possible.
+    assert(count == 0);  // Negative should not be possible.
     ui_open_counts_.erase(tag);
   }
 

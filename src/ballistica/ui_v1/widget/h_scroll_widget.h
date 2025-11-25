@@ -9,14 +9,14 @@
 
 namespace ballistica::ui_v1 {
 
-// A scroll-box container widget.
+// A horizontal scroll-box container widget.
 class HScrollWidget : public ContainerWidget {
  public:
   HScrollWidget();
   ~HScrollWidget() override;
   void Draw(base::RenderPass* pass, bool transparent) override;
   auto HandleMessage(const base::WidgetMessage& m) -> bool override;
-  auto GetWidgetTypeName() -> std::string override { return "scroll"; }
+  auto GetWidgetTypeName() -> std::string override { return "hscroll"; }
   void set_capture_arrows(bool val) { capture_arrows_ = val; }
   void SetWidth(float w) override {
     trough_dirty_ = shadow_dirty_ = glow_dirty_ = thumb_dirty_ = true;
@@ -48,6 +48,8 @@ class HScrollWidget : public ContainerWidget {
 
  private:
   void ClampThumb_(bool velocity_clamp, bool position_clamp);
+  auto CanScrollLeft_() -> bool;
+  auto CanScrollRight_() -> bool;
 
   Object::Ref<base::AppTimer> touch_delay_timer_;
   seconds_t last_scroll_bar_show_time_{};
@@ -82,7 +84,7 @@ class HScrollWidget : public ContainerWidget {
   float border_opacity_{1.0f};
   float thumb_click_start_h_{};
   float thumb_click_start_child_offset_h_{};
-  float scroll_bar_height_{10.0f};
+  float scroll_bar_height_{12.0f};
   float border_width_{2.0f};
   float border_height_{2.0f};
   float child_offset_h_{-9999.0f};
@@ -111,9 +113,14 @@ class HScrollWidget : public ContainerWidget {
   bool mouse_held_thumb_{};
   bool mouse_held_page_down_{};
   bool mouse_held_page_up_{};
-  bool mouse_over_thumb_{};
+  bool hovering_thumb_{};
   bool mouse_over_{};
   bool have_drawn_{};
+  bool hovering_page_left_{};
+  bool page_left_pressed_{};
+  bool hovering_page_right_{};
+  bool page_right_pressed_{};
+  bool last_mouse_move_in_bounds_{};
 };
 
 }  // namespace ballistica::ui_v1

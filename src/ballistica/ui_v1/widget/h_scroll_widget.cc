@@ -14,12 +14,19 @@ namespace ballistica::ui_v1 {
 
 static const float kMarginH{5.0f};
 
+static const float kPageButtonInset{25.0f};
+static const float kPageButtonSize{80.0f};
+
 HScrollWidget::HScrollWidget() {
   set_draggable(false);
   set_claims_left_right(false);
 }
 
 HScrollWidget::~HScrollWidget() = default;
+auto HScrollWidget::CanScrollLeft_() -> bool {
+  return child_offset_h_ < child_max_offset_;
+}
+auto HScrollWidget::CanScrollRight_() -> bool { return child_offset_h_ > 0.0f; }
 
 void HScrollWidget::OnTouchDelayTimerExpired() {
   if (touch_held_) {
@@ -185,21 +192,36 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       last_mouse_move_time_ = g_base->logic->display_time();
       float x = m.fval1;
       float y = m.fval2;
-      bool claimed2 = (m.fval3 > 0.0f);
+      bool was_claimed = m.fval3 > 0.0f;
+
+      auto in_bounds = y >= 0.0f && y < height() && x >= 0.0f && x < width();
+
+      auto repeat_out_of_bounds = !last_mouse_move_in_bounds_ && !in_bounds;
+      auto just_exited_bounds = last_mouse_move_in_bounds_ && !in_bounds;
+      last_mouse_move_in_bounds_ = in_bounds;
+
+      // If we weren't in bounds before and still aren't, don't bother
+      // passing to our children (a single already-claimed move should be
+      // enough for them to cancel hovers/etc).
+      if (repeat_out_of_bounds) {
+        pass = false;
+      }
+
+      // if (!in_bounds) {
+      //   pass = false;
+      // }
 
       if (g_base->ui->touch_mode()) {
         mouse_over_ = false;
       } else {
-        mouse_over_ =
-            ((y >= 0.0f) && (y < height()) && (x >= 0.0f) && (x < width()));
+        mouse_over_ = !was_claimed && in_bounds;
       }
 
-      if (!mouse_over_) {
-        pass = false;
-      }
-
-      if (claimed2) {
-        mouse_over_thumb_ = false;
+      if (was_claimed) {
+        // No hovering if someone above us claimed this.
+        hovering_thumb_ = false;
+        hovering_page_left_ = false;
+        hovering_page_right_ = false;
       } else {
         if (g_base->ui->touch_mode()) {
           if (touch_held_) {
@@ -236,8 +258,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                       || (std::abs(touch_y_ - touch_start_y_) > 10.0f))) {
                 touch_is_scrolling_ = true;
 
-                // Go ahead and send a mouse-up to the sub-widgets; in their
-                // eyes the click is canceled.
+                // Cancel the press for sub-widgets.
                 if (touch_down_sent_ && !touch_up_sent_) {
                   ContainerWidget::HandleMessage(base::WidgetMessage(
                       base::WidgetMessage::Type::kMouseCancel, nullptr, m.fval1,
@@ -251,7 +272,10 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         }
 
         if (g_base->ui->touch_mode()) {
-          mouse_over_thumb_ = false;
+          // No hovering in touch mode.
+          hovering_thumb_ = false;
+          hovering_page_left_ = false;
+          hovering_page_right_ = false;
         } else {
           float s_right = width() - border_width_;
           float s_left = border_width_;
@@ -261,14 +285,29 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                                  - child_offset_h_ / child_max_offset_
                                        * (s_right - (s_left + sb_thumb_width));
 
-          mouse_over_thumb_ =
+          hovering_thumb_ =
               (((y >= 0) && (y < scroll_bar_height_ + bottom_overlap)
                 && x < sb_thumb_right && x >= sb_thumb_right - sb_thumb_width));
+
+          hovering_page_left_ =
+              (CanScrollLeft_() && y >= height() * 0.5f - kPageButtonSize * 0.5f
+               && y <= height() * 0.5f + kPageButtonSize * 0.5f
+               && x >= kPageButtonInset
+               && x <= kPageButtonInset + kPageButtonSize);
+
+          hovering_page_right_ =
+              (CanScrollRight_()
+               && y >= height() * 0.5f - kPageButtonSize * 0.5f
+               && y <= height() * 0.5f + kPageButtonSize * 0.5f
+               && x >= width() - kPageButtonInset - kPageButtonSize
+               && x <= width() - kPageButtonInset);
         }
       }
 
-      // If we're dragging.
+      // If we're dragging the thumb
       if (mouse_held_thumb_) {
+        claimed = true;  // We own this; noone below us should highlight.
+
         auto i = widgets().begin();
         if (i == widgets().end()) {
           break;
@@ -285,9 +324,23 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                           - rate * (x - thumb_click_start_h_);
 
         ClampThumb_(false, true);
-
         MarkForUpdate();
       }
+
+      // If we're hovering over or dragging the thumb or a page-left/right
+      // button or we just exited our bounds, send the event to children but
+      // with claimed marked as true so they know to kill hover effects/etc.
+      if (mouse_held_thumb_ || hovering_thumb_ || just_exited_bounds
+          || hovering_page_left_ || page_left_pressed_ || hovering_page_right_
+          || page_right_pressed_) {
+        // Handle passing this to children ourselves so we can mark as
+        // claimed.
+        pass = false;
+        auto m2{m};
+        m2.fval3 = 1.0f;  // Mark claimed.
+        ContainerWidget::HandleMessage(m2);
+      }
+
       break;
     }
     case base::WidgetMessage::Type::kMouseUp:
@@ -297,6 +350,39 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       mouse_held_thumb_ = false;
       mouse_held_page_down_ = false;
       mouse_held_page_up_ = false;
+
+      float x = m.fval1;
+      float y = m.fval2;
+
+      // Handle page-left/right buttons.
+      auto in_page_left_button =
+          (y >= height() * 0.5f - kPageButtonSize * 0.5f
+           && y <= height() * 0.5f + kPageButtonSize * 0.5f
+           && x >= kPageButtonInset && x <= kPageButtonInset + kPageButtonSize);
+
+      auto in_page_right_button =
+          (y >= height() * 0.5f - kPageButtonSize * 0.5f
+           && y <= height() * 0.5f + kPageButtonSize * 0.5f
+           && x >= width() - kPageButtonInset - kPageButtonSize
+           && x <= width() - kPageButtonInset);
+
+      if (page_left_pressed_ && in_page_left_button
+          && m.type == base::WidgetMessage::Type::kMouseUp) {
+        smoothing_amount_ = 1.0f;  // So we can see the transition.
+        child_offset_h_ += 0.9f * (width() - 2.0f * (border_width_ + kMarginH));
+        ClampThumb_(false, true);
+        claimed = true;
+      }
+      page_left_pressed_ = false;
+
+      if (page_right_pressed_ && in_page_right_button
+          && m.type == base::WidgetMessage::Type::kMouseUp) {
+        smoothing_amount_ = 1.0f;  // So we can see the transition.
+        child_offset_h_ -= 0.9f * (width() - 2.0f * (border_width_ + kMarginH));
+        ClampThumb_(false, true);
+        claimed = true;
+      }
+      page_right_pressed_ = false;
 
       if (g_base->ui->touch_mode()) {
         if (touch_held_) {
@@ -330,8 +416,6 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       // If coords are outside of our bounds, pass a mouse-cancel along for
       // anyone tracking a drag, but mark it as claimed so it doesn't
       // actually get acted on.
-      float x = m.fval1;
-      float y = m.fval2;
       if (!((y >= 0.0f) && (y < height()) && (x >= 0.0f) && (x < width()))) {
         pass = false;
         ContainerWidget::HandleMessage(
@@ -469,6 +553,30 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           }
         }
 
+        // Handle page-left/right buttons.
+        auto in_page_left_button =
+            (CanScrollLeft_() && y >= height() * 0.5f - kPageButtonSize * 0.5f
+             && y <= height() * 0.5f + kPageButtonSize * 0.5f
+             && x >= kPageButtonInset
+             && x <= kPageButtonInset + kPageButtonSize);
+
+        auto in_page_right_button =
+            (CanScrollRight_() && y >= height() * 0.5f - kPageButtonSize * 0.5f
+             && y <= height() * 0.5f + kPageButtonSize * 0.5f
+             && x >= width() - kPageButtonInset - kPageButtonSize
+             && x <= width() - kPageButtonInset);
+
+        if (in_page_left_button) {
+          page_left_pressed_ = true;
+          claimed = true;
+          pass = false;
+        }
+        if (in_page_right_button) {
+          page_right_pressed_ = true;
+          claimed = true;
+          pass = false;
+        }
+
         // For mouse type devices, allow clicking on the scrollbar.
         if (!g_base->ui->touch_mode()) {
           if (y <= scroll_bar_height_ + bottom_overlap) {
@@ -488,7 +596,6 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             if (x >= sb_thumb_right) {
               smoothing_amount_ = 1.0f;  // So we can see the transition.
               child_offset_h_ -= (width() - 2.0f * (border_width_ + kMarginH));
-              MarkForUpdate();
               ClampThumb_(false, true);
             } else if (x >= sb_thumb_right - sb_thumb_width) {
               // On thumb.
@@ -499,7 +606,6 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               // To left of thumb (page left).
               smoothing_amount_ = 1.0f;  // So we can see the transition.
               child_offset_h_ += (width() - 2.0f * (border_width_ + kMarginH));
-              MarkForUpdate();
               ClampThumb_(false, true);
             }
           }
@@ -612,11 +718,12 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       // smoothing on top of inertial scrolling for example or it'll feel
       // muddy)
       float diff = child_offset_h_ - child_offset_h_smoothed_;
-      if (std::abs(diff) < 1.0f)
+      if (std::abs(diff) < 1.0f) {
         child_offset_h_smoothed_ = child_offset_h_;
-      else
-        child_offset_h_smoothed_ += (1.0f - 0.95f * smoothing_amount_) * diff;
-      smoothing_amount_ = std::max(0.0f, smoothing_amount_ - 0.005f);
+      } else {
+        child_offset_h_smoothed_ += (1.0f - smoothing_amount_) * diff;
+      }
+      smoothing_amount_ = std::max(0.0f, smoothing_amount_ - 0.0025f);
     }
 
     // Only re-layout our widgets if we've moved a significant amount.
@@ -655,7 +762,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                  1.0f);
   }
 
-  // scroll trough (depth 0.7f to 0.8f)
+  // Scroll trough (depth 0.7f to 0.8f).
   if (explicit_bool(false)) {
     if (draw_transparent && border_opacity_ > 0.0f) {
       if (trough_dirty_) {
@@ -663,8 +770,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         float t2 = b2 + scroll_bar_height_;
         float l2;
         float r2;
-        l2 = l + (border_width_);
-        r2 = r - (border_width_);
+        l2 = l + border_width_;
+        r2 = r - border_width_;
         float b_border, t_border, l_border, r_border;
         b_border = 3;
         t_border = 0;
@@ -690,6 +797,68 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             base::SysMeshID::kScrollBarTroughTransparent));
       }
       c.Submit();
+    }
+  }
+
+  // Page left/right buttons at depth 0.9-1.0
+  if (explicit_bool(true) && draw_transparent) {
+    // Left button.
+    if (CanScrollLeft_()) {
+      float scale_ex{1.0f};
+      base::SimpleComponent c(pass);
+      c.SetTransparent(true);
+      float brightness;
+      if (page_left_pressed_) {
+        scale_ex = 1.05f;
+        brightness = 1.0f;
+      } else if (hovering_page_left_) {
+        brightness = 0.7f;
+      } else {
+        brightness = 0.5f;
+      }
+      c.SetColor(brightness, brightness, brightness, 1.0f);
+      c.SetTexture(
+          g_base->assets->SysTexture(base::SysTextureID::kPageLeftRight));
+
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(kPageButtonInset + kPageButtonSize * 0.5f, height() * 0.5,
+                    0.9f);
+        c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
+        c.Rotate(180.0f, 0.0f, 0.0f, 1.0f);
+        if (draw_transparent) {
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        }
+        c.Submit();
+      }
+    }
+    // Right button.
+    if (CanScrollRight_()) {
+      float scale_ex{1.0f};
+      base::SimpleComponent c(pass);
+      c.SetTransparent(true);
+      float brightness;
+      if (page_right_pressed_) {
+        scale_ex = 1.05f;
+        brightness = 1.0f;
+      } else if (hovering_page_right_) {
+        brightness = 0.9f;
+      } else {
+        brightness = 0.7f;
+      }
+      c.SetColor(brightness, brightness, brightness, 1.0f);
+      c.SetTexture(
+          g_base->assets->SysTexture(base::SysTextureID::kPageLeftRight));
+      {
+        auto xf = c.ScopedTransform();
+        c.Translate(width() - kPageButtonInset - kPageButtonSize * 0.5f,
+                    height() * 0.5, 0.9f);
+        c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
+        if (draw_transparent) {
+          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        }
+        c.Submit();
+      }
     }
   }
 
@@ -727,9 +896,6 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         thumb_dirty_ = false;
       }
 
-      base::SimpleComponent c(pass);
-      c.SetTransparent(draw_transparent);
-
       float frame_duration = frame_def->display_time_elapsed();
 
       bool smooth_diff =
@@ -741,6 +907,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           last_scroll_bar_show_time_ = frame_def->display_time();
         }
       } else {
+        // printf("M %d\n", static_cast<int>(mouse_over_));
         if (smooth_diff || mouse_held_thumb_
             || std::abs(inertia_scroll_rate_) > 1.0f
             || (mouse_over_
@@ -751,32 +918,36 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       // Fade in if we want to see the scrollbar. Start fading out a moment
       // after we stop wanting to see it.
-      if (frame_def->display_time() - last_scroll_bar_show_time_ < 1.0f) {
+      if (frame_def->display_time() - last_scroll_bar_show_time_ < 0.6f) {
         touch_fade_ = std::min(1.5f, touch_fade_ + 2.0f * frame_duration);
       } else {
-        touch_fade_ = std::max(0.0f, touch_fade_ - frame_duration);
+        touch_fade_ = std::max(0.0f, touch_fade_ - 1.5f * frame_duration);
       }
 
-      c.SetColor(0, 0, 0, std::min(1.0f, 0.3f * touch_fade_));
+      if (touch_fade_ > 0.0f && draw_transparent) {
+        base::SimpleComponent c(pass);
+        c.SetTransparent(draw_transparent);
+        c.SetColor(0, 0, 0, std::min(1.0f, 0.3f * touch_fade_));
 
-      {
-        auto scissor =
-            c.ScopedScissor({l + border_width_, b + border_height_ + 1.0f,
-                             l + (width()), b + (height() * 0.995f)});
-        auto xf = c.ScopedTransform();
-        c.Translate(thumb_center_x_, thumb_center_y_, 0.75f);
-        c.Scale(-thumb_width_, thumb_height_, 0.1f);
-        c.FlipCullFace();
-        c.Rotate(-90.0f, 0.0f, 0.0f, 1.0f);
+        {
+          auto scissor =
+              c.ScopedScissor({l + border_width_, b + border_height_ + 1.0f,
+                               l + (width()), b + (height() * 0.995f)});
+          auto xf = c.ScopedTransform();
+          c.Translate(thumb_center_x_, thumb_center_y_, 0.75f);
+          c.Scale(-thumb_width_, thumb_height_, 0.1f);
+          c.FlipCullFace();
+          c.Rotate(-90.0f, 0.0f, 0.0f, 1.0f);
 
-        if (draw_transparent) {
-          c.DrawMeshAsset(g_base->assets->SysMesh(
-              sb_thumb_width > 100.0f
-                  ? base::SysMeshID::kScrollBarThumbSimple
-                  : base::SysMeshID::kScrollBarThumbShortSimple));
+          if (draw_transparent) {
+            c.DrawMeshAsset(g_base->assets->SysMesh(
+                sb_thumb_width > 100.0f
+                    ? base::SysMeshID::kScrollBarThumbSimple
+                    : base::SysMeshID::kScrollBarThumbShortSimple));
+          }
+          c.FlipCullFace();
+          c.Submit();
         }
-        c.FlipCullFace();
-        c.Submit();
       }
     }
   }
