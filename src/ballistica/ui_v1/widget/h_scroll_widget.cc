@@ -812,9 +812,9 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         scale_ex = 1.05f;
         brightness = 1.0f;
       } else if (hovering_page_left_) {
-        brightness = 0.7f;
+        brightness = 0.9f;
       } else {
-        brightness = 0.5f;
+        brightness = 0.7f;
       }
       c.SetColor(brightness, brightness, brightness, 1.0f);
       c.SetTexture(
