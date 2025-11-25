@@ -73,6 +73,7 @@ class GetTokensWindow(bui.MainWindow):
     ):
         # pylint: disable=too-many-locals
 
+        self._auxiliary_style = auxiliary_style
         self._uiopenstate = bui.UIOpenState('gettokens')
         bwidthstd = 170
         bwidthwide = 300
@@ -442,9 +443,16 @@ class GetTokensWindow(bui.MainWindow):
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
         cls = type(self)
+
+        # Pull everything out of self here. If we do it below in the lambda,
+        # we'll keep self alive which is bad.
+        auxiliary_style = self._auxiliary_style
+
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
-                transition=transition, origin_widget=origin_widget
+                transition=transition,
+                origin_widget=origin_widget,
+                auxiliary_style=auxiliary_style,
             )
         )
 
@@ -817,7 +825,9 @@ def show_get_tokens_prompt() -> None:
         )
 
 
-def show_get_tokens_window(origin_widget: bui.Widget | None = None) -> None:
+def show_get_tokens_window(
+    origin_widget: bui.Widget | None = None, toggle: bool = False
+) -> None:
     """Transition to the get-tokens main-window from anywhere."""
 
     # NOTE TO USERS: The code below is not the standard way to do things;
@@ -834,6 +844,8 @@ def show_get_tokens_window(origin_widget: bui.Widget | None = None) -> None:
 
     # Special-case: If it seems we're already in the window, do nothing.
     if isinstance(prev_main_window, GetTokensWindow):
+        if toggle:
+            prev_main_window.main_window_back()
         return
 
     ui = bui.app.ui_v1

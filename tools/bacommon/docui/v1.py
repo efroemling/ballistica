@@ -629,7 +629,7 @@ class ButtonRow(Row):
     )
 
     #: Spacing between all buttons in the row.
-    button_spacing: Annotated[float, IOAttrs('bs', store_default=False)] = 5.0
+    button_spacing: Annotated[float, IOAttrs('bs', store_default=False)] = 15.0
 
     #: Padding on the left of the row's horizonally-scrollable area.
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 10.0

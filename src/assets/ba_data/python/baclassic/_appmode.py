@@ -845,17 +845,20 @@ class ClassicAppMode(AppMode):
         return True
 
     def _root_ui_get_tokens_press(self) -> None:
-        from bauiv1lib.gettokens import GetTokensWindow
+        from bauiv1lib.gettokens import GetTokensWindow, show_get_tokens_window
 
         btn = bui.get_special_widget('get_tokens_button')
 
         if not self._ensure_signed_in(origin_widget=btn):
             return
 
-        bui.app.ui_v1.auxiliary_window_activate(
-            win_type=GetTokensWindow,
-            win_create_call=lambda: GetTokensWindow(origin_widget=btn),
-        )
+        if bool(True):
+            show_get_tokens_window(origin_widget=btn, toggle=True)
+        else:
+            bui.app.ui_v1.auxiliary_window_activate(
+                win_type=GetTokensWindow,
+                win_create_call=lambda: GetTokensWindow(origin_widget=btn),
+            )
 
     def _root_ui_chest_slot_pressed(self, index: int) -> None:
         from bauiv1lib.chest import ChestWindow

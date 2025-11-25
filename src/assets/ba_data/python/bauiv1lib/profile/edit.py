@@ -745,10 +745,10 @@ class EditProfileWindow(
         ):
             return
 
-        # Set this up as a non-auxiliary window so we can nav back to
-        # char editing (otherwise it would replace the whole inventory
-        # stack). Also don't set uiopenstateid in this case since we don't
-        # want store button to glow (since inventory button already is).
+        # Because profile editing is happening within an auxiliary
+        # window stack, we need to bring up the store as a regular
+        # non-auxiliary window pushed onto our stack. If we brought it
+        # up as an auxiliary window itself it would replace our stack.
         wait_for_connectivity(
             on_connected=lambda: self.main_window_replace(
                 bui.CallStrict(

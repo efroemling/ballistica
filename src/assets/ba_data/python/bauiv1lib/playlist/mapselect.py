@@ -67,8 +67,10 @@ class PlaylistMapSelectWindow(bui.MainWindow):
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
+                toolbar_visibility=(
+                    'menu_minimal_no_back'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
             ),
             transition=transition,
@@ -290,6 +292,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
     def _on_store_press(self) -> None:
         import bacommon.docui.v1 as dui1
 
+        from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.connectivity import wait_for_connectivity
         from bauiv1lib.store.newstore import StoreUIController
         from bauiv1lib.account.signin import show_sign_in_prompt
@@ -307,19 +310,22 @@ class PlaylistMapSelectWindow(bui.MainWindow):
 
         self._selected_get_more_maps = True
 
-        # Set this up as a non-auxiliary window so we can nav back to
-        # char editing (otherwise it would replace the whole inventory
-        # stack). Also don't set uiopenstateid in this case since we don't
-        # want store button to glow (since inventory button already is).
+        # Playlist editing happens in the regular non-auxiliary window
+        # stack so we can just pop up the regular auxiliary-mode store
+        # and it'll do the right thing and take us back to our editing
+        # when we close it.
         wait_for_connectivity(
-            on_connected=lambda: self.main_window_replace(
-                bui.CallStrict(
+            on_connected=lambda: bui.app.ui_v1.auxiliary_window_activate(
+                win_type=DocUIWindow,
+                win_create_call=bui.CallStrict(
                     StoreUIController().create_window,
                     dui1.Request('/'),
-                    origin_widget=bui.get_special_widget('store_button'),
-                    auxiliary_style=False,
+                    origin_widget=self._get_more_maps_button,
+                    uiopenstateid='classicstore',
                 ),
-                extra_type_id=StoreUIController.get_window_extra_type_id(),
+                win_extra_type_id=(
+                    StoreUIController.get_window_extra_type_id()
+                ),
             )
         )
 

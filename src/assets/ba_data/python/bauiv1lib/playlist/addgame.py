@@ -58,7 +58,11 @@ class PlaylistAddGameWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 scale=scale,
-                toolbar_visibility='menu_minimal',
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
             ),
             transition=transition,
             origin_widget=origin_widget,
@@ -279,25 +283,35 @@ class PlaylistAddGameWindow(bui.MainWindow):
             )
 
     def _on_get_more_games_press(self) -> None:
-        from bauiv1lib.account.signin import show_sign_in_prompt
-        from bauiv1lib.store.browser import StoreBrowserWindow
+        import bacommon.docui.v1 as dui1
 
-        # No-op if we're not in control.
-        if not self.main_window_has_control():
-            return
+        from bauiv1lib.docui import DocUIWindow
+        from bauiv1lib.account.signin import show_sign_in_prompt
+        from bauiv1lib.store.newstore import StoreUIController
+        from bauiv1lib.connectivity import wait_for_connectivity
 
         plus = bui.app.plus
         assert plus is not None
-
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             show_sign_in_prompt()
             return
 
-        self.main_window_replace(
-            lambda: StoreBrowserWindow(
-                show_tab=StoreBrowserWindow.TabID.MINIGAMES,
-                origin_widget=self._get_more_games_button,
-                minimal_toolbars=True,
+        # Playlist editing happens in the regular non-auxiliary window
+        # stack so we can just pop up the regular auxiliary-mode store
+        # and it'll do the right thing and take us back to our editing
+        # when we close it.
+        wait_for_connectivity(
+            on_connected=lambda: bui.app.ui_v1.auxiliary_window_activate(
+                win_type=DocUIWindow,
+                win_create_call=bui.CallStrict(
+                    StoreUIController().create_window,
+                    dui1.Request('/'),
+                    origin_widget=self._get_more_games_button,
+                    uiopenstateid='classicstore',
+                ),
+                win_extra_type_id=(
+                    StoreUIController.get_window_extra_type_id()
+                ),
             )
         )
 

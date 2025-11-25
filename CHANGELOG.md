@@ -1,4 +1,9 @@
-### 1.7.55 (build 22636, api 9, 2025-11-20)
+### 1.7.55 (build 22638, api 9, 2025-11-24)
+- The 'get-tokens' plus button now allows going back to whatever window one was
+  on before, even auxiliary windows. Previously it was an auxiliary window
+  itself so it would replace other auxiliary windows.
+- Fixed an issue where the 'get more games' button in the playlist editor would
+  go to the old store UI instead of the new one.
 
 ### 1.7.54 (build 22634, api 9, 2025-11-20)
 - `scrollwidget` and `hscrollwidget` now center selected items that are too

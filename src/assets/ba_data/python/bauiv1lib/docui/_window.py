@@ -82,7 +82,7 @@ class DocUIWindow(bui.MainWindow):
             else 700 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._root_scale = (
-            1.5
+            1.45
             if uiscale is bui.UIScale.SMALL
             else 0.9 if uiscale is bui.UIScale.MEDIUM else 0.8
         )
