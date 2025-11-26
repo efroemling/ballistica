@@ -369,7 +369,8 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (page_left_pressed_ && in_page_left_button
           && m.type == base::WidgetMessage::Type::kMouseUp) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
-        child_offset_h_ += 0.9f * (width() - 2.0f * (border_width_ + kMarginH));
+        child_offset_h_ +=
+            0.95f * (width() - 2.0f * (border_width_ + kMarginH));
         ClampThumb_(false, true);
         claimed = true;
       }
@@ -378,7 +379,8 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (page_right_pressed_ && in_page_right_button
           && m.type == base::WidgetMessage::Type::kMouseUp) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
-        child_offset_h_ -= 0.9f * (width() - 2.0f * (border_width_ + kMarginH));
+        child_offset_h_ -=
+            0.95f * (width() - 2.0f * (border_width_ + kMarginH));
         ClampThumb_(false, true);
         claimed = true;
       }
@@ -514,10 +516,24 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
       // If its in our overall scroll region at all.
       if (y >= 0.0f && y < height() && x >= 0.0f && x < width()) {
+        // Handle page-left/right buttons.
+        auto in_page_left_button =
+            (CanScrollLeft_() && y >= height() * 0.5f - kPageButtonSize * 0.5f
+             && y <= height() * 0.5f + kPageButtonSize * 0.5f
+             && x >= kPageButtonInset
+             && x <= kPageButtonInset + kPageButtonSize);
+
+        auto in_page_right_button =
+            (CanScrollRight_() && y >= height() * 0.5f - kPageButtonSize * 0.5f
+             && y <= height() * 0.5f + kPageButtonSize * 0.5f
+             && x >= width() - kPageButtonInset - kPageButtonSize
+             && x <= width() - kPageButtonInset);
+
         // On touch devices, clicks begin scrolling, (and eventually can
         // count as clicks if they don't move). Only if we're showing less
         // than everything though.
-        if (g_base->ui->touch_mode() && amount_visible_ < 1.0f) {
+        if (g_base->ui->touch_mode() && amount_visible_ < 1.0f
+            && !in_page_left_button && !in_page_right_button) {
           touch_held_ = true;
           auto click_count = static_cast<int>(m.fval3);
           touch_held_click_count_ = click_count;
@@ -552,19 +568,6 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             new_scroll_touch_ = true;
           }
         }
-
-        // Handle page-left/right buttons.
-        auto in_page_left_button =
-            (CanScrollLeft_() && y >= height() * 0.5f - kPageButtonSize * 0.5f
-             && y <= height() * 0.5f + kPageButtonSize * 0.5f
-             && x >= kPageButtonInset
-             && x <= kPageButtonInset + kPageButtonSize);
-
-        auto in_page_right_button =
-            (CanScrollRight_() && y >= height() * 0.5f - kPageButtonSize * 0.5f
-             && y <= height() * 0.5f + kPageButtonSize * 0.5f
-             && x >= width() - kPageButtonInset - kPageButtonSize
-             && x <= width() - kPageButtonInset);
 
         if (in_page_left_button) {
           page_left_pressed_ = true;
