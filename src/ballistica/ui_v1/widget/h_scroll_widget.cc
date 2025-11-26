@@ -23,10 +23,16 @@ HScrollWidget::HScrollWidget() {
 }
 
 HScrollWidget::~HScrollWidget() = default;
-auto HScrollWidget::CanScrollLeft_() -> bool {
-  return child_offset_h_ < child_max_offset_;
+
+auto HScrollWidget::ShouldShowPageLeftButton_() -> bool {
+  // Slight fudge factor - avoid showing button when we'd barely move.
+  return child_offset_h_ < child_max_offset_ - 5.0f;
 }
-auto HScrollWidget::CanScrollRight_() -> bool { return child_offset_h_ > 0.0f; }
+
+auto HScrollWidget::ShouldShowPageRightButton_() -> bool {
+  // Slight fudge factor - avoid showing button when we'd barely move.
+  return child_offset_h_ > 5.0f;
+}
 
 void HScrollWidget::OnTouchDelayTimerExpired() {
   if (touch_held_) {
@@ -290,13 +296,14 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                 && x < sb_thumb_right && x >= sb_thumb_right - sb_thumb_width));
 
           hovering_page_left_ =
-              (CanScrollLeft_() && y >= height() * 0.5f - kPageButtonSize * 0.5f
+              (ShouldShowPageLeftButton_()
+               && y >= height() * 0.5f - kPageButtonSize * 0.5f
                && y <= height() * 0.5f + kPageButtonSize * 0.5f
                && x >= kPageButtonInset
                && x <= kPageButtonInset + kPageButtonSize);
 
           hovering_page_right_ =
-              (CanScrollRight_()
+              (ShouldShowPageRightButton_()
                && y >= height() * 0.5f - kPageButtonSize * 0.5f
                && y <= height() * 0.5f + kPageButtonSize * 0.5f
                && x >= width() - kPageButtonInset - kPageButtonSize
@@ -518,13 +525,15 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (y >= 0.0f && y < height() && x >= 0.0f && x < width()) {
         // Handle page-left/right buttons.
         auto in_page_left_button =
-            (CanScrollLeft_() && y >= height() * 0.5f - kPageButtonSize * 0.5f
+            (ShouldShowPageLeftButton_()
+             && y >= height() * 0.5f - kPageButtonSize * 0.5f
              && y <= height() * 0.5f + kPageButtonSize * 0.5f
              && x >= kPageButtonInset
              && x <= kPageButtonInset + kPageButtonSize);
 
         auto in_page_right_button =
-            (CanScrollRight_() && y >= height() * 0.5f - kPageButtonSize * 0.5f
+            (ShouldShowPageRightButton_()
+             && y >= height() * 0.5f - kPageButtonSize * 0.5f
              && y <= height() * 0.5f + kPageButtonSize * 0.5f
              && x >= width() - kPageButtonInset - kPageButtonSize
              && x <= width() - kPageButtonInset);
@@ -806,7 +815,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // Page left/right buttons at depth 0.9-1.0
   if (explicit_bool(true) && draw_transparent) {
     // Left button.
-    if (CanScrollLeft_()) {
+    if (ShouldShowPageLeftButton_()) {
       float scale_ex{1.0f};
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
@@ -836,7 +845,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
     }
     // Right button.
-    if (CanScrollRight_()) {
+    if (ShouldShowPageRightButton_()) {
       float scale_ex{1.0f};
       base::SimpleComponent c(pass);
       c.SetTransparent(true);

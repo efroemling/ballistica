@@ -48,8 +48,8 @@ class HScrollWidget : public ContainerWidget {
 
  private:
   void ClampThumb_(bool velocity_clamp, bool position_clamp);
-  auto CanScrollLeft_() -> bool;
-  auto CanScrollRight_() -> bool;
+  auto ShouldShowPageLeftButton_() -> bool;
+  auto ShouldShowPageRightButton_() -> bool;
 
   Object::Ref<base::AppTimer> touch_delay_timer_;
   seconds_t last_scroll_bar_show_time_{};
