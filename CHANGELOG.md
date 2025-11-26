@@ -1,4 +1,4 @@
-### 1.7.55 (build 22641, api 9, 2025-11-25)
+### 1.7.55 (build 22642, api 9, 2025-11-25)
 - The 'get-tokens' plus button now allows going back to whatever window one was
   on before, even auxiliary windows. Previously it was an auxiliary window
   itself so it would replace other auxiliary windows.

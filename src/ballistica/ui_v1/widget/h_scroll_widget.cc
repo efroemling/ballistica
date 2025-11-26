@@ -810,7 +810,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       float brightness;
       if (page_left_pressed_) {
         scale_ex = 1.05f;
-        brightness = 1.0f;
+        brightness = 1.4f;
       } else if (hovering_page_left_) {
         brightness = 0.9f;
       } else {
@@ -840,7 +840,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       float brightness;
       if (page_right_pressed_) {
         scale_ex = 1.05f;
-        brightness = 1.0f;
+        brightness = 1.4f;
       } else if (hovering_page_right_) {
         brightness = 0.9f;
       } else {

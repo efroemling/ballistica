@@ -1490,7 +1490,7 @@ void ContainerWidget::ShowWidget(Widget* w) {
   // Hacky exception; scroll-widgets don't respond directly to this
   // (it always arrives via a child's child.. need to clean this up)
   // it causes double-shows to happen otherwise and odd jumpy behavior.
-  if (GetWidgetTypeName() == "scroll") {
+  if (GetWidgetTypeName() == "scroll" || GetWidgetTypeName() == "hscroll") {
     return;
   }
 
