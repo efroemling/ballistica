@@ -14,7 +14,7 @@ namespace ballistica::ui_v1 {
 
 static const float kMarginH{5.0f};
 
-static const float kPageButtonInset{25.0f};
+static const float kPageButtonInset{15.0f};
 static const float kPageButtonSize{80.0f};
 static const float kPageButtonYOffs{7.0f};
 static const float kBottomOverlap{3.0f};
@@ -53,7 +53,7 @@ void HScrollWidget::OnTouchDelayTimerExpired() {
           static_cast<float>(touch_held_click_count_)));
 
       touch_down_sent_ = true;
-      handling_deferred_click_ = true;
+      handling_deferred_click_ = false;
 
       // Run any calls built up by UI callbacks.
       ui_op_context.Finish();

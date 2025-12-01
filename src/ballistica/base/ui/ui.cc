@@ -150,6 +150,7 @@ UI::UI() {
   // on whether touch events or mouse events come through/etc.
   touch_mode_ = !g_core->platform->IsRunningOnDesktop();
 }
+
 void UI::SetUIScale(UIScale val) {
   BA_PRECONDITION(g_base->InLogicThread());
   uiscale_ = val;
