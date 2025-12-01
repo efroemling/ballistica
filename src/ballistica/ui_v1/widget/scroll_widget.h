@@ -57,6 +57,7 @@ class ScrollWidget : public ContainerWidget {
   millisecs_t last_sub_widget_h_scroll_claim_time_{};
   millisecs_t last_velocity_event_time_millisecs_{};
   millisecs_t inertia_scroll_update_time_{};
+  millisecs_t last_touch_held_time_{};
   int touch_held_click_count_{};
   float color_red_{0.55f};
   float color_green_{0.47f};

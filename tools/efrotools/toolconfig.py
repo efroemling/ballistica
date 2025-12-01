@@ -96,7 +96,7 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
             '     (python-shell-interpreter . "__EFRO_PY_BIN__")\n'
             '     (eglot-workspace-configuration . (\n'
             '         (:pylsp . (:plugins (\n'
-            '             :pylint (:enabled t)\n'
+            '             :pylint (:enabled :json-false)\n'
             '             :flake8 (:enabled :json-false)\n'
             '             :pycodestyle (:enabled :json-false)\n'
             '             :mccabe (:enabled :json-false)\n'

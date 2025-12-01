@@ -56,7 +56,7 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22646
+TARGET_BALLISTICA_BUILD = 22648
 TARGET_BALLISTICA_VERSION = '1.7.55'
 
 
@@ -95,7 +95,7 @@ class EnvConfig:
     #: stderr into the engine so they show up on in-app consoles, etc.
     log_handler: LogHandler | None
 
-    # Initial data from the ``config.json`` file in the config dir.
+    #: Initial data from the ``config.json`` file in the config dir.
     initial_app_config: Any
 
     #: Timestamp when we first started doing stuff.

@@ -365,6 +365,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           // count as clicks if they don't move).
           if (g_base->ui->touch_mode()) {
             touch_held_ = true;
+            last_touch_held_time_ = g_core->AppTimeMillisecs();
+
             auto click_count = static_cast<int>(m.fval3);
             touch_held_click_count_ = click_count;
             touch_down_sent_ = false;
@@ -507,7 +509,10 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               // If we're currently scrolling but this touch has moved
               // significantly left or right, cancel our scrolling and pass
               // the touch.
-              if (touch_is_scrolling_ && abs(touch_x_ - touch_start_x_) > 10.0f
+              auto since_held =
+                  g_core->AppTimeMillisecs() - last_touch_held_time_;
+              if (touch_is_scrolling_ && since_held < 100
+                  && abs(touch_x_ - touch_start_x_) > 10.0f
                   && abs(touch_y_ - touch_start_y_) < 5.0f) {
                 touch_held_ = false;
                 inertia_scroll_rate_ = 0.0f;
