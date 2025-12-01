@@ -10,6 +10,7 @@
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 
 namespace ballistica::ui_v1 {
 
@@ -373,6 +374,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             touch_up_sent_ = false;
             touch_start_x_ = x;
             touch_start_y_ = y;
+            touch_moved_significantly_ = false;
             touch_x_ = x;
             touch_y_ = y;
             touch_down_y_ = y - child_offset_v_;
@@ -511,9 +513,23 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               // the touch.
               auto since_held =
                   g_core->AppTimeMillisecs() - last_touch_held_time_;
-              if (touch_is_scrolling_ && since_held < 100
-                  && abs(touch_x_ - touch_start_x_) > 10.0f
-                  && abs(touch_y_ - touch_start_y_) < 5.0f) {
+              auto xdiff = std::abs(touch_x_ - touch_start_x_);
+              auto ydiff = std::abs(touch_y_ - touch_start_y_);
+
+              // Stop watching for left/right scrolling once they've moved a
+              // short distance (50 virtual pixels). Otherwise they could
+              // erroneously trigger us later in a long touch where they're
+              // moving around a lot.
+              auto touch_had_moved_significantly = touch_moved_significantly_;
+              if (!touch_moved_significantly_
+                  && xdiff * xdiff + ydiff * ydiff > (50.0f * 50.0f)) {
+                touch_moved_significantly_ = true;
+              }
+
+              if (!touch_had_moved_significantly
+                  && touch_is_scrolling_
+                  // && since_held < 150
+                  && xdiff > 3.0f && (ydiff < 0.1f || xdiff / ydiff > 1.25f)) {
                 touch_held_ = false;
                 inertia_scroll_rate_ = 0.0f;
                 MarkForUpdate();

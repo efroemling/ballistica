@@ -113,6 +113,7 @@ class ScrollWidget : public ContainerWidget {
   bool center_small_content_{};
   bool center_small_content_horizontally_{};
   bool touch_held_{};
+  bool touch_moved_significantly_{};
   bool highlight_{true};
   bool capture_arrows_{false};
   bool mouse_held_scroll_down_{};
