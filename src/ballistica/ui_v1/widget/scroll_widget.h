@@ -97,6 +97,7 @@ class ScrollWidget : public ContainerWidget {
   float child_max_offset_{};
   float amount_visible_{};
   float inertia_scroll_rate_{};
+  bool handling_deferred_click_{};
   bool mouse_held_page_down_{};
   bool mouse_held_page_up_{};
   bool hovering_thumb_{};

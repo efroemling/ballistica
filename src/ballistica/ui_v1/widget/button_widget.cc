@@ -90,9 +90,9 @@ auto ButtonWidget::GetHeight() -> float { return height_; }
 auto ButtonWidget::GetMult(millisecs_t current_time) const -> float {
   float mult = 1.0f;
 
-  if ((pressed_ && mouse_over_)
+  if ((pressed_ && hover_)
       || (current_time - last_activate_time_millisecs_ < 200)) {
-    if (pressed_ && mouse_over_) {
+    if (pressed_ && hover_) {
       mult = 3.0f;
     } else {
       float x = static_cast<float>(current_time - last_activate_time_millisecs_)
@@ -113,7 +113,7 @@ auto ButtonWidget::GetMult(millisecs_t current_time) const -> float {
   } else {
     // Slightly highlighting all buttons for idle hovering (but ONLY with a
     // mouse; not touchscreen).
-    if (mouse_over_ && !g_base->ui->touch_mode()) {
+    if (hover_ && !g_base->ui->touch_mode()) {
       // if (mouse_over_) {
       mult = 1.2f;
     }
@@ -626,24 +626,29 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float x = m.fval1;
       float y = m.fval2;
       bool claimed = (m.fval3 > 0.0f);
-      auto old_mouse_over{mouse_over_};
+      auto old_hover{hover_};
 
       if (claimed || !enabled_) {
-        mouse_over_ = false;
+        hover_ = false;
       } else {
-        mouse_over_ =
-            ((x >= (-left_overlap)) && (x < (width_ + right_overlap))
-             && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap)));
+        if (pressed_) {
+          claimed = true;
+        }
+        hover_ = (x >= -left_overlap && x < width_ + right_overlap
+                  && y >= -bottom_overlap && y < height_ + top_overlap);
+      }
+      if (hover_) {
+        claimed = true;
       }
 
-      return mouse_over_;
+      return claimed;
     }
     case base::WidgetMessage::Type::kMouseDown: {
       float x = m.fval1;
       float y = m.fval2;
       if (enabled_ && (x >= (-left_overlap)) && (x < (width_ + right_overlap))
           && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))) {
-        mouse_over_ = true;
+        hover_ = true;
         pressed_ = true;
 
         if (repeat_) {

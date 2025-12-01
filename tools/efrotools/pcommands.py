@@ -92,6 +92,8 @@ def requirements_upgrade() -> None:
         filterlines: list[tuple[str, str]] = [
             # Fails to build on bastaging (submitted fix).
             ('pyicu==2.16', 'pyicu==2.15.2'),
+            ('google-auth-oauthlib==1.2.3', 'google-auth-oauthlib==1.2.2'),
+            ('pylint==4.0.4', 'pylint==4.0.3'),
         ]
         for fsrc, fdst in filterlines:
             if fsrc in reqs_new:

@@ -484,9 +484,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       }
 
       if (!root_selectable_) {
-        // Go through all widgets backwards until one claims the cursor position
-        // (we still send it to other widgets even then though in case they
-        // case).
+        // Go through all widgets backwards until one claims the cursor
+        // position (we still send it to other widgets even then though in
+        // case they case).
         for (auto i = widgets_.rbegin(); i != widgets_.rend(); i++) {
           float cx = x;
           float cy = y;
@@ -515,6 +515,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       } else {
         mouse_over_ = false;
       }
+      // printf("BREAKING %s %d\n", GetWidgetTypeName().c_str(),
+      //        static_cast<int>(claimed));
       break;
     }
 
@@ -549,7 +551,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           claimed = true;
           break;
         }
-        if (modal_children_) break;
+        if (modal_children_) {
+          break;
+        }
       }
 
       // If its not yet claimed, see if its within our contained region, in

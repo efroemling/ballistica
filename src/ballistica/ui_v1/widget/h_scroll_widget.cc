@@ -16,6 +16,8 @@ static const float kMarginH{5.0f};
 
 static const float kPageButtonInset{25.0f};
 static const float kPageButtonSize{80.0f};
+static const float kPageButtonYOffs{7.0f};
+static const float kBottomOverlap{3.0f};
 
 HScrollWidget::HScrollWidget() {
   set_draggable(false);
@@ -42,10 +44,16 @@ void HScrollWidget::OnTouchDelayTimerExpired() {
       // before we return.
       base::UI::OperationContext ui_op_context;
 
-      ContainerWidget::HandleMessage(base::WidgetMessage(
+      // Make note this is deferred so it doesn't generate delayed clicks
+      // itself.
+      handling_deferred_click_ = true;
+
+      HandleMessage(base::WidgetMessage(
           base::WidgetMessage::Type::kMouseDown, nullptr, touch_x_, touch_y_,
           static_cast<float>(touch_held_click_count_)));
+
       touch_down_sent_ = true;
+      handling_deferred_click_ = true;
 
       // Run any calls built up by UI callbacks.
       ui_op_context.Finish();
@@ -119,7 +127,6 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
   bool claimed = false;
   bool pass = true;
-  float bottom_overlap = 3;
   switch (m.type) {
     case base::WidgetMessage::Type::kShow: {
       claimed = true;
@@ -175,11 +182,9 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
         // If we're moving right, stop at the end.
         {
-          // if (child_offset_h_ < prev_child_offset) {
           if (child_offset_h_ < 0.0f) {
             child_offset_h_ = 0.0f;
           }
-          // }
         }
       }
 
@@ -200,6 +205,9 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float y = m.fval2;
       bool was_claimed = m.fval3 > 0.0f;
 
+      if (was_claimed) {
+        claimed = true;
+      }
       auto in_bounds = y >= 0.0f && y < height() && x >= 0.0f && x < width();
 
       auto repeat_out_of_bounds = !last_mouse_move_in_bounds_ && !in_bounds;
@@ -213,10 +221,6 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         pass = false;
       }
 
-      // if (!in_bounds) {
-      //   pass = false;
-      // }
-
       if (g_base->ui->touch_mode()) {
         mouse_over_ = false;
       } else {
@@ -229,6 +233,11 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         hovering_page_left_ = false;
         hovering_page_right_ = false;
       } else {
+        // We always claim if page right/left are held.
+        if (page_left_pressed_ || page_right_pressed_) {
+          claimed = true;
+        }
+
         if (g_base->ui->touch_mode()) {
           if (touch_held_) {
             touch_x_ = x;
@@ -250,7 +259,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
                 // If they haven't moved far enough yet, ignore it.
                 if (x_diff < y_diff) {
-                  return false;
+                  return claimed;
                 }
               }
             }
@@ -292,22 +301,30 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                                        * (s_right - (s_left + sb_thumb_width));
 
           hovering_thumb_ =
-              (((y >= 0) && (y < scroll_bar_height_ + bottom_overlap)
+              (((y >= 0) && (y < scroll_bar_height_ + kBottomOverlap)
                 && x < sb_thumb_right && x >= sb_thumb_right - sb_thumb_width));
 
           hovering_page_left_ =
               (ShouldShowPageLeftButton_()
                && y >= height() * 0.5f - kPageButtonSize * 0.5f
+                           + kPageButtonYOffs
                && y <= height() * 0.5f + kPageButtonSize * 0.5f
+                           + kPageButtonYOffs
                && x >= kPageButtonInset
                && x <= kPageButtonInset + kPageButtonSize);
 
           hovering_page_right_ =
               (ShouldShowPageRightButton_()
                && y >= height() * 0.5f - kPageButtonSize * 0.5f
+                           + kPageButtonYOffs
                && y <= height() * 0.5f + kPageButtonSize * 0.5f
+                           + kPageButtonYOffs
                && x >= width() - kPageButtonInset - kPageButtonSize
                && x <= width() - kPageButtonInset);
+
+          if (hovering_thumb_ || hovering_page_left_ || hovering_page_right_) {
+            claimed = true;
+          }
         }
       }
 
@@ -363,13 +380,13 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
       // Handle page-left/right buttons.
       auto in_page_left_button =
-          (y >= height() * 0.5f - kPageButtonSize * 0.5f
-           && y <= height() * 0.5f + kPageButtonSize * 0.5f
+          (y >= height() * 0.5f - kPageButtonSize * 0.5f + kPageButtonYOffs
+           && y <= height() * 0.5f + kPageButtonSize * 0.5f + kPageButtonYOffs
            && x >= kPageButtonInset && x <= kPageButtonInset + kPageButtonSize);
 
       auto in_page_right_button =
-          (y >= height() * 0.5f - kPageButtonSize * 0.5f
-           && y <= height() * 0.5f + kPageButtonSize * 0.5f
+          (y >= height() * 0.5f - kPageButtonSize * 0.5f + kPageButtonYOffs
+           && y <= height() * 0.5f + kPageButtonSize * 0.5f + kPageButtonYOffs
            && x >= width() - kPageButtonInset - kPageButtonSize
            && x <= width() - kPageButtonInset);
 
@@ -526,23 +543,26 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         // Handle page-left/right buttons.
         auto in_page_left_button =
             (ShouldShowPageLeftButton_()
-             && y >= height() * 0.5f - kPageButtonSize * 0.5f
-             && y <= height() * 0.5f + kPageButtonSize * 0.5f
+             // && m.type == base::WidgetMessage::Type::kMouseDown
+             && y >= height() * 0.5f - kPageButtonSize * 0.5f + kPageButtonYOffs
+             && y <= height() * 0.5f + kPageButtonSize * 0.5f + kPageButtonYOffs
              && x >= kPageButtonInset
              && x <= kPageButtonInset + kPageButtonSize);
 
         auto in_page_right_button =
             (ShouldShowPageRightButton_()
-             && y >= height() * 0.5f - kPageButtonSize * 0.5f
-             && y <= height() * 0.5f + kPageButtonSize * 0.5f
+             // && m.type == base::WidgetMessage::Type::kMouseDown
+             && y >= height() * 0.5f - kPageButtonSize * 0.5f + kPageButtonYOffs
+             && y <= height() * 0.5f + kPageButtonSize * 0.5f + kPageButtonYOffs
              && x >= width() - kPageButtonInset - kPageButtonSize
              && x <= width() - kPageButtonInset);
 
         // On touch devices, clicks begin scrolling, (and eventually can
         // count as clicks if they don't move). Only if we're showing less
         // than everything though.
-        if (g_base->ui->touch_mode() && amount_visible_ < 1.0f
-            && !in_page_left_button && !in_page_right_button) {
+        if (g_base->ui->touch_mode() && !handling_deferred_click_
+            && amount_visible_ < 1.0f && !in_page_left_button
+            && !in_page_right_button) {
           touch_held_ = true;
           auto click_count = static_cast<int>(m.fval3);
           touch_held_click_count_ = click_count;
@@ -580,18 +600,26 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
         if (in_page_left_button) {
           page_left_pressed_ = true;
-          claimed = true;
+          if (m.type != base::WidgetMessage::Type::kScrollMouseDown) {
+            // Ew; currently need to avoid claiming these for
+            // scroll-mouse-down when we're not using it for scrolling.
+            claimed = true;
+          }
           pass = false;
         }
         if (in_page_right_button) {
           page_right_pressed_ = true;
-          claimed = true;
+          if (m.type != base::WidgetMessage::Type::kScrollMouseDown) {
+            // Ew; currently need to avoid claiming these for
+            // scroll-mouse-down when we're not using it for scrolling.
+            claimed = true;
+          }
           pass = false;
         }
 
         // For mouse type devices, allow clicking on the scrollbar.
         if (!g_base->ui->touch_mode()) {
-          if (y <= scroll_bar_height_ + bottom_overlap) {
+          if (y <= scroll_bar_height_ + kBottomOverlap) {
             claimed = true;
             pass = false;
 
@@ -812,7 +840,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     }
   }
 
-  // Page left/right buttons at depth 0.9-1.0
+  // Page left/right buttons at depth 0.9 - 1.0.
   if (explicit_bool(true) && draw_transparent) {
     // Left button.
     if (ShouldShowPageLeftButton_()) {
@@ -821,12 +849,13 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetTransparent(true);
       float brightness;
       if (page_left_pressed_) {
-        scale_ex = 1.05f;
-        brightness = 1.4f;
+        scale_ex = 1.1f;
+        brightness = 2.0f;
       } else if (hovering_page_left_) {
-        brightness = 0.9f;
+        scale_ex = 1.03f;
+        brightness = 1.2f;
       } else {
-        brightness = 0.7f;
+        brightness = 1.0f;
       }
       c.SetColor(brightness, brightness, brightness, 1.0f);
       c.SetTexture(
@@ -834,8 +863,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       {
         auto xf = c.ScopedTransform();
-        c.Translate(kPageButtonInset + kPageButtonSize * 0.5f, height() * 0.5,
-                    0.9f);
+        c.Translate(kPageButtonInset + kPageButtonSize * 0.5f,
+                    height() * 0.5 + kPageButtonYOffs, 0.9f);
         c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
         c.Rotate(180.0f, 0.0f, 0.0f, 1.0f);
         if (draw_transparent) {
@@ -851,12 +880,13 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetTransparent(true);
       float brightness;
       if (page_right_pressed_) {
-        scale_ex = 1.05f;
-        brightness = 1.4f;
+        scale_ex = 1.1f;
+        brightness = 2.0f;
       } else if (hovering_page_right_) {
-        brightness = 0.9f;
+        scale_ex = 1.03f;
+        brightness = 1.2f;
       } else {
-        brightness = 0.7f;
+        brightness = 1.0f;
       }
       c.SetColor(brightness, brightness, brightness, 1.0f);
       c.SetTexture(
@@ -864,7 +894,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       {
         auto xf = c.ScopedTransform();
         c.Translate(width() - kPageButtonInset - kPageButtonSize * 0.5f,
-                    height() * 0.5, 0.9f);
+                    height() * 0.5 + kPageButtonYOffs, 0.9f);
         c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
         if (draw_transparent) {
           c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
@@ -919,7 +949,6 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           last_scroll_bar_show_time_ = frame_def->display_time();
         }
       } else {
-        // printf("M %d\n", static_cast<int>(mouse_over_));
         if (smooth_diff || mouse_held_thumb_
             || std::abs(inertia_scroll_rate_) > 1.0f
             || (mouse_over_

@@ -1,4 +1,4 @@
-### 1.7.55 (build 22644, api 9, 2025-11-25)
+### 1.7.55 (build 22645, api 9, 2025-11-30)
 - The 'get-tokens' plus button now allows going back to whatever window one was
   on before, even auxiliary windows. Previously it was an auxiliary window
   itself so it would replace other auxiliary windows.
@@ -7,6 +7,9 @@
 - Added page left/right buttons to help navigate long h-scroll lines.
 - Tightened up some UI highlighting logic. Hovering over a scrollbar thumb
   should no longer highlight buttons behind the thumb, etc.
+- Cleaned up some scrolling event logic to feel more intuitive. It is now
+  possible to go from vertical scrolling in a scroll-widget to horizontally
+  scrolling in a child widget with one swipe, etc.
 
 ### 1.7.54 (build 22634, api 9, 2025-11-20)
 - `scrollwidget` and `hscrollwidget` now center selected items that are too

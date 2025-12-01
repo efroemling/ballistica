@@ -115,7 +115,7 @@ class ButtonWidget : public Widget {
   bool enabled_{true};
   bool selectable_{true};
   bool sound_enabled_{true};
-  bool mouse_over_{};
+  bool hover_{};
   bool repeat_{};
   bool pressed_{};
   bool better_bg_fit_{};

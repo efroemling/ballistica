@@ -31,10 +31,16 @@ void ScrollWidget::OnTouchDelayTimerExpired() {
       // end before we return.
       base::UI::OperationContext ui_op_context;
 
-      ContainerWidget::HandleMessage(base::WidgetMessage(
+      // Make note this is deferred so it doesn't generate delayed clicks
+      // itself.
+      handling_deferred_click_ = true;
+
+      HandleMessage(base::WidgetMessage(
           base::WidgetMessage::Type::kMouseDown, nullptr, touch_x_, touch_y_,
           static_cast<float>(touch_held_click_count_)));
+
       touch_down_sent_ = true;
+      handling_deferred_click_ = false;
 
       // Run any calls built up by UI callbacks.
       ui_op_context.Finish();
@@ -208,6 +214,17 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       MarkForUpdate();
       break;
     }
+    case base::WidgetMessage::Type::kMouseWheelH: {
+      if (ContainerWidget::HandleMessage(m)) {
+        claimed = true;
+        // If child is claiming a horizontal scroll event, cancel any
+        // vertical motion we've got going.
+        inertia_scroll_rate_ = 0.0f;
+        MarkForUpdate();
+      }
+      pass = false;
+      break;
+    }
     case base::WidgetMessage::Type::kMouseWheelVelocityH: {
       if (ContainerWidget::HandleMessage(m)) {
         claimed = true;
@@ -219,7 +236,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           avg_scroll_speed_h_ =
               smoothing * avg_scroll_speed_h_ + (1.0f - smoothing) * m.fval3;
 
-          // Also tamp this down in case we're not getting new events for it.
+          // Also tamp this down in case we're not getting new events for
+          // it.
           avg_scroll_speed_v_ =
               smoothing * avg_scroll_speed_v_ + (1.0f - smoothing) * 0.0f;
         }
@@ -339,88 +357,93 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     case base::WidgetMessage::Type::kMouseDown: {
       float x = m.fval1;
       float y = m.fval2;
-      if (x >= 0.0f && x < (width() + right_overlap) && y >= 0.0f
-          && y < height()) {
-        // On touch devices, touches begin scrolling, (and eventually can
-        // count as clicks if they don't move).
-        if (g_base->ui->touch_mode()) {
-          touch_held_ = true;
-          auto click_count = static_cast<int>(m.fval3);
-          touch_held_click_count_ = click_count;
-          touch_down_sent_ = false;
-          touch_up_sent_ = false;
-          touch_start_x_ = x;
-          touch_start_y_ = y;
-          touch_x_ = x;
-          touch_y_ = y;
-          touch_down_y_ = y - child_offset_v_;
-          touch_is_scrolling_ = false;
-          child_is_scrolling_ = false;
-          child_disowned_scroll_ = false;
+      if (!handling_deferred_click_) {
+        // In our scroll box?
+        if (x >= 0.0f && x < (width() + right_overlap) && y >= 0.0f
+            && y < height()) {
+          // On touch devices, touches begin scrolling, (and eventually can
+          // count as clicks if they don't move).
+          if (g_base->ui->touch_mode()) {
+            touch_held_ = true;
+            auto click_count = static_cast<int>(m.fval3);
+            touch_held_click_count_ = click_count;
+            touch_down_sent_ = false;
+            touch_up_sent_ = false;
+            touch_start_x_ = x;
+            touch_start_y_ = y;
+            touch_x_ = x;
+            touch_y_ = y;
+            touch_down_y_ = y - child_offset_v_;
+            touch_is_scrolling_ = false;
+            child_is_scrolling_ = false;
+            child_disowned_scroll_ = false;
 
-          // If there's already significant scrolling happening, we handle
-          // all these ourself as scroll events.
-          if (std::abs(inertia_scroll_rate_) > 0.05f) {
-            touch_is_scrolling_ = true;
-          }
-
-          pass = false;
-          claimed = true;
-
-          if (!touch_is_scrolling_) {
-            // Give children a chance to claim this for their own scrolling
-            // before we do so.
-            child_is_scrolling_ = ContainerWidget::HandleMessage(
-                base::WidgetMessage(base::WidgetMessage::Type::kScrollMouseDown,
-                                    nullptr, m.fval1, m.fval2, m.fval3));
-
-            // After a short delay we go ahead and handle this as a regular
-            // click if it hasn't turned into a scroll or a child scroll.
-            if (!child_is_scrolling_) {
-              touch_delay_timer_ = base::AppTimer::New(
-                  0.150, false, [this] { OnTouchDelayTimerExpired(); });
+            // If there's already significant scrolling happening, we handle
+            // all these ourself as scroll events.
+            if (std::abs(inertia_scroll_rate_) > 0.05f) {
+              touch_is_scrolling_ = true;
             }
-          }
-        }
 
-        // For mouse type devices, allow clicking on the scrollbar.
-        if (!g_base->ui->touch_mode()) {
-          if (x >= width() - scroll_bar_width_ - left_overlap) {
-            claimed = true;
             pass = false;
-            float s_top = height() - border_height_;
-            float s_bottom = border_height_;
-            float sb_thumb_height =
-                amount_visible_ * (height() - 2.0f * border_height_);
-            float sb_thumb_top = s_top
-                                 - child_offset_v_ / child_max_offset_
-                                       * (s_top - (s_bottom + sb_thumb_height));
-            // Above thumb (page-up).
-            if (y >= sb_thumb_top) {
-              // So we can see the transition.
-              smoothing_amount_ = 1.0f;
-              child_offset_v_ -=
-                  (height() - 2.0f * (border_height_ + kMarginV));
-              // MarkForUpdate();
-              ClampThumb_(false, true);
-            } else if (y >= sb_thumb_top - sb_thumb_height) {
-              // On thumb.
-              mouse_held_thumb_ = true;
-              thumb_click_start_v_ = y;
-              thumb_click_start_child_offset_v_ = child_offset_v_;
-            } else if (y >= s_bottom) {
-              // Below thumb (page down). So we can see the transition.
-              smoothing_amount_ = 1.0f;
-              child_offset_v_ +=
-                  (height() - 2.0f * (border_height_ + kMarginV));
-              // MarkForUpdate();
-              ClampThumb_(false, true);
+            claimed = true;
+
+            if (!touch_is_scrolling_) {
+              // Give children a chance to claim this for their own scrolling
+              // before we do so.
+              child_is_scrolling_ =
+                  ContainerWidget::HandleMessage(base::WidgetMessage(
+                      base::WidgetMessage::Type::kScrollMouseDown, nullptr,
+                      m.fval1, m.fval2, m.fval3));
+
+              // After a short delay we go ahead and handle this as a regular
+              // click if it hasn't turned into a scroll or a child scroll.
+              if (!child_is_scrolling_) {
+                touch_delay_timer_ = base::AppTimer::New(
+                    0.150, false, [this] { OnTouchDelayTimerExpired(); });
+              }
             }
           }
+
+          // For mouse type devices, allow clicking on the scrollbar.
+          if (!g_base->ui->touch_mode()) {
+            if (x >= width() - scroll_bar_width_ - left_overlap) {
+              claimed = true;
+              pass = false;
+              float s_top = height() - border_height_;
+              float s_bottom = border_height_;
+              float sb_thumb_height =
+                  amount_visible_ * (height() - 2.0f * border_height_);
+              float sb_thumb_top =
+                  s_top
+                  - child_offset_v_ / child_max_offset_
+                        * (s_top - (s_bottom + sb_thumb_height));
+              // Above thumb (page-up).
+              if (y >= sb_thumb_top) {
+                // So we can see the transition.
+                smoothing_amount_ = 1.0f;
+                child_offset_v_ -=
+                    (height() - 2.0f * (border_height_ + kMarginV));
+                MarkForUpdate();
+                ClampThumb_(false, true);
+              } else if (y >= sb_thumb_top - sb_thumb_height) {
+                // On thumb.
+                mouse_held_thumb_ = true;
+                thumb_click_start_v_ = y;
+                thumb_click_start_child_offset_v_ = child_offset_v_;
+              } else if (y >= s_bottom) {
+                // Below thumb (page down). So we can see the transition.
+                smoothing_amount_ = 1.0f;
+                child_offset_v_ +=
+                    (height() - 2.0f * (border_height_ + kMarginV));
+                MarkForUpdate();
+                ClampThumb_(false, true);
+              }
+            }
+          }
+        } else {
+          // Not in the scroll box; dont allow children to claim it.
+          pass = false;
         }
-      } else {
-        // Not in the scroll box; dont allow children to claim it.
-        pass = false;
       }
       break;
     }
@@ -428,6 +451,10 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float x = m.fval1;
       float y = m.fval2;
       bool was_claimed = (m.fval3 > 0.0f);
+
+      if (was_claimed) {
+        claimed = true;
+      }
 
       // If coords are outside of our bounds we don't want to pass
       // mouse-moved events through the standard container logic.
@@ -477,14 +504,31 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               touch_x_ = x;
               touch_y_ = y;
 
-              // If we move more than a slight amount it means our touch
-              // isn't a click.
-              if (!touch_is_scrolling_
-                  && ((std::abs(touch_x_ - touch_start_x_) > 10.0f)
-                      || (std::abs(touch_y_ - touch_start_y_) > 10.0f))) {
+              // If we're currently scrolling but this touch has moved
+              // significantly left or right, cancel our scrolling and pass
+              // the touch.
+              if (touch_is_scrolling_ && abs(touch_x_ - touch_start_x_) > 10.0f
+                  && abs(touch_y_ - touch_start_y_) < 5.0f) {
+                touch_held_ = false;
+                inertia_scroll_rate_ = 0.0f;
+                MarkForUpdate();
+
+                ContainerWidget::HandleMessage(base::WidgetMessage(
+                    base::WidgetMessage::Type::kMouseDown, nullptr,
+                    touch_start_x_, touch_start_y_, false));
+                ContainerWidget::HandleMessage(
+                    base::WidgetMessage(base::WidgetMessage::Type::kMouseMove,
+                                        nullptr, touch_x_, touch_y_, false));
+
+              } else if (!touch_is_scrolling_
+                         && ((std::abs(touch_x_ - touch_start_x_) > 10.0f)
+                             || (std::abs(touch_y_ - touch_start_y_)
+                                 > 10.0f))) {
+                // If we move more than a slight amount it means our touch
+                // goes to scrolling and isn't a deferred click.
                 touch_is_scrolling_ = true;
 
-                // Go ahead and send a mouse-up to the sub-widgets; in their
+                // Go ahead and send a mouse-up to our sub-widgets; in their
                 // eyes the click is canceled.
                 if (touch_down_sent_ && !touch_up_sent_) {
                   ContainerWidget::HandleMessage(base::WidgetMessage(
@@ -513,6 +557,10 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               (((x >= width() - scroll_bar_width_ - left_overlap)
                 && (x < width() + right_overlap) && y < sb_thumb_top
                 && y >= sb_thumb_top - sb_thumb_height));
+
+          if (hovering_thumb_) {
+            claimed = true;
+          }
         }
       }
 
