@@ -541,7 +541,7 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float b = 0;
       float t = height_;
 
-      // Go through all widgets backwards until one claims the wheel.
+      // Go through all widgets backwards until one claims the event.
       for (auto i = widgets_.rbegin(); i != widgets_.rend(); i++) {
         float cx = x;
         float cy = y;

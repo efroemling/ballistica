@@ -47,12 +47,17 @@ class HScrollWidget : public ContainerWidget {
   void UpdateLayout() override;
 
  private:
-  void ClampThumb_(bool velocity_clamp, bool position_clamp);
+  void ClampScrolling_(bool velocity_clamp, bool position_clamp,
+                       millisecs_t current_time_millisecs);
+  void UpdateScrolling_(millisecs_t current_time);
   auto ShouldShowPageLeftButton_() -> bool;
   auto ShouldShowPageRightButton_() -> bool;
+  void UpdatePageLeftRightButtons_(seconds_t display_time_elapsed);
+
   Object::Ref<base::AppTimer> touch_delay_timer_;
   seconds_t last_scroll_bar_show_time_{};
   seconds_t last_mouse_move_time_{};
+  millisecs_t last_h_scroll_event_time_millisecs_{};
   float color_red_{0.55f};
   float color_green_{0.47f};
   float color_blue_{0.67f};
@@ -91,8 +96,10 @@ class HScrollWidget : public ContainerWidget {
   float child_max_offset_{};
   float amount_visible_{};
   float inertia_scroll_rate_{};
-  millisecs_t inertia_scroll_update_time_ms_{};
-  millisecs_t last_velocity_event_time_millisecs_{};
+  float page_left_button_presence_{};
+  float page_right_button_presence_{};
+  float scroll_h_accum_{};
+  millisecs_t inertia_scroll_update_time_millisecs_{};
   int touch_held_click_count_{};
   bool handling_deferred_click_{};
   bool touch_is_scrolling_{};
@@ -100,7 +107,7 @@ class HScrollWidget : public ContainerWidget {
   bool touch_up_sent_{};
   bool new_scroll_touch_{};
   bool touch_held_{};
-  bool has_momentum_{true};
+  bool has_momentum_{false};
   bool trough_dirty_{true};
   bool shadow_dirty_{true};
   bool glow_dirty_{true};
@@ -121,6 +128,7 @@ class HScrollWidget : public ContainerWidget {
   bool hovering_page_right_{};
   bool page_right_pressed_{};
   bool last_mouse_move_in_bounds_{};
+  bool last_scroll_was_touch_{};
 };
 
 }  // namespace ballistica::ui_v1

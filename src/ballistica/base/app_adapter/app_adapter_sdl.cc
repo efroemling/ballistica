@@ -450,11 +450,13 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_MOUSEWHEEL: {
-      const SDL_MouseWheelEvent* e = &event.wheel;
-      int scroll_speed{500};
+      // Mouse wheel speeds feel significantly different on Mac vs
+      // Windows/Linux due to acceleration and whatnot. Slowing things down
+      // gets them feeling more similar.
+      auto mult = g_buildconfig.platform_macos() ? 0.35f : 1.0f;
       g_base->input->PushMouseScrollEvent(
-          Vector2f(static_cast<float>(e->x * scroll_speed),
-                   static_cast<float>(e->y * scroll_speed)));
+          Vector2f(event.wheel.preciseX * mult, event.wheel.preciseY * mult));
+
       break;
     }
 

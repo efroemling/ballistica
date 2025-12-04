@@ -1085,6 +1085,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 cancel_button=False,
                 width=460,
                 height=130,
+                origin_widget=origin_widget,
             )
             return
 

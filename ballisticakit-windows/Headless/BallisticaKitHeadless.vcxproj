@@ -697,6 +697,7 @@
     <ClInclude Include="..\..\src\ballistica\shared\generic\utf8.h" />
     <ClCompile Include="..\..\src\ballistica\shared\generic\utils.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\utils.h" />
+    <ClInclude Include="..\..\src\ballistica\shared\math\lerp.h" />
     <ClCompile Include="..\..\src\ballistica\shared\math\matrix44f.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\math\matrix44f.h" />
     <ClInclude Include="..\..\src\ballistica\shared\math\point2d.h" />

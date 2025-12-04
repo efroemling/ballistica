@@ -10,7 +10,7 @@
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/logging/logging.h"
+#include "ballistica/shared/math/lerp.h"
 
 namespace ballistica::ui_v1 {
 
@@ -52,68 +52,72 @@ void ScrollWidget::OnTouchDelayTimerExpired() {
   touch_delay_timer_.Clear();
 }
 
-void ScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
+void ScrollWidget::ClampScrolling_(bool velocity_clamp, bool position_clamp,
+                                   millisecs_t current_time_millisecs) {
   BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
-  auto touch_mode{g_base->ui->touch_mode()};
-
-  bool is_scrolling;
-  if (touch_mode) {
-    is_scrolling = (touch_held_ || !has_momentum_);
-  } else {
-    is_scrolling = (!has_momentum_);
-  }
-  float strong_force;
-  float weak_force;
-  if (touch_mode) {
-    strong_force = -0.12f;
-    weak_force = -0.004f;
-  } else {
-    strong_force = -0.012f;
-    weak_force = -0.004f;
-  }
+  float stiffness = touch_is_scrolling_ ? -0.4f : -0.004f;
+  float damping_scaling = 0.89f;
   auto i = widgets().begin();
-  if (i != widgets().end()) {
-    float child_h = (**i).GetHeight();
-    if (velocity_clamp) {
-      if (child_offset_v_ < 0) {
-        // Even in velocity case do some sane clamping.
-        float diff = child_offset_v_;
-        inertia_scroll_rate_ +=
-            diff * (is_scrolling ? strong_force : weak_force);
-        inertia_scroll_rate_ *= 0.9f;
+  if (i == widgets().end()) {
+    return;  // No children.
+  }
+  float child_height = (**i).GetHeight();
 
-      } else if (child_offset_v_
-                 > child_h - (height() - 2.0f * (border_height_ + kMarginV))) {
-        float diff =
-            child_offset_v_
-            - (child_h
-               - std::min(child_h,
-                          (height() - 2.0f * (border_height_ + kMarginV))));
-        inertia_scroll_rate_ +=
-            diff * (is_scrolling ? strong_force : weak_force);
-        inertia_scroll_rate_ *= 0.9f;
+  if (velocity_clamp) {
+    if (child_offset_v_ < 0.0f) {
+      // We've scrolled past the top.
+      float diff = child_offset_v_;
+      inertia_scroll_rate_ += diff * stiffness;
+      inertia_scroll_rate_ *= damping_scaling;
+
+    } else {
+      float diff =
+          child_offset_v_
+          - (child_height
+             - std::min(child_height,
+                        (height() - 2.0f * (border_height_ + kMarginV))));
+      if (diff > 0.0f) {
+        // We've scrolled past the bottom.
+        inertia_scroll_rate_ += diff * stiffness;
+        inertia_scroll_rate_ *= damping_scaling;
+      } else {
+        // We're in the middle.
+        //
+        // Hit the brakes a moment after our last non-touch non-momentum
+        // scroll event comes through. This kills motion for regular
+        // non-momentum scroll wheels and for momentum stuff while the touch
+        // is still happening. Also kill it when we're feeding h-scrolls to
+        // children.
+        if (!last_scroll_was_touch_) {
+          if ((!has_momentum_
+               && (current_time_millisecs - last_v_scroll_event_time_millisecs_
+                   > 1000 / 30))
+              || should_pass_h_scroll_to_children_) {
+            inertia_scroll_rate_ *= 0.8f;
+          }
+        }
       }
     }
+  }
 
-    // Hard clipping if we're dragging the scrollbar.
-    if (position_clamp) {
-      if (child_offset_v_smoothed_
-          > child_h - (height() - 2.0f * (border_height_ + kMarginV))) {
-        child_offset_v_smoothed_ =
-            child_h - (height() - 2.0f * (border_height_ + kMarginV));
-      }
-      if (child_offset_v_smoothed_ < 0.0f) {
-        child_offset_v_smoothed_ = 0.0f;
-      }
-      if (child_offset_v_
-          > child_h - (height() - 2.0f * (border_height_ + kMarginV))) {
-        child_offset_v_ =
-            child_h - (height() - 2.0f * (border_height_ + kMarginV));
-      }
-      if (child_offset_v_ < 0) {
-        child_offset_v_ = 0;
-      }
+  // Hard clipping if we're dragging the scrollbar.
+  if (position_clamp) {
+    if (child_offset_v_smoothed_
+        > child_height - (height() - 2.0f * (border_height_ + kMarginV))) {
+      child_offset_v_smoothed_ =
+          child_height - (height() - 2.0f * (border_height_ + kMarginV));
+    }
+    if (child_offset_v_smoothed_ < 0.0f) {
+      child_offset_v_smoothed_ = 0.0f;
+    }
+    if (child_offset_v_
+        > child_height - (height() - 2.0f * (border_height_ + kMarginV))) {
+      child_offset_v_ =
+          child_height - (height() - 2.0f * (border_height_ + kMarginV));
+    }
+    if (child_offset_v_ < 0) {
+      child_offset_v_ = 0;
     }
   }
 }
@@ -131,7 +135,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_v_ -= 60.0f;
         MarkForUpdate();
-        ClampThumb_(false, true);
+        ClampScrolling_(false, true, -1);
       }
       break;
 
@@ -140,7 +144,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_v_ += 60.0f;
         MarkForUpdate();
-        ClampThumb_(false, true);
+        ClampScrolling_(false, true, -1);
       }
       break;
 
@@ -215,146 +219,121 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       MarkForUpdate();
       break;
     }
+
     case base::WidgetMessage::Type::kMouseWheelH: {
-      if (ContainerWidget::HandleMessage(m)) {
-        claimed = true;
-        // If child is claiming a horizontal scroll event, cancel any
-        // vertical motion we've got going.
-        inertia_scroll_rate_ = 0.0f;
-        MarkForUpdate();
-      }
-      pass = false;
-      break;
-    }
-    case base::WidgetMessage::Type::kMouseWheelVelocityH: {
-      if (ContainerWidget::HandleMessage(m)) {
-        claimed = true;
-
-        // Keep track of the average scrolling going on. (only update when
-        // we get non-momentum events)
-        if (std::abs(m.fval3) > 0.001f && !has_momentum_) {
-          float smoothing = 0.8f;
-          avg_scroll_speed_h_ =
-              smoothing * avg_scroll_speed_h_ + (1.0f - smoothing) * m.fval3;
-
-          // Also tamp this down in case we're not getting new events for
-          // it.
-          avg_scroll_speed_v_ =
-              smoothing * avg_scroll_speed_v_ + (1.0f - smoothing) * 0.0f;
-        }
-        last_sub_widget_h_scroll_claim_time_ = g_core->AppTimeMillisecs();
-      }
-      pass = false;
-      break;
-    }
-    case base::WidgetMessage::Type::kMouseWheelVelocity: {
+      // If its out of our bounds, ignore and don't pass to children.
       float x = m.fval1;
       float y = m.fval2;
+      if (!(x >= 0.0f && x < width() && y >= 0.0f && y < height())) {
+        pass = false;
+        break;
+      }
 
-      // Don't scroll if everything is visible.
+      last_scroll_was_touch_ = false;
+
+      // We don't do anything with h-scrolling but we do keep track
+      // of the current speed.
+      scroll_h_accum_ += m.fval3;
+
+      if (!should_pass_h_scroll_to_children_) {
+        pass = false;
+        break;
+      }
+
+      break;
+    }
+
+    case base::WidgetMessage::Type::kMouseWheelVelocityH: {
+      // If its out of our bounds, ignore and don't pass to children.
+      float x = m.fval1;
+      float y = m.fval2;
+      if (!(x >= 0.0f && x < width() && y >= 0.0f && y < height())) {
+        pass = false;
+        break;
+      }
+
+      last_scroll_was_touch_ = false;
+
+      // We don't do anything with h-scrolling but we do keep track
+      // of the current speed.
+      auto event_is_momentum = static_cast<bool>(m.fval4);
+      if (!event_is_momentum) {
+        scroll_h_accum_ += m.fval3;
+      }
+
+      if (!should_pass_h_scroll_to_children_) {
+        pass = false;
+        break;
+      }
+
+      break;
+    }
+
+    case base::WidgetMessage::Type::kMouseWheel: {
+      // If its out of our bounds, ignore and don't pass to children.
+      float x = m.fval1;
+      float y = m.fval2;
+      if (!(x >= 0.0f && x < width() && y >= 0.0f && y < height())) {
+        pass = false;
+        break;
+      }
+
+      last_scroll_was_touch_ = false;
+
+      // Keep track of whether we're getting actual events or momentum
+      // ones.
+      has_momentum_ = false;
+      last_v_scroll_event_time_millisecs_ =
+          static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+
+      // Don't do scrolling if everything is visible.
       if (amount_visible_ >= 1.0f) {
         break;
       }
 
-      // Keep track of the average scrolling going on. (only update when we
-      // get non-momentum events).
-      if (std::abs(m.fval3) > 0.001f && !has_momentum_) {
-        float smoothing = 0.8f;
-        avg_scroll_speed_v_ =
-            smoothing * avg_scroll_speed_v_ + (1.0f - smoothing) * m.fval3;
-
-        // Also tamp this down in case we're not getting new events for it.
-        avg_scroll_speed_h_ =
-            smoothing * avg_scroll_speed_h_ + (1.0f - smoothing) * 0.0f;
-      }
-
-      // If a child appears to be looking at horizontal scroll events and
-      // we're scrolling more horizontally than vertically in general,
-      // ignore vertical scrolling (should probably make this less fuzzy).
-      bool ignore_regular_scrolling = false;
-      bool child_claimed_h_scroll_recently =
-          (g_core->AppTimeMillisecs() - last_sub_widget_h_scroll_claim_time_
-           < 100);
-      if (child_claimed_h_scroll_recently
-          && std::abs(avg_scroll_speed_h_) > std::abs(avg_scroll_speed_v_)) {
-        ignore_regular_scrolling = true;
-      }
-
-      if (x >= 0.0f && x < width() && y >= 0.0f && y < height()
-          && !ignore_regular_scrolling) {
-        claimed = true;
-        pass = false;
-        has_momentum_ = static_cast<bool>(m.fval4);
-
-        // We only set velocity from events when not in momentum mode. We
-        // handle momentum ourself.
-        if (std::abs(m.fval3) > 0.001f && !has_momentum_) {
-          float scroll_speed = 2.2f;
-          float smoothing = 0.8f;
-          float new_val;
-          if (m.fval3 < 0.0f) {
-            // Apply less if we're past the end.
-            if (child_offset_v_ < 0) {
-              new_val = scroll_speed * 0.1f * m.fval3;
-            } else {
-              new_val = scroll_speed * m.fval3;
-            }
-          } else {
-            // Apply less if we're past the end.
-            bool past_end = false;
-
-            // Calc our total height.
-            auto i = widgets().begin();
-            if (i != widgets().end()) {
-              float child_h = (**i).GetHeight();
-              float diff =
-                  child_offset_v_
-                  - (child_h
-                     - std::min(
-                         child_h,
-                         (height() - 2.0f * (border_height_ + kMarginV))));
-              if (diff > 0) {
-                past_end = true;
-              }
-            }
-            if (past_end) {
-              new_val = scroll_speed * 0.1f * m.fval3;
-            } else {
-              new_val = scroll_speed * m.fval3;
-            }
-          }
-          inertia_scroll_rate_ =
-              smoothing * inertia_scroll_rate_ + (1.0f - smoothing) * new_val;
-        }
-        last_velocity_event_time_millisecs_ =
-            static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
-        MarkForUpdate();
-      } else {
-        // Not within our widget; don't allow children to claim.
-        pass = false;
-      }
+      // Simply add it to our accum val; we'll apply at next update.
+      claimed = true;
+      pass = false;
+      scroll_v_accum_ -= m.fval3;
       break;
     }
-    case base::WidgetMessage::Type::kMouseWheel: {
+
+    case base::WidgetMessage::Type::kMouseWheelVelocity: {
+      // If its out of our bounds, ignore and don't pass to children.
       float x = m.fval1;
       float y = m.fval2;
-      if (x >= 0.0f && x < width() && y >= 0.0f && y < height()) {
+      if (!(x >= 0.0f && x < width() && y >= 0.0f && y < height())) {
+        pass = false;
+        break;
+      }
+
+      last_scroll_was_touch_ = false;
+
+      // Keep a few things up to date regardless of what we do with the
+      // event.
+      has_momentum_ = static_cast<bool>(m.fval4);
+
+      // Do nothing with momentum events since we calc our own momentum.
+      if (has_momentum_) {
         claimed = true;
         pass = false;
-
-        // Don't scroll if everything is visible.
-        if (amount_visible_ >= 1.0f) {
-          break;
-        }
-
-        inertia_scroll_rate_ -= m.fval3 * 0.003f;
-        MarkForUpdate();
-      } else {
-        // Not within our widget; dont allow children to claim.
-        pass = false;
+        break;
       }
+      last_v_scroll_event_time_millisecs_ =
+          static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+
+      // Don't do scrolling if everything is visible.
+      if (amount_visible_ >= 1.0f) {
+        break;
+      }
+
+      // Simply add it to our accum val; we'll apply at next update.
+      claimed = true;
+      pass = false;
+      scroll_v_accum_ += m.fval3;
       break;
     }
+
     case base::WidgetMessage::Type::kMouseDown: {
       float x = m.fval1;
       float y = m.fval2;
@@ -386,6 +365,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             // all these ourself as scroll events.
             if (std::abs(inertia_scroll_rate_) > 0.05f) {
               touch_is_scrolling_ = true;
+              last_scroll_was_touch_ = true;
             }
 
             pass = false;
@@ -428,7 +408,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                 child_offset_v_ -=
                     (height() - 2.0f * (border_height_ + kMarginV));
                 MarkForUpdate();
-                ClampThumb_(false, true);
+                ClampScrolling_(false, true, -1);
               } else if (y >= sb_thumb_top - sb_thumb_height) {
                 // On thumb.
                 mouse_held_thumb_ = true;
@@ -440,7 +420,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                 child_offset_v_ +=
                     (height() - 2.0f * (border_height_ + kMarginV));
                 MarkForUpdate();
-                ClampThumb_(false, true);
+                ClampScrolling_(false, true, -1);
               }
             }
           }
@@ -451,6 +431,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       }
       break;
     }
+
     case base::WidgetMessage::Type::kMouseMove: {
       float x = m.fval1;
       float y = m.fval2;
@@ -526,11 +507,10 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                 touch_moved_significantly_ = true;
               }
 
-              if (!touch_had_moved_significantly
-                  && touch_is_scrolling_
-                  // && since_held < 150
+              if (!touch_had_moved_significantly && touch_is_scrolling_
                   && xdiff > 3.0f && (ydiff < 0.1f || xdiff / ydiff > 1.25f)) {
                 touch_held_ = false;
+                touch_is_scrolling_ = false;
                 inertia_scroll_rate_ = 0.0f;
                 MarkForUpdate();
 
@@ -548,6 +528,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                 // If we move more than a slight amount it means our touch
                 // goes to scrolling and isn't a deferred click.
                 touch_is_scrolling_ = true;
+                last_scroll_was_touch_ = true;
 
                 // Go ahead and send a mouse-up to our sub-widgets; in their
                 // eyes the click is canceled.
@@ -601,7 +582,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                                          * (s_top - s_bottom)));
           child_offset_v_ = thumb_click_start_child_offset_v_
                             - rate * (y - thumb_click_start_v_);
-          ClampThumb_(false, true);
+          ClampScrolling_(false, true, -1);
           MarkForUpdate();
         }
       }
@@ -620,6 +601,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
       break;
     }
+
     case base::WidgetMessage::Type::kMouseUp:
     case base::WidgetMessage::Type::kMouseCancel: {
       mouse_held_scroll_down_ = false;
@@ -629,8 +611,6 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       mouse_held_page_up_ = false;
       if (g_base->ui->touch_mode()) {
         if (touch_held_) {
-          touch_held_ = false;
-
           // If we moved at all, we mark it as claimed to keep sub-widgets
           // from acting on it (since we used it for scrolling)
           bool claimed2 = touch_is_scrolling_ || child_is_scrolling_;
@@ -657,6 +637,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             touch_up_sent_ = true;
           }
 
+          touch_held_ = false;
+          touch_is_scrolling_ = false;
           return true;
         }
       }
@@ -676,6 +658,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
       break;
     }
+
     default:
       break;
   }
@@ -701,11 +684,11 @@ void ScrollWidget::UpdateLayout() {
   // Move everything based on our offset.
   auto i = widgets().begin();
   if (i == widgets().end()) {
-    amount_visible_ = 0;
+    amount_visible_ = 0.0f;
     return;
   }
 
-  float extra_border_x{4.0};  // Whee arbitrary hard coded values.
+  float extra_border_x{4.0f};  // Whee arbitrary hard coded values.
   float xoffs;
   if (center_small_content_horizontally_) {
     float our_width{width()};
@@ -720,15 +703,15 @@ void ScrollWidget::UpdateLayout() {
       child_height - (height() - 2.0f * (border_height_ + kMarginV));
   amount_visible_ =
       (height() - 2.0f * (border_height_ + kMarginV)) / child_height;
-  if (amount_visible_ > 1) {
-    amount_visible_ = 1;
+  if (amount_visible_ > 1.0f) {
+    amount_visible_ = 1.0f;
     if (center_small_content_) {
       center_offset_y_ = child_max_offset_ * 0.5f;
     } else {
-      center_offset_y_ = 0;
+      center_offset_y_ = 0.0f;
     }
   } else {
-    center_offset_y_ = 0;
+    center_offset_y_ = 0.0f;
   }
 
   if (mouse_held_thumb_) {
@@ -738,9 +721,9 @@ void ScrollWidget::UpdateLayout() {
           child_height - (height() - 2.0f * (border_height_ + kMarginV));
       inertia_scroll_rate_ = 0;
     }
-    if (child_offset_v_ < 0) {
-      child_offset_v_ = 0;
-      inertia_scroll_rate_ = 0;
+    if (child_offset_v_ < 0.0f) {
+      child_offset_v_ = 0.0f;
+      inertia_scroll_rate_ = 0.0f;
     }
   }
   (**i).set_translate(xoffs, height() - (border_height_ + kMarginV)
@@ -749,59 +732,147 @@ void ScrollWidget::UpdateLayout() {
   thumb_dirty_ = true;
 }
 
+void ScrollWidget::UpdateScrolling_(millisecs_t current_time_millisecs) {
+  float prev_child_offset_v_smoothed = child_offset_v_smoothed_;
+
+  // Skip huge differences.
+  if (current_time_millisecs - inertia_scroll_update_time_millisecs_ > 100) {
+    inertia_scroll_update_time_millisecs_ = current_time_millisecs - 100;
+  }
+
+  // Step once per 4ms; should give us decent consistency at 60 or 120hz.
+  while (current_time_millisecs - inertia_scroll_update_time_millisecs_ > 4) {
+    inertia_scroll_update_time_millisecs_ += 4;
+
+    // Keep a smoothed value of how much scrolling we're *trying* to do,
+    // in both x and y.
+    auto accum_smoothing{0.5f};
+    scroll_h_accum_smoothed_ = accum_smoothing * scroll_h_accum_smoothed_
+                               + (1.0f - accum_smoothing) * scroll_h_accum_;
+    scroll_v_accum_smoothed_ = accum_smoothing * scroll_v_accum_smoothed_
+                               + (1.0f - accum_smoothing) * scroll_v_accum_;
+
+    // Update whether we should be passing h-scrolls to children (we
+    // suppress our vertical scrolling while we're doing child horizontal
+    // scrolling and vice versa).
+    {
+      auto scroll_h_mag{std::abs(scroll_h_accum_smoothed_)};
+      auto scroll_v_mag{std::abs(scroll_v_accum_smoothed_)};
+      if (should_pass_h_scroll_to_children_) {
+        if (scroll_v_mag > 0.1 && scroll_v_mag > scroll_h_mag * 2.0) {
+          should_pass_h_scroll_to_children_ = false;
+          // printf("OFF %.3f %.3f\n", scroll_h_mag, scroll_v_mag);
+        }
+      } else {
+        if (scroll_h_mag > 0.1 && scroll_h_mag > scroll_v_mag * 2.0) {
+          should_pass_h_scroll_to_children_ = true;
+          // printf("ON %.3f %.3f\n", scroll_h_mag, scroll_v_mag);
+        }
+      }
+    }
+
+    // Update our scrolling rate based on our latest accumulated scroll
+    // values.
+    //
+    // TODO(ericf): Ideally we should be tracking scroll actions through to
+    // the end and ALWAYS be setting this during the scroll; not only when
+    // there are significant values.
+    if (std::abs(scroll_v_accum_) > 0.0001f) {
+      // Add a bit of smoothing here since what we're doing is not entirely
+      // accurate (ie: 3 staggered scroll events with a value of 4 will give
+      // us a lower velocity than a single event with value 12 even though
+      // they're supposed to represent the same change. Smoothing helps even
+      // things out a bit).
+      float smoothing{0.5f};
+      float scroll_speed = 8.0f;
+      inertia_scroll_rate_ =
+          smoothing * inertia_scroll_rate_
+          + (1.0f - smoothing) * (scroll_speed * scroll_v_accum_);
+      scroll_v_accum_ = 0.0f;
+    }
+    scroll_h_accum_ = 0.0f;
+
+    // Limit how far we can overshoot edges by clamping velocity as we do.
+    auto fade_region{200.0f};
+    float inertia_scroll_mult{1.0f};
+    if (inertia_scroll_rate_ < 0.0f) {
+      // If we're scrolling up and have passed the top, slow down.
+      if (child_offset_v_ < 0.0f) {
+        inertia_scroll_mult =
+            inv_lerp_clamped(-fade_region, 0.0f, child_offset_v_);
+      }
+    } else {
+      // If we're scrolling down and have passed the bottom, slow down.
+      auto i = widgets().begin();
+      if (i != widgets().end()) {
+        float child_height = (**i).GetHeight();
+        float diff =
+            child_offset_v_
+            - (child_height
+               - std::min(child_height,
+                          (height() - 2.0f * (border_height_ + kMarginV))));
+        if (diff > 0.0f) {
+          inertia_scroll_mult = inv_lerp_clamped(fade_region, 0.0f, diff);
+        }
+      }
+    }
+
+    // If we're using scroll events (not touches) and we're h-scrolling
+    // children, freeze vertically.
+    if (should_pass_h_scroll_to_children_ && !last_scroll_was_touch_) {
+      inertia_scroll_mult = 0.0f;
+    }
+
+    // In touch mode, push our scroll rate to match what the touch is doing.
+    if (g_base->ui->touch_mode()) {
+      if (touch_held_) {
+        float diff = (touch_y_ - child_offset_v_) - touch_down_y_;
+        float smoothing = 0.7f;
+        inertia_scroll_rate_ =
+            smoothing * inertia_scroll_rate_ + (1.0f - smoothing) * 0.2f * diff;
+      } else {
+        inertia_scroll_rate_ *= 0.98f;
+      }
+    } else {
+      inertia_scroll_rate_ *= 0.98f;
+    }
+    ClampScrolling_(true, mouse_held_thumb_, current_time_millisecs);  //
+
+    // Finally update our scroll position.
+    child_offset_v_ +=
+        inertia_scroll_rate_ * std::pow(inertia_scroll_mult, 2.0f);
+
+    // Lastly we apply smoothing so that if we're snapping to a specific
+    // place we don't go instantly there we blend between smoothed and
+    // non-smoothed depending on whats driving us (we dont want to add
+    // smoothing on top of inertial scrolling for example or it'll feel
+    // muddy).
+    float diff = child_offset_v_ - child_offset_v_smoothed_;
+    if (std::abs(diff) < 1.0f) {
+      child_offset_v_smoothed_ = child_offset_v_;
+    } else {
+      child_offset_v_smoothed_ += (1.0f - smoothing_amount_) * diff;
+    }
+    smoothing_amount_ = std::max(0.0f, smoothing_amount_ - 0.002f);
+  }
+
+  // Only re-layout our widgets if we've moved a significant amount.
+  if (std::abs(prev_child_offset_v_smoothed - child_offset_v_smoothed_)
+      > 0.01f) {
+    MarkForUpdate();
+  }
+}
+
 void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   have_drawn_ = true;
-  millisecs_t current_time = pass->frame_def()->display_time_millisecs();
-  float prev_child_offset_v_smoothed = child_offset_v_smoothed_;
+
+  auto current_time_millisecs{pass->frame_def()->display_time_millisecs()};
 
   // Ok, lets update our inertial scrolling during the opaque pass (we
   // really should have some sort of update() function for this but widgets
   // don't have that).
   if (!draw_transparent) {
-    // Skip huge differences.
-    if (current_time - inertia_scroll_update_time_ > 1000) {
-      inertia_scroll_update_time_ = current_time - 1000;
-    }
-    while (current_time - inertia_scroll_update_time_ > 5) {
-      inertia_scroll_update_time_ += 5;
-
-      if (g_base->ui->touch_mode()) {
-        if (touch_held_) {
-          float diff = (touch_y_ - child_offset_v_) - touch_down_y_;
-          float smoothing = 0.7f;
-          inertia_scroll_rate_ = smoothing * inertia_scroll_rate_
-                                 + (1.0f - smoothing) * 0.2f * diff;
-        } else {
-          inertia_scroll_rate_ *= 0.98f;
-        }
-      } else {
-        inertia_scroll_rate_ *= 0.98f;
-      }
-      ClampThumb_(true, mouse_held_thumb_);
-      child_offset_v_ += inertia_scroll_rate_;
-      if (!has_momentum_
-          && (current_time - last_velocity_event_time_millisecs_ > 1000 / 30))
-        inertia_scroll_rate_ = 0;
-
-      // Lastly we apply smoothing so that if we're snapping to a specific
-      // place we don't go instantly there we blend between smoothed and
-      // non-smoothed depending on whats driving us (we dont want to add
-      // smoothing on top of inertial scrolling for example or it'll feel
-      // muddy).
-      float diff = child_offset_v_ - child_offset_v_smoothed_;
-      if (std::abs(diff) < 1.0f) {
-        child_offset_v_smoothed_ = child_offset_v_;
-      } else {
-        child_offset_v_smoothed_ += (1.0f - smoothing_amount_) * diff;
-      }
-      smoothing_amount_ = std::max(0.0f, smoothing_amount_ - 0.0025f);
-    }
-
-    // Only re-layout our widgets if we've moved a significant amount.
-    if (std::abs(prev_child_offset_v_smoothed - child_offset_v_smoothed_)
-        > 0.01f) {
-      MarkForUpdate();
-    }
+    UpdateScrolling_(current_time_millisecs);
   }
 
   CheckLayout();
@@ -973,10 +1044,11 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // If selected, do glow at depth 0.9 - 1.0.
   if (draw_transparent && IsHierarchySelected()
       && g_base->ui->ShouldHighlightWidgets() && highlight_) {
-    float m =
-        (0.8f
-         + std::abs(sinf(static_cast<float>(current_time) * 0.006467f)) * 0.2f)
-        * border_opacity_;
+    float m = (0.8f
+               + std::abs(sinf(static_cast<float>(current_time_millisecs)
+                               * 0.006467f))
+                     * 0.2f)
+              * border_opacity_;
     if (glow_dirty_) {
       float r2 = l + width();
       float l2 = l;

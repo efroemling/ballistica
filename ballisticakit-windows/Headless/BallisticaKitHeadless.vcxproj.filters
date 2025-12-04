@@ -1540,6 +1540,9 @@
     <ClInclude Include="..\..\src\ballistica\shared\generic\utils.h">
       <Filter>ballistica\shared\generic</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\math\lerp.h">
+      <Filter>ballistica\shared\math</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\shared\math\matrix44f.cc">
       <Filter>ballistica\shared\math</Filter>
     </ClCompile>

@@ -320,6 +320,7 @@ class InventoryUIController(DocUIController):
         action.window.main_window_replace(
             lambda: EditProfileWindow(
                 profile,
+                origin_widget=action.widget,
                 on_profile_save=bui.WeakCallPartial(self._on_profile_save),
                 on_profile_delete=bui.WeakCallPartial(self._on_profile_delete),
             )

@@ -9,6 +9,7 @@
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/math/lerp.h"
 
 namespace ballistica::ui_v1 {
 
@@ -64,61 +65,63 @@ void HScrollWidget::OnTouchDelayTimerExpired() {
   touch_delay_timer_.Clear();
 }
 
-void HScrollWidget::ClampThumb_(bool velocity_clamp, bool position_clamp) {
+void HScrollWidget::ClampScrolling_(bool velocity_clamp, bool position_clamp,
+                                    millisecs_t current_time_millisecs) {
   BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
-  bool is_scrolling = (touch_held_ || !has_momentum_);
-  float strong_force;
-  float weak_force;
-  if (g_base->ui->touch_mode()) {
-    strong_force = -0.12f;
-    weak_force = -0.004f;
-  } else {
-    strong_force = -0.012f;
-    weak_force = -0.004f;
-  }
+
+  float stiffness = touch_is_scrolling_ ? -0.4f : -0.004f;
+  float damping_scaling = 0.89f;
   auto i = widgets().begin();
-  if (i != widgets().end()) {
-    float child_w = (**i).GetWidth();
+  if (i == widgets().end()) {
+    return;  // No children.
+  }
+  float child_width = (**i).GetWidth();
 
-    if (velocity_clamp) {
-      if (child_offset_h_ < 0.0f) {
-        // Even in velocity case do some sane clamping.
-        float diff = child_offset_h_;
-        inertia_scroll_rate_ +=
-            diff * (is_scrolling ? strong_force : weak_force);
-        inertia_scroll_rate_ *= 0.9f;
-
-      } else if (child_offset_h_
-                 > child_w - (width() - 2.0f * (border_width_ + kMarginH))) {
-        float diff =
-            child_offset_h_
-            - (child_w
-               - std::min(child_w,
-                          (width() - 2.0f * (border_width_ + kMarginH))));
-        inertia_scroll_rate_ +=
-            diff * (is_scrolling ? strong_force : weak_force);
-        inertia_scroll_rate_ *= 0.9f;
+  if (velocity_clamp) {
+    if (child_offset_h_ < 0.0f) {
+      // We've scrolled past the right edge.
+      float diff = child_offset_h_;
+      inertia_scroll_rate_ += diff * stiffness;
+      inertia_scroll_rate_ *= damping_scaling;
+    } else {
+      float diff =
+          child_offset_h_
+          - (child_width
+             - std::min(child_width,
+                        (width() - 2.0f * (border_width_ + kMarginH))));
+      if (diff > 0.0f) {
+        // We've scrolled past the left edge.
+        inertia_scroll_rate_ += diff * stiffness;
+        inertia_scroll_rate_ *= damping_scaling;
+      } else {
+        if (!last_scroll_was_touch_) {
+          if (!has_momentum_
+              && (current_time_millisecs - last_h_scroll_event_time_millisecs_
+                  > 1000 / 30)) {
+            inertia_scroll_rate_ *= 0.8f;
+          }
+        }
       }
     }
+  }
 
-    // Hard clipping if we're dragging the scrollbar.
-    if (position_clamp) {
-      if (child_offset_h_smoothed_
-          > child_w - (width() - 2.0f * (border_width_ + kMarginH))) {
-        child_offset_h_smoothed_ =
-            child_w - (width() - 2.0f * (border_width_ + kMarginH));
-      }
-      if (child_offset_h_smoothed_ < 0.0f) {
-        child_offset_h_smoothed_ = 0.0f;
-      }
-      if (child_offset_h_
-          > child_w - (width() - 2.0f * (border_width_ + kMarginH))) {
-        child_offset_h_ =
-            child_w - (width() - 2.0f * (border_width_ + kMarginH));
-      }
-      if (child_offset_h_ < 0.0f) {
-        child_offset_h_ = 0.0f;
-      }
+  // Hard clipping if we're dragging the scrollbar.
+  if (position_clamp) {
+    if (child_offset_h_smoothed_
+        > child_width - (width() - 2.0f * (border_width_ + kMarginH))) {
+      child_offset_h_smoothed_ =
+          child_width - (width() - 2.0f * (border_width_ + kMarginH));
+    }
+    if (child_offset_h_smoothed_ < 0.0f) {
+      child_offset_h_smoothed_ = 0.0f;
+    }
+    if (child_offset_h_
+        > child_width - (width() - 2.0f * (border_width_ + kMarginH))) {
+      child_offset_h_ =
+          child_width - (width() - 2.0f * (border_width_ + kMarginH));
+    }
+    if (child_offset_h_ < 0.0f) {
+      child_offset_h_ = 0.0f;
     }
   }
 }
@@ -127,6 +130,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
   bool claimed = false;
   bool pass = true;
+
   switch (m.type) {
     case base::WidgetMessage::Type::kShow: {
       claimed = true;
@@ -199,6 +203,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       MarkForUpdate();
       break;
     }
+
     case base::WidgetMessage::Type::kMouseMove: {
       last_mouse_move_time_ = g_base->logic->display_time();
       float x = m.fval1;
@@ -272,6 +277,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                   && ((std::abs(touch_x_ - touch_start_x_) > 10.0f)
                       || (std::abs(touch_y_ - touch_start_y_) > 10.0f))) {
                 touch_is_scrolling_ = true;
+                last_scroll_was_touch_ = true;
 
                 // Cancel the press for sub-widgets.
                 if (touch_down_sent_ && !touch_up_sent_) {
@@ -347,7 +353,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         child_offset_h_ = thumb_click_start_child_offset_h_
                           - rate * (x - thumb_click_start_h_);
 
-        ClampThumb_(false, true);
+        ClampScrolling_(false, true, -1);
         MarkForUpdate();
       }
 
@@ -367,6 +373,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
       break;
     }
+
     case base::WidgetMessage::Type::kMouseUp:
     case base::WidgetMessage::Type::kMouseCancel: {
       mouse_held_scroll_down_ = false;
@@ -395,7 +402,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_h_ +=
             0.95f * (width() - 2.0f * (border_width_ + kMarginH));
-        ClampThumb_(false, true);
+        ClampScrolling_(false, true, -1);
         claimed = true;
       }
       page_left_pressed_ = false;
@@ -405,7 +412,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_h_ -=
             0.95f * (width() - 2.0f * (border_width_ + kMarginH));
-        ClampThumb_(false, true);
+        ClampScrolling_(false, true, -1);
         claimed = true;
       }
       page_right_pressed_ = false;
@@ -414,11 +421,12 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         if (touch_held_) {
           bool m_claimed = (m.fval3 > 0.0f);
 
-          touch_held_ = false;
-
           // If we moved at all, we mark it as claimed to keep sub-widgets
           // from acting on it (since we used it for scrolling).
           bool claimed2 = touch_is_scrolling_ || m_claimed;
+
+          touch_held_ = false;
+          touch_is_scrolling_ = false;
 
           // If we're not claiming it and we haven't sent a mouse_down yet
           // due to our delay, send that first.
@@ -452,87 +460,73 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       break;
     }
 
-    case base::WidgetMessage::Type::kMouseWheelVelocityH: {
-      float x = m.fval1;
-      float y = m.fval2;
-      if ((x >= 0.0f) && (x < width()) && (y >= 0.0f) && (y < height())) {
-        claimed = true;
-        pass = false;
-        has_momentum_ = static_cast<bool>(m.fval4);
-
-        // Don't scroll if everything is visible.
-        if (amount_visible_ >= 1.0f) {
-          break;
-        }
-
-        // We only set velocity from events when not in momentum mode; we
-        // handle momentum ourself.
-        if (std::abs(m.fval3) > 0.001f && !has_momentum_) {
-          float scroll_speed = 2.2f;
-          float smoothing = 0.8f;
-          float new_val;
-          if (m.fval3 < 0.0f) {
-            // Apply less if we're past the end.
-            if (child_offset_h_ < 0) {
-              new_val = scroll_speed * 0.1f * m.fval3;
-            } else {
-              new_val = scroll_speed * m.fval3;
-            }
-          } else {
-            // Apply less if we're past the end.
-            bool past_end = false;
-
-            // Calc our total height.
-            auto i = widgets().begin();
-            if (i != widgets().end()) {
-              float child_h = (**i).GetWidth();
-              float diff =
-                  child_offset_h_
-                  - (child_h
-                     - std::min(child_h,
-                                (width() - 2.0f * (border_width_ + kMarginH))));
-              if (diff > 0.0f) {
-                past_end = true;
-              }
-            }
-            if (past_end) {
-              new_val = scroll_speed * 0.1f * m.fval3;
-            } else {
-              new_val = scroll_speed * m.fval3;
-            }
-          }
-          inertia_scroll_rate_ =
-              smoothing * inertia_scroll_rate_ + (1.0f - smoothing) * new_val;
-        }
-        last_velocity_event_time_millisecs_ =
-            static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
-        MarkForUpdate();
-      } else {
-        // Not within our widget; dont allow children to claim.
-        pass = false;
-      }
-      break;
-    }
     case base::WidgetMessage::Type::kMouseWheelH: {
+      // If its out of our bounds, ignore and don't pass to children.
       float x = m.fval1;
       float y = m.fval2;
-      if (x >= 0.0f && x < width() && y >= 0.0f && y < height()) {
-        claimed = true;
+      if (!(x >= 0.0f && x < width() && y >= 0.0f && y < height())) {
         pass = false;
-
-        // Don't scroll if everything is visible.
-        if (amount_visible_ >= 1.0f) {
-          break;
-        }
-
-        inertia_scroll_rate_ -= m.fval3 * 0.003f;
-        MarkForUpdate();
-      } else {
-        // Not within our widget; dont allow children to claim.
-        pass = false;
+        break;
       }
+
+      last_scroll_was_touch_ = false;
+
+      // Keep track of whether we're getting actual events or momentum
+      // ones.
+      has_momentum_ = false;
+      last_h_scroll_event_time_millisecs_ =
+          static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+
+      // Don't do scrolling if everything is visible.
+      if (amount_visible_ >= 1.0f) {
+        break;
+      }
+
+      // Simply add it to our accum val; we'll apply at next update.
+      claimed = true;
+      pass = false;
+      scroll_h_accum_ -= m.fval3;
+
       break;
     }
+
+    case base::WidgetMessage::Type::kMouseWheelVelocityH: {
+      // If its out of our bounds, ignore and don't pass to children.
+      float x = m.fval1;
+      float y = m.fval2;
+      if (!(x >= 0.0f && x < width() && y >= 0.0f && y < height())) {
+        pass = false;
+        break;
+      }
+
+      last_scroll_was_touch_ = false;
+
+      // Keep track of whether we're getting actual events or momentum
+      // ones.
+      has_momentum_ = static_cast<bool>(m.fval4);
+
+      // Do nothing with momentum events since we calc our own momentum.
+      if (has_momentum_) {
+        claimed = true;
+        pass = false;
+        break;
+      }
+      last_h_scroll_event_time_millisecs_ =
+          static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
+
+      // Don't do scrolling if everything is visible.
+      if (amount_visible_ >= 1.0f) {
+        break;
+      }
+
+      // Simply add it to our accum val; we'll apply at next update.
+      claimed = true;
+      pass = false;
+      scroll_h_accum_ += m.fval3;
+
+      break;
+    }
+
     case base::WidgetMessage::Type::kScrollMouseDown:
     case base::WidgetMessage::Type::kMouseDown: {
       float x = m.fval1;
@@ -543,7 +537,6 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         // Handle page-left/right buttons.
         auto in_page_left_button =
             (ShouldShowPageLeftButton_()
-             // && m.type == base::WidgetMessage::Type::kMouseDown
              && y >= height() * 0.5f - kPageButtonSize * 0.5f + kPageButtonYOffs
              && y <= height() * 0.5f + kPageButtonSize * 0.5f + kPageButtonYOffs
              && x >= kPageButtonInset
@@ -551,7 +544,6 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
         auto in_page_right_button =
             (ShouldShowPageRightButton_()
-             // && m.type == base::WidgetMessage::Type::kMouseDown
              && y >= height() * 0.5f - kPageButtonSize * 0.5f + kPageButtonYOffs
              && y <= height() * 0.5f + kPageButtonSize * 0.5f + kPageButtonYOffs
              && x >= width() - kPageButtonInset - kPageButtonSize
@@ -579,6 +571,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           // touches. they're only used to scroll more/less.
           if (std::abs(inertia_scroll_rate_) > 0.05f) {
             touch_is_scrolling_ = true;
+            last_scroll_was_touch_ = true;
           }
 
           pass = false;
@@ -636,7 +629,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             if (x >= sb_thumb_right) {
               smoothing_amount_ = 1.0f;  // So we can see the transition.
               child_offset_h_ -= (width() - 2.0f * (border_width_ + kMarginH));
-              ClampThumb_(false, true);
+              ClampScrolling_(false, true, -1);
             } else if (x >= sb_thumb_right - sb_thumb_width) {
               // On thumb.
               mouse_held_thumb_ = true;
@@ -646,7 +639,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               // To left of thumb (page left).
               smoothing_amount_ = 1.0f;  // So we can see the transition.
               child_offset_h_ += (width() - 2.0f * (border_width_ + kMarginH));
-              ClampThumb_(false, true);
+              ClampScrolling_(false, true, -1);
             }
           }
         }
@@ -655,6 +648,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       }
       break;
     }
+
     default:
       break;
   }
@@ -682,9 +676,10 @@ void HScrollWidget::UpdateLayout() {
     amount_visible_ = 0.0f;
     return;
   }
-  float child_w = (**i).GetWidth();
-  child_max_offset_ = child_w - (width() - 2.0f * (border_width_ + kMarginH));
-  amount_visible_ = (width() - 2.0f * (border_width_ + kMarginH)) / child_w;
+  float child_width = (**i).GetWidth();
+  child_max_offset_ =
+      child_width - (width() - 2.0f * (border_width_ + kMarginH));
+  amount_visible_ = (width() - 2.0f * (border_width_ + kMarginH)) / child_width;
   if (amount_visible_ > 1.0f) {
     amount_visible_ = 1.0f;
     if (center_small_content_) {
@@ -697,8 +692,9 @@ void HScrollWidget::UpdateLayout() {
   }
   if (mouse_held_thumb_) {
     if (child_offset_h_
-        > child_w - (width() - 2.0f * (border_width_ + kMarginH))) {
-      child_offset_h_ = child_w - (width() - 2.0f * (border_width_ + kMarginH));
+        > child_width - (width() - 2.0f * (border_width_ + kMarginH))) {
+      child_offset_h_ =
+          child_width - (width() - 2.0f * (border_width_ + kMarginH));
       inertia_scroll_rate_ = 0.0f;
     }
     if (child_offset_h_ < 0.0f) {
@@ -707,70 +703,146 @@ void HScrollWidget::UpdateLayout() {
     }
   }
   (**i).set_translate(width() - (border_width_ + kMarginH)
-                          + child_offset_h_smoothed_ - child_w
+                          + child_offset_h_smoothed_ - child_width
                           + center_offset_x_,
                       4.0f + border_height_);
   thumb_dirty_ = true;
 }
 
+void HScrollWidget::UpdateScrolling_(millisecs_t current_time_millisecs) {
+  float prev_child_offset_h_smoothed = child_offset_h_smoothed_;
+
+  // (skip huge differences)
+  if (current_time_millisecs - inertia_scroll_update_time_millisecs_ > 100) {
+    inertia_scroll_update_time_millisecs_ = current_time_millisecs - 100;
+  }
+
+  // Step once per 4ms; should give us decent consistency at 60 or 120hz.
+  while (current_time_millisecs - inertia_scroll_update_time_millisecs_ > 4) {
+    inertia_scroll_update_time_millisecs_ += 4;
+
+    // Update our scrolling rate based on our latest accumulated scroll
+    // values.
+    //
+    // TODO(ericf): Ideally we should be tracking scroll actions through to
+    // the end and ALWAYS be setting this during the scroll; not only when
+    // there are significant values.
+    if (std::abs(scroll_h_accum_) > 0.0001f) {
+      // Add a bit of smoothing here since what we're doing is not entirely
+      // accurate (ie: 3 staggered scroll events with a value of 4 will give
+      // us a lower velocity than a single event with value 12 even though
+      // they're supposed to represent the same change. Smoothing helps even
+      // things out a bit).
+      float smoothing{0.5f};
+      float scroll_speed = 8.0f;
+      inertia_scroll_rate_ =
+          smoothing * inertia_scroll_rate_
+          + (1.0f - smoothing) * (scroll_speed * scroll_h_accum_);
+      // inertia_scroll_rate_ = scroll_speed * scroll_h_accum_;
+      scroll_h_accum_ = 0.0f;
+    }
+
+    // Limit how far we can overshoot edges by clamping velocity as we do.
+    auto fade_region{200.0f};
+    float inertia_scroll_mult{1.0f};
+    if (inertia_scroll_rate_ < 0.0f) {
+      // If we're scrolling up and have passed the top, slow down.
+      if (child_offset_h_ < 0.0f) {
+        inertia_scroll_mult =
+            inv_lerp_clamped(-fade_region, 0.0f, child_offset_h_);
+      }
+    } else {
+      // If we're scrolling down and have passed the bottom, slow down.
+      auto i = widgets().begin();
+      if (i != widgets().end()) {
+        float child_width = (**i).GetWidth();
+        float diff =
+            child_offset_h_
+            - (child_width
+               - std::min(child_width,
+                          (width() - 2.0f * (border_width_ + kMarginH))));
+        if (diff > 0.0f) {
+          inertia_scroll_mult = inv_lerp_clamped(fade_region, 0.0f, diff);
+        }
+      }
+    }
+
+    // In touch mode, push our scroll rate to match what the touch is doing.
+    if (g_base->ui->touch_mode()) {
+      if (touch_held_) {
+        float diff = (touch_x_ - child_offset_h_) - touch_down_x_;
+        float smoothing = 0.7f;
+        inertia_scroll_rate_ =
+            smoothing * inertia_scroll_rate_ + (1.0f - smoothing) * 0.2f * diff;
+      } else {
+        inertia_scroll_rate_ *= 0.98f;
+      }
+    } else {
+      inertia_scroll_rate_ *= 0.98f;
+    }
+    ClampScrolling_(true, mouse_held_thumb_, current_time_millisecs);
+
+    // Finally update our scroll position.
+    child_offset_h_ +=
+        inertia_scroll_rate_ * std::pow(inertia_scroll_mult, 2.0f);
+
+    // Lastly we apply smoothing so that if we're snapping to a specific
+    // place we don't go instantly there we blend between smoothed and
+    // non-smoothed depending on whats driving us (we dont want to add
+    // smoothing on top of inertial scrolling for example or it'll feel
+    // muddy)
+    float diff = child_offset_h_ - child_offset_h_smoothed_;
+    if (std::abs(diff) < 1.0f) {
+      child_offset_h_smoothed_ = child_offset_h_;
+    } else {
+      child_offset_h_smoothed_ += (1.0f - smoothing_amount_) * diff;
+    }
+    smoothing_amount_ = std::max(0.0f, smoothing_amount_ - 0.002f);
+  }
+
+  // Only re-layout our widgets if we've moved a significant amount.
+  if (std::abs(prev_child_offset_h_smoothed - child_offset_h_smoothed_)
+      > 0.01f) {
+    MarkForUpdate();
+  }
+}
+
+void HScrollWidget::UpdatePageLeftRightButtons_(
+    seconds_t display_time_elapsed) {
+  // Step our page-left/right buttons in the transparent pass.
+  auto increase_rate{6.0f};
+  auto decrease_rate{6.0f};
+  if (ShouldShowPageLeftButton_()) {
+    page_left_button_presence_ = std::min(
+        1.0f, page_left_button_presence_
+                  + increase_rate * static_cast<float>(display_time_elapsed));
+  } else {
+    page_left_button_presence_ = std::max(
+        0.0f, page_left_button_presence_
+                  - decrease_rate * static_cast<float>(display_time_elapsed));
+  }
+  if (ShouldShowPageRightButton_()) {
+    page_right_button_presence_ = std::min(
+        1.0f, page_right_button_presence_
+                  + increase_rate * static_cast<float>(display_time_elapsed));
+  } else {
+    page_right_button_presence_ = std::max(
+        0.0f, page_right_button_presence_
+                  - decrease_rate * static_cast<float>(display_time_elapsed));
+  }
+}
+
 void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   have_drawn_ = true;
   auto* frame_def{pass->frame_def()};
-  millisecs_t current_time_ms = frame_def->display_time_millisecs();
-  float prev_child_offset_h_smoothed = child_offset_h_smoothed_;
+  millisecs_t current_time_millisecs = frame_def->display_time_millisecs();
 
   // Ok, lets update our inertial scrolling during the opaque pass. (we
   // really should have some sort of update() function for this but widgets
   // don't have that currently)
   if (!draw_transparent) {
-    // (skip huge differences)
-    if (current_time_ms - inertia_scroll_update_time_ms_ > 1000) {
-      inertia_scroll_update_time_ms_ = current_time_ms - 1000;
-    }
-    while (current_time_ms - inertia_scroll_update_time_ms_ > 5) {
-      inertia_scroll_update_time_ms_ += 5;
-
-      if (g_base->ui->touch_mode()) {
-        if (touch_held_) {
-          float diff = (touch_x_ - child_offset_h_) - touch_down_x_;
-          float smoothing = 0.7f;
-          inertia_scroll_rate_ = smoothing * inertia_scroll_rate_
-                                 + (1.0f - smoothing) * 0.2f * diff;
-        } else {
-          inertia_scroll_rate_ *= 0.98f;
-        }
-      } else {
-        inertia_scroll_rate_ *= 0.98f;
-      }
-
-      ClampThumb_(true, mouse_held_thumb_);
-      child_offset_h_ += inertia_scroll_rate_;
-
-      if (!has_momentum_
-          && (current_time_ms - last_velocity_event_time_millisecs_
-              > 1000 / 30)) {
-        inertia_scroll_rate_ = 0.0f;
-      }
-
-      // Lastly we apply smoothing so that if we're snapping to a specific
-      // place we don't go instantly there we blend between smoothed and
-      // non-smoothed depending on whats driving us (we dont want to add
-      // smoothing on top of inertial scrolling for example or it'll feel
-      // muddy)
-      float diff = child_offset_h_ - child_offset_h_smoothed_;
-      if (std::abs(diff) < 1.0f) {
-        child_offset_h_smoothed_ = child_offset_h_;
-      } else {
-        child_offset_h_smoothed_ += (1.0f - smoothing_amount_) * diff;
-      }
-      smoothing_amount_ = std::max(0.0f, smoothing_amount_ - 0.0025f);
-    }
-
-    // Only re-layout our widgets if we've moved a significant amount.
-    if (std::abs(prev_child_offset_h_smoothed - child_offset_h_smoothed_)
-        > 0.01f) {
-      MarkForUpdate();
-    }
+    UpdateScrolling_(current_time_millisecs);
+    UpdatePageLeftRightButtons_(pass->frame_def()->display_time_elapsed());
   }
 
   CheckLayout();
@@ -843,21 +915,24 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // Page left/right buttons at depth 0.9 - 1.0.
   if (explicit_bool(true) && draw_transparent) {
     // Left button.
-    if (ShouldShowPageLeftButton_()) {
-      float scale_ex{1.0f};
+    if (page_left_button_presence_ > 0.0001f) {
+      float scale_ex{0.5f + 0.5f * page_left_button_presence_};
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       float brightness;
       if (page_left_pressed_) {
-        scale_ex = 1.1f;
+        if (hovering_page_left_) {
+          scale_ex *= 1.1f;
+        }
         brightness = 2.0f;
       } else if (hovering_page_left_) {
-        scale_ex = 1.03f;
+        scale_ex *= 1.03f;
         brightness = 1.2f;
       } else {
         brightness = 1.0f;
       }
-      c.SetColor(brightness, brightness, brightness, 1.0f);
+      c.SetColor(brightness, brightness, brightness,
+                 page_left_button_presence_);
       c.SetTexture(
           g_base->assets->SysTexture(base::SysTextureID::kPageLeftRight));
 
@@ -874,21 +949,24 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
     }
     // Right button.
-    if (ShouldShowPageRightButton_()) {
-      float scale_ex{1.0f};
+    if (page_right_button_presence_ > 0.0001f) {
+      float scale_ex{0.5f + 0.5f * page_right_button_presence_};
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       float brightness;
       if (page_right_pressed_) {
-        scale_ex = 1.1f;
+        if (hovering_page_right_) {
+          scale_ex *= 1.1f;
+        }
         brightness = 2.0f;
       } else if (hovering_page_right_) {
-        scale_ex = 1.03f;
+        scale_ex *= 1.03f;
         brightness = 1.2f;
       } else {
         brightness = 1.0f;
       }
-      c.SetColor(brightness, brightness, brightness, 1.0f);
+      c.SetColor(brightness, brightness, brightness,
+                 page_right_button_presence_);
       c.SetTexture(
           g_base->assets->SysTexture(base::SysTextureID::kPageLeftRight));
       {
@@ -1030,7 +1108,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       && g_base->ui->ShouldHighlightWidgets() && highlight_
       && border_opacity_ > 0.0f) {
     float m = (0.8f
-               + std::abs(sinf(static_cast<float>(current_time_ms) * 0.006467f))
+               + std::abs(sinf(static_cast<float>(current_time_millisecs)
+                               * 0.006467f))
                      * 0.2f)
               * border_opacity_;
 

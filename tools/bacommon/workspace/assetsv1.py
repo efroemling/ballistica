@@ -85,8 +85,8 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
 
         NONE = 'none'
         TITLE = 'title'
-        INTENSE = 'intense'
-        SUBTLE = 'subtle'
+        LOUD = 'loud'
+        SOFT = 'soft'
 
     @override
     @classmethod

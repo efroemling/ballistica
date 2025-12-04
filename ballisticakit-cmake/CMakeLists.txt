@@ -688,6 +688,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/generic/utf8.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/utils.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/utils.h
+  ${BA_SRC_ROOT}/ballistica/shared/math/lerp.h
   ${BA_SRC_ROOT}/ballistica/shared/math/matrix44f.cc
   ${BA_SRC_ROOT}/ballistica/shared/math/matrix44f.h
   ${BA_SRC_ROOT}/ballistica/shared/math/point2d.h

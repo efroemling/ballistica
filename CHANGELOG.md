@@ -1,3 +1,9 @@
+### 1.7.56 (build 22651, api 9, 2025-12-03)
+- Heavily refactored scroll and h-scroll ui logic. Scrolling should now behave
+  pretty naturally across touchscreens, mice, and trackpads, including momentum
+  scrolling on Mac. CMake builds no longer have weird fake momentum. Please
+  holler if you run across any scrolling situations that feel wonky.
+
 ### 1.7.55 (build 22649, api 9, 2025-12-01)
 - The 'get-tokens' plus button now allows going back to whatever window one was
   on before, even auxiliary windows. Previously it was an auxiliary window

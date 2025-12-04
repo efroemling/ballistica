@@ -51,19 +51,23 @@ class ScrollWidget : public ContainerWidget {
   void UpdateLayout() override;
 
  private:
-  void ClampThumb_(bool velocity_clamp, bool position_clamp);
+  void ClampScrolling_(bool velocity_clamp, bool position_clamp,
+                       millisecs_t current_time_millisecs);
+  void UpdateScrolling_(millisecs_t current_time_millisecs);
 
   Object::Ref<base::AppTimer> touch_delay_timer_;
-  millisecs_t last_sub_widget_h_scroll_claim_time_{};
-  millisecs_t last_velocity_event_time_millisecs_{};
-  millisecs_t inertia_scroll_update_time_{};
+  // millisecs_t last_sub_widget_h_scroll_claim_time_{};
+  millisecs_t last_v_scroll_event_time_millisecs_{};
+  millisecs_t inertia_scroll_update_time_millisecs_{};
   millisecs_t last_touch_held_time_{};
   int touch_held_click_count_{};
   float color_red_{0.55f};
   float color_green_{0.47f};
   float color_blue_{0.67f};
-  float avg_scroll_speed_h_{};
-  float avg_scroll_speed_v_{};
+  float scroll_v_accum_{};
+  float scroll_v_accum_smoothed_{};
+  float scroll_h_accum_{};
+  float scroll_h_accum_smoothed_{};
   float center_offset_y_{};
   float touch_down_y_{};
   float touch_x_{};
@@ -98,6 +102,7 @@ class ScrollWidget : public ContainerWidget {
   float child_max_offset_{};
   float amount_visible_{};
   float inertia_scroll_rate_{};
+  bool last_scroll_was_touch_{};
   bool handling_deferred_click_{};
   bool mouse_held_page_down_{};
   bool mouse_held_page_up_{};
@@ -105,7 +110,7 @@ class ScrollWidget : public ContainerWidget {
   bool touch_is_scrolling_{};
   bool touch_down_sent_{};
   bool touch_up_sent_{};
-  bool has_momentum_{true};
+  bool has_momentum_{false};
   bool trough_dirty_{true};
   bool shadow_dirty_{true};
   bool glow_dirty_{true};
@@ -124,6 +129,7 @@ class ScrollWidget : public ContainerWidget {
   bool child_is_scrolling_{};
   bool child_disowned_scroll_{};
   bool last_mouse_move_in_bounds_{};
+  bool should_pass_h_scroll_to_children_{};
 };
 
 }  // namespace ballistica::ui_v1

@@ -22,4 +22,4 @@ types-filelock==3.2.7
 types-requests==2.32.4.20250913
 typing_extensions==4.15.0
 urllib3==2.5.0
-zuban==0.2.3
+zuban==0.3.0

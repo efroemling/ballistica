@@ -94,6 +94,7 @@ def requirements_upgrade() -> None:
             ('pyicu==2.16', 'pyicu==2.15.2'),
             ('google-auth-oauthlib==1.2.3', 'google-auth-oauthlib==1.2.2'),
             ('pylint==4.0.4', 'pylint==4.0.3'),
+            ('Sphinx==9.0.1', 'Sphinx==8.2.3'),
         ]
         for fsrc, fdst in filterlines:
             if fsrc in reqs_new:
