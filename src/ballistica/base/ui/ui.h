@@ -165,6 +165,8 @@ class UI {
   /// device, etc.)
   auto touch_mode() const { return touch_mode_; }
 
+  void SetTouchMode(bool val);
+
   /// For keeping track of whether mouse/touch input is being actively used.
   void OnClickOrTap();
   void OnInputDeviceActive(InputDevice* device);

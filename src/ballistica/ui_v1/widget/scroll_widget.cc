@@ -94,7 +94,7 @@ void ScrollWidget::ClampScrolling_(bool velocity_clamp, bool position_clamp,
                && (current_time_millisecs - last_v_scroll_event_time_millisecs_
                    > 1000 / 30))
               || should_pass_h_scroll_to_children_) {
-            inertia_scroll_rate_ *= 0.8f;
+            inertia_scroll_rate_ *= 0.5f;
           }
         }
       }
@@ -615,7 +615,8 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           // from acting on it (since we used it for scrolling)
           bool claimed2 = touch_is_scrolling_ || child_is_scrolling_;
 
-          // if a child is still scrolling, send them a scroll-mouse-up/cancel
+          // If a child is still scrolling, send them a
+          // scroll-mouse-up/cancel.
           if (child_is_scrolling_ && !child_disowned_scroll_) {
             ContainerWidget::HandleMessage(
                 base::WidgetMessage(m.type, nullptr, m.fval1, m.fval2, false));
@@ -827,14 +828,24 @@ void ScrollWidget::UpdateScrolling_(millisecs_t current_time_millisecs) {
     if (g_base->ui->touch_mode()) {
       if (touch_held_) {
         float diff = (touch_y_ - child_offset_v_) - touch_down_y_;
+
+        // Calibrate springiness here so scrolling stays as close to a
+        // cursor as possible without noise or oscillations.
+        float aggression{0.3f};
         float smoothing = 0.7f;
-        inertia_scroll_rate_ =
-            smoothing * inertia_scroll_rate_ + (1.0f - smoothing) * 0.2f * diff;
+        // float damping_scale = 0.6f;
+        inertia_scroll_rate_ = smoothing * inertia_scroll_rate_
+                               + (1.0f - smoothing) * aggression * diff;
+
+        // float fudge{1.0f};  // Calibrate to visually match.
+        // float smoothing = 0.0f;
+        // inertia_scroll_rate_ = smoothing * inertia_scroll_rate_
+        //                        + (1.0f - smoothing) * fudge * diff;
       } else {
-        inertia_scroll_rate_ *= 0.98f;
+        inertia_scroll_rate_ *= 0.985f;
       }
     } else {
-      inertia_scroll_rate_ *= 0.98f;
+      inertia_scroll_rate_ *= 0.985f;
     }
     ClampScrolling_(true, mouse_held_thumb_, current_time_millisecs);  //
 

@@ -149,8 +149,15 @@ UI::UI() {
   // Set touch-mode. In the future we'll update this dynamically depending
   // on whether touch events or mouse events come through/etc.
   touch_mode_ = !g_core->platform->IsRunningOnDesktop();
-  // touch_mode_ = true;
+
+  // Handy way to test touchscreen interaction from desktop.
   // printf("FORCING TOUCH\n");
+  // touch_mode_ = true;
+}
+
+void UI::SetTouchMode(bool val) {
+  assert(g_base->InLogicThread());
+  touch_mode_ = val;
 }
 
 void UI::SetUIScale(UIScale val) {

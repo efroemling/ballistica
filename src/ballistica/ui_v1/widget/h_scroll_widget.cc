@@ -94,11 +94,17 @@ void HScrollWidget::ClampScrolling_(bool velocity_clamp, bool position_clamp,
         inertia_scroll_rate_ += diff * stiffness;
         inertia_scroll_rate_ *= damping_scaling;
       } else {
+        // We're in the middle.
+        //
+        // Hit the brakes a moment after our last non-touch non-momentum
+        // scroll event comes through. This kills motion for regular
+        // non-momentum scroll wheels and for momentum stuff while the touch
+        // is still happening.
         if (!last_scroll_was_touch_) {
           if (!has_momentum_
               && (current_time_millisecs - last_h_scroll_event_time_millisecs_
                   > 1000 / 30)) {
-            inertia_scroll_rate_ *= 0.8f;
+            inertia_scroll_rate_ *= 0.5f;
           }
         }
       }
@@ -423,7 +429,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
           // If we moved at all, we mark it as claimed to keep sub-widgets
           // from acting on it (since we used it for scrolling).
-          bool claimed2 = touch_is_scrolling_ || m_claimed;
+          bool claimed2 = touch_is_scrolling_ || m_claimed || claimed;
 
           touch_held_ = false;
           touch_is_scrolling_ = false;
@@ -553,8 +559,10 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         // count as clicks if they don't move). Only if we're showing less
         // than everything though.
         if (g_base->ui->touch_mode() && !handling_deferred_click_
-            && amount_visible_ < 1.0f && !in_page_left_button
-            && !in_page_right_button) {
+            && amount_visible_ < 1.0f) {
+          // if (g_base->ui->touch_mode() && !handling_deferred_click_
+          //     && amount_visible_ < 1.0f && !in_page_left_button
+          //     && !in_page_right_button) {
           touch_held_ = true;
           auto click_count = static_cast<int>(m.fval3);
           touch_held_click_count_ = click_count;
@@ -771,14 +779,21 @@ void HScrollWidget::UpdateScrolling_(millisecs_t current_time_millisecs) {
     if (g_base->ui->touch_mode()) {
       if (touch_held_) {
         float diff = (touch_x_ - child_offset_h_) - touch_down_x_;
+
+        // Calibrate springiness here so scrolling stays as close to a
+        // cursor as possible without noise or oscillations.
+        float aggression{0.3f};
         float smoothing = 0.7f;
-        inertia_scroll_rate_ =
-            smoothing * inertia_scroll_rate_ + (1.0f - smoothing) * 0.2f * diff;
+        // float damping_scale = 0.6f;
+        inertia_scroll_rate_ = smoothing * inertia_scroll_rate_
+                               + (1.0f - smoothing) * aggression * diff;
+        // printf("%.3f\n", inertia_scroll_rate_);
+        // inertia_scroll_rate_ *= damping_scale;
       } else {
-        inertia_scroll_rate_ *= 0.98f;
+        inertia_scroll_rate_ *= 0.985f;
       }
     } else {
-      inertia_scroll_rate_ *= 0.98f;
+      inertia_scroll_rate_ *= 0.985f;
     }
     ClampScrolling_(true, mouse_held_thumb_, current_time_millisecs);
 

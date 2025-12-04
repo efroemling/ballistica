@@ -1,8 +1,14 @@
-### 1.7.56 (build 22651, api 9, 2025-12-03)
+### 1.7.56 (build 22652, api 9, 2025-12-03)
 - Heavily refactored scroll and h-scroll ui logic. Scrolling should now behave
   pretty naturally across touchscreens, mice, and trackpads, including momentum
   scrolling on Mac. CMake builds no longer have weird fake momentum. Please
   holler if you run across any scrolling situations that feel wonky.
+- Left/right swipes that start on page-left/right buttons in a h-scroll now
+  function for scrolling (instead of getting eaten by the buttons).
+- On Android builds, mice and trackpads now function the same as on Desktop
+  builds instead of behaving like touches. This means buttons will highlight on
+  mouse-over, scrollbars can be dragged, etc.
+  
 
 ### 1.7.55 (build 22649, api 9, 2025-12-01)
 - The 'get-tokens' plus button now allows going back to whatever window one was
