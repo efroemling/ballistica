@@ -1,3 +1,5 @@
+### 1.7.57 (build 22656, api 9, 2025-12-05)
+
 ### 1.7.56 (build 22655, api 9, 2025-12-04)
 - First new character in a while: Betty! (Thanks SoK!!!!)
 - Heavily refactored scroll and h-scroll ui logic. Scrolling should now behave
