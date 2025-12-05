@@ -5596,25 +5596,25 @@ $(BUILD_DIR)/ba_data/data/languages/%.json : ../../.efrocachemap
 $(BUILD_DIR)/ba_data/data/maps/%.json : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
-ba_data/%.tex2d.png : ../../.efrocachemap
+# ba_data/%.tex2d.png : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
-ba_data/%_+x.tex2d.png : ../../.efrocachemap
+# ba_data/%_+x.tex2d.png : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
-ba_data/%_-x.tex2d.png: ../../.efrocachemap
+# ba_data/%_-x.tex2d.png: ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
-ba_data/%_+y.tex2d.png: ../../.efrocachemap
+# ba_data/%_+y.tex2d.png: ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
-ba_data/%_-y.tex2d.png: ../../.efrocachemap
+# ba_data/%_-y.tex2d.png: ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
-ba_data/%_+z.tex2d.png: ../../.efrocachemap
+# ba_data/%_+z.tex2d.png: ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
-ba_data/%_-z.tex2d.png: ../../.efrocachemap
+# ba_data/%_-z.tex2d.png: ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
 $(BUILD_DIR)/ba_data/%_preview.png : ../../.efrocachemap

@@ -164,35 +164,38 @@ def lazy_increment_build() -> None:
 
 def get_master_asset_src_dir() -> None:
     """Print master-asset-source dir for this repo."""
-    import subprocess
+    import socket
     import os
 
     pcommand.disallow_in_batch()
+
+    hostname = socket.gethostname()
 
     master_assets_dir = '/Users/ericf/Documents/ballisticakit_master_assets'
     dummy_dir = '/__DUMMY_MASTER_SRC_DISABLED_PATH__'
 
     # Only apply this on my primary setup.
-    if os.path.exists(master_assets_dir) and os.path.exists('.git'):
+    # if os.path.exists(master_assets_dir) and os.path.exists('.git'):
+    if os.path.exists(master_assets_dir) and hostname == 'MacBook-Fro.local':
         # Ok, for now lets simply use our hard-coded master-src
         # path if we're on master in and not otherwise.  Should
         # probably make this configurable.
-        output = subprocess.check_output(
-            ['git', 'status', '--branch', '--porcelain']
-        ).decode()
+        # output = subprocess.check_output(
+        #     ['git', 'status', '--branch', '--porcelain']
+        # ).decode()
 
         # Also compare repo name to split version of itself to
         # see if we're outside of core (filtering will cause mismatch if so).
         # pylint: disable=useless-suppression
         # pylint: disable=simplifiable-condition
         # pylint: disable=condition-evals-to-constant
-        if (
-            'origin/master' in output.splitlines()[0]
-            and 'ballistica' + 'kit' == 'ballisticakit'
-        ):
-            # We seem to be in master in core repo; lets do it.
-            print(master_assets_dir)
-            return
+        # if (
+        #     'origin/main' in output.splitlines()[0]
+        #     and 'ballistica' + 'kit' == 'ballisticakit'
+        # ):
+        # We seem to be in master in core repo; lets do it.
+        print(master_assets_dir)
+        return
 
     # Still need to supply dummy path for makefile if not..
     print(dummy_dir)

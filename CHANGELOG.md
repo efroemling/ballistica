@@ -1,4 +1,4 @@
-### 1.7.56 (build 22652, api 9, 2025-12-03)
+### 1.7.56 (build 22655, api 9, 2025-12-04)
 - Heavily refactored scroll and h-scroll ui logic. Scrolling should now behave
   pretty naturally across touchscreens, mice, and trackpads, including momentum
   scrolling on Mac. CMake builds no longer have weird fake momentum. Please

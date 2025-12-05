@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 import sys
+import socket
 import subprocess
 from enum import Enum
 from pathlib import Path
@@ -250,12 +251,8 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 return False
             return True
 
-        LazyBuildContext(
+        ctx = LazyBuildContext(
             target=target,
-            # Even though this category currently doesn't run any clean
-            # commands, going to restrict to one use at a time for now
-            # in case we want to add that.
-            # buildlockname=category.value,
             srcpaths=[
                 'Makefile',
                 'tools',
@@ -273,7 +270,20 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             ],
             command=command,
             filefilter=_filefilter,
-        ).run()
+        )
+
+        # TEMP HACK - rebuild with any src-master assets change on my
+        # work machine. This should go away once we've migrated to cloud
+        # assets.
+        master_assets_dir = '/Users/ericf/Documents/ballisticakit_master_assets'
+        hostname = socket.gethostname()
+        if (
+            os.path.exists(master_assets_dir)
+            and hostname == 'MacBook-Fro.local'
+        ):
+            ctx.srcpaths.append(master_assets_dir)
+
+        ctx.run()
 
     # Dummymodule builds.
     elif category is LazyBuildCategory.DUMMYMODULES:
