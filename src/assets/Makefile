@@ -4039,6 +4039,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/ticketRolls.dds \
   $(BUILD_DIR)/ba_data/textures/tickets.dds \
   $(BUILD_DIR)/ba_data/textures/ticketsMore.dds \
+  $(BUILD_DIR)/ba_data/textures/ticketsPurple.dds \
   $(BUILD_DIR)/ba_data/textures/tipTopBGColor.dds \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.dds \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.dds \
@@ -4469,6 +4470,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/ticketRolls.pvr \
   $(BUILD_DIR)/ba_data/textures/tickets.pvr \
   $(BUILD_DIR)/ba_data/textures/ticketsMore.pvr \
+  $(BUILD_DIR)/ba_data/textures/ticketsPurple.pvr \
   $(BUILD_DIR)/ba_data/textures/tipTopBGColor.pvr \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.pvr \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.pvr \
@@ -4899,6 +4901,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/ticketRolls.ktx \
   $(BUILD_DIR)/ba_data/textures/tickets.ktx \
   $(BUILD_DIR)/ba_data/textures/ticketsMore.ktx \
+  $(BUILD_DIR)/ba_data/textures/ticketsPurple.ktx \
   $(BUILD_DIR)/ba_data/textures/tipTopBGColor.ktx \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor.ktx \
   $(BUILD_DIR)/ba_data/textures/tipTopPreview.ktx \
@@ -5328,6 +5331,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/ticketRoll_preview.png \
   $(BUILD_DIR)/ba_data/textures/ticketRolls_preview.png \
   $(BUILD_DIR)/ba_data/textures/ticketsMore_preview.png \
+  $(BUILD_DIR)/ba_data/textures/ticketsPurple_preview.png \
   $(BUILD_DIR)/ba_data/textures/tickets_preview.png \
   $(BUILD_DIR)/ba_data/textures/tipTopBGColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/tipTopLevelColor_preview.png \

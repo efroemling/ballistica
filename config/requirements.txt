@@ -21,5 +21,5 @@ types-docutils==0.22.3.20251115
 types-filelock==3.2.7
 types-requests==2.32.4.20250913
 typing_extensions==4.15.0
-urllib3==2.5.0
+urllib3==2.6.0
 zuban==0.3.0

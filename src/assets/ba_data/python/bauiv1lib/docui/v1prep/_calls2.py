@@ -484,6 +484,7 @@ def prep_display_item(
     elif (
         itemtype is ditm.ItemTypeID.TOKENS
         or itemtype is ditm.ItemTypeID.TICKETS
+        or itemtype is ditm.ItemTypeID.TICKETS_PURPLE
     ):
         if itemtype is ditm.ItemTypeID.TOKENS:
             assert isinstance(item, ditm.Tokens)
@@ -493,6 +494,11 @@ def prep_display_item(
         elif itemtype is ditm.ItemTypeID.TICKETS:
             assert isinstance(item, ditm.Tickets)
             img = 'tickets'
+            if compact:
+                text = str(item.count)
+        elif itemtype is ditm.ItemTypeID.TICKETS_PURPLE:
+            assert isinstance(item, ditm.TicketsPurple)
+            img = 'ticketsPurple'
             if compact:
                 text = str(item.count)
         else:

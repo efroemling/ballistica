@@ -23,6 +23,7 @@ class ItemTypeID(Enum):
 
     UNKNOWN = 'u'
     TICKETS = 't'
+    TICKETS_PURPLE = 'tp'
     TOKENS = 'k'
     TEST = 's'
     CHEST = 'c'
@@ -53,6 +54,8 @@ class Item(IOMultiType[ItemTypeID]):
             return Unknown
         if type_id is t.TICKETS:
             return Tickets
+        if type_id is t.TICKETS_PURPLE:
+            return TicketsPurple
         if type_id is t.TOKENS:
             return Tokens
         if type_id is t.TEST:
@@ -124,6 +127,23 @@ class Tickets(Item):
     @override
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:
         return '${C} Tickets', [('${C}', str(self.count))]
+
+
+@ioprepped
+@dataclass
+class TicketsPurple(Item):
+    """Some amount of purple tickets."""
+
+    count: Annotated[int, IOAttrs('c')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ItemTypeID:
+        return ItemTypeID.TICKETS_PURPLE
+
+    @override
+    def get_description(self) -> tuple[str, list[tuple[str, str]]]:
+        return '${C} Purple Tickets', [('${C}', str(self.count))]
 
 
 @ioprepped
