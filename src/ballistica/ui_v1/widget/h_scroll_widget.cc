@@ -169,8 +169,6 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         if (child_offset_h_ > child_offset_left
             && child_offset_h_ < child_offset_right) {
         } else {
-          // float prev_child_offset = child_offset_h_;
-
           // Do whatever offset is less of a move.
           if (std::abs(child_offset_left - child_offset_h_)
               < std::abs(child_offset_right - child_offset_h_)) {
@@ -784,11 +782,8 @@ void HScrollWidget::UpdateScrolling_(millisecs_t current_time_millisecs) {
         // cursor as possible without noise or oscillations.
         float aggression{0.3f};
         float smoothing = 0.7f;
-        // float damping_scale = 0.6f;
         inertia_scroll_rate_ = smoothing * inertia_scroll_rate_
                                + (1.0f - smoothing) * aggression * diff;
-        // printf("%.3f\n", inertia_scroll_rate_);
-        // inertia_scroll_rate_ *= damping_scale;
       } else {
         inertia_scroll_rate_ *= 0.985f;
       }
@@ -810,7 +805,10 @@ void HScrollWidget::UpdateScrolling_(millisecs_t current_time_millisecs) {
     if (std::abs(diff) < 1.0f) {
       child_offset_h_smoothed_ = child_offset_h_;
     } else {
-      child_offset_h_smoothed_ += (1.0f - smoothing_amount_) * diff;
+      // Fudge here is so we still make progress even if smoothing is
+      // constantly reset to 1.0 (as can happen with fast key repeats/etc.)
+      auto fudge{0.95f};
+      child_offset_h_smoothed_ += (1.0f - fudge * smoothing_amount_) * diff;
     }
     smoothing_amount_ = std::max(0.0f, smoothing_amount_ - 0.002f);
   }

@@ -1,4 +1,6 @@
-### 1.7.57 (build 22656, api 9, 2025-12-05)
+### 1.7.57 (build 22657, api 9, 2025-12-05)
+- Fixed an issue where holding left or right on a keyboard with fast key repeats
+  would cause weird laggy scrolling.
 
 ### 1.7.56 (build 22655, api 9, 2025-12-04)
 - First new character in a while: Betty! (Thanks SoK!!!!)
