@@ -1,4 +1,4 @@
-### 1.7.57 (build 22657, api 9, 2025-12-05)
+### 1.7.57 (build 22658, api 9, 2025-12-05)
 - Fixed an issue where holding left or right on a keyboard with fast key repeats
   would cause weird laggy scrolling.
 - Adding purple tickets, which will likely be an ultra-rare type of ticket
