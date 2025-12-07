@@ -640,7 +640,7 @@ class ButtonRow(Row):
     #: Padding on the bottom of the row's horizonally-scrollable area.
     padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 10.0
 
-    #: Extra space below the row's horizontally-scrollable area.
+    #: Extra space above the row's horizontally-scrollable area.
     spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
 
     #: Extra space below the row's horizontally-scrollable area.

@@ -646,6 +646,13 @@ def _test_page_root(
                     ],
                 ),
                 dui1.ButtonRow(
+                    spacing_top=-15,
+                    subtitle='Subtitle only!',
+                    buttons=[
+                        dui1.Button(size=(200, 120)),
+                    ],
+                ),
+                dui1.ButtonRow(
                     buttons=[
                         dui1.Button(
                             'Row-With-No-Title Test',
