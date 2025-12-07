@@ -802,6 +802,9 @@ class ChestWindow(bui.MainWindow):
                 if isinstance(item.item, ditm.Tickets):
                     _mktxt(str(item.item.count))
                     _mkicon('tickets')
+                elif isinstance(item.item, ditm.TicketsPurple):
+                    _mktxt(str(item.item.count))
+                    _mkicon('ticketsPurple')
                 elif isinstance(item.item, ditm.Tokens):
                     _mktxt(str(item.item.count))
                     _mkicon('coin')
