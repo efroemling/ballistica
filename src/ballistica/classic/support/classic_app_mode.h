@@ -232,6 +232,7 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUIInboxState(int count, bool is_max,
                            const std::string& announce_text);
   void SetRootUIGoldPass(bool enabled);
+  void SetRootUIStoreStyle(const char* val);
   void SetRootUIChests(
       const std::string& chest_0_appearance,
       const std::string& chest_1_appearance,
@@ -360,6 +361,7 @@ class ClassicAppMode : public base::AppMode {
   std::string root_ui_level_text_;
   std::string root_ui_xp_text_;
   std::string root_ui_inbox_announce_text_;
+  std::string root_ui_store_style_;
   std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};

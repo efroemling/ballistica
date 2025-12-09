@@ -1788,6 +1788,18 @@ void ClassicAppMode::SetRootUIInboxState(int count, bool is_max,
   }
 }
 
+void ClassicAppMode::SetRootUIStoreStyle(const char* val) {
+  // Store the value.
+  root_ui_store_style_ = val;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetStoreStyle(root_ui_store_style_);
+    }
+  }
+}
+
 void ClassicAppMode::SetRootUIGoldPass(bool enabled) {
   assert(g_base->InLogicThread());
   if (enabled == root_ui_gold_pass_) {

@@ -50,6 +50,7 @@ class RootWidget : public ContainerWidget {
   void SetLevelText(const std::string& val);
   void SetXPText(const std::string& val);
   void SetInboxState(int val, bool is_max, const std::string& announce_text);
+  void SetStoreStyle(const std::string& val);
   void SetChests(const std::string& chest_0_appearance,
                  const std::string& chest_1_appearance,
                  const std::string& chest_2_appearance,
@@ -149,6 +150,7 @@ class RootWidget : public ContainerWidget {
   std::string league_type_value_;
   std::string inbox_announce_text_str_;
   std::string open_me_text_;
+  std::string store_style_;
   std::list<Button_> buttons_;
   std::list<Text_> texts_;
   std::list<Image_> images_;
@@ -179,6 +181,7 @@ class RootWidget : public ContainerWidget {
   Image_* tickets_meter_icon_{};
   Image_* tokens_meter_icon_{};
   Image_* inbox_count_backing_{};
+  Image_* store_decoration_{};
   Text_* squad_size_text_{};
   Text_* account_name_text_{};
   Text_* tickets_meter_text_{};
@@ -204,9 +207,6 @@ class RootWidget : public ContainerWidget {
   float base_scale_{1.0f};
   float bottom_left_height_{};
   float league_rank_anim_val_{};
-  // float trophy_meter_mult_r_{1.0f};
-  // float trophy_meter_mult_g_{1.0f};
-  // float trophy_meter_mult_b_{1.0f};
   int league_rank_vis_value_{-1};
   int league_rank_value_{-1};
   int league_rank_anim_start_val_{};

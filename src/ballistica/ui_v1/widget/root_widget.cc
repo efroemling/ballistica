@@ -21,6 +21,7 @@
 #include "ballistica/base/support/context.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
@@ -1111,6 +1112,20 @@ void RootWidget::Setup() {
     store_button_ = AddButton_(b);
     bottom_right_buttons_.push_back(store_button_);
   }
+  // Store decoration.
+  {
+    ImageDef_ imgd;
+    imgd.x = -3.0f;
+    imgd.y = 50.0f;
+    imgd.width = 50.0f;
+    imgd.height = 50.0f;
+    imgd.img = "white";
+    // imgd.depth_min = 0.3f;
+
+    imgd.button = store_button_;
+    store_decoration_ = AddImage_(imgd);
+    store_decoration_->visible = false;
+  }
 
   UpdateForFocusedWindow_(nullptr);
 }
@@ -1845,6 +1860,19 @@ void RootWidget::StepChildWidgets_(seconds_t dt) {
       BA_LOG_ONCE(LogName::kBaUI, LogLevel::kError,
                   "classic-store button missing when updating open states");
     }
+    // Store-decoration.
+    if (auto* img = store_decoration_) {
+      if (counts.find("classicstore") != counts.end()) {
+        img->widget->set_color(0.2f, 0.8f, 0.2f);
+        img->widget->set_flatness(0.7f);
+      } else {
+        img->widget->set_color(1.0f, 1.0f, 1.0f);
+        img->widget->set_flatness(0.0f);
+      }
+    } else {
+      BA_LOG_ONCE(LogName::kBaUI, LogLevel::kError,
+                  "classic-store button missing when updating open states");
+    }
 
     // Inventory
     if (auto* btn = inventory_button_) {
@@ -2519,6 +2547,29 @@ void RootWidget::SetLeagueRankValues(const std::string& league_type,
   UpdateLeagueRankDisplay_();
 }
 
+void RootWidget::SetStoreStyle(const std::string& val) {
+  if (store_style_ == val) {
+    return;  // Unchanged.
+  }
+
+  child_widgets_dirty_ = true;
+
+  assert(store_decoration_);
+  if (val == "s") {
+    base::Assets::AssetListLock lock;
+    store_decoration_->widget->SetTexture(
+        g_base->assets->GetTexture("storeCharacterXmas").get());
+    store_decoration_->visible = true;
+  } else {
+    // Normal style.
+    if (val != "n" && val != "") {
+      BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                  "Unsupported root-widget store-style: '" + val + "'");
+    }
+    store_decoration_->visible = false;
+  }
+}
+
 void RootWidget::SetInboxState(int val, bool is_max,
                                const std::string& announce_text) {
   // Store latest values and then (possibly) apply them to our display.
@@ -2616,6 +2667,10 @@ void RootWidget::SetHaveLiveValues(bool have_live_values) {
   assert(store_button_);
   store_button_->widget->set_opacity(oval2);
 
+  assert(store_decoration_);
+  store_decoration_->widget->set_opacity(oval2);
+
+  // UPDATE - inventory is always available in classic.
   // assert(inventory_button_);
   // inventory_button_->widget->set_opacity(oval2);
 

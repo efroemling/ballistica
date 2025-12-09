@@ -44,6 +44,12 @@ class ClassicAccountLiveData:
 
         ASK_FOR_REVIEW = 'r'
 
+    class StoreStyle(Enum):
+        """Special looks for the store."""
+
+        NORMAL = 'n'
+        SANTA = 's'
+
     tickets: Annotated[int, IOAttrs('ti')]
 
     tokens: Annotated[int, IOAttrs('to')]
@@ -71,3 +77,7 @@ class ClassicAccountLiveData:
     purchases_state: Annotated[str | None, IOAttrs('p')]
 
     flags: Annotated[set[Flag], IOAttrs('f', soft_default_factory=set)]
+
+    store_style: Annotated[
+        StoreStyle, IOAttrs('s', enum_fallback=StoreStyle.NORMAL)
+    ]

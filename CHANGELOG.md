@@ -1,7 +1,10 @@
-### 1.7.58 (build 22662, api 9, 2025-12-07)
+### 1.7.58 (build 22664, api 9, 2025-12-08)
 - Split up some store categories into multiple smaller subcategories to keep row
   sizes down.
 - Made a lovely clay plus icon for things like the new-profile button.
+- Finally ported store decorations (Santa or other characters poking up behind
+  the store button) to the toolbar store button. They've been missing in action
+  since before the toolbar revamp a while back.
 
 ### 1.7.57 (build 22660, api 9, 2025-12-06)
 - Fixed an issue where holding left or right on a keyboard with fast key repeats

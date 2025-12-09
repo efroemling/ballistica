@@ -470,6 +470,7 @@ class ClassicAppMode(AppMode):
                 chest_1_ad_allow_time=-1.0,
                 chest_2_ad_allow_time=-1.0,
                 chest_3_ad_allow_time=-1.0,
+                store_style='',
             )
             self._have_account_values = False
             self._update_ui_live_state()
@@ -665,6 +666,7 @@ class ClassicAppMode(AppMode):
                 if chest3 is None or chest3.ad_allow_time is None
                 else chest3.ad_allow_time.timestamp()
             ),
+            store_style=val.store_style.value,
         )
 
         # Note that we have values and updated faded state accordingly.
