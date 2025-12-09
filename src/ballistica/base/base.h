@@ -497,6 +497,7 @@ enum class SysTextureID : uint8_t {
   kCircleSoft,
   kButtonSquareWide,
   kPageLeftRight,
+  kFontExtras5,
 };
 
 enum class SysCubeMapTextureID : uint8_t {

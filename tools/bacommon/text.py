@@ -115,3 +115,4 @@ class SpecialChar(Enum):
     FLAG_CHILE = '\ue061'
     MIKIROG = '\ue062'
     V2_LOGO = '\ue063'
+    SANTA_HAT = '\ue064'

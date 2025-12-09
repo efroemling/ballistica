@@ -30,12 +30,12 @@ class TextGraphics::TextSpanBoundsCacheEntry : public Object {
 };
 
 TextGraphics::TextGraphics() {
-  // Init glyph values for our custom font pages
-  // (just a 5x5 array currently).
-  for (int page = 0; page < 4; page++) {
-    for (int x = 0; x < 5; x++) {
-      for (int y = 0; y < 5; y++) {
-        int index = 25 * page + y * 5 + x;
+  // Init glyph values for our custom font pages.
+  for (int page = 0; page < kFontExtrasPages; page++) {
+    for (int x = 0; x < kFontExtrasColumns; x++) {
+      for (int y = 0; y < kFontExtrasRows; y++) {
+        int index = kFontExtrasColumns * kFontExtrasRows * page
+                    + y * kFontExtrasColumns + x;
         Glyph& g(glyphs_extras_[index]);
 
         float extra_advance = 0.0f;
@@ -72,14 +72,17 @@ TextGraphics::TextGraphics() {
           g.y_size *= 0.55f;
         }
 
-        // Same with the logo and all the icons on sheets 3 and 4.
-        if (index == 30 || (index >= 50 && index < 99)) {
+        // Same with the logo and most icons on sheets 3, 4, and 5.
+        if (index == 30 || (index >= 50 && index < 99)
+            || (index >= 100 && index < 125)) {
           // A few are *extra* big
           if (index == 67 || index == 65 || index == 70 || index == 72
               || index == 73 || index == 75 || index == 76 || index == 78
-              || index == 79) {
+              || index == 79 || index == 100) {
             g.pen_offset_y += 0.31f;
-            if (index == 70) g.pen_offset_y -= 0.02f;
+            if (index == 70) {
+              g.pen_offset_y -= 0.02f;
+            }
             extra_advance += 0.04f;
             g.x_size *= 0.75f;
             g.y_size *= 0.75f;
@@ -894,6 +897,11 @@ void TextGraphics::GetFontPageCharRange(int page, uint32_t* first_char,
       (*last_char) = (*first_char) + 24;
       break;
     }
+    case static_cast<int>(FontPage::kExtras5): {
+      (*first_char) = 0xE000 + 100;
+      (*last_char) = (*first_char) + 24;
+      break;
+    }
     default: {
       assert(page < BA_GLYPH_PAGE_COUNT);
       (*first_char) = g_glyph_page_start_index_map[page];
@@ -940,6 +948,10 @@ void TextGraphics::GetFontPagesForText(const std::string& text,
         // Special value denoting our custom font page.
         page = static_cast<int>(FontPage::kExtras4);
         covered = true;
+      } else if (val < 0xE000 + 125) {
+        // Special value denoting our custom font page.
+        page = static_cast<int>(FontPage::kExtras5);
+        covered = true;
       }
     } else if (val < kGlyphCount) {
       page = g_glyph_map[val];
@@ -979,7 +991,9 @@ auto TextGraphics::HaveBigChars(const std::string& text) -> bool {
 }
 
 inline auto IsSpecialChar(uint32_t val) -> bool {
-  return (val >= 0xE000 && val < (0xE000 + 100));
+  return (val >= 0xE000
+          && val < (0xE000
+                    + kFontExtrasRows * kFontExtrasColumns * kFontExtrasPages));
 }
 
 auto TextGraphics::HaveChars(const std::string& text) -> bool {

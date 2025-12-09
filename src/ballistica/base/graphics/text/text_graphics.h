@@ -19,6 +19,10 @@ namespace ballistica::base {
 const int kTextMaxUnicodeVal = 999999;
 const float kTextRowHeight = 32.0f;
 
+constexpr int kFontExtrasRows{5};
+constexpr int kFontExtrasColumns{5};
+constexpr int kFontExtrasPages{5};
+
 // Encapsulates text-display functionality used by the logic thread.
 class TextGraphics {
  public:
@@ -29,7 +33,8 @@ class TextGraphics {
     kExtras1 = 9990,
     kExtras2 = 9991,
     kExtras3 = 9992,
-    kExtras4 = 9993
+    kExtras4 = 9993,
+    kExtras5 = 9994
   };
 
   struct Glyph {
@@ -100,7 +105,8 @@ class TextGraphics {
   // List of entries for sorting by last-use-time
   std::list<Object::Ref<TextSpanBoundsCacheEntry> > text_span_bounds_cache_;
   std::mutex glyph_load_mutex_;
-  Glyph glyphs_extras_[100]{};
+  Glyph
+      glyphs_extras_[kFontExtrasRows * kFontExtrasColumns * kFontExtrasPages]{};
   Glyph glyphs_big_[64]{};
 };
 

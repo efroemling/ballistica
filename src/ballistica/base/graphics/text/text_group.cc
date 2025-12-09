@@ -89,7 +89,8 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
       entry->can_color =
           ((*i != static_cast<int>(TextGraphics::FontPage::kExtras2))
            && (*i != static_cast<int>(TextGraphics::FontPage::kExtras3))
-           && (*i != static_cast<int>(TextGraphics::FontPage::kExtras4)));
+           && (*i != static_cast<int>(TextGraphics::FontPage::kExtras4))
+           && (*i != static_cast<int>(TextGraphics::FontPage::kExtras5)));
 
       // For the few we can't color, we don't want to be able to
       // flatten them either.
@@ -164,6 +165,9 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras4):
           entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras4);
+          break;
+        case static_cast<int>(TextGraphics::FontPage::kExtras5):
+          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras5);
           break;
         default:
           throw Exception();

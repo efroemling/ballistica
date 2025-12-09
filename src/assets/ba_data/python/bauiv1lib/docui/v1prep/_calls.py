@@ -57,9 +57,12 @@ def prep_page(
                         ).as_json(),
                         label_color=(1, 1, 1, 0.3),
                         label_is_lstr=True,
-                        size=(200, 100),
+                        size=(220, 100),
+                        label_scale=0.6,
                         texture='buttonSquareWide',
-                        color=(1, 1, 1, 0.1),
+                        padding_top=-8,
+                        padding_bottom=-10,
+                        color=(0.2, 0.2, 0.2, 0.15),
                         action=dui1.Local(default_sound=False),
                     )
                 )

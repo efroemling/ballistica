@@ -3807,6 +3807,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/fontExtras2.dds \
   $(BUILD_DIR)/ba_data/textures/fontExtras3.dds \
   $(BUILD_DIR)/ba_data/textures/fontExtras4.dds \
+  $(BUILD_DIR)/ba_data/textures/fontExtras5.dds \
   $(BUILD_DIR)/ba_data/textures/fontSmall0.dds \
   $(BUILD_DIR)/ba_data/textures/fontSmall1.dds \
   $(BUILD_DIR)/ba_data/textures/fontSmall2.dds \
@@ -4239,6 +4240,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/fontExtras2.pvr \
   $(BUILD_DIR)/ba_data/textures/fontExtras3.pvr \
   $(BUILD_DIR)/ba_data/textures/fontExtras4.pvr \
+  $(BUILD_DIR)/ba_data/textures/fontExtras5.pvr \
   $(BUILD_DIR)/ba_data/textures/fontSmall0.pvr \
   $(BUILD_DIR)/ba_data/textures/fontSmall1.pvr \
   $(BUILD_DIR)/ba_data/textures/fontSmall2.pvr \
@@ -4671,6 +4673,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/fontExtras2.ktx \
   $(BUILD_DIR)/ba_data/textures/fontExtras3.ktx \
   $(BUILD_DIR)/ba_data/textures/fontExtras4.ktx \
+  $(BUILD_DIR)/ba_data/textures/fontExtras5.ktx \
   $(BUILD_DIR)/ba_data/textures/fontSmall0.ktx \
   $(BUILD_DIR)/ba_data/textures/fontSmall1.ktx \
   $(BUILD_DIR)/ba_data/textures/fontSmall2.ktx \
@@ -5102,6 +5105,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/fontExtras2_preview.png \
   $(BUILD_DIR)/ba_data/textures/fontExtras3_preview.png \
   $(BUILD_DIR)/ba_data/textures/fontExtras4_preview.png \
+  $(BUILD_DIR)/ba_data/textures/fontExtras5_preview.png \
   $(BUILD_DIR)/ba_data/textures/fontExtras_preview.png \
   $(BUILD_DIR)/ba_data/textures/fontSmall0_preview.png \
   $(BUILD_DIR)/ba_data/textures/fontSmall1_preview.png \

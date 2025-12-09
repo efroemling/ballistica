@@ -1,4 +1,4 @@
-### 1.7.58 (build 22664, api 9, 2025-12-08)
+### 1.7.58 (build 22667, api 9, 2025-12-08)
 - Split up some store categories into multiple smaller subcategories to keep row
   sizes down.
 - Made a lovely clay plus icon for things like the new-profile button.

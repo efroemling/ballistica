@@ -292,6 +292,9 @@ class StoreSubsystem:
                 'icons.explodinary': {
                     'icon': babase.charstr(babase.SpecialChar.EXPLODINARY_LOGO)
                 },
+                'icons.santa_hat': {
+                    'icon': babase.charstr(babase.SpecialChar.SANTA_HAT)
+                },
             }
         return babase.app.classic.store_items
 
