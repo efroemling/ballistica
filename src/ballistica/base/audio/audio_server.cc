@@ -452,9 +452,9 @@ void AudioServer::Start_() {
               " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
         openalsoft_android_log_.clear();
       }
-      FatalError(
-          "Unable to init audio. Do you have speakers/headphones/etc. "
-          "connected?");
+      // FatalError(
+      //     "Unable to init audio. Do you have speakers/headphones/etc. "
+      //     "connected?");
     }
     BA_PRECONDITION_FATAL(impl_->alc_context);
     BA_PRECONDITION_FATAL(alcMakeContextCurrent(impl_->alc_context));
