@@ -34,6 +34,22 @@ if TYPE_CHECKING:
     from bauiv1lib.docui import v1prep
 
 
+class _WinState(Enum):
+    """Per-window state."""
+
+    FETCHING_FRESH_REQUEST = 0
+    REDISPLAYING_OLD_STATE = 1
+    REFRESHING = 2
+    ERRORED = 3
+    IDLE = 4
+
+
+@dataclass
+class _WinData:
+    state: _WinState
+    refresh_timer: bui.AppTimer | None = None
+
+
 class DocUIController:
     """Manages interactions between DocUI clients and servers.
 
@@ -352,7 +368,7 @@ class DocUIController:
             uiopenstateid=uiopenstateid,
             suppress_win_extra_type_warning=suppress_win_extra_type_warning,
         )
-        self._set_win_state(win, self._WinState.FETCHING_FRESH_REQUEST)
+        self._set_win_data(win, _WinData(_WinState.FETCHING_FRESH_REQUEST))
 
         # Lock its ui and kick off a bg task to populate it.
         win.lock_ui()
@@ -398,6 +414,7 @@ class DocUIController:
         win: DocUIWindow,
         *,
         last_response: DocUIResponse | None,
+        has_had_response: bool,
     ) -> DocUIWindow:
         """Restore a window from previous state.
 
@@ -431,9 +448,9 @@ class DocUIController:
 
         # We're either errored or redisplaying an old state.
         if explicit_error is None:
-            self._set_win_state(win, self._WinState.REDISPLAYING_OLD_STATE)
+            self._set_win_data(win, _WinData(_WinState.REDISPLAYING_OLD_STATE))
         else:
-            self._set_win_state(win, self._WinState.ERRORED)
+            self._set_win_data(win, _WinData(_WinState.ERRORED))
 
         # Lock the ui and kick off this update.
         win.lock_ui()
@@ -446,10 +463,9 @@ class DocUIController:
                 scroll_width=win.scroll_width,
                 scroll_height=win.scroll_height,
                 idprefix=win.main_window_id_prefix,
-                # If we're restoring an old response, snap it in
-                # immediately. If we're doing a fresh fetch, allow a
-                # transition to hide delays.
-                immediate=last_response is not None,
+                # If this window has had a response already, snap things
+                # in immediately with no transitions.
+                immediate=has_had_response,
                 explicit_error=explicit_error,
                 explicit_response=explicit_response,
             )
@@ -476,12 +492,14 @@ class DocUIController:
         if requesttype is DocUIRequestTypeID.V1:
             assert isinstance(win.request, dui1.Request)
 
-            self._set_win_state(
+            self._set_win_data(
                 win,
                 (
-                    self._WinState.REFRESHING
-                    if is_refresh
-                    else self._WinState.FETCHING_FRESH_REQUEST
+                    _WinData(
+                        _WinState.REFRESHING
+                        if is_refresh
+                        else _WinState.FETCHING_FRESH_REQUEST
+                    )
                 ),
             )
 
@@ -504,7 +522,7 @@ class DocUIController:
             # Got a request type we don't know. Show a 'need a newer
             # build' error.
 
-            self._set_win_state(win, self._WinState.ERRORED)
+            self._set_win_data(win, _WinData(_WinState.ERRORED))
 
             # Lock the ui and kick off this update.
             win.lock_ui(origin_widget)
@@ -539,9 +557,12 @@ class DocUIController:
 
         assert bui.in_logic_thread()
 
-        # If locked, just beep.
+        # If locked, been and tell them to try again.
         if window.locked:
             bui.getsound('error').play()
+            bui.screenmessage(
+                bui.Lstr(resource='pageRefreshingTryAgainText'), color=(1, 0, 0)
+            )
             return
 
         widget: bui.Widget | None
@@ -558,9 +579,10 @@ class DocUIController:
         else:
             widget = None
 
-        # Buttons with no actions assigned.
+        # Play error beeps on buttons with no actions assigned to let
+        # the user know nothing is supposed to happen.
         if action is None:
-            bui.getsound('click01').play()
+            bui.getsound('error').play()
             return
 
         action_type = action.get_type_id()
@@ -695,22 +717,13 @@ class DocUIController:
                     local_action,
                 )
 
-    class _WinState(Enum):
-        """Per-window state."""
-
-        FETCHING_FRESH_REQUEST = 0
-        REDISPLAYING_OLD_STATE = 1
-        REFRESHING = 2
-        ERRORED = 3
-        IDLE = 4
-
-    def _get_win_state(self, window: DocUIWindow) -> _WinState:
-        val = getattr(window, '_cstate')
-        assert isinstance(val, self._WinState)
+    def _get_win_data(self, window: DocUIWindow) -> _WinData:
+        val = getattr(window, '_wcdata')
+        assert isinstance(val, _WinData)
         return val
 
-    def _set_win_state(self, window: DocUIWindow, state: _WinState) -> None:
-        setattr(window, '_cstate', state)
+    def _set_win_data(self, window: DocUIWindow, data: _WinData) -> None:
+        setattr(window, '_wcdata', data)
 
     def _process_request_in_bg(
         self,
@@ -848,12 +861,12 @@ class DocUIController:
         # Set the UI.
         win.instantiate_ui(pageprep)
 
-        state = self._get_win_state(win)
+        state = self._get_win_data(win).state
 
         # Run client-effects and local-actions ONLY after fresh requests
         # (don't want sounds and other actions firing when we navigate
         # back or resize a window).
-        if state is self._WinState.FETCHING_FRESH_REQUEST:
+        if state is _WinState.FETCHING_FRESH_REQUEST:
             if response.client_effects and bui.app.classic is not None:
                 bui.app.classic.run_bs_client_effects(response.client_effects)
             if response.local_action is not None:
@@ -877,7 +890,7 @@ class DocUIController:
                     )
 
         # Possibly take further action depending on state.
-        if state is self._WinState.REDISPLAYING_OLD_STATE:
+        if state is _WinState.REDISPLAYING_OLD_STATE:
             # Ok; we're done showing old state. For POST this is as far
             # as we go (don't want to repeat POST effects), but for GET
             # we can now kick off a refresh to swap in the latest
@@ -893,11 +906,11 @@ class DocUIController:
             else:
                 assert_never(win.request.method)
 
-        elif state is self._WinState.ERRORED or state is self._WinState.IDLE:
+        elif state is _WinState.ERRORED or state is _WinState.IDLE:
             pass
         elif (
-            state is self._WinState.FETCHING_FRESH_REQUEST
-            or state is self._WinState.REFRESHING
+            state is _WinState.FETCHING_FRESH_REQUEST
+            or state is _WinState.REFRESHING
         ):
             self._set_idle_and_schedule_timed_action(response, weakwin)
         else:
@@ -910,15 +923,16 @@ class DocUIController:
 
         win = weakwin()
         assert win is not None
-        assert self._get_win_state(win) is not self._WinState.IDLE
+        assert self._get_win_data(win).state is not _WinState.IDLE
         assert isinstance(response, dui1.Response)
 
-        self._set_win_state(win, self._WinState.IDLE)
+        refresh_timer: bui.AppTimer | None = None
+
         if response.timed_action is not None:
 
             # Limit delay to .25 seconds or more to prevent excessive
             # churn. Can revisit if there is a strong use case.
-            bui.apptimer(
+            refresh_timer = bui.AppTimer(
                 max(0.250, response.timed_action_delay),
                 bui.WeakCallStrict(
                     self._run_timed_action,
@@ -926,6 +940,7 @@ class DocUIController:
                     response.timed_action,
                 ),
             )
+        self._set_win_data(win, _WinData(_WinState.IDLE, refresh_timer))
 
     def _run_timed_action(
         self,
@@ -937,8 +952,8 @@ class DocUIController:
         if win is None:
             return
 
-        state = self._get_win_state(win)
-        if state is not self._WinState.IDLE:
+        state = self._get_win_data(win).state
+        if state is not _WinState.IDLE:
             bui.uilog.warning(
                 'win has non-idle state in _run_timed_action; not expected'
             )

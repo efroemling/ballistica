@@ -1,9 +1,15 @@
-### 1.7.59 (build 22671, api 9, 2025-12-10)
+### 1.7.59 (build 22675, api 9, 2025-12-11)
 - Added a 'League President' button in the league-rank window. The back-end is
   still under construction, but it'll soon be possible to bid tickets to become
   president of your current league. It is a totally meaningless role but I'm
   hoping it'll be a fun way to burn some unused tickets for folks who have
   unlocked everything in the store.
+- DocUI buttons with no actions assigned now make error beep noises instead of
+  click noises. Hopefully this helps communicate that they don't actually do
+  anything. Currently static content in DocUI has to be built out of selectable
+  buttons to facilitate scrolling with controller/keyboard arrow keys (by
+  selecting neighboring buttons). Perhaps we can come up with an alternative in
+  the future.
 
 ### 1.7.58 (build 22669, api 9, 2025-12-09)
 - Split up some store categories into multiple smaller subcategories to keep row

@@ -34,6 +34,7 @@ class DocUIWindow(bui.MainWindow):
         restored: bool = False,
         uiopenstateid: str | None = None,
         suppress_win_extra_type_warning: bool = False,
+        has_had_response: bool = False,
     ):
         # pylint: disable=too-many-statements
         ui = bui.app.ui_v1
@@ -58,6 +59,7 @@ class DocUIWindow(bui.MainWindow):
         self._last_response: DocUIResponse | None = None
         self._last_response_success: bool = False
         self._last_response_shared_state_id: str | None = None
+        self._has_had_response: bool = has_had_response
 
         # We want to display differently whether we're an auxiliary
         # window or not, but unfortunately that value is not yet
@@ -385,6 +387,7 @@ class DocUIWindow(bui.MainWindow):
         assert not self._locked
         self._last_response = response
         self._last_response_success = success
+        self._has_had_response = True
 
         # Grab any custom shared-state-id included in this response.
         responsetypeid = response.get_type_id()
@@ -485,6 +488,7 @@ class DocUIWindow(bui.MainWindow):
         controller = self.controller
         request = self._request
         last_response = self._last_response
+        has_had_response = self._has_had_response
         uiopenstateid = (
             None if self._uiopenstate is None else self._uiopenstate.stateid
         )
@@ -504,8 +508,10 @@ class DocUIWindow(bui.MainWindow):
                             suppress_win_extra_type_warning
                         ),
                         restored=True,
+                        has_had_response=has_had_response,
                     ),
                     last_response=last_response,
+                    has_had_response=has_had_response,
                 )
             ),
             uiopenstate=self._uiopenstate,
