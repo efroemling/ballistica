@@ -309,6 +309,19 @@ class CloudSubsystem(babase.AppSubsystem):
         ],
     ) -> None: ...
 
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.bs.GetClassicLeaguePresidentButtonInfoMessage,
+        on_response: Callable[
+            [
+                bacommon.bs.GetClassicLeaguePresidentButtonInfoResponse
+                | Exception
+            ],
+            None,
+        ],
+    ) -> None: ...
+
     def send_message_cb(
         self,
         msg: Message,

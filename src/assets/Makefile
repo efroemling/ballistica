@@ -389,6 +389,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/keyboard/englishkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/kiosk.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/league/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/league/presidency.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/league/rankwindow.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/mainmenu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/party.py \

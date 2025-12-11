@@ -497,7 +497,7 @@ def prep_display_item(
             if compact:
                 text = str(item.count)
         elif itemtype is ditm.ItemTypeID.TICKETS_PURPLE:
-            assert isinstance(item, ditm.TicketsPurple)
+            assert isinstance(item, ditm.PurpleTickets)
             img = 'ticketsPurple'
             if compact:
                 text = str(item.count)

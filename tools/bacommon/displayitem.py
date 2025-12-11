@@ -55,7 +55,7 @@ class Item(IOMultiType[ItemTypeID]):
         if type_id is t.TICKETS:
             return Tickets
         if type_id is t.TICKETS_PURPLE:
-            return TicketsPurple
+            return PurpleTickets
         if type_id is t.TOKENS:
             return Tokens
         if type_id is t.TEST:
@@ -131,7 +131,7 @@ class Tickets(Item):
 
 @ioprepped
 @dataclass
-class TicketsPurple(Item):
+class PurpleTickets(Item):
     """Some amount of purple tickets."""
 
     count: Annotated[int, IOAttrs('c')]

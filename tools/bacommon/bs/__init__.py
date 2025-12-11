@@ -22,6 +22,8 @@ from bacommon.bs._chest import (
     ClassicChestDisplayItem,
 )
 from bacommon.bs._msg import (
+    GetClassicLeaguePresidentButtonInfoMessage,
+    GetClassicLeaguePresidentButtonInfoResponse,
     ChestInfoMessage,
     ChestInfoResponse,
     GetClassicPurchasesMessage,
@@ -47,6 +49,8 @@ __all__ = [
     'ClassicAccountLiveData',
     'ClassicChestAppearance',
     'ClassicChestDisplayItem',
+    'GetClassicLeaguePresidentButtonInfoMessage',
+    'GetClassicLeaguePresidentButtonInfoResponse',
     'GetClassicPurchasesMessage',
     'GetClassicPurchasesResponse',
     'GlobalProfileCheckMessage',

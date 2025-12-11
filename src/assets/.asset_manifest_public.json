@@ -260,6 +260,7 @@
  "ba_data/python/bauiv1lib/keyboard/englishkeyboard.py",
  "ba_data/python/bauiv1lib/kiosk.py",
  "ba_data/python/bauiv1lib/league/__init__.py",
+ "ba_data/python/bauiv1lib/league/presidency.py",
  "ba_data/python/bauiv1lib/league/rankwindow.py",
  "ba_data/python/bauiv1lib/mainmenu.py",
  "ba_data/python/bauiv1lib/party.py",

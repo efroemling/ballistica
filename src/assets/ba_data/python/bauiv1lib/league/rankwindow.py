@@ -9,6 +9,7 @@ import copy
 import logging
 from typing import TYPE_CHECKING, override
 
+import bacommon.bs
 import bauiv1 as bui
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.popup import PopupMenu
@@ -222,6 +223,29 @@ class LeagueRankWindow(bui.MainWindow):
         )
         self._update(show=info is None)
 
+    def _on_p_button_info_response(
+        self,
+        response: (
+            bacommon.bs.GetClassicLeaguePresidentButtonInfoResponse | Exception
+        ),
+    ) -> None:
+
+        # If our window has died, no-op.
+        if not self._root_widget:
+            return
+
+        if isinstance(response, Exception) or response.name is None:
+            bui.textwidget(
+                edit=self._president_name, color=(0.6, 0.6, 1, 0.2), text='-'
+            )
+            return
+
+        bui.textwidget(
+            edit=self._president_name,
+            color=(0.6, 0.6, 1, 0.9),
+            text=response.name,
+        )
+
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
@@ -387,6 +411,18 @@ class LeagueRankWindow(bui.MainWindow):
                     self._on_power_ranking_query_response
                 ),
             )
+            # Also kick off a query to v2 for latest league-president
+            # info.
+            if plus.accounts.primary is not None:
+                with plus.accounts.primary:
+                    plus.cloud.send_message_cb(
+                        bacommon.bs.GetClassicLeaguePresidentButtonInfoMessage(
+                            season=self._requested_season
+                        ),
+                        on_response=bui.WeakCallPartial(
+                            self._on_p_button_info_response
+                        ),
+                    )
 
     def _refresh(self) -> None:
         # pylint: disable=too-many-statements
@@ -417,7 +453,7 @@ class LeagueRankWindow(bui.MainWindow):
         v2 = v - 60
         worth_color = (0.6, 0.6, 0.65)
         tally_color = (0.5, 0.6, 0.8)
-        spc = 43
+        spc = 23
 
         h_offs_tally = 150
         tally_maxwidth = 120
@@ -607,6 +643,64 @@ class LeagueRankWindow(bui.MainWindow):
             maxwidth=tally_maxwidth,
         )
 
+        self._president_button = bui.buttonwidget(
+            parent=w_parent,
+            id=f'{self.main_window_id_prefix}|president',
+            label='',
+            position=(self._xoffs + h2 - 60, v2 - 100),
+            color=(0.7, 0.55, 0.9),
+            texture=bui.gettexture('buttonSquareWide'),
+            opacity=0.3,
+            size=(200, 80),
+            autoselect=True,
+            on_activate_call=bui.WeakCallStrict(self._on_president_press),
+        )
+        self._president_label = bui.textwidget(
+            parent=w_parent,
+            text=bui.Lstr(resource='league.leaguePresidentText'),
+            flatness=1.0,
+            shadow=0.0,
+            color=(0.6, 0.6, 1, 0.7),
+            draw_controller=self._president_button,
+            scale=0.5,
+            h_align='center',
+            v_align='center',
+            maxwidth=140,
+            position=(self._xoffs + h2 - 60 + 100, v2 - 100 + 59),
+            size=(0, 0),
+        )
+        self._president_name = bui.textwidget(
+            parent=w_parent,
+            text='-',
+            draw_controller=self._president_button,
+            color=(0.6, 0.6, 1, 0.2),
+            flatness=1.0,
+            shadow=0.0,
+            h_align='center',
+            v_align='center',
+            maxwidth=120,
+            position=(self._xoffs + h2 - 60 + 100, v2 - 100 + 34),
+            size=(0, 0),
+        )
+        self._president_star1 = bui.imagewidget(
+            parent=w_parent,
+            draw_controller=self._president_button,
+            texture=bui.gettexture('star'),
+            color=(0.7, 0.55, 0.9),
+            opacity=0.2,
+            position=(self._xoffs + h2 - 60 + 5, v2 - 100 + 17),
+            size=(32, 32),
+        )
+        self._president_star1 = bui.imagewidget(
+            parent=w_parent,
+            draw_controller=self._president_button,
+            texture=bui.gettexture('star'),
+            color=(0.7, 0.55, 0.9),
+            opacity=0.2,
+            position=(self._xoffs + h2 - 60 + 200 - 5 - 32, v2 - 100 + 17),
+            size=(32, 32),
+        )
+
         self._season_show_text = bui.textwidget(
             parent=w_parent,
             position=(self._xoffs + 390 - 15, v - 20),
@@ -757,6 +851,43 @@ class LeagueRankWindow(bui.MainWindow):
             size=(230, 60),
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._on_more_press),
+        )
+
+    def _on_president_press(self) -> None:
+        import bacommon.docui.v1 as dui1
+
+        from bauiv1lib.league.presidency import LeaguePresidencyUIController
+        from bauiv1lib.connectivity import wait_for_connectivity
+
+        # No-op if we're not in control.
+        if not self.main_window_has_control():
+            return
+
+        plus = bui.app.plus
+        assert plus is not None
+
+        # We should be signed in at this point, but let's be sure.
+        if plus.accounts.primary is None:
+            bui.screenmessage(
+                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+            )
+            bui.getsound('error').play()
+            return
+
+        # Wait for connectivity if need be, then bring up a cloud based
+        # doc-ui window for showing/futzing-with league president stuff.
+        wait_for_connectivity(
+            on_connected=lambda: self.main_window_replace(
+                bui.CallStrict(
+                    LeaguePresidencyUIController().create_window,
+                    dui1.Request('/', args={'season': self._season}),
+                    origin_widget=self._president_button,
+                    auxiliary_style=False,
+                ),
+                extra_type_id=(
+                    LeaguePresidencyUIController
+                ).get_window_extra_type_id(),
+            )
         )
 
     def _on_more_press(self) -> None:

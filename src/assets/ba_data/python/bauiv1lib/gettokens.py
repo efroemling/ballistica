@@ -797,7 +797,7 @@ class GetTokensWindow(bui.MainWindow):
         bui.open_url(url)
 
 
-def show_get_tokens_prompt() -> None:
+def show_get_tokens_prompt(origin_widget: bui.Widget | None = None) -> None:
     """Show a 'not enough tokens' prompt with an option to purchase more.
 
     Note that the purchase option may not always be available
@@ -807,14 +807,19 @@ def show_get_tokens_prompt() -> None:
 
     assert bui.app.classic is not None
 
+    get_tokens_button = bui.get_special_widget('get_tokens_button')
+
     # Currently always allowing token purchases.
     if bool(True):
         ConfirmWindow(
             bui.Lstr(resource='tokens.notEnoughTokensText'),
-            show_get_tokens_window,
+            bui.CallStrict(
+                show_get_tokens_window, origin_widget=get_tokens_button
+            ),
             ok_text=bui.Lstr(resource='tokens.getTokensText'),
             width=460,
             height=130,
+            origin_widget=origin_widget,
         )
     else:
         ConfirmWindow(
@@ -822,6 +827,7 @@ def show_get_tokens_prompt() -> None:
             cancel_button=False,
             width=460,
             height=130,
+            origin_widget=origin_widget,
         )
 
 

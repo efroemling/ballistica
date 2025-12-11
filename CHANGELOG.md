@@ -1,4 +1,11 @@
-### 1.7.58 (build 22667, api 9, 2025-12-08)
+### 1.7.59 (build 22671, api 9, 2025-12-10)
+- Added a 'League President' button in the league-rank window. The back-end is
+  still under construction, but it'll soon be possible to bid tickets to become
+  president of your current league. It is a totally meaningless role but I'm
+  hoping it'll be a fun way to burn some unused tickets for folks who have
+  unlocked everything in the store.
+
+### 1.7.58 (build 22669, api 9, 2025-12-09)
 - Split up some store categories into multiple smaller subcategories to keep row
   sizes down.
 - Made a lovely clay plus icon for things like the new-profile button.

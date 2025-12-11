@@ -802,7 +802,7 @@ class ChestWindow(bui.MainWindow):
                 if isinstance(item.item, ditm.Tickets):
                     _mktxt(str(item.item.count))
                     _mkicon('tickets')
-                elif isinstance(item.item, ditm.TicketsPurple):
+                elif isinstance(item.item, ditm.PurpleTickets):
                     _mktxt(str(item.item.count))
                     _mkicon('ticketsPurple')
                 elif isinstance(item.item, ditm.Tokens):
@@ -853,7 +853,7 @@ class ChestWindow(bui.MainWindow):
             # Hack: We disable normal swish for the open button and it
             # seems weird without a swish here, so explicitly do one.
             bui.getsound('swish').play()
-            show_get_tokens_prompt()
+            show_get_tokens_prompt(origin_widget=self._open_now_button)
             return
 
         self._action_in_flight = True

@@ -19,6 +19,28 @@ from bacommon.bs._chest import ClassicChestAppearance
 
 @ioprepped
 @dataclass
+class GetClassicLeaguePresidentButtonInfoMessage(Message):
+    """Curious who is president of my league?.."""
+
+    season: Annotated[str | None, IOAttrs('s')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [GetClassicLeaguePresidentButtonInfoResponse]
+
+
+@ioprepped
+@dataclass
+class GetClassicLeaguePresidentButtonInfoResponse(Response):
+    """Here's that info about the president you asked for boss."""
+
+    # Lstr for the name shown on the button.
+    name: Annotated[str | None, IOAttrs('n')]
+
+
+@ioprepped
+@dataclass
 class GetClassicPurchasesMessage(Message):
     """Asking for current account's classic purchases."""
 
