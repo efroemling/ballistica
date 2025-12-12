@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import random
+
 from typing import override, TYPE_CHECKING
 
 from efro.util import asserttype
@@ -90,6 +92,25 @@ class InventoryUIController(DocUIController):
                     ),
                 )
 
+        for row in response.page.rows:
+            if (
+                isinstance(row, dui1.ButtonRow)
+                and row.title
+                and '"r":"store.yourCharactersText"' in row.title
+            ):
+                for button in row.buttons:
+                    if not button.decorations:
+                        continue
+                    for decoration in button.decorations:
+                        if isinstance(decoration, dui1.Text):
+                            button.action = dui1.Local(
+                                immediate_local_action='spawn_bot',
+                                immediate_local_action_args={
+                                    'name': decoration.text
+                                },
+                            )
+                            break
+
         # Now add in our profiles, which we handle locally so it is
         # available offline.
         response.page.rows = [
@@ -134,6 +155,8 @@ class InventoryUIController(DocUIController):
             self._new_profile(action)
         elif action.name == 'edit_profile':
             self._edit_profile(action)
+        elif action.name == 'spawn_bot':
+            self._spawn_bot(action)
         else:
             bui.screenmessage(
                 f'Invalid local-action "{action.name}".', color=(1, 0, 0)
@@ -328,3 +351,41 @@ class InventoryUIController(DocUIController):
                 on_profile_delete=bui.WeakCallPartial(self._on_profile_delete),
             )
         )
+
+    def _spawn_bot(self, action: DocUILocalAction) -> None:
+        import bascenev1 as bs
+        from bascenev1lib.mainmenu import MainMenuActivity
+        from bascenev1lib.actor.spazbot import DemoSpazBotSet, DemoBot
+        from bascenev1lib.actor.spazappearance import get_appearances
+
+        name = action.args.get('name')
+        assert isinstance(name, str)
+
+        activity = bs.get_foreground_host_activity()
+        if not isinstance(activity, MainMenuActivity) or activity.map is None:
+            return
+        bounds = activity.map.get_def_bound_box('map_bounds')
+        if bounds is None:
+            return
+        i = 0
+        while i < len(activity.bot_sets):
+            if activity.bot_sets[i].have_living_bots():
+                i += 1
+            else:
+                activity.bot_sets.pop(i)
+        for appearance in get_appearances(True):
+            if f'"{appearance}"' in name:
+                with activity.context:
+                    bot_set = DemoSpazBotSet()
+                    DemoBot.randomize_traits(appearance)
+                    bot_set.spawn_bot(
+                        DemoBot,
+                        (
+                            (bounds[0] + bounds[3]) / 2 + random.uniform(-7, 7),
+                            bounds[4] - 2,
+                            (bounds[2] + bounds[5]) / 2 + random.uniform(-7, 7),
+                        ),
+                        0,
+                    )
+                activity.bot_sets.append(bot_set)
+                break
