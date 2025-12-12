@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 
     import bacommon.bs
 
+    from bascenev1lib.actor.spazbot import AnarchySpazBotSet
+
 
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
     """Activity showing the rotating main menu bg stuff."""
@@ -36,12 +38,9 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         self.version: bs.NodeActor | None = None
         self.beta_info: bs.NodeActor | None = None
         self.beta_info_2: bs.NodeActor | None = None
-        self.bottom: bs.NodeActor | None = None
-        self.vr_bottom_fill: bs.NodeActor | None = None
-        self.vr_top_fill: bs.NodeActor | None = None
-        self.terrain: bs.NodeActor | None = None
+        self.map: bs.Map | None = None
+        self.bot_sets: list[AnarchySpazBotSet] = []
         self.trees: bs.NodeActor | None = None
-        self.bgterrain: bs.NodeActor | None = None
         self._ts = 0.86
         self._language: str | None = None
         self._update_timer: bs.Timer | None = None
@@ -53,6 +52,12 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
     def on_transition_in(self) -> None:
         # pylint: disable=too-many-locals
         super().on_transition_in()
+
+        from bascenev1lib.maps import ThePad
+
+        ThePad.preload()
+        self.map = ThePad()
+
         random.seed(123)
         app = bs.app
         env = app.env
@@ -108,17 +113,8 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 assert self.beta_info.node
                 bs.animate(self.beta_info.node, 'opacity', {1.3: 0, 1.8: 1.0})
 
-        mesh = bs.getmesh('thePadLevel')
         trees_mesh = bs.getmesh('trees')
-        bottom_mesh = bs.getmesh('thePadLevelBottom')
-        color_texture = bs.gettexture('thePadLevelColor')
         trees_texture = bs.gettexture('treesColor')
-        bgtex = bs.gettexture('menuBG')
-        bgmesh = bs.getmesh('thePadBG')
-
-        # Load these last since most platforms don't use them.
-        vr_bottom_fill_mesh = bs.getmesh('thePadVRFillBottom')
-        vr_top_fill_mesh = bs.getmesh('thePadVRFillTop')
 
         gnode = self.globalsnode
         gnode.camera_mode = 'rotate'
@@ -129,51 +125,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         gnode.vignette_outer = (0.45, 0.55, 0.54)
         gnode.vignette_inner = (0.99, 0.98, 0.98)
 
-        self.bottom = bs.NodeActor(
-            bs.newnode(
-                'terrain',
-                attrs={
-                    'mesh': bottom_mesh,
-                    'lighting': False,
-                    'reflection': 'soft',
-                    'reflection_scale': [0.45],
-                    'color_texture': color_texture,
-                },
-            )
-        )
-        self.vr_bottom_fill = bs.NodeActor(
-            bs.newnode(
-                'terrain',
-                attrs={
-                    'mesh': vr_bottom_fill_mesh,
-                    'lighting': False,
-                    'vr_only': True,
-                    'color_texture': color_texture,
-                },
-            )
-        )
-        self.vr_top_fill = bs.NodeActor(
-            bs.newnode(
-                'terrain',
-                attrs={
-                    'mesh': vr_top_fill_mesh,
-                    'vr_only': True,
-                    'lighting': False,
-                    'color_texture': bgtex,
-                },
-            )
-        )
-        self.terrain = bs.NodeActor(
-            bs.newnode(
-                'terrain',
-                attrs={
-                    'mesh': mesh,
-                    'color_texture': color_texture,
-                    'reflection': 'soft',
-                    'reflection_scale': [0.3],
-                },
-            )
-        )
         self.trees = bs.NodeActor(
             bs.newnode(
                 'terrain',
@@ -183,18 +134,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     'reflection': 'char',
                     'reflection_scale': [0.1],
                     'color_texture': trees_texture,
-                },
-            )
-        )
-        self.bgterrain = bs.NodeActor(
-            bs.newnode(
-                'terrain',
-                attrs={
-                    'mesh': bgmesh,
-                    'color': (0.92, 0.91, 0.9),
-                    'lighting': False,
-                    'background': True,
-                    'color_texture': bgtex,
                 },
             )
         )

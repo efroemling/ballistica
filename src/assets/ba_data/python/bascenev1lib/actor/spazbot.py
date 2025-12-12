@@ -111,12 +111,17 @@ class SpazBot(Spaz):
             can_accept_powerups=False,
         )
 
+        from bascenev1lib.mainmenu import MainMenuActivity
+
         # If you need to add custom behavior to a bot, set this to a callable
         # which takes one arg (the bot) and returns False if the bot's normal
         # update should be run and True if not.
         self.update_callback: Callable[[SpazBot], Any] | None = None
         activity = self.activity
-        assert isinstance(activity, bs.GameActivity)
+        assert (
+            isinstance(activity, bs.GameActivity)
+            or isinstance(activity, MainMenuActivity)
+        )
         self._map = weakref.ref(activity.map)
         self.last_player_attacked_by: bs.Player | None = None
         self.last_attacked_time = 0.0
@@ -906,6 +911,55 @@ class ExplodeyBotShielded(ExplodeyBot):
     points_mult = 5
 
 
+class DemoBot(SpazBot):
+    run = True
+
+    @classmethod
+    def randomize_traits(cls, appearance) -> None:
+        cls.color = (random.random(), random.random(), random.random())
+        cls.highlight = (random.random(), random.random(), random.random())
+        cls.character = appearance
+        cls.punchiness = random.uniform(0.5, 1.0)
+        cls.throwiness = random.uniform(0.5, 1.0)
+        cls.bouncy = True if appearance == 'Easter Bunny' else False
+        cls.throw_rate = random.uniform(0.5, 2.0)
+        cls.default_bomb_type = random.choice(
+            ('normal', 'sticky', 'ice', 'impact')
+        )
+        cls.default_boxing_gloves = random.choice((True, False, False, False))
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._init_time = bs.time()
+
+    def handlemessage(self, msg: Any) -> Any:
+        if (
+            isinstance(msg, bs.HitMessage)
+            and self.node
+            and bs.time() - self._init_time <= 1.0
+        ):
+            assert msg.force_direction is not None
+            self.node.handlemessage(
+                'impulse',
+                msg.pos[0],
+                msg.pos[1],
+                msg.pos[2],
+                msg.velocity[0],
+                msg.velocity[1],
+                msg.velocity[2],
+                msg.magnitude * self.impact_scale,
+                msg.velocity_magnitude * self.impact_scale,
+                msg.radius,
+                0,
+                msg.force_direction[0],
+                msg.force_direction[1],
+                msg.force_direction[2],
+            )
+            self.node.handlemessage('hurt_sound')
+            return None
+        return super().handlemessage(msg)
+
+
 class SpazBotSet:
     """A container/controller for one or more bs.SpazBots.
 
@@ -1108,3 +1162,36 @@ class SpazBotSet:
         """Add a bs.SpazBot instance to the set."""
         self._bot_lists[self._bot_add_list].append(bot)
         self._bot_add_list = (self._bot_add_list + 1) % self._bot_list_count
+
+
+class AnarchySpazBotSet(SpazBotSet):
+    def _update(self) -> None:
+        # Update one of our bot lists each time through.
+        # First off, remove no-longer-existing bots from the list.
+        try:
+            bot_list = self._bot_lists[self._bot_update_list] = [
+                b for b in self._bot_lists[self._bot_update_list] if b
+            ]
+        except Exception:
+            bot_list = []
+            logging.exception(
+                'Error updating bot list: %s',
+                self._bot_lists[self._bot_update_list],
+            )
+        self._bot_update_list = (
+                                    self._bot_update_list + 1
+                                ) % self._bot_list_count
+
+        # Update our list of player points for the bots to use.
+        spaz_pts = []
+        our_bots = self.get_living_bots()
+        for node in bs.getnodes():
+            spaz = node.getdelegate(Spaz)
+            if spaz and spaz.is_alive() and spaz not in our_bots:
+                spaz_pts.append(
+                    (bs.Vec3(node.position), bs.Vec3(node.velocity))
+                )
+
+        for bot in bot_list:
+            bot.set_player_points(spaz_pts)
+            bot.update_ai()
