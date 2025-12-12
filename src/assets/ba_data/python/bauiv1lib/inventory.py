@@ -99,15 +99,16 @@ class InventoryUIController(DocUIController):
                 and '"r":"store.yourCharactersText"' in row.title
             ):
                 for button in row.buttons:
-                    for decoration in button.decorations:
-                        if isinstance(decoration, dui1.Text):
-                            button.action = dui1.Local(
-                                immediate_local_action='spawn_bot',
-                                immediate_local_action_args={
-                                    'name': decoration.text
-                                },
-                            )
-                            break
+                    if button.decorations:
+                        for decoration in button.decorations:
+                            if isinstance(decoration, dui1.Text):
+                                button.action = dui1.Local(
+                                    immediate_local_action='spawn_bot',
+                                    immediate_local_action_args={
+                                        'name': decoration.text
+                                    },
+                                )
+                                break
 
         # Now add in our profiles, which we handle locally so it is
         # available offline.
@@ -360,9 +361,11 @@ class InventoryUIController(DocUIController):
         assert isinstance(name, str)
 
         activity = bs.get_foreground_host_activity()
-        if not isinstance(activity, MainMenuActivity):
+        if not isinstance(activity, MainMenuActivity) or activity.map is None:
             return
         bounds = activity.map.get_def_bound_box('map_bounds')
+        if bounds is None:
+            return
         i = 0
         while i < len(activity.bot_sets):
             if activity.bot_sets[i].have_living_bots():
