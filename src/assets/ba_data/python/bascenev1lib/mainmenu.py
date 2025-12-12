@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
     import bacommon.bs
 
-    from bascenev1lib.actor.spazbot import AnarchySpazBotSet
+    from bascenev1lib.actor.spazbot import DemoSpazBotSet
 
 
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
@@ -39,7 +39,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         self.beta_info: bs.NodeActor | None = None
         self.beta_info_2: bs.NodeActor | None = None
         self.map: bs.Map | None = None
-        self.bot_sets: list[AnarchySpazBotSet] = []
+        self.bot_sets: list[DemoSpazBotSet] = []
         self.trees: bs.NodeActor | None = None
         self._ts = 0.86
         self._language: str | None = None
@@ -50,7 +50,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
     @override
     def on_transition_in(self) -> None:
-        # pylint: disable=too-many-locals
         super().on_transition_in()
 
         from bascenev1lib.maps import ThePad

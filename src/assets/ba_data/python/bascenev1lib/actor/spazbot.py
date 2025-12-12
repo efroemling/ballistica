@@ -118,10 +118,7 @@ class SpazBot(Spaz):
         # update should be run and True if not.
         self.update_callback: Callable[[SpazBot], Any] | None = None
         activity = self.activity
-        assert (
-            isinstance(activity, bs.GameActivity)
-            or isinstance(activity, MainMenuActivity)
-        )
+        assert isinstance(activity, (bs.GameActivity, MainMenuActivity))
         self._map = weakref.ref(activity.map)
         self.last_player_attacked_by: bs.Player | None = None
         self.last_attacked_time = 0.0
@@ -912,26 +909,38 @@ class ExplodeyBotShielded(ExplodeyBot):
 
 
 class DemoBot(SpazBot):
+    """A bs.SpazBot who lacks many specific traits and is used for the "Bots
+    Free-for-All" easter egg.
+
+    category: Bot Classes
+    """
+
     run = True
 
     @classmethod
-    def randomize_traits(cls, appearance) -> None:
+    def randomize_traits(cls, appearance: str) -> None:
+        """Randomize the behavioral traits of the bot. Should be called
+        everytime before creating a new instance.
+        """
+
         cls.color = (random.random(), random.random(), random.random())
         cls.highlight = (random.random(), random.random(), random.random())
         cls.character = appearance
         cls.punchiness = random.uniform(0.5, 1.0)
         cls.throwiness = random.uniform(0.5, 1.0)
-        cls.bouncy = True if appearance == 'Easter Bunny' else False
+        cls.bouncy = appearance == 'Easter Bunny'
         cls.throw_rate = random.uniform(0.5, 2.0)
         cls.default_bomb_type = random.choice(
             ('normal', 'sticky', 'ice', 'impact')
         )
         cls.default_boxing_gloves = random.choice((True, False, False, False))
 
+    @override
     def __init__(self) -> None:
         super().__init__()
         self._init_time = bs.time()
 
+    @override
     def handlemessage(self, msg: Any) -> Any:
         if (
             isinstance(msg, bs.HitMessage)
@@ -1164,7 +1173,14 @@ class SpazBotSet:
         self._bot_add_list = (self._bot_add_list + 1) % self._bot_list_count
 
 
-class AnarchySpazBotSet(SpazBotSet):
+class DemoSpazBotSet(SpazBotSet):
+    """A bs.SpazBotSet that has its bs.SpazBots attack every other bs.Spaz
+    instead of only going after bs.Players.
+
+    category: Bot Classes
+    """
+
+    @override
     def _update(self) -> None:
         # Update one of our bot lists each time through.
         # First off, remove no-longer-existing bots from the list.

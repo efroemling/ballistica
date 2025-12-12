@@ -353,7 +353,7 @@ class InventoryUIController(DocUIController):
     def _spawn_bot(self, action: DocUILocalAction) -> None:
         import bascenev1 as bs
         from bascenev1lib.mainmenu import MainMenuActivity
-        from bascenev1lib.actor.spazbot import AnarchySpazBotSet, DemoBot
+        from bascenev1lib.actor.spazbot import DemoSpazBotSet, DemoBot
         from bascenev1lib.actor.spazappearance import get_appearances
 
         name = action.args.get('name')
@@ -372,7 +372,7 @@ class InventoryUIController(DocUIController):
         for appearance in get_appearances(True):
             if f'"{appearance}"' in name:
                 with activity.context:
-                    bot_set = AnarchySpazBotSet()
+                    bot_set = DemoSpazBotSet()
                     DemoBot.randomize_traits(appearance)
                     bot_set.spawn_bot(
                         DemoBot,
