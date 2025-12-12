@@ -826,7 +826,10 @@ def set_canonical_module_names(module_globals: dict[str, Any]) -> None:
 
 
 def timedelta_str(
-    timeval: datetime.timedelta | float, *, maxparts: int = 2, decimals: int = 0
+    timeval: datetime.timedelta | float | int,
+    *,
+    maxparts: int = 2,
+    decimals: int = 0,
 ) -> str:
     """Return a simple human readable time string for a length of time.
 
@@ -843,7 +846,7 @@ def timedelta_str(
     """
     # pylint: disable=too-many-locals
 
-    if isinstance(timeval, float):
+    if isinstance(timeval, float | int):
         timevalfin = datetime.timedelta(seconds=timeval)
     else:
         timevalfin = timeval

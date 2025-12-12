@@ -1,4 +1,4 @@
-### 1.7.59 (build 22675, api 9, 2025-12-11)
+### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
   still under construction, but it'll soon be possible to bid tickets to become
   president of your current league. It is a totally meaningless role but I'm
