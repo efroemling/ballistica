@@ -99,16 +99,17 @@ class InventoryUIController(DocUIController):
                 and '"r":"store.yourCharactersText"' in row.title
             ):
                 for button in row.buttons:
-                    if button.decorations:
-                        for decoration in button.decorations:
-                            if isinstance(decoration, dui1.Text):
-                                button.action = dui1.Local(
-                                    immediate_local_action='spawn_bot',
-                                    immediate_local_action_args={
-                                        'name': decoration.text
-                                    },
-                                )
-                                break
+                    if not button.decorations:
+                        continue
+                    for decoration in button.decorations:
+                        if isinstance(decoration, dui1.Text):
+                            button.action = dui1.Local(
+                                immediate_local_action='spawn_bot',
+                                immediate_local_action_args={
+                                    'name': decoration.text
+                                },
+                            )
+                            break
 
         # Now add in our profiles, which we handle locally so it is
         # available offline.
