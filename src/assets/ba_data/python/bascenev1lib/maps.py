@@ -783,26 +783,47 @@ class ThePad(bs.Map):
         # fixme should chop this into vr/non-vr sections for efficiency
         return data
 
-    def __init__(self) -> None:
+    def __init__(self, main_menu_style: bool = False) -> None:
         super().__init__()
         shared = SharedObjects.get()
         self.node = bs.newnode(
             'terrain',
             delegate=self,
-            attrs={
-                'collision_mesh': self.preloaddata['collision_mesh'],
-                'mesh': self.preloaddata['mesh'],
-                'color_texture': self.preloaddata['tex'],
-                'materials': [shared.footing_material],
-            },
+            attrs=(
+                {
+                    'collision_mesh': self.preloaddata['collision_mesh'],
+                    'mesh': self.preloaddata['mesh'],
+                    'color_texture': self.preloaddata['tex'],
+                    'materials': [shared.footing_material],
+                    'reflection': 'soft',
+                    'reflection_scale': [0.3],
+                }
+                if main_menu_style
+                else {
+                    'collision_mesh': self.preloaddata['collision_mesh'],
+                    'mesh': self.preloaddata['mesh'],
+                    'color_texture': self.preloaddata['tex'],
+                    'materials': [shared.footing_material],
+                }
+            ),
         )
         self.bottom = bs.newnode(
             'terrain',
-            attrs={
-                'mesh': self.preloaddata['bottom_mesh'],
-                'lighting': False,
-                'color_texture': self.preloaddata['tex'],
-            },
+            attrs=(
+                {
+                    'mesh': self.preloaddata['bottom_mesh'],
+                    'lighting': False,
+                    'color_texture': self.preloaddata['tex'],
+                    'reflection': 'soft',
+                    'reflection_scale': [0.45],
+                }
+                if main_menu_style
+                else {
+                    'mesh': self.preloaddata['bottom_mesh'],
+                    'lighting': False,
+                    'color_texture': self.preloaddata['tex'],
+                }
+            ),
         )
         self.background = bs.newnode(
             'terrain',

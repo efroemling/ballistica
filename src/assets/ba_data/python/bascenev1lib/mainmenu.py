@@ -55,7 +55,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         from bascenev1lib.maps import ThePad
 
         ThePad.preload()
-        self.map = ThePad()
+        self.map = ThePad(main_menu_style=True)
 
         random.seed(123)
         app = bs.app

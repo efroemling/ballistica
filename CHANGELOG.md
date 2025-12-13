@@ -1,5 +1,7 @@
-### 1.7.60 (build 22679, api 9, 2025-12-12)
-
+### 1.7.60 (build 22680, api 9, 2025-12-12)
+- Fun easter-egg when clicking characters in inventory window (Thanks
+  EraOSBeta!)
+  
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
   still under construction, but it'll soon be possible to bid tickets to become
