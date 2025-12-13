@@ -196,13 +196,17 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
         )
         # Flag region.
         flagmats = [self._flag_region_material, shared.region_material]
-        if self.map.getname() == "Happy Thoughts":
-            # Exclusive region for happy thoughts, to avoid 
+        if self.map.getname() == 'Happy Thoughts':
+            # Exclusive region for happy thoughts, to avoid
             # marking points from the bottom of the platform.
             bs.newnode(
                 'region',
                 attrs={
-                    'position': (self._flag_pos[0], self._flag_pos[1]*1.06, self._flag_pos[2]),
+                    'position': (
+                        self._flag_pos[0],
+                        self._flag_pos[1] * 1.06,
+                        self._flag_pos[2],
+                    ),
                     'scale': (3.4, 1.75, 0.8),
                     'type': 'square',
                     'materials': flagmats,
