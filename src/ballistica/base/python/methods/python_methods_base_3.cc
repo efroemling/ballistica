@@ -1065,6 +1065,36 @@ static PyMethodDef PyMarkLogSentDef = {
     ":meta private:",
 };
 
+// --------------------- analytics_enabled -----------------------------
+
+auto PyAnalyticsEnabled(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  int value=1;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+  if (g_core && g_core->platform) {
+    g_core->platform->AnalyticsIsEnabled = value;
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAnalyticsEnabledDef = {
+    "analytics_enabled",              // name
+    (PyCFunction)PyAnalyticsEnabled,  // method
+    METH_VARARGS | METH_KEYWORDS,     // flags
+
+    "analytics_enabled(value: bool = True) -> None\n"
+    "\n"
+    "Used to disable analytics collection if desired.\n"
+    "\n"
+    ":meta private:",
+};
+
 // --------------------- increment_analytics_count -----------------------------
 
 auto PyIncrementAnalyticsCount(PyObject* self, PyObject* args, PyObject* keywds)
@@ -1074,7 +1104,7 @@ auto PyIncrementAnalyticsCount(PyObject* self, PyObject* args, PyObject* keywds)
   int increment = 1;
   static const char* kwlist[] = {"name", "increment", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "s|p", const_cast<char**>(kwlist), &name, &increment))
+          args, keywds, "s|p", const_cast<char**>(kwlist), &name, &increment) && g_core->platform->AnalyticsIsEnabled)
     g_core->platform->IncrementAnalyticsCount(name, increment);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1099,7 +1129,7 @@ static auto PyIncrementAnalyticsCountRaw(PyObject* self, PyObject* args,
   int increment = 1;
   static const char* kwlist[] = {"name", "increment", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "s|i", const_cast<char**>(kwlist), &name, &increment))
+          args, keywds, "s|i", const_cast<char**>(kwlist), &name, &increment) && g_core->platform->AnalyticsIsEnabled)
     g_core->platform->IncrementAnalyticsCountRaw(name, increment);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1130,8 +1160,10 @@ static auto PyIncrementAnalyticsCountRaw2(PyObject* self, PyObject* args,
                                    &uses_increment, &increment)) {
     return nullptr;
   }
-  g_core->platform->IncrementAnalyticsCountRaw2(name, uses_increment,
-                                                increment);
+  if(g_core->platform->AnalyticsIsEnabled){
+    g_core->platform->IncrementAnalyticsCountRaw2(name, uses_increment,
+                                                  increment);
+  }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1152,7 +1184,9 @@ static PyMethodDef PyIncrementAnalyticsCountRaw2Def = {
 static auto PySubmitAnalyticsCounts(PyObject* self, PyObject* args,
                                     PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  g_core->platform->SubmitAnalyticsCounts();
+  if(g_core->platform->AnalyticsIsEnabled){
+    g_core->platform->SubmitAnalyticsCounts();
+  }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1178,7 +1212,9 @@ static auto PySetAnalyticsScreen(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &screen)) {
     return nullptr;
   }
-  g_core->platform->SetAnalyticsScreen(screen);
+  if(g_core->platform->AnalyticsIsEnabled){
+    g_core->platform->SetAnalyticsScreen(screen);
+  }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -2179,6 +2215,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PySetAnalyticsScreenDef,
       PyLoginAdapterGetSignInTokenDef,
       PyLoginAdapterBackEndActiveChangeDef,
+      PyAnalyticsEnabledDef,
       PySubmitAnalyticsCountsDef,
       PyIncrementAnalyticsCountRawDef,
       PyIncrementAnalyticsCountRaw2Def,
