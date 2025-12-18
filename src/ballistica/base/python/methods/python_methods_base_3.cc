@@ -1070,7 +1070,7 @@ static PyMethodDef PyMarkLogSentDef = {
 auto PyAnalyticsEnabled(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
-  int value=1;
+  int value = 1;
   static const char* kwlist[] = {"value", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "|p",
                                    const_cast<char**>(kwlist), &value)) {
@@ -1104,7 +1104,8 @@ auto PyIncrementAnalyticsCount(PyObject* self, PyObject* args, PyObject* keywds)
   int increment = 1;
   static const char* kwlist[] = {"name", "increment", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "s|p", const_cast<char**>(kwlist), &name, &increment) && g_core->platform->AnalyticsIsEnabled)
+          args, keywds, "s|p", const_cast<char**>(kwlist), &name, &increment)
+      && g_core->platform->AnalyticsIsEnabled)
     g_core->platform->IncrementAnalyticsCount(name, increment);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1129,7 +1130,8 @@ static auto PyIncrementAnalyticsCountRaw(PyObject* self, PyObject* args,
   int increment = 1;
   static const char* kwlist[] = {"name", "increment", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "s|i", const_cast<char**>(kwlist), &name, &increment) && g_core->platform->AnalyticsIsEnabled)
+          args, keywds, "s|i", const_cast<char**>(kwlist), &name, &increment)
+      && g_core->platform->AnalyticsIsEnabled)
     g_core->platform->IncrementAnalyticsCountRaw(name, increment);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1160,7 +1162,7 @@ static auto PyIncrementAnalyticsCountRaw2(PyObject* self, PyObject* args,
                                    &uses_increment, &increment)) {
     return nullptr;
   }
-  if(g_core->platform->AnalyticsIsEnabled){
+  if (g_core->platform->AnalyticsIsEnabled) {
     g_core->platform->IncrementAnalyticsCountRaw2(name, uses_increment,
                                                   increment);
   }
@@ -1184,7 +1186,7 @@ static PyMethodDef PyIncrementAnalyticsCountRaw2Def = {
 static auto PySubmitAnalyticsCounts(PyObject* self, PyObject* args,
                                     PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  if(g_core->platform->AnalyticsIsEnabled){
+  if (g_core->platform->AnalyticsIsEnabled) {
     g_core->platform->SubmitAnalyticsCounts();
   }
   Py_RETURN_NONE;
@@ -1212,7 +1214,7 @@ static auto PySetAnalyticsScreen(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &screen)) {
     return nullptr;
   }
-  if(g_core->platform->AnalyticsIsEnabled){
+  if (g_core->platform->AnalyticsIsEnabled) {
     g_core->platform->SetAnalyticsScreen(screen);
   }
   Py_RETURN_NONE;
