@@ -1095,6 +1095,29 @@ static PyMethodDef PyAnalyticsEnabledDef = {
     ":meta private:",
 };
 
+// --------------------- is_analytics_enabled -----------------------------
+
+auto PyIsAnalyticsEnabled(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (g_core->platform->AnalyticsIsEnabled) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyIsAnalyticsEnabledDef = {
+    "is_analytics_enabled",             // name
+    (PyCFunction)PyIsAnalyticsEnabled,  // method
+    METH_VARARGS,                       // flags
+
+    "is_analytics_enabled() -> bool\n"
+    "\n"
+    "Returns a boolean value to show if Analytics is enabled.\n"
+    "\n"
+    ":meta private:",
+};
+
 // --------------------- increment_analytics_count -----------------------------
 
 auto PyIncrementAnalyticsCount(PyObject* self, PyObject* args, PyObject* keywds)
@@ -2218,6 +2241,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyLoginAdapterGetSignInTokenDef,
       PyLoginAdapterBackEndActiveChangeDef,
       PyAnalyticsEnabledDef,
+      PyIsAnalyticsEnabledDef,
       PySubmitAnalyticsCountsDef,
       PyIncrementAnalyticsCountRawDef,
       PyIncrementAnalyticsCountRaw2Def,
