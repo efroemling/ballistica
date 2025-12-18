@@ -686,7 +686,8 @@ class AdvancedSettingsWindow(bui.MainWindow):
             maxwidth=430,
             textcolor=(0.8, 0.8, 0.8),
             value=babase.is_analytics_enabled(),
-            text=bui.Lstr(value="Enable Analytics"), # f'{self._r}.EnableAnalytics'),
+            text=bui.Lstr(value="Enable Analytics"),
+            # (resource=f'{self._r}.enableAnalytics'),
             on_value_change_call=bui.WeakCallPartial(
                 self._on_toggle_analytics_value_change
             ),
