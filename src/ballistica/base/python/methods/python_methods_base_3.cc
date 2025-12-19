@@ -1076,7 +1076,7 @@ auto PyAnalyticsDisable(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &value)) {
     return nullptr;
   }
-  g_core->platform->AnalyticsIsEnabled = value;
+  g_core->platform->AnalyticsIsEnabled = !value;
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
