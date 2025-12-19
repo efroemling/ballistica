@@ -192,6 +192,8 @@ class App:
         self._subsystem_property_lock = RLock()
         self._subsystem_property_data: dict[str, AppSubsystem | bool] = {}
 
+        _babase.analytics_enabled(self.config.get('Analytics Enabled', True))
+
     @property
     def active(self) -> bool:
         """Whether the app is currently front and center.
