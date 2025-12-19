@@ -843,6 +843,8 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
     def _on_toggle_analytics_value_change(self, val: bool) -> None:
         babase.analytics_enabled(val)
+        bui.app.config['Analytics Enabled'] = val
+        bui.app.config.apply_and_commit()
 
     def _on_vr_test_press(self) -> None:
         from bauiv1lib.settings.vrtesting import VRTestingWindow
