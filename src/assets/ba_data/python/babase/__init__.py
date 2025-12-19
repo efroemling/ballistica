@@ -22,7 +22,7 @@ import _babase
 from _babase import (
     add_clean_frame_callback,
     allows_ticket_sales,
-    analytics_enabled,
+    analytics_disable,
     android_get_external_files_dir,
     app_instance_uuid,
     appname,
@@ -222,7 +222,7 @@ __all__ = [
     'ActorNotFoundError',
     'allows_ticket_sales',
     'add_clean_frame_callback',
-    'analytics_enabled',
+    'analytics_disable',
     'android_get_external_files_dir',
     'app',
     'App',

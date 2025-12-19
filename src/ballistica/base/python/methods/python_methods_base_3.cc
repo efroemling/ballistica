@@ -1065,9 +1065,9 @@ static PyMethodDef PyMarkLogSentDef = {
     ":meta private:",
 };
 
-// --------------------- analytics_enabled -----------------------------
+// --------------------- analytics_disable -----------------------------
 
-auto PyAnalyticsEnabled(PyObject* self, PyObject* args, PyObject* keywds)
+auto PyAnalyticsDisable(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   int value = 1;
@@ -1076,19 +1076,17 @@ auto PyAnalyticsEnabled(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &value)) {
     return nullptr;
   }
-  if (g_core && g_core->platform) {
-    g_core->platform->AnalyticsIsEnabled = value;
-  }
+  g_core->platform->AnalyticsIsEnabled = value;
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyAnalyticsEnabledDef = {
-    "analytics_enabled",              // name
-    (PyCFunction)PyAnalyticsEnabled,  // method
+static PyMethodDef PyAnalyticsDisableDef = {
+    "analytics_disable",              // name
+    (PyCFunction)PyAnalyticsDisable,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
 
-    "analytics_enabled(value: bool = True) -> None\n"
+    "analytics_disable(value: bool = True) -> None\n"
     "\n"
     "Used to disable analytics collection if desired.\n"
     "\n"
@@ -1101,8 +1099,9 @@ auto PyIsAnalyticsEnabled(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   if (g_core->platform->AnalyticsIsEnabled) {
     Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
   }
-  Py_RETURN_FALSE;
   BA_PYTHON_CATCH;
 }
 
@@ -2240,7 +2239,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PySetAnalyticsScreenDef,
       PyLoginAdapterGetSignInTokenDef,
       PyLoginAdapterBackEndActiveChangeDef,
-      PyAnalyticsEnabledDef,
+      PyAnalyticsDisableDef,
       PyIsAnalyticsEnabledDef,
       PySubmitAnalyticsCountsDef,
       PyIncrementAnalyticsCountRawDef,
