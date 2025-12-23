@@ -192,7 +192,9 @@ class App:
         self._subsystem_property_lock = RLock()
         self._subsystem_property_data: dict[str, AppSubsystem | bool] = {}
 
-        _babase.analytics_disable(not self.config.get('Analytics Enabled', False))
+        _babase.analytics_disable(
+            not self.config.get('Analytics Enabled', True)
+        )
 
     @property
     def active(self) -> bool:
