@@ -1,15 +1,23 @@
-name: 'Setup BombSquad Environment'
-description: 'Common setup steps for BombSquad builds'
+name: "Setup BombSquad Environment"
+description: "Common setup steps for BombSquad builds"
+
+inputs:
+  using-cmake:
+    description: "Set to true if building with cmake to enable caching"
+    required: false
+    type: boolean
+    default: false
+
 runs:
-  using: 'composite'
-  steps:    
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v6
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.13'
-        cache: 'pip'
+        python-version: "3.13"
+        cache: "pip"
         cache-dependency-path: config/requirements.txt
-    - uses: actions/checkout@v4
     - name: Cache Bombsquad assets
       id: cache-assets
       uses: actions/cache@v4
@@ -23,5 +31,44 @@ runs:
         restore-keys: |
           ${{ runner.os }}-${{ env.cache-name }}-
     - name: Setup project environment
-      run: make env
       shell: bash
+      run: make env
+    - name: Update assets
+      shell: bash
+      run: |
+        make assets-cmake
+        make assets-windows
+    # Following steps only run for inputs.using-cmake == 'true'
+    - name: Install build packgages
+      if: ${{ inputs.using-cmake == 'true' }}
+      shell: bash
+      run: |
+        sudo add-apt-repository ppa:deadsnakes/ppa
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends \
+        build-essential \
+        clang \
+        clang-format \
+        cmake \
+        curl \
+        libglut-dev \
+        libopenal-dev \
+        libsdl2-dev \
+        libvorbis-dev \
+        make \
+        python3-pip \
+        python3.13-dev \
+        python3.13-venv \
+        rsync \
+        zstd
+    - name: Setup env variables
+      if: ${{ inputs.using-cmake == 'true' }}
+      shell: bash
+      run: |
+        echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+        echo CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache" >> $GITHUB_ENV
+    - name: Setup sccache
+      if: ${{ inputs.using-cmake == 'true' }}
+      uses: mozilla-actions/sccache-action@v0.0.9
+      with:
+        disable_annotations: true
