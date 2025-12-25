@@ -24,14 +24,19 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.9
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_GHA_VERSION: "linux-cmake-v1"
         with:
-          key: ${{ github.job }}-${{ matrix.os }}
-          max-size: 200M
-          verbose: 2
-          create-symlink: true
+          disable_annotations: false
+
       - name: Make the build
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_GHA_VERSION: "linux-cmake-v1"
         run: |
           sudo add-apt-repository ppa:deadsnakes/ppa
           sudo apt-get update
@@ -51,8 +56,9 @@ jobs:
           python3.13-venv \
           rsync \
           zstd
-          CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache" \
+          CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache" \
           make cmake-build
+
   # make_linux_x86_64_gui_debug_build:
   #   needs: setup_bombsquad_cache
   #   runs-on: ubuntu-latest
