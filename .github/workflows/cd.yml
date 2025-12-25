@@ -17,161 +17,197 @@ jobs:
           make assets-cmake
           make assets-windows
 
-  make_linux_x86_64_gui_debug_build:
+  make_linux_cmake:
     needs: setup_bombsquad_cache
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-gui-debug-build
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
         with:
-          name: linux_x86_64_gui_(debug)
-          path: build/prefab/full/linux_x86_64_gui
-
-  make_linux_x86_64_server_debug_build:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
+          key: ${{ github.job }}-${{ matrix.os }}
+          max-size: 200M
+          verbose: 2
+          create-symlink: true
       - name: Make the build
-        run: make prefab-server-debug-build
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux_x86_64_server_(debug)
-          path: build/prefab/full/linux_x86_64_server
-
-  make_linux_arm64_gui_debug_build:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-linux-arm64-gui-debug-build
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux_arm64_gui_(debug)
-          path: build/prefab/full/linux_arm64_gui
-
-  make_linux_arm64_server_debug_build:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-linux-arm64-server-debug-build
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux_arm64_server_(debug)
-          path: build/prefab/full/linux_arm64_server
-
-  # Limiting mac prefab builds to arm only for now.
-  # Leaving this here in case we re-enable them though.
-
-  # make_mac_x86_64_gui_debug_build:
+        run: |
+          sudo add-apt-repository ppa:deadsnakes/ppa
+          sudo apt-get update
+          sudo apt-get install -y \
+          build-essential \
+          clang \
+          clang-format \
+          cmake \
+          curl \
+          libglut-dev \
+          libopenal-dev \
+          libsdl2-dev \
+          libvorbis-dev \
+          make \
+          python3-pip \
+          python3.13-dev \
+          python3.13-venv \
+          rsync \
+          zstd
+          CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache" \
+          make cmake-build
+  # make_linux_x86_64_gui_debug_build:
+  #   needs: setup_bombsquad_cache
   #   runs-on: ubuntu-latest
   #   steps:
-  #   - uses: actions/checkout@v4
-  #   - name: Set up Python
-  #     uses: actions/setup-python@v5
-  #     with:
-  #       python-version: '3.13'
-  #   - name: Setup project environment
-  #     run: make env
-  #   - name: Make the build
-  #     run: make prefab-mac-x86-64-gui-debug-build
-  #   - name: Upload the build
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: mac_x86_64_gui_(debug)
-  #       path: build/prefab/full/mac_x86_64_gui
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-gui-debug-build
+  #     - name: Upload the build
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: linux_x86_64_gui_(debug)
+  #         path: build/prefab/full/linux_x86_64_gui
 
-  # make_mac_x86_64_server_debug_build:
+  # make_linux_x86_64_server_debug_build:
+  #   needs: setup_bombsquad_cache
   #   runs-on: ubuntu-latest
   #   steps:
-  #   - uses: actions/checkout@v4
-  #   - name: Set up Python
-  #     uses: actions/setup-python@v5
-  #     with:
-  #       python-version: '3.13'
-  #   - name: Setup project environment
-  #     run: make env
-  #   - name: Make the build
-  #     run: make prefab-mac-x86-64-server-debug-build
-  #   - name: Upload the build
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: mac_x86_64_server_(debug)
-  #       path: build/prefab/full/mac_x86_64_server
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-server-debug-build
+  #     - name: Upload the build
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: linux_x86_64_server_(debug)
+  #         path: build/prefab/full/linux_x86_64_server
 
-  make_mac_arm64_gui_debug_build:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-mac-arm64-gui-debug-build
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
-        with:
-          name: mac_arm64_gui_(debug)
-          path: build/prefab/full/mac_arm64_gui
+  # make_linux_arm64_gui_debug_build:
+  #   needs: setup_bombsquad_cache
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-linux-arm64-gui-debug-build
+  #     - name: Upload the build
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: linux_arm64_gui_(debug)
+  #         path: build/prefab/full/linux_arm64_gui
 
-  make_mac_arm64_server_debug_build:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-mac-arm64-server-debug-build
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
-        with:
-          name: mac_arm64_server_(debug)
-          path: build/prefab/full/mac_arm64_server
+  # make_linux_arm64_server_debug_build:
+  #   needs: setup_bombsquad_cache
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-linux-arm64-server-debug-build
+  #     - name: Upload the build
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: linux_arm64_server_(debug)
+  #         path: build/prefab/full/linux_arm64_server
 
-  make_windows_x86_64_gui_debug_build:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-windows-x86-64-gui-debug-build
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows_x86_64_gui_(debug)
-          path: build/prefab/full/windows_x86_64_gui
+  # # Limiting mac prefab builds to arm only for now.
+  # # Leaving this here in case we re-enable them though.
 
-  make_windows_x86_64_server_debug_build:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-windows-x86-64-server-debug-build
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows_x86_64_server_(debug)
-          path: build/prefab/full/windows_x86_64_server
+  # # make_mac_x86_64_gui_debug_build:
+  # #   runs-on: ubuntu-latest
+  # #   steps:
+  # #   - uses: actions/checkout@v4
+  # #   - name: Set up Python
+  # #     uses: actions/setup-python@v5
+  # #     with:
+  # #       python-version: '3.13'
+  # #   - name: Setup project environment
+  # #     run: make env
+  # #   - name: Make the build
+  # #     run: make prefab-mac-x86-64-gui-debug-build
+  # #   - name: Upload the build
+  # #     uses: actions/upload-artifact@v4
+  # #     with:
+  # #       name: mac_x86_64_gui_(debug)
+  # #       path: build/prefab/full/mac_x86_64_gui
+
+  # # make_mac_x86_64_server_debug_build:
+  # #   runs-on: ubuntu-latest
+  # #   steps:
+  # #   - uses: actions/checkout@v4
+  # #   - name: Set up Python
+  # #     uses: actions/setup-python@v5
+  # #     with:
+  # #       python-version: '3.13'
+  # #   - name: Setup project environment
+  # #     run: make env
+  # #   - name: Make the build
+  # #     run: make prefab-mac-x86-64-server-debug-build
+  # #   - name: Upload the build
+  # #     uses: actions/upload-artifact@v4
+  # #     with:
+  # #       name: mac_x86_64_server_(debug)
+  # #       path: build/prefab/full/mac_x86_64_server
+
+  # make_mac_arm64_gui_debug_build:
+  #   needs: setup_bombsquad_cache
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-mac-arm64-gui-debug-build
+  #     - name: Upload the build
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: mac_arm64_gui_(debug)
+  #         path: build/prefab/full/mac_arm64_gui
+
+  # make_mac_arm64_server_debug_build:
+  #   needs: setup_bombsquad_cache
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-mac-arm64-server-debug-build
+  #     - name: Upload the build
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: mac_arm64_server_(debug)
+  #         path: build/prefab/full/mac_arm64_server
+
+  # make_windows_x86_64_gui_debug_build:
+  #   needs: setup_bombsquad_cache
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-windows-x86-64-gui-debug-build
+  #     - name: Upload the build
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: windows_x86_64_gui_(debug)
+  #         path: build/prefab/full/windows_x86_64_gui
+
+  # make_windows_x86_64_server_debug_build:
+  #   needs: setup_bombsquad_cache
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-windows-x86-64-server-debug-build
+  #     - name: Upload the build
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: windows_x86_64_server_(debug)
+  #         path: build/prefab/full/windows_x86_64_server

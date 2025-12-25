@@ -2,18 +2,14 @@ name: 'Setup BombSquad Environment'
 description: 'Common setup steps for BombSquad builds'
 runs:
   using: 'composite'
-  steps:
-    - uses: actions/checkout@v4
-    - name: Cache Python venv
-      id: cache-venv
-      uses: actions/cache@v4
-      env:
-        cache-name: cache-python-venv
+  steps:    
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        path: .venv
-        key: ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-${{ hashFiles('config/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-
+        python-version: '3.13'
+        cache: 'pip'
+        cache-dependency-path: config/requirements.txt
+    - uses: actions/checkout@v4
     - name: Cache Bombsquad assets
       id: cache-assets
       uses: actions/cache@v4
@@ -26,10 +22,6 @@ runs:
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('.efrocachemap') }}
         restore-keys: |
           ${{ runner.os }}-${{ env.cache-name }}-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
     - name: Setup project environment
       run: make env
       shell: bash
