@@ -7,8 +7,10 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, override
 
-from bauiv1lib.popup import PopupWindow
+from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
+
+from bauiv1lib.popup import PopupWindow
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -589,6 +591,13 @@ class TournamentEntryWindow(PopupWindow):
             return
         self._launched = True
         launched = False
+
+        bui.app.analytics.submit_event(
+            ClassicAnalyticsEvent(
+                ClassicAnalyticsEvent.EventType.START_TOURNEY_COOP_SESSION,
+                extra=self._tournament_info.get('game'),
+            )
+        )
 
         # If they gave us an existing, non-consistent practice activity,
         # just restart it.

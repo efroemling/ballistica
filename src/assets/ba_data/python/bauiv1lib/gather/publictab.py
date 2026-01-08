@@ -12,6 +12,7 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast, override
 
+from bacommon.analytics import ClassicAnalyticsEvent
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
 import bascenev1 as bs
@@ -1495,6 +1496,13 @@ class PublicGatherTab(GatherTab):
     def on_public_party_activate(self, party: PartyEntry) -> None:
         """Called when a party is clicked or otherwise activated."""
         self.save_state()
+
+        bui.app.analytics.submit_event(
+            ClassicAnalyticsEvent(
+                ClassicAnalyticsEvent.EventType.JOIN_PUBLIC_PARTY
+            )
+        )
+
         if party.queue is not None:
             from bauiv1lib.partyqueue import PartyQueueWindow
 

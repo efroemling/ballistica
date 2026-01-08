@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from bacommon.bs import ClassicChestAppearance
+from bacommon.classic import ClassicChestAppearance
 import babase
 import bauiv1
 import bascenev1

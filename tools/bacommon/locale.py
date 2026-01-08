@@ -71,6 +71,7 @@ class Locale(Enum):
     VENETIAN = 'venetn'
     VIETNAMESE = 'viet'
     KAZAKH = 'kazk'
+    JAPANESE = 'jpn'
 
     # Note: We use if-statement chains here so we can use assert_never()
     # to ensure we cover all existing values. But we cache lookups so
@@ -175,6 +176,8 @@ class Locale(Enum):
             return 'Vietnamese'
         if self is cls.KAZAKH:
             return 'Kazakh'
+        if self is cls.JAPANESE:
+            return 'Japanese'
 
         # Make sure we've covered all cases.
         assert_never(self)
@@ -296,6 +299,8 @@ class Locale(Enum):
             return 'Vietnamese'
         if self is cls.KAZAKH:
             return 'Kazakh'
+        if self is cls.JAPANESE:
+            return 'Japanese'
 
         # Make sure we've covered all cases.
         assert_never(self)
@@ -389,6 +394,8 @@ class Locale(Enum):
             return R.VIETNAMESE
         if self is cls.KAZAKH:
             return R.KAZAKH
+        if self is cls.JAPANESE:
+            return R.JAPANESE
 
         # Make sure we're covering all cases.
         assert_never(self)
@@ -444,6 +451,7 @@ class LocaleResolved(Enum):
     VENETIAN = 'venetn'
     VIETNAMESE = 'viet'
     KAZAKH = 'kazk'
+    JAPANESE = 'jpn'
 
     # Note: We use if-statement chains here so we can use assert_never()
     # to ensure we cover all existing values. But we cache lookups so
@@ -546,6 +554,8 @@ class LocaleResolved(Enum):
             return Locale.VIETNAMESE
         if self is cls.KAZAKH:
             return Locale.KAZAKH
+        if self is cls.JAPANESE:
+            return Locale.JAPANESE
 
         # Make sure we're covering all cases.
         assert_never(self)
@@ -647,6 +657,8 @@ class LocaleResolved(Enum):
             val = 'vi'
         elif self is cls.KAZAKH:
             val = 'kk'
+        elif self is cls.JAPANESE:
+            val = 'ja'
         else:
             # Make sure we cover all cases.
             assert_never(self)
@@ -840,6 +852,8 @@ class LocaleResolved(Enum):
             return cls.VIETNAMESE
         if lang == 'kk':
             return cls.KAZAKH
+        if lang == 'ja':
+            return cls.JAPANESE
 
         # Make noise if we come across something unexpected so we can
         # add it.

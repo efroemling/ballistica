@@ -14,7 +14,7 @@ from efro.message import Message, Response
 import bacommon.displayitem as ditm
 import bacommon.clouddialog as cdlg
 import bacommon.clienteffect as clfx
-from bacommon.bs._chest import ClassicChestAppearance
+from bacommon.classic._chest import ClassicChestAppearance
 
 
 @ioprepped

@@ -64,7 +64,7 @@ def run_bs_client_effects(
             if effect.sound is scls.UNKNOWN:
                 # Server should avoid sending us sounds we don't
                 # support. Make some noise if it happens.
-                logging.error('Got unrecognized bacommon.bs.Sound.')
+                logging.error('Got unrecognized bacommon.classic.Sound.')
             elif effect.sound is scls.CASH_REGISTER:
                 soundfile = 'cashRegister'
             elif effect.sound is scls.ERROR:
@@ -128,7 +128,7 @@ def run_bs_client_effects(
             # Server should not send us stuff we can't digest. Make
             # some noise if it happens.
             logging.error(
-                'Got unrecognized bacommon.bs.Effect; should not happen.'
+                'Got unrecognized bacommon.classic.Effect; should not happen.'
             )
 
         else:

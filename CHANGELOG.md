@@ -1,6 +1,9 @@
-### 1.7.60 (build 22680, api 9, 2025-12-12)
+### 1.7.60 (build 22684, api 9, 2026-01-07)
 - Fun easter-egg when clicking characters in inventory window (Thanks
   EraOSBeta!)
+- It is no longer possible to capture the hill from below the platform in happy
+  thoughts king of the hill (Thanks ZackerDC!)
+- Added Japanese translation (Thanks internet stranger!!)
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is

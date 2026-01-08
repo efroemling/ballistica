@@ -10,7 +10,7 @@ import random
 from typing import override, TYPE_CHECKING
 
 from efro.util import strict_partial
-import bacommon.bs
+import bacommon.classic
 import bacommon.displayitem as ditm
 import bauiv1 as bui
 
@@ -59,7 +59,9 @@ class ChestWindow(bui.MainWindow):
         self._time_string_timer: bui.AppTimer | None = None
         self._time_string_text: bui.Widget | None = None
         self._open_me_flash_timer: bui.AppTimer | None = None
-        self._prizesets: list[bacommon.bs.ChestInfoResponse.Chest.PrizeSet] = []
+        self._prizesets: list[
+            bacommon.classic.ChestInfoResponse.Chest.PrizeSet
+        ] = []
         self._prizeindex = -1
         self._prizesettxts: dict[int, list[bui.Widget]] = {}
         self._prizesetimgs: dict[int, list[bui.Widget]] = {}
@@ -202,7 +204,7 @@ class ChestWindow(bui.MainWindow):
         self._action_in_flight = True
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
-                bacommon.bs.ChestInfoMessage(chest_id=str(self._index)),
+                bacommon.classic.ChestInfoMessage(chest_id=str(self._index)),
                 on_response=bui.WeakCallPartial(self._on_chest_info_response),
             )
 
@@ -244,7 +246,7 @@ class ChestWindow(bui.MainWindow):
         bui.textwidget(edit=self._time_string_text, text=tstr)
 
     def _on_chest_info_response(
-        self, response: bacommon.bs.ChestInfoResponse | Exception
+        self, response: bacommon.classic.ChestInfoResponse | Exception
     ) -> None:
         assert self._action_in_flight  # Should be us.
         self._action_in_flight = False
@@ -299,7 +301,7 @@ class ChestWindow(bui.MainWindow):
         bui.app.classic.run_bs_client_effects(response.effects, delay=toffs)
 
     def _show_chest_actions(
-        self, user_tokens: int, chest: bacommon.bs.ChestInfoResponse.Chest
+        self, user_tokens: int, chest: bacommon.classic.ChestInfoResponse.Chest
     ) -> None:
         """Show state for our chest."""
         # pylint: disable=too-many-statements

@@ -13,7 +13,7 @@ from baplus._ads import AdsSubsystem
 if TYPE_CHECKING:
     from typing import Callable, Any
 
-    import bacommon.bs
+    import bacommon.classic
     from babase import AccountV2Subsystem
 
     from baplus._cloud import CloudSubsystem

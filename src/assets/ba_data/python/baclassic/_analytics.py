@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Functionality related to analytics."""
+"""Functionality related to classic analytics."""
 
 from __future__ import annotations
 

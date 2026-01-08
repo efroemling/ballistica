@@ -29,6 +29,7 @@ from babase._appmodeselector import AppModeSelector
 from babase._appintent import AppIntentDefault, AppIntentExec
 from babase._stringedit import StringEditSubsystem
 from babase._devconsole import DevConsoleSubsystem
+from babase._analytics import AnalyticsSubsystem
 from babase._appconfig import AppConfig
 from babase._logging import lifecyclelog, applog
 from babase._gc import GarbageCollectionSubsystem
@@ -151,6 +152,9 @@ class App:
 
         #: Subsystem for wrangling the dev-console UI.
         self.devconsole: DevConsoleSubsystem = DevConsoleSubsystem()
+
+        #: Subsystem for wrangling analytics.
+        self.analytics: AnalyticsSubsystem = AnalyticsSubsystem()
 
         #: Incremented each time the app leaves the
         #: :attr:`~babase.AppState.SUSPENDED` state. This can be a simple

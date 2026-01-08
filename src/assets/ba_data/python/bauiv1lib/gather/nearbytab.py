@@ -7,6 +7,7 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING, override
 
+from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
 import bascenev1 as bs
 
@@ -60,6 +61,12 @@ class NetScanner:
         self._last_selected_host = host
 
     def _on_activate(self, host: dict[str, Any]) -> None:
+
+        bui.app.analytics.submit_event(
+            ClassicAnalyticsEvent(
+                ClassicAnalyticsEvent.EventType.JOIN_NEARBY_PARTY
+            )
+        )
 
         # Store UI location to return to when done.
         if bs.app.classic is not None:

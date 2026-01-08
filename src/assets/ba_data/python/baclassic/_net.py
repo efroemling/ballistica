@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, override
 
 from efro.error import CommunicationError
 from efro.util import strip_exception_tracebacks
-import bacommon.bs
+import bacommon.classic
 import babase
 import bascenev1
 
@@ -113,7 +113,7 @@ class MasterServerV1CallThread(threading.Thread):
             dataenc = urllib.parse.urlencode(self._data)
 
             mresponse = plus.cloud.send_message(
-                bacommon.bs.LegacyRequest(
+                bacommon.classic.LegacyRequest(
                     self._request,
                     self._request_type,
                     classic.legacy_user_agent_string,

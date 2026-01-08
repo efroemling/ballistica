@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Annotated, override
 
 from efro.message import Message, Response
 from efro.dataclassio import ioprepped, IOAttrs
+from bacommon.analytics import AnalyticsEvent
 from bacommon.securedata import SecureDataChecker
 from bacommon.transfer import DirectoryManifest
 from bacommon.login import LoginType
@@ -453,3 +454,11 @@ class FulfillDocUIResponse(Response):
     """Here's that doc-ui you asked for, boss."""
 
     response: Annotated[DocUIResponse, IOAttrs('r')]
+
+
+@ioprepped
+@dataclass
+class AnalyticsEventMessage(Message):
+    """Have a nice analytics event!"""
+
+    event: Annotated[AnalyticsEvent, IOAttrs('e')]

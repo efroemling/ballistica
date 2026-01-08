@@ -278,7 +278,7 @@ skip_prefixes = [
     'bacommon.build.',
     'bacommon.bacloud.',
     'bacommon.assets.',
-    'bacommon.bs.',
+    'bacommon.classic.',
     'bacommon.clouddialog.',
     'bacommon.clienteffect.',
 ]

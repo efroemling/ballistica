@@ -116,3 +116,4 @@ class SpecialChar(Enum):
     MIKIROG = '\ue062'
     V2_LOGO = '\ue063'
     SANTA_HAT = '\ue064'
+    POTATO = '\ue065'

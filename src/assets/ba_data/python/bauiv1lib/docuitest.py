@@ -724,7 +724,7 @@ def _test_page_display_items(
     request: bacommon.docui.v1.Request,
 ) -> bacommon.docui.v1.Response:
     """Testing display-items."""
-    from bacommon.bs import ClassicChestAppearance, ClassicChestDisplayItem
+    from bacommon.classic import ClassicChestAppearance, ClassicChestDisplayItem
     import bacommon.docui.v1 as dui1
     import bacommon.displayitem as ditm
 

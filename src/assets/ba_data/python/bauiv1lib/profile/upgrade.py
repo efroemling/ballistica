@@ -8,7 +8,7 @@ import time
 import weakref
 from typing import TYPE_CHECKING
 
-import bacommon.bs
+import bacommon.classic
 
 import bauiv1 as bui
 
@@ -142,7 +142,7 @@ class ProfileUpgradeWindow(bui.Window):
         assert plus.accounts.primary is not None
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
-                bacommon.bs.GlobalProfileCheckMessage(self._name),
+                bacommon.classic.GlobalProfileCheckMessage(self._name),
                 on_response=bui.WeakCallPartial(
                     self._on_global_profile_check_response
                 ),
@@ -155,7 +155,7 @@ class ProfileUpgradeWindow(bui.Window):
         self._update()
 
     def _on_global_profile_check_response(
-        self, response: bacommon.bs.GlobalProfileCheckResponse | Exception
+        self, response: bacommon.classic.GlobalProfileCheckResponse | Exception
     ) -> None:
         if isinstance(response, Exception):
             bui.textwidget(

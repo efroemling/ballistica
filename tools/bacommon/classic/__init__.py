@@ -8,20 +8,20 @@
   it in mod code.
 """
 
-from bacommon.bs._account import (
-    ClassicAccountLiveData,
+from bacommon.classic._account import (
+    ClassicLiveAccountClientData,
 )
-from bacommon.bs._bs import (
+from bacommon.classic._classic import (
     TOKENS1_COUNT,
     TOKENS2_COUNT,
     TOKENS3_COUNT,
     TOKENS4_COUNT,
 )
-from bacommon.bs._chest import (
+from bacommon.classic._chest import (
     ClassicChestAppearance,
     ClassicChestDisplayItem,
 )
-from bacommon.bs._msg import (
+from bacommon.classic._msg import (
     GetClassicLeaguePresidentButtonInfoMessage,
     GetClassicLeaguePresidentButtonInfoResponse,
     ChestInfoMessage,
@@ -46,7 +46,7 @@ from bacommon.bs._msg import (
 __all__ = [
     'ChestInfoMessage',
     'ChestInfoResponse',
-    'ClassicAccountLiveData',
+    'ClassicLiveAccountClientData',
     'ClassicChestAppearance',
     'ClassicChestDisplayItem',
     'GetClassicLeaguePresidentButtonInfoMessage',

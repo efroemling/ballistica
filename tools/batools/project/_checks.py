@@ -284,6 +284,7 @@ def check_makefiles(self: ProjectUpdater) -> None:
 
 def check_python_files(self: ProjectUpdater) -> None:
     """Check all project python files."""
+    # pylint: disable=too-many-branches
     from efrotools.code import get_script_filenames
 
     scriptfiles = get_script_filenames(Path(self.projroot))
@@ -319,33 +320,37 @@ def check_python_files(self: ProjectUpdater) -> None:
                 packagedirs.append(fullpath)
 
     for packagedir in packagedirs:
-        # Special case: if this dir contains ONLY __pycache__ dirs and
-        # hidden files like .DS_Store, blow it away. It probably is left
-        # over bits from a since-removed-or-renamed package.
-        if _contains_only_pycache_and_cruft(packagedir):
-            print(
-                f"{Clr.MAG}NOTE: Directory '{packagedir}' contains only"
-                ' __pycache__ and hidden files/dirs; assuming it is'
-                ' left over from a deleted package and blowing it away.'
-                f'{Clr.RST}'
-            )
-            subprocess.run(['rm', '-rf', packagedir], check=True)
 
         for root, dirs, files in os.walk(packagedir, topdown=True):
             # Skip over hidden and pycache dirs.
             for dirname in dirs:
                 if dirname.startswith('.'):
                     dirs.remove(dirname)
+
+            # Don't delve into pycache dirs.
             if '__pycache__' in dirs:
                 dirs.remove('__pycache__')
 
-            # Check our packages and make sure all subdirs contain an
-            # __init__.py (I tend to forget this sometimes).
+            # Make sure there's an__init__.py (I tend to forget this
+            # sometimes).
             if '__init__.py' not in files:
-                raise CleanError(
-                    f'No __init__.py under (presumed)'
-                    f" Python package dir: '{root}'."
-                )
+
+                # Special case: If there's *nothing* in this dir except
+                # a pycache dir, blow it away - it was probably a
+                # removed package/subpackage.
+                if _contains_only_pycache_and_cruft(root):
+                    print(
+                        f"{Clr.MAG}NOTE: Directory '{root}' contains only"
+                        f' __pycache__ and hidden files/dirs; assuming it is'
+                        f' left over from a deleted (sub)package and blowing'
+                        f' it away. {Clr.RST}'
+                    )
+                    subprocess.run(['rm', '-rf', root], check=True)
+                else:
+                    raise CleanError(
+                        f'No __init__.py under (presumed)'
+                        f" Python package dir: '{root}'."
+                    )
 
 
 def _check_python_file(self: ProjectUpdater, fname: str) -> None:

@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, override
 
+from bacommon.analytics import ClassicAnalyticsEvent
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -545,6 +546,21 @@ class PlayOptionsWindow(PopupWindow):
         # Save our place in the UI that we'll return to when done.
         if bs.app.classic is not None:
             bs.app.classic.save_ui_state()
+
+        # Log analytics for when teams/ffa sessions are started from the
+        # UI.
+        if self._sessiontype is bs.FreeForAllSession:
+            bui.app.analytics.submit_event(
+                ClassicAnalyticsEvent(
+                    ClassicAnalyticsEvent.EventType.START_FFA_SESSION
+                )
+            )
+        elif self._sessiontype is bs.DualTeamSession:
+            bui.app.analytics.submit_event(
+                ClassicAnalyticsEvent(
+                    ClassicAnalyticsEvent.EventType.START_TEAMS_SESSION
+                )
+            )
 
         try:
             bs.new_host_session(self._sessiontype)

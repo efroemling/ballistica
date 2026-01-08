@@ -61,7 +61,7 @@ class Item(IOMultiType[ItemTypeID]):
         if type_id is t.TEST:
             return Test
         if type_id is t.CHEST:
-            from bacommon.bs._chest import ClassicChestDisplayItem
+            from bacommon.classic._chest import ClassicChestDisplayItem
 
             return ClassicChestDisplayItem
 

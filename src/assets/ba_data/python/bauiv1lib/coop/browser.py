@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, override
 
-
+from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
 from bauiv1lib.utils import scroll_fade_top, scroll_fade_bottom
 
@@ -1042,6 +1042,12 @@ class CoopBrowserWindow(bui.MainWindow):
         """Run the provided game."""
         from efro.util import strict_partial
         from bauiv1lib.confirm import ConfirmWindow
+
+        bui.app.analytics.submit_event(
+            ClassicAnalyticsEvent(
+                ClassicAnalyticsEvent.EventType.START_COOP_SESSION, extra=game
+            )
+        )
 
         classic = bui.app.classic
         assert classic is not None

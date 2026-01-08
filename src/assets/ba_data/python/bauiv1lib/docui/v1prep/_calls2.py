@@ -442,9 +442,9 @@ def prep_display_item(
             CHEST_APPEARANCE_DISPLAY_INFOS,
             CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
         )
-        import bacommon.bs
+        import bacommon.classic
 
-        assert isinstance(item, bacommon.bs.ClassicChestDisplayItem)
+        assert isinstance(item, bacommon.classic.ClassicChestDisplayItem)
 
         img = None
         show_text = False

@@ -16,7 +16,7 @@ import bauiv1 as bui
 if TYPE_CHECKING:
     from typing import Any
 
-    import bacommon.bs
+    import bacommon.classic
 
     from bascenev1lib.actor.spazbot import DemoSpazBotSet
 

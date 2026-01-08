@@ -10,12 +10,12 @@ from dataclasses import dataclass
 from typing import Annotated
 
 from efro.dataclassio import ioprepped, IOAttrs
-from bacommon.bs._chest import ClassicChestAppearance
+from bacommon.classic._chest import ClassicChestAppearance
 
 
 @ioprepped
 @dataclass
-class ClassicAccountLiveData:
+class ClassicLiveAccountClientData:
     """Live account data fed to the client in the bs classic app mode."""
 
     @dataclass

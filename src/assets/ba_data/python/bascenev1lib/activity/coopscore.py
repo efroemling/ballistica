@@ -10,7 +10,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 from efro.util import strict_partial
-import bacommon.bs
+import bacommon.classic
 from bacommon.login import LoginType
 import bascenev1 as bs
 import bauiv1 as bui
@@ -1211,14 +1211,14 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             ).autoretain()
 
     def _on_v2_score_results(
-        self, response: bacommon.bs.ScoreSubmitResponse | Exception
+        self, response: bacommon.classic.ScoreSubmitResponse | Exception
     ) -> None:
 
         if isinstance(response, Exception):
             logging.debug('Got error score-submit response: %s', response)
             return
 
-        assert isinstance(response, bacommon.bs.ScoreSubmitResponse)
+        assert isinstance(response, bacommon.classic.ScoreSubmitResponse)
 
         # Aim to have these effects run shortly after the final rating
         # hit happens.
@@ -1277,7 +1277,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 ):
                     with plus.accounts.primary:
                         plus.cloud.send_message_cb(
-                            bacommon.bs.ScoreSubmitMessage(score_token),
+                            bacommon.classic.ScoreSubmitMessage(score_token),
                             on_response=bui.WeakCallPartial(
                                 self._on_v2_score_results
                             ),

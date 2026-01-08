@@ -75,10 +75,10 @@ TextGraphics::TextGraphics() {
         // Same with the logo and most icons on sheets 3, 4, and 5.
         if (index == 30 || (index >= 50 && index < 99)
             || (index >= 100 && index < 125)) {
-          // A few are *extra* big
+          // A few are *extra* big.
           if (index == 67 || index == 65 || index == 70 || index == 72
               || index == 73 || index == 75 || index == 76 || index == 78
-              || index == 79 || index == 100) {
+              || index == 79 || index == 100 || index == 101) {
             g.pen_offset_y += 0.31f;
             if (index == 70) {
               g.pen_offset_y -= 0.02f;
@@ -86,6 +86,14 @@ TextGraphics::TextGraphics() {
             extra_advance += 0.04f;
             g.x_size *= 0.75f;
             g.y_size *= 0.75f;
+
+            // potato!
+            if (index == 101) {
+              g.x_size *= 1.2f;
+              g.y_size *= 1.2f;
+              extra_advance += 0.05f;
+              g.pen_offset_y -= 0.1f;
+            }
           } else {
             g.pen_offset_y += 0.4f;
             extra_advance += 0.08f;

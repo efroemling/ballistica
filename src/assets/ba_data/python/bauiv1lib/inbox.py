@@ -14,7 +14,7 @@ from efro.util import strict_partial, pairs_from_flat
 from efro.error import CommunicationError
 import bacommon.clouddialog as cdlg
 import bacommon.clouddialog.basic as bcdlg
-import bacommon.bs
+import bacommon.classic
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
 
@@ -495,7 +495,7 @@ class InboxWindow(bui.MainWindow):
 
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
-                bacommon.bs.InboxRequestMessage(),
+                bacommon.classic.InboxRequestMessage(),
                 on_response=bui.WeakCallPartial(
                     self._on_inbox_request_response
                 ),
@@ -697,7 +697,7 @@ class InboxWindow(bui.MainWindow):
             bui.buttonwidget(edit=button, label=label)
 
     def _on_inbox_request_response(
-        self, response: bacommon.bs.InboxRequestResponse | Exception
+        self, response: bacommon.classic.InboxRequestResponse | Exception
     ) -> None:
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
@@ -723,7 +723,7 @@ class InboxWindow(bui.MainWindow):
             self._error(errmsg)
             return
 
-        assert isinstance(response, bacommon.bs.InboxRequestResponse)
+        assert isinstance(response, bacommon.classic.InboxRequestResponse)
 
         # If we got no messages, don't touch anything. This keeps
         # keyboard control working in the empty case.

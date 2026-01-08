@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, override
 
 from efro.error import CommunicationError
 import bacommon.clienteffect as clfx
-import bacommon.bs
+import bacommon.classic
 from babase import AppMode
 import bauiv1 as bui
 from bauiv1lib.connectivity import wait_for_connectivity
@@ -234,19 +234,19 @@ class ClassicAppMode(AppMode):
 
         if item_id.startswith('tokens'):
             if item_id == 'tokens1':
-                tokens = bacommon.bs.TOKENS1_COUNT
+                tokens = bacommon.classic.TOKENS1_COUNT
                 tokens_str = str(tokens)
                 anim_time = 2.0
             elif item_id == 'tokens2':
-                tokens = bacommon.bs.TOKENS2_COUNT
+                tokens = bacommon.classic.TOKENS2_COUNT
                 tokens_str = str(tokens)
                 anim_time = 2.5
             elif item_id == 'tokens3':
-                tokens = bacommon.bs.TOKENS3_COUNT
+                tokens = bacommon.classic.TOKENS3_COUNT
                 tokens_str = str(tokens)
                 anim_time = 3.0
             elif item_id == 'tokens4':
-                tokens = bacommon.bs.TOKENS4_COUNT
+                tokens = bacommon.classic.TOKENS4_COUNT
                 tokens_str = str(tokens)
                 anim_time = 3.5
             else:
@@ -344,14 +344,14 @@ class ClassicAppMode(AppMode):
 
         with plus.accounts.primary:
             plus.cloud.send_message_cb(
-                bacommon.bs.GetClassicPurchasesMessage(),
+                bacommon.classic.GetClassicPurchasesMessage(),
                 on_response=bui.WeakCallPartial(
                     self._on_get_classic_purchases_response
                 ),
             )
 
     def _on_get_classic_purchases_response(
-        self, response: bacommon.bs.GetClassicPurchasesResponse | Exception
+        self, response: bacommon.classic.GetClassicPurchasesResponse | Exception
     ) -> None:
         assert self._purchase_request_in_flight
         self._purchase_request_in_flight = False
@@ -505,7 +505,7 @@ class ClassicAppMode(AppMode):
         print(f'GOT SUB TEST UPDATE: {val}')
 
     def _on_classic_account_data_change(
-        self, val: bacommon.bs.ClassicAccountLiveData
+        self, val: bacommon.classic.ClassicLiveAccountClientData
     ) -> None:
         achp = round(val.achievements / max(val.achievements_total, 1) * 100.0)
 

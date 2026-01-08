@@ -377,7 +377,7 @@ class SendInfoWindowLegacyModal(bui.Window):
 
 
 async def _send_info(description: str) -> None:
-    from bacommon.bs import SendInfoMessage
+    from bacommon.classic import SendInfoMessage
 
     plus = bui.app.plus
     assert plus is not None
