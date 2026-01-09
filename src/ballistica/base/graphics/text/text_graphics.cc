@@ -78,7 +78,8 @@ TextGraphics::TextGraphics() {
           // A few are *extra* big.
           if (index == 67 || index == 65 || index == 70 || index == 72
               || index == 73 || index == 75 || index == 76 || index == 78
-              || index == 79 || index == 100 || index == 101) {
+              || index == 79 || index == 100 || index == 101 || index == 102
+              || index == 103) {
             g.pen_offset_y += 0.31f;
             if (index == 70) {
               g.pen_offset_y -= 0.02f;
@@ -93,6 +94,20 @@ TextGraphics::TextGraphics() {
               g.y_size *= 1.2f;
               extra_advance += 0.05f;
               g.pen_offset_y -= 0.1f;
+            }
+            // palm tree
+            // if (index == 102) {
+            // g.x_size *= 1.2f;
+            // g.y_size *= 1.2f;
+            // extra_advance += 0.05f;
+            // g.pen_offset_y -= 0.1f;
+            // }
+            // boxing glove
+            if (index == 103) {
+              // g.x_size *= 1.1f;
+              // g.y_size *= 1.1f;
+              extra_advance += 0.08f;
+              // g.pen_offset_y -= 0.1f;
             }
           } else {
             g.pen_offset_y += 0.4f;

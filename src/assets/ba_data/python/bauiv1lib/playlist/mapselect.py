@@ -294,7 +294,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.connectivity import wait_for_connectivity
-        from bauiv1lib.store.newstore import StoreUIController
+        from bauiv1lib.store import StoreUIController
         from bauiv1lib.account.signin import show_sign_in_prompt
 
         # No-op if we're not in control.

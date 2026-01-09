@@ -12,8 +12,6 @@ import bauiv1 as bui
 if TYPE_CHECKING:
     from typing import Any, Sequence
 
-REQUIRE_PRO = False
-
 
 class ColorPicker(PopupWindow):
     """A popup UI to select from a set of colors.
@@ -108,16 +106,6 @@ class ColorPicker(PopupWindow):
             on_activate_call=bui.WeakCallStrict(self._select_other),
         )
 
-        assert bui.app.classic is not None
-        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro():
-            bui.imagewidget(
-                parent=self.root_widget,
-                position=(50, 12),
-                size=(30, 30),
-                texture=bui.gettexture('lock'),
-                draw_controller=other_button,
-            )
-
         # If their color is close to one of our swatches, select it.
         # Otherwise select 'other'.
         if closest_dist < 0.03:
@@ -135,14 +123,6 @@ class ColorPicker(PopupWindow):
         return self._tag
 
     def _select_other(self) -> None:
-        from bauiv1lib import purchase
-
-        # Requires pro.
-        assert bui.app.classic is not None
-        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro():
-            purchase.PurchaseWindow(items=['pro'])
-            self._transition_out()
-            return
         ColorPickerExact(
             parent=self._parent,
             position=self._position,

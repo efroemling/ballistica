@@ -254,6 +254,8 @@ enum class SpecialChar : uint8_t {
   kClose,
   kSantaHat,
   kPotato,
+  kPalmTree,
+  kBoxingGlove,
   kLast  // Sentinel
 };
 

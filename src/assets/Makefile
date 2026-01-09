@@ -410,7 +410,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/edit.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/profile/upgrade.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/purchase.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/qrcode.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/radiogroup.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/report.py \
@@ -441,10 +440,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/edit.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/entrytypeselect.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/soundtrack/macmusicapp.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/browser.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/item.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/store/newstore.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/store.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/tabs.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/teamnamescolors.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/template.py \

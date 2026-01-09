@@ -298,6 +298,12 @@ class StoreSubsystem:
                 'icons.potato': {
                     'icon': babase.charstr(babase.SpecialChar.POTATO)
                 },
+                'icons.palm_tree': {
+                    'icon': babase.charstr(babase.SpecialChar.PALM_TREE)
+                },
+                'icons.boxing_glove': {
+                    'icon': babase.charstr(babase.SpecialChar.BOXING_GLOVE)
+                },
             }
         return babase.app.classic.store_items
 

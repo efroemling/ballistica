@@ -117,3 +117,5 @@ class SpecialChar(Enum):
     V2_LOGO = '\ue063'
     SANTA_HAT = '\ue064'
     POTATO = '\ue065'
+    PALM_TREE = '\ue066'
+    BOXING_GLOVE = '\ue067'

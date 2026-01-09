@@ -738,7 +738,7 @@ class EditProfileWindow(
         """User wants to get more icons."""
         import bacommon.docui.v1 as dui1
 
-        from bauiv1lib.store.newstore import StoreUIController
+        from bauiv1lib.store import StoreUIController
 
         if not self._ensure_signed_in(
             origin_widget=bui.get_special_widget('store_button')
@@ -747,8 +747,10 @@ class EditProfileWindow(
 
         # Because profile editing is happening within an auxiliary
         # window stack, we need to bring up the store as a regular
-        # non-auxiliary window pushed onto our stack. If we brought it
-        # up as an auxiliary window itself it would replace our stack.
+        # non-auxiliary window pushed onto our stack. If we did the
+        # simple thing and triggered it as an auxiliary window then it
+        # would *replace* our stack and we wouldn't be able to get back
+        # to our editing.
         wait_for_connectivity(
             on_connected=lambda: self.main_window_replace(
                 bui.CallStrict(
@@ -795,7 +797,7 @@ class EditProfileWindow(
     def on_character_picker_get_more_press(self) -> None:
         import bacommon.docui.v1 as dui1
 
-        from bauiv1lib.store.newstore import StoreUIController
+        from bauiv1lib.store import StoreUIController
 
         if not self._ensure_signed_in(
             origin_widget=bui.get_special_widget('store_button')

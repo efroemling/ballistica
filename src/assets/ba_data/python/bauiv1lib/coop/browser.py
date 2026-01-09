@@ -11,7 +11,9 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
+
 from bauiv1lib.utils import scroll_fade_top, scroll_fade_bottom
+from bauiv1lib.connectivity import wait_for_connectivity
 
 if TYPE_CHECKING:
     from typing import Any
@@ -59,8 +61,8 @@ class CoopBrowserWindow(bui.MainWindow):
                 ),
             )
 
-        # Try to recreate the same number of buttons we had last time so our
-        # re-selection code works.
+        # Try to recreate the same number of buttons we had last time so
+        # our re-selection code works.
         self._tournament_button_count = app.config.get('Tournament Rows', 0)
         assert isinstance(self._tournament_button_count, int)
 
@@ -256,7 +258,8 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._subcontainer: bui.Widget | None = None
 
-        # Take note of our account state; we'll refresh later if this changes.
+        # Take note of our account state; we'll refresh later if this
+        # changes.
         self._account_state_num = plus.get_v1_account_state_num()
 
         # Same for fg/bg state.
@@ -264,14 +267,14 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._refresh()
 
-        # Even though we might display cached tournament data immediately, we
-        # don't consider it valid until we've pinged.
+        # Even though we might display cached tournament data
+        # immediately, we don't consider it valid until we've pinged.
         # the server for an update
         self._tourney_data_up_to_date = False
 
-        # If we've got a cached tournament list for our account and info for
-        # each one of those tournaments, go ahead and display it as a
-        # starting point.
+        # If we've got a cached tournament list for our account and info
+        # for each one of those tournaments, go ahead and display it as
+        # a starting point.
         if (
             classic.accounts.account_tournament_list is not None
             and classic.accounts.account_tournament_list[0]
@@ -315,17 +318,15 @@ class CoopBrowserWindow(bui.MainWindow):
     def _preload_modules() -> None:
         """Preload modules we use; avoids hitches (called in bg thread)."""
         # pylint: disable=cyclic-import
-        import bauiv1lib.purchase as _unused1
-        import bauiv1lib.coop.gamebutton as _unused2
-        import bauiv1lib.confirm as _unused3
-        import bauiv1lib.account as _unused4
-        import bauiv1lib.league.rankwindow as _unused5
-        import bauiv1lib.store.browser as _unused6
-        import bauiv1lib.account.viewer as _unused7
-        import bauiv1lib.tournamentscores as _unused8
-        import bauiv1lib.tournamententry as _unused9
-        import bauiv1lib.play as _unused10
-        import bauiv1lib.coop.tournamentbutton as _unused11
+        import bauiv1lib.coop.gamebutton as _unused1
+        import bauiv1lib.confirm as _unused2
+        import bauiv1lib.account as _unused3
+        import bauiv1lib.league.rankwindow as _unused4
+        import bauiv1lib.account.viewer as _unused5
+        import bauiv1lib.tournamentscores as _unused6
+        import bauiv1lib.tournamententry as _unused7
+        import bauiv1lib.play as _unused8
+        import bauiv1lib.coop.tournamentbutton as _unused9
 
     def _update(self) -> None:
         plus = bui.app.plus
@@ -356,8 +357,8 @@ class CoopBrowserWindow(bui.MainWindow):
             self._save_state()
             self._refresh()
 
-            # Also encourage a new tournament query since this will clear out
-            # our current results.
+            # Also encourage a new tournament query since this will
+            # clear out our current results.
             if not self._doing_tournament_query:
                 self._last_tournament_query_time = None
 
@@ -459,7 +460,8 @@ class CoopBrowserWindow(bui.MainWindow):
         assert bui.app.classic is not None
         accounts = bui.app.classic.accounts
         if data is not None:
-            tournament_data = data['t']  # This used to be the whole payload.
+            # This used to be the whole payload.
+            tournament_data = data['t']
             self._last_tournament_query_response_time = bui.apptime()
         else:
             tournament_data = None
@@ -469,7 +471,8 @@ class CoopBrowserWindow(bui.MainWindow):
             self._tourney_data_up_to_date = True
             accounts.cache_tournament_info(tournament_data)
 
-            # Also cache the current tourney list/order for this account.
+            # Also cache the current tourney list/order for this
+            # account.
             accounts.account_tournament_list = (
                 plus.get_v1_account_state_num(),
                 [e['tournamentID'] for e in tournament_data],
@@ -479,21 +482,11 @@ class CoopBrowserWindow(bui.MainWindow):
         self._update_for_data(tournament_data)
 
     def _set_campaign_difficulty(self, difficulty: str) -> None:
-        # pylint: disable=cyclic-import
-        from bauiv1lib.purchase import PurchaseWindow
-
         plus = bui.app.plus
         assert plus is not None
 
         assert bui.app.classic is not None
         if difficulty != self._campaign_difficulty:
-            if (
-                difficulty == 'hard'
-                and HARD_REQUIRES_PRO
-                and not bui.app.classic.accounts.have_pro_options()
-            ):
-                PurchaseWindow(items=['pro'])
-                return
             bui.getsound('gunCocking').play()
             if difficulty not in ('easy', 'hard'):
                 print('ERROR: invalid campaign difficulty:', difficulty)
@@ -1071,9 +1064,11 @@ class CoopBrowserWindow(bui.MainWindow):
     ) -> None:
         """Run the provided game."""
         # pylint: disable=cyclic-import
+        import bacommon.docui.v1 as dui1
+
         from bauiv1lib.confirm import ConfirmWindow
-        from bauiv1lib.purchase import PurchaseWindow
         from bauiv1lib.account.signin import show_sign_in_prompt
+        from bauiv1lib.store import StoreUIController
 
         plus = bui.app.plus
         assert plus is not None
@@ -1097,16 +1092,38 @@ class CoopBrowserWindow(bui.MainWindow):
 
         required_purchases = bui.app.classic.required_purchases_for_game(game)
 
+        have_requirements = True
+
         # Show pop-up to allow purchasing any required stuff we don't have.
         for purchase in required_purchases:
             if not purchase in bui.app.classic.purchases:
-                if plus.accounts.primary is None:
-                    show_sign_in_prompt()
-                else:
-                    PurchaseWindow(
-                        items=[purchase], origin_widget=origin_widget
+                have_requirements = False
+
+        if not have_requirements:
+            if plus.accounts.primary is None:
+                show_sign_in_prompt()
+            else:
+                # Push a custom store window onto our stack. We
+                # shouldn't use the standard auxiliary store window
+                # setup since this isn't a standard store window.
+                wait_for_connectivity(
+                    on_connected=lambda: self.main_window_replace(
+                        bui.CallStrict(
+                            StoreUIController().create_window,
+                            dui1.Request(
+                                '/',
+                                args={'unlockreqs': required_purchases},
+                            ),
+                            origin_widget=origin_widget,
+                            auxiliary_style=False,
+                        ),
+                        extra_type_id=(
+                            StoreUIController.get_window_extra_type_id()
+                        ),
                     )
-                return
+                )
+
+            return
 
         self._save_state()
 
@@ -1117,9 +1134,11 @@ class CoopBrowserWindow(bui.MainWindow):
         """Run the provided tournament game."""
         # pylint: disable=too-many-return-statements
 
-        from bauiv1lib.purchase import PurchaseWindow
+        import bacommon.docui.v1 as dui1
+
         from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.tournamententry import TournamentEntryWindow
+        from bauiv1lib.store import StoreUIController
 
         plus = bui.app.plus
         assert plus is not None
@@ -1185,16 +1204,42 @@ class CoopBrowserWindow(bui.MainWindow):
             # We gotta be missing *something* if its locked.
             assert required_purchases
 
+            have_requirements = True
+
             for purchase in required_purchases:
                 if purchase not in classic.purchases:
-                    if plus.accounts.primary is None:
-                        show_sign_in_prompt()
-                    else:
-                        PurchaseWindow(
-                            items=[purchase],
-                            origin_widget=tournament_button.button,
+                    have_requirements = False
+
+            if not have_requirements:
+                if plus.accounts.primary is None:
+                    show_sign_in_prompt()
+                else:
+                    # Push a custom store window onto our stack. We
+                    # shouldn't use the standard auxiliary store
+                    # window setup since this isn't a standard store
+                    # window.
+                    wait_for_connectivity(
+                        on_connected=lambda: self.main_window_replace(
+                            bui.CallStrict(
+                                StoreUIController().create_window,
+                                dui1.Request(
+                                    '/',
+                                    args={'unlockreqs': required_purchases},
+                                ),
+                                origin_widget=tournament_button.button,
+                                auxiliary_style=False,
+                            ),
+                            extra_type_id=(
+                                StoreUIController.get_window_extra_type_id()
+                            ),
                         )
-                    return
+                    )
+
+                    # PurchaseWindow(
+                    #     items=[purchase],
+                    #     origin_widget=tournament_button.button,
+                    # )
+                return
 
         if tournament_button.time_remaining <= 0:
             bui.screenmessage(

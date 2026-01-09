@@ -89,13 +89,12 @@ class MainMenuWindow(bui.MainWindow):
         import bauiv1lib.getremote as _unused
         import bauiv1lib.confirm as _unused2
         import bauiv1lib.account.settings as _unused5
-        import bauiv1lib.store.browser as _unused6
-        import bauiv1lib.credits as _unused7
-        import bauiv1lib.help as _unused8
-        import bauiv1lib.settings.allsettings as _unused9
-        import bauiv1lib.gather as _unused10
-        import bauiv1lib.watch as _unused11
-        import bauiv1lib.play as _unused12
+        import bauiv1lib.credits as _unused6
+        import bauiv1lib.help as _unused7
+        import bauiv1lib.settings.allsettings as _unused8
+        import bauiv1lib.gather as _unused9
+        import bauiv1lib.watch as _unused10
+        import bauiv1lib.play as _unused11
 
     def _show_remote_app_info_on_first_launch(self) -> None:
         app = bui.app

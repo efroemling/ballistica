@@ -755,7 +755,7 @@ class ClassicAppMode(AppMode):
         import bacommon.docui.v1 as dui1
 
         from bauiv1lib.docui import DocUIWindow
-        from bauiv1lib.store.newstore import StoreUIController
+        from bauiv1lib.store import StoreUIController
 
         btn = bui.get_special_widget('store_button')
 

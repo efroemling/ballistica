@@ -287,7 +287,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.account.signin import show_sign_in_prompt
-        from bauiv1lib.store.newstore import StoreUIController
+        from bauiv1lib.store import StoreUIController
         from bauiv1lib.connectivity import wait_for_connectivity
 
         plus = bui.app.plus
