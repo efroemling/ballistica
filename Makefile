@@ -1150,7 +1150,7 @@ cmake-server-build: assets-server meta cmake-server-binary
 cmake-server-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/server-$(CM_BT_LC)
 	@cd build/cmake/server-$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true \
       $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) \
       build/cmake/server-$(CM_BT_LC)
@@ -1172,7 +1172,7 @@ cmake-modular: cmake-modular-build
 cmake-modular-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/modular-$(CM_BT_LC)
 	@cd build/cmake/modular-$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) \
       $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) \
       build/cmake/modular-$(CM_BT_LC)
@@ -1194,7 +1194,7 @@ cmake-modular-server-build: assets-server meta cmake-modular-server-binary
 cmake-modular-server-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/modular-server-$(CM_BT_LC)
 	@cd build/cmake/modular-server-$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true \
       $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) \
       build/cmake/modular-server-$(CM_BT_LC)
