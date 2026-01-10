@@ -9,6 +9,7 @@ import os
 import logging
 from typing import TYPE_CHECKING, override
 
+import babase
 from bacommon.locale import LocaleResolved
 import bauiv1 as bui
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
@@ -675,6 +676,23 @@ class AdvancedSettingsWindow(bui.MainWindow):
         else:
             self._always_use_internal_keyboard_check_box = None
 
+        v -= 42
+        self._toggle_analytics_checkbox = cbw = bui.checkboxwidget(
+            parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|toggleanalytics',
+            position=(50, v),
+            size=(self._sub_width - 100, 30),
+            autoselect=True,
+            maxwidth=430,
+            textcolor=(0.8, 0.8, 0.8),
+            value=babase.is_analytics_enabled(),
+            text=bui.Lstr(value='Enable Analytics'),
+            # (resource=f'{self._r}.enableAnalytics'),
+            on_value_change_call=bui.WeakCallPartial(
+                self._on_toggle_analytics_value_change
+            ),
+        )
+
         v -= self._spacing * 2.1
 
         this_button_width = 410
@@ -691,6 +709,16 @@ class AdvancedSettingsWindow(bui.MainWindow):
             ),
         )
 
+        assert cbw is not None
+        bui.widget(
+            edit=cbw,
+            down_widget=self._modding_guide_button,
+        )
+        bui.widget(
+            edit=self._modding_guide_button,
+            up_widget=cbw,
+        )
+
         v -= self._spacing * 2.0
 
         self._dev_tools_button = bui.buttonwidget(
@@ -703,32 +731,6 @@ class AdvancedSettingsWindow(bui.MainWindow):
             text_scale=1.0,
             on_activate_call=self._on_dev_tools_button_press,
         )
-
-        if self._show_always_use_internal_keyboard:
-            assert self._always_use_internal_keyboard_check_box is not None
-            bui.widget(
-                edit=self._always_use_internal_keyboard_check_box.widget,
-                down_widget=self._modding_guide_button,
-            )
-            bui.widget(
-                edit=self._modding_guide_button,
-                up_widget=self._always_use_internal_keyboard_check_box.widget,
-            )
-        else:
-            # ew.
-            next_widget_up = (
-                self._disable_gyro_check_box.widget
-                if self._disable_gyro_check_box is not None
-                else self._disable_camera_shake_check_box.widget
-            )
-            bui.widget(
-                edit=self._modding_guide_button,
-                up_widget=next_widget_up,
-            )
-            bui.widget(
-                edit=next_widget_up,
-                down_widget=self._modding_guide_button,
-            )
 
         v -= self._spacing * 2.0
 
@@ -838,6 +840,11 @@ class AdvancedSettingsWindow(bui.MainWindow):
             {'type': 'SET_MISC_VAL', 'name': 'langInform', 'value': val}
         )
         plus.run_v1_account_transactions()
+
+    def _on_toggle_analytics_value_change(self, val: bool) -> None:
+        babase.analytics_disable(not val)
+        bui.app.config['Analytics Enabled'] = val
+        bui.app.config.apply_and_commit()
 
     def _on_vr_test_press(self) -> None:
         from bauiv1lib.settings.vrtesting import VRTestingWindow

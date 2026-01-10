@@ -26,6 +26,7 @@ class CorePlatform {
  public:
   /// Instantiate the CorePlatform subclass for the current build.
   static auto Create() -> CorePlatform*;
+  bool AnalyticsIsEnabled = true;
 
 #pragma mark LIFECYCLE/SETTINGS ------------------------------------------------
 
