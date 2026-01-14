@@ -12,22 +12,11 @@ on:
 jobs:
   # We run most of our testing only on linux but it should apply to mac too;
   # we can always add an explicit mac job later if it seems worthwhile.
-  setup_bombsquad_cache:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: |
-          make assets-cmake
-          make assets-windows
 
   check_linux:
-    needs: setup_bombsquad_cache
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Run checks
@@ -35,12 +24,13 @@ jobs:
 
   # Compile a server binary and run some tests.
   build_and_test_linux:
-    needs: setup_bombsquad_cache
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
+        with:
+          using-cmake: true
       - name: Assemble monolithic server build
         run: make cmake-server-build
       - name: Run tests
@@ -50,12 +40,17 @@ jobs:
   # added or removed or other changes made.
   # (How ballisticakit becomes bombsquad/etc.)
   spinoff_test_linux:
-    needs: setup_bombsquad_cache
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
+        # Not using the `using-cmake: true` 
+        # because it doesn't benifit from the cache 
+        # as it sets up a new project dir
+        #
+        # with:
+        #   using-cmake: true
       - name: Build spinoff project with only core featureset
         run: make spinoff-test-core
       - name: Build spinoff project with core and base featuresets
@@ -65,12 +60,13 @@ jobs:
   # Make a copy of the template feature-set and build with it included.
   # Also take the opportunity to test a modular build (we did monolithic above).
   feature_set_copy_test_linux:
-    needs: setup_bombsquad_cache
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
+        with:
+          using-cmake: true
       - name: Create poo feature-set
         run: tools/spinoff fset-copy template_fs poo
       - name: Add new feature-set to project
@@ -86,10 +82,9 @@ jobs:
   # significantly between windows and linux/apple. We also are able to
   # build our windows binary.
   build_and_test_windows:
-    needs: setup_bombsquad_cache
     runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
