@@ -1,4 +1,4 @@
-### 1.7.60 (build 22688, api 9, 2026-01-14)
+### 1.7.60 (build 22689, api 9, 2026-01-14)
 - Fun easter-egg when clicking characters in inventory window (Thanks
   EraOSBeta!)
 - It is no longer possible to capture the hill from below the platform in happy
@@ -7,6 +7,8 @@
 - Removed final remnants of the old store UI.
 - Tweaked flag positions on Roundabout to reduce tossing-the-flag-across cheese
   (Thanks SoK!).
+- Fixed an error that could occur when leaving solo mode elimination (Thanks
+  FluffyPal0!).
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
