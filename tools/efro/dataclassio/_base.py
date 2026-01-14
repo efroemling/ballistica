@@ -108,7 +108,12 @@ class IOMultiType[EnumT: Enum]:
 
     @classmethod
     def get_type(cls, type_id: EnumT) -> type[Self]:
-        """Return a specific subclass given a type-id."""
+        """Return a specific subclass given a type-id.
+
+        Should be overridden by child classes.
+        Generally, users of the class should call :meth:`get_type_cached()`
+        instead of this, as it is more efficient.
+        """
         raise NotImplementedError()
 
     @final
