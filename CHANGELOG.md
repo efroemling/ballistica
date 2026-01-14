@@ -1,10 +1,12 @@
-### 1.7.60 (build 22687, api 9, 2026-01-08)
+### 1.7.60 (build 22688, api 9, 2026-01-14)
 - Fun easter-egg when clicking characters in inventory window (Thanks
   EraOSBeta!)
 - It is no longer possible to capture the hill from below the platform in happy
   thoughts king of the hill (Thanks ZackerDC!)
 - Added Japanese translation (Thanks internet stranger!!)
 - Removed final remnants of the old store UI.
+- Tweaked flag positions on Roundabout to reduce tossing-the-flag-across cheese
+  (Thanks SoK!).
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
