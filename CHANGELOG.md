@@ -9,6 +9,9 @@
   (Thanks SoK!).
 - Fixed an error that could occur when leaving solo mode elimination (Thanks
   FluffyPal0!).
+- Asset-package versions now use a date-based version format instead of a
+  numeric one. So instead of `a-0.bastdassets.5`, built-in assets will now be
+  something like `a-0.bastdassets.260116` (YYMMDD).
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is

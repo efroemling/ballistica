@@ -263,6 +263,12 @@ class IOAttrs:
     #: editing the value. Does not actually affect value input/output.
     multiline: bool | None = None
 
+    #: If provided for a string, hints whether the value should be
+    #: edited as distinct options in something like a popup menu instead
+    #: of as a text field. Can be referenced when creating UI for
+    #: editing the value. Does not actually affect value input/output.
+    edit_as_options: bool | None = None
+
     def __init__(
         self,
         storagename: str | None = storagename,
@@ -276,7 +282,10 @@ class IOAttrs:
         soft_default_factory: Callable[[], Any] | _MissingType = MISSING,
         enum_fallback: Enum | None = None,
         multiline: bool | None = None,
+        edit_as_options: bool | None = None,
     ):
+        # pylint: disable=too-many-branches
+
         # Only store values that differ from class defaults to keep
         # our instances nice and lean.
         cls = type(self)
@@ -311,6 +320,8 @@ class IOAttrs:
             self.enum_fallback = enum_fallback
         if multiline is not cls.multiline:
             self.multiline = multiline
+        if edit_as_options is not cls.multiline:
+            self.edit_as_options = edit_as_options
 
     def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs is ok to use with provided field."""
