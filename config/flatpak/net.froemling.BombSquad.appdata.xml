@@ -5,42 +5,48 @@
   <launchable type="desktop-id">net.froemling.BombSquad.desktop</launchable>
   <name>BombSquad</name>
   <developer_name>Eric Froemling</developer_name>
-  <summary>Fast-paced multiplayer party game with explosions</summary>
-  <metadata_license>CC0-1.0</metadata_license>
-  <project_license>LicenseRef-proprietary=https://link.to/license</project_license>
+  <summary>Blow up your friends in mini-games from capture-the-flag to hockey!</summary>
+  <metadata_license>LicenseRef-proprietary=https://github.com/efroemling/ballistica/blob/main/LICENSE</metadata_license>
+  <project_license>LicenseRef-proprietary=https://github.com/efroemling/ballistica/blob/main/LICENSE</project_license>
   <url type="homepage">https://www.froemling.net/apps/bombsquad</url>
   <url type="help">https://github.com/efroemling/ballistica/issues</url>
   <description>
-    <p>Grab some friends, your PC, a few gamepads or phones, and get your party-game on!
+    <p>Blow up your friends in mini-games ranging from capture-the-flag to hockey! Featuring 8 player local/networked multiplayer, gratuitous explosions, advanced ragdoll face-plant physics, pirates, ninjas, barbarians, insane chefs, and more.
 
-Challenge your friends or the computer to a plethora of mini-games including Capture-the-Flag, King-of-the-Hill, Bomber-Hockey, and of course Epic-Slow-Motion-Elimination.
+BombSquad supports touch screens as well as a variety of controllers so all your friends can get in on the action.
+You can even use phones and tablets as controllers via the free 'BombSquad Remote' app.
 
-Laugh gleefully as you land a perfectly-thrown sticky-bomb squarely on an opponent's face, freeze them with an ice bomb and shatter them to bits with a punch, or just pick them up and toss them off a nearby cliff. BombSquad's rag doll physics based gameplay ensures that every confrontation leads to a unique (and often hilarious) outcome.
+Bombs away!
 
-    Up to 8 players can get in on the action on a single Mac through BombSquad's support of keyboards, USB gamepads, Wiimotes, PS3 controllers, and XBox 360 controllers. You can even use Android devices, iPhones, iPod Touches, and iPads as controllers via 'BombSquad Remote', a free app available on the iOS App Store/Google Play Store.
-
-Bombs Away!
-
-Check out www.froemling.net/bombsquad for gameplay videos and further info.</p>
+Check out www.froemling.net/apps/bombsquad for gameplay videos and further info.</p>
   </description>
   <screenshots>
-    <screenshot type="default">
-      <caption>The BombSquad main menu</caption>
-      <image type="source" width="985" height="599">https://i.imgur.com/5L7Kl6b.png</image>
+    <video type="default" width="1920" height="1080">
+      <source url="https://files.ballistica.net/bombsquad/promo/BombSquadTrailer1.mp4" type="video/mp4"/>
+    </video>
+    <screenshot>
+      <caption>BombSquadBanner</caption>
+      <image type="source" width="954" height="537">https://files.ballistica.net/bombsquad/promo/BombsquadBanner.jpg</image>
     </screenshot>
     <screenshot>
-      <caption>Campaign level</caption>
-      <image type="source" width="985" height="599">https://i.imgur.com/aCsQfZB.png</image>
+      <caption>BombSquadBannerAlt</caption>
+      <image type="source" width="911" height="537">https://files.ballistica.net/bombsquad/promo/BombSquadBannerAlt.png</image>
     </screenshot>
     <screenshot>
-      <caption>Explosion</caption>
-      <image type="source" width="985" height="599">https://i.imgur.com/2pwXxbR.png</image>
+      <caption>onslaught</caption>
+      <image type="source" width="859" height="537">https://files.ballistica.net/bombsquad/promo/onslaught.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Race</caption>
+      <image type="source" width="859" height="537">https://files.ballistica.net/bombsquad/promo/race.png</image>
     </screenshot>
   </screenshots>
   <kudos>
     <kudo>HiDpiIcon</kudo>
+    <kudo>UserDocs</kudo>
+    <kudo>HighScore</kudo>
   </kudos>
   <releases>
-    <release date="2022-or-when-it-will-happen" version="1.6.10"/>
+    <release date="2026-01-23" version="1.7.60"/>
   </releases>
 </component>
