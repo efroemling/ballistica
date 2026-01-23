@@ -101,7 +101,7 @@ modules:
 
       - type: archive
         url: https://github.com/Loup-Garou911XD/ballistica/releases/latest/download/linux_build_env.tar
-        sha256: 2fc63339daae641bd678f4cf03b6bcd3040d59983f0a5151864def02fd0326d4
+        sha256: 4a08db1f57819615a02285b2e3543c4de601ac2ab0b0fc7ed5e513c4a36a45c7
         strip-components: 0
 
       - type: file
