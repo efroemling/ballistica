@@ -6,17 +6,6 @@ on:
       - "v*"
 
 jobs:
-  setup_bombsquad_cache:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: |
-          make assets-cmake
-          make assets-windows
-
   create_release:
     runs-on: ubuntu-latest
     outputs:
@@ -44,7 +33,7 @@ jobs:
       - name: Make the build
         run: make assets-cmake
       - name: Compress the build
-        run: tar -cf "linux_build_env.tar" *
+        run: tar -cf "linux_build_env.tar" .
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:

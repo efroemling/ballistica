@@ -79,12 +79,13 @@ modules:
       append-path: /usr/lib/sdk/llvm20/bin
       prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
       build-args:
-        - --share=network
+        # - --share=network
     build-commands:
       # FLATPAK_DEST=/app, FLATPAK_ID=net.froemling.bombsquad
       - mkdir -p ${FLATPAK_DEST}/bin/bombsquad
       # Get rid of tools/pcommand and similar with wrong shebangs
-      - make env-clean
+      - ls -al
+      # - make env-clean
       - make cmake-build
       - mv build/cmake/debug/ballisticakit build/cmake/debug/staged/
       - cp -r build/cmake/debug/staged/* ${FLATPAK_DEST}/bin/bombsquad/
@@ -95,8 +96,13 @@ modules:
       - install -Dm644 ${FLATPAK_ID}.releases.xml ${FLATPAK_DEST}/share/metainfo/releases/${FLATPAK_ID}.releases.xml
 
     sources:
-      - type: dir
-        path: ./../../
+      # - type: dir
+      #   path: ./../../
+
+      - type: archive
+        url: https://github.com/Loup-Garou911XD/ballistica/releases/latest/download/linux_build_env.tar
+        sha256: 2fc63339daae641bd678f4cf03b6bcd3040d59983f0a5151864def02fd0326d4
+        strip-components: 0
 
       - type: file
         dest-filename: net.froemling.bombsquad.png
