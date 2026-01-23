@@ -33,11 +33,7 @@ jobs:
         with:
           using-cmake: true
       - name: Make the build
-        run: |
-          pip download \
-          --dest python-deps \
-          -r config/requirements.txt
-          make cmake-build
+        run: make assets-cmake
       - name: Compress the build
         run: tar -cf "linux_build_env.tar" --exclude="linux_build_env.tar" .
       - name: Upload the build

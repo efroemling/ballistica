@@ -83,9 +83,11 @@ modules:
     build-commands:
       # FLATPAK_DEST=/app, FLATPAK_ID=net.froemling.bombsquad
       - mkdir -p ${FLATPAK_DEST}/bin/bombsquad
+      - rm -f .venv/bin/python3.13
+      - ln -s /usr/bin/python3.13 .venv/bin/python3.13
+      - python3.13 -m venv --upgrade .venv
       # Get rid of tools/pcommand and similar with wrong shebangs
-      - ls -al
-      # - make env-clean
+      - make env-clean
       - make cmake-build
       - mv build/cmake/debug/ballisticakit build/cmake/debug/staged/
       - cp -r build/cmake/debug/staged/* ${FLATPAK_DEST}/bin/bombsquad/
@@ -101,7 +103,7 @@ modules:
 
       - type: archive
         url: https://github.com/Loup-Garou911XD/ballistica/releases/latest/download/linux_build_env.tar
-        sha256: eca0eab0163a6707958ecb070f3c5dc1485dd19cf5146226ad867c72f773263c
+        sha256: 3f74d5a54e079add537cd1ecb3a833d003594c6f18a481edc4112505207968d8
         strip-components: 0
 
       - type: file
