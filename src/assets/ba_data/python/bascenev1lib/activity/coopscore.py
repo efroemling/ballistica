@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Provides a score screen for coop games."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -1578,7 +1579,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     ]
                     # pylint: disable=useless-suppression
                     # pylint: disable=unbalanced-tuple-unpacking
-                    (pr1, pv1, pr2, pv2, pr3, pv3) = (
+                    pr1, pv1, pr2, pv2, pr3, pv3 = (
                         bs.app.classic.get_tournament_prize_strings(
                             tourney_info, include_tickets=False
                         )

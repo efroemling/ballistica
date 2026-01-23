@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Logging functionality."""
+
 from __future__ import annotations
 
 import sys

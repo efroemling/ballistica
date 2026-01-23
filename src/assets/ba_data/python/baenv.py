@@ -14,6 +14,7 @@ Ballistica can be used without explicitly configuring the environment in
 order to integrate it in arbitrary Python environments, but this may
 cause some features to be disabled or behave differently than expected.
 """
+
 from __future__ import annotations
 
 import os

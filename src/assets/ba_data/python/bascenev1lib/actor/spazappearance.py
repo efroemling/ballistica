@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Appearance functionality for spazzes."""
+
 from __future__ import annotations
 
 import bascenev1 as bs

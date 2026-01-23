@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """UI related to league rank."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations

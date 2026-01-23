@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Music playback using OS functionality exposed through the C++ layer."""
+
 from __future__ import annotations
 
 import os

@@ -3,6 +3,7 @@
 """Functionality related to classic game tips.
 
 These can be shown at opportune times such as between rounds."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

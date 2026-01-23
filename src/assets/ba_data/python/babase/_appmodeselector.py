@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Contains AppModeSelector base class."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

@@ -42,7 +42,6 @@ from bacommon.classic._msg import (
     SendInfoResponse,
 )
 
-
 __all__ = [
     'ChestInfoMessage',
     'ChestInfoResponse',

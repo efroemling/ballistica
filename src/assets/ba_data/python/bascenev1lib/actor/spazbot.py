@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Bot versions of Spaz."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations

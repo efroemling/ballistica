@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Testing message functionality."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations

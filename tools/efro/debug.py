@@ -10,6 +10,7 @@ For this reason, these methods should NEVER be called in production code.
 Enable them only for debugging situations and be aware that their use may
 itself cause problems. The same is true for the gc module itself.
 """
+
 from __future__ import annotations
 
 import os

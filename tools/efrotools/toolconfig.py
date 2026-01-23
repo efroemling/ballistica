@@ -160,8 +160,7 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
     shortname = short_names.get(projroot.name, projroot.name)
     cfg = cfg.replace('__EFRO_PROJECT_SHORTNAME__', shortname)
 
-    mypy_standard_settings = textwrap.dedent(
-        """
+    mypy_standard_settings = textwrap.dedent("""
     # We don't want all of our plain scripts complaining
     # about __main__ being redefined.
     scripts_are_modules = True
@@ -187,8 +186,7 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
 
     enable_error_code = redundant-expr, truthy-bool, \
 truthy-function, unused-awaitable, explicit-override
-    """
-    ).strip()
+    """).strip()
 
     cfg = cfg.replace('__EFRO_MYPY_STANDARD_SETTINGS__', mypy_standard_settings)
 

@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to co-op games."""
+
 from __future__ import annotations
 
 import logging

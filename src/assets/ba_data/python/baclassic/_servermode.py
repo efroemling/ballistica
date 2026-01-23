@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to running the game in server-mode."""
+
 from __future__ import annotations
 
 import sys

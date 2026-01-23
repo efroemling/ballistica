@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """UI for browsing available co-op levels/games/etc."""
+
 # FIXME: Break this up.
 # pylint: disable=too-many-lines
 

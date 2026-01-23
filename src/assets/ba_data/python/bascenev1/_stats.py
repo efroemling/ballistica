@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to scores and statistics."""
+
 from __future__ import annotations
 
 import random
@@ -12,7 +13,6 @@ from dataclasses import dataclass
 import babase
 
 import _bascenev1
-
 
 if TYPE_CHECKING:
     from typing import Any, Sequence

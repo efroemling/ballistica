@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Various functionality related to achievements."""
+
 from __future__ import annotations
 
 import logging

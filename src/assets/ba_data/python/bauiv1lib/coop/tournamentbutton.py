@@ -510,7 +510,7 @@ class TournamentButton:
         x_offs2c = x_offs2 + 50
 
         # Fetch prize range and trophy strings.
-        (pr1, pv1, pr2, pv2, pr3, pv3) = classic.get_tournament_prize_strings(
+        pr1, pv1, pr2, pv2, pr3, pv3 = classic.get_tournament_prize_strings(
             entry, include_tickets=False
         )
 

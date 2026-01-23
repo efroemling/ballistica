@@ -8,6 +8,7 @@ generally a better direction to go since introspecting Python objects
 or source code ast is more foolproof than the text based parsing we
 are doing here.
 """
+
 from __future__ import annotations
 
 import re

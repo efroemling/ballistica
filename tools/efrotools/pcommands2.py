@@ -6,6 +6,7 @@ A snippet is a mini-program that directly takes input from stdin and does
 some focused task. This module is a repository of common snippets that can
 be imported into projects' pcommand script for easy reuse.
 """
+
 from __future__ import annotations
 
 import sys

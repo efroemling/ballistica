@@ -3,6 +3,7 @@
 # pylint: disable=too-many-lines
 
 """Provides classic app subsystem."""
+
 from __future__ import annotations
 
 import random

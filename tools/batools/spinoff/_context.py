@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Spinoff system for spawning child projects from a ballistica project."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations

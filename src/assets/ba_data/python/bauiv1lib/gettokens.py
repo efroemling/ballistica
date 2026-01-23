@@ -13,7 +13,6 @@ import bacommon.cloud
 import bacommon.classic
 import bauiv1 as bui
 
-
 if TYPE_CHECKING:
     from typing import Any, Callable
 

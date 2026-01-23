@@ -10,7 +10,6 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-
 # Pylint's preferred import order here seems non-deterministic (as of 2.17.2).
 # pylint: disable=useless-suppression
 # pylint: disable=wrong-import-order
