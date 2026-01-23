@@ -10,8 +10,8 @@
 - Fixed an error that could occur when leaving solo mode elimination (Thanks
   FluffyPal0!).
 - Asset-package versions now use a date-based version format instead of a
-  numeric one. So instead of `a-0.bastdassets.5`, built-in assets will now be
-  something like `a-0.bastdassets.260116` (YYMMDD).
+  numeric one. So instead of `a-0.bastdassets.5`, built-in assets will now come
+  from something like `a-0.bastdassets.260116` (YYMMDD).
 - Flatpak package name is now `net.froemling.bombsquad` instead of
   `net.froemling.BombSquad` along with improved package metadata.
   Installing new flatpak builds alongside old flatpak builds will create 2 
