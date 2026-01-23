@@ -35,478 +35,479 @@ jobs:
   #                                   Linux                                      #
   #                                                                              #
   ################################################################################
-  release_linux_x86_64_gui_debug_build:
-    needs: [create_release, setup_bombsquad_cache]
+  release_linux_build_env:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
-        run: make prefab-gui-debug-build
+        run: make assets-cmake
       - name: Compress the build
-        run: tar -cf "linux_x86_64_gui_debug.tar" build/prefab/full/linux_x86_64_gui/
+        run: tar -cf "linux_build_env.tar" *
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
           omitBody: true
-          artifacts: linux_x86_64_gui_debug.tar
+          artifacts: linux_build_env.tar
 
-  release_linux_x86_64_server_debug_build:
-    needs: [create_release, setup_bombsquad_cache]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-server-debug-build
-      - name: Compress the build
-        run: tar -cf "linux_x86_64_server_debug.tar" build/prefab/full/linux_x86_64_server/
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBody: true
-          artifacts: linux_x86_64_server_debug.tar
+  # release_linux_x86_64_gui_debug_build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-gui-debug-build
+  #     - name: Compress the build
+  #       run: tar -cf "linux_x86_64_gui_debug.tar" build/prefab/full/linux_x86_64_gui/
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: linux_x86_64_gui_debug.tar
 
-  release_linux_arm64_gui_debug_build:
-    needs: [create_release, setup_bombsquad_cache]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-linux-arm64-gui-debug-build
-      - name: Compress the build
-        run: tar -cf "linux_arm64_gui_debug.tar" build/prefab/full/linux_arm64_gui/
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBody: true
-          artifacts: linux_arm64_gui_debug.tar
+  # release_linux_x86_64_server_debug_build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-server-debug-build
+  #     - name: Compress the build
+  #       run: tar -cf "linux_x86_64_server_debug.tar" build/prefab/full/linux_x86_64_server/
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: linux_x86_64_server_debug.tar
 
-  release_linux_arm64_server_debug_build:
-    needs: [create_release, setup_bombsquad_cache]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-linux-arm64-server-debug-build
-      - name: Compress the build
-        run: tar -cf "linux_arm64_server_debug.tar" build/prefab/full/linux_arm64_server/
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBody: true
-          artifacts: linux_arm64_server_debug.tar
+  # release_linux_arm64_gui_debug_build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-linux-arm64-gui-debug-build
+  #     - name: Compress the build
+  #       run: tar -cf "linux_arm64_gui_debug.tar" build/prefab/full/linux_arm64_gui/
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: linux_arm64_gui_debug.tar
 
-  ################################################################################
-  #                                                                              #
-  #                                    Mac                                       #
-  #                                                                              #
-  ################################################################################
-  release_mac_arm64_gui_debug_build:
-    needs: [create_release, setup_bombsquad_cache]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-mac-arm64-gui-debug-build
-      - name: Compress the build
-        run: tar -cf "mac_arm64_gui_debug.tar" build/prefab/full/mac_arm64_gui/
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBody: true
-          artifacts: mac_arm64_gui_debug.tar
+  # release_linux_arm64_server_debug_build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-linux-arm64-server-debug-build
+  #     - name: Compress the build
+  #       run: tar -cf "linux_arm64_server_debug.tar" build/prefab/full/linux_arm64_server/
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: linux_arm64_server_debug.tar
 
-  release_mac_arm64_server_debug_build:
-    needs: [create_release, setup_bombsquad_cache]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-mac-arm64-server-debug-build
-      - name: Compress the build
-        run: tar -cf "mac_arm64_server_debug.tar" build/prefab/full/mac_arm64_server/
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBody: true
-          artifacts: mac_arm64_server_debug.tar
+  # ################################################################################
+  # #                                                                              #
+  # #                                    Mac                                       #
+  # #                                                                              #
+  # ################################################################################
+  # release_mac_arm64_gui_debug_build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-mac-arm64-gui-debug-build
+  #     - name: Compress the build
+  #       run: tar -cf "mac_arm64_gui_debug.tar" build/prefab/full/mac_arm64_gui/
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: mac_arm64_gui_debug.tar
 
-  ################################################################################
-  #                                                                              #
-  #                                   Windows                                    #
-  #                                                                              #
-  ################################################################################
-  release_windows_x86_64_gui_debug_build:
-    needs: [create_release, setup_bombsquad_cache]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-windows-x86-64-gui-debug-build
-      - name: Compress the build
-        run: tar -cf "windows_x86_64_gui_debug.tar" build/prefab/full/windows_x86_64_gui/
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBody: true
-          artifacts: windows_x86_64_gui_debug.tar
+  # release_mac_arm64_server_debug_build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-mac-arm64-server-debug-build
+  #     - name: Compress the build
+  #       run: tar -cf "mac_arm64_server_debug.tar" build/prefab/full/mac_arm64_server/
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: mac_arm64_server_debug.tar
 
-  release_windows_x86_64_server_debug_build:
-    needs: [create_release, setup_bombsquad_cache]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-windows-x86-64-server-debug-build
-      - name: Compress the build
-        run: tar -cf "windows_x86_64_server_debug.tar" build/prefab/full/windows_x86_64_server/
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBody: true
-          artifacts: windows_x86_64_server_debug.tar
+  # ################################################################################
+  # #                                                                              #
+  # #                                   Windows                                    #
+  # #                                                                              #
+  # ################################################################################
+  # release_windows_x86_64_gui_debug_build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-windows-x86-64-gui-debug-build
+  #     - name: Compress the build
+  #       run: tar -cf "windows_x86_64_gui_debug.tar" build/prefab/full/windows_x86_64_gui/
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: windows_x86_64_gui_debug.tar
 
-  ################################################################################
-  #                                                                              #
-  #                                   Docker                                     #
-  #                                                                              #
-  ################################################################################
-  release_docker_gui_debug_image:
-    needs: [create_release, setup_bombsquad_cache]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Docker login
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Make the build
-        run: |
-          make docker-gui-debug
-          make docker-save
-      - name: Zip the build
-        run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBody: true
-          artifacts: bombsquad_docker_gui_debug.tar.zip
-      - name: Push to github image repository
-        run: |
-          docker tag bombsquad_gui_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_${{ github.ref_name }}_x86_64
-          docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_${{ github.ref_name }}_x86_64
+  # release_windows_x86_64_server_debug_build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make prefab-windows-x86-64-server-debug-build
+  #     - name: Compress the build
+  #       run: tar -cf "windows_x86_64_server_debug.tar" build/prefab/full/windows_x86_64_server/
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: windows_x86_64_server_debug.tar
 
-  release_docker_server_debug_image:
-    needs: [create_release, setup_bombsquad_cache]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Docker login
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Make the build
-        run: |
-          make docker-server-debug
-          make docker-save
-      - name: Zip the build
-        run: zip -j bombsquad_docker_server_debug.tar.zip build/docker/bombsquad_server_debug_docker.tar
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBody: true
-          artifacts: bombsquad_docker_server_debug.tar.zip
-      - name: Push to github image repository
-        run: |
-          docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}_x86_64
-          docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}_x86_64
+  # ################################################################################
+  # #                                                                              #
+  # #                                   Docker                                     #
+  # #                                                                              #
+  # ################################################################################
+  # release_docker_gui_debug_image:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Docker login
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Make the build
+  #       run: |
+  #         make docker-gui-debug
+  #         make docker-save
+  #     - name: Zip the build
+  #       run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: bombsquad_docker_gui_debug.tar.zip
+  #     - name: Push to github image repository
+  #       run: |
+  #         docker tag bombsquad_gui_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_${{ github.ref_name }}_x86_64
+  #         docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_${{ github.ref_name }}_x86_64
 
-  upload_docker_x86_64_server_release_image:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Docker login
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Make the build
-        run: |
-          make docker-server-release
-      #    make docker-save
-      # - name: Zip the build
-      #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
-      # - name: Upload the build
-      #   uses: ncipollo/release-action@v1
-      #   with:
-      #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
-      #     allowUpdates: true
-      #     artifacts: bombsquad_docker_gui_debug.tar.zip
-      - name: Push to github image repository
-        run: |
-          docker tag bombsquad_server_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64
-          docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64
+  # release_docker_server_debug_image:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Docker login
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Make the build
+  #       run: |
+  #         make docker-server-debug
+  #         make docker-save
+  #     - name: Zip the build
+  #       run: zip -j bombsquad_docker_server_debug.tar.zip build/docker/bombsquad_server_debug_docker.tar
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: bombsquad_docker_server_debug.tar.zip
+  #     - name: Push to github image repository
+  #       run: |
+  #         docker tag bombsquad_server_debug:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}_x86_64
+  #         docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_${{ github.ref_name }}_x86_64
 
-  upload_docker_arm64_server_release_image:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Docker login
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Make the build
-        run: |
-          make docker-arm64-server-release
-      #    make docker-save
-      # - name: Zip the build
-      #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
-      # - name: Upload the build
-      #   uses: ncipollo/release-action@v1
-      #   with:
-      #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
-      #     allowUpdates: true
-      #     artifacts: bombsquad_docker_gui_debug.tar.zip
-      - name: Push to github image repository
-        run: |
-          docker tag bombsquad_server_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
-          docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
+  # upload_docker_x86_64_server_release_image:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Docker login
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Make the build
+  #       run: |
+  #         make docker-server-release
+  #     #    make docker-save
+  #     # - name: Zip the build
+  #     #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
+  #     # - name: Upload the build
+  #     #   uses: ncipollo/release-action@v1
+  #     #   with:
+  #     #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+  #     #     allowUpdates: true
+  #     #     artifacts: bombsquad_docker_gui_debug.tar.zip
+  #     - name: Push to github image repository
+  #       run: |
+  #         docker tag bombsquad_server_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64
+  #         docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64
 
-  manifest_docker_server_multiarch:
-    needs:
-      [
-        upload_docker_x86_64_server_release_image,
-        upload_docker_arm64_server_release_image,
-      ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+  # upload_docker_arm64_server_release_image:
+  #   runs-on: ubuntu-24.04-arm
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Docker login
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Make the build
+  #       run: |
+  #         make docker-arm64-server-release
+  #     #    make docker-save
+  #     # - name: Zip the build
+  #     #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
+  #     # - name: Upload the build
+  #     #   uses: ncipollo/release-action@v1
+  #     #   with:
+  #     #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+  #     #     allowUpdates: true
+  #     #     artifacts: bombsquad_docker_gui_debug.tar.zip
+  #     - name: Push to github image repository
+  #       run: |
+  #         docker tag bombsquad_server_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
+  #         docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
 
-      - name: Create manifest
-        run: |
-          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:${{ github.ref_name }} \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64 \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
-          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:${{ github.ref_name }}
-          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:latest \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64 \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
-          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:latest
+  # manifest_docker_server_multiarch:
+  #   needs:
+  #     [
+  #       upload_docker_x86_64_server_release_image,
+  #       upload_docker_arm64_server_release_image,
+  #     ]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Login to GHCR
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
 
-  upload_docker_x86_64_gui_release_image:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Docker login
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Make the build
-        run: |
-          make docker-gui-release
-      #    make docker-save
-      # - name: Zip the build
-      #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
-      # - name: Upload the build
-      #   uses: ncipollo/release-action@v1
-      #   with:
-      #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
-      #     allowUpdates: true
-      #     artifacts: bombsquad_docker_gui_debug.tar.zip
-      - name: Push to github image repository
-        run: |
-          docker tag bombsquad_gui_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64
-          docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64
+  #     - name: Create manifest
+  #       run: |
+  #         docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:${{ github.ref_name }} \
+  #           --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64 \
+  #           --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
+  #         docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:${{ github.ref_name }}
+  #         docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:latest \
+  #           --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_x86_64 \
+  #           --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:release_${{ github.ref_name }}_arm64
+  #         docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:latest
 
-  upload_docker_arm64_gui_release_image:
-    needs: setup_bombsquad_cache
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Docker login
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Make the build
-        run: |
-          make docker-arm64-gui-release
-      #    make docker-save
-      # - name: Zip the build
-      #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
-      # - name: Upload the build
-      #   uses: ncipollo/release-action@v1
-      #   with:
-      #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
-      #     allowUpdates: true
-      #     artifacts: bombsquad_docker_gui_debug.tar.zip
-      - name: Push to github image repository
-        run: |
-          docker tag bombsquad_gui_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
-          docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
+  # upload_docker_x86_64_gui_release_image:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Docker login
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Make the build
+  #       run: |
+  #         make docker-gui-release
+  #     #    make docker-save
+  #     # - name: Zip the build
+  #     #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
+  #     # - name: Upload the build
+  #     #   uses: ncipollo/release-action@v1
+  #     #   with:
+  #     #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+  #     #     allowUpdates: true
+  #     #     artifacts: bombsquad_docker_gui_debug.tar.zip
+  #     - name: Push to github image repository
+  #       run: |
+  #         docker tag bombsquad_gui_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64
+  #         docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64
 
-  manifest_docker_gui_multiarch:
-    needs:
-      [
-        upload_docker_x86_64_gui_release_image,
-        upload_docker_arm64_gui_release_image,
-      ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+  # upload_docker_arm64_gui_release_image:
+  #   runs-on: ubuntu-24.04-arm
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Docker login
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Make the build
+  #       run: |
+  #         make docker-arm64-gui-release
+  #     #    make docker-save
+  #     # - name: Zip the build
+  #     #   run: zip -j bombsquad_docker_gui_debug.tar.zip build/docker/bombsquad_gui_debug_docker.tar
+  #     # - name: Upload the build
+  #     #   uses: ncipollo/release-action@v1
+  #     #   with:
+  #     #     body : "See the [Full Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)"
+  #     #     allowUpdates: true
+  #     #     artifacts: bombsquad_docker_gui_debug.tar.zip
+  #     - name: Push to github image repository
+  #       run: |
+  #         docker tag bombsquad_gui_release:latest ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
+  #         docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
 
-      - name: Create manifest
-        run: |
-          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:${{ github.ref_name }} \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64 \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
-          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:${{ github.ref_name }}
-          docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:latest \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64 \
-            --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
-          docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:latest
+  # manifest_docker_gui_multiarch:
+  #   needs:
+  #     [
+  #       upload_docker_x86_64_gui_release_image,
+  #       upload_docker_arm64_gui_release_image,
+  #     ]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Login to GHCR
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.repository_owner }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
 
-  ################################################################################
-  #                                                                              #
-  #                                    Docs                                      #
-  #                                                                              #
-  ################################################################################
-  release_docs:
-    needs: [create_release, setup_bombsquad_cache]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make docs
-      - name: Compress the build
-        run: tar -cf "html_docs.tar" build/docs/
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBody: true
-          artifacts: html_docs.tar
+  #     - name: Create manifest
+  #       run: |
+  #         docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:${{ github.ref_name }} \
+  #           --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64 \
+  #           --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
+  #         docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:${{ github.ref_name }}
+  #         docker manifest create ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:latest \
+  #           --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_x86_64 \
+  #           --amend ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:release_${{ github.ref_name }}_arm64
+  #         docker manifest push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:latest
 
-  ################################################################################
-  #                                                                              #
-  #                                    Flatpak                                   #
-  #                                                                              #
-  ################################################################################
+  # ################################################################################
+  # #                                                                              #
+  # #                                    Docs                                      #
+  # #                                                                              #
+  # ################################################################################
+  # release_docs:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Make the build
+  #       run: make docs
+  #     - name: Compress the build
+  #       run: tar -cf "html_docs.tar" build/docs/
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: html_docs.tar
 
-  release_flatpak_gui_debug:
-    needs: [create_release, setup_bombsquad_cache]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            arch: x86_64
-          - os: ubuntu-24.04-arm
-            arch: arm64
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Cache Flatpak data
-        id: cache-flatpak-sdk
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-flatpak
-        with:
-          path: |
-            ~/.local/share/flatpak
-            .cache/flatpak/flatpak-builder
-            .cache/flatpak/build_dir
-            .cache/flatpak/repo
-          key: ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt install -y flatpak flatpak-builder
+  # ################################################################################
+  # #                                                                              #
+  # #                                    Flatpak                                   #
+  # #                                                                              #
+  # ################################################################################
 
-      # This works but its nice to have precise control over the cache
-      # - name: Build Flatpak
-      #   uses: flatpak/flatpak-github-actions/flatpak-builder@v6
-      #   with:
-      #     bundle: bombsquad.flatpak
-      #     manifest-path: config/flatpak/net.froemling.BombSquad.yml
-      #     cache-key: flatpak-builder-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}-${{ github.sha }}
-      - name: Make the build
-        run: |
-          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-          sudo flatpak install -y flathub org.freedesktop.Sdk//25.08
-          sudo flatpak install -y flathub org.freedesktop.Platform//25.08
-          sudo flatpak install -y flathub org.freedesktop.Sdk.Extension.llvm20//25.08
-          make flatpak-linux
-          mv build/flatpak/bombsquad.flatpak bombsquad_${{ matrix.arch }}.flatpak
-      - name: Upload the build
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          omitBody: true
-          artifacts: bombsquad_${{ matrix.arch }}.flatpak
+  # release_flatpak_gui_debug:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include:
+  #         - os: ubuntu-latest
+  #           arch: x86_64
+  #         - os: ubuntu-24.04-arm
+  #           arch: arm64
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Setup build env
+  #       uses: ./.github/actions/bombsquad_build_env
+  #     - name: Cache Flatpak data
+  #       id: cache-flatpak-sdk
+  #       uses: actions/cache@v4
+  #       env:
+  #         cache-name: cache-flatpak
+  #       with:
+  #         path: |
+  #           ~/.local/share/flatpak
+  #           .cache/flatpak/flatpak-builder
+  #           .cache/flatpak/build_dir
+  #           .cache/flatpak/repo
+  #         key: ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-
+  #     - name: Install dependencies
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt install -y flatpak flatpak-builder
+
+  #     # This works but its nice to have precise control over the cache
+  #     # - name: Build Flatpak
+  #     #   uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+  #     #   with:
+  #     #     bundle: bombsquad.flatpak
+  #     #     manifest-path: config/flatpak/net.froemling.BombSquad.yml
+  #     #     cache-key: flatpak-builder-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}-${{ github.sha }}
+  #     - name: Make the build
+  #       run: |
+  #         sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+  #         sudo flatpak install -y flathub org.freedesktop.Sdk//25.08
+  #         sudo flatpak install -y flathub org.freedesktop.Platform//25.08
+  #         sudo flatpak install -y flathub org.freedesktop.Sdk.Extension.llvm20//25.08
+  #         make flatpak-linux
+  #         mv build/flatpak/bombsquad.flatpak bombsquad_${{ matrix.arch }}.flatpak
+  #     - name: Upload the build
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #         allowUpdates: true
+  #         omitBody: true
+  #         artifacts: bombsquad_${{ matrix.arch }}.flatpak
