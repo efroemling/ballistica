@@ -1,4 +1,4 @@
-### 1.7.60 (build 22689, api 9, 2026-01-14)
+### 1.7.60 (build 22696, api 9, 2026-01-23)
 - Fun easter-egg when clicking characters in inventory window (Thanks
   EraOSBeta!)
 - It is no longer possible to capture the hill from below the platform in happy
@@ -16,6 +16,8 @@
   `net.froemling.BombSquad` along with improved package metadata.
   Installing new flatpak builds alongside old flatpak builds will create 2 
   seperate installs.
+- Updated Android audio stack to OpenALSoft 1.25.1 and oboe 1.10.0.
+- Updated Mac and Window audio stack to OpenALSoft 1.25.1.
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is

@@ -227,6 +227,10 @@ class IOAttrs:
     #: minute boundaries (see :meth:`efro.util.utc_this_minute()`).
     whole_minutes: bool = False
 
+    #: If ``True``, requires ``datetime.datetime`` values to lie exactly on
+    #: second boundaries (see :meth:`efro.util.utc_this_second()`).
+    whole_seconds: bool = False
+
     #: If ``True``, values of type ``datetime.datetime`` (in json codec)
     #: and ``datetime.timedelta`` (in all codecs) will be stored as single
     #: float timestamp/seconds values instead of the default list of
@@ -277,6 +281,7 @@ class IOAttrs:
         whole_days: bool = whole_days,
         whole_hours: bool = whole_hours,
         whole_minutes: bool = whole_minutes,
+        whole_seconds: bool = whole_seconds,
         float_times: bool = float_times,
         soft_default: Any = MISSING,
         soft_default_factory: Callable[[], Any] | _MissingType = MISSING,
@@ -299,6 +304,8 @@ class IOAttrs:
             self.whole_hours = whole_hours
         if whole_minutes != cls.whole_minutes:
             self.whole_minutes = whole_minutes
+        if whole_seconds != cls.whole_seconds:
+            self.whole_seconds = whole_seconds
         if float_times != cls.float_times:
             self.float_times = float_times
         if soft_default is not cls.soft_default:
@@ -374,6 +381,11 @@ class IOAttrs:
             if any(x != 0 for x in (value.second, value.microsecond)):
                 raise ValueError(
                     f'Value {value} at {fieldpath}' f' is not a whole minute.'
+                )
+        elif self.whole_seconds:
+            if any(x != 0 for x in (value.microsecond,)):
+                raise ValueError(
+                    f'Value {value} at {fieldpath}' f' is not a whole second.'
                 )
 
 
