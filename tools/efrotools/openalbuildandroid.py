@@ -80,7 +80,8 @@ def build_openal(arch: str, mode: str) -> None:
             # 'bc83c874ff15b29fdab9b6c0bf40b268345b3026',
             # '59c466077fd6f16af64afcc6260bb61aa4e632dc',
             # '1.24.2',
-            '1.24.3',
+            # '1.24.3',
+            '1.25.1',
         ],
         check=True,
         cwd=builddir,
@@ -103,8 +104,9 @@ def build_openal(arch: str, mode: str) -> None:
         [
             'git',
             'checkout',
-            '1.9.3',
+            # '1.9.3',
             # '2968fff97730ede42d522ad5afe8b82468a7d1d8',  # Early 1.9.4
+            '1.10.0',
         ],
         check=True,
         cwd=builddir_oboe,
@@ -119,33 +121,34 @@ def build_openal(arch: str, mode: str) -> None:
         txt = replace_exact(
             txt,
             (
-                '    /* Open a basic output stream, just to ensure'
-                ' it can work. */\n'
-                '    oboe::ManagedStream stream;\n'
-                '    oboe::Result result{oboe::AudioStreamBuilder{}'
+                '    /* Open a basic output stream,'
+                ' just to ensure it can work. */\n'
+                '    auto stream = std::shared_ptr<oboe::AudioStream>{};\n'
+                '    const auto result = oboe::AudioStreamBuilder{}'
                 '.setDirection(oboe::Direction::Output)\n'
-                '        ->setPerformanceMode(oboe::PerformanceMode::'
-                'LowLatency)\n'
-                '        ->openManagedStream(stream)};\n'
+                '        ->setPerformanceMode('
+                'oboe::PerformanceMode::LowLatency)\n'
+                '        ->openStream(stream);\n'
                 '    if(result != oboe::Result::OK)\n'
-                '        throw al::backend_exception{al::backend_error::'
-                'DeviceError, "Failed to create stream: {}",\n'
+                '        throw al::backend_exception{'
+                'al::backend_error::DeviceError,'
+                ' "Failed to create stream: {}",\n'
                 '            oboe::convertToText(result)};\n'
             ),
             (
-                '    /* Open a basic output stream, just to ensure'
-                ' it can work. */\n'
-                ' // DISABLED BY ERICF\n'
-                ' //    oboe::ManagedStream stream;\n'
-                ' //   oboe::Result result{oboe::AudioStreamBuilder{}'
+                '    /* Open a basic output stream,'
+                ' just to ensure it can work. */\n'
+                '    // auto stream = std::shared_ptr<oboe::AudioStream>{};\n'
+                '    // const auto result = oboe::AudioStreamBuilder{}'
                 '.setDirection(oboe::Direction::Output)\n'
-                ' //       ->setPerformanceMode(oboe::PerformanceMode::'
-                'LowLatency)\n'
-                ' //       ->openManagedStream(stream)};\n'
-                ' //   if(result != oboe::Result::OK)\n'
-                ' //       throw al::backend_exception{al::backend_error::'
-                'DeviceError, "Failed to create stream: {}",\n'
-                ' //           oboe::convertToText(result)};\n'
+                '    //     ->setPerformanceMode('
+                'oboe::PerformanceMode::LowLatency)\n'
+                '    //     ->openStream(stream);\n'
+                '    // if(result != oboe::Result::OK)\n'
+                '    //     throw al::backend_exception{'
+                'al::backend_error::DeviceError,'
+                ' "Failed to create stream: {}",\n'
+                '    //         oboe::convertToText(result)};\n'
             ),
         )
         # Add our fallback option.
@@ -196,9 +199,13 @@ def build_openal(arch: str, mode: str) -> None:
             txt = infile.read()
 
         logcall = (
-            '__android_log_print(android_severity(level),'
-            ' "openal", "%.*s%s", al::sizei(prefix),'
+            '    __android_log_print(android_severity(level),'
+            ' "openal", "%.*s%s",\n'
+            '        al::saturate_cast<int>(prefix.size()),'
             ' prefix.data(), msg.c_str());'
+            # '__android_log_print(android_severity(level),'
+            # ' "openal", "%.*s%s", al::sizei(prefix),'
+            # ' prefix.data(), msg.c_str());'
             # '__android_log_print(android_severity(level),'
             #             ' "openal", "%s", str);'
         )
@@ -216,8 +223,12 @@ def build_openal(arch: str, mode: str) -> None:
             txt,
             (
                 '    __android_log_print(android_severity(level),'
-                ' "openal", "%.*s%s", al::sizei(prefix),\n'
-                '        prefix.data(), msg.c_str());'
+                ' "openal", "%.*s%s",\n'
+                '        al::saturate_cast<int>(prefix.size()),'
+                ' prefix.data(), msg.c_str());'
+                # '    __android_log_print(android_severity(level),'
+                # ' "openal", "%.*s%s", al::sizei(prefix),\n'
+                # '        prefix.data(), msg.c_str());'
                 # '    __android_log_print(android_severity(level),'
                 # ' "openal", "%s", str);'
             ),

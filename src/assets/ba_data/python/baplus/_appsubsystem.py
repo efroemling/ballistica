@@ -142,14 +142,6 @@ class PlusAppSubsystem(AppSubsystem):
         """:meta private:"""
         return _baplus.get_v1_account_state_num()
 
-    # @staticmethod
-    # def get_v1_account_ticket_count() -> int:
-    #     """Return the number of tickets for the current account.
-
-    #     :meta private:
-    #     """
-    #     return _baplus.get_v1_account_ticket_count()
-
     @staticmethod
     def get_v1_account_type() -> str:
         """:meta private:"""
