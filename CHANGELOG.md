@@ -12,6 +12,8 @@
 - Asset-package versions now use a date-based version format instead of a
   numeric one. So instead of `a-0.bastdassets.5`, built-in assets will now come
   from something like `a-0.bastdassets.260116` (YYMMDD).
+- Updated Android audio stack to OpenALSoft 1.25.1 and oboe 1.10.0.
+- Updated Mac and Window audio stack to OpenALSoft 1.25.1.
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
