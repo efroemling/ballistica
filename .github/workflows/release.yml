@@ -33,7 +33,7 @@ jobs:
         with:
           using-cmake: true
       - name: Make the build
-        run: make cmake
+        run: make cmake-build
       - name: Compress the build
         run: tar -cf "linux_build_env.tar" --exclude="linux_build_env.tar" .
       - name: Upload the build
