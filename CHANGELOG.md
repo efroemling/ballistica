@@ -12,6 +12,10 @@
 - Asset-package versions now use a date-based version format instead of a
   numeric one. So instead of `a-0.bastdassets.5`, built-in assets will now be
   something like `a-0.bastdassets.260116` (YYMMDD).
+- Flatpak package name is now `net.froemling.bombsquad` instead of
+  `net.froemling.BombSquad` along with improved package metadata.
+  Installing new flatpak builds alongside old flatpak builds will create 2 
+  seperate installs.
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
@@ -881,7 +885,8 @@
   two forms. Now it is possible to provide both.
 - Spaz classes now have a `default_hitpoints` which makes customizing that
   easier (Thanks rabbitboom!)
-- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`, `docker-server-debug`, `docker-clean` and `docker-save` targets
+- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`, 
+  `docker-server-debug`, `docker-clean` and `docker-save` targets
   to Makefile.
 - Fixed an issue in Assault where being teleported back to base with a sticky
   bomb stuck to you would do some crazy rubber-band-launching thing (Thanks
