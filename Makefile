@@ -519,9 +519,9 @@ flatpak-linux: env
 	--force-clean --keep-build-dirs \
 	--state-dir=./.cache/flatpak/flatpak-builder \
 	./.cache/flatpak/build_dir \
-	config/flatpak/net.froemling.BombSquad.yml
+	config/flatpak/net.froemling.bombsquad.yml
 	flatpak build-bundle ./.cache/flatpak/repo \
-	build/flatpak/bombsquad.flatpak net.froemling.BombSquad
+	build/flatpak/bombsquad.flatpak net.froemling.bombsquad
 
 flatpak-clean:
 	rm build/flatpak -rf
