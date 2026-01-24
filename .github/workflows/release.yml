@@ -536,7 +536,7 @@ jobs:
         run: |
           cd config/flatpak/flathub
           git fetch origin net.froemling.bombsquad
-          git checkout net.froemling.bombsquad
+          git checkout -b net.froemling.bombsquad origin/net.froemling.bombsquad
           git add -A
           git commit -m "Update flathub manifest to latest release"
           git push origin net.froemling.bombsquad
