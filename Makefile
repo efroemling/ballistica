@@ -522,6 +522,11 @@ flatpak-linux: env
 	config/flatpak/net.froemling.bombsquad.yml
 	flatpak build-bundle ./.cache/flatpak/repo \
 	build/flatpak/bombsquad.flatpak net.froemling.bombsquad
+flatpak-gen-flathub-manifest:
+	$(PCOMMAND) generate_flathub_manifest
+
+# Alias for the above target with hyphens
+generate-flathub-manifest: flatpak-gen-flathub-manifest
 
 flatpak-clean:
 	rm build/flatpak -rf

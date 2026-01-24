@@ -736,3 +736,162 @@ def cst_test() -> None:
         f.write(modified_tree.code)
 
     print('Success!')
+
+def generate_flathub_manifest() -> None:
+    """Generate a Flathub manifest for Ballistica and push to submodule.
+    
+    This function:
+    1. Copies files from config/flatpak/ to config/flatpak/flathub
+    2. Generates the manifest from template using latest GitHub release info
+    """
+    # 3. Commits and pushes changes to the flathub submodule
+    import json
+    import os
+    import shutil
+    import subprocess
+    import urllib.request
+
+    from efro.error import CleanError
+    from efro.terminal import Clr
+
+    pcommand.disallow_in_batch()
+
+    # Get environment variables from GitHub Actions
+    github_token = os.environ.get('GITHUB_TOKEN')
+    # MK:Change the default repo to upstream 
+    github_repo = os.environ.get('GITHUB_REPOSITORY', 'Loup-Garou911XD/ballistica')
+    
+    def run_cmd(cmd: list[str], cwd: str | None = None) -> str:
+        """Run a command and return stdout."""
+        result = subprocess.run(
+            cmd,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            raise CleanError(
+                f'Command failed: {" ".join(cmd)}\n{result.stderr}'
+            )
+        return result.stdout.strip()
+
+    # Paths
+    flatpak_src_dir = os.path.join(pcommand.PROJROOT, 'config', 'flatpak')
+    flathub_dir = os.path.join(flatpak_src_dir, 'flathub')
+    template_path = os.path.join(
+        flathub_dir, 'net.froemling.bombsquad.yml.template'
+    )
+    manifest_path = os.path.join(
+        flathub_dir, 'net.froemling.bombsquad.yml'
+    )
+
+    print(f'{Clr.BLD}Generating Flathub manifest...{Clr.RST}')
+
+    # Step 1: Copy files from config/flatpak/ to config/flatpak/flathub
+    print(f'{Clr.BLD}Copying files from {flatpak_src_dir} to {flathub_dir}...{Clr.RST}')
+    
+    # List of files to copy (skip the flathub directory itself)
+    files_to_copy = [
+        'net.froemling.bombsquad.appdata.xml',
+        'net.froemling.bombsquad.desktop',
+        'net.froemling.bombsquad.releases.xml',
+    ]
+    
+    for filename in files_to_copy:
+        src = os.path.join(flatpak_src_dir, filename)
+        dst = os.path.join(flathub_dir, filename)
+        if os.path.exists(src):
+            shutil.copy2(src, dst)
+            print(f'  Copied {filename}')
+        else:
+            print(f'  Warning: {filename} not found at {src}')
+
+    # Step 2: Get latest release information from GitHub
+    print(f'{Clr.BLD}Fetching latest GitHub release info...{Clr.RST}')
+    
+    try:
+        api_url = f'https://api.github.com/repos/{github_repo}/releases/latest'
+        req = urllib.request.Request(api_url)
+        if github_token:
+            req.add_header('Authorization', f'token {github_token}')
+        
+        with urllib.request.urlopen(req) as response:
+            release_data = json.loads(response.read().decode())
+        
+        # Find the linux_build_env.tar asset
+        asset_url = None
+        asset_name = 'linux_build_env.tar'
+        
+        for asset in release_data.get('assets', []):
+            if asset['name'] == asset_name:
+                asset_url = asset['browser_download_url']
+                break
+        
+        if not asset_url:
+            raise CleanError(
+                f'Could not find {asset_name} in latest release assets'
+            )
+        
+        print(f'  Found asset: {asset_url}')
+        
+        # Step 3: Calculate SHA256 checksum of the archive
+        print(f'{Clr.BLD}Getting SHA256 checksum...{Clr.RST}')
+        digest = asset.get("digest")
+        if not digest or not digest.startswith("sha256:"):
+            raise CleanError("No SHA256 digest found in GitHub release asset")
+
+        checksum = digest.split(":", 1)[1]
+        
+    except Exception as e:
+        raise CleanError(f'Failed to fetch release info: {e}')
+
+    # Step 4: Generate manifest from template
+    print(f'{Clr.BLD}Generating manifest from template...{Clr.RST}')
+    
+    with open(template_path, 'r', encoding='utf-8') as infile:
+        template = infile.read()
+    
+    # Replace placeholders
+    manifest_content = template.replace('{ ARCHIVE_URL }', asset_url)
+    manifest_content = manifest_content.replace('{ SHA256_CHECKSUM }', checksum)
+    
+    with open(manifest_path, 'w', encoding='utf-8') as outfile:
+        outfile.write(manifest_content)
+    
+    print(f'  Generated manifest at {manifest_path}')
+
+    # Step 5: Commit and push to flathub submodule
+    # print(f'{Clr.BLD}Pushing changes to flathub submodule...{Clr.RST}')
+    
+    # try:
+    #     # Check git status
+    #     git_status = run_cmd(['git', 'status', '--porcelain'], cwd=flathub_dir)
+        
+    #     if git_status:
+    #         print(f'  Staged changes in flathub submodule:')
+    #         for line in git_status.split('\n'):
+    #             print(f'    {line}')
+            
+    #         # Add all changes
+    #         run_cmd(['git', 'add', '-A'], cwd=flathub_dir)
+            
+    #         # Commit
+    #         commit_msg = 'Update flathub manifest with latest release info'
+    #         run_cmd(
+    #             ['git', 'commit', '-m', commit_msg],
+    #             cwd=flathub_dir,
+    #         )
+    #         print(f'  Committed changes with message: "{commit_msg}"')
+            
+    #         # Push to origin
+    #         run_cmd(['git', 'push', 'origin', 'main'], cwd=flathub_dir)
+    #         print(f'  Pushed changes to remote')
+    #     else:
+    #         print(f'  No changes to commit')
+    
+    # except CleanError as e:
+    #     print(f'{Clr.RED}Warning: Failed to push to submodule: {e}{Clr.RST}')
+    #     print(f'{Clr.YLW}You may need to manually push the submodule changes{Clr.RST}')
+
+    print(f'{Clr.BLD}{Clr.GRN}Flathub manifest generation complete!{Clr.RST}')

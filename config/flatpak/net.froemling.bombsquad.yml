@@ -83,6 +83,9 @@ modules:
     build-commands:
       # FLATPAK_DEST=/app, FLATPAK_ID=net.froemling.bombsquad
       - mkdir -p ${FLATPAK_DEST}/bin/bombsquad
+      # we need to fix .venv/bin/python3.13 which is a symlink to system python
+      # of the machine the venv was created on, and then update the venv to fix
+      # all the shebangs according to the current build env
       - rm -f .venv/bin/python3.13
       - ln -s /usr/bin/python3.13 .venv/bin/python3.13
       - python3.13 -m venv --upgrade .venv
@@ -103,7 +106,7 @@ modules:
 
       - type: archive
         url: https://github.com/Loup-Garou911XD/ballistica/releases/latest/download/linux_build_env.tar
-        sha256: 3f74d5a54e079add537cd1ecb3a833d003594c6f18a481edc4112505207968d8
+        sha256: 492769b162f7055fb5d21f7dc728c5be464aeb39b902647da2f4bba3edfe697b
         strip-components: 0
 
       - type: file
