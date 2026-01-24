@@ -533,8 +533,8 @@ jobs:
         run: |
           cd config/flatpak/flathub
           git add -A
-          git commit -m "Update flathub manifest to latest release" || true
-          git push || true
+          git commit -m "Update flathub manifest to latest release"
+          git push origin HEAD:net.froemling.bombsquad
       # - name: Add submodule changes to parent repo
       #   run: |
       #     git add config/flatpak/flathub
