@@ -6,8 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-# from bacommon.app import AppExperience
-
 import _babase
 from babase._appmode import AppMode
 from babase._appintent import AppIntentExec, AppIntentDefault

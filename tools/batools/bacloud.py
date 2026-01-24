@@ -66,15 +66,23 @@ def get_tz_offset_seconds() -> float:
 
 def run_bacloud_main() -> None:
     """Do the thing."""
+    # pylint: disable=try-except-raise, raise-missing-from
+
+    # We return 0 on success, 1 for a no/fail result, and 2+ for errors.
     try:
-        App().run()
-    except KeyboardInterrupt:
-        # Let's do a clean fail on keyboard interrupt. Can make this
-        # optional if a backtrace is ever useful.
-        sys.exit(1)
+        raise SystemExit(App().run())
     except CleanError as clean_exc:
         clean_exc.pretty_print()
-        sys.exit(1)
+        raise SystemExit(2)
+    except SystemExit:
+        # Never handle this here.
+        raise
+    except KeyboardInterrupt:
+        # Print nothing on keyboard interrupts.
+        raise SystemExit(2)
+    except Exception:
+        sys.excepthook(*sys.exc_info())  # standard color traceback
+        raise SystemExit(2)
 
 
 class App:
@@ -84,8 +92,9 @@ class App:
         self._state = StateData()
         self._project_root: Path | None = None
         self._end_command_args: dict = {}
+        self._return_code = 0
 
-    def run(self) -> None:
+    def run(self) -> int:
         """Run the tool."""
 
         # Make sure we can locate the project bacloud is being run from.
@@ -103,6 +112,8 @@ class App:
         self.run_interactive_command(cwd=os.getcwd(), args=sys.argv[1:])
 
         self._save_state()
+
+        return self._return_code
 
     @property
     def _state_dir(self) -> Path:
@@ -493,3 +504,8 @@ class App:
                 nextcall = response.end_command
                 for key, val in self._end_command_args.items():
                     nextcall[1][key] = val
+
+            if response.return_code is not None:
+                # Should only get these if we're actually gonna exit.
+                assert nextcall is None
+                self._return_code = response.return_code
