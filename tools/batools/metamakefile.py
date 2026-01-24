@@ -5,6 +5,7 @@
 This Makefiles builds our generated code such as encrypted python strings,
 node types, etc).
 """
+
 from __future__ import annotations
 
 import os

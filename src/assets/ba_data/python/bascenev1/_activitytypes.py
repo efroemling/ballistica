@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Some handy base class and special purpose Activity types."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
@@ -13,7 +14,6 @@ from bascenev1._activity import Activity
 from bascenev1._player import EmptyPlayer
 from bascenev1._team import EmptyTeam
 from bascenev1._music import MusicType, setmusic
-
 
 if TYPE_CHECKING:
     import bascenev1

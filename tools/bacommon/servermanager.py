@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to the server manager script."""
+
 from __future__ import annotations
 
 from enum import Enum

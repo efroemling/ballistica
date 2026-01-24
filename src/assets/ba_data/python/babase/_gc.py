@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Utility functionality related to the overall operation of the app."""
+
 from __future__ import annotations
 
 import gc

@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING, Annotated, override, assert_never
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 from bacommon.locale import Locale
 
-
 if TYPE_CHECKING:
     pass
 

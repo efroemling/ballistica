@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 # Version is sent to the master-server with all commands. Can be incremented
 # if we need to change behavior server-side to go along with client changes.
-BACLOUD_VERSION = 13
+BACLOUD_VERSION = 14
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -102,6 +102,10 @@ class ResponseData:
 
     #: If present, client should abort with this error message.
     error: Annotated[str | None, IOAttrs('e', store_default=False)] = None
+
+    #: If present for an interactive command, specifies the return code
+    #: for the process. Note that this only applies if error is not set.
+    return_code: Annotated[int | None, IOAttrs('r', store_default=False)] = None
 
     #: How long to wait before proceeding with remaining response (can
     #: be useful when waiting for server progress in a loop).

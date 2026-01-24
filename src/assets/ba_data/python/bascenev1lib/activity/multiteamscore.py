@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to teams mode score screen."""
+
 from __future__ import annotations
 
 from typing import override

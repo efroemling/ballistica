@@ -28,7 +28,6 @@ from efro.dataclassio import (
 )
 from efro.terminal import Clr
 
-
 if TYPE_CHECKING:
     import efro.terminal
 

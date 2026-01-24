@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Hooks for C++ layer to use for ClassicAppMode."""
+
 from __future__ import annotations
 
 import logging

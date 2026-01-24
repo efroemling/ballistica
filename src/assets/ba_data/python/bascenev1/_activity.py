@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Defines Activity class."""
+
 from __future__ import annotations
 
 import weakref
@@ -11,7 +12,6 @@ import babase
 import _bascenev1
 from bascenev1._dependency import DependencyComponent
 from bascenev1._messages import UNHANDLED
-
 
 if TYPE_CHECKING:
     from typing import Any, Self

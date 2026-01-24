@@ -58,6 +58,7 @@ for batch-friendly pcommands follow:
   its thing, it is probably not a good fit for batch-mode.
 
 """
+
 from __future__ import annotations
 
 import os

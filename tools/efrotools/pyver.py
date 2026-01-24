@@ -5,6 +5,7 @@
 Tools that need to do some work or regenerate files when this changes can
 add this submodule file as a dependency.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

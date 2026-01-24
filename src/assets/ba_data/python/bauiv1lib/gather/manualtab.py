@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Defines the manual tab in the gather UI."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations

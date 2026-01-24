@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to game results."""
+
 from __future__ import annotations
 
 import copy

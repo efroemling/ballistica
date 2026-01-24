@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Implements lobby system for gathering before games, char select, etc."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations

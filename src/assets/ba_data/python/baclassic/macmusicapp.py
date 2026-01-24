@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Music playback functionality using the Mac Music (formerly iTunes) app."""
+
 from __future__ import annotations
 
 import logging

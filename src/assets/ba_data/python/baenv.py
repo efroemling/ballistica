@@ -14,6 +14,7 @@ Ballistica can be used without explicitly configuring the environment in
 order to integrate it in arbitrary Python environments, but this may
 cause some features to be disabled or behave differently than expected.
 """
+
 from __future__ import annotations
 
 import os
@@ -56,7 +57,7 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22696
+TARGET_BALLISTICA_BUILD = 22697
 TARGET_BALLISTICA_VERSION = '1.7.60'
 
 

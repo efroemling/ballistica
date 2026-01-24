@@ -18,7 +18,6 @@ from bacommon.docui._docui import (
     DocUIWebResponse,
 )
 
-
 __all__ = [
     'DocUIRequest',
     'DocUIRequestTypeID',
