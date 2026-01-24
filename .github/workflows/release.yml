@@ -512,14 +512,10 @@ jobs:
   release_generate_flathub_manifest:
     runs-on: ubuntu-latest
     needs: release_linux_build_env
-    permissions:
-      contents: write
-
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Configure Git
@@ -529,14 +525,14 @@ jobs:
       - name: Generate Flathub manifest
         run: make generate-flathub-manifest
         env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          FLATHUB_PUSH_PAT: ${{ secrets.FLATHUB_PUSH_PAT }}
       - name: Push submodule changes
         run: |
           cd config/flatpak/flathub
           git fetch origin net.froemling.bombsquad
           git checkout -b net.froemling.bombsquad FETCH_HEAD
           git remote set-url origin \
-            https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository_owner }}/flathub.git
+            https://x-access-token:${FLATHUB_PUSH_PAT}@github.com/${{ github.repository_owner }}/flathub.git
           git add -A
           git commit -m "Update flathub manifest to latest release"
           git push origin net.froemling.bombsquad
