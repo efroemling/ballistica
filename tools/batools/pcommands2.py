@@ -781,7 +781,7 @@ def generate_flathub_manifest() -> None:
     flatpak_src_dir = os.path.join(pcommand.PROJROOT, 'config', 'flatpak')
     flathub_dir = os.path.join(flatpak_src_dir, 'flathub')
     template_path = os.path.join(
-        flathub_dir, 'net.froemling.bombsquad.yml.template'
+        flatpak_src_dir, 'net.froemling.bombsquad.yml.template'
     )
     manifest_path = os.path.join(
         flathub_dir, 'net.froemling.bombsquad.yml'
