@@ -740,12 +740,12 @@ def cst_test() -> None:
 
 def generate_flathub_manifest() -> None:
     """Generate a Flathub manifest for Ballistica and push to submodule.
-    
+    This function is intended to be run within a GitHub Actions workflow.
+
     This function:
     1. Copies files from config/flatpak/ to config/flatpak/flathub
     2. Generates the manifest from template using latest GitHub release info
     """
-    # 3. Commits and pushes changes to the flathub submodule
     import json
     import os
     import shutil
@@ -758,7 +758,7 @@ def generate_flathub_manifest() -> None:
     pcommand.disallow_in_batch()
 
     # Get environment variables from GitHub Actions
-    github_token = os.environ.get('GITHUB_TOKEN')
+    # github_token = os.environ.get('GITHUB_TOKEN')
     # MK:Change the default repo to upstream 
     github_repo = os.environ.get('GITHUB_REPOSITORY', 'Loup-Garou911XD/ballistica')
     
@@ -814,8 +814,6 @@ def generate_flathub_manifest() -> None:
     try:
         api_url = f'https://api.github.com/repos/{github_repo}/releases/latest'
         req = urllib.request.Request(api_url)
-        if github_token:
-            req.add_header('Authorization', f'token {github_token}')
         
         with urllib.request.urlopen(req) as response:
             release_data = json.loads(response.read().decode())
