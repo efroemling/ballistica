@@ -522,8 +522,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
-        with:
-          using-cmake: true
       - name: Configure Git
         run: |
           git config --global user.email "actions@github.com"
@@ -537,6 +535,8 @@ jobs:
           cd config/flatpak/flathub
           git fetch origin net.froemling.bombsquad
           git checkout -b net.froemling.bombsquad FETCH_HEAD
+          git remote set-url origin \
+            https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository_owner }}/flathub.git
           git add -A
           git commit -m "Update flathub manifest to latest release"
           git push origin net.froemling.bombsquad
