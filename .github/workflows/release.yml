@@ -524,9 +524,9 @@ jobs:
           git config --global user.name "GitHub Actions"
       - name: Generate Flathub manifest
         run: make generate-flathub-manifest
+      - name: Push submodule changes
         env:
           FLATHUB_PUSH_PAT: ${{ secrets.FLATHUB_PUSH_PAT }}
-      - name: Push submodule changes
         run: |
           cd config/flatpak/flathub
           git fetch origin net.froemling.bombsquad
