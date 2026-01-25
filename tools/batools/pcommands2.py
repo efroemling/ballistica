@@ -738,6 +738,7 @@ def cst_test() -> None:
 
     print('Success!')
 
+
 def generate_flathub_manifest() -> None:
     """Generate a Flathub manifest for Ballistica and push to submodule.
     This function is intended to be run within a GitHub Actions workflow.
@@ -756,9 +757,11 @@ def generate_flathub_manifest() -> None:
 
     pcommand.disallow_in_batch()
 
-    # MK:Change the default repo to upstream 
-    github_repo = os.environ.get('GITHUB_REPOSITORY', 'Loup-Garou911XD/ballistica')
-    
+    # MK:Change the default repo to upstream
+    github_repo = os.environ.get(
+        'GITHUB_REPOSITORY', 'Loup-Garou911XD/ballistica'
+    )
+
     # Paths
     flatpak_src_dir = os.path.join(pcommand.PROJROOT, 'config', 'flatpak')
     flathub_dir = os.path.join(pcommand.PROJROOT, 'build', 'flathub')
@@ -766,22 +769,22 @@ def generate_flathub_manifest() -> None:
         flatpak_src_dir, 'net.froemling.bombsquad.yml.template'
     )
     os.makedirs(flathub_dir, exist_ok=True)
-    manifest_path = os.path.join(
-        flathub_dir, 'net.froemling.bombsquad.yml'
-    )
+    manifest_path = os.path.join(flathub_dir, 'net.froemling.bombsquad.yml')
 
     print(f'{Clr.BLD}Generating Flathub manifest...{Clr.RST}')
 
     # Step 1: Copy files from config/flatpak/ to config/flatpak/flathub
-    print(f'{Clr.BLD}Copying files from {flatpak_src_dir} to {flathub_dir}...{Clr.RST}')
-    
+    print(
+        f'{Clr.BLD}Copying files from {flatpak_src_dir} to {flathub_dir}...{Clr.RST}'
+    )
+
     # List of files to copy (skip the flathub directory itself)
     files_to_copy = [
         'net.froemling.bombsquad.appdata.xml',
         'net.froemling.bombsquad.desktop',
         'net.froemling.bombsquad.releases.xml',
     ]
-    
+
     for filename in files_to_copy:
         src = os.path.join(flatpak_src_dir, filename)
         dst = os.path.join(flathub_dir, filename)
@@ -793,36 +796,36 @@ def generate_flathub_manifest() -> None:
 
     # Step 2: Get latest release information from GitHub
     print(f'{Clr.BLD}Fetching latest GitHub release info...{Clr.RST}')
-    
+
     try:
         api_url = f'https://api.github.com/repos/{github_repo}/releases/latest'
         req = urllib.request.Request(api_url)
-        
+
         with urllib.request.urlopen(req) as response:
             release_data = json.loads(response.read().decode())
-        
+
         # Find the linux_build_env.tar asset
         asset_url = None
         asset_name = 'linux_build_env.tar'
-        
+
         for asset in release_data.get('assets', []):
             if asset['name'] == asset_name:
                 asset_url = asset['browser_download_url']
                 break
-        
+
         if not asset_url:
             raise CleanError(
                 f'Could not find {asset_name} in latest release assets'
             )
-        
+
         print(f'  Found asset: {asset_url}')
-        
+
         # Extract version from release tag
         version = release_data.get('tag_name', '').lstrip('v')
         if not version:
             raise CleanError('Could not extract version from release tag')
         print(f'  Release version: {version}')
-        
+
         # Extract release date from published_at field
         release_date = release_data.get('published_at', '')
         if not release_date:
@@ -830,45 +833,52 @@ def generate_flathub_manifest() -> None:
         # Convert ISO format date (e.g., '2026-01-25T12:34:56Z') to YYYY-MM-DD
         release_date = release_date.split('T')[0]
         print(f'  Release date: {release_date}')
-        
+
         print(f'{Clr.BLD}Getting SHA256 checksum...{Clr.RST}')
-        digest = asset.get("digest")
-        if not digest or not digest.startswith("sha256:"):
-            raise CleanError("No SHA256 digest found in GitHub release asset")
-        checksum = digest.split(":", 1)[1]
-        
+        digest = asset.get('digest')
+        if not digest or not digest.startswith('sha256:'):
+            raise CleanError('No SHA256 digest found in GitHub release asset')
+        checksum = digest.split(':', 1)[1]
+
     except Exception as e:
         raise CleanError(f'Failed to fetch release info: {e}')
 
     print(f'{Clr.BLD}Generating manifest from template...{Clr.RST}')
-    
+
     with open(template_path, 'r', encoding='utf-8') as infile:
         template = infile.read()
-    
+
     # Replace placeholders
     manifest_content = template.replace('{ ARCHIVE_URL }', asset_url)
     manifest_content = manifest_content.replace('{ SHA256_CHECKSUM }', checksum)
-    
+
     with open(manifest_path, 'w', encoding='utf-8') as outfile:
         outfile.write(manifest_content)
-    
+
     print(f'  Generated manifest at {manifest_path}')
-    
+
     # Call generate_flatpak_release_manifest with the extracted version, repo URL, and date
     print(f'{Clr.BLD}Generating Flatpak release manifest...{Clr.RST}')
-    generate_flatpak_release_manifest(version, asset_url, checksum, github_repo, release_date)
-    
+    generate_flatpak_release_manifest(
+        version, asset_url, checksum, github_repo, release_date
+    )
+
     print(f'{Clr.BLD}{Clr.GRN}Flathub manifest generation complete!{Clr.RST}')
 
+
 def generate_flatpak_release_manifest(
-    version: str, asset_url: str, checksum: str, github_repo: str, release_date: str
+    version: str,
+    asset_url: str,
+    checksum: str,
+    github_repo: str,
+    release_date: str,
 ) -> None:
     """Generate a Flatpak release manifest for Ballistica.
 
     This function:
     1. Adds a new release entry to net.froemling.bombsquad.releases.xml
     2. Updates the net.froemling.bombsquad.releases.xml file with the new release information
-    
+
     Args:
         version: Version string from GitHub release (e.g., '1.7.60')
         asset_url: URL to the release asset
@@ -889,73 +899,79 @@ def generate_flatpak_release_manifest(
     releases_xml_path = os.path.join(
         flathub_dir, 'net.froemling.bombsquad.releases.xml'
     )
-    
+
     print(f'{Clr.BLD}Adding release {version} to releases.xml...{Clr.RST}')
 
     # Parse the existing releases.xml
     if not os.path.exists(releases_xml_path):
         raise CleanError(f'releases.xml not found at {releases_xml_path}')
-    
+
     try:
         tree = ET.parse(releases_xml_path)
         root = tree.getroot()
     except ET.ParseError as e:
         raise CleanError(f'Failed to parse releases.xml: {e}')
-    
+
     # Check if release with this version already exists
     existing_release = root.find(f".//release[@version='{version}']")
     if existing_release is not None:
-        print(f'{Clr.YLW}Warning: Release {version} already exists in releases.xml, skipping...{Clr.RST}')
+        print(
+            f'{Clr.YLW}Warning: Release {version} already exists in releases.xml, skipping...{Clr.RST}'
+        )
         return
-    
+
     # Create new release element
     new_release = ET.Element('release')
     new_release.set('version', version)
     new_release.set('date', release_date)
     new_release.set('urgency', 'low')
     new_release.set('type', 'stable')
-    
+
     # Add description
     description = ET.SubElement(new_release, 'description')
     p = ET.SubElement(description, 'p')
     p.text = get_changelog(version)
-    
+
     # Add URL element for release page
     release_url = ET.SubElement(new_release, 'url')
-    release_url.text = f'https://github.com/{github_repo}/releases/tag/v{version}'
-    
+    release_url.text = (
+        f'https://github.com/{github_repo}/releases/tag/v{version}'
+    )
+
     # Add artifacts section with binary information
     artifacts = ET.SubElement(new_release, 'artifacts')
-    
+
     # Add source artifact
     source_artifact = ET.SubElement(artifacts, 'artifact')
     source_artifact.set('type', 'source')
-    
+
     source_location = ET.SubElement(source_artifact, 'location')
-    source_location.text = f'https://github.com/{github_repo}/archive/refs/tags/v{version}.tar.gz'
-    
+    source_location.text = (
+        f'https://github.com/{github_repo}/archive/refs/tags/v{version}.tar.gz'
+    )
+
     # Add binary artifact for linux
     binary_artifact = ET.SubElement(artifacts, 'artifact')
     binary_artifact.set('type', 'source')
     binary_artifact.set('platform', 'x86_64-linux-gnu')
-    
+
     binary_location = ET.SubElement(binary_artifact, 'location')
     binary_location.text = asset_url
-    
+
     binary_checksum = ET.SubElement(binary_artifact, 'checksum')
     binary_checksum.set('type', 'sha256')
     binary_checksum.text = checksum
-    
+
     # Insert the new release at the beginning (after the root element)
     root.insert(0, new_release)
-    
+
     # Format the XML with proper indentation
     def _indent(elem, level=0):
         """Add pretty-printing indentation to XML tree."""
-        indent_str = "\n" + ("    " * level)
+        indent_str = '\n' + ('    ' * level)
         if len(elem):
             if not elem.text or not elem.text.strip():
-                elem.text = indent_str + "    "
+                elem.text = indent_str + '    '
             if not elem.tail or not elem.tail.strip():
                 elem.tail = indent_str
             for child in elem:
@@ -965,21 +981,20 @@ def generate_flatpak_release_manifest(
         else:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = indent_str
-    
+
     _indent(root)
-    
+
     # Write back to file
     try:
-        tree.write(
-            releases_xml_path,
-            encoding='utf-8',
-            xml_declaration=True
-        )
+        tree.write(releases_xml_path, encoding='utf-8', xml_declaration=True)
         print(f'  Added release {version} to releases.xml')
         print(f'  Generated flatpak release manifest at {releases_xml_path}')
-        print(f'{Clr.BLD}{Clr.GRN}Flatpak release manifest generation complete!{Clr.RST}')
+        print(
+            f'{Clr.BLD}{Clr.GRN}Flatpak release manifest generation complete!{Clr.RST}'
+        )
     except Exception as e:
         raise CleanError(f'Failed to write releases.xml: {e}')
+
 
 def get_changelog(version: str = None) -> str:
     """Get changelog text for a given version from CHANGELOG.md."""
@@ -987,7 +1002,7 @@ def get_changelog(version: str = None) -> str:
     import os
     from efro.error import CleanError
     from efro.terminal import Clr
-    
+
     pcommand.disallow_in_batch()
     if version is None:
         args = pcommand.get_args()
@@ -1008,5 +1023,7 @@ def get_changelog(version: str = None) -> str:
         raise CleanError(f'Changelog entry for version {version} not found.')
 
     changelog_text = match.group(1).strip()
-    print(f'{Clr.BLD}Changelog for version {version}:{Clr.RST}\n{changelog_text}')
+    print(
+        f'{Clr.BLD}Changelog for version {version}:{Clr.RST}\n{changelog_text}'
+    )
     return changelog_text
