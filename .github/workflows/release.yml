@@ -490,6 +490,7 @@ jobs:
   #                                   Flathub                                    #
   #                           (only runs on upstream)                            #
   ################################################################################
+
   release_linux_build_env:
     if: ${{ github.repository_owner == 'efroemling' || github.repository_owner == 'Loup-Garou911XD' }}
     runs-on: ubuntu-latest

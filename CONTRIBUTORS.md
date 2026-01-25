@@ -68,6 +68,7 @@
 - Various CI/CD improvements
 - Added discord social sdk support
 - Added flatpak build
+- added bombsquad on flathub :DD
 
 ### Zacker Tz
 - PW: King of the Hill: Fix flag region on the Happy Thoughts
