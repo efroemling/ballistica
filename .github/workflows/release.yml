@@ -532,7 +532,7 @@ jobs:
         env:
           FLATHUB_PUSH_PAT: ${{ secrets.FLATHUB_PUSH_PAT }}
         run: |
-          pwd
+          cd build/flathub
           git fetch origin net.froemling.bombsquad
           git checkout -b net.froemling.bombsquad FETCH_HEAD
           git remote set-url origin \
