@@ -15,6 +15,8 @@ if TYPE_CHECKING:
     from libcst import BaseExpression
     from libcst.metadata import CodeRange
 
+# pylint: disable=too-many-lines
+
 
 def gen_monolithic_register_modules() -> None:
     """Generate .h file for registering py modules."""
@@ -739,6 +741,7 @@ def cst_test() -> None:
     print('Success!')
 
 
+# pylint: disable=too-many-locals,too-many-statements
 def generate_flathub_manifest() -> None:
     """Generate a Flathub manifest for Ballistica and push to submodule.
     This function is intended to be run within a GitHub Actions workflow.
@@ -775,7 +778,8 @@ def generate_flathub_manifest() -> None:
 
     # Step 1: Copy files from config/flatpak/ to config/flatpak/flathub
     print(
-        f'{Clr.BLD}Copying files from {flatpak_src_dir} to {flathub_dir}...{Clr.RST}'
+        f'{Clr.BLD}Copying files from {flatpak_src_dir} to '
+        f'{flathub_dir}...{Clr.RST}'
     )
 
     # List of files to copy (skip the flathub directory itself)
@@ -805,6 +809,7 @@ def generate_flathub_manifest() -> None:
             release_data = json.loads(response.read().decode())
 
         # Find the linux_build_env.tar asset
+        asset: dict = {}
         asset_url = None
         asset_name = 'linux_build_env.tar'
 
@@ -830,18 +835,20 @@ def generate_flathub_manifest() -> None:
         release_date = release_data.get('published_at', '')
         if not release_date:
             raise CleanError('Could not extract release date from API')
-        # Convert ISO format date (e.g., '2026-01-25T12:34:56Z') to YYYY-MM-DD
+        # Convert ISO format date (e.g., '2026-01-25T12:34:56Z')
+        # to YYYY-MM-DD
         release_date = release_date.split('T')[0]
         print(f'  Release date: {release_date}')
 
         print(f'{Clr.BLD}Getting SHA256 checksum...{Clr.RST}')
         digest = asset.get('digest')
         if not digest or not digest.startswith('sha256:'):
-            raise CleanError('No SHA256 digest found in GitHub release asset')
+            msg = 'No SHA256 digest found in GitHub release asset'
+            raise CleanError(msg)
         checksum = digest.split(':', 1)[1]
 
     except Exception as e:
-        raise CleanError(f'Failed to fetch release info: {e}')
+        raise CleanError(f'Failed to fetch release info: {e}') from e
 
     print(f'{Clr.BLD}Generating manifest from template...{Clr.RST}')
 
@@ -857,7 +864,8 @@ def generate_flathub_manifest() -> None:
 
     print(f'  Generated manifest at {manifest_path}')
 
-    # Call generate_flatpak_release_manifest with the extracted version, repo URL, and date
+    # Call generate_flatpak_release_manifest with
+    # the extracted version, repo URL, and date
     print(f'{Clr.BLD}Generating Flatpak release manifest...{Clr.RST}')
     generate_flatpak_release_manifest(
         version, asset_url, checksum, github_repo, release_date
@@ -866,6 +874,7 @@ def generate_flathub_manifest() -> None:
     print(f'{Clr.BLD}{Clr.GRN}Flathub manifest generation complete!{Clr.RST}')
 
 
+# pylint: disable=too-many-locals,too-many-statements
 def generate_flatpak_release_manifest(
     version: str,
     asset_url: str,
@@ -877,7 +886,8 @@ def generate_flatpak_release_manifest(
 
     This function:
     1. Adds a new release entry to net.froemling.bombsquad.releases.xml
-    2. Updates the net.froemling.bombsquad.releases.xml file with the new release information
+    2. Updates the net.froemling.bombsquad.releases.xml file with
+        the new release information
 
     Args:
         version: Version string from GitHub release (e.g., '1.7.60')
@@ -910,13 +920,14 @@ def generate_flatpak_release_manifest(
         tree = ET.parse(releases_xml_path)
         root = tree.getroot()
     except ET.ParseError as e:
-        raise CleanError(f'Failed to parse releases.xml: {e}')
+        raise CleanError(f'Failed to parse releases.xml: {e}') from e
 
     # Check if release with this version already exists
     existing_release = root.find(f".//release[@version='{version}']")
     if existing_release is not None:
         print(
-            f'{Clr.YLW}Warning: Release {version} already exists in releases.xml, skipping...{Clr.RST}'
+            f'{Clr.YLW}Warning: Release {version} '
+            f'already exists in releases.xml, skipping...{Clr.RST}'
         )
         return
 
@@ -966,7 +977,7 @@ def generate_flatpak_release_manifest(
     root.insert(0, new_release)
 
     # Format the XML with proper indentation
-    def _indent(elem, level=0):
+    def _indent(elem: ET.Element[str], level: int = 0) -> None:
         """Add pretty-printing indentation to XML tree."""
         indent_str = '\n' + ('    ' * level)
         if len(elem):
@@ -974,9 +985,10 @@ def generate_flatpak_release_manifest(
                 elem.text = indent_str + '    '
             if not elem.tail or not elem.tail.strip():
                 elem.tail = indent_str
+            child: ET.Element | None = None
             for child in elem:
                 _indent(child, level + 1)
-            if not child.tail or not child.tail.strip():
+            if child and (not child.tail or not child.tail.strip()):
                 child.tail = indent_str
         else:
             if level and (not elem.tail or not elem.tail.strip()):
@@ -990,13 +1002,14 @@ def generate_flatpak_release_manifest(
         print(f'  Added release {version} to releases.xml')
         print(f'  Generated flatpak release manifest at {releases_xml_path}')
         print(
-            f'{Clr.BLD}{Clr.GRN}Flatpak release manifest generation complete!{Clr.RST}'
+            f'{Clr.BLD}{Clr.GRN}Flatpak release manifest '
+            f'generation complete!{Clr.RST}'
         )
     except Exception as e:
-        raise CleanError(f'Failed to write releases.xml: {e}')
+        raise CleanError(f'Failed to write releases.xml: {e}') from e
 
 
-def get_changelog(version: str = None) -> str:
+def get_changelog(version: str | None = None) -> str:
     """Get changelog text for a given version from CHANGELOG.md."""
     import re
     import os
