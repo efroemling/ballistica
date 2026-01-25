@@ -214,6 +214,14 @@ class App:
         if response.message is not None:
             print(response.message, end=response.message_end, flush=True)
 
+        if response.message_stderr is not None:
+            print(
+                response.message_stderr,
+                end=response.message_stderr_end,
+                flush=True,
+                file=sys.stderr,
+            )
+
         if response.error is not None:
             raise CleanError(response.error)
 
@@ -499,6 +507,13 @@ class App:
                     response.end_message,
                     end=response.end_message_end,
                     flush=True,
+                )
+            if response.end_message_stderr is not None:
+                print(
+                    response.end_message_stderr,
+                    end=response.end_message_stderr_end,
+                    flush=True,
+                    file=sys.stderr,
                 )
             if response.end_command is not None:
                 nextcall = response.end_command

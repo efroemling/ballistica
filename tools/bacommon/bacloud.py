@@ -97,14 +97,28 @@ class ResponseData:
     #: response processing (including error handling) occurs.
     message: Annotated[str | None, IOAttrs('m', store_default=False)] = None
 
-    #: End arg for message print() call.
+    #: Value for the 'end' arg of the message print() call.
     message_end: Annotated[str, IOAttrs('m_end', store_default=False)] = '\n'
 
-    #: If present, client should abort with this error message.
+    #: If present, client should print this message before any other
+    #: response processing (including error handling) occurs.
+    message_stderr: Annotated[
+        str | None, IOAttrs('m2', store_default=False)
+    ] = None
+
+    #: Value for the 'end' arg of the message print() call.
+    message_stderr_end: Annotated[
+        str, IOAttrs('m2_end', store_default=False)
+    ] = '\n'
+
+    #: If present, client should abort with this error message and
+    #: return-code 2.
     error: Annotated[str | None, IOAttrs('e', store_default=False)] = None
 
     #: If present for an interactive command, specifies the return code
     #: for the process. Note that this only applies if error is not set.
+    #: Standard return codes are 0 for success, 1 for a successful run
+    #: but negative result, and 2 for errors.
     return_code: Annotated[int | None, IOAttrs('r', store_default=False)] = None
 
     #: How long to wait before proceeding with remaining response (can
@@ -179,6 +193,17 @@ class ResponseData:
 
     #: End arg for end_message print() call.
     end_message_end: Annotated[str, IOAttrs('eme', store_default=False)] = '\n'
+
+    #: If present, a message that should be printed after all other
+    #: response processing is done.
+    end_message_stderr: Annotated[
+        str | None, IOAttrs('em2', store_default=False)
+    ] = None
+
+    #: End arg for end_message print() call.
+    end_message_stderr_end: Annotated[
+        str, IOAttrs('em2e', store_default=False)
+    ] = '\n'
 
     #: If present, this command is run with these args at the end of
     #: response processing.
