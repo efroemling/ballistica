@@ -762,7 +762,7 @@ def generate_flathub_manifest() -> None:
 
     # MK:Change the default repo to upstream
     github_repo = os.environ.get(
-        'GITHUB_REPOSITORY', 'Loup-Garou911XD/ballistica'
+        'GITHUB_REPOSITORY', 'efroemling/ballistica'
     )
 
     # Paths
@@ -886,8 +886,8 @@ def generate_flatpak_release_manifest(
 
     This function:
     1. Adds a new release entry to net.froemling.bombsquad.releases.xml
-    2. Updates the net.froemling.bombsquad.releases.xml file with
-        the new release information
+    2. Updates the net.froemling.bombsquad.releases.xml file with the
+       new release information
 
     Args:
         version: Version string from GitHub release (e.g., '1.7.60')
