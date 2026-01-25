@@ -79,7 +79,7 @@ modules:
       append-path: /usr/lib/sdk/llvm20/bin
       prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
       build-args:
-        - --share=network
+        # - --share=network
     build-commands:
       # FLATPAK_DEST=/app, FLATPAK_ID=net.froemling.bombsquad
       - mkdir -p ${FLATPAK_DEST}/bin/bombsquad
@@ -101,13 +101,13 @@ modules:
       - install -Dm644 ${FLATPAK_ID}.releases.xml ${FLATPAK_DEST}/share/metainfo/releases/${FLATPAK_ID}.releases.xml
 
     sources:
-      - type: dir
-        path: ./../../
+      # - type: dir
+      #   path: ./../../
 
-      # - type: archive
-      #   url: https://github.com/Loup-Garou911XD/ballistica/releases/latest/download/linux_build_env.tar
-      #   sha256: 492769b162f7055fb5d21f7dc728c5be464aeb39b902647da2f4bba3edfe697b
-      #   strip-components: 0
+      - type: archive
+        url: { ARCHIVE_URL }
+        sha256: { SHA256_CHECKSUM }
+        strip-components: 0
 
       - type: file
         dest-filename: net.froemling.bombsquad.png

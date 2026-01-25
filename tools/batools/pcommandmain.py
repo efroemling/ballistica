@@ -150,6 +150,8 @@ from batools.pcommands2 import (
     asset_package_resolve,
     asset_package_assemble,
     cst_test,
+    generate_flathub_manifest,
+    get_changelog,
 )
 
 # pylint: enable=unused-import
