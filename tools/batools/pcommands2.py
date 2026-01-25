@@ -760,7 +760,6 @@ def generate_flathub_manifest() -> None:
 
     pcommand.disallow_in_batch()
 
-    # MK:Change the default repo to upstream
     github_repo = os.environ.get(
         'GITHUB_REPOSITORY', 'efroemling/ballistica'
     )
