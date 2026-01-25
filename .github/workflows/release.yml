@@ -524,8 +524,8 @@ jobs:
           git config --global user.email "90267658+Loup-Garou911XD@users.noreply.github.com"
           git config --global user.name "GitHub Actions"
           mkdir -p build/flathub
+          git clone https://github.com/${{ github.repository_owner }}/flathub build/flathub
           cd build/flathub
-          git clone https://github.com/${{ github.repository_owner }}/flathub.git
       - name: Generate Flathub manifest
         run: make generate-flathub-manifest
       - name: Push changes
