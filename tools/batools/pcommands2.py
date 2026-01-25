@@ -749,7 +749,6 @@ def generate_flathub_manifest() -> None:
     import json
     import os
     import shutil
-    import subprocess
     import urllib.request
 
     from efro.error import CleanError
@@ -883,6 +882,8 @@ def generate_flatpak_release_manifest(
     from efro.error import CleanError
     from efro.terminal import Clr
 
+    pcommand.disallow_in_batch()
+
     # Paths
     flathub_dir = os.path.join(pcommand.PROJROOT, 'build', 'flathub')
     releases_xml_path = os.path.join(
@@ -917,7 +918,7 @@ def generate_flatpak_release_manifest(
     # Add description
     description = ET.SubElement(new_release, 'description')
     p = ET.SubElement(description, 'p')
-    p.text = 'This stable release fixes bugs and improves features.'
+    p.text = get_changelog(version)
     
     # Add URL element for release page
     release_url = ET.SubElement(new_release, 'url')
@@ -979,3 +980,33 @@ def generate_flatpak_release_manifest(
         print(f'{Clr.BLD}{Clr.GRN}Flatpak release manifest generation complete!{Clr.RST}')
     except Exception as e:
         raise CleanError(f'Failed to write releases.xml: {e}')
+
+def get_changelog(version: str = None) -> str:
+    """Get changelog text for a given version from CHANGELOG.md."""
+    import re
+    import os
+    from efro.error import CleanError
+    from efro.terminal import Clr
+    
+    pcommand.disallow_in_batch()
+    if version is None:
+        args = pcommand.get_args()
+        if len(args) != 1:
+            raise CleanError('Expected 1 arg: version')
+        version = args[0]
+    changelog_path = os.path.join(pcommand.PROJROOT, 'CHANGELOG.md')
+    if not os.path.exists(changelog_path):
+        raise CleanError(f'CHANGELOG.md not found at {changelog_path}')
+
+    with open(changelog_path, 'r', encoding='utf-8') as infile:
+        changelog_content = infile.read()
+
+    # Regex to find the section for the given version
+    pattern = rf'^###\s+{re.escape(version)}\b.*?\n(.*?)(?=^###\s+|\Z)'
+    match = re.search(pattern, changelog_content, re.DOTALL | re.MULTILINE)
+    if not match:
+        raise CleanError(f'Changelog entry for version {version} not found.')
+
+    changelog_text = match.group(1).strip()
+    print(f'{Clr.BLD}Changelog for version {version}:{Clr.RST}\n{changelog_text}')
+    return changelog_text
