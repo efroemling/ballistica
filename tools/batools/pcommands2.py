@@ -762,7 +762,7 @@ def generate_flathub_manifest() -> None:
 
     # MK:Change the default repo to upstream
     github_repo = os.environ.get(
-        'GITHUB_REPOSITORY', 'Loup-Garou911XD/ballistica'
+        'GITHUB_REPOSITORY', 'efroemling/ballistica'
     )
 
     # Paths
