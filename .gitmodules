@@ -1,4 +1,0 @@
-[submodule "config/flatpak/flathub"]
-	path = config/flatpak/flathub
-	url = https://github.com/Loup-Garou911XD/flathub
-	branch = net.froemling.bombsquad

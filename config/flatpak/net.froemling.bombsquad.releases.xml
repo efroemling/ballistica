@@ -1,6 +1,6 @@
 <!-- for more info https://www.freedesktop.org/software/appstream/docs/sect-Metadata-Releases.html -->
 <releases>
-    <release version="1.7.60" date="2026-01-13" urgency="low" type="stable">
+    <release version="1.7.59" date="2026-01-13" urgency="low" type="stable">
         <description>
             <p>This stable release fixes bugs.</p>
         </description>
