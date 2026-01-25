@@ -526,6 +526,10 @@ jobs:
           mkdir -p build/flathub
           git clone https://github.com/${{ github.repository_owner }}/flathub build/flathub
           cd build/flathub
+          git fetch origin net.froemling.bombsquad
+          git checkout -b net.froemling.bombsquad FETCH_HEAD
+          git remote set-url origin \
+            https://x-access-token:${FLATHUB_PUSH_PAT}@github.com/${{ github.repository_owner }}/flathub.git
       - name: Generate Flathub manifest
         run: make generate-flathub-manifest
       - name: Push changes
@@ -533,10 +537,6 @@ jobs:
           FLATHUB_PUSH_PAT: ${{ secrets.FLATHUB_PUSH_PAT }}
         run: |
           cd build/flathub
-          git fetch origin net.froemling.bombsquad
-          git checkout -b net.froemling.bombsquad FETCH_HEAD
-          git remote set-url origin \
-            https://x-access-token:${FLATHUB_PUSH_PAT}@github.com/${{ github.repository_owner }}/flathub.git
           git add -A
           git commit -m "Update flathub manifest to latest release"
           git push origin net.froemling.bombsquad
