@@ -264,6 +264,7 @@ def generate_flatpak_release_manifest(
     """Generate a Flatpak release manifest for Ballistica.
 
     This function:
+
     1. Adds a new release entry to net.froemling.bombsquad.releases.xml
     2. Updates the net.froemling.bombsquad.releases.xml file with the
        new release information
