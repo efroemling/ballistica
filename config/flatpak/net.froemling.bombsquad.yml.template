@@ -43,20 +43,21 @@ modules:
   #     - /lib/pkgconfig
   #     - /share
 
-  - name: SDL2
-    buildsystem: cmake
-    builddir: true
-    cleanup:
-      - /bin
-      - /include
-      - /lib/pkgconfig
-      - /lib/cmake
-      - /share
-      - "*.a"
-    sources:
-      - type: git
-        url: https://github.com/libsdl-org/SDL
-        tag: release-2.32.8
+  # SDL2 is already provided by the runtime
+  # - name: SDL2
+  #   buildsystem: cmake
+  #   builddir: true
+  #   cleanup:
+  #     - /bin
+  #     - /include
+  #     - /lib/pkgconfig
+  #     - /lib/cmake
+  #     - /share
+  #     - "*.a"
+  #   sources:
+  #     - type: git
+  #       url: https://github.com/libsdl-org/SDL
+  #       tag: release-2.32.8
 
   - name: rsync
     buildsystem: autotools
@@ -78,8 +79,8 @@ modules:
     build-options:
       append-path: /usr/lib/sdk/llvm20/bin
       prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
-      build-args:
-        # - --share=network
+      # build-args:
+      #   - --share=network
     build-commands:
       # FLATPAK_DEST=/app, FLATPAK_ID=net.froemling.bombsquad
       - mkdir -p ${FLATPAK_DEST}/bin/bombsquad
