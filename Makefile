@@ -1250,6 +1250,7 @@ docker-clean:
 	$(PCOMMAND) remove_docker_images
 	docker system prune
 
+
 ################################################################################
 #                                                                              #
 #                                   Flatpak                                    #
@@ -1273,6 +1274,7 @@ flatpak-clean:
 	rm build/flatpak -rf
 	rm build/flathub -rf
 	rm .cache/flatpak -rf
+
 
 ################################################################################
 #                                                                              #
