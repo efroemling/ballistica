@@ -10,13 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
+      # - name: Setup build env
+      #   uses: ./.github/actions/bombsquad_build_env
       - name: Install flatpak-builder
         run: sudo apt install -y flatpak-builder
       - name: Get flathub repo
         run: |
-          git clone ${{github.repository_owner}}/flathub.git flathub
           git clone https://github.com/${{ github.repository_owner }}/flathub build/flathub
           cd build/flathub
           git fetch origin net.froemling.bombsquad
