@@ -16,8 +16,6 @@
   `net.froemling.BombSquad` along with improved package metadata.
   Installing new flatpak builds alongside old flatpak builds will create 2 
   seperate installs.
-- Added `flatpak-generate-flathub-manifest` make target that will generate 
-  manifest for flathub in `build/flathub`
 - Updated Android audio stack to OpenALSoft 1.25.1 and oboe 1.10.0.
 - Updated Mac and Window audio stack to OpenALSoft 1.25.1.
   
