@@ -1,4 +1,4 @@
-### 1.7.60 (build 22699, api 9, 2026-01-26)
+### 1.7.60 (build 22700, api 9, 2026-01-26)
 - Fun easter-egg when clicking characters in inventory window (Thanks
   EraOSBeta!)
 - It is no longer possible to capture the hill from below the platform in happy
