@@ -155,6 +155,7 @@ from batools.pcommands3 import (
     generate_flathub_manifest,
     get_changelog,
 )
+
 # pylint: enable=unused-import
 
 

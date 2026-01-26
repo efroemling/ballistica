@@ -6,7 +6,6 @@ from __future__ import annotations
 
 # Note: import as little as possible here at the module level to
 # keep launch times fast for small snippets.
-import sys
 from typing import TYPE_CHECKING
 
 from efrotools import pcommand
@@ -109,16 +108,24 @@ def generate_flathub_manifest() -> None:
     pcommand.disallow_in_batch()
     try:
         github_repo = os.environ['GITHUB_REPOSITORY']
-    except:
+    except KeyError:
         try:
-            user_plus_repo: list[str] = subprocess.run(
-                'git config remote.origin.url',
-                check=True,
-                shell=True,
-                capture_output=True,
-                text=True
-            ).stdout.strip(' \n').split('/')
-            github_repo = user_plus_repo[-2] + '/' + user_plus_repo[-1].removesuffix('.git')
+            user_plus_repo: list[str] = (
+                subprocess.run(
+                    'git config remote.origin.url',
+                    check=True,
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                )
+                .stdout.strip(' \n')
+                .split('/')
+            )
+            github_repo = (
+                user_plus_repo[-2]
+                + '/'
+                + user_plus_repo[-1].removesuffix('.git')
+            )
         except Exception as e:
             raise CleanError(
                 f'GITHUB_REPOSITORY env var not'
@@ -218,12 +225,14 @@ def generate_flathub_manifest() -> None:
 
     def _remove_comments_from_xml_template(content: str) -> str:
         import re
+
         # Pattern matches lines that start with optional spaces/tabs then '#'
         # This removes the entire line including the newline
         pattern = r'^\s*#.*$\n?'
         result = re.sub(pattern, '', content, flags=re.MULTILINE)
 
         return result
+
     template = _remove_comments_from_xml_template(template)
     # Replace placeholders
     manifest_content = template.replace('{ ARCHIVE_URL }', asset_url)
@@ -385,6 +394,7 @@ def get_changelog(version: str | None = None) -> str:
     import os
     from efro.error import CleanError
     from efro.terminal import Clr
+
     called_from_other_function = version is not None
     pcommand.disallow_in_batch()
     if version is None:
@@ -408,6 +418,7 @@ def get_changelog(version: str | None = None) -> str:
     changelog_text = match.group(1).strip()
     if not called_from_other_function:
         print(
-            f'{Clr.BLD}Changelog for version {version}:{Clr.RST}\n{changelog_text}'
+            f'{Clr.BLD}Changelog for version '
+            f'{version}:{Clr.RST}\n{changelog_text}'
         )
     return changelog_text

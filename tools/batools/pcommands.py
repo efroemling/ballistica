@@ -662,6 +662,7 @@ def prefab_binary_path() -> None:
         end='',
     )
 
+
 def make_prefab() -> None:
     """Run prefab builds for the current platform."""
     import subprocess
