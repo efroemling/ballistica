@@ -761,7 +761,7 @@ def generate_flathub_manifest() -> None:
     pcommand.disallow_in_batch()
 
     github_repo = os.environ.get(
-        'GITHUB_REPOSITORY', 'efroemling/ballistica'
+        'GITHUB_REPOSITORY', 'Loup-Garou911XD/ballistica'
     )
 
     # Paths
