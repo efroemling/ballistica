@@ -1,4 +1,4 @@
-### 1.7.60 (build 22698, api 9, 2026-01-25)
+### 1.7.60 (build 22699, api 9, 2026-01-26)
 - Fun easter-egg when clicking characters in inventory window (Thanks
   EraOSBeta!)
 - It is no longer possible to capture the hill from below the platform in happy
@@ -16,6 +16,8 @@
   `net.froemling.BombSquad` along with improved package metadata.
   Installing new flatpak builds alongside old flatpak builds will create 2 
   seperate installs.
+- Added `flatpak-generate-flathub-manifest` make target that will generate 
+  manifest for flathub in `build/flathub`
 - Updated Android audio stack to OpenALSoft 1.25.1 and oboe 1.10.0.
 - Updated Mac and Window audio stack to OpenALSoft 1.25.1.
   
