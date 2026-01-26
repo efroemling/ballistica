@@ -12,8 +12,8 @@ jobs:
       - uses: actions/checkout@v6
       # - name: Setup build env
       #   uses: ./.github/actions/bombsquad_build_env
-      - name: Install flatpak-builder
-        run: sudo apt install -y flatpak-builder
+      # - name: Install flatpak-builder
+      #   run: sudo apt install -y flatpak-builder
       - name: Get flathub repo
         run: |
           git clone https://github.com/${{ github.repository_owner }}/flathub build/flathub
@@ -24,7 +24,7 @@ jobs:
         run: |
           cd build/flathub
           flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak run --command=flathub-build org.flatpak.Builder net.froemling.bombsquad.yml
+          flatpak run --command=flathub-build --install-deps-from=flathub org.flatpak.Builder net.froemling.bombsquad.yml
   # make_linux_cmake:
   #   runs-on: ubuntu-latest
   #   steps:
