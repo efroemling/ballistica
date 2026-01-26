@@ -523,7 +523,7 @@ jobs:
           submodules: true
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
-      - name: Configure Git
+      - name: Configure flathub repo clone
         run: |
           git config --global user.email "90267658+Loup-Garou911XD@users.noreply.github.com"
           git config --global user.name "GitHub Actions"
@@ -532,7 +532,6 @@ jobs:
           cd build/flathub
           git fetch origin net.froemling.bombsquad
           git checkout -b net.froemling.bombsquad FETCH_HEAD
-
       - name: Generate Flathub manifest
         run: make flatpak-generate-flathub-manifest
       - name: Push changes

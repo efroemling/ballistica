@@ -9,6 +9,12 @@ Ballistica Developer's Guide
 ================================================
 *Last updated for BallisticaKit {{data.version_no}} build {{data.build_no}}*
 
+|deploy-badge|
+
+.. |deploy-badge| image:: https://github.com/efroemling/ballistica/actions/workflows/deploy_docs.yml/badge.svg
+   :target: https://github.com/efroemling/ballistica/actions/workflows/deploy_docs.yml
+   :alt: Deploy Documentation
+
 .. toctree::
    :maxdepth: 2
    :caption: Python Reference
