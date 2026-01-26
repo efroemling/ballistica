@@ -10,8 +10,6 @@ import sys
 
 from efrotools import pcommand
 
-# pylint: disable=too-many-lines
-
 
 def prune_includes() -> None:
     """Check for unnecessary includes in C++ files.
@@ -663,79 +661,6 @@ def prefab_binary_path() -> None:
         f'build/prefab/full/{platform.value}_{buildtype}/{buildmode}/{binpath}',
         end='',
     )
-
-
-def compose_docker_gui_release() -> None:
-    """Build the docker image with bombsquad cmake gui."""
-    import batools.docker
-
-    batools.docker.docker_compose(headless_build=False)
-
-
-def compose_docker_gui_debug() -> None:
-    """Build the docker image with bombsquad debug cmake gui."""
-    import batools.docker
-
-    batools.docker.docker_compose(headless_build=False, build_type='Debug')
-
-
-def compose_docker_server_release() -> None:
-    """Build the docker image with bombsquad cmake server."""
-    import batools.docker
-
-    batools.docker.docker_compose()
-
-
-def compose_docker_server_debug() -> None:
-    """Build the docker image with bombsquad debug cmake server."""
-    import batools.docker
-
-    batools.docker.docker_compose(build_type='Debug')
-
-
-def compose_docker_arm64_gui_release() -> None:
-    """Build the docker image with bombsquad cmake for arm64."""
-    import batools.docker
-
-    batools.docker.docker_compose(headless_build=False, platform='linux/arm64')
-
-
-def compose_docker_arm64_gui_debug() -> None:
-    """Build the docker image with bombsquad cmake for arm64."""
-    import batools.docker
-
-    batools.docker.docker_compose(
-        headless_build=False, platform='linux/arm64', build_type='Debug'
-    )
-
-
-def compose_docker_arm64_server_release() -> None:
-    """Build the docker image with bombsquad cmake server for arm64."""
-    import batools.docker
-
-    batools.docker.docker_compose(platform='linux/arm64')
-
-
-def compose_docker_arm64_server_debug() -> None:
-    """Build the docker image with bombsquad cmake server for arm64."""
-    import batools.docker
-
-    batools.docker.docker_compose(platform='linux/arm64', build_type='Debug')
-
-
-def save_docker_images() -> None:
-    """Saves bombsquad images loaded into docker."""
-    import batools.docker
-
-    batools.docker.docker_save_images()
-
-
-def remove_docker_images() -> None:
-    """Remove the bombsquad images loaded in docker."""
-    import batools.docker
-
-    batools.docker.docker_remove_images()
-
 
 def make_prefab() -> None:
     """Run prefab builds for the current platform."""

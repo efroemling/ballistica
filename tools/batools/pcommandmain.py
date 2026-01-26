@@ -107,16 +107,6 @@ from batools.pcommands import (
     ensure_prefab_platform,
     prefab_run_var,
     prefab_binary_path,
-    compose_docker_gui_release,
-    compose_docker_gui_debug,
-    compose_docker_server_release,
-    compose_docker_server_debug,
-    compose_docker_arm64_gui_release,
-    compose_docker_arm64_gui_debug,
-    compose_docker_arm64_server_release,
-    compose_docker_arm64_server_debug,
-    save_docker_images,
-    remove_docker_images,
     make_prefab,
     lazybuild,
     efro_gradle,
@@ -150,10 +140,21 @@ from batools.pcommands2 import (
     asset_package_resolve,
     asset_package_assemble,
     cst_test,
+)
+from batools.pcommands3 import (
+    compose_docker_gui_release,
+    compose_docker_gui_debug,
+    compose_docker_server_release,
+    compose_docker_server_debug,
+    compose_docker_arm64_gui_release,
+    compose_docker_arm64_gui_debug,
+    compose_docker_arm64_server_release,
+    compose_docker_arm64_server_debug,
+    save_docker_images,
+    remove_docker_images,
     generate_flathub_manifest,
     get_changelog,
 )
-
 # pylint: enable=unused-import
 
 
