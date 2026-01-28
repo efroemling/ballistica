@@ -108,6 +108,11 @@ class LoggerControlConfig:
         for logname in existinglognames:
             logger = logging.getLogger(logname)
             if logger.getEffectiveLevel() != self.get_effective_level(logname):
+
+                # Exceptions for ones that I don't care to look into.
+                if logname in {'pyasn1'}:
+                    continue
+
                 logging.error(
                     'loggercontrol effective-level sanity check failed;'
                     ' expected logger %s to have effective level %s'

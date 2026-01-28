@@ -35,6 +35,7 @@ class PluginWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
+        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         app = bui.app
 
@@ -54,7 +55,7 @@ class PluginWindow(bui.MainWindow):
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
         scale = (
-            1.9
+            1.7
             if uiscale is bui.UIScale.SMALL
             else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
@@ -121,16 +122,21 @@ class PluginWindow(bui.MainWindow):
             size=(0, 0),
             text=bui.Lstr(resource='pluginsText'),
             color=app.ui_v1.title_color,
-            maxwidth=170,
+            maxwidth=140,
             h_align='center',
             v_align='center',
         )
 
-        settings_button_x = (
-            self._width * 0.5
-            + self._scroll_width * 0.5
-            - (100 if uiscale is bui.UIScale.SMALL else 40)
-        )
+        settings_button_x = self._width * 0.5 + self._scroll_width * 0.5 - 40
+        if uiscale is bui.UIScale.SMALL:
+            # In small UI there's stuff top right we need to avoid.
+            if bui.in_main_menu():
+                # Squads button
+                settings_button_x -= 65
+            else:
+                # Squads and settings buttons
+                settings_button_x -= 115
+
         button_row_yoffs = yoffs + (-2 if uiscale is bui.UIScale.SMALL else 10)
 
         self._num_plugins_text = bui.textwidget(

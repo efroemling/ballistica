@@ -20,6 +20,8 @@
   manifest for flathub in `build/flathub`
 - Updated Android audio stack to OpenALSoft 1.25.1 and oboe 1.10.0.
 - Updated Mac and Window audio stack to OpenALSoft 1.25.1.
+- Fixed an issue with overlapping widgets in the corner of the Plugins window
+  when shown from within a game.
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
