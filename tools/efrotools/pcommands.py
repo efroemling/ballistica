@@ -356,7 +356,8 @@ def pylint() -> None:
 
     full = '-full' in sys.argv
     fast = '-fast' in sys.argv
-    efrotools.code.pylint(pcommand.PROJROOT, full, fast)
+    extra = '-extra' in sys.argv
+    efrotools.code.pylint(pcommand.PROJROOT, full, fast, extra)
 
 
 def pylint_files() -> None:
@@ -367,11 +368,13 @@ def pylint_files() -> None:
 
     pcommand.disallow_in_batch()
 
+    extra = '-extra' in sys.argv
+
     if len(sys.argv) < 3:
         raise CleanError('Expected at least 1 filename arg.')
 
     filenames = sys.argv[2:]
-    efrotools.code.runpylint(pcommand.PROJROOT, filenames)
+    efrotools.code.runpylint(pcommand.PROJROOT, filenames, extra)
     print(f'{Clr.GRN}Pylint Passed.{Clr.RST}')
 
 

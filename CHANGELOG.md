@@ -1,4 +1,4 @@
-### 1.7.60 (build 22701, api 9, 2026-01-26)
+### 1.7.60 (build 22702, api 9, 2026-01-28)
 - Fun easter-egg when clicking characters in inventory window (Thanks
   EraOSBeta!)
 - It is no longer possible to capture the hill from below the platform in happy
@@ -22,6 +22,18 @@
 - Updated Mac and Window audio stack to OpenALSoft 1.25.1.
 - Fixed an issue with overlapping widgets in the corner of the Plugins window
   when shown from within a game.
+- Cleaned up some Makefile targets. Targets such as `check2` or `preflight2` are
+  now called `check-ex`, `preflight-ex`, etc. These targets are slower but more
+  complete than regular versions; ideal for things like CI where
+  accuracy/consistency is more important than iteration speed. In line with
+  this, the `test-fast` target is now `test` and the old regular `test` target
+  is now `test-ex`.
+- We now run Pylint in multiprocess mode for regular check targets but not for
+  'ex' ones. When I last tried this years ago it gave somewhat flaky
+  nondeterministic results, but apparently it is better now. We'll see. The 'ex'
+  versions still run in a single-process so CI should catch anything that slips
+  through interactive checks. This gives a pretty huge speedup so hopefully is a
+  good tradeoff.
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
