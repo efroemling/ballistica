@@ -20,7 +20,7 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Run checks
-        run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check
+        run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check-ex
 
   # Compile a server binary and run some tests.
   build_and_test_linux:
@@ -34,7 +34,7 @@ jobs:
       - name: Assemble monolithic server build
         run: make cmake-server-build
       - name: Run tests
-        run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test
+        run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test-ex
 
   # Test spinoff projects - versions of the project with feature-sets
   # added or removed or other changes made.
