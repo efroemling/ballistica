@@ -562,8 +562,8 @@ void AudioServer::Start_() {
             LogName::kBaAudio, LogLevel::kInfo,
             "OpenAL default-device-change events UNAVAILABLE.");
       }
-    // #endif
-  }
+      // #endif
+    }
 
     if (!using_null_device_) {
       ALfloat listener_pos[] = {0.0f, 0.0f, 0.0f};

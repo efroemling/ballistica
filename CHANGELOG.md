@@ -34,6 +34,7 @@
   versions still run in a single-process so CI should catch anything that slips
   through interactive checks. This gives a pretty huge speedup so hopefully is a
   good tradeoff.
+- Added a null audio device to prevent crash when no audio device is available
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
