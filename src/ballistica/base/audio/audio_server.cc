@@ -359,13 +359,16 @@ void AudioServer::Start_() {
       g_core->logging->Log(
           LogName::kBaAudio, LogLevel::kWarning,
           "No audio devices found. Falling back to null audio device.");
-      device = nullptr;
+      using_null_device_ = true;
+      if (!g_buildconfig.platform_android()) {
+        return;
+      }
     }
 
-    impl_->alc_context = device ? alcCreateContext(device, nullptr) : nullptr;
+    impl_->alc_context = alcCreateContext(device, nullptr);
 
     // Android special case: if we fail, try again after a few seconds.
-    if (!impl_->alc_context && device && g_buildconfig.platform_android()) {
+    if (!impl_->alc_context && g_buildconfig.platform_android()) {
       g_core->logging->Log(
           LogName::kBaAudio, LogLevel::kError,
           "Failed creating AL context; waiting and trying again.");
@@ -385,17 +388,21 @@ void AudioServer::Start_() {
       alGetError();  // Clear any errors.
 
       if (!device) {
-        g_core->logging->Log(
-            LogName::kBaAudio, LogLevel::kWarning,
-            "Fallback attempt device create failed; using null audio device.");
-        device = nullptr;
-      } else {
-        impl_->alc_context = alcCreateContext(device, nullptr);
-        if (impl_->alc_context) {
-          // For now want to explicitly know if this works.
-          g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
-                               "Backup AL context creation successful!");
-        }
+        std::scoped_lock lock(openalsoft_android_log_mutex_);
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+            "------------------------"
+            " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
+                + openalsoft_android_log_
+            + "\n-------------------------"
+              " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
+        openalsoft_android_log_.clear();
+        FatalError("Fallback attempt device create failed.");
+      }
+      impl_->alc_context = alcCreateContext(device, nullptr);
+      if (impl_->alc_context) {
+        // For now want to explicitly know if this works.
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                             "Backup AL context creation successful!");
       }
     }
 
@@ -437,13 +444,8 @@ void AudioServer::Start_() {
       }
     }
 
-    // If we still don't have context, use null audio device.
+    // Fail at this point if we've got nothing.
     if (!impl_->alc_context) {
-      g_core->logging->Log(
-          LogName::kBaAudio, LogLevel::kWarning,
-          "Unable to initialize OpenAL audio. Using null audio device.");
-      using_null_device_ = true;
-    } else {
       if (g_buildconfig.platform_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
         g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
@@ -454,10 +456,13 @@ void AudioServer::Start_() {
               " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
         openalsoft_android_log_.clear();
       }
-      BA_PRECONDITION_FATAL(impl_->alc_context);
-      BA_PRECONDITION_FATAL(alcMakeContextCurrent(impl_->alc_context));
-      CHECK_AL_ERROR;
+      FatalError(
+          "Unable to init audio. Do you have speakers/headphones/etc. "
+          "connected?");
     }
+    BA_PRECONDITION_FATAL(impl_->alc_context);
+    BA_PRECONDITION_FATAL(alcMakeContextCurrent(impl_->alc_context));
+    CHECK_AL_ERROR;
 
     // Log some general OpenAL info if desired:
     g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo, [device] {
@@ -480,131 +485,119 @@ void AudioServer::Start_() {
              + "\n  Device: " + device_name + env_note;
     });
 
-    if (!using_null_device_) {
-      alcDevicePauseSOFT = reinterpret_cast<LPALCDEVICEPAUSESOFT_>(
-          alcGetProcAddress(device, "alcDevicePauseSOFT"));
-      alcDeviceResumeSOFT = reinterpret_cast<LPALCDEVICERESUMESOFT_>(
-          alcGetProcAddress(device, "alcDeviceResumeSOFT"));
+    alcDevicePauseSOFT = reinterpret_cast<LPALCDEVICEPAUSESOFT_>(
+        alcGetProcAddress(device, "alcDevicePauseSOFT"));
+    alcDeviceResumeSOFT = reinterpret_cast<LPALCDEVICERESUMESOFT_>(
+        alcGetProcAddress(device, "alcDeviceResumeSOFT"));
 
-      // Sanity check: we expect neither or both of these to be present.
-      assert((alcDevicePauseSOFT != nullptr)
-             == (alcDeviceResumeSOFT != nullptr));
-      if (alcDevicePauseSOFT != nullptr && alcDeviceResumeSOFT != nullptr) {
-        g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
-                             "OpenAL device pause/resume AVAILABLE.");
-      } else {
-        g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
-                             "OpenAL device pause/resume UNAVAILABLE.");
-      }
-
-      alcResetDeviceSOFT = reinterpret_cast<LPALCRESETDEVICESOFT_>(
-          alcGetProcAddress(device, "alcResetDeviceSOFT"));
-
-      alcReopenDeviceSOFT = reinterpret_cast<LPALCREOPENDEVICESOFT_>(
-          alcGetProcAddress(device, "alcReopenDeviceSOFT"));
-
-      alEventCallbackSOFT = reinterpret_cast<LPALEVENTCALLBACKSOFT_>(
-          alcGetProcAddress(device, "alEventCallbackSOFT"));
-
-      alEventControlSOFT = reinterpret_cast<LPALEVENTCONTROLSOFT_>(
-          alcGetProcAddress(device, "alEventControlSOFT"));
-
-      alcEventCallbackSOFT = reinterpret_cast<LPALCEVENTCALLBACKSOFT_>(
-          alcGetProcAddress(device, "alcEventCallbackSOFT"));
-
-      alcEventControlSOFT = reinterpret_cast<LPALCEVENTCONTROLSOFT_>(
-          alcGetProcAddress(device, "alcEventControlSOFT"));
-
-      alcEventIsSupportedSOFT = reinterpret_cast<LPALCEVENTISSUPPORTEDSOFT_>(
-          alcGetProcAddress(device, "alcEventIsSupportedSOFT"));
-
-      if (alEventCallbackSOFT != nullptr && alEventControlSOFT != nullptr) {
-        // Set ourself up to recieve these type of callbacks.
-        alEventCallbackSOFT(ALEventCallback_, nullptr);
-        CHECK_AL_ERROR;
-
-        g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
-                             "OpenAL disconnect events AVAILABLE.");
-
-        // Ask to be notified when a context is disconnected from its device.
-        ALenum types[] = {AL_EVENT_TYPE_DISCONNECTED_SOFT_};
-        alEventControlSOFT(1, types, AL_TRUE);
-        CHECK_AL_ERROR;
-      } else {
-        g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
-                             "OpenAL disconnect events UNAVAILABLE.");
-      }
-
-      bool set_default_device_changed_callback{};
-      if (alcEventCallbackSOFT != nullptr && alcEventIsSupportedSOFT != nullptr
-          && alcEventControlSOFT != nullptr) {
-        // Set ourself up to recieve these type of callbacks.
-        alcEventCallbackSOFT(ALCEventCallback_, nullptr);
-        CHECK_AL_ERROR;
-
-        if (alcEventIsSupportedSOFT(ALC_EVENT_TYPE_DEFAULT_DEVICE_CHANGED_SOFT_,
-                                    ALC_PLAYBACK_DEVICE_SOFT_)
-            == ALC_EVENT_SUPPORTED_SOFT_) {
-          // Ask to be notified when default output device changes.
-          ALenum types[] = {ALC_EVENT_TYPE_DEFAULT_DEVICE_CHANGED_SOFT_};
-          auto success = alcEventControlSOFT(1, types, AL_TRUE);
-          if (success) {
-            set_default_device_changed_callback = true;
-          }
-          CHECK_AL_ERROR;
-        }
-      }
-      if (set_default_device_changed_callback) {
-        g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
-                             "OpenAL default-device-change events AVAILABLE.");
-      } else {
-        g_core->logging->Log(
-            LogName::kBaAudio, LogLevel::kInfo,
-            "OpenAL default-device-change events UNAVAILABLE.");
-      }
-      // #endif
+    // Sanity check: we expect neither or both of these to be present.
+    assert((alcDevicePauseSOFT != nullptr) == (alcDeviceResumeSOFT != nullptr));
+    if (alcDevicePauseSOFT != nullptr && alcDeviceResumeSOFT != nullptr) {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL device pause/resume AVAILABLE.");
+    } else {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL device pause/resume UNAVAILABLE.");
     }
 
-    if (!using_null_device_) {
-      ALfloat listener_pos[] = {0.0f, 0.0f, 0.0f};
-      ALfloat listener_vel[] = {0.0f, 0.0f, 0.0f};
-      ALfloat listener_ori[] = {0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f};
+    alcResetDeviceSOFT = reinterpret_cast<LPALCRESETDEVICESOFT_>(
+        alcGetProcAddress(device, "alcResetDeviceSOFT"));
 
-      alListenerfv(AL_POSITION, listener_pos);
-      alListenerfv(AL_VELOCITY, listener_vel);
-      alListenerfv(AL_ORIENTATION, listener_ori);
+    alcReopenDeviceSOFT = reinterpret_cast<LPALCREOPENDEVICESOFT_>(
+        alcGetProcAddress(device, "alcReopenDeviceSOFT"));
+
+    alEventCallbackSOFT = reinterpret_cast<LPALEVENTCALLBACKSOFT_>(
+        alcGetProcAddress(device, "alEventCallbackSOFT"));
+
+    alEventControlSOFT = reinterpret_cast<LPALEVENTCONTROLSOFT_>(
+        alcGetProcAddress(device, "alEventControlSOFT"));
+
+    alcEventCallbackSOFT = reinterpret_cast<LPALCEVENTCALLBACKSOFT_>(
+        alcGetProcAddress(device, "alcEventCallbackSOFT"));
+
+    alcEventControlSOFT = reinterpret_cast<LPALCEVENTCONTROLSOFT_>(
+        alcGetProcAddress(device, "alcEventControlSOFT"));
+
+    alcEventIsSupportedSOFT = reinterpret_cast<LPALCEVENTISSUPPORTEDSOFT_>(
+        alcGetProcAddress(device, "alcEventIsSupportedSOFT"));
+
+    if (alEventCallbackSOFT != nullptr && alEventControlSOFT != nullptr) {
+      // Set ourself up to recieve these type of callbacks.
+      alEventCallbackSOFT(ALEventCallback_, nullptr);
       CHECK_AL_ERROR;
-    }
-  }
 
-  // Only create audio sources if we have a valid OpenAL context.
-  if (!using_null_device_) {
-    // Create our sources.
-    int target_source_count = 30;
-    for (int i = 0; i < target_source_count; i++) {
-      bool valid = false;
-      auto s(Object::New<AudioServer::ThreadSource_>(this, i, &valid));
-      if (valid) {
-        s->CreateClientSource(i);
-        g_base->audio->AddClientSource(&(*s->client_source()));
-        sound_source_refs_.push_back(s);
-        sources_.push_back(&(*s));
-      } else {
-        g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
-                             "Made " + std::to_string(i) + " sources; (wanted "
-                                 + std::to_string(target_source_count) + ").");
-        break;
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL disconnect events AVAILABLE.");
+
+      // Ask to be notified when a context is disconnected from its device.
+      ALenum types[] = {AL_EVENT_TYPE_DISCONNECTED_SOFT_};
+      alEventControlSOFT(1, types, AL_TRUE);
+      CHECK_AL_ERROR;
+    } else {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL disconnect events UNAVAILABLE.");
+    }
+
+    bool set_default_device_changed_callback{};
+    if (alcEventCallbackSOFT != nullptr && alcEventIsSupportedSOFT != nullptr
+        && alcEventControlSOFT != nullptr) {
+      // Set ourself up to recieve these type of callbacks.
+      alcEventCallbackSOFT(ALCEventCallback_, nullptr);
+      CHECK_AL_ERROR;
+
+      if (alcEventIsSupportedSOFT(ALC_EVENT_TYPE_DEFAULT_DEVICE_CHANGED_SOFT_,
+                                  ALC_PLAYBACK_DEVICE_SOFT_)
+          == ALC_EVENT_SUPPORTED_SOFT_) {
+        // Ask to be notified when default output device changes.
+        ALenum types[] = {ALC_EVENT_TYPE_DEFAULT_DEVICE_CHANGED_SOFT_};
+        auto success = alcEventControlSOFT(1, types, AL_TRUE);
+        if (success) {
+          set_default_device_changed_callback = true;
+        }
+        CHECK_AL_ERROR;
       }
     }
-    CHECK_AL_ERROR;
+    if (set_default_device_changed_callback) {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL default-device-change events AVAILABLE.");
+    } else {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL default-device-change events UNAVAILABLE.");
+    }
 
-    // Now make available any stopped sources (should be all of them).
-    UpdateAvailableSources_();
-  } else {
-    g_core->logging->Log(
-        LogName::kBaAudio, LogLevel::kWarning,
-        "Running in null audio device mode; audio output is disabled.");
+    // #endif
   }
+
+  ALfloat listener_pos[] = {0.0f, 0.0f, 0.0f};
+  ALfloat listener_vel[] = {0.0f, 0.0f, 0.0f};
+  ALfloat listener_ori[] = {0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f};
+
+  alListenerfv(AL_POSITION, listener_pos);
+  alListenerfv(AL_VELOCITY, listener_vel);
+  alListenerfv(AL_ORIENTATION, listener_ori);
+  CHECK_AL_ERROR;
+
+  // Create our sources.
+  int target_source_count = 30;
+  for (int i = 0; i < target_source_count; i++) {
+    bool valid = false;
+    auto s(Object::New<AudioServer::ThreadSource_>(this, i, &valid));
+    if (valid) {
+      s->CreateClientSource(i);
+      g_base->audio->AddClientSource(&(*s->client_source()));
+      sound_source_refs_.push_back(s);
+      sources_.push_back(&(*s));
+    } else {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                           "Made " + std::to_string(i) + " sources; (wanted "
+                               + std::to_string(target_source_count) + ").");
+      break;
+    }
+  }
+  CHECK_AL_ERROR;
+
+  // Now make available any stopped sources (should be all of them).
+  UpdateAvailableSources_();
 
   last_started_playing_time_ = g_core->AppTimeSeconds();
 #endif  // BA_ENABLE_AUDIO
