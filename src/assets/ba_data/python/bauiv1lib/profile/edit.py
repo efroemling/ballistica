@@ -580,6 +580,17 @@ class EditProfileWindow(
 
         assert self._existing_profile is not None
 
+        # Play a death sound of the character.
+        classic = bui.app.classic
+        if classic is not None:
+            profiles = bui.app.config.get('Player Profiles', {})
+            p_info = profiles.get(self._existing_profile)
+            if p_info:
+                char = p_info.get('character', 'Spaz')
+                appearance = classic.spaz_appearances.get(char)
+                if appearance:
+                    bui.getsound(random.choice(appearance.death_sounds)).play()
+
         plus.add_v1_account_transaction(
             {'type': 'REMOVE_PLAYER_PROFILE', 'name': self._existing_profile}
         )
