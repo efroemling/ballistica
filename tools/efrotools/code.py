@@ -367,7 +367,7 @@ def get_script_filenames(projroot: Path) -> list[str]:
     return out
 
 
-def runpylint(projroot: Path, filenames: list[str]) -> None:
+def runpylint(projroot: Path, filenames: list[str], extra: bool) -> None:
     """Run Pylint explicitly on files."""
 
     pylintrc = Path(projroot, '.pylintrc')
@@ -378,11 +378,16 @@ def runpylint(projroot: Path, filenames: list[str]) -> None:
     # but let's go ahead and run it inline so we're consistent with our cached
     # full-project version.
     _run_pylint(
-        projroot, pylintrc, cache=None, dirtyfiles=filenames, allfiles=None
+        projroot,
+        pylintrc,
+        cache=None,
+        dirtyfiles=filenames,
+        allfiles=None,
+        extra=extra,
     )
 
 
-def pylint(projroot: Path, full: bool, fast: bool) -> None:
+def pylint(projroot: Path, full: bool, fast: bool, extra: bool) -> None:
     """Run Pylint on all scripts in our project (with smart dep tracking)."""
     from efrotools.util import get_files_hash
     from efro.terminal import Clr
@@ -424,7 +429,7 @@ def pylint(projroot: Path, full: bool, fast: bool) -> None:
             flush=True,
         )
         try:
-            _run_pylint(projroot, pylintrc, cache, dirtyfiles, filenames)
+            _run_pylint(projroot, pylintrc, cache, dirtyfiles, filenames, extra)
         finally:
             # No matter what happens, we still want to
             # update our disk cache (since some lints may have passed).
@@ -510,12 +515,30 @@ def _run_pylint(
     cache: FileCache | None,
     dirtyfiles: list[str],
     allfiles: list[str] | None,
+    extra: bool,
 ) -> dict[str, Any]:
+    # pylint: disable=too-many-positional-arguments
+    # pylint: disable=too-many-locals
     from pylint import lint
     from efro.terminal import Clr
 
+    # By default we use up to 8 cpus if available. However if they pass
+    # 'extra' we limit to one. This is intended to keep things as
+    # deterministic as possible for things such as CI where speed isn't
+    # as important.
+    cpucount = os.cpu_count()
+    if cpucount is None:
+        cpucount = 1
+    jobcount = 1 if extra else max(cpucount, 8)
+
     start_time = time.monotonic()
-    args = ['--rcfile', str(pylintrc), '--output-format=colorized']
+    args = [
+        '--rcfile',
+        str(pylintrc),
+        '--output-format=colorized',
+        '--jobs',
+        str(jobcount),
+    ]
 
     args += dirtyfiles
     name = f'{len(dirtyfiles)} file(s)'

@@ -803,13 +803,14 @@ check-full: py_check_prepass
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as 'check' plus optional/slow extra checks.
-check2: py_check_prepass
-	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy
+# Intended for things such as CI where speed is less of a concern.
+check-ex: py_check_prepass
+	@$(DMAKE) -j$(CPUS) update-check cpplint pylint-ex mypy
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
-# Same as check2 but no caching (all files are checked).
-check2-full: py_check_prepass
-	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full
+# Same as check-ex but no caching (all files are checked).
+check-ex-full: py_check_prepass
+	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-ex-full mypy-full
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
@@ -827,6 +828,14 @@ pylint: py_check_prepass
 # Run Pylint checks without caching (all files are checked).
 pylint-full: py_check_prepass
 	@$(PCOMMAND) pylint -full
+
+# Run Pylint checks on all Python Code (including extra slow ones).
+pylint-ex: py_check_prepass
+	@$(PCOMMAND) pylint -extra
+
+# Run Pylint checks including extras without caching (all files are checked).
+pylint-ex-full: py_check_prepass
+	@$(PCOMMAND) pylint -full -extra
 
 # Run Mypy checks on all Python code.
 mypy: py_check_prepass
@@ -875,9 +884,9 @@ pycharm-full: py_check_prepass
 py_check_prepass: dummymodules
 
 # Tell make which of these targets don't represent files.
-.PHONY: check check-full check2 check2-full cpplint cpplint-full pylint		\
-        pylint-full mypy mypy-full dmypy dmypy-stop pycharm pycharm-full	\
-        py_check_prepass
+.PHONY: check check-full check-ex check-ex-full cpplint cpplint-full pylint		\
+        pylint-ex pylint-full pylint-ex-full mypy mypy-full dmypy dmypy-stop	\
+        pycharm pycharm-full py_check_prepass
 
 
 ################################################################################
@@ -896,18 +905,18 @@ TEST_TARGET ?= tests
 
 # Run tests (live execution verification).
 test: py_check_prepass
-	@$(PCOMMANDBATCH) echo BLU Running all tests...
-	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v $(TEST_TARGET)
-
-# Run tests (live execution verification). Excludes slow ones.
-test-fast: py_check_prepass
-	@$(PCOMMANDBATCH) echo BLU Running all tests \(fast\)...
+	@$(PCOMMANDBATCH) echo BLU Running quick tests...
 	@$(PCOMMAND) tests_warm_start
 	@BA_TEST_FAST_MODE=1 $(PCOMMAND) pytest -v $(TEST_TARGET)
 
-test-verbose: py_check_prepass
-	@$(PCOMMANDBATCH) echo BLU Running all tests...
+# Run tests (live execution verification). Includes extra slow ones.
+test-ex: py_check_prepass
+	@$(PCOMMANDBATCH) echo BLU Running extended tests...
+	@$(PCOMMAND) tests_warm_start
+	@$(PCOMMAND) pytest -v $(TEST_TARGET)
+
+test-ex-verbose: py_check_prepass
+	@$(PCOMMANDBATCH) echo BLU Running extended tests...
 	@$(PCOMMAND) tests_warm_start
 	@$(PCOMMAND) pytest -o log_cli=true -o log_cli_level=debug \
       -s -vv $(TEST_TARGET)
@@ -915,8 +924,8 @@ test-verbose: py_check_prepass
 # Run tests with any caching disabled.
 test-full: test
 
-# Run fast tests with any caching disabled.
-test-fast-full: test-fast
+# Run extended tests with any caching disabled.
+test-ex-full: test-ex
 
 # Shortcut to test efro.message only.
 test-message:
@@ -939,7 +948,7 @@ test-threadpool:
       tests/test_efro/test_threadpool.py
 
 # Tell make which of these targets don't represent files.
-.PHONY: test test-fast test-verbose test-full test-fast-full \
+.PHONY: test test-ex test-ex-verbose test-full test-ex-full \
         test-message test-dataclassio test-rpc
 
 
@@ -954,7 +963,7 @@ preflight:
 	@$(MAKE) format
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint pylint mypy test-fast
+	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' without caching (all files are visited).
@@ -962,27 +971,27 @@ preflight-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-fast-full
+	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' plus optional/slow extra checks.
-preflight2:
+preflight-ex:
 	@$(MAKE) format
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint pylint mypy test-fast
+	@$(MAKE) -j$(CPUS) cpplint pylint-ex mypy test-ex
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
-# Same as 'preflight2' but without caching (all files visited).
-preflight2-full:
+# Same as 'preflight-ex' but without caching (all files visited).
+preflight-ex-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-fast-full
+	@$(MAKE) -j$(CPUS) cpplint-full pylint-ex-full mypy-full test-ex-full
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Tell make which of these targets don't represent files.
-.PHONY: preflight preflight-full preflight2 preflight2-full
+.PHONY: preflight preflight-full preflight-ex preflight-ex-full
 
 
 ################################################################################
@@ -1250,6 +1259,7 @@ docker-clean:
 	$(PCOMMAND) remove_docker_images
 	docker system prune
 
+
 ################################################################################
 #                                                                              #
 #                                   Flatpak                                    #
@@ -1273,6 +1283,7 @@ flatpak-clean:
 	rm build/flatpak -rf
 	rm build/flathub -rf
 	rm .cache/flatpak -rf
+
 
 ################################################################################
 #                                                                              #
