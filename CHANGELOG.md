@@ -34,7 +34,10 @@
   versions still run in a single-process so CI should catch anything that slips
   through interactive checks. This gives a pretty huge speedup so hopefully is a
   good tradeoff.
-  
+- Switch to using python's native REPL which gives us cool features like
+  autocompletion, command history, multiline statements and
+  line editing(going left/right)
+
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
   still under construction, but it'll soon be possible to bid tickets to become
