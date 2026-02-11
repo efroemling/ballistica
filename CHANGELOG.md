@@ -1,4 +1,6 @@
-### 1.7.60 (build 22702, api 9, 2026-01-28)
+### 1.7.60 (build 22707, api 9, 2026-02-11)
+- Fixed a longstanding issue causing impact, roll, and skid sounds to not
+  function.
 - Fun easter-egg when clicking characters in inventory window (Thanks
   EraOSBeta!)
 - It is no longer possible to capture the hill from below the platform in happy
@@ -35,6 +37,8 @@
   through interactive checks. This gives a pretty huge speedup so hopefully is a
   good tradeoff.
 - Added a null audio device to prevent crash when no audio device is available
+- Flatpak permissions adjusted to allow gamepads to be properly detected and the
+  configuration directory to be created if it does not already exist.
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
