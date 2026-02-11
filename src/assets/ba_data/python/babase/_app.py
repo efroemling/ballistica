@@ -1205,7 +1205,7 @@ class App:
             await asyncio.sleep(0.01)
         lifecyclelog.info('fade-and-shutdown-audio end')
 
-    def run_default_imports(self) -> None:
+    def _run_default_imports(self) -> None:
         """Run default imports configured for this project.
 
         This function imports modules that should be available by default

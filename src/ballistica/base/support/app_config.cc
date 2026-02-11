@@ -243,7 +243,7 @@ void AppConfig::SetupEntries_() {
   bool_entries_[BoolID::kHighlightPotentialTokenPurchases] =
       BoolEntry("Highlight Potential Token Purchases", true);
   bool_entries_[BoolID::kUseNativePythonREPL] =
-      BoolEntry("Use native python REPL", false);
+      BoolEntry("Use native python REPL", true);
 
   // Now add everything to our name map and make sure all is kosher.
   CompleteMap_(float_entries_);

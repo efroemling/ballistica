@@ -25,6 +25,10 @@ namespace ballistica::base {
 StdioConsole::StdioConsole() = default;
 
 void StdioConsole::Start() {
+  assert(g_base->InLogicThread());
+  use_native_repl = g_base->app_config->Resolve(
+      base::AppConfig::BoolID::kUseNativePythonREPL);
+
   g_base->app_adapter->PushMainThreadCall([this] { StartInMainThread_(); });
 }
 
@@ -38,16 +42,11 @@ void StdioConsole::StartInMainThread_() {
   // Check if we should use the native Python REPL.
   // If the config is not available or set to true, use native REPL as default.
   // Fall back to legacy console if native REPL is disabled.
-  bool use_native_repl = true;
-  auto* config_entry = g_base->app_config->GetEntry("Use Native Python REPL");
-  if (config_entry != nullptr) {
-    use_native_repl = config_entry->BoolValue();
-  }
 
   if (use_native_repl && Py_IsInitialized()) {
     // Use Python's native interactive loop which includes readline support
     // for autocompletion, history, and line editing.
-    event_loop()->PushCall([this] { StartNativeREPL_(); });
+    event_loop()->PushCall([this] { StartNativePythonREPL_(); });
   } else {
     // Tell our thread to start reading using legacy console.
     event_loop()->PushCall([this] {
@@ -125,7 +124,13 @@ void StdioConsole::StartInMainThread_() {
   }
 }
 
-void StdioConsole::StartNativeREPL_() {
+void StdioConsole::StartNativePythonREPL_() {
+  // This currently uses the readline library
+  // In future we may want to add an option to use the built-in Python REPL
+  // from the _pyrepl module without readline module, as readline can be missing
+  // on some platforms. But for now we'll just use readline when available since
+  // _pyrepl is still very new and is not well documented.
+
   Python::ScopedInterpreterLock gil;
 
   // Enable readline for full REPL features:

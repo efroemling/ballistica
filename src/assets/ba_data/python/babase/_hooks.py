@@ -471,4 +471,4 @@ def run_default_imports() -> None:
     in interactive contexts like the REPL. It delegates to the app
     which contains auto-generated import statements.
     """
-    _babase.app.run_default_imports()
+    _babase.app._run_default_imports()

@@ -37,6 +37,7 @@
 - Switch to using python's native REPL which gives us cool features like
   autocompletion, command history, multiline statements and
   line editing(going left/right)
+- Native python REPL can be toggled by `Use native python REPL` app_config entry
 
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
