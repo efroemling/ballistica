@@ -87,7 +87,7 @@ def requirements_upgrade() -> None:
         # to one exact version and thus shouldn't apply to later ones.
         filterlines: list[tuple[str, str]] = [
             # Fails to build on bastaging (submitted fix).
-            ('pyicu==2.16', 'pyicu==2.15.2'),
+            ('pyicu==2.16.1', 'pyicu==2.15.2'),
             ('google-auth-oauthlib==1.2.3', 'google-auth-oauthlib==1.2.2'),
             ('pylint==4.0.4', 'pylint==4.0.3'),
             ('Sphinx==9.1.0', 'Sphinx==8.2.3'),
