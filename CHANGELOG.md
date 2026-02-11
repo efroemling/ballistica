@@ -36,6 +36,7 @@
   versions still run in a single-process so CI should catch anything that slips
   through interactive checks. This gives a pretty huge speedup so hopefully is a
   good tradeoff.
+- Added a null audio device to prevent crash when no audio device is available
 - Flatpak permissions adjusted to allow gamepads to be properly detected and the
   configuration directory to be created if it does not already exist.
   
