@@ -1,4 +1,4 @@
-### 1.7.60 (build 22707, api 9, 2026-02-11)
+### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not
   function.
 - Fun easter-egg when clicking characters in inventory window (Thanks
