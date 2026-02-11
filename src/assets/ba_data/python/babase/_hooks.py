@@ -462,3 +462,13 @@ def copy_dev_console_history() -> None:
     _babase.clipboard_set_text('\n'.join(lines))
     _babase.screenmessage(Lstr(resource='copyConfirmText'), color=(0, 1, 0))
     _babase.getsimplesound('gunCocking').play()
+
+
+def run_default_imports() -> None:
+    """Run default imports configured for this project.
+
+    This function imports modules that should be available by default
+    in interactive contexts like the REPL. It delegates to the app
+    which contains auto-generated import statements.
+    """
+    _babase.app.run_default_imports()

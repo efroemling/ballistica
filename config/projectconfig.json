@@ -22,6 +22,20 @@
     "baclassic.ClassicAppMode",
     "babase.EmptyAppMode"
   ],
+  "default_imports": [
+    "babase",
+    "bascenev1",
+    "bascenev1lib",
+    "bauiv1",
+    "bauiv1lib"
+  ],
+  "default_imports_aliases": {
+    "babase": "ba",
+    "bascenev1": "bs",
+    "bascenev1lib": "bs_lib",
+    "bauiv1": "bui",
+    "bauiv1lib": "bui_lib"
+  },
   "efrocache_repository_url": "https://files.ballistica.net/cache/ba1",
   "name": "BallisticaKit",
   "public": true,
