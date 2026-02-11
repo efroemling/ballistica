@@ -226,6 +226,69 @@ def generate_app_module(
         keep_markers=True,
     )
 
+    # Generate default imports in run_default_imports function in _app.py
+    # based on 'default_imports' in projectconfig.
+    # These are imports that will be injected into the main module namespace.
+    # Meant for use in REPL for getting the basic stuff without
+    # having to import it manually.
+    default_imports: list[str] | None = getprojectconfig(projroot).get(
+        'default_imports'
+    )
+    if default_imports is None:
+        default_imports = []
+    elif not all(isinstance(x, str) for x in default_imports):
+        raise RuntimeError(
+            'Could not load default_imports from projectconfig; '
+            'must be a list of strings or not present'
+        )
+
+    # Load import aliases from projectconfig
+    default_import_aliases: dict[str, str] | None = getprojectconfig(
+        projroot
+    ).get('default_imports_aliases')
+    if default_import_aliases is None:
+        default_import_aliases = {}
+    elif not all(
+        isinstance(k, str) and isinstance(v, str)
+        for k, v in default_import_aliases.items()
+    ):
+        raise RuntimeError(
+            'Could not load default_import_aliases from projectconfig; '
+            'must be a dict of string keys and values or not present'
+        )
+
+    contents = ''
+    if default_imports:
+        contents = 'import sys\n'
+        contents += 'import importlib\n\n'
+        contents += '# Get the main module namespace to inject imports\n'
+        contents += 'main_module = sys.modules.get(\'__main__\')\n'
+        contents += 'if main_module is None:\n'
+        contents += '    return\n\n'
+        contents += 'main_dict = vars(main_module)\n\n'
+        contents += '# Auto-generated imports from projectconfig\n'
+
+        # Generate import and assignment statements using importlib
+        for module_name in default_imports:
+            contents += f"_mod = importlib.import_module('{module_name}')\n"
+            # Add the default module name
+            contents += f"main_dict['{module_name}'] = _mod\n"
+            # Also add the alias if one exists in projectconfig
+            alias = default_import_aliases.get(module_name)
+            if alias:
+                contents += f"main_dict['{alias}'] = _mod\n"
+    else:
+        contents = 'pass\n'
+
+    indent = '        '
+    out = replace_section(
+        out,
+        f'{indent}# __RUN_DEFAULT_IMPORTS_BEGIN__\n',
+        f'{indent}# __RUN_DEFAULT_IMPORTS_END__\n',
+        textwrap.indent(f'{info}\n\n{contents}\n', indent),
+        keep_markers=True,
+    )
+
     # Disabling this for now; will probably remove permanently. Testable
     # app mode discovery now uses meta discovery system.
     if bool(False):

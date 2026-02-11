@@ -11,6 +11,7 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
+#include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/core_platform.h"
@@ -51,18 +52,18 @@ void StdioConsole::StartInMainThread_() {
           "import rlcompleter\n"
           "readline.parse_and_bind('tab: complete')\n";
 
-      // Import ballistica modules so they are available by default in the REPL.
-      const char* ballistica_import =
-          "import babase\n"
-          "import babase as ba\n"
-          "import bascenev1\n"
-          "import bascenev1 as bs\n"
-          "import bascenev1lib as bs_lib\n"
-          "import bauiv1 as bui\n"
-          "import bauiv1lib as bui_lib\n";
-
       PyRun_SimpleString(readline_import);
-      PyRun_SimpleString(ballistica_import);
+
+      // Run default imports (babase, bascenev1, bauiv1, etc)
+      // which are configured in projectconfig.json
+      g_base->python->objs()
+          .Get(BasePython::ObjID::kRunDefaultImportsCall)
+          .Call();
+
+      // Print any errors that occurred during default imports
+      if (PyErr_Occurred()) {
+        PyErr_Print();
+      }
 
       // Run Python's interactive loop directly. This handles:
       // - Autocompletion (via readline + rlcompleter)

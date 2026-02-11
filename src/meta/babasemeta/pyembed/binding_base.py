@@ -74,6 +74,7 @@ values = [
     _hooks.implicit_sign_out,  # kImplicitSignOutCall
     _hooks.login_adapter_get_sign_in_token_response,  # kLoginAdapterGetSignInTokenResponseCall
     _hooks.open_url_with_webbrowser_module,  # kOpenURLWithWebBrowserModuleCall
+    _hooks.run_default_imports,  # kRunDefaultImportsCall
     _env.on_native_module_import,  # kEnvOnNativeModuleImportCall
     _env.on_main_thread_start_app,  # kOnMainThreadStartAppCall
     _ui.DevConsoleStringEditAdapter,  # kDevConsoleStringEditAdapterClass
