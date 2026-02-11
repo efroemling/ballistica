@@ -242,6 +242,8 @@ void AppConfig::SetupEntries_() {
       BoolEntry("Show Deprecated Login Types", false);
   bool_entries_[BoolID::kHighlightPotentialTokenPurchases] =
       BoolEntry("Highlight Potential Token Purchases", true);
+  bool_entries_[BoolID::kUseNativePythonREPL] =
+      BoolEntry("Use native python REPL", false);
 
   // Now add everything to our name map and make sure all is kosher.
   CompleteMap_(float_entries_);

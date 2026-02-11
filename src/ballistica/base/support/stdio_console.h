@@ -17,6 +17,8 @@ class StdioConsole {
 
  private:
   void StartInMainThread_();
+  void StartNativeREPL_();
+  void PushCommand_(const std::string& command);
   void Clear_();
   EventLoop* event_loop_{};
   std::string pending_input_;
