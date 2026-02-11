@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Any
     from batools.featureset import FeatureSet
 
 
@@ -243,9 +244,10 @@ def generate_app_module(
         )
 
     # Load import aliases from projectconfig
-    default_import_aliases: dict[str, str] | None = getprojectconfig(
+    default_import_aliases: dict[str, str] | Any = getprojectconfig(
         projroot
     ).get('default_imports_aliases')
+    # pylint: disable=
     if default_import_aliases is None:
         default_import_aliases = {}
     elif not all(
