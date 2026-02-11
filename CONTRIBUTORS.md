@@ -76,3 +76,6 @@
 ### komasio71
 - Retired Discord server moderator
 - Small contributor
+
+### haydenmc
+- Flatpak permissions fixes

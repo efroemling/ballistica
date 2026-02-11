@@ -36,6 +36,8 @@
   versions still run in a single-process so CI should catch anything that slips
   through interactive checks. This gives a pretty huge speedup so hopefully is a
   good tradeoff.
+- Flatpak permissions adjusted to allow gamepads to be properly detected and the
+  configuration directory to be created if it does not already exist.
   
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is

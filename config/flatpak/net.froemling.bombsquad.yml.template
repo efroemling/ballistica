@@ -9,7 +9,8 @@ finish-args:
   - --socket=x11
   - --socket=pulseaudio
   - --device=dri
-  - --filesystem=~/.ballisticakit
+  - --device=input
+  - --filesystem=~/.ballisticakit:create
 
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm20
