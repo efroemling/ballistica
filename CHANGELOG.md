@@ -1,4 +1,6 @@
-### 1.7.60 (build 22706, api 9, 2026-02-10)
+### 1.7.60 (build 22707, api 9, 2026-02-11)
+- Fixed a longstanding issue causing impact, roll, and skid sounds to not
+  function.
 - Fun easter-egg when clicking characters in inventory window (Thanks
   EraOSBeta!)
 - It is no longer possible to capture the hill from below the platform in happy
