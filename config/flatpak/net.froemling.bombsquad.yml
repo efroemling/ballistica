@@ -81,7 +81,6 @@ modules:
     build-options:
       append-path: /usr/lib/sdk/llvm20/bin
       prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
-      build-env: --CMAKE_BUILD_TYPE=Release
       build-args:
         - --share=network
     build-commands:
@@ -95,9 +94,9 @@ modules:
       - python3.13 -m venv --upgrade .venv
       # Get rid of tools/pcommand and similar with wrong shebangs
       - make env-clean
-      - make cmake-build
-      - mv build/cmake/release/ballisticakit build/cmake/release/staged/
-      - cp -r build/cmake/release/staged/* ${FLATPAK_DEST}/bin/bombsquad/
+      - CMAKE_BUILD_TYPE=Release make cmake-build
+      - mv build/cmake/*/ballisticakit build/cmake/*/staged/
+      - cp -r build/cmake/*/staged/* ${FLATPAK_DEST}/bin/bombsquad/
       - install -Dm755 bombsquad.sh ${FLATPAK_DEST}/bin/bombsquad.sh
       - install -Dm644 ${FLATPAK_ID}.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
       - install -Dm644 ${FLATPAK_ID}.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
