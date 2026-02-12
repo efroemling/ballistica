@@ -124,10 +124,10 @@ void ScrollWidget::ClampScrolling_(bool velocity_clamp, bool position_clamp,
 
 auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
-  bool claimed{false};
-  bool pass{true};
-  float right_overlap{0.0f};
-  float left_overlap{3.0f};
+  auto claimed{false};
+  auto pass{true};
+  auto right_overlap{0.0f};
+  auto left_overlap{3.0f};
 
   switch (m.type) {
     case base::WidgetMessage::Type::kMoveUp:

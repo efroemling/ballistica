@@ -510,7 +510,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
     c.Submit();
   }
 
-  bool have_player_position{false};
+  bool have_player_position{};
   std::vector<float> player_position(3);
   if (AttachedToPlayer()) {
     auto pos = delegate().GetPlayerPosition();

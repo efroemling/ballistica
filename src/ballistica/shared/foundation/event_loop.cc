@@ -19,10 +19,10 @@ namespace ballistica {
 
 // Special flags we can safely access from interrupt/ctrl handlers.
 #if BA_PLATFORM_WINDOWS
-std::atomic<bool> g_event_loop_got_ctrl_c{false};
+std::atomic<bool> g_event_loop_got_ctrl_c{};
 #else
-volatile sig_atomic_t g_event_loop_got_sigint = 0;
-volatile sig_atomic_t g_event_loop_got_sigterm = 0;
+volatile sig_atomic_t g_event_loop_got_sigint{};
+volatile sig_atomic_t g_event_loop_got_sigterm{};
 #endif
 
 // Note: implicitly using core here so will fail spectacularly if that has
