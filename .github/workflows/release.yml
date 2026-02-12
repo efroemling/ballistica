@@ -504,6 +504,8 @@ jobs:
         run: |
           make assets-cmake
           make build/prefab/lib/linux_x86_64_gui/debug/libballisticaplus.a
+          make build/prefab/lib/linux_arm64_gui/debug/libballisticaplus.a
+          make ballisticakit-windows/Generic/BallisticaKit.ico
       - name: Compress the build
         run: tar -cf "linux_build_env.tar" --exclude="linux_build_env.tar" .
       - name: Upload the build
