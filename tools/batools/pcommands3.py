@@ -176,10 +176,10 @@ def generate_flathub_manifest() -> None:
         with urllib.request.urlopen(req) as response:
             release_data = json.loads(response.read().decode())
 
-        # Find the linux_build_env.tar asset
+        # Find the bombsquad_build_env.tar asset
         asset: dict = {}
         asset_url = None
-        asset_name = 'linux_build_env.tar'
+        asset_name = 'bombsquad_build_env.tar'
 
         for asset in release_data.get('assets', []):
             if asset['name'] == asset_name:
