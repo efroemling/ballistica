@@ -2,8 +2,7 @@
 Name=BombSquad
 Comment=Blow up your friends in mini-games ranging from capture-the-flag to hockey!
 Keywords=ballistica;bs;game;multiplayer;
-Path=/app/bin/bombsquad
-Exec=ballisticakit
+Exec=bombsquad.sh
 Icon=net.froemling.bombsquad
 Terminal=false
 Type=Application
