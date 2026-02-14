@@ -1010,18 +1010,22 @@ void AudioServer::SetSoundPitch_(float pitch) {
 }
 
 void AudioServer::SetSoundVolume_(float volume) {
-  sound_volume_ = std::clamp(volume, 0.0f, 3.0f);
+  sound_volume_ = std::clamp(GetPerceivedVolume_(volume), 0.0f, 3.0f);
   for (auto&& i : sources_) {
     i->UpdateVolume();
   }
 }
 
 void AudioServer::SetMusicVolume_(float volume) {
-  music_volume_ = std::clamp(volume, 0.0f, 3.0f);
+  music_volume_ = std::clamp(GetPerceivedVolume_(volume), 0.0f, 3.0f);
   UpdateMusicPlayState_();
   for (auto&& i : sources_) {
     i->UpdateVolume();
   }
+}
+
+float AudioServer::GetPerceivedVolume_(float volume_linear) {
+  return powf(volume_linear, 3.0f);
 }
 
 // Start or stop music playback based on volume/suspend-state/etc.
