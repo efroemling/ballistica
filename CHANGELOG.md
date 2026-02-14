@@ -1,4 +1,4 @@
-### 1.7.61 (build 22710, api 9, 2026-02-11)
+### 1.7.61 (build 22712, api 9, 2026-02-12)
 - Volume slider values now properly match user expectations.
   This means 50% volume is half as loud as 100%, and lower volumes can now be
   fine tuned better.
