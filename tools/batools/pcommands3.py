@@ -281,6 +281,7 @@ def generate_flatpak_release_manifest(
 
     from efro.error import CleanError
     from efro.terminal import Clr
+    from batools.changelog import get_version_changelog
 
     pcommand.disallow_in_batch()
 
@@ -320,12 +321,13 @@ def generate_flatpak_release_manifest(
 
     # Add description
     description = ET.SubElement(new_release, 'description')
-    changelog_list = get_changelog(version)
+    changelog_list = get_version_changelog(
+        version, projroot=str(pcommand.PROJROOT)
+    )
     ul = ET.SubElement(description, 'ul')
     for line in changelog_list:
         li = ET.SubElement(ul, 'li')
         li.text = line
-            
 
     # Add URL element for release page
     release_url = ET.SubElement(new_release, 'url')
@@ -391,70 +393,3 @@ def generate_flatpak_release_manifest(
         )
     except Exception as e:
         raise CleanError(f'Failed to write releases.xml: {e}') from e
-
-
-def get_changelog(version: str | None = None) -> list[str]:
-    """Get changelog text for a given version from CHANGELOG.md."""
-    import re
-    import os
-    from efro.error import CleanError
-    from efro.terminal import Clr
-
-    called_from_other_function = version is not None
-    pcommand.disallow_in_batch()
-    if version is None:
-        args = pcommand.get_args()
-        if len(args) != 1:
-            raise CleanError('Expected 1 arg: version')
-        version = args[0]
-
-    changelog_path = os.path.join(pcommand.PROJROOT, 'CHANGELOG.md')
-    if not os.path.exists(changelog_path):
-        raise CleanError(f'CHANGELOG.md not found at {changelog_path}')
-
-    with open(changelog_path, 'r', encoding='utf-8') as infile:
-        changelog_content = infile.read()
-
-    # Regex to find the section for the given version
-    pattern = rf'^###\s+{re.escape(version)}\b.*?\n(.*?)(?=^###\s+|\Z)'
-    match = re.search(pattern, changelog_content, re.DOTALL | re.MULTILINE)
-    if not match:
-        raise CleanError(f'Changelog entry for version {version} not found.')
-
-    section_text = match.group(1).rstrip()
-
-    # Convert changelog section into a list of bullet entries,
-    # preserving internal newlines and indentation.
-    lines = section_text.splitlines()
-    entries: list[str] = []
-    current_entry: list[str] = []
-
-    for line in lines:
-        if line.startswith('- '):
-            # Save previous entry if present
-            if current_entry:
-                entries.append('\n'.join(current_entry).rstrip())
-                current_entry = []
-
-            # Strip "- " but preserve rest exactly
-            current_entry.append(line[2:])
-        else:
-            # Continuation line (including indentation or blank lines)
-            if current_entry:
-                current_entry.append(line)
-
-    # Add final entry
-    if current_entry:
-        entries.append('\n'.join(current_entry).rstrip())
-
-    changelog_list = entries
-
-    if not called_from_other_function:
-        print(
-            f'{Clr.BLD}Changelog for version '
-            f'{version}:{Clr.RST}\n'
-        )
-        for entry in changelog_list:
-            print(f'{Clr.CYN}-{Clr.RST} {entry}')
-
-    return changelog_list
