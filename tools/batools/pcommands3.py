@@ -152,7 +152,7 @@ def generate_flathub_manifest() -> None:
 
     # List of files to copy (skip the flathub directory itself)
     files_to_copy = [
-        'net.froemling.bombsquad.appdata.xml',
+        'net.froemling.bombsquad.metainfo.xml',
         'net.froemling.bombsquad.desktop',
         'net.froemling.bombsquad.releases.xml',
     ]
@@ -320,8 +320,12 @@ def generate_flatpak_release_manifest(
 
     # Add description
     description = ET.SubElement(new_release, 'description')
-    p = ET.SubElement(description, 'p')
-    p.text = get_changelog(version)
+    changelog_list = get_changelog(version)
+    ul = ET.SubElement(description, 'ul')
+    for line in changelog_list:
+        li = ET.SubElement(ul, 'li')
+        li.text = line
+            
 
     # Add URL element for release page
     release_url = ET.SubElement(new_release, 'url')
@@ -389,7 +393,7 @@ def generate_flatpak_release_manifest(
         raise CleanError(f'Failed to write releases.xml: {e}') from e
 
 
-def get_changelog(version: str | None = None) -> str:
+def get_changelog(version: str | None = None) -> list[str]:
     """Get changelog text for a given version from CHANGELOG.md."""
     import re
     import os
@@ -403,6 +407,7 @@ def get_changelog(version: str | None = None) -> str:
         if len(args) != 1:
             raise CleanError('Expected 1 arg: version')
         version = args[0]
+
     changelog_path = os.path.join(pcommand.PROJROOT, 'CHANGELOG.md')
     if not os.path.exists(changelog_path):
         raise CleanError(f'CHANGELOG.md not found at {changelog_path}')
@@ -416,10 +421,40 @@ def get_changelog(version: str | None = None) -> str:
     if not match:
         raise CleanError(f'Changelog entry for version {version} not found.')
 
-    changelog_text = match.group(1).strip()
+    section_text = match.group(1).rstrip()
+
+    # Convert changelog section into a list of bullet entries,
+    # preserving internal newlines and indentation.
+    lines = section_text.splitlines()
+    entries: list[str] = []
+    current_entry: list[str] = []
+
+    for line in lines:
+        if line.startswith('- '):
+            # Save previous entry if present
+            if current_entry:
+                entries.append('\n'.join(current_entry).rstrip())
+                current_entry = []
+
+            # Strip "- " but preserve rest exactly
+            current_entry.append(line[2:])
+        else:
+            # Continuation line (including indentation or blank lines)
+            if current_entry:
+                current_entry.append(line)
+
+    # Add final entry
+    if current_entry:
+        entries.append('\n'.join(current_entry).rstrip())
+
+    changelog_list = entries
+
     if not called_from_other_function:
         print(
             f'{Clr.BLD}Changelog for version '
-            f'{version}:{Clr.RST}\n{changelog_text}'
+            f'{version}:{Clr.RST}\n'
         )
-    return changelog_text
+        for entry in changelog_list:
+            print(f'{Clr.CYN}-{Clr.RST} {entry}')
+
+    return changelog_list
