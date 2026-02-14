@@ -1,4 +1,7 @@
 ### 1.7.61 (build 22710, api 9, 2026-02-11)
+- Volume slider values now properly match user expectations.
+  This means 50% volume is half as loud as 100%, and lower volumes can now be
+  fine tuned better.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not
