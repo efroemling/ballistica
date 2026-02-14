@@ -9,8 +9,8 @@ finish-args:
   - --socket=x11
   - --socket=pulseaudio
   - --device=dri
-  - --device=input
-  - --filesystem=~/.ballisticakit:create
+  # - --device=input
+  - --persist=.ballisticakit
 
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.llvm20
@@ -45,6 +45,7 @@ modules:
   #     - /share
 
   # SDL2 is already provided by the runtime
+
   # - name: SDL2
   #   buildsystem: cmake
   #   builddir: true
@@ -60,28 +61,31 @@ modules:
   #       url: https://github.com/libsdl-org/SDL
   #       tag: release-2.32.8
 
-  - name: rsync
-    buildsystem: autotools
-    config-opts:
-      - --prefix=${FLATPAK_DEST}
-      - --disable-debug
-      - --disable-locale
-    sources:
-      - type: archive
-        url: https://download.samba.org/pub/rsync/src/rsync-3.4.1.tar.gz
-        sha256: 2924bcb3a1ed8b551fc101f740b9f0fe0a202b115027647cf69850d65fd88c52
-    cleanup:
-      - /share/man
-      - /share/doc
-      - /bin
+  # rsync is required by bombsquad's build system to stage files for the flatpak build
+  # we can remove this in flathub version since we cannot access internet during the build
+
+  # - name: rsync
+  #   buildsystem: autotools
+  #   config-opts:
+  #     - --prefix=${FLATPAK_DEST}
+  #     - --disable-debug
+  #     - --disable-locale
+  #   sources:
+  #     - type: archive
+  #       url: https://download.samba.org/pub/rsync/src/rsync-3.4.1.tar.gz
+  #       sha256: 2924bcb3a1ed8b551fc101f740b9f0fe0a202b115027647cf69850d65fd88c52
+  #   cleanup:
+  #     - "*"
 
   - name: bombsquad
     buildsystem: simple
     build-options:
       append-path: /usr/lib/sdk/llvm20/bin
       prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
-      # build-args:
-      #   - --share=network
+      build-args:
+        - --share=network
+      env:
+        CMAKE_BUILD_TYPE: "Release"
     build-commands:
       # FLATPAK_DEST=/app, FLATPAK_ID=net.froemling.bombsquad
       - mkdir -p ${FLATPAK_DEST}/bin/bombsquad
@@ -94,13 +98,13 @@ modules:
       # Get rid of tools/pcommand and similar with wrong shebangs
       - make env-clean
       - make cmake-build
-      - mv build/cmake/debug/ballisticakit build/cmake/debug/staged/
-      - cp -r build/cmake/debug/staged/* ${FLATPAK_DEST}/bin/bombsquad/
+      - mv build/cmake/*/ballisticakit build/cmake/*/staged/
+      - cp -r build/cmake/*/staged/* ${FLATPAK_DEST}/bin/bombsquad/
       - install -Dm755 bombsquad.sh ${FLATPAK_DEST}/bin/bombsquad.sh
-      - install -Dm644 ${FLATPAK_ID}.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
+      - install -Dm644 config/flatpak/net.froemling.bombsquad.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
+      - install -Dm644 config/flatpak/net.froemling.bombsquad.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
+      - install -Dm644 config/flatpak/net.froemling.bombsquad.releases.xml ${FLATPAK_DEST}/share/metainfo/releases/${FLATPAK_ID}.releases.xml
       - install -Dm644 ${FLATPAK_ID}.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
-      - install -Dm644 ${FLATPAK_ID}.appdata.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
-      - install -Dm644 ${FLATPAK_ID}.releases.xml ${FLATPAK_DEST}/share/metainfo/releases/${FLATPAK_ID}.releases.xml
 
     sources:
       # - type: dir
@@ -115,15 +119,6 @@ modules:
         dest-filename: net.froemling.bombsquad.png
         url: https://files.ballistica.net/bombsquad/promo/BombSquadIcon512.png
         sha256: c950d1b62da2714b1ed1afc42244f7e192be23172c89b6fa3e6eaaca8e45a89a
-
-      - type: file
-        path: net.froemling.bombsquad.desktop
-
-      - type: file
-        path: net.froemling.bombsquad.appdata.xml
-
-      - type: file
-        path: net.froemling.bombsquad.releases.xml
 
       - type: script
         dest-filename: bombsquad.sh
