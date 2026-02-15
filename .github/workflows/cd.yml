@@ -6,18 +6,6 @@ on:
   pull_request:
 
 jobs:
-  make_linux_cmake:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-        with:
-          using-cmake: true
-      - name: Make the build
-        run: |
-          make cmake-build
-
   make_linux_x86_64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:

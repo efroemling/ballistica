@@ -13,7 +13,7 @@ services:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-0} # why not just remove BS_HEADLESS_BUILD?
       labels:
-        - org.opencontainers.image.description="BombSquad graphical docker image"
+        - org.opencontainers.image.description=BombSquad graphical docker image
         - org.opencontainers.image.licenses=MIT
         - BOMBSQUAD_VERSION=${BS_VERSION:-unknown}
         - BOMBSQUAD_BUILD=${BS_BUILD_NUMBER:-unknown}
@@ -41,7 +41,7 @@ services:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-1}
       labels:
-        - org.opencontainers.image.description="BombSquad headdless docker image"
+        - org.opencontainers.image.description=BombSquad headdless docker image
         - org.opencontainers.image.licenses=MIT
         - BOMBSQUAD_VERSION=${BS_VERSION:-unknown}
         - BOMBSQUAD_BUILD=${BS_BUILD_NUMBER:-unknown}
