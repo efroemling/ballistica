@@ -6,61 +6,57 @@ on:
   pull_request:
 
 jobs:
-  make_linux_x86_64_gui_debug_build:
-    runs-on: ubuntu-latest
+  make_linux_gui_debug_build:
+    name: Linux (${{ matrix.arch }}) GUI (debug)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
+        with:
+          using-cmake: true
       - name: Make the build
-        run: make prefab-gui-debug-build
+        run: |
+          make cmake-build
+          mv build/cmake/debug/ballisticakit build/cmake/debug/staged
       - name: Upload the build
         uses: actions/upload-artifact@v4
         with:
-          name: linux_x86_64_gui_(debug)
-          path: build/prefab/full/linux_x86_64_gui
+          name: linux_${{ matrix.arch }}_gui_(debug)
+          path: build/cmake/debug/staged
 
-  make_linux_x86_64_server_debug_build:
-    runs-on: ubuntu-latest
+  make_linux_server_debug_build:
+    name: Linux (${{ matrix.arch }}) Server (debug)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
+        with:
+          using-cmake: true
       - name: Make the build
-        run: make prefab-server-debug-build
+        run: make cmake-server-build
       - name: Upload the build
         uses: actions/upload-artifact@v4
         with:
-          name: linux_x86_64_server_(debug)
-          path: build/prefab/full/linux_x86_64_server
-
-  make_linux_arm64_gui_debug_build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-linux-arm64-gui-debug-build
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux_arm64_gui_(debug)
-          path: build/prefab/full/linux_arm64_gui
-
-  make_linux_arm64_server_debug_build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: make prefab-linux-arm64-server-debug-build
-      - name: Upload the build
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux_arm64_server_(debug)
-          path: build/prefab/full/linux_arm64_server
+          name: linux_${{ matrix.arch }}_server_(debug)
+          path: build/cmake/server-debug/staged
 
   # Limiting mac prefab builds to arm only for now.
   # Leaving this here in case we re-enable them though.
