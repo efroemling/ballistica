@@ -1,4 +1,6 @@
 ### 1.7.61 (build 22712, api 9, 2026-02-12)
+- Fixed party window sub-menus staying after closing the root window.
+  (Thanks temp!)
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not
