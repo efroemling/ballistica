@@ -93,6 +93,7 @@ class PartyWindow(bui.Window):
             color=(0.55, 0.73, 0.25),
             iconscale=1.2,
         )
+        self._menu_popup: PopupMenuWindow | None = None
 
         info = bs.get_connection_to_host_info_2()
 
@@ -276,7 +277,7 @@ class PartyWindow(bui.Window):
             choices.append('add_to_favorites')
             choices_display.append(bui.Lstr(resource='addToFavoritesText'))
 
-        PopupMenuWindow(
+        self._menu_popup = PopupMenuWindow(
             position=self._menu_button.get_screen_space_center(),
             scale=(
                 2.3
@@ -581,8 +582,9 @@ class PartyWindow(bui.Window):
             )
             bui.getsound('error').play()
 
-    def popup_menu_closing(self, popup_window: PopupWindow) -> None:
+    def popup_menu_closing(self, _popup_window: PopupWindow) -> None:
         """Called when the popup is closing."""
+        self._menu_popup = None
 
     def _on_party_member_press(
         self, client_id: int, is_host: bool, widget: bui.Widget
@@ -598,7 +600,7 @@ class PartyWindow(bui.Window):
             kick_str = bui.Lstr(resource='kickVoteText')
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        PopupMenuWindow(
+        self._menu_popup = PopupMenuWindow(
             position=widget.get_screen_space_center(),
             scale=(
                 2.3
@@ -622,6 +624,10 @@ class PartyWindow(bui.Window):
 
     def close(self) -> None:
         """Close the window."""
+        # exit our menu widget if it's up (likely from a hotkey press)
+        if self._menu_popup is not None:
+            self._menu_popup.on_popup_cancel()
+
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
             return
