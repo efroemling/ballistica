@@ -462,3 +462,25 @@ class AnalyticsEventMessage(Message):
     """Have a nice analytics event!"""
 
     event: Annotated[AnalyticsEvent, IOAttrs('e')]
+
+
+@ioprepped
+@dataclass
+class AuthRequestMessage(Message):
+    """Request access to a server for a current account."""
+
+    global_app_instance_uuid: Annotated[str, IOAttrs('a')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [AuthRequestResponse]
+
+
+@ioprepped
+@dataclass
+class AuthRequestResponse(Response):
+    """Here's that access ya asked for boss."""
+
+    error: Annotated[str | None, IOAttrs('e')]
+    token: Annotated[str | None, IOAttrs('t')]

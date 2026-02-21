@@ -1089,3 +1089,17 @@ def strip_exception_tracebacks(exc: BaseException) -> None:
         cause = getattr(e, '__cause__', None)
         if cause is not None:
             stack.append(cause)
+
+
+def secure_id() -> str:
+    """Generate a 20 char cryptographically secure string.
+
+    Basically what firestore does for its random document ids.
+    If its good enough for firestore its good enough for us.
+    """
+    import secrets
+    import string
+
+    alphabet = string.ascii_letters + string.digits  # 62 chars
+
+    return ''.join(secrets.choice(alphabet) for _ in range(20))

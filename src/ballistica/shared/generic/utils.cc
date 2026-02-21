@@ -194,28 +194,27 @@ static auto utf8_check_is_valid(const std::string& string) -> bool {
   return true;
 }
 
-// added by ericf from http://stackoverflow.com/questions/17316506/
+// Added by ericf from: http://stackoverflow.com/questions/17316506/
 // strip-invalid-utf8-from-string-in-c-c
-// static std::string correct_non_utf_8(std::string *str) {
 auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
   int i, f_size = static_cast<int>(strlen(str));
   unsigned char c, c2 = 0, c3, c4;
   std::string to;
   to.reserve(static_cast<size_t>(f_size));
 
-  // ok, it seems we're somehow letting some funky utf8 through that's
-  // causing crashes.. for now lets try this all-or-nothing func and return
-  // ascii only if it fails
+  // Ok, it seems we're somehow letting some funky utf8 through that's
+  // causing crashes. For now lets try this all-or-nothing func and return
+  // ascii only if it fails.
   if (!utf8_check_is_valid(str)) {
-    // now strip out anything but normal ascii...
+    // Now strip out anything but normal ascii.
     for (i = 0; i < f_size; i++) {
       c = (unsigned char)(str)[i];
-      if (c < 127) {  // normal ASCII
+      if (c < 127) {  // Normal ASCII.
         to.append(1, static_cast<char>(c));
       }
     }
 
-    // phone home a few times for bad strings
+    // Phone home a few times for bad strings.
     static int logged_count = 0;
     if (logged_count < 10) {
       std::string log_str;

@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 _g_player_rejoin_cooldown: float = 0.0
 
 # overrides the session's decision of max_players
-_max_players_override: int | None = None
+_g_max_players_override: int | None = None
 
 
 def set_player_rejoin_cooldown(cooldown: float) -> None:
@@ -36,8 +36,8 @@ def set_player_rejoin_cooldown(cooldown: float) -> None:
 
 def set_max_players_override(max_players: int | None) -> None:
     """Set the override for how many players can join a session"""
-    global _max_players_override  # pylint: disable=global-statement
-    _max_players_override = max_players
+    global _g_max_players_override  # pylint: disable=global-statement
+    _g_max_players_override = max_players
 
 
 class Session:
@@ -176,8 +176,8 @@ class Session:
         self.min_players = min_players
         self.max_players = (
             max_players
-            if _max_players_override is None
-            else _max_players_override
+            if _g_max_players_override is None
+            else _g_max_players_override
         )
         self.submit_score = submit_score
 

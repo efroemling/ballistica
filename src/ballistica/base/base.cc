@@ -4,6 +4,7 @@
 
 #include <cstdio>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
@@ -37,6 +38,7 @@
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/vector4f.h"
 #include "ballistica/shared/python/python_command.h"
@@ -586,38 +588,40 @@ void BaseFeatureSet::set_classic(ClassicSoftInterface* classic) {
   classic_soft_ = classic;
 }
 
-auto BaseFeatureSet::GetAppInstanceUUID() -> const std::string& {
-  static std::string app_instance_uuid;
-  static bool have_app_instance_uuid = false;
-
-  if (!have_app_instance_uuid) {
-    if (g_base) {
-      Python::ScopedInterpreterLock gil;
-      auto uuid = g_core->python->objs()
-                      .Get(core::CorePython::ObjID::kUUIDStrCall)
-                      .Call();
-      if (uuid.exists()) {
-        app_instance_uuid = uuid.ValueAsString();
-        have_app_instance_uuid = true;
-      }
-    }
-    if (!have_app_instance_uuid) {
-      // As an emergency fallback simply use a single random number. We
-      // should probably simply disallow this before Python is up.
-      g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
-                           "GetSessionUUID() using rand fallback.");
-      srand(static_cast<unsigned int>(
-          core::CorePlatform::TimeMonotonicMillisecs()));  // NOLINT
-      app_instance_uuid =
-          std::to_string(static_cast<uint32_t>(rand()));  // NOLINT
-      have_app_instance_uuid = true;
-    }
-    if (app_instance_uuid.size() >= 100) {
-      g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
-                           "session id longer than it should be.");
-    }
+auto BaseFeatureSet::LocalAppInstanceUUID() -> const std::string& {
+  if (!have_local_app_instance_uuid_) {
+    assert(g_base);
+    Python::ScopedInterpreterLock gil;
+    auto uuid{g_core->python->objs()
+                  .Get(core::CorePython::ObjID::kUUIDStrCall)
+                  .Call()};
+    BA_PRECONDITION_FATAL(uuid.exists());
+    local_app_instance_uuid_ = "lai-" + uuid.ValueAsString();
+    assert(local_app_instance_uuid_.size() < 100);
+    have_local_app_instance_uuid_ = true;
   }
-  return app_instance_uuid;
+  return local_app_instance_uuid_;
+}
+
+auto BaseFeatureSet::GlobalAppInstanceUUID() -> std::optional<std::string> {
+  std::scoped_lock lock(global_app_instance_uuid_lock_);
+
+  // If we have a value but it is expired, clear it.
+  if (global_app_instance_uuid_.has_value()
+      && core::CorePlatform::TimeSinceEpochSeconds()
+             > global_app_instance_uuid_expire_time_) {
+    global_app_instance_uuid_.reset();
+    global_app_instance_uuid_expire_time_ = 0.0;
+  }
+
+  return global_app_instance_uuid_;
+}
+
+void BaseFeatureSet::SetGlobalAppInstanceUUID(std::string value,
+                                              seconds_t expire_time) {
+  std::scoped_lock lock(global_app_instance_uuid_lock_);
+  global_app_instance_uuid_ = std::move(value);
+  global_app_instance_uuid_expire_time_ = expire_time;
 }
 
 void BaseFeatureSet::PlusDirectSendV1CloudLogs(const std::string& prefix,
@@ -763,8 +767,8 @@ void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
   Plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
 }
 
-void BaseFeatureSet::PushDevConsolePrintCall(const std::string& msg,
-                                             float scale, Vector4f color) {
+void BaseFeatureSet::PushDevConsolePrintCall(std::string_view msg, float scale,
+                                             Vector4f color) {
   ui->PushDevConsolePrintCall(msg, scale, color);
 }
 

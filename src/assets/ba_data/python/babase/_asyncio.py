@@ -23,8 +23,8 @@ if TYPE_CHECKING:
     import babase
 
 # Our timer and event loop for the ballistica logic thread.
-_asyncio_timer: babase.AppTimer | None = None
-_asyncio_event_loop: asyncio.AbstractEventLoop | None = None
+_g_asyncio_timer: babase.AppTimer | None = None
+_g_asyncio_event_loop: asyncio.AbstractEventLoop | None = None
 
 DEBUG_TIMING = os.environ.get('BA_DEBUG_TIMING') == '1'
 
@@ -46,12 +46,12 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
     except RuntimeError:
         pass
 
-    global _asyncio_event_loop
-    _asyncio_event_loop = asyncio.new_event_loop()
-    _asyncio_event_loop.set_default_executor(babase.app.threadpool)
+    global _g_asyncio_event_loop
+    _g_asyncio_event_loop = asyncio.new_event_loop()
+    _g_asyncio_event_loop.set_default_executor(babase.app.threadpool)
 
     # Try to avoid reference loops from exceptions.
-    _asyncio_event_loop.set_exception_handler(_exception_handler)
+    _g_asyncio_event_loop.set_exception_handler(_exception_handler)
 
     # Ideally we should integrate asyncio into our C++ Thread class's
     # low level event loop so that asyncio timers/sockets/etc. could
@@ -62,10 +62,10 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
     # See https://stackoverflow.com/questions/29782377/
     # is-it-possible-to-run-only-a-single-step-of-the-asyncio-event-loop
     def run_cycle() -> None:
-        assert _asyncio_event_loop is not None
-        _asyncio_event_loop.call_soon(_asyncio_event_loop.stop)
+        assert _g_asyncio_event_loop is not None
+        _g_asyncio_event_loop.call_soon(_g_asyncio_event_loop.stop)
         starttime = time.monotonic() if DEBUG_TIMING else 0
-        _asyncio_event_loop.run_forever()
+        _g_asyncio_event_loop.run_forever()
         endtime = time.monotonic() if DEBUG_TIMING else 0
 
         # Let's aim to have nothing take longer than 1/120 of a second.
@@ -79,21 +79,21 @@ def setup_asyncio() -> asyncio.AbstractEventLoop:
                     warn_time,
                 )
 
-    global _asyncio_timer
-    _asyncio_timer = _babase.AppTimer(1.0 / 30.0, run_cycle, repeat=True)
+    global _g_asyncio_timer
+    _g_asyncio_timer = _babase.AppTimer(1.0 / 30.0, run_cycle, repeat=True)
 
     if bool(False):
 
         async def aio_test() -> None:
             print('TEST AIO TASK STARTING')
-            assert _asyncio_event_loop is not None
-            assert asyncio.get_running_loop() is _asyncio_event_loop
+            assert _g_asyncio_event_loop is not None
+            assert asyncio.get_running_loop() is _g_asyncio_event_loop
             await asyncio.sleep(2.0)
             print('TEST AIO TASK ENDING')
 
-        _testtask = _asyncio_event_loop.create_task(aio_test())
+        _testtask = _g_asyncio_event_loop.create_task(aio_test())
 
-    return _asyncio_event_loop
+    return _g_asyncio_event_loop
 
 
 def _exception_handler(

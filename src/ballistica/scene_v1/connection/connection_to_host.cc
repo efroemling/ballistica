@@ -30,6 +30,52 @@ namespace ballistica::scene_v1 {
 // How long to go between sending out null packets for pings.
 const int kPingSendInterval = 2000;
 
+static auto MakeServerResponseJson_(const std::string& passed_str)
+    -> std::string {
+  // Root object.
+  cJSON* root = cJSON_CreateObject();
+  if (!root) {
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "MakeServerResponseJson_: cJSON_CreateObject failed.");
+    return "<Internal Error>";
+  }
+
+  // Create array for "t".
+  cJSON* t_array = cJSON_CreateArray();
+  if (!t_array) {
+    cJSON_Delete(root);
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "MakeServerResponseJson_: cJSON_CreateArray failed.");
+    return "<Internal Error>";
+  }
+
+  // Add array to root under key "t".
+  cJSON_AddItemToObject(root, "t", t_array);
+
+  // Add elements to array.
+  cJSON_AddItemToArray(t_array, cJSON_CreateString("serverResponses"));
+  cJSON_AddItemToArray(t_array, cJSON_CreateString(passed_str.c_str()));
+
+  // Serialize to compact JSON.
+  char* json_cstr = cJSON_PrintUnformatted(root);
+  if (!json_cstr) {
+    cJSON_Delete(root);
+    g_core->logging->Log(
+        LogName::kBaNetworking, LogLevel::kError,
+        "MakeServerResponseJson_: cJSON_PrintUnformatted failed.");
+    return "<Internal Error>";
+  }
+
+  // Copy into std::string.
+  std::string result(json_cstr);
+
+  // Free cJSON allocations.
+  cJSON_free(json_cstr);
+  cJSON_Delete(root);
+
+  return result;
+}
+
 ConnectionToHost::ConnectionToHost()
     : protocol_version_{
           classic::ClassicAppMode::GetSingleton()->host_protocol_version()} {}
@@ -101,10 +147,10 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
       auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
       // We expect a > 3 byte handshake packet with protocol version as the
-      // second and third bytes and name/info beyond that.
-      // (player-spec for protocol <= 32 and info json dict for 33+).
+      // second and third bytes and name/info beyond that. (player-spec for
+      // protocol <= 32 and info json dict for 33+).
 
-      // If we don't support their protocol, let them know..
+      // If we don't support their protocol, let them know.
       bool compatible = false;
       uint16_t their_protocol_version;
       memcpy(&their_protocol_version, data.data() + 1,
@@ -113,13 +159,89 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           && their_protocol_version <= kProtocolVersionMax) {
         compatible = true;
 
-        // If we are compatible, set our protocol version to match
-        // what they're dealing.
+        // If we are compatible, set our protocol version to match what
+        // they're dealing.
         protocol_version_ = their_protocol_version;
       }
 
-      // Ok now we know if we can talk to them. Respond so they know
-      // whether they can talk to us.
+      // See if the server uses v2 auth.
+      if (!got_v2_auth_usage_) {
+        // If server requires v2 auth, it will have a 'v2a' value in its
+        // handshake which is its global-app-instance-uuid. We'll ask the
+        // cloud to send our account info to that app-instance and give us a
+        // token we can use to identify ourself as that account to them.
+        if (their_protocol_version >= 33) {
+          std::vector<char> string_buffer(data.size() - 3 + 1);
+          memcpy(&(string_buffer[0]), &(data[3]), data.size() - 3);
+          string_buffer[string_buffer.size() - 1] = 0;
+          if (cJSON* handshake = cJSON_Parse(string_buffer.data())) {
+            if (cJSON_IsObject(handshake)) {
+              cJSON* v2a = cJSON_GetObjectItem(handshake, "v2a");
+              if (cJSON_IsString(v2a)) {
+                v2_auth_global_app_instance_id_ = v2a->valuestring;
+              }
+            }
+            cJSON_Delete(handshake);
+          }
+        }
+        got_v2_auth_usage_ = true;
+      }
+
+      std::optional<std::string> v2_auth_token;
+
+      // If the server does use v2 auth, process v2-auth requests as needed
+      // and hold off on handshake-responses until something goes through.
+      assert(got_v2_auth_usage_);
+      if (v2_auth_global_app_instance_id_.has_value()) {
+        auto args = PythonRef::Stolen(
+            Py_BuildValue("(s)", v2_auth_global_app_instance_id_->c_str()));
+        auto result = g_base->python->objs()
+                          .Get(base::BasePython::ObjID::kV2AuthRequestCall)
+                          .Call(args);
+        if (!result.exists()) {
+          g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                               "Error running v2_auth_request.");
+        } else {
+          if (result.ValueIsNone()) {
+            // Still waiting...
+          } else {
+            auto valid_format{false};
+            if (result.ValueIsSequence()) {
+              auto vals{result.ValueAsSequence()};
+              if (vals.size() == 2 && PyBool_Check(*vals[0])
+                  && vals[1].ValueIsString()) {
+                // Success!!!
+                auto success{vals[0].ValueAsBool()};
+                auto sval{vals[1].ValueAsString()};
+                valid_format = true;
+
+                if (!success) {
+                  // If auth rejected us, show auth error message and fail.
+                  Error(MakeServerResponseJson_(sval));
+                  return;
+                } else {
+                  // Auth accepted us! Pass along this token in our
+                  // handshake-response.
+                  v2_auth_token = sval;
+                }
+              }
+            }
+
+            if (!valid_format) {
+              g_core->logging->Log(
+                  LogName::kBaNetworking, LogLevel::kError,
+                  "Invalid type returned from v2_auth_request.");
+            }
+          }
+        }
+        // If we're still waiting on a token, go no further.
+        if (!v2_auth_token.has_value()) {
+          return;
+        }
+      }
+
+      // Ok now we know if we can talk to them. Respond so they know whether
+      // they can talk to us.
 
       // (packet-type, our protocol-version, our spec/info)
       // For server-protocol < 32 we provide our player-spec.
@@ -129,9 +251,14 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         JsonDict dict;
         dict.AddString("s", PlayerSpec::GetAccountPlayerSpec().GetSpecString());
 
-        // Also add our public device id. Servers can
-        // use this to combat spammers.
+        // Also add our public device id. Servers can use this to combat
+        // spammers.
         dict.AddString("d", g_base->platform->GetPublicDeviceUUID());
+
+        // Add v2 auth token.
+        if (v2_auth_token.has_value()) {
+          dict.AddString("v2at", *v2_auth_token);
+        }
 
         std::string out = dict.PrintUnformatted();
 
@@ -164,15 +291,15 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         return;
       }
 
-      // If we're freshly establishing that we're able to talk to them
-      // in a language they understand, go ahead and kick some stuff off.
+      // If we're freshly establishing that we're able to talk to them in a
+      // language they understand, go ahead and kick some stuff off.
       if (!can_communicate()) {
         if (their_protocol_version >= 33) {
-          // In newer protocols, handshake contains a json dict
-          // so we can evolve it going forward.
           std::vector<char> string_buffer(data.size() - 3 + 1);
           memcpy(&(string_buffer[0]), &(data[3]), data.size() - 3);
           string_buffer[string_buffer.size() - 1] = 0;
+          // In newer protocols, handshake contains a json dict so we can
+          // evolve it going forward.
           if (cJSON* handshake = cJSON_Parse(string_buffer.data())) {
             if (cJSON_IsObject(handshake)) {
               // We hash this to prove that we're us; keep it around.
@@ -191,8 +318,9 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           }
         } else {
           // (KILL THIS WHEN kProtocolVersionClientMin >= 33)
-          // In older protocols, handshake simply contained a
-          // player-spec for the host.
+          //
+          // In older protocols, handshake simply contained a player-spec
+          // for the host.
 
           // Pull host's PlayerSpec from the handshake packet.
           std::vector<char> string_buffer(data.size() - 3 + 1);
@@ -210,8 +338,9 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         appmode->LaunchClientSession();
 
         // NOTE:
-        // we don't actually print a 'connected' message until after
-        // we get our first message (it may influence the message we print and
+        //
+        // we don't actually print a 'connected' message until after we get
+        // our first message (it may influence the message we print and
         // there's also a chance we could still get booted after sending our
         // info message)
 
@@ -223,8 +352,8 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         client_session_ = cs;
         cs->SetConnectionToHost(this);
 
-        // The very first thing we send is our client-info
-        // which is a json dict with arbitrary data.
+        // The very first thing we send is our client-info which is a json
+        // dict with arbitrary data.
         {
           JsonDict dict;
           dict.AddNumber("b", kEngineBuildNumber);
@@ -232,7 +361,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           g_base->Plus()->V1SetClientInfo(&dict);
 
           // Pass the hash we generated from their handshake; they can use
-          // this to make sure we're who we say we are.
+          // this for v1 client auth.
           dict.AddString("ph", peer_hash_);
           std::string info = dict.PrintUnformatted();
           std::vector<uint8_t> msg(info.size() + 1);
@@ -242,11 +371,16 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         }
 
         // Send them our player-profiles so we can use them on their end.
-        // (the host generally will pull these from the master server
-        // to prevent cheating, but in some cases these are used)
+        // (the host generally will pull these from the master server to
+        // prevent cheating, but in some cases these are used).
 
-        // On newer hosts we send these as json.
-        if (protocol_version_ >= 32) {
+        if (v2_auth_global_app_instance_id_.has_value()) {
+          // Host has enabled v2-auth. Don't bother sending our profiles
+          // directly as they will be ignored anyway (host gets profiles
+          // from cloud in this case).
+        } else if (protocol_version_ >= 32) {
+          // On newer hosts we send profiles as json.
+          //
           // (This is a borrowed ref)
           PyObject* profiles =
               g_base->python->GetRawConfigValue("Player Profiles");
@@ -384,7 +518,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     }
 
     case BA_MESSAGE_JMESSAGE: {
-      // High level json messages (nice and easy to expand on but not
+      // High level json screen-messages (nice and easy to expand on but not
       // especially efficient).
       if (buffer.size() >= 3 && buffer[buffer.size() - 1] == 0) {
         if (cJSON* msg =

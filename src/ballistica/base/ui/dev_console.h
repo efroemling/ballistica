@@ -38,7 +38,7 @@ class DevConsole {
   auto PasteFromClipboard() -> bool;
 
   /// Print text to the console.
-  void Print(const std::string& s_in, float scale, Vector4f color);
+  void Print(const char* s_in, float scale, Vector4f color);
   void Draw(FrameDef* frame_def);
 
   void ApplyAppConfig();

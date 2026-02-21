@@ -8,6 +8,7 @@
 #include <list>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "ballistica/core/platform/core_platform.h"
@@ -20,8 +21,8 @@ class CorePlatformWindows : public CorePlatform {
  public:
   CorePlatformWindows();
 
-  static auto UTF8Encode(const std::wstring& wstr) -> std::string;
-  static auto UTF8Decode(const std::string& str) -> std::wstring;
+  static auto UTF8Encode(std::wstring_view str) -> std::string;
+  static auto UTF8Decode(std::string_view str) -> std::wstring;
 
   auto GetNativeStackTrace() -> NativeStackTrace* override;
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "w"; }
@@ -43,8 +44,8 @@ class CorePlatformWindows : public CorePlatform {
   auto DoGetDeviceName() -> std::string override;
   auto DoGetDeviceDescription() -> std::string override;
   auto DoHasTouchScreen() -> bool override;
-  void EmitPlatformLog(const std::string& name, LogLevel level,
-                       const std::string& msg) override;
+  void EmitPlatformLog(std::string_view name, LogLevel level,
+                       std::string_view msg) override;
   void SetEnv(const std::string& name, const std::string& value) override;
   auto GetEnv(const std::string& name) -> std::optional<std::string> override;
   auto GetIsStdinATerminal() -> bool override;

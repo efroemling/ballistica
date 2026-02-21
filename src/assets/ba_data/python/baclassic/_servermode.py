@@ -108,6 +108,12 @@ class ServerController:
         self._playlist_fetch_got_response = False
         self._playlist_fetch_code = -1
 
+        # We do most configuration *after* we've fetched playlists or
+        # whatever other prep stuff we need to do, but this we should
+        # set immediately; otherwise unauthenticated clients can sneak
+        # into auth-enabled servers while they're bootstrapping.
+        bascenev1.set_authenticate_clients(self._config.authenticate_clients)
+
         # Now sit around doing any pre-launch prep such as waiting for
         # account sign-in or fetching playlists; this will kick off the
         # session once done.
@@ -424,8 +430,6 @@ class ServerController:
         classic.teams_series_length = self._config.teams_series_length
         classic.ffa_series_length = self._config.ffa_series_length
 
-        bascenev1.set_authenticate_clients(self._config.authenticate_clients)
-
         bascenev1.set_enable_default_kick_voting(
             self._config.enable_default_kick_voting
         )
@@ -448,7 +452,6 @@ class ServerController:
         bascenev1.set_player_rejoin_cooldown(
             self._config.player_rejoin_cooldown
         )
-
         bascenev1.set_max_players_override(
             self._config.session_max_players_override
         )
@@ -467,6 +470,6 @@ class ServerController:
             bascenev1.new_host_session(sessiontype)
 
         # Run an access check if we're trying to make a public party.
-        if not self._ran_access_check and self._config.party_is_public:
+        if self._config.party_is_public and not self._ran_access_check:
             self._run_access_check()
             self._ran_access_check = True

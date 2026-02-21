@@ -1345,7 +1345,7 @@ void DevConsole::SubmitPythonCommand_(const std::string& command) {
     if (cmd.CanEval()) {
       auto obj = cmd.Eval(true, nullptr, nullptr);
       if (obj.exists() && obj.get() != Py_None) {
-        Print(obj.Repr(), 1.0f, kVector4f1);
+        Print(obj.Repr().c_str(), 1.0f, kVector4f1);
       }
     } else {
       // Not eval-able; just exec it.
@@ -1410,9 +1410,11 @@ void DevConsole::CycleState(bool backwards) {
   transition_start_ = g_base->logic->display_time();
 }
 
-void DevConsole::Print(const std::string& s_in, float scale, Vector4f color) {
+void DevConsole::Print(const char* s_in, float scale, Vector4f color) {
   assert(g_base->InLogicThread());
-  std::string s = Utils::GetValidUTF8(s_in.c_str(), "cspr");
+
+  std::string s = Utils::GetValidUTF8(s_in, "cspr");
+
   std::vector<std::string> broken_up;
   g_base->text_graphics->BreakUpString(
       s.c_str(), kDevConsoleStringBreakUpSize / scale, &broken_up);

@@ -141,6 +141,9 @@ class Python {
     return static_cast<float>(GetDouble(o));
   }
 
+  /// Is the provided PyObject a sequence?
+  static auto IsSequence(PyObject* o) -> bool;
+
   /// Return float values any Python sequence of numeric objects.
   static auto GetFloats(PyObject* o) -> std::vector<float>;
 
