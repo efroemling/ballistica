@@ -722,7 +722,7 @@ void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {
   }
 }
 
-void UI::PushDevConsolePrintCall(const std::string& msg, float scale,
+void UI::PushDevConsolePrintCall(std::string_view msg, float scale,
                                  Vector4f color) {
   // Completely ignore this stuff in headless mode.
   if (g_core->HeadlessMode()) {
@@ -730,10 +730,13 @@ void UI::PushDevConsolePrintCall(const std::string& msg, float scale,
   }
   // If our event loop AND console are up and running, ship it off to be
   // printed. Otherwise store it for the console to grab when it's ready.
+  //
+  // IMPORTANT: We're holding a string_view here so we need to copy it into
+  // a string to keep it valid when its called later.
   if (auto* event_loop = g_base->logic->event_loop()) {
     if (dev_console_ != nullptr) {
-      event_loop->PushCall([this, msg, scale, color] {
-        dev_console_->Print(msg, scale, color);
+      event_loop->PushCall([this, msg_s = std::string(msg), scale, color] {
+        dev_console_->Print(msg_s.c_str(), scale, color);
       });
       return;
     }
@@ -758,7 +761,7 @@ void UI::OnAssetsAvailable() {
     // Print any messages that have built up.
     if (!dev_console_startup_messages_.empty()) {
       for (auto&& entry : dev_console_startup_messages_) {
-        dev_console_->Print(std::get<0>(entry), std::get<1>(entry),
+        dev_console_->Print(std::get<0>(entry).c_str(), std::get<1>(entry),
                             std::get<2>(entry));
       }
       dev_console_startup_messages_.clear();

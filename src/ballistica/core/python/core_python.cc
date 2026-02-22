@@ -313,7 +313,7 @@ void CorePython::EnablePythonLoggingCalls() {
     python_logging_calls_enabled_ = true;
     for (auto&& entry : early_logs_) {
       LoggingCall(std::get<0>(entry), std::get<1>(entry),
-                  "[HELD] " + std::get<2>(entry));
+                  ("[HELD] " + std::get<2>(entry)).c_str());
     }
     early_logs_.clear();
   }
@@ -535,7 +535,7 @@ void CorePython::MonolithicModeBaEnvConfigure() {
 }
 
 void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
-                             const std::string& msg) {
+                             const char* msg) {
   // If we're not yet sending logs to Python, store this one away until we
   // are.
   if (!python_logging_calls_enabled_) {
@@ -557,7 +557,7 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
         g_core->platform->EmitPlatformLog("root", LogLevel::kError, errmsg);
         g_core->platform->EmitPlatformLog("root", loglevel, msg);
       }
-      fprintf(stderr, "%s\n%s\n", errmsg, msg.c_str());
+      fprintf(stderr, "%s\n%s\n", errmsg, msg);
     }
     return;
   }
@@ -649,18 +649,17 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
       fprintf(stderr, "Unexpected LogLevel %d\n", static_cast<int>(loglevel));
       break;
   }
-  PythonRef args(
-      Py_BuildValue("(Os)", objs().Get(loglevelobjid).get(), msg.c_str()),
-      PythonRef::kSteal);
+  PythonRef args(Py_BuildValue("(Os)", objs().Get(loglevelobjid).get(), msg),
+                 PythonRef::kSteal);
   objs().Get(logcallobj).Call(args);
 }
 
 auto CorePython::WasModularMainCalled() -> bool {
   assert(!g_buildconfig.monolithic_build());
 
-  // This gets called in modular builds before anything is inited, so we need
-  // to avoid using anything from g_core or whatnot here; only raw Python
-  // stuff.
+  // This gets called in modular builds before anything is inited, so we
+  // need to avoid using anything from g_core or whatnot here; only raw
+  // Python stuff.
 
   PyObject* baenv = PyImport_ImportModule("baenv");
   if (!baenv) {
@@ -697,9 +696,9 @@ auto CorePython::WasModularMainCalled() -> bool {
 
 auto CorePython::FetchPythonArgs(std::vector<std::string>* buffer)
     -> std::vector<char*> {
-  // This gets called in modular builds before anything is inited, so we need
-  // to avoid using anything from g_core or whatnot here; only raw Python
-  // stuff.
+  // This gets called in modular builds before anything is inited, so we
+  // need to avoid using anything from g_core or whatnot here; only raw
+  // Python stuff.
 
   assert(buffer && buffer->empty());
   PyObject* sys = PyImport_ImportModule("sys");

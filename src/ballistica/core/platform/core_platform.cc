@@ -549,8 +549,8 @@ auto CorePlatform::GetDefaultUIScale() -> UIScale {
   return UIScale::kLarge;
 }
 
-void CorePlatform::EmitPlatformLog(const std::string& name, LogLevel level,
-                                   const std::string& msg) {
+void CorePlatform::EmitPlatformLog(std::string_view name, LogLevel level,
+                                   std::string_view msg) {
   // Do nothing by default.
 }
 

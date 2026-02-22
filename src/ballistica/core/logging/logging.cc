@@ -14,8 +14,8 @@ namespace ballistica::core {
 
 int g_early_v1_cloud_log_writes{10};
 
-void Logging::EmitLog(const std::string& name, LogLevel level, double timestamp,
-                      const std::string& msg) {
+void Logging::EmitLog(std::string_view name, LogLevel level, double timestamp,
+                      std::string_view msg) {
   assert(g_base_soft);
   // Print to the dev console.
   if (name == "stdout" || name == "stderr") {
@@ -48,7 +48,8 @@ void Logging::EmitLog(const std::string& name, LogLevel level, double timestamp,
       }
       char prestr[256];
 
-      snprintf(prestr, sizeof(prestr), "%.3f  %s", rel_time, name.c_str());
+      snprintf(prestr, sizeof(prestr), "%.3f  %.*s", rel_time,
+               static_cast<int>(name.size()), name.data());
       g_base_soft->PushDevConsolePrintCall("", 0.3f, kVector4f1);
       g_base_soft->PushDevConsolePrintCall(
           prestr, 0.75f,
@@ -95,7 +96,7 @@ void Logging::V1CloudLog(const std::string& msg) {
   }
 }
 
-void Logging::Log_(LogName name, LogLevel level, const std::string& msg) {
+void Logging::Log_(LogName name, LogLevel level, const char* msg) {
   assert(g_core);
   // Wrappers calling us should be checking this.
   assert(LogLevelEnabled(name, level));

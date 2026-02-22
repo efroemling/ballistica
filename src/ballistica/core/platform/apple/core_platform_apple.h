@@ -25,8 +25,8 @@ class CorePlatformApple : public CorePlatform {
   auto DoHasTouchScreen() -> bool override;
   auto GetDefaultUIScale() -> UIScale override;
   auto IsRunningOnDesktop() -> bool override;
-  void EmitPlatformLog(const std::string& name, LogLevel level,
-                       const std::string& msg) override;
+  void EmitPlatformLog(std::string_view name, LogLevel level,
+                       std::string_view msg) override;
   void GetTextBoundsAndWidth(const std::string& text, Rect* r,
                              float* width) override;
   void FreeTextTexture(void* tex) override;

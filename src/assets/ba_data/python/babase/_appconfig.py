@@ -11,7 +11,7 @@ import _babase
 if TYPE_CHECKING:
     from typing import Any
 
-_g_pending_apply = False  # pylint: disable=invalid-name
+_g_pending_apply = False
 
 
 class AppConfig(dict):

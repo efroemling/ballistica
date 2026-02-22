@@ -30,13 +30,19 @@ class ServerConfig:
     # If True, all connecting clients will be authenticated through the
     # master server to screen for fake account info. Generally this
     # should always be enabled unless you are hosting on a LAN with no
-    # internet connection.
+    # internet connection. Note that if you set protocol_version to 36
+    # or newer, client authentication uses V2 account info. This is
+    # highly recommended as it does not have spoofing vulnerabilities
+    # like the earlier V1 authentication.
     authenticate_clients: bool = True
 
     # IDs of server admins. Server admins are not kickable through the
     # default kick vote system and they are able to kick players without
-    # a vote. To get your account id, enter 'getaccountid' in
-    # settings->advanced->enter-code.
+    # a vote. If protocol_version is set to 36 or newer this will use V2
+    # account ids (a-XXX); otherwise it will use V1 ids (pb-XXX). To get
+    # your V2 account id, poke the 'manage account' button in the
+    # account window in-game. To get your V1 account id, enter
+    # 'getaccountid' in Settings->Advanced->Send Info
     admins: list[str] = field(default_factory=list)
 
     # Whether the default kick-voting system is enabled.
@@ -176,7 +182,10 @@ class ServerConfig:
     # Protocol version we host with. Currently the default is 33 which
     # still allows older 1.4 game clients to connect. Explicitly setting
     # to 35 no longer allows those clients but adds/fixes a few things
-    # such as making camera shake properly work in net games.
+    # such as making camera shake properly work in net games. Protocol
+    # 36 enables V2 account ids (a-XXX) for client authentication, which
+    # does not suffer from spoofing vulnerabilities that V1 account ids
+    # (pb-XXX) did.
     protocol_version: int | None = None
 
     # (internal) stress-testing mode.

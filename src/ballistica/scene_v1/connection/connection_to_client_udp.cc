@@ -55,11 +55,13 @@ void ConnectionToClientUDP::Update() {
   auto current_time_millisecs =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
-  // if its been long enough since we've heard anything from the host, error.
+  // If its been long enough since we've heard anything from the host,
+  // error.
   if (current_time_millisecs - last_client_response_time_millisecs_
-      > (can_communicate() ? 10000u : 5000u)) {
-    // die immediately in this case; no use trying to wait for a
-    // disconnect-ack since we've already given up hope of hearing from them..
+      > (can_communicate() ? 30000u : 10000u)) {
+    // Die immediately in this case; no use trying to wait for a
+    // disconnect-ack since we've already given up hope of hearing from
+    // them.
     Die();
     return;
   }

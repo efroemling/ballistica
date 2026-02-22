@@ -48,11 +48,13 @@
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/networking/networking_sys.h"
 
+// Make sure we're using unicode versions of things.
 #if !defined(UNICODE) || !defined(_UNICODE)
 #error Unicode not defined.
 #endif
@@ -183,25 +185,73 @@ auto CorePlatformWindows::GetNativeStackTrace() -> NativeStackTrace* {
   return new WinStackTrace(this);
 }
 
-// Convert a wide Unicode string to an UTF8 string.
-auto CorePlatformWindows::UTF8Encode(const std::wstring& wstr) -> std::string {
-  if (wstr.empty()) return std::string();
-  int size_needed = WideCharToMultiByte(
-      CP_UTF8, 0, &wstr[0], static_cast<int>(wstr.size()), NULL, 0, NULL, NULL);
-  std::string str(size_needed, 0);
-  WideCharToMultiByte(CP_UTF8, 0, &wstr[0], static_cast<int>(wstr.size()),
-                      &str[0], size_needed, NULL, NULL);
-  return str;
+auto CorePlatformWindows::UTF8Encode(std::wstring_view wstr) -> std::string {
+  if (wstr.empty()) {
+    return std::string();
+  }
+
+  if (wstr.size() > static_cast<size_t>(std::numeric_limits<int>::max())) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kCritical,
+                "UTF8Encode input too large.");
+    return std::string();
+  }
+
+  const auto* wdata = wstr.data();
+  const int wlen = static_cast<int>(wstr.size());
+
+  const int size_needed = WideCharToMultiByte(CP_UTF8, 0, wdata, wlen, nullptr,
+                                              0, nullptr, nullptr);
+  if (size_needed <= 0) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kCritical,
+                "UTF8Encode unexpected size_needed <= 0.");
+    return std::string();  // or throw/log
+  }
+
+  std::string out(static_cast<size_t>(size_needed), '\0');
+  const int written = WideCharToMultiByte(CP_UTF8, 0, wdata, wlen, out.data(),
+                                          size_needed, nullptr, nullptr);
+  if (written != size_needed) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kCritical,
+                "UTF8Encode incomplete conversion.");
+    return std::string();  // or handle mismatch
+  }
+
+  return out;
 }
 
 // Convert an UTF8 string to a wide Unicode String.
-auto CorePlatformWindows::UTF8Decode(const std::string& str) -> std::wstring {
-  if (str.empty()) return std::wstring();
-  int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0],
-                                        static_cast<int>(str.size()), NULL, 0);
-  std::wstring wstr(size_needed, 0);
-  MultiByteToWideChar(CP_UTF8, 0, &str[0], static_cast<int>(str.size()),
-                      &wstr[0], size_needed);
+auto CorePlatformWindows::UTF8Decode(std::string_view str) -> std::wstring {
+  if (str.empty()) {
+    return std::wstring();
+  }
+
+  // MultiByteToWideChar takes an int length; guard against overflow.
+  if (str.size() > static_cast<size_t>(std::numeric_limits<int>::max())) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kCritical,
+                "UTF8Decode input too large.");
+    return std::wstring();
+  }
+
+  const auto* bytes = str.data();
+  const int byte_count = static_cast<int>(str.size());
+
+  const int size_needed =
+      MultiByteToWideChar(CP_UTF8, 0, bytes, byte_count, nullptr, 0);
+  if (size_needed <= 0) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kCritical,
+                "UTF8Decode unexpected size_needed <= 0.");
+    return std::wstring();
+  }
+
+  std::wstring wstr(static_cast<size_t>(size_needed), L'\0');
+  const int converted = MultiByteToWideChar(CP_UTF8, 0, bytes, byte_count,
+                                            wstr.data(), size_needed);
+  if (converted != size_needed) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kCritical,
+                "UTF8Decode incomplete conversion.");
+    return std::wstring();
+  }
+
   return wstr;
 }
 
@@ -369,7 +419,7 @@ auto CorePlatformWindows::FOpen(const char* path, const char* mode) -> FILE* {
 
 void CorePlatformWindows::DoMakeDir(const std::string& dir, bool quiet) {
   std::wstring stemp = UTF8Decode(dir);
-  int result = CreateDirectory(stemp.c_str(), 0);
+  int result = CreateDirectoryW(stemp.c_str(), 0);
   if (result == 0) {
     DWORD err = GetLastError();
     if (err != ERROR_ALREADY_EXISTS) {
@@ -811,7 +861,7 @@ std::string CorePlatformWindows::DoGetDeviceName() {
   std::string device_name;
   wchar_t computer_name[256];
   DWORD computer_name_size = 256;
-  int result = GetComputerName(computer_name, &computer_name_size);
+  int result = GetComputerNameW(computer_name, &computer_name_size);
   if (result != 0) {
     device_name = UTF8Encode(computer_name);
     if (device_name.size() != 0) {
@@ -843,16 +893,21 @@ std::string CorePlatformWindows::DoGetDeviceDescription() {
 
 bool CorePlatformWindows::DoHasTouchScreen() { return false; }
 
-void CorePlatformWindows::EmitPlatformLog(const std::string& name,
-                                          LogLevel level,
-                                          const std::string& msg) {
-  // Spit this out as a debug-string for when running from msvc.
-  OutputDebugString(UTF8Decode(msg).c_str());
+void CorePlatformWindows::EmitPlatformLog(std::string_view name, LogLevel level,
+                                          std::string_view msg) {
+  // Spit this out as a debug-string only if we're being debugged.
+  //
+  // Note that this only checks for the presence of a user-mode debugger; if
+  // we ever need to see this stuff in remote debugging or system-monitoring
+  // situations we'll need to check for that or force this to always run.
+  if (IsDebuggerPresent()) {
+    OutputDebugStringW(UTF8Decode(msg).c_str());
+  }
 }
 
 auto CorePlatformWindows::DoGetDataDirectoryMonolithicDefault() -> std::string {
   wchar_t sz_file_name[MAX_PATH + 1];
-  GetModuleFileName(nullptr, sz_file_name, MAX_PATH + 1);
+  GetModuleFileNameW(nullptr, sz_file_name, MAX_PATH + 1);
   wchar_t* last_slash = nullptr;
   for (wchar_t* s = sz_file_name; *s != 0; ++s) {
     if (*s == '\\') {

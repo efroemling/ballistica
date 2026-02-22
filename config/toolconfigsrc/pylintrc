@@ -67,9 +67,12 @@ disable=broad-except,
 enable=useless-suppression
 
 [BASIC]
+
+# Allow module level names like _g_foo or _FOO.
+const-rgx=^(__.*__|_?[A-Z][A-Z0-9_]*|_g_[a-z][a-z0-9_]*)$
+
 # Allowing a handful of short names commonly understood to be iterators,
 # math concepts, or short-but-complete words.
-
 good-names=i,
            j,
            k,

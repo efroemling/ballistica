@@ -84,8 +84,8 @@ class CorePlatform {
   /// those to log messages is handled at a higher level. Implementations should
   /// not use any Python functionality, as this may be called before Python is
   /// spun up or after it is finalized.
-  virtual void EmitPlatformLog(const std::string& name, LogLevel level,
-                               const std::string& msg);
+  virtual void EmitPlatformLog(std::string_view name, LogLevel level,
+                               std::string_view msg);
 
 #pragma mark ENVIRONMENT -------------------------------------------------------
 

@@ -4,9 +4,11 @@
 
 from __future__ import annotations
 
+import time
 import hashlib
 import logging
 from functools import partial
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never
 
 from efro.error import CommunicationError
@@ -18,6 +20,8 @@ import _babase
 
 if TYPE_CHECKING:
     from typing import Any, Callable
+
+    import bacommon.cloud
 
     from babase._login import LoginAdapter, LoginInfo
 
@@ -62,6 +66,9 @@ class AccountV2Subsystem:
             Callable[[AccountV2Handle | None], None]
         ] = CallbackSet()
 
+        # Request state per global-app-instance-id
+        self._auth_requests: dict[str, _AuthRequest] = {}
+
         adapter: LoginAdapter
         if _babase.using_google_play_game_services():
             adapter = LoginAdapterGPGS()
@@ -103,6 +110,9 @@ class AccountV2Subsystem:
         :meta private:
         """
         assert _babase.in_logic_thread()
+
+        # Blow away any outstanding auth-requests.
+        self._auth_requests = {}
 
         # Inform the base layer of new names/etc.
         if account is not None:
@@ -200,6 +210,78 @@ class AccountV2Subsystem:
         if not self._initial_sign_in_completed:
             self._initial_sign_in_completed = True
             _babase.app.on_initial_sign_in_complete()
+
+    def auth_request(
+        self, global_app_instance_id: str
+    ) -> None | tuple[bool, str]:
+        """Start/process an auth request."""
+        import bacommon.cloud
+
+        assert _babase.in_logic_thread()
+        plus = _babase.app.plus
+        assert plus is not None
+
+        now = time.monotonic()
+
+        # If there are any expired ones, do a prune pass.
+        if any(r.expire_time <= now for r in self._auth_requests.values()):
+            self._auth_requests = {
+                rid: r
+                for rid, r in self._auth_requests.items()
+                if r.expire_time > now
+            }
+
+        auth_request = self._auth_requests.get(global_app_instance_id)
+
+        # If we find no attempt in progress, kick one off.
+        if (
+            auth_request is None
+            and plus.cloud.connected
+            and self.primary is not None
+        ):
+            # print('SENDING AUTH REQUEST')
+            auth_request = self._auth_requests[global_app_instance_id] = (
+                _AuthRequest(expire_time=now + 10.0, error=None, token=None)
+            )
+            with self.primary:
+                plus.cloud.send_message_cb(
+                    bacommon.cloud.AuthRequestMessage(global_app_instance_id),
+                    on_response=partial(
+                        self._on_auth_request_response, auth_request
+                    ),
+                )
+
+        # If we found results, return them.
+        if auth_request is None:
+            return None
+        if auth_request.error is not None:
+            assert auth_request.token is None
+            return (False, auth_request.error)
+        if auth_request.token is not None:
+            assert auth_request.error is None
+            return (True, auth_request.token)
+        # No error or token; its still in flight.
+        return None
+
+    def _on_auth_request_response(
+        self,
+        auth_request: _AuthRequest,
+        response: bacommon.cloud.AuthRequestResponse | Exception,
+    ) -> None:
+        assert _babase.in_logic_thread()
+
+        assert auth_request.error is None
+        assert auth_request.token is None
+
+        if isinstance(response, Exception):
+            auth_request.error = 'An error has occurred.'
+        else:
+            # print('SETTING AUTH RESPONSE')
+            auth_request.error = response.error
+            auth_request.token = response.token
+            # Make sure this sticks around for long enough to complete
+            # the connection.
+            auth_request.expire_time = time.monotonic() + 10.0
 
     @staticmethod
     def _hashstr(val: str) -> str:
@@ -501,3 +583,10 @@ class AccountV2Handle:
 
         This allows cloud messages to be sent on our behalf.
         """
+
+
+@dataclass
+class _AuthRequest:
+    expire_time: float
+    error: str | None
+    token: str | None

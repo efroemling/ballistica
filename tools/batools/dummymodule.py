@@ -306,6 +306,8 @@ def _writefuncs(
                 returnstr = 'return (0, 0)'
             elif returns == 'list[dict[str, Any]]':
                 returnstr = "return [{'foo': 'bar'}]"
+            elif returns == 'list[dict[str, str]]':
+                returnstr = "return [{'foo': 'bar'}]"
             elif returns in {
                 'session.Session',
                 'team.Team',
@@ -346,7 +348,8 @@ def _writefuncs(
                 returnstr = 'return ' + returns + '()'
             else:
                 raise RuntimeError(
-                    f'Unknown returns value: {returns} for {funcname}'
+                    f'Unknown returns value: {returns} for {funcname}.'
+                    f' You may need to add this case to dummymodule.py.'
                 )
             returnstr = (
                 f'# This is a dummy stub;'
