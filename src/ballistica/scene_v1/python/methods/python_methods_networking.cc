@@ -951,11 +951,7 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PyDisconnectFromHostDef,
       PyDisconnectClientDef,
       PyGetClientPublicDeviceUUIDDef,
-<<<<<<< HEAD
-=======
-      PyGetClientIPAddressDef,
       PyGetClientPingDef,
->>>>>>> 98cafc39 (Networking: expose current_ping() to Python)
       PyGetConnectionToHostInfoDef,
       PyGetConnectionToHostInfo2Def,
       PyClientInfoQueryResponseDef,
