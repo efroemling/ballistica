@@ -678,7 +678,6 @@ static PyMethodDef PyGetClientPublicDeviceUUIDDef = {
     "periodically with updates to the game or operating system.",
 };
 
-
 // ----------------------- get_client_ping -----------------------------
 
 static PyObject* PyGetClientPing(PyObject* self, PyObject* args,
@@ -689,8 +688,7 @@ static PyObject* PyGetClientPing(PyObject* self, PyObject* args,
   static const char* kwlist[] = {"client_id", nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
-                                   const_cast<char**>(kwlist),
-                                   &client_id)) {
+                                   const_cast<char**>(kwlist), &client_id)) {
     return nullptr;
   }
 
@@ -701,13 +699,12 @@ static PyObject* PyGetClientPing(PyObject* self, PyObject* args,
 
   if (connection_iter
       == appmode->connections()->connections_to_clients().end()) {
-    Py_RETURN_NONE;
+    return PyFloat_FromDouble(-1.0f);
   }
 
   assert(connection_iter->second.exists());
 
-  ConnectionToClient* connection =
-      connection_iter->second.get();
+  ConnectionToClient* connection = connection_iter->second.get();
 
   float ping = connection->current_ping();
 
@@ -717,15 +714,14 @@ static PyObject* PyGetClientPing(PyObject* self, PyObject* args,
 }
 
 static PyMethodDef PyGetClientPingDef = {
-    "get_client_ping",            // name
-    (PyCFunction)PyGetClientPing, // method
-    METH_VARARGS | METH_KEYWORDS, // flags
+    "get_client_ping",             // name
+    (PyCFunction)PyGetClientPing,  // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "get_client_ping(client_id: int) -> float | None\n"
+    "get_client_ping(client_id: int) -> float\n"
     "\n"
     "Return the current ping (RTT in ms) for a connected client.\n"
-    "Returns None if client_id is invalid.",
-};
+    "Returns -1.0 if client_id is invalid.\n"};
 
 // ----------------------------- get_game_port ---------------------------------
 
