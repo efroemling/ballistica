@@ -3,7 +3,9 @@ description: "Common setup steps for BombSquad builds"
 
 inputs:
   using-cmake:
-    description: "Set to true if building with cmake to enable caching"
+    description: |
+      "Set to true if building with cmake to enable caching"
+      "Also sets up BA_APP_RUN_ENABLE_BUILDS env var"
     required: false
     type: boolean
     default: false
