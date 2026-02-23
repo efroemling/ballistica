@@ -233,7 +233,10 @@ class AccountV2Subsystem:
 
         auth_request = self._auth_requests.get(global_app_instance_id)
 
-        # If we find no attempt in progress, kick one off.
+        # If we find no attempt in progress, kick one off (or fail fast).
+        if auth_request is None:
+            if self.primary is None:
+                return (False, 'You must sign in to do this.')
         if (
             auth_request is None
             and plus.cloud.connected

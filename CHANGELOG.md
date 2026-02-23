@@ -1,4 +1,4 @@
-### 1.7.61 (build 22714, api 9, 2026-02-21)
+### 1.7.61 (build 22717, api 9, 2026-02-23)
 - Added scenev1 protocol 36, which enables V2 auth for servers. This allows
   servers to receive authenticated V2 account info for all players before they
   are allowed to join and fixes the spoofing vulnerabilities that V1 auth had.
