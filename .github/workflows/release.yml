@@ -491,7 +491,7 @@ jobs:
   #                           (only runs on upstream)                            #
   ################################################################################
 
-  release_linux_build_env:
+  release_bombsquad_build_env:
     if: ${{ github.repository_owner == 'efroemling' || github.repository_owner == 'Loup-Garou911XD' }}
     runs-on: ubuntu-latest
     steps:
@@ -502,21 +502,20 @@ jobs:
           using-cmake: true
       - name: Make the build
         run: |
-          make assets-cmake
-          make build/prefab/lib/linux_x86_64_gui/debug/libballisticaplus.a
+          make assets
       - name: Compress the build
-        run: tar -cf "linux_build_env.tar" --exclude="linux_build_env.tar" .
+        run: tar -cf "bombsquad_build_env.tar" --exclude="bombsquad_build_env.tar" .
       - name: Upload the build
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
           omitBody: true
-          artifacts: linux_build_env.tar
+          artifacts: bombsquad_build_env.tar
 
   release_generate_flathub_manifest:
     if: ${{ github.repository_owner == 'efroemling' || github.repository_owner == 'Loup-Garou911XD' }}
     runs-on: ubuntu-latest
-    needs: release_linux_build_env
+    needs: release_bombsquad_build_env
     steps:
       - uses: actions/checkout@v4
         with:
