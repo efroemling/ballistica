@@ -19,6 +19,8 @@ jobs:
       - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
+        with:
+          using-cmake: true
       - name: Run checks
         run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check-ex
 
@@ -34,7 +36,7 @@ jobs:
       - name: Assemble monolithic server build
         run: make cmake-server-build
       - name: Run tests
-        run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test-ex
+        run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_BUILD_HEADLESS=1 make test-ex
 
   # Test spinoff projects - versions of the project with feature-sets
   # added or removed or other changes made.
@@ -45,8 +47,8 @@ jobs:
       - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
-        # Not using the `using-cmake: true` 
-        # because it doesn't benifit from the cache 
+        # Not using the `using-cmake: true`
+        # because it doesn't benifit from the cache
         # as it sets up a new project dir
         #
         # with:
