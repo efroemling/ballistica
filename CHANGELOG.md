@@ -13,6 +13,8 @@
   (thanks std::string_view!).
 - Fixed an issue where clicks could sometimes be lost in the nearby-parties
   browser.
+- Add `bascenev1.get_client_ping` which returns the current ping (RTT in ms)
+  for a connected client.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not
