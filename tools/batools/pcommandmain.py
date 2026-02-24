@@ -116,6 +116,7 @@ from batools.pcommands import (
     gen_binding_code,
     gen_flat_data_code,
     genchangelog,
+    get_changelog,
     android_sdk_utils,
     logcat,
     gen_python_enums_module,
@@ -153,7 +154,6 @@ from batools.pcommands3 import (
     save_docker_images,
     remove_docker_images,
     generate_flathub_manifest,
-    get_changelog,
 )
 
 # pylint: enable=unused-import

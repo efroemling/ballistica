@@ -398,9 +398,12 @@ class RPCEndpoint:
         message_id: int,
     ) -> bytes:
         # pylint: disable=too-many-positional-arguments
-        # We need to know their protocol, so if we haven't gotten a handshake
-        # from them yet, just wait.
+
+        # We need to know their protocol, so if we haven't gotten a
+        # handshake from them yet, just wait.
         while self._peer_info is None:
+            if self._closing:
+                raise CommunicationError('Endpoint closed before handshake.')
             await asyncio.sleep(0.01)
         assert self._peer_info is not None
 
@@ -409,19 +412,21 @@ class RPCEndpoint:
                 raise RuntimeError('Message cannot be larger than 65535 bytes')
 
         try:
-            # print(f'WILL WAIT FOR TASK {bytes_awaitable.get_name()}')
             return await asyncio.wait_for(bytes_awaitable, timeout=timeout)
         except asyncio.CancelledError as exc:
-            # Question: we assume this means the above wait_for() was
-            # cancelled; how do we distinguish between this and *us* being
-            # cancelled though?
+            # If the current task itself was cancelled (vs an inner task
+            # being cancelled by endpoint close()), preserve the
+            # CancelledError rather than swallowing it as a
+            # CommunicationError or incorrectly closing the endpoint.
+            current_task = asyncio.current_task()
+            if current_task is not None and current_task.cancelling() > 0:
+                raise
             if self.debug_print:
                 self.debug_print_call(
                     f'{self._label}: message {message_id} was cancelled.'
                 )
             if close_on_error:
                 self.close()
-
             raise CommunicationError() from exc
         except Exception as exc:
             # If our timer timed-out or anything else went wrong with

@@ -528,7 +528,7 @@ def _get_server_config_template_toml(projroot: str) -> str:
     cfg.unclean_exit_minutes = 90
     cfg.idle_exit_minutes = 20
     cfg.admins = ['a-YOUR-ID-HERE', 'a-ANOTHER-ID-HERE']
-    cfg.protocol_version = 35
+    cfg.protocol_version = 36
     cfg.session_max_players_override = 8
     cfg.playlist_inline = []
     cfg.team_names = ('Red', 'Blue')

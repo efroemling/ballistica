@@ -15,7 +15,7 @@ from efro.error import CommunicationError
 from efro.call import CallbackSet
 from bacommon.login import LoginType
 
-from babase._logging import accountlog
+from babase._logging import accountlog, netlog
 import _babase
 
 if TYPE_CHECKING:
@@ -233,13 +233,16 @@ class AccountV2Subsystem:
 
         auth_request = self._auth_requests.get(global_app_instance_id)
 
-        # If we find no attempt in progress, kick one off.
+        # If we find no attempt in progress, kick one off (or fail fast).
+        if auth_request is None:
+            if self.primary is None:
+                return (False, 'You must sign in to do this.')
         if (
             auth_request is None
             and plus.cloud.connected
             and self.primary is not None
         ):
-            # print('SENDING AUTH REQUEST')
+            netlog.debug('Sending v2 auth request...')
             auth_request = self._auth_requests[global_app_instance_id] = (
                 _AuthRequest(expire_time=now + 10.0, error=None, token=None)
             )
@@ -276,9 +279,14 @@ class AccountV2Subsystem:
         if isinstance(response, Exception):
             auth_request.error = 'An error has occurred.'
         else:
-            # print('SETTING AUTH RESPONSE')
+            netlog.debug(
+                'Got V2 auth response with error %s and token %s.',
+                response.error,
+                response.token,
+            )
             auth_request.error = response.error
             auth_request.token = response.token
+
             # Make sure this sticks around for long enough to complete
             # the connection.
             auth_request.expire_time = time.monotonic() + 10.0

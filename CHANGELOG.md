@@ -1,10 +1,13 @@
-### 1.7.61 (build 22714, api 9, 2026-02-21)
+### 1.7.61 (build 22719, api 9, 2026-02-23)
 - Added scenev1 protocol 36, which enables V2 auth for servers. This allows
   servers to receive authenticated V2 account info for all players before they
   are allowed to join and fixes the spoofing vulnerabilities that V1 auth had.
   V2 account ids look like 'a-XXX' whereas old V1 looked like 'pb-XXXX'. The
   default protocol is still 33, but if you are running a server it is highly
   recommended to set your protocol to 36 in your server config to enable this.
+- Wired up an http request on the V1 master server you can use to get V2 account
+  ids given a V1 account id. You can use this to migrate old account databases
+  for V2 auth. https://legacy.ballistica.net/v2id/YOURV1IDHERE
 - Clients will now wait for responses for up to 10 seconds when connecting to a
   server and 30 seconds if contact is lost once connected. Hopefully this
   reduces disconnects due to momentary network issues. Holler if this feels like
@@ -15,6 +18,8 @@
   browser.
 - Fixed party window sub-menus staying after closing the root window.
   (Thanks temp!)
+- Add `bascenev1.get_client_ping` which returns the current ping (RTT in ms)
+  for a connected client.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not
