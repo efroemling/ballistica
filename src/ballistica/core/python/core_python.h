@@ -34,6 +34,8 @@ class CorePython {
     kLoggerRootLogCall,
     kLoggerBa,
     kLoggerBaLogCall,
+    kLoggerBaAccount,
+    kLoggerBaAccountLogCall,
     kLoggerBaApp,
     kLoggerBaAppLogCall,
     kLoggerBaAudio,

@@ -288,6 +288,8 @@ void CorePython::EnablePythonLoggingCalls() {
   assert(objs().Exists(ObjID::kLoggerRootLogCall));
   assert(objs().Exists(ObjID::kLoggerBa));
   assert(objs().Exists(ObjID::kLoggerBaLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaAccount));
+  assert(objs().Exists(ObjID::kLoggerBaAccountLogCall));
   assert(objs().Exists(ObjID::kLoggerBaApp));
   assert(objs().Exists(ObjID::kLoggerBaAppLogCall));
   assert(objs().Exists(ObjID::kLoggerBaAudio));
@@ -373,6 +375,7 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
       {LogName::kRoot, ObjID::kLoggerRoot},
       {LogName::kBa, ObjID::kLoggerBa},
       {LogName::kBaApp, ObjID::kLoggerBaApp},
+      {LogName::kBaAccount, ObjID::kLoggerBaAccount},
       {LogName::kBaAudio, ObjID::kLoggerBaAudio},
       {LogName::kBaGraphics, ObjID::kLoggerBaGraphics},
       {LogName::kBaPerformance, ObjID::kLoggerBaPerformance},
@@ -574,6 +577,10 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
       break;
     case LogName::kBa:
       logcallobj = ObjID::kLoggerBaLogCall;
+      handled = true;
+      break;
+    case LogName::kBaAccount:
+      logcallobj = ObjID::kLoggerBaAccountLogCall;
       handled = true;
       break;
     case LogName::kBaApp:

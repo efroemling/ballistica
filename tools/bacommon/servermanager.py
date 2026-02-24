@@ -34,7 +34,9 @@ class ServerConfig:
     # client authentication uses V2 account info (V2 account ids look
     # like a-XXX while V1 ids look like pb-XXX). This is highly
     # recommended as it does not suffer from spoofing vulnerabilities
-    # that V1 ids do.
+    # that V1 ids do. You can use the following url to convert V1 ids to
+    # V2 if you have an existing database of account ids for your
+    # server: https://legacy.ballistica.net/v2id/YOURV1IDHERE
     authenticate_clients: bool = True
 
     # Account IDs of server admins. Server admins are not kickable

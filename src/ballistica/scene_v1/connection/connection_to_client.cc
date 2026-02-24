@@ -119,7 +119,15 @@ void ConnectionToClient::Update() {
 
   // If we're waiting for handshake response still, keep sending out
   // handshake attempts.
-  if (!can_communicate() && real_time - last_hand_shake_send_time_ > 1000) {
+  //
+  // NOTE: Prior to 1.7.61 these would go out once per second, but now with
+  // V2 auth there can be a delay before clients respond to a handshake
+  // (while auth is happening) so we send them out more frequently to reduce
+  // the max possible wait. Alternately we could make the client smart
+  // enough to respond to a prior handshake immediately after auth goes
+  // through, but that would be more complicated engineering. This is good
+  // enough for now.
+  if (!can_communicate() && real_time - last_hand_shake_send_time_ > 250) {
     // In newer protocols we embed a json dict as the second part of the
     // handshake packet; this way we can evolve the protocol more easily in
     // the future.
@@ -260,7 +268,10 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           Error("");
           return;
         } else {
-          // printf("GOT TOKEN FROM JOINER: %s\n", v2_auth_token->c_str());
+          g_core->logging->Log(
+              LogName::kBaNetworking, LogLevel::kDebug, [&v2_auth_token] {
+                return "Got V2 auth token from joiner: " + *v2_auth_token;
+              });
 
           auto args =
               PythonRef::Stolen(Py_BuildValue("(s)", v2_auth_token->c_str()));

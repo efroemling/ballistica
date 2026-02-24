@@ -286,6 +286,7 @@ enum class LogName : uint8_t {
   kRoot,
   kBa,
   kBaApp,
+  kBaAccount,
   kBaDisplayTime,
   kBaLifecycle,
   kBaAudio,
