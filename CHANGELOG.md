@@ -16,6 +16,8 @@
   (thanks std::string_view!).
 - Fixed an issue where clicks could sometimes be lost in the nearby-parties
   browser.
+- Fixed party window sub-menus staying after closing the root window.
+  (Thanks temp!)
 - Add `bascenev1.get_client_ping` which returns the current ping (RTT in ms)
   for a connected client.
 
