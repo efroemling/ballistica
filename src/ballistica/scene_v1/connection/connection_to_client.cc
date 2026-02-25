@@ -321,10 +321,12 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           // Verified account tag should always be simple ascii with no
           // quotes or crazy stuff so we can just stuff it directly into a
           // json str.
+          auto account_tag_str = account_tag_ref.ValueAsString();
+          assert(account_tag_str.size() < 128);
           char buffer[256];
           snprintf(buffer, sizeof(buffer),
                    "{\"n\":\"%s\",\"a\":\"V2\",\"sn\":\"\"}",
-                   account_tag_ref.ValueAsString().c_str());
+                   account_tag_str.c_str());
           set_peer_spec(PlayerSpec(buffer));
 
           // printf("TODO: SET PEER PROFILES TO %s.\n",
@@ -811,6 +813,13 @@ void ConnectionToClient::HandleMessagePacket(
             float val;
             memcpy(&val, &(buffer[index]), 4);
             index += 4;
+            if (type >= InputType::kLast) {
+              BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                          "Ignoring player-input-commands packet with unknown "
+                          "InputType value "
+                              + std::to_string(static_cast<int>(type)));
+              break;
+            }
             client_input_device->PassInputCommand(type, val);
           }
         }
@@ -902,10 +911,9 @@ void ConnectionToClient::HandleMessagePacket(
       break;
     }
     default: {
-      // Hackers have attempted to mess with servers by sending huge
-      // amounts of data through chat messages/etc. Let's watch out for
-      // mutli-part messages growing too large and kick/ban the client if
-      // they do.
+      // Hackers have attempted to mess with servers by sending huge amounts
+      // of data through chat messages/etc. Let's watch out for multi-part
+      // messages growing too large and kick/ban the client if they do.
       if (buffer[0] == BA_MESSAGE_MULTIPART) {
         if (multipart_buffer_size() > 50000) {
           // Its not actually unknown but shhh don't tell the hackers...
