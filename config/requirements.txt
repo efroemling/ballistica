@@ -17,9 +17,9 @@ requests==2.32.5
 Sphinx==8.2.3
 tomlkit==0.14.0
 types-certifi==2021.10.8.3
-types-docutils==0.22.3.20251115
+types-docutils==0.22.3.20260223
 types-filelock==3.2.7
 types-requests==2.32.4.20260107
 typing_extensions==4.15.0
 urllib3==2.6.3
-zuban==0.6.0
+zuban==0.6.1

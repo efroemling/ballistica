@@ -57,6 +57,19 @@ class CorePlatformWindows : public CorePlatform {
   auto SetSocketNonBlocking(int sd) -> bool override;
   auto GetLegacyPlatformName() -> std::string override;
   auto GetLegacySubplatformName() -> std::string override;
+
+#if BA_ENABLE_OS_FONT_RENDERING
+  void GetTextBoundsAndWidth(const std::string& text, Rect* r,
+                             float* width) override;
+  void FreeTextTexture(void* tex) override;
+  auto CreateTextTexture(int width, int height,
+                         const std::vector<std::string>& strings,
+                         const std::vector<float>& positions,
+                         const std::vector<float>& widths, float scale)
+      -> void* override;
+  auto GetTextTextureData(void* tex) -> uint8_t* override;
+#endif
+
   bool have_stdin_stdout_ = false;
 
   auto FormatWinStackTraceForDisplay(WinStackTrace* stack_trace) -> std::string;

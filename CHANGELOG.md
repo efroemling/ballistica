@@ -1,4 +1,6 @@
-### 1.7.61 (build 22719, api 9, 2026-02-23)
+### 1.7.61 (build 22720, api 9, 2026-02-24)
+- OS-Font-Rendering now works on Windows, so all languages and emoji should
+  render properly (Thanks Claude!).
 - Added scenev1 protocol 36, which enables V2 auth for servers. This allows
   servers to receive authenticated V2 account info for all players before they
   are allowed to join and fixes the spoofing vulnerabilities that V1 auth had.
@@ -13,7 +15,7 @@
   reduces disconnects due to momentary network issues. Holler if this feels like
   too long. Old values were 5 and 10 seconds respectively.
 - Improved efficiency of various low level logging calls in the C++ layer
-  (thanks std::string_view!).
+  (Thanks std::string_view!).
 - Fixed an issue where clicks could sometimes be lost in the nearby-parties
   browser.
 - Fixed party window sub-menus staying after closing the root window.
