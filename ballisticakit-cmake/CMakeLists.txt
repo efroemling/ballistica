@@ -4,6 +4,7 @@ project(BallisticaKit)
 option(HEADLESS "build headless server" OFF)
 option(TEST_BUILD "include testing features" OFF)
 option(DISCORD "enable Discord" OFF)
+option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" OFF)
 
 # Requiring minimum of C++20 currently.
 set(CMAKE_CXX_STANDARD 20)
@@ -56,7 +57,19 @@ else()
     PkgConfig::VORBISFILE
     OpenGL::GL
   )
-  
+
+  # Optional: Pango+Cairo for OS font rendering on Linux/macOS cmake builds.
+  # Pass -DREQUIRE_OS_FONT_RENDERING=ON to make this a hard requirement.
+  if(REQUIRE_OS_FONT_RENDERING)
+    pkg_check_modules(PANGOCAIRO REQUIRED IMPORTED_TARGET pangocairo)
+  else()
+    pkg_check_modules(PANGOCAIRO IMPORTED_TARGET pangocairo)
+  endif()
+  if(PANGOCAIRO_FOUND)
+    target_compile_definitions(common_deps INTERFACE BA_ENABLE_OS_FONT_RENDERING=1)
+    target_link_libraries(ba_deps INTERFACE PkgConfig::PANGOCAIRO)
+  endif()
+
 endif()
 
 if(TEST_BUILD)
@@ -459,6 +472,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/core/platform/platform.cc
   ${BA_SRC_ROOT}/ballistica/core/platform/platform.h
   ${BA_SRC_ROOT}/ballistica/core/platform/support/min_sdl.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/support/platform_pango.h
   ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.cc
   ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.h
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.cc

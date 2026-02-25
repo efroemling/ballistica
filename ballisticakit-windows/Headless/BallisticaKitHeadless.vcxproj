@@ -468,6 +468,7 @@
     <ClCompile Include="..\..\src\ballistica\core\platform\platform.cc" />
     <ClInclude Include="..\..\src\ballistica\core\platform\platform.h" />
     <ClInclude Include="..\..\src\ballistica\core\platform\support\min_sdl.h" />
+    <ClInclude Include="..\..\src\ballistica\core\platform\support\platform_pango.h" />
     <ClCompile Include="..\..\src\ballistica\core\platform\windows\platform_windows.cc" />
     <ClInclude Include="..\..\src\ballistica\core\platform\windows\platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\core\python\core_python.cc" />

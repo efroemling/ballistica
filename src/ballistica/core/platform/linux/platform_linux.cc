@@ -10,6 +10,11 @@
 #include <cstring>
 #include <list>
 #include <string>
+#include <vector>
+
+#if BA_ENABLE_OS_FONT_RENDERING
+#include "ballistica/core/platform/support/platform_pango.h"
+#endif
 
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/exception.h"
@@ -96,6 +101,30 @@ std::string PlatformLinux::GetLegacySubplatformName() {
   return "";
 #endif
 }
+
+#if BA_ENABLE_OS_FONT_RENDERING
+
+void PlatformLinux::GetTextBoundsAndWidth(const std::string& text, Rect* r,
+                                          float* width) {
+  PangoGetTextBoundsAndWidth_(text, r, width);
+}
+
+auto PlatformLinux::CreateTextTexture(int width, int height,
+                                      const std::vector<std::string>& strings,
+                                      const std::vector<float>& positions,
+                                      const std::vector<float>& widths,
+                                      float scale) -> void* {
+  return PangoCreateTextTexture_(width, height, strings, positions, widths,
+                                 scale);
+}
+
+auto PlatformLinux::GetTextTextureData(void* tex) -> uint8_t* {
+  return PangoGetTextTextureData_(tex);
+}
+
+void PlatformLinux::FreeTextTexture(void* tex) { PangoFreeTextTexture_(tex); }
+
+#endif  // BA_ENABLE_OS_FONT_RENDERING
 
 }  // namespace ballistica::core
 

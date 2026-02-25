@@ -6,6 +6,7 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 #include "ballistica/core/platform/platform.h"
 
@@ -21,6 +22,18 @@ class PlatformLinux : public Platform {
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
   auto DoGetDeviceDescription() -> std::string override;
   auto GetOSVersionString() -> std::string override;
+
+#if BA_ENABLE_OS_FONT_RENDERING
+  void GetTextBoundsAndWidth(const std::string& text, Rect* r,
+                             float* width) override;
+  void FreeTextTexture(void* tex) override;
+  auto CreateTextTexture(int width, int height,
+                         const std::vector<std::string>& strings,
+                         const std::vector<float>& positions,
+                         const std::vector<float>& widths, float scale)
+      -> void* override;
+  auto GetTextTextureData(void* tex) -> uint8_t* override;
+#endif
 };
 
 }  // namespace ballistica::core

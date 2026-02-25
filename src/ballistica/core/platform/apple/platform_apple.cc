@@ -21,6 +21,10 @@
 #include "ballistica/shared/math/rect.h"
 #endif
 
+#if BA_ENABLE_OS_FONT_RENDERING && !BA_XCODE_BUILD
+#include "ballistica/core/platform/support/platform_pango.h"
+#endif
+
 #include "ballistica/shared/ballistica.h"
 
 #if BA_XCODE_BUILD
@@ -248,6 +252,9 @@ auto PlatformApple::CreateTextTexture(int width, int height,
   //                                                     positions, widths,
   //                                                     scale);
   return wrapper;
+#elif BA_ENABLE_OS_FONT_RENDERING
+  return PangoCreateTextTexture_(width, height, strings, positions, widths,
+                                 scale);
 #else
   return Platform::CreateTextTexture(width, height, strings, positions, widths,
                                      scale);
@@ -259,6 +266,8 @@ auto PlatformApple::GetTextTextureData(void* tex) -> uint8_t* {
   auto* wrapper = static_cast<TextTextureWrapper_*>(tex);
   return static_cast<uint8_t*>(wrapper->data.getTextTextureData());
   // return base::AppleUtils::GetTextTextureData(wrapper->old);
+#elif BA_ENABLE_OS_FONT_RENDERING
+  return PangoGetTextTextureData_(tex);
 #else
   return Platform::GetTextTextureData(tex);
 #endif
@@ -280,6 +289,8 @@ void PlatformApple::GetTextBoundsAndWidth(const std::string& text, Rect* r,
 //  printf("GOT BOUNDS l=%.2f r=%.2f b=%.2f t=%.2f w=%.2f\n", r->l, r->r, r->b,
 //  r->t, *width); printf("SWIFT BOUNDS l=%.2f r=%.2f b=%.2f t=%.2f w=%.2f\n",
 //         vals[0], vals[1], vals[2], vals[3], vals[4]);
+#elif BA_ENABLE_OS_FONT_RENDERING
+  PangoGetTextBoundsAndWidth_(text, r, width);
 #else
   Platform::GetTextBoundsAndWidth(text, r, width);
 #endif
@@ -290,6 +301,8 @@ void PlatformApple::FreeTextTexture(void* tex) {
   auto* wrapper = static_cast<TextTextureWrapper_*>(tex);
   // base::AppleUtils::FreeTextTexture(wrapper->old);
   delete wrapper;
+#elif BA_ENABLE_OS_FONT_RENDERING
+  PangoFreeTextTexture_(tex);
 #else
   Platform::FreeTextTexture(tex);
 #endif
