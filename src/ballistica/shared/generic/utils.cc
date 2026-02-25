@@ -319,11 +319,11 @@ auto Utils::GetUTF8Value(const char* c) -> uint32_t {
   uint32_t val = u8_nextchar(c, &offset);
 
   // Hack: allow showing euro even if we don't support unicode font rendering.
-  if (!g_buildconfig.enable_os_font_rendering()) {
-    if (val == 8364) {
-      val = 0xE000;
-    }
-  }
+  // if (!g_buildconfig.enable_os_font_rendering()) {
+  //   if (val == 8364) {
+  //     val = 0xE000;
+  //   }
+  // }
   return val;
 }
 
@@ -331,8 +331,9 @@ auto Utils::UTF8FromUnicode(std::vector<uint32_t> unichars) -> std::string {
   int buffer_size = static_cast<int>(unichars.size() * 4 + 1);
   // at most 4 chars per unichar plus ending zero
   std::vector<char> buffer(static_cast<size_t>(buffer_size));
-  int len = u8_toutf8(buffer.data(), buffer_size, unichars.data(),
-                      static_cast<int>(unichars.size()));
+  [[maybe_unused]] int len =
+      u8_toutf8(buffer.data(), buffer_size, unichars.data(),
+                static_cast<int>(unichars.size()));
   assert(len == unichars.size());
   buffer.resize(strlen(buffer.data()) + 1);
   return buffer.data();

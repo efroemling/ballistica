@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
 #if BA_PLATFORM_LINUX
-#include "ballistica/core/platform/linux/core_platform_linux.h"
+#include "ballistica/core/platform/linux/platform_linux.h"
 
 #include <sys/utsname.h>
 
@@ -16,9 +16,9 @@
 
 namespace ballistica::core {
 
-CorePlatformLinux::CorePlatformLinux() {}
+PlatformLinux::PlatformLinux() {}
 
-auto CorePlatformLinux::DoGetDeviceDescription() -> std::string {
+auto PlatformLinux::DoGetDeviceDescription() -> std::string {
   // Let's look for something pretty like "Ubuntu 20.04", etc.
   FILE* file = fopen("/etc/os-release", "r");
   std::optional<std::string> out;
@@ -42,10 +42,10 @@ auto CorePlatformLinux::DoGetDeviceDescription() -> std::string {
   if (out.has_value()) {
     return *out;
   }
-  return CorePlatform::GetDeviceDescription();
+  return Platform::GetDeviceDescription();
 }
 
-auto CorePlatformLinux::GetOSVersionString() -> std::string {
+auto PlatformLinux::GetOSVersionString() -> std::string {
   std::optional<std::string> out;
   struct utsname uts;
   if (uname(&uts) == 0) {
@@ -62,10 +62,10 @@ auto CorePlatformLinux::GetOSVersionString() -> std::string {
   if (out.has_value()) {
     return *out;
   }
-  return CorePlatform::GetOSVersionString();
+  return Platform::GetOSVersionString();
 }
 
-auto CorePlatformLinux::GetDeviceUUIDInputs() -> std::list<std::string> {
+auto PlatformLinux::GetDeviceUUIDInputs() -> std::list<std::string> {
   std::list<std::string> out;
 
   // For now let's just go with machine-id.
@@ -85,11 +85,11 @@ auto CorePlatformLinux::GetDeviceUUIDInputs() -> std::list<std::string> {
   return out;
 };
 
-bool CorePlatformLinux::DoHasTouchScreen() { return false; }
+bool PlatformLinux::DoHasTouchScreen() { return false; }
 
-std::string CorePlatformLinux::GetLegacyPlatformName() { return "linux"; }
+std::string PlatformLinux::GetLegacyPlatformName() { return "linux"; }
 
-std::string CorePlatformLinux::GetLegacySubplatformName() {
+std::string PlatformLinux::GetLegacySubplatformName() {
 #if BA_VARIANT_TEST_BUILD
   return "test";
 #else

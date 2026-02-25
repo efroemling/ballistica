@@ -139,7 +139,7 @@ auto AppAdapter::DoClipboardGetText() -> std::string {
 
 auto AppAdapter::GetKeyName(int keycode) -> std::string {
   BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
-              "CorePlatform::GetKeyName not implemented here.");
+              "Platform::GetKeyName not implemented here.");
   return "?";
 }
 

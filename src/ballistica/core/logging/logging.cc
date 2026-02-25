@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <string>
 
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/math/vector4f.h"

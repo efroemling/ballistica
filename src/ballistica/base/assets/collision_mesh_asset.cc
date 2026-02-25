@@ -7,7 +7,7 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 
 namespace ballistica::base {
 

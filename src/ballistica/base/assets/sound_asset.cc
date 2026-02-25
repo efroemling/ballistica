@@ -21,7 +21,7 @@
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 
 // Need to move away from OpenAL on Apple stuff.
 #if __clang__

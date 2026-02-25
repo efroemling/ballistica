@@ -2,7 +2,7 @@
 
 #include "ballistica/shared/foundation/exception.h"
 #if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS
-#include "ballistica/core/platform/apple/core_platform_apple.h"
+#include "ballistica/core/platform/apple/platform_apple.h"
 
 #if BA_XCODE_BUILD
 #include <CoreServices/CoreServices.h>
@@ -17,7 +17,7 @@
 #include <vector>
 
 #if BA_XCODE_BUILD
-#include "ballistica/base/platform/apple/from_swift.h"
+#include "ballistica/base/app_platform/apple/from_swift.h"
 #include "ballistica/shared/math/rect.h"
 #endif
 
@@ -31,9 +31,9 @@
 
 namespace ballistica::core {
 
-CorePlatformApple::CorePlatformApple() = default;
+PlatformApple::PlatformApple() = default;
 
-auto CorePlatformApple::GetDeviceV1AccountUUIDPrefix() -> std::string {
+auto PlatformApple::GetDeviceV1AccountUUIDPrefix() -> std::string {
   if (g_buildconfig.platform_macos()) {
     return "m";
   } else if (g_buildconfig.platform_ios_tvos()) {
@@ -44,7 +44,7 @@ auto CorePlatformApple::GetDeviceV1AccountUUIDPrefix() -> std::string {
   }
 }
 
-auto CorePlatformApple::DoGetDeviceName() -> std::string {
+auto PlatformApple::DoGetDeviceName() -> std::string {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
 
 #pragma clang diagnostic push
@@ -73,25 +73,25 @@ auto CorePlatformApple::DoGetDeviceName() -> std::string {
 #elif BA_PLATFORM_IOS_TVOS && BA_XCODE_BUILD
   return BallisticaKit::UIKitFromCpp::getDeviceName();
 #endif
-  return CorePlatform::DoGetDeviceName();
+  return Platform::DoGetDeviceName();
 }
 
-auto CorePlatformApple::DoGetDeviceDescription() -> std::string {
+auto PlatformApple::DoGetDeviceDescription() -> std::string {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   return BallisticaKit::CocoaFromCpp::getDeviceModelName();
 #endif
-  return CorePlatform::DoGetDeviceDescription();
+  return Platform::DoGetDeviceDescription();
 }
 
-auto CorePlatformApple::GetOSVersionString() -> std::string {
+auto PlatformApple::GetOSVersionString() -> std::string {
 #if BA_XCODE_BUILD
   return BallisticaKit::FromCpp::getOSVersion();
 #endif
-  return CorePlatform::GetOSVersionString();
+  return Platform::GetOSVersionString();
 }
 
 // Legacy for device-accounts; don't modify this code.
-auto CorePlatformApple::GetRealLegacyDeviceUUID(std::string* uuid) -> bool {
+auto PlatformApple::GetRealLegacyDeviceUUID(std::string* uuid) -> bool {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   *uuid = std::string(BallisticaKit::CocoaFromCpp::getLegacyDeviceUUID());
   return true;
@@ -128,7 +128,7 @@ static auto GetMacUUIDFallback() -> std::string {
 
 // For semi-permanent public-uuid hashes; can modify this if we
 // find better sources.
-auto CorePlatformApple::GetDeviceUUIDInputs() -> std::list<std::string> {
+auto PlatformApple::GetDeviceUUIDInputs() -> std::list<std::string> {
   std::list<std::string> out;
 #if BA_PLATFORM_MACOS
 #if BA_XCODE_BUILD
@@ -147,7 +147,7 @@ auto CorePlatformApple::GetDeviceUUIDInputs() -> std::list<std::string> {
   return out;
 }
 
-auto CorePlatformApple::DoGetConfigDirectoryMonolithicDefault()
+auto PlatformApple::DoGetConfigDirectoryMonolithicDefault()
     -> std::optional<std::string> {
 #if BA_PLATFORM_IOS_TVOS
   // FIXME - this doesn't seem right.
@@ -157,20 +157,20 @@ auto CorePlatformApple::DoGetConfigDirectoryMonolithicDefault()
   return std::string(BallisticaKit::CocoaFromCpp::getApplicationSupportPath())
          + "/BallisticaKit";
 #else
-  return CorePlatform::DoGetConfigDirectoryMonolithicDefault();
+  return Platform::DoGetConfigDirectoryMonolithicDefault();
 #endif
 }
 
-auto CorePlatformApple::DoGetCacheDirectoryMonolithicDefault()
+auto PlatformApple::DoGetCacheDirectoryMonolithicDefault()
     -> std::optional<std::string> {
 #if BA_XCODE_BUILD
   return BallisticaKit::FromCpp::getCacheDirectoryPath();
 #else
-  return CorePlatform::DoGetCacheDirectoryMonolithicDefault();
+  return Platform::DoGetCacheDirectoryMonolithicDefault();
 #endif
 }
 
-auto CorePlatformApple::DoHasTouchScreen() -> bool {
+auto PlatformApple::DoHasTouchScreen() -> bool {
 #if BA_PLATFORM_IOS
   return true;
 #else
@@ -178,7 +178,7 @@ auto CorePlatformApple::DoHasTouchScreen() -> bool {
 #endif
 }
 
-auto CorePlatformApple::GetDefaultUIScale() -> UIScale {
+auto PlatformApple::GetDefaultUIScale() -> UIScale {
 #if BA_PLATFORM_IOS
   if (BallisticaKit::UIKitFromCpp::isTablet()) {
     // if (base::AppleUtils::IsTablet()) {
@@ -188,11 +188,11 @@ auto CorePlatformApple::GetDefaultUIScale() -> UIScale {
   }
 #else
   // The default case handles mac & tvos.
-  return CorePlatform::GetDefaultUIScale();
+  return Platform::GetDefaultUIScale();
 #endif
 }
 
-auto CorePlatformApple::IsRunningOnDesktop() -> bool {
+auto PlatformApple::IsRunningOnDesktop() -> bool {
 #if BA_PLATFORM_IOS_TVOS
   return false;
 #else
@@ -200,26 +200,26 @@ auto CorePlatformApple::IsRunningOnDesktop() -> bool {
 #endif
 }
 
-void CorePlatformApple::EmitPlatformLog(std::string_view name, LogLevel level,
-                                        std::string_view msg) {
+void PlatformApple::EmitPlatformLog(std::string_view name, LogLevel level,
+                                    std::string_view msg) {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
 
   // HMM: do we want to use proper logging APIs here or simple printing?
   // base::AppleUtils::NSLogStr(msg);
-  CorePlatform::EmitPlatformLog(name, level, msg);
+  Platform::EmitPlatformLog(name, level, msg);
 #else
 
   // Fall back to default handler...
-  CorePlatform::EmitPlatformLog(name, level, msg);
+  Platform::EmitPlatformLog(name, level, msg);
 #endif
 }
 
-auto CorePlatformApple::DoGetDataDirectoryMonolithicDefault() -> std::string {
+auto PlatformApple::DoGetDataDirectoryMonolithicDefault() -> std::string {
 #if BA_XCODE_BUILD
   return BallisticaKit::FromCpp::getResourcesPath();
 #else
   // Fall back to default.
-  return CorePlatform::DoGetDataDirectoryMonolithicDefault();
+  return Platform::DoGetDataDirectoryMonolithicDefault();
 #endif
 }
 
@@ -236,10 +236,11 @@ class TextTextureWrapper_ {
 };
 #endif
 
-auto CorePlatformApple::CreateTextTexture(
-    int width, int height, const std::vector<std::string>& strings,
-    const std::vector<float>& positions, const std::vector<float>& widths,
-    float scale) -> void* {
+auto PlatformApple::CreateTextTexture(int width, int height,
+                                      const std::vector<std::string>& strings,
+                                      const std::vector<float>& positions,
+                                      const std::vector<float>& widths,
+                                      float scale) -> void* {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
   auto* wrapper =
       new TextTextureWrapper_(width, height, strings, positions, widths, scale);
@@ -248,23 +249,23 @@ auto CorePlatformApple::CreateTextTexture(
   //                                                     scale);
   return wrapper;
 #else
-  return CorePlatform::CreateTextTexture(width, height, strings, positions,
-                                         widths, scale);
+  return Platform::CreateTextTexture(width, height, strings, positions, widths,
+                                     scale);
 #endif
 }
 
-auto CorePlatformApple::GetTextTextureData(void* tex) -> uint8_t* {
+auto PlatformApple::GetTextTextureData(void* tex) -> uint8_t* {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
   auto* wrapper = static_cast<TextTextureWrapper_*>(tex);
   return static_cast<uint8_t*>(wrapper->data.getTextTextureData());
   // return base::AppleUtils::GetTextTextureData(wrapper->old);
 #else
-  return CorePlatform::GetTextTextureData(tex);
+  return Platform::GetTextTextureData(tex);
 #endif
 }
 
-void CorePlatformApple::GetTextBoundsAndWidth(const std::string& text, Rect* r,
-                                              float* width) {
+void PlatformApple::GetTextBoundsAndWidth(const std::string& text, Rect* r,
+                                          float* width) {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
 
   auto vals = BallisticaKit::TextTextureData::getTextBoundsAndWidth(text);
@@ -280,150 +281,150 @@ void CorePlatformApple::GetTextBoundsAndWidth(const std::string& text, Rect* r,
 //  r->t, *width); printf("SWIFT BOUNDS l=%.2f r=%.2f b=%.2f t=%.2f w=%.2f\n",
 //         vals[0], vals[1], vals[2], vals[3], vals[4]);
 #else
-  CorePlatform::GetTextBoundsAndWidth(text, r, width);
+  Platform::GetTextBoundsAndWidth(text, r, width);
 #endif
 }
 
-void CorePlatformApple::FreeTextTexture(void* tex) {
+void PlatformApple::FreeTextTexture(void* tex) {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
   auto* wrapper = static_cast<TextTextureWrapper_*>(tex);
   // base::AppleUtils::FreeTextTexture(wrapper->old);
   delete wrapper;
 #else
-  CorePlatform::FreeTextTexture(tex);
+  Platform::FreeTextTexture(tex);
 #endif
 }
 
-void CorePlatformApple::SubmitScore(const std::string& game,
-                                    const std::string& version, int64_t score) {
+void PlatformApple::SubmitScore(const std::string& game,
+                                const std::string& version, int64_t score) {
 #if BA_USE_GAME_CENTER
   BallisticaKit::GameCenterContext::submitScore(game, version, score);
   // base::AppleUtils::SubmitScore(game, version, score);
 #else
-  CorePlatform::SubmitScore(game, version, score);
+  Platform::SubmitScore(game, version, score);
 #endif
 }
 
-void CorePlatformApple::ReportAchievement(const std::string& achievement) {
+void PlatformApple::ReportAchievement(const std::string& achievement) {
 #if BA_USE_GAME_CENTER
   BallisticaKit::GameCenterContext::reportAchievement(achievement);
   // base::AppleUtils::ReportAchievement(achievement);
 #else
-  CorePlatform::ReportAchievement(achievement);
+  Platform::ReportAchievement(achievement);
 #endif
 }
 
-void CorePlatformApple::ResetAchievements() {
+void PlatformApple::ResetAchievements() {
 #if BA_USE_GAME_CENTER
   BallisticaKit::GameCenterContext::resetAchievements();
   // base::AppleUtils::ResetGameCenterAchievements();
 #else
-  CorePlatform::ResetAchievements();
+  Platform::ResetAchievements();
 #endif
 }
 
-auto CorePlatformApple::HaveLeaderboard(const std::string& game,
-                                        const std::string& config) -> bool {
+auto PlatformApple::HaveLeaderboard(const std::string& game,
+                                    const std::string& config) -> bool {
 #if BA_USE_GAME_CENTER
   return BallisticaKit::GameCenterContext::haveLeaderboard(game, config);
   // return base::AppleUtils::HaveGameCenterLeaderboard(game, config);
 #else
-  return CorePlatform::HaveLeaderboard(game, config);
+  return Platform::HaveLeaderboard(game, config);
 #endif
 }
 
-void CorePlatformApple::ShowGameServiceUI(const std::string& show,
-                                          const std::string& game,
-                                          const std::string& game_version) {
+void PlatformApple::ShowGameServiceUI(const std::string& show,
+                                      const std::string& game,
+                                      const std::string& game_version) {
 #if BA_USE_GAME_CENTER
   BallisticaKit::GameCenterContext::showGameServiceUI(show, game, game_version);
   // base::AppleUtils::ShowGameServiceUI(show, game, game_version);
 #else
-  CorePlatform::ShowGameServiceUI(show, game, game_version);
+  Platform::ShowGameServiceUI(show, game, game_version);
 #endif
 }
 
-// auto CorePlatformApple::NewAutoReleasePool() -> void* {
+// auto PlatformApple::NewAutoReleasePool() -> void* {
 // #if BA_XCODE_BUILD
 //   return base::AppleUtils::NewAutoReleasePool();
 // #else
-//   return CorePlatform::NewAutoReleasePool();
+//   return Platform::NewAutoReleasePool();
 // #endif
 // }
 
-// void CorePlatformApple::DrainAutoReleasePool(void* pool) {
+// void PlatformApple::DrainAutoReleasePool(void* pool) {
 // #if BA_XCODE_BUILD
 //   base::AppleUtils::DrainAutoReleasePool(pool);
 // #else
-//   CorePlatform::DrainAutoReleasePool(pool);
+//   Platform::DrainAutoReleasePool(pool);
 // #endif
 // }
 
-// void CorePlatformApple::GameCenterLogin() {
+// void PlatformApple::GameCenterLogin() {
 // #if BA_USE_GAME_CENTER
 //   BallisticaKit::GameCenterContext::signIn();
 //   // base::AppleUtils::DoGameCenterLogin();
 // #else
-//   CorePlatform::GameCenterLogin();
+//   Platform::GameCenterLogin();
 // #endif
 // }
 
-auto CorePlatformApple::IsOSPlayingMusic() -> bool {
+auto PlatformApple::IsOSPlayingMusic() -> bool {
 #if BA_XCODE_BUILD
   // FIXME - should look into doing this properly these days, or whether
   // this is still needed at all.
   return false;
   // return base::AppleUtils::IsMusicPlaying();
 #else
-  return CorePlatform::IsOSPlayingMusic();
+  return Platform::IsOSPlayingMusic();
 #endif
 }
 
-void CorePlatformApple::MacMusicAppInit() {
+void PlatformApple::MacMusicAppInit() {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   BallisticaKit::CocoaFromCpp::macMusicAppInit();
   // base::AppleUtils::MacMusicAppInit();
 #else
-  CorePlatform::MacMusicAppInit();
+  Platform::MacMusicAppInit();
 #endif
 }
-auto CorePlatformApple::MacMusicAppGetVolume() -> int {
+auto PlatformApple::MacMusicAppGetVolume() -> int {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   return BallisticaKit::CocoaFromCpp::macMusicAppGetVolume();
   // return static_cast<int>(base::AppleUtils::MacMusicAppGetVolume());
 #else
-  return CorePlatform::MacMusicAppGetVolume();
+  return Platform::MacMusicAppGetVolume();
 #endif
 }
-void CorePlatformApple::MacMusicAppSetVolume(int volume) {
+void PlatformApple::MacMusicAppSetVolume(int volume) {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   return BallisticaKit::CocoaFromCpp::macMusicAppSetVolume(volume);
   // base::AppleUtils::MacMusicAppSetVolume(volume);
 #else
-  CorePlatform::MacMusicAppSetVolume(volume);
+  Platform::MacMusicAppSetVolume(volume);
 #endif
 }
 
-void CorePlatformApple::MacMusicAppStop() {
+void PlatformApple::MacMusicAppStop() {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   return BallisticaKit::CocoaFromCpp::macMusicAppStop();
   // base::AppleUtils::MacMusicAppStop();
 #else
-  CorePlatform::MacMusicAppStop();
+  Platform::MacMusicAppStop();
 #endif
 }
 
-auto CorePlatformApple::MacMusicAppPlayPlaylist(const std::string& playlist)
+auto PlatformApple::MacMusicAppPlayPlaylist(const std::string& playlist)
     -> bool {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   return BallisticaKit::CocoaFromCpp::macMusicAppPlayPlaylist(playlist);
   // return base::AppleUtils::MacMusicAppPlayPlaylist(playlist.c_str());
 #else
-  return CorePlatform::MacMusicAppPlayPlaylist(playlist);
+  return Platform::MacMusicAppPlayPlaylist(playlist);
 #endif
 }
 
-auto CorePlatformApple::MacMusicAppGetPlaylists() -> std::list<std::string> {
+auto PlatformApple::MacMusicAppGetPlaylists() -> std::list<std::string> {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
   BallisticaKit::CocoaFromCpp::macMusicAppGetPlaylists();
   // mac_music_app_playlists_.clear();
@@ -436,11 +437,11 @@ auto CorePlatformApple::MacMusicAppGetPlaylists() -> std::list<std::string> {
   //  return out;
   return mac_music_app_playlists();
 #else
-  return CorePlatform::MacMusicAppGetPlaylists();
+  return Platform::MacMusicAppGetPlaylists();
 #endif
 }
 
-auto CorePlatformApple::GetLegacyPlatformName() -> std::string {
+auto PlatformApple::GetLegacyPlatformName() -> std::string {
 #if BA_PLATFORM_MACOS
   return "mac";
 #elif BA_PLATFORM_IOS_TVOS
@@ -450,7 +451,7 @@ auto CorePlatformApple::GetLegacyPlatformName() -> std::string {
 #endif
 }
 
-auto CorePlatformApple::GetLegacySubplatformName() -> std::string {
+auto PlatformApple::GetLegacySubplatformName() -> std::string {
 #if BA_VARIANT_TEST_BUILD
   return "test";
 #elif BA_XCODE_BUILD
@@ -460,40 +461,40 @@ auto CorePlatformApple::GetLegacySubplatformName() -> std::string {
 #endif
 }
 
-auto CorePlatformApple::GetBaLocale() -> std::string {
+auto PlatformApple::GetBaLocale() -> std::string {
 #if BA_XCODE_BUILD
   if (!ba_locale_.has_value()) {
     ba_locale_ = std::string(BallisticaKit::FromCpp::getBaLocale());
   }
   return *ba_locale_;
 #else
-  return CorePlatform::GetBaLocale();
+  return Platform::GetBaLocale();
 #endif
 }
 
-auto CorePlatformApple::GetLocaleTag() -> std::string {
+auto PlatformApple::GetLocaleTag() -> std::string {
 #if BA_XCODE_BUILD
   if (!locale_tag_.has_value()) {
     locale_tag_ = std::string(BallisticaKit::FromCpp::getLocaleTag());
   }
   return *locale_tag_;
 #else
-  return CorePlatform::GetLocaleTag();
+  return Platform::GetLocaleTag();
 #endif
 }
 
-auto CorePlatformApple::CanShowBlockingFatalErrorDialog() -> bool {
+auto PlatformApple::CanShowBlockingFatalErrorDialog() -> bool {
   if (g_buildconfig.xcode_build() && g_buildconfig.platform_macos()) {
     return true;
   }
-  return CorePlatform::CanShowBlockingFatalErrorDialog();
+  return Platform::CanShowBlockingFatalErrorDialog();
 }
 
-void CorePlatformApple::BlockingFatalErrorDialog(const std::string& message) {
+void PlatformApple::BlockingFatalErrorDialog(const std::string& message) {
 #if BA_XCODE_BUILD && BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::blockingFatalErrorDialog(message);
 #else
-  CorePlatform::BlockingFatalErrorDialog(message);
+  Platform::BlockingFatalErrorDialog(message);
 #endif
 }
 

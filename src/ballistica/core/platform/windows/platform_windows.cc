@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
 #if BA_PLATFORM_WINDOWS
-#include "ballistica/core/platform/windows/core_platform_windows.h"
+#include "ballistica/core/platform/windows/platform_windows.h"
 
 #include <direct.h>
 #include <fcntl.h>
@@ -84,7 +84,7 @@ static const int kTraceMaxFunctionNameLength{1024};
 
 class WinStackTrace : public NativeStackTrace {
  public:
-  explicit WinStackTrace(CorePlatformWindows* platform) : platform_{platform} {
+  explicit WinStackTrace(PlatformWindows* platform) : platform_{platform} {
     number_of_frames_ =
         CaptureStackBackTrace(0, kTraceMaxStackFrames, stack_, NULL);
   }
@@ -115,13 +115,13 @@ class WinStackTrace : public NativeStackTrace {
   auto* stack() const { return stack_; }
 
  private:
-  CorePlatformWindows* platform_;
+  PlatformWindows* platform_;
   WORD number_of_frames_{};
   void* stack_[kTraceMaxStackFrames];
 };
 
-auto CorePlatformWindows::FormatWinStackTraceForDisplay(
-    WinStackTrace* stack_trace) -> std::string {
+auto PlatformWindows::FormatWinStackTraceForDisplay(WinStackTrace* stack_trace)
+    -> std::string {
   try {
     std::string out;
 
@@ -199,11 +199,11 @@ auto CorePlatformWindows::FormatWinStackTraceForDisplay(
   }
 }
 
-auto CorePlatformWindows::GetNativeStackTrace() -> NativeStackTrace* {
+auto PlatformWindows::GetNativeStackTrace() -> NativeStackTrace* {
   return new WinStackTrace(this);
 }
 
-auto CorePlatformWindows::UTF8Encode(std::wstring_view wstr) -> std::string {
+auto PlatformWindows::UTF8Encode(std::wstring_view wstr) -> std::string {
   if (wstr.empty()) {
     return std::string();
   }
@@ -238,7 +238,7 @@ auto CorePlatformWindows::UTF8Encode(std::wstring_view wstr) -> std::string {
 }
 
 // Convert an UTF8 string to a wide Unicode String.
-auto CorePlatformWindows::UTF8Decode(std::string_view str) -> std::wstring {
+auto PlatformWindows::UTF8Decode(std::string_view str) -> std::wstring {
   if (str.empty()) {
     return std::wstring();
   }
@@ -273,7 +273,7 @@ auto CorePlatformWindows::UTF8Decode(std::string_view str) -> std::wstring {
   return wstr;
 }
 
-CorePlatformWindows::CorePlatformWindows() {
+PlatformWindows::PlatformWindows() {
   // We should be built in unicode mode.
   assert(sizeof(TCHAR) == 2);
 
@@ -314,7 +314,7 @@ CorePlatformWindows::CorePlatformWindows() {
   }
 }
 
-auto CorePlatformWindows::GetDeviceUUIDInputs() -> std::list<std::string> {
+auto PlatformWindows::GetDeviceUUIDInputs() -> std::list<std::string> {
   std::list<std::string> out;
 
   std::string ret;
@@ -336,7 +336,7 @@ auto CorePlatformWindows::GetDeviceUUIDInputs() -> std::list<std::string> {
   return out;
 }
 
-auto CorePlatformWindows::DoGetConfigDirectoryMonolithicDefault()
+auto PlatformWindows::DoGetConfigDirectoryMonolithicDefault()
     -> std::optional<std::string> {
   std::string config_dir;
   wchar_t* path;
@@ -348,7 +348,7 @@ auto CorePlatformWindows::DoGetConfigDirectoryMonolithicDefault()
   return configdir;
 }
 
-std::string CorePlatformWindows::GetErrnoString() {
+std::string PlatformWindows::GetErrnoString() {
   switch (errno) {
     case EPERM:
       return "operation not permitted";
@@ -380,13 +380,13 @@ std::string CorePlatformWindows::GetErrnoString() {
   }
 }
 
-std::string CorePlatformWindows::GetSocketErrorString() {
+std::string PlatformWindows::GetSocketErrorString() {
   // on windows, socket errors are returned via WSAGetLastError,
   // (while they're just errno elsewhere..)
   return std::to_string(WSAGetLastError());
 }
 
-int CorePlatformWindows::GetSocketError() {
+int PlatformWindows::GetSocketError() {
   int val = WSAGetLastError();
   switch (val) {
     case WSAEINTR:
@@ -398,17 +398,15 @@ int CorePlatformWindows::GetSocketError() {
   }
 }
 
-auto CorePlatformWindows::Remove(const char* path) -> int {
+auto PlatformWindows::Remove(const char* path) -> int {
   return _wremove(UTF8Decode(path).c_str());
 }
 
-auto CorePlatformWindows::Stat(const char* path, struct BA_STAT* buffer)
-    -> int {
+auto PlatformWindows::Stat(const char* path, struct BA_STAT* buffer) -> int {
   return _wstat(UTF8Decode(path).c_str(), buffer);
 }
 
-auto CorePlatformWindows::Rename(const char* oldname, const char* newname)
-    -> int {
+auto PlatformWindows::Rename(const char* oldname, const char* newname) -> int {
   // Unlike other platforms, windows will error if the target file already
   // exists instead of simply overwriting it. So let's attempt to blow away
   // anything there first.
@@ -417,8 +415,8 @@ auto CorePlatformWindows::Rename(const char* oldname, const char* newname)
   return _wrename(UTF8Decode(oldname).c_str(), new_name_utf8.c_str());
 }
 
-auto CorePlatformWindows::DoAbsPath(const std::string& path,
-                                    std::string* outpath) -> bool {
+auto PlatformWindows::DoAbsPath(const std::string& path, std::string* outpath)
+    -> bool {
   wchar_t abspath[MAX_PATH + 1];
   auto path_utf8 = UTF8Decode(path);
   uint32_t pathlen =
@@ -431,11 +429,11 @@ auto CorePlatformWindows::DoAbsPath(const std::string& path,
   return true;
 }
 
-auto CorePlatformWindows::FOpen(const char* path, const char* mode) -> FILE* {
+auto PlatformWindows::FOpen(const char* path, const char* mode) -> FILE* {
   return _wfopen(UTF8Decode(path).c_str(), UTF8Decode(mode).c_str());
 }
 
-void CorePlatformWindows::DoMakeDir(const std::string& dir, bool quiet) {
+void PlatformWindows::DoMakeDir(const std::string& dir, bool quiet) {
   std::wstring stemp = UTF8Decode(dir);
   int result = CreateDirectoryW(stemp.c_str(), 0);
   if (result == 0) {
@@ -446,7 +444,7 @@ void CorePlatformWindows::DoMakeDir(const std::string& dir, bool quiet) {
   }
 }
 
-std::string CorePlatformWindows::GetLocaleTag() {
+std::string PlatformWindows::GetLocaleTag() {
   // Get the windows locale.
   // (see http://msdn.microsoft.com/en-us/goglobal/bb895996.aspx)
   // theres a func to convert this to a string but its not available on xp
@@ -875,7 +873,7 @@ std::string CorePlatformWindows::GetLocaleTag() {
   }
 }
 
-std::string CorePlatformWindows::DoGetDeviceName() {
+std::string PlatformWindows::DoGetDeviceName() {
   std::string device_name;
   wchar_t computer_name[256];
   DWORD computer_name_size = 256;
@@ -887,10 +885,10 @@ std::string CorePlatformWindows::DoGetDeviceName() {
     }
   }
   // Fall back on default.
-  return CorePlatform::DoGetDeviceName();
+  return Platform::DoGetDeviceName();
 }
 
-std::string CorePlatformWindows::DoGetDeviceDescription() {
+std::string PlatformWindows::DoGetDeviceDescription() {
   std::string device_name;
   wchar_t computer_name[256];
   DWORD computer_name_size = 256;
@@ -906,13 +904,13 @@ std::string CorePlatformWindows::DoGetDeviceDescription() {
     }
   }
   // Fall back on default.
-  return CorePlatform::DoGetDeviceDescription();
+  return Platform::DoGetDeviceDescription();
 }
 
-bool CorePlatformWindows::DoHasTouchScreen() { return false; }
+bool PlatformWindows::DoHasTouchScreen() { return false; }
 
-void CorePlatformWindows::EmitPlatformLog(std::string_view name, LogLevel level,
-                                          std::string_view msg) {
+void PlatformWindows::EmitPlatformLog(std::string_view name, LogLevel level,
+                                      std::string_view msg) {
   // Spit this out as a debug-string only if we're being debugged.
   //
   // Note that this only checks for the presence of a user-mode debugger; if
@@ -923,7 +921,7 @@ void CorePlatformWindows::EmitPlatformLog(std::string_view name, LogLevel level,
   }
 }
 
-auto CorePlatformWindows::DoGetDataDirectoryMonolithicDefault() -> std::string {
+auto PlatformWindows::DoGetDataDirectoryMonolithicDefault() -> std::string {
   wchar_t sz_file_name[MAX_PATH + 1];
   GetModuleFileNameW(nullptr, sz_file_name, MAX_PATH + 1);
   wchar_t* last_slash = nullptr;
@@ -940,16 +938,16 @@ auto CorePlatformWindows::DoGetDataDirectoryMonolithicDefault() -> std::string {
     // stack traces/etc.
     auto out = UTF8Encode(sz_file_name);
     if (out == GetCWD()) {
-      return CorePlatform::DoGetDataDirectoryMonolithicDefault();
+      return Platform::DoGetDataDirectoryMonolithicDefault();
     }
     return out;
   } else {
     FatalError("Unable to deduce application path.");
-    return CorePlatform::DoGetDataDirectoryMonolithicDefault();
+    return Platform::DoGetDataDirectoryMonolithicDefault();
   }
 }
 
-auto CorePlatformWindows::GetEnv(const std::string& name)
+auto PlatformWindows::GetEnv(const std::string& name)
     -> std::optional<std::string> {
   // Start with a small static buffer for a quick-out. Most stuff we're
   // fetching should fit in this.
@@ -986,8 +984,8 @@ auto CorePlatformWindows::GetEnv(const std::string& name)
   return UTF8Encode(big_buffer.data());
 }
 
-void CorePlatformWindows::SetEnv(const std::string& name,
-                                 const std::string& value) {
+void PlatformWindows::SetEnv(const std::string& name,
+                             const std::string& value) {
   auto result = SetEnvironmentVariableW(UTF8Decode(name).c_str(),
                                         UTF8Decode(value).c_str());
   if (result == 0) {
@@ -996,11 +994,9 @@ void CorePlatformWindows::SetEnv(const std::string& name,
   }
 }
 
-bool CorePlatformWindows::GetIsStdinATerminal() {
-  return _isatty(_fileno(stdin));
-}
+bool PlatformWindows::GetIsStdinATerminal() { return _isatty(_fileno(stdin)); }
 
-std::string CorePlatformWindows::GetOSVersionString() {
+std::string PlatformWindows::GetOSVersionString() {
   DWORD dw_version = 0;
   DWORD dw_major_version = 0;
   DWORD dw_minor_version = 0;
@@ -1022,7 +1018,7 @@ std::string CorePlatformWindows::GetOSVersionString() {
   return version;
 }
 
-std::string CorePlatformWindows::GetCWD() {
+std::string PlatformWindows::GetCWD() {
   wchar_t buffer[MAX_PATH];
   wchar_t* result = _wgetcwd(buffer, MAX_PATH);
   if (result == nullptr) {
@@ -1031,11 +1027,11 @@ std::string CorePlatformWindows::GetCWD() {
   return UTF8Encode(buffer);
 }
 
-void CorePlatformWindows::Unlink(const char* path) { _unlink(path); }
+void PlatformWindows::Unlink(const char* path) { _unlink(path); }
 
-void CorePlatformWindows::CloseSocket(int socket) { closesocket(socket); }
+void PlatformWindows::CloseSocket(int socket) { closesocket(socket); }
 
-std::vector<uint32_t> CorePlatformWindows::GetBroadcastAddrs() {
+std::vector<uint32_t> PlatformWindows::GetBroadcastAddrs() {
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
 #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
   std::vector<uint32_t> addrs;
@@ -1099,7 +1095,7 @@ std::vector<uint32_t> CorePlatformWindows::GetBroadcastAddrs() {
 #undef FREE
 }
 
-bool CorePlatformWindows::SetSocketNonBlocking(int sd) {
+bool PlatformWindows::SetSocketNonBlocking(int sd) {
   unsigned long dataval = 1;  // NOLINT (func signature wants long)
   int result = ioctlsocket(sd, FIONBIO, &dataval);
   if (result != 0) {
@@ -1111,9 +1107,9 @@ bool CorePlatformWindows::SetSocketNonBlocking(int sd) {
   return true;
 }
 
-std::string CorePlatformWindows::GetLegacyPlatformName() { return "windows"; }
+std::string PlatformWindows::GetLegacyPlatformName() { return "windows"; }
 
-std::string CorePlatformWindows::GetLegacySubplatformName() {
+std::string PlatformWindows::GetLegacySubplatformName() {
 #if BA_VARIANT_TEST_BUILD
   return "test";
 #else
@@ -1205,10 +1201,11 @@ struct WinTextTextureData_ {
   int height{};
 };
 
-auto CorePlatformWindows::CreateTextTexture(
-    int width, int height, const std::vector<std::string>& strings,
-    const std::vector<float>& positions, const std::vector<float>& widths,
-    float scale) -> void* {
+auto PlatformWindows::CreateTextTexture(int width, int height,
+                                        const std::vector<std::string>& strings,
+                                        const std::vector<float>& positions,
+                                        const std::vector<float>& widths,
+                                        float scale) -> void* {
   if (kDebugFontBounds) {
     printf("CreateTextTexture: %dx%d scale=%.2f strings=%zu\n", width, height,
            scale, strings.size());
@@ -1433,16 +1430,16 @@ auto CorePlatformWindows::CreateTextTexture(
   return result;
 }
 
-auto CorePlatformWindows::GetTextTextureData(void* tex) -> uint8_t* {
+auto PlatformWindows::GetTextTextureData(void* tex) -> uint8_t* {
   return static_cast<WinTextTextureData_*>(tex)->pixels.data();
 }
 
-void CorePlatformWindows::FreeTextTexture(void* tex) {
+void PlatformWindows::FreeTextTexture(void* tex) {
   delete static_cast<WinTextTextureData_*>(tex);
 }
 
-void CorePlatformWindows::GetTextBoundsAndWidth(const std::string& text,
-                                                Rect* r, float* width) {
+void PlatformWindows::GetTextBoundsAndWidth(const std::string& text, Rect* r,
+                                            float* width) {
   std::call_once(g_font_factories_init_flag, InitFontFactories_);
   if (!g_dwrite_factory) {
     return;

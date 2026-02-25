@@ -35,7 +35,7 @@
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
@@ -286,15 +286,14 @@ void BaseFeatureSet::SuspendApp() {
     return;
   }
 
-  millisecs_t start_time{core::CorePlatform::TimeMonotonicMillisecs()};
+  millisecs_t start_time{core::Platform::TimeMonotonicMillisecs()};
 
   // Apple mentioned 5 seconds to run stuff once backgrounded or they bring
   // down the hammer. Let's aim to stay under 4.
   millisecs_t max_duration{4000};
 
   g_core->platform->LowLevelDebugLog(
-      "SuspendApp@"
-      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()));
+      "SuspendApp@" + std::to_string(core::Platform::TimeMonotonicMillisecs()));
   app_suspended_ = true;
 
   // IMPORTANT: Any pause related stuff that event-loop-threads need to do
@@ -315,14 +314,14 @@ void BaseFeatureSet::SuspendApp() {
     if (g_base->logic->app_active_applied() == false) {
       break;
     }
-    if (std::abs(core::CorePlatform::TimeMonotonicMillisecs() - start_time)
+    if (std::abs(core::Platform::TimeMonotonicMillisecs() - start_time)
         >= max_duration_part) {
       BA_LOG_ONCE(
           LogName::kBa, LogLevel::kError,
           "SuspendApp timed out waiting for app-active callback to complete.");
       break;
     }
-    core::CorePlatform::SleepMillisecs(1);
+    core::Platform::SleepMillisecs(1);
   }
 
   EventLoop::SetEventLoopsSuspended(true);
@@ -346,13 +345,13 @@ void BaseFeatureSet::SuspendApp() {
         g_core->logging->Log(
             LogName::kBa, LogLevel::kDebug,
             "SuspendApp() completed in "
-                + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()
+                + std::to_string(core::Platform::TimeMonotonicMillisecs()
                                  - start_time)
                 + "ms.");
       }
       return;
     }
-  } while (std::abs(core::CorePlatform::TimeMonotonicMillisecs() - start_time)
+  } while (std::abs(core::Platform::TimeMonotonicMillisecs() - start_time)
            < max_duration);
 
   // If we made it here, we timed out. Complain.
@@ -360,8 +359,7 @@ void BaseFeatureSet::SuspendApp() {
       std::string("SuspendApp() took too long; ")
       + std::to_string(running_loops.size())
       + " event-loops not yet suspended after "
-      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()
-                       - start_time)
+      + std::to_string(core::Platform::TimeMonotonicMillisecs() - start_time)
       + " ms: (";
   bool first = true;
   for (auto* loop : running_loops) {
@@ -419,10 +417,10 @@ void BaseFeatureSet::UnsuspendApp() {
         "AppAdapter::UnsuspendApp() called with app not in suspendedstate.");
     return;
   }
-  millisecs_t start_time{core::CorePlatform::TimeMonotonicMillisecs()};
+  millisecs_t start_time{core::Platform::TimeMonotonicMillisecs()};
   g_core->platform->LowLevelDebugLog(
       "UnsuspendApp@"
-      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()));
+      + std::to_string(core::Platform::TimeMonotonicMillisecs()));
   app_suspended_ = false;
 
   // Spin all event-loops back up.
@@ -436,7 +434,7 @@ void BaseFeatureSet::UnsuspendApp() {
     g_core->logging->Log(
         LogName::kBa, LogLevel::kDebug,
         "UnsuspendApp() completed in "
-            + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()
+            + std::to_string(core::Platform::TimeMonotonicMillisecs()
                              - start_time)
             + "ms.");
   }
@@ -608,7 +606,7 @@ auto BaseFeatureSet::GlobalAppInstanceUUID() -> std::optional<std::string> {
 
   // If we have a value but it is expired, clear it.
   if (global_app_instance_uuid_.has_value()
-      && core::CorePlatform::TimeSinceEpochSeconds()
+      && core::Platform::TimeSinceEpochSeconds()
              > global_app_instance_uuid_expire_time_) {
     global_app_instance_uuid_.reset();
     global_app_instance_uuid_expire_time_ = 0.0;
@@ -1006,7 +1004,7 @@ void BaseFeatureSet::SetAppActive(bool active) {
 
   g_core->platform->LowLevelDebugLog(
       "SetAppActive(" + std::to_string(active) + ")@"
-      + std::to_string(core::CorePlatform::TimeMonotonicMillisecs()));
+      + std::to_string(core::Platform::TimeMonotonicMillisecs()));
 
   // Issue a gentle warning if they are feeding us the same state twice in a
   // row; might imply faulty logic on an app-adapter or whatnot.
@@ -1033,7 +1031,7 @@ void BaseFeatureSet::Reset() {
 auto BaseFeatureSet::TimeSinceEpochCloudSeconds() -> seconds_t {
   // TODO(ericf): wire this up. Just using local time for now. And make sure
   // that this and utc_now_cloud() in the Python layer are synced up.
-  return core::CorePlatform::TimeSinceEpochSeconds();
+  return core::Platform::TimeSinceEpochSeconds();
 }
 
 void BaseFeatureSet::SetUIScale(UIScale scale) {

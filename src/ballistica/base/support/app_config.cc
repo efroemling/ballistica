@@ -8,7 +8,7 @@
 
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 

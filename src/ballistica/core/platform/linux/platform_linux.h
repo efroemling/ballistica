@@ -1,19 +1,19 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_CORE_PLATFORM_LINUX_CORE_PLATFORM_LINUX_H_
-#define BALLISTICA_CORE_PLATFORM_LINUX_CORE_PLATFORM_LINUX_H_
+#ifndef BALLISTICA_CORE_PLATFORM_LINUX_PLATFORM_LINUX_H_
+#define BALLISTICA_CORE_PLATFORM_LINUX_PLATFORM_LINUX_H_
 #if BA_PLATFORM_LINUX
 
 #include <list>
 #include <string>
 
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 
 namespace ballistica::core {
 
-class CorePlatformLinux : public CorePlatform {
+class PlatformLinux : public Platform {
  public:
-  CorePlatformLinux();
+  PlatformLinux();
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "l"; }
   auto DoHasTouchScreen() -> bool override;
   auto GetLegacyPlatformName() -> std::string override;
@@ -26,4 +26,4 @@ class CorePlatformLinux : public CorePlatform {
 }  // namespace ballistica::core
 
 #endif  // BA_PLATFORM_LINUX
-#endif  // BALLISTICA_CORE_PLATFORM_LINUX_CORE_PLATFORM_LINUX_H_
+#endif  // BALLISTICA_CORE_PLATFORM_LINUX_PLATFORM_LINUX_H_

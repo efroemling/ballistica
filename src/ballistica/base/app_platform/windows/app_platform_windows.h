@@ -1,19 +1,19 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_PLATFORM_WINDOWS_BASE_PLATFORM_WINDOWS_H_
-#define BALLISTICA_BASE_PLATFORM_WINDOWS_BASE_PLATFORM_WINDOWS_H_
+#ifndef BALLISTICA_BASE_APP_PLATFORM_WINDOWS_APP_PLATFORM_WINDOWS_H_
+#define BALLISTICA_BASE_APP_PLATFORM_WINDOWS_APP_PLATFORM_WINDOWS_H_
 #if BA_PLATFORM_WINDOWS
 
 #include <string>
 #include <vector>
 
-#include "ballistica/base/platform/base_platform.h"
+#include "ballistica/base/app_platform/app_platform.h"
 
 namespace ballistica::base {
 
-class BasePlatformWindows : public BasePlatform {
+class AppPlatformWindows : public AppPlatform {
  public:
-  BasePlatformWindows();
+  AppPlatformWindows();
   void DoOpenURL(const std::string& url) override;
   void SetupInterruptHandling() override;
   auto SupportsOpenDirExternally() -> bool override;
@@ -24,4 +24,4 @@ class BasePlatformWindows : public BasePlatform {
 }  // namespace ballistica::base
 
 #endif  // BA_PLATFORM_WINDOWS
-#endif  // BALLISTICA_BASE_PLATFORM_WINDOWS_BASE_PLATFORM_WINDOWS_H_
+#endif  // BALLISTICA_BASE_APP_PLATFORM_WINDOWS_APP_PLATFORM_WINDOWS_H_

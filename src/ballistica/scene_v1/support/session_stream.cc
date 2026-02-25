@@ -874,7 +874,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
     if (g_buildconfig.debug_build()) {
-      for (auto val : vals) {
+      for ([[maybe_unused]] auto val : vals) {
         assert(IsValidNode(val));
       }
     }
@@ -907,7 +907,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<Material*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
-    for (auto val : vals) {
+    for ([[maybe_unused]] auto val : vals) {
       assert(IsValidMaterial(val));
     }
   }
@@ -952,7 +952,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneTexture*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
-    for (auto val : vals) {
+    for ([[maybe_unused]] auto val : vals) {
       assert(IsValidTexture(val));
     }
   }
@@ -997,7 +997,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneSound*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
-    for (auto val : vals) {
+    for ([[maybe_unused]] auto val : vals) {
       assert(IsValidSound(val));
     }
   }
@@ -1042,7 +1042,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneMesh*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
-    for (auto val : vals) {
+    for ([[maybe_unused]] auto val : vals) {
       assert(IsValidMesh(val));
     }
   }
@@ -1086,7 +1086,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneCollisionMesh*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
-    for (auto val : vals) {
+    for ([[maybe_unused]] auto val : vals) {
       assert(IsValidCollisionMesh(val));
     }
   }

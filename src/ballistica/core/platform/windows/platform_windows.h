@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_CORE_PLATFORM_WINDOWS_CORE_PLATFORM_WINDOWS_H_
-#define BALLISTICA_CORE_PLATFORM_WINDOWS_CORE_PLATFORM_WINDOWS_H_
+#ifndef BALLISTICA_CORE_PLATFORM_WINDOWS_PLATFORM_WINDOWS_H_
+#define BALLISTICA_CORE_PLATFORM_WINDOWS_PLATFORM_WINDOWS_H_
 #if BA_PLATFORM_WINDOWS
 
 #include <cstdio>
@@ -11,15 +11,15 @@
 #include <string_view>
 #include <vector>
 
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 
 namespace ballistica::core {
 
 class WinStackTrace;
 
-class CorePlatformWindows : public CorePlatform {
+class PlatformWindows : public Platform {
  public:
-  CorePlatformWindows();
+  PlatformWindows();
 
   static auto UTF8Encode(std::wstring_view str) -> std::string;
   static auto UTF8Decode(std::string_view str) -> std::wstring;
@@ -83,4 +83,4 @@ class CorePlatformWindows : public CorePlatform {
 }  // namespace ballistica::core
 
 #endif  // BA_PLATFORM_WINDOWS
-#endif  // BALLISTICA_CORE_PLATFORM_WINDOWS_CORE_PLATFORM_WINDOWS_H_
+#endif  // BALLISTICA_CORE_PLATFORM_WINDOWS_PLATFORM_WINDOWS_H_

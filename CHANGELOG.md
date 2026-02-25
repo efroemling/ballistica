@@ -1,4 +1,4 @@
-### 1.7.61 (build 22720, api 9, 2026-02-24)
+### 1.7.61 (build 22721, api 9, 2026-02-25)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
 - Added scenev1 protocol 36, which enables V2 auth for servers. This allows

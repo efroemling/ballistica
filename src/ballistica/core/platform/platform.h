@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_CORE_PLATFORM_CORE_PLATFORM_H_
-#define BALLISTICA_CORE_PLATFORM_CORE_PLATFORM_H_
+#ifndef BALLISTICA_CORE_PLATFORM_PLATFORM_H_
+#define BALLISTICA_CORE_PLATFORM_PLATFORM_H_
 
 #include <sys/stat.h>
 
@@ -19,13 +19,13 @@ namespace ballistica::core {
 /// implemented by platform-specific subclasses.
 ///
 /// TODO(ericf): Much of the stuff below should be migrated into
-///   BasePlatform or other higher-level places. Core should contain only
+///   AppPlatform or other higher-level places. Core should contain only
 ///   what is directly needed to bootstrap Python and the engine
 ///   environment.
-class CorePlatform {
+class Platform {
  public:
-  /// Instantiate the CorePlatform subclass for the current build.
-  static auto Create() -> CorePlatform*;
+  /// Instantiate the Platform subclass for the current build.
+  static auto Create() -> Platform*;
 
 #pragma mark LIFECYCLE/SETTINGS ------------------------------------------------
 
@@ -477,8 +477,8 @@ class CorePlatform {
 
   virtual void HandleLowLevelDebugLog(const std::string& msg);
 
-  CorePlatform();
-  virtual ~CorePlatform();
+  Platform();
+  virtual ~Platform();
 
  private:
   bool is_stdin_a_terminal_{};
@@ -501,4 +501,4 @@ class CorePlatform {
 
 }  // namespace ballistica::core
 
-#endif  // BALLISTICA_CORE_PLATFORM_CORE_PLATFORM_H_
+#endif  // BALLISTICA_CORE_PLATFORM_PLATFORM_H_

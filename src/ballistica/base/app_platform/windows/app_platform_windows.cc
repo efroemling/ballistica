@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
 #if BA_PLATFORM_WINDOWS
-#include "ballistica/base/platform/windows/base_platform_windows.h"
+#include "ballistica/base/app_platform/windows/app_platform_windows.h"
 
 #include <direct.h>
 #include <fcntl.h>
@@ -17,23 +17,23 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
-#include "ballistica/core/platform/windows/core_platform_windows.h"
+#include "ballistica/core/platform/windows/platform_windows.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
 
-BasePlatformWindows::BasePlatformWindows() {}
+AppPlatformWindows::AppPlatformWindows() {}
 
-void BasePlatformWindows::DoOpenURL(const std::string& url) {
+void AppPlatformWindows::DoOpenURL(const std::string& url) {
   if (explicit_bool(true)) {
     // Switching to the default implementation which goes through Python's
     // webbrowser module. If this works well enough we can kill this
     // override completely.
-    BasePlatform::DoOpenURL(url);
+    AppPlatform::DoOpenURL(url);
   } else {
     auto r = reinterpret_cast<intptr_t>(ShellExecute(
-        nullptr, _T("open"), core::CorePlatformWindows::UTF8Decode(url).c_str(),
+        nullptr, _T("open"), core::PlatformWindows::UTF8Decode(url).c_str(),
         nullptr, nullptr, SW_SHOWNORMAL));
 
     // This should return > 32 on success.
@@ -57,7 +57,7 @@ BOOL WINAPI CtrlHandler(DWORD fdwCtrlType) {
   }
 }
 
-void BasePlatformWindows::SetupInterruptHandling() {
+void AppPlatformWindows::SetupInterruptHandling() {
   // Set up Ctrl-C handling.
   if (!SetConsoleCtrlHandler(CtrlHandler, TRUE)) {
     g_core->logging->Log(LogName::kBa, LogLevel::kError,
@@ -65,13 +65,12 @@ void BasePlatformWindows::SetupInterruptHandling() {
   }
 }
 
-auto BasePlatformWindows::SupportsOpenDirExternally() -> bool { return true; }
+auto AppPlatformWindows::SupportsOpenDirExternally() -> bool { return true; }
 
-void BasePlatformWindows::OpenDirExternally(const std::string& path) {
-  auto r = reinterpret_cast<intptr_t>(
-      ShellExecute(nullptr, _T("open"), _T("explorer.exe"),
-                   core::CorePlatformWindows::UTF8Decode(path).c_str(), nullptr,
-                   SW_SHOWNORMAL));
+void AppPlatformWindows::OpenDirExternally(const std::string& path) {
+  auto r = reinterpret_cast<intptr_t>(ShellExecute(
+      nullptr, _T("open"), _T("explorer.exe"),
+      core::PlatformWindows::UTF8Decode(path).c_str(), nullptr, SW_SHOWNORMAL));
   if (r <= 32) {
     g_core->logging->Log(LogName::kBa, LogLevel::kError,
                          "Error " + std::to_string(r)
@@ -79,11 +78,10 @@ void BasePlatformWindows::OpenDirExternally(const std::string& path) {
   }
 }
 
-void BasePlatformWindows::OpenFileExternally(const std::string& path) {
-  auto r = reinterpret_cast<intptr_t>(
-      ShellExecute(nullptr, _T("open"), _T("notepad.exe"),
-                   core::CorePlatformWindows::UTF8Decode(path).c_str(), nullptr,
-                   SW_SHOWNORMAL));
+void AppPlatformWindows::OpenFileExternally(const std::string& path) {
+  auto r = reinterpret_cast<intptr_t>(ShellExecute(
+      nullptr, _T("open"), _T("notepad.exe"),
+      core::PlatformWindows::UTF8Decode(path).c_str(), nullptr, SW_SHOWNORMAL));
   if (r <= 32) {
     g_core->logging->Log(LogName::kBa, LogLevel::kError,
                          "Error " + std::to_string(r)

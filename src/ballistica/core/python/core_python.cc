@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "ballistica/core/mgen/python_modules_monolithic.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/python/python.h"

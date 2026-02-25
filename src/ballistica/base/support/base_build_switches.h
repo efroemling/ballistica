@@ -11,7 +11,7 @@ namespace ballistica::base {
 class BaseBuildSwitches {
  public:
   static auto CreateGraphics() -> Graphics*;
-  static auto CreatePlatform() -> BasePlatform*;
+  static auto CreatePlatform() -> AppPlatform*;
   static auto CreateAppAdapter() -> AppAdapter*;
 };
 

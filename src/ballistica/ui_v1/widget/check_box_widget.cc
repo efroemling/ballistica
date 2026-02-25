@@ -12,7 +12,7 @@
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 
 namespace ballistica::ui_v1 {
 

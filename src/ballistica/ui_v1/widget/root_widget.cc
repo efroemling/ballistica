@@ -2271,7 +2271,7 @@ void RootWidget::SetAccountSignInState(bool signed_in,
                                        const std::string& name) {
   if (account_name_text_) {
     auto* w{account_name_text_->widget.get()};
-    auto* wb{account_button_->widget.get()};
+    [[maybe_unused]] auto* wb{account_button_->widget.get()};
     assert(w);
     assert(wb);
 

@@ -12,7 +12,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/math/vector3f.h"
@@ -384,7 +384,7 @@ auto NetworkReader::RunThread_() -> int {
     }
 
     // Sleep for a moment to keep us from running wild if we're unable to block.
-    core::CorePlatform::SleepMillisecs(1000);
+    core::Platform::SleepMillisecs(1000);
   }
 }
 

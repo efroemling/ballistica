@@ -16,7 +16,7 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui_delegate.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"

@@ -492,7 +492,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               // If we're currently scrolling but this touch has moved
               // significantly left or right, cancel our scrolling and pass
               // the touch.
-              auto since_held =
+              [[maybe_unused]] auto since_held =
                   g_core->AppTimeMillisecs() - last_touch_held_time_;
               auto xdiff = std::abs(touch_x_ - touch_start_x_);
               auto ydiff = std::abs(touch_y_ - touch_start_y_);

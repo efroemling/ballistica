@@ -13,7 +13,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"

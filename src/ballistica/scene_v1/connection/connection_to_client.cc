@@ -986,8 +986,9 @@ void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // Sanity check; should never come through here if we're doing v2 auth.
-  auto doing_v2_auth{appmode->require_client_authentication()
-                     && appmode->client_authentication_version() == 2};
+  [[maybe_unused]] auto doing_v2_auth{
+      appmode->require_client_authentication()
+      && appmode->client_authentication_version() == 2};
   assert(!doing_v2_auth);
 
   PyObject* profiles_obj = PyDict_GetItemString(info_obj, "p");

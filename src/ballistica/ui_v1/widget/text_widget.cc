@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
@@ -18,11 +19,10 @@
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"

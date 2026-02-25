@@ -22,7 +22,7 @@
 #include "ballistica/classic/python/classic_python.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
@@ -566,7 +566,7 @@ auto ClassicAppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
 void ClassicAppMode::StepDisplayTime() {
   assert(g_base->InLogicThread());
 
-  auto startms{core::CorePlatform::TimeMonotonicMillisecs()};
+  auto startms{core::Platform::TimeMonotonicMillisecs()};
   millisecs_t app_time = g_core->AppTimeMillisecs();
   g_core->platform->SetDebugKey("LastUpdateTime", std::to_string(startms));
   in_update_ = true;
@@ -642,7 +642,7 @@ void ClassicAppMode::StepDisplayTime() {
   // Report excessively long updates.
   if (g_core->core_config().debug_timing
       && app_time >= next_long_update_report_time_) {
-    auto duration{core::CorePlatform::TimeMonotonicMillisecs() - startms};
+    auto duration{core::Platform::TimeMonotonicMillisecs() - startms};
 
     // Complain when our full update takes longer than 1/60th second.
     if (duration > (1000 / 60)) {

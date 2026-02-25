@@ -41,7 +41,7 @@ class AudioServer;
 class AudioStreamer;
 class AudioSource;
 class BaseFeatureSet;
-class BasePlatform;
+class AppPlatform;
 class BasePython;
 class BGDynamics;
 class BGDynamicsServer;
@@ -867,7 +867,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   AssetsServer* const assets_server;
   Audio* const audio;
   AudioServer* const audio_server;
-  BasePlatform* const platform;
+  AppPlatform* const platform;
   BasePython* const python;
   BGDynamics* const bg_dynamics;
   BGDynamicsServer* const bg_dynamics_server;

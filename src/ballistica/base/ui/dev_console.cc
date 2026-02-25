@@ -12,12 +12,12 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/context.h"

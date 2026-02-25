@@ -18,7 +18,7 @@ namespace ballistica::core {
 class BaseSoftInterface;
 class CoreConfig;
 class CoreFeatureSet;
-class CorePlatform;
+class Platform;
 class CorePython;
 class Logging;
 
@@ -167,7 +167,7 @@ class CoreFeatureSet {
 
   // Const components.
   CorePython* const python;
-  CorePlatform* const platform;
+  Platform* const platform;
   Logging* const logging;
 
   // The following are misc values that should be migrated to applicable
