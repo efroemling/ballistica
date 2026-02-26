@@ -11,10 +11,15 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 
 namespace ballistica::base {
@@ -22,6 +27,10 @@ namespace ballistica::base {
 StdioConsole::StdioConsole() = default;
 
 void StdioConsole::Start() {
+  assert(g_base->InLogicThread());
+  use_native_repl = g_base->app_config->Resolve(
+      base::AppConfig::BoolID::kUseNativePythonREPL);
+
   g_base->app_adapter->PushMainThreadCall([this] { StartInMainThread_(); });
 }
 
@@ -32,79 +41,154 @@ void StdioConsole::StartInMainThread_() {
   event_loop_ = new EventLoop(EventLoopID::kStdin);
   g_core->suspendable_event_loops.push_back(event_loop_);
 
-  // Tell our thread to start reading.
-  event_loop()->PushCall([this] {
-    bool stdin_is_terminal = g_core->platform->is_stdin_a_terminal();
+  // Check if we should use the native Python REPL.
+  // If the config is not available or set to true, use native REPL as default.
+  // Fall back to legacy console if native REPL is disabled.
 
-    while (true) {
-      // Print a prompt if we're a tty. We send this to the logic thread so
-      // it happens AFTER the results of the last script-command message we
-      // may have just sent.
-      if (stdin_is_terminal) {
-        g_base->logic->event_loop()->PushCall([] {
-          if (!g_base->logic->shutting_down()) {
-            printf(">>> ");
-            fflush(stdout);
-          }
-        });
-      }
-
-      // Was using getline, but switched to new fgets based approach (more
-      // portable). Ideally at some point we can wire up to the Python api
-      // to get behavior more like the actual Python command line.
-      char buffer[4096];
-      char* val;
-
-      // Use our fancy safe version of fgets(); on some platforms this will
-      // return a fake EOF once the app/engine starts going down. This
-      // avoids some scenarios where regular blocking fgets() prevents the
-      // process from exiting (until they press Ctrl-D in the terminal).
-      if (explicit_bool(true)) {
-        val = g_base->platform->SafeStdinFGetS(buffer, sizeof(buffer), stdin);
-      } else {
-        val = fgets(buffer, sizeof(buffer), stdin);
-      }
-      if (val) {
-        pending_input_ += val;
-
-        if (!pending_input_.empty()
-            && pending_input_[pending_input_.size() - 1] == '\n') {
-          // Get rid of the last newline and ship it to the game.
-          pending_input_.pop_back();
-
-          // Handle special cases ourself.
-          if (pending_input_ == std::string("@clear")) {
-            Clear_();
-          } else {
-            // Otherwise ship it off to the engine to run.
-            PushCommand_(pending_input_);
-          }
-          pending_input_.clear();
-        }
-      } else {
-        // Bail on any error (could be actual EOF or one of our fake ones).
-        if (stdin_is_terminal) {
-          // Ok this is strange: on windows consoles, it seems that Ctrl-C
-          // in a terminal immediately closes our stdin even if we catch
-          // the interrupt, and then our Python interrupt handler runs a
-          // moment later. This means we wind up telling the user that EOF
-          // was reached and they should Ctrl-C to quit right after
-          // they've hit Ctrl-C to quit. To hopefully avoid this, let's
-          // hold off on the print for a second and see if a shutdown has
-          // begun first. (or, more likely, just never print because the
-          // app has exited).
-          if (g_buildconfig.windows_console_build()) {
-            core::Platform::SleepMillisecs(250);
-          }
-          if (!g_base->logic->shutting_down()) {
-            printf("Stdin EOF reached. Use Ctrl-C to quit.\n");
-            fflush(stdout);
-          }
-        }
-        break;
-      }
+  if (use_native_repl && Py_IsInitialized()) {
+    // Use Python's native interactive loop which includes readline support
+    // for autocompletion, history, and line editing.
+    try {
+      event_loop()->PushCall([this] { StartNativePythonREPL_(); });
+    } catch (const std::exception& e) {
+      printf("Error initializing native Python REPL: %s\n", e.what());
+      printf("Falling back to legacy console.\n");
+      fflush(stderr);
     }
-  });
+  } else {
+    // Tell our thread to start reading using legacy console.
+    event_loop()->PushCall([this] { StartLegacyConsole_(); });
+  }
+}
+
+void StdioConsole::StartNativePythonREPL_() {
+  // This currently uses the readline library
+  // In future we may want to add an option to use the built-in Python REPL
+  // from the _pyrepl module without readline module, as readline can be missing
+  // on some platforms. But for now we'll just use readline when available since
+  // _pyrepl is still very new and is not well documented.
+
+  Python::ScopedInterpreterLock gil;
+
+  // Enable readline for full REPL features:
+  // - Command history (up/down arrows)
+  // - Line editing (backspace, left/right)
+  // - Tab autocompletion
+
+  // we are currently in python3.13, try the _pyrepl in python3.14
+  const char* readline_import =
+      // "import _pyrepl\n"
+      // "_pyrepl.main.interactive_console()\n"
+      "import readline\n"
+      "import rlcompleter\n"
+      "readline.parse_and_bind('tab: complete')\n";
+
+  bool readline_available = (PyRun_SimpleString(readline_import) == 0);
+
+  if (!readline_available) {
+    g_core->logging->Log(
+        LogName::kRoot, LogLevel::kWarning,
+        "Failed to initialize readline for Python REPL. Readline support will "
+        "be unavailable. Falling back to legacy console.");
+  }
+
+  // Run default imports (babase, bascenev1, bauiv1, etc)
+  // which are configured in projectconfig.json
+  g_base->python->objs().Get(BasePython::ObjID::kRunDefaultImportsCall).Call();
+
+  // Print any errors that occurred during default imports
+  if (PyErr_Occurred()) {
+    PyErr_Print();
+  }
+
+  // If readline is not available, fall back to legacy console with proper
+  // signal handling
+  if (!readline_available) {
+    // Release the GIL before entering the blocking console loop
+    Python::ScopedInterpreterLockRelease unlock;
+    StartLegacyConsole_();
+    return;
+  }
+
+  // Run Python's interactive loop directly. This handles:
+  // - Autocompletion (via readline + rlcompleter)
+  // - Command history (via readline)
+  // - Multi-line statements
+  // - Importing of ballistica modules
+  PyRun_InteractiveLoop(stdin, "<stdin>");
+}
+
+void StdioConsole::StartLegacyConsole_() {
+  bool stdin_is_terminal = g_core->platform->is_stdin_a_terminal();
+
+  while (true) {
+    // Print a prompt if we're a tty. We send this to the logic thread so
+    // it happens AFTER the results of the last script-command message we
+    // may have just sent.
+    if (stdin_is_terminal) {
+      g_base->logic->event_loop()->PushCall([] {
+        if (!g_base->logic->shutting_down()) {
+          printf(">>> ");
+          fflush(stdout);
+        }
+      });
+    }
+
+    // Was using getline, but switched to new fgets based approach (more
+    // portable). Ideally at some point we can wire up to the Python api
+    // to get behavior more like the actual Python command line.
+    char buffer[4096];
+    char* val;
+
+    // Use our fancy safe version of fgets(); on some platforms this will
+    // return a fake EOF once the app/engine starts going down. This
+    // avoids some scenarios where regular blocking fgets() prevents the
+    // process from exiting (until they press Ctrl-D in the terminal).
+    if (explicit_bool(true)) {
+      val = g_base->platform->SafeStdinFGetS(buffer, sizeof(buffer), stdin);
+    } else {
+      val = fgets(buffer, sizeof(buffer), stdin);
+    }
+    if (val) {
+      pending_input_ += val;
+
+      if (!pending_input_.empty()
+          && pending_input_[pending_input_.size() - 1] == '\n') {
+        // Get rid of the last newline and ship it to the game.
+        pending_input_.pop_back();
+
+        // Handle special cases ourself.
+        if (pending_input_ == std::string("@clear")) {
+          Clear_();
+        } else {
+          // Otherwise ship it off to the engine to run.
+          PushCommand_(pending_input_);
+        }
+        pending_input_.clear();
+      }
+    } else {
+      // Bail on any error (could be actual EOF or one of our fake ones).
+      if (stdin_is_terminal) {
+        // Ok this is strange: on windows consoles, it seems that Ctrl-C
+        // in a terminal immediately closes our stdin even if we catch
+        // the interrupt, and then our Python interrupt handler runs a
+        // moment later. This means we wind up telling the user that EOF
+        // was reached and they should Ctrl-C to quit right after
+        // they've hit Ctrl-C to quit. To hopefully avoid this, let's
+        // hold off on the print for a second and see if a shutdown has
+        // begun first. (or, more likely, just never print because the
+        // app has exited).
+        if (g_buildconfig.windows_console_build()) {
+          core::Platform::SleepMillisecs(250);
+        }
+        if (!g_base->logic->shutting_down()) {
+          printf("Stdin EOF reached. Use Ctrl-C to quit.\n");
+          fflush(stdout);
+        }
+      }
+      break;
+    }
+  }
 }
 
 void StdioConsole::Clear_() {

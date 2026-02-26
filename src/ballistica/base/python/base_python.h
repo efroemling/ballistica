@@ -106,6 +106,7 @@ class BasePython {
     kLoginAdapterGetSignInTokenResponseCall,
     kPreEnv,
     kOpenURLWithWebBrowserModuleCall,
+    kRunDefaultImportsCall,
     kEnvOnNativeModuleImportCall,
     kOnMainThreadStartAppCall,
     kAppPushApplyAppConfigCall,

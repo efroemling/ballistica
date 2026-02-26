@@ -464,6 +464,16 @@ def copy_dev_console_history() -> None:
     _babase.getsimplesound('gunCocking').play()
 
 
+def run_default_imports() -> None:
+    """Run default imports configured for this project.
+
+    This function imports modules that should be available by default
+    in interactive contexts like the REPL. It delegates to the app
+    which contains auto-generated import statements.
+    """
+    _babase.app.run_default_imports()
+
+
 def v2_auth_request(global_app_instance_id: str) -> None | tuple[bool, str]:
     """Kick off or process v2 auth requests.
 
