@@ -715,14 +715,18 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     }
 
     default: {
-      if (buffer[0] == BA_MESSAGE_MULTIPART
-          && multipart_buffer_size() > 50000) {
-        g_core->logging->Log(
-            LogName::kBaNetworking, LogLevel::kError,
-            "Multipart message from host exceeded size limit; disconnecting.");
-        Error("");
-        return;
-      }
+      // Disabling this check for now - looks like there are legit multipart
+      // messages of that size coming through.
+      //
+      // if (buffer[0] == BA_MESSAGE_MULTIPART
+      //     && multipart_buffer_size() > 50000) {
+      //   g_core->logging->Log(
+      //       LogName::kBaNetworking, LogLevel::kError,
+      //       "Multipart message from host exceeded size limit;
+      //       disconnecting.");
+      //   Error("");
+      //   return;
+      // }
       Connection::HandleMessagePacket(buffer);
     }
   }
