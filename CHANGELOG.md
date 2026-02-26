@@ -25,6 +25,10 @@
   (Thanks temp!)
 - Add `bascenev1.get_client_ping` which returns the current ping (RTT in ms)
   for a connected client.
+- Switch to using python's native REPL which gives us cool features like
+  autocompletion, command history, multiline statements and
+  line editing(going left/right)
+- Native python REPL can be toggled by `Use native python REPL` app_config entry
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not
