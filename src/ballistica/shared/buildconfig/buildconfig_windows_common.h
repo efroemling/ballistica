@@ -80,7 +80,11 @@ typedef int ssize_t;
 #if !BA_HEADLESS_BUILD
 #define BA_ENABLE_AUDIO 1
 #define BA_ENABLE_OPENGL 1
+// Default to ANGLE (OpenGL ES via D3D11). VR/Oculus builds override this
+// to 0 before including this header to use desktop OpenGL instead.
+#ifndef BA_OPENGL_IS_ES
 #define BA_OPENGL_IS_ES 1
+#endif
 #define BA_ENABLE_OS_FONT_RENDERING 1
 #endif
 
