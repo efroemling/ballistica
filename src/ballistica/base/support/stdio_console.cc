@@ -79,7 +79,7 @@ void StdioConsole::StartNativePythonREPL_() {
   const char* readline_import =
       // "import _pyrepl\n"
       // "_pyrepl.main.interactive_console()\n"
-      "import readlinea\n"
+      "import readline\n"
       "import rlcompleter\n"
       "readline.parse_and_bind('tab: complete')\n";
 
