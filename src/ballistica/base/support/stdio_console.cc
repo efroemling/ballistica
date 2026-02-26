@@ -15,8 +15,8 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/platform.h"
 #include "ballistica/core/logging/logging.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
@@ -144,7 +144,11 @@ void StdioConsole::StartNativePythonREPL_() {
   // - Command history (up/down arrows)
   // - Line editing (backspace, left/right)
   // - Tab autocompletion
+
+  // we are currently in python3.13, try the _pyrepl in python3.14
   const char* readline_import =
+      // "import _pyrepl\n"
+      // "_pyrepl.main.interactive_console()\n"
       "import readline\n"
       "import rlcompleter\n"
       "readline.parse_and_bind('tab: complete')\n";
