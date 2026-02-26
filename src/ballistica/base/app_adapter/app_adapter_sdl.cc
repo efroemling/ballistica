@@ -766,6 +766,13 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                           SDL_GL_CONTEXT_PROFILE_CORE);
       context_flags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+    } else if (g_buildconfig.platform_windows()) {
+      // Use ANGLE (libEGL.dll) for OpenGL ES via D3D11 on Windows.
+      SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                          SDL_GL_CONTEXT_PROFILE_ES);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     } else {
       // On other platforms, let's not ask for anything in particular.
       // We'll work with whatever they give us if its 4.x or 3.x or we'll

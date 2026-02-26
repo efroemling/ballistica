@@ -392,11 +392,17 @@ class BuildStager:
 
         if self.win_type == 'win':
             toplevelfiles += [
+                'libEGL.dll',
+                'libGLESv2.dll',
                 'libvorbis.dll',
                 'libvorbisfile.dll',
                 'ogg.dll',
                 'OpenAL32.dll',
                 'SDL2.dll',
+                # zlib1.dll lives in DLLs/ (Python dependency) but also needs
+                # to be at the top level because ANGLE (libGLESv2.dll) depends
+                # on it for shader blob caching.
+                'DLLs/zlib1.dll',
             ]
         elif self.win_type == 'winserver':
             toplevelfiles += [f'python{dbgsfx}.exe']

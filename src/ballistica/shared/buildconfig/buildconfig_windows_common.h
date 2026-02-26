@@ -80,6 +80,7 @@ typedef int ssize_t;
 #if !BA_HEADLESS_BUILD
 #define BA_ENABLE_AUDIO 1
 #define BA_ENABLE_OPENGL 1
+#define BA_OPENGL_IS_ES 1
 #define BA_ENABLE_OS_FONT_RENDERING 1
 #endif
 
