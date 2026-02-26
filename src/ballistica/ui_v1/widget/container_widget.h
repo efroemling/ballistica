@@ -274,8 +274,8 @@ class ContainerWidget : public Widget {
   bool selection_loops_to_parent_{};
   bool is_window_stack_{};
   bool background_{true};
-  bool darken_behind_{false};
-  bool darken_behind_is_permanent_{false};
+  bool darken_behind_{};
+  bool darken_behind_is_permanent_{};
   bool root_selectable_{};
   bool selectable_{true};
   bool ignore_input_{};

@@ -22,7 +22,7 @@ class Logging {
     // Checking log-level here is more efficient than letting it happen in
     // Python land.
     if (LogLevelEnabled(name, level)) {
-      Log_(name, level, msg);
+      Log_(name, level, msg.c_str());
     }
   }
 
@@ -50,10 +50,10 @@ class Logging {
   void Log(LogName name, LogLevel level, C getmsgcall) {
     // Make sure provided lambdas return std::string; otherwise it would be
     // an easy mistake to return a char* to invalid function-local memory.
-    static_assert(std::is_same<std::string, decltype(getmsgcall())>::value,
-                  "Lambda must return std::string");
+    // static_assert(std::is_same<std::string, decltype(getmsgcall())>::value,
+    //               "Lambda must return std::string");
     if (LogLevelEnabled(name, level)) {
-      Log_(name, level, getmsgcall());
+      Log_(name, level, getmsgcall().c_str());
     }
   }
 
@@ -80,8 +80,8 @@ class Logging {
   /// Send a log message to the in-app console, platform-specific logs, etc.
   /// This generally should not be called directly but instead wired up to
   /// log messages coming through the Python logging system.
-  void EmitLog(const std::string& name, LogLevel level, double timestamp,
-               const std::string& msg);
+  void EmitLog(std::string_view name, LogLevel level, double timestamp,
+               std::string_view msg);
 
   /// Write a message to the v1 cloud log. This is considered legacy and
   /// will be phased out eventually.
@@ -106,7 +106,7 @@ class Logging {
   /// ever made will be routed through the app, visible in in-app consoles,
   /// etc. Note that direct Python logging calls or prints occurring before
   /// babase is imported may not be visible in the app for that same reason.
-  void Log_(LogName name, LogLevel level, const std::string& msg);
+  void Log_(LogName name, LogLevel level, const char* msg);
 
   LogLevel log_levels_[static_cast<int>(LogName::kLast)]{};
   bool did_put_v1_cloud_log_{};

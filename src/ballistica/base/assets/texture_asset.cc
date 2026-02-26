@@ -21,7 +21,7 @@
 #include "ballistica/base/graphics/texture/pvr.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
 namespace ballistica::base {

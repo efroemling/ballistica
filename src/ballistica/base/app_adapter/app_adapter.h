@@ -14,7 +14,7 @@ namespace ballistica::base {
 /// environment. For example, 'Headless', 'VROculus', 'SDL', etc. These may
 /// be mixed & matched with platform classes to define a build. For example,
 /// on Windows, we might have SDL, VR, and Headless AppAdapters, but they
-/// all might share the same CorePlatform and BasePlatform classes.
+/// all might share the same Platform and AppPlatform classes.
 class AppAdapter {
  public:
   AppAdapter();

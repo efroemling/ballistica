@@ -9,7 +9,7 @@
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/scene_v1/support/huffman.h"
 #include "ballistica/shared/generic/json.h"
@@ -452,7 +452,8 @@ void Connection::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                              "got invalid BA_MESSAGE_MULTIPART");
       }
       if (buffer[0] == BA_MESSAGE_MULTIPART_END) {
-        if (multipart_buffer_[0] == BA_MESSAGE_MULTIPART) {
+        if (!multipart_buffer_.empty()
+            && multipart_buffer_[0] == BA_MESSAGE_MULTIPART) {
           BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
                       "nested multipart message detected; kicking");
           Error("");

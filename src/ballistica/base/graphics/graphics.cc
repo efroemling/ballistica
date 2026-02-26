@@ -29,7 +29,7 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
@@ -1029,7 +1029,7 @@ void Graphics::DrawFades(FrameDef* frame_def) {
     millisecs_t cancel_time = frame_time - fade_cancel_start_;
 
     // Reset if a substantial amount of real time passes between frame draws.
-    auto real_ms = core::CorePlatform::TimeMonotonicMillisecs();
+    auto real_ms = core::Platform::TimeMonotonicMillisecs();
     if (real_ms - fade_cancel_last_real_ms_ > 1000) {
       fade_cancel_start_ = frame_time;
     }
@@ -1061,7 +1061,7 @@ void Graphics::DrawFades(FrameDef* frame_def) {
       fade_start_ = frame_time;
       // Calc when we should start counting for force-ending.
       fade_cancel_start_ = fade_start_ + fade_time_;
-      fade_cancel_last_real_ms_ = core::CorePlatform::TimeMonotonicMillisecs();
+      fade_cancel_last_real_ms_ = core::Platform::TimeMonotonicMillisecs();
     }
     bool was_done = fade_ <= 0;
     if (frame_time <= fade_start_) {

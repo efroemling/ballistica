@@ -472,3 +472,36 @@ def run_default_imports() -> None:
     which contains auto-generated import statements.
     """
     _babase.app.run_default_imports()
+
+
+def v2_auth_request(global_app_instance_id: str) -> None | tuple[bool, str]:
+    """Kick off or process v2 auth requests.
+
+    Return None if no results or (success, error/token)
+    """
+    assert _babase.app.plus is not None
+    out: None | tuple[bool, str] = _babase.app.plus.accounts.auth_request(
+        global_app_instance_id
+    )
+    return out
+
+
+def v2_auth_data(token: str) -> None | tuple[str, str, dict]:
+    """Look up autheneticated v2 account data via a token."""
+    assert _babase.in_logic_thread()
+
+    classic = _babase.app.classic
+    if classic is None:
+        return None
+
+    now = time.monotonic()
+    authdata = classic.v2_auth_datas.get(token)
+    if authdata is None or authdata.expire_time <= now:
+        return None
+
+    # Success!
+    return (
+        authdata.account_id,
+        authdata.account_tag,
+        authdata.player_profiles,
+    )

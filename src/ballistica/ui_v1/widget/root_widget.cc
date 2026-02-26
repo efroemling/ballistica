@@ -61,7 +61,7 @@ constexpr std::array<const char*, 4> chest_ids{"0", "1", "2", "3"};
 int RootWidget::update_pause_count_;
 
 // Flip this to true when we're ready to use levels.
-static const bool kShowLevels{false};
+static const bool kShowLevels{};
 
 struct RootWidget::ChestSlot_ {
   std::string appearance;
@@ -2271,7 +2271,7 @@ void RootWidget::SetAccountSignInState(bool signed_in,
                                        const std::string& name) {
   if (account_name_text_) {
     auto* w{account_name_text_->widget.get()};
-    auto* wb{account_button_->widget.get()};
+    [[maybe_unused]] auto* wb{account_button_->widget.get()};
     assert(w);
     assert(wb);
 

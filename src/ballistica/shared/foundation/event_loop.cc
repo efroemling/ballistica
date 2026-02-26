@@ -11,7 +11,7 @@
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/fatal_error.h"
 
@@ -19,10 +19,10 @@ namespace ballistica {
 
 // Special flags we can safely access from interrupt/ctrl handlers.
 #if BA_PLATFORM_WINDOWS
-std::atomic<bool> g_event_loop_got_ctrl_c{false};
+std::atomic<bool> g_event_loop_got_ctrl_c{};
 #else
-volatile sig_atomic_t g_event_loop_got_sigint = 0;
-volatile sig_atomic_t g_event_loop_got_sigterm = 0;
+volatile sig_atomic_t g_event_loop_got_sigint{};
+volatile sig_atomic_t g_event_loop_got_sigterm{};
 #endif
 
 // Note: implicitly using core here so will fail spectacularly if that has
@@ -752,7 +752,7 @@ void EventLoop::AcquireGIL_() {
   assert(g_base_soft && g_base_soft->InLogicThread());
   auto debug_timing{g_core->core_config().debug_timing};
   millisecs_t startmillisecs{
-      debug_timing ? core::CorePlatform::TimeMonotonicMillisecs() : 0};
+      debug_timing ? core::Platform::TimeMonotonicMillisecs() : 0};
 
   if (py_thread_state_) {
     PyEval_RestoreThread(py_thread_state_);
@@ -760,8 +760,7 @@ void EventLoop::AcquireGIL_() {
   }
 
   if (debug_timing) {
-    auto duration{core::CorePlatform::TimeMonotonicMillisecs()
-                  - startmillisecs};
+    auto duration{core::Platform::TimeMonotonicMillisecs() - startmillisecs};
     if (duration > (1000 / 120)) {
       g_core->logging->Log(LogName::kBa, LogLevel::kInfo,
                            "GIL acquire took too long ("

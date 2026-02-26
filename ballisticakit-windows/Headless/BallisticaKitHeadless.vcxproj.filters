@@ -43,6 +43,33 @@
     <ClInclude Include="..\..\src\ballistica\base\app_mode\empty_app_mode.h">
       <Filter>ballistica\base\app_mode</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app_platform\app_platform.cc">
+      <Filter>ballistica\base\app_platform</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app_platform\app_platform.h">
+      <Filter>ballistica\base\app_platform</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app_platform\apple\app_platform_apple.cc">
+      <Filter>ballistica\base\app_platform\apple</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app_platform\apple\app_platform_apple.h">
+      <Filter>ballistica\base\app_platform\apple</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app_platform\linux\app_platform_linux.cc">
+      <Filter>ballistica\base\app_platform\linux</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app_platform\linux\app_platform_linux.h">
+      <Filter>ballistica\base\app_platform\linux</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\app_platform\support\min_sdl_key_names.h">
+      <Filter>ballistica\base\app_platform\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\app_platform\windows\app_platform_windows.cc">
+      <Filter>ballistica\base\app_platform\windows</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\app_platform\windows\app_platform_windows.h">
+      <Filter>ballistica\base\app_platform\windows</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\assets\asset.cc">
       <Filter>ballistica\base\assets</Filter>
     </ClCompile>
@@ -613,33 +640,6 @@
     <ClInclude Include="..\..\src\ballistica\base\networking\networking.h">
       <Filter>ballistica\base\networking</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\platform\apple\base_platform_apple.cc">
-      <Filter>ballistica\base\platform\apple</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\platform\apple\base_platform_apple.h">
-      <Filter>ballistica\base\platform\apple</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\platform\base_platform.cc">
-      <Filter>ballistica\base\platform</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\platform\base_platform.h">
-      <Filter>ballistica\base\platform</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\platform\linux\base_platform_linux.cc">
-      <Filter>ballistica\base\platform\linux</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\platform\linux\base_platform_linux.h">
-      <Filter>ballistica\base\platform\linux</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\ballistica\base\platform\support\min_sdl_key_names.h">
-      <Filter>ballistica\base\platform\support</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\base\platform\windows\base_platform_windows.cc">
-      <Filter>ballistica\base\platform\windows</Filter>
-    </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\base\platform\windows\base_platform_windows.h">
-      <Filter>ballistica\base\platform\windows</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\python\base_python.cc">
       <Filter>ballistica\base\python</Filter>
     </ClCompile>
@@ -832,31 +832,34 @@
     <ClInclude Include="..\..\src\ballistica\core\logging\logging_macros.h">
       <Filter>ballistica\core\logging</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\core\platform\apple\core_platform_apple.cc">
+    <ClCompile Include="..\..\src\ballistica\core\platform\apple\platform_apple.cc">
       <Filter>ballistica\core\platform\apple</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\core\platform\apple\core_platform_apple.h">
+    <ClInclude Include="..\..\src\ballistica\core\platform\apple\platform_apple.h">
       <Filter>ballistica\core\platform\apple</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\core\platform\core_platform.cc">
-      <Filter>ballistica\core\platform</Filter>
+    <ClCompile Include="..\..\src\ballistica\core\platform\linux\platform_linux.cc">
+      <Filter>ballistica\core\platform\linux</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\core\platform\core_platform.h">
-      <Filter>ballistica\core\platform</Filter>
+    <ClInclude Include="..\..\src\ballistica\core\platform\linux\platform_linux.h">
+      <Filter>ballistica\core\platform\linux</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\core\platform\linux\core_platform_linux.cc">
-      <Filter>ballistica\core\platform\linux</Filter>
+    <ClCompile Include="..\..\src\ballistica\core\platform\platform.cc">
+      <Filter>ballistica\core\platform</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\core\platform\linux\core_platform_linux.h">
-      <Filter>ballistica\core\platform\linux</Filter>
+    <ClInclude Include="..\..\src\ballistica\core\platform\platform.h">
+      <Filter>ballistica\core\platform</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ballistica\core\platform\support\min_sdl.h">
       <Filter>ballistica\core\platform\support</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\core\platform\windows\core_platform_windows.cc">
+    <ClInclude Include="..\..\src\ballistica\core\platform\support\platform_pango.h">
+      <Filter>ballistica\core\platform\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\core\platform\windows\platform_windows.cc">
       <Filter>ballistica\core\platform\windows</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\core\platform\windows\core_platform_windows.h">
+    <ClInclude Include="..\..\src\ballistica\core\platform\windows\platform_windows.h">
       <Filter>ballistica\core\platform\windows</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\core\python\core_python.cc">
@@ -1999,6 +2002,11 @@
     <Filter Include="ballistica\base" />
     <Filter Include="ballistica\base\app_adapter" />
     <Filter Include="ballistica\base\app_mode" />
+    <Filter Include="ballistica\base\app_platform" />
+    <Filter Include="ballistica\base\app_platform\apple" />
+    <Filter Include="ballistica\base\app_platform\linux" />
+    <Filter Include="ballistica\base\app_platform\support" />
+    <Filter Include="ballistica\base\app_platform\windows" />
     <Filter Include="ballistica\base\assets" />
     <Filter Include="ballistica\base\audio" />
     <Filter Include="ballistica\base\discord" />
@@ -2019,11 +2027,6 @@
     <Filter Include="ballistica\base\input\support" />
     <Filter Include="ballistica\base\logic" />
     <Filter Include="ballistica\base\networking" />
-    <Filter Include="ballistica\base\platform" />
-    <Filter Include="ballistica\base\platform\apple" />
-    <Filter Include="ballistica\base\platform\linux" />
-    <Filter Include="ballistica\base\platform\support" />
-    <Filter Include="ballistica\base\platform\windows" />
     <Filter Include="ballistica\base\python" />
     <Filter Include="ballistica\base\python\class" />
     <Filter Include="ballistica\base\python\methods" />

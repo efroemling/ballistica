@@ -124,10 +124,10 @@ void ScrollWidget::ClampScrolling_(bool velocity_clamp, bool position_clamp,
 
 auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
-  bool claimed{false};
-  bool pass{true};
-  float right_overlap{0.0f};
-  float left_overlap{3.0f};
+  auto claimed{false};
+  auto pass{true};
+  auto right_overlap{0.0f};
+  auto left_overlap{3.0f};
 
   switch (m.type) {
     case base::WidgetMessage::Type::kMoveUp:
@@ -492,7 +492,7 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               // If we're currently scrolling but this touch has moved
               // significantly left or right, cancel our scrolling and pass
               // the touch.
-              auto since_held =
+              [[maybe_unused]] auto since_held =
                   g_core->AppTimeMillisecs() - last_touch_held_time_;
               auto xdiff = std::abs(touch_x_ - touch_start_x_);
               auto ydiff = std::abs(touch_y_ - touch_start_y_);

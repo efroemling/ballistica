@@ -4,6 +4,7 @@ project(BallisticaKit)
 option(HEADLESS "build headless server" OFF)
 option(TEST_BUILD "include testing features" OFF)
 option(DISCORD "enable Discord" OFF)
+option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" OFF)
 
 # Requiring minimum of C++20 currently.
 set(CMAKE_CXX_STANDARD 20)
@@ -56,7 +57,19 @@ else()
     PkgConfig::VORBISFILE
     OpenGL::GL
   )
-  
+
+  # Optional: Pango+Cairo for OS font rendering on Linux/macOS cmake builds.
+  # Pass -DREQUIRE_OS_FONT_RENDERING=ON to make this a hard requirement.
+  if(REQUIRE_OS_FONT_RENDERING)
+    pkg_check_modules(PANGOCAIRO REQUIRED IMPORTED_TARGET pangocairo)
+  else()
+    pkg_check_modules(PANGOCAIRO IMPORTED_TARGET pangocairo)
+  endif()
+  if(PANGOCAIRO_FOUND)
+    target_compile_definitions(common_deps INTERFACE BA_ENABLE_OS_FONT_RENDERING=1)
+    target_link_libraries(ba_deps INTERFACE PkgConfig::PANGOCAIRO)
+  endif()
+
 endif()
 
 if(TEST_BUILD)
@@ -189,6 +202,15 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/app_mode/app_mode.h
   ${BA_SRC_ROOT}/ballistica/base/app_mode/empty_app_mode.cc
   ${BA_SRC_ROOT}/ballistica/base/app_mode/empty_app_mode.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/app_platform.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/app_platform.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/apple/app_platform_apple.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/apple/app_platform_apple.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/linux/app_platform_linux.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/linux/app_platform_linux.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/support/min_sdl_key_names.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows.h
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.h
   ${BA_SRC_ROOT}/ballistica/base/assets/assets.cc
@@ -379,15 +401,6 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/networking/network_writer.h
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.cc
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/apple/base_platform_apple.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/apple/base_platform_apple.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/base_platform.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/base_platform.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/linux/base_platform_linux.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/linux/base_platform_linux.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/support/min_sdl_key_names.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows.h
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.cc
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_app_timer.cc
@@ -452,15 +465,16 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/core/logging/logging.cc
   ${BA_SRC_ROOT}/ballistica/core/logging/logging.h
   ${BA_SRC_ROOT}/ballistica/core/logging/logging_macros.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/apple/core_platform_apple.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/apple/core_platform_apple.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/core_platform.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/core_platform.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/linux/core_platform_linux.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/linux/core_platform_linux.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/apple/platform_apple.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/apple/platform_apple.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/linux/platform_linux.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/linux/platform_linux.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/platform.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/platform.h
   ${BA_SRC_ROOT}/ballistica/core/platform/support/min_sdl.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/windows/core_platform_windows.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/windows/core_platform_windows.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/support/platform_pango.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.h
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.cc
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.h
   ${BA_SRC_ROOT}/ballistica/core/support/base_soft.h

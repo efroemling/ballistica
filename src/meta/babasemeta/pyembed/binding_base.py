@@ -81,4 +81,6 @@ values = [
     AppArchitecture,  # kAppArchitectureType
     AppPlatform,  # kAppPlatformType
     AppVariant,  # kAppVariantType
+    _hooks.v2_auth_request,  # kV2AuthRequestCall
+    _hooks.v2_auth_data,  # kV2AuthDataCall
 ]

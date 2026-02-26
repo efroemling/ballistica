@@ -6,6 +6,55 @@ import os
 import subprocess
 
 
+def get_version_changelog(version: str, projroot: str) -> list[str]:
+    """Get changelog text for a given version from CHANGELOG.md."""
+    import re
+    from efro.error import CleanError
+
+    changelog_path = os.path.join(projroot, 'CHANGELOG.md')
+    if not os.path.exists(changelog_path):
+        raise CleanError(f'CHANGELOG.md not found at {changelog_path}')
+
+    with open(changelog_path, 'r', encoding='utf-8') as infile:
+        changelog_content = infile.read()
+
+    # Regex to find the section for the given version
+    pattern = rf'^###\s+{re.escape(version)}\b.*?\n(.*?)(?=^###\s+|\Z)'
+    match = re.search(pattern, changelog_content, re.DOTALL | re.MULTILINE)
+    if not match:
+        raise CleanError(f'Changelog entry for version {version} not found.')
+
+    section_text = match.group(1).rstrip()
+
+    # Convert changelog section into a list of bullet entries,
+    # preserving internal newlines and indentation.
+    lines = section_text.splitlines()
+    entries: list[str] = []
+    current_entry: list[str] = []
+
+    for line in lines:
+        if line.startswith('- '):
+            # Save previous entry if present
+            if current_entry:
+                entries.append('\n'.join(current_entry).rstrip())
+                current_entry = []
+
+            # Strip "- " but preserve rest exactly
+            current_entry.append(line[2:])
+        else:
+            # Continuation line (including indentation or blank lines)
+            if current_entry:
+                current_entry.append(line)
+
+    # Add final entry
+    if current_entry:
+        entries.append('\n'.join(current_entry).rstrip())
+
+    changelog_list = entries
+
+    return changelog_list
+
+
 def generate(projroot: str) -> None:
     """Main script entry point."""
 

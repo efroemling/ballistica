@@ -120,7 +120,7 @@ class AssetsV1PathValsTypeID(Enum):
     """Types of vals we can store for paths."""
 
     TEX_V1 = 'tex_v1'
-    # STR_V1 = 'str_v1'
+    STR_V1 = 'str_v1'
 
 
 class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
@@ -150,6 +150,9 @@ class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
         if type_id is t.TEX_V1:
             return AssetsV1PathValsTexV1
 
+        if type_id is t.STR_V1:
+            return AssetsV1PathValsStrV1
+
         # Important to make sure we provide all types.
         assert_never(type_id)
 
@@ -175,3 +178,20 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
         return AssetsV1PathValsTypeID.TEX_V1
+
+
+@ioprepped
+@dataclass
+class AssetsV1PathValsStrV1(AssetsV1PathVals):
+    """Path-specific values for an assets_v1 workspace path."""
+
+    #: Hash generated when all translations for this entry are complete.
+    #: Used as a fast-out for checking whether updates are needed.
+    up_to_date_state: Annotated[
+        str | None, IOAttrs('up_to_date_state', store_default=False)
+    ] = None
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1PathValsTypeID:
+        return AssetsV1PathValsTypeID.STR_V1

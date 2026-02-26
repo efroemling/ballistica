@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
-#define BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
+#ifndef BALLISTICA_BASE_APP_PLATFORM_APP_PLATFORM_H_
+#define BALLISTICA_BASE_APP_PLATFORM_APP_PLATFORM_H_
 
 #include <cstdio>
 #include <deque>
@@ -13,21 +13,12 @@
 
 namespace ballistica::base {
 
-/// EFRO NOTE: I think everything here should be migrated to app_adapter,
-///            which perhaps could be renamed to something like
-///            app_platform. Having both base_platform and app_adapter feels
-///            redundant. If there is functionality shared by multiple
-///            app_platforms, it can be implemented as a common base class
-///            or via composition.
-
-/// Most general platform-specific functionality is contained here, to be
-/// implemented by platform-specific subclasses. Exceptions to this rule are
-/// things such as AppAdapter which are broken out into their own classes so
-/// that different adapters (SDL, headless, etc.) may be composed together
-/// with a single platform (Windows, Mac, etc.).
-class BasePlatform {
+/// Various high level app functionality is contained here to be implemented
+/// by platform-specific subclasses. These platform implementations can
+/// then be composed with app-adapters to yield an app.
+class AppPlatform {
  public:
-  BasePlatform();
+  AppPlatform();
 
   /// Called after our singleton has been instantiated. Any construction
   /// functionality requiring virtual functions resolving to their final
@@ -164,7 +155,7 @@ class BasePlatform {
   /// Make a purchase.
   virtual void DoPurchase(const std::string& item);
 
-  virtual ~BasePlatform();
+  virtual ~AppPlatform();
 
  private:
   int SmartGetC_(FILE* stream);
@@ -179,4 +170,4 @@ class BasePlatform {
 
 }  // namespace ballistica::base
 
-#endif  // BALLISTICA_BASE_PLATFORM_BASE_PLATFORM_H_
+#endif  // BALLISTICA_BASE_APP_PLATFORM_APP_PLATFORM_H_

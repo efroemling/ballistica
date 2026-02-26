@@ -110,7 +110,7 @@ class ScrollWidget : public ContainerWidget {
   bool touch_is_scrolling_{};
   bool touch_down_sent_{};
   bool touch_up_sent_{};
-  bool has_momentum_{false};
+  bool has_momentum_{};
   bool trough_dirty_{true};
   bool shadow_dirty_{true};
   bool glow_dirty_{true};
@@ -120,7 +120,7 @@ class ScrollWidget : public ContainerWidget {
   bool touch_held_{};
   bool touch_moved_significantly_{};
   bool highlight_{true};
-  bool capture_arrows_{false};
+  bool capture_arrows_{};
   bool mouse_held_scroll_down_{};
   bool mouse_held_scroll_up_{};
   bool mouse_held_thumb_{};

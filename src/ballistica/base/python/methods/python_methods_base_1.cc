@@ -18,7 +18,7 @@
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/logging/logging.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
@@ -468,7 +468,7 @@ static auto PyAppInstanceUUID(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  return PyUnicode_FromString(g_base->GetAppInstanceUUID().c_str());
+  return PyUnicode_FromString(g_base->LocalAppInstanceUUID().c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -1948,7 +1948,6 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyMacMusicAppPlayPlaylistDef,
       PyMacMusicAppGetPlaylistsDef,
       PyIsOSPlayingMusicDef,
-      // PyLifecycleLogDef,
       PyExecArgDef,
       PyOnAppRunningDef,
       PyOnInitialAppModeSetDef,

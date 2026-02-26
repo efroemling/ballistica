@@ -8,7 +8,7 @@
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/python/python.h"
 
@@ -17,7 +17,7 @@
 namespace ballistica {
 
 auto MacroFunctionTimerStartTime() -> millisecs_t {
-  return core::CorePlatform::TimeMonotonicMillisecs();
+  return core::Platform::TimeMonotonicMillisecs();
 }
 
 void MacroFunctionTimerEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
@@ -28,7 +28,7 @@ void MacroFunctionTimerEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
     return;
   }
   assert(corefs);
-  millisecs_t endtime = core::CorePlatform::TimeMonotonicMillisecs();
+  millisecs_t endtime = core::Platform::TimeMonotonicMillisecs();
   if (endtime - starttime > time) {
     core::g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
                                std::to_string(endtime - starttime)
@@ -45,7 +45,7 @@ void MacroFunctionTimerEndThread(core::CoreFeatureSet* corefs,
     return;
   }
   assert(corefs);
-  millisecs_t endtime = core::CorePlatform::TimeMonotonicMillisecs();
+  millisecs_t endtime = core::Platform::TimeMonotonicMillisecs();
   if (endtime - starttime > time) {
     corefs->logging->Log(
         LogName::kBa, LogLevel::kWarning,
@@ -63,7 +63,7 @@ void MacroFunctionTimerEndEx(core::CoreFeatureSet* corefs,
     return;
   }
   assert(corefs);
-  millisecs_t endtime = core::CorePlatform::TimeMonotonicMillisecs();
+  millisecs_t endtime = core::Platform::TimeMonotonicMillisecs();
   if (endtime - starttime > time) {
     corefs->logging->Log(LogName::kBa, LogLevel::kWarning,
                          std::to_string(endtime - starttime)
@@ -82,7 +82,7 @@ void MacroFunctionTimerEndThreadEx(core::CoreFeatureSet* corefs,
     return;
   }
   assert(corefs);
-  millisecs_t endtime = core::CorePlatform::TimeMonotonicMillisecs();
+  millisecs_t endtime = core::Platform::TimeMonotonicMillisecs();
   if (endtime - starttime > time) {
     corefs->logging->Log(LogName::kBa, LogLevel::kWarning,
                          std::to_string(endtime - starttime)
@@ -101,7 +101,7 @@ void MacroTimeCheckEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
   if (g_buildconfig.variant_test_build()) {
     return;
   }
-  millisecs_t e = core::CorePlatform::TimeMonotonicMillisecs();
+  millisecs_t e = core::Platform::TimeMonotonicMillisecs();
   if (e - starttime > time) {
     corefs->logging->Log(LogName::kBa, LogLevel::kWarning,
                          std::string(name) + " took "

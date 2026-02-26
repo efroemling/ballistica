@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_SCENE_V1_CONNECTION_CONNECTION_TO_HOST_H_
 #define BALLISTICA_SCENE_V1_CONNECTION_CONNECTION_TO_HOST_H_
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -33,15 +34,17 @@ class ConnectionToHost : public Connection {
   std::string party_name_;
   std::string peer_hash_input_;
   std::string peer_hash_;
+  std::optional<std::string> v2_auth_global_app_instance_id_;
+  // The client-session that we're driving
+  Object::WeakRef<ClientSession> client_session_;
+  int protocol_version_{-1};
+  int build_number_{};
+  millisecs_t last_ping_send_time_{};
   // Can remove once back-compat protocol is > 29
   bool ignore_old_attach_remote_player_packets_{};
   bool printed_connect_message_{};
   bool got_host_info_{};
-  int protocol_version_{-1};
-  int build_number_{};
-  millisecs_t last_ping_send_time_{};
-  // the client-session that we're driving
-  Object::WeakRef<ClientSession> client_session_;
+  bool got_v2_auth_usage_{};
 };
 
 }  // namespace ballistica::scene_v1

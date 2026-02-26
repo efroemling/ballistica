@@ -34,6 +34,8 @@ class CorePython {
     kLoggerRootLogCall,
     kLoggerBa,
     kLoggerBaLogCall,
+    kLoggerBaAccount,
+    kLoggerBaAccountLogCall,
     kLoggerBaApp,
     kLoggerBaAppLogCall,
     kLoggerBaAudio,
@@ -85,7 +87,7 @@ class CorePython {
   /// Can be called from any thread at any time. If called before Python
   /// logging is available, logs locally using Logging::EmitPlatformLog()
   /// (with an added warning).
-  void LoggingCall(LogName logname, LogLevel loglevel, const std::string& msg);
+  void LoggingCall(LogName logname, LogLevel loglevel, const char* msg);
   void ImportPythonObjs();
   void VerifyPythonEnvironment();
   void SoftImportBase();

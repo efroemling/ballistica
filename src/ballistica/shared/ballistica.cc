@@ -9,7 +9,7 @@
 #include <thread>
 
 #include "ballistica/core/logging/logging.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
@@ -44,8 +44,8 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22702;
-const char* kEngineVersion = "1.7.60";
+const int kEngineBuildNumber = 22724;
+const char* kEngineVersion = "1.7.61";
 const int kEngineApiVersion = 9;
 
 #if BA_MONOLITHIC_BUILD
@@ -58,7 +58,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
   core::BaseSoftInterface* l_base{};
 
   try {
-    auto time1 = core::CorePlatform::TimeMonotonicMillisecs();
+    auto time1 = core::Platform::TimeMonotonicMillisecs();
 
     // Even at the absolute start of execution we should be able to
     // reasonably log errors. Set env var BA_CRASH_TEST=1 to test this.
@@ -73,7 +73,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // import it first thing even if we don't explicitly use it.
     l_core = core::CoreFeatureSet::Import(&core_config);
 
-    auto time2 = core::CorePlatform::TimeMonotonicMillisecs();
+    auto time2 = core::Platform::TimeMonotonicMillisecs();
 
     // If a command was passed, simply run it and exit. We want to act
     // simply as a Python interpreter in that case; we don't do any
@@ -109,7 +109,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     l_core->python->MonolithicModeBaEnvImport();
     l_core->python->MonolithicModeBaEnvConfigure();
 
-    auto time3 = core::CorePlatform::TimeMonotonicMillisecs();
+    auto time3 = core::Platform::TimeMonotonicMillisecs();
 
     // We need the base feature-set to run a full app but we don't have a hard
     // dependency to it. Let's see if it's available.
@@ -118,7 +118,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       FatalError("Base module unavailable; can't run app.");
     }
 
-    auto time4 = core::CorePlatform::TimeMonotonicMillisecs();
+    auto time4 = core::Platform::TimeMonotonicMillisecs();
 
     // -------------------------------------------------------------------------
     // Phase 2: "The pieces are moving."
@@ -137,7 +137,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // environment do that part).
 
     // Make noise if it takes us too long to get to this point.
-    auto time5 = core::CorePlatform::TimeMonotonicMillisecs();
+    auto time5 = core::Platform::TimeMonotonicMillisecs();
     auto total_duration = time5 - time1;
     if (total_duration > 5000) {
       auto core_import_duration = time2 - time1;
@@ -232,7 +232,7 @@ class IncrementalInitRunner_ {
           Python::PermanentlyReleaseGIL();
 
           step_++;
-          last_step_time_ = core::CorePlatform::TimeMonotonicSeconds();
+          last_step_time_ = core::Platform::TimeMonotonicSeconds();
           return false;
 
         case 1: {
@@ -267,10 +267,9 @@ class IncrementalInitRunner_ {
           // to finish, returning periodically to avoid ANRs. Note that we
           // DON'T need to acquire the GIL here since we kicked off a
           // background thread to set a plain old bool we can watch for.
-          auto starttime{core::CorePlatform::TimeMonotonicMillisecs()};
+          auto starttime{core::Platform::TimeMonotonicMillisecs()};
           while (explicit_bool(true)) {
-            if (core::CorePlatform::TimeMonotonicMillisecs() - starttime
-                > 1000) {
+            if (core::Platform::TimeMonotonicMillisecs() - starttime > 1000) {
               // Out of time this pass.
               LogStepTime_(step_);
               return false;
@@ -286,7 +285,7 @@ class IncrementalInitRunner_ {
             }
             // Sleep for short bits while the warm start bg stuff is going
             // so they get most of the cpu.
-            core::CorePlatform::SleepMillisecs(1);
+            core::Platform::SleepMillisecs(1);
           }
         }
 
@@ -373,7 +372,7 @@ class IncrementalInitRunner_ {
       return;
     }
     char buffer[256];
-    auto now{core::CorePlatform::TimeMonotonicSeconds()};
+    auto now{core::Platform::TimeMonotonicSeconds()};
     snprintf(buffer, sizeof(buffer), "Incremental init step %d took %.3fs.",
              step, now - last_step_time_);
     core_->platform->EmitPlatformLog("ba_native_incr_init", LogLevel::kDebug,

@@ -343,6 +343,23 @@ class InventoryUIController(DocUIController):
         profile = action.args.get('profile')
         assert isinstance(profile, str)
 
+        # Play a random sound from the character.
+        classic = bui.app.classic
+        if classic is not None:
+            profiles = bui.app.config.get('Player Profiles', {})
+            p_info = profiles.get(profile)
+            if p_info:
+                char = p_info.get('character', 'Spaz')
+                appearance = classic.spaz_appearances.get(char)
+                if appearance:
+                    sounds = (
+                        appearance.jump_sounds
+                        + appearance.attack_sounds
+                        + appearance.pickup_sounds
+                    )
+                    if sounds:
+                        bui.getsound(random.choice(sounds)).play()
+
         action.window.main_window_replace(
             lambda: EditProfileWindow(
                 profile,

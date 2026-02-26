@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/base/platform/base_platform.h"
+#include "ballistica/base/app_platform/app_platform.h"
 
 #include <csignal>
 #include <cstdio>
@@ -22,23 +22,23 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
 
 namespace ballistica::base {
 
-BasePlatform::BasePlatform() = default;
+AppPlatform::AppPlatform() = default;
 
-void BasePlatform::PostInit() {
+void AppPlatform::PostInit() {
   // Make sure any overrides remember to call us.
   ran_base_post_init_ = true;
 }
 
-BasePlatform::~BasePlatform() = default;
+AppPlatform::~AppPlatform() = default;
 
-void BasePlatform::LoginAdapterGetSignInToken(const std::string& login_type,
-                                              int attempt_id) {
+void AppPlatform::LoginAdapterGetSignInToken(const std::string& login_type,
+                                             int attempt_id) {
   // Default implementation simply calls completion callback immediately.
   g_base->logic->event_loop()->PushCall([login_type, attempt_id] {
     PythonRef args(Py_BuildValue("(sss)", login_type.c_str(),
@@ -50,12 +50,12 @@ void BasePlatform::LoginAdapterGetSignInToken(const std::string& login_type,
   });
 }
 
-void BasePlatform::LoginAdapterBackEndActiveChange(
-    const std::string& login_type, bool active) {
+void AppPlatform::LoginAdapterBackEndActiveChange(const std::string& login_type,
+                                                  bool active) {
   // Default is no-op.
 }
 
-auto BasePlatform::GetPublicDeviceUUID() -> std::string {
+auto AppPlatform::GetPublicDeviceUUID() -> std::string {
   assert(g_core);
 
   if (public_device_uuid_.empty()) {
@@ -85,7 +85,7 @@ auto BasePlatform::GetPublicDeviceUUID() -> std::string {
   return public_device_uuid_;
 }
 
-void BasePlatform::Purchase(const std::string& item) {
+void AppPlatform::Purchase(const std::string& item) {
   // We use alternate _c ids for consumables in some cases where
   // we originally used entitlements. We are all consumables now though
   // so we can purchase for different accounts.
@@ -100,31 +100,31 @@ void BasePlatform::Purchase(const std::string& item) {
   DoPurchase(item_filtered);
 }
 
-void BasePlatform::DoPurchase(const std::string& item) {
+void AppPlatform::DoPurchase(const std::string& item) {
   // Just print 'unavailable' by default.
   g_base->python->objs().PushCall(
       base::BasePython::ObjID::kUnavailableMessageCall);
 }
 
-void BasePlatform::RestorePurchases() {
+void AppPlatform::RestorePurchases() {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "RestorePurchases() unimplemented");
 }
 
-void BasePlatform::PurchaseAck(const std::string& purchase,
-                               const std::string& order_id) {
+void AppPlatform::PurchaseAck(const std::string& purchase,
+                              const std::string& order_id) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "PurchaseAck() unimplemented");
 }
 
-void BasePlatform::OpenURL(const std::string& url) {
+void AppPlatform::OpenURL(const std::string& url) {
   // We can be called from any thread, but DoOpenURL expects to be run in
   // the main thread.
   g_base->app_adapter->PushMainThreadCall(
       [url] { g_base->platform->DoOpenURL(url); });
 }
 
-void BasePlatform::DoOpenURL(const std::string& url) {
+void AppPlatform::DoOpenURL(const std::string& url) {
   // As a default, use Python's webbrowser module functionality.
   // It expects to be run in the logic thread though so we need
   // to push it over that way.
@@ -132,9 +132,9 @@ void BasePlatform::DoOpenURL(const std::string& url) {
       [url] { g_base->python->OpenURLWithWebBrowserModule(url); });
 }
 
-auto BasePlatform::OverlayWebBrowserIsSupported() -> bool { return false; }
+auto AppPlatform::OverlayWebBrowserIsSupported() -> bool { return false; }
 
-void BasePlatform::OverlayWebBrowserOpenURL(const std::string& url) {
+void AppPlatform::OverlayWebBrowserOpenURL(const std::string& url) {
   BA_PRECONDITION(OverlayWebBrowserIsSupported());
 
   std::scoped_lock lock(web_overlay_mutex_);
@@ -152,13 +152,13 @@ void BasePlatform::OverlayWebBrowserOpenURL(const std::string& url) {
       [url] { g_base->platform->DoOverlayWebBrowserOpenURL(url); });
 }
 
-auto BasePlatform::OverlayWebBrowserIsOpen() -> bool {
+auto AppPlatform::OverlayWebBrowserIsOpen() -> bool {
   BA_PRECONDITION(OverlayWebBrowserIsSupported());
   // No reason to lock the mutex here I think.
   return web_overlay_open_;
 }
 
-void BasePlatform::OverlayWebBrowserOnClose() {
+void AppPlatform::OverlayWebBrowserOnClose() {
   std::scoped_lock lock(web_overlay_mutex_);
   if (!web_overlay_open_) {
     g_core->logging->Log(
@@ -168,7 +168,7 @@ void BasePlatform::OverlayWebBrowserOnClose() {
   web_overlay_open_ = false;
 }
 
-void BasePlatform::OverlayWebBrowserClose() {
+void AppPlatform::OverlayWebBrowserClose() {
   BA_PRECONDITION(OverlayWebBrowserIsSupported());
 
   // I don't think theres any point to looking at the opened-state, is
@@ -180,12 +180,12 @@ void BasePlatform::OverlayWebBrowserClose() {
       [] { g_base->platform->DoOverlayWebBrowserClose(); });
 }
 
-void BasePlatform::DoOverlayWebBrowserOpenURL(const std::string& url) {
+void AppPlatform::DoOverlayWebBrowserOpenURL(const std::string& url) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "DoOpenURLInOverlayBrowser unimplemented");
 }
 
-void BasePlatform::DoOverlayWebBrowserClose() {
+void AppPlatform::DoOverlayWebBrowserClose() {
   // As a default, use Python's webbrowser module functionality.
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "DoOverlayWebBrowserClose unimplemented");
@@ -202,7 +202,7 @@ static void HandleSIGTERM(int s) {
 }
 #endif
 
-void BasePlatform::SetupInterruptHandling() {
+void AppPlatform::SetupInterruptHandling() {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -224,17 +224,17 @@ void BasePlatform::SetupInterruptHandling() {
 #endif
 }
 
-void BasePlatform::OnAppStart() { assert(g_base->InLogicThread()); }
-void BasePlatform::OnAppSuspend() { assert(g_base->InLogicThread()); }
-void BasePlatform::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
-void BasePlatform::OnAppShutdown() { assert(g_base->InLogicThread()); }
-void BasePlatform::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
-void BasePlatform::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
-void BasePlatform::ApplyAppConfig() { assert(g_base->InLogicThread()); }
+void AppPlatform::OnAppStart() { assert(g_base->InLogicThread()); }
+void AppPlatform::OnAppSuspend() { assert(g_base->InLogicThread()); }
+void AppPlatform::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
+void AppPlatform::OnAppShutdown() { assert(g_base->InLogicThread()); }
+void AppPlatform::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
+void AppPlatform::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
+void AppPlatform::ApplyAppConfig() { assert(g_base->InLogicThread()); }
 
-auto BasePlatform::HaveStringEditor() -> bool { return false; }
+auto AppPlatform::HaveStringEditor() -> bool { return false; }
 
-void BasePlatform::InvokeStringEditor(PyObject* string_edit_adapter) {
+void AppPlatform::InvokeStringEditor(PyObject* string_edit_adapter) {
   BA_PRECONDITION(HaveStringEditor());
   BA_PRECONDITION(g_base->InLogicThread());
 
@@ -254,7 +254,7 @@ void BasePlatform::InvokeStringEditor(PyObject* string_edit_adapter) {
 }
 
 /// Should be called by platform StringEditor to apply a value.
-void BasePlatform::StringEditorApply(const std::string& val) {
+void AppPlatform::StringEditorApply(const std::string& val) {
   BA_PRECONDITION(HaveStringEditor());
   BA_PRECONDITION(g_base->InLogicThread());
   BA_PRECONDITION(string_edit_adapter_.exists());
@@ -264,7 +264,7 @@ void BasePlatform::StringEditorApply(const std::string& val) {
 }
 
 /// Should be called by platform StringEditor to signify a cancel.
-void BasePlatform::StringEditorCancel() {
+void AppPlatform::StringEditorCancel() {
   BA_PRECONDITION(HaveStringEditor());
   BA_PRECONDITION(g_base->InLogicThread());
   BA_PRECONDITION(string_edit_adapter_.exists());
@@ -272,26 +272,26 @@ void BasePlatform::StringEditorCancel() {
   string_edit_adapter_.Release();
 }
 
-void BasePlatform::DoInvokeStringEditor(const std::string& title,
-                                        const std::string& value,
-                                        std::optional<int> max_chars) {
+void AppPlatform::DoInvokeStringEditor(const std::string& title,
+                                       const std::string& value,
+                                       std::optional<int> max_chars) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "FIXME: DoInvokeStringEditor() unimplemented");
 }
 
-auto BasePlatform::SupportsOpenDirExternally() -> bool { return false; }
+auto AppPlatform::SupportsOpenDirExternally() -> bool { return false; }
 
-void BasePlatform::OpenDirExternally(const std::string& path) {
+void AppPlatform::OpenDirExternally(const std::string& path) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "OpenDirExternally() unimplemented");
 }
 
-void BasePlatform::OpenFileExternally(const std::string& path) {
+void AppPlatform::OpenFileExternally(const std::string& path) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "OpenFileExternally() unimplemented");
 }
 
-auto BasePlatform::SafeStdinFGetS(char* s, int n, FILE* iop) -> char* {
+auto AppPlatform::SafeStdinFGetS(char* s, int n, FILE* iop) -> char* {
 #if BA_PLATFORM_WINDOWS
   // Use plain old vanilla fgets on Windows since blocking stdin reads
   // don't seem to prevent the app from exiting there.
@@ -318,7 +318,7 @@ auto BasePlatform::SafeStdinFGetS(char* s, int n, FILE* iop) -> char* {
 #endif  // BA_PLATFORM_WINDOWS
 }
 
-int BasePlatform::SmartGetC_(FILE* stream) {
+int AppPlatform::SmartGetC_(FILE* stream) {
 #if BA_PLATFORM_WINDOWS
   return -1;
 #else

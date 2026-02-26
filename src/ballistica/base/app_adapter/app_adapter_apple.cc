@@ -6,12 +6,12 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/base/app_platform/apple/from_swift.h"
+#include "ballistica/base/app_platform/support/min_sdl_key_names.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/apple/from_swift.h"
-#include "ballistica/base/platform/support/min_sdl_key_names.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/event_loop.h"

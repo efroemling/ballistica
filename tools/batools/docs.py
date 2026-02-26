@@ -29,7 +29,7 @@ class AttributeInfo:
     docs: str | None = None
 
 
-_g_genned_pdoc_with_dummy_modules = False  # pylint: disable=invalid-name
+_g_genned_pdoc_with_dummy_modules = False
 
 
 def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:

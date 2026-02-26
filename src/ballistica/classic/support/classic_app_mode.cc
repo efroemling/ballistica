@@ -22,7 +22,7 @@
 #include "ballistica/classic/python/classic_python.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
@@ -90,7 +90,7 @@ bool ClassicAppMode::IsInMainMenu() const {
   return (hostsession && hostsession->is_main_menu());
 }
 
-static ClassicAppMode* g_scene_v1_app_mode{};
+static ClassicAppMode* g_classic_app_mode{};
 
 void ClassicAppMode::OnActivate() {
   assert(g_base->InLogicThread());
@@ -363,7 +363,7 @@ void ClassicAppMode::HostScanCycle() {
             std::scoped_lock lock(scan_results_mutex_);
 
             // Ignore if it looks like its us.
-            if (id != g_base->GetAppInstanceUUID()) {
+            if (id != g_base->LocalAppInstanceUUID()) {
               std::string key = id;
               auto i = scan_results_.find(key);
 
@@ -443,8 +443,8 @@ auto ClassicAppMode::GetActive() -> ClassicAppMode* {
   // keep in mind that app-mode may change under them.
 
   // Otherwise return our singleton only if it is current.
-  if (g_base->app_mode() == g_scene_v1_app_mode) {
-    return g_scene_v1_app_mode;
+  if (g_base->app_mode() == g_classic_app_mode) {
+    return g_classic_app_mode;
   }
   return nullptr;
 }
@@ -491,10 +491,10 @@ auto ClassicAppMode::GetActiveOrFatal() -> ClassicAppMode* {
 auto ClassicAppMode::GetSingleton() -> ClassicAppMode* {
   assert(g_base->InLogicThread());
 
-  if (g_scene_v1_app_mode == nullptr) {
-    g_scene_v1_app_mode = new ClassicAppMode();
+  if (g_classic_app_mode == nullptr) {
+    g_classic_app_mode = new ClassicAppMode();
   }
-  return g_scene_v1_app_mode;
+  return g_classic_app_mode;
 }
 
 ClassicAppMode::ClassicAppMode()
@@ -566,7 +566,7 @@ auto ClassicAppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
 void ClassicAppMode::StepDisplayTime() {
   assert(g_base->InLogicThread());
 
-  auto startms{core::CorePlatform::TimeMonotonicMillisecs()};
+  auto startms{core::Platform::TimeMonotonicMillisecs()};
   millisecs_t app_time = g_core->AppTimeMillisecs();
   g_core->platform->SetDebugKey("LastUpdateTime", std::to_string(startms));
   in_update_ = true;
@@ -642,7 +642,7 @@ void ClassicAppMode::StepDisplayTime() {
   // Report excessively long updates.
   if (g_core->core_config().debug_timing
       && app_time >= next_long_update_report_time_) {
-    auto duration{core::CorePlatform::TimeMonotonicMillisecs() - startms};
+    auto duration{core::Platform::TimeMonotonicMillisecs() - startms};
 
     // Complain when our full update takes longer than 1/60th second.
     if (duration > (1000 / 60)) {
@@ -1086,14 +1086,15 @@ auto ClassicAppMode::GetDisplayPing() -> std::optional<float> {
 
 void ClassicAppMode::CleanUpBeforeConnectingToHost() {
   // We can't have connected clients and a host-connection at the same time.
-  // Make a minimal attempt to disconnect any client connections we have, but
-  // get them off the list immediately.
+  // Make a minimal attempt to disconnect any client connections we have,
+  // but get them off the list immediately.
+  //
   // FIXME: Should we have a 'purgatory' for dying client connections?..
   //  (they may not get the single 'go away' packet we send here)
   connections_->ForceDisconnectClients();
 
-  // Also make sure our public party state is off; this will inform the server
-  // that it should not be handing out our address to anyone.
+  // Also make sure our public party state is off; this will inform the
+  // server that it should not be handing out our address to anyone.
   SetPublicPartyEnabled(false);
 }
 
@@ -1550,7 +1551,7 @@ void ClassicAppMode::HandleGameQuery(const char* buffer, size_t size,
     // version, our unique-app-instance-id, and our player_spec.
     char msg[400];
 
-    std::string usid = g_base->GetAppInstanceUUID();
+    std::string usid = g_base->LocalAppInstanceUUID();
     std::string player_spec_string;
 
     // If we're signed in, send our account spec. Otherwise just send a

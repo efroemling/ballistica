@@ -16,6 +16,7 @@
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"
 #include "ballistica/shared/python/python.h"
@@ -295,9 +296,10 @@ static auto PySetAuthenticateClients(PyObject* self, PyObject* args,
                                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   int enable;
+  int version;
   static const char* kwlist[] = {"enable", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
-                                   const_cast<char**>(kwlist), &enable)) {
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "p", const_cast<char**>(kwlist), &enable, &version)) {
     return nullptr;
   }
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
@@ -676,6 +678,51 @@ static PyMethodDef PyGetClientPublicDeviceUUIDDef = {
     "periodically with updates to the game or operating system.",
 };
 
+// ----------------------- get_client_ping -----------------------------
+
+static PyObject* PyGetClientPing(PyObject* self, PyObject* args,
+                                 PyObject* keywds) {
+  BA_PYTHON_TRY;
+
+  int client_id;
+  static const char* kwlist[] = {"client_id", nullptr};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &client_id)) {
+    return nullptr;
+  }
+
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+
+  auto&& connection_iter{
+      appmode->connections()->connections_to_clients().find(client_id)};
+
+  if (connection_iter
+      == appmode->connections()->connections_to_clients().end()) {
+    return PyFloat_FromDouble(-1.0f);
+  }
+
+  assert(connection_iter->second.exists());
+
+  ConnectionToClient* connection = connection_iter->second.get();
+
+  float ping = connection->current_ping();
+
+  return PyFloat_FromDouble(ping);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetClientPingDef = {
+    "get_client_ping",             // name
+    (PyCFunction)PyGetClientPing,  // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "get_client_ping(client_id: int) -> float\n"
+    "\n"
+    "Return the current ping (RTT in ms) for a connected client.\n"
+    "Returns -1.0 if client_id is invalid.\n"};
+
 // ----------------------------- get_game_port ---------------------------------
 
 static auto PyGetGamePort(PyObject* self, PyObject* args) -> PyObject* {
@@ -752,7 +799,7 @@ static PyMethodDef PyHostScanCycleDef = {
     (PyCFunction)PyHostScanCycle,  // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "host_scan_cycle() -> list\n"
+    "host_scan_cycle() -> list[dict[str, str]]\n"
     "\n"
     "(internal)\n"
     "\n"
@@ -900,6 +947,7 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PyDisconnectFromHostDef,
       PyDisconnectClientDef,
       PyGetClientPublicDeviceUUIDDef,
+      PyGetClientPingDef,
       PyGetConnectionToHostInfoDef,
       PyGetConnectionToHostInfo2Def,
       PyClientInfoQueryResponseDef,

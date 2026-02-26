@@ -27,16 +27,25 @@ class ServerConfig:
     # address.
     party_is_public: bool = True
 
-    # If True, all connecting clients will be authenticated through the
-    # master server to screen for fake account info. Generally this
-    # should always be enabled unless you are hosting on a LAN with no
-    # internet connection.
+    # If True, the master-server will provide your server with verified
+    # account info for all connecting clients. Generally this should
+    # always be enabled unless you are hosting on a LAN with no internet
+    # connection. Note that if protocol_version is set to 36 or newer,
+    # client authentication uses V2 account info (V2 account ids look
+    # like a-XXX while V1 ids look like pb-XXX). This is highly
+    # recommended as it does not suffer from spoofing vulnerabilities
+    # that V1 ids do. You can use the following url to convert V1 ids to
+    # V2 if you have an existing database of account ids for your
+    # server: https://legacy.ballistica.net/v2id/YOURV1IDHERE
     authenticate_clients: bool = True
 
-    # IDs of server admins. Server admins are not kickable through the
-    # default kick vote system and they are able to kick players without
-    # a vote. To get your account id, enter 'getaccountid' in
-    # settings->advanced->enter-code.
+    # Account IDs of server admins. Server admins are not kickable
+    # through the default kick vote system and they are able to kick
+    # players without a vote. If protocol_version is set to 36 or newer
+    # this will use V2 account ids (a-XXX); otherwise it will use V1 ids
+    # (pb-XXX). To get your V2 account id, poke the 'manage account'
+    # button in the account window in-game. To get your V1 account id,
+    # enter 'getaccountid' in Settings->Advanced->Send Info
     admins: list[str] = field(default_factory=list)
 
     # Whether the default kick-voting system is enabled.
@@ -176,7 +185,10 @@ class ServerConfig:
     # Protocol version we host with. Currently the default is 33 which
     # still allows older 1.4 game clients to connect. Explicitly setting
     # to 35 no longer allows those clients but adds/fixes a few things
-    # such as making camera shake properly work in net games.
+    # such as making camera shake properly work in net games. Protocol
+    # 36 enables V2 account ids (a-XXX) for client authentication, which
+    # does not suffer from spoofing vulnerabilities that V1 account ids
+    # (pb-XXX) did.
     protocol_version: int | None = None
 
     # (internal) stress-testing mode.

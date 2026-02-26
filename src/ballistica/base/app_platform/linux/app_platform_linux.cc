@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
 #if BA_PLATFORM_LINUX
-#include "ballistica/base/platform/linux/base_platform_linux.h"
+#include "ballistica/base/app_platform/linux/app_platform_linux.h"
 
 #include <stdlib.h>
 
@@ -12,17 +12,17 @@
 
 namespace ballistica::base {
 
-BasePlatformLinux::BasePlatformLinux() = default;
+AppPlatformLinux::AppPlatformLinux() = default;
 
-void BasePlatformLinux::DoOpenURL(const std::string& url) {
+void AppPlatformLinux::DoOpenURL(const std::string& url) {
   // UPDATE - just relying on default Python webbrowser path now.
   // (technically could kill this override).
-  BasePlatform::DoOpenURL(url);
+  AppPlatform::DoOpenURL(url);
 }
 
-auto BasePlatformLinux::SupportsOpenDirExternally() -> bool { return true; }
+auto AppPlatformLinux::SupportsOpenDirExternally() -> bool { return true; }
 
-void BasePlatformLinux::OpenDirExternally(const std::string& path) {
+void AppPlatformLinux::OpenDirExternally(const std::string& path) {
   std::string cmd = std::string("xdg-open \"") + path + "\"";
   int result = system(cmd.c_str());
   if (result != 0) {
@@ -32,7 +32,7 @@ void BasePlatformLinux::OpenDirExternally(const std::string& path) {
   }
 }
 
-void BasePlatformLinux::OpenFileExternally(const std::string& path) {
+void AppPlatformLinux::OpenFileExternally(const std::string& path) {
   std::string cmd = std::string("xdg-open \"") + path + "\"";
   int result = system(cmd.c_str());
   if (result != 0) {

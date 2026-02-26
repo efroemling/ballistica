@@ -1,7 +1,7 @@
 // Released under the MIT License. See LICENSE for details.
 
-#ifndef BALLISTICA_CORE_PLATFORM_APPLE_CORE_PLATFORM_APPLE_H_
-#define BALLISTICA_CORE_PLATFORM_APPLE_CORE_PLATFORM_APPLE_H_
+#ifndef BALLISTICA_CORE_PLATFORM_APPLE_PLATFORM_APPLE_H_
+#define BALLISTICA_CORE_PLATFORM_APPLE_PLATFORM_APPLE_H_
 #if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS
 
 #include <list>
@@ -9,13 +9,13 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 
 namespace ballistica::core {
 
-class CorePlatformApple : public CorePlatform {
+class PlatformApple : public Platform {
  public:
-  CorePlatformApple();
+  PlatformApple();
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override;
   auto GetRealLegacyDeviceUUID(std::string* uuid) -> bool override;
   auto DoGetConfigDirectoryMonolithicDefault()
@@ -25,8 +25,8 @@ class CorePlatformApple : public CorePlatform {
   auto DoHasTouchScreen() -> bool override;
   auto GetDefaultUIScale() -> UIScale override;
   auto IsRunningOnDesktop() -> bool override;
-  void EmitPlatformLog(const std::string& name, LogLevel level,
-                       const std::string& msg) override;
+  void EmitPlatformLog(std::string_view name, LogLevel level,
+                       std::string_view msg) override;
   void GetTextBoundsAndWidth(const std::string& text, Rect* r,
                              float* width) override;
   void FreeTextTexture(void* tex) override;
@@ -74,4 +74,4 @@ class CorePlatformApple : public CorePlatform {
 }  // namespace ballistica::core
 
 #endif  // BA_XCODE_BUILD || BA_PLATFORM_MACOS
-#endif  // BALLISTICA_CORE_PLATFORM_APPLE_CORE_PLATFORM_APPLE_H_
+#endif  // BALLISTICA_CORE_PLATFORM_APPLE_PLATFORM_APPLE_H_

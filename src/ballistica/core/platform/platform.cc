@@ -1,6 +1,6 @@
 // Released under the MIT License. See LICENSE for details.
 
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 
 #include <chrono>
 #include <cstdio>
@@ -52,53 +52,53 @@
 
 #if BA_PLATFORM_ANDROID
 #if BA_VARIANT_GOOGLE_PLAY
-#include "ballistica/core/platform/android/google/core_plat_andr_google.h"
-#define BA_CORE_PLATFORM_CLASS CorePlatformAndroidGoogle
+#include "ballistica/core/platform/android/google/platform_android_google.h"
+#define BA_PLATFORM_CLASS PlatformAndroidGoogle
 #elif BA_VARIANT_AMAZON_APPSTORE
-#include "ballistica/core/platform/android/amazon/core_plat_andr_amazon.h"
-#define BA_CORE_PLATFORM_CLASS CorePlatformAndroidAmazon
+#include "ballistica/core/platform/android/amazon/platform_android_amazon.h"
+#define BA_PLATFORM_CLASS PlatformAndroidAmazon
 #elif BA_VARIANT_CARDBOARD
-#include "ballistica/core/platform/android/cardboard/core_pl_an_cardboard.h"
-#define BA_CORE_PLATFORM_CLASS CorePlatformAndroidCardboard
+#include "ballistica/core/platform/android/cardboard/platform_android_cardboard.h"
+#define BA_PLATFORM_CLASS PlatformAndroidCardboard
 #else  // Generic android.
-#include "ballistica/core/platform/android/core_platform_android.h"
-#define BA_CORE_PLATFORM_CLASS CorePlatformAndroid
+#include "ballistica/core/platform/android/platform_android.h"
+#define BA_PLATFORM_CLASS PlatformAndroid
 #endif  // (Android subplatform)
 
 // Apple -----------------------------------------------------------------------
 
 #elif BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS
-#include "ballistica/core/platform/apple/core_platform_apple.h"
-#define BA_CORE_PLATFORM_CLASS CorePlatformApple
+#include "ballistica/core/platform/apple/platform_apple.h"
+#define BA_PLATFORM_CLASS PlatformApple
 
 // Windows ---------------------------------------------------------------------
 
 #elif BA_PLATFORM_WINDOWS
 #if BA_RIFT_BUILD
-#include "ballistica/core/platform/windows/core_platform_windows_oculus.h"
-#define BA_CORE_PLATFORM_CLASS CorePlatformWindowsOculus
+#include "ballistica/core/platform/windows/platform_windows_oculus.h"
+#define BA_PLATFORM_CLASS PlatformWindowsOculus
 #else  // generic windows
-#include "ballistica/core/platform/windows/core_platform_windows.h"
-#define BA_CORE_PLATFORM_CLASS CorePlatformWindows
+#include "ballistica/core/platform/windows/platform_windows.h"
+#define BA_PLATFORM_CLASS PlatformWindows
 #endif  // windows subtype
 
 // Linux -----------------------------------------------------------------------
 
 #elif BA_PLATFORM_LINUX
-#include "ballistica/core/platform/linux/core_platform_linux.h"
-#define BA_CORE_PLATFORM_CLASS CorePlatformLinux
+#include "ballistica/core/platform/linux/platform_linux.h"
+#define BA_PLATFORM_CLASS PlatformLinux
 #else
 
 // Generic ---------------------------------------------------------------------
 
-#define BA_CORE_PLATFORM_CLASS CorePlatform
+#define BA_PLATFORM_CLASS Platform
 
 #endif
 
 // ----------------------- END PLATFORM SELECTION ------------------------------
 
-#ifndef BA_CORE_PLATFORM_CLASS
-#error no BA_CORE_PLATFORM_CLASS defined for this platform
+#ifndef BA_PLATFORM_CLASS
+#error no BA_PLATFORM_CLASS defined for this platform
 #endif
 
 // A call that can be used by custom built native libraries (Python, etc.)
@@ -113,21 +113,20 @@ void BallisticaLowLevelDebugLog(const char* msg) {}
 
 namespace ballistica::core {
 
-auto CorePlatform::Create() -> CorePlatform* {
-  auto platform = new BA_CORE_PLATFORM_CLASS();
+auto Platform::Create() -> Platform* {
+  auto platform = new BA_PLATFORM_CLASS();
   platform->PostInit();
   assert(platform->ran_base_post_init_);
   return platform;
 }
 
-void CorePlatform::LowLevelDebugLog(const std::string& msg) {
+void Platform::LowLevelDebugLog(const std::string& msg) {
   HandleLowLevelDebugLog(msg);
 }
 
-CorePlatform::CorePlatform()
-    : start_time_millisecs_(TimeMonotonicMillisecs()) {}
+Platform::Platform() : start_time_millisecs_(TimeMonotonicMillisecs()) {}
 
-void CorePlatform::PostInit() {
+void Platform::PostInit() {
   // Hmm; we seem to get some funky invalid utf8 out of
   // this sometimes (mainly on windows). Should look into that
   // more closely or at least log it somewhere.
@@ -144,9 +143,9 @@ void CorePlatform::PostInit() {
   }
 }
 
-CorePlatform::~CorePlatform() = default;
+Platform::~Platform() = default;
 
-auto CorePlatform::GetLegacyDeviceUUID() -> const std::string& {
+auto Platform::GetLegacyDeviceUUID() -> const std::string& {
   if (!have_device_uuid_) {
     legacy_device_uuid_ = GetDeviceV1AccountUUIDPrefix();
 
@@ -202,17 +201,17 @@ auto CorePlatform::GetLegacyDeviceUUID() -> const std::string& {
   return legacy_device_uuid_;
 }
 
-auto CorePlatform::GetDeviceV1AccountUUIDPrefix() -> std::string {
+auto Platform::GetDeviceV1AccountUUIDPrefix() -> std::string {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "GetDeviceV1AccountUUIDPrefix() unimplemented");
   return "u";
 }
 
-auto CorePlatform::GetRealLegacyDeviceUUID(std::string* uuid) -> bool {
+auto Platform::GetRealLegacyDeviceUUID(std::string* uuid) -> bool {
   return false;
 }
 
-auto CorePlatform::GenerateUUID() -> std::string {
+auto Platform::GenerateUUID() -> std::string {
   // We used to have platform-specific code for this, but nowadays we just
   // ask Python to do it for us. Perhaps should move this out of platform.
   Python::ScopedInterpreterLock gil;
@@ -222,18 +221,18 @@ auto CorePlatform::GenerateUUID() -> std::string {
   return uuid.ValueAsString();
 }
 
-auto CorePlatform::GetDeviceUUIDInputs() -> std::list<std::string> {
+auto Platform::GetDeviceUUIDInputs() -> std::list<std::string> {
   throw Exception("GetDeviceUUIDInputs unimplemented");
 }
 
-auto CorePlatform::DoGetConfigDirectoryMonolithicDefault()
+auto Platform::DoGetConfigDirectoryMonolithicDefault()
     -> std::optional<std::string> {
   std::string config_dir;
   // Go with unset here; let baenv handle it in Python-land.
   return {};
 }
 
-auto CorePlatform::DoGetCacheDirectoryMonolithicDefault()
+auto Platform::DoGetCacheDirectoryMonolithicDefault()
     -> std::optional<std::string> {
   std::string config_dir;
   // Go with unset here; let baenv handle it in Python-land.
@@ -241,7 +240,7 @@ auto CorePlatform::DoGetCacheDirectoryMonolithicDefault()
 }
 
 // FIXME: should make this unnecessary.
-auto CorePlatform::GetLowLevelConfigValue(const char* key, int default_value)
+auto Platform::GetLowLevelConfigValue(const char* key, int default_value)
     -> int {
   std::string path =
       g_core->GetConfigDirectory() + BA_DIRSLASH + ".cvar_" + key;
@@ -261,7 +260,7 @@ auto CorePlatform::GetLowLevelConfigValue(const char* key, int default_value)
 }
 
 // FIXME: should make this unnecessary.
-void CorePlatform::SetLowLevelConfigValue(const char* key, int value) {
+void Platform::SetLowLevelConfigValue(const char* key, int value) {
   std::string path =
       g_core->GetConfigDirectory() + BA_DIRSLASH + ".cvar_" + key;
   std::string out = std::to_string(value);
@@ -278,7 +277,7 @@ void CorePlatform::SetLowLevelConfigValue(const char* key, int value) {
   }
 }
 
-// auto CorePlatform::GetCacheDirectory() -> std::string {
+// auto Platform::GetCacheDirectory() -> std::string {
 //   if (!made_cache_dir_) {
 //     cache_dir_ = GetDefaultCacheDirectory();
 //     MakeDir(cache_dir_);
@@ -287,12 +286,12 @@ void CorePlatform::SetLowLevelConfigValue(const char* key, int value) {
 //   return cache_dir_;
 // }
 
-// auto CorePlatform::GetDefaultCacheDirectory() -> std::string {
+// auto Platform::GetDefaultCacheDirectory() -> std::string {
 //   // By default, stuff this in a subdir under our config dir.
 //   return g_core->GetConfigDirectory() + BA_DIRSLASH + "cache";
 // }
 
-auto CorePlatform::GetReplaysDir() -> std::string {
+auto Platform::GetReplaysDir() -> std::string {
   static bool made_dir = false;
   if (!made_dir) {
     replays_dir_ = g_core->GetConfigDirectory() + BA_DIRSLASH + "replays";
@@ -303,7 +302,7 @@ auto CorePlatform::GetReplaysDir() -> std::string {
 }
 
 // rename() supporting UTF8 strings.
-auto CorePlatform::Rename(const char* oldname, const char* newname) -> int {
+auto Platform::Rename(const char* oldname, const char* newname) -> int {
   // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -312,7 +311,7 @@ auto CorePlatform::Rename(const char* oldname, const char* newname) -> int {
 #endif
 }
 
-auto CorePlatform::Remove(const char* path) -> int {
+auto Platform::Remove(const char* path) -> int {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -322,7 +321,7 @@ auto CorePlatform::Remove(const char* path) -> int {
 }
 
 // stat() supporting UTF8 strings.
-auto CorePlatform::Stat(const char* path, struct BA_STAT* buffer) -> int {
+auto Platform::Stat(const char* path, struct BA_STAT* buffer) -> int {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -332,7 +331,7 @@ auto CorePlatform::Stat(const char* path, struct BA_STAT* buffer) -> int {
 }
 
 // fopen() supporting UTF8 strings.
-auto CorePlatform::FOpen(const char* path, const char* mode) -> FILE* {
+auto Platform::FOpen(const char* path, const char* mode) -> FILE* {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -341,22 +340,22 @@ auto CorePlatform::FOpen(const char* path, const char* mode) -> FILE* {
 #endif
 }
 
-auto CorePlatform::FilePathExists(const std::string& name) -> bool {
+auto Platform::FilePathExists(const std::string& name) -> bool {
   struct BA_STAT buffer {};
   return (Stat(name.c_str(), &buffer) == 0);
 }
 
-auto CorePlatform::GetSocketErrorString() -> std::string {
+auto Platform::GetSocketErrorString() -> std::string {
   // On default platforms we just look at errno.
   return GetErrnoString();
 }
 
-auto CorePlatform::GetSocketError() -> int {
+auto Platform::GetSocketError() -> int {
   // By default this is simply errno.
   return errno;
 }
 
-auto CorePlatform::GetErrnoString() -> std::string {
+auto Platform::GetErrnoString() -> std::string {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -380,7 +379,7 @@ auto CorePlatform::GetErrnoString() -> std::string {
 #endif
 }
 
-auto CorePlatform::GetConfigDirectoryMonolithicDefault()
+auto Platform::GetConfigDirectoryMonolithicDefault()
     -> std::optional<std::string> {
   // CoreConfig value trumps all. Otherwise go with platform-specific
   // default.
@@ -390,7 +389,7 @@ auto CorePlatform::GetConfigDirectoryMonolithicDefault()
   return DoGetConfigDirectoryMonolithicDefault();
 }
 
-auto CorePlatform::GetCacheDirectoryMonolithicDefault()
+auto Platform::GetCacheDirectoryMonolithicDefault()
     -> std::optional<std::string> {
   // CoreConfig value trumps all. Otherwise go with platform-specific
   // default.
@@ -400,7 +399,7 @@ auto CorePlatform::GetCacheDirectoryMonolithicDefault()
   return DoGetCacheDirectoryMonolithicDefault();
 }
 
-auto CorePlatform::GetDataDirectoryMonolithicDefault() -> std::string {
+auto Platform::GetDataDirectoryMonolithicDefault() -> std::string {
   // CoreConfig value trumps all. Otherwise ask for platform-specific
   // default.
   if (g_core->core_config().data_dir.has_value()) {
@@ -409,7 +408,7 @@ auto CorePlatform::GetDataDirectoryMonolithicDefault() -> std::string {
   return DoGetDataDirectoryMonolithicDefault();
 }
 
-void CorePlatform::MakeDir(const std::string& dir, bool quiet) {
+void Platform::MakeDir(const std::string& dir, bool quiet) {
   bool exists = FilePathExists(dir);
   if (!exists) {
     DoMakeDir(dir, quiet);
@@ -420,11 +419,11 @@ void CorePlatform::MakeDir(const std::string& dir, bool quiet) {
   }
 }
 
-auto CorePlatform::AndroidGetExternalFilesDir() -> std::string {
+auto Platform::AndroidGetExternalFilesDir() -> std::string {
   throw Exception("AndroidGetExternalFilesDir() unimplemented");
 }
 
-auto CorePlatform::GetUserPythonDirectoryMonolithicDefault()
+auto Platform::GetUserPythonDirectoryMonolithicDefault()
     -> std::optional<std::string> {
   // CoreConfig arg trumps all. Otherwise ask for platform-specific value.
   if (g_core->core_config().user_python_dir.has_value()) {
@@ -433,13 +432,13 @@ auto CorePlatform::GetUserPythonDirectoryMonolithicDefault()
   return DoGetUserPythonDirectoryMonolithicDefault();
 }
 
-auto CorePlatform::DoGetUserPythonDirectoryMonolithicDefault()
+auto Platform::DoGetUserPythonDirectoryMonolithicDefault()
     -> std::optional<std::string> {
   // Go with unset; let baenv calc this in Python-land
   return {};
 }
 
-void CorePlatform::DoMakeDir(const std::string& dir, bool quiet) {
+void Platform::DoMakeDir(const std::string& dir, bool quiet) {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -454,13 +453,13 @@ void CorePlatform::DoMakeDir(const std::string& dir, bool quiet) {
 #endif
 }
 
-auto CorePlatform::GetBaLocale() -> std::string {
+auto Platform::GetBaLocale() -> std::string {
   // Default implementation returns nothing so we fall back to
   // GetLocaleTag().
   return "";
 }
 
-auto CorePlatform::GetLocaleTag() -> std::string {
+auto Platform::GetLocaleTag() -> std::string {
   const char* lang = getenv("LANG");
   if (lang) {
     return lang;
@@ -473,17 +472,17 @@ auto CorePlatform::GetLocaleTag() -> std::string {
   }
 }
 
-auto CorePlatform::GetDeviceName() -> std::string {
+auto Platform::GetDeviceName() -> std::string {
   assert(ran_base_post_init_);
   return device_name_;
 }
 
-auto CorePlatform::GetDeviceDescription() -> std::string {
+auto Platform::GetDeviceDescription() -> std::string {
   assert(ran_base_post_init_);
   return device_description_;
 }
 
-auto CorePlatform::DoGetDeviceName() -> std::string {
+auto Platform::DoGetDeviceName() -> std::string {
   // Check devicename in env_var
   char* devicename;
   devicename = getenv("BA_DEVICE_NAME");
@@ -501,13 +500,13 @@ auto CorePlatform::DoGetDeviceName() -> std::string {
   return "Unnamed Device";
 }
 
-auto CorePlatform::DoGetDeviceDescription() -> std::string {
+auto Platform::DoGetDeviceDescription() -> std::string {
   return "Unknown Device Type";
 }
 
-auto CorePlatform::IsRunningOnTV() -> bool { return false; }
+auto Platform::IsRunningOnTV() -> bool { return false; }
 
-auto CorePlatform::HasTouchScreen() -> bool {
+auto Platform::HasTouchScreen() -> bool {
   if (!have_has_touchscreen_value_) {
     have_touchscreen_ = DoHasTouchScreen();
     have_has_touchscreen_value_ = true;
@@ -515,60 +514,56 @@ auto CorePlatform::HasTouchScreen() -> bool {
   return have_touchscreen_;
 }
 
-auto CorePlatform::IsRunningOnFireTV() -> bool { return false; }
+auto Platform::IsRunningOnFireTV() -> bool { return false; }
 
-auto CorePlatform::IsRunningOnDaydream() -> bool { return false; }
+auto Platform::IsRunningOnDaydream() -> bool { return false; }
 
-auto CorePlatform::DoHasTouchScreen() -> bool {
-  throw Exception("UNIMPLEMENTED");
-}
+auto Platform::DoHasTouchScreen() -> bool { throw Exception("UNIMPLEMENTED"); }
 
-auto CorePlatform::IsRunningOnDesktop() -> bool {
+auto Platform::IsRunningOnDesktop() -> bool {
   // Default case to cover mac, win, etc.
   return true;
 }
 
-void CorePlatform::SleepSeconds(seconds_t duration) {
+void Platform::SleepSeconds(seconds_t duration) {
   std::this_thread::sleep_for(
       std::chrono::microseconds(static_cast<microsecs_t>(duration * 1000000)));
 }
 
-void CorePlatform::SleepMillisecs(millisecs_t duration) {
+void Platform::SleepMillisecs(millisecs_t duration) {
   std::this_thread::sleep_for(std::chrono::milliseconds(duration));
 }
 
-void CorePlatform::SleepMicrosecs(millisecs_t duration) {
+void Platform::SleepMicrosecs(millisecs_t duration) {
   std::this_thread::sleep_for(std::chrono::microseconds(duration));
 }
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "NullDereferences"
 
-auto CorePlatform::GetDefaultUIScale() -> UIScale {
+auto Platform::GetDefaultUIScale() -> UIScale {
   // Handles mac/pc/linux cases.
   return UIScale::kLarge;
 }
 
-void CorePlatform::EmitPlatformLog(const std::string& name, LogLevel level,
-                                   const std::string& msg) {
+void Platform::EmitPlatformLog(std::string_view name, LogLevel level,
+                               std::string_view msg) {
   // Do nothing by default.
 }
 
-auto CorePlatform::ReportFatalError(const std::string& message,
-                                    bool in_top_level_exception_handler)
-    -> bool {
+auto Platform::ReportFatalError(const std::string& message,
+                                bool in_top_level_exception_handler) -> bool {
   // Don't override handling by default.
   return false;
 }
 
-auto CorePlatform::HandleFatalError(bool exit_cleanly,
-                                    bool in_top_level_exception_handler)
-    -> bool {
+auto Platform::HandleFatalError(bool exit_cleanly,
+                                bool in_top_level_exception_handler) -> bool {
   // Don't override handling by default.
   return false;
 }
 
-auto CorePlatform::CanShowBlockingFatalErrorDialog() -> bool {
+auto Platform::CanShowBlockingFatalErrorDialog() -> bool {
   if (g_buildconfig.sdl_build()) {
     return true;
   } else {
@@ -576,7 +571,7 @@ auto CorePlatform::CanShowBlockingFatalErrorDialog() -> bool {
   }
 }
 
-void CorePlatform::BlockingFatalErrorDialog(const std::string& message) {
+void Platform::BlockingFatalErrorDialog(const std::string& message) {
 #if BA_SDL_BUILD
   assert(g_core->InMainThread());
   if (!g_core->HeadlessMode()) {
@@ -586,12 +581,12 @@ void CorePlatform::BlockingFatalErrorDialog(const std::string& message) {
 #endif
 }
 
-auto CorePlatform::DoGetDataDirectoryMonolithicDefault() -> std::string {
+auto Platform::DoGetDataDirectoryMonolithicDefault() -> std::string {
   // By default, look for ba_data and whatnot where we are now.
   return ".";
 }
 
-void CorePlatform::SetEnv(const std::string& name, const std::string& value) {
+void Platform::SetEnv(const std::string& name, const std::string& value) {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -604,8 +599,7 @@ void CorePlatform::SetEnv(const std::string& name, const std::string& value) {
 #endif
 }
 
-auto CorePlatform::GetEnv(const std::string& name)
-    -> std::optional<std::string> {
+auto Platform::GetEnv(const std::string& name) -> std::optional<std::string> {
   // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -618,7 +612,7 @@ auto CorePlatform::GetEnv(const std::string& name)
 #endif
 }
 
-auto CorePlatform::GetIsStdinATerminal() -> bool {
+auto Platform::GetIsStdinATerminal() -> bool {
 // This covers non-windows cases.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -627,9 +621,9 @@ auto CorePlatform::GetIsStdinATerminal() -> bool {
 #endif
 }
 
-auto CorePlatform::GetOSVersionString() -> std::string { return "unknown"; }
+auto Platform::GetOSVersionString() -> std::string { return "unknown"; }
 
-auto CorePlatform::GetLegacyUserAgentString() -> std::string {
+auto Platform::GetLegacyUserAgentString() -> std::string {
   std::string device = GetDeviceDescription();
   std::string version = GetOSVersionString();
   if (!version.empty()) {
@@ -683,7 +677,7 @@ auto CorePlatform::GetLegacyUserAgentString() -> std::string {
   return out;
 }
 
-auto CorePlatform::GetCWD() -> std::string {
+auto Platform::GetCWD() -> std::string {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -693,65 +687,63 @@ auto CorePlatform::GetCWD() -> std::string {
 #endif
 }
 
-auto CorePlatform::GetAndroidExecArg() -> std::string { return ""; }
+auto Platform::GetAndroidExecArg() -> std::string { return ""; }
 
-void CorePlatform::GetTextBoundsAndWidth(const std::string& text, Rect* r,
-                                         float* width) {
+void Platform::GetTextBoundsAndWidth(const std::string& text, Rect* r,
+                                     float* width) {
   throw Exception();
 }
 
-void CorePlatform::FreeTextTexture(void* tex) { throw Exception(); }
+void Platform::FreeTextTexture(void* tex) { throw Exception(); }
 
-auto CorePlatform::CreateTextTexture(int width, int height,
-                                     const std::vector<std::string>& strings,
-                                     const std::vector<float>& positions,
-                                     const std::vector<float>& widths,
-                                     float scale) -> void* {
+auto Platform::CreateTextTexture(int width, int height,
+                                 const std::vector<std::string>& strings,
+                                 const std::vector<float>& positions,
+                                 const std::vector<float>& widths, float scale)
+    -> void* {
   throw Exception();
 }
 
-auto CorePlatform::GetTextTextureData(void* tex) -> uint8_t* {
-  throw Exception();
-}
+auto Platform::GetTextTextureData(void* tex) -> uint8_t* { throw Exception(); }
 
-void CorePlatform::OnScreenSizeChange() {
+void Platform::OnScreenSizeChange() {
   assert(g_base_soft && g_base_soft->InLogicThread());
 }
 
-void CorePlatform::StepDisplayTime() {
+void Platform::StepDisplayTime() {
   assert(g_base_soft && g_base_soft->InLogicThread());
 }
 
-auto CorePlatform::ConvertIncomingLeaderboardScore(
+auto Platform::ConvertIncomingLeaderboardScore(
     const std::string& leaderboard_id, int score) -> int {
   return score;
 }
 
-void CorePlatform::SubmitScore(const std::string& game,
-                               const std::string& version, int64_t score) {
+void Platform::SubmitScore(const std::string& game, const std::string& version,
+                           int64_t score) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "FIXME: SubmitScore() unimplemented");
 }
 
-void CorePlatform::ReportAchievement(const std::string& achievement) {}
+void Platform::ReportAchievement(const std::string& achievement) {}
 
-auto CorePlatform::HaveLeaderboard(const std::string& game,
-                                   const std::string& config) -> bool {
+auto Platform::HaveLeaderboard(const std::string& game,
+                               const std::string& config) -> bool {
   return false;
 }
 
-void CorePlatform::ShowGameServiceUI(const std::string& show,
-                                     const std::string& game,
-                                     const std::string& game_version) {
+void Platform::ShowGameServiceUI(const std::string& show,
+                                 const std::string& game,
+                                 const std::string& game_version) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "FIXME: ShowGameServiceUI() unimplemented");
 }
 
-void CorePlatform::AndroidSetResString(const std::string& res) {
+void Platform::AndroidSetResString(const std::string& res) {
   throw Exception();
 }
 
-auto CorePlatform::GetDeviceV1AccountID() -> std::string {
+auto Platform::GetDeviceV1AccountID() -> std::string {
   if (g_core->HeadlessMode()) {
     return "S-" + GetLegacyDeviceUUID();
   }
@@ -761,7 +753,7 @@ auto CorePlatform::GetDeviceV1AccountID() -> std::string {
   return "L-" + GetLegacyDeviceUUID();
 }
 
-auto CorePlatform::DemangleCXXSymbol(const std::string& s) -> std::string {
+auto Platform::DemangleCXXSymbol(const std::string& s) -> std::string {
   // Do __cxa_demangle on platforms that support it.
   // FIXME; I believe there's an equivalent call for windows; should research.
 #if !BA_PLATFORM_WINDOWS
@@ -786,111 +778,109 @@ auto CorePlatform::DemangleCXXSymbol(const std::string& s) -> std::string {
 #endif
 }
 
-void CorePlatform::ResetAchievements() {
+void Platform::ResetAchievements() {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "ResetAchievements() unimplemented");
 }
 
-void CorePlatform::RunEvents() {}
+void Platform::RunEvents() {}
 
-void CorePlatform::MusicPlayerPlay(PyObject* target) {
+void Platform::MusicPlayerPlay(PyObject* target) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "MusicPlayerPlay() unimplemented on this platform");
 }
 
-void CorePlatform::MusicPlayerStop() {
+void Platform::MusicPlayerStop() {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "MusicPlayerStop() unimplemented on this platform");
 }
 
-void CorePlatform::MusicPlayerShutdown() {
+void Platform::MusicPlayerShutdown() {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "MusicPlayerShutdown() unimplemented on this platform");
 }
 
-void CorePlatform::MusicPlayerSetVolume(float volume) {
+void Platform::MusicPlayerSetVolume(float volume) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "MusicPlayerSetVolume() unimplemented on this platform");
 }
 
-auto CorePlatform::IsOSPlayingMusic() -> bool { return false; }
+auto Platform::IsOSPlayingMusic() -> bool { return false; }
 
-void CorePlatform::IncrementAnalyticsCount(const std::string& name,
-                                           int increment) {}
+void Platform::IncrementAnalyticsCount(const std::string& name, int increment) {
+}
 
-void CorePlatform::IncrementAnalyticsCountRaw(const std::string& name,
-                                              int increment) {}
+void Platform::IncrementAnalyticsCountRaw(const std::string& name,
+                                          int increment) {}
 
-void CorePlatform::IncrementAnalyticsCountRaw2(const std::string& name,
-                                               int uses_increment,
-                                               int increment) {}
+void Platform::IncrementAnalyticsCountRaw2(const std::string& name,
+                                           int uses_increment, int increment) {}
 
-void CorePlatform::SetAnalyticsScreen(const std::string& screen) {}
+void Platform::SetAnalyticsScreen(const std::string& screen) {}
 
-void CorePlatform::SubmitAnalyticsCounts() {}
+void Platform::SubmitAnalyticsCounts() {}
 
-void CorePlatform::SetPlatformMiscReadVals(const std::string& vals) {}
+void Platform::SetPlatformMiscReadVals(const std::string& vals) {}
 
-void CorePlatform::ShowAd(const std::string& purpose) {
+void Platform::ShowAd(const std::string& purpose) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "ShowAd() unimplemented");
 }
 
-auto CorePlatform::GetHasAds() -> bool { return false; }
+auto Platform::GetHasAds() -> bool { return false; }
 
-auto CorePlatform::GetHasVideoAds() -> bool {
+auto Platform::GetHasVideoAds() -> bool {
   // By default we assume we have this anywhere we have ads.
   return GetHasAds();
 }
 
-void CorePlatform::SignInV1(const std::string& account_type) {
+void Platform::SignInV1(const std::string& account_type) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "SignInV1() unimplemented");
 }
 
-void CorePlatform::V1LoginDidChange() {
+void Platform::V1LoginDidChange() {
   // Default is no-op.
 }
 
-void CorePlatform::SignOutV1() {
+void Platform::SignOutV1() {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "SignOutV1() unimplemented");
 }
 
-void CorePlatform::MacMusicAppInit() {
+void Platform::MacMusicAppInit() {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "MacMusicAppInit() unimplemented");
 }
 
-auto CorePlatform::MacMusicAppGetVolume() -> int {
+auto Platform::MacMusicAppGetVolume() -> int {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "MacMusicAppGetVolume() unimplemented");
   return 0;
 }
 
-void CorePlatform::MacMusicAppSetVolume(int volume) {
+void Platform::MacMusicAppSetVolume(int volume) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "MacMusicAppSetVolume() unimplemented");
 }
 
-void CorePlatform::MacMusicAppStop() {
+void Platform::MacMusicAppStop() {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "MacMusicAppStop() unimplemented");
 }
 
-auto CorePlatform::MacMusicAppPlayPlaylist(const std::string& playlist)
-    -> bool {
+auto Platform::MacMusicAppPlayPlaylist(const std::string& playlist) -> bool {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "MacMusicAppPlayPlaylist() unimplemented");
   return false;
 }
-auto CorePlatform::MacMusicAppGetPlaylists() -> std::list<std::string> {
+auto Platform::MacMusicAppGetPlaylists() -> std::list<std::string> {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "MacMusicAppGetPlaylists() unimplemented");
   return {};
 }
 
-void CorePlatform::SetCurrentThreadName(const std::string& name) {
+void Platform::SetCurrentThreadName(const std::string& name) {
   // We should never be doing this for the main thread.
   BA_PRECONDITION_FATAL(!g_core->InMainThread());
 
@@ -901,7 +891,7 @@ void CorePlatform::SetCurrentThreadName(const std::string& name) {
 #endif
 }
 
-void CorePlatform::Unlink(const char* path) {
+void Platform::Unlink(const char* path) {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -910,8 +900,7 @@ void CorePlatform::Unlink(const char* path) {
 #endif
 }
 
-auto CorePlatform::AbsPath(const std::string& path, std::string* outpath)
-    -> bool {
+auto Platform::AbsPath(const std::string& path, std::string* outpath) -> bool {
   // Ensure all implementations fail if the file does not exist.
   if (!FilePathExists(path)) {
     return false;
@@ -919,7 +908,7 @@ auto CorePlatform::AbsPath(const std::string& path, std::string* outpath)
   return DoAbsPath(path, outpath);
 }
 
-auto CorePlatform::DoAbsPath(const std::string& path, std::string* outpath)
+auto Platform::DoAbsPath(const std::string& path, std::string* outpath)
     -> bool {
   // This covers all but windows.
 #if BA_PLATFORM_WINDOWS
@@ -935,13 +924,11 @@ auto CorePlatform::DoAbsPath(const std::string& path, std::string* outpath)
 #endif
 }
 
-// auto CorePlatform::IsEventPushMode() -> bool { return false; }
+// auto Platform::IsEventPushMode() -> bool { return false; }
 
-auto CorePlatform::GetDisplayResolution(int* x, int* y) -> bool {
-  return false;
-}
+auto Platform::GetDisplayResolution(int* x, int* y) -> bool { return false; }
 
-void CorePlatform::CloseSocket(int socket) {
+void Platform::CloseSocket(int socket) {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -950,7 +937,7 @@ void CorePlatform::CloseSocket(int socket) {
 #endif
 }
 
-auto CorePlatform::GetBroadcastAddrs() -> std::vector<uint32_t> {
+auto Platform::GetBroadcastAddrs() -> std::vector<uint32_t> {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -984,7 +971,7 @@ auto CorePlatform::GetBroadcastAddrs() -> std::vector<uint32_t> {
 #endif
 }
 
-auto CorePlatform::SetSocketNonBlocking(int sd) -> bool {
+auto Platform::SetSocketNonBlocking(int sd) -> bool {
 // This default implementation covers non-windows platforms.
 #if BA_PLATFORM_WINDOWS
   throw Exception();
@@ -1000,15 +987,15 @@ auto CorePlatform::SetSocketNonBlocking(int sd) -> bool {
 #endif
 }
 
-auto CorePlatform::TimeSinceLaunchMillisecs() const -> millisecs_t {
+auto Platform::TimeSinceLaunchMillisecs() const -> millisecs_t {
   return TimeMonotonicMillisecs() - start_time_millisecs_;
 }
 
-auto CorePlatform::GetLegacyPlatformName() -> std::string {
+auto Platform::GetLegacyPlatformName() -> std::string {
   throw Exception("UNIMPLEMENTED");
 }
 
-auto CorePlatform::GetLegacySubplatformName() -> std::string {
+auto Platform::GetLegacySubplatformName() -> std::string {
   // This doesnt always have to be set.
   return "";
 }
@@ -1088,7 +1075,7 @@ class NativeStackTraceExecInfo : public NativeStackTrace {
 };
 #endif
 
-auto CorePlatform::GetNativeStackTrace() -> NativeStackTrace* {
+auto Platform::GetNativeStackTrace() -> NativeStackTrace* {
 // Our default handler here supports execinfo backtraces where available
 // and gives nothing elsewhere.
 #if BA_ENABLE_EXECINFO_BACKTRACES
@@ -1098,50 +1085,49 @@ auto CorePlatform::GetNativeStackTrace() -> NativeStackTrace* {
 #endif
 }
 
-void CorePlatform::RequestPermission(Permission p) {
+void Platform::RequestPermission(Permission p) {
   // No-op.
 }
 
-auto CorePlatform::HavePermission(Permission p) -> bool {
+auto Platform::HavePermission(Permission p) -> bool {
   // Its assumed everything is accessible unless we override saying no.
   return true;
 }
 
-void CorePlatform::SetDebugKey(const std::string& key,
-                               const std::string& value) {}
+void Platform::SetDebugKey(const std::string& key, const std::string& value) {}
 
-void CorePlatform::HandleLowLevelDebugLog(const std::string& msg) {}
+void Platform::HandleLowLevelDebugLog(const std::string& msg) {}
 
-auto CorePlatform::TimeMonotonicMillisecs() -> millisecs_t {
+auto Platform::TimeMonotonicMillisecs() -> millisecs_t {
   using std::chrono::duration_cast, std::chrono::milliseconds,
       std::chrono::steady_clock;
   return duration_cast<milliseconds>(steady_clock::now().time_since_epoch())
       .count();
 }
 
-auto CorePlatform::TimeMonotonicMicrosecs() -> millisecs_t {
+auto Platform::TimeMonotonicMicrosecs() -> millisecs_t {
   using std::chrono::duration_cast, std::chrono::microseconds,
       std::chrono::steady_clock;
   return duration_cast<microseconds>(steady_clock::now().time_since_epoch())
       .count();
 }
 
-auto CorePlatform::TimeMonotonicSeconds() -> seconds_t {
+auto Platform::TimeMonotonicSeconds() -> seconds_t {
   using std::chrono::duration, std::chrono::steady_clock;
   return duration<seconds_t>(steady_clock::now().time_since_epoch()).count();
 }
 
-auto CorePlatform::TimeMonotonicWholeSeconds() -> int64_t {
+auto Platform::TimeMonotonicWholeSeconds() -> int64_t {
   using std::chrono::floor, std::chrono::seconds, std::chrono::steady_clock;
   return floor<seconds>(steady_clock::now().time_since_epoch()).count();
 }
 
-auto CorePlatform::TimeSinceEpochSeconds() -> seconds_t {
+auto Platform::TimeSinceEpochSeconds() -> seconds_t {
   using std::chrono::duration, std::chrono::system_clock;
   return duration<seconds_t>(system_clock::now().time_since_epoch()).count();
 }
 
-auto CorePlatform::System(const char* cmd) -> int {
+auto Platform::System(const char* cmd) -> int {
   // By default can support this everywhere outside of Apple's more
   // sandboxed platforms (iOS and equivalent). Actually should check
   // sandboxed Mac version; not sure if this succeeds there (though it
