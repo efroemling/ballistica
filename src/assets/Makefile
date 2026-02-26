@@ -5467,6 +5467,8 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/email/architecture.rst \
   $(BUILD_DIR)/windows/Win32/OpenAL32.dll \
   $(BUILD_DIR)/windows/Win32/SDL2.dll \
+  $(BUILD_DIR)/windows/Win32/libEGL.dll \
+  $(BUILD_DIR)/windows/Win32/libGLESv2.dll \
   $(BUILD_DIR)/windows/Win32/libvorbis.dll \
   $(BUILD_DIR)/windows/Win32/libvorbisfile.dll \
   $(BUILD_DIR)/windows/Win32/ogg.dll \
@@ -5561,6 +5563,8 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/email/architecture.rst \
   $(BUILD_DIR)/windows/x64/OpenAL32.dll \
   $(BUILD_DIR)/windows/x64/SDL2.dll \
+  $(BUILD_DIR)/windows/x64/libEGL.dll \
+  $(BUILD_DIR)/windows/x64/libGLESv2.dll \
   $(BUILD_DIR)/windows/x64/libvorbis.dll \
   $(BUILD_DIR)/windows/x64/libvorbisfile.dll \
   $(BUILD_DIR)/windows/x64/ogg.dll \

@@ -17,7 +17,7 @@ APPLE_NEW = False
 
 # Python version we build here (not necessarily same as we use in repo).
 PY_VER_ANDROID = '3.13'
-PY_VER_EXACT_ANDROID = '3.13.6'
+PY_VER_EXACT_ANDROID = '3.13.12'
 PY_VER_APPLE = '3.12'
 PY_VER_EXACT_APPLE = '3.12.4' if APPLE_NEW else '3.12.0'
 
@@ -327,7 +327,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
     (can be arm, arm64, x86, or x86_64)
     """
 
-    builddir = f'build/python_android_{arch}' + ('_debug' if debug else '')
+    builddir = f'build/python_android_{arch}_old' + ('_debug' if debug else '')
     subprocess.run(['rm', '-rf', builddir], check=True)
     subprocess.run(['mkdir', '-p', 'build'], check=True)
     subprocess.run(
@@ -486,7 +486,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         '        # OpenSSL handles NDK internal paths by itself',
         '        # Ericf addition: do some patching:\n'
         '        self.run(["../../../../../../../tools/pcommand",'
-        ' "python_android_patch_ssl"])\n'
+        ' "python_android_patch_ssl_old"])\n'
         '        # OpenSSL handles NDK internal paths by itself',
     )
 
@@ -521,7 +521,7 @@ def build_android(rootdir: str, arch: str, debug: bool = False) -> None:
         ftxt,
         '    popd\n',
         f'    ../../../tools/pcommand'
-        f' python_android_patch Python-{PY_VER_EXACT_ANDROID}\n    popd\n',
+        f' python_android_patch_old Python-{PY_VER_EXACT_ANDROID}\n    popd\n',
     )
     writefile('build.sh', ftxt)
 
@@ -639,6 +639,7 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
         ('_testsinglephase', 1),
         ('_testexternalinspection', 1),
         ('_testclinic', 1),
+        ('_sqlite3', 1),
         ('_uuid', 1),
         # ('_xxsubinterpreters', 1),
         ('_xxtestfuzz', 1),
@@ -694,6 +695,7 @@ def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
         '_socket',
         '_blake2',
         '_lzma',
+        '_sqlite3',
         'binascii',
         '_posixsubprocess',
         'zlib',
@@ -801,8 +803,8 @@ def _patch_android_ctypes() -> None:
     txt = readfile(fname)
     txt = replace_exact(
         txt,
-        'elif _sys.platform == "android":\n',
-        'elif _sys.platform == "android" and False: # efro tweak\n',
+        'elif _sys.platform in ["android", "cygwin"]:\n',
+        'elif _sys.platform in ["cygwin"]:  # efro: android uses static lib\n',
     )
     writefile(fname, txt)
 
@@ -1094,15 +1096,18 @@ def gather(do_android: bool, do_apple: bool) -> None:
         sys_config_scripts: list[str] | None = None
 
     # First off, clear out any existing output.
-    for platform, enabled in [('android', do_android), ('apple', do_apple)]:
+    for platform_out, enabled in [
+        ('android-old', do_android),
+        ('apple', do_apple),
+    ]:
         if enabled:
             subprocess.run(
                 [
                     'rm',
                     '-rf',
-                    f'src/external/python-{platform}',
-                    f'src/external/python-{platform}-debug',
-                    f'src/assets/pylib-{platform}',
+                    f'src/external/python-{platform_out}',
+                    f'src/external/python-{platform_out}-debug',
+                    f'src/assets/pylib-{platform_out}',
                 ],
                 check=True,
             )
@@ -1122,10 +1127,10 @@ def gather(do_android: bool, do_apple: bool) -> None:
             'ios_simulator': f'build/python_apple_ios{bsuffix}',
             'tvos': f'build/python_apple_tvos{bsuffix}',
             'tvos_simulator': f'build/python_apple_tvos{bsuffix}',
-            'android_arm': f'build/python_android_arm{bsuffix}/build',
-            'android_arm64': f'build/python_android_arm64{bsuffix}/build',
-            'android_x86': f'build/python_android_x86{bsuffix}/build',
-            'android_x86_64': f'build/python_android_x86_64{bsuffix}/build',
+            'android_arm': f'build/python_android_arm_old{bsuffix}/build',
+            'android_arm64': f'build/python_android_arm64_old{bsuffix}/build',
+            'android_x86': f'build/python_android_x86_old{bsuffix}/build',
+            'android_x86_64': f'build/python_android_x86_64_old{bsuffix}/build',
         }
 
         # Where some support libraries got built to.
@@ -1153,10 +1158,14 @@ def gather(do_android: bool, do_apple: bool) -> None:
             'tvos_simulator': (
                 f'{bases['tvos_simulator']}/install/tvOS/appletvsimulator.arm64'
             ),
-            'android_arm': f'build/python_android_arm{bsuffix}/{apost2}',
-            'android_arm64': f'build/python_android_arm64{bsuffix}/{apost2}',
-            'android_x86': f'build/python_android_x86{bsuffix}/{apost2}',
-            'android_x86_64': f'build/python_android_x86_64{bsuffix}/{apost2}',
+            'android_arm': (f'build/python_android_arm_old{bsuffix}/{apost2}'),
+            'android_arm64': (
+                f'build/python_android_arm64_old{bsuffix}/{apost2}'
+            ),
+            'android_x86': (f'build/python_android_x86_old{bsuffix}/{apost2}'),
+            'android_x86_64': (
+                f'build/python_android_x86_64_old{bsuffix}/{apost2}'
+            ),
         }
 
         # Groups should point to base sets of headers and pylibs that
@@ -1210,23 +1219,23 @@ def gather(do_android: bool, do_apple: bool) -> None:
             ),
             'android': GroupDef(
                 baseheaders=[
-                    f'build/python_android_arm/src/'
+                    f'build/python_android_arm_old/src/'
                     f'Python-{PY_VER_EXACT_ANDROID}/Include',
-                    f'build/python_android_arm64/src/'
+                    f'build/python_android_arm64_old/src/'
                     f'Python-{PY_VER_EXACT_ANDROID}/Include',
-                    f'build/python_android_x86/src/'
+                    f'build/python_android_x86_old/src/'
                     f'Python-{PY_VER_EXACT_ANDROID}/Include',
-                    f'build/python_android_x86_64/src/'
+                    f'build/python_android_x86_64_old/src/'
                     f'Python-{PY_VER_EXACT_ANDROID}/Include',
                 ],
                 basepylib=[
-                    f'build/python_android_arm/src/'
+                    f'build/python_android_arm_old/src/'
                     f'Python-{PY_VER_EXACT_ANDROID}/Lib',
-                    f'build/python_android_arm64/src/'
+                    f'build/python_android_arm64_old/src/'
                     f'Python-{PY_VER_EXACT_ANDROID}/Lib',
-                    f'build/python_android_x86/src/'
+                    f'build/python_android_x86_old/src/'
                     f'Python-{PY_VER_EXACT_ANDROID}/Lib',
-                    f'build/python_android_x86_64/src/'
+                    f'build/python_android_x86_64_old/src/'
                     f'Python-{PY_VER_EXACT_ANDROID}/Lib',
                 ],
             ),
@@ -1492,8 +1501,9 @@ def gather(do_android: bool, do_apple: bool) -> None:
                             f'{dirlist[i+1]}'
                         )
 
-            pylib_dst = f'src/assets/pylib-{grpname}'
-            src_dst = f'src/external/python-{grpname}{bsuffix2}'
+            grpname_out = 'android-old' if grpname == 'android' else grpname
+            pylib_dst = f'src/assets/pylib-{grpname_out}'
+            src_dst = f'src/external/python-{grpname_out}{bsuffix2}'
             include_dst = os.path.join(src_dst, 'include')
             lib_dst = os.path.join(src_dst, 'lib')
 

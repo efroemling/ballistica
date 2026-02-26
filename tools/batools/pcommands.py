@@ -2,6 +2,7 @@
 #
 """A nice collection of ready-to-use pcommands for this package."""
 
+# pylint: disable=too-many-lines
 from __future__ import annotations
 
 # Note: import as little as possible here at the module level to
@@ -331,8 +332,16 @@ def _python_build_apple(debug: bool) -> None:
     pybuild.build_apple(arch, debug=debug)
 
 
+def python_build_android_old() -> None:
+    """Build an embeddable Python lib for Android (old pipeline)."""
+
+    pcommand.disallow_in_batch()
+
+    _python_build_android_old(debug=False)
+
+
 def python_build_android() -> None:
-    """Build an embeddable Python lib for Android."""
+    """Build Android Python lib using new in-tree build script."""
 
     pcommand.disallow_in_batch()
 
@@ -340,7 +349,7 @@ def python_build_android() -> None:
 
 
 def python_build_android_debug() -> None:
-    """Build embeddable Android Python lib (debug ver)."""
+    """Build Android Python lib using new in-tree script (debug)."""
 
     pcommand.disallow_in_batch()
 
@@ -348,6 +357,42 @@ def python_build_android_debug() -> None:
 
 
 def _python_build_android(debug: bool) -> None:
+    import os
+    from efro.error import CleanError
+    from efrotools import python_build_android as _python_build_android_mod
+
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
+    archs = ('arm', 'arm64', 'x86', 'x86_64')
+    if len(sys.argv) != 3:
+        raise CleanError('Error: Expected one <ARCH> arg: ' + ', '.join(archs))
+    arch = sys.argv[2]
+    if arch not in archs:
+        raise CleanError(
+            'Error: invalid arch. valid values are: ' + ', '.join(archs)
+        )
+    _python_build_android_mod.build(str(pcommand.PROJROOT), arch, debug=debug)
+
+
+def python_gather_android() -> None:
+    """Gather Android Python build into project."""
+    from efrotools import python_build_android as _python_build_android_mod
+
+    pcommand.disallow_in_batch()
+
+    _python_build_android_mod.gather(str(pcommand.PROJROOT))
+
+
+def python_build_android_old_debug() -> None:
+    """Build embeddable Android Python lib (old pipeline, debug ver)."""
+
+    pcommand.disallow_in_batch()
+
+    _python_build_android_old(debug=True)
+
+
+def _python_build_android_old(debug: bool) -> None:
     import os
     from efro.error import CleanError
     from efrotools import pybuild
@@ -366,8 +411,8 @@ def _python_build_android(debug: bool) -> None:
     pybuild.build_android(str(pcommand.PROJROOT), arch, debug=debug)
 
 
-def python_android_patch() -> None:
-    """Patches Python to prep for building for Android."""
+def python_android_patch_old() -> None:
+    """Patches Python to prep for building for Android (old pipeline)."""
     import os
     from efrotools import pybuild
 
@@ -377,8 +422,8 @@ def python_android_patch() -> None:
     pybuild.android_patch()
 
 
-def python_android_patch_ssl() -> None:
-    """Patches Python ssl to prep for building for Android."""
+def python_android_patch_ssl_old() -> None:
+    """Patches Python ssl to prep for building for Android (old pipeline)."""
     from efrotools import pybuild
 
     pcommand.disallow_in_batch()
@@ -419,8 +464,8 @@ def python_gather() -> None:
     pybuild.gather(do_android=True, do_apple=True)
 
 
-def python_gather_android() -> None:
-    """python_gather but only android bits."""
+def python_gather_android_old() -> None:
+    """python_gather but only android bits (old pipeline)."""
     import os
     from efrotools import pybuild
 

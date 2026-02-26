@@ -25,6 +25,13 @@
   (Thanks temp!)
 - Add `bascenev1.get_client_ping` which returns the current ping (RTT in ms)
   for a connected client.
+- Simplified the Python build process for Android (see
+  `efrotools.python_build_android`). For now we're still compiling to a static
+  library which has some technical advantages for our use-case over the
+  officially-supported many-shared-libraries route. The old build path is still
+  in place (labeled '_old') but I'll remove it soon.
+- Android Python has been bumped to the latest bug fix release (3.13.12).
+- Fixed an issue where the sqlite3 module was not available in Android Python.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not
