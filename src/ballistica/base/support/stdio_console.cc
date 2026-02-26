@@ -9,15 +9,14 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
-#include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
-#include "ballistica/core/logging/logging.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/platform.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
@@ -104,21 +103,21 @@ void StdioConsole::StartInMainThread_() {
               PushCommand_(pending_input_);
             }
             pending_input_.clear();
-      } else {
-        // Bail on any error (could be actual EOF or one of our fake ones).
-        if (stdin_is_terminal) {
-          // Ok this is strange: on windows consoles, it seems that Ctrl-C
-          // in a terminal immediately closes our stdin even if we catch
-          // the interrupt, and then our Python interrupt handler runs a
-          // moment later. This means we wind up telling the user that EOF
-          // was reached and they should Ctrl-C to quit right after
-          // they've hit Ctrl-C to quit. To hopefully avoid this, let's
-          // hold off on the print for a second and see if a shutdown has
-          // begun first. (or, more likely, just never print because the
-          // app has exited).
-          if (g_buildconfig.windows_console_build()) {
-            core::Platform::SleepMillisecs(250);
           }
+        } else {
+          // Bail on any error (could be actual EOF or one of our fake ones).
+          if (stdin_is_terminal) {
+            // Ok this is strange: on windows consoles, it seems that Ctrl-C
+            // in a terminal immediately closes our stdin even if we catch
+            // the interrupt, and then our Python interrupt handler runs a
+            // moment later. This means we wind up telling the user that EOF
+            // was reached and they should Ctrl-C to quit right after
+            // they've hit Ctrl-C to quit. To hopefully avoid this, let's
+            // hold off on the print for a second and see if a shutdown has
+            // begun first. (or, more likely, just never print because the
+            // app has exited).
+            if (g_buildconfig.windows_console_build()) {
+              core::CorePlatform::SleepMillisecs(250);
             }
             if (!g_base->logic->shutting_down()) {
               printf("Stdin EOF reached. Use Ctrl-C to quit.\n");
@@ -179,7 +178,7 @@ void StdioConsole::Clear_() {
   if (g_buildconfig.platform_macos() || g_buildconfig.platform_linux()) {
     // Attempt to run actual clear command on unix-y systems to plop
     // our prompt back at the top of the screen.
-    retval = core::Platform::System("clear");
+    retval = core::CorePlatform::System("clear");
   }
   // As a fallback, just spit out a bunch of newlines.
   if (retval != 0) {
