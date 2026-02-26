@@ -15,6 +15,7 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/core_platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
@@ -46,7 +47,13 @@ void StdioConsole::StartInMainThread_() {
   if (use_native_repl && Py_IsInitialized()) {
     // Use Python's native interactive loop which includes readline support
     // for autocompletion, history, and line editing.
-    event_loop()->PushCall([this] { StartNativePythonREPL_(); });
+    try {
+      event_loop()->PushCall([this] { StartNativePythonREPL_(); });
+    } catch (const std::exception& e) {
+      printf("Error initializing native Python REPL: %s\n", e.what());
+      printf("Falling back to legacy console.\n");
+      fflush(stderr);
+    }
   } else {
     // Tell our thread to start reading using legacy console.
     event_loop()->PushCall([this] {
@@ -142,7 +149,12 @@ void StdioConsole::StartNativePythonREPL_() {
       "import rlcompleter\n"
       "readline.parse_and_bind('tab: complete')\n";
 
-  PyRun_SimpleString(readline_import);
+  if (PyRun_SimpleString(readline_import) != 0) {
+    g_core->logging->Log(
+        LogName::kRoot, LogLevel::kWarning,
+        "Failed to initialize readline for Python REPL. Readline support will "
+        "be unavailable.");
+  }
 
   // Run default imports (babase, bascenev1, bauiv1, etc)
   // which are configured in projectconfig.json
