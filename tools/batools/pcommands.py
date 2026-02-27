@@ -384,6 +384,32 @@ def python_gather_android() -> None:
     _python_build_android_mod.gather(str(pcommand.PROJROOT))
 
 
+def python_build_apple_new() -> None:
+    """Build one Apple Python slice using new in-tree script."""
+    import os
+    from efro.error import CleanError
+    from efrotools import python_build_apple as _python_build_apple_mod
+
+    pcommand.disallow_in_batch()
+
+    slices = _python_build_apple_mod.SLICES
+    if len(sys.argv) != 3 or sys.argv[2] not in slices:
+        raise CleanError('Expected one slice arg: ' + ', '.join(slices))
+    os.chdir(pcommand.PROJROOT)
+    _python_build_apple_mod.build(str(pcommand.PROJROOT), sys.argv[2])
+
+
+def python_gather_apple_new() -> None:
+    """Gather Apple Python slices into XCFramework and copy to project."""
+    import os
+    from efrotools import python_build_apple as _python_build_apple_mod
+
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
+    _python_build_apple_mod.gather(str(pcommand.PROJROOT))
+
+
 def python_build_android_old_debug() -> None:
     """Build embeddable Android Python lib (old pipeline, debug ver)."""
 

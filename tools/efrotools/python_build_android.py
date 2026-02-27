@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Self-contained Android Python build script.
 
 Replaces the GRRedWings/python3-android clone+patch approach with a
@@ -9,6 +10,7 @@ No external repo dependency.
 
 from __future__ import annotations
 
+import glob
 import os
 import subprocess
 import tarfile
@@ -623,6 +625,36 @@ def _configure_python(
 
 
 # ---------------------------------------------------------------------------
+# Post-build checks
+# ---------------------------------------------------------------------------
+
+
+def _check_no_shared_modules(installdir: str, arch: str) -> None:
+    """Fail if any .so extension modules appear in lib-dynload after install.
+
+    All extension modules must be statically linked into libpython.  A file
+    in lib-dynload means a module was not compiled statically and will be
+    missing at runtime (since we don't ship lib-dynload in the APK).
+    If this fires, update the cmodules/enables sets in
+    pybuild.patch_modules_setup().
+    """
+    dynload_dir = os.path.join(
+        installdir, 'usr', 'lib', f'python{PY_VER}', 'lib-dynload'
+    )
+    if not os.path.isdir(dynload_dir):
+        return
+    so_files = glob.glob(os.path.join(dynload_dir, '*.so'))
+    if so_files:
+        names = '\n'.join(f'  {os.path.basename(f)}' for f in sorted(so_files))
+        raise RuntimeError(
+            f'Android/{arch}: shared extension modules found in lib-dynload'
+            f' (all must be static):\n{names}\n'
+            f'Update cmodules/enables in pybuild.patch_modules_setup().'
+        )
+    print(f'  Static-module check passed for Android/{arch}.')
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -631,7 +663,8 @@ def build(rootdir: str, arch: str, debug: bool) -> None:
     """Build Python for the given Android architecture.
 
     arch must be one of: arm, arm64, x86, x86_64.
-    Outputs are written to:
+    Outputs are written to::
+
       build/python_android_{arch}[_debug]/build/usr/   (installed Python)
       build/python_android_{arch}[_debug]/src/Python-{PY_VER_EXACT}/
         Include/          (Python headers)
@@ -717,6 +750,10 @@ def build(rootdir: str, arch: str, debug: bool) -> None:
         env=env,
         check=True,
     )
+
+    # 7. Verify no shared extension modules slipped through.
+    print('Checking for shared extension modules...')
+    _check_no_shared_modules(installdir, arch)
 
     print(f'=== Python {PY_VER_EXACT} for Android/{arch} build complete! ===')
     print(f'    Output: {installdir}')

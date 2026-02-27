@@ -1,4 +1,4 @@
-### 1.7.61 (build 22730, api 9, 2026-02-26)
+### 1.7.61 (build 22731, api 9, 2026-02-27)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
 - OS-Font-Rendering now works on Linux (or other Posix-y platforms like Mac

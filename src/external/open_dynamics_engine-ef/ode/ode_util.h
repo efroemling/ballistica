@@ -39,6 +39,10 @@ void dxProcessIslands (dxWorld *world, dReal stepsize, dstepper_fn_t stepper);
 /////////ERIC ADDED STUFF//////////////////////
 #define VALUE_TESTING 0
 
+// Set to 1 to printf whenever heap allocation is used instead of alloca.
+// Useful for checking whether alloca thresholds are sized appropriately.
+#define BA_ODE_ALLOCA_DEBUG 0
+
 #if VALUE_TESTING
 extern FILE *f;
 extern bool testLogging;

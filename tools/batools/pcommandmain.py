@@ -92,6 +92,8 @@ from batools.pcommands import (
     python_build_android,
     python_build_android_debug,
     python_gather_android,
+    python_build_apple_new,
+    python_gather_apple_new,
     python_android_patch_old,
     python_android_patch_ssl_old,
     python_apple_patch,

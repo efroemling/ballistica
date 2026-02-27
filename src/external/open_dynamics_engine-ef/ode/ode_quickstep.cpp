@@ -63,7 +63,11 @@ private:
 
 
 // ...ericf update - we can shave a bit of time off by using our own bare-bones buffer class...
-#define TRIXY_ALLOCA(name,type,n) _Buffer name ## BUF; if (n > 6000){name ## BUF.allocate((n)); name = (type*)name ## BUF.getPtr();} else {name = (type*)ALLOCA((n)); dIASSERT(name);}
+#if BA_ODE_ALLOCA_DEBUG
+#define TRIXY_ALLOCA(name,type,n) _Buffer name ## BUF; if (n > 12000){printf("ODE_ALLOCA_DEBUG: TRIXY_ALLOCA heap: " #name " size=%lu threshold=12000\n",(unsigned long)(n)); name ## BUF.allocate((n)); name = (type*)name ## BUF.getPtr();} else {name = (type*)ALLOCA((n)); dIASSERT(name);}
+#else
+#define TRIXY_ALLOCA(name,type,n) _Buffer name ## BUF; if (n > 12000){name ## BUF.allocate((n)); name = (type*)name ## BUF.getPtr();} else {name = (type*)ALLOCA((n)); dIASSERT(name);}
+#endif
 
 #define dRealAllocaArray(name,n) dReal *name; TRIXY_ALLOCA(name,dReal,n*sizeof(dReal))
 //#define dRealAllocaArray(name,n) dReal *name = (dReal*) ALLOCA ((n)*sizeof(dReal));

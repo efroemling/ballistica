@@ -543,6 +543,7 @@ void dxHashSpace::collide (void *data, dNearCallback *callback)
 
     unsigned char *allocated1 = NULL;
     unsigned char *allocated2 = NULL;
+    unsigned char *allocated3 = NULL;
 
     dAASSERT(callback);
     dxGeom *geom;
@@ -569,14 +570,30 @@ void dxHashSpace::collide (void *data, dNearCallback *callback)
     dxAABB *first_aabb = 0;	// list of AABBs in hash table
     dxAABB *big_boxes = 0;	// list of AABBs too big for hash table
     maxlevel = global_minlevel - 1;
+
+    // ericf fix: allocate a pool for all dxAABBs up front as a single
+    // allocation. the original code used ALLOCA inside the loop which
+    // accumulates on the stack (alloca doesn't release between iterations),
+    // causing stack overflow with high geom counts.
+    dxAABB *aabb_pool;
+    int aabb_pool_bytes = count * (int)sizeof(dxAABB);
+    if (aabb_pool_bytes < 9000) {
+        aabb_pool = (dxAABB*) ALLOCA(aabb_pool_bytes);
+    } else {
+#if BA_ODE_ALLOCA_DEBUG
+        printf("ODE_ALLOCA_DEBUG: collide heap: aabb_pool size=%d threshold=9000\n",
+               aabb_pool_bytes);
+#endif
+        aabb_pool = (dxAABB*) malloc(aabb_pool_bytes);
+        allocated3 = (unsigned char*)aabb_pool;
+    }
+    int pool_idx = 0;
+
     for (geom = first; geom; geom=geom->next) {
         // if (!GEOM_ENABLED(geom)){
         //     continue;
         // }
-        // ericf note: TRIXY_ALLOCA will never actually allocate because
-        // this is always a small bit of memory; right?..  should test.
-        // TRIXY_ALLOCA(aabb, dxAABB, sizeof(dxAABB));
-        dxAABB *aabb = (dxAABB*) ALLOCA (sizeof(dxAABB));
+        dxAABB *aabb = &aabb_pool[pool_idx++];
         aabb->geom = geom;
         // compute level, but prevent cells from getting too small
         int level = findLevel (geom->aabb);
@@ -613,6 +630,10 @@ void dxHashSpace::collide (void *data, dNearCallback *callback)
     if (n*tested_rowsize < 5000){
       tested = (unsigned char *) alloca (n * tested_rowsize);
     } else {
+#if BA_ODE_ALLOCA_DEBUG
+      printf("ODE_ALLOCA_DEBUG: collide heap: tested size=%ld threshold=5000\n",
+             n * tested_rowsize);
+#endif
       tested = (unsigned char *) malloc (n * tested_rowsize);
       allocated1 = tested;
     }
@@ -631,9 +652,13 @@ void dxHashSpace::collide (void *data, dNearCallback *callback)
 
     // allocate and initialize hash table node pointers
     Node **table;
-    if (sizeof(Node*)*sz < 8000){
+    if (sizeof(Node*)*sz < 10000){
       table = (Node **) ALLOCA (sizeof(Node*) * sz);
     } else {
+#if BA_ODE_ALLOCA_DEBUG
+      printf("ODE_ALLOCA_DEBUG: collide heap: table size=%lu threshold=10000\n",
+             (unsigned long)(sizeof(Node*) * sz));
+#endif
       table = (Node **) malloc(sizeof(Node*) * sz);
       allocated2 = (unsigned char*)table;
     }
@@ -658,6 +683,10 @@ void dxHashSpace::collide (void *data, dNearCallback *callback)
           }
         }
       }
+#if BA_ODE_ALLOCA_DEBUG
+      printf("ODE_ALLOCA_DEBUG: collide heap: nodeBuffer size=%d threshold=n>500 (n=%d)\n",
+             need*(int)sizeof(Node), n);
+#endif
       nodeBuffer = (Node*)malloc(need*sizeof(Node));
       dIASSERT(nodeBuffer);
       Node *ni = nodeBuffer;
@@ -778,6 +807,9 @@ void dxHashSpace::collide (void *data, dNearCallback *callback)
     }
     if (allocated2) {
       free(allocated2);
+    }
+    if (allocated3) {
+      free(allocated3);
     }
     if (nodeBuffer) {
       free(nodeBuffer);
