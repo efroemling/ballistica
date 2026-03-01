@@ -1,4 +1,4 @@
-### 1.7.61 (build 22734, api 9, 2026-03-01)
+### 1.7.61 (build 22735, api 9, 2026-03-01)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
 - OS-Font-Rendering now works on Linux (or other Posix-y platforms like Mac
@@ -41,6 +41,8 @@
 - Starting to add some tests of low level C++ stuff (the Object class in this
   case) to make sure it stays in good working order. Do `make test-ex` to see
   that stuff.
+- Server with v2-auth enabled now provide verified account-ids of all clients
+  in the client-info-lists they send out.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not

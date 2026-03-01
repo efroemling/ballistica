@@ -192,6 +192,11 @@ venv-clean:
 docs: env
 	@$(PCOMMAND) gen_docs_sphinx
 
+# Cloud version of docs
+docs-cloud:
+	@tools/cloudshell $(CLOUDSHELL_HOST_TEST) --env $(CLOUDSHELL_ENV_CHECK) \
+ --instance docs -- make docs
+
 docs-clean:
 	rm -rf .cache/sphinx
 	rm -rf .cache/sphinxfiltered
