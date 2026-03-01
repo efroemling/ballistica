@@ -1128,8 +1128,9 @@ def gather(rootdir: str) -> None:
 
     Expects all 10 slice builds to exist under build/python_apple_*/
     Outputs:
-      src/external/python-apple/Python.xcframework
-      src/assets/pylib-apple/
+
+    - src/external/python-apple/Python.xcframework
+    - src/assets/pylib-apple/
     """
     # pylint: disable=too-many-locals,too-many-statements
     from efrotools.pybuild import PRUNE_LIB_NAMES, tweak_empty_py_files
