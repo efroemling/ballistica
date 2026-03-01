@@ -296,23 +296,23 @@ def python_version_apple() -> None:
     print(PY_VER_EXACT_APPLE, end='')
 
 
-def python_build_apple() -> None:
+def python_build_apple_old() -> None:
     """Build an embeddable python for mac/ios/tvos."""
 
     pcommand.disallow_in_batch()
 
-    _python_build_apple(debug=False)
+    _python_build_apple_old(debug=False)
 
 
-def python_build_apple_debug() -> None:
+def python_build_apple_old_debug() -> None:
     """Build embeddable python for mac/ios/tvos (dbg ver)."""
 
     pcommand.disallow_in_batch()
 
-    _python_build_apple(debug=True)
+    _python_build_apple_old(debug=True)
 
 
-def _python_build_apple(debug: bool) -> None:
+def _python_build_apple_old(debug: bool) -> None:
     """Build an embeddable python for macOS/iOS/tvOS."""
     import os
     from efro.error import CleanError
@@ -340,7 +340,7 @@ def python_build_android_old() -> None:
     _python_build_android_old(debug=False)
 
 
-def python_build_android() -> None:
+def python_android_build() -> None:
     """Build Android Python lib using new in-tree build script."""
 
     pcommand.disallow_in_batch()
@@ -348,7 +348,7 @@ def python_build_android() -> None:
     _python_build_android(debug=False)
 
 
-def python_build_android_debug() -> None:
+def python_android_build_debug() -> None:
     """Build Android Python lib using new in-tree script (debug)."""
 
     pcommand.disallow_in_batch()
@@ -375,7 +375,7 @@ def _python_build_android(debug: bool) -> None:
     _python_build_android_mod.build(str(pcommand.PROJROOT), arch, debug=debug)
 
 
-def python_gather_android() -> None:
+def python_android_gather() -> None:
     """Gather Android Python build into project."""
     from efrotools import python_build_android as _python_build_android_mod
 
@@ -384,7 +384,7 @@ def python_gather_android() -> None:
     _python_build_android_mod.gather(str(pcommand.PROJROOT))
 
 
-def python_build_apple_new() -> None:
+def python_build_apple() -> None:
     """Build one Apple Python slice using new in-tree script."""
     import os
     from efro.error import CleanError
@@ -399,7 +399,7 @@ def python_build_apple_new() -> None:
     _python_build_apple_mod.build(str(pcommand.PROJROOT), sys.argv[2])
 
 
-def python_gather_apple_new() -> None:
+def python_apple_gather() -> None:
     """Gather Apple Python slices into XCFramework and copy to project."""
     import os
     from efrotools import python_build_apple as _python_build_apple_mod
@@ -501,8 +501,8 @@ def python_gather_android_old() -> None:
     pybuild.gather(do_android=True, do_apple=False)
 
 
-def python_gather_apple() -> None:
-    """python_gather but only apple bits."""
+def python_apple_gather_old() -> None:
+    """python_gather but only apple bits (old pipeline)."""
     import os
     from efrotools import pybuild
 

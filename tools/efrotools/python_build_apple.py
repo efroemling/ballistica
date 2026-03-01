@@ -22,7 +22,7 @@ import urllib.request
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    pass
+    from collections.abc import Callable
 
 # ---------------------------------------------------------------------------
 # Version constants (bump these to update)
@@ -604,6 +604,33 @@ def _patch_modules_setup(pydir: str) -> None:
     patch_modules_setup(pydir, 'apple')
 
 
+def _patch_configure(pydir: str) -> None:
+    """Remove BeeWare's --enable-framework enforcement from configure.
+
+    BeeWare's Python.patch adds as_fn_error calls to the generated configure
+    script that abort the build if --enable-framework is not passed (for all
+    embedded Apple platforms).  Since we use a plain static build without a
+    framework, we strip those lines after applying the BeeWare patches but
+    before running configure.
+    """
+    cfg = os.path.join(pydir, 'configure')
+    with open(cfg, encoding='utf-8') as f:
+        txt = f.read()
+    # Remove each case arm that enforces --enable-framework.  The whole line
+    # (case pattern + as_fn_error call + ;;) must be removed so empty case
+    # arms are not left behind, which would be a shell syntax error.
+    enforce_pat = (
+        r'^[^\n]*\bas_fn_error \$\? "[^"]*builds must use'
+        r' --enable-framework"[^\n]*\n'
+    )
+    txt, n = re.subn(enforce_pat, '', txt, flags=re.MULTILINE)
+    if n == 0:
+        raise RuntimeError('configure framework-enforcement lines not found')
+    print(f'  Patched out {n} --enable-framework enforcement checks.')
+    with open(cfg, 'w', encoding='utf-8') as f:
+        f.write(txt)
+
+
 def _patch_macos_makefile(pydir: str) -> None:
     """Patch the generated Makefile for macOS cross-compilation correctness.
 
@@ -646,6 +673,111 @@ def _patch_macos_makefile(pydir: str) -> None:
         )
     with open(mk, 'w', encoding='utf-8') as fh:
         fh.write(txt)
+
+
+def _patch_embedded_makefile(pydir: str) -> None:
+    """Patch the generated Makefile for non-macOS embedded builds.
+
+    Two issues are fixed:
+
+    1. LINKFORSHARED: Without --enable-framework, configure sets
+       PYTHONFRAMEWORKDIR=no-framework and PYTHONFRAMEWORK='' (empty).
+       The default LINKFORSHARED line ends with
+       '$(PYTHONFRAMEWORKDIR)/$(PYTHONFRAMEWORK)', which expands to the bare
+       path 'no-framework/' — a nonexistent directory that the linker rejects.
+
+    2. build_all dependencies: $(BUILDPYTHON) is replaced with $(LIBRARY)
+       (libpython3.13.a) so the static library is still built, but the python
+       executable link step is skipped — it fails for cross-compiled embedded
+       targets because macOS-only Homebrew dylibs (e.g. libb2) get pulled in.
+       Programs/_testembed, checksharedmods, and rundsymutil are also removed
+       from build_all because they all have transitive deps on $(BUILDPYTHON).
+    """
+    mk = os.path.join(pydir, 'Makefile')
+    with open(mk, encoding='utf-8') as fh:
+        txt = fh.read()
+
+    # Fix 1: Remove 'no-framework/' path from LINKFORSHARED.
+    txt, n = re.subn(
+        r'^(LINKFORSHARED\s*=.*?)\s*'
+        r'\$\(PYTHONFRAMEWORKDIR\)/\$\(PYTHONFRAMEWORK\)\s*$',
+        r'\1',
+        txt,
+        flags=re.MULTILINE,
+    )
+    if n == 0:
+        print(
+            '  Note: $(PYTHONFRAMEWORKDIR)/$(PYTHONFRAMEWORK) not found in'
+            ' LINKFORSHARED — check if this patch is still needed.'
+        )
+    else:
+        print(
+            f'  Removed $(PYTHONFRAMEWORKDIR)/$(PYTHONFRAMEWORK)'
+            f' from LINKFORSHARED ({n} occurrence(s)).'
+        )
+
+    # Fix 2: Remove targets that depend on the python executable from
+    # build_all.  $(BUILDPYTHON), Programs/_testembed, checksharedmods, and
+    # rundsymutil all fail to link or are meaningless for cross-compiled
+    # embedded targets (macOS-only Homebrew dylibs like libb2 get pulled in).
+    # We run our own _check_no_shared_modules check after install instead.
+    # Replace $(BUILDPYTHON) with $(LIBRARY): we need libpython3.13.a but not
+    # the python executable (which fails to link for cross-compiled targets
+    # because Homebrew libraries like libb2 are macOS-only).
+    new_txt = txt.replace(
+        'check-app-store-compliance $(BUILDPYTHON) platform',
+        'check-app-store-compliance $(LIBRARY) platform',
+    )
+    # Remove Programs/_testembed, checksharedmods, and rundsymutil: all have
+    # transitive deps on $(BUILDPYTHON) and are not needed for our use case.
+    new_txt = new_txt.replace(
+        'gdbhooks Programs/_testembed scripts checksharedmods rundsymutil',
+        'gdbhooks scripts',
+    )
+    # libainstall tries to install Programs/python.o, which was not compiled
+    # because we excluded $(BUILDPYTHON) from build_all.  Remove that line.
+    new_txt = new_txt.replace(
+        '\t\t$(INSTALL_DATA) Programs/python.o'
+        ' $(DESTDIR)$(LIBPL)/python.o; \\\n',
+        '',
+    )
+    if new_txt == txt:
+        print(
+            '  Note: build_all exe deps not found — check if this'
+            ' patch is still needed.'
+        )
+    else:
+        print(
+            '  Replaced $(BUILDPYTHON) with $(LIBRARY) in build_all;'
+            ' removed _testembed/checksharedmods/rundsymutil/python.o-install.'
+        )
+    txt = new_txt
+
+    with open(mk, 'w', encoding='utf-8') as fh:
+        fh.write(txt)
+
+
+# ---------------------------------------------------------------------------
+# Shared-module check
+# ---------------------------------------------------------------------------
+
+
+def _check_no_shared_modules(installdir: str, slice_name: str) -> None:
+    """Fail if any .so extension modules appear in lib-dynload after install."""
+    dynload_dir = os.path.join(
+        installdir, 'usr', 'lib', f'python{PY_VER}', 'lib-dynload'
+    )
+    if not os.path.isdir(dynload_dir):
+        return
+    so_files = glob.glob(os.path.join(dynload_dir, '*.so'))
+    if so_files:
+        names = '\n'.join(f'  {os.path.basename(f)}' for f in sorted(so_files))
+        raise RuntimeError(
+            f'Apple/{slice_name}: shared extension modules found in'
+            f' lib-dynload (all must be static):\n{names}\n'
+            f'Update cmodules/enables in pybuild.patch_modules_setup().'
+        )
+    print(f'  Static-module check passed for {slice_name}.')
 
 
 # ---------------------------------------------------------------------------
@@ -717,12 +849,13 @@ def build(rootdir: str, slice_name: str) -> None:
         cwd=pydir,
         check=True,
     )
-    print('Applying app-store-compliance.patch...')
-    subprocess.run(
-        ['patch', '-p1', '--input', compliance_patch],
-        cwd=pydir,
-        check=True,
-    )
+    # Note: app-store-compliance.patch is NOT applied here to the source tree.
+    # BeeWare sets APP_STORE_COMPLIANCE_PATCH in the generated Makefile for all
+    # non-macOS embedded platforms; the build system verifies the source is
+    # un-patched (via `check-app-store-compliance` dry-run) and then applies
+    # the patch to the installed stdlib files during `make install`.
+    # Applying it manually here would cause the dry-run check to fail.
+    del compliance_patch
 
     # patch(1) does not restore the executable bit on newly created files.
     # Make all wrapper scripts under Apple/*/Resources/bin/ executable.
@@ -731,6 +864,10 @@ def build(rootdir: str, slice_name: str) -> None:
     ):
         if os.path.isfile(wrapper_bin_glob):
             os.chmod(wrapper_bin_glob, 0o755)
+
+    # Remove BeeWare's --enable-framework enforcement from configure.
+    print('Patching configure (remove --enable-framework enforcement)...')
+    _patch_configure(pydir)
 
     # ------------------------------------------------------------------
     # 3. Fetch and extract prebuilt deps.
@@ -807,7 +944,7 @@ def build(rootdir: str, slice_name: str) -> None:
         configure_cmd = [
             './configure',
             f'--with-build-python={build_python}',
-            '--enable-framework',
+            '--prefix=/usr',
             '--without-ensurepip',
             f'--with-openssl={openssl_prefix}',
             '--disable-test-modules',
@@ -818,7 +955,7 @@ def build(rootdir: str, slice_name: str) -> None:
             f'--host={triple}',
             f'--build=arm64-apple-darwin{uname_release}',
             f'--with-build-python={build_python}',
-            '--enable-framework',
+            '--prefix=/usr',
             '--without-ensurepip',
             f'--with-openssl={openssl_prefix}',
             '--with-system-libmpdec',
@@ -847,28 +984,78 @@ def build(rootdir: str, slice_name: str) -> None:
     subprocess.run(configure_cmd, cwd=pydir, env=env, check=True)
 
     # ------------------------------------------------------------------
-    # 8b. Post-configure Makefile fixups (macOS only).
+    # 8b. Post-configure Makefile fixups.
     # ------------------------------------------------------------------
     if is_macos:
         _patch_macos_makefile(pydir)
+    else:
+        _patch_embedded_makefile(pydir)
 
     # ------------------------------------------------------------------
-    # 9. Build libpython<VER>.a (stop before framework creation).
+    # 9. Build Python and install into a local DESTDIR tree.
     # ------------------------------------------------------------------
-    lib_target = f'libpython{PY_VER}.a'
-    print(f'Building {lib_target}...')
-    subprocess.run(
-        ['make', f'-j{_cpus()}', lib_target],
-        cwd=pydir,
-        env=env,
-        check=True,
+    installdir = os.path.join(build_dir, 'install')
+
+    print('Building Python...')
+    subprocess.run(['make', f'-j{_cpus()}'], cwd=pydir, env=env, check=True)
+
+    print('Installing into DESTDIR...')
+    if is_macos:
+        # Full install — python.exe and _testembed link fine on macOS.
+        subprocess.run(
+            ['make', 'install', f'DESTDIR={installdir}'],
+            cwd=pydir,
+            env=env,
+            check=True,
+        )
+    else:
+        # libainstall: libpython3.13.a and config-*/Makefile etc.
+        # libinstall:  stdlib .py files + app-store compliance patch.
+        # inclinstall: headers (standalone, no build_all dep).
+        # altbininstall / bininstall / maninstall are skipped — we don't need
+        # the python executable and it was excluded from build_all above.
+        subprocess.run(
+            [
+                'make',
+                'libainstall',
+                'libinstall',
+                'inclinstall',
+                f'DESTDIR={installdir}',
+            ],
+            cwd=pydir,
+            env=env,
+            check=True,
+        )
+
+    # ------------------------------------------------------------------
+    # 9b. Verify no shared extension modules were produced.
+    # ------------------------------------------------------------------
+    print('Checking for shared extension modules...')
+    _check_no_shared_modules(installdir, slice_name)
+
+    # ------------------------------------------------------------------
+    # 9c. Find libpython<VER>.a in the install tree.
+    # ------------------------------------------------------------------
+    # Lands in config-3.13-<platform>/ under the install tree; glob avoids
+    # hard-coding the platform-triplet suffix.
+    matches = glob.glob(
+        os.path.join(
+            installdir,
+            'usr',
+            'lib',
+            f'python{PY_VER}',
+            'config-*',
+            f'libpython{PY_VER}.a',
+        )
     )
-
-    src_lib = os.path.join(pydir, lib_target)
-    assert os.path.isfile(src_lib), f'Expected {src_lib} to exist after build'
+    if len(matches) != 1:
+        raise RuntimeError(
+            f'Expected exactly one libpython .a, found: {matches}'
+        )
+    src_lib = matches[0]
 
     # ------------------------------------------------------------------
-    # 9b. Collect all dep .a files and merge into one fat archive.
+    # 9d. Collect all dep .a files and merge into one fat archive.
     # ------------------------------------------------------------------
     print('Merging dep .a files...')
     # deps_dir/lib contains all the static .a files for both macOS (source-
@@ -888,18 +1075,47 @@ def build(rootdir: str, slice_name: str) -> None:
     assert os.path.isfile(merged_lib)
 
     # ------------------------------------------------------------------
-    # 11. Copy headers.
+    # 11. Copy headers from install tree.
     # ------------------------------------------------------------------
     print('Copying headers...')
     include_dst = os.path.join(build_dir, 'include')
-    shutil.copytree(os.path.join(pydir, 'Include'), include_dst)
-    # Copy pyconfig.h (generated by configure, lives in pydir root).
-    shutil.copy2(os.path.join(pydir, 'pyconfig.h'), include_dst)
+    include_src = os.path.join(installdir, 'usr', 'include', f'python{PY_VER}')
+    shutil.copytree(include_src, include_dst)
 
     print(
         f'=== Python {PY_VER_EXACT} for Apple/{slice_name} build complete! ==='
     )
     print(f'    merged lib: {merged_lib}')
+
+
+def _copy_sysconfigdata(
+    slice_build_dir_fn: 'Callable[[str], str]', stdlib_dst: str
+) -> None:
+    """Copy per-platform _sysconfigdata_*.py into the shared stdlib tree.
+
+    PRUNE_LIB_NAMES strips all _sysconfigdata_* from the rsync output; this
+    adds back one file per platform so Python's sysconfig module works at
+    runtime.  Each filename is unique to its platform (e.g.
+    _sysconfigdata__ios_arm64-iphoneos.py), except that both macOS slices
+    produce _sysconfigdata__darwin_darwin.py — only the first copy is kept.
+    """
+    seen: set[str] = set()
+    for sl in SLICES:
+        lib_dir = os.path.join(
+            slice_build_dir_fn(sl), 'install', 'usr', 'lib', f'python{PY_VER}'
+        )
+        matches = glob.glob(os.path.join(lib_dir, '_sysconfigdata_*.py'))
+        if len(matches) != 1:
+            raise RuntimeError(
+                f'Expected exactly one _sysconfigdata_*.py for slice'
+                f' {sl!r}, found: {matches}'
+            )
+        name = os.path.basename(matches[0])
+        if name in seen:
+            continue  # both macOS slices produce the same filename
+        seen.add(name)
+        shutil.copy2(matches[0], os.path.join(stdlib_dst, name))
+        print(f'  {name}  (from {sl})')
 
 
 # ---------------------------------------------------------------------------
@@ -912,10 +1128,10 @@ def gather(rootdir: str) -> None:
 
     Expects all 10 slice builds to exist under build/python_apple_*/
     Outputs:
-      src/external/python-apple-new/Python.xcframework
-      src/assets/pylib-apple-new/
+      src/external/python-apple/Python.xcframework
+      src/assets/pylib-apple/
     """
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,too-many-statements
     from efrotools.pybuild import PRUNE_LIB_NAMES, tweak_empty_py_files
 
     print('=== Gathering Apple Python slices ===')
@@ -1019,10 +1235,16 @@ def gather(rootdir: str) -> None:
     # ------------------------------------------------------------------
     print('Gathering stdlib...')
     ref_slice = 'iphoneos.arm64'
-    ref_pydir = os.path.join(
-        _slice_build_dir(ref_slice), 'src', f'Python-{PY_VER_EXACT}'
+    # Source from the *installed* tree, not the raw source Lib/.
+    # The installed tree has the app-store compliance patch applied
+    # (removes itms-services:// from urllib/parse.py uses_netloc).
+    stdlib_src = os.path.join(
+        _slice_build_dir(ref_slice),
+        'install',
+        'usr',
+        'lib',
+        f'python{PY_VER}',
     )
-    stdlib_src = os.path.join(ref_pydir, 'Lib')
     stdlib_dst = os.path.join(build_dir, 'python_apple_stdlib')
 
     if os.path.exists(stdlib_dst):
@@ -1053,14 +1275,20 @@ def gather(rootdir: str) -> None:
         check=True,
     )
 
+    # Copy per-platform _sysconfigdata_*.py from each slice's install tree.
+    # PRUNE_LIB_NAMES strips them all; we add back one per platform so
+    # Python's sysconfig module can find its data at runtime.
+    print('Copying per-platform sysconfigdata files...')
+    _copy_sysconfigdata(_slice_build_dir, stdlib_dst)
+
     # ------------------------------------------------------------------
     # 4. Copy to project.
     # ------------------------------------------------------------------
     print('Copying to project...')
     xcfw_dst = os.path.join(
-        rootdir, 'src', 'external', 'python-apple-new', 'Python.xcframework'
+        rootdir, 'src', 'external', 'python-apple', 'Python.xcframework'
     )
-    pylib_dst = os.path.join(rootdir, 'src', 'assets', 'pylib-apple-new')
+    pylib_dst = os.path.join(rootdir, 'src', 'assets', 'pylib-apple')
 
     # XCFramework.
     if os.path.exists(xcfw_dst):

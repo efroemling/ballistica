@@ -849,7 +849,7 @@ def gather(rootdir: str) -> None:
             for arch in archs
         ]
         basepylib = [
-            f'build/python_android_{arch}/src/' f'Python-{PY_VER_EXACT}/Lib'
+            f'build/python_android_{arch}/build/usr/lib/python{PY_VER}'
             for arch in archs
         ]
 
@@ -936,10 +936,27 @@ def gather(rootdir: str) -> None:
 
         # Assemble pylib only once (same content for debug and release).
         if not os.path.exists(pylib_dst):
-            # Sanity check: all arch Lib dirs should be identical.
+            # Sanity check: all arch install lib dirs should be identical
+            # (excluding _sysconfigdata_*.py which is arch-specific and
+            # handled separately below).
             for i in range(len(basepylib) - 1):
                 returncode = subprocess.run(
-                    ['diff', basepylib[i], basepylib[i + 1]],
+                    [
+                        'diff',
+                        # Arch-specific sysconfig data; gathered separately.
+                        '--exclude=_sysconfigdata_*',
+                        # Pre-compiled bytecode installed alongside .py files;
+                        # differs across arches due to embedded timestamps even
+                        # when the source is identical. Not gathered (rsync
+                        # only picks up *.py).
+                        '--exclude=__pycache__',
+                        # Arch-named dir containing libpython.a and build
+                        # Makefiles (e.g. config-3.13-aarch64-linux-android).
+                        # Differs by arch name; not gathered.
+                        '--exclude=config-*',
+                        basepylib[i],
+                        basepylib[i + 1],
+                    ],
                     check=False,
                     capture_output=True,
                 ).returncode
@@ -954,6 +971,10 @@ def gather(rootdir: str) -> None:
                 [
                     'rsync',
                     '--recursive',
+                    '--exclude',
+                    '_sysconfigdata_*',  # arch-specific; handled separately
+                    '--exclude',
+                    'config-*',  # arch-specific build config dir
                     '--include',
                     '*.py',
                     '--exclude',

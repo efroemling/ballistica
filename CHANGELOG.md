@@ -1,4 +1,4 @@
-### 1.7.61 (build 22731, api 9, 2026-02-27)
+### 1.7.61 (build 22733, api 9, 2026-03-01)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
 - OS-Font-Rendering now works on Linux (or other Posix-y platforms like Mac
@@ -36,6 +36,11 @@
   in place (labeled '_old') but I'll remove it soon.
 - Android Python has been bumped to the latest bug fix release (3.13.12).
 - Fixed an issue where the sqlite3 module was not available in Android Python.
+- Windows builds will create a .dmp file in the executable directory on crashes,
+  which can be useful to send to me to diagnose crash bugs.
+- Starting to add some tests of low level C++ stuff (the Object class in this
+  case) to make sure it stays in good working order. Do `make test-ex` to see
+  that stuff.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not

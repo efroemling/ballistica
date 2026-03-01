@@ -79,6 +79,50 @@
 
 namespace ballistica::core {
 
+// ---------------------------------------------------------------------------
+// Crash dump handler
+// ---------------------------------------------------------------------------
+
+static auto GetExeDir_() -> std::wstring {
+  wchar_t buf[MAX_PATH];
+  GetModuleFileNameW(nullptr, buf, MAX_PATH);
+  std::wstring path(buf);
+  auto pos = path.rfind(L'\\');
+  return (pos != std::wstring::npos) ? path.substr(0, pos) : path;
+}
+
+static LONG WINAPI CrashHandler_(EXCEPTION_POINTERS* exc) {
+  SYSTEMTIME t;
+  GetLocalTime(&t);
+
+  wchar_t filename[MAX_PATH];
+  swprintf_s(filename, MAX_PATH, L"%s\\crash_%04d-%02d-%02d_%02d-%02d-%02d.dmp",
+             GetExeDir_().c_str(), t.wYear, t.wMonth, t.wDay, t.wHour,
+             t.wMinute, t.wSecond);
+
+  HANDLE file = CreateFileW(filename, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
+                            FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (file != INVALID_HANDLE_VALUE) {
+    MINIDUMP_EXCEPTION_INFORMATION mdei{};
+    mdei.ThreadId = GetCurrentThreadId();
+    mdei.ExceptionPointers = exc;
+    mdei.ClientPointers = FALSE;
+
+    MiniDumpWriteDump(
+        GetCurrentProcess(), GetCurrentProcessId(), file,
+        static_cast<MINIDUMP_TYPE>(MiniDumpWithUnloadedModules
+                                   | MiniDumpWithIndirectlyReferencedMemory),
+        exc ? &mdei : nullptr, nullptr, nullptr);
+
+    CloseHandle(file);
+  }
+
+  // Let Windows' normal crash dialog appear so the tester sees something.
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+
+// ---------------------------------------------------------------------------
+
 static const int kTraceMaxStackFrames{256};
 static const int kTraceMaxFunctionNameLength{1024};
 
@@ -276,6 +320,10 @@ auto PlatformWindows::UTF8Decode(std::string_view str) -> std::wstring {
 PlatformWindows::PlatformWindows() {
   // We should be built in unicode mode.
   assert(sizeof(TCHAR) == 2);
+
+  if (g_buildconfig.variant_generic() || g_buildconfig.variant_test_build()) {
+    SetUnhandledExceptionFilter(CrashHandler_);
+  }
 
   // Need to init winsock immediately since we use it for
   // threading/logging/etc.
