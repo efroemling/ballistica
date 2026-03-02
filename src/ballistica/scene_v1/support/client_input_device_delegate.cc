@@ -75,7 +75,7 @@ auto ClientInputDeviceDelegate::GetClientID() const -> int {
   }
 }
 
-auto ClientInputDeviceDelegate::GetPublicV1AccountID() const -> std::string {
+auto ClientInputDeviceDelegate::GetAccountID() const -> std::string {
   assert(g_base->InLogicThread());
   if (connection_to_client_.exists()) {
     return connection_to_client_->peer_public_account_id();

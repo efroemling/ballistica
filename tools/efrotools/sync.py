@@ -326,7 +326,8 @@ def add_marker(src_proj: str, srcdata: str) -> str:
 
     hashstr = string_hash(srcdata)
     lines.insert(
-        firstline, f'# Synced from {src_proj}.\n# EFRO_SYNC_HASH={hashstr}\n#'
+        firstline,
+        f'# EfroSynced from {src_proj}.\n# EFRO_SYNC_HASH={hashstr}\n#',
     )
     return '\n'.join(lines) + '\n'
 

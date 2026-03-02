@@ -1,4 +1,4 @@
-### 1.7.61 (build 22735, api 9, 2026-03-01)
+### 1.7.61 (build 22745, api 9, 2026-03-02)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
 - OS-Font-Rendering now works on Linux (or other Posix-y platforms like Mac
@@ -14,6 +14,11 @@
   V2 account ids look like 'a-XXX' whereas old V1 looked like 'pb-XXXX'. The
   default protocol is still 33, but if you are running a server it is highly
   recommended to set your protocol to 36 in your server config to enable this.
+- Added `bascenev1.SessionPlayer.get_account_id()`, which supersedes the old
+  `get_v1_account_id()`. The new method returns a V1 account id for players
+  connected via protocol < 36 and a V2 account id for protocol >= 36.
+  `get_v1_account_id()` is now deprecated and will be removed when api 9
+  support ends.
 - Wired up an http request on the V1 master server you can use to get V2 account
   ids given a V1 account id. You can use this to migrate old account databases
   for V2 auth. https://legacy.ballistica.net/v2id/YOURV1IDHERE

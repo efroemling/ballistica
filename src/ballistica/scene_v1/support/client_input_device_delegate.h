@@ -19,7 +19,7 @@ class ClientInputDeviceDelegate : public SceneV1InputDeviceDelegate {
 
   void StoreClientDeviceInfo(ClientInputDevice* device);
   auto GetClientID() const -> int override;
-  auto GetPublicV1AccountID() const -> std::string override;
+  auto GetAccountID() const -> std::string override;
   auto GetAccountName(bool full) const -> std::string override;
   // Return player-profiles dict if available; otherwise nullptr.
   auto GetPlayerProfiles() const -> PyObject* override;
