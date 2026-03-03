@@ -1,4 +1,4 @@
-### 1.7.61 (build 22745, api 9, 2026-03-02)
+### 1.7.61 (build 22746, api 9, 2026-03-02)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
 - OS-Font-Rendering now works on Linux (or other Posix-y platforms like Mac
@@ -48,6 +48,10 @@
   that stuff.
 - Server with v2-auth enabled now provide verified account-ids of all clients
   in the client-info-lists they send out.
+- Added GL debug logging. This can hopefully give us clues if we're doing
+  something that doesn't play nicely with certain graphics hardware. To enable
+  this, flip logging levels for `ba.gfx` to 'info' or 'debug' in the dev
+  console.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not

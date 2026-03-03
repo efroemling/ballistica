@@ -223,6 +223,9 @@ class RendererGL : public Renderer {
   auto GetMSAASamplesForFramebuffer_(int width, int height) -> int;
   void UpdateMSAAEnabled_() override;
   void CheckGLCapabilities_();
+  void TrySetupGLDebugOutput_();
+  void ApplyGLDebugSettings_();
+  void UpdateGLDebugSettingsIfNeeded_();
   void UpdateVignetteTex_(bool force) override;
   void StandardPostProcessSetup_(ProgramPostProcessGL* p,
                                  const RenderPass& pass);
@@ -354,6 +357,13 @@ class RendererGL : public Renderer {
   GLfloat max_anisotropy_{};
   int msaa_max_samples_rgb565_{-1};
   int msaa_max_samples_rgb8_{-1};
+  bool gl_debug_output_available_{};
+#if BA_OPENGL_IS_ES
+  PFNGLDEBUGMESSAGECONTROLKHRPROC gl_debug_message_control_khr_{};
+#else
+  PFNGLDEBUGMESSAGECONTROLPROC gl_debug_message_control_{};
+#endif
+  int gl_debug_last_level_{-1};
 };
 
 }  // namespace ballistica::base

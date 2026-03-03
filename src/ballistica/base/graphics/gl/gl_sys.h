@@ -39,8 +39,11 @@
 // that hardware may still be limited to older versions so we need to check
 // for that and set a limit in our manifest.
 #if BA_PLATFORM_ANDROID
+// clang-format off
 #include <GLES3/gl31.h>
 #include <GLES3/gl3ext.h>
+#include <GLES2/gl2ext.h>  // GL_KHR_debug typedefs (needs gl31.h first)
+// clang-format on
 #endif
 
 // On Windows with ANGLE we include GLES3 headers here (via gl_sys_windows.h)
