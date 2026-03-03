@@ -197,7 +197,9 @@ static void GL_APIENTRY GLDebugCallbackKHR_(GLenum source, GLenum type,
   }
   g_core->logging->Log(kGLDebugLogName, level, std::string(prefix) + message);
 }
-#else
+#elif BA_SDL_BUILD
+// Not compiled on non-SDL desktop GL builds (e.g. macOS Xcode) since Apple's
+// OpenGL headers cap at 4.1 and don't define GL_DEBUG_* constants.
 static void GLAPIENTRY GLDebugCallback_(GLenum source, GLenum type, GLuint id,
                                         GLenum severity, GLsizei length,
                                         const GLchar* message,
@@ -3302,7 +3304,7 @@ void RendererGL::ApplyGLDebugSettings_() {
   if (!info_level && !debug_level) {
 #if BA_OPENGL_IS_ES
     glDisable(GL_DEBUG_OUTPUT_KHR);
-#else
+#elif BA_SDL_BUILD
     glDisable(GL_DEBUG_OUTPUT);
 #endif
     return;
@@ -3327,7 +3329,7 @@ void RendererGL::ApplyGLDebugSettings_() {
     ctrl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION_KHR, 0,
          nullptr, GL_TRUE);
   }
-#else
+#elif BA_SDL_BUILD
   glEnable(GL_DEBUG_OUTPUT);
   auto& ctrl = gl_debug_message_control_;
   if (debug_level) {
