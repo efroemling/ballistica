@@ -358,9 +358,10 @@ class RendererGL : public Renderer {
   int msaa_max_samples_rgb565_{-1};
   int msaa_max_samples_rgb8_{-1};
   bool gl_debug_output_available_{};
-#if BA_OPENGL_IS_ES
+#if BA_OPENGL_IS_ES && (BA_SDL_BUILD || BA_PLATFORM_ANDROID)
+  // Not available on Apple ES builds (iOS/tvOS) — gl2ext.h KHR typedefs absent.
   PFNGLDEBUGMESSAGECONTROLKHRPROC gl_debug_message_control_khr_{};
-#elif BA_SDL_BUILD
+#elif !BA_OPENGL_IS_ES && BA_SDL_BUILD
   // Not available on non-SDL desktop GL builds (e.g. macOS Xcode).
   PFNGLDEBUGMESSAGECONTROLPROC gl_debug_message_control_{};
 #endif

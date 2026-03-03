@@ -174,7 +174,8 @@ static auto CheckGLExtension(const std::vector<std::string>& exts,
 // category is added to LogName in the future.
 constexpr LogName kGLDebugLogName = LogName::kBaGraphics;
 
-#if BA_OPENGL_IS_ES
+#if BA_OPENGL_IS_ES && (BA_SDL_BUILD || BA_PLATFORM_ANDROID)
+// Not compiled on Apple ES builds (iOS/tvOS) — GL_DEBUG_*_KHR constants absent.
 static void GL_APIENTRY GLDebugCallbackKHR_(GLenum source, GLenum type,
                                             GLuint id, GLenum severity,
                                             GLsizei length,
@@ -3246,47 +3247,48 @@ void RendererGL::VRSyncRenderStates() {
 
 void RendererGL::TrySetupGLDebugOutput_() {
   // Load extension function pointers via the platform's proc-address API.
-  // SDL_GL_GetProcAddress is available on SDL builds (Windows, macOS, Linux).
-  // eglGetProcAddress is used on Android (MINSDL_BUILD, no full SDL).
-  // On other non-SDL platforms this is a no-op (iOS Xcode, etc.).
-#if BA_OPENGL_IS_ES
-#if BA_SDL_BUILD
+  // SDL_GL_GetProcAddress covers SDL builds (Windows ANGLE, macOS, Linux).
+  // eglGetProcAddress covers Android (MINSDL_BUILD, no full SDL).
+  // Apple ES (iOS/tvOS) and Apple desktop (macOS Xcode) lack proc-address APIs
+  // and GL_KHR_debug header support, so they are skipped entirely.
+#if BA_OPENGL_IS_ES && BA_SDL_BUILD
   auto set_callback = reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKKHRPROC>(
       SDL_GL_GetProcAddress("glDebugMessageCallbackKHR"));
   gl_debug_message_control_khr_ =
       reinterpret_cast<PFNGLDEBUGMESSAGECONTROLKHRPROC>(
           SDL_GL_GetProcAddress("glDebugMessageControlKHR"));
-#elif BA_PLATFORM_ANDROID
-  auto set_callback = reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKKHRPROC>(
-      eglGetProcAddress("glDebugMessageCallbackKHR"));
-  gl_debug_message_control_khr_ =
-      reinterpret_cast<PFNGLDEBUGMESSAGECONTROLKHRPROC>(
-          eglGetProcAddress("glDebugMessageControlKHR"));
-#else
-  return;  // No proc-address API available on this platform.
-#endif
   if (!set_callback || !gl_debug_message_control_khr_) {
     g_core->logging->Log(kGLDebugLogName, LogLevel::kInfo,
                          "GL debug output not available.");
     return;
   }
   set_callback(GLDebugCallbackKHR_, nullptr);
-#else  // !BA_OPENGL_IS_ES
-#if BA_SDL_BUILD
+#elif BA_OPENGL_IS_ES && BA_PLATFORM_ANDROID
+  auto set_callback = reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKKHRPROC>(
+      eglGetProcAddress("glDebugMessageCallbackKHR"));
+  gl_debug_message_control_khr_ =
+      reinterpret_cast<PFNGLDEBUGMESSAGECONTROLKHRPROC>(
+          eglGetProcAddress("glDebugMessageControlKHR"));
+  if (!set_callback || !gl_debug_message_control_khr_) {
+    g_core->logging->Log(kGLDebugLogName, LogLevel::kInfo,
+                         "GL debug output not available.");
+    return;
+  }
+  set_callback(GLDebugCallbackKHR_, nullptr);
+#elif !BA_OPENGL_IS_ES && BA_SDL_BUILD
   auto set_callback = reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKPROC>(
       SDL_GL_GetProcAddress("glDebugMessageCallback"));
   gl_debug_message_control_ = reinterpret_cast<PFNGLDEBUGMESSAGECONTROLPROC>(
       SDL_GL_GetProcAddress("glDebugMessageControl"));
-#else
-  return;  // No proc-address API available on this platform.
-#endif
   if (!set_callback || !gl_debug_message_control_) {
     g_core->logging->Log(kGLDebugLogName, LogLevel::kInfo,
                          "GL debug output not available.");
     return;
   }
   set_callback(GLDebugCallback_, nullptr);
-#endif  // BA_OPENGL_IS_ES
+#else
+  return;  // Platform has no proc-address API or GL_KHR_debug header support.
+#endif
   gl_debug_output_available_ = true;
   ApplyGLDebugSettings_();
 }
@@ -3302,15 +3304,15 @@ void RendererGL::ApplyGLDebugSettings_() {
   // At warning level or higher: disable GL debug output entirely to avoid
   // any driver-side overhead.
   if (!info_level && !debug_level) {
-#if BA_OPENGL_IS_ES
+#if BA_OPENGL_IS_ES && (BA_SDL_BUILD || BA_PLATFORM_ANDROID)
     glDisable(GL_DEBUG_OUTPUT_KHR);
-#elif BA_SDL_BUILD
+#elif !BA_OPENGL_IS_ES && BA_SDL_BUILD
     glDisable(GL_DEBUG_OUTPUT);
 #endif
     return;
   }
 
-#if BA_OPENGL_IS_ES
+#if BA_OPENGL_IS_ES && (BA_SDL_BUILD || BA_PLATFORM_ANDROID)
   glEnable(GL_DEBUG_OUTPUT_KHR);
   auto& ctrl = gl_debug_message_control_khr_;
   if (debug_level) {
