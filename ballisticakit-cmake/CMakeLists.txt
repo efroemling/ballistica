@@ -9,11 +9,15 @@ option(STATIC_BUILD "build with static libs" OFF)
 
 # Requiring minimum of C++20 currently.
 set(CMAKE_CXX_STANDARD 20)
+set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
 
 # ============= STATIC BUILD CONFIGURATION =============
 if(STATIC_BUILD)
   # Prefer static libraries for find_package
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".lib" ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  # set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".lib" ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  set(BA_OPENAL_LIB "${PROJECT_ROOT_DIR}/build/static_dependencies/libopenal.a")
+  set(BA_OPENAL_INCLUDE_DIR "${PROJECT_ROOT_DIR}/build/static_dependencies/openal_x86_debug/openal-soft-1.25.1/include/AL")
+
   set(PKG_CONFIG_STATIC ON)
   set(Python3_USE_STATIC_LIBS ON)
   message(STATUS "Static build enabled - configuring for static libraries")
@@ -54,22 +58,17 @@ else()
   
   pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
   
-  # SDL2 has complex X11 transitive dependencies on Linux; force dynamic linking
-  # to avoid linker issues with unresolved X11 symbols when statically linking
-  if(STATIC_BUILD)
-    set(_SAVED_FIND_LIBRARY_SUFFIXES_SDL ${CMAKE_FIND_LIBRARY_SUFFIXES})
-    set(_SAVED_PKG_CONFIG_STATIC_SDL ${PKG_CONFIG_STATIC})
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".a")
-    set(PKG_CONFIG_STATIC OFF)
-  endif()
-  
   pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
   
   if(STATIC_BUILD)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ${_SAVED_FIND_LIBRARY_SUFFIXES_SDL})
-    set(PKG_CONFIG_STATIC ${_SAVED_PKG_CONFIG_STATIC_SDL})
+    message(WARNING "Static build enabled - ensure that all dependencies are available as static libraries and that the appropriate -dev packages are installed.")
+    add_library(openal STATIC IMPORTED)
+    set_target_properties(openal PROPERTIES IMPORTED_LOCATION ${BA_OPENAL_LIB})
+    # Set include directories for the static OpenAL library
+    set_target_properties(openal PROPERTIES IMPORTED_INCLUDE_DIRECTORIES "${BA_OPENAL_INCLUDE_DIR}")
+    # Also add include directories to ba_deps so they're available during compilation
+    target_include_directories(ba_deps INTERFACE ${BA_OPENAL_INCLUDE_DIR})
   endif()
-  
   pkg_check_modules(OGG REQUIRED IMPORTED_TARGET ogg)
   pkg_check_modules(VORBISFILE REQUIRED IMPORTED_TARGET vorbisfile)
   
@@ -77,23 +76,23 @@ else()
   set(OpenGL_GL_PREFERENCE GLVND)
   find_package(OpenGL REQUIRED)
   
-  target_link_libraries(ba_deps INTERFACE
-    PkgConfig::OPENAL
-    PkgConfig::SDL2
-    PkgConfig::OGG
-    PkgConfig::VORBISFILE
-    OpenGL::GL
-  )
 
-  # PANGOCAIRO causing alot of transitive dependency issues when linked in statically, 
-  # so we need to temporarily disable static library searching when looking for it.
-  # Force dynamic linking for pangocairo to avoid transitive dependency issues
   if(STATIC_BUILD)
-    set(_SAVED_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
-    set(_SAVED_PKG_CONFIG_STATIC ${PKG_CONFIG_STATIC})
-    # Restore default (dynamic) library search order
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".a")
-    set(PKG_CONFIG_STATIC OFF)
+    target_link_libraries(ba_deps INTERFACE
+      openal
+      PkgConfig::SDL2
+      PkgConfig::OGG
+      PkgConfig::VORBISFILE
+      OpenGL::GL
+    )
+  else()
+    target_link_libraries(ba_deps INTERFACE
+      PkgConfig::OPENAL
+      PkgConfig::SDL2
+      PkgConfig::OGG
+      PkgConfig::VORBISFILE
+      OpenGL::GL
+    )
   endif()
 
   # Optional: Pango+Cairo for OS font rendering on Linux/macOS cmake builds.
@@ -107,13 +106,6 @@ else()
   target_compile_definitions(common_deps INTERFACE BA_ENABLE_OS_FONT_RENDERING=1)
   target_link_libraries(ba_deps INTERFACE PkgConfig::PANGOCAIRO)
   endif()
-
-  # Restore static library preferences for other libraries
-  if(STATIC_BUILD)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES ${_SAVED_FIND_LIBRARY_SUFFIXES})
-    set(PKG_CONFIG_STATIC ${_SAVED_PKG_CONFIG_STATIC})
-  endif()
-
 endif()
 
 if(TEST_BUILD)
@@ -892,6 +884,11 @@ target_include_directories(ballisticakitbin PRIVATE
   ${EXTRA_INCLUDE_DIRS}
 )
 
+if(STATIC_BUILD)
+  # Add OpenAL includes via compiler flags with absolute path
+  target_compile_options(ballisticakitbin PRIVATE "-I/home/loup/github_fork/ballistica/build/static_dependencies/openal_x86_debug/openal-soft-1.25.1/include" "-I/home/loup/github_fork/ballistica/build/static_dependencies/openal_x86_debug/openal-soft-1.25.1/include/AL")
+endif()
+
 target_link_libraries(ballisticakitbin PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread dl common_deps ba_deps Python3::Python
 )
@@ -934,6 +931,12 @@ target_include_directories(ballisticakitso PRIVATE
   ${BA_SRC_ROOT}/external/open_dynamics_engine-ef
   ${EXTRA_INCLUDE_DIRS}
 )
+
+if(STATIC_BUILD)
+  # Add OpenAL includes via both include directories and compile options
+  target_include_directories(ballisticakitso PRIVATE ${BA_OPENAL_INCLUDE_DIR})
+  target_compile_options(ballisticakitso PRIVATE -I${BA_OPENAL_INCLUDE_DIR})
+endif()
 
 target_link_libraries(ballisticakitso PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread dl common_deps ba_deps Python3::Python

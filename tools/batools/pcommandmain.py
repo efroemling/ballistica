@@ -83,6 +83,7 @@ from batools.pcommands import (
     printcolors,
     prune_includes,
     python_version_android,
+    build_static_dependencies_debug,
     python_version_apple,
     python_build_apple,
     python_version_android_base,

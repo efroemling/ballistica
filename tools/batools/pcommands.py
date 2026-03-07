@@ -9,7 +9,7 @@ from __future__ import annotations
 # keep launch times fast for small snippets.
 import sys
 
-from efrotools import pcommand
+from efrotools import pcommand, pybuild
 
 
 def prune_includes() -> None:
@@ -374,6 +374,30 @@ def _python_build_android(debug: bool) -> None:
         )
     _python_build_android_mod.build(str(pcommand.PROJROOT), arch, debug=debug)
 
+def build_static_dependencies_debug() -> None:
+    """Build static dependencies for Android and Apple platforms."""
+
+    pcommand.disallow_in_batch()
+    _build_static_dependencies(debug=True)
+
+def _build_static_dependencies(debug: bool) -> None:
+    """Build static dependencies for Android and Apple platforms."""
+    import os
+    from efro.error import CleanError
+    from efrotools import build_static_dependencies as _build_static_dependencies_mod
+
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
+    archs = ('arm', 'arm64', 'x86', 'x86_64')
+    if len(sys.argv) != 3:
+        raise CleanError('Error: Expected one <ARCH> arg: ' + ', '.join(archs))
+    arch = sys.argv[2]
+    if arch not in archs:
+        raise CleanError(
+            'Error: invalid arch. valid values are: ' + ', '.join(archs)
+        )
+    _build_static_dependencies_mod.build(str(pcommand.PROJROOT), arch, debug=debug)
 
 def python_gather_android() -> None:
     """Gather Android Python build into project."""
