@@ -32,7 +32,7 @@ add_library(ba_deps INTERFACE)
 
 if(APPLE)
   # Look for homebrew's keg-only OpenAL Soft. We don't want to use Apple's
-  # OpenAL anymo  re since its deprecated (and buggy as of Tahoe).
+  # OpenAL anymore since its deprecated (and buggy as of Tahoe).
   execute_process(
     COMMAND brew --prefix openal-soft
     OUTPUT_VARIABLE _OPENAL_SOFT_PREFIX
@@ -57,7 +57,6 @@ else()
   find_package(PkgConfig REQUIRED)
   
   pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
-  
   pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
   
   if(STATIC_BUILD)
@@ -103,9 +102,10 @@ else()
     pkg_check_modules(PANGOCAIRO IMPORTED_TARGET pangocairo)
   endif()
   if(PANGOCAIRO_FOUND)
-  target_compile_definitions(common_deps INTERFACE BA_ENABLE_OS_FONT_RENDERING=1)
-  target_link_libraries(ba_deps INTERFACE PkgConfig::PANGOCAIRO)
+    target_compile_definitions(common_deps INTERFACE BA_ENABLE_OS_FONT_RENDERING=1)
+    target_link_libraries(ba_deps INTERFACE PkgConfig::PANGOCAIRO)
   endif()
+
 endif()
 
 if(TEST_BUILD)

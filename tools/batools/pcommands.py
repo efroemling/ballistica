@@ -9,7 +9,7 @@ from __future__ import annotations
 # keep launch times fast for small snippets.
 import sys
 
-from efrotools import pcommand, pybuild
+from efrotools import pcommand
 
 
 def prune_includes() -> None:
