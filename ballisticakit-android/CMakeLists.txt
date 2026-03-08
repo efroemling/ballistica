@@ -1,228 +1,269 @@
-cmake_minimum_required(VERSION 3.18)
+# For more information about using CMake with Android Studio, read the
+# documentation: https://d.android.com/studio/projects/add-native-code.html
+
+# Sets the minimum version of CMake required to build the native library.
+
+cmake_minimum_required(VERSION 3.18.1)
 project(BallisticaKit)
 
-option(HEADLESS "build headless server" OFF)
-option(TEST_BUILD "include testing features" OFF)
-option(DISCORD "enable Discord" OFF)
-option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" OFF)
-option(STATIC_BUILD "build with static libs" OFF)
+set(BA_SRC_ROOT src)
 
-# Requiring minimum of C++20 currently.
-set(CMAKE_CXX_STANDARD 20)
-set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
+# Prebuilt Python and its support libs.
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+  set(BA_PY_LIB_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../../../src/external/python-android-debug/lib/android_${ANDROID_ABI})
+  set(BA_PY_LIB_NAME libpython3.13d.a)
+  set(BA_PY_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../../../src/external/python-android-debug/include)
+else ()
+  set(BA_PY_LIB_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../../../src/external/python-android/lib/android_${ANDROID_ABI})
+  set(BA_PY_LIB_NAME libpython3.13.a)
+  set(BA_PY_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../../../src/external/python-android/include)
+endif ()
 
-# ============= STATIC BUILD CONFIGURATION =============
-if(STATIC_BUILD)
-  # Prefer static libraries for find_package
-  # set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".lib" ${CMAKE_FIND_LIBRARY_SUFFIXES})
-  set(BA_OPENAL_LIB "${PROJECT_ROOT_DIR}/build/static_dependencies/libopenal.a")
-  set(BA_OPENAL_INCLUDE_DIR "${PROJECT_ROOT_DIR}/build/static_dependencies/include")
+# Prebuilt OpenAL
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+  set(BA_OPENAL_LIB ${CMAKE_CURRENT_LIST_DIR}/../../../../../src/external/openal-android/lib/${ANDROID_ABI}_debug/libopenal.a)
+else ()
+  set(BA_OPENAL_LIB ${CMAKE_CURRENT_LIST_DIR}/../../../../../src/external/openal-android/lib/${ANDROID_ABI}_release/libopenal.a)
+endif ()
+set(BA_OPENAL_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../../../src/external/openal-android/include/AL)
 
-  set(PKG_CONFIG_STATIC ON)
-  set(Python3_USE_STATIC_LIBS ON)
-  message(STATUS "Static build enabled - configuring for static libraries")
-endif() #STATIC_BUILD
-# =======================================================
+# Prebuilt Oboe (used by OpenAL)
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+  set(BA_OBOE_LIB ${CMAKE_CURRENT_LIST_DIR}/../../../../../src/external/openal-android/lib/${ANDROID_ABI}_debug/liboboe.a)
+else ()
+  set(BA_OBOE_LIB ${CMAKE_CURRENT_LIST_DIR}/../../../../../src/external/openal-android/lib/${ANDROID_ABI}_release/liboboe.a)
+endif ()
 
-# Stuff applying everywhere.
-add_library(common_deps INTERFACE)
-  
-# Stuff applying to all ba targets.
-add_library(ba_deps INTERFACE)
+add_library(python STATIC IMPORTED)
+set_target_properties(python PROPERTIES IMPORTED_LOCATION ${BA_PY_LIB_ROOT}/${BA_PY_LIB_NAME})
 
-if(APPLE)
-  # Look for homebrew's keg-only OpenAL Soft. We don't want to use Apple's
-  # OpenAL anymo  re since its deprecated (and buggy as of Tahoe).
-  execute_process(
-    COMMAND brew --prefix openal-soft
-    OUTPUT_VARIABLE _OPENAL_SOFT_PREFIX
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    RESULT_VARIABLE _brew_rc
+add_library(pycrypto STATIC IMPORTED)
+set_target_properties(pycrypto PROPERTIES IMPORTED_LOCATION ${BA_PY_LIB_ROOT}/libcrypto.a)
+
+add_library(pyssl STATIC IMPORTED)
+set_target_properties(pyssl PROPERTIES IMPORTED_LOCATION ${BA_PY_LIB_ROOT}/libssl.a)
+
+add_library(pylzma STATIC IMPORTED)
+set_target_properties(pylzma PROPERTIES IMPORTED_LOCATION ${BA_PY_LIB_ROOT}/liblzma.a)
+
+add_library(pysqlite STATIC IMPORTED)
+set_target_properties(pysqlite PROPERTIES IMPORTED_LOCATION ${BA_PY_LIB_ROOT}/libsqlite3.a)
+
+add_library(pybz2 STATIC IMPORTED)
+set_target_properties(pybz2 PROPERTIES IMPORTED_LOCATION ${BA_PY_LIB_ROOT}/libbz2.a)
+
+add_library(pyuuid STATIC IMPORTED)
+set_target_properties(pyuuid PROPERTIES IMPORTED_LOCATION ${BA_PY_LIB_ROOT}/libuuid.a)
+
+add_library(pyffi STATIC IMPORTED)
+set_target_properties(pyffi PROPERTIES IMPORTED_LOCATION ${BA_PY_LIB_ROOT}/libffi.a)
+
+add_library(openal STATIC IMPORTED)
+set_target_properties(openal PROPERTIES IMPORTED_LOCATION ${BA_OPENAL_LIB})
+
+add_library(oboe STATIC IMPORTED)
+set_target_properties(oboe PROPERTIES IMPORTED_LOCATION ${BA_OBOE_LIB})
+
+# Note to self: why do we set C++ version differently here than in our standalone cmake build?
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=c++20> -ffast-math -include ballistica/shared/buildconfig/buildconfig_android_${BA_ANDROID_BUILDCONFIG}.h)
+
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+  add_definitions(-DBA_DEBUG_BUILD=1)
+  # Write patterns on temp stack memory to try and intercept bad usage.
+  add_compile_options(-ftrivial-auto-var-init=pattern)
+else ()
+  # It seems that cmake can choose -O2 sometimes and -O3 sometimes
+  # for release builds (depending on Release vs RelWithDebInfo, etc).
+  # (Or perhaps that is a android/gradle thing). 
+  # Regardless, let's keep all our non-debug builds consistent at -O3 for
+  # now; can revisit if it causes problems.
+  add_definitions(-O3)
+endif ()
+
+set(ODE_ROOT ${BA_SRC_ROOT}/external/open_dynamics_engine-ef)
+set(BA_OGG_ROOT ${BA_SRC_ROOT}/external/libogg-1.2.2)
+set(BA_TREMOR_ROOT ${BA_SRC_ROOT}/external/tremor)
+
+include_directories(
+  ${BA_SRC_ROOT}
+  ${ODE_ROOT}
+  ${BA_PY_INCLUDE_DIR}
+  ${BA_OGG_ROOT}/include
+  ${BA_TREMOR_ROOT}
+  ${BA_OPENAL_INCLUDE_DIR}
+)
+
+# Auxiliary static lib to be linked in with our main lib.
+# (and bundled precompiled in public releases)
+add_library(internal STATIC
+  ${ODE_ROOT}/ode/IceAABB.cpp
+  ${ODE_ROOT}/ode/IceContainer.cpp
+  ${ODE_ROOT}/ode/IceHPoint.cpp
+  ${ODE_ROOT}/ode/IceIndexedTriangle.cpp
+  ${ODE_ROOT}/ode/IceMatrix3x3.cpp
+  ${ODE_ROOT}/ode/IceMatrix4x4.cpp
+  ${ODE_ROOT}/ode/IceOBB.cpp
+  ${ODE_ROOT}/ode/IcePlane.cpp
+  ${ODE_ROOT}/ode/IcePoint.cpp
+  ${ODE_ROOT}/ode/IceRandom.cpp
+  ${ODE_ROOT}/ode/IceRay.cpp
+  ${ODE_ROOT}/ode/IceRevisitedRadix.cpp
+  ${ODE_ROOT}/ode/IceSegment.cpp
+  ${ODE_ROOT}/ode/IceTriangle.cpp
+  ${ODE_ROOT}/ode/IceUtils.cpp
+  ${ODE_ROOT}/ode/ode.cpp
+  ${ODE_ROOT}/ode/ode_array.cpp
+  ${ODE_ROOT}/ode/ode_collision_cylinder_box.cpp
+  ${ODE_ROOT}/ode/ode_collision_cylinder_plane.cpp
+  ${ODE_ROOT}/ode/ode_collision_cylinder_sphere.cpp
+  ${ODE_ROOT}/ode/ode_collision_cylinder_trimesh.cpp
+  ${ODE_ROOT}/ode/ode_collision_kernel.cpp
+  ${ODE_ROOT}/ode/ode_collision_quadtreespace.cpp
+  ${ODE_ROOT}/ode/ode_collision_sapspace.cpp
+  ${ODE_ROOT}/ode/ode_collision_space.cpp
+  ${ODE_ROOT}/ode/ode_collision_std.cpp
+  ${ODE_ROOT}/ode/ode_collision_transform.cpp
+  ${ODE_ROOT}/ode/ode_collision_trimesh.cpp
+  ${ODE_ROOT}/ode/ode_collision_trimesh_box.cpp
+  ${ODE_ROOT}/ode/ode_collision_trimesh_ccylinder.cpp
+  ${ODE_ROOT}/ode/ode_collision_trimesh_distance.cpp
+  ${ODE_ROOT}/ode/ode_collision_trimesh_plane.cpp
+  ${ODE_ROOT}/ode/ode_collision_trimesh_ray.cpp
+  ${ODE_ROOT}/ode/ode_collision_trimesh_sphere.cpp
+  ${ODE_ROOT}/ode/ode_collision_trimesh_trimesh.cpp
+  ${ODE_ROOT}/ode/ode_collision_util.cpp
+  ${ODE_ROOT}/ode/ode_error.cpp
+  ${ODE_ROOT}/ode/ode_export-diff.cpp
+  ${ODE_ROOT}/ode/ode_fastdot.cpp
+  ${ODE_ROOT}/ode/ode_fastldlt.cpp
+  ${ODE_ROOT}/ode/ode_fastlsolve.cpp
+  ${ODE_ROOT}/ode/ode_fastltsolve.cpp
+  ${ODE_ROOT}/ode/ode_joint.cpp
+  ${ODE_ROOT}/ode/ode_lcp.cpp
+  ${ODE_ROOT}/ode/ode_mass.cpp
+  ${ODE_ROOT}/ode/ode_mat.cpp
+  ${ODE_ROOT}/ode/ode_math.cpp
+  ${ODE_ROOT}/ode/ode_matrix.cpp
+  ${ODE_ROOT}/ode/ode_memory.cpp
+  ${ODE_ROOT}/ode/ode_misc.cpp
+  ${ODE_ROOT}/ode/ode_obstack.cpp
+  ${ODE_ROOT}/ode/ode_quickstep.cpp
+  ${ODE_ROOT}/ode/ode_rotation.cpp
+  ${ODE_ROOT}/ode/ode_step.cpp
+  ${ODE_ROOT}/ode/ode_stepfast.cpp
+  ${ODE_ROOT}/ode/ode_timer.cpp
+  ${ODE_ROOT}/ode/ode_util.cpp
+  ${ODE_ROOT}/ode/OPC_AABBCollider.cpp
+  ${ODE_ROOT}/ode/OPC_AABBTree.cpp
+  ${ODE_ROOT}/ode/OPC_BaseModel.cpp
+  ${ODE_ROOT}/ode/OPC_BoxPruning.cpp
+  ${ODE_ROOT}/ode/OPC_Collider.cpp
+  ${ODE_ROOT}/ode/OPC_HybridModel.cpp
+  ${ODE_ROOT}/ode/OPC_LSSCollider.cpp
+  ${ODE_ROOT}/ode/OPC_MeshInterface.cpp
+  ${ODE_ROOT}/ode/OPC_Model.cpp
+  ${ODE_ROOT}/ode/OPC_OBBCollider.cpp
+  ${ODE_ROOT}/ode/OPC_OptimizedTree.cpp
+  ${ODE_ROOT}/ode/OPC_PlanesCollider.cpp
+  ${ODE_ROOT}/ode/OPC_RayCollider.cpp
+  ${ODE_ROOT}/ode/OPC_SphereCollider.cpp
+  ${ODE_ROOT}/ode/OPC_SweepAndPrune.cpp
+  ${ODE_ROOT}/ode/OPC_TreeBuilders.cpp
+  ${ODE_ROOT}/ode/OPC_TreeCollider.cpp
+  ${ODE_ROOT}/ode/OPC_VolumeCollider.cpp
+  ${ODE_ROOT}/ode/Opcode.cpp
   )
-  if(_brew_rc EQUAL 0)
-    set(_pcdir "${_OPENAL_SOFT_PREFIX}/lib/pkgconfig")
-    set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${_pcdir}")
-  endif()  
+
+# Our main shared lib to be included in the app.
+add_library(
+  main SHARED
   
-endif()  # APPLE
-
-set(Python3_FIND_FRAMEWORK NEVER)
-# TODO: Look into using Development.Module/Development.Embed here.
-find_package(Python3 3.13 EXACT REQUIRED COMPONENTS Development)
-
-  
-if(HEADLESS)
-  target_compile_definitions(common_deps INTERFACE BA_HEADLESS_BUILD=1)
-else()
-  find_package(PkgConfig REQUIRED)
-  
-  pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
-  
-  pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
-  
-  if(STATIC_BUILD)
-    message(WARNING "Static build enabled - ensure that all dependencies are available as static libraries and that the appropriate -dev packages are installed.")
-    add_library(openal STATIC IMPORTED)
-    set_target_properties(openal PROPERTIES IMPORTED_LOCATION ${BA_OPENAL_LIB})
-    # Set include directories for the static OpenAL library
-    set_target_properties(openal PROPERTIES IMPORTED_INCLUDE_DIRECTORIES "${BA_OPENAL_INCLUDE_DIR}")
-    # Also add include directories to ba_deps so they're available during compilation
-    target_include_directories(ba_deps INTERFACE ${BA_OPENAL_INCLUDE_DIR})
-  endif()
-  pkg_check_modules(OGG REQUIRED IMPORTED_TARGET ogg)
-  pkg_check_modules(VORBISFILE REQUIRED IMPORTED_TARGET vorbisfile)
-  
-  # On linux, prefer modern libOpenGL.so over legacy libGL.so.
-  set(OpenGL_GL_PREFERENCE GLVND)
-  find_package(OpenGL REQUIRED)
-  
-
-  if(STATIC_BUILD)
-    target_link_libraries(ba_deps INTERFACE
-      openal
-      PkgConfig::SDL2
-      PkgConfig::OGG
-      PkgConfig::VORBISFILE
-      OpenGL::GL
-    )
-  else()
-    target_link_libraries(ba_deps INTERFACE
-      PkgConfig::OPENAL
-      PkgConfig::SDL2
-      PkgConfig::OGG
-      PkgConfig::VORBISFILE
-      OpenGL::GL
-    )
-  endif()
-
-  # Optional: Pango+Cairo for OS font rendering on Linux/macOS cmake builds.
-  # Pass -DREQUIRE_OS_FONT_RENDERING=ON to make this a hard requirement.
-  if(REQUIRE_OS_FONT_RENDERING)
-    pkg_check_modules(PANGOCAIRO REQUIRED IMPORTED_TARGET pangocairo)
-  else()
-    pkg_check_modules(PANGOCAIRO IMPORTED_TARGET pangocairo)
-  endif()
-  if(PANGOCAIRO_FOUND)
-  target_compile_definitions(common_deps INTERFACE BA_ENABLE_OS_FONT_RENDERING=1)
-  target_link_libraries(ba_deps INTERFACE PkgConfig::PANGOCAIRO)
-  endif()
-endif()
-
-if(TEST_BUILD)
-  target_compile_definitions(common_deps INTERFACE BA_VARIANT_TEST_BUILD=1)
-endif()
-
-set(BA_SRC_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../src")
-target_include_directories(common_deps INTERFACE
-  "${BA_SRC_ROOT}"
-)
-target_compile_options(common_deps INTERFACE
-  -include "${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_cmake.h"
-)
-
-# Define BA_DEBUG_BUILD for debug builds.
-target_compile_definitions(common_deps INTERFACE
-  $<$<CONFIG:Debug>:BA_DEBUG_BUILD=1>
-)
-
-# Go with -O3 for non-debug builds.
-target_compile_options(common_deps INTERFACE
-  $<$<NOT:$<CONFIG:Debug>>:-O3>
-)
-
-set(ODE_SRC_ROOT ${BA_SRC_ROOT}/external/open_dynamics_engine-ef)
-
-add_library(ode
-  ${ODE_SRC_ROOT}/ode/IceAABB.cpp
-  ${ODE_SRC_ROOT}/ode/IceContainer.cpp
-  ${ODE_SRC_ROOT}/ode/IceHPoint.cpp
-  ${ODE_SRC_ROOT}/ode/IceIndexedTriangle.cpp
-  ${ODE_SRC_ROOT}/ode/IceMatrix3x3.cpp
-  ${ODE_SRC_ROOT}/ode/IceMatrix4x4.cpp
-  ${ODE_SRC_ROOT}/ode/IceOBB.cpp
-  ${ODE_SRC_ROOT}/ode/IcePlane.cpp
-  ${ODE_SRC_ROOT}/ode/IcePoint.cpp
-  ${ODE_SRC_ROOT}/ode/IceRandom.cpp
-  ${ODE_SRC_ROOT}/ode/IceRay.cpp
-  ${ODE_SRC_ROOT}/ode/IceRevisitedRadix.cpp
-  ${ODE_SRC_ROOT}/ode/IceSegment.cpp
-  ${ODE_SRC_ROOT}/ode/IceTriangle.cpp
-  ${ODE_SRC_ROOT}/ode/IceUtils.cpp
-  ${ODE_SRC_ROOT}/ode/ode.cpp
-  ${ODE_SRC_ROOT}/ode/ode_array.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_cylinder_box.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_cylinder_plane.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_cylinder_sphere.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_cylinder_trimesh.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_kernel.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_quadtreespace.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_sapspace.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_space.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_std.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_transform.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_trimesh.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_trimesh_box.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_trimesh_ccylinder.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_trimesh_distance.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_trimesh_plane.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_trimesh_ray.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_trimesh_sphere.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_trimesh_trimesh.cpp
-  ${ODE_SRC_ROOT}/ode/ode_collision_util.cpp
-  ${ODE_SRC_ROOT}/ode/ode_error.cpp
-  ${ODE_SRC_ROOT}/ode/ode_export-diff.cpp
-  ${ODE_SRC_ROOT}/ode/ode_fastdot.cpp
-  ${ODE_SRC_ROOT}/ode/ode_fastldlt.cpp
-  ${ODE_SRC_ROOT}/ode/ode_fastlsolve.cpp
-  ${ODE_SRC_ROOT}/ode/ode_fastltsolve.cpp
-  ${ODE_SRC_ROOT}/ode/ode_joint.cpp
-  ${ODE_SRC_ROOT}/ode/ode_lcp.cpp
-  ${ODE_SRC_ROOT}/ode/ode_mass.cpp
-  ${ODE_SRC_ROOT}/ode/ode_mat.cpp
-  ${ODE_SRC_ROOT}/ode/ode_math.cpp
-  ${ODE_SRC_ROOT}/ode/ode_matrix.cpp
-  ${ODE_SRC_ROOT}/ode/ode_memory.cpp
-  ${ODE_SRC_ROOT}/ode/ode_misc.cpp
-  ${ODE_SRC_ROOT}/ode/ode_obstack.cpp
-  ${ODE_SRC_ROOT}/ode/ode_quickstep.cpp
-  ${ODE_SRC_ROOT}/ode/ode_rotation.cpp
-  ${ODE_SRC_ROOT}/ode/ode_step.cpp
-  ${ODE_SRC_ROOT}/ode/ode_stepfast.cpp
-  ${ODE_SRC_ROOT}/ode/ode_timer.cpp
-  ${ODE_SRC_ROOT}/ode/ode_util.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_AABBCollider.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_AABBTree.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_BaseModel.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_BoxPruning.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_Collider.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_HybridModel.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_LSSCollider.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_MeshInterface.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_Model.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_OBBCollider.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_OptimizedTree.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_PlanesCollider.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_RayCollider.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_SphereCollider.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_SweepAndPrune.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_TreeBuilders.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_TreeCollider.cpp
-  ${ODE_SRC_ROOT}/ode/OPC_VolumeCollider.cpp
-  ${ODE_SRC_ROOT}/ode/Opcode.cpp
-  )
-target_include_directories(ode PRIVATE ${ODE_SRC_ROOT})
-
-# Necessary on GCC to allow linking in to our .so version. (but disabling
-# semantic-interposition should lessen the associated speed hit).
-set_property(TARGET ode PROPERTY POSITION_INDEPENDENT_CODE ON)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  target_compile_options(ode PRIVATE -fno-semantic-interposition)
-endif()
-
-target_link_libraries(ode PRIVATE common_deps)
-
-set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/external/qr_code_generator/QrCode.cpp
+  
+  ${BA_OGG_ROOT}/bitwise.c
+  ${BA_OGG_ROOT}/framing.c
+  
+  ${BA_TREMOR_ROOT}/block.c
+  ${BA_TREMOR_ROOT}/codebook.c
+  ${BA_TREMOR_ROOT}/floor0.c
+  ${BA_TREMOR_ROOT}/floor1.c
+  ${BA_TREMOR_ROOT}/info.c
+  ${BA_TREMOR_ROOT}/mapping0.c
+  ${BA_TREMOR_ROOT}/mdct.c
+  ${BA_TREMOR_ROOT}/registry.c
+  ${BA_TREMOR_ROOT}/res012.c
+  ${BA_TREMOR_ROOT}/sharedbook.c
+  ${BA_TREMOR_ROOT}/synthesis.c
+  ${BA_TREMOR_ROOT}/vorbisfile.c
+  ${BA_TREMOR_ROOT}/window.c
+  
+  # AUTOGENERATED_PRIVATE_BEGIN (this section is managed by the "update_project" tool)
+  ${BA_SRC_ROOT}/ballistica/base/app_adapter/app_adapter_android.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_adapter/app_adapter_android.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/android/amazon/app_platform_android_amazon.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/android/amazon/app_platform_android_amazon.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/android/app_platform_android.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/android/app_platform_android.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/android/cardboard/app_platform_android_cardboard.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/android/cardboard/app_platform_android_cardboard.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/android/google/app_platform_android_google.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/android/google/app_platform_android_google.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/apple/MacMusicApp.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/apple/MacMusicAppScriptingBridge.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/apple/from_swift.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/apple/from_swift.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/oculus/main_rift.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/oculus/oculus_utils.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/oculus/oculus_utils.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows_oculus.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows_oculus.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/amazon/platform_android_amazon.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/amazon/platform_android_amazon.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/android_utils.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/android_utils.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/cardboard/platform_android_cardboard.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/cardboard/platform_android_cardboard.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/execinfo.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/execinfo.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/from_java.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/from_java.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/google/platform_android_google.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/google/platform_android_google.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/ifaddrs_android_ext.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/ifaddrs_android_ext.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/platform_android.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/platform_android.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/utf8/checked.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/utf8/core.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/android/utf8/unchecked.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows_oculus.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows_oculus.h
+  ${BA_SRC_ROOT}/ballistica/plus/plus.cc
+  ${BA_SRC_ROOT}/ballistica/plus/plus.h
+  ${BA_SRC_ROOT}/ballistica/plus/python/methods/python_methods_plus.cc
+  ${BA_SRC_ROOT}/ballistica/plus/python/methods/python_methods_plus.h
+  ${BA_SRC_ROOT}/ballistica/plus/python/plus_python.cc
+  ${BA_SRC_ROOT}/ballistica/plus/python/plus_python.h
+  ${BA_SRC_ROOT}/ballistica/plus/support/master_server_config.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_android_amazon.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_android_arcade.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_android_cardboard.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_android_common.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_android_demo.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_android_generic.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_android_google.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_android_meta.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_android_template.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_meta.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_xcode_common.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_xcode_ios.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_xcode_mac_appstore.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_xcode_mac_common.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_xcode_mac_steam.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_xcode_mac_testbuild.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_xcode_tvos.h
+  # AUTOGENERATED_PRIVATE_END
+  
   # AUTOGENERATED_PUBLIC_BEGIN (this section is managed by the "update_project" tool)
   ${BA_SRC_ROOT}/ballistica/base/app_adapter/app_adapter.cc
   ${BA_SRC_ROOT}/ballistica/base/app_adapter/app_adapter.h
@@ -813,132 +854,20 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/widget.h
   # AUTOGENERATED_PUBLIC_END
-)
-
-# BallisticaKit monolithic binary.
-add_executable(ballisticakitbin ${BALLISTICA_SOURCES})
-
-#================== Discord Platform SDK ==================
-if(DISCORD)
-  set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../src/external/discord_social_sdk")
-  set(DISCORD_SDK_INCLUDE_DIR "${DISCORD_SDK_ROOT}/include")
-  set(DISCORD_SDK_LIB_DIR "${DISCORD_SDK_ROOT}/lib/release")
-  set(DISCORD_SDK_BIN_DIR "${DISCORD_SDK_ROOT}/bin/release")
-
-  # Include Discord SDK headers.
-  include_directories(${DISCORD_SDK_INCLUDE_DIR})
-
-  # Platform-specific Social SDK library paths
-  if(WIN32)
-    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/discord_partner_sdk.lib")
-    set(DISCORD_SHARED_LIB "${DISCORD_SDK_BIN_DIR}/discord_partner_sdk.dll")
-  elseif(APPLE)
-    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
-    set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
-  else()  # Linux
-    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
-    set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
-  endif()
   
-  # Need to link to this instead.
-  # Copy the Discord shared library to the output directory.
-  add_custom_command(TARGET ballisticakitbin
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${DISCORD_SHARED_LIB}"
-    $<TARGET_FILE_DIR:ballisticakitbin>)
-  
-  target_include_directories(ba_deps INTERFACE ${DISCORD_SDK_INCLUDE_DIR})
-  target_link_libraries(ba_deps INTERFACE ${DISCORD_LIB_PATH})
-endif()  # DISCORD
-# ==============================================================
-
-
-# ============= STATIC BUILD LINKING CONFIGURATION =============
-if(STATIC_BUILD)
-  if(MSVC)
-    add_link_options(/SUBSYSTEM:CONSOLE)
-  else()
-    add_link_options(-static-libgcc -static-libstdc++)
-  endif()
-  message(STATUS "Static build: C++ runtime linked statically")
-endif()
-# ==============================================================
-
-# Gets -rdynamic added when linking gcc builds which exports all symbols which
-# gives us more meaningful stack traces using backtrace_symbols().
-set_target_properties(ballisticakitbin PROPERTIES ENABLE_EXPORTS 1)
-  
-if(HEADLESS)
-  set_target_properties(ballisticakitbin
-    PROPERTIES OUTPUT_NAME "ballisticakit_headless"
   )
-else()
-  set_target_properties(ballisticakitbin
-    PROPERTIES OUTPUT_NAME "ballisticakit"
-  )
-endif()
 
-target_include_directories(ballisticakitbin PRIVATE
-  ${BA_SRC_ROOT}/external/open_dynamics_engine-ef
-  ${EXTRA_INCLUDE_DIRS}
-)
+# Search for specific system libs we use.
+find_library(gl-lib GLESv3)
+find_library(opensl-lib OpenSLES)
+find_library(log-lib log)
+find_library(egl-lib EGL)
+find_library(jnigraphics-lib jnigraphics)
+find_library(z-lib z)
 
-if(STATIC_BUILD)
-  # Add OpenAL includes via compiler flags with absolute path
-  target_compile_options(ballisticakitbin PRIVATE "-I/home/loup/github_fork/ballistica/build/static_dependencies/openal_x86_debug/openal-soft-1.25.1/include" "-I/home/loup/github_fork/ballistica/build/static_dependencies/openal_x86_debug/openal-soft-1.25.1/include/AL")
-endif()
+target_link_libraries( main
+  python pyssl pycrypto pylzma pysqlite pybz2 pyuuid pyffi openal oboe internal
+  ${z-lib} ${jnigraphics-lib} ${egl-lib} ${log-lib} ${gl-lib} ${opensl-lib})
 
-target_link_libraries(ballisticakitbin PRIVATE
-  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread dl common_deps ba_deps Python3::Python
-)
-
-
-# BallisticaKit modular shared library
-# (for use with vanilla Python interpreters).
-add_library(ballisticakitso SHARED ${BALLISTICA_SOURCES})
-
-# This is a 'modular' build.
-target_compile_definitions(ballisticakitso PRIVATE BA_MONOLITHIC_BUILD=0)
-
-# Improves speed on GCC.
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-target_compile_options(ballisticakitso PRIVATE -fno-semantic-interposition)
-endif()
-
-# Gets -rdynamic added when linking gcc builds which exports all symbols
-# which gives us more meaningful stack traces using backtrace_symbols().
-# This involves a speed/size hit so ideally we should turn this off and
-# use .dSYMs to get pretty stack traces, but that would be a technical
-# challenge to do from the client end.
-# UPDATE: Apparently .so targets have thisenabled anyway?.. Should read
-#  up on that.
-set_target_properties(ballisticakitso PROPERTIES ENABLE_EXPORTS 1)
-
-set_target_properties(ballisticakitso PROPERTIES PREFIX "")
-# TODO: Look into ${PYTHON3_EXTENSION_SUFFIX} (.cpython-313-arm64-gnu.so, etc)
-set_target_properties(ballisticakitso PROPERTIES SUFFIX ".so")
-
-if(HEADLESS)
-  set_target_properties(ballisticakitso
-    PROPERTIES OUTPUT_NAME "ballisticakit_headless")
-else()
-  set_target_properties(ballisticakitso
-    PROPERTIES OUTPUT_NAME "ballisticakit")
-endif()
-
-target_include_directories(ballisticakitso PRIVATE
-  ${BA_SRC_ROOT}/external/open_dynamics_engine-ef
-  ${EXTRA_INCLUDE_DIRS}
-)
-
-if(STATIC_BUILD)
-  # Add OpenAL includes via both include directories and compile options
-  target_include_directories(ballisticakitso PRIVATE ${BA_OPENAL_INCLUDE_DIR})
-  target_compile_options(ballisticakitso PRIVATE -I${BA_OPENAL_INCLUDE_DIR})
-endif()
-
-target_link_libraries(ballisticakitso PRIVATE
-  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread dl common_deps ba_deps Python3::Python
-)
-
+# testing
+# add_executable(readlinktest ${BA_SRC_ROOT}/external/readlinktest.c)

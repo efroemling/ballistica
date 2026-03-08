@@ -374,17 +374,17 @@ def _python_build_android(debug: bool) -> None:
         )
     _python_build_android_mod.build(str(pcommand.PROJROOT), arch, debug=debug)
 
-def build_static_dependencies_debug() -> None:
+def static_dependencies_build_debug() -> None:
     """Build static dependencies for Android and Apple platforms."""
 
     pcommand.disallow_in_batch()
-    _build_static_dependencies(debug=True)
+    _static_dependencies_build(debug=True)
 
-def _build_static_dependencies(debug: bool) -> None:
+def _static_dependencies_build(debug: bool) -> None:
     """Build static dependencies for Android and Apple platforms."""
     import os
     from efro.error import CleanError
-    from efrotools import build_static_dependencies as _build_static_dependencies_mod
+    from efrotools import static_dependencies_build as static_dependencies_build__mod
 
     pcommand.disallow_in_batch()
 
@@ -397,7 +397,8 @@ def _build_static_dependencies(debug: bool) -> None:
         raise CleanError(
             'Error: invalid arch. valid values are: ' + ', '.join(archs)
         )
-    _build_static_dependencies_mod.build(str(pcommand.PROJROOT), arch, debug=debug)
+    static_dependencies_build__mod.build(str(pcommand.PROJROOT), arch, debug=debug)
+
 
 def python_gather_android() -> None:
     """Gather Android Python build into project."""
