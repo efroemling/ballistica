@@ -63,9 +63,7 @@ else()
     message(WARNING "Static build enabled - ensure that all dependencies are available as static libraries and that the appropriate -dev packages are installed.")
     add_library(openal STATIC IMPORTED)
     set_target_properties(openal PROPERTIES IMPORTED_LOCATION ${BA_OPENAL_LIB})
-    # Set include directories for the static OpenAL library
     set_target_properties(openal PROPERTIES IMPORTED_INCLUDE_DIRECTORIES "${BA_OPENAL_INCLUDE_DIR}")
-    # Also add include directories to ba_deps so they're available during compilation
     target_include_directories(ba_deps INTERFACE ${BA_OPENAL_INCLUDE_DIR})
   endif()
   pkg_check_modules(OGG REQUIRED IMPORTED_TARGET ogg)
@@ -884,10 +882,6 @@ target_include_directories(ballisticakitbin PRIVATE
   ${EXTRA_INCLUDE_DIRS}
 )
 
-if(STATIC_BUILD)
-  # Add OpenAL includes via compiler flags with absolute path
-  target_compile_options(ballisticakitbin PRIVATE "-I/home/loup/github_fork/ballistica/build/static_dependencies/openal_x86_debug/openal-soft-1.25.1/include" "-I/home/loup/github_fork/ballistica/build/static_dependencies/openal_x86_debug/openal-soft-1.25.1/include/AL")
-endif()
 
 target_link_libraries(ballisticakitbin PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread dl common_deps ba_deps Python3::Python
@@ -931,12 +925,6 @@ target_include_directories(ballisticakitso PRIVATE
   ${BA_SRC_ROOT}/external/open_dynamics_engine-ef
   ${EXTRA_INCLUDE_DIRS}
 )
-
-if(STATIC_BUILD)
-  # Add OpenAL includes via both include directories and compile options
-  target_include_directories(ballisticakitso PRIVATE ${BA_OPENAL_INCLUDE_DIR})
-  target_compile_options(ballisticakitso PRIVATE -I${BA_OPENAL_INCLUDE_DIR})
-endif()
 
 target_link_libraries(ballisticakitso PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread dl common_deps ba_deps Python3::Python
