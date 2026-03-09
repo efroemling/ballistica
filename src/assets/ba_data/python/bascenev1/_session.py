@@ -289,7 +289,7 @@ class Session:
                 return False
 
         # Rejoin cooldown.
-        identifier = player.get_v1_account_id()
+        identifier = player.get_account_id()
         if identifier:
             leave_time = self._players_on_wait.get(identifier)
             if leave_time:

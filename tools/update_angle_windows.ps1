@@ -113,15 +113,26 @@ try {
             }
         }
 
-        # Copy .dll files.
+        # Copy .dll and .pdb files.
         $DllDst = "$StagingDir\dll\$($triplet.DllArch)"
         New-Item -ItemType Directory -Path $DllDst -Force | Out-Null
-        foreach ($dll in @('libEGL.dll', 'libGLESv2.dll')) {
-            $Src = "$InstallDir\bin\$dll"
+        foreach ($file in @('libEGL.dll', 'libGLESv2.dll', 'libEGL.pdb', 'libGLESv2.pdb')) {
+            $Src = "$InstallDir\bin\$file"
             if (Test-Path $Src) {
-                Write-Host "  Staging $dll -> dll\$($triplet.DllArch)"
+                Write-Host "  Staging $file -> dll\$($triplet.DllArch)"
                 Copy-Item $Src $DllDst -Force
             }
+        }
+    }
+
+    # Copy build logs (useful for diagnosing failures).
+    $LogSrc = "$VcpkgDir\buildtrees\angle"
+    $LogDst = "$StagingDir\logs"
+    if (Test-Path $LogSrc) {
+        New-Item -ItemType Directory -Path $LogDst -Force | Out-Null
+        Get-ChildItem -Path $LogSrc -Filter '*.log' | ForEach-Object {
+            Write-Host "  Staging log: $($_.Name)"
+            Copy-Item $_.FullName $LogDst -Force
         }
     }
 

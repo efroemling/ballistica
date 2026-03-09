@@ -422,10 +422,10 @@ void Player::set_input_device_delegate(
   input_device_delegate_ = input_device;
 }
 
-auto Player::GetPublicV1AccountID() const -> std::string {
+auto Player::GetAccountID() const -> std::string {
   assert(g_base->InLogicThread());
   if (input_device_delegate_.exists()) {
-    return input_device_delegate_->GetPublicV1AccountID();
+    return input_device_delegate_->GetAccountID();
   }
   return "";
 }

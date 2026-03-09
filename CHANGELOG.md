@@ -1,4 +1,4 @@
-### 1.7.61 (build 22730, api 9, 2026-02-26)
+### 1.7.61 (build 22748, api 9, 2026-03-03)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
 - OS-Font-Rendering now works on Linux (or other Posix-y platforms like Mac
@@ -14,6 +14,11 @@
   V2 account ids look like 'a-XXX' whereas old V1 looked like 'pb-XXXX'. The
   default protocol is still 33, but if you are running a server it is highly
   recommended to set your protocol to 36 in your server config to enable this.
+- Added `bascenev1.SessionPlayer.get_account_id()`, which supersedes the old
+  `get_v1_account_id()`. The new method returns a V1 account id for players
+  connected via protocol < 36 and a V2 account id for protocol >= 36.
+  `get_v1_account_id()` is now deprecated and will be removed when api 9
+  support ends.
 - Wired up an http request on the V1 master server you can use to get V2 account
   ids given a V1 account id. You can use this to migrate old account databases
   for V2 auth. https://legacy.ballistica.net/v2id/YOURV1IDHERE
@@ -36,6 +41,17 @@
   in place (labeled '_old') but I'll remove it soon.
 - Android Python has been bumped to the latest bug fix release (3.13.12).
 - Fixed an issue where the sqlite3 module was not available in Android Python.
+- Windows builds will create a .dmp file in the executable directory on crashes,
+  which can be useful to send to me to diagnose crash bugs.
+- Starting to add some tests of low level C++ stuff (the Object class in this
+  case) to make sure it stays in good working order. Do `make test-ex` to see
+  that stuff.
+- Server with v2-auth enabled now provide verified account-ids of all clients
+  in the client-info-lists they send out.
+- Added GL debug logging. This can hopefully give us clues if we're doing
+  something that doesn't play nicely with certain graphics hardware. To enable
+  this, flip logging levels for `ba.gfx` to 'info' or 'debug' in the dev
+  console.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not

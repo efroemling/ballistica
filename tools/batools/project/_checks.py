@@ -541,7 +541,7 @@ def _calc_python_file_copyright_line(
     ):
         copyrightline += 2
 
-    if lines[copyrightline].startswith('# Synced from '):
+    if lines[copyrightline].startswith('# EfroSynced from '):
         copyrightline += 3
 
     return copyrightline

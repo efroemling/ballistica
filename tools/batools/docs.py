@@ -169,8 +169,20 @@ def generate_sphinx_docs() -> None:
     ]
     for srcdir, dstdir in dirpairs:
         os.makedirs(dstdir, exist_ok=True)
-        shutil.copytree(srcdir, dstdir, dirs_exist_ok=True)
-        # subprocess.run(['cp', '-rv', srcdir, dstdir], check=True)
+        # Exclude tools/spinoff; it's a symlink into a possibly-absent
+        # parent repo and we don't want to break if it is invalid.
+        # Use a custom callable (not ignore_patterns) so we only skip
+        # spinoff at the top level of tools/ and not tools/batools/spinoff.
+        ignore = (
+            (
+                lambda s, ns: (
+                    {'spinoff'} if os.path.normpath(s) == 'tools' else set()
+                )
+            )
+            if srcdir == 'tools/'
+            else None
+        )
+        shutil.copytree(srcdir, dstdir, dirs_exist_ok=True, ignore=ignore)
 
     # Filter all files. Doing this with multiprocessing gives us a very
     # nice speedup vs multithreading which seems gil-constrained.

@@ -246,13 +246,13 @@ void SceneV1InputDeviceDelegate::InvalidateConnectionToHost() {
   remote_player_.Clear();
 }
 
-auto SceneV1InputDeviceDelegate::GetPublicV1AccountID() const -> std::string {
+auto SceneV1InputDeviceDelegate::GetAccountID() const -> std::string {
   assert(g_base->InLogicThread());
 
   // This default implementation assumes the device is local so just returns
-  // the locally signed in account's public id.
+  // the locally signed in account's id.
 
-  return g_base->Plus()->GetPublicV1AccountID();
+  return g_base->Plus()->GetAccountID();
 }
 
 auto SceneV1InputDeviceDelegate::GetPlayerProfiles() const -> PyObject* {

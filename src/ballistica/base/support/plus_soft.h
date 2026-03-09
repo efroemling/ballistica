@@ -53,7 +53,7 @@ class PlusSoftInterface {
                                            const std::string& signature,
                                            const std::string& order_id,
                                            bool user_initiated) = 0;
-  virtual auto GetPublicV1AccountID() -> std::string = 0;
+  virtual auto GetAccountID() -> std::string = 0;
   virtual void DirectSendV1CloudLogs(const std::string& prefix,
                                      const std::string& suffix, bool instant,
                                      int* result) = 0;

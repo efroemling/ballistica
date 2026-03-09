@@ -459,6 +459,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_2.h
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.cc
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_test.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_test.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.cc
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call_runnable.h
@@ -720,6 +722,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/foundation/macros.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/object.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/object.h
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/object_test.cc
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/object_test.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/base64.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/base64.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/buffer.h
