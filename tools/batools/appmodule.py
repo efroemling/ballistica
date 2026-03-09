@@ -232,53 +232,35 @@ def generate_app_module(
     # These are imports that will be injected into the main module namespace.
     # Meant for use in REPL for getting the basic stuff without
     # having to import it manually.
-    default_imports: list[str] | None = getprojectconfig(projroot).get(
-        'default_imports'
-    )
-    if default_imports is None:
-        default_imports = []
-    elif not all(isinstance(x, str) for x in default_imports):
-        raise RuntimeError(
-            'Could not load default_imports from projectconfig; '
-            'must be a list of strings or not present'
-        )
-
-    # Load import aliases from projectconfig
-    default_import_aliases: dict[str, str] | Any = getprojectconfig(
+    default_imports: dict[str, str | None] | None = getprojectconfig(
         projroot
-    ).get('default_imports_aliases')
-    # pylint: disable=
-    if default_import_aliases is None:
-        default_import_aliases = {}
+    ).get('default_imports')
+    if default_imports is None:
+        default_imports = {}
     elif not all(
-        isinstance(k, str) and isinstance(v, str)
-        for k, v in default_import_aliases.items()
+        isinstance(k, str) and (isinstance(v, str) or v is None)
+        for k, v in default_imports.items()
     ):
         raise RuntimeError(
-            'Could not load default_import_aliases from projectconfig; '
-            'must be a dict of string keys and values or not present'
+            'Could not load default_imports from projectconfig; '
+            'must be a dict with string keys and string or None values, '
+            'or not present'
         )
 
     contents = ''
     if default_imports:
-        contents = 'import sys\n'
-        contents += 'import importlib\n\n'
-        contents += '# Get the main module namespace to inject imports\n'
-        contents += 'main_module = sys.modules.get(\'__main__\')\n'
-        contents += 'if main_module is None:\n'
-        contents += '    return\n\n'
-        contents += 'main_dict = vars(main_module)\n\n'
-        contents += '# Auto-generated imports from projectconfig\n'
-
-        # Generate import and assignment statements using importlib
-        for module_name in default_imports:
-            contents += f"_mod = importlib.import_module('{module_name}')\n"
-            # Add the default module name
-            contents += f"main_dict['{module_name}'] = _mod\n"
-            # Also add the alias if one exists in projectconfig
-            alias = default_import_aliases.get(module_name)
-            if alias:
-                contents += f"main_dict['{alias}'] = _mod\n"
+        for module_name in default_imports.keys():
+            contents += 'try:\n'
+            contents += f'  import {module_name}\n'
+            contents += 'except ImportError as e:\n'
+            contents += f'  print(f\'Error importing default module {module_name}: {{e}}\')\n'
+        for module_name, alias in default_imports.items():
+            if alias is not None and isinstance(alias, str):    
+                import_as = alias or module_name.split('.')[-1]
+                contents += 'try:\n'
+                contents += f"  import {module_name} as {import_as}\n"
+                contents += 'except ImportError as e:\n'
+                contents += f'  print(f\'Error importing default module {module_name} with alias {alias}: {{e}}\')\n'
     else:
         contents = 'pass\n'
 
