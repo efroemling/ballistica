@@ -882,7 +882,6 @@ target_include_directories(ballisticakitbin PRIVATE
   ${EXTRA_INCLUDE_DIRS}
 )
 
-
 target_link_libraries(ballisticakitbin PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread dl common_deps ba_deps Python3::Python
 )

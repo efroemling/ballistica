@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 # Version constants (easy to bump at the top of the file).
 
-OPENAL_VER = "1.25.1"
+OPENAL_VER = '1.25.1'
 BASE_PATH = 'build/static_dependencies'
 
 
@@ -102,10 +102,12 @@ def _cpus() -> int:
 def _build_libopenal(
     cache_dir: str,
     build_dir: str,
-    arch: str,
+    _arch: str,
+    debug: bool,
 ) -> str:
     """Build and install OpenAL."""
     print('Building OpenAL...')
+    # pylint: disable=line-too-long
     url = f'https://github.com/kcat/openal-soft/archive/refs/tags/{OPENAL_VER}.zip'
     print(f'  Fetching OpenAL from {url} ...')
     zipfile_path = _fetch(url, cache_dir)
@@ -119,7 +121,7 @@ def _build_libopenal(
         [
             'cmake',
             '..',
-            '-DCMAKE_BUILD_TYPE=Release',
+            f'-DCMAKE_BUILD_TYPE={'Debug' if debug else 'Release'}',
             '-DALSOFT_UTILS=OFF',
             '-DALSOFT_EXAMPLES=OFF',
             '-DALSOFT_TESTS=OFF',
@@ -136,7 +138,10 @@ def _build_libopenal(
         raise RuntimeError(f'OpenAL static library not found: {static_lib}')
 
     lib_size = os.path.getsize(static_lib)
-    print(f'OpenAL build complete! Static library: {static_lib} ({lib_size} bytes)')
+    print(
+        'OpenAL build complete!'
+        f'Static library: {static_lib} ({lib_size} bytes)'
+    )
     print('OpenAL build complete!')
     return srcdir
 
@@ -170,11 +175,13 @@ def build(rootdir: str, arch: str, debug: bool) -> None:
     os.makedirs(cache_dir, exist_ok=True)
 
     # Build OpenAL
-    src_dir = _build_libopenal(cache_dir, buildroot, arch)
+    src_dir = _build_libopenal(cache_dir, buildroot, arch, debug)
     static_lib_path = os.path.join(src_dir, 'build', 'libopenal.a')
     shutil.copy(static_lib_path, BASE_PATH)
     include_dir = os.path.join(src_dir, 'include', 'AL')
-    shutil.copytree(include_dir, os.path.join(BASE_PATH, 'include'), dirs_exist_ok=True)
+    shutil.copytree(
+        include_dir, os.path.join(BASE_PATH, 'include'), dirs_exist_ok=True
+    )
     print(f'=== OpenAL {OPENAL_VER} build complete! ===')
     print(f'    Output: {buildroot}')
     print(f'cache: {cache_dir}')
@@ -249,4 +256,3 @@ def build(rootdir: str, arch: str, debug: bool) -> None:
 #         print(f'  Gathered {arch}: {lib_name}')
 
 #     print(f'OpenAL gather{suffix}: done.')
-
