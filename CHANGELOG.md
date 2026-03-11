@@ -1,4 +1,4 @@
-### 1.7.61 (build 22748, api 9, 2026-03-03)
+### 1.7.61 (build 22752, api 9, 2026-03-11)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
 - OS-Font-Rendering now works on Linux (or other Posix-y platforms like Mac
@@ -52,6 +52,9 @@
   something that doesn't play nicely with certain graphics hardware. To enable
   this, flip logging levels for `ba.gfx` to 'info' or 'debug' in the dev
   console.
+- The client now connects to basn (regional) nodes using proper dns names with
+  standard public TLS. No more passing around self-signed-certificates and other
+  weirdness that is more likely to be blocked at the network level.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not

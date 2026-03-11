@@ -13,9 +13,7 @@ if TYPE_CHECKING:
 
 def spinoff_test(args: list[str]) -> None:
     """High level test run command; accepts args and raises CleanErrors."""
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
     import os
     import subprocess
 

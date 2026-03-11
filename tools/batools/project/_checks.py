@@ -52,7 +52,6 @@ def _source_file_feature_set_namespace_check(
     self: ProjectUpdater, fname: str, lines: list[str]
 ) -> None:
     """Make sure C++ code uses correct namespaces based on its location."""
-    # pylint: disable=too-many-branches
 
     # Extensions we know we're skipping.
     if any(fname.endswith(x) for x in ['.c', '.swift']):
@@ -284,7 +283,6 @@ def check_makefiles(self: ProjectUpdater) -> None:
 
 def check_python_files(self: ProjectUpdater) -> None:
     """Check all project python files."""
-    # pylint: disable=too-many-branches
     from efrotools.code import get_script_filenames
 
     scriptfiles = get_script_filenames(Path(self.projroot))
@@ -366,7 +364,6 @@ def _check_python_file(self: ProjectUpdater, fname: str) -> None:
 def _check_python_file_imports(
     self: ProjectUpdater, fname: str, lines: list[str]
 ) -> None:
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
     fspackagesroot = 'src/assets/ba_data/python/'
 

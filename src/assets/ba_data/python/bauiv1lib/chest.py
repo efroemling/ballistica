@@ -36,7 +36,6 @@ class ChestWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
     ):
-        # pylint: disable=too-many-statements
         self._index = index
 
         self._uiopenstate = bui.UIOpenState(f'classicchest{index}')
@@ -304,8 +303,6 @@ class ChestWindow(bui.MainWindow):
         self, user_tokens: int, chest: bacommon.classic.ChestInfoResponse.Chest
     ) -> None:
         """Show state for our chest."""
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from baclassic import (
             ClassicAppMode,
@@ -704,7 +701,6 @@ class ChestWindow(bui.MainWindow):
         initial_highlighted_row: int,
         initial_highlighted_extra: bool = False,
     ) -> None:
-        # pylint: disable=too-many-locals
         xoffs = 110
 
         totalweight = max(0.001, sum(t.weight for t in self._prizesets))
@@ -991,8 +987,6 @@ class ChestWindow(bui.MainWindow):
     def _show_chest_contents(
         self, response: bacommon.cloud.ChestActionResponse
     ) -> float:
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
 
         from baclassic import show_display_item
 

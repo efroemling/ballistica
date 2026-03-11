@@ -3289,8 +3289,10 @@ void RendererGL::TrySetupGLDebugOutput_() {
 #else
   return;  // Platform has no proc-address API or GL_KHR_debug header support.
 #endif
+#if BA_SDL_BUILD || BA_PLATFORM_ANDROID
   gl_debug_output_available_ = true;
   ApplyGLDebugSettings_();
+#endif
 }
 
 void RendererGL::ApplyGLDebugSettings_() {

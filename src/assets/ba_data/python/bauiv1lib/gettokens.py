@@ -70,7 +70,6 @@ class GetTokensWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
     ):
-        # pylint: disable=too-many-locals
 
         self._auxiliary_style = auxiliary_style
         self._uiopenstate = bui.UIOpenState('gettokens')

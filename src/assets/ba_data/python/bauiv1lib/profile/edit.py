@@ -33,8 +33,8 @@ class EditProfileWindow(
         on_profile_save: Callable[[str], None] | None = None,
         on_profile_delete: Callable[[str], None] | None = None,
     ):
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
 
         assert bui.app.classic is not None

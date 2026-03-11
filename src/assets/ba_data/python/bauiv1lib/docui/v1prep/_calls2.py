@@ -338,9 +338,9 @@ def prep_display_item(
     *,
     highlight: bool,
 ) -> None:
+    # pylint: disable=too-many-statements
     """Prep decorations for a display-item."""
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
     # pylint: disable=too-many-locals
 
     # Calc center and size of our bounds based on parent.

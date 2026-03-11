@@ -25,7 +25,6 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
         assert bui.app.classic is not None
         music = bui.app.classic.music
         self._r = 'editSoundtrackWindow'

@@ -72,7 +72,6 @@ class WorkspaceSubsystem:
         workspacename: str,
         on_completed: Callable[[], None],
     ) -> None:
-        # pylint: disable=too-many-locals
         from babase._language import Lstr
 
         class _SkipSyncError(RuntimeError):

@@ -117,9 +117,9 @@ def get_sphinx_settings(projroot: str) -> SphinxSettings:
 
 
 def generate_sphinx_docs() -> None:
+    # pylint: disable=too-many-statements
     """Run docs generation with sphinx."""
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     import time
     import shutil

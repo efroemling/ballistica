@@ -126,7 +126,10 @@ static void TestRefBasics() {
     bool destroyed = false;
     {
       auto r = Object::New<T>(&destroyed);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-move"
       r = std::move(r);  // guarded by if (this != &other)
+#pragma clang diagnostic pop
       Check(r.exists(), "1.6 Ref should survive self-move-assign");
       Check(!destroyed, "1.6 object should survive self-move-assign");
     }
@@ -370,7 +373,10 @@ static void TestWeakRefBasics() {
     {
       auto r = Object::New<T>(&destroyed);
       Object::WeakRef<T> wr(r.get());
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-move"
       wr = std::move(wr);  // guarded by if (this != &other)
+#pragma clang diagnostic pop
       Check(wr.exists(), "2.10 WeakRef should survive self-move-assign");
       Check(!destroyed, "2.10 object should survive self-move-assign");
     }

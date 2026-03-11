@@ -41,8 +41,6 @@ class ControlsGuide(bs.Actor):
         bright: if True, brighter colors will be used; handy when showing
                 over gameplay but may be too bright for join-screens, etc.
         """
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         super().__init__()
         show_title = True
         scale *= 0.75
@@ -362,7 +360,6 @@ class ControlsGuide(bs.Actor):
     def _update(self) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
 
         if self._dead:
             return

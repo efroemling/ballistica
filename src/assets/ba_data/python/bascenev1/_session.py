@@ -111,10 +111,7 @@ class Session:
         bascenev1.DependencySet instances; one for each bascenev1.Activity
         the session may potentially run.
         """
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
-        # pylint: disable=too-many-branches
         from efro.util import empty_weakref
         from bascenev1._dependency import (
             Dependency,

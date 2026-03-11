@@ -28,8 +28,6 @@ class AccountSettingsWindow(bui.MainWindow):
         close_once_signed_in: bool = False,
         auxiliary_style: bool = True,
     ):
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
 
         plus = bui.app.plus
         assert plus is not None

@@ -557,7 +557,6 @@ def apple_patch(python_dir: str) -> None:
 
 def patch_modules_setup(python_dir: str, baseplatform: str) -> None:
     """Muck with the Setup.* files Python uses to build modules."""
-    # pylint: disable=too-many-locals
     del baseplatform  # Unused.
 
     assert ' ' not in python_dir
@@ -1044,13 +1043,13 @@ def winprune() -> None:
 
 
 def gather(do_android: bool, do_apple: bool) -> None:
+    # pylint: disable=too-many-statements
     """Gather per-platform python headers, libs, and modules into our src.
 
     This assumes all embeddable py builds have been run successfully,
     and that PROJROOT is the cwd.
     """
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
 
     class CompileArch(Enum):

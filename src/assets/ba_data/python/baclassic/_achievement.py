@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 # This could use some cleanup.
 # We wear the cone of shame.
 # pylint: disable=too-many-lines
-# pylint: disable=too-many-statements
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-branches
 
@@ -795,6 +794,7 @@ class Achievement:
         color: Sequence[float] | None = None,
         style: str = 'post_game',
     ) -> list[bascenev1.Actor]:
+        # pylint: disable=too-many-statements
         """Create a display for the Achievement.
 
         Shows the Achievement icon, name, and description.
@@ -1197,6 +1197,7 @@ class Achievement:
         self._completion_banner_slot = None
 
     def show_completion_banner(self, sound: bool = True) -> None:
+        # pylint: disable=too-many-statements
         """Create the banner/sound for an acquired achievement announcement."""
         from bascenev1lib.actor.text import Text
         from bascenev1lib.actor.image import Image

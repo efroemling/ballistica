@@ -102,7 +102,6 @@ class ConfigNumberEdit:
         f: int = 1,
         idprefix: str | None = None,
     ):
-        # pylint: disable=too-many-locals
         if displayname is None:
             displayname = configkey
 

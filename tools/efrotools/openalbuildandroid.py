@@ -31,8 +31,6 @@ def _build_dir(arch: str, mode: str) -> str:
 
 def build_openal(arch: str, mode: str) -> None:
     """Do the thing."""
-    # pylint: disable=too-many-statements
-    # pylint: disable=too-many-locals
     from efrotools.util import replace_exact
 
     if arch not in ARCHS:

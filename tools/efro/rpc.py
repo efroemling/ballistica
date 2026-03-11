@@ -497,7 +497,6 @@ class RPCEndpoint:
         Wait for the endpoint to finish closing. This is called by run()
         so generally does not need to be explicitly called.
         """
-        # pylint: disable=too-many-branches
         self._check_env()
 
         # Make sure we only *enter* this call once.

@@ -91,9 +91,7 @@ class _Outputter:
         )
 
     def _process_dataclass(self, cls: type, obj: Any, fieldpath: str) -> Any:
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         prep = PrepSession(explicit=False).prep_dataclass(
             type(obj), recursion_level=0
         )
@@ -202,10 +200,10 @@ class _Outputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-statements
         # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
 
         origin = _get_origin(anntype)
 
@@ -465,20 +463,22 @@ class _Outputter:
             check_utc(value)
             if ioattrs is not None:
                 ioattrs.validate_datetime(value, fieldpath)
-                float_times = ioattrs.float_times
+                time_format = ioattrs.time_format
             else:
-                float_times = False
+                time_format = 'ints'
             if self._codec is Codec.FIRESTORE:
                 return value
             assert self._codec is Codec.JSON
 
-            # By default we spit out an array of ints so that we can
-            # reconstruct the datetime perfectly. However we now have
-            # the option to spit out a float timestamp instead. This is
-            # simpler but may not read back in 100% the same due to
-            # floating point precision issues.
-            if float_times:
+            if time_format == 'float':
                 return value.timestamp() if self._create else None
+            if time_format == 'iso':
+                return (
+                    value.isoformat().replace('+00:00', 'Z')
+                    if self._create
+                    else None
+                )
+            # Default 'ints': lossless list of ints.
             return (
                 [
                     value.year,
@@ -499,12 +499,13 @@ class _Outputter:
                     f' found a {type(value)}.'
                 )
             if ioattrs is not None:
-                float_times = ioattrs.float_times
+                time_format = ioattrs.time_format
             else:
-                float_times = False
+                time_format = 'ints'
 
-            if float_times:
+            if time_format == 'float':
                 return value.total_seconds() if self._create else None
+            # Default 'ints' ('iso' is rejected at prep time).
             return (
                 [value.days, value.seconds, value.microseconds]
                 if self._create

@@ -195,10 +195,9 @@ class SpazBot(Spaz):
         self._player_pts = pts
 
     def update_ai(self) -> None:
+        # pylint: disable=too-many-statements
         """Should be called periodically to update the spaz' AI."""
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         if self.update_callback is not None:
             if self.update_callback(self):
                 # Bot has been handled.

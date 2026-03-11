@@ -46,7 +46,6 @@ class CoopJoinActivity(bs.JoinActivity):
         bs.pushcall(self._show_remaining_achievements)
 
     def _show_remaining_achievements(self) -> None:
-        # pylint: disable=too-many-locals
         from bascenev1lib.actor.text import Text
 
         app = bs.app

@@ -137,9 +137,8 @@ class BuildStager:
             _write_payload_file(self.dst, self.is_payload_full)
 
     def _parse_args(self, args: list[str]) -> None:
-        """Parse args and apply to ourself."""
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        """Parse args and apply to ourself."""
 
         if len(args) < 1:
             raise RuntimeError('Expected at least one argument.')
@@ -323,7 +322,6 @@ class BuildStager:
             raise RuntimeError(f"Invalid winplt: '{winplt}'.")
 
     def _sync_windows_extras(self) -> None:
-        # pylint: disable=too-many-branches
         assert self.win_extras_src is not None
         assert self.win_platform is not None
         assert self.win_type is not None
@@ -572,7 +570,6 @@ class BuildStager:
         subprocess.run(cmd, check=True)
 
     def _sync_ba_data_new(self) -> None:
-        # pylint: disable=too-many-locals
         import json
         import stat
         import shutil
@@ -774,7 +771,6 @@ class BuildStager:
         )
 
     def _sync_python_dylib(self) -> None:
-        # pylint: disable=too-many-locals
         from batools.featureset import FeatureSet
 
         # Note: we're technically not *syncing* quite so much as

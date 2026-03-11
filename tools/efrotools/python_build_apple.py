@@ -786,13 +786,13 @@ def _check_no_shared_modules(installdir: str, slice_name: str) -> None:
 
 
 def build(rootdir: str, slice_name: str) -> None:
+    # pylint: disable=too-many-statements
     """Build Python for a single Apple platform slice.
 
     slice_name must be one of SLICES.
     Output is written to build/python_apple_{slice_name_underscored}/.
     """
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
     if slice_name not in _SLICE_INFO:
         raise ValueError(
@@ -1132,7 +1132,7 @@ def gather(rootdir: str) -> None:
     - src/external/python-apple/Python.xcframework
     - src/assets/pylib-apple/
     """
-    # pylint: disable=too-many-locals,too-many-statements
+    # pylint: disable=too-many-locals
     from efrotools.pybuild import PRUNE_LIB_NAMES, tweak_empty_py_files
 
     print('=== Gathering Apple Python slices ===')

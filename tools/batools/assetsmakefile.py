@@ -26,7 +26,6 @@ def _get_targets(
     limit_to_prefix: str | None = None,
 ) -> str:
     """Generic function to map source extension to dst files."""
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-positional-arguments
 
     src = ASSETS_SRC
@@ -68,8 +67,6 @@ def _get_py_targets(
 ) -> None:
     # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     py_generated_root = f'{ASSETS_SRC}/ba_data/python/babase/_mgen'
 
@@ -489,7 +486,6 @@ def generate_assets_makefile(
     explicit_sources: set[str],
 ) -> dict[str, str]:
     """Main script entry point."""
-    # pylint: disable=too-many-locals
     from efrotools.project import getprojectconfig
     from pathlib import Path
 

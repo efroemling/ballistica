@@ -27,7 +27,6 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
     @override
     def on_begin(self) -> None:
         # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         from bascenev1lib.actor.text import Text
         from bascenev1lib.actor.image import Image
 

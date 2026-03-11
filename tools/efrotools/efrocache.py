@@ -115,7 +115,6 @@ def _project_centric_path(path: str) -> str:
 def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
     """Fetch a target path from the cache, downloading if need be."""
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
     import tempfile
 
@@ -296,8 +295,6 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
 
 def update_cache(makefile_dirs: list[str]) -> None:
     """Given a list of directories containing Makefiles, update caches."""
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-branches
 
     import multiprocessing
 
@@ -552,7 +549,6 @@ def _gather_cache_files(
     staging_dir: str,
     mapping_file: str,
 ) -> None:
-    # pylint: disable=too-many-locals
     import functools
 
     fhashpaths_all: set[str] = set()

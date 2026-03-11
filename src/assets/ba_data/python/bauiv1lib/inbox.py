@@ -619,7 +619,6 @@ class InboxWindow(bui.MainWindow):
         action: cdlg.Action,
         response: cdlg.ActionResponse | Exception,
     ) -> None:
-        # pylint: disable=too-many-branches
 
         # Let the UI auto-update again after any animations we may apply
         # here.
@@ -699,8 +698,8 @@ class InboxWindow(bui.MainWindow):
     def _on_inbox_request_response(
         self, response: bacommon.classic.InboxRequestResponse | Exception
     ) -> None:
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
 
         # No-op if our UI is dead or on its way out.

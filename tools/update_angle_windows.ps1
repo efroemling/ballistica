@@ -55,9 +55,23 @@ if (Test-Path $StagingDir) {
 }
 New-Item -ItemType Directory -Path $StagingDir -Force | Out-Null
 
-# Create a throw-away temp dir for vcpkg under build/ so cloudshell purge
-# cleans it up if the build is interrupted.
-$TempDir = "$RepoRoot\build\angle-vcpkg-$([System.IO.Path]::GetRandomFileName())"
+# Use a short root-level base path for the vcpkg temp dir. The cloudshell
+# workspace path is already long (~80 chars), and vcpkg's virtualenv pip wheel
+# extraction creates deep subdirectories that exceed MAX_PATH (260 chars) for
+# the arm64 triplet if rooted inside the workspace. C:\abt (angle build temp)
+# keeps the prefix short enough to stay under the limit.
+$TempBase = 'C:\abt'
+New-Item -ItemType Directory -Path $TempBase -Force -ErrorAction SilentlyContinue | Out-Null
+
+# Clean up any stale vcpkg temp dirs left by previously interrupted runs.
+# (The finally block handles normal cleanup, but an external kill can bypass it.)
+Get-ChildItem -Path $TempBase -Directory -Filter 'angle-*' -ErrorAction SilentlyContinue |
+    ForEach-Object {
+        Write-Host "Removing stale vcpkg dir: $($_.FullName)"
+        & 'cmd.exe' /c "rd /s /q `"$($_.FullName)`""
+    }
+
+$TempDir = "$TempBase\angle-$([System.IO.Path]::GetRandomFileName())"
 New-Item -ItemType Directory -Path $TempDir -Force | Out-Null
 $VcpkgDir = Join-Path $TempDir 'vcpkg'
 
@@ -73,8 +87,6 @@ try {
     & "$VcpkgDir\bootstrap-vcpkg.bat" -disableMetrics
     if ($LASTEXITCODE -ne 0) { throw "vcpkg bootstrap failed." }
 
-    $HeadersCopied = $false
-
     foreach ($triplet in $Triplets) {
         $name = $triplet.Name
         Write-Host ""
@@ -82,24 +94,17 @@ try {
         Write-Host ""
 
         & "$VcpkgDir\vcpkg.exe" install "angle:$name" --no-binarycaching --no-print-usage --clean-after-build
-        if ($LASTEXITCODE -ne 0) {
-            Write-Warning "ANGLE build failed for $name - skipping."
-            continue
-        }
+        if ($LASTEXITCODE -ne 0) { throw "ANGLE build failed for $name." }
 
         $InstallDir = "$VcpkgDir\installed\$name"
 
-        # Copy headers once, from the first successful build.
-        if (-not $HeadersCopied) {
-            foreach ($dir in @('EGL', 'GLES2', 'GLES3', 'KHR')) {
-                $Src = "$InstallDir\include\$dir"
-                $Dst = "$StagingDir\include\$dir"
-                if (Test-Path $Src) {
-                    Write-Host "  Staging headers: $dir"
-                    Copy-Item $Src $Dst -Recurse -Force
-                }
-            }
-            $HeadersCopied = $true
+        # Copy headers (identical across all triplets; overwriting is fine).
+        foreach ($dir in @('EGL', 'GLES2', 'GLES3', 'KHR')) {
+            $Src = "$InstallDir\include\$dir"
+            $Dst = "$StagingDir\include\$dir"
+            if (-not (Test-Path $Src)) { throw "Expected header dir not found: $Src" }
+            Write-Host "  Staging headers: $dir"
+            Copy-Item $Src $Dst -Recurse -Force
         }
 
         # Copy .lib files.
@@ -107,10 +112,9 @@ try {
         New-Item -ItemType Directory -Path $LibDst -Force | Out-Null
         foreach ($lib in @('libEGL.lib', 'libGLESv2.lib')) {
             $Src = "$InstallDir\lib\$lib"
-            if (Test-Path $Src) {
-                Write-Host "  Staging $lib -> lib\$($triplet.LibArch)"
-                Copy-Item $Src $LibDst -Force
-            }
+            if (-not (Test-Path $Src)) { throw "Expected lib not found: $Src" }
+            Write-Host "  Staging $lib -> lib\$($triplet.LibArch)"
+            Copy-Item $Src $LibDst -Force
         }
 
         # Copy .dll and .pdb files.
@@ -118,11 +122,11 @@ try {
         New-Item -ItemType Directory -Path $DllDst -Force | Out-Null
         foreach ($file in @('libEGL.dll', 'libGLESv2.dll', 'libEGL.pdb', 'libGLESv2.pdb')) {
             $Src = "$InstallDir\bin\$file"
-            if (Test-Path $Src) {
-                Write-Host "  Staging $file -> dll\$($triplet.DllArch)"
-                Copy-Item $Src $DllDst -Force
-            }
+            if (-not (Test-Path $Src)) { throw "Expected file not found: $Src" }
+            Write-Host "  Staging $file -> dll\$($triplet.DllArch)"
+            Copy-Item $Src $DllDst -Force
         }
+
     }
 
     # Copy build logs (useful for diagnosing failures).

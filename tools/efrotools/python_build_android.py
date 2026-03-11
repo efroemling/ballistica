@@ -671,7 +671,6 @@ def build(rootdir: str, arch: str, debug: bool) -> None:
         Lib/              (Python stdlib)
         Android/sysroot/  (dep .a files)
     """
-    # pylint: disable=too-many-locals
     if arch not in ARCH_TARGETS:
         raise ValueError(
             f'Invalid arch {arch!r}; must be one of {list(ARCH_TARGETS)}'
@@ -770,7 +769,6 @@ def gather(rootdir: str) -> None:
     for both debug and release.
     """
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     from efrotools.pybuild import PRUNE_LIB_NAMES, tweak_empty_py_files
 
     # Arch name -> output lib dir name (matching Android ABI conventions).

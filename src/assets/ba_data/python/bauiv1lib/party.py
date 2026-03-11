@@ -292,9 +292,7 @@ class PartyWindow(bui.Window):
         self._popup_type = 'menu'
 
     def _update(self) -> None:
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-nested-blocks
 
         # update muted state
