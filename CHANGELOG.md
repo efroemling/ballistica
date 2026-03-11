@@ -55,6 +55,9 @@
 - The client now connects to basn (regional) nodes using proper dns names with
   standard public TLS. No more passing around self-signed-certificates and other
   weirdness that is more likely to be blocked at the network level.
+- Volume slider values now properly match user expectations.
+  This means 50% volume is half as loud as 100%, and lower volumes can now be
+  fine tuned better.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not
