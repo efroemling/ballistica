@@ -156,7 +156,8 @@ def build(rootdir: str, arch: str, debug: bool) -> None:
 
     arch parameter is ignored (kept for compatibility).
     Outputs are written to:
-      build/static_dependencies/openal_{arch}[_debug]/   (OpenAL build)
+
+    - ``build/static_dependencies/openal_{arch}[_debug]/`` (OpenAL build)
     """
 
     suffix = '_debug' if debug else ''

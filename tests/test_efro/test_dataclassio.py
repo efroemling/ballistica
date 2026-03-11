@@ -1945,6 +1945,74 @@ def test_float_timedeltas() -> None:
     assert testclass2.tmval3 == testclass.tmval3
 
 
+def test_date() -> None:
+    """Test datetime.date support."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        dval: datetime.date
+        dval_opt: datetime.date | None = None
+        dval_nostore: Annotated[datetime.date, IOAttrs(store_default=False)] = (
+            datetime.date(2020, 1, 1)
+        )
+
+    today = datetime.date(2024, 3, 15)
+
+    # Basic roundtrip via JSON codec.
+    obj = _TestClass(dval=today)
+    d = dataclass_to_dict(obj)
+    assert d['dval'] == '2024-03-15'
+    obj2 = dataclass_from_dict(_TestClass, d)
+    assert obj2.dval == today
+
+    # Roundtrip via Firestore codec (same wire format: YYYY-MM-DD string).
+    d_fs = dataclass_to_dict(obj, codec=Codec.FIRESTORE)
+    assert d_fs['dval'] == '2024-03-15'
+    obj3 = dataclass_from_dict(_TestClass, d_fs, codec=Codec.FIRESTORE)
+    assert obj3.dval == today
+
+    # Optional field: None roundtrips correctly.
+    obj_none = _TestClass(dval=today, dval_opt=None)
+    d_none = dataclass_to_dict(obj_none)
+    assert d_none.get('dval_opt') is None
+    obj_none2 = dataclass_from_dict(_TestClass, d_none)
+    assert obj_none2.dval_opt is None
+
+    # Optional field: present value roundtrips correctly.
+    obj_opt = _TestClass(dval=today, dval_opt=datetime.date(2000, 6, 1))
+    d_opt = dataclass_to_dict(obj_opt)
+    assert d_opt['dval_opt'] == '2000-06-01'
+    obj_opt2 = dataclass_from_dict(_TestClass, d_opt)
+    assert obj_opt2.dval_opt == datetime.date(2000, 6, 1)
+
+    # store_default=False: default value is omitted.
+    obj_def = _TestClass(dval=today)
+    d_def = dataclass_to_dict(obj_def)
+    assert 'dval_nostore' not in d_def
+    obj_def2 = dataclass_from_dict(_TestClass, d_def)
+    assert obj_def2.dval_nostore == datetime.date(2020, 1, 1)
+
+    # Invalid input: non-string raises TypeError.
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'dval': 20240315})
+
+    # Invalid input: bad format raises ValueError.
+    with pytest.raises(ValueError):
+        dataclass_from_dict(_TestClass, {'dval': 'not-a-date'})
+
+    # Make sure datetime.datetime is not mistakenly handled as date.
+    @ioprepped
+    @dataclass
+    class _TestClass2:
+        dtval: datetime.datetime
+
+    dt_obj = _TestClass2(dtval=utc_now())
+    dt_d = dataclass_to_dict(dt_obj)
+    # datetime should serialize as a list of ints, not a YYYY-MM-DD string.
+    assert isinstance(dt_d['dtval'], list)
+
+
 class MTTestMissingTypeID(Enum):
     """IDs for our multi-type class."""
 

@@ -246,7 +246,8 @@ class IOAttrs:
     #: Controls the wire format used for ``datetime.datetime`` and
     #: ``datetime.timedelta`` values under the JSON codec. Has no effect
     #: under the Firestore codec, which always stores datetime objects
-    #: natively.
+    #: natively. Does not apply to ``datetime.date`` fields, which are
+    #: always serialized as ``YYYY-MM-DD`` strings.
     #:
     #: - ``'ints'`` (default): lossless list of integers
     #:   (``[year, month, day, hour, minute, second, microsecond]`` for

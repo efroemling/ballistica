@@ -454,6 +454,9 @@ class _Outputter:
             # types, so we can blindly return it here.
             return value.value if self._create else None
 
+        # IMPORTANT: datetime.datetime is a subclass of datetime.date, so the
+        # datetime.datetime check MUST come before the datetime.date check
+        # below.
         if issubclass(origin, datetime.datetime):
             if not isinstance(value, origin):
                 raise TypeError(
@@ -511,6 +514,21 @@ class _Outputter:
                 if self._create
                 else None
             )
+
+        # Note: the datetime.datetime check above must precede this since
+        # datetime.datetime is a subclass of datetime.date.
+        if issubclass(origin, datetime.date) and not issubclass(
+            origin, datetime.datetime
+        ):
+            if not isinstance(value, datetime.date):
+                raise TypeError(
+                    f'Expected a datetime.date for {fieldpath};'
+                    f' found a {type(value)}.'
+                )
+            # Always serialize as ISO 8601 date string: YYYY-MM-DD.
+            # Both JSON and Firestore codecs use this format since
+            # Firestore has no native date-only type.
+            return value.isoformat() if self._create else None
 
         if origin is bytes:
             return self._process_bytes(cls, fieldpath, value)

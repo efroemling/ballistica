@@ -273,8 +273,18 @@ class _Inputter:
                 # Otherwise the error stands as-is.
                 raise
 
+        # IMPORTANT: datetime.datetime is a subclass of datetime.date, so the
+        # datetime.datetime check MUST come before the datetime.date check
+        # below.
         if issubclass(origin, datetime.datetime):
             return self._datetime_from_input(cls, fieldpath, value, ioattrs)
+
+        # Note: the datetime.datetime check above must precede this since
+        # datetime.datetime is a subclass of datetime.date.
+        if issubclass(origin, datetime.date) and not issubclass(
+            origin, datetime.datetime
+        ):
+            return self._date_from_input(cls, fieldpath, value, ioattrs)
 
         if issubclass(origin, datetime.timedelta):
             return self._timedelta_from_input(cls, fieldpath, value, ioattrs)
@@ -806,3 +816,25 @@ class _Inputter:
                 days=value[0], seconds=value[1], microseconds=value[2]
             )
         return out
+
+    def _date_from_input(
+        self, cls: type, fieldpath: str, value: Any, ioattrs: IOAttrs | None
+    ) -> Any:
+        del ioattrs  # Unused; no options for date fields.
+        # Both JSON and Firestore codecs use YYYY-MM-DD strings.
+        if not isinstance(value, str):
+            raise TypeError(
+                f'Invalid input value for "{fieldpath}"'
+                f' on "{cls.__name__}";'
+                f' expected a YYYY-MM-DD date string,'
+                f' got a {type(value).__name__}.'
+            )
+        try:
+            return datetime.date.fromisoformat(value)
+        except ValueError as exc:
+            raise ValueError(
+                f'Invalid input value for "{fieldpath}"'
+                f' on "{cls.__name__}";'
+                f' expected a date in YYYY-MM-DD format,'
+                f' got {value!r}.'
+            ) from exc

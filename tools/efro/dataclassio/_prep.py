@@ -418,7 +418,18 @@ class PrepSession:
             # We allow datetime objects (and google's extended subclass of
             # them used in firestore, which is why we don't look for exact
             # type here).
+            # IMPORTANT: datetime.datetime is a subclass of datetime.date, so
+            # the datetime.datetime check MUST come before the datetime.date
+            # check below.
             if issubclass(origin, datetime.datetime):
+                return
+
+            # We support datetime.date. Note: the datetime.datetime check
+            # above must precede this since datetime.datetime is a subclass
+            # of datetime.date.
+            if issubclass(origin, datetime.date) and not issubclass(
+                origin, datetime.datetime
+            ):
                 return
 
             # We support datetime.timedelta.

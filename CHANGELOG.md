@@ -1,4 +1,4 @@
-### 1.7.61 (build 22752, api 9, 2026-03-11)
+### 1.7.61 (build 22753, api 9, 2026-03-11)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
 - OS-Font-Rendering now works on Linux (or other Posix-y platforms like Mac
@@ -55,9 +55,11 @@
 - The client now connects to basn (regional) nodes using proper dns names with
   standard public TLS. No more passing around self-signed-certificates and other
   weirdness that is more likely to be blocked at the network level.
-- Volume slider values now properly match user expectations.
-  This means 50% volume is half as loud as 100%, and lower volumes can now be
-  fine tuned better.
+- Volume slider values now properly match user expectations. This means 50%
+  volume is half as loud as 100%, and lower volumes can now be fine tuned better
+  (Thanks TheMikirog!).
+- Added support for `datetime.date` values to dataclassio (serialized as
+  YYYY-MM-DD strings).
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not
