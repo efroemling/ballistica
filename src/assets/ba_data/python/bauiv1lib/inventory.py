@@ -225,7 +225,6 @@ class InventoryUIController(DocUIController):
             session.handlemessage(bs.PlayerProfilesChangedMessage())
 
     def _get_profile_buttons(self) -> list[dui1.Button]:
-        # pylint: disable=too-many-locals
 
         plus = bui.app.plus
         assert plus is not None

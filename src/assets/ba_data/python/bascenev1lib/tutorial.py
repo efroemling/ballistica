@@ -5,10 +5,8 @@
 # Not too concerned with keeping this old module pretty;
 # don't expect to be revisiting it.
 # pylint: disable=too-many-branches
-# pylint: disable=too-many-statements
 # pylint: disable=too-many-lines
 # pylint: disable=missing-function-docstring, missing-class-docstring
-# pylint: disable=too-many-locals
 # pylint: disable=unused-argument
 
 from __future__ import annotations

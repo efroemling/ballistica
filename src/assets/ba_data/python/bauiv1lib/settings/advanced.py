@@ -26,7 +26,6 @@ class AdvancedSettingsWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
 
         if bui.app.classic is None:
             raise RuntimeError('This requires classic support.')
@@ -296,7 +295,6 @@ class AdvancedSettingsWindow(bui.MainWindow):
     def _rebuild(self) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
 
         from bauiv1lib.config import ConfigCheckBox
         from babase.modutils import show_user_scripts

@@ -509,7 +509,7 @@ class ClassicAppMode(AppMode):
     ) -> None:
         achp = round(val.achievements / max(val.achievements_total, 1) * 100.0)
 
-        bui.accountlog.debug('Got new classic account data.')
+        bui.accountlog.debug('Got new classic live account data.')
 
         chest0 = val.chests.get('0')
         chest1 = val.chests.get('1')

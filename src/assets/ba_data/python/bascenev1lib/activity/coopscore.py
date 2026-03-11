@@ -337,9 +337,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
     def show_ui(self) -> None:
         """Show the UI for restarting, playing the next Level, etc."""
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
 
         assert bui.app.classic is not None
 
@@ -1077,9 +1074,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         ).autoretain()
 
     def _got_friend_score_results(self, results: list[Any] | None) -> None:
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         from efro.util import asserttype
 
         # delay a bit if results come in too fast
@@ -1236,9 +1231,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             )
 
     def _got_score_results(self, results: dict[str, Any] | None) -> None:
+        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
 
         plus = bs.app.plus
         assert plus is not None
@@ -1514,10 +1509,10 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             self._tournament_time_remaining_text.node.text = val
 
     def _show_world_rank(self, offs_x: float) -> None:
+        # pylint: disable=too-many-statements
         # FIXME: Tidy this up.
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         assert bs.app.classic is not None
         assert self._show_info is not None
         available = self._show_info['results'] is not None

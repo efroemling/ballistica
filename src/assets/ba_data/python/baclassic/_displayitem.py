@@ -24,7 +24,6 @@ def show_display_item(
     debug: bool = False,
 ) -> None:
     """Create ui to depict a display-item."""
-    # pylint: disable=too-many-locals
 
     # Let's go with 4:3 aspect ratio.
     height = width * 0.75

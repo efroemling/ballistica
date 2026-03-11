@@ -223,6 +223,9 @@ class RendererGL : public Renderer {
   auto GetMSAASamplesForFramebuffer_(int width, int height) -> int;
   void UpdateMSAAEnabled_() override;
   void CheckGLCapabilities_();
+  void TrySetupGLDebugOutput_();
+  void ApplyGLDebugSettings_();
+  void UpdateGLDebugSettingsIfNeeded_();
   void UpdateVignetteTex_(bool force) override;
   void StandardPostProcessSetup_(ProgramPostProcessGL* p,
                                  const RenderPass& pass);
@@ -354,6 +357,15 @@ class RendererGL : public Renderer {
   GLfloat max_anisotropy_{};
   int msaa_max_samples_rgb565_{-1};
   int msaa_max_samples_rgb8_{-1};
+  bool gl_debug_output_available_{};
+#if BA_OPENGL_IS_ES && (BA_SDL_BUILD || BA_PLATFORM_ANDROID)
+  // Not available on Apple ES builds (iOS/tvOS) — gl2ext.h KHR typedefs absent.
+  PFNGLDEBUGMESSAGECONTROLKHRPROC gl_debug_message_control_khr_{};
+#elif !BA_OPENGL_IS_ES && BA_SDL_BUILD
+  // Not available on non-SDL desktop GL builds (e.g. macOS Xcode).
+  PFNGLDEBUGMESSAGECONTROLPROC gl_debug_message_control_{};
+#endif
+  int gl_debug_last_level_{-1};
 };
 
 }  // namespace ballistica::base

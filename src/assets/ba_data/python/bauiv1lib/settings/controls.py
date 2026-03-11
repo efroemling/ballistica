@@ -18,8 +18,8 @@ class ControlsSettingsWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # FIXME: should tidy up here.
         # pylint: disable=too-many-statements
+        # FIXME: should tidy up here.
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import

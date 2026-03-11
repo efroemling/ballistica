@@ -308,9 +308,6 @@ class InGameMenuWindow(bui.MainWindow):
     def _refresh_in_game(
         self, positions: list[tuple[float, float, float]]
     ) -> tuple[float, float, float]:
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         assert bui.app.classic is not None
         custom_menu_entries: list[dict[str, Any]] = []
         session = bs.get_foreground_host_session()

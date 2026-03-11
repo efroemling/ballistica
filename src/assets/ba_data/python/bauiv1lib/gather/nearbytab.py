@@ -45,14 +45,17 @@ class NetScanner:
         bui.widget(edit=self._columnwidget, up_widget=tab_button)
         self._width = width
         self._last_selected_host: dict[str, Any] | None = None
+        self._last_scan: list[dict[str, str]] | None = None
 
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCallStrict(self.update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
-        # Go ahead and run a few *almost* immediately so we don't
-        # have to wait a second.
-        self.update()
-        bui.apptimer(0.25, bui.WeakCallStrict(self.update))
+        # Run two cycles pretty immediately - this should send out a
+        # "who's there" and update the list with any immediate-ish
+        # results so we may not have to wait a second to see things
+        # appear.
+        self._update()
+        bui.apptimer(0.25, bui.WeakCallStrict(self._update))
 
     def __del__(self) -> None:
         bs.end_host_scanning()
@@ -74,15 +77,26 @@ class NetScanner:
 
         bs.connect_to_party(host['address'])
 
-    def update(self) -> None:
+    def _update(self) -> None:
         """(internal)"""
 
         # In case our UI was killed from under us.
         if not self._columnwidget:
-            print(
-                f'ERROR: NetScanner running without UI at time {bui.apptime()}.'
+            bui.uilog.error(
+                'nearbytab NetScanner running without UI at time %s.',
+                bui.apptime(),
             )
             return
+
+        hosts = bs.host_scan_cycle()
+
+        # If nothing has changed since our last run, do nothing. If we
+        # do redundant rebuilds then we are likely to lose some clicks
+        # due to rebuilding after a click starts but before it ends.
+        if hosts == self._last_scan:
+            return
+
+        self._last_scan = hosts
 
         t_scale = 1.6
         for child in self._columnwidget.get_children():
@@ -90,7 +104,6 @@ class NetScanner:
 
         # Grab this now this since adding widgets will change it.
         last_selected_host = self._last_selected_host
-        hosts = bs.host_scan_cycle()
         for i, host in enumerate(hosts):
             txt3 = bui.textwidget(
                 parent=self._columnwidget,

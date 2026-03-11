@@ -25,8 +25,6 @@ class _Entry:
         width: float | None = None,
         height: float | None = None,
     ):
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-positional-arguments
         self._scoreboard = weakref.ref(scoreboard)
         self._do_cover = do_cover

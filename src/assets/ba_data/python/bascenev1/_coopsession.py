@@ -267,13 +267,13 @@ class CoopSession(Session):
     def on_activity_end(
         self, activity: bascenev1.Activity, results: Any
     ) -> None:
+        # pylint: disable=too-many-statements
         """Method override for co-op sessions.
 
         Jumps between co-op games and score screens.
         """
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bascenev1lib.activity.coopscore import CoopScoreScreen
         from bascenev1lib.tutorial import TutorialActivity

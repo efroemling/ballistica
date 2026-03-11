@@ -30,7 +30,6 @@ class WatchWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
         from bauiv1lib.tabs import TabRow
 
         bui.set_analytics_screen('Watch Window')
@@ -198,7 +197,6 @@ class WatchWindow(bui.MainWindow):
         return True
 
     def _set_tab(self, tab_id: TabID) -> None:
-        # pylint: disable=too-many-locals
 
         if self._current_tab == tab_id:
             return

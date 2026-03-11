@@ -185,7 +185,6 @@ class PrivateGatherTab(GatherTab):
 
     def _build_hosting_config(self) -> PrivateHostingConfig:
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         from bauiv1lib.playlist import PlaylistTypeVars
         from bascenev1 import filter_playlist
 
@@ -557,8 +556,8 @@ class PrivateGatherTab(GatherTab):
         )
 
     def _build_host_tab(self) -> None:
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-branches
         classic = bui.app.classic
         assert classic is not None
 

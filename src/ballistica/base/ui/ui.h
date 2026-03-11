@@ -5,6 +5,7 @@
 
 #include <list>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "ballistica/base/graphics/support/frame_def.h"
@@ -138,7 +139,7 @@ class UI {
 
   auto* dev_console() const { return dev_console_; }
 
-  void PushDevConsolePrintCall(const std::string& msg, float scale,
+  void PushDevConsolePrintCall(std::string_view msg, float scale,
                                Vector4f color);
 
   auto* delegate() const { return delegate_; }

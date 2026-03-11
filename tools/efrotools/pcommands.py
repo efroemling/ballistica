@@ -45,7 +45,6 @@ def _spelling(words: list[str]) -> None:
 
 def requirements_upgrade() -> None:
     """Upgrade project requirements."""
-    # pylint: disable=too-many-locals
     import os
     import tempfile
     import subprocess
@@ -88,15 +87,27 @@ def requirements_upgrade() -> None:
         filterlines: list[tuple[str, str]] = [
             # Fails to build on bastaging (submitted fix).
             ('pyicu==2.16.1', 'pyicu==2.15.2'),
-            ('google-auth-oauthlib==1.2.3', 'google-auth-oauthlib==1.2.2'),
-            ('pylint==4.0.4', 'pylint==4.0.3'),
-            ('Sphinx==9.1.0', 'Sphinx==8.2.3'),
-            ('gunicorn==24.0.0', 'gunicorn==23.0.0'),
+            # ('google-auth-oauthlib==1.2.3', 'google-auth-oauthlib==1.2.2'),
+            # ('pylint==4.0.4', 'pylint==4.0.3'),
+            # ('Sphinx==9.1.0', 'Sphinx==8.2.3'),
+            # ('gunicorn==24.0.0', 'gunicorn==23.0.0'),
         ]
         for fsrc, fdst in filterlines:
             if fsrc in reqs_new:
                 reqs_new = reqs_new.replace(fsrc, fdst)
                 print(f'{Clr.MAG}HOLDING BACK {fdst}{Clr.RST}')
+
+        unpinned = [
+            line
+            for line in reqs_new.splitlines()
+            if line and not line.startswith('#') and '==' not in line
+        ]
+        if unpinned:
+            raise CleanError(
+                'requirements.txt contains unpinned entries'
+                ' (expected exact versions via ==):\n'
+                + '\n'.join(f'  {u}' for u in unpinned)
+            )
 
         if reqs_new != reqs:
             with open(reqpath, 'w', encoding='utf-8') as outfile:
@@ -834,7 +845,6 @@ def make_ensure() -> None:
     Can be useful to run after cloud-builds to ensure the local results
     consider themselves up-to-date.
     """
-    # pylint: disable=too-many-locals
     from efro.error import CleanError
     from efro.terminal import Clr
     import subprocess
@@ -925,3 +935,38 @@ def make_target_debug() -> None:
     )
     print(f'SRC modified at {srctimestr}.')
     print(f'DST modified at {dsttimestr}.')
+
+
+def showtime() -> None:
+    """Run a command and print how long it took.
+
+    First arg is a label; remaining args are the command to run.
+    Prints '<label> completed in X.XXs.' on success (Clr.BLK) or
+    '<label> failed in X.XXs.' on failure (Clr.RED), then exits with
+    the command's return code.
+    """
+    import time
+    import subprocess
+    from efro.error import CleanError
+
+    args = pcommand.get_args()
+    if len(args) < 2:
+        raise CleanError('Expected a label and at least one command arg.')
+
+    label = args[0]
+    cmd = args[1:]
+    clr = pcommand.clr()
+
+    t = time.monotonic()
+    result = subprocess.run(cmd, check=False)
+    elapsed = time.monotonic() - t
+
+    if result.returncode == 0:
+        pcommand.clientprint(
+            f'{clr.SBLK}{label} completed in {elapsed:.2f}s.{clr.RST}'
+        )
+    else:
+        pcommand.clientprint(
+            f'{clr.RED}{label} failed in {elapsed:.2f}s.{clr.RST}'
+        )
+        sys.exit(result.returncode)

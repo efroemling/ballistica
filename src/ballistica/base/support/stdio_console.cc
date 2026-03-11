@@ -9,11 +9,11 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python_command.h"
 
@@ -94,7 +94,7 @@ void StdioConsole::StartInMainThread_() {
           // begun first. (or, more likely, just never print because the
           // app has exited).
           if (g_buildconfig.windows_console_build()) {
-            core::CorePlatform::SleepMillisecs(250);
+            core::Platform::SleepMillisecs(250);
           }
           if (!g_base->logic->shutting_down()) {
             printf("Stdin EOF reached. Use Ctrl-C to quit.\n");
@@ -112,7 +112,7 @@ void StdioConsole::Clear_() {
   if (g_buildconfig.platform_macos() || g_buildconfig.platform_linux()) {
     // Attempt to run actual clear command on unix-y systems to plop
     // our prompt back at the top of the screen.
-    retval = core::CorePlatform::System("clear");
+    retval = core::Platform::System("clear");
   }
   // As a fallback, just spit out a bunch of newlines.
   if (retval != 0) {

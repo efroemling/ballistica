@@ -26,7 +26,6 @@ def _get_targets(
     limit_to_prefix: str | None = None,
 ) -> str:
     """Generic function to map source extension to dst files."""
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-positional-arguments
 
     src = ASSETS_SRC
@@ -68,8 +67,6 @@ def _get_py_targets(
 ) -> None:
     # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     py_generated_root = f'{ASSETS_SRC}/ba_data/python/babase/_mgen'
 
@@ -134,7 +131,7 @@ def _get_py_targets(
             elif proot.startswith(f'{ASSETS_SRC}/windows/Win32'):
                 in_subset = 'private-windows-Win32'
             elif proot.startswith(
-                f'src/external/python-apple/macos/Python.xcframework/'
+                f'src/external/python-apple-old/macos/Python.xcframework/'
                 f'macos-arm64_x86_64/Python.framework/'
                 f'Versions/{PYVER}/lib/python{PYVER}'
             ):
@@ -245,20 +242,20 @@ def _get_py_targets_subset(
     # build/assets/pylib-apple-mac
     elif subset == 'private-apple-mac':
         src = (
-            f'src/external/python-apple/macos/Python.xcframework/'
+            f'src/external/python-apple-old/macos/Python.xcframework/'
             f'macos-arm64_x86_64/Python.framework/'
             f'Versions/{PYVER}/lib/python{PYVER}'
         )
-        dst = f'{BUILD_DIR}/python-apple/macos/pylib'
+        dst = f'{BUILD_DIR}/python-apple-old/macos/pylib'
         copyrule = (
-            f'$(BUILD_DIR)/python-apple/macos/pylib/%.py :'
-            f' $(SRC_DIR)/external/python-apple/macos/Python.xcframework/'
+            f'$(BUILD_DIR)/python-apple-old/macos/pylib/%.py :'
+            f' $(SRC_DIR)/external/python-apple-old/macos/Python.xcframework/'
             f'macos-arm64_x86_64/Python.framework/'
             f'Versions/{PYVER}/lib/python{PYVER}/%.py'
         )
         copyrule_so = (
-            f'$(BUILD_DIR)/python-apple/macos/pylib/%.so :'
-            f' $(SRC_DIR)/external/python-apple/macos/Python.xcframework/'
+            f'$(BUILD_DIR)/python-apple-old/macos/pylib/%.so :'
+            f' $(SRC_DIR)/external/python-apple-old/macos/Python.xcframework/'
             f'macos-arm64_x86_64/Python.framework/'
             f'Versions/{PYVER}/lib/python{PYVER}/%.so'
         )
@@ -489,7 +486,6 @@ def generate_assets_makefile(
     explicit_sources: set[str],
 ) -> dict[str, str]:
     """Main script entry point."""
-    # pylint: disable=too-many-locals
     from efrotools.project import getprojectconfig
     from pathlib import Path
 

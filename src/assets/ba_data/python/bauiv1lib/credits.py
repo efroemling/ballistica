@@ -23,8 +23,8 @@ class CreditsWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-locals
 
         bui.set_analytics_screen('Credits Window')
 

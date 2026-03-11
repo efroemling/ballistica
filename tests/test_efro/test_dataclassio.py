@@ -72,9 +72,8 @@ class _NestedClass:
 
 
 def test_assign() -> None:
-    """Testing various assignments."""
-
     # pylint: disable=too-many-statements
+    """Testing various assignments."""
 
     @ioprepped
     @dataclass
@@ -941,8 +940,6 @@ def test_extended_data() -> None:
 
 def test_soft_default() -> None:
     """Test soft_default IOAttr value."""
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     # Try both of these with and without storage_name to make sure
     # soft_default interacts correctly with both cases.
@@ -1275,7 +1272,6 @@ class MTTestClass2(MTTestBase):
 def test_multi_type() -> None:
     """Test IOMultiType stuff."""
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     # Test converting single instances back and forth.
     val1: MTTestBase = MTTestClass1(ival=123)
@@ -1827,15 +1823,15 @@ def test_float_timestamps() -> None:
     @ioprepped
     @dataclass
     class _TestClass:
-        tmval: Annotated[datetime.datetime, IOAttrs(float_times=True)]
-        tmval2: Annotated[datetime.datetime, IOAttrs(float_times=False)]
+        tmval: Annotated[datetime.datetime, IOAttrs(time_format='float')]
+        tmval2: Annotated[datetime.datetime, IOAttrs(time_format='ints')]
         tmval3: datetime.datetime
 
     now = utc_now()
     testclass = _TestClass(tmval=now, tmval2=now, tmval3=now)
     testclass_dict = dataclass_to_dict(testclass)
 
-    # Make sure prefer_timestamps True gives us a float and False (or
+    # Make sure time_format='float' gives us a float and 'ints' (or
     # default) gives us the int list.
     assert isinstance(testclass_dict.get('tmval'), float)
     assert isinstance(testclass_dict.get('tmval2'), list)
@@ -1854,14 +1850,76 @@ def test_float_timestamps() -> None:
     assert testclass2.tmval3 == testclass.tmval3
 
 
-def test_float_timedeltas() -> None:
-    """Test exporting times as floats instead of int arrays."""
+def test_iso_timestamps() -> None:
+    """Test exporting datetimes as ISO 8601 strings."""
+    import re
+    import warnings
 
     @ioprepped
     @dataclass
     class _TestClass:
-        tmval: Annotated[datetime.timedelta, IOAttrs(float_times=True)]
-        tmval2: Annotated[datetime.timedelta, IOAttrs(float_times=False)]
+        tmval: Annotated[datetime.datetime, IOAttrs(time_format='iso')]
+        tmval2: Annotated[datetime.datetime, IOAttrs(time_format='ints')]
+
+    now = utc_now()
+    testclass = _TestClass(tmval=now, tmval2=now)
+    testclass_dict = dataclass_to_dict(testclass)
+
+    # ISO format should produce a Z-suffixed RFC 3339 string.
+    iso_val = testclass_dict.get('tmval')
+    assert isinstance(iso_val, str)
+    assert re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$', iso_val)
+
+    # Int-list format is unchanged.
+    assert isinstance(testclass_dict.get('tmval2'), list)
+
+    # Round-trip should be exact (no float precision loss).
+    testclass2 = dataclass_from_dict(_TestClass, testclass_dict)
+    assert testclass2.tmval == testclass.tmval
+    assert testclass2.tmval2 == testclass.tmval2
+
+    # Auto-detection: an ISO string should be accepted even on a field
+    # declared with time_format='ints'.
+    testclass_dict_mixed = dict(testclass_dict)
+    testclass_dict_mixed['tmval2'] = iso_val
+    testclass3 = dataclass_from_dict(_TestClass, testclass_dict_mixed)
+    assert testclass3.tmval2 == testclass.tmval2
+
+    # time_format='iso' on a timedelta field should error at prep time.
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _BadTDClass:
+            tdval: Annotated[datetime.timedelta, IOAttrs(time_format='iso')]
+
+    # float_times=True should emit a DeprecationWarning and behave like
+    # time_format='float'.
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter('always')
+
+        @ioprepped
+        @dataclass
+        class _DeprecatedClass:
+            tmval: Annotated[datetime.datetime, IOAttrs(float_times=True)]
+
+    assert any(
+        issubclass(w.category, DeprecationWarning)
+        and 'float_times' in str(w.message)
+        for w in caught
+    )
+    obj = _DeprecatedClass(tmval=now)
+    assert isinstance(dataclass_to_dict(obj).get('tmval'), float)
+
+
+def test_float_timedeltas() -> None:
+    """Test exporting timedeltas as floats instead of int arrays."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        tmval: Annotated[datetime.timedelta, IOAttrs(time_format='float')]
+        tmval2: Annotated[datetime.timedelta, IOAttrs(time_format='ints')]
         tmval3: datetime.timedelta
 
     testdelta = datetime.timedelta(days=123, hours=12.3423, seconds=2.345)
@@ -1869,7 +1927,7 @@ def test_float_timedeltas() -> None:
     testclass = _TestClass(tmval=testdelta, tmval2=testdelta, tmval3=testdelta)
     testclass_dict = dataclass_to_dict(testclass)
 
-    # Make sure prefer_timestamps True gives us a float and False (or
+    # Make sure time_format='float' gives us a float and 'ints' (or
     # default) gives us the int list.
     assert isinstance(testclass_dict.get('tmval'), float)
     assert isinstance(testclass_dict.get('tmval2'), list)

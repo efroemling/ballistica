@@ -126,7 +126,6 @@ class OnScreenKeyboardWindow(Window):
         self._load_keyboard()
 
     def _load_keyboard(self) -> None:
-        # pylint: disable=too-many-locals
         self._keyboard = self._get_keyboard()
         # We want to get just chars without column data, etc.
         self._chars = [j for i in self._keyboard.chars for j in i]

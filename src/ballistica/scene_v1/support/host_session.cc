@@ -15,7 +15,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
@@ -490,7 +490,7 @@ void HostSession::StepScene() {
 void HostSession::Update(int time_advance_millisecs, double time_advance) {
   assert(g_base->InLogicThread());
 
-  millisecs_t update_time_start = core::CorePlatform::TimeMonotonicMillisecs();
+  millisecs_t update_time_start = core::Platform::TimeMonotonicMillisecs();
 
   // HACK: we used to do a bunch of fudging to try and advance time by
   // exactly 16 milliseconds per frame which would give us a clean 2 sim
@@ -548,8 +548,7 @@ void HostSession::Update(int time_advance_millisecs, double time_advance) {
     // After each time we step time, abort if we're taking too long. This way we
     // slow down if we're overloaded and have a better chance at maintaining
     // a reasonable frame-rate/etc.
-    auto elapsed =
-        core::CorePlatform::TimeMonotonicMillisecs() - update_time_start;
+    auto elapsed = core::Platform::TimeMonotonicMillisecs() - update_time_start;
     if (elapsed >= 1000 / 30) {
       too_slow = true;
       break;

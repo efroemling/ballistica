@@ -33,7 +33,6 @@ class CoopBrowserWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
 
         plus = bui.app.plus
@@ -505,8 +504,6 @@ class CoopBrowserWindow(bui.MainWindow):
             bui.getsound('click01').play()
 
     def _refresh_campaign_row(self) -> None:
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bauiv1lib.coop.gamebutton import GameButton
 

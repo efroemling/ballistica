@@ -29,7 +29,7 @@ class AttributeInfo:
     docs: str | None = None
 
 
-_g_genned_pdoc_with_dummy_modules = False  # pylint: disable=invalid-name
+_g_genned_pdoc_with_dummy_modules = False
 
 
 def parse_docs_attrs(attrs: list[AttributeInfo], docs: str) -> str:
@@ -117,9 +117,9 @@ def get_sphinx_settings(projroot: str) -> SphinxSettings:
 
 
 def generate_sphinx_docs() -> None:
+    # pylint: disable=too-many-statements
     """Run docs generation with sphinx."""
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     import time
     import shutil
@@ -169,8 +169,20 @@ def generate_sphinx_docs() -> None:
     ]
     for srcdir, dstdir in dirpairs:
         os.makedirs(dstdir, exist_ok=True)
-        shutil.copytree(srcdir, dstdir, dirs_exist_ok=True)
-        # subprocess.run(['cp', '-rv', srcdir, dstdir], check=True)
+        # Exclude tools/spinoff; it's a symlink into a possibly-absent
+        # parent repo and we don't want to break if it is invalid.
+        # Use a custom callable (not ignore_patterns) so we only skip
+        # spinoff at the top level of tools/ and not tools/batools/spinoff.
+        ignore = (
+            (
+                lambda s, ns: (
+                    {'spinoff'} if os.path.normpath(s) == 'tools' else set()
+                )
+            )
+            if srcdir == 'tools/'
+            else None
+        )
+        shutil.copytree(srcdir, dstdir, dirs_exist_ok=True, ignore=ignore)
 
     # Filter all files. Doing this with multiprocessing gives us a very
     # nice speedup vs multithreading which seems gil-constrained.

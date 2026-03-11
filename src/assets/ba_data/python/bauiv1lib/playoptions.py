@@ -31,9 +31,9 @@ class PlayOptionsWindow(PopupWindow):
         delegate: Any = None,
         playlist_select_context: PlaylistSelectContext | None = None,
     ):
+        # pylint: disable=too-many-statements
         # FIXME: Tidy this up.
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         from bascenev1 import filter_playlist, get_map_class
         from bauiv1lib.playlist import PlaylistTypeVars

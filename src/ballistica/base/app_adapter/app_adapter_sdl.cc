@@ -22,7 +22,7 @@
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
@@ -377,7 +377,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
   assert(g_core->InMainThread());
   assert(g_base);
 
-  auto starttime{core::CorePlatform::TimeMonotonicMicrosecs()};
+  auto starttime{core::Platform::TimeMonotonicMicrosecs()};
   bool log_long_events{true};
 
   switch (event.type) {
@@ -577,7 +577,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       // Lastly handle our custom events (can't since their
       // values are dynamic).
       if (event.type == sdl_runnable_event_id_) {
-        auto starttime2{core::CorePlatform::TimeMonotonicMicrosecs()};
+        auto starttime2{core::Platform::TimeMonotonicMicrosecs()};
 
         auto* runnable = static_cast<Runnable*>(event.user.data1);
         assert(runnable);
@@ -585,8 +585,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
 
         // Log calls longer than a millisecond or so.
         log_long_events = false;  // We handle this ourself.
-        auto duration{core::CorePlatform::TimeMonotonicMicrosecs()
-                      - starttime2};
+        auto duration{core::Platform::TimeMonotonicMicrosecs() - starttime2};
         if (duration > 1000) {
           g_core->logging->Log(
               LogName::kBaPerformance, LogLevel::kDebug, [duration, runnable] {
@@ -606,7 +605,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
 
   if (log_long_events) {
     // Make noise for anything taking longer than a millisecond or so.
-    auto duration{core::CorePlatform::TimeMonotonicMicrosecs() - starttime};
+    auto duration{core::Platform::TimeMonotonicMicrosecs() - starttime};
     if (duration > 1000) {
       g_core->logging->Log(
           LogName::kBaPerformance, LogLevel::kDebug, [duration] {
@@ -767,6 +766,15 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                           SDL_GL_CONTEXT_PROFILE_CORE);
       context_flags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+#if BA_OPENGL_IS_ES
+    } else if (g_buildconfig.platform_windows()) {
+      // Use ANGLE (libEGL.dll) for OpenGL ES via D3D11 on Windows.
+      SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                          SDL_GL_CONTEXT_PROFILE_ES);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#endif
     } else {
       // On other platforms, let's not ask for anything in particular.
       // We'll work with whatever they give us if its 4.x or 3.x or we'll

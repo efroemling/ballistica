@@ -267,7 +267,6 @@ class Table[T]:
 
     def refresh(self, tab: DevConsoleTab) -> None:
         """Call to refresh the data."""
-        # pylint: disable=too-many-locals
 
         margin_top = 50.0
         margin_bottom = 10.0
@@ -537,7 +536,6 @@ class DevConsoleTabLogging(DevConsoleTab):
         height: float,
     ) -> None:
         # pylint: disable=too-many-positional-arguments
-        # pylint: disable=too-many-locals
 
         xoffs = -15.0
         bwidth = 80.0

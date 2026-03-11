@@ -80,10 +80,9 @@ class Player : public Object {
 
   void SetPosition(const Vector3f& position);
 
-  // If an public account-id can be determined with relative
-  // certainty for this player, returns it. Otherwise returns
-  // an empty string.
-  auto GetPublicV1AccountID() const -> std::string;
+  // Returns the account-id for this player, or an empty string if
+  // not available.
+  auto GetAccountID() const -> std::string;
 
   void SetHostActivity(HostActivity* host_activity);
   auto GetHostActivity() const -> HostActivity*;

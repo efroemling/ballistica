@@ -339,11 +339,10 @@ class Blast(bs.Actor):
         hit_type: str = 'explosion',
         hit_subtype: str = 'normal',
     ):
+        # pylint: disable=too-many-statements
         """Instantiate with given values."""
 
         # bah; get off my lawn!
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
 
         super().__init__()
 
@@ -707,9 +706,7 @@ class Bomb(bs.Actor):
     """
 
     # Ew; should try to clean this up later.
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
 
     def __init__(
         self,
@@ -722,6 +719,7 @@ class Bomb(bs.Actor):
         source_player: bs.Player | None = None,
         owner: bs.Node | None = None,
     ):
+        # pylint: disable=too-many-statements
         """Create a new Bomb.
 
         bomb_type can be 'ice','impact','land_mine','normal','sticky', or

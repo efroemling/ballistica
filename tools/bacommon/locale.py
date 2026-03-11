@@ -562,6 +562,7 @@ class LocaleResolved(Enum):
 
     @cached_property
     def tag(self) -> str:
+        # pylint: disable=too-many-statements
         """An IETF BCP 47 tag for this locale.
 
         This is often simply a language code ('en') but may in some
@@ -570,7 +571,6 @@ class LocaleResolved(Enum):
         ('en-x-pirate').
         """
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         cls = LocaleResolved
 
         val: str | None = None
@@ -689,7 +689,6 @@ class LocaleResolved(Enum):
         string form ('en_US.UTF-8').
         """
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-return-statements
 
         cls = LocaleResolved

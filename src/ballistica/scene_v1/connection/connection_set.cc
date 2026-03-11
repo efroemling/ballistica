@@ -616,15 +616,15 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
     }
     case BA_PACKET_CLIENT_REQUEST: {
       if (data_size > 4) {
-        // Bytes 2 and 3 are their protocol ID, byte 4 is request ID, the rest
-        // is session-id.
+        // Bytes 2 and 3 are their protocol ID, byte 4 is request ID, the
+        // rest is their app-instance-uuid.
         uint16_t protocol_id;
         memcpy(&protocol_id, data + 1, 2);
         uint8_t request_id = data[3];
 
-        // They also send us their session-ID which should
-        // be completely unique to them; we can use this to lump client
-        // requests together and such.
+        // They also send us their app-instance-uuid which should be
+        // completely unique to them (though spoofable since it is public).
+        // We can use this to lump client requests together and such.
         std::vector<char> client_instance_buffer(data_size - 4 + 1);
         memcpy(&(client_instance_buffer[0]), data + 4, data_size - 4);
         client_instance_buffer[data_size - 4] = 0;  // terminate string
@@ -632,11 +632,12 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
 
         if (static_cast<int>(connections_to_clients_.size() + 1)
             >= appmode->public_party_max_size()) {
-          // If we've reached our party size limit (including ourself in that
-          // count), reject.
+          // If we've reached our party size limit (including ourself in
+          // that count), reject.
 
-          // Newer version have a specific party-full message; send that first
-          // but also follow up with a generic deny message for older clients.
+          // Newer version have a specific party-full message; send that
+          // first but also follow up with a generic deny message for older
+          // clients.
           g_base->network_writer->PushSendToCall(
               {BA_PACKET_CLIENT_DENY_PARTY_FULL, request_id}, addr);
 
@@ -692,9 +693,8 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
             connections_to_clients_[client_id] = connection_to_client;
           }
 
-          // If we got to this point, regardless of whether
-          // we already had a connection or not, tell them
-          // they're accepted.
+          // If we got to this point, regardless of whether we already had a
+          // connection or not, tell them they're accepted.
           std::vector<uint8_t> msg_out(3);
           msg_out[0] = BA_PACKET_CLIENT_ACCEPT;
           assert(connection_to_client->id() < 256);

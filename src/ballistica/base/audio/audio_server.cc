@@ -28,7 +28,7 @@
 #include "ballistica/base/audio/ogg_stream.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/math/vector3f.h"
 

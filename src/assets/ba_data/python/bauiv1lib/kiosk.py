@@ -18,7 +18,7 @@ class KioskWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals, too-many-statements
+        # pylint: disable=too-many-statements
         from bauiv1lib.confirm import QuitWindow
 
         assert bui.app.classic is not None

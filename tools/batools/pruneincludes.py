@@ -129,7 +129,6 @@ class Pruner:
 
     def _check_file(self, path: str, cmd: str) -> None:
         """Run all checks on an individual file."""
-        # pylint: disable=too-many-locals
 
         with open(path, encoding='utf-8') as infile:
             orig_contents = infile.read()

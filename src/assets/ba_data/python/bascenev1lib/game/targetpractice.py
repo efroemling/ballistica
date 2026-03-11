@@ -284,7 +284,6 @@ class Target(bs.Actor):
 
     def do_hit_at_position(self, pos: Sequence[float], player: Player) -> bool:
         """Handle a bomb hit at the given position."""
-        # pylint: disable=too-many-statements
         activity = self.activity
 
         # Ignore hits if the game is over or if we've already been hit

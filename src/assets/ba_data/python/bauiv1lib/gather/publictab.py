@@ -95,7 +95,6 @@ class UIRow:
         tab: PublicGatherTab,
     ) -> None:
         """Update for the given data."""
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-positional-arguments
 
         plus = bui.app.plus

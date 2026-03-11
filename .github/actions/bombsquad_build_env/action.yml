@@ -3,7 +3,9 @@ description: "Common setup steps for BombSquad builds"
 
 inputs:
   using-cmake:
-    description: "Set to true if building with cmake to enable caching"
+    description: |
+      "Set to true if building with cmake to enable caching"
+      "Also sets up BA_APP_RUN_ENABLE_BUILDS env var"
     required: false
     type: boolean
     default: false
@@ -43,24 +45,12 @@ runs:
       if: ${{ inputs.using-cmake == 'true' }}
       shell: bash
       run: |
-        sudo add-apt-repository ppa:deadsnakes/ppa
         sudo apt-get update -qq
         sudo apt-get install -y --no-install-recommends \
-          build-essential \
-          clang \
-          clang-format \
-          cmake \
-          curl \
           libglut-dev \
           libopenal-dev \
           libsdl2-dev \
-          libvorbis-dev \
-          make \
-          python3-pip \
-          python3.13-dev \
-          python3.13-venv \
-          rsync \
-          zstd
+          libvorbis-dev
     - name: Setup env variables
       if: ${{ inputs.using-cmake == 'true' }}
       shell: bash

@@ -242,7 +242,6 @@ class App:
         loop. Hopefully this situation will be improved in the future
         with a unified event loop.
         """
-        assert _babase.in_logic_thread()
         assert self._asyncio_loop is not None
         return self._asyncio_loop
 

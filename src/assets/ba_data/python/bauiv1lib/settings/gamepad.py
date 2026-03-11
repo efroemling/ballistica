@@ -170,7 +170,6 @@ class GamepadSettingsWindow(bui.MainWindow):
                 self._settings[button] = val
 
     def _rebuild_ui(self, is_reset: bool = False) -> None:
-        # pylint: disable=too-many-statements
 
         assert bui.app.classic is not None
 
