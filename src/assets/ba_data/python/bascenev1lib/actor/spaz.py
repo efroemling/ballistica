@@ -1360,13 +1360,12 @@ class Spaz(bs.Actor):
                 self.node.handlemessage('celebrate', int(msg.duration * 1000))
         elif isinstance(msg, FootConnectMessage):
             if not self._footing and self.node:
-                self._footing = True
                 self.node.handlemessage('footing', 1)
+            self.footing = True
         elif isinstance(msg, FootDisconnectMessage):
             if self._footing and self.node:
-                self._footing = False
                 self.node.handlemessage('footing', -1)
-
+            self._footing = False
         else:
             return super().handlemessage(msg)
         return None
