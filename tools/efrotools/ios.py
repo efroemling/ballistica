@@ -170,8 +170,7 @@ def _export_ipa_from_xcarchive(
     import textwrap
 
     print('Exporting IPA...')
-    exportoptions = textwrap.dedent(
-        """
+    exportoptions = textwrap.dedent("""
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
          "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -193,8 +192,7 @@ def _export_ipa_from_xcarchive(
                 <string>&lt;none&gt;</string>
         </dict>
         </plist>
-    """
-    ).strip()
+    """).strip()
     with exportoptionspath.open('w') as outfile:
         outfile.write(exportoptions)
 
