@@ -9,7 +9,7 @@ jobs:
   make_docker_gui_debug_image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
@@ -35,7 +35,7 @@ jobs:
   make_docker_server_debug_image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
@@ -61,7 +61,7 @@ jobs:
   make_docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -83,12 +83,12 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Cache Flatpak data
         id: cache-flatpak-sdk
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           cache-name: cache-flatpak
         with:

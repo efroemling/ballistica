@@ -9,7 +9,7 @@ jobs:
   setup_bombsquad_cache:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -21,7 +21,7 @@ jobs:
     needs: setup_bombsquad_cache
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Build documentation

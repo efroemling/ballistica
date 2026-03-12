@@ -12,7 +12,7 @@ jobs:
       release_id: ${{ steps.create_release.outputs.id }}
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Create Release
         id: create_release
         uses: ncipollo/release-action@v1
@@ -28,7 +28,7 @@ jobs:
   release_linux_x86_64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -45,7 +45,7 @@ jobs:
   release_linux_x86_64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -62,7 +62,7 @@ jobs:
   release_linux_arm64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -79,7 +79,7 @@ jobs:
   release_linux_arm64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -101,7 +101,7 @@ jobs:
   release_mac_arm64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -118,7 +118,7 @@ jobs:
   release_mac_arm64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -140,7 +140,7 @@ jobs:
   release_windows_x86_64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -157,7 +157,7 @@ jobs:
   release_windows_x86_64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -179,7 +179,7 @@ jobs:
   release_docker_gui_debug_image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
@@ -208,7 +208,7 @@ jobs:
   release_docker_server_debug_image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
@@ -237,7 +237,7 @@ jobs:
   upload_docker_x86_64_server_release_image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
@@ -266,7 +266,7 @@ jobs:
   upload_docker_arm64_server_release_image:
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
@@ -321,7 +321,7 @@ jobs:
   upload_docker_x86_64_gui_release_image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
@@ -350,7 +350,7 @@ jobs:
   upload_docker_arm64_gui_release_image:
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
@@ -410,7 +410,7 @@ jobs:
   release_docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -441,12 +441,12 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Cache Flatpak data
         id: cache-flatpak-sdk
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           cache-name: cache-flatpak
         with:
@@ -495,7 +495,7 @@ jobs:
     if: ${{ github.repository_owner == 'efroemling' || github.repository_owner == 'Loup-Garou911XD' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
         with:
@@ -517,7 +517,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: release_bombsquad_build_env
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Setup build env
