@@ -73,9 +73,9 @@ class Endpoint(StrEnum):
 @ioprepped
 @dataclass
 class ErrorResponse:
-    """Returned on error; HTTP status code conveys success/failure.
+    """Returned by all :class:`Endpoint` members on any non-200 response.
 
-    Returned by all :class:`Endpoint` members on any non-200 response.
+    The HTTP status code conveys the specific failure type.
     """
 
     #: Machine-readable error code (e.g. ``'not_found'``, ``'unauthorized'``).
