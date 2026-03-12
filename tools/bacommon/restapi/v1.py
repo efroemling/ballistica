@@ -69,6 +69,42 @@ class Endpoint(StrEnum):
     #: Pass ``'me'`` as ``account_id`` to refer to the authenticated account.
     ACCOUNT = '/api/v1/accounts/{account_id}'
 
+    #: ``GET`` — list all workspaces for the authenticated account.
+    #: Returns :class:`WorkspacesResponse`.
+    #:
+    #: ``POST`` — create a new workspace.
+    #: Optional JSON body: ``{"name": "My Workspace"}``.
+    #: Returns :class:`WorkspaceResponse` with HTTP 201.
+    WORKSPACES = '/api/v1/workspaces'
+
+    #: ``GET`` — fetch metadata for a single workspace.
+    #: Returns :class:`WorkspaceResponse`.
+    #:
+    #: ``PATCH`` — rename the workspace.
+    #: JSON body: ``{"name": "New Name"}``.
+    #: Returns :class:`WorkspaceResponse`.
+    #:
+    #: ``DELETE`` — delete the workspace (creates a 30-day backup
+    #: internally). Returns HTTP 204.
+    WORKSPACE = '/api/v1/workspaces/{workspace_id}'
+
+    #: ``GET`` — flat listing of all files and directories in the workspace.
+    #: Returns :class:`WorkspaceFilesResponse`.
+    WORKSPACE_FILES = '/api/v1/workspaces/{workspace_id}/files'
+
+    #: ``GET`` — download a file. Returns raw file bytes.
+    #:
+    #: ``PUT`` — upload or replace a file. Raw body = file contents.
+    #: Parent directories are created automatically. Returns HTTP 204.
+    #:
+    #: ``DELETE`` — delete a file or directory. Returns HTTP 204.
+    #:
+    #: ``POST`` — perform a structured file operation.
+    #: JSON body: ``{"op": "mkdir"}``, ``{"op": "move", "dest": "path"}``,
+    #: or ``{"op": "copy", "dest": "path"}``.
+    #: Returns HTTP 204.
+    WORKSPACE_FILE = '/api/v1/workspaces/{workspace_id}/files/{file_path}'
+
 
 @ioprepped
 @dataclass
@@ -104,3 +140,85 @@ class AccountResponse:
     last_active_day: Annotated[datetime.date | None, IOAttrs('last_active_day')]
     #: Number of distinct days the account has been active.
     total_active_days: Annotated[int, IOAttrs('total_active_days')]
+
+
+class WorkspaceEntryType(StrEnum):
+    """Type of a workspace entry."""
+
+    FILE = 'file'
+    DIRECTORY = 'directory'
+
+
+@ioprepped
+@dataclass
+class WorkspaceResponse:
+    """Metadata for a single workspace.
+
+    Returned by :attr:`Endpoint.WORKSPACE` and :attr:`Endpoint.WORKSPACES`.
+    """
+
+    #: Unique workspace ID.
+    id: Annotated[str, IOAttrs('id')]
+    #: User-assigned workspace name.
+    name: Annotated[str, IOAttrs('name')]
+    #: Total size of all files in bytes.
+    size: Annotated[int, IOAttrs('size')]
+    #: When the workspace was created.
+    create_time: Annotated[
+        datetime.datetime, IOAttrs('create_time', time_format='iso')
+    ]
+    #: When the workspace was last modified.
+    modified_time: Annotated[
+        datetime.datetime, IOAttrs('modified_time', time_format='iso')
+    ]
+
+
+@ioprepped
+@dataclass
+class WorkspacesResponse:
+    """List of workspaces for the authenticated account.
+
+    Returned by :attr:`Endpoint.WORKSPACES`.
+    """
+
+    workspaces: Annotated[list[WorkspaceResponse], IOAttrs('workspaces')]
+
+
+@ioprepped
+@dataclass
+class WorkspaceEntryResponse:
+    """A single file or directory entry in a workspace.
+
+    Part of :class:`WorkspaceFilesResponse`.
+    """
+
+    #: Path relative to the workspace root (e.g. ``'mymod/plugin.py'``).
+    path: Annotated[str, IOAttrs('path')]
+    #: Whether this entry is a file or directory.
+    type: Annotated[WorkspaceEntryType, IOAttrs('type')]
+    #: Size in bytes. Present for files; absent for directories.
+    size: Annotated[
+        int | None, IOAttrs('size', soft_default=None, store_default=False)
+    ]
+    #: Last-modified time. Present for files; may be absent for directories.
+    modified_time: Annotated[
+        datetime.datetime | None,
+        IOAttrs(
+            'modified_time',
+            time_format='iso',
+            soft_default=None,
+            store_default=False,
+        ),
+    ]
+
+
+@ioprepped
+@dataclass
+class WorkspaceFilesResponse:
+    """Flat listing of all files and directories in a workspace.
+
+    Returned by :attr:`Endpoint.WORKSPACE_FILES`.
+    Entries are sorted by path.
+    """
+
+    entries: Annotated[list[WorkspaceEntryResponse], IOAttrs('entries')]

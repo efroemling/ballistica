@@ -107,8 +107,10 @@ def _build_libopenal(
 ) -> str:
     """Build and install OpenAL."""
     print('Building OpenAL...')
-    # pylint: disable=line-too-long
-    url = f'https://github.com/kcat/openal-soft/archive/refs/tags/{OPENAL_VER}.zip'
+    url = (
+        f'https://github.com/kcat/openal-soft/archive/refs/tags/'
+        f'{OPENAL_VER}.zip'
+    )
     print(f'  Fetching OpenAL from {url} ...')
     zipfile_path = _fetch(url, cache_dir)
     srcdir = _extract_zip(zipfile_path, build_dir)

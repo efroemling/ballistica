@@ -677,11 +677,21 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     )
     entries.append(Entry('mac_xcode_sdks', mac_xcode_sdks))
 
+    # Resolve Homebrew prefix (ARM: /opt/homebrew, Intel: /usr/local).
+    # Homebrew include paths are symlinks into versioned Cellar directories,
+    # so when a package is updated the resolved path changes. CMake bakes
+    # the old versioned paths into its cache, causing linker errors against
+    # libraries that no longer exist. We detect this by resolving the symlink
+    # for a few key headers and wiping the build dir when any of them change.
+    brew_prefix = (
+        '/opt/homebrew' if os.path.isdir('/opt/homebrew') else '/usr/local'
+    )
+
     # ...or if homebrew SDL.h resolved path changes (happens for updates)
     entries.append(
         Entry(
             'homebrew_sdl_h_resolved',
-            _brew_h_resolved('/opt/homebrew/include/SDL2/SDL.h'),
+            _brew_h_resolved(f'{brew_prefix}/include/SDL2/SDL.h'),
         )
     )
 
@@ -689,7 +699,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     entries.append(
         Entry(
             'homebrew_pango_h_resolved',
-            _brew_h_resolved('/opt/homebrew/include/pango-1.0/pango/pango.h'),
+            _brew_h_resolved(f'{brew_prefix}/include/pango-1.0/pango/pango.h'),
         )
     )
 
@@ -697,7 +707,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     entries.append(
         Entry(
             'homebrew_hb_h_resolved',
-            _brew_h_resolved('/opt/homebrew/include/harfbuzz/hb.h'),
+            _brew_h_resolved(f'{brew_prefix}/include/harfbuzz/hb.h'),
         )
     )
 
