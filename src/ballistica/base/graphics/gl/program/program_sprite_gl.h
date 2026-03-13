@@ -89,7 +89,7 @@ class RendererGL::ProgramSpriteGL : public RendererGL::ProgramGL {
     }
 
     if (flags & SHD_OVERLAY) {
-      s += BA_GLSL_VERTEX_OUT " " BA_GLSL_LOWP "vec4 vScreenCoord;\n";
+      s += BA_GLSL_VERTEX_OUT " " BA_GLSL_MEDIUMP "vec4 vScreenCoord;\n";
     }
 
     s += BA_GLSL_VERTEX_IN " " BA_GLSL_LOWP "vec4 color;\n" BA_GLSL_VERTEX_OUT

@@ -1,4 +1,4 @@
-### 1.7.61 (build 22758, api 9, 2026-03-12)
+### 1.7.61 (build 22761, api 9, 2026-03-13)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
@@ -61,6 +61,9 @@
   (Thanks TheMikirog!).
 - Added support for `datetime.date` values to dataclassio (serialized as
   YYYY-MM-DD strings).
+- (build 22759) ANGLE GL rendering on Windows is now properly loading compressed
+  textures; previously was using fallback half-res cpu-based decompression which
+  is slow and ugly (Thanks SoK for the heads-up).
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not

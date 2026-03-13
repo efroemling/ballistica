@@ -210,7 +210,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
       s += BA_GLSL_VERTEX_OUT " vec2 vUVShadow;\n"
            BA_GLSL_VERTEX_OUT " vec2 vUVShadow2;\n"
            BA_GLSL_VERTEX_OUT " vec2 vUVShadow3;\n"
-           "uniform " BA_GLSL_LOWP "vec4 shadowParams;\n";
+           "uniform " BA_GLSL_MEDIUMP "vec4 shadowParams;\n";
     }
     s += "void main() {\n";
     if (flags & SHD_TEXTURE) {
@@ -246,42 +246,42 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     // clang-format off
     std::string s;
     if (flags & SHD_TEXTURE) {
-      s += "uniform " BA_GLSL_LOWP "sampler2D colorTex;\n";
+      s += "uniform " BA_GLSL_MEDIUMP "sampler2D colorTex;\n";
     }
     if ((flags & SHD_COLORIZE)) {
-      s += "uniform " BA_GLSL_LOWP "sampler2D colorizeTex;\n"
-           "uniform " BA_GLSL_LOWP "vec4 colorizeColor;\n";
+      s += "uniform " BA_GLSL_MEDIUMP "sampler2D colorizeTex;\n"
+           "uniform " BA_GLSL_MEDIUMP "vec4 colorizeColor;\n";
     }
     if ((flags & SHD_COLORIZE2)) {
-      s += "uniform " BA_GLSL_LOWP "vec4 colorize2Color;\n";
+      s += "uniform " BA_GLSL_MEDIUMP "vec4 colorize2Color;\n";
     }
     if ((flags & SHD_TEXTURE) || (flags & SHD_COLORIZE)
         || (flags & SHD_COLORIZE2)) {
-      s += BA_GLSL_FRAG_IN " " BA_GLSL_LOWP "vec2 vUV;\n";
+      s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUV;\n";
     }
     if (flags & SHD_MASK_UV2) {
-      s += BA_GLSL_FRAG_IN " " BA_GLSL_LOWP "vec2 vUV2;\n";
+      s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUV2;\n";
     }
     if (flags & SHD_FLATNESS) {
-      s += "uniform " BA_GLSL_LOWP "float flatness;\n";
+      s += "uniform " BA_GLSL_MEDIUMP "float flatness;\n";
     }
     if (flags & SHD_SHADOW) {
-      s += BA_GLSL_FRAG_IN " " BA_GLSL_LOWP "vec2 vUVShadow;\n"
-           BA_GLSL_FRAG_IN " " BA_GLSL_LOWP "vec2 vUVShadow2;\n"
-           BA_GLSL_FRAG_IN " " BA_GLSL_LOWP "vec2 vUVShadow3;\n"
-           "uniform " BA_GLSL_LOWP "vec4 shadowParams;\n";
+      s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow;\n"
+           BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow2;\n"
+           BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow3;\n"
+           "uniform " BA_GLSL_MEDIUMP "vec4 shadowParams;\n";
     }
     if (flags & SHD_GLOW) {
-      s += "uniform " BA_GLSL_LOWP "vec2 glowParams;\n";
+      s += "uniform " BA_GLSL_MEDIUMP "vec2 glowParams;\n";
     }
     if ((flags & SHD_MODULATE) || (!(flags & SHD_TEXTURE))) {
-      s += "uniform " BA_GLSL_LOWP "vec4 color;\n";
+      s += "uniform " BA_GLSL_MEDIUMP "vec4 color;\n";
     }
     if (flags & SHD_MASKED) {
-      s += "uniform " BA_GLSL_LOWP "sampler2D maskTex;\n";
+      s += "uniform " BA_GLSL_MEDIUMP "sampler2D maskTex;\n";
     }
     if (flags & SHD_MASK_UV2) {
-      s += "uniform " BA_GLSL_LOWP "sampler2D maskUV2Tex;\n";
+      s += "uniform " BA_GLSL_MEDIUMP "sampler2D maskUV2Tex;\n";
     }
     s += "void main() {\n";
     if (!(flags & SHD_TEXTURE)) {
@@ -289,7 +289,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     } else {
       std::string blur_arg;
       if (flags & SHD_GLOW) {
-        s += "   " BA_GLSL_LOWP
+        s += "   " BA_GLSL_MEDIUMP
              "vec4 cVal = " BA_GLSL_TEXTURE2D "(colorTex, vUV, glowParams.g);\n"
              "      " BA_GLSL_FRAGCOLOR
              " = vec4(color.rgb * cVal.rgb * cVal.a * "
@@ -301,14 +301,14 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
       } else {
         if ((flags & SHD_COLORIZE) || (flags & SHD_COLORIZE2)) {
           // TEMP TEST
-          s += "   " BA_GLSL_LOWP
+          s += "   " BA_GLSL_MEDIUMP
                "vec4 colorizeVal = " BA_GLSL_TEXTURE2D "(colorizeTex, vUV);\n";
         }
         if (flags & SHD_COLORIZE) {
-          s += "   " BA_GLSL_LOWP "float colorizeA = colorizeVal.r;\n";
+          s += "   " BA_GLSL_MEDIUMP "float colorizeA = colorizeVal.r;\n";
         }
         if (flags & SHD_COLORIZE2) {
-          s += "   " BA_GLSL_LOWP "float colorizeB = colorizeVal.g;\n";
+          s += "   " BA_GLSL_MEDIUMP "float colorizeB = colorizeVal.g;\n";
         }
         if (flags & SHD_MASKED) {
           s += "   " BA_GLSL_MEDIUMP "vec4 mask = "
@@ -317,7 +317,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
 
         if (flags & SHD_MODULATE) {
           if (flags & SHD_FLATNESS) {
-            s += "   " BA_GLSL_LOWP
+            s += "   " BA_GLSL_MEDIUMP
                  "vec4 rawTexColor = " BA_GLSL_TEXTURE2D "(colorTex, vUV);\n"
                  "   " BA_GLSL_FRAGCOLOR " = color * "
                        "vec4(mix(rawTexColor.rgb, vec3(1.0), flatness),"
@@ -344,7 +344,7 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
         s += ";\n";
 
         if (flags & SHD_SHADOW) {
-          s += "   " BA_GLSL_LOWP
+          s += "   " BA_GLSL_MEDIUMP
                      "float shadowA = ("
                      BA_GLSL_TEXTURE2D "(colorTex, vUVShadow).a + "
                      "" BA_GLSL_TEXTURE2D "(colorTex, vUVShadow2, 1.0).a + "

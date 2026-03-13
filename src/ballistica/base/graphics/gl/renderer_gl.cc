@@ -135,7 +135,7 @@ auto RendererGL::GLErrorToString(GLenum err) -> std::string {
 static auto CheckGLExtension(const std::vector<std::string>& exts,
                              const char* ext) -> bool {
   assert(strlen(ext) < 100);
-  const int variant_count{10};
+  const int variant_count{11};
   char variants[variant_count][128];
   int i = 0;
   snprintf(variants[i], sizeof(variants[i]), "OES_%s", ext);
@@ -157,6 +157,8 @@ static auto CheckGLExtension(const std::vector<std::string>& exts,
   snprintf(variants[i], sizeof(variants[i]), "GL_SGIS_%s", ext);
   i++;
   snprintf(variants[i], sizeof(variants[i]), "GL_IMG_%s", ext);
+  i++;
+  snprintf(variants[i], sizeof(variants[i]), "GL_ANGLE_%s", ext);
   i++;
   assert(i == variant_count);
 
@@ -346,7 +348,11 @@ void RendererGL::CheckGLCapabilities_() {
 
   std::list<TextureCompressionType> c_types;
   assert(g_base->graphics);
-  if (CheckGLExtension(extensions, "texture_compression_s3tc")) {
+  // Also check for texture_compression_dxt5: ANGLE reports
+  // GL_ANGLE_texture_compression_dxt5 rather than
+  // GL_EXT_texture_compression_s3tc.
+  if (CheckGLExtension(extensions, "texture_compression_s3tc")
+      || CheckGLExtension(extensions, "texture_compression_dxt5")) {
     c_types.push_back(TextureCompressionType::kS3TC);
   }
 
@@ -846,6 +852,10 @@ void RendererGL::SyncGLState_() {
 
   glDisable(GL_BLEND);
   blend_ = false;
+
+  // Disable dithering; on desktop GL this is a no-op but on ANGLE (Windows)
+  // dithering can produce visible noise/grain on smooth transparent gradients.
+  glDisable(GL_DITHER);
 
   // Currently we only ever write to an alpha buffer for our vr flat overlay
   // texture, and in that case we need alpha to accumulate; not get

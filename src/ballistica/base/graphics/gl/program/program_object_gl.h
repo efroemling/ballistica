@@ -196,8 +196,8 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
     std::string s;
     s = "uniform mat4 modelViewProjectionMatrix;\n"
         "uniform vec4 camPos;\n" BA_GLSL_VERTEX_IN
-        " vec4 position;\n" BA_GLSL_VERTEX_IN " " BA_GLSL_LOWP
-        "vec2 uv;\n" BA_GLSL_VERTEX_OUT " " BA_GLSL_LOWP
+        " vec4 position;\n" BA_GLSL_VERTEX_IN " " BA_GLSL_MEDIUMP
+        "vec2 uv;\n" BA_GLSL_VERTEX_OUT " " BA_GLSL_MEDIUMP
         "vec2 vUV;\n" BA_GLSL_VERTEX_OUT " " BA_GLSL_MEDIUMP
         "vec4 vScreenCoord;\n";
     if ((flags & SHD_REFLECTION) || (flags & SHD_LIGHT_SHADOW))
@@ -243,12 +243,12 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
 
   auto GetFragmentCode(int flags) -> std::string {
     std::string s;
-    s = "uniform " BA_GLSL_LOWP
+    s = "uniform " BA_GLSL_MEDIUMP
         "sampler2D colorTex;\n"
         "uniform " BA_GLSL_LOWP
         "sampler2D vignetteTex;\n"
-        "uniform " BA_GLSL_LOWP "vec4 color;\n" BA_GLSL_FRAG_IN " " BA_GLSL_LOWP
-        "vec2 vUV;\n" BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP
+        "uniform " BA_GLSL_MEDIUMP "vec4 color;\n" BA_GLSL_FRAG_IN
+        " " BA_GLSL_MEDIUMP "vec2 vUV;\n" BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP
         "vec4 vScreenCoord;\n";
     if (flags & SHD_ADD) {
       s += "uniform " BA_GLSL_LOWP "vec4 colorAdd;\n";
@@ -268,16 +268,17 @@ class RendererGL::ProgramObjectGL : public RendererGL::ProgramGL {
       s += "uniform " BA_GLSL_LOWP "vec4 colorize2Color;\n";
     }
     if (flags & SHD_LIGHT_SHADOW) {
-      s += "uniform " BA_GLSL_LOWP "sampler2D lightShadowTex;\n" BA_GLSL_FRAG_IN
-           " " BA_GLSL_MEDIUMP "vec4 vLightShadowUV;\n";
+      s += "uniform " BA_GLSL_MEDIUMP
+           "sampler2D lightShadowTex;\n" BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP
+           "vec4 vLightShadowUV;\n";
     }
     s += "void main() {\n";
     if (flags & SHD_LIGHT_SHADOW) {
-      s += "   " BA_GLSL_LOWP "vec4 lightShadVal = " BA_GLSL_TEXTURE2DPROJ
+      s += "   " BA_GLSL_MEDIUMP "vec4 lightShadVal = " BA_GLSL_TEXTURE2DPROJ
            "(lightShadowTex, vLightShadowUV);\n";
     }
     if ((flags & SHD_COLORIZE) || (flags & SHD_COLORIZE2)) {
-      s += "   " BA_GLSL_LOWP "vec4 colorizeVal = " BA_GLSL_TEXTURE2D
+      s += "   " BA_GLSL_MEDIUMP "vec4 colorizeVal = " BA_GLSL_TEXTURE2D
            "(colorizeTex, vUV);\n";
     }
     if (flags & SHD_COLORIZE) {
