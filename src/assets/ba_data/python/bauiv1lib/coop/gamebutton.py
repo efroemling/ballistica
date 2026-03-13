@@ -28,7 +28,6 @@ class GameButton:
         row: str,
     ):
         # pylint: disable=too-many-positional-arguments
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
 
         assert bui.app.classic is not None

@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Provides UI for selecting soundtrack entry types."""
+
 from __future__ import annotations
 
 import copy
@@ -24,7 +25,6 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
         assert bui.app.classic is not None
         music = bui.app.classic.music
         self._r = 'editSoundtrackWindow'

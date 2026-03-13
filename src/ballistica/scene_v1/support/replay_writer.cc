@@ -10,7 +10,7 @@
 #include "ballistica/base/base.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/scene_v1/support/huffman.h"
 #include "ballistica/shared/foundation/event_loop.h"

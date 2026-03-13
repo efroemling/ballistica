@@ -197,6 +197,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* text_literal_obj{Py_None};
   PyObject* opacity_obj{Py_None};
   PyObject* enabled_obj{Py_None};
+  PyObject* better_bg_fit_obj{Py_None};
   static const char* kwlist[] = {"edit",
                                  "parent",
                                  "id",
@@ -237,9 +238,10 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "enabled",
                                  "text_literal",
                                  "opacity",
+                                 "better_bg_fit",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &on_activate_call_obj, &label_obj, &color_obj,
           &down_widget_obj, &up_widget_obj, &left_widget_obj, &right_widget_obj,
@@ -250,7 +252,8 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &icon_obj, &icon_scale_obj, &icon_tint_obj, &icon_color_obj,
           &autoselect_obj, &mask_texture_obj, &tint_texture_obj,
           &tint_color_obj, &tint2_color_obj, &text_flatness_obj,
-          &text_res_scale_obj, &enabled_obj, &text_literal_obj, &opacity_obj))
+          &text_res_scale_obj, &enabled_obj, &text_literal_obj, &opacity_obj,
+          &better_bg_fit_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -354,6 +357,9 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (scale_obj != Py_None) {
     b->set_scale(Python::GetFloat(scale_obj));
   }
+  if (better_bg_fit_obj != Py_None) {
+    b->set_better_bg_fit(Python::GetBool(better_bg_fit_obj));
+  }
   if (icon_scale_obj != Py_None) {
     b->set_icon_scale(Python::GetFloat(icon_scale_obj));
   }
@@ -406,6 +412,8 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
       b->set_style(ButtonWidget::Style::kLarge);
     } else if (button_type == "larger") {
       b->set_style(ButtonWidget::Style::kLarger);
+    } else if (button_type == "squareWide") {
+      b->set_style(ButtonWidget::Style::kSquareWide);
     } else {
       throw Exception("Invalid button type: '" + button_type + "'.",
                       PyExcType::kValue);
@@ -525,6 +533,7 @@ static PyMethodDef PyButtonWidgetDef = {
     "  enabled: bool | None = None,\n"
     "  text_literal: bool | None = None,\n"
     "  opacity: float | None = None,\n"
+    "  better_bg_fit: bool | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a button widget.\n"
@@ -947,12 +956,14 @@ static auto PySpinnerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* pos_obj{Py_None};
   PyObject* visible_obj{Py_None};
   PyObject* style_obj{Py_None};
+  PyObject* fade_obj{Py_None};
 
   static const char* kwlist[] = {"edit",    "parent", "size", "position",
-                                 "visible", "style",  nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOO", const_cast<char**>(kwlist), &edit_obj,
-          &parent_obj, &size_obj, &pos_obj, &visible_obj, &style_obj))
+                                 "visible", "style",  "fade", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OOOOOOO",
+                                   const_cast<char**>(kwlist), &edit_obj,
+                                   &parent_obj, &size_obj, &pos_obj,
+                                   &visible_obj, &style_obj, &fade_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -992,6 +1003,9 @@ static auto PySpinnerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (visible_obj != Py_None) {
     b->set_visible(Python::GetBool(visible_obj));
   }
+  if (fade_obj != Py_None) {
+    b->set_fade(Python::GetBool(fade_obj));
+  }
   if (style_obj != Py_None) {
     auto style_str = Python::GetString(style_obj);
     if (style_str == "bomb") {
@@ -1027,8 +1041,8 @@ static PyMethodDef PySpinnerWidgetDef = {
     "  position: Sequence[float] | None = None,\n"
     "  style: Literal['bomb', 'simple'] | None = None,\n"
     "  visible: bool | None = None,\n"
-    ")\n"
-    "  -> bauiv1.Widget\n"
+    "  fade: bool | None = None,\n"
+    ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a spinner widget.\n"
     "\n"

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from bacommon.bs import ClassicChestAppearance
+from bacommon.classic import ClassicChestAppearance
 import babase
 import bauiv1
 import bascenev1
@@ -24,7 +24,6 @@ def get_tournament_prize_strings(
     entry: dict[str, Any], include_tickets: bool
 ) -> list[str]:
     """Given a tournament entry, return strings for its prize levels."""
-    # pylint: disable=too-many-locals
     from bascenev1 import get_trophy_string
 
     range1 = entry.get('prizeRange1')

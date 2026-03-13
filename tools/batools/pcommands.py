@@ -1,6 +1,8 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """A nice collection of ready-to-use pcommands for this package."""
+
+# pylint: disable=too-many-lines
 from __future__ import annotations
 
 # Note: import as little as possible here at the module level to
@@ -8,8 +10,6 @@ from __future__ import annotations
 import sys
 
 from efrotools import pcommand
-
-# pylint: disable=too-many-lines
 
 
 def prune_includes() -> None:
@@ -164,35 +164,38 @@ def lazy_increment_build() -> None:
 
 def get_master_asset_src_dir() -> None:
     """Print master-asset-source dir for this repo."""
-    import subprocess
+    import socket
     import os
 
     pcommand.disallow_in_batch()
+
+    hostname = socket.gethostname()
 
     master_assets_dir = '/Users/ericf/Documents/ballisticakit_master_assets'
     dummy_dir = '/__DUMMY_MASTER_SRC_DISABLED_PATH__'
 
     # Only apply this on my primary setup.
-    if os.path.exists(master_assets_dir) and os.path.exists('.git'):
+    # if os.path.exists(master_assets_dir) and os.path.exists('.git'):
+    if os.path.exists(master_assets_dir) and hostname == 'MacBook-Fro.local':
         # Ok, for now lets simply use our hard-coded master-src
         # path if we're on master in and not otherwise.  Should
         # probably make this configurable.
-        output = subprocess.check_output(
-            ['git', 'status', '--branch', '--porcelain']
-        ).decode()
+        # output = subprocess.check_output(
+        #     ['git', 'status', '--branch', '--porcelain']
+        # ).decode()
 
         # Also compare repo name to split version of itself to
         # see if we're outside of core (filtering will cause mismatch if so).
         # pylint: disable=useless-suppression
         # pylint: disable=simplifiable-condition
         # pylint: disable=condition-evals-to-constant
-        if (
-            'origin/master' in output.splitlines()[0]
-            and 'ballistica' + 'kit' == 'ballisticakit'
-        ):
-            # We seem to be in master in core repo; lets do it.
-            print(master_assets_dir)
-            return
+        # if (
+        #     'origin/main' in output.splitlines()[0]
+        #     and 'ballistica' + 'kit' == 'ballisticakit'
+        # ):
+        # We seem to be in master in core repo; lets do it.
+        print(master_assets_dir)
+        return
 
     # Still need to supply dummy path for makefile if not..
     print(dummy_dir)
@@ -293,23 +296,23 @@ def python_version_apple() -> None:
     print(PY_VER_EXACT_APPLE, end='')
 
 
-def python_build_apple() -> None:
+def python_build_apple_old() -> None:
     """Build an embeddable python for mac/ios/tvos."""
 
     pcommand.disallow_in_batch()
 
-    _python_build_apple(debug=False)
+    _python_build_apple_old(debug=False)
 
 
-def python_build_apple_debug() -> None:
+def python_build_apple_old_debug() -> None:
     """Build embeddable python for mac/ios/tvos (dbg ver)."""
 
     pcommand.disallow_in_batch()
 
-    _python_build_apple(debug=True)
+    _python_build_apple_old(debug=True)
 
 
-def _python_build_apple(debug: bool) -> None:
+def _python_build_apple_old(debug: bool) -> None:
     """Build an embeddable python for macOS/iOS/tvOS."""
     import os
     from efro.error import CleanError
@@ -329,16 +332,24 @@ def _python_build_apple(debug: bool) -> None:
     pybuild.build_apple(arch, debug=debug)
 
 
-def python_build_android() -> None:
-    """Build an embeddable Python lib for Android."""
+def python_build_android_old() -> None:
+    """Build an embeddable Python lib for Android (old pipeline)."""
+
+    pcommand.disallow_in_batch()
+
+    _python_build_android_old(debug=False)
+
+
+def python_android_build() -> None:
+    """Build Android Python lib using new in-tree build script."""
 
     pcommand.disallow_in_batch()
 
     _python_build_android(debug=False)
 
 
-def python_build_android_debug() -> None:
-    """Build embeddable Android Python lib (debug ver)."""
+def python_android_build_debug() -> None:
+    """Build Android Python lib using new in-tree script (debug)."""
 
     pcommand.disallow_in_batch()
 
@@ -346,6 +357,99 @@ def python_build_android_debug() -> None:
 
 
 def _python_build_android(debug: bool) -> None:
+    import os
+    from efro.error import CleanError
+    from efrotools import python_build_android as _python_build_android_mod
+
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
+    archs = ('arm', 'arm64', 'x86', 'x86_64')
+    if len(sys.argv) != 3:
+        raise CleanError('Error: Expected one <ARCH> arg: ' + ', '.join(archs))
+    arch = sys.argv[2]
+    if arch not in archs:
+        raise CleanError(
+            'Error: invalid arch. valid values are: ' + ', '.join(archs)
+        )
+    _python_build_android_mod.build(str(pcommand.PROJROOT), arch, debug=debug)
+
+
+def static_dependencies_build_debug() -> None:
+    """Build static dependencies for Android and Apple platforms."""
+
+    pcommand.disallow_in_batch()
+    _static_dependencies_build(debug=True)
+
+
+def _static_dependencies_build(debug: bool) -> None:
+    """Build static dependencies for Android and Apple platforms."""
+    import os
+    from efro.error import CleanError
+    from efrotools import (
+        static_dependencies_build as static_dependencies_build__mod,
+    )
+
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
+    archs = ('arm', 'arm64', 'x86', 'x86_64')
+    if len(sys.argv) != 3:
+        raise CleanError('Error: Expected one <ARCH> arg: ' + ', '.join(archs))
+    arch = sys.argv[2]
+    if arch not in archs:
+        raise CleanError(
+            'Error: invalid arch. valid values are: ' + ', '.join(archs)
+        )
+    static_dependencies_build__mod.build(
+        str(pcommand.PROJROOT), arch, debug=debug
+    )
+
+
+def python_android_gather() -> None:
+    """Gather Android Python build into project."""
+    from efrotools import python_build_android as _python_build_android_mod
+
+    pcommand.disallow_in_batch()
+
+    _python_build_android_mod.gather(str(pcommand.PROJROOT))
+
+
+def python_build_apple() -> None:
+    """Build one Apple Python slice using new in-tree script."""
+    import os
+    from efro.error import CleanError
+    from efrotools import python_build_apple as _python_build_apple_mod
+
+    pcommand.disallow_in_batch()
+
+    slices = _python_build_apple_mod.SLICES
+    if len(sys.argv) != 3 or sys.argv[2] not in slices:
+        raise CleanError('Expected one slice arg: ' + ', '.join(slices))
+    os.chdir(pcommand.PROJROOT)
+    _python_build_apple_mod.build(str(pcommand.PROJROOT), sys.argv[2])
+
+
+def python_apple_gather() -> None:
+    """Gather Apple Python slices into XCFramework and copy to project."""
+    import os
+    from efrotools import python_build_apple as _python_build_apple_mod
+
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
+    _python_build_apple_mod.gather(str(pcommand.PROJROOT))
+
+
+def python_build_android_old_debug() -> None:
+    """Build embeddable Android Python lib (old pipeline, debug ver)."""
+
+    pcommand.disallow_in_batch()
+
+    _python_build_android_old(debug=True)
+
+
+def _python_build_android_old(debug: bool) -> None:
     import os
     from efro.error import CleanError
     from efrotools import pybuild
@@ -364,8 +468,8 @@ def _python_build_android(debug: bool) -> None:
     pybuild.build_android(str(pcommand.PROJROOT), arch, debug=debug)
 
 
-def python_android_patch() -> None:
-    """Patches Python to prep for building for Android."""
+def python_android_patch_old() -> None:
+    """Patches Python to prep for building for Android (old pipeline)."""
     import os
     from efrotools import pybuild
 
@@ -375,8 +479,8 @@ def python_android_patch() -> None:
     pybuild.android_patch()
 
 
-def python_android_patch_ssl() -> None:
-    """Patches Python ssl to prep for building for Android."""
+def python_android_patch_ssl_old() -> None:
+    """Patches Python ssl to prep for building for Android (old pipeline)."""
     from efrotools import pybuild
 
     pcommand.disallow_in_batch()
@@ -417,8 +521,8 @@ def python_gather() -> None:
     pybuild.gather(do_android=True, do_apple=True)
 
 
-def python_gather_android() -> None:
-    """python_gather but only android bits."""
+def python_gather_android_old() -> None:
+    """python_gather but only android bits (old pipeline)."""
     import os
     from efrotools import pybuild
 
@@ -428,8 +532,8 @@ def python_gather_android() -> None:
     pybuild.gather(do_android=True, do_apple=False)
 
 
-def python_gather_apple() -> None:
-    """python_gather but only apple bits."""
+def python_apple_gather_old() -> None:
+    """python_gather but only apple bits (old pipeline)."""
     import os
     from efrotools import pybuild
 
@@ -659,78 +763,6 @@ def prefab_binary_path() -> None:
         f'build/prefab/full/{platform.value}_{buildtype}/{buildmode}/{binpath}',
         end='',
     )
-
-
-def compose_docker_gui_release() -> None:
-    """Build the docker image with bombsquad cmake gui."""
-    import batools.docker
-
-    batools.docker.docker_compose(headless_build=False)
-
-
-def compose_docker_gui_debug() -> None:
-    """Build the docker image with bombsquad debug cmake gui."""
-    import batools.docker
-
-    batools.docker.docker_compose(headless_build=False, build_type='Debug')
-
-
-def compose_docker_server_release() -> None:
-    """Build the docker image with bombsquad cmake server."""
-    import batools.docker
-
-    batools.docker.docker_compose()
-
-
-def compose_docker_server_debug() -> None:
-    """Build the docker image with bombsquad debug cmake server."""
-    import batools.docker
-
-    batools.docker.docker_compose(build_type='Debug')
-
-
-def compose_docker_arm64_gui_release() -> None:
-    """Build the docker image with bombsquad cmake for arm64."""
-    import batools.docker
-
-    batools.docker.docker_compose(headless_build=False, platform='linux/arm64')
-
-
-def compose_docker_arm64_gui_debug() -> None:
-    """Build the docker image with bombsquad cmake for arm64."""
-    import batools.docker
-
-    batools.docker.docker_compose(
-        headless_build=False, platform='linux/arm64', build_type='Debug'
-    )
-
-
-def compose_docker_arm64_server_release() -> None:
-    """Build the docker image with bombsquad cmake server for arm64."""
-    import batools.docker
-
-    batools.docker.docker_compose(platform='linux/arm64')
-
-
-def compose_docker_arm64_server_debug() -> None:
-    """Build the docker image with bombsquad cmake server for arm64."""
-    import batools.docker
-
-    batools.docker.docker_compose(platform='linux/arm64', build_type='Debug')
-
-
-def save_docker_images() -> None:
-    """Saves bombsquad images loaded into docker."""
-    import batools.docker
-
-    batools.docker.docker_save_images()
-
-
-def remove_docker_images() -> None:
-    """Remove the bombsquad images loaded in docker."""
-    import batools.docker
-
-    batools.docker.docker_remove_images()
 
 
 def make_prefab() -> None:
@@ -971,6 +1003,28 @@ def genchangelog() -> None:
     pcommand.disallow_in_batch()
 
     generate(projroot=str(pcommand.PROJROOT))
+
+
+def get_changelog() -> None:
+    """Print the changelog for a specified version"""
+    from efro.error import CleanError
+    from efro.terminal import Clr
+
+    from batools.changelog import get_version_changelog
+
+    pcommand.disallow_in_batch()
+
+    args = pcommand.get_args()
+    if len(args) != 1:
+        raise CleanError('Expected 1 arg: version')
+    version_str = args[0]
+
+    changelog_list = get_version_changelog(
+        version=version_str, projroot=str(pcommand.PROJROOT)
+    )
+    print(f'{Clr.BLD}Changelog for version ' f'{version_str}:{Clr.RST}\n')
+    for entry in changelog_list:
+        print(f'{Clr.CYN}-{Clr.RST} {entry}')
 
 
 def android_sdk_utils() -> None:

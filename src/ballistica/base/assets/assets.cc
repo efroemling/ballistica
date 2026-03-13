@@ -25,7 +25,7 @@
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/python/python.h"
@@ -181,6 +181,9 @@ void Assets::StartLoading() {
   LoadSystemTexture(SysTextureID::kSpinner10, "spinner10");
   LoadSystemTexture(SysTextureID::kSpinner11, "spinner11");
   LoadSystemTexture(SysTextureID::kCircleSoft, "circleSoft");
+  LoadSystemTexture(SysTextureID::kButtonSquareWide, "buttonSquareWide");
+  LoadSystemTexture(SysTextureID::kPageLeftRight, "pageLeftRight");
+  LoadSystemTexture(SysTextureID::kFontExtras5, "fontExtras5");
 
   // System cube map textures:
   LoadSystemCubeMapTexture(SysCubeMapTextureID::kReflectionChar,
@@ -1370,6 +1373,10 @@ void Assets::InitSpecialChars() {
 
   special_char_strings_[SpecialChar::kMikirog] = "\xee\x81\xA2";
   special_char_strings_[SpecialChar::kV2Logo] = "\xee\x81\xA3";
+  special_char_strings_[SpecialChar::kSantaHat] = "\xee\x81\xA4";
+  special_char_strings_[SpecialChar::kPotato] = "\xee\x81\xA5";
+  special_char_strings_[SpecialChar::kPalmTree] = "\xee\x81\xA6";
+  special_char_strings_[SpecialChar::kBoxingGlove] = "\xee\x81\xA7";
 }
 
 void Assets::SetLanguageKeys(

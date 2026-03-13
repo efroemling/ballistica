@@ -5,6 +5,7 @@
 
 #include <list>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "ballistica/base/graphics/support/frame_def.h"
@@ -138,7 +139,7 @@ class UI {
 
   auto* dev_console() const { return dev_console_; }
 
-  void PushDevConsolePrintCall(const std::string& msg, float scale,
+  void PushDevConsolePrintCall(std::string_view msg, float scale,
                                Vector4f color);
 
   auto* delegate() const { return delegate_; }
@@ -164,6 +165,8 @@ class UI {
   /// latest input (switching from a mouse to touchscreen on a single
   /// device, etc.)
   auto touch_mode() const { return touch_mode_; }
+
+  void SetTouchMode(bool val);
 
   /// For keeping track of whether mouse/touch input is being actively used.
   void OnClickOrTap();

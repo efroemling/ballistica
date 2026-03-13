@@ -4,6 +4,7 @@
 
 This can be preferable vs using shared git subrepos for certain use cases.
 """
+
 from __future__ import annotations
 
 import os
@@ -70,7 +71,6 @@ def run_standard_syncs(
     Syncitems should be a list of tuples consisting of a src project name,
     a src subpath, and optionally a dst subpath (src will be used by default).
     """
-    # pylint: disable=too-many-locals
     from efrotools.project import getlocalconfig
 
     localconfig = getlocalconfig(projectroot)
@@ -122,10 +122,10 @@ def run_standard_syncs(
 
 
 def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
+    # pylint: disable=too-many-statements
     """Sync src and dst paths."""
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     if mode == Mode.CHECK:
         raise ValueError('sync_paths cannot be called in CHECK mode')
     if not (src.is_dir() or src.is_file()):
@@ -325,7 +325,8 @@ def add_marker(src_proj: str, srcdata: str) -> str:
 
     hashstr = string_hash(srcdata)
     lines.insert(
-        firstline, f'# Synced from {src_proj}.\n# EFRO_SYNC_HASH={hashstr}\n#'
+        firstline,
+        f'# EfroSynced from {src_proj}.\n# EFRO_SYNC_HASH={hashstr}\n#',
     )
     return '\n'.join(lines) + '\n'
 

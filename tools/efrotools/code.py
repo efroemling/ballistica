@@ -121,7 +121,6 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
 
 def check_cpplint(projroot: Path, full: bool) -> None:
     """Run cpplint on all our applicable code."""
-    # pylint: disable=too-many-locals
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
 
@@ -367,7 +366,7 @@ def get_script_filenames(projroot: Path) -> list[str]:
     return out
 
 
-def runpylint(projroot: Path, filenames: list[str]) -> None:
+def runpylint(projroot: Path, filenames: list[str], extra: bool) -> None:
     """Run Pylint explicitly on files."""
 
     pylintrc = Path(projroot, '.pylintrc')
@@ -378,11 +377,16 @@ def runpylint(projroot: Path, filenames: list[str]) -> None:
     # but let's go ahead and run it inline so we're consistent with our cached
     # full-project version.
     _run_pylint(
-        projroot, pylintrc, cache=None, dirtyfiles=filenames, allfiles=None
+        projroot,
+        pylintrc,
+        cache=None,
+        dirtyfiles=filenames,
+        allfiles=None,
+        extra=extra,
     )
 
 
-def pylint(projroot: Path, full: bool, fast: bool) -> None:
+def pylint(projroot: Path, full: bool, fast: bool, extra: bool) -> None:
     """Run Pylint on all scripts in our project (with smart dep tracking)."""
     from efrotools.util import get_files_hash
     from efro.terminal import Clr
@@ -424,7 +428,7 @@ def pylint(projroot: Path, full: bool, fast: bool) -> None:
             flush=True,
         )
         try:
-            _run_pylint(projroot, pylintrc, cache, dirtyfiles, filenames)
+            _run_pylint(projroot, pylintrc, cache, dirtyfiles, filenames, extra)
         finally:
             # No matter what happens, we still want to
             # update our disk cache (since some lints may have passed).
@@ -445,7 +449,6 @@ def _dirty_dep_check(
     recursion: int,
 ) -> bool:
     """Recursively check a file's deps and return whether it is dirty."""
-    # pylint: disable=too-many-branches
 
     if not fast:
         # Check for existing dirty state (only applies in non-fast where
@@ -510,12 +513,29 @@ def _run_pylint(
     cache: FileCache | None,
     dirtyfiles: list[str],
     allfiles: list[str] | None,
+    extra: bool,
 ) -> dict[str, Any]:
+    # pylint: disable=too-many-positional-arguments
     from pylint import lint
     from efro.terminal import Clr
 
+    # By default we use up to 8 cpus if available. However if they pass
+    # 'extra' we limit to one. This is intended to keep things as
+    # deterministic as possible for things such as CI where speed isn't
+    # as important.
+    cpucount = os.cpu_count()
+    if cpucount is None:
+        cpucount = 1
+    jobcount = 1 if extra else max(cpucount, 8)
+
     start_time = time.monotonic()
-    args = ['--rcfile', str(pylintrc), '--output-format=colorized']
+    args = [
+        '--rcfile',
+        str(pylintrc),
+        '--output-format=colorized',
+        '--jobs',
+        str(jobcount),
+    ]
 
     args += dirtyfiles
     name = f'{len(dirtyfiles)} file(s)'
@@ -558,7 +578,6 @@ def _apply_pylint_run_to_cache(
 ) -> int:
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
 
     from astroid import modutils
 
@@ -773,6 +792,43 @@ def _filter_module_name(mpath: str) -> str:
     return mpath[:-9] if mpath.endswith('.__init__') else mpath
 
 
+def zmypy_files(
+    projroot: Path, filenames: list[str], full: bool = False, check: bool = True
+) -> None:
+    """Run zuban mypy on provided filenames."""
+
+    args = [
+        # sys.executable,
+        # '-m',
+        'zmypy',
+        '--pretty',
+        '--no-error-summary',
+        '--config-file',
+        str(Path(projroot, '.mypy.ini')),
+    ] + filenames
+    if full:
+        args.insert(args.index('zmypy') + 1, '--no-incremental')
+    subprocess.run(args, check=check)
+
+
+def zmypy(projroot: Path, full: bool) -> None:
+    """Type check all of our scripts using mypy."""
+    from efro.terminal import Clr
+
+    filenames = get_script_filenames(projroot)
+    desc = '(full)' if full else '(incremental)'
+    print(f'{Clr.BLU}Running Zmypy {desc}...{Clr.RST}', flush=True)
+    starttime = time.monotonic()
+    try:
+        zmypy_files(projroot, filenames, full)
+    except Exception as exc:
+        raise CleanError('Zmypy failed.') from exc
+    duration = time.monotonic() - starttime
+    print(
+        f'{Clr.GRN}Zmypy passed in {duration:.1f} seconds.{Clr.RST}', flush=True
+    )
+
+
 def mypy_files(
     projroot: Path, filenames: list[str], full: bool = False, check: bool = True
 ) -> None:
@@ -892,7 +948,6 @@ def _run_idea_inspections(
     Throw an Exception if anything is found or goes wrong.
     """
     # pylint: disable=too-many-positional-arguments
-    # pylint: disable=too-many-locals
     # pylint: disable=consider-using-with
 
     from efro.terminal import Clr
@@ -966,7 +1021,6 @@ def _run_idea_inspections_cached(
     verbose: bool,
     inspectdir: Path | None = None,
 ) -> None:
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-positional-arguments
     import hashlib
     import json

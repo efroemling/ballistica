@@ -158,6 +158,14 @@ class ClassicAppMode : public base::AppMode {
   void set_require_client_authentication(bool enable) {
     require_client_authentication_ = enable;
   }
+  // void set_client_authentication_version(int version) {
+  //   assert(version == 1 || version == 2);
+  //   client_authentication_version_ = version;
+  // }
+  auto client_authentication_version() const {
+    assert(host_protocol_version_ != -1);
+    return host_protocol_version_ >= 36 ? 2 : 1;
+  }
   auto IsPlayerBanned(const scene_v1::PlayerSpec& spec) -> bool;
   void BanPlayer(const scene_v1::PlayerSpec& spec, millisecs_t duration);
   void OnAppStart() override;
@@ -232,6 +240,7 @@ class ClassicAppMode : public base::AppMode {
   void SetRootUIInboxState(int count, bool is_max,
                            const std::string& announce_text);
   void SetRootUIGoldPass(bool enabled);
+  void SetRootUIStoreStyle(const char* val);
   void SetRootUIChests(
       const std::string& chest_0_appearance,
       const std::string& chest_1_appearance,
@@ -360,6 +369,7 @@ class ClassicAppMode : public base::AppMode {
   std::string root_ui_level_text_;
   std::string root_ui_xp_text_;
   std::string root_ui_inbox_announce_text_;
+  std::string root_ui_store_style_;
   std::list<std::pair<millisecs_t, scene_v1::PlayerSpec> > banned_players_;
   std::optional<float> idle_exit_minutes_{};
   std::optional<uint32_t> internal_music_play_id_{};

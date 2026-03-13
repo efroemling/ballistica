@@ -6,22 +6,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  setup_bombsquad_cache:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup build env
-        uses: ./.github/actions/bombsquad_build_env
-      - name: Make the build
-        run: |
-          make assets-cmake
-          make assets-windows
-
   make_docker_gui_debug_image:
-    needs: setup_bombsquad_cache
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
@@ -45,10 +33,9 @@ jobs:
           docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_gui:debug_nightly_x86_64
 
   make_docker_server_debug_image:
-    needs: setup_bombsquad_cache
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
@@ -72,10 +59,9 @@ jobs:
           docker push ghcr.io/${GITHUB_REPOSITORY,,}/bombsquad_server:debug_nightly_x86_64
 
   make_docs:
-    needs: setup_bombsquad_cache
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -87,7 +73,6 @@ jobs:
           path: build/docs
 
   make_flatpak_gui_debug:
-    needs: setup_bombsquad_cache
     strategy:
       fail-fast: false
       matrix:
@@ -98,12 +83,12 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Cache Flatpak data
         id: cache-flatpak-sdk
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         env:
           cache-name: cache-flatpak
         with:

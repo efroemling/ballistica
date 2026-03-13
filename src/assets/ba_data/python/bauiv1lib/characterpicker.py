@@ -40,7 +40,6 @@ class CharacterPicker(PopupWindow):
         tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
         selected_character: str | None = None,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-positional-arguments
         from bascenev1lib.actor import spazappearance
 
@@ -198,8 +197,9 @@ class CharacterPicker(PopupWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             show_sign_in_prompt()
+            self._transition_out()
             return
 
         if self._delegate is not None:

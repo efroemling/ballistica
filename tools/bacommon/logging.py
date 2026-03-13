@@ -48,7 +48,7 @@ class ClientLoggerName(Enum):
         """Return a short description for the logger."""
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
-        cls = type(self)
+        cls = ClientLoggerName
         if self is cls.BA:
             return 'top level Ballistica logger - use to adjust everything'
         if self is cls.ENV:

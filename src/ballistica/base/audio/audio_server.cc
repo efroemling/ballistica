@@ -28,7 +28,7 @@
 #include "ballistica/base/audio/ogg_stream.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/math/vector3f.h"
 
@@ -356,9 +356,13 @@ void AudioServer::Start_() {
               " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
         openalsoft_android_log_.clear();
       }
-      FatalError(
-          "No audio devices found. Do you have speakers/headphones/etc. "
-          "connected?");
+      g_core->logging->Log(
+          LogName::kBaAudio, LogLevel::kWarning,
+          "No audio devices found. Falling back to null audio device.");
+      using_null_device_ = true;
+      if (!g_buildconfig.platform_android()) {
+        return;
+      }
     }
 
     impl_->alc_context = alcCreateContext(device, nullptr);
@@ -868,7 +872,7 @@ void AudioServer::PushResetCall() {
 void AudioServer::PushSetListenerPositionCall(const Vector3f& p) {
   event_loop()->PushCall([this, p] {
 #if BA_ENABLE_AUDIO
-    if (!suspended_ && !shutting_down_) {
+    if (!using_null_device_ && !suspended_ && !shutting_down_) {
       ALfloat lpos[3] = {p.x, p.y, p.z};
       alListenerfv(AL_POSITION, lpos);
       CHECK_AL_ERROR;
@@ -881,7 +885,7 @@ void AudioServer::PushSetListenerOrientationCall(const Vector3f& forward,
                                                  const Vector3f& up) {
   event_loop()->PushCall([this, forward, up] {
 #if BA_ENABLE_AUDIO
-    if (!suspended_ && !shutting_down_) {
+    if (!using_null_device_ && !suspended_ && !shutting_down_) {
       ALfloat lorient[6] = {forward.x, forward.y, forward.z, up.x, up.y, up.z};
       alListenerfv(AL_ORIENTATION, lorient);
       CHECK_AL_ERROR;
@@ -1006,18 +1010,28 @@ void AudioServer::SetSoundPitch_(float pitch) {
 }
 
 void AudioServer::SetSoundVolume_(float volume) {
-  sound_volume_ = std::clamp(volume, 0.0f, 3.0f);
+  // Clamp to 3.0 rather than 1.0 to allow overdriving via script or config.
+  sound_volume_ = std::clamp(GetPerceivedVolume_(volume), 0.0f, 3.0f);
   for (auto&& i : sources_) {
     i->UpdateVolume();
   }
 }
 
 void AudioServer::SetMusicVolume_(float volume) {
-  music_volume_ = std::clamp(volume, 0.0f, 3.0f);
+  // Clamp to 3.0 rather than 1.0 to allow overdriving via script or config.
+  music_volume_ = std::clamp(GetPerceivedVolume_(volume), 0.0f, 3.0f);
   UpdateMusicPlayState_();
   for (auto&& i : sources_) {
     i->UpdateVolume();
   }
+}
+
+float AudioServer::GetPerceivedVolume_(float volume_linear) {
+  // Apply a cubic curve to convert a linear slider value to a perceptually
+  // even volume. AL_GAIN is a linear amplitude multiplier, so without this
+  // correction a linear slider would feel like it jumps quickly at the low
+  // end.
+  return powf(volume_linear, 3.0f);
 }
 
 // Start or stop music playback based on volume/suspend-state/etc.
@@ -1045,6 +1059,11 @@ void AudioServer::UpdateMusicPlayState_() {
 
 void AudioServer::ProcessDefaultDeviceChange_() {
 #if BA_ENABLE_AUDIO
+  // Skip device re-opening in null device mode.
+  if (using_null_device_) {
+    return;
+  }
+
   if (should_reopen_) {
     should_reopen_ = false;
     auto* device = alcGetContextsDevice(impl_->alc_context);
@@ -1062,6 +1081,11 @@ void AudioServer::ProcessDefaultDeviceChange_() {
 
 void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
 #if BA_ENABLE_AUDIO
+  // Skip device disconnect handling in null device mode.
+  if (using_null_device_) {
+    return;
+  }
+
   // If our context device has been disconnected, try to reconnect it
   // periodically. The Android back-end in particular uses uses this - with
   // Android there is a single system device and plugging or unplugging
@@ -1199,7 +1223,9 @@ void AudioServer::Process_() {
     }
 
 #if BA_ENABLE_AUDIO
-    CHECK_AL_ERROR;
+    if (!using_null_device_) {
+      CHECK_AL_ERROR;
+    }
 #endif
   }
   UpdateTimerInterval_();
@@ -1280,6 +1306,14 @@ AudioServer::ThreadSource_::ThreadSource_(AudioServer* audio_server_in,
 #if BA_ENABLE_AUDIO
   assert(g_core);
   assert(valid_out != nullptr);
+
+  // In null device mode, mark all sources as valid but don't initialize OpenAL.
+  if (audio_server_in->using_null_device_) {
+    valid_ = true;
+    *valid_out = true;
+    return;
+  }
+
   CHECK_AL_ERROR;
 
   // Generate our sources.
@@ -1316,6 +1350,11 @@ AudioServer::ThreadSource_::ThreadSource_(AudioServer* audio_server_in,
 AudioServer::ThreadSource_::~ThreadSource_() {
 #if BA_ENABLE_AUDIO
 
+  // Skip OpenAL operations in null device mode.
+  if (audio_server_->using_null_device_) {
+    return;
+  }
+
   if (!valid_) {
     return;
   }
@@ -1348,6 +1387,11 @@ void AudioServer::ThreadSource_::UpdateAvailability() {
 #if BA_ENABLE_AUDIO
 
   assert(g_base->InAudioThread());
+
+  // Skip in null device mode.
+  if (audio_server_->using_null_device_) {
+    return;
+  }
 
   // If it's waiting to be picked up by a client or has pending client
   // commands, skip.
@@ -1410,6 +1454,9 @@ void AudioServer::ThreadSource_::UpdateAvailability() {
 
 void AudioServer::ThreadSource_::Update() {
 #if BA_ENABLE_AUDIO
+  if (audio_server_->using_null_device_) {
+    return;
+  }
   assert(is_streamed_ && is_actually_playing_);
   streamer_->Update();
 #endif
@@ -1441,7 +1488,8 @@ void AudioServer::ThreadSource_::SetLooping(bool loop) {
 
 void AudioServer::ThreadSource_::SetPositional(bool p) {
 #if BA_ENABLE_AUDIO
-  if (g_base->audio_server->suspended_
+  if (g_base->audio_server->using_null_device_
+      || g_base->audio_server->suspended_
       || g_base->audio_server->shutting_down_) {
     return;
   }
@@ -1455,7 +1503,8 @@ void AudioServer::ThreadSource_::SetPositional(bool p) {
 
 void AudioServer::ThreadSource_::SetPosition(float x, float y, float z) {
 #if BA_ENABLE_AUDIO
-  if (g_base->audio_server->suspended_
+  if (g_base->audio_server->using_null_device_
+      || g_base->audio_server->suspended_
       || g_base->audio_server->shutting_down_) {
     return;
   }
@@ -1506,7 +1555,8 @@ auto AudioServer::ThreadSource_::Play(const Object::Ref<SoundAsset>* sound)
   assert(source_sound_ == nullptr);
   source_sound_ = sound;
 
-  if (!g_base->audio_server->suspended_
+  if (!g_base->audio_server->using_null_device_
+      && !g_base->audio_server->suspended_
       && !g_base->audio_server->shutting_down_) {
     // Ok, here's where we might start needing to access our media; can't
     // hold off any longer.
@@ -1546,6 +1596,12 @@ auto AudioServer::ThreadSource_::Play(const Object::Ref<SoundAsset>* sound)
 // Actually begin playback.
 void AudioServer::ThreadSource_::ExecPlay() {
 #if BA_ENABLE_AUDIO
+
+  // Skip playback in null device mode.
+  if (audio_server_->using_null_device_) {
+    is_actually_playing_ = true;
+    return;
+  }
 
   assert(g_core);
   assert(source_sound_->exists());
@@ -1614,6 +1670,12 @@ void AudioServer::ThreadSource_::Stop() {
 #if BA_ENABLE_AUDIO
   assert(g_base->audio_server);
 
+  // Skip if in null device mode.
+  if (g_base->audio_server->using_null_device_) {
+    want_to_play_ = false;
+    return;
+  }
+
   // If our context is suspended we can't actually stop now; just record our
   // intent.
   if (g_base->audio_server->suspended_) {
@@ -1640,6 +1702,13 @@ void AudioServer::ThreadSource_::Stop() {
 void AudioServer::ThreadSource_::ExecStop() {
 #if BA_ENABLE_AUDIO
   assert(g_base->InAudioThread());
+
+  // Skip OpenAL operations in null device mode.
+  if (audio_server_->using_null_device_) {
+    is_actually_playing_ = false;
+    return;
+  }
+
   assert(!g_base->audio_server->suspended_);
   assert(is_actually_playing_);
   if (streamer_.exists()) {
@@ -1665,7 +1734,8 @@ void AudioServer::ThreadSource_::ExecStop() {
 void AudioServer::ThreadSource_::UpdateVolume() {
 #if BA_ENABLE_AUDIO
   assert(g_base->InAudioThread());
-  if (audio_server_->suspended_ || audio_server_->shutting_down_) {
+  if (audio_server_->using_null_device_ || audio_server_->suspended_
+      || audio_server_->shutting_down_) {
     return;
   }
   float val = gain_ * fade_;
@@ -1685,7 +1755,8 @@ void AudioServer::ThreadSource_::UpdateVolume() {
 void AudioServer::ThreadSource_::UpdatePitch() {
 #if BA_ENABLE_AUDIO
   assert(g_base->InAudioThread());
-  if (g_base->audio_server->suspended_
+  if (g_base->audio_server->using_null_device_
+      || g_base->audio_server->suspended_
       || g_base->audio_server->shutting_down_) {
     return;
   }

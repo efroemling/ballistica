@@ -12,6 +12,10 @@
 
 namespace ballistica::base {
 
+// Use this to show what texture pages are getting built (pages will be
+// drawn just above text itself).
+static constexpr bool kDebugShowTexturePages{false};
+
 TextMesh::TextMesh() : MeshIndexedDualTextureFull(MeshDrawType::kStatic) {}
 
 void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
@@ -50,16 +54,15 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
 
   // Go with 32 bit indices if there's any chance we'll have over 65535 pts;
   // otherwise go with 16 bit.
-  // NOTE: disabling 32 bit indices for now; turns out they're
-  // not supported in OpenGL ES2 :-(
-  // It may be worth adding logic to split up meshes into multiple
-  // draw-calls. (or we can just wait until ES2 is dead).
-  if (explicit_bool(false) && 4 * text_size > 65535) {
-    indices32 = Object::New<MeshIndexBuffer32>(6 * (text_size));
+  // Add room for one extra debug quad when kDebugShowTexturePages is enabled.
+  int debug_extra = kDebugShowTexturePages ? 1 : 0;
+  if (4 * text_size > 65535) {
+    indices32 = Object::New<MeshIndexBuffer32>(6 * (text_size + debug_extra));
   } else {
-    indices16 = Object::New<MeshIndexBuffer16>(6 * (text_size));
+    indices16 = Object::New<MeshIndexBuffer16>(6 * (text_size + debug_extra));
   }
-  auto vertices(Object::New<MeshBuffer<VertexDualTextureFull>>(4 * text_size));
+  auto vertices(Object::New<MeshBuffer<VertexDualTextureFull>>(
+      4 * (text_size + debug_extra)));
 
   uint16_t* index16 = indices16.exists() ? indices16->elements.data() : nullptr;
   uint32_t* index32 = indices32.exists() ? indices32->elements.data() : nullptr;
@@ -360,15 +363,15 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
     os_span.clear();
   }
 
-  // Now if we've been building a text-packer,
-  // compile it and add its final spans to our mesh.
+  // Now if we've been building a text-packer, compile it and add its final
+  // spans to our mesh.
   if (packer) {
     std::vector<TextPacker::Span> spans;
     packer->Compile();
 
-    // DEBUGGING - add a single quad above our first
-    // span showing the entire texture for debugging purposes
-    if (explicit_bool(false) && !packer->spans().empty()) {
+    // DEBUGGING - add a single quad above our first span showing the entire
+    // texture for debugging purposes.
+    if (kDebugShowTexturePages && !packer->spans().empty()) {
       int v_max_i = static_cast<int>(65535 * 1.0f);
       int v_min_i = static_cast<int>(65535 * 0.0f);
       int u_max_i = static_cast<int>(65535 * 1.0f);

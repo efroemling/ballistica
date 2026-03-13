@@ -100,6 +100,8 @@ class MainWindow(Window):
         # old ones as back targets.
         self.main_window_is_auxiliary: bool = False
 
+        self.main_window_extra_type_id = ''
+
         self._main_window_transition = transition
         self._main_window_origin_widget = origin_widget
         super().__init__(
@@ -348,6 +350,7 @@ class MainWindow(Window):
             assert back_state.is_top_level is not None
             assert back_state.is_auxiliary is not None
             assert back_state.window_type is not None
+            assert back_state.extra_type_id is not None
 
             # When leaving an auxiliary window, scale the destination
             # window in instead of sliding to convey that its more of a
@@ -364,6 +367,7 @@ class MainWindow(Window):
                 is_back=True,
                 back_state=back_state,
                 suppress_warning=True,
+                extra_type_id=back_state.extra_type_id,
             )
 
     def main_window_replace(
@@ -371,6 +375,7 @@ class MainWindow(Window):
         new_window: MainWindow | Callable[[], MainWindow],
         back_state: MainWindowState | None = None,
         is_auxiliary: bool = False,
+        extra_type_id: str = '',
     ) -> MainWindow | None:
         """Replace ourself with a new MainWindow.
 
@@ -449,6 +454,7 @@ class MainWindow(Window):
             from_window=self,
             back_state=back_state,
             is_auxiliary=is_auxiliary,
+            extra_type_id=extra_type_id,
             suppress_warning=True,
         )
         return new_window
@@ -542,6 +548,7 @@ class MainWindowState:
         self.is_top_level: bool | None = None
         self.is_auxiliary: bool | None = None
         self.window_type: type[MainWindow] | None = None
+        self.extra_type_id: str | None = None
 
     def create_window(
         self,
@@ -572,9 +579,14 @@ class BasicMainWindowState(MainWindowState):
             ],
             bauiv1.MainWindow,
         ],
+        uiopenstate: bauiv1.UIOpenState | None = None,
     ) -> None:
         super().__init__()
         self.create_call = create_call
+
+        # We simply need to hold on to this to keep the ui-open-state
+        # alive.
+        self.uiopenstate = uiopenstate
 
     @override
     def create_window(

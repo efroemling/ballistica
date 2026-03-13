@@ -1,12 +1,13 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Various functionality related to achievements."""
+
 from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
 
-from bacommon.bs import ClassicChestAppearance
+from bacommon.classic import ClassicChestAppearance
 from baclassic._chest import (
     CHEST_APPEARANCE_DISPLAY_INFOS,
     CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
@@ -23,7 +24,6 @@ if TYPE_CHECKING:
 # This could use some cleanup.
 # We wear the cone of shame.
 # pylint: disable=too-many-lines
-# pylint: disable=too-many-statements
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-branches
 
@@ -727,7 +727,10 @@ class Achievement:
         )
 
     def get_award_chest_type(self) -> ClassicChestAppearance:
-        """Return the type of chest given for this achievement."""
+        """Return the type of chest given for this achievement.
+
+        :meta private:
+        """
 
         # For now just map our old ticket values to chest types.
         # Can add distinct values if need be later.
@@ -791,6 +794,7 @@ class Achievement:
         color: Sequence[float] | None = None,
         style: str = 'post_game',
     ) -> list[bascenev1.Actor]:
+        # pylint: disable=too-many-statements
         """Create a display for the Achievement.
 
         Shows the Achievement icon, name, and description.
@@ -1193,6 +1197,7 @@ class Achievement:
         self._completion_banner_slot = None
 
     def show_completion_banner(self, sound: bool = True) -> None:
+        # pylint: disable=too-many-statements
         """Create the banner/sound for an acquired achievement announcement."""
         from bascenev1lib.actor.text import Text
         from bascenev1lib.actor.image import Image

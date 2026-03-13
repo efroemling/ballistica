@@ -181,7 +181,6 @@ class PlayerSpaz(Spaz):
     def handlemessage(self, msg: Any) -> Any:
         # FIXME: Tidy this up.
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-nested-blocks
         assert not self.expired
 

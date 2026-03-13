@@ -30,7 +30,6 @@ class TournamentButton:
         on_pressed: Callable[[TournamentButton], None],
     ) -> None:
         # pylint: disable=too-many-positional-arguments
-        # pylint: disable=too-many-statements
         self._r = 'coopSelectWindow'
         sclx = 300
         scly = 195.0
@@ -485,8 +484,8 @@ class TournamentButton:
         )
 
     def update_for_data(self, entry: dict[str, Any]) -> None:
-        """Update for new incoming data."""
         # pylint: disable=too-many-statements
+        """Update for new incoming data."""
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
 
@@ -510,7 +509,7 @@ class TournamentButton:
         x_offs2c = x_offs2 + 50
 
         # Fetch prize range and trophy strings.
-        (pr1, pv1, pr2, pv2, pr3, pv3) = classic.get_tournament_prize_strings(
+        pr1, pv1, pr2, pv2, pr3, pv3 = classic.get_tournament_prize_strings(
             entry, include_tickets=False
         )
 

@@ -29,9 +29,6 @@ class CoreConfig {
   /// Enable vr mode on supported platforms.
   bool vr_mode{};
 
-  /// Log various stages/times in the bootstrapping process.
-  // bool lifecycle_log{};
-
   /// Let the engine know there's a debugger attached so it should do things
   /// like abort() instead of exiting with error codes.
   bool debugger_attached{};
@@ -45,8 +42,8 @@ class CoreConfig {
   /// immediately in their entirety.
   std::optional<int> immediate_return_code{};
 
-  /// If set, this single Python command will be run instead of the
-  /// normal app loop (monolithic builds only).
+  /// If set, this single Python command will be run instead of the normal
+  /// app loop (monolithic builds only).
   std::optional<std::string> call_command{};
 
   /// Python command to be run within the normal app loop.

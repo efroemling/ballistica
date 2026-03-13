@@ -7,7 +7,7 @@ from __future__ import annotations
 import bauiv1 as bui
 
 
-def show_sign_in_prompt() -> None:
+def show_sign_in_prompt(origin_widget: bui.Widget | None = None) -> None:
     """Bring up a prompt telling the user they must sign in."""
     from bauiv1lib.confirm import ConfirmWindow
 
@@ -17,6 +17,7 @@ def show_sign_in_prompt() -> None:
         ok_text=bui.Lstr(resource='accountSettingsWindow.signInText'),
         width=460,
         height=130,
+        origin_widget=origin_widget,
     )
 
 
@@ -47,6 +48,7 @@ def _show_account_settings() -> None:
         from_window=False,  # Don't check where we're coming from.
         is_auxiliary=True,
         suppress_warning=True,
+        extra_type_id='',
     )
 
     # Transition out any previous main window.

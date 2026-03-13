@@ -5,6 +5,7 @@
 This Makefiles builds our generated code such as encrypted python strings,
 node types, etc).
 """
+
 from __future__ import annotations
 
 import os
@@ -79,7 +80,6 @@ class MetaMakefileGenerator:
 
     def run(self) -> dict[str, str]:
         """Do the thing."""
-        # pylint: disable=too-many-locals
 
         public = getprojectconfig(Path(self._projroot))['public']
         assert isinstance(public, bool)

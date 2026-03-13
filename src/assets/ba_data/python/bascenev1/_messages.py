@@ -99,7 +99,7 @@ class PlayerDiedMessage:
 
         Pass the Player type being used by the current game.
         """
-        assert isinstance(self._killerplayer, (playertype, type(None)))
+        assert isinstance(self._killerplayer, playertype | None)
         return self._killerplayer
 
     def getplayer[PlayerT: bascenev1.Player](

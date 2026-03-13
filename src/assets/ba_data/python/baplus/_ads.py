@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to ads."""
+
 from __future__ import annotations
 
 import time
@@ -94,9 +95,6 @@ class AdsSubsystem:
 
     def call_after_ad(self, call: Callable[[], Any]) -> None:
         """Run a call after potentially showing an ad."""
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
 
         app = babase.app
         plus = app.plus

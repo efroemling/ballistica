@@ -30,9 +30,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         edit_info: dict[str, Any] | None = None,
     ):
+        # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-positional-arguments
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         from bascenev1 import (
             get_filtered_map_name,
@@ -132,8 +132,10 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     if uiscale is bui.UIScale.SMALL
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
+                toolbar_visibility=(
+                    'menu_minimal_no_back'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
             ),
             transition=transition,

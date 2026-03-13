@@ -4,9 +4,25 @@ project(BallisticaKit)
 option(HEADLESS "build headless server" OFF)
 option(TEST_BUILD "include testing features" OFF)
 option(DISCORD "enable Discord" OFF)
+option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" OFF)
+option(STATIC_BUILD "build with static libs" OFF)
 
 # Requiring minimum of C++20 currently.
 set(CMAKE_CXX_STANDARD 20)
+set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
+
+# ============= STATIC BUILD CONFIGURATION =============
+if(STATIC_BUILD)
+  # Prefer static libraries for find_package
+  # set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".lib" ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  set(BA_OPENAL_LIB "${PROJECT_ROOT_DIR}/build/static_dependencies/libopenal.a")
+  set(BA_OPENAL_INCLUDE_DIR "${PROJECT_ROOT_DIR}/build/static_dependencies/include")
+
+  set(PKG_CONFIG_STATIC ON)
+  set(Python3_USE_STATIC_LIBS ON)
+  message(STATUS "Static build enabled - configuring for static libraries")
+endif() #STATIC_BUILD
+# =======================================================
 
 # Stuff applying everywhere.
 add_library(common_deps INTERFACE)
@@ -42,6 +58,14 @@ else()
   
   pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
   pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
+  
+  if(STATIC_BUILD)
+    message(WARNING "Static build enabled - ensure that all dependencies are available as static libraries and that the appropriate -dev packages are installed.")
+    add_library(openal STATIC IMPORTED)
+    set_target_properties(openal PROPERTIES IMPORTED_LOCATION ${BA_OPENAL_LIB})
+    set_target_properties(openal PROPERTIES IMPORTED_INCLUDE_DIRECTORIES "${BA_OPENAL_INCLUDE_DIR}")
+    target_include_directories(ba_deps INTERFACE ${BA_OPENAL_INCLUDE_DIR})
+  endif()
   pkg_check_modules(OGG REQUIRED IMPORTED_TARGET ogg)
   pkg_check_modules(VORBISFILE REQUIRED IMPORTED_TARGET vorbisfile)
   
@@ -49,14 +73,37 @@ else()
   set(OpenGL_GL_PREFERENCE GLVND)
   find_package(OpenGL REQUIRED)
   
-  target_link_libraries(ba_deps INTERFACE
-    PkgConfig::OPENAL
-    PkgConfig::SDL2
-    PkgConfig::OGG
-    PkgConfig::VORBISFILE
-    OpenGL::GL
-  )
-  
+
+  if(STATIC_BUILD)
+    target_link_libraries(ba_deps INTERFACE
+      openal
+      PkgConfig::SDL2
+      PkgConfig::OGG
+      PkgConfig::VORBISFILE
+      OpenGL::GL
+    )
+  else()
+    target_link_libraries(ba_deps INTERFACE
+      PkgConfig::OPENAL
+      PkgConfig::SDL2
+      PkgConfig::OGG
+      PkgConfig::VORBISFILE
+      OpenGL::GL
+    )
+  endif()
+
+  # Optional: Pango+Cairo for OS font rendering on Linux/macOS cmake builds.
+  # Pass -DREQUIRE_OS_FONT_RENDERING=ON to make this a hard requirement.
+  if(REQUIRE_OS_FONT_RENDERING)
+    pkg_check_modules(PANGOCAIRO REQUIRED IMPORTED_TARGET pangocairo)
+  else()
+    pkg_check_modules(PANGOCAIRO IMPORTED_TARGET pangocairo)
+  endif()
+  if(PANGOCAIRO_FOUND)
+    target_compile_definitions(common_deps INTERFACE BA_ENABLE_OS_FONT_RENDERING=1)
+    target_link_libraries(ba_deps INTERFACE PkgConfig::PANGOCAIRO)
+  endif()
+
 endif()
 
 if(TEST_BUILD)
@@ -189,6 +236,15 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/app_mode/app_mode.h
   ${BA_SRC_ROOT}/ballistica/base/app_mode/empty_app_mode.cc
   ${BA_SRC_ROOT}/ballistica/base/app_mode/empty_app_mode.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/app_platform.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/app_platform.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/apple/app_platform_apple.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/apple/app_platform_apple.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/linux/app_platform_linux.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/linux/app_platform_linux.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/support/min_sdl_key_names.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows.h
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.h
   ${BA_SRC_ROOT}/ballistica/base/assets/assets.cc
@@ -379,15 +435,6 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/networking/network_writer.h
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.cc
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/apple/base_platform_apple.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/apple/base_platform_apple.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/base_platform.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/base_platform.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/linux/base_platform_linux.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/linux/base_platform_linux.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/support/min_sdl_key_names.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows.h
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.cc
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_app_timer.cc
@@ -412,6 +459,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_2.h
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.cc
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_test.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_test.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.cc
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call_runnable.h
@@ -452,15 +501,16 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/core/logging/logging.cc
   ${BA_SRC_ROOT}/ballistica/core/logging/logging.h
   ${BA_SRC_ROOT}/ballistica/core/logging/logging_macros.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/apple/core_platform_apple.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/apple/core_platform_apple.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/core_platform.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/core_platform.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/linux/core_platform_linux.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/linux/core_platform_linux.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/apple/platform_apple.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/apple/platform_apple.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/linux/platform_linux.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/linux/platform_linux.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/platform.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/platform.h
   ${BA_SRC_ROOT}/ballistica/core/platform/support/min_sdl.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/windows/core_platform_windows.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/windows/core_platform_windows.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/support/platform_pango.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.h
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.cc
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.h
   ${BA_SRC_ROOT}/ballistica/core/support/base_soft.h
@@ -672,6 +722,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/foundation/macros.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/object.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/object.h
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/object_test.cc
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/object_test.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/base64.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/base64.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/buffer.h
@@ -688,6 +740,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/generic/utf8.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/utils.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/utils.h
+  ${BA_SRC_ROOT}/ballistica/shared/math/lerp.h
   ${BA_SRC_ROOT}/ballistica/shared/math/matrix44f.cc
   ${BA_SRC_ROOT}/ballistica/shared/math/matrix44f.h
   ${BA_SRC_ROOT}/ballistica/shared/math/point2d.h
@@ -767,7 +820,7 @@ set(BALLISTICA_SOURCES
 # BallisticaKit monolithic binary.
 add_executable(ballisticakitbin ${BALLISTICA_SOURCES})
 
-############################ Discord Platform SDK ##############################
+#================== Discord Platform SDK ==================
 if(DISCORD)
   set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../src/external/discord_social_sdk")
   set(DISCORD_SDK_INCLUDE_DIR "${DISCORD_SDK_ROOT}/include")
@@ -800,6 +853,19 @@ if(DISCORD)
   target_include_directories(ba_deps INTERFACE ${DISCORD_SDK_INCLUDE_DIR})
   target_link_libraries(ba_deps INTERFACE ${DISCORD_LIB_PATH})
 endif()  # DISCORD
+# ==============================================================
+
+
+# ============= STATIC BUILD LINKING CONFIGURATION =============
+if(STATIC_BUILD)
+  if(MSVC)
+    add_link_options(/SUBSYSTEM:CONSOLE)
+  else()
+    add_link_options(-static-libgcc -static-libstdc++)
+  endif()
+  message(STATUS "Static build: C++ runtime linked statically")
+endif()
+# ==============================================================
 
 # Gets -rdynamic added when linking gcc builds which exports all symbols which
 # gives us more meaningful stack traces using backtrace_symbols().

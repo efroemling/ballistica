@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, overload
 from efro.error import CommunicationError
 from efro.call import CallbackSet
 from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
-import bacommon.bs
+import bacommon.classic
 import bacommon.cloud
 import babase
 
@@ -19,7 +19,8 @@ if TYPE_CHECKING:
     from typing import Callable, Any
 
     from efro.message import Message, Response, BoolResponse
-    import bacommon.bs
+    import bacommon.classic
+    import bacommon.clouddialog as cdlg
 
 
 # TODO: Should make it possible to define a protocol in bacommon.cloud and
@@ -36,6 +37,8 @@ class CloudSubsystem(babase.AppSubsystem):
     """
 
     #: General engine config values provided by the cloud.
+    #:
+    #: :meta private:
     vals: bacommon.cloud.CloudVals
 
     def __init__(self) -> None:
@@ -214,9 +217,9 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.bs.GetClassicPurchasesMessage,
+        msg: bacommon.classic.GetClassicPurchasesMessage,
         on_response: Callable[
-            [bacommon.bs.GetClassicPurchasesResponse | Exception], None
+            [bacommon.classic.GetClassicPurchasesResponse | Exception], None
         ],
     ) -> None: ...
 
@@ -232,61 +235,59 @@ class CloudSubsystem(babase.AppSubsystem):
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.bs.PrivatePartyMessage,
+        msg: bacommon.classic.PrivatePartyMessage,
         on_response: Callable[
-            [bacommon.bs.PrivatePartyResponse | Exception], None
+            [bacommon.classic.PrivatePartyResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.bs.InboxRequestMessage,
+        msg: bacommon.classic.InboxRequestMessage,
         on_response: Callable[
-            [bacommon.bs.InboxRequestResponse | Exception], None
+            [bacommon.classic.InboxRequestResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.bs.CloudDialogActionMessage,
+        msg: cdlg.ActionMessage,
+        on_response: Callable[[cdlg.ActionResponse | Exception], None],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.classic.ChestInfoMessage,
         on_response: Callable[
-            [bacommon.bs.CloudDialogActionResponse | Exception], None
+            [bacommon.classic.ChestInfoResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.bs.ChestInfoMessage,
+        msg: bacommon.cloud.ChestActionMessage,
         on_response: Callable[
-            [bacommon.bs.ChestInfoResponse | Exception], None
+            [bacommon.cloud.ChestActionResponse | Exception], None
         ],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.bs.ChestActionMessage,
-        on_response: Callable[
-            [bacommon.bs.ChestActionResponse | Exception], None
-        ],
-    ) -> None: ...
-
-    @overload
-    def send_message_cb(
-        self,
-        msg: bacommon.bs.GlobalProfileCheckMessage,
+        msg: bacommon.classic.GlobalProfileCheckMessage,
         on_response: Callable[[BoolResponse | Exception], None],
     ) -> None: ...
 
     @overload
     def send_message_cb(
         self,
-        msg: bacommon.bs.ScoreSubmitMessage,
+        msg: bacommon.classic.ScoreSubmitMessage,
         on_response: Callable[
-            [bacommon.bs.ScoreSubmitResponse | Exception], None
+            [bacommon.classic.ScoreSubmitResponse | Exception], None
         ],
     ) -> None: ...
 
@@ -305,6 +306,49 @@ class CloudSubsystem(babase.AppSubsystem):
         msg: bacommon.cloud.SecureDataCheckerRequest,
         on_response: Callable[
             [bacommon.cloud.SecureDataCheckerResponse | Exception], None
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.classic.GetClassicLeaguePresidentButtonInfoMessage,
+        on_response: Callable[
+            [
+                bacommon.classic.GetClassicLeaguePresidentButtonInfoResponse
+                | Exception
+            ],
+            None,
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.AnalyticsEventMessage,
+        on_response: Callable[
+            [None | Exception],
+            None,
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.AuthRequestMessage,
+        on_response: Callable[
+            [bacommon.cloud.AuthRequestResponse | Exception],
+            None,
+        ],
+    ) -> None: ...
+
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.TransientAPIKeyRequest,
+        on_response: Callable[
+            [bacommon.cloud.TransientAPIKeyResponse | Exception],
+            None,
         ],
     ) -> None: ...
 
@@ -339,8 +383,13 @@ class CloudSubsystem(babase.AppSubsystem):
 
     @overload
     def send_message(
-        self, msg: bacommon.bs.LegacyRequest
-    ) -> bacommon.bs.LegacyResponse: ...
+        self, msg: bacommon.classic.LegacyRequest
+    ) -> bacommon.classic.LegacyResponse: ...
+
+    @overload
+    def send_message(
+        self, msg: bacommon.cloud.FulfillDocUIRequest
+    ) -> bacommon.cloud.FulfillDocUIResponse: ...
 
     def send_message(self, msg: Message) -> Response | None:
         """Synchronously send a message to the cloud.
@@ -353,8 +402,8 @@ class CloudSubsystem(babase.AppSubsystem):
 
     @overload
     async def send_message_async(
-        self, msg: bacommon.bs.SendInfoMessage
-    ) -> bacommon.bs.SendInfoResponse: ...
+        self, msg: bacommon.classic.SendInfoMessage
+    ) -> bacommon.classic.SendInfoResponse: ...
 
     @overload
     async def send_message_async(
@@ -383,9 +432,14 @@ class CloudSubsystem(babase.AppSubsystem):
 
     def subscribe_classic_account_data(
         self,
-        updatecall: Callable[[bacommon.bs.ClassicAccountLiveData], None],
+        updatecall: Callable[
+            [bacommon.classic.ClassicLiveAccountClientData], None
+        ],
     ) -> babase.CloudSubscription:
-        """Subscribe to classic account data."""
+        """Subscribe to classic account data.
+
+        :meta private:
+        """
         raise NotImplementedError(
             'Cloud functionality is not present in this build.'
         )

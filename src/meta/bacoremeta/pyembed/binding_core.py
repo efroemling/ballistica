@@ -43,6 +43,8 @@ values = [
     logging.getLogger('ba.app').log,  # kLoggerBaAppLogCall
     logging.getLogger('ba.assets'),  # kLoggerBaAssets
     logging.getLogger('ba.assets').log,  # kLoggerBaAssetsLogCall
+    logging.getLogger('ba.account'),  # kLoggerBaAccount
+    logging.getLogger('ba.account').log,  # kLoggerBaAccountLogCall
     logging.getLogger('ba.audio'),  # kLoggerBaAudio
     logging.getLogger('ba.audio').log,  # kLoggerBaAudioLogCall
     logging.getLogger('ba.displaytime'),  # kLoggerBaDisplayTime

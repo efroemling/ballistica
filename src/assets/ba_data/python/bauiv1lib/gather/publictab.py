@@ -12,6 +12,7 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast, override
 
+from bacommon.analytics import ClassicAnalyticsEvent
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
 import bascenev1 as bs
@@ -94,7 +95,6 @@ class UIRow:
         tab: PublicGatherTab,
     ) -> None:
         """Update for the given data."""
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-positional-arguments
 
         plus = bui.app.plus
@@ -1160,7 +1160,7 @@ class PublicGatherTab(GatherTab):
 
             # Now, new or not, update its values.
             party.queue = party_in.get('q')
-            assert isinstance(party.queue, (str, type(None)))
+            assert isinstance(party.queue, str | None)
             party.port = port
             party.name = party_in['n']
             assert isinstance(party.name, str)
@@ -1173,7 +1173,7 @@ class PublicGatherTab(GatherTab):
             party.ping_interval = 0.001 * party_in['pi']
             assert isinstance(party.ping_interval, float)
             party.stats_addr = party_in['sa']
-            assert isinstance(party.stats_addr, (str, type(None)))
+            assert isinstance(party.stats_addr, str | None)
 
             # Make sure the party's UI gets updated.
             party.clean_display_index = None
@@ -1495,6 +1495,13 @@ class PublicGatherTab(GatherTab):
     def on_public_party_activate(self, party: PartyEntry) -> None:
         """Called when a party is clicked or otherwise activated."""
         self.save_state()
+
+        bui.app.analytics.submit_event(
+            ClassicAnalyticsEvent(
+                ClassicAnalyticsEvent.EventType.JOIN_PUBLIC_PARTY
+            )
+        )
+
         if party.queue is not None:
             from bauiv1lib.partyqueue import PartyQueueWindow
 

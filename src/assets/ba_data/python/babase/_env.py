@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Environment related functionality."""
+
 from __future__ import annotations
 
 import os
@@ -158,26 +159,6 @@ def on_main_thread_start_app() -> None:
         # situations.
         __main__.__builtins__.help = _CustomHelper()
 
-    # UPDATE: As of May 2025 I'm no longer seeing the below issue, so
-    # disabling this workaround for now and will remove it soon if no
-    # issues arise.
-
-    # On Windows I'm seeing the following error creating asyncio loops
-    # in background threads with the default proactor setup:
-
-    # ValueError: set_wakeup_fd only works in main thread of the main
-    # interpreter.
-
-    # So let's explicitly request selector loops. Interestingly this
-    # error only started showing up once I moved Python init to the main
-    # thread; previously the various asyncio bg thread loops were
-    # working fine (maybe something caused them to default to selector
-    # in that case?..
-    if sys.platform == 'win32' and bool(False):
-        import asyncio
-
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
     # Kick off networking bootstrapping. We do this here instead of in
     # our app net-subsystem so that it can proceed in parallel with the
     # rest of our bootstrapping (as networking stuff is often an overall
@@ -282,10 +263,10 @@ def _pycache_upkeep() -> None:
 
 
 def _do_pycache_upkeep() -> None:
+    # pylint: disable=too-many-statements
     """Take a quick pass at generating pycs for all .py files."""
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     import py_compile
     import importlib.util
 
@@ -647,5 +628,5 @@ class _CustomHelper:
                 'Interactive help is not available in this environment.\n'
                 'Type help(object) for help about object.'
             )
-            return None
-        return pydoc.help(*args, **kwds)
+            return
+        pydoc.help(*args, **kwds)

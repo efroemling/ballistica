@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Logging functionality."""
+
 from __future__ import annotations
 
 import sys
@@ -73,7 +74,7 @@ LEVELNO_COLOR_CODES: dict[int, tuple[str, str]] = {
     logging.INFO: ('', ''),
     logging.WARNING: (Clr.YLW, Clr.RST),
     logging.ERROR: (Clr.RED, Clr.RST),
-    logging.CRITICAL: (Clr.SMAG + Clr.BLD + Clr.BLK, Clr.RST),
+    logging.CRITICAL: (Clr.SMAG + Clr.BLD + Clr.BBLK, Clr.RST),
 }
 
 
@@ -322,8 +323,6 @@ class LogHandler(logging.Handler):
 
     @override
     def emit(self, record: logging.LogRecord) -> None:
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
 
         if __debug__:
             starttime = time.monotonic()

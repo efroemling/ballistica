@@ -206,7 +206,6 @@ class SendInfoWindowLegacyModal(bui.Window):
         transition: str | None = 'in_scale',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
 
         # Need to wrangle our own transition-out in modal mode.
         if origin_widget is not None:
@@ -377,7 +376,7 @@ class SendInfoWindowLegacyModal(bui.Window):
 
 
 async def _send_info(description: str) -> None:
-    from bacommon.bs import SendInfoMessage
+    from bacommon.classic import SendInfoMessage
 
     plus = bui.app.plus
     assert plus is not None

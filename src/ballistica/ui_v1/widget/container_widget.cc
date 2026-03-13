@@ -456,6 +456,13 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     case base::WidgetMessage::Type::kMouseMove: {
       CheckLayout();
 
+      // Make sure our child widgets know if someone above already claimed
+      // this.
+      bool was_claimed = (m.fval3 > 0.0f);
+      if (was_claimed) {
+        claimed = true;
+      }
+
       // Ignore mouse stuff while transitioning out.
       if (transitioning_ && transitioning_out_) {
         break;
@@ -477,9 +484,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       }
 
       if (!root_selectable_) {
-        // Go through all widgets backwards until one claims the cursor position
-        // (we still send it to other widgets even then though in case they
-        // case).
+        // Go through all widgets backwards until one claims the cursor
+        // position (we still send it to other widgets even then though in
+        // case they case).
         for (auto i = widgets_.rbegin(); i != widgets_.rend(); i++) {
           float cx = x;
           float cy = y;
@@ -508,6 +515,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       } else {
         mouse_over_ = false;
       }
+      // printf("BREAKING %s %d\n", GetWidgetTypeName().c_str(),
+      //        static_cast<int>(claimed));
       break;
     }
 
@@ -532,7 +541,7 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float b = 0;
       float t = height_;
 
-      // Go through all widgets backwards until one claims the wheel.
+      // Go through all widgets backwards until one claims the event.
       for (auto i = widgets_.rbegin(); i != widgets_.rend(); i++) {
         float cx = x;
         float cy = y;
@@ -542,7 +551,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           claimed = true;
           break;
         }
-        if (modal_children_) break;
+        if (modal_children_) {
+          break;
+        }
       }
 
       // If its not yet claimed, see if its within our contained region, in
@@ -830,7 +841,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
         while (display_time_ms - dynamics_update_time_millisecs_ > 5) {
           dynamics_update_time_millisecs_ += 5;
-          transition_scale_ -= 0.03f;
+          // transition_scale_ -= 0.03f;
+          transition_scale_ -= 0.025f;
           if (transition_scale_ <= 0.0f) {
             transition_scale_ = 0.0f;
 
@@ -962,7 +974,9 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // so always calc them).
   if (bg_dirty_) {
     base::SysTextureID tex_id;
-    float l_border, r_border, b_border, t_border, center_x_amt, center_y_amt;
+    float l_border, r_border, b_border, t_border;
+    [[maybe_unused]] float center_x_amt;
+    [[maybe_unused]] float center_y_amt;
     float width = r - l;
     float height = t - b;
     if (height > width * 0.6f) {
@@ -1482,7 +1496,7 @@ void ContainerWidget::ShowWidget(Widget* w) {
   // Hacky exception; scroll-widgets don't respond directly to this
   // (it always arrives via a child's child.. need to clean this up)
   // it causes double-shows to happen otherwise and odd jumpy behavior.
-  if (GetWidgetTypeName() == "scroll") {
+  if (GetWidgetTypeName() == "scroll" || GetWidgetTypeName() == "hscroll") {
     return;
   }
 
@@ -1494,8 +1508,8 @@ void ContainerWidget::ShowWidget(Widget* w) {
   float buffer_left = w->show_buffer_left();
   float tx = (w->tx() - buffer_left) * s;
   float ty = (w->ty() - buffer_bottom) * s;
-  float width = (w->GetWidth() + buffer_left + buffer_right) * s;
-  float height = (w->GetHeight() + buffer_bottom + buffer_top) * s;
+  float width = (w->GetWidth() * w->scale() + buffer_left + buffer_right) * s;
+  float height = (w->GetHeight() * w->scale() + buffer_bottom + buffer_top) * s;
   HandleMessage(base::WidgetMessage(base::WidgetMessage::Type::kShow, nullptr,
                                     tx, ty, width, height));
 }

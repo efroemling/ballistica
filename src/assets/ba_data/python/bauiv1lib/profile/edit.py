@@ -1,17 +1,22 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """Provides UI to edit a player profile."""
 
 from __future__ import annotations
 
 import random
-from typing import cast, override
+from typing import cast, override, TYPE_CHECKING
 
 from bauiv1lib.colorpicker import ColorPicker
 from bauiv1lib.characterpicker import CharacterPickerDelegate
 from bauiv1lib.iconpicker import IconPickerDelegate
+from bauiv1lib.connectivity import wait_for_connectivity
 import bauiv1 as bui
 import bascenev1 as bs
+
+if TYPE_CHECKING:
+    from typing import Callable
 
 
 class EditProfileWindow(
@@ -19,29 +24,20 @@ class EditProfileWindow(
 ):
     """Window for editing a player profile."""
 
-    def reload_window(self) -> None:
-        """Transitions out and recreates ourself."""
-
-        # Replace ourself with ourself, but keep the same back location.
-        assert self.main_window_back_state is not None
-        self.main_window_replace(
-            lambda: EditProfileWindow(self.getname()),
-            back_state=self.main_window_back_state,
-        )
-
     def __init__(
         self,
         existing_profile: str | None,
+        *,
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
+        on_profile_save: Callable[[str], None] | None = None,
+        on_profile_delete: Callable[[str], None] | None = None,
     ):
-        # FIXME: Tidy this up a bit.
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
 
         assert bui.app.classic is not None
-        # print(f'EditProfileWindow({id(self)})')
 
         plus = bui.app.plus
         assert plus is not None
@@ -51,6 +47,8 @@ class EditProfileWindow(
         self._spazzes: list[str] = []
         self._icon_textures: list[bui.Texture] = []
         self._icon_tint_textures: list[bui.Texture] = []
+        self._on_profile_save = on_profile_save
+        self._on_profile_delete = on_profile_delete
 
         # Grab profile colors or pick random ones.
         (
@@ -58,17 +56,17 @@ class EditProfileWindow(
             self._highlight,
         ) = bui.app.classic.get_player_profile_colors(existing_profile)
         uiscale = bui.app.ui_v1.uiscale
-        self._width = width = 880.0 if uiscale is bui.UIScale.SMALL else 680.0
-        self._x_inset = x_inset = 100.0 if uiscale is bui.UIScale.SMALL else 0.0
+        self._width = width = 1000.0 if uiscale is bui.UIScale.SMALL else 680.0
+        self._x_inset = x_inset = 140.0 if uiscale is bui.UIScale.SMALL else 0.0
         self._height = height = (
             500.0
             if uiscale is bui.UIScale.SMALL
-            else 400.0 if uiscale is bui.UIScale.MEDIUM else 450.0
+            else 450.0 if uiscale is bui.UIScale.MEDIUM else 450.0
         )
-        yoffs = -42 if uiscale is bui.UIScale.SMALL else 0
+        yoffs = 2 if uiscale is bui.UIScale.SMALL else 0
         spacing = 40
         self._base_scale = (
-            2.0
+            1.72
             if uiscale is bui.UIScale.SMALL
             else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
         )
@@ -101,6 +99,7 @@ class EditProfileWindow(
             scale=0.8,
             label=bui.Lstr(resource='saveText'),
         )
+
         bui.widget(edit=save_button, left_widget=cancel_button)
         bui.widget(edit=cancel_button, right_widget=save_button)
         bui.containerwidget(edit=self._root_widget, start_button=btn)
@@ -511,7 +510,101 @@ class EditProfileWindow(
             color=bui.app.ui_v1.title_color,
             maxwidth=120,
         )
+
+        if existing_profile is not None:
+            bui.buttonwidget(
+                parent=self._root_widget,
+                position=(self._width * 0.5 - 43, v - 185),
+                size=(140, 60),
+                autoselect=True,
+                scale=0.6,
+                color=(
+                    (0.5, 0.5, 0.5)
+                    if self._is_account_profile
+                    else (0.65, 0.45, 0.5)
+                ),
+                textcolor=(
+                    (0.5, 0.5, 0.5)
+                    if self._is_account_profile
+                    else (1.0, 0.5, 0.5)
+                ),
+                label=bui.Lstr(resource='deleteText'),
+                on_activate_call=bui.WeakCallStrict(self._delete_press),
+                enable_sound=not self._is_account_profile,
+            )
+
         self._update_character()
+
+    def reload_window(self) -> None:
+        """Transitions out and recreates ourself."""
+
+        # Replace ourself with ourself, but keep the same back location.
+        assert self.main_window_back_state is not None
+        self.main_window_replace(
+            lambda: EditProfileWindow(self.getname()),
+            back_state=self.main_window_back_state,
+        )
+
+    def _delete_press(self) -> None:
+        # pylint: disable=cyclic-import
+        from bauiv1lib.confirm import ConfirmWindow
+
+        if self._is_account_profile:
+            bui.getsound('error').play()
+            bui.screenmessage(
+                bui.Lstr(
+                    resource='playerProfilesWindow.cantDeleteAccountProfileText'
+                ),
+                color=(1, 0, 0),
+            )
+            return
+
+        if self._existing_profile is None:
+            bui.getsound('error').play()
+            bui.screenmessage(
+                bui.Lstr(resource='nothingIsSelectedErrorText'), color=(1, 0, 0)
+            )
+            return
+        ConfirmWindow(
+            bui.Lstr(
+                resource='playerProfilesWindow.deleteConfirmText',
+                subs=[('${PROFILE}', self._existing_profile)],
+            ),
+            self._do_delete_profile,
+            width=350,
+        )
+
+    def _do_delete_profile(self) -> None:
+        plus = bui.app.plus
+        assert plus is not None
+
+        assert self._existing_profile is not None
+
+        # Play a death sound of the character.
+        classic = bui.app.classic
+        if classic is not None:
+            profiles = bui.app.config.get('Player Profiles', {})
+            p_info = profiles.get(self._existing_profile)
+            if p_info:
+                char = p_info.get('character', 'Spaz')
+                appearance = classic.spaz_appearances.get(char)
+                if appearance:
+                    bui.getsound(random.choice(appearance.death_sounds)).play()
+
+        plus.add_v1_account_transaction(
+            {'type': 'REMOVE_PLAYER_PROFILE', 'name': self._existing_profile}
+        )
+
+        plus.run_v1_account_transactions()
+        bui.getsound('shieldDown').play()
+
+        if self._on_profile_delete is not None:
+            try:
+                self._on_profile_delete(self._existing_profile)
+            except Exception:
+                bui.balog.exception('Error in _on_profile_delete cb.')
+
+        self.main_window_back()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -520,6 +613,8 @@ class EditProfileWindow(
 
         # Pull things out of self here; if we do it within the lambda
         # we'll keep ourself alive which is bad.
+        on_profile_save = self._on_profile_save
+        on_profile_delete = self._on_profile_delete
 
         existing_profile = self._existing_profile
         return bui.BasicMainWindowState(
@@ -527,6 +622,8 @@ class EditProfileWindow(
                 transition=transition,
                 origin_widget=origin_widget,
                 existing_profile=existing_profile,
+                on_profile_save=on_profile_save,
+                on_profile_delete=on_profile_delete,
             )
         )
 
@@ -650,12 +747,30 @@ class EditProfileWindow(
     @override
     def on_icon_picker_get_more_press(self) -> None:
         """User wants to get more icons."""
-        from bauiv1lib.store.browser import StoreBrowserWindow
+        import bacommon.docui.v1 as dui1
 
-        self.main_window_replace(
-            lambda: StoreBrowserWindow(
-                minimal_toolbars=True,
-                show_tab=StoreBrowserWindow.TabID.ICONS,
+        from bauiv1lib.store import StoreUIController
+
+        if not self._ensure_signed_in(
+            origin_widget=bui.get_special_widget('store_button')
+        ):
+            return
+
+        # Because profile editing is happening within an auxiliary
+        # window stack, we need to bring up the store as a regular
+        # non-auxiliary window pushed onto our stack. If we did the
+        # simple thing and triggered it as an auxiliary window then it
+        # would *replace* our stack and we wouldn't be able to get back
+        # to our editing.
+        wait_for_connectivity(
+            on_connected=lambda: self.main_window_replace(
+                bui.CallStrict(
+                    StoreUIController().create_window,
+                    dui1.Request('/'),
+                    origin_widget=bui.get_special_widget('store_button'),
+                    auxiliary_style=False,
+                ),
+                extra_type_id=StoreUIController.get_window_extra_type_id(),
             )
         )
 
@@ -673,14 +788,46 @@ class EditProfileWindow(
         )
         self._update_character()
 
+    def _ensure_signed_in(
+        self, *, origin_widget: bui.Widget | None = None
+    ) -> bool:
+        """Make sure we're signed in (requiring modern v2 accounts)."""
+        from bauiv1lib.account.signin import show_sign_in_prompt
+
+        plus = bui.app.plus
+        if plus is None:
+            bui.screenmessage('This requires plus.', color=(1, 0, 0))
+            bui.getsound('error').play()
+            return False
+        if plus.accounts.primary is None:
+            show_sign_in_prompt(origin_widget=origin_widget)
+            return False
+        return True
+
     @override
     def on_character_picker_get_more_press(self) -> None:
-        from bauiv1lib.store.browser import StoreBrowserWindow
+        import bacommon.docui.v1 as dui1
 
-        self.main_window_replace(
-            lambda: StoreBrowserWindow(
-                minimal_toolbars=True,
-                show_tab=StoreBrowserWindow.TabID.CHARACTERS,
+        from bauiv1lib.store import StoreUIController
+
+        if not self._ensure_signed_in(
+            origin_widget=bui.get_special_widget('store_button')
+        ):
+            return
+
+        # Set this up as a non-auxiliary window so we can nav back to
+        # char editing (otherwise it would replace the whole inventory
+        # stack). Also don't set uiopenstateid in this case since we don't
+        # want store button to glow (since inventory button already is).
+        wait_for_connectivity(
+            on_connected=lambda: self.main_window_replace(
+                bui.CallStrict(
+                    StoreUIController().create_window,
+                    dui1.Request('/'),
+                    origin_widget=bui.get_special_widget('store_button'),
+                    auxiliary_style=False,
+                ),
+                extra_type_id=StoreUIController.get_window_extra_type_id(),
             )
         )
 
@@ -826,9 +973,6 @@ class EditProfileWindow(
 
     def save(self, transition_out: bool = True) -> bool:
         """Save has been selected."""
-        # pylint: disable=cyclic-import
-
-        from bauiv1lib.profile.browser import ProfileBrowserWindow
 
         # no-op if our underlying widget is dead or on its way out.
         if not self._root_widget or self._root_widget.transitioning_out:
@@ -853,8 +997,11 @@ class EditProfileWindow(
             bui.getsound('error').play()
             return False
 
-        # Set the profile-browser to have this one selected by default.
-        ProfileBrowserWindow.selected_profile = new_name
+        if self._on_profile_save is not None:
+            try:
+                self._on_profile_save(new_name)
+            except Exception:
+                bui.balog.exception('Error in _on_profile_save cb.')
 
         if transition_out:
             bui.getsound('gunCocking').play()

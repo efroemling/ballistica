@@ -71,7 +71,7 @@ class TextPacker : public Object {
   }
 
  private:
-  bool compiled_{false};
+  bool compiled_{};
   float resolution_scale_;
   float text_scale_{};
   int texture_width_{};

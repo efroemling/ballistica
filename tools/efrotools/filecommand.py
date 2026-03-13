@@ -36,9 +36,11 @@ class _FileBatchesRun:
         if self._include_mac_packages:
             # pylint: disable=useless-suppression
             # pylint: disable=no-name-in-module, import-error
-            from Cocoa import NSWorkspace  # pyright: ignore
+            if bool(True):
+                raise RuntimeError('Cocoa support deactivated')
+            # from Cocoa import NSWorkspace  # pyright: ignore
 
-            self._shared_nsworkspace = NSWorkspace.sharedWorkspace()
+            # self._shared_nsworkspace = NSWorkspace.sharedWorkspace()
             # pylint: enable=useless-suppression
         else:
             self._shared_nsworkspace = None
@@ -69,7 +71,6 @@ class _FileBatchesRun:
 
     def bg_thread(self) -> None:
         """Add batches in the bg thread."""
-        # pylint: disable=too-many-nested-blocks
 
         # Build batches and push them when they're big enough.
         for path in self.paths:
@@ -79,19 +80,20 @@ class _FileBatchesRun:
                 # From os.walk docs: we can prune dirs in-place when
                 # running in top-down mode. We can use this to skip
                 # diving into mac packages.
-                for root, dirs, fnames in os.walk(path, topdown=True):
+                for root, _dirs, fnames in os.walk(path, topdown=True):
                     # If we find dirs that are actually mac packages, pull
                     # them out of the dir list we'll dive into and pass
                     # them directly to our batch for processing.
                     if self._include_mac_packages:
-                        assert self._shared_nsworkspace is not None
-                        for dirname in list(dirs):
-                            fullpath = os.path.join(root, dirname)
-                            if self._shared_nsworkspace.isFilePackageAtPath_(
-                                fullpath
-                            ):
-                                dirs.remove(dirname)
-                                self._possibly_add_to_pending_batch(fullpath)
+                        raise RuntimeError('should not get here')
+                        # assert self._shared_nsworkspace is not None
+                        # for dirname in list(dirs):
+                        #     fullpath = os.path.join(root, dirname)
+                        #     if self._shared_nsworkspace.isFilePackageAtPath_(
+                        #         fullpath
+                        #     ):
+                        #         dirs.remove(dirname)
+                        #         self._possibly_add_to_pending_batch(fullpath)
 
                     for fname in fnames:
                         fullpath = os.path.join(root, fname)

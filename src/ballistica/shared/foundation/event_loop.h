@@ -4,6 +4,7 @@
 #define BALLISTICA_SHARED_FOUNDATION_EVENT_LOOP_H_
 
 #include <condition_variable>
+#include <csignal>
 #include <list>
 #include <mutex>
 #include <string>
@@ -15,6 +16,14 @@
 #include "ballistica/shared/generic/timer_list.h"
 
 namespace ballistica {
+
+// Special flags we can safely access from interrupt/ctrl handlers.
+#if BA_PLATFORM_WINDOWS
+extern std::atomic<bool> g_event_loop_got_ctrl_c;
+#else
+extern volatile sig_atomic_t g_event_loop_got_sigint;
+extern volatile sig_atomic_t g_event_loop_got_sigterm;
+#endif
 
 const int kThreadMessageSafetyThreshold{500};
 
@@ -119,6 +128,7 @@ class EventLoop {
   void PushCrossThreadRunnable_(Runnable* runnable, bool* completion_flag);
   void NotifyClientListeners_();
   void Run_(bool single_cycle);
+  void CheckInterrupts_();
 
   // These are all exactly the same, but running different ones for
   // different threads can help identify threads in profilers, backtraces,

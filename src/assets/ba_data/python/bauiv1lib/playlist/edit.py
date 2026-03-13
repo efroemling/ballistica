@@ -23,8 +23,6 @@ class PlaylistEditWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         prev_selection: str | None
         self._editcontroller = editcontroller
         self._r = 'editGameListWindow'
@@ -49,8 +47,10 @@ class PlaylistEditWindow(bui.MainWindow):
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
+                toolbar_visibility=(
+                    'menu_minimal_no_back'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
             ),
             transition=transition,

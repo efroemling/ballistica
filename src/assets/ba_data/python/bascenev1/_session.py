@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Defines base session class."""
+
 from __future__ import annotations
 
 import math
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
 _g_player_rejoin_cooldown: float = 0.0
 
 # overrides the session's decision of max_players
-_max_players_override: int | None = None
+_g_max_players_override: int | None = None
 
 
 def set_player_rejoin_cooldown(cooldown: float) -> None:
@@ -35,8 +36,8 @@ def set_player_rejoin_cooldown(cooldown: float) -> None:
 
 def set_max_players_override(max_players: int | None) -> None:
     """Set the override for how many players can join a session"""
-    global _max_players_override  # pylint: disable=global-statement
-    _max_players_override = max_players
+    global _g_max_players_override  # pylint: disable=global-statement
+    _g_max_players_override = max_players
 
 
 class Session:
@@ -110,10 +111,7 @@ class Session:
         bascenev1.DependencySet instances; one for each bascenev1.Activity
         the session may potentially run.
         """
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
-        # pylint: disable=too-many-branches
         from efro.util import empty_weakref
         from bascenev1._dependency import (
             Dependency,
@@ -175,8 +173,8 @@ class Session:
         self.min_players = min_players
         self.max_players = (
             max_players
-            if _max_players_override is None
-            else _max_players_override
+            if _g_max_players_override is None
+            else _g_max_players_override
         )
         self.submit_score = submit_score
 
@@ -288,7 +286,7 @@ class Session:
                 return False
 
         # Rejoin cooldown.
-        identifier = player.get_v1_account_id()
+        identifier = player.get_account_id()
         if identifier:
             leave_time = self._players_on_wait.get(identifier)
             if leave_time:
@@ -374,7 +372,7 @@ class Session:
 
             # Grab their activity-specific player instance.
             player = sessionplayer.activityplayer
-            assert isinstance(player, (Player, type(None)))
+            assert isinstance(player, Player | None)
 
             # Remove them from any current Activity.
             if player is not None and activity is not None:

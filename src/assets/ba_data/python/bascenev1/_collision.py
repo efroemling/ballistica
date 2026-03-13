@@ -19,7 +19,9 @@ class Collision:
     @property
     def position(self) -> bascenev1.Vec3:
         """The position of the current collision."""
-        return babase.Vec3(_bascenev1.get_collision_info('position'))
+        out = babase.Vec3(_bascenev1.get_collision_info('position'))
+        assert isinstance(out, babase.Vec3)
+        return out
 
     @property
     def sourcenode(self) -> bascenev1.Node:
@@ -30,7 +32,7 @@ class Collision:
         start of the collision callback).
         """
         node = _bascenev1.get_collision_info('sourcenode')
-        assert isinstance(node, (_bascenev1.Node, type(None)))
+        assert isinstance(node, _bascenev1.Node | None)
         if not node:
             raise babase.NodeNotFoundError()
         return node
@@ -45,7 +47,7 @@ class Collision:
         currently-colliding node.
         """
         node = _bascenev1.get_collision_info('opposingnode')
-        assert isinstance(node, (_bascenev1.Node, type(None)))
+        assert isinstance(node, _bascenev1.Node | None)
         if not node:
             raise babase.NodeNotFoundError()
         return node

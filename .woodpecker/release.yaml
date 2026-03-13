@@ -52,7 +52,7 @@ steps:
       - cd ../../../..
     depends_on: [parallel-prepare]
   - name: build-and-publish-gui-docker
-    image: woodpeckerci/plugin-docker-buildx
+    image: woodpeckerci/plugin-docker-buildx:6
     settings:
       dockerfile: config/docker/Dockerfile
       build_args:
@@ -69,7 +69,7 @@ steps:
         from_secret: ACCESS_TOKEN
     depends_on: [parallel-prepare]
   - name: build-and-publish-server-docker
-    image: woodpeckerci/plugin-docker-buildx
+    image: woodpeckerci/plugin-docker-buildx:6
     settings:
       dockerfile: config/docker/Dockerfile
       build_args:

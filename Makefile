@@ -192,6 +192,11 @@ venv-clean:
 docs: env
 	@$(PCOMMAND) gen_docs_sphinx
 
+# Cloud version of docs
+docs-cloud:
+	@tools/cloudshell $(CLOUDSHELL_HOST_TEST) --env $(CLOUDSHELL_ENV_CHECK) \
+ --instance docs -- make docs
+
 docs-clean:
 	rm -rf .cache/sphinx
 	rm -rf .cache/sphinxfiltered
@@ -511,22 +516,6 @@ build/prefab/full/linux_%_server/release/dist/ballisticakit_headless: .efrocache
 build/prefab/lib/linux_%_server/release/libballisticaplus.a: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
 
-# Linux flatpak debug:
-
-flatpak-linux: env
-	mkdir build/flatpak -p
-	flatpak-builder --repo=./.cache/flatpak/repo \
-	--force-clean --keep-build-dirs \
-	--state-dir=./.cache/flatpak/flatpak-builder \
-	./.cache/flatpak/build_dir \
-	config/flatpak/net.froemling.BombSquad.yml
-	flatpak build-bundle ./.cache/flatpak/repo \
-	build/flatpak/bombsquad.flatpak net.froemling.BombSquad
-
-flatpak-clean:
-	rm build/flatpak -rf
-	rm .cache/flatpak -rf
-
 # Windows gui debug:
 
 RUN_PREFAB_WINDOWS_X86_64_GUI_DEBUG = cd \
@@ -819,13 +808,14 @@ check-full: py_check_prepass
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Same as 'check' plus optional/slow extra checks.
-check2: py_check_prepass
-	@$(DMAKE) -j$(CPUS) update-check cpplint pylint mypy
+# Intended for things such as CI where speed is less of a concern.
+check-ex: py_check_prepass
+	@$(DMAKE) -j$(CPUS) update-check cpplint pylint-ex mypy
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
-# Same as check2 but no caching (all files are checked).
-check2-full: py_check_prepass
-	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-full mypy-full
+# Same as check-ex but no caching (all files are checked).
+check-ex-full: py_check_prepass
+	@$(DMAKE) -j$(CPUS) update-check cpplint-full pylint-ex-full mypy-full
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
@@ -844,9 +834,21 @@ pylint: py_check_prepass
 pylint-full: py_check_prepass
 	@$(PCOMMAND) pylint -full
 
+# Run Pylint checks on all Python Code (including extra slow ones).
+pylint-ex: py_check_prepass
+	@$(PCOMMAND) pylint -extra
+
+# Run Pylint checks including extras without caching (all files are checked).
+pylint-ex-full: py_check_prepass
+	@$(PCOMMAND) pylint -full -extra
+
 # Run Mypy checks on all Python code.
 mypy: py_check_prepass
 	@$(PCOMMAND) mypy
+
+# Run Mypy checks on all Python code.
+zmypy: py_check_prepass
+	@$(PCOMMAND) zmypy
 
 # Run Mypy checks without caching (all files are checked).
 mypy-full: py_check_prepass
@@ -887,9 +889,9 @@ pycharm-full: py_check_prepass
 py_check_prepass: dummymodules
 
 # Tell make which of these targets don't represent files.
-.PHONY: check check-full check2 check2-full cpplint cpplint-full pylint		\
-        pylint-full mypy mypy-full dmypy dmypy-stop pycharm pycharm-full	\
-        py_check_prepass
+.PHONY: check check-full check-ex check-ex-full cpplint cpplint-full pylint		\
+        pylint-ex pylint-full pylint-ex-full mypy mypy-full dmypy dmypy-stop	\
+        pycharm pycharm-full py_check_prepass
 
 
 ################################################################################
@@ -908,18 +910,18 @@ TEST_TARGET ?= tests
 
 # Run tests (live execution verification).
 test: py_check_prepass
-	@$(PCOMMANDBATCH) echo BLU Running all tests...
-	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v $(TEST_TARGET)
-
-# Run tests (live execution verification). Excludes slow ones.
-test-fast: py_check_prepass
-	@$(PCOMMANDBATCH) echo BLU Running all tests \(fast\)...
+	@$(PCOMMANDBATCH) echo BLU Running quick tests...
 	@$(PCOMMAND) tests_warm_start
 	@BA_TEST_FAST_MODE=1 $(PCOMMAND) pytest -v $(TEST_TARGET)
 
-test-verbose: py_check_prepass
-	@$(PCOMMANDBATCH) echo BLU Running all tests...
+# Run tests (live execution verification). Includes extra slow ones.
+test-ex: py_check_prepass
+	@$(PCOMMANDBATCH) echo BLU Running extended tests...
+	@$(PCOMMAND) tests_warm_start
+	@$(PCOMMAND) pytest -v $(TEST_TARGET)
+
+test-ex-verbose: py_check_prepass
+	@$(PCOMMANDBATCH) echo BLU Running extended tests...
 	@$(PCOMMAND) tests_warm_start
 	@$(PCOMMAND) pytest -o log_cli=true -o log_cli_level=debug \
       -s -vv $(TEST_TARGET)
@@ -927,8 +929,8 @@ test-verbose: py_check_prepass
 # Run tests with any caching disabled.
 test-full: test
 
-# Run fast tests with any caching disabled.
-test-fast-full: test-fast
+# Run extended tests with any caching disabled.
+test-ex-full: test-ex
 
 # Shortcut to test efro.message only.
 test-message:
@@ -951,7 +953,7 @@ test-threadpool:
       tests/test_efro/test_threadpool.py
 
 # Tell make which of these targets don't represent files.
-.PHONY: test test-fast test-verbose test-full test-fast-full \
+.PHONY: test test-ex test-ex-verbose test-full test-ex-full \
         test-message test-dataclassio test-rpc
 
 
@@ -966,7 +968,7 @@ preflight:
 	@$(MAKE) format
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint pylint mypy test-fast
+	@$(MAKE) -j$(CPUS) cpplint pylint mypy test
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' without caching (all files are visited).
@@ -974,27 +976,27 @@ preflight-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-fast-full
+	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-full
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Same as 'preflight' plus optional/slow extra checks.
-preflight2:
+preflight-ex:
 	@$(MAKE) format
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint pylint mypy test-fast
+	@$(MAKE) -j$(CPUS) cpplint pylint-ex mypy test-ex
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
-# Same as 'preflight2' but without caching (all files visited).
-preflight2-full:
+# Same as 'preflight-ex' but without caching (all files visited).
+preflight-ex-full:
 	@$(MAKE) format-full
 	@$(MAKE) update
 	@$(MAKE) -j$(CPUS) py_check_prepass # Needs to be done explicitly first.
-	@$(MAKE) -j$(CPUS) cpplint-full pylint-full mypy-full test-fast-full
+	@$(MAKE) -j$(CPUS) cpplint-full pylint-ex-full mypy-full test-ex-full
 	@$(PCOMMANDBATCH) echo SGRN BLD PREFLIGHT SUCCESSFUL!
 
 # Tell make which of these targets don't represent files.
-.PHONY: preflight preflight-full preflight2 preflight2-full
+.PHONY: preflight preflight-full preflight-ex preflight-ex-full
 
 
 ################################################################################
@@ -1146,7 +1148,7 @@ cmake-server-build: assets-server meta cmake-server-binary
 cmake-server-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/server-$(CM_BT_LC)
 	@cd build/cmake/server-$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true \
       $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) \
       build/cmake/server-$(CM_BT_LC)
@@ -1168,7 +1170,7 @@ cmake-modular: cmake-modular-build
 cmake-modular-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/modular-$(CM_BT_LC)
 	@cd build/cmake/modular-$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) \
       $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) \
       build/cmake/modular-$(CM_BT_LC)
@@ -1190,7 +1192,7 @@ cmake-modular-server-build: assets-server meta cmake-modular-server-binary
 cmake-modular-server-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/modular-server-$(CM_BT_LC)
 	@cd build/cmake/modular-server-$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DHEADLESS=true \
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true \
       $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) \
       build/cmake/modular-server-$(CM_BT_LC)
@@ -1261,6 +1263,31 @@ docker-clean:
 	rm -rf build/docker/
 	$(PCOMMAND) remove_docker_images
 	docker system prune
+
+
+################################################################################
+#                                                                              #
+#                                   Flatpak                                    #
+#                                                                              #
+################################################################################
+
+flatpak-linux: env
+	mkdir build/flatpak -p
+	flatpak-builder --repo=./.cache/flatpak/repo \
+	--force-clean --keep-build-dirs \
+	--state-dir=./.cache/flatpak/flatpak-builder \
+	./.cache/flatpak/build_dir \
+	config/flatpak/net.froemling.bombsquad.yml
+	flatpak build-bundle ./.cache/flatpak/repo \
+	build/flatpak/bombsquad.flatpak net.froemling.bombsquad
+
+flatpak-generate-flathub-manifest:
+	$(PCOMMAND) generate_flathub_manifest
+
+flatpak-clean:
+	rm build/flatpak -rf
+	rm build/flathub -rf
+	rm .cache/flatpak -rf
 
 
 ################################################################################
@@ -1431,6 +1458,7 @@ WSLW=BA_WSL_TARGETS_WINDOWS=1
 VISUAL_STUDIO_VERSION = -property:VisualStudioVersion=17
 WIN_MSBUILD_EXE = $(_WMSBE_1)$(_WMSBE_2)
 WIN_MSBUILD_EXE_B = "$(_WMSBE_1B)$(_WMSBE_2B)"
+WIN_POWERSHELL_EXE_B = /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
 WINPRJ = $(WINDOWS_PROJECT)
 WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)

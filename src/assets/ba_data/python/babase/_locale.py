@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Locale related functionality."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, override, assert_never
@@ -144,6 +145,7 @@ class LocaleSubsystem(AppSubsystem):
             or rlocale is cls.TAMIL
             or rlocale is cls.THAI
             or rlocale is cls.VIETNAMESE
+            or rlocale is cls.JAPANESE
         ):
             # Return True only if we can display full unicode.
             return _babase.supports_unicode_display()

@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Provides plus app subsystem."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
@@ -13,7 +14,7 @@ from baplus._ads import AdsSubsystem
 if TYPE_CHECKING:
     from typing import Callable, Any
 
-    import bacommon.bs
+    import bacommon.classic
     from babase import AccountV2Subsystem
 
     from baplus._cloud import CloudSubsystem
@@ -141,14 +142,6 @@ class PlusAppSubsystem(AppSubsystem):
     def get_v1_account_state_num() -> int:
         """:meta private:"""
         return _baplus.get_v1_account_state_num()
-
-    # @staticmethod
-    # def get_v1_account_ticket_count() -> int:
-    #     """Return the number of tickets for the current account.
-
-    #     :meta private:
-    #     """
-    #     return _baplus.get_v1_account_ticket_count()
 
     @staticmethod
     def get_v1_account_type() -> str:

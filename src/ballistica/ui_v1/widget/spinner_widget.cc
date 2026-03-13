@@ -27,11 +27,19 @@ void SpinnerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   // Fade presence in any time we're visible and out any time we're not.
   if (visible_) {
-    presence_ = std::min(
-        1.0, presence_ + pass->frame_def()->display_time_elapsed() * 1.0);
+    if (fade_) {
+      presence_ = std::min(
+          1.0, presence_ + pass->frame_def()->display_time_elapsed() * 1.0);
+    } else {
+      presence_ = 1.0f;
+    }
   } else {
-    presence_ = std::max(
-        0.0, presence_ - pass->frame_def()->display_time_elapsed() * 2.0);
+    if (fade_) {
+      presence_ = std::max(
+          0.0, presence_ - pass->frame_def()->display_time_elapsed() * 2.0);
+    } else {
+      presence_ = 0.0f;
+    }
     // Also don't draw anything in this case.
     return;
   }
@@ -93,7 +101,10 @@ void SpinnerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   {
     auto xf = c.ScopedTransform();
-    c.Scale(size_, size_, 1.0f);
+
+    // Draw at depth range 0.9-1 (mostly want to cover other things).
+    c.Translate(0.0f, 0.0f, 0.9f);
+    c.Scale(size_, size_, 0.1f);
     if (style_ == Style::kSimple) {
       c.Rotate(-360.0f * std::fmod(current_time * 2.0, 1.0), 0.0f, 0.0f, 1.0f);
     }

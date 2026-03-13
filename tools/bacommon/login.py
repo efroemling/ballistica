@@ -32,7 +32,7 @@ class LoginType(Enum):
     @property
     def displayname(self) -> str:
         """A human readable name for this value."""
-        cls = type(self)
+        cls = LoginType
         match self:
             case cls.EMAIL:
                 return 'Email/Password'
@@ -44,7 +44,7 @@ class LoginType(Enum):
     @property
     def displaynameshort(self) -> str:
         """A short human readable name for this value."""
-        cls = type(self)
+        cls = LoginType
         match self:
             case cls.EMAIL:
                 return 'Email'

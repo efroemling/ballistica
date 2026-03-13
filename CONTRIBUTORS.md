@@ -55,9 +55,10 @@
 - Modder
 - BSE Heartbeat mechanic port
 
-### Temp (3alTemp)
+### temp (temp4ture) (temp3al)
 - Original idea for customizable series length on GUI builds
 - Modder & Bug Fixer
+- temp
 
 ### brostos
 - Added support for joining using ipv6 address
@@ -68,7 +69,17 @@
 - Various CI/CD improvements
 - Added discord social sdk support
 - Added flatpak build
+- added bombsquad on flathub :DD
+
+### Zacker Tz
+- PW: King of the Hill: Fix flag region on the Happy Thoughts
 
 ### komasio71
 - Retired Discord server moderator
 - Small contributor
+
+### haydenmc
+- Flatpak permissions fixes
+
+### TheMikirog
+- Volume slider value to perceived volume fix

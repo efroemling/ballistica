@@ -1,6 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Functionality related to cloud based assets."""
+"""Functionality related to cloud based assets.
+
+.. warning::
+
+  This is an internal api and subject to change at any time. Do not use
+  it in mod code.
+"""
 
 from __future__ import annotations
 

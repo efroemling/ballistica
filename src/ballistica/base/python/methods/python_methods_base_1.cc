@@ -18,7 +18,7 @@
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/logging/logging.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
@@ -468,7 +468,7 @@ static auto PyAppInstanceUUID(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  return PyUnicode_FromString(g_base->GetAppInstanceUUID().c_str());
+  return PyUnicode_FromString(g_base->LocalAppInstanceUUID().c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -1903,6 +1903,45 @@ static PyMethodDef PyGraphicsShutdownIsCompleteDef = {
     ":meta private:\n",
 };
 
+// ---------------------------------- crash ------------------------------------
+
+static auto PyCrash(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (!g_buildconfig.variant_generic() && !g_buildconfig.variant_test_build()) {
+    throw Exception(
+        "crash() is only available in generic and test-build variants.");
+  }
+
+  // Dereference a null pointer; same mechanism as the --crash arg.
+  int dummyval{};
+  int* invalid_ptr{&dummyval};
+  if (explicit_bool(true)) {
+    invalid_ptr = nullptr;
+  }
+  if (explicit_bool(true)) {
+    *invalid_ptr = 1;
+  }
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyCrashDef = {
+    "crash",               // name
+    (PyCFunction)PyCrash,  // method
+    METH_NOARGS,           // flags
+
+    "crash() -> None\n"
+    "\n"
+    "Intentionally crash the engine (for testing crash handling).\n"
+    "\n"
+    "Triggers an immediate hard crash via null pointer dereference,\n"
+    "which will exercise crash-dump mechanisms such as minidump\n"
+    "generation on Windows. Only available in generic and test-build\n"
+    "variants.\n",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
@@ -1948,7 +1987,6 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyMacMusicAppPlayPlaylistDef,
       PyMacMusicAppGetPlaylistsDef,
       PyIsOSPlayingMusicDef,
-      // PyLifecycleLogDef,
       PyExecArgDef,
       PyOnAppRunningDef,
       PyOnInitialAppModeSetDef,
@@ -1970,6 +2008,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyAudioShutdownIsCompleteDef,
       PyGraphicsShutdownBeginDef,
       PyGraphicsShutdownIsCompleteDef,
+      PyCrashDef,
   };
 }
 

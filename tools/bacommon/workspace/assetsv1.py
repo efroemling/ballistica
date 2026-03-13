@@ -2,10 +2,10 @@
 #
 """Public types for assets-v1 workspaces.
 
-These types may only be used server-side, but they are exposed here
-for reference when setting workspace config data by hand or for use
-in client-side workspace modification tools. There may be advanced
-settings that are not accessible through the UI/etc.
+While this module is currently only used server-side, its source code
+can be useful as reference when setting workspace config data by hand or
+for use in client-side workspace modification tools. There may be
+advanced settings that are not accessible through the UI/etc.
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ from typing import TYPE_CHECKING, Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 from bacommon.locale import Locale
-
 
 if TYPE_CHECKING:
     pass
@@ -85,8 +84,8 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
 
         NONE = 'none'
         TITLE = 'title'
-        INTENSE = 'intense'
-        SUBTLE = 'subtle'
+        LOUD = 'loud'
+        SOFT = 'soft'
 
     @override
     @classmethod
@@ -99,7 +98,7 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
 
         #: When this output was last changed.
         modtime: Annotated[
-            datetime.datetime, IOAttrs('modtime', float_times=True)
+            datetime.datetime, IOAttrs('modtime', time_format='float')
         ]
 
         #: Default value (no counts involved).
@@ -107,7 +106,7 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
 
     input: Annotated[str, IOAttrs('input')]
     input_modtime: Annotated[
-        datetime.datetime, IOAttrs('input_modtime', float_times=True)
+        datetime.datetime, IOAttrs('input_modtime', time_format='float')
     ]
     style_preset: Annotated[
         StylePreset, IOAttrs('style_preset', store_default=False)
@@ -121,7 +120,7 @@ class AssetsV1PathValsTypeID(Enum):
     """Types of vals we can store for paths."""
 
     TEX_V1 = 'tex_v1'
-    # STR_V1 = 'str_v1'
+    STR_V1 = 'str_v1'
 
 
 class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
@@ -151,6 +150,9 @@ class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
         if type_id is t.TEX_V1:
             return AssetsV1PathValsTexV1
 
+        if type_id is t.STR_V1:
+            return AssetsV1PathValsStrV1
+
         # Important to make sure we provide all types.
         assert_never(type_id)
 
@@ -176,3 +178,20 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
         return AssetsV1PathValsTypeID.TEX_V1
+
+
+@ioprepped
+@dataclass
+class AssetsV1PathValsStrV1(AssetsV1PathVals):
+    """Path-specific values for an assets_v1 workspace path."""
+
+    #: Hash generated when all translations for this entry are complete.
+    #: Used as a fast-out for checking whether updates are needed.
+    up_to_date_state: Annotated[
+        str | None, IOAttrs('up_to_date_state', store_default=False)
+    ] = None
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1PathValsTypeID:
+        return AssetsV1PathValsTypeID.STR_V1

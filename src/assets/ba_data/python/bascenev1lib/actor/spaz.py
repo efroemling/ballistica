@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Defines the spaz actor."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -87,8 +88,8 @@ class Spaz(bs.Actor):
         powerups_expire: bool = False,
         demo_mode: bool = False,
     ):
-        """Create a spaz with the requested color, character, etc."""
         # pylint: disable=too-many-statements
+        """Create a spaz with the requested color, character, etc."""
 
         super().__init__()
         shared = SharedObjects.get()
@@ -714,8 +715,8 @@ class Spaz(bs.Actor):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
-        # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
         assert not self.expired
 

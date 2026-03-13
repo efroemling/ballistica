@@ -454,7 +454,6 @@ class PartyQueueWindow(bui.Window):
 
     def on_update_response(self, response: dict[str, Any] | None) -> None:
         """We've received a response from an update to the server."""
-        # pylint: disable=too-many-branches
         if not self._root_widget:
             return
 

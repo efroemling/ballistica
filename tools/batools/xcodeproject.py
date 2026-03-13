@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """XCode related functionality."""
+
 from __future__ import annotations
 
 import os
@@ -87,7 +88,6 @@ class Updater:
 
     def run(self, force: bool = False) -> str:
         """Do the thing."""
-        # pylint: disable=too-many-locals
 
         projpath = os.path.join(self.projroot, self.path, 'project.pbxproj')
 

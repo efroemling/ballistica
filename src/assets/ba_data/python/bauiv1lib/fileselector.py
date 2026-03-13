@@ -186,7 +186,6 @@ class FileSelectorWindow(bui.MainWindow):
             self._callback(self._path)
 
     def _on_entry_activated(self, entry: str) -> None:
-        # pylint: disable=too-many-branches
         new_path = None
         try:
             assert self._path is not None
@@ -269,9 +268,7 @@ class FileSelectorWindow(bui.MainWindow):
         self._RefreshThread(path, self._refresh).start()
 
     def _refresh(self, file_names: list[str], error: str | None) -> None:
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         if not self._root_widget:
             return
 

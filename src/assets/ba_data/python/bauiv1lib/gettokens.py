@@ -10,9 +10,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never, override
 
 import bacommon.cloud
-import bacommon.bs
+import bacommon.classic
 import bauiv1 as bui
-
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -71,8 +70,8 @@ class GetTokensWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
     ):
-        # pylint: disable=too-many-locals
 
+        self._auxiliary_style = auxiliary_style
         self._uiopenstate = bui.UIOpenState('gettokens')
         bwidthstd = 170
         bwidthwide = 300
@@ -108,7 +107,12 @@ class GetTokensWindow(bui.MainWindow):
                     _TxtDef(
                         bui.Lstr(
                             resource='tokens.numTokensText',
-                            subs=[('${COUNT}', str(bacommon.bs.TOKENS1_COUNT))],
+                            subs=[
+                                (
+                                    '${COUNT}',
+                                    str(bacommon.classic.TOKENS1_COUNT),
+                                )
+                            ],
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -148,7 +152,12 @@ class GetTokensWindow(bui.MainWindow):
                     _TxtDef(
                         bui.Lstr(
                             resource='tokens.numTokensText',
-                            subs=[('${COUNT}', str(bacommon.bs.TOKENS2_COUNT))],
+                            subs=[
+                                (
+                                    '${COUNT}',
+                                    str(bacommon.classic.TOKENS2_COUNT),
+                                )
+                            ],
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -188,7 +197,12 @@ class GetTokensWindow(bui.MainWindow):
                     _TxtDef(
                         bui.Lstr(
                             resource='tokens.numTokensText',
-                            subs=[('${COUNT}', str(bacommon.bs.TOKENS3_COUNT))],
+                            subs=[
+                                (
+                                    '${COUNT}',
+                                    str(bacommon.classic.TOKENS3_COUNT),
+                                )
+                            ],
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -228,7 +242,12 @@ class GetTokensWindow(bui.MainWindow):
                     _TxtDef(
                         bui.Lstr(
                             resource='tokens.numTokensText',
-                            subs=[('${COUNT}', str(bacommon.bs.TOKENS4_COUNT))],
+                            subs=[
+                                (
+                                    '${COUNT}',
+                                    str(bacommon.classic.TOKENS4_COUNT),
+                                )
+                            ],
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -442,9 +461,16 @@ class GetTokensWindow(bui.MainWindow):
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
         cls = type(self)
+
+        # Pull everything out of self here. If we do it below in the lambda,
+        # we'll keep self alive which is bad.
+        auxiliary_style = self._auxiliary_style
+
         return bui.BasicMainWindowState(
             create_call=lambda transition, origin_widget: cls(
-                transition=transition, origin_widget=origin_widget
+                transition=transition,
+                origin_widget=origin_widget,
+                auxiliary_style=auxiliary_style,
             )
         )
 
@@ -789,7 +815,7 @@ class GetTokensWindow(bui.MainWindow):
         bui.open_url(url)
 
 
-def show_get_tokens_prompt() -> None:
+def show_get_tokens_prompt(origin_widget: bui.Widget | None = None) -> None:
     """Show a 'not enough tokens' prompt with an option to purchase more.
 
     Note that the purchase option may not always be available
@@ -799,14 +825,19 @@ def show_get_tokens_prompt() -> None:
 
     assert bui.app.classic is not None
 
+    get_tokens_button = bui.get_special_widget('get_tokens_button')
+
     # Currently always allowing token purchases.
     if bool(True):
         ConfirmWindow(
             bui.Lstr(resource='tokens.notEnoughTokensText'),
-            show_get_tokens_window,
+            bui.CallStrict(
+                show_get_tokens_window, origin_widget=get_tokens_button
+            ),
             ok_text=bui.Lstr(resource='tokens.getTokensText'),
             width=460,
             height=130,
+            origin_widget=origin_widget,
         )
     else:
         ConfirmWindow(
@@ -814,39 +845,45 @@ def show_get_tokens_prompt() -> None:
             cancel_button=False,
             width=460,
             height=130,
+            origin_widget=origin_widget,
         )
 
 
-def show_get_tokens_window(origin_widget: bui.Widget | None = None) -> None:
+def show_get_tokens_window(
+    origin_widget: bui.Widget | None = None, toggle: bool = False
+) -> None:
     """Transition to the get-tokens main-window from anywhere."""
 
-    # NOTE TO USERS: The code below is not the proper way to do things;
+    # NOTE TO USERS: The code below is not the standard way to do things;
     # whenever possible one should use a MainWindow's
     # main_window_replace() or main_window_back() methods or
     # bauiv1.auxiliary_window_activate(). We just need to do things a
     # bit more manually in this particular case.
 
-    # Basically we want to pop up our auxiliary window but we don't want
-    # to replace any existing auxiliary windows; we want our close
-    # button to go back to whatever was there already, no matter whether
-    # it was an auxiliary window or not.
+    # Basically we want to push our window on to the stack from
+    # anywhere so we can go back to where we were once done even if it
+    # was an auxiliary window.
 
     prev_main_window = bui.app.ui_v1.get_main_window()
 
     # Special-case: If it seems we're already in the window, do nothing.
     if isinstance(prev_main_window, GetTokensWindow):
+        if toggle:
+            prev_main_window.main_window_back()
         return
 
     ui = bui.app.ui_v1
-    # Set our new main window.
+    # Set our new main window. Note that we pass auxiliary_style=False
+    # so that we get a back button instead of a close button.
     ui.set_main_window(
-        GetTokensWindow(origin_widget=origin_widget),
+        GetTokensWindow(origin_widget=origin_widget, auxiliary_style=False),
         from_window=False,  # Don't check where we're coming from.
         back_state=ui.save_current_main_window_state(),
-        is_auxiliary=True,
+        is_auxiliary=False,
         suppress_warning=True,
+        extra_type_id='',
     )
 
     # Transition out any previous main window.
     if prev_main_window is not None:
-        prev_main_window.main_window_close()
+        prev_main_window.main_window_close(transition='out_left')

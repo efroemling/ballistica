@@ -357,6 +357,7 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
   double chest_2_ad_allow_time;
   double chest_3_ad_allow_time;
   int gold_pass{};
+  const char* store_style;
 
   static const char* kwlist[] = {"tickets",
                                  "tokens",
@@ -390,9 +391,10 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
                                  "chest_1_ad_allow_time",
                                  "chest_2_ad_allow_time",
                                  "chest_3_ad_allow_time",
+                                 "store_style",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "iisiisssipspssssddddddddiiiidddd",
+          args, keywds, "iisiisssipspssssddddddddiiiidddds",
           const_cast<char**>(kwlist), &tickets, &tokens, &league_type,
           &league_number, &league_rank, &achievements_percent_text, &level_text,
           &xp_text, &inbox_count, &inbox_count_is_max, &inbox_announce_text,
@@ -403,7 +405,7 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
           &chest_3_unlock_time, &chest_0_unlock_tokens, &chest_1_unlock_tokens,
           &chest_2_unlock_tokens, &chest_3_unlock_tokens,
           &chest_0_ad_allow_time, &chest_1_ad_allow_time,
-          &chest_2_ad_allow_time, &chest_3_ad_allow_time)) {
+          &chest_2_ad_allow_time, &chest_3_ad_allow_time, &store_style)) {
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
@@ -429,6 +431,7 @@ static auto PySetRootUIAccountValues(PyObject* self, PyObject* args,
       chest_0_unlock_tokens, chest_1_unlock_tokens, chest_2_unlock_tokens,
       chest_3_unlock_tokens, chest_0_ad_allow_time, chest_1_ad_allow_time,
       chest_2_ad_allow_time, chest_3_ad_allow_time);
+  appmode->SetRootUIStoreStyle(store_style);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -472,6 +475,7 @@ static PyMethodDef PySetRootUIAccountValuesDef = {
     "      chest_1_ad_allow_time: float,\n"
     "      chest_2_ad_allow_time: float,\n"
     "      chest_3_ad_allow_time: float,\n"
+    "      store_style: str,\n"
     ") -> None\n"
     "\n"
     "Pass values to the native layer for use in the root UI or elsewhere.",

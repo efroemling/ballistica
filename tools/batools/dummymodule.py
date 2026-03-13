@@ -124,9 +124,8 @@ def _writefuncs(
     spacing: int,
     as_method: bool,
 ) -> str:
-    # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
     out = ''
     spcstr = '\n' * spacing
     indstr = ' ' * indent
@@ -306,6 +305,8 @@ def _writefuncs(
                 returnstr = 'return (0, 0)'
             elif returns == 'list[dict[str, Any]]':
                 returnstr = "return [{'foo': 'bar'}]"
+            elif returns == 'list[dict[str, str]]':
+                returnstr = "return [{'foo': 'bar'}]"
             elif returns in {
                 'session.Session',
                 'team.Team',
@@ -346,7 +347,8 @@ def _writefuncs(
                 returnstr = 'return ' + returns + '()'
             else:
                 raise RuntimeError(
-                    f'Unknown returns value: {returns} for {funcname}'
+                    f'Unknown returns value: {returns} for {funcname}.'
+                    f' You may need to add this case to dummymodule.py.'
                 )
             returnstr = (
                 f'# This is a dummy stub;'
@@ -716,8 +718,6 @@ def _formatdoc(
 
 def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
-    # pylint: disable=too-many-locals
     from batools.docs import parse_docs_attrs
 
     out = ''
@@ -1043,16 +1043,13 @@ def generate_dummy_modules(projroot: str) -> None:
         # Also pass our .venv path so any recursive invocations of Python
         # will properly pick up our modules (for things like black formatting).
 
-        # pylint: disable=inconsistent-quotes
-        subprocess.run(
-            [binary_path, '--command', pycmd],
-            env=dict(
-                os.environ,
-                PYTHONDONTWRITEBYTECODE='1',
-                PATH=f'.venv/bin:{os.environ["PATH"]}',
-            ),
-            check=True,
+        env: dict[str, str] = os.environ.copy()
+        env.update(
+            PYTHONDONTWRITEBYTECODE='1',
+            PATH=f'.venv/bin:{os.environ['PATH']}',
         )
+        subprocess.run([binary_path, '--command', pycmd], env=env, check=True)
+
         print(
             f'{Clr.BLD}{Clr.BLU}Generated {gencount} dummy-modules'
             f' {Clr.RST}(in {builddir}){Clr.RST}{Clr.BLD}{Clr.BLU}.{Clr.RST}',

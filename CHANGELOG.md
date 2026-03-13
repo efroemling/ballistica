@@ -1,4 +1,163 @@
-### 1.7.54 (build 22607, api 9, 2025-11-01)
+### 1.7.61 (build 22758, api 9, 2026-03-12)
+- Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)
+- OS-Font-Rendering now works on Windows, so all languages and emoji should
+  render properly (Thanks Claude!).
+- OS-Font-Rendering now works on Linux (or other Posix-y platforms like Mac
+  homebrew) when Cairo/Pango is detected, so all languages and emoji should
+  render properly there too (Thanks Claude!).
+- Windows builds now use ANGLE (Almost Native Graphics Layer Engine) instead of
+  relying directly on OpenGL. ANGLE is an implementation of OpenGL ES that runs
+  on top of Direct3D, which gives us much better support across hardware on
+  Windows than we had before.
+- Added scenev1 protocol 36, which enables V2 auth for servers. This allows
+  servers to receive authenticated V2 account info for all players before they
+  are allowed to join and fixes the spoofing vulnerabilities that V1 auth had.
+  V2 account ids look like 'a-XXX' whereas old V1 looked like 'pb-XXXX'. The
+  default protocol is still 33, but if you are running a server it is highly
+  recommended to set your protocol to 36 in your server config to enable this.
+- Added `bascenev1.SessionPlayer.get_account_id()`, which supersedes the old
+  `get_v1_account_id()`. The new method returns a V1 account id for players
+  connected via protocol < 36 and a V2 account id for protocol >= 36.
+  `get_v1_account_id()` is now deprecated and will be removed when api 9
+  support ends.
+- Wired up an http request on the V1 master server you can use to get V2 account
+  ids given a V1 account id. You can use this to migrate old account databases
+  for V2 auth. https://legacy.ballistica.net/v2id/YOURV1IDHERE
+- Clients will now wait for responses for up to 10 seconds when connecting to a
+  server and 30 seconds if contact is lost once connected. Hopefully this
+  reduces disconnects due to momentary network issues. Holler if this feels like
+  too long. Old values were 5 and 10 seconds respectively.
+- Improved efficiency of various low level logging calls in the C++ layer
+  (Thanks std::string_view!).
+- Fixed an issue where clicks could sometimes be lost in the nearby-parties
+  browser.
+- Fixed party window sub-menus staying after closing the root window.
+  (Thanks temp!)
+- Add `bascenev1.get_client_ping` which returns the current ping (RTT in ms)
+  for a connected client.
+- Simplified the Python build process for Android (see
+  `efrotools.python_build_android`). For now we're still compiling to a static
+  library which has some technical advantages for our use-case over the
+  officially-supported many-shared-libraries route. The old build path is still
+  in place (labeled '_old') but I'll remove it soon.
+- Android Python has been bumped to the latest bug fix release (3.13.12).
+- Fixed an issue where the sqlite3 module was not available in Android Python.
+- Windows builds will create a .dmp file in the executable directory on crashes,
+  which can be useful to send to me to diagnose crash bugs.
+- Starting to add some tests of low level C++ stuff (the Object class in this
+  case) to make sure it stays in good working order. Do `make test-ex` to see
+  that stuff.
+- Server with v2-auth enabled now provide verified account-ids of all clients
+  in the client-info-lists they send out.
+- Added GL debug logging. This can hopefully give us clues if we're doing
+  something that doesn't play nicely with certain graphics hardware. To enable
+  this, flip logging levels for `ba.gfx` to 'info' or 'debug' in the dev
+  console.
+- The client now connects to basn (regional) nodes using proper dns names with
+  standard public TLS. No more passing around self-signed-certificates and other
+  weirdness that is more likely to be blocked at the network level.
+- Volume slider values now properly match user expectations. This means 50%
+  volume is half as loud as 100%, and lower volumes can now be fine tuned better
+  (Thanks TheMikirog!).
+- Added support for `datetime.date` values to dataclassio (serialized as
+  YYYY-MM-DD strings).
+
+### 1.7.60 (build 22709, api 9, 2026-02-11)
+- Fixed a longstanding issue causing impact, roll, and skid sounds to not
+  function.
+- Fun easter-egg when clicking characters in inventory window (Thanks
+  EraOSBeta!)
+- It is no longer possible to capture the hill from below the platform in happy
+  thoughts king of the hill (Thanks ZackerDC!)
+- Added Japanese translation (Thanks internet stranger!!)
+- Removed final remnants of the old store UI.
+- Tweaked flag positions on Roundabout to reduce tossing-the-flag-across cheese
+  (Thanks SoK!).
+- Fixed an error that could occur when leaving solo mode elimination (Thanks
+  FluffyPal0!).
+- Asset-package versions now use a date-based version format instead of a
+  numeric one. So instead of `a-0.bastdassets.5`, built-in assets will now come
+  from something like `a-0.bastdassets.260116` (YYMMDD).
+- Flatpak package name is now `net.froemling.bombsquad` instead of
+  `net.froemling.BombSquad` along with improved package metadata.
+  Installing new flatpak builds alongside old flatpak builds will create 2 
+  seperate installs.
+- Added `flatpak-generate-flathub-manifest` make target that will generate 
+  manifest for flathub in `build/flathub`
+- Updated Android audio stack to OpenALSoft 1.25.1 and oboe 1.10.0.
+- Updated Mac and Window audio stack to OpenALSoft 1.25.1.
+- Fixed an issue with overlapping widgets in the corner of the Plugins window
+  when shown from within a game.
+- Cleaned up some Makefile targets. Targets such as `check2` or `preflight2` are
+  now called `check-ex`, `preflight-ex`, etc. These targets are slower but more
+  complete than regular versions; ideal for things like CI where
+  accuracy/consistency is more important than iteration speed. In line with
+  this, the `test-fast` target is now `test` and the old regular `test` target
+  is now `test-ex`.
+- We now run Pylint in multiprocess mode for regular check targets but not for
+  'ex' ones. When I last tried this years ago it gave somewhat flaky
+  nondeterministic results, but apparently it is better now. We'll see. The 'ex'
+  versions still run in a single-process so CI should catch anything that slips
+  through interactive checks. This gives a pretty huge speedup so hopefully is a
+  good tradeoff.
+- Added a null audio device to prevent crash when no audio device is available
+- Flatpak permissions adjusted to allow gamepads to be properly detected and the
+  configuration directory to be created if it does not already exist.
+  
+### 1.7.59 (build 22677, api 9, 2025-12-12)
+- Added a 'League President' button in the league-rank window. The back-end is
+  still under construction, but it'll soon be possible to bid tickets to become
+  president of your current league. It is a totally meaningless role but I'm
+  hoping it'll be a fun way to burn some unused tickets for folks who have
+  unlocked everything in the store.
+- DocUI buttons with no actions assigned now make error beep noises instead of
+  click noises. Hopefully this helps communicate that they don't actually do
+  anything. Currently static content in DocUI has to be built out of selectable
+  buttons to facilitate scrolling with controller/keyboard arrow keys (by
+  selecting neighboring buttons). Perhaps we can come up with an alternative in
+  the future.
+
+### 1.7.58 (build 22669, api 9, 2025-12-09)
+- Split up some store categories into multiple smaller subcategories to keep row
+  sizes down.
+- Made a lovely clay plus icon for things like the new-profile button.
+- Finally ported store decorations (Santa or other characters poking up behind
+  the store button) to the toolbar store button. They've been missing in action
+  since before the toolbar revamp a while back.
+
+### 1.7.57 (build 22660, api 9, 2025-12-06)
+- Fixed an issue where holding left or right on a keyboard with fast key repeats
+  would cause weird laggy scrolling.
+- Adding purple tickets, which will likely be an ultra-rare type of ticket
+  earned in-game that can be used to unlock particular things in the store.
+
+### 1.7.56 (build 22655, api 9, 2025-12-04)
+- First new character in a while: Betty! (Thanks SoK!!!!)
+- Heavily refactored scroll and h-scroll ui logic. Scrolling should now behave
+  pretty naturally across touchscreens, mice, and trackpads, including momentum
+  scrolling on Mac. CMake builds no longer have weird fake momentum. Please
+  holler if you run across any scrolling situations that feel wonky.
+- Left/right swipes that start on page-left/right buttons in a h-scroll now
+  function for scrolling (instead of getting eaten by the buttons).
+- On Android builds, mice and trackpads now function the same as on Desktop
+  builds instead of behaving like touches. This means buttons will highlight on
+  mouse-over, scrollbars can be dragged, etc.
+  
+
+### 1.7.55 (build 22649, api 9, 2025-12-01)
+- The 'get-tokens' plus button now allows going back to whatever window one was
+  on before, even auxiliary windows. Previously it was an auxiliary window
+  itself so it would replace other auxiliary windows.
+- Fixed an issue where the 'get more games' button in the playlist editor would
+  go to the old store UI instead of the new one.
+- Added page left/right buttons to help navigate long h-scroll lines.
+- Tightened up some UI highlighting logic. Hovering over a scrollbar thumb
+  should no longer highlight buttons behind the thumb, etc.
+- Cleaned up some scrolling event logic to feel more intuitive. It is now
+  possible to go from vertical scrolling in a scroll-widget to horizontally
+  scrolling in a child widget with one swipe, etc.
+
+### 1.7.54 (build 22634, api 9, 2025-11-20)
 - `scrollwidget` and `hscrollwidget` now center selected items that are too
   large to fit completely in view instead of unpredictably scrolling to the
   beginning or end of them. This makes show-buffer values (which effectively
@@ -7,6 +166,30 @@
   'large', and 'larger'. These correspond to the styles that are normally
   selected based on button dimensions; you can now choose them explicitly if you
   like.
+- Added `DocUI` (short for Document-Based-UI) - a high level layer built on top
+  of `bauiv1` which allows defining a UI as a dataclass structure. This system
+  aims to makes it easier to create mostly-bullet-proof UIs that work at any UI
+  scale with any amount of content and also makes it possible to serve UIs
+  through a webserver or other means. Originally this was called `CloudUI` due
+  to that feature being my primary motivation for making it, but I renamed it to
+  `DocUI` after some feedback and further thought. I want it to be clear that it
+  is also useful for purely local UI creation; not only cloud based stuff. To
+  learn more, poke the `DocUI Test` button in the `UI` dev-console tab.
+- Added a `better_bg_fit` arg to `bauiv1.buttonwidget()`. When set to True,
+  button widgets do a better job of fitting their background images to their
+  widget bounds. The old fitting code did not scale consistently, meaning a
+  200x50 size button might fit button bounds nicely while a 400x100 button would
+  not. With this new setting, scaling is consistent and tightly calibrated to
+  fit bounds. It is enabled by default for doc-ui buttons. See the 'Bounds
+  Tests' page in the dev-console's doc-ui test page for more.
+- Added a 'squareWide' `button_type` option in `bauiv1.buttonwidget()` and a
+  corresponding `ButtonType.SQUARE_WIDE` in doc-ui.
+- The store has been replaced with a shiny new one that uses DocUI.
+- The inventory page is finally fully filled out (using DocUI).
+- Added a `fade` arg to `bauiv1.spinnerwidget()`. Pass `False` to make the
+  spinner appear/disappear immediately instead of fading.
+- Widget ids can now be any string; there are no longer restrictions on which
+  characters can be used.
   
 ### 1.7.53 (build 22597, api 9, 2025-10-25)
 - Fixes an issue where deleting player profiles would error.
@@ -789,7 +972,8 @@
   two forms. Now it is possible to provide both.
 - Spaz classes now have a `default_hitpoints` which makes customizing that
   easier (Thanks rabbitboom!)
-- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`, `docker-server-debug`, `docker-clean` and `docker-save` targets
+- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`, 
+  `docker-server-debug`, `docker-clean` and `docker-save` targets
   to Makefile.
 - Fixed an issue in Assault where being teleported back to base with a sticky
   bomb stuck to you would do some crazy rubber-band-launching thing (Thanks

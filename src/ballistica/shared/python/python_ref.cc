@@ -171,6 +171,12 @@ auto PythonRef::ValueIsString() const -> bool {
   return Python::IsString(obj_);
 }
 
+auto PythonRef::ValueIsSequence() const -> bool {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+  return Python::IsSequence(obj_);
+}
+
 auto PythonRef::ValueAsLString() const -> std::string {
   assert(Python::HaveGIL());
   ThrowIfUnset();
@@ -190,6 +196,26 @@ auto PythonRef::ValueAsStringSequence() const -> std::vector<std::string> {
   assert(Python::HaveGIL());
   ThrowIfUnset();
   return Python::GetStrings(obj_);
+}
+
+auto PythonRef::ValueAsSequence() const -> std::vector<PythonRef> {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+
+  if (!PySequence_Check(obj_)) {
+    throw Exception("Expected a sequence object; got type "
+                        + Python::ObjTypeToString(obj_) + ".",
+                    PyExcType::kType);
+  }
+
+  Py_ssize_t size = PySequence_Size(obj_);
+
+  std::vector<PythonRef> result;
+  result.reserve(static_cast<size_t>(size));
+  for (Py_ssize_t i = 0; i < size; ++i) {
+    result.push_back(PythonRef::Stolen(PySequence_GetItem(obj_, i)));
+  }
+  return result;
 }
 
 auto PythonRef::ValueAsOptionalInt() const -> std::optional<int64_t> {
@@ -224,6 +250,12 @@ auto PythonRef::ValueAsOptionalStringSequence() const
     return {};
   }
   return Python::GetStrings(obj_);
+}
+
+auto PythonRef::ValueAsBool() const -> bool {
+  assert(Python::HaveGIL());
+  ThrowIfUnset();
+  return Python::GetBool(obj_);
 }
 
 auto PythonRef::ValueAsInt() const -> int64_t {

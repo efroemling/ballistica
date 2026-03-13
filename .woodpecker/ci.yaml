@@ -20,14 +20,14 @@ steps:
     image: codeberg.org/3ra/ballistica-dev:latest
     commands:
       - cd ../check_linux
-      - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check
+      - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check-ex
     depends_on: [parallel-prepare]
   - name: build-and-test-linux
     image: codeberg.org/3ra/ballistica-dev:latest
     commands:
       - cd ../build_and_test_linux
       - make cmake-server-build
-      - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test
+      - BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_ENABLE_BUILDS=1 BA_APP_RUN_BUILD_HEADLESS=1 make test-ex
     depends_on: [parallel-prepare]
   - name: spinoff-test-linux
     image: codeberg.org/3ra/ballistica-dev:latest

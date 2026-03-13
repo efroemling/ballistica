@@ -41,16 +41,14 @@ class PlayWindow(bui.MainWindow):
             print('HELLO FROM TEST')
             plus = bui.app.plus
             assert plus is not None
-            plus.cloud.send_message_cb(
-                bacommon.cloud.SecureDataCheckMessage(
-                    data=b'fo', signature=b'mo'
-                ),
-                on_response=lambda r: print('GOT CHECK RESPONSE', r),
-            )
-            plus.cloud.send_message_cb(
-                bacommon.cloud.SecureDataCheckerRequest(),
-                on_response=lambda r: print('GOT CHECKER RESPONSE', r),
-            )
+            if plus.accounts.primary is not None:
+                with plus.accounts.primary:
+                    plus.cloud.send_message_cb(
+                        bacommon.cloud.TransientAPIKeyRequest(),
+                        on_response=lambda r: print(
+                            'GOT TRANSIENT API KEY RESPONSE', r
+                        ),
+                    )
 
         # Preload some modules we use in a background thread so we won't
         # have a visual hitch when the user taps them.
@@ -603,7 +601,7 @@ class PlayWindow(bui.MainWindow):
         assert plus is not None
 
         if plus.get_v1_account_state() != 'signed_in':
-            show_sign_in_prompt()
+            show_sign_in_prompt(origin_widget=self._coop_button)
             return
 
         self.main_window_replace(

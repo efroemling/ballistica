@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import os
+import types
 import logging
 from typing import TYPE_CHECKING, override
 
@@ -93,6 +94,13 @@ rst_epilog = """
 nitpicky = True
 nitpick_ignore = [
     #
+    # Stuff that is part of 'private' apis that we've intentionally
+    # hidden despite having public naming. See 'skip_prefixes' below.
+    ('py:class', 'v1prep.PagePrep'),
+    ('py:class', 'bacommon.displayitem.Wrapper'),
+    ('py:class', 'bacommon.displayitem.Item'),
+    ('py:class', 'bacommon.displayitem.ItemTypeID'),
+    #
     # Stuff that seems like we could fix (presumably issues due to not
     # importing things at runtime (only if TYPE_CHECKING), etc.)
     ('py:class', 'Enum'),
@@ -155,6 +163,38 @@ nitpick_ignore = [
     ('py:attr', 'socket.AF_INET'),
     ('py:attr', 'socket.AF_INET6'),
     ('py:class', 'weakref.ReferenceType'),
+    #
+    # Additional bs.* types not yet covered above.
+    ('py:class', 'bs.NodeActor'),
+    ('py:class', 'bs.Player'),
+    ('py:class', 'bs.Timer'),
+    ('py:class', 'bs.Vec3'),
+    #
+    # Private module types.
+    ('py:class', 'bascenev1._dependency.DependencyEntry'),
+]
+
+# Regex-based nitpick ignores for whole categories of references.
+nitpick_ignore_regex = [
+    # Types from private/skipped namespaces. Sphinx 9.x generates
+    # cross-references to these from public API signatures even though
+    # the modules themselves are excluded (see skip_prefixes below).
+    ('py:class', r'bacommon\.classic\..*'),
+    ('py:class', r'bacommon\.clienteffect\..*'),
+    ('py:class', r'bacommon\.cloud\..*'),
+    # 'cdlg' is an alias for bacommon.clouddialog (a skipped namespace).
+    ('py:class', r'cdlg\..*'),
+    # Truncated generic type strings that Sphinx 9.x emits as cross-reference
+    # targets when processing complex type annotations such as
+    # dict[str, X], list[tuple[str, ...]], Callable[[], X], Literal['a', 'b'].
+    # The warning targets are malformed (e.g. 'dict[str' with no closing
+    # bracket), which strongly suggests this is a Sphinx bug — it appears to be
+    # splitting annotation strings at commas before fully parsing them. Worth
+    # re-checking on future Sphinx versions to see if it has been fixed.
+    ('py:class', r'Callable\[.*'),
+    ('py:class', r'dict\[.*'),
+    ('py:class', r'list\[.*'),
+    ('py:class', r'Literal\[.*'),
 ]
 
 # Gives us links to common Python types.
@@ -173,7 +213,11 @@ toc_object_entries_show_parents = 'hide'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files. This pattern also
 # affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+]
 
 
 def _wrangle_logging() -> None:
@@ -251,13 +295,56 @@ def _wrangle_logging() -> None:
 
 _wrangle_logging()
 
-# def _cb(app: Sphinx, *args: Any) -> None:
-#     logger = logging.getLogger('sphinx')  # Get the root logger
-#     handlers = logger.handlers  # Get the list of handlers
-#     print(f'HELLO; Current logging handlers2: {handlers}', flush=True)
 
-# _cb(None)
-# def setup(app: Sphinx) -> None:
-#     """Do the thing."""
-#     # app.connect('autodoc-skip-member', skip_duplicate)
-#     app.connect('config-inited', _cb)
+# Prevent docs generation for particular packages that we consider
+# 'private' despite having public naming. Note that these will still be
+# listed under their parent package's page, but the only thing visible
+# in them will be their module docstring (which should explain that they
+# are private).
+skip_prefixes = [
+    'bauiv1lib.docui.v1prep.',
+    'bacommon.displayitem.',
+    'bacommon.net.',
+    'bacommon.cloud.',
+    'bacommon.transfer.',
+    'bacommon.build.',
+    'bacommon.bacloud.',
+    'bacommon.assets.',
+    'bacommon.classic.',
+    'bacommon.clouddialog.',
+    'bacommon.clienteffect.',
+]
+
+# Make sure we don't unintentionally skip 'foo.bar' by adding 'foo.b'
+assert all(p.endswith('.') for p in skip_prefixes)
+
+
+def skip_private_submodules(
+    app: Sphinx, what: str, name: str, obj: Any, skip: bool, options: Any
+) -> bool | None:
+    """Skip submodules we consider private despite looking public."""
+    # pylint: disable=too-many-positional-arguments
+    del app, options  # Unused.
+
+    # If this member is an actual module object
+    if what == 'module' and isinstance(obj, types.ModuleType):
+        fqname = obj.__name__
+    # For everything else (functions, classes, etc.)
+    else:
+        modname = getattr(obj, '__module__', None)
+        fqname = f'{modname}.{name}' if modname else name
+
+    if any(fqname.startswith(p) for p in skip_prefixes):
+        return True
+
+    return skip
+
+
+def setup(app: Sphinx) -> Any:
+    """Do the thing."""
+    app.connect('autodoc-skip-member', skip_private_submodules)
+    return {
+        'version': '1.0',
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }

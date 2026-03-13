@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import astroid
 import astroid.nodes
 
 # from pylint.checkers import BaseChecker
@@ -265,7 +264,6 @@ def var_annotations_filter(node: astroid.nodes.NodeNG) -> astroid.nodes.NodeNG:
 
     This accounts for deferred evaluation.
     """
-    # pylint: disable=too-many-branches
     # pylint: disable=too-many-nested-blocks
 
     if using_future_annotations(node):

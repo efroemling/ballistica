@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Spinoff system for spawning child projects from a ballistica project."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -367,7 +368,6 @@ class SpinoffContext:
     def run(self) -> None:
         """Do the thing."""
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
 
         self._read_state()
 
@@ -1675,7 +1675,6 @@ class SpinoffContext:
         print_individual_updates: bool,
         is_project_file: bool = False,
     ) -> None:
-        # pylint: disable=too-many-locals
         src_entity = self._src_entities[src_path]
         dst_path = src_entity.dst
         src_path_full = os.path.join(self._src_root, src_path)
@@ -1785,8 +1784,8 @@ class SpinoffContext:
             if not self._should_filter_src_file(src_path):
                 with open(src_path_full, 'rb') as infile:
                     data = infile.read()
-                with open(dst_path_full, 'wb') as outfile:
-                    outfile.write(data)
+                with open(dst_path_full, 'wb') as outfileb:
+                    outfileb.write(data)
             else:
                 with open(src_path_full, 'rb') as infile:
                     encoding = self._encoding_for_file(src_path_full)
@@ -1796,8 +1795,8 @@ class SpinoffContext:
                         print(f"Error decoding file: '{src_path}'.")
                         raise
                     contents_out = self._filter_file(src_path, contents_in)
-                    with open(dst_path_full, 'wb') as outfile:
-                        outfile.write(contents_out.encode(encoding))
+                    with open(dst_path_full, 'wb') as outfileb:
+                        outfileb.write(contents_out.encode(encoding))
 
         return DstEntity(
             entity_type=src_entity.entity_type,
@@ -2047,8 +2046,6 @@ class SpinoffContext:
     ) -> None:
         # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
 
         # Ok, *something* differs from our cache. Need to take a closer look.
 

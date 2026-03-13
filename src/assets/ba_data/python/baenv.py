@@ -14,6 +14,7 @@ Ballistica can be used without explicitly configuring the environment in
 order to integrate it in arbitrary Python environments, but this may
 cause some features to be disabled or behave differently than expected.
 """
+
 from __future__ import annotations
 
 import os
@@ -56,8 +57,8 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22607
-TARGET_BALLISTICA_VERSION = '1.7.54'
+TARGET_BALLISTICA_BUILD = 22758
+TARGET_BALLISTICA_VERSION = '1.7.61'
 
 
 @dataclass
@@ -95,7 +96,7 @@ class EnvConfig:
     #: stderr into the engine so they show up on in-app consoles, etc.
     log_handler: LogHandler | None
 
-    # Initial data from the ``config.json`` file in the config dir.
+    #: Initial data from the ``config.json`` file in the config dir.
     initial_app_config: Any
 
     #: Timestamp when we first started doing stuff.
@@ -182,7 +183,6 @@ def configure(
     creation. This must be called before any actual Ballistica modules
     are imported; the environment is locked in as soon as that happens.
     """
-    # pylint: disable=too-many-locals
 
     # Measure when we start doing this stuff. We plug this in to show
     # relative times in our log timestamp displays and also pass this to

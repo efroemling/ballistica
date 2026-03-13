@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Provides a score screen for coop games."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -10,7 +11,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 from efro.util import strict_partial
-import bacommon.bs
+import bacommon.classic
 from bacommon.login import LoginType
 import bascenev1 as bs
 import bauiv1 as bui
@@ -133,10 +134,10 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         assert all(isinstance(i, bs.PlayerInfo) for i in self._playerinfos)
 
         self._score: int | None = settings['score']
-        assert isinstance(self._score, (int, type(None)))
+        assert isinstance(self._score, int | None)
 
         self._fail_message: bs.Lstr | None = settings['fail_message']
-        assert isinstance(self._fail_message, (bs.Lstr, type(None)))
+        assert isinstance(self._fail_message, bs.Lstr | None)
 
         self._begin_time: float | None = None
 
@@ -336,9 +337,6 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
     def show_ui(self) -> None:
         """Show the UI for restarting, playing the next Level, etc."""
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
 
         assert bui.app.classic is not None
 
@@ -1076,9 +1074,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         ).autoretain()
 
     def _got_friend_score_results(self, results: list[Any] | None) -> None:
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         from efro.util import asserttype
 
         # delay a bit if results come in too fast
@@ -1211,14 +1207,14 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             ).autoretain()
 
     def _on_v2_score_results(
-        self, response: bacommon.bs.ScoreSubmitResponse | Exception
+        self, response: bacommon.classic.ScoreSubmitResponse | Exception
     ) -> None:
 
         if isinstance(response, Exception):
             logging.debug('Got error score-submit response: %s', response)
             return
 
-        assert isinstance(response, bacommon.bs.ScoreSubmitResponse)
+        assert isinstance(response, bacommon.classic.ScoreSubmitResponse)
 
         # Aim to have these effects run shortly after the final rating
         # hit happens.
@@ -1235,9 +1231,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             )
 
     def _got_score_results(self, results: dict[str, Any] | None) -> None:
+        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
 
         plus = bs.app.plus
         assert plus is not None
@@ -1277,7 +1273,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 ):
                     with plus.accounts.primary:
                         plus.cloud.send_message_cb(
-                            bacommon.bs.ScoreSubmitMessage(score_token),
+                            bacommon.classic.ScoreSubmitMessage(score_token),
                             on_response=bui.WeakCallPartial(
                                 self._on_v2_score_results
                             ),
@@ -1513,10 +1509,10 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             self._tournament_time_remaining_text.node.text = val
 
     def _show_world_rank(self, offs_x: float) -> None:
+        # pylint: disable=too-many-statements
         # FIXME: Tidy this up.
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         assert bs.app.classic is not None
         assert self._show_info is not None
         available = self._show_info['results'] is not None
@@ -1578,7 +1574,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     ]
                     # pylint: disable=useless-suppression
                     # pylint: disable=unbalanced-tuple-unpacking
-                    (pr1, pv1, pr2, pv2, pr3, pv3) = (
+                    pr1, pv1, pr2, pv2, pr3, pv3 = (
                         bs.app.classic.get_tournament_prize_strings(
                             tourney_info, include_tickets=False
                         )

@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Provides UI for account functionality."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -27,8 +28,6 @@ class AccountSettingsWindow(bui.MainWindow):
         close_once_signed_in: bool = False,
         auxiliary_style: bool = True,
     ):
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
 
         plus = bui.app.plus
         assert plus is not None

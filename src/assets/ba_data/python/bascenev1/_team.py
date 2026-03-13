@@ -65,7 +65,8 @@ class SessionTeam:
         self.customdata = {}
 
 
-class Team[PlayerT: bascenev1.Player]:
+# class Team[PlayerT: bascenev1.Player]:
+class Team[PlayerT]:
     """A team in a specific :class:`~bascenev1.Activity`.
 
     These correspond to :class:`~bascenev1.SessionTeam` objects, but are

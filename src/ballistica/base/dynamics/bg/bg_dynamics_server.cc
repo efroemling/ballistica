@@ -234,8 +234,8 @@ class BGDynamicsServer::Tendril {
   };
 
   explicit Tendril(BGDynamicsServer* t)
-      : has_updated_{false},
-        controller_{nullptr},
+      : has_updated_{},
+        controller_{},
         emitting_{true},
         emit_rate_{0.8f + 0.4f * RandomFloat()},
         birth_time_{t->time_ms()},

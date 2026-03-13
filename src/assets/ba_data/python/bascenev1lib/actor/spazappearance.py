@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Appearance functionality for spazzes."""
+
 from __future__ import annotations
 
 import bascenev1 as bs
@@ -8,7 +9,6 @@ import bascenev1 as bs
 
 def get_appearances(include_locked: bool = False) -> list[str]:
     """Get the list of available spaz appearances."""
-    # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
     plus = bs.app.plus
     assert plus is not None
@@ -121,11 +121,11 @@ class Appearance:
 
 
 def register_appearances() -> None:
+    # pylint: disable=too-many-statements
     """Register our builtin spaz appearances."""
 
     # This is quite ugly but will be going away so not worth cleaning up.
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     # Spaz #######################################
     t = Appearance('Spaz')
@@ -606,7 +606,10 @@ def register_appearances() -> None:
     t.default_color = (0.3, 0.5, 0.8)
     t.default_highlight = (1, 0, 0)
 
-    # Assassin ###################################
+    # Lucky the Leprechaun ############################
+    #
+    # Note: repurposing assassin slot. Lucky is not actually an
+    # assassin. He is a good and friendly Leprechaun.
     t = Appearance('Zola')
     t.color_texture = 'assassinColor'
     t.color_mask_texture = 'assassinColorMask'
@@ -630,8 +633,8 @@ def register_appearances() -> None:
     t.pickup_sounds = assassin_sounds
     t.fall_sounds = ['assassinFall']
     t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    t.default_color = (0.2, 1.0, 0.5)
+    t.default_highlight = (1.0, 0.3, 0)
 
     # Wizard ###################################
     t = Appearance('Grumbledorf')
@@ -818,9 +821,9 @@ def register_appearances() -> None:
     t.death_sounds = ['oldLadyDeath']
     t.pickup_sounds = old_lady_sounds
     t.fall_sounds = ['oldLadyFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    t.style = 'bones'
+    t.default_color = (0.2, 1.0, 1.0)
+    t.default_highlight = (0.5, 0.25, 1.0)
 
     # Gladiator ###################################
     t = Appearance('Gladiator')

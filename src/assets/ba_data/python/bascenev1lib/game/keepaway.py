@@ -215,7 +215,7 @@ class KeepAwayGame(bs.TeamGameActivity[Player, Team]):
         for player in self.players:
             holdingflag = False
             try:
-                assert isinstance(player.actor, (PlayerSpaz, type(None)))
+                assert isinstance(player.actor, PlayerSpaz | None)
                 if (
                     player.actor
                     and player.actor.node

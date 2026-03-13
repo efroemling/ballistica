@@ -21,7 +21,7 @@
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 
 // Need to move away from OpenAL on Apple stuff.
 #if __clang__
@@ -293,6 +293,11 @@ void SoundAsset::DoLoad() {
 #if BA_ENABLE_AUDIO
   assert(!g_base->audio_server->paused());
 
+  // Skip actual loading in null device mode.
+  if (g_base->audio_server->using_null_device()) {
+    return;
+  }
+
   // Note: streamed sources create buffers as they're used; not here.
   if (!is_streamed_) {
     // Generate our buffer.
@@ -318,6 +323,11 @@ void SoundAsset::DoUnload() {
   assert(g_base->InAudioThread());
   assert(valid_);
 #if BA_ENABLE_AUDIO
+  // Skip unload in null device mode.
+  if (g_base->audio_server->using_null_device()) {
+    return;
+  }
+
   if (!is_streamed_) {
     assert(buffer_);
     CHECK_AL_ERROR;

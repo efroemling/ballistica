@@ -182,6 +182,10 @@ class PythonRef {
   auto ValueAsOptionalStringSequence() const
       -> std::optional<std::vector<std::string>>;
 
+  auto ValueIsSequence() const -> bool;
+  auto ValueAsSequence() const -> std::vector<PythonRef>;
+
+  auto ValueAsBool() const -> bool;
   auto ValueAsInt() const -> int64_t;
   auto ValueAsDouble() const -> double;
   auto ValueAsOptionalInt() const -> std::optional<int64_t>;

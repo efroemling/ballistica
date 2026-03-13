@@ -29,7 +29,6 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         select_get_more_maps_button: bool = False,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-positional-arguments
 
         from bascenev1 import get_filtered_map_name
@@ -67,8 +66,10 @@ class PlaylistMapSelectWindow(bui.MainWindow):
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
+                toolbar_visibility=(
+                    'menu_minimal_no_back'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
             ),
             transition=transition,
@@ -153,8 +154,6 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         return False
 
     def _refresh(self, select_get_more_maps_button: bool = False) -> None:
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         from bascenev1 import (
             get_map_class,
@@ -288,8 +287,12 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             )
 
     def _on_store_press(self) -> None:
+        import bacommon.docui.v1 as dui1
+
+        from bauiv1lib.docui import DocUIWindow
+        from bauiv1lib.connectivity import wait_for_connectivity
+        from bauiv1lib.store import StoreUIController
         from bauiv1lib.account.signin import show_sign_in_prompt
-        from bauiv1lib.store.browser import StoreBrowserWindow
 
         # No-op if we're not in control.
         if not self.main_window_has_control():
@@ -298,17 +301,28 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             show_sign_in_prompt()
             return
 
         self._selected_get_more_maps = True
 
-        self.main_window_replace(
-            lambda: StoreBrowserWindow(
-                show_tab=StoreBrowserWindow.TabID.MAPS,
-                origin_widget=self._get_more_maps_button,
-                minimal_toolbars=True,
+        # Playlist editing happens in the regular non-auxiliary window
+        # stack so we can just pop up the regular auxiliary-mode store
+        # and it'll do the right thing and take us back to our editing
+        # when we close it.
+        wait_for_connectivity(
+            on_connected=lambda: bui.app.ui_v1.auxiliary_window_activate(
+                win_type=DocUIWindow,
+                win_create_call=bui.CallStrict(
+                    StoreUIController().create_window,
+                    dui1.Request('/'),
+                    origin_widget=self._get_more_maps_button,
+                    uiopenstateid='classicstore',
+                ),
+                win_extra_type_id=(
+                    StoreUIController.get_window_extra_type_id()
+                ),
             )
         )
 

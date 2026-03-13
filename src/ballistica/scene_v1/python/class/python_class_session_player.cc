@@ -502,9 +502,7 @@ auto PythonClassSessionPlayer::GetTeam(PythonClassSessionPlayer* self)
   BA_PYTHON_CATCH;
 }
 
-// NOTE: this returns their PUBLIC account-id; we want to keep
-// actual account-ids as hidden as possible for now.
-auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
+auto PythonClassSessionPlayer::GetAccountID(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
@@ -512,7 +510,32 @@ auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  std::string account_id = p->GetPublicV1AccountID();
+  std::string account_id = p->GetAccountID();
+  if (account_id.empty()) {
+    Py_RETURN_NONE;
+  }
+  return PyUnicode_FromString(account_id.c_str());
+  BA_PYTHON_CATCH;
+}
+
+// REMOVE WHEN API 9 SUPPORT ENDS
+auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+  if (PyErr_WarnEx(
+          PyExc_DeprecationWarning,
+          "get_v1_account_id() will be removed when api 9 support ends;"
+          " use get_account_id() instead.",
+          1)
+      == -1) {
+    return nullptr;
+  }
+  Player* p = self->player_->get();
+  if (!p) {
+    throw Exception(PyExcType::kSessionPlayerNotFound);
+  }
+  std::string account_id = p->GetAccountID();
   if (account_id.empty()) {
     Py_RETURN_NONE;
   }
@@ -728,16 +751,26 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "remove_from_game() -> None\n"
      "\n"
      "Removes the player from the game."},
+    {"get_account_id", (PyCFunction)GetAccountID, METH_NOARGS,
+     "get_account_id() -> str | None\n"
+     "\n"
+     "Return the account id this player is signed in under, or None if\n"
+     "not available. For players connected via protocol < 36 this\n"
+     "will be a V1 account id; for protocol >= 36 it will be a V2\n"
+     "account id. Note that this may require an active internet\n"
+     "connection (especially for network-connected players) and may\n"
+     "return None for a short while after a player initially joins\n"
+     "(while verification occurs)."},
     {"get_v1_account_id", (PyCFunction)GetV1AccountID,
      METH_VARARGS | METH_KEYWORDS,
-     "get_v1_account_id() -> str\n"
+     "get_v1_account_id() -> str | None\n"
      "\n"
-     "Return the V1 account id this player is signed in under, if\n"
-     "there is one and it can be determined with relative certainty.\n"
-     "Returns None otherwise. Note that this may require an active\n"
-     "internet connection (especially for network-connected players)\n"
-     "and may return None for a short while after a player initially\n"
-     "joins (while verification occurs)."},
+     ".. deprecated::\n"
+     "   Use :meth:`get_account_id` instead. This method will be\n"
+     "   removed when api 9 support ends.\n"
+     "\n"
+     "Return the account id this player is signed in under, if it can\n"
+     "be determined with relative certainty. Returns None otherwise."},
     {"setdata", (PyCFunction)SetData, METH_VARARGS | METH_KEYWORDS,
      "setdata(team: bascenev1.SessionTeam, character: str,\n"
      "  color: Sequence[float], highlight: Sequence[float]) -> None\n"

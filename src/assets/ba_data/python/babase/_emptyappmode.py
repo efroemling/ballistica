@@ -1,11 +1,10 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Provides AppMode functionality."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
-
-# from bacommon.app import AppExperience
 
 import _babase
 from babase._appmode import AppMode

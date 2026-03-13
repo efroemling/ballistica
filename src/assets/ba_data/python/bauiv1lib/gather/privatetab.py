@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, cast, override
 
 from efro.error import CommunicationError
 from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
+from bacommon.analytics import ClassicAnalyticsEvent
 import bacommon.cloud
 from bacommon.net import (
     PrivateHostingState,
@@ -63,7 +64,7 @@ class PrivateGatherTab(GatherTab):
         self._state: State = State()
         self._last_datacode_refresh_time: float | None = None
         self._hostingstate = PrivateHostingState()
-        self._v2state: bacommon.bs.PrivatePartyResponse | None = None
+        self._v2state: bacommon.classic.PrivatePartyResponse | None = None
         self._join_sub_tab_text: bui.Widget | None = None
         self._host_sub_tab_text: bui.Widget | None = None
         self._update_timer: bui.AppTimer | None = None
@@ -184,7 +185,6 @@ class PrivateGatherTab(GatherTab):
 
     def _build_hosting_config(self) -> PrivateHostingConfig:
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         from bauiv1lib.playlist import PlaylistTypeVars
         from bascenev1 import filter_playlist
 
@@ -341,7 +341,7 @@ class PrivateGatherTab(GatherTab):
                     if plus.accounts.primary is not None:
                         with plus.accounts.primary:
                             plus.cloud.send_message_cb(
-                                bacommon.bs.PrivatePartyMessage(
+                                bacommon.classic.PrivatePartyMessage(
                                     need_datacode=(
                                         self._last_datacode_refresh_time is None
                                         or time.monotonic()
@@ -357,7 +357,7 @@ class PrivateGatherTab(GatherTab):
                     self._last_v2_state_query_time = now
 
     def _on_private_party_query_response(
-        self, response: bacommon.bs.PrivatePartyResponse | Exception
+        self, response: bacommon.classic.PrivatePartyResponse | Exception
     ) -> None:
         if isinstance(response, Exception):
             self._debug_server_comm('got pp v2 state response (err)')
@@ -556,8 +556,8 @@ class PrivateGatherTab(GatherTab):
         )
 
     def _build_host_tab(self) -> None:
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-branches
         classic = bui.app.classic
         assert classic is not None
 
@@ -948,6 +948,13 @@ class PrivateGatherTab(GatherTab):
             )
 
     def _connect_to_party_code(self, code: str) -> None:
+
+        bui.app.analytics.submit_event(
+            ClassicAnalyticsEvent(
+                ClassicAnalyticsEvent.EventType.JOIN_PRIVATE_PARTY
+            )
+        )
+
         # Ignore attempted followup sends for a few seconds (this will
         # reset if we get a response).
         plus = bui.app.plus

@@ -18,10 +18,12 @@ Audio::Audio() = default;
 
 auto Audio::UseLowQualityAudio() -> bool {
   assert(g_base->InLogicThread());
+
   // Currently just piggybacking off graphics quality here.
-  if (g_core->HeadlessMode() || g_base->graphics->has_client_context()) {
+  if (g_core->HeadlessMode() || !g_base->graphics->has_client_context()) {
     return true;
   }
+
   // We don't have a frame-def to look at so need to calc this ourself; ugh.
   auto quality = Graphics::GraphicsQualityFromRequest(
       g_base->graphics->settings()->graphics_quality,

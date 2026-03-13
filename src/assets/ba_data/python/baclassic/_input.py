@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Input related functionality"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

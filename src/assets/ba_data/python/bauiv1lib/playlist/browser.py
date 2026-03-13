@@ -28,7 +28,6 @@ class PlaylistBrowserWindow(bui.MainWindow):
         playlist_select_context: PlaylistSelectContext | None = None,
     ):
         # pylint: disable=cyclic-import
-        # pylint: disable=too-many-statements
         from bauiv1lib.playlist import PlaylistTypeVars
 
         # Store state for when we exit the next game.
@@ -378,8 +377,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
             plus.run_v1_account_transactions()
 
     def _refresh(self) -> None:
-        # FIXME: Should tidy this up.
         # pylint: disable=too-many-statements
+        # FIXME: Should tidy this up.
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-nested-blocks

@@ -137,9 +137,8 @@ class BuildStager:
             _write_payload_file(self.dst, self.is_payload_full)
 
     def _parse_args(self, args: list[str]) -> None:
-        """Parse args and apply to ourself."""
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        """Parse args and apply to ourself."""
 
         if len(args) < 1:
             raise RuntimeError('Expected at least one argument.')
@@ -224,7 +223,7 @@ class BuildStager:
                 + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
             )
             self.include_pylib = True
-            self.pylib_src_path = 'python-apple/macos/pylib'
+            self.pylib_src_path = 'python-apple-old/macos/pylib'
             self.tex_suffix = '.dds'
         elif platform_arg == '-xcode-ios':
             self.desc = 'xcode ios'
@@ -323,7 +322,6 @@ class BuildStager:
             raise RuntimeError(f"Invalid winplt: '{winplt}'.")
 
     def _sync_windows_extras(self) -> None:
-        # pylint: disable=too-many-branches
         assert self.win_extras_src is not None
         assert self.win_platform is not None
         assert self.win_type is not None
@@ -392,11 +390,17 @@ class BuildStager:
 
         if self.win_type == 'win':
             toplevelfiles += [
+                'libEGL.dll',
+                'libGLESv2.dll',
                 'libvorbis.dll',
                 'libvorbisfile.dll',
                 'ogg.dll',
                 'OpenAL32.dll',
                 'SDL2.dll',
+                # zlib1.dll lives in DLLs/ (Python dependency) but also needs
+                # to be at the top level because ANGLE (libGLESv2.dll) depends
+                # on it for shader blob caching.
+                'DLLs/zlib1.dll',
             ]
         elif self.win_type == 'winserver':
             toplevelfiles += [f'python{dbgsfx}.exe']
@@ -566,7 +570,6 @@ class BuildStager:
         subprocess.run(cmd, check=True)
 
     def _sync_ba_data_new(self) -> None:
-        # pylint: disable=too-many-locals
         import json
         import stat
         import shutil
@@ -768,7 +771,6 @@ class BuildStager:
         )
 
     def _sync_python_dylib(self) -> None:
-        # pylint: disable=too-many-locals
         from batools.featureset import FeatureSet
 
         # Note: we're technically not *syncing* quite so much as

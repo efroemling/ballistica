@@ -157,6 +157,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         window: bauiv1.MainWindow,
         *,
         back_state: MainWindowState | None,
+        extra_type_id: str = '',
         from_window: bauiv1.MainWindow | None | bool = True,
         is_back: bool = False,
         is_top_level: bool = False,
@@ -174,8 +175,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         window.
         """
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         from bauiv1._window import MainWindow
 
         # If we haven't grabbed initial uiscale or screen size for
@@ -228,6 +227,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 back_state.is_top_level is None
                 or back_state.is_auxiliary is None
                 or back_state.window_type is None
+                or back_state.extra_type_id is None
             ):
                 raise RuntimeError(
                     'Provided back_state is incomplete.'
@@ -292,15 +292,18 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             assert back_state.is_top_level is not None
             assert back_state.is_auxiliary is not None
             assert back_state.window_type is type(window)
+            assert back_state.extra_type_id is not None
             window.main_window_back_state = back_state.parent
             window.main_window_is_top_level = back_state.is_top_level
             window.main_window_is_auxiliary = back_state.is_auxiliary
+            window.main_window_extra_type_id = back_state.extra_type_id
         else:
             # Store if the window is top-level so we won't complain
             # later if we go back from it and there's nowhere to go to.
             window.main_window_is_top_level = is_top_level
 
             window.main_window_is_auxiliary = is_auxiliary
+            window.main_window_extra_type_id = extra_type_id
 
             # When navigating forward, generate a back-window-state from
             # the outgoing window.
@@ -354,6 +357,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         winstate.is_top_level = window.main_window_is_top_level
         winstate.is_auxiliary = window.main_window_is_auxiliary
         winstate.window_type = type(window)
+        winstate.extra_type_id = window.main_window_extra_type_id
 
         return winstate
 
@@ -383,6 +387,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         assert state.is_top_level is not None
         assert state.is_auxiliary is not None
         assert state.window_type is not None
+        assert state.extra_type_id is not None
 
         win = state.create_window(transition=None)
         self.set_main_window(
@@ -392,6 +397,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             is_auxiliary=state.is_auxiliary,
             back_state=state.parent,
             suppress_warning=True,
+            extra_type_id=state.extra_type_id,
         )
 
     def should_suppress_window_recreates(self) -> bool:
@@ -465,6 +471,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self,
         win_type: type[bauiv1.MainWindow],
         win_create_call: Callable[[], bauiv1.MainWindow],
+        win_extra_type_id: str = '',
     ) -> None:
         """Navigate to or away from an Auxiliary window.
 
@@ -473,12 +480,12 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         ranking windows that the user might want to visit without losing
         their place in the regular hierarchy.
 
-        Calling this method with a MainWindow of the provided type
-        already in the stack will back out past it (effectively toggling
-        the 'side quest' back off).
+        If an auxiliary window matching the provided type and
+        extra-type-id exists in the stack, this call will back out past
+        it (think of it as toggling the side-quest back off).
 
-        Calling this method with a *different* auxiliary window in the
-        stack will back out past that and replace it with this
+        If a non-matching auxiliary window exists in the stack, this
+        call will back out past that and replace it with this
         (effectively ending the old side-quest and starting a new one).
         """
         # pylint: disable=unidiomatic-typecheck
@@ -498,8 +505,12 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         state = current_main_window.main_window_back_state
         while state is not None:
             assert state.window_type is not None
+            assert state.extra_type_id is not None
             if state.is_auxiliary:
-                if state.window_type is win_type:
+                if (
+                    state.window_type is win_type
+                    and state.extra_type_id == win_extra_type_id
+                ):
                     aux_matching_state = state
                 else:
                     aux_state = state
@@ -531,19 +542,22 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 back_state=aux_state.parent,
                 suppress_warning=True,
                 is_auxiliary=True,
+                extra_type_id=win_extra_type_id,
             )
             return
 
         # Ok, no auxiliary states found. Now if current window is
-        # auxiliary and the type matches, simply do a back.
+        # auxiliary and the type/extra-id matches, simply do a back.
         if (
             current_main_window.main_window_is_auxiliary
             and type(current_main_window) is win_type
+            and current_main_window.main_window_extra_type_id
+            == win_extra_type_id
         ):
             current_main_window.main_window_back()
             return
 
-        # If current window is auxiliary but type doesn't match,
+        # If current window is auxiliary but type/extra-id doesn't match,
         # swap it out for our new auxiliary UI.
         if current_main_window.main_window_is_auxiliary:
             self.clear_main_window()
@@ -553,13 +567,16 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 back_state=current_main_window.main_window_back_state,
                 suppress_warning=True,
                 is_auxiliary=True,
+                extra_type_id=win_extra_type_id,
             )
             return
 
         # Ok, no existing auxiliary stuff was found period. Just
         # navigate forward to this UI.
         new_main_win = current_main_window.main_window_replace(
-            win_create_call, is_auxiliary=True
+            win_create_call,
+            is_auxiliary=True,
+            extra_type_id=win_extra_type_id,
         )
 
         # We should always be allowed to replace the main win in this

@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Provides GameActivity class."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -469,7 +470,6 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         This is the thing in the top left corner showing the name
         and short description of the game.
         """
-        # pylint: disable=too-many-locals
         from bascenev1._freeforallsession import FreeForAllSession
         from bascenev1._gameutils import animate
         from bascenev1._nodeactor import NodeActor
@@ -629,7 +629,6 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         _bascenev1.timer(4.0, dnode.delete)
 
     def _show_tip(self) -> None:
-        # pylint: disable=too-many-locals
         from bascenev1._gameutils import animate, GameTip
 
         # If there's any tips left on the list, display one.
@@ -841,7 +840,6 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         angle: float | None = None,
     ) -> PlayerSpaz:
         """Create and wire up a player-spaz for the provided player."""
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from bascenev1._gameutils import animate
         from bascenev1._coopsession import CoopSession

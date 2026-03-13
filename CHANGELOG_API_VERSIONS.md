@@ -52,4 +52,16 @@ available builds.
   for examples.
 - `bauiv1.uicleanupcheck()` will be removed. To prepare for this, use
   `ba*.app.ui_v1.add_use_cleanup_check()` instead.
+- The `extra_type_id` arg to `ba*.app.ui_v1.set_main_window()` will no longer
+  have a default value. If you are using this method (generally you should not),
+  make sure you are passing this. It is mainly for use with DocUI windows; in
+  most other cases it can be an empty string.
+- `bascenev1.SessionPlayer.get_v1_account_id()` is deprecated; use
+  `get_account_id()` instead. The new and old functions are technically
+  identical and return V1 ids for protocol < 36 and V2 ids for protocol >= 36;
+  the new one just has a more correct name. The old name will be removed when
+  api 9 support ends.
+- The `float_times` argument on `efro.dataclassio.IOAttrs` is deprecated and
+  will be removed when api 9 support ends. Replace `IOAttrs(float_times=True)`
+  with `IOAttrs(time_format='float')`.
 

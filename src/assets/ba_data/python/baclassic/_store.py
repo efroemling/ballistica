@@ -292,6 +292,18 @@ class StoreSubsystem:
                 'icons.explodinary': {
                     'icon': babase.charstr(babase.SpecialChar.EXPLODINARY_LOGO)
                 },
+                'icons.santa_hat': {
+                    'icon': babase.charstr(babase.SpecialChar.SANTA_HAT)
+                },
+                'icons.potato': {
+                    'icon': babase.charstr(babase.SpecialChar.POTATO)
+                },
+                'icons.palm_tree': {
+                    'icon': babase.charstr(babase.SpecialChar.PALM_TREE)
+                },
+                'icons.boxing_glove': {
+                    'icon': babase.charstr(babase.SpecialChar.BOXING_GLOVE)
+                },
             }
         return babase.app.classic.store_items
 
@@ -478,8 +490,6 @@ class StoreSubsystem:
 
     def get_available_sale_time(self, tab: str) -> int | None:
         """(internal)"""
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-nested-blocks
         plus = babase.app.plus
         assert plus is not None
@@ -569,7 +579,7 @@ class StoreSubsystem:
     def get_unowned_maps(self) -> list[str]:
         """Return the list of local maps not owned by the current account."""
         classic = babase.app.classic
-        purchases = classic.purchases if classic is not None else set()
+        purchases = classic.purchases if classic is not None else frozenset()
         unowned_maps: set[str] = set()
         if babase.app.env.gui:
             for map_section in self.get_store_layout()['maps']:
@@ -583,7 +593,9 @@ class StoreSubsystem:
         """Return present game types not owned by the current account."""
         try:
             classic = babase.app.classic
-            purchases = classic.purchases if classic is not None else set()
+            purchases = (
+                classic.purchases if classic is not None else frozenset()
+            )
             unowned_games: set[type[bascenev1.GameActivity]] = set()
             if babase.app.env.gui:
                 for section in self.get_store_layout()['minigames']:

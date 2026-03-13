@@ -80,6 +80,7 @@ void Python::SetPythonException(const Exception& exc) {
     pytype = PyExc_RuntimeError;
   }
   assert(pytype != nullptr && PyType_Check(pytype));
+
   PyErr_SetString(pytype, description);
 }
 
@@ -114,6 +115,17 @@ auto Python::IsString(PyObject* o) -> bool {
   }
 
   return PyUnicode_Check(o);
+}
+
+auto Python::IsSequence(PyObject* o) -> bool {
+  assert(HaveGIL());
+
+  // We now gracefully handle null values.
+  if (o == nullptr) {
+    return false;
+  }
+
+  return PySequence_Check(o);
 }
 
 auto Python::GetString(PyObject* o) -> std::string {

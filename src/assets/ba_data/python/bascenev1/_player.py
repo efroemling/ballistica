@@ -35,7 +35,8 @@ class StandLocation:
     angle: float | None = None
 
 
-class Player[TeamT: bascenev1.Team]:
+# class Player[TeamT: bascenev1.Team]:
+class Player[TeamT]:
     """A player in a specific bascenev1.Activity.
 
     These correspond to bascenev1.SessionPlayer objects, but are associated
@@ -315,5 +316,5 @@ def playercast_o[PlayerT: bascenev1.Player](
     totype: type[PlayerT], player: bascenev1.Player | None
 ) -> PlayerT | None:
     """A variant of bascenev1.playercast() for optional Player values."""
-    assert isinstance(player, (totype, type(None)))
+    assert isinstance(player, totype | None)
     return player

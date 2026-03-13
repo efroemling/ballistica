@@ -2,10 +2,12 @@
 #
 # pylint: disable=too-many-lines
 """Functionality related to the high level state of the app."""
+
 from __future__ import annotations
 
 import os
 import time
+import asyncio
 import logging
 from enum import Enum
 from functools import partial
@@ -28,12 +30,12 @@ from babase._appmodeselector import AppModeSelector
 from babase._appintent import AppIntentDefault, AppIntentExec
 from babase._stringedit import StringEditSubsystem
 from babase._devconsole import DevConsoleSubsystem
+from babase._analytics import AnalyticsSubsystem
 from babase._appconfig import AppConfig
 from babase._logging import lifecyclelog, applog
 from babase._gc import GarbageCollectionSubsystem
 
 if TYPE_CHECKING:
-    import asyncio
     from typing import Any, Callable, Coroutine, Generator, Awaitable
     from concurrent.futures import Future
 
@@ -152,6 +154,9 @@ class App:
         #: Subsystem for wrangling the dev-console UI.
         self.devconsole: DevConsoleSubsystem = DevConsoleSubsystem()
 
+        #: Subsystem for wrangling analytics.
+        self.analytics: AnalyticsSubsystem = AnalyticsSubsystem()
+
         #: Incremented each time the app leaves the
         #: :attr:`~babase.AppState.SUSPENDED` state. This can be a simple
         #: way to determine if network data should be refreshed/etc.
@@ -237,7 +242,6 @@ class App:
         loop. Hopefully this situation will be improved in the future
         with a unified event loop.
         """
-        assert _babase.in_logic_thread()
         assert self._asyncio_loop is not None
         return self._asyncio_loop
 
@@ -281,8 +285,9 @@ class App:
     def mode_selector(self, selector: babase.AppModeSelector) -> None:
         self._mode_selector = selector
 
-    def _on_task_done(self, task: asyncio.Task) -> None:
+    def _on_task_done(self, task: Any) -> None:
         # Report any errors that occurred.
+        assert isinstance(task, asyncio.Task)
         try:
             exc = task.exception()
             if exc is not None:
@@ -1028,7 +1033,6 @@ class App:
                 )
 
     async def _shutdown(self) -> None:
-        import asyncio
 
         _babase.lock_all_input()
         try:
@@ -1054,7 +1058,6 @@ class App:
         self, coro: Coroutine[None, None, None]
     ) -> None:
         """Run a shutdown task; report errors and abort if taking too long."""
-        import asyncio
 
         task = asyncio.create_task(coro)
         try:
@@ -1140,7 +1143,6 @@ class App:
                 )
 
     async def _wait_for_shutdown_suppressions(self) -> None:
-        import asyncio
 
         # Spin and wait for anything blocking shutdown to complete.
         starttime = _babase.apptime()
@@ -1157,7 +1159,6 @@ class App:
             )
 
     async def _fade_and_shutdown_graphics(self) -> None:
-        import asyncio
 
         # Kick off a short fade and give it time to complete.
         lifecyclelog.info('fade-and-shutdown-graphics begin')
@@ -1193,7 +1194,6 @@ class App:
         lifecyclelog.info('fade-and-shutdown-graphics end')
 
     async def _fade_and_shutdown_audio(self) -> None:
-        import asyncio
 
         # Tell the audio system to go down and give it a bit of
         # time to do so gracefully.

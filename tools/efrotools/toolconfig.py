@@ -66,7 +66,6 @@ def install_tool_config(projroot: Path, src: Path, dst: Path) -> None:
 
 
 def _filter_tool_config(projroot: Path, cfg: str) -> str:
-    # pylint: disable=too-many-locals
     import textwrap
 
     from efrotools.project import getprojectconfig
@@ -96,7 +95,7 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
             '     (python-shell-interpreter . "__EFRO_PY_BIN__")\n'
             '     (eglot-workspace-configuration . (\n'
             '         (:pylsp . (:plugins (\n'
-            '             :pylint (:enabled t)\n'
+            '             :pylint (:enabled :json-false)\n'
             '             :flake8 (:enabled :json-false)\n'
             '             :pycodestyle (:enabled :json-false)\n'
             '             :mccabe (:enabled :json-false)\n'
@@ -160,8 +159,7 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
     shortname = short_names.get(projroot.name, projroot.name)
     cfg = cfg.replace('__EFRO_PROJECT_SHORTNAME__', shortname)
 
-    mypy_standard_settings = textwrap.dedent(
-        """
+    mypy_standard_settings = textwrap.dedent("""
     # We don't want all of our plain scripts complaining
     # about __main__ being redefined.
     scripts_are_modules = True
@@ -187,8 +185,7 @@ def _filter_tool_config(projroot: Path, cfg: str) -> str:
 
     enable_error_code = redundant-expr, truthy-bool, \
 truthy-function, unused-awaitable, explicit-override
-    """
-    ).strip()
+    """).strip()
 
     cfg = cfg.replace('__EFRO_MYPY_STANDARD_SETTINGS__', mypy_standard_settings)
 

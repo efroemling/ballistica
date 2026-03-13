@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Implements lobby system for gathering before games, char select, etc."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -338,10 +339,10 @@ class Chooser:
         if inputdevice.is_controller_app and '_random' in profilenames:
             return profilenames.index('_random')
 
-        # If its a client connection, for now just force
-        # the account profile if possible.. (need to provide a
-        # way for clients to specify/remember their default
-        # profile on remote servers that do not already know them).
+        # If its a client connection, for now just force the account
+        # profile if possible. (need to provide a way for clients to
+        # specify/remember their default profile on remote servers that
+        # do not already know them).
         if inputdevice.is_remote_client and '__account__' in profilenames:
             return profilenames.index('__account__')
 

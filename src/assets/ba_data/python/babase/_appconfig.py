@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Provides the AppConfig class."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -10,7 +11,7 @@ import _babase
 if TYPE_CHECKING:
     from typing import Any
 
-_g_pending_apply = False  # pylint: disable=invalid-name
+_g_pending_apply = False
 
 
 class AppConfig(dict):

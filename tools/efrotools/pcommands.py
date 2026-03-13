@@ -17,8 +17,6 @@ def _spelling(words: list[str]) -> None:
     from efrotools.code import sort_jetbrains_dict
     import os
 
-    pcommand.disallow_in_batch()
-
     num_modded_dictionaries = 0
     for fname in [
         '.idea/dictionaries/ericf.xml',
@@ -47,15 +45,12 @@ def _spelling(words: list[str]) -> None:
 
 def requirements_upgrade() -> None:
     """Upgrade project requirements."""
-    # pylint: disable=too-many-locals
     import os
     import tempfile
     import subprocess
 
     from efro.terminal import Clr
     from efro.error import CleanError
-
-    pcommand.disallow_in_batch()
 
     args = pcommand.get_args()
 
@@ -91,12 +86,28 @@ def requirements_upgrade() -> None:
         # to one exact version and thus shouldn't apply to later ones.
         filterlines: list[tuple[str, str]] = [
             # Fails to build on bastaging (submitted fix).
-            ('pyicu==2.15.3', 'pyicu==2.15.2'),
+            ('pyicu==2.16.1', 'pyicu==2.15.2'),
+            # ('google-auth-oauthlib==1.2.3', 'google-auth-oauthlib==1.2.2'),
+            # ('pylint==4.0.4', 'pylint==4.0.3'),
+            # ('Sphinx==9.1.0', 'Sphinx==8.2.3'),
+            # ('gunicorn==24.0.0', 'gunicorn==23.0.0'),
         ]
         for fsrc, fdst in filterlines:
             if fsrc in reqs_new:
                 reqs_new = reqs_new.replace(fsrc, fdst)
                 print(f'{Clr.MAG}HOLDING BACK {fdst}{Clr.RST}')
+
+        unpinned = [
+            line
+            for line in reqs_new.splitlines()
+            if line and not line.startswith('#') and '==' not in line
+        ]
+        if unpinned:
+            raise CleanError(
+                'requirements.txt contains unpinned entries'
+                ' (expected exact versions via ==):\n'
+                + '\n'.join(f'  {u}' for u in unpinned)
+            )
 
         if reqs_new != reqs:
             with open(reqpath, 'w', encoding='utf-8') as outfile:
@@ -106,8 +117,6 @@ def requirements_upgrade() -> None:
 def spelling_all() -> None:
     """Add all misspellings from a pycharm run."""
     import subprocess
-
-    pcommand.disallow_in_batch()
 
     print('Running "make pycharm-full"...')
     lines = [
@@ -133,16 +142,12 @@ def spelling_all() -> None:
 def spelling() -> None:
     """Add words to the PyCharm dictionary."""
 
-    pcommand.disallow_in_batch()
-
     _spelling(sys.argv[2:])
 
 
 def xcodebuild() -> None:
     """Run xcodebuild with added smarts."""
     from efrotools.xcodebuild import XCodeBuild
-
-    pcommand.disallow_in_batch()
 
     XCodeBuild(projroot=str(pcommand.PROJROOT), args=sys.argv[2:]).run()
 
@@ -151,8 +156,6 @@ def _xcodepath(executable: bool) -> str:
     import os
     from efro.error import CleanError
     from efrotools.xcodebuild import project_build_path
-
-    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 5:
         raise CleanError(
@@ -189,8 +192,6 @@ def pyver() -> None:
     """Prints the Python version used by this project."""
     from efrotools.pyver import PYVER
 
-    pcommand.disallow_in_batch()
-
     print(PYVER, end='')
 
 
@@ -201,8 +202,6 @@ def try_repeat() -> None:
     """
     import subprocess
     from efro.error import CleanError
-
-    pcommand.disallow_in_batch()
 
     # We require one number arg and at least one command arg.
     if len(sys.argv) < 4:
@@ -238,8 +237,6 @@ def check_clean_safety() -> None:
     import subprocess
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 2:
         raise CleanError('invalid arguments')
 
@@ -268,8 +265,6 @@ def gen_empty_py_init() -> None:
     from efro.terminal import Clr
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 3:
         raise CleanError('Expected a single path arg.')
 
@@ -284,8 +279,6 @@ def formatcode() -> None:
     """Format all of our C/C++/etc. code."""
     import efrotools.code
 
-    pcommand.disallow_in_batch()
-
     full = '-full' in sys.argv
     efrotools.code.format_project_cpp_files(pcommand.PROJROOT, full)
 
@@ -293,8 +286,6 @@ def formatcode() -> None:
 def formatscripts() -> None:
     """Format all of our Python/etc. code."""
     import efrotools.code
-
-    pcommand.disallow_in_batch()
 
     full = '-full' in sys.argv
     efrotools.code.format_project_python_files(pcommand.PROJROOT, full)
@@ -306,8 +297,6 @@ def formatmakefile() -> None:
 
     with open('Makefile', encoding='utf-8') as infile:
         original = infile.read()
-
-    pcommand.disallow_in_batch()
 
     formatted = Makefile(original).get_output()
 
@@ -321,8 +310,6 @@ def cpplint() -> None:
     """Run lint-checking on all code deemed lint-able."""
     import efrotools.code
 
-    pcommand.disallow_in_batch()
-
     full = '-full' in sys.argv
     efrotools.code.check_cpplint(pcommand.PROJROOT, full)
 
@@ -333,8 +320,6 @@ def scriptfiles() -> None:
     Pass -lines to use newlines as separators. The default is spaces.
     """
     import efrotools.code
-
-    pcommand.disallow_in_batch()
 
     paths = efrotools.code.get_script_filenames(projroot=pcommand.PROJROOT)
     assert not any(' ' in path for path in paths)
@@ -348,11 +333,10 @@ def pylint() -> None:
     """Run pylint checks on our scripts."""
     import efrotools.code
 
-    pcommand.disallow_in_batch()
-
     full = '-full' in sys.argv
     fast = '-fast' in sys.argv
-    efrotools.code.pylint(pcommand.PROJROOT, full, fast)
+    extra = '-extra' in sys.argv
+    efrotools.code.pylint(pcommand.PROJROOT, full, fast, extra)
 
 
 def pylint_files() -> None:
@@ -361,21 +345,44 @@ def pylint_files() -> None:
     from efro.error import CleanError
     import efrotools.code
 
-    pcommand.disallow_in_batch()
+    extra = '-extra' in sys.argv
 
     if len(sys.argv) < 3:
         raise CleanError('Expected at least 1 filename arg.')
 
     filenames = sys.argv[2:]
-    efrotools.code.runpylint(pcommand.PROJROOT, filenames)
+    efrotools.code.runpylint(pcommand.PROJROOT, filenames, extra)
     print(f'{Clr.GRN}Pylint Passed.{Clr.RST}')
+
+
+def zmypy() -> None:
+    """Run zuban mypy checks on our scripts."""
+    import efrotools.code
+
+    full = '-full' in sys.argv
+    efrotools.code.zmypy(pcommand.PROJROOT, full)
+
+
+def zmypy_files() -> None:
+    """Run zuban mypy checks on provided filenames."""
+    from efro.terminal import Clr
+    from efro.error import CleanError
+    import efrotools.code
+
+    if len(sys.argv) < 3:
+        raise CleanError('Expected at least 1 filename arg.')
+
+    filenames = sys.argv[2:]
+    try:
+        efrotools.code.zmypy_files(pcommand.PROJROOT, filenames)
+        print(f'{Clr.GRN}Zmypy Passed.{Clr.RST}')
+    except Exception as exc:
+        raise CleanError('Zmypy Failed.') from exc
 
 
 def mypy() -> None:
     """Run mypy checks on our scripts."""
     import efrotools.code
-
-    pcommand.disallow_in_batch()
 
     full = '-full' in sys.argv
     efrotools.code.mypy(pcommand.PROJROOT, full)
@@ -386,8 +393,6 @@ def mypy_files() -> None:
     from efro.terminal import Clr
     from efro.error import CleanError
     import efrotools.code
-
-    pcommand.disallow_in_batch()
 
     if len(sys.argv) < 3:
         raise CleanError('Expected at least 1 filename arg.')
@@ -404,16 +409,12 @@ def dmypy() -> None:
     """Run mypy checks on our scripts using the mypy daemon."""
     import efrotools.code
 
-    pcommand.disallow_in_batch()
-
     efrotools.code.dmypy(pcommand.PROJROOT)
 
 
 def pycharm() -> None:
     """Run PyCharm checks on our scripts."""
     import efrotools.code
-
-    pcommand.disallow_in_batch()
 
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
@@ -424,8 +425,6 @@ def clioncode() -> None:
     """Run CLion checks on our code."""
     import efrotools.code
 
-    pcommand.disallow_in_batch()
-
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
     efrotools.code.check_clioncode(pcommand.PROJROOT, full, verbose)
@@ -434,8 +433,6 @@ def clioncode() -> None:
 def androidstudiocode() -> None:
     """Run Android Studio checks on our code."""
     import efrotools.code
-
-    pcommand.disallow_in_batch()
 
     full = '-full' in sys.argv
     verbose = '-v' in sys.argv
@@ -449,8 +446,6 @@ def tool_config_install() -> None:
     from efro.error import CleanError
 
     import efrotools.toolconfig
-
-    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 4:
         raise CleanError('expected 2 args')
@@ -473,8 +468,6 @@ def sync_all() -> None:
     import concurrent.futures
     from efro.error import CleanError
     from efro.terminal import Clr
-
-    pcommand.disallow_in_batch()
 
     print(f'{Clr.BLD}Updating formatting for all projects...{Clr.RST}')
     projects_str = os.environ.get('EFROTOOLS_SYNC_PROJECTS')
@@ -528,8 +521,6 @@ def sync() -> None:
     """Runs standard syncs between this project and others."""
     from efrotools.project import getprojectconfig
     from efrotools.sync import Mode, SyncItem, run_standard_syncs
-
-    pcommand.disallow_in_batch()
 
     mode = Mode(sys.argv[2]) if len(sys.argv) > 2 else Mode.PULL
 
@@ -677,8 +668,6 @@ def pytest() -> None:
     from efrotools.project import getprojectconfig
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
     # Grab our python paths for the project and stuff them in PYTHONPATH.
     pypaths = getprojectconfig(pcommand.PROJROOT).get('python_paths')
     if pypaths is None:
@@ -711,8 +700,6 @@ def makefile_target_list() -> None:
     from dataclasses import dataclass
     from efro.error import CleanError
     from efro.terminal import Clr
-
-    pcommand.disallow_in_batch()
 
     @dataclass
     class _Entry:
@@ -814,8 +801,6 @@ def urandom_pretty() -> None:
     import os
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) not in (3, 4):
         raise CleanError(
             'Expected one arg (count) and possibly two (line len).'
@@ -846,8 +831,6 @@ def tweak_empty_py_files() -> None:
     from efro.error import CleanError
     import efrotools.pybuild
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 3:
         raise CleanError('Expected exactly 1 path arg.')
     efrotools.pybuild.tweak_empty_py_files(sys.argv[2])
@@ -862,12 +845,9 @@ def make_ensure() -> None:
     Can be useful to run after cloud-builds to ensure the local results
     consider themselves up-to-date.
     """
-    # pylint: disable=too-many-locals
     from efro.error import CleanError
     from efro.terminal import Clr
     import subprocess
-
-    pcommand.disallow_in_batch()
 
     dirpath: str | None = None
     args = sys.argv[2:]
@@ -929,10 +909,6 @@ def make_target_debug() -> None:
 
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
-    # from efro.util import ago_str, utc_now
-
     args = sys.argv[2:]
     if len(args) != 2:
         raise CleanError('Expected 2 args.')
@@ -940,7 +916,6 @@ def make_target_debug() -> None:
     def _utc_mod_time(path: str) -> datetime.datetime:
         mtime = os.path.getmtime(path)
         mdtime = datetime.datetime.fromtimestamp(mtime, datetime.timezone.utc)
-        # mdtime.replace(tzinfo=datetime.timezone.utc)
         return mdtime
 
     # srcname = os.path.basename(args[0])
@@ -960,3 +935,38 @@ def make_target_debug() -> None:
     )
     print(f'SRC modified at {srctimestr}.')
     print(f'DST modified at {dsttimestr}.')
+
+
+def showtime() -> None:
+    """Run a command and print how long it took.
+
+    First arg is a label; remaining args are the command to run.
+    Prints '<label> completed in X.XXs.' on success (Clr.BLK) or
+    '<label> failed in X.XXs.' on failure (Clr.RED), then exits with
+    the command's return code.
+    """
+    import time
+    import subprocess
+    from efro.error import CleanError
+
+    args = pcommand.get_args()
+    if len(args) < 2:
+        raise CleanError('Expected a label and at least one command arg.')
+
+    label = args[0]
+    cmd = args[1:]
+    clr = pcommand.clr()
+
+    t = time.monotonic()
+    result = subprocess.run(cmd, check=False)
+    elapsed = time.monotonic() - t
+
+    if result.returncode == 0:
+        pcommand.clientprint(
+            f'{clr.SBLK}{label} completed in {elapsed:.2f}s.{clr.RST}'
+        )
+    else:
+        pcommand.clientprint(
+            f'{clr.RED}{label} failed in {elapsed:.2f}s.{clr.RST}'
+        )
+        sys.exit(result.returncode)

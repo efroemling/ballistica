@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Defines the manual tab in the gather UI."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -10,10 +11,12 @@ from enum import Enum
 from threading import Thread
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast, override
-from bauiv1lib.gather import GatherTab
 
+from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
 import bascenev1 as bs
+
+from bauiv1lib.gather import GatherTab
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -803,6 +806,13 @@ class ManualGatherTab(GatherTab):
     def _connect(
         self, textwidget: bui.Widget, port_textwidget: bui.Widget
     ) -> None:
+
+        bui.app.analytics.submit_event(
+            ClassicAnalyticsEvent(
+                ClassicAnalyticsEvent.EventType.JOIN_PARTY_BY_ADDRESS
+            )
+        )
+
         addr = cast(str, bui.textwidget(query=textwidget))
         if addr == '':
             bui.screenmessage(

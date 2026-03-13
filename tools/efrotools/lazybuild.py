@@ -10,7 +10,6 @@ import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-
 # Pylint's preferred import order here seems non-deterministic (as of 2.17.2).
 # pylint: disable=useless-suppression
 # pylint: disable=wrong-import-order
@@ -161,7 +160,6 @@ class LazyBuildContext:
         Path(self.target).touch()
 
     def _check_for_changes(self) -> None:
-        # pylint: disable=too-many-branches
         manfile = self.manifest_file
         # If we're watching for file adds/removes/renames in addition
         # to just modtimes, build a set of all files we come across.
