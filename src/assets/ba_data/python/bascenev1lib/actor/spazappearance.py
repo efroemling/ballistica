@@ -606,7 +606,10 @@ def register_appearances() -> None:
     t.default_color = (0.3, 0.5, 0.8)
     t.default_highlight = (1, 0, 0)
 
-    # Assassin ###################################
+    # Lucky the Leprechaun ############################
+    #
+    # Note: repurposing assassin slot. Lucky is not actually an
+    # assassin. He is a good and friendly Leprechaun.
     t = Appearance('Zola')
     t.color_texture = 'assassinColor'
     t.color_mask_texture = 'assassinColorMask'
@@ -630,8 +633,8 @@ def register_appearances() -> None:
     t.pickup_sounds = assassin_sounds
     t.fall_sounds = ['assassinFall']
     t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    t.default_color = (0.2, 1.0, 0.5)
+    t.default_highlight = (1.0, 0.3, 0)
 
     # Wizard ###################################
     t = Appearance('Grumbledorf')

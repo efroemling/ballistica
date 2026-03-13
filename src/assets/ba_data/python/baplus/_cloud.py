@@ -342,6 +342,16 @@ class CloudSubsystem(babase.AppSubsystem):
         ],
     ) -> None: ...
 
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.TransientAPIKeyRequest,
+        on_response: Callable[
+            [bacommon.cloud.TransientAPIKeyResponse | Exception],
+            None,
+        ],
+    ) -> None: ...
+
     def send_message_cb(
         self,
         msg: Message,
