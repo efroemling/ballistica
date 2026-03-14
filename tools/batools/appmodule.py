@@ -238,8 +238,7 @@ def generate_app_module(
     if default_imports is None:
         default_imports = {}
     elif not all(
-        isinstance(k, str) and (isinstance(v, str) or v is None)
-        for k, v in default_imports.items()
+        isinstance(v, str) or v is None for k, v in default_imports.items()
     ):
         raise RuntimeError(
             'Could not load default_imports from projectconfig; '
@@ -247,20 +246,19 @@ def generate_app_module(
             'or not present'
         )
 
-    contents = ''
+    contents = '# pylint: disable=cyclic-import\n'
     if default_imports:
-        for module_name in default_imports.keys():
-            contents += 'try:\n'
-            contents += f'  import {module_name}\n'
-            contents += 'except ImportError as e:\n'
-            contents += f'  print(f\'Error importing default module {module_name}: {{e}}\')\n'
         for module_name, alias in default_imports.items():
-            if alias is not None and isinstance(alias, str):    
-                import_as = alias or module_name.split('.')[-1]
-                contents += 'try:\n'
-                contents += f"  import {module_name} as {import_as}\n"
-                contents += 'except ImportError as e:\n'
-                contents += f'  print(f\'Error importing default module {module_name} with alias {alias}: {{e}}\')\n'
+            contents += 'try:\n'
+            contents += f'    import {module_name}\n'
+            contents += f'    main_globals[\'{module_name}\'] = {module_name}\n'
+            if alias is not None and isinstance(alias, str):
+                contents += f'    main_globals[\'{alias}\'] = {module_name}\n'
+            contents += 'except ImportError as e:\n'
+            contents += (
+                f'    print(f\'Error importing default module '
+                f'{module_name}: {{e}}\')\n\n'
+            )
     else:
         contents = 'pass\n'
 
