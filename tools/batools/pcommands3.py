@@ -253,7 +253,7 @@ def generate_flathub_manifest() -> None:
     print(f'{Clr.BLD}{Clr.GRN}Flathub manifest generation complete!{Clr.RST}')
 
 
-# pylint: disable=too-many-locals,too-many-statements
+# pylint: disable=too-many-locals
 def generate_flatpak_release_manifest(
     version: str,
     asset_url: str,

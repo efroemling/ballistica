@@ -33,8 +33,8 @@ def prep_page(
     idprefix: str,
     immediate: bool = False,
 ) -> PagePrep:
-    """Prep a page."""
     # pylint: disable=too-many-statements
+    """Prep a page."""
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
     # pylint: disable=cyclic-import

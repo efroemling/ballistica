@@ -52,7 +52,6 @@ def spinoff_main() -> None:
 
 def _main() -> None:
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
     if len(sys.argv) < 2:
         print(f'{Clr.RED}Error: Expected a command argument.{Clr.RST}')
         _print_available_commands()
@@ -145,7 +144,7 @@ def _main() -> None:
 
 
 def _do_create(src_root: str, dst_root: str | None) -> None:
-    # pylint: disable=too-many-locals, cyclic-import
+    # pylint: disable=cyclic-import
     from efro.util import extract_arg, extract_flag
     from efrotools.code import format_python_str
     from efrotools.project import getprojectconfig
@@ -316,7 +315,6 @@ def _do_featureset_delete() -> None:
 
 
 def _do_featureset_copy() -> None:
-    # pylint: disable=too-many-locals
     from efro.util import extract_flag
 
     from batools.featureset import FeatureSet
@@ -419,8 +417,6 @@ def _do_featureset_copy() -> None:
 def _do_featureset_copy_dir(
     srcpath: str, dstpath: str, subs: list[tuple[str, str]], force: bool
 ) -> None:
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-branches
 
     # This feature-set might not have this component. No biggie.
     if not os.path.exists(srcpath):

@@ -83,6 +83,8 @@
  "ba_data/python/bacommon/logging.py",
  "ba_data/python/bacommon/login.py",
  "ba_data/python/bacommon/net.py",
+ "ba_data/python/bacommon/restapi/__init__.py",
+ "ba_data/python/bacommon/restapi/v1.py",
  "ba_data/python/bacommon/securedata.py",
  "ba_data/python/bacommon/servermanager.py",
  "ba_data/python/bacommon/text.py",

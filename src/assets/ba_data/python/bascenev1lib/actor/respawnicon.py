@@ -20,7 +20,6 @@ class RespawnIcon:
 
     def __init__(self, player: bs.Player, respawn_time: float):
         """Instantiate with a Player and respawn_time (in seconds)."""
-        # pylint: disable=too-many-locals
         self._visible = True
         self._dots_epic_only = False
 

@@ -712,6 +712,12 @@
     <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_base_3.h">
       <Filter>ballistica\base\python\methods</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\methods\python_methods_test.cc">
+      <Filter>ballistica\base\python\methods</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\methods\python_methods_test.h">
+      <Filter>ballistica\base\python\methods</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\python\support\python_context_call.cc">
       <Filter>ballistica\base\python\support</Filter>
     </ClCompile>
@@ -1493,6 +1499,12 @@
       <Filter>ballistica\shared\foundation</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\shared\foundation\object.h">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\object_test.cc">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\object_test.h">
       <Filter>ballistica\shared\foundation</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\shared\generic\base64.cc">

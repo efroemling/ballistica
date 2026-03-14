@@ -257,7 +257,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'Makefile',
                 'tools',
                 'src/assets',
-                'src/external/python-apple',
+                'src/external/python-apple-old',
                 '.efrocachemap',
                 # Needed to rebuild on asset-package changes.
                 'config/projectconfig.json',
@@ -602,13 +602,18 @@ def filter_server_config_toml(projroot: str, infilepath: str) -> str:
     )
 
 
+def _brew_h_resolved(header_path: str) -> str:
+    """Return resolved symlink path for a homebrew header, or '' if absent."""
+    p = Path(header_path)
+    return str(p.resolve()) if p.exists() else ''
+
+
 def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     """Create a dir, recreating it when cmake/python/etc. versions change.
 
     Useful to prevent builds from breaking when cmake or other components
     are updated.
     """
-    # pylint: disable=too-many-locals
     import json
 
     from efrotools.pyver import PYVER
@@ -672,12 +677,39 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     )
     entries.append(Entry('mac_xcode_sdks', mac_xcode_sdks))
 
-    # ...or if homebrew SDL.h resolved path changes (happens for updates)
-    sdl_h_path = Path('/opt/homebrew/include/SDL2/SDL.h')
-    homebrew_sdl_h_resolved: str = (
-        str(sdl_h_path.resolve()) if sdl_h_path.exists() else ''
+    # Resolve Homebrew prefix (ARM: /opt/homebrew, Intel: /usr/local).
+    # Homebrew include paths are symlinks into versioned Cellar directories,
+    # so when a package is updated the resolved path changes. CMake bakes
+    # the old versioned paths into its cache, causing linker errors against
+    # libraries that no longer exist. We detect this by resolving the symlink
+    # for a few key headers and wiping the build dir when any of them change.
+    brew_prefix = (
+        '/opt/homebrew' if os.path.isdir('/opt/homebrew') else '/usr/local'
     )
-    entries.append(Entry('homebrew_sdl_h_resolved', homebrew_sdl_h_resolved))
+
+    # ...or if homebrew SDL.h resolved path changes (happens for updates)
+    entries.append(
+        Entry(
+            'homebrew_sdl_h_resolved',
+            _brew_h_resolved(f'{brew_prefix}/include/SDL2/SDL.h'),
+        )
+    )
+
+    # ...or if homebrew pango resolved path changes (happens for updates)
+    entries.append(
+        Entry(
+            'homebrew_pango_h_resolved',
+            _brew_h_resolved(f'{brew_prefix}/include/pango-1.0/pango/pango.h'),
+        )
+    )
+
+    # ...or if homebrew harfbuzz resolved path changes (happens for updates)
+    entries.append(
+        Entry(
+            'homebrew_hb_h_resolved',
+            _brew_h_resolved(f'{brew_prefix}/include/harfbuzz/hb.h'),
+        )
+    )
 
     # Ok; do the thing.
     verfilename = os.path.join(dirname, '.ba_cmake_env')

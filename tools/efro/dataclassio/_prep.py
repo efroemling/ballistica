@@ -134,8 +134,6 @@ class PrepSession:
         The only case where this will return None is for recursive types
         if the type is already being prepped higher in the call order.
         """
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-branches
 
         # We should only need to do this once per dataclass.
         existing_data = getattr(cls, PREP_ATTR, None)
@@ -264,7 +262,6 @@ class PrepSession:
         # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
 
         if not TYPE_CHECKING:
 
@@ -421,11 +418,29 @@ class PrepSession:
             # We allow datetime objects (and google's extended subclass of
             # them used in firestore, which is why we don't look for exact
             # type here).
+            # IMPORTANT: datetime.datetime is a subclass of datetime.date, so
+            # the datetime.datetime check MUST come before the datetime.date
+            # check below.
             if issubclass(origin, datetime.datetime):
+                return
+
+            # We support datetime.date. Note: the datetime.datetime check
+            # above must precede this since datetime.datetime is a subclass
+            # of datetime.date.
+            if issubclass(origin, datetime.date) and not issubclass(
+                origin, datetime.datetime
+            ):
                 return
 
             # We support datetime.timedelta.
             if issubclass(origin, datetime.timedelta):
+                if ioattrs is not None and ioattrs.time_format == 'iso':
+                    raise TypeError(
+                        f"time_format='iso' is not supported for"
+                        f' datetime.timedelta fields'
+                        f" (attr '{attrname}' on {cls.__name__});"
+                        f" use 'float' or 'ints' instead."
+                    )
                 return
 
             if dataclasses.is_dataclass(origin):

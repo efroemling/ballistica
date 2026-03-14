@@ -21,7 +21,6 @@ class GamepadAdvancedSettingsWindow(bui.Window):
 
     def __init__(self, parent_window: GamepadSettingsWindow):
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         self._parent_window = parent_window
 
         app = bui.app

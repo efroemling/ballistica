@@ -738,6 +738,8 @@ void ClassicAppMode::UpdateGameRoster() {
     }
 
     // Add all connected clients.
+    bool doing_v2_auth =
+        require_client_authentication() && client_authentication_version() == 2;
     for (auto&& i : connections()->connections_to_clients()) {
       if (i.second->can_communicate()) {
         cJSON* client_dict = cJSON_CreateObject();
@@ -783,6 +785,11 @@ void ClassicAppMode::UpdateGameRoster() {
         cJSON_AddItemToObject(client_dict, "p", player_array);
         cJSON_AddItemToObject(client_dict, "i",
                               cJSON_CreateNumber(i.second->id()));
+        if (doing_v2_auth && !i.second->peer_public_account_id().empty()) {
+          cJSON_AddItemToObject(
+              client_dict, "a",
+              cJSON_CreateString(i.second->peer_public_account_id().c_str()));
+        }
         cJSON_AddItemToArray(game_roster_, client_dict);
         total_party_size += 1;
       }

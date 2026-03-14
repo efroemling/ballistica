@@ -88,7 +88,6 @@ class Updater:
 
     def run(self, force: bool = False) -> str:
         """Do the thing."""
-        # pylint: disable=too-many-locals
 
         projpath = os.path.join(self.projroot, self.path, 'project.pbxproj')
 

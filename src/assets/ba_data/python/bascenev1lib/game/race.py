@@ -246,7 +246,6 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
 
     def _handle_race_point_collide(self) -> None:
         # FIXME: Tidy this up.
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-nested-blocks
         collision = bs.getcollision()

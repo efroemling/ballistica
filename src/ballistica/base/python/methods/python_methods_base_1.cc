@@ -1903,6 +1903,45 @@ static PyMethodDef PyGraphicsShutdownIsCompleteDef = {
     ":meta private:\n",
 };
 
+// ---------------------------------- crash ------------------------------------
+
+static auto PyCrash(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  if (!g_buildconfig.variant_generic() && !g_buildconfig.variant_test_build()) {
+    throw Exception(
+        "crash() is only available in generic and test-build variants.");
+  }
+
+  // Dereference a null pointer; same mechanism as the --crash arg.
+  int dummyval{};
+  int* invalid_ptr{&dummyval};
+  if (explicit_bool(true)) {
+    invalid_ptr = nullptr;
+  }
+  if (explicit_bool(true)) {
+    *invalid_ptr = 1;
+  }
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyCrashDef = {
+    "crash",               // name
+    (PyCFunction)PyCrash,  // method
+    METH_NOARGS,           // flags
+
+    "crash() -> None\n"
+    "\n"
+    "Intentionally crash the engine (for testing crash handling).\n"
+    "\n"
+    "Triggers an immediate hard crash via null pointer dereference,\n"
+    "which will exercise crash-dump mechanisms such as minidump\n"
+    "generation on Windows. Only available in generic and test-build\n"
+    "variants.\n",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
@@ -1969,6 +2008,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyAudioShutdownIsCompleteDef,
       PyGraphicsShutdownBeginDef,
       PyGraphicsShutdownIsCompleteDef,
+      PyCrashDef,
   };
 }
 

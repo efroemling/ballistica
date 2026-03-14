@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import dataclasses
 import typing
+import warnings
 import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, get_args, override, final
@@ -237,7 +238,27 @@ class IOAttrs:
     #: ints. This is more concise but introduces the possibility of
     #: restored values varying slightly from originals due to
     #: floating-point precision limitations.
+    #:
+    #: .. deprecated::
+    #:     Use :attr:`time_format` instead.
     float_times: bool = False
+
+    #: Controls the wire format used for ``datetime.datetime`` and
+    #: ``datetime.timedelta`` values under the JSON codec. Has no effect
+    #: under the Firestore codec, which always stores datetime objects
+    #: natively. Does not apply to ``datetime.date`` fields, which are
+    #: always serialized as ``YYYY-MM-DD`` strings.
+    #:
+    #: - ``'ints'`` (default): lossless list of integers
+    #:   (``[year, month, day, hour, minute, second, microsecond]`` for
+    #:   datetime; ``[days, seconds, microseconds]`` for timedelta).
+    #: - ``'float'``: single float value (Unix timestamp for datetime;
+    #:   total seconds for timedelta). Compact but subject to
+    #:   floating-point precision loss.
+    #: - ``'iso'``: RFC 3339 / ISO 8601 UTC string with ``Z`` suffix
+    #:   (e.g. ``"2024-03-15T14:30:45.123456Z"``). JSON codec only;
+    #:   not valid for ``timedelta`` fields.
+    time_format: Literal['ints', 'float', 'iso'] = 'ints'
 
     #: If passed, injects a default value into dataclass instantiation
     #: when the field is not present in the input data. This allows
@@ -283,13 +304,13 @@ class IOAttrs:
         whole_minutes: bool = whole_minutes,
         whole_seconds: bool = whole_seconds,
         float_times: bool = float_times,
+        time_format: Literal['ints', 'float', 'iso'] = 'ints',
         soft_default: Any = MISSING,
         soft_default_factory: Callable[[], Any] | _MissingType = MISSING,
         enum_fallback: Enum | None = None,
         multiline: bool | None = None,
         edit_as_options: bool | None = None,
     ):
-        # pylint: disable=too-many-branches
 
         # Only store values that differ from class defaults to keep
         # our instances nice and lean.
@@ -306,8 +327,17 @@ class IOAttrs:
             self.whole_minutes = whole_minutes
         if whole_seconds != cls.whole_seconds:
             self.whole_seconds = whole_seconds
-        if float_times != cls.float_times:
-            self.float_times = float_times
+        if float_times:
+            warnings.warn(
+                "IOAttrs 'float_times' is deprecated;"
+                " use time_format='float' instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            # Coerce to the new flag when caller did not also set time_format.
+            time_format = 'float' if time_format == 'ints' else time_format
+        if time_format != cls.time_format:
+            self.time_format = time_format
         if soft_default is not cls.soft_default:
             # Do what dataclasses does with its default types and
             # tell the user to use factory for mutable ones.

@@ -163,6 +163,38 @@ nitpick_ignore = [
     ('py:attr', 'socket.AF_INET'),
     ('py:attr', 'socket.AF_INET6'),
     ('py:class', 'weakref.ReferenceType'),
+    #
+    # Additional bs.* types not yet covered above.
+    ('py:class', 'bs.NodeActor'),
+    ('py:class', 'bs.Player'),
+    ('py:class', 'bs.Timer'),
+    ('py:class', 'bs.Vec3'),
+    #
+    # Private module types.
+    ('py:class', 'bascenev1._dependency.DependencyEntry'),
+]
+
+# Regex-based nitpick ignores for whole categories of references.
+nitpick_ignore_regex = [
+    # Types from private/skipped namespaces. Sphinx 9.x generates
+    # cross-references to these from public API signatures even though
+    # the modules themselves are excluded (see skip_prefixes below).
+    ('py:class', r'bacommon\.classic\..*'),
+    ('py:class', r'bacommon\.clienteffect\..*'),
+    ('py:class', r'bacommon\.cloud\..*'),
+    # 'cdlg' is an alias for bacommon.clouddialog (a skipped namespace).
+    ('py:class', r'cdlg\..*'),
+    # Truncated generic type strings that Sphinx 9.x emits as cross-reference
+    # targets when processing complex type annotations such as
+    # dict[str, X], list[tuple[str, ...]], Callable[[], X], Literal['a', 'b'].
+    # The warning targets are malformed (e.g. 'dict[str' with no closing
+    # bracket), which strongly suggests this is a Sphinx bug — it appears to be
+    # splitting annotation strings at commas before fully parsing them. Worth
+    # re-checking on future Sphinx versions to see if it has been fixed.
+    ('py:class', r'Callable\[.*'),
+    ('py:class', r'dict\[.*'),
+    ('py:class', r'list\[.*'),
+    ('py:class', r'Literal\[.*'),
 ]
 
 # Gives us links to common Python types.

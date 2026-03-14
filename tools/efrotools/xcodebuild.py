@@ -453,8 +453,8 @@ class XCodeBuild:
             self._returncode = proc.returncode
 
     def _print_filtered_line(self, line: str) -> None:
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-branches
         # pylint: disable=too-many-return-statements
 
         # NOTE: xcodebuild output can be coming from multiple tasks and
@@ -1055,7 +1055,6 @@ class XCodeBuild:
         ignore_containing: list[str] | None = None,
         prefix_unexpected: bool = True,
     ) -> None:
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-positional-arguments
         if ignore_line_starts is None:
             ignore_line_starts = []
@@ -1113,8 +1112,6 @@ def project_build_path(
     executable: bool = True,
 ) -> str:
     """Get build paths for an xcode project (cached for efficiency)."""
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     config_path = os.path.join(projroot, '.cache', 'xcode_build_path')
     config: dict[str, dict[str, Any]] = {}

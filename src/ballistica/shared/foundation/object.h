@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_SHARED_FOUNDATION_OBJECT_H_
 #define BALLISTICA_SHARED_FOUNDATION_OBJECT_H_
 
+#include <cstddef>
 #include <string>
 #include <utility>
 #include <vector>
@@ -169,6 +170,8 @@ class Object {
    public:
     WeakRefBase() = default;
     ~WeakRefBase() { Release(); }
+    WeakRefBase(const WeakRefBase&) = delete;
+    auto operator=(const WeakRefBase&) -> WeakRefBase& = delete;
 
     void Release() {
       if (obj_) {
@@ -302,15 +305,47 @@ class Object {
       return *this;
     }
 
+    /// Move-assign from our exact type.
+    auto operator=(WeakRef<T>&& other) -> WeakRef<T>& {
+      if (this != &other) {
+        Release();
+        if (other.obj_) {
+#if BA_DEBUG_BUILD
+          other.obj_->ObjectThreadCheck();
+#endif
+          obj_ = other.obj_;
+          prev_ = other.prev_;
+          next_ = other.next_;
+          if (next_) next_->prev_ = this;
+          if (prev_) {
+            prev_->next_ = this;
+          } else {
+            obj_->object_weak_refs_ = this;
+          }
+          other.obj_ = nullptr;
+          other.prev_ = nullptr;
+          other.next_ = nullptr;
+        }
+      }
+      return *this;
+    }
+
+    /// Assign nullptr to clear the reference.
+    auto operator=(std::nullptr_t) -> WeakRef<T>& {
+      Release();
+      return *this;
+    }
+
     /// Assign from a pointer of any compatible type.
     template <typename U>
     auto operator=(U* ptr) -> WeakRef<T>& {
-      Release();
-
       // Go through our template type instead of assigning directly to our
       // Object* so we catch invalid assigns at compile-time.
       T* tmp = ptr;
-      if (tmp) Acquire(tmp);
+      if (static_cast<Object*>(tmp) != obj_) {
+        Release();
+        if (tmp) Acquire(tmp);
+      }
 
       // More debug sanity checks.
       assert(reinterpret_cast<T*>(obj_) == ptr);
@@ -347,6 +382,27 @@ class Object {
     /// and strong-refs and weak-refs so it's good to be aware exactly where
     /// refs are being added/etc.
     explicit WeakRef(const WeakRef<T>& ref) { *this = ref.get(); }
+
+    /// Move constructor.
+    WeakRef(WeakRef<T>&& other) {
+      if (other.obj_) {
+#if BA_DEBUG_BUILD
+        other.obj_->ObjectThreadCheck();
+#endif
+        obj_ = other.obj_;
+        prev_ = other.prev_;
+        next_ = other.next_;
+        if (next_) next_->prev_ = this;
+        if (prev_) {
+          prev_->next_ = this;
+        } else {
+          obj_->object_weak_refs_ = this;
+        }
+        other.obj_ = nullptr;
+        other.prev_ = nullptr;
+        other.next_ = nullptr;
+      }
+    }
 
     /// Create from a pointer of any compatible type.
     template <typename U>
@@ -483,12 +539,30 @@ class Object {
       return *this;
     }
 
+    /// Move-assign from our exact type.
+    auto operator=(Ref<T>&& other) -> Ref<T>& {
+      if (this != &other) {
+        Release();
+        obj_ = other.obj_;
+        other.obj_ = nullptr;
+      }
+      return *this;
+    }
+
+    /// Assign nullptr to clear the reference.
+    auto operator=(std::nullptr_t) -> Ref<T>& {
+      Release();
+      return *this;
+    }
+
     /// Assign from a pointer of any compatible type.
     template <typename U>
     auto operator=(U* ptr) -> Ref<T>& {
-      Release();
-      if (ptr) {
-        Acquire(ptr);
+      if (ptr != obj_) {
+        Release();
+        if (ptr) {
+          Acquire(ptr);
+        }
       }
       return *this;
     }
@@ -521,6 +595,9 @@ class Object {
     /// strong-refs and weak-refs so it's good to be aware exactly where
     /// refs are being added/etc.
     explicit Ref(const Ref<T>& ref) { *this = ref.get(); }
+
+    /// Move constructor.
+    Ref(Ref<T>&& other) noexcept : obj_(other.obj_) { other.obj_ = nullptr; }
 
     /// Create from a compatible pointer.
     template <typename U>
@@ -590,7 +667,15 @@ class Object {
     assert(!ptr->object_is_post_inited_);
 #endif
 
-    ptr->ObjectPostInit();
+    try {
+      ptr->ObjectPostInit();
+    } catch (...) {
+#if BA_DEBUG_BUILD
+      ptr->object_is_ref_counted_ = false;
+#endif
+      delete ptr;
+      throw;
+    }
 
 #if BA_DEBUG_BUILD
     // Make sure top level post-init was called.
@@ -629,7 +714,12 @@ class Object {
     assert(!ptr->object_is_post_inited_);
 #endif
 
-    ptr->ObjectPostInit();
+    try {
+      ptr->ObjectPostInit();
+    } catch (...) {
+      delete ptr;
+      throw;
+    }
 
 #if BA_DEBUG_BUILD
     // Make sure top level post-init was called.
@@ -688,7 +778,12 @@ class Object {
     assert(!ptr->object_is_post_inited_);
 #endif
 
-    ptr->ObjectPostInit();
+    try {
+      ptr->ObjectPostInit();
+    } catch (...) {
+      delete ptr;
+      throw;
+    }
 
 #if BA_DEBUG_BUILD
     // Make sure top level post-init was called.

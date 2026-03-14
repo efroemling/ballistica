@@ -208,7 +208,7 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
                         self._flag_pos[2],
                     ),
                     'scale': (3.4, 1.75, 0.8),
-                    'type': 'square',
+                    'type': 'box',
                     'materials': flagmats,
                 },
             )

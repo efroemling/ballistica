@@ -111,10 +111,7 @@ class Session:
         bascenev1.DependencySet instances; one for each bascenev1.Activity
         the session may potentially run.
         """
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
-        # pylint: disable=too-many-branches
         from efro.util import empty_weakref
         from bascenev1._dependency import (
             Dependency,
@@ -289,7 +286,7 @@ class Session:
                 return False
 
         # Rejoin cooldown.
-        identifier = player.get_v1_account_id()
+        identifier = player.get_account_id()
         if identifier:
             leave_time = self._players_on_wait.get(identifier)
             if leave_time:

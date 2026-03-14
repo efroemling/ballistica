@@ -81,3 +81,6 @@
 
 ### haydenmc
 - Flatpak permissions fixes
+
+### TheMikirog
+- Volume slider value to perceived volume fix

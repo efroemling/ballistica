@@ -18,7 +18,8 @@
 // ----------------------------- BASE GL INCLUDES ------------------------------
 
 // On SDL builds, let SDL handle this for us.
-#if BA_SDL_BUILD
+// (Skipped on Windows+ANGLE: we use GLES3 headers there instead.)
+#if BA_SDL_BUILD && !(BA_PLATFORM_WINDOWS && BA_OPENGL_IS_ES)
 #include <SDL_opengl.h>
 #endif
 
@@ -38,8 +39,18 @@
 // that hardware may still be limited to older versions so we need to check
 // for that and set a limit in our manifest.
 #if BA_PLATFORM_ANDROID
+// clang-format off
 #include <GLES3/gl31.h>
 #include <GLES3/gl3ext.h>
+#include <GLES2/gl2ext.h>  // GL_KHR_debug typedefs (needs gl31.h first)
+// clang-format on
+#endif
+
+// On Windows with ANGLE we include GLES3 headers here (via gl_sys_windows.h)
+// so that glDepthRangef and other ES functions are visible before we define
+// any inline wrappers below.
+#if BA_PLATFORM_WINDOWS
+#include "ballistica/base/graphics/gl/gl_sys_windows.h"
 #endif
 
 // -----------------------------------------------------------------------------
@@ -162,10 +173,6 @@ inline void glDepthRange(double min, double max) {
 // #if BA_PLATFORM_ANDROID
 // extern PFNGLDISCARDFRAMEBUFFEREXTPROC _glDiscardFramebufferEXT;
 // #endif
-
-#if BA_PLATFORM_WINDOWS
-#include "ballistica/base/graphics/gl/gl_sys_windows.h"
-#endif
 
 // #ifndef GL_NV_texture_rectangle
 // #define GL_TEXTURE_RECTANGLE_NV 0x84F5

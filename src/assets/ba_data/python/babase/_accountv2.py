@@ -592,6 +592,46 @@ class AccountV2Handle:
         This allows cloud messages to be sent on our behalf.
         """
 
+    def request_transient_api_key(
+        self, on_response: Callable[[str | Exception], None]
+    ) -> None:
+        """Request a transient API key for this account.
+
+        Calls on_response with the key string on success, or an Exception
+        on failure. Always called in the logic thread.
+
+        Note that keys may be rotated in some cases, so it is best to
+        re-request a key at least once per hour rather than caching it
+        indefinitely.
+        """
+        import bacommon.cloud
+
+        assert _babase.in_logic_thread()
+
+        plus = _babase.app.plus
+        assert plus is not None
+
+        def _on_raw_response(
+            response: bacommon.cloud.TransientAPIKeyResponse | Exception,
+        ) -> None:
+            if isinstance(response, Exception):
+                on_response(response)
+                return
+            if response.key is not None:
+                on_response(response.key)
+                return
+            on_response(
+                RuntimeError(
+                    f'Transient API key request failed: {response.error}'
+                )
+            )
+
+        with self:
+            plus.cloud.send_message_cb(
+                bacommon.cloud.TransientAPIKeyRequest(),
+                on_response=_on_raw_response,
+            )
+
 
 @dataclass
 class _AuthRequest:

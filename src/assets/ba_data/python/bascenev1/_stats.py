@@ -132,7 +132,6 @@ class PlayerRecord:
     def submit_kill(self, showpoints: bool = True) -> None:
         """Submit a kill for this player entry."""
         # FIXME Clean this up.
-        # pylint: disable=too-many-statements
 
         self._multi_kill_count += 1
         stats = self._stats()
@@ -354,7 +353,6 @@ class Stats:
         # FIXME: Tidy this up.
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         from bascenev1lib.actor.popuptext import PopupText
 
         from bascenev1._gameactivity import GameActivity

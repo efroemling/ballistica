@@ -1010,18 +1010,28 @@ void AudioServer::SetSoundPitch_(float pitch) {
 }
 
 void AudioServer::SetSoundVolume_(float volume) {
-  sound_volume_ = std::clamp(volume, 0.0f, 3.0f);
+  // Clamp to 3.0 rather than 1.0 to allow overdriving via script or config.
+  sound_volume_ = std::clamp(GetPerceivedVolume_(volume), 0.0f, 3.0f);
   for (auto&& i : sources_) {
     i->UpdateVolume();
   }
 }
 
 void AudioServer::SetMusicVolume_(float volume) {
-  music_volume_ = std::clamp(volume, 0.0f, 3.0f);
+  // Clamp to 3.0 rather than 1.0 to allow overdriving via script or config.
+  music_volume_ = std::clamp(GetPerceivedVolume_(volume), 0.0f, 3.0f);
   UpdateMusicPlayState_();
   for (auto&& i : sources_) {
     i->UpdateVolume();
   }
+}
+
+float AudioServer::GetPerceivedVolume_(float volume_linear) {
+  // Apply a cubic curve to convert a linear slider value to a perceptually
+  // even volume. AL_GAIN is a linear amplitude multiplier, so without this
+  // correction a linear slider would feel like it jumps quickly at the low
+  // end.
+  return powf(volume_linear, 3.0f);
 }
 
 // Start or stop music playback based on volume/suspend-state/etc.

@@ -39,7 +39,6 @@ class ZoomText(bs.Actor):
         tilt_translate: float = 0.0,
         maxwidth: float | None = None,
     ):
-        # pylint: disable=too-many-locals
         super().__init__()
         self._dying = False
         positionadjusted = (position[0], position[1] - 100)

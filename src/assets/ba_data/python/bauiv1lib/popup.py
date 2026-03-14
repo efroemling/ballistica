@@ -131,8 +131,6 @@ class PopupMenuWindow(PopupWindow):
     ):
         # FIXME: Clean up a bit.
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         if choices_disabled is None:
             choices_disabled = []
         if choices_display is None:
@@ -327,7 +325,6 @@ class PopupMenu:
         button_size: tuple[float, float] = (160.0, 50.0),
         autoselect: bool = True,
     ):
-        # pylint: disable=too-many-locals
         if choices_disabled is None:
             choices_disabled = []
         if choices_display is None:

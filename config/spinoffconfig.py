@@ -290,6 +290,7 @@ ctx.filter_file_extensions = {
     '.xcstrings',
     '.filters',
     '.rst_t',
+    '.ps1',
 }
 
 # ELSE files with these extensions will NOT be filtered.

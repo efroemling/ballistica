@@ -20,7 +20,6 @@ class AudioSettingsWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from bauiv1lib.config import ConfigNumberEdit
 

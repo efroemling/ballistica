@@ -175,8 +175,6 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         window.
         """
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         from bauiv1._window import MainWindow
 
         # If we haven't grabbed initial uiscale or screen size for

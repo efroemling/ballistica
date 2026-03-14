@@ -25,7 +25,6 @@ def standard_message_sender_gen_pcommand(
     embedded: bool = False,
 ) -> None:
     """Used by pcommands taking a single filename argument."""
-    # pylint: disable=too-many-locals
     import efro.message
     from efro.terminal import Clr
     from efro.error import CleanError
@@ -94,7 +93,6 @@ def standard_message_receiver_gen_pcommand(
     embedded: bool = False,
 ) -> None:
     """Used by pcommands generating efro.message receiver modules."""
-    # pylint: disable=too-many-locals
 
     import efro.message
     from efro.terminal import Clr

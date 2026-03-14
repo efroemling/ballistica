@@ -72,9 +72,8 @@ class _NestedClass:
 
 
 def test_assign() -> None:
-    """Testing various assignments."""
-
     # pylint: disable=too-many-statements
+    """Testing various assignments."""
 
     @ioprepped
     @dataclass
@@ -941,8 +940,6 @@ def test_extended_data() -> None:
 
 def test_soft_default() -> None:
     """Test soft_default IOAttr value."""
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     # Try both of these with and without storage_name to make sure
     # soft_default interacts correctly with both cases.
@@ -1275,7 +1272,6 @@ class MTTestClass2(MTTestBase):
 def test_multi_type() -> None:
     """Test IOMultiType stuff."""
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     # Test converting single instances back and forth.
     val1: MTTestBase = MTTestClass1(ival=123)
@@ -1827,15 +1823,15 @@ def test_float_timestamps() -> None:
     @ioprepped
     @dataclass
     class _TestClass:
-        tmval: Annotated[datetime.datetime, IOAttrs(float_times=True)]
-        tmval2: Annotated[datetime.datetime, IOAttrs(float_times=False)]
+        tmval: Annotated[datetime.datetime, IOAttrs(time_format='float')]
+        tmval2: Annotated[datetime.datetime, IOAttrs(time_format='ints')]
         tmval3: datetime.datetime
 
     now = utc_now()
     testclass = _TestClass(tmval=now, tmval2=now, tmval3=now)
     testclass_dict = dataclass_to_dict(testclass)
 
-    # Make sure prefer_timestamps True gives us a float and False (or
+    # Make sure time_format='float' gives us a float and 'ints' (or
     # default) gives us the int list.
     assert isinstance(testclass_dict.get('tmval'), float)
     assert isinstance(testclass_dict.get('tmval2'), list)
@@ -1854,14 +1850,76 @@ def test_float_timestamps() -> None:
     assert testclass2.tmval3 == testclass.tmval3
 
 
-def test_float_timedeltas() -> None:
-    """Test exporting times as floats instead of int arrays."""
+def test_iso_timestamps() -> None:
+    """Test exporting datetimes as ISO 8601 strings."""
+    import re
+    import warnings
 
     @ioprepped
     @dataclass
     class _TestClass:
-        tmval: Annotated[datetime.timedelta, IOAttrs(float_times=True)]
-        tmval2: Annotated[datetime.timedelta, IOAttrs(float_times=False)]
+        tmval: Annotated[datetime.datetime, IOAttrs(time_format='iso')]
+        tmval2: Annotated[datetime.datetime, IOAttrs(time_format='ints')]
+
+    now = utc_now()
+    testclass = _TestClass(tmval=now, tmval2=now)
+    testclass_dict = dataclass_to_dict(testclass)
+
+    # ISO format should produce a Z-suffixed RFC 3339 string.
+    iso_val = testclass_dict.get('tmval')
+    assert isinstance(iso_val, str)
+    assert re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$', iso_val)
+
+    # Int-list format is unchanged.
+    assert isinstance(testclass_dict.get('tmval2'), list)
+
+    # Round-trip should be exact (no float precision loss).
+    testclass2 = dataclass_from_dict(_TestClass, testclass_dict)
+    assert testclass2.tmval == testclass.tmval
+    assert testclass2.tmval2 == testclass.tmval2
+
+    # Auto-detection: an ISO string should be accepted even on a field
+    # declared with time_format='ints'.
+    testclass_dict_mixed = dict(testclass_dict)
+    testclass_dict_mixed['tmval2'] = iso_val
+    testclass3 = dataclass_from_dict(_TestClass, testclass_dict_mixed)
+    assert testclass3.tmval2 == testclass.tmval2
+
+    # time_format='iso' on a timedelta field should error at prep time.
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _BadTDClass:
+            tdval: Annotated[datetime.timedelta, IOAttrs(time_format='iso')]
+
+    # float_times=True should emit a DeprecationWarning and behave like
+    # time_format='float'.
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter('always')
+
+        @ioprepped
+        @dataclass
+        class _DeprecatedClass:
+            tmval: Annotated[datetime.datetime, IOAttrs(float_times=True)]
+
+    assert any(
+        issubclass(w.category, DeprecationWarning)
+        and 'float_times' in str(w.message)
+        for w in caught
+    )
+    obj = _DeprecatedClass(tmval=now)
+    assert isinstance(dataclass_to_dict(obj).get('tmval'), float)
+
+
+def test_float_timedeltas() -> None:
+    """Test exporting timedeltas as floats instead of int arrays."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        tmval: Annotated[datetime.timedelta, IOAttrs(time_format='float')]
+        tmval2: Annotated[datetime.timedelta, IOAttrs(time_format='ints')]
         tmval3: datetime.timedelta
 
     testdelta = datetime.timedelta(days=123, hours=12.3423, seconds=2.345)
@@ -1869,7 +1927,7 @@ def test_float_timedeltas() -> None:
     testclass = _TestClass(tmval=testdelta, tmval2=testdelta, tmval3=testdelta)
     testclass_dict = dataclass_to_dict(testclass)
 
-    # Make sure prefer_timestamps True gives us a float and False (or
+    # Make sure time_format='float' gives us a float and 'ints' (or
     # default) gives us the int list.
     assert isinstance(testclass_dict.get('tmval'), float)
     assert isinstance(testclass_dict.get('tmval2'), list)
@@ -1885,6 +1943,74 @@ def test_float_timedeltas() -> None:
     # we started with.
     assert testclass2.tmval2 == testclass.tmval2
     assert testclass2.tmval3 == testclass.tmval3
+
+
+def test_date() -> None:
+    """Test datetime.date support."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        dval: datetime.date
+        dval_opt: datetime.date | None = None
+        dval_nostore: Annotated[datetime.date, IOAttrs(store_default=False)] = (
+            datetime.date(2020, 1, 1)
+        )
+
+    today = datetime.date(2024, 3, 15)
+
+    # Basic roundtrip via JSON codec.
+    obj = _TestClass(dval=today)
+    d = dataclass_to_dict(obj)
+    assert d['dval'] == '2024-03-15'
+    obj2 = dataclass_from_dict(_TestClass, d)
+    assert obj2.dval == today
+
+    # Roundtrip via Firestore codec (same wire format: YYYY-MM-DD string).
+    d_fs = dataclass_to_dict(obj, codec=Codec.FIRESTORE)
+    assert d_fs['dval'] == '2024-03-15'
+    obj3 = dataclass_from_dict(_TestClass, d_fs, codec=Codec.FIRESTORE)
+    assert obj3.dval == today
+
+    # Optional field: None roundtrips correctly.
+    obj_none = _TestClass(dval=today, dval_opt=None)
+    d_none = dataclass_to_dict(obj_none)
+    assert d_none.get('dval_opt') is None
+    obj_none2 = dataclass_from_dict(_TestClass, d_none)
+    assert obj_none2.dval_opt is None
+
+    # Optional field: present value roundtrips correctly.
+    obj_opt = _TestClass(dval=today, dval_opt=datetime.date(2000, 6, 1))
+    d_opt = dataclass_to_dict(obj_opt)
+    assert d_opt['dval_opt'] == '2000-06-01'
+    obj_opt2 = dataclass_from_dict(_TestClass, d_opt)
+    assert obj_opt2.dval_opt == datetime.date(2000, 6, 1)
+
+    # store_default=False: default value is omitted.
+    obj_def = _TestClass(dval=today)
+    d_def = dataclass_to_dict(obj_def)
+    assert 'dval_nostore' not in d_def
+    obj_def2 = dataclass_from_dict(_TestClass, d_def)
+    assert obj_def2.dval_nostore == datetime.date(2020, 1, 1)
+
+    # Invalid input: non-string raises TypeError.
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'dval': 20240315})
+
+    # Invalid input: bad format raises ValueError.
+    with pytest.raises(ValueError):
+        dataclass_from_dict(_TestClass, {'dval': 'not-a-date'})
+
+    # Make sure datetime.datetime is not mistakenly handled as date.
+    @ioprepped
+    @dataclass
+    class _TestClass2:
+        dtval: datetime.datetime
+
+    dt_obj = _TestClass2(dtval=utc_now())
+    dt_d = dataclass_to_dict(dt_obj)
+    # datetime should serialize as a list of ints, not a YYYY-MM-DD string.
+    assert isinstance(dt_d['dtval'], list)
 
 
 class MTTestMissingTypeID(Enum):

@@ -20,9 +20,7 @@ def generate_app_module(
 ) -> str:
     """Generate babase._app.py based on its existing version."""
 
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
     import textwrap
 
     from efrotools.util import replace_section

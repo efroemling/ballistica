@@ -87,6 +87,7 @@ class AudioServer {
   void SetMusicVolume_(float volume);
   void SetSoundVolume_(float volume);
   void SetSoundPitch_(float pitch);
+  float GetPerceivedVolume_(float volume_linear);
   void ClearSoundRefDeleteList_();
 
   void CompleteShutdown_();

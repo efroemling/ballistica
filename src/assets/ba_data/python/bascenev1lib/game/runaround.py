@@ -733,7 +733,6 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         )
 
     def _update_waves(self) -> None:
-        # pylint: disable=too-many-branches
 
         # If we have no living bots, go to the next wave.
         if (
@@ -894,10 +893,10 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         )
 
     def _start_next_wave(self) -> None:
+        # pylint: disable=too-many-statements
         # FIXME: Need to split this up.
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         self.show_zoom_message(
             bs.Lstr(
                 value='${A} ${B}',

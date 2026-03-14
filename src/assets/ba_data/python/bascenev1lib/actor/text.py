@@ -76,8 +76,6 @@ class Text(bs.Actor):
         front: bool = False,
     ):
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         super().__init__()
         self.node = bs.newnode(
             'text',

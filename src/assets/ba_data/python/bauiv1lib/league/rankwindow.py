@@ -429,7 +429,6 @@ class LeagueRankWindow(bui.MainWindow):
                     )
 
     def _refresh(self) -> None:
-        # pylint: disable=too-many-statements
 
         plus = bui.app.plus
         assert plus is not None

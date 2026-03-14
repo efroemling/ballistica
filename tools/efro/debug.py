@@ -569,10 +569,7 @@ class DeadlockWatcher:
     @classmethod
     def _deadlock_watcher_thread_main(cls, use_logs: bool) -> None:
         # pylint: disable=not-context-manager
-        # pylint: disable=too-many-locals
         # pylint: disable=not-an-iterable
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         from tempfile import TemporaryDirectory
 
         assert cls.watchers_lock is not None and cls.watchers is not None

@@ -102,6 +102,22 @@ disable=no-member
 # lint to trigger errors over that fact.
 notes=
 
+[DESIGN]
+# Default is 50, but our 80-char line limit tends to push statement counts
+# higher than equivalent code in projects with longer line limits (more
+# wrapping = more physical lines). 70 gives room for legitimately complex
+# build/platform logic without forcing artificial helper extraction.
+max-statements=70
+
+# Default is 12. Game logic, build pipelines, and message dispatchers are
+# inherently branch-heavy; 15 reduces suppression noise without losing signal.
+max-branches=15
+
+# Default is 15. Descriptive naming, intermediate variables for clarity, and
+# type annotation aliases all inflate local counts without indicating poor
+# structure. 25 reflects the reality of this codebase.
+max-locals=25
+
 [SIMILARITIES]
 
 [IMPORTS]
