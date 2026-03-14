@@ -1,4 +1,4 @@
-### 1.7.61 (build 22761, api 9, 2026-03-13)
+### 1.7.61 (build 22763, api 9, 2026-03-14)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
