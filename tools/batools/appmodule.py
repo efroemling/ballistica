@@ -279,9 +279,9 @@ def generate_app_module(
     contents += '    """\n'
     contents += '    msg = []\n'
     contents += '    msg.append(\'Available modules:\')\n'
+    contents += '    msg.append(f\'  {\'module\':<24}alias\')\n'
     contents += '    msg.append(\'=\' * 40)\n'
     if default_imports:
-        contents += '    msg.append(\'  module                    alias\')\n'
         contents += '    imports_info = [\n'
         for module_name, alias in sorted(default_imports.items()):
             if alias is not None:

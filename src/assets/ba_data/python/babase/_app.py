@@ -1261,8 +1261,8 @@ class App:
             """
             msg = []
             msg.append('Available modules:')
+            msg.append(f'  {'module':<24}alias')
             msg.append('=' * 40)
-            msg.append('  module                    alias')
             imports_info = [
                 ('bascenev1', 'bs'),
                 ('bascenev1lib', 'bsl'),
