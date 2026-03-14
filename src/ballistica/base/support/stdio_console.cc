@@ -96,6 +96,9 @@ void StdioConsole::StartNativePythonREPL_() {
   // which are configured in projectconfig.json
   g_base->python->objs().Get(BasePython::ObjID::kRunDefaultImportsCall).Call();
 
+  // Print REPL help information
+  g_base->python->objs().Get(BasePython::ObjID::kPrintReplHelpCall).Call();
+
   // Print any errors that occurred during default imports
   if (PyErr_Occurred()) {
     PyErr_Print();

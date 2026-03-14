@@ -474,6 +474,11 @@ def run_default_imports() -> None:
     _babase.app.run_default_imports()
 
 
+def print_repl_help() -> None:
+    """Print REPL help information when the interactive console starts."""
+    _babase.app.print_repl_help()
+
+
 def v2_auth_request(global_app_instance_id: str) -> None | tuple[bool, str]:
     """Kick off or process v2 auth requests.
 

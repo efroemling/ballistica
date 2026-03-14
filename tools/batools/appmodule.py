@@ -271,6 +271,45 @@ def generate_app_module(
         keep_markers=True,
     )
 
+    # Generate repl_help() function to display available imports and info.
+    # This is done inside run_default_imports so it's available in the REPL.
+    # First define the function, then add it to main_globals.
+    contents = 'def repl_help() -> None:\n'
+    contents += '    """Display help info about available REPL imports.\n\n'
+    contents += '    Shows default imports and any aliases available in the\n'
+    contents += '    REPL environment.\n'
+    contents += '    """\n'
+    contents += '    msg = []\n'
+    contents += '    msg.append(\'Available modules:\')\n'
+    contents += '    msg.append(\'=\' * 40)\n'
+    if default_imports:
+        contents += '    msg.append(\'  module                    alias\')\n'
+        contents += '    imports_info = [\n'
+        for module_name, alias in sorted(default_imports.items()):
+            if alias is not None:
+                contents += f'        (\'{module_name}\', \'{alias}\'),\n'
+            else:
+                contents += f'        (\'{module_name}\', None),\n'
+        contents += '    ]\n'
+        contents += '    for module, alias in imports_info:\n'
+        contents += '        if alias:\n'
+        contents += '            msg.append(f\'  {module:<24}{alias}\')\n'
+        contents += '        else:\n'
+        contents += '            msg.append(f\'  {module}\')\n'
+    else:
+        contents += '    msg.append(\'  (none configured)\')\n'
+    contents += '    print(\'\\n\'.join(msg))\n'
+    contents += '\n'
+    contents += 'main_globals[\'repl_help\'] = repl_help\n'
+
+    out = replace_section(
+        out,
+        f'{indent}# __REPL_HELP_GLOBALS_BEGIN__\n',
+        f'{indent}# __REPL_HELP_GLOBALS_END__\n',
+        textwrap.indent(f'{info}\n\n{contents}\n', indent),
+        keep_markers=True,
+    )
+
     # Disabling this for now; will probably remove permanently. Testable
     # app mode discovery now uses meta discovery system.
     if bool(False):

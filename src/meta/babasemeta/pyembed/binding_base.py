@@ -83,4 +83,5 @@ values = [
     AppVariant,  # kAppVariantType
     _hooks.v2_auth_request,  # kV2AuthRequestCall
     _hooks.v2_auth_data,  # kV2AuthDataCall
+    _hooks.print_repl_help,  # kPrintReplHelpCall
 ]
