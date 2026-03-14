@@ -32,23 +32,7 @@ class PlayWindow(bui.MainWindow):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
 
-        import bacommon.cloud
-
         ui = bui.app.ui_v1
-
-        # TEMP TESTING
-        if bool(False):
-            print('HELLO FROM TEST')
-            plus = bui.app.plus
-            assert plus is not None
-            if plus.accounts.primary is not None:
-                with plus.accounts.primary:
-                    plus.cloud.send_message_cb(
-                        bacommon.cloud.TransientAPIKeyRequest(),
-                        on_response=lambda r: print(
-                            'GOT TRANSIENT API KEY RESPONSE', r
-                        ),
-                    )
 
         # Preload some modules we use in a background thread so we won't
         # have a visual hitch when the user taps them.

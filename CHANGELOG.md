@@ -64,6 +64,9 @@
 - (build 22759) ANGLE GL rendering on Windows is now properly loading compressed
   textures; previously was using fallback half-res cpu-based decompression which
   is slow and ugly (Thanks SoK for the heads-up).
+- You can now use `ba*.app.accounts.primary.request_transient_api_key()` to get
+  a temporary api-key for the signed-in account that you can use to call REST
+  functions/etc.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not
