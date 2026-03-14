@@ -40,10 +40,10 @@ def generate_app_module(
     out = _generate_app_mode_selection(out, projroot, feature_sets, info)
 
     # Generate default imports code
-    out = _generate_default_imports(out, projroot, info)
+    out = _generate_default_imports(out, projroot, feature_sets, info)
 
     # Generate REPL help function
-    out = _generate_repl_help(out, projroot, info)
+    out = _generate_repl_help(out, projroot, feature_sets, info)
 
     # Generate testable app modes (currently disabled)
     out = _generate_testable_app_modes(out, projroot, feature_sets, info)
@@ -278,7 +278,7 @@ def _generate_app_mode_selection(
     return out
 
 
-def _generate_default_imports(out: str, projroot: str, info: str) -> str:
+def _generate_default_imports(out: str, projroot: str, feature_sets: dict[str, FeatureSet], info: str) -> str:
     """Generate default imports code for the REPL."""
 
     # Generate default imports in run_default_imports function in _app.py
@@ -299,10 +299,19 @@ def _generate_default_imports(out: str, projroot: str, info: str) -> str:
             'must be a dict with string keys and string or None values, '
             'or not present'
         )
+    
+    # Filter imports to only include those from available feature sets
+    available_imports = {}
+    for module_name, alias in default_imports.items():
+        # Check if this module comes from an available feature set
+        for fset in feature_sets.values():
+            if module_name.startswith(fset.name_python_package):
+                available_imports[module_name] = alias
+                break
 
     contents = '# pylint: disable=cyclic-import\n'
-    if default_imports:
-        for module_name, alias in default_imports.items():
+    if available_imports:
+        for module_name, alias in available_imports.items():
             contents += 'try:\n'
             contents += f'    import {module_name}\n'
             contents += f'    main_globals[\'{module_name}\'] = {module_name}\n'
@@ -327,7 +336,7 @@ def _generate_default_imports(out: str, projroot: str, info: str) -> str:
     return out
 
 
-def _generate_repl_help(out: str, projroot: str, info: str) -> str:
+def _generate_repl_help(out: str, projroot: str, feature_sets: dict[str, FeatureSet], info: str) -> str:
     """Generate repl_help() function to display available imports and info."""
 
     # Generate repl_help() function to display available imports and info.
@@ -339,18 +348,26 @@ def _generate_repl_help(out: str, projroot: str, info: str) -> str:
     if default_imports is None:
         default_imports = {}
 
+    # Filter imports to only include those from available feature sets
+    available_imports = {}
+    for module_name, alias in default_imports.items():
+        # Check if this module comes from an available feature set
+        for fset in feature_sets.values():
+            if module_name.startswith(fset.name_python_package):
+                available_imports[module_name] = alias
+                break
+
     contents = 'def repl_help() -> None:\n'
     contents += '    """Display help info about available REPL imports.\n\n'
     contents += '    Shows default imports and any aliases available in the\n'
     contents += '    REPL environment.\n'
     contents += '    """\n'
     contents += '    msg = []\n'
-    contents += '    msg.append(\'Available modules:\')\n'
-    contents += '    msg.append(f\'  {\'module\':<24}alias\')\n'
+    contents += '    msg.append(f\'  {\'Auto-imported modules\':<24}alias\')\n'
     contents += '    msg.append(\'=\' * 40)\n'
-    if default_imports:
+    if available_imports:
         contents += '    imports_info = [\n'
-        for module_name, alias in sorted(default_imports.items()):
+        for module_name, alias in sorted(available_imports.items()):
             if alias is not None:
                 contents += f'        (\'{module_name}\', \'{alias}\'),\n'
             else:

@@ -1260,8 +1260,7 @@ class App:
             REPL environment.
             """
             msg = []
-            msg.append('Available modules:')
-            msg.append(f'  {'module':<24}alias')
+            msg.append(f'  {'Auto-imported modules':<24}alias')
             msg.append('=' * 40)
             imports_info = [
                 ('bascenev1', 'bs'),
