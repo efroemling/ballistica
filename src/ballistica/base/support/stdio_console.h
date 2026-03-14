@@ -16,7 +16,10 @@ class StdioConsole {
   auto event_loop() const -> EventLoop* { return event_loop_; }
 
  private:
+  bool use_native_repl{true};
   void StartInMainThread_();
+  void StartNativePythonREPL_();
+  void StartLegacyConsole_();
   void PushCommand_(const std::string& command);
   void Clear_();
   EventLoop* event_loop_{};

@@ -106,6 +106,7 @@ class BasePython {
     kLoginAdapterGetSignInTokenResponseCall,
     kPreEnv,
     kOpenURLWithWebBrowserModuleCall,
+    kRunDefaultImportsCall,
     kEnvOnNativeModuleImportCall,
     kOnMainThreadStartAppCall,
     kAppPushApplyAppConfigCall,
@@ -127,6 +128,7 @@ class BasePython {
     kAppVariant,
     kV2AuthRequestCall,
     kV2AuthDataCall,
+    kPrintReplHelpCall,
     kLast  // Sentinel; must be at end.
   };
 
