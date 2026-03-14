@@ -278,7 +278,9 @@ def _generate_app_mode_selection(
     return out
 
 
-def _generate_default_imports(out: str, projroot: str, feature_sets: dict[str, FeatureSet], info: str) -> str:
+def _generate_default_imports(
+    out: str, projroot: str, feature_sets: dict[str, FeatureSet], info: str
+) -> str:
     """Generate default imports code for the REPL."""
 
     # Generate default imports in run_default_imports function in _app.py
@@ -299,7 +301,7 @@ def _generate_default_imports(out: str, projroot: str, feature_sets: dict[str, F
             'must be a dict with string keys and string or None values, '
             'or not present'
         )
-    
+
     # Filter imports to only include those from available feature sets
     available_imports = {}
     for module_name, alias in default_imports.items():
@@ -336,7 +338,9 @@ def _generate_default_imports(out: str, projroot: str, feature_sets: dict[str, F
     return out
 
 
-def _generate_repl_help(out: str, projroot: str, feature_sets: dict[str, FeatureSet], info: str) -> str:
+def _generate_repl_help(
+    out: str, projroot: str, feature_sets: dict[str, FeatureSet], info: str
+) -> str:
     """Generate repl_help() function to display available imports and info."""
 
     # Generate repl_help() function to display available imports and info.
