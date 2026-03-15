@@ -22,7 +22,7 @@
     "baclassic.ClassicAppMode",
     "babase.EmptyAppMode"
   ],
-  "default_imports": {
+  "default_convenience_imports": {
     "bascenev1": "bs",
     "bascenev1lib": "bsl",
     "bauiv1": "bui",

@@ -8,7 +8,6 @@ from __future__ import annotations
 import os
 import time
 import asyncio
-import logging
 from enum import Enum
 from functools import partial
 from typing import TYPE_CHECKING, override
@@ -32,7 +31,7 @@ from babase._stringedit import StringEditSubsystem
 from babase._devconsole import DevConsoleSubsystem
 from babase._analytics import AnalyticsSubsystem
 from babase._appconfig import AppConfig
-from babase._logging import lifecyclelog, applog
+from babase._logging import lifecyclelog, balog, applog
 from babase._gc import GarbageCollectionSubsystem
 
 if TYPE_CHECKING:
@@ -291,7 +290,7 @@ class App:
         try:
             exc = task.exception()
             if exc is not None:
-                logging.error(
+                balog.error(
                     "Error in async task '%s'.", task.get_name(), exc_info=exc
                 )
                 # We're done with the exception, so let's rip out its
@@ -300,7 +299,7 @@ class App:
                 strip_exception_tracebacks(exc)
 
         except Exception:
-            logging.exception('Error reporting async task error.')
+            balog.exception('Error reporting async task error.')
 
         self._asyncio_tasks.remove(task)
 
@@ -371,7 +370,7 @@ class App:
         except ImportError:
             return None
         except Exception:
-            logging.exception('Error importing baclassic.')
+            balog.exception('Error importing baclassic.')
             return None
 
     @property
@@ -391,7 +390,7 @@ class App:
         except ImportError:
             return None
         except Exception:
-            logging.exception('Error importing baplus.')
+            balog.exception('Error importing baplus.')
             return None
 
     @property
@@ -657,7 +656,7 @@ class App:
             try:
                 subsystem.on_ui_scale_change()
             except Exception:
-                logging.exception(
+                balog.exception(
                     'Error in on_ui_scale_change() for subsystem %s.', subsystem
                 )
 
@@ -674,7 +673,7 @@ class App:
             try:
                 subsystem.on_screen_size_change()
             except Exception:
-                logging.exception(
+                balog.exception(
                     'Error in on_screen_size_change() for subsystem %s.',
                     subsystem,
                 )
@@ -732,7 +731,7 @@ class App:
                 from_other_thread=True,
             )
         except Exception:
-            logging.exception('Error setting app intent to %s.', intent)
+            balog.exception('Error setting app intent to %s.', intent)
             _babase.pushcall(
                 partial(self._display_set_intent_error, intent),
                 from_other_thread=True,
@@ -756,7 +755,7 @@ class App:
                 try:
                     self._mode.on_deactivate()
                 except Exception:
-                    logging.exception(
+                    balog.exception(
                         'Error deactivating app-mode %s.', self._mode
                     )
 
@@ -767,7 +766,7 @@ class App:
                 try:
                     subsystem.reset()
                 except Exception:
-                    logging.exception(
+                    balog.exception(
                         'Error in reset() for subsystem %s.', subsystem
                     )
 
@@ -776,7 +775,7 @@ class App:
                 mode.on_activate()
             except Exception:
                 # Hmm; what should we do in this case?...
-                logging.exception('Error activating app-mode %s.', mode)
+                balog.exception('Error activating app-mode %s.', mode)
 
             # Let the world know when we first have an app-mode; certain
             # app stuff such as input processing can proceed at that
@@ -787,7 +786,7 @@ class App:
         try:
             mode.handle_intent(intent)
         except Exception:
-            logging.exception(
+            balog.exception(
                 'Error handling intent %s in app-mode %s.', intent, mode
             )
 
@@ -864,7 +863,7 @@ class App:
             try:
                 subsystem.on_app_loading()
             except Exception:
-                logging.exception(
+                balog.exception(
                     'Error in on_app_loading() for subsystem %s.', subsystem
                 )
 
@@ -913,7 +912,7 @@ class App:
             try:
                 subsystem.on_app_running()
             except Exception:
-                logging.exception(
+                balog.exception(
                     'Error in on_app_running() for subsystem %s.', subsystem
                 )
 
@@ -949,7 +948,7 @@ class App:
             try:
                 subsystem.apply_app_config()
             except Exception:
-                logging.exception(
+                balog.exception(
                     'Error in apply_app_config() for subsystem %s.',
                     subsystem,
                 )
@@ -1025,7 +1024,7 @@ class App:
             else:
                 # Only logical possibility left is NOT_STARTED, in which
                 # case we should not be getting called.
-                logging.warning(
+                balog.warning(
                     'App._update_state called while in %s state;'
                     ' should not happen.',
                     self.state.value,
@@ -1045,7 +1044,7 @@ class App:
                         self._run_shutdown_task(task_coro)
                     )
         except* Exception:
-            logging.exception('Unexpected error(s) in shutdown.')
+            balog.exception('Unexpected error(s) in shutdown.')
 
         # Note: ideally we should run this directly here, but currently
         # it does some legacy stuff which blocks, so running it here
@@ -1064,10 +1063,10 @@ class App:
             await asyncio.wait_for(task, self.SHUTDOWN_TASK_TIMEOUT_SECONDS)
         except TimeoutError:
             # Log simple error message if it times out.
-            logging.error('Timed out waiting for shutdown task %s.', coro)
+            balog.error('Timed out waiting for shutdown task %s.', coro)
         except Exception:
             # Go with full ugly stack trace for anything unexpected.
-            logging.exception('Error in shutdown task %s.', coro)
+            balog.exception('Error in shutdown task %s.', coro)
 
     def _on_suspend(self) -> None:
         """Called when the app goes to a suspended state."""
@@ -1078,7 +1077,7 @@ class App:
             try:
                 subsystem.on_app_suspend()
             except Exception:
-                logging.exception(
+                balog.exception(
                     'Error in on_app_suspend() for subsystem %s.', subsystem
                 )
 
@@ -1092,7 +1091,7 @@ class App:
             try:
                 subsystem.on_app_unsuspend()
             except Exception:
-                logging.exception(
+                balog.exception(
                     'Error in on_app_unsuspend() for subsystem %s.', subsystem
                 )
 
@@ -1106,7 +1105,7 @@ class App:
             try:
                 subsystem.on_app_shutdown()
             except Exception:
-                logging.exception(
+                balog.exception(
                     'Error in on_app_shutdown() for subsystem %s.', subsystem
                 )
 
@@ -1125,7 +1124,7 @@ class App:
             try:
                 self._mode.on_deactivate()
             except Exception:
-                logging.exception(
+                balog.exception(
                     'Error deactivating app-mode %s at app shutdown.',
                     self._mode,
                 )
@@ -1137,7 +1136,7 @@ class App:
             try:
                 subsystem.on_app_shutdown_complete()
             except Exception:
-                logging.exception(
+                balog.exception(
                     'Error in on_app_shutdown_complete() for subsystem %s.',
                     subsystem,
                 )
@@ -1152,7 +1151,7 @@ class App:
         lifecyclelog.info('shutdown-suppress-wait end')
         duration = _babase.apptime() - starttime
         if duration > 1.0:
-            logging.warning(
+            balog.warning(
                 'Shutdown-suppressions lasted longer than ideal '
                 '(%.2f seconds).',
                 duration,
@@ -1204,90 +1203,39 @@ class App:
             await asyncio.sleep(0.01)
         lifecyclelog.info('fade-and-shutdown-audio end')
 
-    def run_default_imports(self) -> None:
-        """Run default imports configured for this project.
+    def get_convenience_imports(self) -> dict[str, str | None]:
+        """Return active convenience imports.
 
-        This function imports modules that should be available by default
-        in interactive contexts like the REPL. It is auto-generated based
-        on the project's configuration.
+        This consists of a dict mapping module names to optional
+        aliases. These are the modules that will be auto-imported into
+        the REPL environment.
+
+        This can be set in the config as 'Convenience Imports'. If it is
+        not present there, defaults for the app are given.
         """
-        import sys
+        cfg = self.config.get('Convenience Imports')
+        if cfg is not None:
+            if isinstance(cfg, dict) and all(
+                isinstance(k, str) and isinstance(v, str | None)
+                for k, v in cfg.items()
+            ):
+                return cfg
+            balog.warning(
+                'Ignoring invalid \'Convenience Imports\' app config value;'
+                ' expected a dict of str -> str | None.'
+            )
 
-        main_globals = sys.modules['__main__'].__dict__
-
-        # __RUN_DEFAULT_IMPORTS_BEGIN__
+        # __GET_DEFAULT_CONVENIENCE_IMPORTS_BEGIN__
         # This section generated by batools.appmodule; do not edit.
 
-        # pylint: disable=cyclic-import
-        try:
-            import bascenev1
-            main_globals['bascenev1'] = bascenev1
-            main_globals['bs'] = bascenev1
-        except ImportError as e:
-            print(f'Error importing default module bascenev1: {e}')
+        return {
+            'bascenev1': 'bs',
+            'bascenev1lib': 'bsl',
+            'bauiv1': 'bui',
+            'bauiv1lib': 'buil',
+        }
 
-        try:
-            import bascenev1lib
-            main_globals['bascenev1lib'] = bascenev1lib
-            main_globals['bsl'] = bascenev1lib
-        except ImportError as e:
-            print(f'Error importing default module bascenev1lib: {e}')
-
-        try:
-            import bauiv1
-            main_globals['bauiv1'] = bauiv1
-            main_globals['bui'] = bauiv1
-        except ImportError as e:
-            print(f'Error importing default module bauiv1: {e}')
-
-        try:
-            import bauiv1lib
-            main_globals['bauiv1lib'] = bauiv1lib
-            main_globals['buil'] = bauiv1lib
-        except ImportError as e:
-            print(f'Error importing default module bauiv1lib: {e}')
-
-
-        # __RUN_DEFAULT_IMPORTS_END__
-
-        # __REPL_HELP_GLOBALS_BEGIN__
-        # This section generated by batools.appmodule; do not edit.
-
-        def repl_help() -> None:
-            """Display help info about available REPL imports.
-
-            Shows default imports and any aliases available in the
-            REPL environment.
-            """
-            msg = []
-            msg.append(f'  {'Auto-imported modules':<24}alias')
-            msg.append('=' * 40)
-            imports_info = [
-                ('bascenev1', 'bs'),
-                ('bascenev1lib', 'bsl'),
-                ('bauiv1', 'bui'),
-                ('bauiv1lib', 'buil'),
-            ]
-            for module, alias in imports_info:
-                if alias:
-                    msg.append(f'  {module:<24}{alias}')
-                else:
-                    msg.append(f'  {module}')
-            print('\n'.join(msg))
-
-        main_globals['repl_help'] = repl_help
-
-        # __REPL_HELP_GLOBALS_END__
-
-    def print_repl_help(self) -> None:
-        """Print help information about REPL imports."""
-        import sys
-
-        main_globals = sys.modules['__main__'].__dict__
-        if 'repl_help' in main_globals:
-            main_globals['repl_help']()
-        else:
-            print('repl_help() not yet available.')
+        # __GET_DEFAULT_CONVENIENCE_IMPORTS_END__
 
     def _thread_pool_thread_init(self) -> None:
         # Help keep things clear in profiling tools/etc.

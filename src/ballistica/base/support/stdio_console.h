@@ -16,7 +16,6 @@ class StdioConsole {
   auto event_loop() const -> EventLoop* { return event_loop_; }
 
  private:
-  bool use_native_repl{true};
   void StartInMainThread_();
   void StartNativePythonREPL_();
   void StartLegacyConsole_();
@@ -24,6 +23,7 @@ class StdioConsole {
   void Clear_();
   EventLoop* event_loop_{};
   std::string pending_input_;
+  bool use_native_repl_{true};
 };
 
 }  // namespace ballistica::base

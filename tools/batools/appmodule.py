@@ -39,11 +39,8 @@ def generate_app_module(
     # Generate default app-mode selection logic
     out = _generate_app_mode_selection(out, projroot, feature_sets, info)
 
-    # Generate default imports code
-    out = _generate_default_imports(out, projroot, feature_sets, info)
-
-    # Generate REPL help function
-    out = _generate_repl_help(out, projroot, feature_sets, info)
+    # Generate get_convenience_imports method
+    out = _generate_get_convenience_imports(out, projroot, feature_sets, info)
 
     # Generate testable app modes (currently disabled)
     out = _generate_testable_app_modes(out, projroot, feature_sets, info)
@@ -148,7 +145,7 @@ def _generate_subsystem_properties(
                         f'    except ImportError:\n'
                         f'        return None\n'
                         f'    except Exception:\n'
-                        f"        logging.exception('Error importing"
+                        f"        balog.exception('Error importing"
                         f" {modname}.')\n"
                         f'        return None\n'
                     )
@@ -278,121 +275,41 @@ def _generate_app_mode_selection(
     return out
 
 
-def _generate_default_imports(
+def _generate_get_convenience_imports(
     out: str, projroot: str, feature_sets: dict[str, FeatureSet], info: str
 ) -> str:
-    """Generate default imports code for the REPL."""
+    """Generate get_convenience_imports() method body."""
 
-    # Generate default imports in run_default_imports function in _app.py
-    # based on 'default_imports' in projectconfig.
-    # These are imports that will be injected into the main module namespace.
-    # Meant for use in REPL for getting the basic stuff without
-    # having to import it manually.
     default_imports: dict[str, str | None] | None = getprojectconfig(
         projroot
-    ).get('default_imports')
+    ).get('default_convenience_imports')
     if default_imports is None:
         default_imports = {}
-    elif not all(
-        isinstance(v, str) or v is None for k, v in default_imports.items()
-    ):
-        raise RuntimeError(
-            'Could not load default_imports from projectconfig; '
-            'must be a dict with string keys and string or None values, '
-            'or not present'
-        )
 
     # Filter imports to only include those from available feature sets
     available_imports = {}
     for module_name, alias in default_imports.items():
-        # Check if this module comes from an available feature set
         for fset in feature_sets.values():
             if module_name.startswith(fset.name_python_package):
                 available_imports[module_name] = alias
                 break
 
-    contents = '# pylint: disable=cyclic-import\n'
     if available_imports:
+        contents = 'return {\n'
         for module_name, alias in available_imports.items():
-            contents += 'try:\n'
-            contents += f'    import {module_name}\n'
-            contents += f'    main_globals[\'{module_name}\'] = {module_name}\n'
-            if alias is not None and isinstance(alias, str):
-                contents += f'    main_globals[\'{alias}\'] = {module_name}\n'
-            contents += 'except ImportError as e:\n'
-            contents += (
-                f'    print(f\'Error importing default module '
-                f'{module_name}: {{e}}\')\n\n'
-            )
-    else:
-        contents = 'pass\n'
-
-    indent = '        '
-    out = replace_section(
-        out,
-        f'{indent}# __RUN_DEFAULT_IMPORTS_BEGIN__\n',
-        f'{indent}# __RUN_DEFAULT_IMPORTS_END__\n',
-        textwrap.indent(f'{info}\n\n{contents}\n', indent),
-        keep_markers=True,
-    )
-    return out
-
-
-def _generate_repl_help(
-    out: str, projroot: str, feature_sets: dict[str, FeatureSet], info: str
-) -> str:
-    """Generate repl_help() function to display available imports and info."""
-
-    # Generate repl_help() function to display available imports and info.
-    # This is done inside run_default_imports so it's available in the REPL.
-    # First define the function, then add it to main_globals.
-    default_imports: dict[str, str | None] | None = getprojectconfig(
-        projroot
-    ).get('default_imports')
-    if default_imports is None:
-        default_imports = {}
-
-    # Filter imports to only include those from available feature sets
-    available_imports = {}
-    for module_name, alias in default_imports.items():
-        # Check if this module comes from an available feature set
-        for fset in feature_sets.values():
-            if module_name.startswith(fset.name_python_package):
-                available_imports[module_name] = alias
-                break
-
-    contents = 'def repl_help() -> None:\n'
-    contents += '    """Display help info about available REPL imports.\n\n'
-    contents += '    Shows default imports and any aliases available in the\n'
-    contents += '    REPL environment.\n'
-    contents += '    """\n'
-    contents += '    msg = []\n'
-    contents += '    msg.append(f\'  {\'Auto-imported modules\':<24}alias\')\n'
-    contents += '    msg.append(\'=\' * 40)\n'
-    if available_imports:
-        contents += '    imports_info = [\n'
-        for module_name, alias in sorted(available_imports.items()):
-            if alias is not None:
-                contents += f'        (\'{module_name}\', \'{alias}\'),\n'
+            if alias is None:
+                contents += f'    \'{module_name}\': None,\n'
             else:
-                contents += f'        (\'{module_name}\', None),\n'
-        contents += '    ]\n'
-        contents += '    for module, alias in imports_info:\n'
-        contents += '        if alias:\n'
-        contents += '            msg.append(f\'  {module:<24}{alias}\')\n'
-        contents += '        else:\n'
-        contents += '            msg.append(f\'  {module}\')\n'
+                contents += f'    \'{module_name}\': \'{alias}\',\n'
+        contents += '}\n'
     else:
-        contents += '    msg.append(\'  (none configured)\')\n'
-    contents += '    print(\'\\n\'.join(msg))\n'
-    contents += '\n'
-    contents += 'main_globals[\'repl_help\'] = repl_help\n'
+        contents = 'return {}\n'
 
     indent = '        '
     out = replace_section(
         out,
-        f'{indent}# __REPL_HELP_GLOBALS_BEGIN__\n',
-        f'{indent}# __REPL_HELP_GLOBALS_END__\n',
+        f'{indent}# __GET_DEFAULT_CONVENIENCE_IMPORTS_BEGIN__\n',
+        f'{indent}# __GET_DEFAULT_CONVENIENCE_IMPORTS_END__\n',
         textwrap.indent(f'{info}\n\n{contents}\n', indent),
         keep_markers=True,
     )
