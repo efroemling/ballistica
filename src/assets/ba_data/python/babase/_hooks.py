@@ -494,7 +494,7 @@ def _do_start_native_repl() -> None:
             if alias is not None:
                 main_globals[alias] = mod
         except Exception:
-            balog.exception('Error importing default module %s.', module_name)
+            balog.exception('Error in convenience import of %s.', module_name)
 
     if default_imports:
         parts = [
