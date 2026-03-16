@@ -2,7 +2,6 @@
 #
 """A nice collection of ready-to-use pcommands for this package."""
 
-# pylint: disable=too-many-lines
 from __future__ import annotations
 
 # Note: import as little as possible here at the module level to
@@ -287,51 +286,6 @@ def python_version_android() -> None:
     print(PY_VER_EXACT_ANDROID, end='')
 
 
-def python_version_apple() -> None:
-    """Print Apple embedded Python version."""
-    from efrotools.pybuild import PY_VER_EXACT_APPLE
-
-    pcommand.disallow_in_batch()
-
-    print(PY_VER_EXACT_APPLE, end='')
-
-
-def python_build_apple_old() -> None:
-    """Build an embeddable python for mac/ios/tvos."""
-
-    pcommand.disallow_in_batch()
-
-    _python_build_apple_old(debug=False)
-
-
-def python_build_apple_old_debug() -> None:
-    """Build embeddable python for mac/ios/tvos (dbg ver)."""
-
-    pcommand.disallow_in_batch()
-
-    _python_build_apple_old(debug=True)
-
-
-def _python_build_apple_old(debug: bool) -> None:
-    """Build an embeddable python for macOS/iOS/tvOS."""
-    import os
-    from efro.error import CleanError
-    from efrotools import pybuild
-
-    pcommand.disallow_in_batch()
-
-    os.chdir(pcommand.PROJROOT)
-    archs = ('mac', 'ios', 'tvos')
-    if len(sys.argv) != 3:
-        raise CleanError('Error: expected one <ARCH> arg: ' + ', '.join(archs))
-    arch = sys.argv[2]
-    if arch not in archs:
-        raise CleanError(
-            'Error: invalid arch. valid values are: ' + ', '.join(archs)
-        )
-    pybuild.build_apple(arch, debug=debug)
-
-
 def python_build_android_old() -> None:
     """Build an embeddable Python lib for Android (old pipeline)."""
 
@@ -488,25 +442,6 @@ def python_android_patch_ssl_old() -> None:
     pybuild.android_patch_ssl()
 
 
-def python_apple_patch() -> None:
-    """Patches Python to prep for building for Apple platforms."""
-    from efro.error import CleanError
-    from efrotools import pybuild
-
-    pcommand.disallow_in_batch()
-
-    if len(sys.argv) != 3:
-        raise CleanError('Expected 1 arg.')
-
-    pydir: str = sys.argv[2]
-    pybuild.apple_patch(pydir)
-    # arch = sys.argv[2]
-    # slc = sys.argv[3]
-    # assert slc
-    # assert ' ' not in slc
-    # pybuild.apple_patch(arch, slc)
-
-
 def python_gather() -> None:
     """Gather build python components into the project.
 
@@ -518,7 +453,7 @@ def python_gather() -> None:
     pcommand.disallow_in_batch()
 
     os.chdir(pcommand.PROJROOT)
-    pybuild.gather(do_android=True, do_apple=True)
+    pybuild.gather(do_android=True)
 
 
 def python_gather_android_old() -> None:
@@ -529,18 +464,7 @@ def python_gather_android_old() -> None:
     pcommand.disallow_in_batch()
 
     os.chdir(pcommand.PROJROOT)
-    pybuild.gather(do_android=True, do_apple=False)
-
-
-def python_apple_gather_old() -> None:
-    """python_gather but only apple bits (old pipeline)."""
-    import os
-    from efrotools import pybuild
-
-    pcommand.disallow_in_batch()
-
-    os.chdir(pcommand.PROJROOT)
-    pybuild.gather(do_android=False, do_apple=True)
+    pybuild.gather(do_android=True)
 
 
 def python_winprune() -> None:

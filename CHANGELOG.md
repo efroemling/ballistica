@@ -1,4 +1,4 @@
-### 1.7.61 (build 22765, api 9, 2026-03-14)
+### 1.7.61 (build 22767, api 9, 2026-03-15)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
@@ -71,6 +71,10 @@
   features like autocompletion, command history, multiline statements and line
   editing(going left/right). This is currently disabled by default but can be
   enabled via the `Use Native Python REPL` config key. (Thanks Loup-Garou911XD!)
+- Network connectivity improvements: devices with no UDP connectivity should be
+  able to establish connectivity to the master-server (though udp is still
+  required for gameplay). Also, establishing connectivity on first launch should
+  be substantially faster.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not

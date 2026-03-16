@@ -130,14 +130,8 @@ def _get_py_targets(
                 in_subset = 'private-windows-x64'
             elif proot.startswith(f'{ASSETS_SRC}/windows/Win32'):
                 in_subset = 'private-windows-Win32'
-            elif proot.startswith(
-                f'src/external/python-apple-old/macos/Python.xcframework/'
-                f'macos-arm64_x86_64/Python.framework/'
-                f'Versions/{PYVER}/lib/python{PYVER}'
-            ):
+            elif proot.startswith(f'{ASSETS_SRC}/pylib-apple'):
                 in_subset = 'private-apple-mac'
-            # elif proot.startswith(f'{ASSETS_SRC}/pylib-apple'):
-            #     in_subset = 'private-apple'
             elif proot.startswith(f'{ASSETS_SRC}/pylib-android'):
                 in_subset = 'private-android'
             else:
@@ -238,27 +232,11 @@ def _get_py_targets_subset(
         dst = f'{BUILD_DIR}/ba_data/python'
         copyrule = '$(BUILD_DIR)/ba_data/python/%.py : $(TOOLS_DIR)/%.py'
 
-    # Map stuff from mac python xcframework's lib dir to
-    # build/assets/pylib-apple-mac
+    # Map stuff from src/assets/pylib-apple to build/assets/pylib-apple
     elif subset == 'private-apple-mac':
-        src = (
-            f'src/external/python-apple-old/macos/Python.xcframework/'
-            f'macos-arm64_x86_64/Python.framework/'
-            f'Versions/{PYVER}/lib/python{PYVER}'
-        )
-        dst = f'{BUILD_DIR}/python-apple-old/macos/pylib'
-        copyrule = (
-            f'$(BUILD_DIR)/python-apple-old/macos/pylib/%.py :'
-            f' $(SRC_DIR)/external/python-apple-old/macos/Python.xcframework/'
-            f'macos-arm64_x86_64/Python.framework/'
-            f'Versions/{PYVER}/lib/python{PYVER}/%.py'
-        )
-        copyrule_so = (
-            f'$(BUILD_DIR)/python-apple-old/macos/pylib/%.so :'
-            f' $(SRC_DIR)/external/python-apple-old/macos/Python.xcframework/'
-            f'macos-arm64_x86_64/Python.framework/'
-            f'Versions/{PYVER}/lib/python{PYVER}/%.so'
-        )
+        src = f'{ASSETS_SRC}/pylib-apple'
+        dst = f'{BUILD_DIR}/pylib-apple'
+        copyrule = '$(BUILD_DIR)/%.py : %.py'
 
     # Default - map stuff from src/assets/ to build/assets/
     else:

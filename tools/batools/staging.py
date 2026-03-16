@@ -223,7 +223,7 @@ class BuildStager:
                 + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
             )
             self.include_pylib = True
-            self.pylib_src_path = 'python-apple-old/macos/pylib'
+            self.pylib_src_path = 'pylib-apple'
             self.tex_suffix = '.dds'
         elif platform_arg == '-xcode-ios':
             self.desc = 'xcode ios'
