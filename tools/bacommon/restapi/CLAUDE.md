@@ -23,8 +23,8 @@ enums locally, mirroring internal values where necessary.
 
 ## File layout
 
-- `v1/__init__.py` — `Endpoint` StrEnum only.
-- `v1/accounts.py` — `ErrorResponse`, `AccountResponse`.
+- `v1/__init__.py` — `ErrorResponse` dataclass and `Endpoint` StrEnum.
+- `v1/accounts.py` — `AccountResponse`.
 - `v1/workspaces.py` — all `Workspace*` types and `WorkspaceEntryType`.
 - Add new resource groups as separate `v1/<resource>.py` files.
 - Every submodule must include ``# See CLAUDE.md in this directory for

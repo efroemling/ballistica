@@ -2,23 +2,12 @@
 #
 """Public REST API v1 endpoint enum for the Ballistica master-server.
 
-See ``CLAUDE.md`` in this directory for package-wide contributor conventions
-(IOAttrs keys, standalone constraint, docstring format, file layout).
-
-All endpoints require an ``Authorization: Bearer <key>`` header. Responses
-are JSON; any non-200 response has an
-:class:`~bacommon.restapi.v1.accounts.ErrorResponse` body regardless of
-which endpoint was called.
-
-See :class:`Endpoint` for the full list of available endpoints and
-their usage.
-
-Example — fetch info for the authenticated account:
+Simple Example — fetch info for the authenticated account:
 
 .. code-block:: bash
 
-    curl -H 'Authorization: Bearer <your-api-key>' \\
-        https://www.ballistica.net/api/v1/accounts/me
+    curl -H 'Authorization: Bearer <your-api-key>' \
+https://www.ballistica.net/api/v1/accounts/me
 
 The dataclasses in the submodules serve as schema documentation and can
 also be used directly with :mod:`efro.dataclassio` to parse or construct
@@ -28,9 +17,43 @@ values::
     from bacommon.restapi.v1.accounts import AccountResponse
 
     account = dataclass_from_json(AccountResponse, response_json_str)
+
+All endpoints require an ``Authorization: Bearer <key>`` header. Responses
+are JSON; any non-200 response has an
+:class:`~bacommon.restapi.v1.ErrorResponse` body regardless of
+which endpoint was called.
+
+See :class:`Endpoint` for the full list of available endpoints and
+their usage.
+
+
 """
 
+from __future__ import annotations
+
+from dataclasses import dataclass
 from enum import StrEnum
+from typing import Annotated
+
+from efro.dataclassio import IOAttrs, ioprepped
+
+# See `CLAUDE.md` in this directory for package-wide contributor
+# conventions (IOAttrs keys, standalone constraint, docstring format,
+# file layout).
+
+
+@ioprepped
+@dataclass
+class ErrorResponse:
+    """Returned by all :class:`Endpoint` members on any non-200 response.
+
+    The HTTP status code conveys the specific failure type.
+    """
+
+    #: Machine-readable error code (e.g. ``'not_found'``, ``'unauthorized'``).
+    error: Annotated[str, IOAttrs('error')]
+    #: Human-readable description of the error.
+    message: Annotated[str, IOAttrs('message')]
 
 
 # Convention for adding entries to Endpoint:

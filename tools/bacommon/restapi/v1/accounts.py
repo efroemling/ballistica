@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # See CLAUDE.md in this directory for contributor conventions.
-"""Account response types and shared error type for REST API v1."""
+"""Account response types for REST API v1."""
 
 from __future__ import annotations
 
@@ -10,21 +10,6 @@ from dataclasses import dataclass
 from typing import Annotated
 
 from efro.dataclassio import ioprepped, IOAttrs
-
-
-@ioprepped
-@dataclass
-class ErrorResponse:
-    """Returned by all :class:`~bacommon.restapi.v1.Endpoint` members
-    on any non-200 response.
-
-    The HTTP status code conveys the specific failure type.
-    """
-
-    #: Machine-readable error code (e.g. ``'not_found'``, ``'unauthorized'``).
-    error: Annotated[str, IOAttrs('error')]
-    #: Human-readable description of the error.
-    message: Annotated[str, IOAttrs('message')]
 
 
 @ioprepped
