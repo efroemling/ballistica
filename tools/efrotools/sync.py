@@ -268,6 +268,19 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
                         f' {Clr.SRED}{killpath}{Clr.RST}'
                     )
                 else:
+                    allow_deletes = (
+                        os.environ.get('EFROSYNC_ALLOW_DELETES') == '1'
+                    )
+                    if not allow_deletes:
+                        raise RuntimeError(
+                            f'Sync would delete {Clr.SRED}{killpath}{Clr.RST}'
+                            f' but EFROSYNC_ALLOW_DELETES is not set to 1.'
+                            f' If this deletion is intentional, re-run with'
+                            f' EFROSYNC_ALLOW_DELETES=1.'
+                            f' If you meant to add this file (not delete it),'
+                            f' move it to the upstream source'
+                            f' ({src_proj}: {src}) instead.'
+                        )
                     print(
                         f'Removing orphaned sync path:'
                         f' {Clr.SRED}{killpath}{Clr.RST}'

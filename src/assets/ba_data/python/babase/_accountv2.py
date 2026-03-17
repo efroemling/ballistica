@@ -563,7 +563,23 @@ class AccountV2Handle:
 
     This class supports the ``with`` statement, which is how it is
     used with some operations such as cloud messaging.
+
+    Do not instantiate this class directly. Always access account
+    handles through the accounts subsystem; for example via
+    :attr:`babase.AccountV2Subsystem.primary`.
     """
+
+    def __init__(self) -> None:
+        # We use type() instead of isinstance() here intentionally;
+        # subclasses should be allowed to instantiate.
+        if (  # pylint: disable=unidiomatic-typecheck
+            type(self) is AccountV2Handle
+        ):
+            raise TypeError(
+                'AccountV2Handle cannot be instantiated directly.'
+                ' Access account handles through the accounts subsystem'
+                ' (e.g. babase.app.plus.accounts.primary).'
+            )
 
     #: The id of this account.
     accountid: str
