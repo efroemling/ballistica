@@ -959,12 +959,12 @@ test-threadpool:
 # Run live-server tests for the public REST API (accounts, workspaces).
 # Requires a running dev server; reads ballistica_api_key from config/localconfig.json.
 BALLISTICA_URL ?= https://dev.ballistica.net
-test-rest: env
+test-restapi: env
 	@$(PCOMMAND) require_ballistica_api_key
-	@$(PCOMMAND) pytest -v tests/test_rest
+	@$(PCOMMAND) pytest -v tests/test_restapi
 
 # Tell make which of these targets don't represent files.
-.PHONY: test-rest
+.PHONY: test-restapi
 
 
 ################################################################################

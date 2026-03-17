@@ -1,7 +1,7 @@
-### 1.7.62 (build 22776, api 9, 2026-03-16)
-- Added `tests/test_rest` which can be useful as reference for the
-  ballistica.net REST api. Run `make test-rest` to run all REST tests (you just
-  need to supply an API Key).
+### 1.7.62 (build 22778, api 9, 2026-03-16)
+- Added `tests/test_restapi` which can be useful as reference for the
+  ballistica.net REST api. Run `make test-restapi` to run all REST api tests
+  (you just need to supply an API Key).
 
 ### 1.7.61 (build 22772, api 9, 2026-03-16)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)

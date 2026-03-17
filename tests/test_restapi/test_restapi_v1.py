@@ -15,7 +15,7 @@ from bacommon.restapi.v1 import Endpoint
 if TYPE_CHECKING:
     import urllib3
 
-    from rest_test_fixtures import AuthedClient
+    from restapi_test_fixtures import AuthedClient
 
 FAST_MODE = os.environ.get('BA_TEST_FAST_MODE') == '1'
 

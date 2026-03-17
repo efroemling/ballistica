@@ -2,4 +2,4 @@
 #
 """Project-wide pytest configuration and fixtures."""
 
-pytest_plugins = ['rest_test_fixtures']
+pytest_plugins = ['restapi_test_fixtures']

@@ -14,7 +14,7 @@ from bacommon.restapi.v1 import Endpoint
 if TYPE_CHECKING:
     import urllib3
 
-    from rest_test_fixtures import AuthedClient
+    from restapi_test_fixtures import AuthedClient
 
 
 @pytest.fixture(scope='session', autouse=True)
