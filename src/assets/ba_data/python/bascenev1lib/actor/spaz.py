@@ -723,7 +723,7 @@ class Spaz(bs.Actor):
             # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
             # NOTE: should test to see if that's still the case.
-            # UPDATE (March 2026): Using bs.pushcall instead of bs.timer - 
+            # UPDATE (March 2026): Using bs.pushcall instead of bs.timer -
             # executes at end of current frame (faster) while still being safe.
             # Tested and works perfectly.
             bs.pushcall(bs.WeakCallStrict(self.shatter))
@@ -731,7 +731,7 @@ class Spaz(bs.Actor):
         elif isinstance(msg, bs.ImpactDamageMessage):
             # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
-            # UPDATE (March 2026): Using bs.pushcall instead of bs.timer - 
+            # UPDATE (March 2026): Using bs.pushcall instead of bs.timer -
             # executes at end of current frame (faster), making hits feel
             # immediate while still being safe.
             bs.pushcall(bs.WeakCallStrict(self._hit_self, msg.intensity))
