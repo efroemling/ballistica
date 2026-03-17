@@ -9,7 +9,6 @@ import sys
 import socket
 import subprocess
 from enum import Enum
-from pathlib import Path
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never
 
@@ -602,10 +601,36 @@ def filter_server_config_toml(projroot: str, infilepath: str) -> str:
     )
 
 
-def _brew_h_resolved(header_path: str) -> str:
-    """Return resolved symlink path for a homebrew header, or '' if absent."""
-    p = Path(header_path)
-    return str(p.resolve()) if p.exists() else ''
+def _cmake_cache_has_missing_cellar_path(dirname: str) -> bool:
+    """Return whether any Homebrew Cellar paths in a cmake cache are gone.
+
+    CMake resolves pkg-config results to versioned Cellar paths at configure
+    time. When homebrew updates a package the old versioned path is removed,
+    causing linker errors on the next build. Scanning CMakeCache.txt for any
+    path matching ``*/Cellar/<pkg>/<ver>`` and checking whether it still
+    exists on disk catches all affected packages automatically without
+    needing to enumerate them individually. No-op on Linux, where packages
+    live at stable paths with no Cellar directories.
+    """
+    import re
+
+    cmake_cache_path = os.path.join(dirname, 'CMakeCache.txt')
+    if not os.path.isfile(cmake_cache_path):
+        return False
+    with open(cmake_cache_path, encoding='utf-8') as cache_file:
+        cache_text = cache_file.read()
+    for cellar_path in sorted(
+        set(re.findall(r'\S+/Cellar/[^/\s]+/[^/\s]+', cache_text))
+    ):
+        if not os.path.isdir(cellar_path):
+            print(
+                f'{Clr.BLU}Homebrew Cellar path no longer exists:'
+                f' {cellar_path}; package was likely updated.'
+                f' Clearing existing build at "{dirname}" to'
+                f' avoid stale cmake cache linker errors.{Clr.RST}'
+            )
+            return True
+    return False
 
 
 def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
@@ -677,40 +702,6 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     )
     entries.append(Entry('mac_xcode_sdks', mac_xcode_sdks))
 
-    # Resolve Homebrew prefix (ARM: /opt/homebrew, Intel: /usr/local).
-    # Homebrew include paths are symlinks into versioned Cellar directories,
-    # so when a package is updated the resolved path changes. CMake bakes
-    # the old versioned paths into its cache, causing linker errors against
-    # libraries that no longer exist. We detect this by resolving the symlink
-    # for a few key headers and wiping the build dir when any of them change.
-    brew_prefix = (
-        '/opt/homebrew' if os.path.isdir('/opt/homebrew') else '/usr/local'
-    )
-
-    # ...or if homebrew SDL.h resolved path changes (happens for updates)
-    entries.append(
-        Entry(
-            'homebrew_sdl_h_resolved',
-            _brew_h_resolved(f'{brew_prefix}/include/SDL2/SDL.h'),
-        )
-    )
-
-    # ...or if homebrew pango resolved path changes (happens for updates)
-    entries.append(
-        Entry(
-            'homebrew_pango_h_resolved',
-            _brew_h_resolved(f'{brew_prefix}/include/pango-1.0/pango/pango.h'),
-        )
-    )
-
-    # ...or if homebrew harfbuzz resolved path changes (happens for updates)
-    entries.append(
-        Entry(
-            'homebrew_hb_h_resolved',
-            _brew_h_resolved(f'{brew_prefix}/include/harfbuzz/hb.h'),
-        )
-    )
-
     # Ok; do the thing.
     verfilename = os.path.join(dirname, '.ba_cmake_env')
     title = 'cmake_prep_dir'
@@ -735,6 +726,9 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
             )
             changed = True
             break
+
+    if not changed:
+        changed = _cmake_cache_has_missing_cellar_path(dirname)
 
     if changed:
         if verbose:
