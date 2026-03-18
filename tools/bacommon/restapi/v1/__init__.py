@@ -115,3 +115,17 @@ class Endpoint(StrEnum):
     #: or ``{"op": "copy", "dest": "path"}``.
     #: Returns HTTP 204.
     WORKSPACE_FILE = '/api/v1/workspaces/{workspace_id}/files/{file_path}'
+
+    #: ``GET`` — fetch the active workspace for the authenticated account.
+    #: Returns
+    #: :class:`~bacommon.restapi.v1.workspaces.ActiveWorkspaceResponse`.
+    #:
+    #: ``POST`` — set the active workspace.
+    #: JSON body: ``{"workspace_id": "ws-123"}`` to activate a workspace,
+    #: or ``{"workspace_id": null}`` to disable syncing.
+    #: ``workspace_id`` must refer to a workspace owned by the authenticated
+    #: account; any other value (including IDs that do not exist) returns
+    #: ``invalid_parameter``.
+    #: Returns
+    #: :class:`~bacommon.restapi.v1.workspaces.ActiveWorkspaceResponse`.
+    WORKSPACES_ACTIVE = '/api/v1/workspaces/active'

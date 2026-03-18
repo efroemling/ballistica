@@ -94,3 +94,15 @@ class WorkspaceFilesResponse:
     """
 
     entries: Annotated[list[WorkspaceEntryResponse], IOAttrs('entries')]
+
+
+@ioprepped
+@dataclass
+class ActiveWorkspaceResponse:
+    """The active workspace for the authenticated account.
+
+    Returned by :attr:`~bacommon.restapi.v1.Endpoint.WORKSPACES_ACTIVE`.
+    """
+
+    #: ID of the active workspace, or ``None`` if syncing is disabled.
+    workspace_id: Annotated[str | None, IOAttrs('workspace_id')]

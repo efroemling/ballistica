@@ -64,6 +64,43 @@ class _BadEnum2(Enum):
     VAL2 = 'val2'
 
 
+class _HumanEnum(Enum):
+    TEST1 = 'test1_val'
+    SOME_LONG_VALUE = 'slv'
+
+
+@dataclass
+class _HumanInner:
+    inner_val: Annotated[int, IOAttrs('iv')] = 0
+
+
+@ioprepped
+@dataclass
+class _HumanTestClass:
+    short_key: Annotated[str, IOAttrs('sk')] = 'hello'
+    enum_field: _HumanEnum = _HumanEnum.TEST1
+    long_enum_field: _HumanEnum = _HumanEnum.SOME_LONG_VALUE
+    nested_field: _HumanInner = field(default_factory=_HumanInner)
+    dt_ints: Annotated[datetime.datetime, IOAttrs(time_format='ints')] = field(
+        default_factory=utc_now
+    )
+    dt_float: Annotated[datetime.datetime, IOAttrs(time_format='float')] = (
+        field(default_factory=utc_now)
+    )
+    dt_iso: Annotated[datetime.datetime, IOAttrs(time_format='iso')] = field(
+        default_factory=utc_now
+    )
+    dt_date: datetime.date = field(
+        default_factory=lambda: datetime.date(2024, 3, 15)
+    )
+    td_field: datetime.timedelta = field(
+        default_factory=lambda: datetime.timedelta(days=1)
+    )
+
+
+ioprep(_HumanInner)
+
+
 @dataclass
 class _NestedClass:
     ival: int = 0
@@ -2200,3 +2237,67 @@ def test_multi_type_missing() -> None:
     # Make sure the lossy load disallows output.
     with pytest.raises(ValueError):
         _out2c = dataclass_to_dict(val2c)
+
+
+def test_human_codec() -> None:
+    """Test Codec.HUMAN produces human-readable dicts."""
+    import re
+
+    now = utc_now()
+    today = datetime.date(2024, 3, 15)
+    delta = datetime.timedelta(days=1, hours=2)
+
+    obj = _HumanTestClass(
+        short_key='world',
+        enum_field=_HumanEnum.TEST1,
+        long_enum_field=_HumanEnum.SOME_LONG_VALUE,
+        nested_field=_HumanInner(inner_val=42),
+        dt_ints=now,
+        dt_float=now,
+        dt_iso=now,
+        dt_date=today,
+        td_field=delta,
+    )
+    out = dataclass_to_dict(obj, codec=Codec.HUMAN)
+
+    # Field keys should use Python attr names (underscores → spaces),
+    # not IOAttrs storage names.
+    assert 'short key' in out
+    assert 'sk' not in out
+
+    # Enum values should be lowercase+spaces of .name, not .value.
+    assert out['enum field'] == 'test1'
+    assert out['long enum field'] == 'some long value'
+
+    # All datetime fields should produce ISO strings regardless of
+    # time_format setting.
+    iso_pattern = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$'
+    for key in ('dt ints', 'dt float', 'dt iso'):
+        val = out[key]
+        assert isinstance(val, str), f'{key!r} is not a string: {val!r}'
+        assert re.match(iso_pattern, val), f'{key!r} is not ISO format: {val!r}'
+
+    # date should still be ISO YYYY-MM-DD.
+    assert out['dt date'] == '2024-03-15'
+
+    # timedelta should be str() output.
+    assert out['td field'] == str(delta)
+
+    # Nested dataclass: inner fields also use attr names.
+    nested_out = out['nested field']
+    assert isinstance(nested_out, dict)
+    assert 'inner val' in nested_out
+    assert 'iv' not in nested_out
+    assert nested_out['inner val'] == 42
+
+    # IOMultiType: discriminator value uses lowercase+spaces .name.
+    tpname = MTTestBase.get_type_id_storage_name()
+    tpname_human = tpname.replace('_', ' ')
+    mt_val = MTTestClass1(ival=5)
+    mt_out = dataclass_to_dict(mt_val, codec=Codec.HUMAN)
+    assert mt_out[tpname_human] == 'class 1'
+    assert mt_out.get(tpname) is None
+
+    # Decoding with HUMAN codec should raise ValueError.
+    with pytest.raises(ValueError):
+        dataclass_from_dict(_HumanTestClass, out, codec=Codec.HUMAN)
