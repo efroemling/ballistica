@@ -41,6 +41,12 @@ class Codec(Enum):
     #: as-is instead of converting them to json-friendly types.
     FIRESTORE = 'firestore'
 
+    #: Output-only codec for human-readable dicts. Uses Python attribute
+    #: names as keys, enum ``.name`` as values, and ISO 8601 format for
+    #: all datetime/date values. NOT suitable for round-trip parsing;
+    #: decoding with this codec raises a ``ValueError``.
+    HUMAN = 'human'
+
 
 class IOExtendedData:
     """A class types can inherit from for extra functionality."""

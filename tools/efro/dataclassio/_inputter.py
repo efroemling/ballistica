@@ -68,6 +68,11 @@ class _Inputter:
     def run(self, values: dict) -> Any:
         """Do the thing."""
 
+        if self._codec is Codec.HUMAN:
+            raise ValueError(
+                'Codec.HUMAN is output-only and cannot be used for decoding.'
+            )
+
         outcls: type[Any]
 
         # If we're dealing with a multi-type subclass which is NOT a
