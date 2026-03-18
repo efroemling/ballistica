@@ -411,6 +411,14 @@ def _build_env_apple(sdk: str, _triple: str, pydir: str) -> dict[str, str]:
     deploy_env = _SDK_DEPLOY_ENV[sdk]
     deploy_ver = _SDK_DEPLOY_VER[sdk]
     env[deploy_env] = deploy_ver
+    # Isolate PKG_CONFIG from the host (Homebrew) environment. Deps for
+    # embedded targets are passed via explicit *_CFLAGS/*_LIBS env vars;
+    # there is no PKG_CONFIG-based dep discovery needed here. Without this
+    # isolation, configure picks up macOS-only Homebrew libraries (e.g.
+    # libb2) and records them in pyconfig.h/Makefile, causing undefined-
+    # symbol link failures when building for iOS/tvOS.
+    env['PKG_CONFIG_LIBDIR'] = ''
+    env['PKG_CONFIG_PATH'] = ''
     return env
 
 
@@ -678,7 +686,7 @@ def _patch_macos_makefile(pydir: str) -> None:
 def _patch_embedded_makefile(pydir: str) -> None:
     """Patch the generated Makefile for non-macOS embedded builds.
 
-    Two issues are fixed:
+    Three issues are fixed:
 
     1. LINKFORSHARED: Without --enable-framework, configure sets
        PYTHONFRAMEWORKDIR=no-framework and PYTHONFRAMEWORK='' (empty).
@@ -692,6 +700,12 @@ def _patch_embedded_makefile(pydir: str) -> None:
        targets because macOS-only Homebrew dylibs (e.g. libb2) get pulled in.
        Programs/_testembed, checksharedmods, and rundsymutil are also removed
        from build_all because they all have transitive deps on $(BUILDPYTHON).
+
+    3. MODULE__BLAKE2_LDFLAGS: Cleared so the build uses Python 3.13's
+       built-in HACL* blake2 instead of Homebrew libb2. If left set,
+       blake2b_*/blake2s_* symbols from libb2 end up as unresolved externals
+       in the resulting static library because libb2 is a macOS-only dylib
+       that cannot be statically merged or used on iOS/tvOS.
     """
     mk = os.path.join(pydir, 'Makefile')
     with open(mk, encoding='utf-8') as fh:
@@ -752,6 +766,38 @@ def _patch_embedded_makefile(pydir: str) -> None:
             ' removed _testembed/checksharedmods/rundsymutil/python.o-install.'
         )
     txt = new_txt
+
+    # Fix 3: Clear MODULE__BLAKE2_CFLAGS and MODULE__BLAKE2_LDFLAGS so the
+    # build uses Python 3.13's built-in HACL* blake2 instead of Homebrew
+    # libb2. With PKG_CONFIG isolation in _build_env_apple these should
+    # already be empty after configure, but clearing them here too is
+    # belt-and-suspenders for any pre-existing build directories. Warning
+    # only: if already empty (because PKG_CONFIG isolation worked) the
+    # substitution count will be 0, which is fine.
+    txt, n_blake2_cflags = re.subn(
+        r'^(MODULE__BLAKE2_CFLAGS=).*$',
+        r'\1',
+        txt,
+        flags=re.MULTILINE,
+    )
+    if n_blake2_cflags == 0:
+        print(
+            '  Note: MODULE__BLAKE2_CFLAGS not found in Makefile — Python'
+            ' may have renamed it. Verify no Homebrew libb2 is being used'
+            ' and update _patch_embedded_makefile() if needed.'
+        )
+    txt, n_blake2 = re.subn(
+        r'^(MODULE__BLAKE2_LDFLAGS=).*$',
+        r'\1',
+        txt,
+        flags=re.MULTILINE,
+    )
+    if n_blake2 == 0:
+        print(
+            '  Note: MODULE__BLAKE2_LDFLAGS not found in Makefile — Python'
+            ' may have renamed it. Verify no Homebrew libb2 is being linked'
+            ' and update _patch_embedded_makefile() if needed.'
+        )
 
     with open(mk, 'w', encoding='utf-8') as fh:
         fh.write(txt)

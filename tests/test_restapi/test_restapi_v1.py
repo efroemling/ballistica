@@ -1,0 +1,505 @@
+# Released under the MIT License. See LICENSE for details.
+#
+"""Live-server tests for public REST API v1 endpoints."""
+
+from __future__ import annotations
+
+import json
+import os
+from typing import TYPE_CHECKING
+
+import pytest
+
+from bacommon.restapi.v1 import Endpoint
+
+if TYPE_CHECKING:
+    import urllib3
+
+    from restapi_test_fixtures import AuthedClient
+
+FAST_MODE = os.environ.get('BA_TEST_FAST_MODE') == '1'
+
+
+def _delete_workspaces_named(
+    authed: AuthedClient, server_url: str, name: str
+) -> None:
+    """Delete all workspaces with the given name (idempotent cleanup)."""
+    r = authed.get(f'{server_url}{Endpoint.WORKSPACES}', timeout=10)
+    assert r.status == 200
+    for ws in json.loads(r.data).get('workspaces', []):
+        if ws['name'] == name:
+            path = Endpoint.WORKSPACE.format(workspace_id=ws['id'])
+            authed.delete(f'{server_url}{path}', timeout=10)
+
+
+# --- Account endpoint ---
+
+
+def test_account_no_auth(server_url: str, http: urllib3.PoolManager) -> None:
+    """No auth header should return 401."""
+    path = Endpoint.ACCOUNT.format(account_id='me')
+    r = http.request('GET', f'{server_url}{path}', timeout=10)
+    assert r.status == 401
+    assert r.headers['Content-Type'].startswith('application/json')
+    body = json.loads(r.data)
+    assert body['error'] == 'unauthorized'
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_account_notfound(server_url: str, authed: AuthedClient) -> None:
+    """Nonexistent account ID should return 404."""
+    path = Endpoint.ACCOUNT.format(account_id='a-00000000')
+    r = authed.get(f'{server_url}{path}', timeout=10)
+    assert r.status == 404
+    body = json.loads(r.data)
+    assert body['error'] == 'not_found'
+
+
+def test_account_me(server_url: str, authed: AuthedClient) -> None:
+    """GET /api/v1/accounts/me returns the authenticated account's info."""
+    path = Endpoint.ACCOUNT.format(account_id='me')
+    r = authed.get(f'{server_url}{path}', timeout=10)
+    assert r.status == 200
+    body = json.loads(r.data)
+    assert isinstance(body['id'], str)
+    assert body['id'].startswith('a-')
+    assert isinstance(body['tag'], str)
+    assert isinstance(body['create_time'], str)
+    assert isinstance(body['total_active_days'], int)
+    # last_active_day is either None or a YYYY-MM-DD string
+    lad = body['last_active_day']
+    assert lad is None or (isinstance(lad, str) and len(lad) == 10)
+
+
+# --- Workspace endpoints ---
+
+
+# --- Auth tests (no session needed) ---
+
+
+def test_workspaces_no_auth(server_url: str, http: urllib3.PoolManager) -> None:
+    """GET /workspaces without auth should return 401."""
+    r = http.request('GET', f'{server_url}{Endpoint.WORKSPACES}', timeout=10)
+    assert r.status == 401
+    body = json.loads(r.data)
+    assert body['error'] == 'unauthorized'
+    assert 'message' in body
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_workspace_create_no_auth(
+    server_url: str, http: urllib3.PoolManager
+) -> None:
+    """POST /workspaces without auth should return 401."""
+    r = http.request(
+        'POST',
+        f'{server_url}{Endpoint.WORKSPACES}',
+        json={'name': 'Whatever'},
+        timeout=10,
+    )
+    assert r.status == 401
+    assert json.loads(r.data)['error'] == 'unauthorized'
+
+
+# --- Workspace lifecycle ---
+
+
+def test_workspace_list(server_url: str, authed: AuthedClient) -> None:
+    """GET /workspaces returns a list; each entry has expected fields."""
+    r = authed.get(f'{server_url}{Endpoint.WORKSPACES}', timeout=10)
+    assert r.status == 200
+    body = json.loads(r.data)
+    assert 'workspaces' in body
+    assert isinstance(body['workspaces'], list)
+    for ws in body['workspaces']:
+        assert isinstance(ws['id'], str)
+        assert isinstance(ws['name'], str)
+        assert isinstance(ws['size'], int)
+        assert isinstance(ws['create_time'], str)
+        assert isinstance(ws['modified_time'], str)
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_workspace_create_and_delete(
+    server_url: str, authed: AuthedClient
+) -> None:
+    """POST creates a workspace; GET returns it; DELETE removes it."""
+    name = '__api_test__lifecycle__'
+    _delete_workspaces_named(authed, server_url, name)
+
+    # Create
+    r = authed.post(
+        f'{server_url}{Endpoint.WORKSPACES}',
+        json={'name': name},
+        timeout=10,
+    )
+    assert r.status == 201
+    ws = json.loads(r.data)
+    assert ws['name'] == name
+    wid = ws['id']
+
+    # Appears in list
+    list_r = authed.get(f'{server_url}{Endpoint.WORKSPACES}', timeout=10)
+    ids = [w['id'] for w in json.loads(list_r.data)['workspaces']]
+    assert wid in ids
+
+    # GET single
+    get_r = authed.get(
+        f'{server_url}{Endpoint.WORKSPACE.format(workspace_id=wid)}',
+        timeout=10,
+    )
+    assert get_r.status == 200
+    assert json.loads(get_r.data)['id'] == wid
+
+    # DELETE
+    del_r = authed.delete(
+        f'{server_url}{Endpoint.WORKSPACE.format(workspace_id=wid)}',
+        timeout=10,
+    )
+    assert del_r.status == 204
+
+    # No longer in list
+    list2_r = authed.get(f'{server_url}{Endpoint.WORKSPACES}', timeout=10)
+    ids2 = [w['id'] for w in json.loads(list2_r.data)['workspaces']]
+    assert wid not in ids2
+
+
+# --- Workspace name validation ---
+
+
+@pytest.mark.parametrize(
+    'bad_name',
+    [
+        '',
+        ' Leading space',
+        'Trailing space ',
+        'bad/char',
+        'x' * 129,
+    ],
+)
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_workspace_create_invalid_names(
+    server_url: str, authed: AuthedClient, bad_name: str
+) -> None:
+    """Invalid workspace names should return 400 (invalid_parameter)."""
+    r = authed.post(
+        f'{server_url}{Endpoint.WORKSPACES}',
+        json={'name': bad_name},
+        timeout=10,
+    )
+    assert r.status == 400
+    assert json.loads(r.data)['error'] == 'invalid_parameter'
+
+
+# --- Rename (PATCH) ---
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_workspace_rename(server_url: str, authed: AuthedClient) -> None:
+    """PATCH with a valid name renames the workspace."""
+    name_orig = '__api_test__rename_orig__'
+    name_new = '__api_test__rename_new__'
+    _delete_workspaces_named(authed, server_url, name_orig)
+    _delete_workspaces_named(authed, server_url, name_new)
+
+    # Create
+    r = authed.post(
+        f'{server_url}{Endpoint.WORKSPACES}',
+        json={'name': name_orig},
+        timeout=10,
+    )
+    assert r.status == 201
+    wid = json.loads(r.data)['id']
+    path = Endpoint.WORKSPACE.format(workspace_id=wid)
+
+    try:
+        # Rename
+        patch_r = authed.patch(
+            f'{server_url}{path}',
+            json={'name': name_new},
+            timeout=10,
+        )
+        assert patch_r.status == 200
+        assert json.loads(patch_r.data)['name'] == name_new
+
+        # Verify via GET
+        get_r = authed.get(f'{server_url}{path}', timeout=10)
+        assert json.loads(get_r.data)['name'] == name_new
+    finally:
+        authed.delete(f'{server_url}{path}', timeout=10)
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_workspace_rename_invalid(
+    server_url: str, authed: AuthedClient
+) -> None:
+    """PATCH with an empty name should return 400."""
+    name = '__api_test__rename_invalid__'
+    _delete_workspaces_named(authed, server_url, name)
+
+    r = authed.post(
+        f'{server_url}{Endpoint.WORKSPACES}',
+        json={'name': name},
+        timeout=10,
+    )
+    assert r.status == 201
+    wid = json.loads(r.data)['id']
+    path = Endpoint.WORKSPACE.format(workspace_id=wid)
+
+    try:
+        patch_r = authed.patch(
+            f'{server_url}{path}',
+            json={'name': ''},
+            timeout=10,
+        )
+        assert patch_r.status == 400
+        assert json.loads(patch_r.data)['error'] == 'invalid_parameter'
+    finally:
+        authed.delete(f'{server_url}{path}', timeout=10)
+
+
+# --- File operations ---
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_file_upload_and_download(
+    server_url: str, authed: AuthedClient, ws_id: str
+) -> None:
+    """PUT a file; GET returns the same bytes."""
+    file_path = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path='hello.txt'
+    )
+    content = b'hello world'
+    put_r = authed.put(f'{server_url}{file_path}', body=content, timeout=10)
+    assert put_r.status == 204
+
+    get_r = authed.get(f'{server_url}{file_path}', timeout=10)
+    assert get_r.status == 200
+    assert get_r.data == content
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_file_listing(
+    server_url: str, authed: AuthedClient, ws_id: str
+) -> None:
+    """After upload, GET /files returns an entry with expected fields."""
+    # Ensure at least one file exists
+    file_path = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path='listing.txt'
+    )
+    authed.put(f'{server_url}{file_path}', body=b'listing test', timeout=10)
+
+    files_url = Endpoint.WORKSPACE_FILES.format(workspace_id=ws_id)
+    r = authed.get(f'{server_url}{files_url}', timeout=10)
+    assert r.status == 200
+    entries = json.loads(r.data)['entries']
+    assert isinstance(entries, list)
+    paths = [e['path'] for e in entries]
+    assert 'listing.txt' in paths
+    for entry in entries:
+        assert 'path' in entry
+        assert entry['type'] in ('file', 'directory')
+        if entry['type'] == 'file':
+            assert isinstance(entry['size'], int)
+            assert isinstance(entry['modified_time'], str)
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_mkdir(server_url: str, authed: AuthedClient, ws_id: str) -> None:
+    """POST op=mkdir creates a directory that appears in the listing."""
+    dir_path = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path='testdir'
+    )
+    r = authed.post(f'{server_url}{dir_path}', json={'op': 'mkdir'}, timeout=10)
+    assert r.status == 204
+
+    files_url = Endpoint.WORKSPACE_FILES.format(workspace_id=ws_id)
+    listing = json.loads(
+        authed.get(f'{server_url}{files_url}', timeout=10).data
+    )
+    dir_entries = [e for e in listing['entries'] if e['path'] == 'testdir']
+    assert len(dir_entries) == 1
+    assert dir_entries[0]['type'] == 'directory'
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_file_in_subdir(
+    server_url: str, authed: AuthedClient, ws_id: str
+) -> None:
+    """PUT to a sub-path auto-creates the parent directory."""
+    file_path = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path='subdir/notes.txt'
+    )
+    r = authed.put(f'{server_url}{file_path}', body=b'notes', timeout=10)
+    assert r.status == 204
+
+    files_url = Endpoint.WORKSPACE_FILES.format(workspace_id=ws_id)
+    listing = json.loads(
+        authed.get(f'{server_url}{files_url}', timeout=10).data
+    )
+    paths = [e['path'] for e in listing['entries']]
+    assert 'subdir/notes.txt' in paths
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_file_delete(server_url: str, authed: AuthedClient, ws_id: str) -> None:
+    """DELETE a file; it should no longer appear in the listing."""
+    file_path = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path='todelete.txt'
+    )
+    authed.put(f'{server_url}{file_path}', body=b'bye', timeout=10)
+
+    del_r = authed.delete(f'{server_url}{file_path}', timeout=10)
+    assert del_r.status == 204
+
+    files_url = Endpoint.WORKSPACE_FILES.format(workspace_id=ws_id)
+    listing = json.loads(
+        authed.get(f'{server_url}{files_url}', timeout=10).data
+    )
+    paths = [e['path'] for e in listing['entries']]
+    assert 'todelete.txt' not in paths
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_file_move(server_url: str, authed: AuthedClient, ws_id: str) -> None:
+    """POST op=move renames a file; src gone, dest present."""
+    src = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path='src.txt'
+    )
+    authed.put(f'{server_url}{src}', body=b'moving', timeout=10)
+
+    move_r = authed.post(
+        f'{server_url}{src}',
+        json={'op': 'move', 'dest': 'dst.txt'},
+        timeout=10,
+    )
+    assert move_r.status == 204
+
+    files_url = Endpoint.WORKSPACE_FILES.format(workspace_id=ws_id)
+    listing = json.loads(
+        authed.get(f'{server_url}{files_url}', timeout=10).data
+    )
+    paths = [e['path'] for e in listing['entries']]
+    assert 'dst.txt' in paths
+    assert 'src.txt' not in paths
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_file_copy(server_url: str, authed: AuthedClient, ws_id: str) -> None:
+    """POST op=copy duplicates a file; both orig and copy are present."""
+    orig = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path='orig.txt'
+    )
+    authed.put(f'{server_url}{orig}', body=b'original', timeout=10)
+
+    copy_r = authed.post(
+        f'{server_url}{orig}',
+        json={'op': 'copy', 'dest': 'copy.txt'},
+        timeout=10,
+    )
+    assert copy_r.status == 204
+
+    files_url = Endpoint.WORKSPACE_FILES.format(workspace_id=ws_id)
+    listing = json.loads(
+        authed.get(f'{server_url}{files_url}', timeout=10).data
+    )
+    paths = [e['path'] for e in listing['entries']]
+    assert 'orig.txt' in paths
+    assert 'copy.txt' in paths
+
+
+# --- File path validation ---
+
+
+@pytest.mark.parametrize(
+    'bad_path',
+    [
+        'UPPERCASE.txt',
+        'has space.txt',
+        'noextension',
+        'bad.exe',
+        'x' * 65 + '.txt',
+    ],
+)
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_file_upload_invalid_paths(
+    server_url: str, authed: AuthedClient, ws_id: str, bad_path: str
+) -> None:
+    """PUT to invalid file paths should return 400."""
+    file_path = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path=bad_path
+    )
+    r = authed.put(f'{server_url}{file_path}', body=b'x', timeout=10)
+    assert r.status == 400
+
+
+# --- POST op validation ---
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_post_op_invalid(
+    server_url: str, authed: AuthedClient, ws_id: str
+) -> None:
+    """POST with unknown op should return 400 (invalid_parameter)."""
+    file_path = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path='dummy.txt'
+    )
+    r = authed.post(
+        f'{server_url}{file_path}', json={'op': 'frobnicate'}, timeout=10
+    )
+    assert r.status == 400
+    assert json.loads(r.data)['error'] == 'invalid_parameter'
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_post_op_move_no_dest(
+    server_url: str, authed: AuthedClient, ws_id: str
+) -> None:
+    """POST op=move without dest should return 400."""
+    file_path = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path='dummy.txt'
+    )
+    r = authed.post(f'{server_url}{file_path}', json={'op': 'move'}, timeout=10)
+    assert r.status == 400
+    assert json.loads(r.data)['error'] == 'invalid_parameter'
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_post_op_not_json(
+    server_url: str, authed: AuthedClient, ws_id: str
+) -> None:
+    """POST with non-JSON body should return 400."""
+    file_path = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path='dummy.txt'
+    )
+    r = authed.post(
+        f'{server_url}{file_path}',
+        body=b'not-json',
+        headers={'Content-Type': 'text/plain'},
+        timeout=10,
+    )
+    assert r.status == 400
+
+
+# --- Not-found cases ---
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_workspace_notfound(server_url: str, authed: AuthedClient) -> None:
+    """GET on a nonexistent workspace ID should return 404."""
+    path = Endpoint.WORKSPACE.format(workspace_id='nonexistent-ws-id-99999')
+    r = authed.get(f'{server_url}{path}', timeout=10)
+    assert r.status == 404
+    assert json.loads(r.data)['error'] == 'not_found'
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_file_notfound(
+    server_url: str, authed: AuthedClient, ws_id: str
+) -> None:
+    """GET on a nonexistent file path should return 404."""
+    file_path = Endpoint.WORKSPACE_FILE.format(
+        workspace_id=ws_id, file_path='missing.txt'
+    )
+    r = authed.get(f'{server_url}{file_path}', timeout=10)
+    assert r.status == 404

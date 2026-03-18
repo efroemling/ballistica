@@ -1,4 +1,9 @@
-### 1.7.61 (build 22763, api 9, 2026-03-14)
+### 1.7.62 (build 22782, api 9, 2026-03-18)
+- Added `tests/test_restapi` which can be useful as reference for the
+  ballistica.net REST api. Run `make test-restapi` to run all REST api tests
+  (you just need to supply an API Key).
+
+### 1.7.61 (build 22772, api 9, 2026-03-16)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)
 - OS-Font-Rendering now works on Windows, so all languages and emoji should
   render properly (Thanks Claude!).
@@ -67,11 +72,14 @@
 - You can now use `ba*.app.accounts.primary.request_transient_api_key()` to get
   a temporary api-key for the signed-in account that you can use to call REST
   functions/etc.
-- Switch to using python's native REPL which gives us cool features like
-  autocompletion, command history, multiline statements and
-  line editing(going left/right)
-- Native python REPL can be toggled by `Use native python REPL` app_config entry
-- Added `App.print_repl_help` with global alias `repl_help` which prints help
+- Added experimental support for Python's native REPL which gives us cool
+  features like autocompletion, command history, multiline statements and line
+  editing(going left/right). This is currently disabled by default but can be
+  enabled via the `Use Native Python REPL` config key. (Thanks Loup-Garou911XD!)
+- Network connectivity improvements: devices with no UDP connectivity should be
+  able to establish connectivity to the master-server (though udp is still
+  required for gameplay). Also, establishing connectivity on first launch should
+  be substantially faster.
 
 ### 1.7.60 (build 22709, api 9, 2026-02-11)
 - Fixed a longstanding issue causing impact, roll, and skid sounds to not

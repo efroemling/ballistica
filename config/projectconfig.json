@@ -22,7 +22,7 @@
     "baclassic.ClassicAppMode",
     "babase.EmptyAppMode"
   ],
-  "default_imports": {
+  "default_convenience_imports": {
     "bascenev1": "bs",
     "bascenev1lib": "bsl",
     "bauiv1": "bui",
@@ -71,7 +71,8 @@
     "src/assets/ba_data/python",
     "build/dummymodules",
     "src/meta",
-    "tools"
+    "tools",
+    "tests"
   ],
   "python_source_dirs": [
     "src/assets/ba_data/python",

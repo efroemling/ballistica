@@ -15,10 +15,10 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 
@@ -28,7 +28,7 @@ StdioConsole::StdioConsole() = default;
 
 void StdioConsole::Start() {
   assert(g_base->InLogicThread());
-  use_native_repl = g_base->app_config->Resolve(
+  use_native_repl_ = g_base->app_config->Resolve(
       base::AppConfig::BoolID::kUseNativePythonREPL);
 
   g_base->app_adapter->PushMainThreadCall([this] { StartInMainThread_(); });
@@ -41,20 +41,22 @@ void StdioConsole::StartInMainThread_() {
   event_loop_ = new EventLoop(EventLoopID::kStdin);
   g_core->suspendable_event_loops.push_back(event_loop_);
 
-  // Check if we should use the native Python REPL.
-  // If the config is not available or set to true, use native REPL as default.
-  // Fall back to legacy console if native REPL is disabled.
+  // If they want native repl, try to set it up. Fall back to legacy if not
+  // available.
+  bool native_repl_available{};
+  if (use_native_repl_) {
+    Python::ScopedInterpreterLock gil;
+    auto result = g_base->python->objs()
+                      .Get(BasePython::ObjID::kStartNativeReplCall)
+                      .Call();
+    BA_PRECONDITION_FATAL(result.get() == Py_True || result.get() == Py_False);
+    native_repl_available = result.get() == Py_True;
+  }
 
-  if (use_native_repl && Py_IsInitialized()) {
+  if (use_native_repl_ && native_repl_available) {
     // Use Python's native interactive loop which includes readline support
     // for autocompletion, history, and line editing.
-    try {
-      event_loop()->PushCall([this] { StartNativePythonREPL_(); });
-    } catch (const std::exception& e) {
-      printf("Error initializing native Python REPL: %s\n", e.what());
-      printf("Falling back to legacy console.\n");
-      fflush(stderr);
-    }
+    event_loop()->PushCall([this] { StartNativePythonREPL_(); });
   } else {
     // Tell our thread to start reading using legacy console.
     event_loop()->PushCall([this] { StartLegacyConsole_(); });
@@ -62,56 +64,7 @@ void StdioConsole::StartInMainThread_() {
 }
 
 void StdioConsole::StartNativePythonREPL_() {
-  // This currently uses the readline library
-  // In future we may want to add an option to use the built-in Python REPL
-  // from the _pyrepl module without readline module, as readline can be missing
-  // on some platforms. But for now we'll just use readline when available since
-  // _pyrepl is still very new and is not well documented.
-
   Python::ScopedInterpreterLock gil;
-
-  // Enable readline for full REPL features:
-  // - Command history (up/down arrows)
-  // - Line editing (backspace, left/right)
-  // - Tab autocompletion
-
-  // we are currently in python3.13, try the _pyrepl in python3.14
-  const char* readline_import =
-      // "import _pyrepl\n"
-      // "_pyrepl.main.interactive_console()\n"
-      "import readline\n"
-      "import rlcompleter\n"
-      "readline.parse_and_bind('tab: complete')\n";
-
-  bool readline_available = (PyRun_SimpleString(readline_import) == 0);
-
-  if (!readline_available) {
-    g_core->logging->Log(
-        LogName::kRoot, LogLevel::kWarning,
-        "Failed to initialize readline for Python REPL. Readline support will "
-        "be unavailable. Falling back to legacy console.");
-  }
-
-  // Run default imports (babase, bascenev1, bauiv1, etc)
-  // which are configured in projectconfig.json
-  g_base->python->objs().Get(BasePython::ObjID::kRunDefaultImportsCall).Call();
-
-  // Print REPL help information
-  g_base->python->objs().Get(BasePython::ObjID::kPrintReplHelpCall).Call();
-
-  // Print any errors that occurred during default imports
-  if (PyErr_Occurred()) {
-    PyErr_Print();
-  }
-
-  // If readline is not available, fall back to legacy console with proper
-  // signal handling
-  if (!readline_available) {
-    // Release the GIL before entering the blocking console loop
-    Python::ScopedInterpreterLockRelease unlock;
-    StartLegacyConsole_();
-    return;
-  }
 
   // Run Python's interactive loop directly. This handles:
   // - Autocompletion (via readline + rlcompleter)
