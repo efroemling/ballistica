@@ -65,6 +65,9 @@ class PlayerSpaz(Spaz):
         self.held_count = 0
         self.last_player_held_by: bs.Player | None = None
         self._player = player
+        self._turbo_filter_times: dict[str, int] = {}
+        self._turbo_filter_time_bucket = 0
+        self._turbo_filter_counts: dict[str, int] = {}
         self._drive_player_position()
 
     # Overloads to tell the type system our return type based on doraise val.
@@ -176,6 +179,94 @@ class PlayerSpaz(Spaz):
                 'WARNING: disconnect_controls_from_player() called for'
                 ' non-connected player'
             )
+
+    def _turbo_filter_add_press(self, source: str) -> None:
+        """
+        Can pass all button presses through here; if we see an obscene number
+        of them in a short time let's shame/pushish this guy for using turbo.
+        """
+        t_ms = int(bs.basetime() * 1000.0)
+        assert isinstance(t_ms, int)
+        t_bucket = int(t_ms / 1000)
+        if t_bucket == self._turbo_filter_time_bucket:
+            # Add only once per timestep (filter out buttons triggering
+            # multiple actions).
+            if t_ms != self._turbo_filter_times.get(source, 0):
+                self._turbo_filter_counts[source] = (
+                    self._turbo_filter_counts.get(source, 0) + 1
+                )
+                self._turbo_filter_times[source] = t_ms
+                # (uncomment to debug; prints what this count is at)
+                # bs.broadcastmessage( str(source) + " "
+                #                   + str(self._turbo_filter_counts[source]))
+                if self._turbo_filter_counts[source] == 15:
+                    # Knock 'em out.  That'll learn 'em.
+                    assert self.node
+                    self.node.handlemessage('knockout', 500.0)
+
+                    # Also issue periodic notices about who is turbo-ing.
+                    now = bs.apptime()
+                    assert bs.app.classic is not None
+                    if now > bs.app.classic.last_spaz_turbo_warn_time + 30.0:
+                        bs.app.classic.last_spaz_turbo_warn_time = now
+                        bs.broadcastmessage(
+                            bs.Lstr(
+                                translate=(
+                                    'statements',
+                                    (
+                                        'Warning to ${NAME}:  '
+                                        'turbo / button-spamming knocks'
+                                        ' you out.'
+                                    ),
+                                ),
+                                subs=[('${NAME}', self.node.name)],
+                            ),
+                            color=(1, 0.5, 0),
+                        )
+                        bs.getsound('error').play()
+        else:
+            self._turbo_filter_times = {}
+            self._turbo_filter_time_bucket = t_bucket
+            self._turbo_filter_counts = {source: 1}
+
+    @override
+    def on_jump_press(self):
+        super().on_jump_press()
+        self._turbo_filter_add_press('jump')
+
+    @override
+    def on_pickup_press(self):
+        super().on_pickup_press()
+        self._turbo_filter_add_press('pickup')
+
+    @override
+    def on_hold_position_press(self) -> None:
+        super().on_hold_position_press()
+        self._turbo_filter_add_press('holdposition')
+
+    @override
+    def on_punch_press(self):
+        super().on_punch_press()
+        self._turbo_filter_add_press('punch')
+
+    @override
+    def on_bomb_press(self):
+        super().on_bomb_press()
+        self._turbo_filter_add_press('bomb')
+
+    @override
+    def on_run(self, value: float):
+        super().on_run(value)
+        # Filtering these events would be tough since its an analog
+        # value, but lets still pass full 0-to-1 presses along to
+        # the turbo filter to punish players if it looks like they're turbo-ing.
+        if self._last_run_value < 0.01 and value > 0.99:
+            self._turbo_filter_add_press('run')
+
+    @override
+    def on_fly_press(self) -> None:
+        super().on_fly_press()
+        self._turbo_filter_add_press('fly')
 
     @override
     def handlemessage(self, msg: Any) -> Any:
