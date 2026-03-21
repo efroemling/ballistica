@@ -1104,7 +1104,7 @@ class Spaz(bs.Actor):
                             0.05,
                             bs.WeakCallStrict(
                                 self.curse_explode, msg.get_source_player(
-                                    bs.Player
+                                    bs.Player,
                                 ),
                             ),
                         )
