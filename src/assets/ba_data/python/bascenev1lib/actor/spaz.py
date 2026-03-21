@@ -1092,10 +1092,6 @@ class Spaz(bs.Actor):
                     newdamage = max(damage - 200, self.hitpoints - 10)
                     damage = newdamage
                 self.node.handlemessage('flash')
-                self.hitpoints -= damage
-                self.node.hurt = (
-                    1.0 - float(self.hitpoints) / self.hitpoints_max
-                )
 
                 if damage > 0:
                     # If we're holding something, drop it.
@@ -1107,9 +1103,15 @@ class Spaz(bs.Actor):
                         bs.timer(
                             0.05,
                             bs.WeakCallStrict(
-                                self.curse_explode, msg.get_source_player(bs.Player)
+                                self.curse_explode, msg.get_source_player(
+                                    bs.Player
+                                ),
                             ),
                         )
+                self.hitpoints -= damage
+                self.node.hurt = (
+                    1.0 - float(self.hitpoints) / self.hitpoints_max
+                )
 
                 # If we're frozen, shatter.. otherwise die if we hit zero
                 if self.frozen and (damage > 200 or self.hitpoints <= 0):
