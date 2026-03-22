@@ -224,7 +224,9 @@ class SpazNode : public Node {
   void set_behavior_version(int val) {
     behavior_version_ = static_cast_check_fit<uint8_t>(val);
   }
-  auto get_pickup_before_hitbox() const -> bool { return pickup_before_hitbox_; }
+  auto get_pickup_before_hitbox() const -> bool {
+    return pickup_before_hitbox_;
+  }
   auto pickup_pressed() const -> bool { return pickup_pressed_; }
   void SetPickupPressed(bool val);
   auto hold_position_pressed() const -> bool { return hold_position_pressed_; }

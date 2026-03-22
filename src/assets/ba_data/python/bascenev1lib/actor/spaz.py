@@ -462,7 +462,11 @@ class Spaz(bs.Actor):
             self._punched_nodes = set()  # Reset this.
             self.last_punch_time_ms = t_ms
             self.node.punch_pressed = True
-            play_swish_sound = not self.node.pickup_before_hitbox if self.node.behavior_version >= 2 else True
+            play_swish_sound = (
+                not self.node.pickup_before_hitbox
+                if self.node.behavior_version >= 2
+                else True
+            )
             if not self.node.hold_node and play_swish_sound:
                 bs.timer(
                     0.1,
