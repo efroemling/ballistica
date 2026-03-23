@@ -98,7 +98,7 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
 
         #: When this output was last changed.
         modtime: Annotated[
-            datetime.datetime, IOAttrs('modtime', float_times=True)
+            datetime.datetime, IOAttrs('modtime', time_format='float')
         ]
 
         #: Default value (no counts involved).
@@ -106,7 +106,7 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
 
     input: Annotated[str, IOAttrs('input')]
     input_modtime: Annotated[
-        datetime.datetime, IOAttrs('input_modtime', float_times=True)
+        datetime.datetime, IOAttrs('input_modtime', time_format='float')
     ]
     style_preset: Annotated[
         StylePreset, IOAttrs('style_preset', store_default=False)

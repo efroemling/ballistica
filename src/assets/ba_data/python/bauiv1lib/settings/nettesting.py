@@ -212,7 +212,6 @@ class NetTestingWindow(bui.MainWindow):
 
 
 def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
-    # pylint: disable=too-many-statements
 
     from efro.util import utc_now
 

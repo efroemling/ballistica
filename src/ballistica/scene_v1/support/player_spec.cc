@@ -8,7 +8,7 @@
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
 

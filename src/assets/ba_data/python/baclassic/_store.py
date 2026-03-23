@@ -490,8 +490,6 @@ class StoreSubsystem:
 
     def get_available_sale_time(self, tab: str) -> int | None:
         """(internal)"""
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-nested-blocks
         plus = babase.app.plus
         assert plus is not None

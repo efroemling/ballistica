@@ -263,10 +263,10 @@ def _pycache_upkeep() -> None:
 
 
 def _do_pycache_upkeep() -> None:
+    # pylint: disable=too-many-statements
     """Take a quick pass at generating pycs for all .py files."""
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     import py_compile
     import importlib.util
 

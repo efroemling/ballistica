@@ -518,7 +518,6 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def on_begin(self) -> None:
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
 
         from bascenev1lib.actor import controlsguide

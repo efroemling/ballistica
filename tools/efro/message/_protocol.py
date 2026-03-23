@@ -96,7 +96,6 @@ class MessageProtocol:
         this, a log message is also printed in such cases. Pass
         'log_response_decode_errors' as False to disable this logging.
         """
-        # pylint: disable=too-many-locals
         self.message_types_by_id: dict[int, type[Message]] = {}
         self.message_ids_by_type: dict[type[Message], int] = {}
         self.response_types_by_id: dict[
@@ -314,9 +313,7 @@ class MessageProtocol:
         enable_async_sends: bool,
     ) -> str:
         """Return common parts of generated modules."""
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         import textwrap
 
         tpimports: dict[str, list[str]] = {}
@@ -437,8 +434,6 @@ class MessageProtocol:
     ) -> str:
         """Used by create_sender_module(); do not call directly."""
         # pylint: disable=too-many-positional-arguments
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-branches
         import textwrap
 
         msgtypes = list(self.message_ids_by_type.keys())
@@ -553,7 +548,6 @@ class MessageProtocol:
         protocol_module_level_import_code: str | None = None,
     ) -> str:
         """Used by create_receiver_module(); do not call directly."""
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-positional-arguments
         import textwrap
 

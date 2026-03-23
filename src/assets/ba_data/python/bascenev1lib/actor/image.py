@@ -53,7 +53,6 @@ class Image(bs.Actor):
     ):
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         super().__init__()
 
         # If they provided a dict as texture, use it to wire up extended

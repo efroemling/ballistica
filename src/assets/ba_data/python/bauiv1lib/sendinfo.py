@@ -206,7 +206,6 @@ class SendInfoWindowLegacyModal(bui.Window):
         transition: str | None = 'in_scale',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
 
         # Need to wrangle our own transition-out in modal mode.
         if origin_widget is not None:

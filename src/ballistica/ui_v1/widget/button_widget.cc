@@ -250,9 +250,9 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.SetFlatness(flatness_);
       }
 
-      float l_border, r_border, b_border, t_border;
-      float bg_scale_center_x, bg_scale_center_y;
-      float bg_scale_x, bg_scale_y;
+      float l_border{}, r_border{}, b_border{}, t_border{};
+      float bg_scale_center_x{}, bg_scale_center_y{};
+      float bg_scale_x{}, bg_scale_y{};
 
       bool do_draw{true};
       bool do_draw_better_fit{};
@@ -626,7 +626,7 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float x = m.fval1;
       float y = m.fval2;
       bool claimed = (m.fval3 > 0.0f);
-      auto old_hover{hover_};
+      [[maybe_unused]] auto old_hover{hover_};
 
       if (claimed || !enabled_) {
         hover_ = false;

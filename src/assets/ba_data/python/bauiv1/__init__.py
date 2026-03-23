@@ -14,8 +14,6 @@ from __future__ import annotations
 
 # pylint: disable=redefined-builtin
 
-import logging
-
 from babase import (
     accountlog,
     AccountV2Handle,
@@ -319,7 +317,7 @@ __all__ = [
 if __debug__:
     for _mdl in 'babase', '_babase':
         if not hasattr(__import__(_mdl), '_REACHED_END_OF_MODULE'):
-            logging.warning(
+            balog.warning(
                 '%s was imported before %s finished importing;'
                 ' should not happen.',
                 __name__,

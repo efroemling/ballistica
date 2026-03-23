@@ -164,7 +164,6 @@ def batchserver() -> None:
 
 def pcommandbatch_speed_test() -> None:
     """Test batch mode speeds."""
-    # pylint: disable=too-many-locals
 
     import time
     import subprocess

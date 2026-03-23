@@ -67,9 +67,12 @@ disable=broad-except,
 enable=useless-suppression
 
 [BASIC]
+
+# Allow module level names like _g_foo or _FOO.
+const-rgx=^(__.*__|_?[A-Z][A-Z0-9_]*|_g_[a-z][a-z0-9_]*)$
+
 # Allowing a handful of short names commonly understood to be iterators,
 # math concepts, or short-but-complete words.
-
 good-names=i,
            j,
            k,
@@ -98,6 +101,22 @@ disable=no-member
 # We've got various TODO and FIXME notes in scripts, but don't want
 # lint to trigger errors over that fact.
 notes=
+
+[DESIGN]
+# Default is 50, but our 80-char line limit tends to push statement counts
+# higher than equivalent code in projects with longer line limits (more
+# wrapping = more physical lines). 70 gives room for legitimately complex
+# build/platform logic without forcing artificial helper extraction.
+max-statements=70
+
+# Default is 12. Game logic, build pipelines, and message dispatchers are
+# inherently branch-heavy; 15 reduces suppression noise without losing signal.
+max-branches=15
+
+# Default is 15. Descriptive naming, intermediate variables for clarity, and
+# type annotation aliases all inflate local counts without indicating poor
+# structure. 25 reflects the reality of this codebase.
+max-locals=25
 
 [SIMILARITIES]
 

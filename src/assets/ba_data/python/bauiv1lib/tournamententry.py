@@ -30,10 +30,8 @@ class TournamentEntryWindow(PopupWindow):
         offset: tuple[float, float] = (0.0, 0.0),
         on_close_call: Callable[[], Any] | None = None,
     ):
-        # pylint: disable=too-many-positional-arguments
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-positional-arguments
 
         from bauiv1lib.coop.tournamentbutton import USE_ENTRY_FEES
 

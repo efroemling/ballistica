@@ -121,7 +121,6 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
 
 def check_cpplint(projroot: Path, full: bool) -> None:
     """Run cpplint on all our applicable code."""
-    # pylint: disable=too-many-locals
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
 
@@ -450,7 +449,6 @@ def _dirty_dep_check(
     recursion: int,
 ) -> bool:
     """Recursively check a file's deps and return whether it is dirty."""
-    # pylint: disable=too-many-branches
 
     if not fast:
         # Check for existing dirty state (only applies in non-fast where
@@ -518,7 +516,6 @@ def _run_pylint(
     extra: bool,
 ) -> dict[str, Any]:
     # pylint: disable=too-many-positional-arguments
-    # pylint: disable=too-many-locals
     from pylint import lint
     from efro.terminal import Clr
 
@@ -581,7 +578,6 @@ def _apply_pylint_run_to_cache(
 ) -> int:
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
 
     from astroid import modutils
 
@@ -952,7 +948,6 @@ def _run_idea_inspections(
     Throw an Exception if anything is found or goes wrong.
     """
     # pylint: disable=too-many-positional-arguments
-    # pylint: disable=too-many-locals
     # pylint: disable=consider-using-with
 
     from efro.terminal import Clr
@@ -1026,7 +1021,6 @@ def _run_idea_inspections_cached(
     verbose: bool,
     inspectdir: Path | None = None,
 ) -> None:
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-positional-arguments
     import hashlib
     import json

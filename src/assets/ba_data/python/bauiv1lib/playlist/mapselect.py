@@ -29,7 +29,6 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         select_get_more_maps_button: bool = False,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-positional-arguments
 
         from bascenev1 import get_filtered_map_name
@@ -155,8 +154,6 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         return False
 
     def _refresh(self, select_get_more_maps_button: bool = False) -> None:
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         from bascenev1 import (
             get_map_class,

@@ -30,7 +30,6 @@ class ColorPicker(PopupWindow):
         offset: tuple[float, float] = (0.0, 0.0),
         tag: Any = '',
     ):
-        # pylint: disable=too-many-locals
         assert bui.app.classic is not None
 
         c_raw = bui.app.classic.get_player_colors()
@@ -172,7 +171,6 @@ class ColorPickerExact(PopupWindow):
         offset: tuple[float, float] = (0.0, 0.0),
         tag: Any = '',
     ):
-        # pylint: disable=too-many-locals
         del parent  # Unused var.
         assert bui.app.classic is not None
 

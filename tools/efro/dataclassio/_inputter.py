@@ -342,8 +342,6 @@ class _Inputter:
     def _do_dataclass_from_input(
         self, cls: type, fieldpath: str, values: dict
     ) -> Any:
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         if not isinstance(values, dict):
             raise TypeError(
@@ -498,7 +496,6 @@ class _Inputter:
     ) -> Any:
         # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
 
         if not isinstance(value, dict):
             raise TypeError(
@@ -745,10 +742,16 @@ class _Inputter:
 
         assert self._codec is Codec.JSON
 
-        # We expect a list of 7 ints (exact datetime value dump) OR
-        # a float/int (timestamp).
+        # We expect a list of 7 ints (exact datetime value dump),
+        # a float/int (Unix timestamp), or an ISO 8601 string with Z
+        # or +00:00 suffix.
         valt = type(value)
-        if valt is float or valt is int:
+        if valt is str:
+            # Accept RFC 3339 / ISO 8601 with Z or +00:00 suffix.
+            # The replace handles Python < 3.11 where fromisoformat
+            # does not accept 'Z' directly.
+            out = datetime.datetime.fromisoformat(value.replace('Z', '+00:00'))
+        elif valt is float or valt is int:
             out = datetime.datetime.fromtimestamp(
                 value, tz=datetime.timezone.utc
             )
@@ -757,7 +760,7 @@ class _Inputter:
                 raise TypeError(
                     f'Invalid input value for "{fieldpath}"'
                     f' on "{cls.__name__}";'
-                    f' expected a timestamp or list,'
+                    f' expected a timestamp, ISO string, or list,'
                     f' got a {type(value).__name__}'
                 )
             if len(value) != 7 or not all(isinstance(x, int) for x in value):

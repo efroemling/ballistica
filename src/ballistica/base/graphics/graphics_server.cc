@@ -12,7 +12,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
 
@@ -191,7 +191,7 @@ auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
       }
       break;  // Fail.
     }
-    core::CorePlatform::SleepMillisecs(1);
+    core::Platform::SleepMillisecs(1);
   }
   return nullptr;
 }

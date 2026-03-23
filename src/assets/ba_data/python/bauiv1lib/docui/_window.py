@@ -36,7 +36,6 @@ class DocUIWindow(bui.MainWindow):
         suppress_win_extra_type_warning: bool = False,
         has_had_response: bool = False,
     ):
-        # pylint: disable=too-many-statements
         ui = bui.app.ui_v1
 
         self._uiopenstate = (

@@ -332,6 +332,16 @@ class CloudSubsystem(babase.AppSubsystem):
         ],
     ) -> None: ...
 
+    @overload
+    def send_message_cb(
+        self,
+        msg: bacommon.cloud.AuthRequestMessage,
+        on_response: Callable[
+            [bacommon.cloud.AuthRequestResponse | Exception],
+            None,
+        ],
+    ) -> None: ...
+
     def send_message_cb(
         self,
         msg: Message,

@@ -9,7 +9,6 @@ import bascenev1 as bs
 
 def get_appearances(include_locked: bool = False) -> list[str]:
     """Get the list of available spaz appearances."""
-    # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
     plus = bs.app.plus
     assert plus is not None
@@ -122,11 +121,11 @@ class Appearance:
 
 
 def register_appearances() -> None:
+    # pylint: disable=too-many-statements
     """Register our builtin spaz appearances."""
 
     # This is quite ugly but will be going away so not worth cleaning up.
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     # Spaz #######################################
     t = Appearance('Spaz')

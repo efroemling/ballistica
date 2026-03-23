@@ -31,7 +31,6 @@ class ConfirmWindow:
         origin_widget: bui.Widget | None = None,
         permanent_ok_fade: bool = False,
     ):
-        # pylint: disable=too-many-locals
 
         ui = bui.app.ui_v1
 

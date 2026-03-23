@@ -21,7 +21,6 @@ class AllSettingsWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         auxiliary_style: bool = True,
     ):
-        # pylint: disable=too-many-locals
 
         # Preload some modules we use in a background thread so we won't
         # have a visual hitch when the user taps them.

@@ -63,7 +63,11 @@ private:
 
 
 // ...ericf update - we can shave a bit of time off by using our own bare-bones buffer class...
-#define TRIXY_ALLOCA(name,type,n) _Buffer name ## BUF; if (n > 6000){name ## BUF.allocate((n)); name = (type*)name ## BUF.getPtr();} else {name = (type*)ALLOCA((n)); dIASSERT(name);}
+#if BA_ODE_ALLOCA_DEBUG
+#define TRIXY_ALLOCA(name,type,n) _Buffer name ## BUF; if (n > 12000){printf("ODE_ALLOCA_DEBUG: TRIXY_ALLOCA heap: " #name " size=%lu threshold=12000\n",(unsigned long)(n)); name ## BUF.allocate((n)); name = (type*)name ## BUF.getPtr();} else {name = (type*)ALLOCA((n)); dIASSERT(name);}
+#else
+#define TRIXY_ALLOCA(name,type,n) _Buffer name ## BUF; if (n > 12000){name ## BUF.allocate((n)); name = (type*)name ## BUF.getPtr();} else {name = (type*)ALLOCA((n)); dIASSERT(name);}
+#endif
 
 #define dRealAllocaArray(name,n) dReal *name; TRIXY_ALLOCA(name,dReal,n*sizeof(dReal))
 //#define dRealAllocaArray(name,n) dReal *name = (dReal*) ALLOCA ((n)*sizeof(dReal));
@@ -447,7 +451,7 @@ static void SOR_LCP (int m, int nb, dRealMutablePtr J, int *jb, dxBody * const *
 	for (i=0; i<m; i++) Ad[i] *= cfm[i];
 
 	// order to solve constraint rows in
-	IndexError *order = (IndexError*) alloca (m*sizeof(IndexError));
+	IndexError *order; TRIXY_ALLOCA(order, IndexError, m*sizeof(IndexError));
 
 #ifndef REORDER_CONSTRAINTS
 	// make sure constraints with findex < 0 come first.
@@ -614,7 +618,7 @@ void dxQuickStepper (dxWorld *world, dxBody * const *body, int nb,
 	// (the "dxJoint *const*" declaration says we're allowed to modify the joints
 	// but not the joint array, because the caller might need it unchanged).
 	//@@@ do we really need to do this? we'll be sorting constraint rows individually, not joints
-	dxJoint **joint = (dxJoint**) alloca (nj * sizeof(dxJoint*));
+	dxJoint **joint; TRIXY_ALLOCA(joint, dxJoint*, nj*sizeof(dxJoint*));
 	memcpy (joint,_joint,nj * sizeof(dxJoint*));
 	
 	// for all bodies, compute the inertia tensor and its inverse in the global
@@ -702,7 +706,7 @@ void dxQuickStepper (dxWorld *world, dxBody * const *body, int nb,
 	// entirely, so that the code that follows does not consider them.
 	//@@@ do we really need to save all the info1's
     //printf("SIZE IS %d coutn is %d\n",sizeof(dxJoint::Info1),nj);
-	dxJoint::Info1 *info = (dxJoint::Info1*) alloca (nj*sizeof(dxJoint::Info1));
+	dxJoint::Info1 *info; TRIXY_ALLOCA(info, dxJoint::Info1, nj*sizeof(dxJoint::Info1));
 	for (i=0, j=0; j<nj; j++) {	// i=dest, j=src
 		joint[j]->vtable->getInfo1 (joint[j],info+i);
 		dIASSERT (info[i].m >= 0 && info[i].m <= 6 && info[i].nub >= 0 && info[i].nub <= info[i].m);
@@ -715,7 +719,7 @@ void dxQuickStepper (dxWorld *world, dxBody * const *body, int nb,
 
 	// create the row offset array
 	int m = 0;
-	int *ofs = (int*) alloca (nj*sizeof(int));
+	int *ofs; TRIXY_ALLOCA(ofs, int, nj*sizeof(int));
 	for (i=0; i<nj; i++) {
 		ofs[i] = m;
 		m += info[i].m;
@@ -724,7 +728,7 @@ void dxQuickStepper (dxWorld *world, dxBody * const *body, int nb,
 
 	// if there are constraints, compute the constraint force
 	dRealAllocaArray (J,m*12);
-	int *jb = (int*) alloca (m*2*sizeof(int));
+	int *jb; TRIXY_ALLOCA(jb, int, m*2*sizeof(int));
 	if (m > 0) {
 		// create a constraint equation right hand side vector `c', a constraint
 		// force mixing vector `cfm', and LCP low and high bound vectors, and an
@@ -733,7 +737,7 @@ void dxQuickStepper (dxWorld *world, dxBody * const *body, int nb,
 		dRealAllocaArray (cfm,m);
 		dRealAllocaArray (lo,m);
 		dRealAllocaArray (hi,m);
-		int *findex = (int*) alloca (m*sizeof(int));
+		int *findex; TRIXY_ALLOCA(findex, int, m*sizeof(int));
 		dSetZero (c,m);
 		dSetValue (cfm,m,world->global_cfm);
 		dSetValue (lo,m,-dInfinity);

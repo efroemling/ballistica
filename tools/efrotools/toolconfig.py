@@ -66,7 +66,6 @@ def install_tool_config(projroot: Path, src: Path, dst: Path) -> None:
 
 
 def _filter_tool_config(projroot: Path, cfg: str) -> str:
-    # pylint: disable=too-many-locals
     import textwrap
 
     from efrotools.project import getprojectconfig

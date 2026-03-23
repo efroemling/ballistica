@@ -479,7 +479,6 @@ def _inline_extra(tpname: str, type_paths: list[str]) -> str:
 
 def _summarize_garbage(loglevel: int) -> str:
     """Print stuff about gc.garbage to aid in breaking ref cycles."""
-    # pylint: disable=too-many-locals
     import io
     import traceback
     from efro.debug import printrefs

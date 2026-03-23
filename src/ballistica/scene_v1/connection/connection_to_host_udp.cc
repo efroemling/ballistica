@@ -79,9 +79,9 @@ void ConnectionToHostUDP::Update() {
       last_client_id_request_time_ = current_time_millisecs;
 
       // Client request packet: contains our protocol version (2 bytes), our
-      // request id (1 byte), and our session-identifier (remainder of the
+      // request id (1 byte), and our app-instance-uuid (remainder of the
       // message).
-      const std::string& uuid{g_base->GetAppInstanceUUID()};
+      const std::string& uuid{g_base->LocalAppInstanceUUID()};
       std::vector<uint8_t> msg(4 + uuid.size());
       msg[0] = BA_PACKET_CLIENT_REQUEST;
       auto p_version = static_cast<uint16_t>(protocol_version());
@@ -94,7 +94,7 @@ void ConnectionToHostUDP::Update() {
 
   // If its been long enough since we've heard anything from the host, error.
   if (current_time_millisecs - last_host_response_time_millisecs_
-      > (can_communicate() ? 10000u : 5000u)) {
+      > (can_communicate() ? 30000u : 10000u)) {
     // If the connection never got established, announce it failed.
     if (!can_communicate()) {
       g_base->ScreenMessage(

@@ -20,7 +20,6 @@ class AchievementsWindow(bui.MainWindow):
         auxiliary_style: bool = True,
     ):
         # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from baclassic import (
             CHEST_APPEARANCE_DISPLAY_INFOS,

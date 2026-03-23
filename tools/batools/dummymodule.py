@@ -124,9 +124,8 @@ def _writefuncs(
     spacing: int,
     as_method: bool,
 ) -> str:
-    # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-branches
     out = ''
     spcstr = '\n' * spacing
     indstr = ' ' * indent
@@ -306,6 +305,8 @@ def _writefuncs(
                 returnstr = 'return (0, 0)'
             elif returns == 'list[dict[str, Any]]':
                 returnstr = "return [{'foo': 'bar'}]"
+            elif returns == 'list[dict[str, str]]':
+                returnstr = "return [{'foo': 'bar'}]"
             elif returns in {
                 'session.Session',
                 'team.Team',
@@ -346,7 +347,8 @@ def _writefuncs(
                 returnstr = 'return ' + returns + '()'
             else:
                 raise RuntimeError(
-                    f'Unknown returns value: {returns} for {funcname}'
+                    f'Unknown returns value: {returns} for {funcname}.'
+                    f' You may need to add this case to dummymodule.py.'
                 )
             returnstr = (
                 f'# This is a dummy stub;'
@@ -718,8 +720,6 @@ def _formatdoc(
 
 def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
-    # pylint: disable=too-many-locals
     from batools.docs import parse_docs_attrs
 
     out = ''
@@ -981,7 +981,6 @@ class Generator:
 def generate_dummy_modules(projroot: str) -> None:
     """Generate all dummy-modules."""
     # pylint: disable=cyclic-import
-    # pylint: disable=too-many-locals
 
     from batools.featureset import FeatureSet
     from batools import apprun

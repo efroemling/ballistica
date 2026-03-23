@@ -192,6 +192,11 @@ venv-clean:
 docs: env
 	@$(PCOMMAND) gen_docs_sphinx
 
+# Cloud version of docs
+docs-cloud:
+	@tools/cloudshell $(CLOUDSHELL_HOST_TEST) --env $(CLOUDSHELL_ENV_CHECK) \
+ --instance docs -- make docs
+
 docs-clean:
 	rm -rf .cache/sphinx
 	rm -rf .cache/sphinxfiltered
@@ -1453,6 +1458,7 @@ WSLW=BA_WSL_TARGETS_WINDOWS=1
 VISUAL_STUDIO_VERSION = -property:VisualStudioVersion=17
 WIN_MSBUILD_EXE = $(_WMSBE_1)$(_WMSBE_2)
 WIN_MSBUILD_EXE_B = "$(_WMSBE_1B)$(_WMSBE_2B)"
+WIN_POWERSHELL_EXE_B = /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
 WINPRJ = $(WINDOWS_PROJECT)
 WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)

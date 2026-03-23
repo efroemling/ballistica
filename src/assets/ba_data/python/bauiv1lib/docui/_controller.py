@@ -742,7 +742,6 @@ class DocUIController:
 
         This will always return a response, even on error conditions.
         """
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         import bacommon.docui.v1 as dui1
         from bauiv1lib.docui import v1prep

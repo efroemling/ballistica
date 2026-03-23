@@ -74,7 +74,6 @@ class GatherWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=cyclic-import
         from bauiv1lib.gather.abouttab import AboutGatherTab
         from bauiv1lib.gather.manualtab import ManualGatherTab

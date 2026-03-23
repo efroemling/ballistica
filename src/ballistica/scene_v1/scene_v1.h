@@ -42,7 +42,7 @@ const int kProtocolVersionHostMin = 33;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 35;
+const int kProtocolVersionMax = 36;
 
 // The protocol version we actually host is now read as a setting; see
 // kSceneV1HostProtocol in ballistica/base/support/app_config.h.
@@ -74,6 +74,12 @@ const int kProtocolVersionMax = 35;
 // 34: New image_node enums, data assets.
 //
 // 35: Camera shake in netplay. how did I apparently miss this for 10 years!?!
+//
+// 36: Enables V2 auth for servers when authenticate-clients is enabled.
+//     This gives servers verified v2 account info for all joiners and
+//     allows screening them before they are even allowed in the game,
+//     unlike V1 auth. It is also free from V1 auth's spoofing
+//     vulnerabilities.
 
 // Sim step size in milliseconds.
 const int kGameStepMilliseconds = 8;

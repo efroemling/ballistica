@@ -55,9 +55,10 @@
 - Modder
 - BSE Heartbeat mechanic port
 
-### Temp (3alTemp)
+### temp (temp4ture) (temp3al)
 - Original idea for customizable series length on GUI builds
 - Modder & Bug Fixer
+- temp
 
 ### brostos
 - Added support for joining using ipv6 address

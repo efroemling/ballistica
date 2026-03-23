@@ -17,6 +17,7 @@
 #include "ballistica/base/python/methods/python_methods_base_1.h"
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 #include "ballistica/base/python/methods/python_methods_base_3.h"
+#include "ballistica/base/python/methods/python_methods_test.h"
 #include "ballistica/core/core.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
@@ -33,6 +34,7 @@ extern "C" auto PyInit__babase() -> PyObject* {
                                   PythonMethodsBase1::GetMethods(),
                                   PythonMoethodsBase3::GetMethods(),
                                   PythonMethodsBase2::GetMethods(),
+                                  PythonMethodsTest::GetMethods(),
                               },
                               [](PyObject* module) -> int {
                                 BA_PYTHON_TRY;

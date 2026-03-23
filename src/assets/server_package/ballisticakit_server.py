@@ -419,7 +419,6 @@ class ServerManagerApp:
 
     def _parse_command_line_args(self) -> None:
         """Parse command line args."""
-        # pylint: disable=too-many-branches
 
         i = 1
         argc = len(sys.argv)
@@ -955,7 +954,6 @@ class ServerManagerApp:
             time.sleep(0.25)
 
     def _request_shutdowns_or_restarts(self) -> None:
-        # pylint: disable=too-many-branches
         assert current_thread() is self._subprocess_thread
         assert self._subprocess_launch_time is not None
         now = time.time()

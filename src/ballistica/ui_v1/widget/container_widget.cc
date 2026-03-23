@@ -974,7 +974,9 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // so always calc them).
   if (bg_dirty_) {
     base::SysTextureID tex_id;
-    float l_border, r_border, b_border, t_border, center_x_amt, center_y_amt;
+    float l_border, r_border, b_border, t_border;
+    [[maybe_unused]] float center_x_amt;
+    [[maybe_unused]] float center_y_amt;
     float width = r - l;
     float height = t - b;
     if (height > width * 0.6f) {

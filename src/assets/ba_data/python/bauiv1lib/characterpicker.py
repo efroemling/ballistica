@@ -40,7 +40,6 @@ class CharacterPicker(PopupWindow):
         tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
         selected_character: str | None = None,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-positional-arguments
         from bascenev1lib.actor import spazappearance
 

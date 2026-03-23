@@ -157,7 +157,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         app.classic.invoke_main_menu_ui()
 
     def _update(self) -> None:
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         app = bs.app
         assert app.classic is not None
@@ -379,8 +378,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         shadow: bool = False,
     ) -> None:
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         if shadow:
             word_obj = bs.NodeActor(
                 bs.newnode(
@@ -507,7 +504,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         rotate: float = 0.0,
         vr_depth_offset: float = 0.0,
     ) -> None:
-        # pylint: disable=too-many-locals
         if custom_texture is None:
             custom_texture = self._get_custom_logo_tex_name()
         self._custom_logo_tex_name = custom_texture

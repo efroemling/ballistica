@@ -1,4 +1,60 @@
-### 1.7.61 (build 22712, api 9, 2026-02-12)
+### 1.7.61 (build 22752, api 9, 2026-03-11)
+- OS-Font-Rendering now works on Windows, so all languages and emoji should
+  render properly (Thanks Claude!).
+- OS-Font-Rendering now works on Linux (or other Posix-y platforms like Mac
+  homebrew) when Cairo/Pango is detected, so all languages and emoji should
+  render properly there too (Thanks Claude!).
+- Windows builds now use ANGLE (Almost Native Graphics Layer Engine) instead of
+  relying directly on OpenGL. ANGLE is an implementation of OpenGL ES that runs
+  on top of Direct3D, which gives us much better support across hardware on
+  Windows than we had before.
+- Added scenev1 protocol 36, which enables V2 auth for servers. This allows
+  servers to receive authenticated V2 account info for all players before they
+  are allowed to join and fixes the spoofing vulnerabilities that V1 auth had.
+  V2 account ids look like 'a-XXX' whereas old V1 looked like 'pb-XXXX'. The
+  default protocol is still 33, but if you are running a server it is highly
+  recommended to set your protocol to 36 in your server config to enable this.
+- Added `bascenev1.SessionPlayer.get_account_id()`, which supersedes the old
+  `get_v1_account_id()`. The new method returns a V1 account id for players
+  connected via protocol < 36 and a V2 account id for protocol >= 36.
+  `get_v1_account_id()` is now deprecated and will be removed when api 9
+  support ends.
+- Wired up an http request on the V1 master server you can use to get V2 account
+  ids given a V1 account id. You can use this to migrate old account databases
+  for V2 auth. https://legacy.ballistica.net/v2id/YOURV1IDHERE
+- Clients will now wait for responses for up to 10 seconds when connecting to a
+  server and 30 seconds if contact is lost once connected. Hopefully this
+  reduces disconnects due to momentary network issues. Holler if this feels like
+  too long. Old values were 5 and 10 seconds respectively.
+- Improved efficiency of various low level logging calls in the C++ layer
+  (Thanks std::string_view!).
+- Fixed an issue where clicks could sometimes be lost in the nearby-parties
+  browser.
+- Fixed party window sub-menus staying after closing the root window.
+  (Thanks temp!)
+- Add `bascenev1.get_client_ping` which returns the current ping (RTT in ms)
+  for a connected client.
+- Simplified the Python build process for Android (see
+  `efrotools.python_build_android`). For now we're still compiling to a static
+  library which has some technical advantages for our use-case over the
+  officially-supported many-shared-libraries route. The old build path is still
+  in place (labeled '_old') but I'll remove it soon.
+- Android Python has been bumped to the latest bug fix release (3.13.12).
+- Fixed an issue where the sqlite3 module was not available in Android Python.
+- Windows builds will create a .dmp file in the executable directory on crashes,
+  which can be useful to send to me to diagnose crash bugs.
+- Starting to add some tests of low level C++ stuff (the Object class in this
+  case) to make sure it stays in good working order. Do `make test-ex` to see
+  that stuff.
+- Server with v2-auth enabled now provide verified account-ids of all clients
+  in the client-info-lists they send out.
+- Added GL debug logging. This can hopefully give us clues if we're doing
+  something that doesn't play nicely with certain graphics hardware. To enable
+  this, flip logging levels for `ba.gfx` to 'info' or 'debug' in the dev
+  console.
+- The client now connects to basn (regional) nodes using proper dns names with
+  standard public TLS. No more passing around self-signed-certificates and other
+  weirdness that is more likely to be blocked at the network level.
 - Volume slider values now properly match user expectations.
   This means 50% volume is half as loud as 100%, and lower volumes can now be
   fine tuned better.

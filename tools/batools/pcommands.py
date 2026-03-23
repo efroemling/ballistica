@@ -2,6 +2,7 @@
 #
 """A nice collection of ready-to-use pcommands for this package."""
 
+# pylint: disable=too-many-lines
 from __future__ import annotations
 
 # Note: import as little as possible here at the module level to
@@ -295,23 +296,23 @@ def python_version_apple() -> None:
     print(PY_VER_EXACT_APPLE, end='')
 
 
-def python_build_apple() -> None:
+def python_build_apple_old() -> None:
     """Build an embeddable python for mac/ios/tvos."""
 
     pcommand.disallow_in_batch()
 
-    _python_build_apple(debug=False)
+    _python_build_apple_old(debug=False)
 
 
-def python_build_apple_debug() -> None:
+def python_build_apple_old_debug() -> None:
     """Build embeddable python for mac/ios/tvos (dbg ver)."""
 
     pcommand.disallow_in_batch()
 
-    _python_build_apple(debug=True)
+    _python_build_apple_old(debug=True)
 
 
-def _python_build_apple(debug: bool) -> None:
+def _python_build_apple_old(debug: bool) -> None:
     """Build an embeddable python for macOS/iOS/tvOS."""
     import os
     from efro.error import CleanError
@@ -331,16 +332,24 @@ def _python_build_apple(debug: bool) -> None:
     pybuild.build_apple(arch, debug=debug)
 
 
-def python_build_android() -> None:
-    """Build an embeddable Python lib for Android."""
+def python_build_android_old() -> None:
+    """Build an embeddable Python lib for Android (old pipeline)."""
+
+    pcommand.disallow_in_batch()
+
+    _python_build_android_old(debug=False)
+
+
+def python_android_build() -> None:
+    """Build Android Python lib using new in-tree build script."""
 
     pcommand.disallow_in_batch()
 
     _python_build_android(debug=False)
 
 
-def python_build_android_debug() -> None:
-    """Build embeddable Android Python lib (debug ver)."""
+def python_android_build_debug() -> None:
+    """Build Android Python lib using new in-tree script (debug)."""
 
     pcommand.disallow_in_batch()
 
@@ -348,6 +357,68 @@ def python_build_android_debug() -> None:
 
 
 def _python_build_android(debug: bool) -> None:
+    import os
+    from efro.error import CleanError
+    from efrotools import python_build_android as _python_build_android_mod
+
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
+    archs = ('arm', 'arm64', 'x86', 'x86_64')
+    if len(sys.argv) != 3:
+        raise CleanError('Error: Expected one <ARCH> arg: ' + ', '.join(archs))
+    arch = sys.argv[2]
+    if arch not in archs:
+        raise CleanError(
+            'Error: invalid arch. valid values are: ' + ', '.join(archs)
+        )
+    _python_build_android_mod.build(str(pcommand.PROJROOT), arch, debug=debug)
+
+
+def python_android_gather() -> None:
+    """Gather Android Python build into project."""
+    from efrotools import python_build_android as _python_build_android_mod
+
+    pcommand.disallow_in_batch()
+
+    _python_build_android_mod.gather(str(pcommand.PROJROOT))
+
+
+def python_build_apple() -> None:
+    """Build one Apple Python slice using new in-tree script."""
+    import os
+    from efro.error import CleanError
+    from efrotools import python_build_apple as _python_build_apple_mod
+
+    pcommand.disallow_in_batch()
+
+    slices = _python_build_apple_mod.SLICES
+    if len(sys.argv) != 3 or sys.argv[2] not in slices:
+        raise CleanError('Expected one slice arg: ' + ', '.join(slices))
+    os.chdir(pcommand.PROJROOT)
+    _python_build_apple_mod.build(str(pcommand.PROJROOT), sys.argv[2])
+
+
+def python_apple_gather() -> None:
+    """Gather Apple Python slices into XCFramework and copy to project."""
+    import os
+    from efrotools import python_build_apple as _python_build_apple_mod
+
+    pcommand.disallow_in_batch()
+
+    os.chdir(pcommand.PROJROOT)
+    _python_build_apple_mod.gather(str(pcommand.PROJROOT))
+
+
+def python_build_android_old_debug() -> None:
+    """Build embeddable Android Python lib (old pipeline, debug ver)."""
+
+    pcommand.disallow_in_batch()
+
+    _python_build_android_old(debug=True)
+
+
+def _python_build_android_old(debug: bool) -> None:
     import os
     from efro.error import CleanError
     from efrotools import pybuild
@@ -366,8 +437,8 @@ def _python_build_android(debug: bool) -> None:
     pybuild.build_android(str(pcommand.PROJROOT), arch, debug=debug)
 
 
-def python_android_patch() -> None:
-    """Patches Python to prep for building for Android."""
+def python_android_patch_old() -> None:
+    """Patches Python to prep for building for Android (old pipeline)."""
     import os
     from efrotools import pybuild
 
@@ -377,8 +448,8 @@ def python_android_patch() -> None:
     pybuild.android_patch()
 
 
-def python_android_patch_ssl() -> None:
-    """Patches Python ssl to prep for building for Android."""
+def python_android_patch_ssl_old() -> None:
+    """Patches Python ssl to prep for building for Android (old pipeline)."""
     from efrotools import pybuild
 
     pcommand.disallow_in_batch()
@@ -419,8 +490,8 @@ def python_gather() -> None:
     pybuild.gather(do_android=True, do_apple=True)
 
 
-def python_gather_android() -> None:
-    """python_gather but only android bits."""
+def python_gather_android_old() -> None:
+    """python_gather but only android bits (old pipeline)."""
     import os
     from efrotools import pybuild
 
@@ -430,8 +501,8 @@ def python_gather_android() -> None:
     pybuild.gather(do_android=True, do_apple=False)
 
 
-def python_gather_apple() -> None:
-    """python_gather but only apple bits."""
+def python_apple_gather_old() -> None:
+    """python_gather but only apple bits (old pipeline)."""
     import os
     from efrotools import pybuild
 
@@ -901,6 +972,28 @@ def genchangelog() -> None:
     pcommand.disallow_in_batch()
 
     generate(projroot=str(pcommand.PROJROOT))
+
+
+def get_changelog() -> None:
+    """Print the changelog for a specified version"""
+    from efro.error import CleanError
+    from efro.terminal import Clr
+
+    from batools.changelog import get_version_changelog
+
+    pcommand.disallow_in_batch()
+
+    args = pcommand.get_args()
+    if len(args) != 1:
+        raise CleanError('Expected 1 arg: version')
+    version_str = args[0]
+
+    changelog_list = get_version_changelog(
+        version=version_str, projroot=str(pcommand.PROJROOT)
+    )
+    print(f'{Clr.BLD}Changelog for version ' f'{version_str}:{Clr.RST}\n')
+    for entry in changelog_list:
+        print(f'{Clr.CYN}-{Clr.RST} {entry}')
 
 
 def android_sdk_utils() -> None:
