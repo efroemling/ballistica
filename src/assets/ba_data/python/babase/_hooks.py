@@ -464,6 +464,53 @@ def copy_dev_console_history() -> None:
     _babase.getsimplesound('gunCocking').play()
 
 
+def start_native_repl() -> bool:
+    """Called when the native Python REPL is starting up."""
+    from babase._logging import balog
+
+    try:
+        _do_start_native_repl()
+        return True
+    except Exception:
+        balog.warning('Unable to start native repl; will fall back to legacy.')
+    return False
+
+
+def _do_start_native_repl() -> None:
+    import sys
+    import importlib
+    import readline
+    import rlcompleter
+
+    from efro.terminal import Clr
+    from babase._logging import balog
+
+    main_globals = sys.modules['__main__'].__dict__
+
+    default_imports = _babase.app.get_convenience_imports()
+    for module_name, alias in default_imports.items():
+        try:
+            mod = importlib.import_module(module_name)
+            if alias is not None:
+                main_globals[alias] = mod
+        except Exception:
+            balog.exception('Error in convenience import of %s.', module_name)
+
+    if default_imports:
+        parts = [
+            f'{name} as {alias}' if alias is not None else name
+            for name, alias in default_imports.items()
+        ]
+        sep = ', '
+        print(
+            f'{Clr.SBLK}Convenience Imports: {sep.join(parts)}{Clr.RST}',
+            file=sys.stderr,
+        )
+
+    readline.set_completer(rlcompleter.Completer(main_globals).complete)
+    readline.parse_and_bind('tab: complete')
+
+
 def v2_auth_request(global_app_instance_id: str) -> None | tuple[bool, str]:
     """Kick off or process v2 auth requests.
 

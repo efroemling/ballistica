@@ -46,6 +46,7 @@ def _valid_filename(fname: str) -> bool:
         'cloudshell',
         'vmshell',
         'editorconfig',
+        'CLAUDE.md',
     ]:
         return True
     return (
@@ -167,7 +168,7 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
 
                 # No dst file; pull src across.
                 with dstfile.open('w') as outfile:
-                    outfile.write(add_marker(src_proj, srcdata))
+                    outfile.write(add_marker(src_proj, srcdata, dstfile.name))
             continue
 
         marker_hash, dst_hash, dstdata = get_dst_file_info(dstfile)
@@ -186,7 +187,7 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
 
                 # Src has changed; simply pull across to dst.
                 with dstfile.open('w') as outfile:
-                    outfile.write(add_marker(src_proj, srcdata))
+                    outfile.write(add_marker(src_proj, srcdata, dstfile.name))
             continue
         if src_hash == marker_hash and dst_hash != marker_hash:
             # Dst has changed; we only copy backwards to src
@@ -203,7 +204,7 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
 
                 # We ALSO need to rewrite dst to update its embedded hash
                 with dstfile.open('w') as outfile:
-                    outfile.write(add_marker(src_proj, dstdata))
+                    outfile.write(add_marker(src_proj, dstdata, dstfile.name))
             else:
                 # Just make note here; we'll error after forward-syncs run.
                 changed_error_dst_files.append(dstfile)
@@ -227,7 +228,9 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
                         f' from {src_proj}: {Clr.SGRN}{dstfile}{Clr.RST}'
                     )
                     with dstfile.open('w') as outfile:
-                        outfile.write(add_marker(src_proj, srcdata))
+                        outfile.write(
+                            add_marker(src_proj, srcdata, dstfile.name)
+                        )
                 continue
             # Src/dst hashes don't match and marker doesn't match either.
             # We give up.
@@ -268,6 +271,19 @@ def sync_paths(src_proj: str, src: Path, dst: Path, mode: Mode) -> int:
                         f' {Clr.SRED}{killpath}{Clr.RST}'
                     )
                 else:
+                    allow_deletes = (
+                        os.environ.get('EFROSYNC_ALLOW_DELETES') == '1'
+                    )
+                    if not allow_deletes:
+                        raise RuntimeError(
+                            f'Sync would delete {Clr.SRED}{killpath}{Clr.RST}'
+                            f' but EFROSYNC_ALLOW_DELETES is not set to 1.'
+                            f' If this deletion is intentional, re-run with'
+                            f' EFROSYNC_ALLOW_DELETES=1.'
+                            f' If you meant to add this file (not delete it),'
+                            f' move it to the upstream source'
+                            f' ({src_proj}: {src}) instead.'
+                        )
                     print(
                         f'Removing orphaned sync path:'
                         f' {Clr.SRED}{killpath}{Clr.RST}'
@@ -305,15 +321,18 @@ def check_path(dst: Path) -> int:
     return len(allpaths)
 
 
-def add_marker(src_proj: str, srcdata: str) -> str:
+def add_marker(src_proj: str, srcdata: str, fname: str) -> str:
     """Given the contents of a file, adds a 'synced from' notice and hash."""
 
     lines = srcdata.splitlines()
 
+    # Markdown files use HTML comments; everything else uses # comments.
+    is_markdown = fname.endswith('.md')
+
     # Normally we add our hash as the first line in the file, but if there's
     # a shebang, we put it under that.
     firstline = 0
-    if len(lines) > 0 and lines[0].startswith('#!'):
+    if not is_markdown and len(lines) > 0 and lines[0].startswith('#!'):
         firstline = 1
 
     # Make sure we're not operating on an already-synced file; that's just
@@ -324,10 +343,19 @@ def add_marker(src_proj: str, srcdata: str) -> str:
         raise RuntimeError('Attempting to sync a file that is itself synced.')
 
     hashstr = string_hash(srcdata)
-    lines.insert(
-        firstline,
-        f'# EfroSynced from {src_proj}.\n# EFRO_SYNC_HASH={hashstr}\n#',
-    )
+    if is_markdown:
+        marker = (
+            f'<!-- EfroSynced from {src_proj}. -->'
+            f'\n<!-- EFRO_SYNC_HASH={hashstr} -->'
+            f'\n<!-- -->'
+        )
+    else:
+        marker = (
+            f'# EfroSynced from {src_proj}.'
+            f'\n# EFRO_SYNC_HASH={hashstr}'
+            f'\n#'
+        )
+    lines.insert(firstline, marker)
     return '\n'.join(lines) + '\n'
 
 
@@ -356,7 +384,9 @@ def get_dst_file_info(dstfile: Path) -> tuple[str, str, str]:
     for offs in range(2):
         checkline = 1 + offs
         if 'EFRO_SYNC_HASH' in dstlines[checkline]:
-            marker_hash = dstlines[checkline].split('EFRO_SYNC_HASH=')[1]
+            marker_hash = (
+                dstlines[checkline].split('EFRO_SYNC_HASH=')[1].split()[0]
+            )
             found = True
             break
     if not found:

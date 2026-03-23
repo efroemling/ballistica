@@ -35,9 +35,14 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-VERSION_STR = '1.3.5'
+VERSION_STR = '1.3.6'
 
 # Version history:
+#
+# 1.3.6
+#
+#  - Minor tweak to disable new native REPL since we rely on the simple old
+#    one to feed input into the game.
 #
 # 1.3.5
 #
@@ -861,6 +866,10 @@ class ServerManagerApp:
             }
         elif binkey in bincfg:
             del bincfg[binkey]
+
+        # We feed the binary commands through stdin, so make sure it
+        # is using the simple old dumb path for that.
+        bincfg['Use Native Python REPL'] = False
 
         with open(cfgpath, 'w', encoding='utf-8') as outfile:
             outfile.write(json.dumps(bincfg))

@@ -49,10 +49,14 @@ def build_openal_mac() -> None:
         [
             'cmake',
             '..',
-            '-DCMAKE_BUILD_TYPE=Release',
+            '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
             '-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64',
             '-DALSOFT_EXAMPLES=OFF',
             '-DALSOFT_UTILS=OFF',
+            # Disable PortAudio to prevent homebrew include paths from leaking
+            # in and shadowing the bundled fmt headers. CoreAudio is the native
+            # macOS backend and is always preferred anyway.
+            '-DALSOFT_BACKEND_PORTAUDIO=OFF',
             # (optional) pin min macOS:
             '-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0',
             # (optional) app-friendly install_name:
@@ -89,6 +93,22 @@ def gather_openal_mac() -> None:
         check=True,
     )
 
+    # Generate dSYM before copying (dsymutil needs the build-dir .o files).
+    subprocess.run(
+        ['dsymutil', 'libopenal.1.dylib', '-o', 'libopenal.1.dylib.dSYM'],
+        cwd=f'{BUILD_DIR_MAC}/build',
+        check=True,
+    )
+
     subprocess.run(['cp', '-L', srcpath, outdir_lib], check=True)
+    subprocess.run(
+        [
+            'cp',
+            '-r',
+            f'{BUILD_DIR_MAC}/build/libopenal.1.dylib.dSYM',
+            outdir_lib,
+        ],
+        check=True,
+    )
 
     print('OpenAL gather successful!')

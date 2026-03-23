@@ -970,6 +970,15 @@ class Generator:
             module, funcnames, indent=0, spacing=2, as_method=False
         )
 
+        # Explicitly add the end-of-module marker for _babase. The real
+        # C extension sets this via PyObject_SetAttrString at the very end
+        # of PyInit__babase(). We skip it when reading attrs from the live
+        # module above (since it's not a function or class), but we want it
+        # present in the dummy so that import-order sanity checks in modules
+        # like bascenev1/baplus/etc. don't fire false positives.
+        if self.mname == '_babase':
+            out += '\n_REACHED_END_OF_MODULE = True\n'
+
         # Lastly format it.
         out = format_python_str(Path(self.projroot), out)
 

@@ -143,11 +143,12 @@ class _Outputter:
             )
             if self._create:
                 assert out is not None
-                storagename = (
-                    fieldname
-                    if (ioattrs is None or ioattrs.storagename is None)
-                    else ioattrs.storagename
-                )
+                if self._codec is Codec.HUMAN:
+                    storagename = fieldname.replace('_', ' ')
+                elif ioattrs is None or ioattrs.storagename is None:
+                    storagename = fieldname
+                else:
+                    storagename = ioattrs.storagename
                 out[storagename] = outvalue
 
         # If there's extra-attrs stored on us, check/include them.
@@ -188,7 +189,13 @@ class _Outputter:
                         f' the type-id-storage-name of the IOMulticlass'
                         f' it inherits from.'
                     )
-                out[storagename] = type_id.value
+                if self._codec is Codec.HUMAN:
+                    storagename = storagename.replace('_', ' ')
+                out[storagename] = (
+                    type_id.name.lower().replace('_', ' ')
+                    if self._codec is Codec.HUMAN
+                    else type_id.value
+                )
 
         return out
 
@@ -452,8 +459,17 @@ class _Outputter:
                 )
             # At prep-time we verified that these enums had valid value
             # types, so we can blindly return it here.
-            return value.value if self._create else None
+            if self._create:
+                return (
+                    value.name.lower().replace('_', ' ')
+                    if self._codec is Codec.HUMAN
+                    else value.value
+                )
+            return None
 
+        # IMPORTANT: datetime.datetime is a subclass of datetime.date, so the
+        # datetime.datetime check MUST come before the datetime.date check
+        # below.
         if issubclass(origin, datetime.datetime):
             if not isinstance(value, origin):
                 raise TypeError(
@@ -468,6 +484,12 @@ class _Outputter:
                 time_format = 'ints'
             if self._codec is Codec.FIRESTORE:
                 return value
+            if self._codec is Codec.HUMAN:
+                return (
+                    value.isoformat().replace('+00:00', 'Z')
+                    if self._create
+                    else None
+                )
             assert self._codec is Codec.JSON
 
             if time_format == 'float':
@@ -505,12 +527,29 @@ class _Outputter:
 
             if time_format == 'float':
                 return value.total_seconds() if self._create else None
+            if self._codec is Codec.HUMAN:
+                return str(value) if self._create else None
             # Default 'ints' ('iso' is rejected at prep time).
             return (
                 [value.days, value.seconds, value.microseconds]
                 if self._create
                 else None
             )
+
+        # Note: the datetime.datetime check above must precede this since
+        # datetime.datetime is a subclass of datetime.date.
+        if issubclass(origin, datetime.date) and not issubclass(
+            origin, datetime.datetime
+        ):
+            if not isinstance(value, datetime.date):
+                raise TypeError(
+                    f'Expected a datetime.date for {fieldpath};'
+                    f' found a {type(value)}.'
+                )
+            # Always serialize as ISO 8601 date string: YYYY-MM-DD.
+            # Both JSON and Firestore codecs use this format since
+            # Firestore has no native date-only type.
+            return value.isoformat() if self._create else None
 
         if origin is bytes:
             return self._process_bytes(cls, fieldpath, value)
@@ -531,8 +570,9 @@ class _Outputter:
         if not self._create:
             return None
 
-        # In JSON we convert to base64, but firestore directly supports bytes.
-        if self._codec is Codec.JSON:
+        # In JSON/HUMAN we convert to base64, but firestore directly
+        # supports bytes.
+        if self._codec in (Codec.JSON, Codec.HUMAN):
             return base64.b64encode(value).decode()
 
         assert self._codec is Codec.FIRESTORE

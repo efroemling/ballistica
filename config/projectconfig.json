@@ -22,6 +22,12 @@
     "baclassic.ClassicAppMode",
     "babase.EmptyAppMode"
   ],
+  "default_convenience_imports": {
+    "bascenev1": "bs",
+    "bascenev1lib": "bsl",
+    "bauiv1": "bui",
+    "bauiv1lib": "buil"
+  },
   "efrocache_repository_url": "https://files.ballistica.net/cache/ba1",
   "name": "BallisticaKit",
   "public": true,
@@ -65,7 +71,8 @@
     "src/assets/ba_data/python",
     "build/dummymodules",
     "src/meta",
-    "tools"
+    "tools",
+    "tests"
   ],
   "python_source_dirs": [
     "src/assets/ba_data/python",

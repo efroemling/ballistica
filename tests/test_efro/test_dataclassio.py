@@ -64,6 +64,43 @@ class _BadEnum2(Enum):
     VAL2 = 'val2'
 
 
+class _HumanEnum(Enum):
+    TEST1 = 'test1_val'
+    SOME_LONG_VALUE = 'slv'
+
+
+@dataclass
+class _HumanInner:
+    inner_val: Annotated[int, IOAttrs('iv')] = 0
+
+
+@ioprepped
+@dataclass
+class _HumanTestClass:
+    short_key: Annotated[str, IOAttrs('sk')] = 'hello'
+    enum_field: _HumanEnum = _HumanEnum.TEST1
+    long_enum_field: _HumanEnum = _HumanEnum.SOME_LONG_VALUE
+    nested_field: _HumanInner = field(default_factory=_HumanInner)
+    dt_ints: Annotated[datetime.datetime, IOAttrs(time_format='ints')] = field(
+        default_factory=utc_now
+    )
+    dt_float: Annotated[datetime.datetime, IOAttrs(time_format='float')] = (
+        field(default_factory=utc_now)
+    )
+    dt_iso: Annotated[datetime.datetime, IOAttrs(time_format='iso')] = field(
+        default_factory=utc_now
+    )
+    dt_date: datetime.date = field(
+        default_factory=lambda: datetime.date(2024, 3, 15)
+    )
+    td_field: datetime.timedelta = field(
+        default_factory=lambda: datetime.timedelta(days=1)
+    )
+
+
+ioprep(_HumanInner)
+
+
 @dataclass
 class _NestedClass:
     ival: int = 0
@@ -1945,6 +1982,74 @@ def test_float_timedeltas() -> None:
     assert testclass2.tmval3 == testclass.tmval3
 
 
+def test_date() -> None:
+    """Test datetime.date support."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        dval: datetime.date
+        dval_opt: datetime.date | None = None
+        dval_nostore: Annotated[datetime.date, IOAttrs(store_default=False)] = (
+            datetime.date(2020, 1, 1)
+        )
+
+    today = datetime.date(2024, 3, 15)
+
+    # Basic roundtrip via JSON codec.
+    obj = _TestClass(dval=today)
+    d = dataclass_to_dict(obj)
+    assert d['dval'] == '2024-03-15'
+    obj2 = dataclass_from_dict(_TestClass, d)
+    assert obj2.dval == today
+
+    # Roundtrip via Firestore codec (same wire format: YYYY-MM-DD string).
+    d_fs = dataclass_to_dict(obj, codec=Codec.FIRESTORE)
+    assert d_fs['dval'] == '2024-03-15'
+    obj3 = dataclass_from_dict(_TestClass, d_fs, codec=Codec.FIRESTORE)
+    assert obj3.dval == today
+
+    # Optional field: None roundtrips correctly.
+    obj_none = _TestClass(dval=today, dval_opt=None)
+    d_none = dataclass_to_dict(obj_none)
+    assert d_none.get('dval_opt') is None
+    obj_none2 = dataclass_from_dict(_TestClass, d_none)
+    assert obj_none2.dval_opt is None
+
+    # Optional field: present value roundtrips correctly.
+    obj_opt = _TestClass(dval=today, dval_opt=datetime.date(2000, 6, 1))
+    d_opt = dataclass_to_dict(obj_opt)
+    assert d_opt['dval_opt'] == '2000-06-01'
+    obj_opt2 = dataclass_from_dict(_TestClass, d_opt)
+    assert obj_opt2.dval_opt == datetime.date(2000, 6, 1)
+
+    # store_default=False: default value is omitted.
+    obj_def = _TestClass(dval=today)
+    d_def = dataclass_to_dict(obj_def)
+    assert 'dval_nostore' not in d_def
+    obj_def2 = dataclass_from_dict(_TestClass, d_def)
+    assert obj_def2.dval_nostore == datetime.date(2020, 1, 1)
+
+    # Invalid input: non-string raises TypeError.
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_TestClass, {'dval': 20240315})
+
+    # Invalid input: bad format raises ValueError.
+    with pytest.raises(ValueError):
+        dataclass_from_dict(_TestClass, {'dval': 'not-a-date'})
+
+    # Make sure datetime.datetime is not mistakenly handled as date.
+    @ioprepped
+    @dataclass
+    class _TestClass2:
+        dtval: datetime.datetime
+
+    dt_obj = _TestClass2(dtval=utc_now())
+    dt_d = dataclass_to_dict(dt_obj)
+    # datetime should serialize as a list of ints, not a YYYY-MM-DD string.
+    assert isinstance(dt_d['dtval'], list)
+
+
 class MTTestMissingTypeID(Enum):
     """IDs for our multi-type class."""
 
@@ -2132,3 +2237,67 @@ def test_multi_type_missing() -> None:
     # Make sure the lossy load disallows output.
     with pytest.raises(ValueError):
         _out2c = dataclass_to_dict(val2c)
+
+
+def test_human_codec() -> None:
+    """Test Codec.HUMAN produces human-readable dicts."""
+    import re
+
+    now = utc_now()
+    today = datetime.date(2024, 3, 15)
+    delta = datetime.timedelta(days=1, hours=2)
+
+    obj = _HumanTestClass(
+        short_key='world',
+        enum_field=_HumanEnum.TEST1,
+        long_enum_field=_HumanEnum.SOME_LONG_VALUE,
+        nested_field=_HumanInner(inner_val=42),
+        dt_ints=now,
+        dt_float=now,
+        dt_iso=now,
+        dt_date=today,
+        td_field=delta,
+    )
+    out = dataclass_to_dict(obj, codec=Codec.HUMAN)
+
+    # Field keys should use Python attr names (underscores → spaces),
+    # not IOAttrs storage names.
+    assert 'short key' in out
+    assert 'sk' not in out
+
+    # Enum values should be lowercase+spaces of .name, not .value.
+    assert out['enum field'] == 'test1'
+    assert out['long enum field'] == 'some long value'
+
+    # All datetime fields should produce ISO strings regardless of
+    # time_format setting.
+    iso_pattern = r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$'
+    for key in ('dt ints', 'dt float', 'dt iso'):
+        val = out[key]
+        assert isinstance(val, str), f'{key!r} is not a string: {val!r}'
+        assert re.match(iso_pattern, val), f'{key!r} is not ISO format: {val!r}'
+
+    # date should still be ISO YYYY-MM-DD.
+    assert out['dt date'] == '2024-03-15'
+
+    # timedelta should be str() output.
+    assert out['td field'] == str(delta)
+
+    # Nested dataclass: inner fields also use attr names.
+    nested_out = out['nested field']
+    assert isinstance(nested_out, dict)
+    assert 'inner val' in nested_out
+    assert 'iv' not in nested_out
+    assert nested_out['inner val'] == 42
+
+    # IOMultiType: discriminator value uses lowercase+spaces .name.
+    tpname = MTTestBase.get_type_id_storage_name()
+    tpname_human = tpname.replace('_', ' ')
+    mt_val = MTTestClass1(ival=5)
+    mt_out = dataclass_to_dict(mt_val, codec=Codec.HUMAN)
+    assert mt_out[tpname_human] == 'class 1'
+    assert mt_out.get(tpname) is None
+
+    # Decoding with HUMAN codec should raise ValueError.
+    with pytest.raises(ValueError):
+        dataclass_from_dict(_HumanTestClass, out, codec=Codec.HUMAN)

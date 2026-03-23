@@ -70,6 +70,7 @@
 - Added discord social sdk support
 - Added flatpak build
 - added bombsquad on flathub :DD
+- added python's native repl :O
 
 ### Zacker Tz
 - PW: King of the Hill: Fix flag region on the Happy Thoughts

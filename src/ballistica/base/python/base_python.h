@@ -127,6 +127,7 @@ class BasePython {
     kAppVariant,
     kV2AuthRequestCall,
     kV2AuthDataCall,
+    kStartNativeReplCall,
     kLast  // Sentinel; must be at end.
   };
 

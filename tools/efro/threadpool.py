@@ -51,9 +51,11 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
     ) -> None:
         """Submit work to the threadpool with no expectation of waiting.
 
-        Any errors occurring in the passed callable will be logged. This
-        call will block and log a warning if the threadpool reaches its
-        max queued no-wait call count.
+        Any exceptions raised by the callable are automatically caught
+        and logged via ``logger.exception()``, so callers do not need
+        their own error handling for fire-and-forget work. This call will
+        block and log a warning if the threadpool reaches its max queued
+        no-wait call count.
         """
         # If we're too backlogged, issue a warning and block until we
         # aren't. We don't bother with the lock here since this can be
