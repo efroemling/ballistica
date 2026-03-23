@@ -335,14 +335,18 @@ class Spaz(bs.Actor):
         Called to 'press jump' on this spaz;
         used by player or AI connections.
         """
-        if not self.node:
+        if (
+            not self.node or
+            self._dead or
+            self.frozen or
+            self.node.knockout > 0.0
+        ):
             return
-        if not (self._dead or self.frozen or self.node.knockout > 0.0):
-            t_ms = int(bs.time() * 1000.0)
-            assert isinstance(t_ms, int)
-            if t_ms - self.last_jump_time_ms >= self._jump_cooldown:
-                self.node.jump_pressed = True
-                self.last_jump_time_ms = t_ms
+        t_ms = int(bs.time() * 1000.0)
+        assert isinstance(t_ms, int)
+        if t_ms - self.last_jump_time_ms >= self._jump_cooldown:
+            self.node.jump_pressed = True
+            self.last_jump_time_ms = t_ms
 
     def on_jump_release(self) -> None:
         """
@@ -358,14 +362,18 @@ class Spaz(bs.Actor):
         Called to 'press pick-up' on this spaz;
         used by player or AI connections.
         """
-        if not self.node:
+        if (
+            not self.node or
+            self._dead or
+            self.frozen or
+            self.node.knockout > 0.0
+        ):
             return
-        if not (self._dead or self.frozen or self.node.knockout > 0.0):
-            t_ms = int(bs.time() * 1000.0)
-            assert isinstance(t_ms, int)
-            if t_ms - self.last_pickup_time_ms >= self._pickup_cooldown:
-                self.node.pickup_pressed = True
-                self.last_pickup_time_ms = t_ms
+        t_ms = int(bs.time() * 1000.0)
+        assert isinstance(t_ms, int)
+        if t_ms - self.last_pickup_time_ms >= self._pickup_cooldown:
+            self.node.pickup_pressed = True
+            self.last_pickup_time_ms = t_ms
 
     def on_pickup_release(self) -> None:
         """
@@ -399,26 +407,30 @@ class Spaz(bs.Actor):
         Called to 'press punch' on this spaz;
         used for player or AI connections.
         """
-        if not self.node:
+        if (
+            not self.node or
+            self._dead or
+            self.frozen or
+            self.node.knockout > 0.0
+        ):
             return
-        if not (self._dead or self.frozen or self.node.knockout > 0.0):
-            t_ms = int(bs.time() * 1000.0)
-            assert isinstance(t_ms, int)
-            if t_ms - self.last_punch_time_ms >= self._punch_cooldown:
-                if self.punch_callback is not None:
-                    self.punch_callback(self)
-                self._punched_nodes = set()  # Reset this.
-                self.last_punch_time_ms = t_ms
-                self.node.punch_pressed = True
-                if not self.node.hold_node:
-                    bs.timer(
-                        0.1,
-                        bs.WeakCallStrict(
-                            self._safe_play_sound,
-                            SpazFactory.get().swish_sound,
-                            0.8,
-                        ),
-                    )
+        t_ms = int(bs.time() * 1000.0)
+        assert isinstance(t_ms, int)
+        if t_ms - self.last_punch_time_ms >= self._punch_cooldown:
+            if self.punch_callback is not None:
+                self.punch_callback(self)
+            self._punched_nodes = set()  # Reset this.
+            self.last_punch_time_ms = t_ms
+            self.node.punch_pressed = True
+            if not self.node.hold_node:
+                bs.timer(
+                    0.1,
+                    bs.WeakCallStrict(
+                        self._safe_play_sound,
+                        SpazFactory.get().swish_sound,
+                        0.8,
+                    ),
+                )
 
     def _safe_play_sound(self, sound: bs.Sound, volume: float) -> None:
         """Plays a sound at our position if we exist."""
@@ -439,16 +451,20 @@ class Spaz(bs.Actor):
         Called to 'press bomb' on this spaz;
         used for player or AI connections.
         """
-        if not self.node:
+        if (
+            not self.node or
+            self._dead or
+            self.frozen or
+            self.node.knockout > 0.0
+        ):
             return
-        if not (self._dead or self.frozen or self.node.knockout > 0.0):
-            t_ms = int(bs.time() * 1000.0)
-            assert isinstance(t_ms, int)
-            if t_ms - self.last_bomb_time_ms >= self._bomb_cooldown:
-                self.last_bomb_time_ms = t_ms
-                self.node.bomb_pressed = True
-                if not self.node.hold_node:
-                    self.drop_bomb()
+        t_ms = int(bs.time() * 1000.0)
+        assert isinstance(t_ms, int)
+        if t_ms - self.last_bomb_time_ms >= self._bomb_cooldown:
+            self.last_bomb_time_ms = t_ms
+            self.node.bomb_pressed = True
+            if not self.node.hold_node:
+                self.drop_bomb()
 
     def on_bomb_release(self) -> None:
         """
