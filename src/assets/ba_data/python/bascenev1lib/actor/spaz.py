@@ -89,6 +89,11 @@ class Spaz(bs.Actor):
 
         factory = SpazFactory.get()
 
+        classic = bs.app.classic
+        assert classic is not None
+
+        protocol_version = classic.scene_v1_protocol_version()
+
         # We need to behave slightly different in the tutorial.
         self._demo_mode = demo_mode
 
@@ -128,12 +133,15 @@ class Spaz(bs.Actor):
         media = factory.get_media(character)
         punchmats = (factory.punch_material, shared.attack_material)
         pickupmats = (factory.pickup_material, shared.pickup_material)
+
         self.node: bs.Node = bs.newnode(
             type='spaz',
             delegate=self,
             attrs={
                 'color': color,
-                'behavior_version': 0 if demo_mode else 2,
+                'behavior_version': (
+                    0 if demo_mode else 1 if protocol_version < 37 else 2
+                ),
                 'demo_mode': demo_mode,
                 'highlight': highlight,
                 'jump_sounds': media['jump_sounds'],
