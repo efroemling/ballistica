@@ -78,6 +78,10 @@ class Endpoint(StrEnum):
     #: Pass ``'me'`` as ``account_id`` to refer to the authenticated account.
     ACCOUNT = '/api/v1/accounts/{account_id}'
 
+    #: ``GET`` — look up an account by its tag (display name).
+    #: Returns :class:`~bacommon.restapi.v1.accounts.AccountResponse`.
+    ACCOUNT_BY_TAG = '/api/v1/accounts/by-tag/{tag}'
+
     #: ``GET`` — list all workspaces for the authenticated account.
     #: Returns :class:`~bacommon.restapi.v1.workspaces.WorkspacesResponse`.
     #:
@@ -118,14 +122,16 @@ class Endpoint(StrEnum):
 
     #: ``GET`` — fetch the active workspace for the authenticated account.
     #: Returns
-    #: :class:`~bacommon.restapi.v1.workspaces.ActiveWorkspaceResponse`.
+    #: :class:`~bacommon.restapi.v1.workspaces.WorkspaceResponse`
+    #: or ``null`` if no workspace is active.
     #:
     #: ``POST`` — set the active workspace.
-    #: JSON body: ``{"workspace_id": "ws-123"}`` to activate a workspace,
+    #: JSON body: ``{"workspace_id": "<id>"}`` to activate a workspace,
     #: or ``{"workspace_id": null}`` to disable syncing.
     #: ``workspace_id`` must refer to a workspace owned by the authenticated
     #: account; any other value (including IDs that do not exist) returns
     #: ``invalid_parameter``.
     #: Returns
-    #: :class:`~bacommon.restapi.v1.workspaces.ActiveWorkspaceResponse`.
+    #: :class:`~bacommon.restapi.v1.workspaces.WorkspaceResponse`
+    #: or ``null``.
     WORKSPACES_ACTIVE = '/api/v1/workspaces/active'

@@ -620,7 +620,7 @@ def _cmake_cache_has_missing_cellar_path(dirname: str) -> bool:
     with open(cmake_cache_path, encoding='utf-8') as cache_file:
         cache_text = cache_file.read()
     for cellar_path in sorted(
-        set(re.findall(r'\S+/Cellar/[^/\s]+/[^/\s]+', cache_text))
+        set(re.findall(r'/[^\s;]+/Cellar/[^/\s;]+/[^/\s;]+', cache_text))
     ):
         if not os.path.isdir(cellar_path):
             print(

@@ -71,6 +71,51 @@ def test_account_me(server_url: str, authed: AuthedClient) -> None:
     assert lad is None or (isinstance(lad, str) and len(lad) == 10)
 
 
+# --- Account-by-tag endpoint ---
+
+
+def test_account_by_tag_no_auth(
+    server_url: str, http: urllib3.PoolManager
+) -> None:
+    """No auth header should return 401."""
+    path = Endpoint.ACCOUNT_BY_TAG.format(tag='SomeTag')
+    r = http.request('GET', f'{server_url}{path}', timeout=10)
+    assert r.status == 401
+    body = json.loads(r.data)
+    assert body['error'] == 'unauthorized'
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_account_by_tag_notfound(server_url: str, authed: AuthedClient) -> None:
+    """Nonexistent tag should return 404."""
+    path = Endpoint.ACCOUNT_BY_TAG.format(tag='zzz_no_such_tag_zzz')
+    r = authed.get(f'{server_url}{path}', timeout=10)
+    assert r.status == 404
+    body = json.loads(r.data)
+    assert body['error'] == 'not_found'
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_account_by_tag(server_url: str, authed: AuthedClient) -> None:
+    """Look up our own account by tag and verify the response matches."""
+    # First, fetch our account info to get our tag.
+    me_path = Endpoint.ACCOUNT.format(account_id='me')
+    me_r = authed.get(f'{server_url}{me_path}', timeout=10)
+    assert me_r.status == 200
+    me_body = json.loads(me_r.data)
+
+    # Now look up by that tag.
+    tag_path = Endpoint.ACCOUNT_BY_TAG.format(tag=me_body['tag'])
+    tag_r = authed.get(f'{server_url}{tag_path}', timeout=10)
+    assert tag_r.status == 200
+    tag_body = json.loads(tag_r.data)
+
+    assert tag_body['id'] == me_body['id']
+    assert tag_body['tag'] == me_body['tag']
+    assert tag_body['create_time'] == me_body['create_time']
+    assert tag_body['total_active_days'] == me_body['total_active_days']
+
+
 # --- Workspace endpoints ---
 
 
@@ -99,6 +144,87 @@ def test_workspace_create_no_auth(
     )
     assert r.status == 401
     assert json.loads(r.data)['error'] == 'unauthorized'
+
+
+# --- Active workspace ---
+
+
+def test_active_workspace_no_auth(
+    server_url: str, http: urllib3.PoolManager
+) -> None:
+    """GET /workspaces/active without auth should return 401."""
+    r = http.request(
+        'GET', f'{server_url}{Endpoint.WORKSPACES_ACTIVE}', timeout=10
+    )
+    assert r.status == 401
+    body = json.loads(r.data)
+    assert body['error'] == 'unauthorized'
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_active_workspace_none(server_url: str, authed: AuthedClient) -> None:
+    """Clear active workspace; GET should return null."""
+    # Ensure no workspace is active.
+    authed.post(
+        f'{server_url}{Endpoint.WORKSPACES_ACTIVE}',
+        json={'workspace_id': None},
+        timeout=10,
+    )
+
+    r = authed.get(f'{server_url}{Endpoint.WORKSPACES_ACTIVE}', timeout=10)
+    assert r.status == 200
+    body = json.loads(r.data)
+    assert body is None
+
+
+@pytest.mark.skipif(FAST_MODE, reason='fast mode')
+def test_active_workspace_set_and_get(
+    server_url: str, authed: AuthedClient
+) -> None:
+    """Set active workspace; GET should return full WorkspaceResponse."""
+    name = '__api_test__active_ws__'
+    _delete_workspaces_named(authed, server_url, name)
+
+    # Create a workspace to activate.
+    cr = authed.post(
+        f'{server_url}{Endpoint.WORKSPACES}',
+        json={'name': name},
+        timeout=10,
+    )
+    assert cr.status == 201
+    ws = json.loads(cr.data)
+    wid = ws['id']
+
+    try:
+        # Set it active.
+        sr = authed.post(
+            f'{server_url}{Endpoint.WORKSPACES_ACTIVE}',
+            json={'workspace_id': wid},
+            timeout=10,
+        )
+        assert sr.status == 200
+        set_body = json.loads(sr.data)
+        assert set_body['id'] == wid
+        assert set_body['name'] == name
+
+        # GET should return the same workspace.
+        gr = authed.get(f'{server_url}{Endpoint.WORKSPACES_ACTIVE}', timeout=10)
+        assert gr.status == 200
+        get_body = json.loads(gr.data)
+        assert get_body['id'] == wid
+        assert get_body['name'] == name
+        assert isinstance(get_body['size'], int)
+        assert isinstance(get_body['create_time'], str)
+        assert isinstance(get_body['modified_time'], str)
+    finally:
+        # Clean up: deactivate and delete.
+        authed.post(
+            f'{server_url}{Endpoint.WORKSPACES_ACTIVE}',
+            json={'workspace_id': None},
+            timeout=10,
+        )
+        path = Endpoint.WORKSPACE.format(workspace_id=wid)
+        authed.delete(f'{server_url}{path}', timeout=10)
 
 
 # --- Workspace lifecycle ---
