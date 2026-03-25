@@ -230,43 +230,43 @@ class PlayerSpaz(Spaz):
             self._turbo_filter_counts = {source: 1}
 
     @override
-    def on_jump_press(self):
-        super().on_jump_press()
+    def on_jump_press(self) -> None:
         self._turbo_filter_add_press('jump')
+        return super().on_jump_press()
 
     @override
-    def on_pickup_press(self):
-        super().on_pickup_press()
+    def on_pickup_press(self) -> None:
         self._turbo_filter_add_press('pickup')
+        return super().on_pickup_press()
 
     @override
     def on_hold_position_press(self) -> None:
-        super().on_hold_position_press()
         self._turbo_filter_add_press('holdposition')
+        return super().on_hold_position_press()
 
     @override
-    def on_punch_press(self):
-        super().on_punch_press()
+    def on_punch_press(self) -> None:
         self._turbo_filter_add_press('punch')
+        return super().on_punch_press()
 
     @override
-    def on_bomb_press(self):
-        super().on_bomb_press()
+    def on_bomb_press(self) -> None:
         self._turbo_filter_add_press('bomb')
+        return super().on_bomb_press()
 
     @override
-    def on_run(self, value: float):
-        super().on_run(value)
+    def on_run(self, value: float) -> None:
         # Filtering these events would be tough since its an analog
         # value, but lets still pass full 0-to-1 presses along to
         # the turbo filter to punish players if it looks like they're turbo-ing.
         if self._last_run_value < 0.01 and value > 0.99:
             self._turbo_filter_add_press('run')
+        return super().on_run(value)
 
     @override
     def on_fly_press(self) -> None:
-        super().on_fly_press()
         self._turbo_filter_add_press('fly')
+        return super().on_fly_press()
 
     @override
     def handlemessage(self, msg: Any) -> Any:
