@@ -18,7 +18,7 @@ namespace ballistica::ui_v1 {
 
 ButtonWidget::ButtonWidget()
     : birth_time_millisecs_{
-        static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)} {
+          static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)} {
   text_ = Object::New<TextWidget>();
   SetText("Button");
   text_->SetVAlign(TextWidget::VAlign::kCenter);

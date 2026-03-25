@@ -904,18 +904,16 @@ void Camera::ApplyToFrameDef(FrameDef* frame_def) {
   //   for now, though, there's just a single beauty pass
   //   which is us.
 
-  RenderPass* passes[] = {
-    frame_def->beauty_pass(),
-    frame_def->beauty_pass_bg(),
+  RenderPass* passes[] = {frame_def->beauty_pass(),
+                          frame_def->beauty_pass_bg(),
 #if BA_VR_BUILD
-    frame_def->overlay_pass(),
-    frame_def->GetOverlayFixedPass(),
-    frame_def->vr_cover_pass(),
+                          frame_def->overlay_pass(),
+                          frame_def->GetOverlayFixedPass(),
+                          frame_def->vr_cover_pass(),
 #endif
-    frame_def->overlay_3d_pass(),
-    frame_def->blit_pass(),
-    nullptr
-  };
+                          frame_def->overlay_3d_pass(),
+                          frame_def->blit_pass(),
+                          nullptr};
 
   // Currently, our x/y fovs are simply enough to fit everything.
   // Check the aspect ratio of what we're rendering to and fit them.

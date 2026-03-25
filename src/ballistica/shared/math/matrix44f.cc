@@ -123,7 +123,7 @@ auto Matrix44f::Transpose() const -> Matrix44f {
 
 static void InvertMatrixGeneral(const float* mat, float* out) {
 /* NB. OpenGL Matrices are COLUMN major. */
-#define MAT(m, r, c) (mat)[(c)*4 + (r)]
+#define MAT(m, r, c) (mat)[(c) * 4 + (r)]
 
 /* Here's some shorthand converting standard (row,column) to index. */
 #define m11 MAT(mat, 0, 0)
@@ -229,7 +229,7 @@ static void InvertMatrixGeneral(const float* mat, float* out) {
 
 static void InvertMatrix(const float* mat, float* out) {
 /* NB. OpenGL Matrices are COLUMN major. */
-#define MAT(mat, r, c) (mat)[(c)*4 + (r)]
+#define MAT(mat, r, c) (mat)[(c) * 4 + (r)]
 
 /* Here's some shorthand converting standard (row,column) to index. */
 #define m11 MAT(mat, 0, 0)

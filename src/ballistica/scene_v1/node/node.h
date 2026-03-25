@@ -17,7 +17,7 @@ namespace ballistica::scene_v1 {
 
 // Define a static creation call for this node type
 #define BA_NODE_CREATE_CALL(FUNC)                       \
-  static auto FUNC(Scene* sg)->Node* {                  \
+  static auto FUNC(Scene* sg) -> Node* {                \
     return Object::NewDeferred<BA_NODE_TYPE_CLASS>(sg); \
   }
 

@@ -78,7 +78,7 @@ static auto MakeServerResponseJson_(const std::string& passed_str)
 
 ConnectionToHost::ConnectionToHost()
     : protocol_version_{
-        classic::ClassicAppMode::GetSingleton()->host_protocol_version()} {}
+          classic::ClassicAppMode::GetSingleton()->host_protocol_version()} {}
 
 auto ConnectionToHost::GetAsUDP() -> ConnectionToHostUDP* { return nullptr; }
 
