@@ -2,6 +2,9 @@
 - Added `tests/test_restapi` which can be useful as reference for the
   ballistica.net REST api. Run `make test-restapi` to run all REST api tests
   (you just need to supply an API Key).
+- Fixed Spaz being able to punch very shortly after executing a grab, but
+  before actually grabbing. This fixes the long standing punch grab infinite
+  exploit that allows for effortless kills on players (Thanks TheMikirog!).
 
 ### 1.7.61 (build 22772, api 9, 2026-03-16)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)

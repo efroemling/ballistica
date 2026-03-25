@@ -224,6 +224,9 @@ class SpazNode : public Node {
   void set_behavior_version(int val) {
     behavior_version_ = static_cast_check_fit<uint8_t>(val);
   }
+  auto get_pickup_before_hitbox() const -> bool {
+    return pickup_before_hitbox_;
+  }
   auto pickup_pressed() const -> bool { return pickup_pressed_; }
   void SetPickupPressed(bool val);
   auto hold_position_pressed() const -> bool { return hold_position_pressed_; }
@@ -515,6 +518,7 @@ class SpazNode : public Node {
   bool has_eyelids_{true};
   bool running_{};
   bool billboard_cross_out_{};
+  bool pickup_before_hitbox_{};
   base::GraphicsQuality graphics_quality_{};
   Object::Ref<RigidBody> hair_front_right_body_;
   JointFixedEF* hair_front_right_joint_{};

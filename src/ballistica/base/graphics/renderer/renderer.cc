@@ -104,9 +104,9 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   // If preprocess decided not to render this.
   if (!frame_def->rendering()) return;
 
-  // Set camera/hand/etc positioning with latest VR data if applicable.
-  // (we do this here at render time as opposed to frame construction time
-  // so we have the most up-to-date data possible).
+    // Set camera/hand/etc positioning with latest VR data if applicable.
+    // (we do this here at render time as opposed to frame construction time
+    // so we have the most up-to-date data possible).
 #if BA_VR_BUILD
   VRUpdateForEyeRender(frame_def);
 #endif  // BA_VR_BUILD

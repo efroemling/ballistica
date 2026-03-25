@@ -33,7 +33,7 @@ typedef unsigned int GLenum;
 typedef int GLint;
 
 #define KTX_IDENTIFIER_REF \
-  {0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A}
+  { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A }
 #define KTX_ENDIAN_REF (0x04030201)
 #define KTX_ENDIAN_REF_REV (0x01020304)
 #define KTX_HEADER_SIZE (64)
@@ -321,7 +321,7 @@ typedef short int16;
 #define PUTBITS(dest, data, size, startpos) \
   dest = ((dest & ~MASK(size, startpos))    \
           | ((data << SHIFT(size, startpos)) & MASK(size, startpos)))
-#define SHIFTHIGH(size, startpos) (((startpos) - 32) - (size) + 1)
+#define SHIFTHIGH(size, startpos) (((startpos)-32) - (size) + 1)
 #define MASKHIGH(size, startpos) \
   (((1 << (size)) - 1) << SHIFTHIGH(size, startpos))
 #define PUTBITSHIGH(dest, data, size, startpos) \
@@ -330,7 +330,7 @@ typedef short int16;
 #define GETBITS(source, size, startpos) \
   (((source) >> ((startpos) - (size) + 1)) & ((1 << (size)) - 1))
 #define GETBITSHIGH(source, size, startpos) \
-  (((source) >> (((startpos) - 32) - (size) + 1)) & ((1 << (size)) - 1))
+  (((source) >> (((startpos)-32) - (size) + 1)) & ((1 << (size)) - 1))
 #ifndef PGMOUT
 #define PGMOUT 0
 #endif
@@ -353,7 +353,7 @@ typedef short int16;
 
 // Helper Macros
 #define CLAMP(ll, x, ul) (((x) < (ll)) ? (ll) : (((x) > (ul)) ? (ul) : (x)))
-#define JAS_ROUND(x) (((x) < 0.0) ? ((int)((x) - 0.5)) : ((int)((x) + 0.5)))
+#define JAS_ROUND(x) (((x) < 0.0) ? ((int)((x)-0.5)) : ((int)((x) + 0.5)))
 
 #define RED_CHANNEL(img, width, x, y, channels) \
   img[channels * (y * width + x) + 0]

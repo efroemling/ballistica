@@ -133,7 +133,7 @@ class Spaz(bs.Actor):
             delegate=self,
             attrs={
                 'color': color,
-                'behavior_version': 0 if demo_mode else 1,
+                'behavior_version': 0 if demo_mode else 2,
                 'demo_mode': demo_mode,
                 'highlight': highlight,
                 'jump_sounds': media['jump_sounds'],
@@ -462,7 +462,12 @@ class Spaz(bs.Actor):
             self._punched_nodes = set()  # Reset this.
             self.last_punch_time_ms = t_ms
             self.node.punch_pressed = True
-            if not self.node.hold_node:
+            play_swish_sound = (
+                not self.node.pickup_before_hitbox
+                if self.node.behavior_version >= 2
+                else True
+            )
+            if not self.node.hold_node and play_swish_sound:
                 bs.timer(
                     0.1,
                     bs.WeakCallStrict(
