@@ -133,7 +133,7 @@ class Spaz(bs.Actor):
             delegate=self,
             attrs={
                 'color': color,
-                'behavior_version': 0 if demo_mode else 1,
+                'behavior_version': 0 if demo_mode else 2,
                 'demo_mode': demo_mode,
                 'highlight': highlight,
                 'jump_sounds': media['jump_sounds'],
@@ -422,7 +422,12 @@ class Spaz(bs.Actor):
             self._punched_nodes = set()  # Reset this.
             self.last_punch_time_ms = t_ms
             self.node.punch_pressed = True
-            if not self.node.hold_node:
+            play_swish_sound = (
+                not self.node.pickup_before_hitbox
+                if self.node.behavior_version >= 2
+                else True
+            )
+            if not self.node.hold_node and play_swish_sound:
                 bs.timer(
                     0.1,
                     bs.WeakCallStrict(
@@ -673,12 +678,18 @@ class Spaz(bs.Actor):
             # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
             # NOTE: should test to see if that's still the case.
-            bs.timer(0.001, bs.WeakCallStrict(self.shatter))
+            # UPDATE (March 2026): Using bs.pushcall instead of bs.timer -
+            # executes at end of current frame (faster) while still being safe.
+            # Tested and works perfectly.
+            bs.pushcall(bs.WeakCallStrict(self.shatter))
 
         elif isinstance(msg, bs.ImpactDamageMessage):
             # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
-            bs.timer(0.001, bs.WeakCallStrict(self._hit_self, msg.intensity))
+            # UPDATE (March 2026): Using bs.pushcall instead of bs.timer -
+            # executes at end of current frame (faster), making hits feel
+            # immediate while still being safe.
+            bs.pushcall(bs.WeakCallStrict(self._hit_self, msg.intensity))
 
         elif isinstance(msg, bs.PowerupMessage):
             if self._dead or not self.node:

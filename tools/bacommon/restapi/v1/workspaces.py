@@ -25,8 +25,9 @@ class WorkspaceEntryType(StrEnum):
 class WorkspaceResponse:
     """Metadata for a single workspace.
 
-    Returned by :attr:`~bacommon.restapi.v1.Endpoint.WORKSPACE` and
-    :attr:`~bacommon.restapi.v1.Endpoint.WORKSPACES`.
+    Returned by :attr:`~bacommon.restapi.v1.Endpoint.WORKSPACE`,
+    :attr:`~bacommon.restapi.v1.Endpoint.WORKSPACES`, and
+    :attr:`~bacommon.restapi.v1.Endpoint.WORKSPACES_ACTIVE`.
     """
 
     #: Unique workspace ID.
@@ -94,15 +95,3 @@ class WorkspaceFilesResponse:
     """
 
     entries: Annotated[list[WorkspaceEntryResponse], IOAttrs('entries')]
-
-
-@ioprepped
-@dataclass
-class ActiveWorkspaceResponse:
-    """The active workspace for the authenticated account.
-
-    Returned by :attr:`~bacommon.restapi.v1.Endpoint.WORKSPACES_ACTIVE`.
-    """
-
-    #: ID of the active workspace, or ``None`` if syncing is disabled.
-    workspace_id: Annotated[str | None, IOAttrs('workspace_id')]

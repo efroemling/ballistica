@@ -117,6 +117,7 @@ const float kHairPonytailBottomAngularDamping = 0.000001f;
 
 const int kPunchDuration = 35;
 const int kPickupCooldown = 40;
+const int kPickupHitboxDelay = 4;
 
 const float kWingAttachX = 0.3f;
 const float kWingAttachY = 0.0f;
@@ -505,6 +506,7 @@ class SpazNodeType : public NodeType {
   BA_FLOAT_ATTR(move_up_down, move_up_down, SetMoveUpDown);
   BA_BOOL_ATTR(demo_mode, demo_mode, set_demo_mode);
   BA_INT_ATTR(behavior_version, behavior_version, set_behavior_version);
+  BA_BOOL_ATTR_READONLY(pickup_before_hitbox, get_pickup_before_hitbox);
 #undef BA_NODE_TYPE_CLASS
 
   SpazNodeType()
@@ -588,7 +590,8 @@ class SpazNodeType : public NodeType {
         move_left_right(this),
         move_up_down(this),
         demo_mode(this),
-        behavior_version(this) {}
+        behavior_version(this),
+        pickup_before_hitbox(this) {}
 };
 
 static NodeType* node_type{};
@@ -939,8 +942,10 @@ void SpazNode::SetPickupPressed(bool val) {
     if (holding_something_) {
       Throw(false);
     } else {
-      if ((pickup_ == 0) && (!knockout_) && (!frozen_))
-        pickup_ = kPickupCooldown + 4;
+      if ((pickup_ == 0) && (!knockout_) && (!frozen_)) {
+        pickup_ = kPickupCooldown + kPickupHitboxDelay;
+        pickup_before_hitbox_ = true;
+      }
     }
   } else {
     // Release
@@ -1021,6 +1026,12 @@ void SpazNode::SetPunchPressed(bool val) {
     if (holding_something_) {
       Throw(false);
     } else {
+      // Do not punch before grab hitbox comes out, if it's coming
+      if (behavior_version_ >= 2
+          && (pickup_ >= kPickupCooldown - kPickupHitboxDelay)) {
+        return;
+      }
+
       if (!holding_something_ && (!knockout_) && (!frozen_)) {
         punch_ = kPunchDuration;
 
@@ -3835,8 +3846,9 @@ void SpazNode::Step() {
     if (!holding_something_ && hold_node_.exists()) hold_node_.Clear();
   }
 
-  if (pickup_ == kPickupCooldown - 4) {
+  if (pickup_ == kPickupCooldown - kPickupHitboxDelay) {
     if (!body_pickup_.exists()) {
+      pickup_before_hitbox_ = false;
       body_pickup_ = Object::New<RigidBody>(
           kPickupBodyID, &pickup_part_, RigidBody::Type::kGeomOnly,
           RigidBody::Shape::kSphere, RigidBody::kCollideRegion,
