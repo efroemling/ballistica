@@ -166,6 +166,16 @@ def generate_flathub_manifest() -> None:
         else:
             print(f'  Warning: {filename} not found at {src}')
 
+    # Download the icon 
+    icon_url = 'https://files.ballistica.net/bombsquad/promo/BombSquadIcon512.png'
+    icon_dst = os.path.join(flathub_dir, 'BombSquadIcon512.png')
+    try:
+        print(f'{Clr.BLD}Downloading icon from {icon_url}...{Clr.RST}')
+        urllib.request.urlretrieve(icon_url, icon_dst)
+        print(f'  Downloaded icon to {icon_dst}')
+    except Exception as e:
+        print(f'  Warning: Failed to download icon: {e}')
+
     # Step 2: Get latest release information from GitHub
     print(f'{Clr.BLD}Fetching latest GitHub release info...{Clr.RST}')
 

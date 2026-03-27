@@ -503,6 +503,9 @@ jobs:
       - name: Make the build
         run: |
           make assets
+      - name: Generate Flathub manifest
+        run: |
+          make flatpak-generate-flathub-manifest
       - name: Compress the build
         run: tar -cf "bombsquad_build_env.tar" --exclude="bombsquad_build_env.tar" .
       - name: Upload the build
@@ -540,6 +543,6 @@ jobs:
           cd build/flathub
           git remote set-url origin \
             https://x-access-token:${FLATHUB_PUSH_PAT}@github.com/${{ github.repository_owner }}/flathub.git
-          git add -A
+          git add net.froemling.BombSquad.yml
           git commit -m "Update flathub manifest to release ${{ github.ref_name }}"
           git push origin net.froemling.bombsquad
