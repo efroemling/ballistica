@@ -72,7 +72,7 @@ from efrotools.pcommands2 import (
     pcommandbatch_speed_test,
     null,
 )
-from bacommontools.pcommands import require_ballistica_api_key
+from bacommontools.pcommands import bacurl, require_ballistica_api_key
 from batools.pcommands import (
     resize_image,
     check_clean_safety,

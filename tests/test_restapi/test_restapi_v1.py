@@ -88,7 +88,7 @@ def test_account_by_tag_no_auth(
 @pytest.mark.skipif(FAST_MODE, reason='fast mode')
 def test_account_by_tag_notfound(server_url: str, authed: AuthedClient) -> None:
     """Nonexistent tag should return 404."""
-    path = Endpoint.ACCOUNT_BY_TAG.format(tag='zzz_no_such_tag_zzz')
+    path = Endpoint.ACCOUNT_BY_TAG.format(tag='zzzznosuchtagzzz')
     r = authed.get(f'{server_url}{path}', timeout=10)
     assert r.status == 404
     body = json.loads(r.data)
