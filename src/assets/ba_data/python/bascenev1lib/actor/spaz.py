@@ -344,10 +344,10 @@ class Spaz(bs.Actor):
         used by player or AI connections.
         """
         if (
-            not self.node or
-            self._dead or
-            self.frozen or
-            self.node.knockout > 0.0
+            not self.node
+            or self._dead
+            or self.frozen
+            or self.node.knockout > 0.0
         ):
             return
         t_ms = int(bs.time() * 1000.0)
@@ -371,10 +371,10 @@ class Spaz(bs.Actor):
         used by player or AI connections.
         """
         if (
-            not self.node or
-            self._dead or
-            self.frozen or
-            self.node.knockout > 0.0
+            not self.node
+            or self._dead
+            or self.frozen
+            or self.node.knockout > 0.0
         ):
             return
         t_ms = int(bs.time() * 1000.0)
@@ -416,10 +416,10 @@ class Spaz(bs.Actor):
         used for player or AI connections.
         """
         if (
-            not self.node or
-            self._dead or
-            self.frozen or
-            self.node.knockout > 0.0
+            not self.node
+            or self._dead
+            or self.frozen
+            or self.node.knockout > 0.0
         ):
             return
         t_ms = int(bs.time() * 1000.0)
@@ -465,10 +465,10 @@ class Spaz(bs.Actor):
         used for player or AI connections.
         """
         if (
-            not self.node or
-            self._dead or
-            self.frozen or
-            self.node.knockout > 0.0
+            not self.node
+            or self._dead
+            or self.frozen
+            or self.node.knockout > 0.0
         ):
             return
         t_ms = int(bs.time() * 1000.0)
@@ -1138,7 +1138,8 @@ class Spaz(bs.Actor):
                         bs.timer(
                             0.05,
                             bs.WeakCallStrict(
-                                self.curse_explode, msg.get_source_player(
+                                self.curse_explode,
+                                msg.get_source_player(
                                     bs.Player,
                                 ),
                             ),
