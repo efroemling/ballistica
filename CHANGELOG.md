@@ -7,6 +7,8 @@
   exploit that allows for effortless kills on players. (Thanks TheMikirog!).
 - Added protocol 37 which allows spaz behavior_version to be set to 2 which
   enables the above behavior. Default protocol version is still 33.
+- Spaz turbo-filter code has been moved from Spaz to PlayerSpaz and button press
+  logic has been cleaned up (Thanks vinnytherabbit!)
 
 ### 1.7.61 (build 22772, api 9, 2026-03-16)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)
