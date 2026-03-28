@@ -1,0 +1,75 @@
+name: Flathub
+
+on:
+  push:
+    tags:
+      - "flathub-*"
+
+jobs:
+  release_bombsquad_build_env:
+    if: ${{ github.repository_owner == 'efroemling' || github.repository_owner == 'Loup-Garou911XD' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup build env
+        uses: ./.github/actions/bombsquad_build_env
+        with:
+          using-cmake: true
+      - name: Make the build
+        run: |
+          make assets
+      - name: Generate Flathub manifest
+        run: |
+          make flatpak-generate-flathub-manifest
+      - name: Compress the build
+        run: tar -cf "bombsquad_build_env.tar" --exclude="bombsquad_build_env.tar" .
+      - name: Verify and upload to matching release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Extract version from flathub tag
+          # e.g., flathub-v1.7.20-2 -> v1.7.20
+          FLATHUB_TAG="${{ github.ref_name }}"
+          RELEASE_TAG=$(echo "$FLATHUB_TAG" | sed 's/^flathub-\(v[0-9]*\.[0-9]*\.[0-9]*\).*/\1/')
+
+          # Verify the release exists
+          if ! gh release view "$RELEASE_TAG" --repo ${{ github.repository }} > /dev/null 2>&1; then
+            echo "Error: Release $RELEASE_TAG not found. Flathub tag must match a release version."
+            echo "Example: flathub-v1.7.20 or flathub-v1.7.20-2 (for v1.7.20 release)"
+            exit 1
+          fi
+
+          # Upload to the matching release
+          gh release upload "$RELEASE_TAG" bombsquad_build_env.tar --repo ${{ github.repository }} --clobber
+
+  release_generate_flathub_manifest:
+    if: ${{ github.repository_owner == 'efroemling' || github.repository_owner == 'Loup-Garou911XD' }}
+    runs-on: ubuntu-latest
+    needs: release_bombsquad_build_env
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+      - name: Setup build env
+        uses: ./.github/actions/bombsquad_build_env
+      - name: Configure flathub repo clone
+        run: |
+          git config --global user.email "90267658+Loup-Garou911XD@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+          mkdir -p build/flathub
+          git clone https://github.com/${{ github.repository_owner }}/flathub build/flathub
+          cd build/flathub
+          git fetch origin net.froemling.bombsquad
+          git checkout -b net.froemling.bombsquad FETCH_HEAD
+      - name: Generate Flathub manifest
+        run: make flatpak-generate-flathub-manifest
+      - name: Push changes
+        env:
+          FLATHUB_PUSH_PAT: ${{ secrets.FLATHUB_PUSH_PAT }}
+        run: |
+          cd build/flathub
+          git remote set-url origin \
+            https://x-access-token:${FLATHUB_PUSH_PAT}@github.com/${{ github.repository_owner }}/flathub.git
+          git add net.froemling.BombSquad.yml
+          git commit -m "Update flathub manifest to release ${{ github.ref_name }}"
+          git push origin net.froemling.bombsquad
