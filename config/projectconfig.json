@@ -65,7 +65,10 @@
     "cryptography.exceptions",
     "cryptography.hazmat.primitives.asymmetric.ed25519",
     "sphinx.util.logging",
-    "pylint.checkers"
+    "pylint.checkers",
+    "websockets.asyncio.client",
+    "websockets.asyncio.connection",
+    "websockets.asyncio.server"
   ],
   "python_paths": [
     "src/assets/ba_data/python",

@@ -351,6 +351,7 @@
  "ba_data/python/efro/message/_receiver.py",
  "ba_data/python/efro/message/_sender.py",
  "ba_data/python/efro/rpc.py",
+ "ba_data/python/efro/rpcws.py",
  "ba_data/python/efro/terminal.py",
  "ba_data/python/efro/threadpool.py",
  "ba_data/python/efro/util.py",
