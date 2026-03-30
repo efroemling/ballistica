@@ -6,7 +6,6 @@ option(TEST_BUILD "include testing features" OFF)
 option(DISCORD "enable Discord" OFF)
 option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" OFF)
 option(STATIC_BUILD "build with static libs" OFF)
-
 # Requiring minimum of C++20 currently.
 set(CMAKE_CXX_STANDARD 20)
 set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
