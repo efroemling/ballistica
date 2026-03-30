@@ -98,7 +98,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest typing_extensions urllib3
+          pip install pytest typing_extensions urllib3 websockets
           python tools/pcommand win_ci_install_prereqs
       - name: Compile binary
         run: python tools/pcommand win_ci_binary_build
