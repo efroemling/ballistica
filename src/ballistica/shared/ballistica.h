@@ -9,7 +9,6 @@
 #include <type_traits>
 
 // Try to ensure they're providing proper config stuff.
-// Trivial change to trigger full rebuilds.
 #ifndef BA_HAVE_CONFIG
 #error ballistica platform config has not been defined!
 #endif
