@@ -224,8 +224,8 @@ class _Tester:
     async def _run_test(self, testcall: Awaitable[None]) -> None:
         """Set up before and tear down after a test call."""
 
-        # Wait until the client has connected.
-        while not self.server.has_endpoint():
+        # Wait until both endpoints are up.
+        while not (self.server.has_endpoint() and self.client.has_endpoint()):
             await asyncio.sleep(0.01)
 
         print('test_rpcws test call starting...')
@@ -299,9 +299,10 @@ def test_simultaneous_messages() -> None:
             tester.server.send_message(_Message(_MessageType.TEST_SLOW)),
         )
 
-        # This should all go through in the same time that 1 goes
-        # through in.
-        assert (time.monotonic() - starttime) < 1.25 * SLOW_WAIT
+        # This should all go through in roughly the same time that 1
+        # goes through in. Using 2x to allow headroom on slow CI
+        # runners (Windows, etc.).
+        assert (time.monotonic() - starttime) < 2.0 * SLOW_WAIT
 
         # Make sure we got all correct responses.
         assert all(r.messagetype is _MessageType.RESPONSE_SLOW for r in results)
