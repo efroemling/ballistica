@@ -184,11 +184,6 @@ namespace ballistica {
 #define BA_MINSDL_BUILD 0
 #endif
 
-// Is this a developer build?
-#ifndef BA_DEVELOPER_BUILD
-#define BA_DEVELOPER_BUILD 0
-#endif
-
 // Is this a debug build?
 #ifndef BA_DEBUG_BUILD
 #define BA_DEBUG_BUILD 0
@@ -291,7 +286,6 @@ bool InlineDebugExplicitBool(bool val);
 class BuildConfig {
  public:
   bool debug_build() const { return EXPBOOL_(BA_DEBUG_BUILD); }
-  bool developer_build() const { return EXPBOOL_(BA_DEVELOPER_BUILD); }
   // bool test_build() const { return EXPBOOL_(BA_VARIANT_TEST_BUILD); }
   bool headless_build() const { return EXPBOOL_(BA_HEADLESS_BUILD); }
   bool monolithic_build() const { return EXPBOOL_(BA_MONOLITHIC_BUILD); }

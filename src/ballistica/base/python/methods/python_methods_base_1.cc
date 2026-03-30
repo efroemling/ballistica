@@ -959,13 +959,11 @@ static auto PyPreEnv(PyObject* self) -> PyObject* {
         "si"  // build_number
         "sO"  // debug_build
         "sO"  // test_build
-        "sO"  // developer_build
         "}",
         "build_number", kEngineBuildNumber,
         "debug_build", g_buildconfig.debug_build() ? Py_True : Py_False,
-        "test_build", g_buildconfig.variant_test_build() ? Py_True : Py_False,
-        "developer_build",
-          g_buildconfig.developer_build() ? Py_True : Py_False);
+        "test_build", g_buildconfig.variant_test_build() ? Py_True : Py_False
+    );  // NOLINT(whitespace/parens)
     // clang-format on
     g_base->python->StorePreEnv(env);
   }
@@ -1010,7 +1008,6 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "ss"  // version
         "sO"  // debug_build
         "sO"  // test_build
-        "sO"  // developer_build
         "sO"  // python_directory_user
         "sO"  // python_directory_app
         "ss"  // platform
@@ -1032,7 +1029,6 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "version", kEngineVersion,
         "debug_build", g_buildconfig.debug_build() ? Py_True : Py_False,
         "test_build", g_buildconfig.variant_test_build() ? Py_True : Py_False,
-        "developer_build", g_buildconfig.developer_build() ? Py_True : Py_False,
         "python_directory_user",
           user_py_dir ? *PythonRef::FromString(*user_py_dir) : Py_None,
         "python_directory_app",
