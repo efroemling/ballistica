@@ -22,10 +22,12 @@ def test_game_run() -> None:
     Usage::
 
         tools/pcommand test_game_run [--log LOGLEVELS] [--timeout SECONDS]
+            [--fleet FLEET]
 
     - ``--log``: Comma-separated logger=LEVEL pairs
       (e.g. ``ba.net=DEBUG,ba.connectivity=DEBUG``).
     - ``--timeout``: How long to run in seconds (default 10).
+    - ``--fleet``: Target fleet (``prod``, ``test``, or ``dev``).
 
     Writes a PID file to ``build/tmp/test_game_run.pid`` for use
     with ``test_game_kill``.
@@ -39,6 +41,7 @@ def test_game_run() -> None:
     args = sys.argv[2:]
     log_levels = ''
     timeout = 10
+    fleet = ''
 
     while args:
         if args[0] == '--log' and len(args) > 1:
@@ -46,6 +49,9 @@ def test_game_run() -> None:
             args = args[2:]
         elif args[0] == '--timeout' and len(args) > 1:
             timeout = int(args[1])
+            args = args[2:]
+        elif args[0] == '--fleet' and len(args) > 1:
+            fleet = args[1]
             args = args[2:]
         else:
             raise RuntimeError(f'Unexpected arg: {args[0]}')
@@ -63,6 +69,8 @@ def test_game_run() -> None:
     env = dict(os.environ)
     if log_levels:
         env['BA_LOG_LEVELS'] = log_levels
+    if fleet:
+        env['BA_FLEET'] = fleet
 
     with subprocess.Popen(
         [f'./{os.path.basename(binary)}'],

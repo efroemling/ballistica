@@ -200,6 +200,17 @@ class IOAttrs:
 
     Providing fixed storagenames for all fields can allow the freedom to
     rename fields later without worrying about breaking existing data.
+
+    .. note::
+
+       Any dataclass using ``IOAttrs`` in its field annotations should
+       be decorated with ``@ioprepped`` (or ``@will_ioprep``). This
+       ensures annotations are evaluated at runtime, which is required
+       by systems such as ``FormDataclass`` that inspect type hints.
+       It also satisfies the project's pylint plugin, which only
+       preserves annotations on ``@ioprepped`` classes when deferred
+       annotation evaluation (``from __future__ import annotations``)
+       is active.
     """
 
     # A sentinel object to detect if a parameter is supplied or not. Use
