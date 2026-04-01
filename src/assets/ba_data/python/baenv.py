@@ -57,7 +57,7 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22795
+TARGET_BALLISTICA_BUILD = 22796
 TARGET_BALLISTICA_VERSION = '1.7.62'
 
 
@@ -417,6 +417,14 @@ def _set_log_levels(app_config: dict) -> None:
     from bacommon.loggercontrol import LoggerControlConfig
 
     try:
+        # If BA_LOG_LEVELS env var is set, it completely overrides any
+        # stored config. Format: 'logger=LEVEL,logger=LEVEL,...'
+        # Example: 'ba.net=DEBUG,ba.connectivity=DEBUG'
+        env_log_levels = os.environ.get('BA_LOG_LEVELS')
+        if env_log_levels is not None:
+            _apply_env_log_levels(env_log_levels)
+            return
+
         config = app_config.get('Log Levels', None)
 
         if config is None:
@@ -448,6 +456,49 @@ def _set_log_levels(app_config: dict) -> None:
 
     except Exception:
         logger.exception('Error setting log levels.')
+
+
+def _apply_env_log_levels(env_val: str) -> None:
+    """Apply log levels from the BA_LOG_LEVELS env var.
+
+    Completely overrides stored config. Base defaults are applied
+    first, then env var values are layered on top.
+    """
+    from bacommon.logging import get_base_logger_control_config_client
+    from bacommon.loggercontrol import LoggerControlConfig
+
+    level_names = {
+        'NOTSET': logging.NOTSET,
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARNING': logging.WARNING,
+        'ERROR': logging.ERROR,
+        'CRITICAL': logging.CRITICAL,
+    }
+
+    levels: dict[str, int] = {}
+    for entry in env_val.split(','):
+        entry = entry.strip()
+        if not entry:
+            continue
+        parts = entry.split('=', 1)
+        if len(parts) != 2:
+            raise ValueError(
+                f'Invalid BA_LOG_LEVELS entry: {entry!r}'
+                ' (expected logger=LEVEL)'
+            )
+        logname, levelstr = parts[0].strip(), parts[1].strip().upper()
+        if levelstr not in level_names:
+            valid = ', '.join(level_names)
+            raise ValueError(
+                f'Invalid log level {levelstr!r} in BA_LOG_LEVELS'
+                f' (expected one of {valid})'
+            )
+        levels[logname] = level_names[levelstr]
+
+    get_base_logger_control_config_client().apply_diff(
+        LoggerControlConfig(levels=levels)
+    ).apply()
 
 
 def _setup_certs(contains_python_dist: bool) -> None:

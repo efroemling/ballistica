@@ -1,4 +1,4 @@
-### 1.7.62 (build 22795, api 9, 2026-03-30)
+### 1.7.62 (build 22796, api 9, 2026-03-31)
 - Added `tests/test_restapi` which can be useful as reference for the
   ballistica.net REST api. Run `make test-restapi` to run all REST api tests
   (you just need to supply an API Key).
@@ -9,6 +9,10 @@
   enables the above behavior. Default protocol version is still 33.
 - Spaz turbo-filter code has been moved from Spaz to PlayerSpaz and button press
   logic has been cleaned up (Thanks vinnytherabbit!)
+- Added `BA_LOG_LEVELS` env var to override log levels at launch (e.g.
+  `BA_LOG_LEVELS='ba.net=DEBUG,ba.connectivity=DEBUG'`).
+- Added `test_game_run` and `test_game_kill` pcommands for automated game
+  testing.
 
 ### 1.7.61 (build 22772, api 9, 2026-03-16)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)

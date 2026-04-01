@@ -6,6 +6,7 @@ from __future__ import annotations
 
 # Note: import as little as possible here at the module level to
 # keep launch times fast for small snippets.
+import sys
 from typing import TYPE_CHECKING
 
 from efrotools import pcommand
@@ -13,6 +14,103 @@ from efrotools import pcommand
 if TYPE_CHECKING:
     from libcst import BaseExpression
     from libcst.metadata import CodeRange
+
+
+def test_game_run() -> None:
+    """Run the game for testing purposes.
+
+    Usage::
+
+        tools/pcommand test_game_run [--log LOGLEVELS] [--timeout SECONDS]
+
+    - ``--log``: Comma-separated logger=LEVEL pairs
+      (e.g. ``ba.net=DEBUG,ba.connectivity=DEBUG``).
+    - ``--timeout``: How long to run in seconds (default 10).
+
+    Writes a PID file to ``build/tmp/test_game_run.pid`` for use
+    with ``test_game_kill``.
+    """
+    import os
+    import signal
+    import subprocess
+
+    pcommand.disallow_in_batch()
+
+    args = sys.argv[2:]
+    log_levels = ''
+    timeout = 10
+
+    while args:
+        if args[0] == '--log' and len(args) > 1:
+            log_levels = args[1]
+            args = args[2:]
+        elif args[0] == '--timeout' and len(args) > 1:
+            timeout = int(args[1])
+            args = args[2:]
+        else:
+            raise RuntimeError(f'Unexpected arg: {args[0]}')
+
+    binary = 'build/cmake/debug/staged/ballisticakit'
+    if not os.path.exists(binary):
+        raise RuntimeError(
+            f'Binary not found at {binary}.' ' Run "make cmake-build" first.'
+        )
+
+    pid_dir = 'build/tmp'
+    os.makedirs(pid_dir, exist_ok=True)
+    pid_file = os.path.join(pid_dir, 'test_game_run.pid')
+
+    env = dict(os.environ)
+    if log_levels:
+        env['BA_LOG_LEVELS'] = log_levels
+
+    with subprocess.Popen(
+        [f'./{os.path.basename(binary)}'],
+        cwd=os.path.dirname(binary),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=env,
+    ) as proc:
+        with open(pid_file, 'w', encoding='utf-8') as f:
+            f.write(str(proc.pid))
+
+        try:
+            stdout, _ = proc.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.send_signal(signal.SIGTERM)
+            stdout, _ = proc.communicate(timeout=5)
+        finally:
+            if os.path.exists(pid_file):
+                os.remove(pid_file)
+
+    if stdout:
+        sys.stdout.buffer.write(stdout)
+        sys.stdout.buffer.flush()
+
+
+def test_game_kill() -> None:
+    """Kill a running test game started by test_game_run."""
+    import os
+    import signal
+
+    pcommand.disallow_in_batch()
+
+    pid_file = 'build/tmp/test_game_run.pid'
+    if not os.path.exists(pid_file):
+        print('No test game PID file found.')
+        return
+
+    with open(pid_file, 'r', encoding='utf-8') as f:
+        pid = int(f.read().strip())
+
+    try:
+        os.kill(pid, signal.SIGTERM)
+        print(f'Sent SIGTERM to process {pid}.')
+    except ProcessLookupError:
+        print(f'Process {pid} not found (already exited?).')
+
+    if os.path.exists(pid_file):
+        os.remove(pid_file)
 
 
 def compose_docker_gui_release() -> None:

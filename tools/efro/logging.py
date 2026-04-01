@@ -156,6 +156,7 @@ class LogHandler(logging.Handler):
         self._cache_index_offset = 0
         self._cache_lock = Lock()
         self._printed_callback_error = False
+        self._aux_handler: logging.Handler | None = None
         if __debug__:
             self._last_slow_emit_warning_time: float | None = None
 
@@ -210,6 +211,17 @@ class LogHandler(logging.Handler):
             with self._cache_lock:
                 for _id, entry in self._cache:
                     self._run_callback_on_entry(call, entry)
+
+    def set_aux_handler(self, handler: logging.Handler | None) -> None:
+        """Set an auxiliary handler that receives all log records.
+
+        The auxiliary handler's own ``emit()`` is called directly from
+        this handler's ``emit()``, so it sees every record regardless of
+        which logger originated it. Useful for routing logs to a
+        secondary destination (e.g. a rotating file) without worrying
+        about logger hierarchy.
+        """
+        self._aux_handler = handler
 
     def _log_thread_main(self) -> None:
         self._event_loop = asyncio.new_event_loop()
@@ -328,6 +340,10 @@ class LogHandler(logging.Handler):
             starttime = time.monotonic()
 
         # Called by logging to send us records.
+
+        # Forward to aux handler if present (does its own formatting).
+        if self._aux_handler is not None:
+            self._aux_handler.emit(record)
 
         # Optimization: if our log args are all simple immutable values,
         # we can just kick the whole thing over to our background thread

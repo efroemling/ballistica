@@ -617,9 +617,10 @@ def check_misc(self: ProjectUpdater) -> None:
         ) as infile:
             msconfig = infile.read()
             if (
-                '// V2 Master Server ------------------------'
-                '------------------------------------\n'
+                '// Compile-Time Fleet Selection '
+                '------------------------------------------------\n'
                 '\n'
+                '// Exactly one of these should be 1.\n'
                 '// PROD\n'
                 '#if 1\n'
             ) not in msconfig:
