@@ -519,10 +519,11 @@ class PrivateGatherTab(GatherTab):
         plus = bui.app.plus
         assert plus is not None
 
-        # Ensure V1 and V2 accounts are good to go
+        # Require both V1 and V2 accounts to be valid
+        # block if either is invalid
         if (
             plus.get_v1_account_state() != 'signed_in'
-            and plus.accounts.primary is None
+            or plus.accounts.primary is None
         ):
             bui.textwidget(
                 parent=self._container,
