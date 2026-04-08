@@ -500,6 +500,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/workspace/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/workspace/assetsv1.py \
   $(BUILD_DIR)/ba_data/python/bacommontools/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommontools/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommontools/pcommands.py \
   $(BUILD_DIR)/ba_data/python/efro/__init__.py \
   $(BUILD_DIR)/ba_data/python/efro/call.py \

@@ -49,6 +49,33 @@ class StateData:
     login_token: str | None = None
 
 
+def _resolve_api_key(project_root: Path) -> str | None:
+    """Return an API key from env or localconfig.json, or None.
+
+    Precedence:
+
+    1. ``BALLISTICA_API_KEY`` env var.
+    2. ``ballistica_api_key`` in
+       ``<project_root>/config/localconfig.json``.
+    """
+    import json
+
+    key = os.environ.get('BALLISTICA_API_KEY')
+    if key:
+        return key
+    cfgpath = project_root / 'config' / 'localconfig.json'
+    if cfgpath.exists():
+        try:
+            with cfgpath.open(encoding='utf-8') as infile:
+                cfg = json.load(infile)
+        except Exception:
+            return None
+        val = cfg.get('ballistica_api_key')
+        if isinstance(val, str) and val:
+            return val
+    return None
+
+
 def get_tz_offset_seconds() -> float:
     """Return the offset between utc and local time in seconds."""
     tval = time.time()
@@ -93,25 +120,43 @@ class App:
         self._project_root: Path | None = None
         self._end_command_args: dict = {}
         self._return_code = 0
+        self._api_key: str | None = None
 
     def run(self) -> int:
         """Run the tool."""
 
         # Make sure we can locate the project bacloud is being run from.
         self._project_root = Path(sys.argv[0]).parents[1]
-        # Look for a few things we expect to have in a project.
+        # Look for a few things we expect to have in a project. The
+        # bacommontools check covers every repo that receives this
+        # module via efrosync — historically this was tools/batools
+        # when bacloud lived exclusively in ballistica-internal.
         if not all(
             Path(self._project_root, name).exists()
-            for name in ['config/projectconfig.json', 'tools/batools']
+            for name in ['config/projectconfig.json', 'tools/bacommontools']
         ):
             raise CleanError('Unable to locate project directory.')
 
-        self._load_state()
+        self._api_key = _resolve_api_key(self._project_root)
+
+        # In API-key mode we're stateless: skip load/save of
+        # .cache/bacloud/state. This keeps CI runs from stomping
+        # on a developer's cached login token and lets multiple
+        # parallel CI jobs coexist without corrupting each other.
+        if self._api_key is None:
+            self._load_state()
+
+        if self._api_key is not None and VERBOSE:
+            print(
+                f'{Clr.BLU}bacloud: authenticating with API key'
+                f' ({self._api_key[:8]}\u2026){Clr.RST}'
+            )
 
         # Simply pass all args to the server and let it do the thing.
         self.run_interactive_command(cwd=os.getcwd(), args=sys.argv[1:])
 
-        self._save_state()
+        if self._api_key is None:
+            self._save_state()
 
         return self._return_code
 
@@ -153,13 +198,21 @@ class App:
 
         url = f'https://{BACLOUD_SERVER}/bacloudcmd'
         headers = {'User-Agent': f'bacloud/{BACLOUD_VERSION}'}
+        if self._api_key is not None:
+            headers['Authorization'] = f'Bearer {self._api_key}'
 
         rdata = {
             'v': BACLOUD_VERSION,
             'r': dataclass_to_json(
                 RequestData(
                     command=cmd,
-                    token=self._state.login_token,
+                    # In API-key mode we explicitly send no
+                    # session token; auth travels via the header.
+                    token=(
+                        None
+                        if self._api_key is not None
+                        else self._state.login_token
+                    ),
                     payload=payload,
                     tzoffset=get_tz_offset_seconds(),
                     isatty=sys.stdout.isatty(),

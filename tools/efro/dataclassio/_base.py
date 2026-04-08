@@ -311,7 +311,13 @@ class IOAttrs:
     #: editing the value. Does not actually affect value input/output.
     edit_as_options: bool | None = None
 
-    def __init__(
+    #: If ``True`` for a string field, hints that the value is a literal
+    #: identifier (e.g. a slug, filename, or code token) and should be
+    #: edited without autocapitalization, autocorrect, or spellcheck.
+    #: Does not actually affect value input/output.
+    text_literal: bool | None = None
+
+    def __init__(  # pylint: disable=too-many-branches
         self,
         storagename: str | None = storagename,
         *,
@@ -327,6 +333,7 @@ class IOAttrs:
         enum_fallback: Enum | None = None,
         multiline: bool | None = None,
         edit_as_options: bool | None = None,
+        text_literal: bool | None = None,
     ):
 
         # Only store values that differ from class defaults to keep
@@ -376,6 +383,8 @@ class IOAttrs:
             self.multiline = multiline
         if edit_as_options is not cls.multiline:
             self.edit_as_options = edit_as_options
+        if text_literal is not cls.text_literal:
+            self.text_literal = text_literal
 
     def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs is ok to use with provided field."""

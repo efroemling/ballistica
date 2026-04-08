@@ -182,7 +182,7 @@ def test_active_workspace_set_and_get(
     server_url: str, authed: AuthedClient
 ) -> None:
     """Set active workspace; GET should return full WorkspaceResponse."""
-    name = '__api_test__active_ws__'
+    name = '_test_restapi_active_ws'
     _delete_workspaces_named(authed, server_url, name)
 
     # Create a workspace to activate.
@@ -250,7 +250,7 @@ def test_workspace_create_and_delete(
     server_url: str, authed: AuthedClient
 ) -> None:
     """POST creates a workspace; GET returns it; DELETE removes it."""
-    name = '__api_test__lifecycle__'
+    name = '_test_restapi_lifecycle'
     _delete_workspaces_named(authed, server_url, name)
 
     # Create
@@ -323,8 +323,8 @@ def test_workspace_create_invalid_names(
 @pytest.mark.skipif(FAST_MODE, reason='fast mode')
 def test_workspace_rename(server_url: str, authed: AuthedClient) -> None:
     """PATCH with a valid name renames the workspace."""
-    name_orig = '__api_test__rename_orig__'
-    name_new = '__api_test__rename_new__'
+    name_orig = '_test_restapi_rename_orig'
+    name_new = '_test_restapi_rename_new'
     _delete_workspaces_named(authed, server_url, name_orig)
     _delete_workspaces_named(authed, server_url, name_new)
 
@@ -360,7 +360,7 @@ def test_workspace_rename_invalid(
     server_url: str, authed: AuthedClient
 ) -> None:
     """PATCH with an empty name should return 400."""
-    name = '__api_test__rename_invalid__'
+    name = '_test_restapi_rename_invalid'
     _delete_workspaces_named(authed, server_url, name)
 
     r = authed.post(

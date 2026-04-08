@@ -863,6 +863,12 @@ class SpinoffContext:
                     endindex = index
                     while end_tag not in lines[endindex]:
                         endindex += 1
+                        if endindex >= len(lines):
+                            raise RuntimeError(
+                                f"spinoff strip-tag '{begin_tag}' on line"
+                                f' {index + 1} has no matching'
+                                f" '{end_tag}'."
+                            )
 
                     # If the line after us is blank,
                     # include it too to keep spacing clean.

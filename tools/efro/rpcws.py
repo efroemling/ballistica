@@ -99,6 +99,7 @@ class RPCWSEndpoint:
         self._create_time = time.monotonic()
 
         self._tasks: list[asyncio.Task] = []
+        self._transport_close_task: asyncio.Task | None = None
 
         # (Start near the end to make sure our looping logic is sound).
         self._next_message_id = 65530
@@ -253,6 +254,15 @@ class RPCWSEndpoint:
         for task in self._get_live_tasks():
             task.cancel()
 
+        # Close the underlying transport so our read loop unblocks
+        # immediately and any peer blocked in recv() notices the
+        # disconnect right away instead of waiting for a message
+        # timeout. This matches rpc.py's synchronous writer.close().
+        self._transport_close_task = asyncio.create_task(
+            self._transport.close(),
+            name=f'{self._label} transport close',
+        )
+
         # We don't need this anymore and it may create a dependency loop.
         del self._handle_raw_message_call
 
@@ -286,11 +296,12 @@ class RPCWSEndpoint:
                         result,
                     )
 
-        # Close the underlying transport.
-        try:
-            await asyncio.wait_for(self._transport.close(), timeout=10.0)
-        except Exception:
-            pass
+        # Wait for the transport close scheduled by close().
+        if self._transport_close_task is not None:
+            try:
+                await asyncio.wait_for(self._transport_close_task, timeout=10.0)
+            except Exception:
+                pass
 
     async def _run_read_loop(self) -> None:
         """Read incoming WebSocket messages and dispatch them."""

@@ -22,12 +22,13 @@ def test_game_run() -> None:
     Usage::
 
         tools/pcommand test_game_run [--log LOGLEVELS] [--timeout SECONDS]
-            [--fleet FLEET]
+            [--fleet FLEET] [--headless]
 
     - ``--log``: Comma-separated logger=LEVEL pairs
       (e.g. ``ba.net=DEBUG,ba.connectivity=DEBUG``).
     - ``--timeout``: How long to run in seconds (default 10).
     - ``--fleet``: Target fleet (``prod``, ``test``, or ``dev``).
+    - ``--headless``: Run the headless server build instead of the GUI build.
 
     Writes a PID file to ``build/tmp/test_game_run.pid`` for use
     with ``test_game_kill``.
@@ -42,6 +43,7 @@ def test_game_run() -> None:
     log_levels = ''
     timeout = 10
     fleet = ''
+    headless = False
 
     while args:
         if args[0] == '--log' and len(args) > 1:
@@ -53,13 +55,21 @@ def test_game_run() -> None:
         elif args[0] == '--fleet' and len(args) > 1:
             fleet = args[1]
             args = args[2:]
+        elif args[0] == '--headless':
+            headless = True
+            args = args[1:]
         else:
             raise RuntimeError(f'Unexpected arg: {args[0]}')
 
-    binary = 'build/cmake/debug/staged/ballisticakit'
+    if headless:
+        binary = 'build/cmake/server-debug/staged/dist/ballisticakit_headless'
+        build_hint = 'make cmake-server-build'
+    else:
+        binary = 'build/cmake/debug/staged/ballisticakit'
+        build_hint = 'make cmake-build'
     if not os.path.exists(binary):
         raise RuntimeError(
-            f'Binary not found at {binary}.' ' Run "make cmake-build" first.'
+            f'Binary not found at {binary}. Run "{build_hint}" first.'
         )
 
     pid_dir = 'build/tmp'

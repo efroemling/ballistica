@@ -62,13 +62,37 @@ ENV_REQS_POST_UPDATE_ONLY = $(ENV_COMPILE_COMMANDS_DB)
 
 # Target that should be built before building almost any other target. This
 # installs tool config files, sets up the Python virtual environment, etc.
-env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY)
+env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY) config/localconfig.json
 
 # Set of prereqs safe to run if the project state is dirty.
-env-pre-update: $(ENV_REQS_SAFE)
+env-pre-update: $(ENV_REQS_SAFE) config/localconfig.json
 
 env-clean:
 	rm -rf $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY)
+
+# Bootstrap config/localconfig.json on first run so env is always
+# satisfied. In a worktree we try to mirror the main checkout's file
+# (following any existing symlink to its ultimate target); otherwise
+# we create an empty JSON dict, which is behaviorally equivalent to
+# no file for any code path that reads values via getlocalconfig()
+# (returns {} for missing keys). This is a normal file target so
+# make skips it entirely after the first run, leaving zero per-
+# invocation overhead for the common env dependency.
+config/localconfig.json:
+	@GITDIR=$$(git rev-parse --git-dir 2>/dev/null); \
+	 CMNDIR=$$(git rev-parse --git-common-dir 2>/dev/null); \
+	 if [ -n "$$GITDIR" ] && [ "$$GITDIR" != "$$CMNDIR" ]; then \
+	   MAINROOT=$$(cd "$$(dirname "$$CMNDIR")" && pwd); \
+	   SRC="$$MAINROOT/config/localconfig.json"; \
+	   if [ -e "$$SRC" ]; then \
+	     TARGET=$$(readlink "$$SRC" 2>/dev/null || echo "$$SRC"); \
+	     ln -s "$$TARGET" $@; \
+	     echo "Auto-linked $@ -> $$TARGET (from main checkout)."; \
+	     exit 0; \
+	   fi; \
+	 fi; \
+	 echo '{}' > $@; \
+	 echo "Created empty $@ (no main-checkout source found)."
 
 # Build all assets for all platforms.
 assets: env meta
@@ -1364,7 +1388,7 @@ tools/cloudshell: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 tools/bacloud: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@echo Generating tools/bacloud...
 	@PYTHONPATH=tools python3 -m \
- efrotools.genwrapper bacloud batools.bacloud tools/bacloud
+ efrotools.genwrapper bacloud bacommontools.bacloud tools/bacloud
 
 .clang-format: config/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
