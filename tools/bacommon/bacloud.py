@@ -20,7 +20,17 @@ if TYPE_CHECKING:
 
 # Version is sent to the master-server with all commands. Can be incremented
 # if we need to change behavior server-side to go along with client changes.
-BACLOUD_VERSION = 14
+#
+# 15 (2026-04): Workspace upload protocol switched from inline gzipped
+#               bytes (``uploads_inline``) to direct-to-GCS streaming
+#               via signed URLs (``uploads_signed``). Old clients will
+#               be rejected by the bumped ``MIN_VERSION`` server-side.
+# 16 (2026-04): Dropped ``md5_b64`` from ``DirectoryManifestFile``.
+#               The streaming upload pipeline now relies solely on
+#               SHA-256 verification at finalize time; md5 was
+#               redundant with the content-addressable cloud_file_id
+#               check and just doubled hashing cost client-side.
+BACLOUD_VERSION = 16
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -58,6 +68,27 @@ class RequestData:
 @dataclass
 class ResponseData:
     """Response sent from the bacloud server to the client."""
+
+    @ioprepped
+    @dataclass
+    class SignedUploadEntry:
+        """Describes one direct-to-GCS streaming upload to perform."""
+
+        #: Local file the client should read and PUT.
+        path: Annotated[str, IOAttrs('p')]
+
+        #: Signed GCS URL to PUT the bytes to.
+        upload_url: Annotated[str, IOAttrs('u')]
+
+        #: HTTP headers the client must include on the PUT (notably
+        #: ``Content-MD5`` and ``Content-Type`` — these are bound into
+        #: the URL signature, so the client cannot modify them).
+        upload_headers: Annotated[dict[str, str], IOAttrs('h')]
+
+        #: Server-side upload session id; the client passes this back
+        #: in the next ``end_command`` args under ``uploads_signed`` to
+        #: tell the server which upload to finalize.
+        session_id: Annotated[str, IOAttrs('s')]
 
     @ioprepped
     @dataclass
@@ -138,17 +169,16 @@ class ResponseData:
         None
     )
 
-    #: If present, client should upload the requested files (arg1)
-    #: individually to a server command (arg2) with provided args (arg3).
-    uploads: Annotated[
-        tuple[list[str], str, dict] | None, IOAttrs('u', store_default=False)
-    ] = None
-
-    #: If present, a list of pathnames that should be gzipped and
-    #: uploaded to an 'uploads_inline' bytes dict in end_command args.
-    #: This should be limited to relatively small files.
-    uploads_inline: Annotated[
-        list[str] | None, IOAttrs('uinl', store_default=False)
+    #: If present, files the client should PUT directly to GCS via
+    #: the provided signed URLs and then send the resulting session
+    #: ids back to the server in the next end_command's args under
+    #: 'uploads_signed' (a ``dict[path, session_id]`` keyed by the
+    #: same local path that was sent in the entry). Streams without
+    #: ever buffering the file body in master-server memory, so it
+    #: imposes no per-file size limit.
+    uploads_signed: Annotated[
+        list[SignedUploadEntry] | None,
+        IOAttrs('usgn', store_default=False),
     ] = None
 
     #: If present, file paths that should be deleted on the client.

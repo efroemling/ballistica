@@ -11,9 +11,7 @@ import sys
 import zlib
 import time
 import datetime
-import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 import requests
@@ -27,9 +25,6 @@ from efro.dataclassio import (
     ioprepped,
 )
 from bacommon.bacloud import RequestData, ResponseData, BACLOUD_VERSION
-
-if TYPE_CHECKING:
-    from typing import IO
 
 TOOL_NAME = 'bacloud'
 
@@ -189,9 +184,7 @@ class App:
         with open(self._state_data_path, 'w', encoding='utf-8') as outfile:
             outfile.write(dataclass_to_json(self._state))
 
-    def _servercmd(
-        self, cmd: str, payload: dict, files: dict[str, IO] | None = None
-    ) -> ResponseData:
+    def _servercmd(self, cmd: str, payload: dict) -> ResponseData:
         """Issue a command to the server and get a response."""
 
         response_content: str | None = None
@@ -242,7 +235,6 @@ class App:
                     url,
                     headers=headers,
                     data=rdata,
-                    files=files,
                     timeout=TIMEOUT_SECONDS,
                 ) as response_raw:
                     response_raw.raise_for_status()
@@ -317,52 +309,12 @@ class App:
         os.rename(fnametmp, filename)
         return len(data)
 
-    def _upload_file(self, filename: str, call: str, args: dict) -> None:
-        import tempfile
-
-        print(f'Uploading {Clr.BLU}{filename}{Clr.RST}', flush=True)
-        with tempfile.TemporaryDirectory() as tempdir:
-            srcpath = Path(filename)
-            gzpath = Path(tempdir, 'file.gz')
-            subprocess.run(
-                f'gzip --stdout "{srcpath}" > "{gzpath}"',
-                shell=True,
-                check=True,
-            )
-            with open(gzpath, 'rb') as infile:
-                putfiles: dict = {'file': infile}
-                _response = self._servercmd(
-                    call,
-                    args,
-                    files=putfiles,
-                )
-
     def _handle_dir_manifest_response(self, dirmanifest: str) -> None:
         from bacommon.transfer import DirectoryManifest
 
         self._end_command_args['manifest'] = dataclass_to_dict(
             DirectoryManifest.create_from_disk(Path(dirmanifest))
         )
-
-    def _handle_uploads(self, uploads: tuple[list[str], str, dict]) -> None:
-        from concurrent.futures import ThreadPoolExecutor
-
-        assert len(uploads) == 3
-        filenames, uploadcmd, uploadargs = uploads
-        assert isinstance(filenames, list)
-        assert isinstance(uploadcmd, str)
-        assert isinstance(uploadargs, dict)
-
-        def _do_filename(filename: str) -> None:
-            self._upload_file(filename, uploadcmd, uploadargs)
-
-        # Here we can run uploads concurrently if that goes faster...
-        # (should keep an eye on this to make sure its thread safe and
-        # behaves itself)
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            # Convert the generator to a list to surface any exceptions
-            # that occurred.
-            list(executor.map(_do_filename, filenames))
 
     def _handle_deletes(self, deletes: list[str]) -> None:
         """Handle file deletes."""
@@ -467,20 +419,49 @@ class App:
             if not dirnames and not filenames and basename != prunedir:
                 os.rmdir(basename)
 
-    def _handle_uploads_inline(self, uploads_inline: list[str]) -> None:
-        """Handle uploading files inline."""
-        import base64
+    def _handle_uploads_signed(
+        self, uploads_signed: list[ResponseData.SignedUploadEntry]
+    ) -> None:
+        """Handle direct-to-GCS streaming uploads via signed URLs.
 
-        files: dict[str, str] = {}
-        for filepath in uploads_inline:
-            if not os.path.exists(filepath):
-                raise CleanError(f'File not found: {filepath}')
-            with open(filepath, 'rb') as infile:
-                data = infile.read()
-            data_zipped = zlib.compress(data)
-            data_base64 = base64.b64encode(data_zipped).decode()
-            files[filepath] = data_base64
-        self._end_command_args['uploads_inline'] = files
+        For each entry, stream the local file body straight to the
+        signed PUT URL using ``requests`` (which sends a chunked-free
+        PUT when ``Content-Length`` is set, so GCS sees the bytes as a
+        single body that satisfies the URL's ``Content-MD5``
+        signature). Memory use is bounded regardless of file size —
+        ``requests`` reads the file object in fixed-size chunks rather
+        than slurping it.
+
+        Stashes ``{path: session_id}`` into ``end_command`` args under
+        ``uploads_signed`` so the server can finalize each session in
+        the next call.
+        """
+        sessions: dict[str, str] = {}
+        for entry in uploads_signed:
+            if not os.path.exists(entry.path):
+                raise CleanError(f'File not found: {entry.path}')
+            file_size = os.path.getsize(entry.path)
+            # Setting Content-Length explicitly forces ``requests`` to
+            # send a non-chunked PUT, which is required for the signed
+            # URL's Content-MD5 binding to validate against a single
+            # body on the GCS side.
+            put_headers = dict(entry.upload_headers)
+            put_headers['Content-Length'] = str(file_size)
+            with open(entry.path, 'rb') as infile:
+                response = requests.put(
+                    entry.upload_url,
+                    data=infile,
+                    headers=put_headers,
+                    timeout=TIMEOUT_SECONDS,
+                )
+            if not 200 <= response.status_code < 300:
+                raise CleanError(
+                    f'GCS upload of {entry.path} failed:'
+                    f' status={response.status_code}'
+                    f' body={response.text!r}'
+                )
+            sessions[entry.path] = entry.session_id
+        self._end_command_args['uploads_signed'] = sessions
 
     def _handle_open_url(self, url: str) -> None:
         import webbrowser
@@ -520,10 +501,8 @@ class App:
                 self._state.login_token = None
             if response.dir_manifest is not None:
                 self._handle_dir_manifest_response(response.dir_manifest)
-            if response.uploads is not None:
-                self._handle_uploads(response.uploads)
-            if response.uploads_inline is not None:
-                self._handle_uploads_inline(response.uploads_inline)
+            if response.uploads_signed is not None:
+                self._handle_uploads_signed(response.uploads_signed)
 
             # Note: we handle file deletes *before* downloads. This way
             # our file-download code only has to worry about creating or

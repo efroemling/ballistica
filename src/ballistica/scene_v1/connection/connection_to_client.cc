@@ -199,6 +199,13 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
                     "Ignoring invalid scenepackage-handshake-response");
         return;
       }
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kDebug, [this, &data] {
+            return "ConnectionToClient(id=" + std::to_string(id())
+                   + "): received HANDSHAKE_RESPONSE ("
+                   + std::to_string(data.size()) + " bytes, our protocol "
+                   + std::to_string(protocol_version()) + ").";
+          });
 
       // In newer builds we expect to be sent a json dict here; pull
       // client's spec from that.
@@ -332,6 +339,12 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           // printf("TODO: SET PEER PROFILES TO %s.\n",
           //        profiles_ref.Str().c_str());
           player_profiles_ = profiles_ref;
+          g_core->logging->Log(
+              LogName::kBaNetworking, LogLevel::kDebug, [this] {
+                return "ConnectionToClient(id=" + std::to_string(id())
+                       + "): v2-auth succeeded (account="
+                       + peer_public_account_id_ + ").";
+              });
         }
       }
 
@@ -595,6 +608,14 @@ void ConnectionToClient::HandleMessagePacket(
                   token_, our_handshake_player_spec_str_ + our_handshake_salt_,
                   peer_hash_, build_number_);
             }
+            g_core->logging->Log(
+                LogName::kBaNetworking, LogLevel::kDebug,
+                [this, doing_v2_auth] {
+                  return "ConnectionToClient(id=" + std::to_string(id())
+                         + "): CLIENT_INFO received (build="
+                         + std::to_string(build_number_) + ", v2_auth="
+                         + (doing_v2_auth ? "true" : "false") + ").";
+                });
           }
           cJSON_Delete(info);
         } else {

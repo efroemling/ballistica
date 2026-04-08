@@ -38,6 +38,11 @@ ConnectionToHostUDP::ConnectionToHostUDP(const SockAddr& addr)
       last_host_response_time_millisecs_(
           static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)) {
   GetRequestID_();
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this, &addr] {
+    return "ConnectionToHostUDP: created for " + addr.AddressString() + ":"
+           + std::to_string(addr.Port()) + " with request_id "
+           + std::to_string(request_id_) + ".";
+  });
   if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
     if (appmode->connections()->GetPrintUDPConnectProgress()) {
       g_base->ScreenMessage(
@@ -89,6 +94,14 @@ void ConnectionToHostUDP::Update() {
       msg[3] = request_id_;
       memcpy(&(msg[4]), uuid.c_str(), uuid.size());
       g_base->network_writer->PushSendToCall(msg, *addr_);
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kDebug, [this, p_version] {
+            return "ConnectionToHostUDP: sent CLIENT_REQUEST to "
+                   + addr_->AddressString() + ":"
+                   + std::to_string(addr_->Port()) + " (protocol "
+                   + std::to_string(p_version) + ", request_id "
+                   + std::to_string(request_id_) + ").";
+          });
     }
   }
 

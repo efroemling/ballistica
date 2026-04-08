@@ -155,6 +155,11 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
       uint16_t their_protocol_version;
       memcpy(&their_protocol_version, data.data() + 1,
              sizeof(their_protocol_version));
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kDebug, [their_protocol_version] {
+            return "ConnectionToHost: received HANDSHAKE (host protocol "
+                   + std::to_string(their_protocol_version) + ").";
+          });
       if (their_protocol_version >= kProtocolVersionClientMin
           && their_protocol_version <= kProtocolVersionMax) {
         compatible = true;
@@ -185,6 +190,14 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           }
         }
         got_v2_auth_usage_ = true;
+        g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this] {
+          return v2_auth_global_app_instance_id_.has_value()
+                     ? ("ConnectionToHost: host uses v2-auth "
+                        "(global-app-instance="
+                        + *v2_auth_global_app_instance_id_ + ").")
+                     : std::string(
+                           "ConnectionToHost: host does not use v2-auth.");
+        });
       }
 
       std::optional<std::string> v2_auth_token;
@@ -335,6 +348,12 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         peer_hash_ = g_base->Plus()->CalcV1PeerHash(peer_hash_input_);
 
         set_can_communicate(true);
+        g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this] {
+          return "ConnectionToHost: can_communicate=true "
+                 "(protocol="
+                 + std::to_string(protocol_version_)
+                 + ", peer_spec=" + peer_spec().GetDisplayString() + ").";
+        });
         appmode->LaunchClientSession();
 
         // NOTE:
