@@ -593,7 +593,11 @@ def check_sync_states(self: ProjectUpdater) -> None:
     # their last sync.
     if (
         subprocess.run(
-            [os.path.join(self.projroot, 'tools/pcommand'), 'sync', 'check'],
+            [
+                os.path.join(self.projroot, 'tools/pcommand'),
+                'efrosync',
+                '--check',
+            ],
             check=False,
         ).returncode
         != 0

@@ -22,7 +22,11 @@ def _require_api_key(api_key: str) -> None:  # pylint: disable=unused-argument
     """Skip all tests in this package when no API key is available."""
 
 
-_TEST_WS_NAME = '__api_test__'
+# Must start with the workspace test prefix (Workspace.TEST_NAME_PREFIX)
+# so the server skips backup creation on snapshot updates and on
+# teardown — otherwise every test session would leave a 30-day backup
+# behind on the workspaces backups page.
+_TEST_WS_NAME = '_test_restapi'
 
 
 def _delete_workspaces_named(
@@ -39,7 +43,7 @@ def _delete_workspaces_named(
 
 @pytest.fixture(scope='session')
 def ws_id(server_url: str, authed: AuthedClient) -> str:  # type: ignore[misc]
-    """Session-scoped: creates __api_test__ workspace and tears it down."""
+    """Session-scoped: creates _test_restapi workspace and tears it down."""
     _delete_workspaces_named(authed, server_url, _TEST_WS_NAME)
     r = authed.post(
         f'{server_url}{Endpoint.WORKSPACES}',

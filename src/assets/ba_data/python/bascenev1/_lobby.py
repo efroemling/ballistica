@@ -451,9 +451,39 @@ class Chooser:
 
         # Pull this player's list of unlocked characters.
         if is_remote:
-            # TODO: Pull this from the remote player.
-            # (but make sure to filter it to the ones we've got).
-            self._character_names = ['Spaz']
+            # v2-auth hosts can get an authoritative purchases list
+            # from the master server — see
+            # ``input_device.get_classic_purchases()``. When that
+            # returns ``None`` (non-v2-auth connection, older
+            # master, etc.) fall back to the legacy behavior: start
+            # with just 'Spaz' and let ``update_from_profile()``
+            # lazily append characters referenced in the remote
+            # player's (master-server-validated) profiles. The
+            # purchases snapshot is captured at handshake time, so
+            # characters unlocked mid-match won't appear until
+            # rejoin — mirrors local-player behavior
+            # (``character_names_local_unlocked`` is only refreshed
+            # at lobby reload).
+            classic_purchases: list[str] | None = (
+                input_device.get_classic_purchases()
+            )
+            if classic_purchases is None:
+                self._character_names = ['Spaz']
+            else:
+                # Run through the same mapper local players use so
+                # the legacy-id → in-game-name translation lives in
+                # one place.
+                # pylint: disable=cyclic-import
+                from bascenev1lib.actor.spazappearance import (
+                    get_appearances,
+                )
+
+                self._character_names = get_appearances(
+                    purchases=classic_purchases
+                )
+                self._character_names.sort(key=lambda x: x.lower())
+                if not self._character_names:
+                    self._character_names = ['Spaz']
         else:
             self._character_names = self.lobby.character_names_local_unlocked
 

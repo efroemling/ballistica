@@ -102,6 +102,13 @@ auto ClientInputDeviceDelegate::GetPlayerProfiles() const -> PyObject* {
   return nullptr;
 }
 
+auto ClientInputDeviceDelegate::GetClassicPurchases() const -> PyObject* {
+  if (connection_to_client_.exists()) {
+    return connection_to_client_->GetClassicPurchases();
+  }
+  return nullptr;
+}
+
 auto ClientInputDeviceDelegate::IsRemoteClient() const -> bool { return true; }
 
 }  // namespace ballistica::scene_v1

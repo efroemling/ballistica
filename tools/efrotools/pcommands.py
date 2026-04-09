@@ -456,80 +456,11 @@ def tool_config_install() -> None:
     efrotools.toolconfig.install_tool_config(pcommand.PROJROOT, src, dst)
 
 
-def sync_all() -> None:
-    """Runs full syncs between all efrotools projects.
+def efrosync() -> None:
+    """Centralized file sync across local repos."""
+    from efrotools.efrosync import efrosync_main
 
-    This list is defined in the EFROTOOLS_SYNC_PROJECTS env var.
-    This assumes that there is a 'sync-full' and 'sync-list' Makefile target
-    under each project.
-    """
-    import os
-    import subprocess
-    import concurrent.futures
-    from efro.error import CleanError
-    from efro.terminal import Clr
-
-    print(f'{Clr.BLD}Updating formatting for all projects...{Clr.RST}')
-    projects_str = os.environ.get('EFROTOOLS_SYNC_PROJECTS')
-    if projects_str is None:
-        raise CleanError('EFROTOOL_SYNC_PROJECTS is not defined.')
-    projects = projects_str.split(':')
-
-    def _format_project(fproject: str) -> None:
-        fcmd = f'cd "{fproject}" && make format'
-        # print(fcmd)
-        subprocess.run(fcmd, shell=True, check=True)
-
-    # No matter what we're doing (even if just listing), run formatting
-    # in all projects before beginning. Otherwise if we do a sync and then
-    # a preflight we'll often wind up getting out-of-sync errors due to
-    # formatting changing after the sync.
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=len(projects)
-    ) as executor:
-        # Converting this to a list will propagate any errors.
-        list(executor.map(_format_project, projects))
-
-    if len(sys.argv) > 2 and sys.argv[2] == 'list':
-        # List mode
-        for project in projects_str.split(':'):
-            cmd = f'cd "{project}" && make sync-list'
-            print(cmd)
-            subprocess.run(cmd, shell=True, check=True)
-
-    else:
-        # Real mode
-        for i in range(2):
-            if i == 0:
-                print(
-                    f'{Clr.BLD}Running sync pass 1'
-                    f' (ensures all changes at dsts are pushed to src):'
-                    f'{Clr.RST}'
-                )
-            else:
-                print(
-                    f'{Clr.BLD}Running sync pass 2'
-                    f' (ensures latest src is pulled to all dsts):{Clr.RST}'
-                )
-            for project in projects_str.split(':'):
-                cmd = f'cd "{project}" && make sync-full'
-                subprocess.run(cmd, shell=True, check=True)
-        print(Clr.BLD + 'Sync-all successful!' + Clr.RST)
-
-
-def sync() -> None:
-    """Runs standard syncs between this project and others."""
-    from efrotools.project import getprojectconfig
-    from efrotools.sync import Mode, SyncItem, run_standard_syncs
-
-    mode = Mode(sys.argv[2]) if len(sys.argv) > 2 else Mode.PULL
-
-    # Load sync-items from project config and run them
-    sync_items = [
-        SyncItem(**i)
-        for i in getprojectconfig(pcommand.PROJROOT).get('sync_items', [])
-    ]
-    run_standard_syncs(pcommand.PROJROOT, mode, sync_items)
+    efrosync_main()
 
 
 def copy_win_extra_file() -> None:

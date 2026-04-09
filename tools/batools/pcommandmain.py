@@ -19,6 +19,7 @@ from efrotools import pcommand
 # in modules rather than inline here because we'll be able to load them
 # via pyc. pylint: disable=unused-import
 from efrotools.pcommands import (
+    efrosync,
     formatcode,
     formatscripts,
     formatmakefile,
@@ -31,8 +32,6 @@ from efrotools.pcommands import (
     mypy_files,
     dmypy,
     tool_config_install,
-    sync,
-    sync_all,
     scriptfiles,
     pycharm,
     clioncode,

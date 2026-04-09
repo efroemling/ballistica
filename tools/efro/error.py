@@ -1,3 +1,6 @@
+# EfroSynced from ballistica-internal.
+# EFRO_SYNC_HASH=53457934136221791503769390008780313724
+#
 # Released under the MIT License. See LICENSE for details.
 #
 """Common errors and related functionality."""

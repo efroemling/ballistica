@@ -343,6 +343,26 @@ auto PythonClassInputDevice::GetPlayerProfiles(PythonClassInputDevice* self)
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassInputDevice::GetClassicPurchases(PythonClassInputDevice* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->get();
+  if (!d) {
+    throw Exception(PyExcType::kInputDeviceNotFound);
+  }
+  PyObject* purchases = d->GetClassicPurchases();
+  // Distinguish "unknown" (None) from "owns nothing" (empty list):
+  // a missing or Py_None backing object means the master server
+  // didn't provide a list, so we return None. Only a real list is
+  // propagated.
+  if (purchases == nullptr || purchases == Py_None) {
+    Py_RETURN_NONE;
+  }
+  Py_INCREF(purchases);
+  return purchases;
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassInputDevice::GetV1AccountName(PythonClassInputDevice* self,
                                               PyObject* args, PyObject* keywds)
     -> PyObject* {
@@ -502,6 +522,21 @@ PyMethodDef PythonClassInputDevice::tp_methods[] = {
      "(can be used to get account names for remote players)"},
     {"get_player_profiles", (PyCFunction)GetPlayerProfiles, METH_NOARGS,
      "get_player_profiles() -> dict\n"
+     "\n"
+     "(internal)"},
+    {"get_classic_purchases", (PyCFunction)GetClassicPurchases, METH_NOARGS,
+     "get_classic_purchases() -> list[str] | None\n"
+     "\n"
+     "Return classic-inventory purchase legacy-ids owned by this\n"
+     "device's account, as provided by the master server.\n"
+     "\n"
+     "Returns ``None`` when the master server isn't providing this\n"
+     "data — e.g. when this device isn't connected via a v2-auth\n"
+     "handshake, when an older master-server version didn't send\n"
+     "it, or when the account has no classic-inventory record.\n"
+     "Callers should treat ``None`` as 'unknown', not as\n"
+     "'owns nothing'; an empty list is the correct way to\n"
+     "represent 'owns nothing'.\n"
      "\n"
      "(internal)"},
     {nullptr}};  // namespace ballistica

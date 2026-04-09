@@ -34,6 +34,7 @@ class PythonClassInputDevice : public PythonClass {
   static auto DetachFromPlayer(PythonClassInputDevice* self) -> PyObject*;
   static auto GetDefaultPlayerName(PythonClassInputDevice* self) -> PyObject*;
   static auto GetPlayerProfiles(PythonClassInputDevice* self) -> PyObject*;
+  static auto GetClassicPurchases(PythonClassInputDevice* self) -> PyObject*;
   static auto GetV1AccountName(PythonClassInputDevice* self, PyObject* args,
                                PyObject* keywds) -> PyObject*;
   static auto IsAttachedToPlayer(PythonClassInputDevice* self) -> PyObject*;
