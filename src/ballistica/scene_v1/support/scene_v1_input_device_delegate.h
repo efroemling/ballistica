@@ -53,6 +53,15 @@ class SceneV1InputDeviceDelegate : public base::InputDeviceDelegate {
   /// Returns player-profiles dict if available; otherwise nullptr.
   virtual auto GetPlayerProfiles() const -> PyObject*;
 
+  /// Returns the classic-inventory purchase legacy-ids list
+  /// provided by the master server for the account using this
+  /// device, or ``nullptr`` / ``Py_None`` when unknown (non-v2-auth
+  /// connection, older master-server version, or no classic
+  /// inventory record). Python callers should treat all "absent"
+  /// cases as ``None`` — see the ``get_classic_purchases()``
+  /// binding.
+  virtual auto GetClassicPurchases() const -> PyObject*;
+
   // FIXME: redundant.
   virtual auto IsRemoteClient() const -> bool;
 

@@ -2,20 +2,36 @@
 #
 """Appearance functionality for spazzes."""
 
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import bascenev1 as bs
 
+if TYPE_CHECKING:
+    from collections.abc import Container
 
-def get_appearances(include_locked: bool = False) -> list[str]:
-    """Get the list of available spaz appearances."""
+
+def get_appearances(
+    include_locked: bool = False,
+    purchases: Container[str] | None = None,
+) -> list[str]:
+    """Get the list of available spaz appearances.
+
+    If ``purchases`` is None (the default), the local player's
+    ``bs.app.classic.purchases`` set is used. Pass an explicit
+    ``purchases`` container to get the list of characters owned by
+    some other account (e.g. a remote player's authoritative list
+    from the master server).
+    """
     # pylint: disable=too-many-branches
-    plus = bs.app.plus
-    assert plus is not None
-
     assert bs.app.classic is not None
-
-    purchases = bs.app.classic.purchases
+    if purchases is None:
+        plus = bs.app.plus
+        assert plus is not None
+        purchases = bs.app.classic.purchases
 
     disallowed = []
     if not include_locked:

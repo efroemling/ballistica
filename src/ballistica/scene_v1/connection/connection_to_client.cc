@@ -304,14 +304,17 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           PythonRef account_id_ref;
           PythonRef account_tag_ref;
           PythonRef profiles_ref;
+          PythonRef classic_purchases_ref;
           if (result.ValueIsSequence()) {
             auto vals{result.ValueAsSequence()};
-            if (vals.size() == 3 && vals[0].ValueIsString()
-                && vals[1].ValueIsString() && PyDict_Check(*vals[2])) {
+            if (vals.size() == 4 && vals[0].ValueIsString()
+                && vals[1].ValueIsString() && PyDict_Check(*vals[2])
+                && (vals[3].ValueIsNone() || PyList_Check(*vals[3]))) {
               valid_format = true;
               account_id_ref = vals[0];
               account_tag_ref = vals[1];
               profiles_ref = vals[2];
+              classic_purchases_ref = vals[3];  // list or Py_None
             }
           }
           if (!valid_format) {
@@ -339,6 +342,12 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           // printf("TODO: SET PEER PROFILES TO %s.\n",
           //        profiles_ref.Str().c_str());
           player_profiles_ = profiles_ref;
+          // Store the classic purchases ref as-is; the accessor
+          // differentiates between "a Py_None sentinel was stored"
+          // (masters signaled unknown) and "nothing was ever stored"
+          // (non-v2-auth connection). Both cases end up as None on
+          // the Python side, which is what the lobby wants.
+          classic_purchases_ = classic_purchases_ref;
           g_core->logging->Log(
               LogName::kBaNetworking, LogLevel::kDebug, [this] {
                 return "ConnectionToClient(id=" + std::to_string(id())

@@ -297,6 +297,8 @@ def _writefuncs(
                 returnstr = 'return (0.0, 0.0, 0.0)'
             elif returns == 'list[str]':
                 returnstr = "return ['blah', 'blah2']"
+            elif returns == 'list[str] | None':
+                returnstr = "return ['blah', 'blah2']"
             elif returns == 'float | int':
                 returnstr = 'return 0.0'
             elif returns == 'dict[str, Any]':
