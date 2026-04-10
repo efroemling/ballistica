@@ -201,6 +201,13 @@ class WorkspaceFetchResponse(Response):
 
     done: Annotated[bool, IOAttrs('d')] = False
 
+    #: If set, the client should treat the sync as failed and display
+    #: this message. Allows the server to communicate user-facing errors
+    #: without relying on the protocol's ``forward_clean_errors`` flag.
+    error: Annotated[
+        str | None, IOAttrs('e', soft_default=None, store_default=False)
+    ] = None
+
 
 @ioprepped
 @dataclass

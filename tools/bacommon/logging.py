@@ -42,6 +42,7 @@ class ClientLoggerName(Enum):
     ACCOUNT = 'ba.account'
     LOGIN_ADAPTER = 'ba.loginadapter'
     UI = 'ba.ui'
+    WORKSPACE = 'ba.workspace'
 
     @property
     def description(self) -> str:
@@ -89,6 +90,8 @@ class ClientLoggerName(Enum):
             return 'support for particular login types'
         if self is cls.UI:
             return 'anything user-interface related'
+        if self is cls.WORKSPACE:
+            return 'cloud workspace syncing'
         assert_never(self)
 
 

@@ -1,4 +1,4 @@
-### 1.7.62 (build 22810, api 9, 2026-04-10)
+### 1.7.62 (build 22812, api 9, 2026-04-10)
 - Added `tests/test_restapi` which can be useful as reference for the
   ballistica.net REST api. Run `make test-restapi` to run all REST api tests
   (you just need to supply an API Key).
