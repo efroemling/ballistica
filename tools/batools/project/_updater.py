@@ -657,43 +657,6 @@ class ProjectUpdater:
     def _generate_assets_makefile(self, path: str, existing_data: str) -> None:
         from batools.assetsmakefile import generate_assets_makefile
 
-        # If the asset source tree is stripped down (as in the
-        # ba-check cloudshell env, which omits audio/textures/meshes
-        # to reduce sync size for check/test/docs workloads),
-        # regenerating the assets Makefile from the scanned sources
-        # would produce a truncated version that doesn't match the one
-        # synced from the source repo. Detect this case by the absence
-        # of a characteristic media source dir and preserve the
-        # existing file as-is.
-        # If the asset source tree is stripped down (as in the
-        # ba-check cloudshell env, which omits audio/textures/meshes
-        # to reduce sync size for check/test/docs workloads),
-        # regenerating the assets Makefile from the scanned sources
-        # would produce a truncated version that doesn't match the one
-        # synced from the source repo. Detect this by the absence of
-        # a characteristic media source dir combined with an existing
-        # Makefile that already has complete content (not a first-time
-        # generation). Spinoff test projects also lack audio but need
-        # the Makefile regenerated from their actual (reduced) sources.
-        audio_src_dir = os.path.join(self.projroot, 'src/assets/ba_data/audio')
-        if not os.path.isdir(audio_src_dir) and existing_data:
-            # Distinguish ba-check (stripped copy with full Makefile)
-            # from spinoff projects (which need fresh generation).
-            # Spinoff dst projects have a symlinked tools/spinoff.
-            spinoff_link = os.path.join(self.projroot, 'tools/spinoff')
-            if not os.path.islink(spinoff_link):
-                self._generated_files[path] = existing_data
-                # Also passthrough the manifest files normally generated
-                # as side effects of the full Makefile generation.
-                for mantype in ['public', 'private']:
-                    manpath = f'src/assets/.asset_manifest_{mantype}.json'
-                    if manpath not in self._generated_files:
-                        manfullpath = os.path.join(self.projroot, manpath)
-                        if os.path.isfile(manfullpath):
-                            with open(manfullpath, encoding='utf-8') as infile:
-                                self._generated_files[manpath] = infile.read()
-                return
-
         # We need to know what files meta will be creating (since they
         # can be asset sources).
         meta_manifests: dict[str, str] = {}
