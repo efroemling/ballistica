@@ -24,6 +24,17 @@
 #                                                                              #
 ################################################################################
 
+# Which asset-build target the cmake/cmake-server build and the
+# prefab-*-server-release-build targets depend on. Defaults build the
+# full asset bundle, but acquire_binary (tools/batools/apprun.py) can
+# override these to assets-cmake-scripts when its caller only needs the
+# binary + python scripts (e.g. dummymodule generation). This lets
+# check/test/docs workflows run against a stripped-down asset source
+# tree (such as the ba-check cloudshell env, which omits audio/
+# textures/meshes).
+CMAKE_ASSETS_TARGET ?= assets-cmake
+CMAKE_SERVER_ASSETS_TARGET ?= assets-server
+
 # List targets in this Makefile and basic descriptions for them.
 help: env
 	@$(PCOMMAND) makefile_target_list Makefile
