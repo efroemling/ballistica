@@ -268,8 +268,6 @@ def test_game_run() -> None:
     import signal
     import subprocess
 
-    pcommand.disallow_in_batch()
-
     opts = _test_game_run_parse_args()
     instance = opts['instance']
     log_levels = opts['log_levels']
@@ -412,8 +410,6 @@ def test_game_kill() -> None:
     import glob
     import os
 
-    pcommand.disallow_in_batch()
-
     args = sys.argv[2:]
     only_instance: str | None = None
     while args:
@@ -537,7 +533,6 @@ def generate_flathub_manifest() -> None:
     from efro.error import CleanError
     from efro.terminal import Clr
 
-    pcommand.disallow_in_batch()
     try:
         github_repo = os.environ['GITHUB_REPOSITORY']
     except KeyError:
@@ -714,8 +709,6 @@ def generate_flatpak_release_manifest(
     from efro.error import CleanError
     from efro.terminal import Clr
     from batools.changelog import get_version_changelog
-
-    pcommand.disallow_in_batch()
 
     # Paths
     flathub_dir = os.path.join(pcommand.PROJROOT, 'build', 'flathub')

@@ -301,17 +301,6 @@ def run_client_pcommand(
     return resultcode, stdout_str, stderr_str
 
 
-def disallow_in_batch() -> None:
-    """Utility call to raise a clean error if running under batch mode."""
-    from efro.error import CleanError
-
-    if _g_batch_server_mode:
-        raise CleanError(
-            'This pcommand does not support batch mode.\n'
-            'See docs in efrotools.pcommand if you want to add it.'
-        )
-
-
 def _trim_docstring(docstring: str) -> str:
     """Trim raw doc-strings for pretty printing.
 

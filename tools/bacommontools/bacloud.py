@@ -278,6 +278,7 @@ class App:
     def _download_file(
         self, filename: str, call: str, args: dict
     ) -> int | None:
+        import hashlib
 
         # Fast out - for repeat batch downloads, most of the time these
         # will already exist and we can ignore them.
@@ -292,22 +293,60 @@ class App:
 
         response = self._servercmd(call, args)
 
-        # We currently expect a single 'default' entry in
-        # downloads_inline for this.
-        assert response.downloads_inline is not None
-        assert len(response.downloads_inline) == 1
-        data_zipped = response.downloads_inline.get('default')
-        assert isinstance(data_zipped, bytes)
+        # We expect a single sentinel entry in downloads_signed keyed
+        # at 'default'. The server-side per-file handler doesn't know
+        # the client's destination path, so it hands back one signed
+        # URL + hash under that sentinel and we stream it into
+        # ``filename`` here.
+        assert response.downloads_signed is not None
+        assert len(response.downloads_signed) == 1
+        entry = response.downloads_signed[0]
+        assert entry.path == 'default'
 
-        data = zlib.decompress(data_zipped)
+        tmp = f'{filename}.tmp'
+        chunk_size = 1024 * 1024
+        hasher = hashlib.sha256()
+        total = 0
+        with requests.get(
+            entry.download_url,
+            stream=True,
+            timeout=TIMEOUT_SECONDS,
+        ) as resp:
+            if not 200 <= resp.status_code < 300:
+                raise CleanError(
+                    f'GCS download of {filename} failed:'
+                    f' status={resp.status_code}'
+                    f' body={resp.text!r}'
+                )
+            with open(tmp, 'wb') as outfile:
+                for chunk in resp.iter_content(chunk_size=chunk_size):
+                    if not chunk:
+                        continue
+                    outfile.write(chunk)
+                    hasher.update(chunk)
+                    total += len(chunk)
 
-        # Write to tmp files first and then move into place. This way
-        # crashes are less likely to lead to corrupt data.
-        fnametmp = f'{filename}.tmp'
-        with open(fnametmp, 'wb') as outfile:
-            outfile.write(data)
-        os.rename(fnametmp, filename)
-        return len(data)
+        if total != entry.size:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise CleanError(
+                f'GCS download of {filename} returned'
+                f' {total} bytes; expected {entry.size}.'
+            )
+        digest = hasher.hexdigest()
+        if digest != entry.sha256:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise CleanError(
+                f'GCS download of {filename} sha256 mismatch:'
+                f' got {digest}, expected {entry.sha256}.'
+            )
+        os.rename(tmp, filename)
+        return total
 
     def _handle_dir_manifest_response(self, dirmanifest: str) -> None:
         from bacommon.transfer import DirectoryManifest
@@ -463,6 +502,101 @@ class App:
             sessions[entry.path] = entry.session_id
         self._end_command_args['uploads_signed'] = sessions
 
+    def _handle_downloads_signed(
+        self, downloads_signed: list[ResponseData.SignedDownloadEntry]
+    ) -> None:
+        """Handle direct-from-GCS streaming downloads via signed URLs.
+
+        For each entry, stream the GCS body straight to ``<path>.tmp``
+        while feeding bytes through ``hashlib.sha256``. On a successful
+        digest + size match we atomic-rename into place; on mismatch
+        we delete the tmp file and raise. Memory use is bounded by the
+        stream chunk size regardless of file size, so this bypasses
+        the Cloud Run 32 MB response cap entirely.
+
+        Downloads run through a thread pool so large workspaces fan
+        out over the network instead of serializing through one TCP
+        connection.
+        """
+        import hashlib
+        from concurrent.futures import ThreadPoolExecutor
+
+        # 1 MiB read chunk — large enough to keep per-chunk overhead
+        # negligible, small enough that peak memory stays bounded even
+        # when running several fetches concurrently.
+        chunk_size = 1024 * 1024
+
+        def _fetch(entry: ResponseData.SignedDownloadEntry) -> None:
+            # Clear out any existing dir where we want the file to go
+            # (mirrors the _handle_downloads_inline contract — file
+            # deletes should have run before this, so anything still
+            # here should be empty and killable via rmdir).
+            if os.path.isdir(entry.path):
+                for basename, dirnames, _fn in os.walk(
+                    entry.path, topdown=False
+                ):
+                    for dirname in dirnames:
+                        os.rmdir(os.path.join(basename, dirname))
+                os.rmdir(entry.path)
+
+            # Ensure the parent dir exists. For the workspace-get path
+            # the server supplies absolute paths the client chose, and
+            # the intermediate dirs may not exist yet.
+            parent = os.path.dirname(entry.path)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
+
+            tmp = f'{entry.path}.tmp'
+            hasher = hashlib.sha256()
+            total = 0
+            with requests.get(
+                entry.download_url,
+                stream=True,
+                timeout=TIMEOUT_SECONDS,
+            ) as resp:
+                if not 200 <= resp.status_code < 300:
+                    raise CleanError(
+                        f'GCS download of {entry.path} failed:'
+                        f' status={resp.status_code}'
+                        f' body={resp.text!r}'
+                    )
+                with open(tmp, 'wb') as outfile:
+                    for chunk in resp.iter_content(chunk_size=chunk_size):
+                        if not chunk:
+                            continue
+                        outfile.write(chunk)
+                        hasher.update(chunk)
+                        total += len(chunk)
+
+            if total != entry.size:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                raise CleanError(
+                    f'GCS download of {entry.path} returned'
+                    f' {total} bytes; expected {entry.size}.'
+                )
+            digest = hasher.hexdigest()
+            if digest != entry.sha256:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                raise CleanError(
+                    f'GCS download of {entry.path} sha256'
+                    f' mismatch: got {digest}, expected {entry.sha256}.'
+                )
+            os.rename(tmp, entry.path)
+
+        if not downloads_signed:
+            return
+        # Cap parallelism at 4 to match _handle_downloads — this is
+        # enough to saturate a typical client uplink without piling
+        # pressure on GCS or running the client out of fds.
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            list(executor.map(_fetch, downloads_signed))
+
     def _handle_open_url(self, url: str) -> None:
         import webbrowser
 
@@ -524,6 +658,8 @@ class App:
                 self._handle_downloads(response.downloads)
             if response.downloads_inline:
                 self._handle_downloads_inline(response.downloads_inline)
+            if response.downloads_signed:
+                self._handle_downloads_signed(response.downloads_signed)
             if response.dir_prune_empty:
                 self._handle_dir_prune_empty(response.dir_prune_empty)
 

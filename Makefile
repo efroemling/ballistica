@@ -400,12 +400,12 @@ prefab-mac-arm64-server-release: prefab-mac-arm64-server-release-build
 	@$(PCOMMAND) ensure_prefab_platform mac_arm64
 	$(RUN_PREFAB_MAC_ARM64_SERVER_RELEASE)
 
-prefab-mac-x86-64-server-release-build: env assets-server \
+prefab-mac-x86-64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
    build/prefab/full/mac_x86_64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/mac_x86_64_server/release
 
-prefab-mac-arm64-server-release-build: env assets-server \
+prefab-mac-arm64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
    build/prefab/full/mac_arm64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/mac_arm64_server/release
@@ -524,12 +524,12 @@ prefab-linux-arm64-server-release: prefab-linux-arm64-server-release-build
 	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_arm64
 	$(RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE)
 
-prefab-linux-x86-64-server-release-build: env assets-server \
+prefab-linux-x86-64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
    build/prefab/full/linux_x86_64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/linux_x86_64_server/release
 
-prefab-linux-arm64-server-release-build: env assets-server \
+prefab-linux-arm64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
    build/prefab/full/linux_arm64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/linux_arm64_server/release
@@ -890,14 +890,6 @@ dmypy-stop: py_check_prepass
 pyright: py_check_prepass
 	@$(PCOMMAND) pyright
 
-# Run PyCharm checks on all Python code.
-pycharm: py_check_prepass
-	@$(PCOMMAND) pycharm
-
-# Run PyCharm checks without caching (all files are checked).
-pycharm-full: py_check_prepass
-	@$(PCOMMAND) pycharm -full
-
 # Build prerequisites needed for python checks.
 #
 # IMPORTANT - this target may kick off new meta/asset/binary builds/cleans as
@@ -915,7 +907,7 @@ py_check_prepass: dummymodules
 # Tell make which of these targets don't represent files.
 .PHONY: check check-full check-ex check-ex-full cpplint cpplint-full pylint		\
         pylint-ex pylint-full pylint-ex-full mypy mypy-full dmypy dmypy-stop	\
-        pycharm pycharm-full py_check_prepass
+        py_check_prepass
 
 
 ################################################################################
@@ -1152,7 +1144,7 @@ cmake-lldb: cmake-build
       BA_DEBUGGER_ATTACHED=1 lldb ./ballisticakit
 
 # Build but don't run it.
-cmake-build: assets-cmake resources cmake-binary
+cmake-build: $(CMAKE_ASSETS_TARGET) resources cmake-binary
 	@$(STAGE_BUILD) -cmake -$(CM_BT_LC) -builddir build/cmake/$(CM_BT_LC) \
       build/cmake/$(CM_BT_LC)/staged
 	@$(PCOMMANDBATCH) echo BLD Build complete: BLU build/cmake/$(CM_BT_LC)/staged
@@ -1171,7 +1163,7 @@ cmake-clean:
 cmake-server: cmake-server-build
 	cd build/cmake/server-$(CM_BT_LC)/staged && ./ballisticakit_server
 
-cmake-server-build: assets-server meta cmake-server-binary
+cmake-server-build: $(CMAKE_SERVER_ASSETS_TARGET) meta cmake-server-binary
 	@$(STAGE_BUILD) -cmakeserver -$(CM_BT_LC) \
       -builddir build/cmake/server-$(CM_BT_LC) \
       build/cmake/server-$(CM_BT_LC)/staged
@@ -1232,17 +1224,12 @@ cmake-modular-server-binary: meta
 cmake-modular-server-clean:
 	rm -rf build/cmake/modular-server-$(CM_BT_LC)
 
-# Stage assets for building/running within CLion.
-clion-staging: assets-cmake resources meta
-	@$(STAGE_BUILD) -cmake -debug build/clion_debug
-	@$(STAGE_BUILD) -cmake -release build/clion_release
-
 # Tell make which of these targets don't represent files.
 .PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build	\
         cmake-server-clean cmake-modular-build cmake-modular					\
         cmake-modular-binary cmake-modular-clean cmake-modular-server	\
         cmake-modular-server-build cmake-modular-server-binary				\
-        cmake-modular-server-clean clion-staging
+        cmake-modular-server-clean
 
 
 ################################################################################
@@ -1494,7 +1481,9 @@ WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)
 WINCFGLC = $(shell echo $(WINDOWS_CONFIGURATION) | tr A-Z a-z)
 
-# When using CLion, our cmake dir is root. Expose .clang-format there too.
+# Our cmake dir acts as a secondary project root for some IDEs/tools.
+# Expose .clang-format there too so clangd picks it up for files whose
+# paths resolve through ballisticakit-cmake.
 ballisticakit-cmake/.clang-format: .clang-format
 	@mkdir -p ballisticakit-cmake
 	@cd ballisticakit-cmake && ln -sf ../.clang-format .

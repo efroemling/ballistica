@@ -30,7 +30,14 @@ if TYPE_CHECKING:
 #               SHA-256 verification at finalize time; md5 was
 #               redundant with the content-addressable cloud_file_id
 #               check and just doubled hashing cost client-side.
-BACLOUD_VERSION = 16
+# 17 (2026-04): Workspace download / asset-package file-download
+#               switched from inline gzipped bytes (``downloads_inline``)
+#               to direct-from-GCS streaming via signed GET URLs
+#               (``downloads_signed``). Removes the Cloud Run 32 MB
+#               response-size cap for CloudFile-backed downloads.
+#               ``downloads_inline`` remains for small ad-hoc blobs
+#               (asset manifests, admin test payloads).
+BACLOUD_VERSION = 17
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -89,6 +96,35 @@ class ResponseData:
         #: in the next ``end_command`` args under ``uploads_signed`` to
         #: tell the server which upload to finalize.
         session_id: Annotated[str, IOAttrs('s')]
+
+    @ioprepped
+    @dataclass
+    class SignedDownloadEntry:
+        """Describes one direct-from-GCS streaming download to perform.
+
+        The client streams bytes from ``download_url`` straight to
+        ``path``, hashing as it goes and verifying against ``sha256``
+        before atomic-renaming into place. Since the bytes bypass the
+        bacloud response envelope entirely, there is no per-file size
+        cap — files of any size can be delivered this way.
+        """
+
+        #: Local path the client should write the file to. Will be
+        #: created (and its parent dirs) if missing; any existing file
+        #: at the path is replaced atomically.
+        path: Annotated[str, IOAttrs('p')]
+
+        #: Signed GCS URL to GET the bytes from.
+        download_url: Annotated[str, IOAttrs('u')]
+
+        #: Hex-encoded SHA-256 of the expected file body. The client
+        #: streams through ``hashlib.sha256`` and refuses to commit the
+        #: file if the final digest does not match.
+        sha256: Annotated[str, IOAttrs('h')]
+
+        #: Expected file size in bytes, for progress reporting and a
+        #: belt-and-suspenders sanity check against the streamed total.
+        size: Annotated[int, IOAttrs('s')]
 
     @ioprepped
     @dataclass
@@ -194,9 +230,23 @@ class ResponseData:
 
     #: If present, pathnames mapped to gzipped data to be written to the
     #: client. This should only be used for relatively small files as
-    #: they are all included inline as part of the response.
+    #: they are all included inline as part of the response — Cloud
+    #: Run caps buffered response bodies at 32 MB, which places a hard
+    #: ceiling on any payload delivered this way. For larger or
+    #: CloudFile-backed downloads, use ``downloads_signed`` instead.
     downloads_inline: Annotated[
         dict[str, bytes] | None, IOAttrs('dinl', store_default=False)
+    ] = None
+
+    #: If present, files the client should GET directly from GCS via
+    #: the provided signed URLs, verifying the streamed content against
+    #: the provided SHA-256. Streams without ever buffering the file
+    #: body in master-server memory, so it imposes no per-file size
+    #: limit and bypasses the Cloud Run 32 MB response cap that
+    #: constrains ``downloads_inline``.
+    downloads_signed: Annotated[
+        list[SignedDownloadEntry] | None,
+        IOAttrs('dsgn', store_default=False),
     ] = None
 
     #: If present, all empty dirs under this one should be removed.

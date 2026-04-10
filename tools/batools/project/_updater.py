@@ -657,6 +657,19 @@ class ProjectUpdater:
     def _generate_assets_makefile(self, path: str, existing_data: str) -> None:
         from batools.assetsmakefile import generate_assets_makefile
 
+        # If the asset source tree is stripped down (as in the
+        # ba-check cloudshell env, which omits audio/textures/meshes
+        # to reduce sync size for check/test/docs workloads),
+        # regenerating the assets Makefile from the scanned sources
+        # would produce a truncated version that doesn't match the one
+        # synced from the source repo. Detect this case by the absence
+        # of a characteristic media source dir and preserve the
+        # existing file as-is.
+        audio_src_dir = os.path.join(self.projroot, 'src/assets/ba_data/audio')
+        if not os.path.isdir(audio_src_dir):
+            self._generated_files[path] = existing_data
+            return
+
         # We need to know what files meta will be creating (since they
         # can be asset sources).
         meta_manifests: dict[str, str] = {}

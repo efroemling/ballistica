@@ -256,7 +256,6 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'Makefile',
                 'tools',
                 'src/assets',
-                'src/external/python-apple',
                 '.efrocachemap',
                 # Needed to rebuild on asset-package changes.
                 'config/projectconfig.json',
