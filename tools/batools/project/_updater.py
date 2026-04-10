@@ -657,6 +657,35 @@ class ProjectUpdater:
     def _generate_assets_makefile(self, path: str, existing_data: str) -> None:
         from batools.assetsmakefile import generate_assets_makefile
 
+        # HACK: The ba-check cloudshell env is a stripped-down copy
+        # of the full project that omits media sources (audio,
+        # textures, meshes) to reduce sync time for check/test/docs
+        # workloads. The assets Makefile and its companion manifest
+        # files are synced intact from the full project, but if we
+        # regenerate them here the scanner would see only the
+        # stripped sources and produce a truncated Makefile that
+        # fails the update-check. We key off BA_CLOUDSHELL_ENV
+        # (set by cloudshell when running with --env) so that this
+        # skip applies *only* to the top-level project in ba-check.
+        # Spinoff test projects that run within ba-check (under
+        # build/spinofftest/) still need normal regeneration — they
+        # have a reduced set of feature sets and the generator
+        # correctly scopes the Makefile to only the files present.
+        # We detect spinoff dst projects by their symlinked
+        # tools/spinoff.
+        if os.environ.get('BA_CLOUDSHELL_ENV') == 'ba-check':
+            spinoff_link = os.path.join(self.projroot, 'tools/spinoff')
+            if not os.path.islink(spinoff_link):
+                self._generated_files[path] = existing_data
+                for mantype in ['public', 'private']:
+                    manpath = f'src/assets/.asset_manifest_{mantype}.json'
+                    if manpath not in self._generated_files:
+                        manfullpath = os.path.join(self.projroot, manpath)
+                        if os.path.isfile(manfullpath):
+                            with open(manfullpath, encoding='utf-8') as infile:
+                                self._generated_files[manpath] = infile.read()
+                return
+
         # We need to know what files meta will be creating (since they
         # can be asset sources).
         meta_manifests: dict[str, str] = {}
