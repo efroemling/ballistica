@@ -1015,7 +1015,6 @@ class Spaz(bs.Actor):
                 )
 
                 damage = int(damage_scale * self.node.damage)
-            self.node.handlemessage('hurt_sound')
 
             # Play punch impact sound based on damage if it was a punch.
             if msg.hit_type == 'punch':
@@ -1149,13 +1148,16 @@ class Spaz(bs.Actor):
                     1.0 - float(self.hitpoints) / self.hitpoints_max
                 )
 
-                # If we're frozen, shatter.. otherwise die if we hit zero
+                # If we're frozen, shatter.. Otherwise, die if we hit zero...
+                # Otherwise, we'll just make a sound of pain. 
                 if self.frozen and (damage > 200 or self.hitpoints <= 0):
                     self.shatter()
                 elif self.hitpoints <= 0:
                     self.node.handlemessage(
                         bs.DieMessage(how=bs.DeathType.IMPACT)
                     )
+                else:
+                    self.node.handlemessage('hurt_sound')
 
             # If we're dead, take a look at the smoothed damage value
             # (which gives us a smoothed average of recent damage) and shatter
