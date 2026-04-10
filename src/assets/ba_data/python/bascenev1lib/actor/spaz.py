@@ -1149,7 +1149,7 @@ class Spaz(bs.Actor):
                 )
 
                 # If we're frozen, shatter.. Otherwise, die if we hit zero...
-                # Otherwise, we'll just make a sound of pain. 
+                # Otherwise, we'll just make a sound of pain.
                 if self.frozen and (damage > 200 or self.hitpoints <= 0):
                     self.shatter()
                 elif self.hitpoints <= 0:
