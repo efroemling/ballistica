@@ -464,7 +464,7 @@ class Spaz(bs.Actor):
             self.node.punch_pressed = True
             if not self.node.hold_node:
                 bs.timer(
-                    0.05,
+                    0.06,
                     bs.WeakCallStrict(
                         self._safe_play_sound,
                         SpazFactory.get().swish_sound,
