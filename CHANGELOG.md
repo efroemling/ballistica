@@ -13,6 +13,7 @@
   `BA_LOG_LEVELS='ba.net=DEBUG,ba.connectivity=DEBUG'`).
 - Added `test_game_run` and `test_game_kill` pcommands for automated game
   testing.
+- Fixed an issue allowing unauthenticated users to join private parties.
 - Players finally have all their unlocked characters accurately available when
   connecting to servers with v2-auth enabled.
 - Servers with v2-auth enabled can now see verified classic_purchases for
