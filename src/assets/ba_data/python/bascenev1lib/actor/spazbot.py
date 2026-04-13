@@ -224,8 +224,8 @@ class SpazBot(Spaz):
             # If we're holding the flag, just walk left.
             if holding_flag:
                 # Just walk left.
-                self.node.move_left_right = -1.0
-                self.node.move_up_down = 0.0
+                self.on_move_left_right(-1.0)
+                self.on_move_up_down(0.0)
 
             # Otherwise try to go pick it up.
             elif self.target_flag.node:
@@ -237,31 +237,31 @@ class SpazBot(Spaz):
 
                 # If we're holding some non-flag item, drop it.
                 if self.node.hold_node:
-                    self.node.pickup_pressed = True
-                    self.node.pickup_pressed = False
+                    self.on_pickup_press()
+                    self.on_pickup_release()
                     return
 
                 # If we're a runner, run only when not super-near the flag.
                 if self.run and dist > 3.0:
                     self._running = True
-                    self.node.run = 1.0
+                    self.on_run(1.0)
                 else:
                     self._running = False
-                    self.node.run = 0.0
+                    self.on_run(0.0)
 
-                self.node.move_left_right = to_target.x
-                self.node.move_up_down = -to_target.z
+                self.on_move_left_right(to_target.x)
+                self.on_move_up_down(-to_target.z)
                 if dist < 1.25:
-                    self.node.pickup_pressed = True
-                    self.node.pickup_pressed = False
+                    self.on_pickup_press()
+                    self.on_pickup_release()
             return
 
         # Not a flag-bearer. If we're holding anything but a bomb, drop it.
         if self.node.hold_node:
             holding_bomb = self.node.hold_node.getnodetype() in ['bomb', 'prop']
             if not holding_bomb:
-                self.node.pickup_pressed = True
-                self.node.pickup_pressed = False
+                self.on_pickup_press()
+                self.on_pickup_release()
                 return
 
         target_pt_raw, target_vel = self._get_target_player_pt()
@@ -275,11 +275,11 @@ class SpazBot(Spaz):
 
             # With no target, we stop moving and drop whatever we're holding.
             else:
-                self.node.move_left_right = 0
-                self.node.move_up_down = 0
+                self.on_move_left_right(0)
+                self.on_move_up_down(0)
                 if self.node.hold_node:
-                    self.node.pickup_pressed = True
-                    self.node.pickup_pressed = False
+                    self.on_pickup_press()
+                    self.on_pickup_release()
                 return
 
         # We don't want height to come into play.
@@ -319,20 +319,19 @@ class SpazBot(Spaz):
                 # Oh crap, we're holding a bomb; better throw it.
                 elif time_till_throw <= 0.0:
                     # Jump and throw.
-                    def _safe_pickup(node: bs.Node) -> None:
-                        if node and self.node:
-                            self.node.pickup_pressed = True
-                            self.node.pickup_pressed = False
+                    def _pickup() -> None:
+                        self.on_pickup_press()
+                        self.on_pickup_release()
 
                     if dist > 5.0:
-                        self.node.jump_pressed = True
-                        self.node.jump_pressed = False
+                        self.on_jump_press()
+                        self.on_jump_release()
 
                         # Throws:
-                        bs.timer(0.1, bs.CallStrict(_safe_pickup, self.node))
+                        bs.timer(0.1, bs.CallStrict(_pickup))
                     else:
                         # Throws:
-                        bs.timer(0.1, bs.CallStrict(_safe_pickup, self.node))
+                        bs.timer(0.1, bs.CallStrict(_pickup))
 
                 if self.static:
                     if time_till_throw < 0.3:
@@ -348,8 +347,8 @@ class SpazBot(Spaz):
                     else:
                         # Earlier we can hold or move backward for a whiplash.
                         speed = 0.0125
-                self.node.move_left_right = to_target.x * speed
-                self.node.move_up_down = to_target.z * -1.0 * speed
+                self.on_move_left_right(to_target.x * speed)
+                self.on_move_up_down(to_target.z * -1.0 * speed)
 
         elif self._mode == 'charge':
             if random.random() < 0.3:
@@ -362,36 +361,36 @@ class SpazBot(Spaz):
                 if self.run and dist_raw > self.run_dist_min:
                     self._lead_amount = 0.3
                     self._running = True
-                    self.node.run = 1.0
+                    self.on_run(1.0)
                 else:
                     self._lead_amount = 0.01
                     self._running = False
-                    self.node.run = 0.0
+                    self.on_run(0.0)
 
-            self.node.move_left_right = to_target.x * self._charge_speed
-            self.node.move_up_down = to_target.z * -1.0 * self._charge_speed
+            self.on_move_left_right(to_target.x * self._charge_speed)
+            self.on_move_up_down(to_target.z * -1.0 * self._charge_speed)
 
         elif self._mode == 'wait':
             # Every now and then, aim towards our target.
             # Other than that, just stand there.
             if int(bs.time() * 1000.0) % 1234 < 100:
-                self.node.move_left_right = to_target.x * (400.0 / 33000)
-                self.node.move_up_down = to_target.z * (-400.0 / 33000)
+                self.on_move_left_right(to_target.x * (400.0 / 33000))
+                self.on_move_up_down(to_target.z * (-400.0 / 33000))
             else:
-                self.node.move_left_right = 0
-                self.node.move_up_down = 0
+                self.on_move_left_right(0)
+                self.on_move_up_down(0)
 
         elif self._mode == 'flee':
             # Even if we're a runner, only run till we get away from our
             # target (if we keep running we tend to run off edges).
             if self.run and dist < 3.0:
                 self._running = True
-                self.node.run = 1.0
+                self.on_run(1.0)
             else:
                 self._running = False
-                self.node.run = 0.0
-            self.node.move_left_right = to_target.x * -1.0
-            self.node.move_up_down = to_target.z
+                self.on_run(0.0)
+            self.on_move_left_right(to_target.x * -1.0)
+            self.on_move_up_down(to_target.z)
 
         # We might wanna switch states unless we're doing a throw
         # (in which case that's our sole concern).
@@ -474,8 +473,8 @@ class SpazBot(Spaz):
                 and random.random() < 0.5
             ):
                 self._last_jump_time = bs.time()
-                self.node.jump_pressed = True
-                self.node.jump_pressed = False
+                self.on_jump_press()
+                self.on_jump_release()
 
             # Throw punches when real close.
             if dist < (1.6 if self._running else 1.2) and can_attack:

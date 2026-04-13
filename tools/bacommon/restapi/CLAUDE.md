@@ -1,5 +1,13 @@
 # REST API v1 Package Conventions
 
+## Authorship and compatibility
+
+All additions and changes to the public REST API are implemented in
+`ballistica-master-server`. **Do not make API changes here.** These files exist
+for client-side consumption and tooling only.
+
+Backwards compatibility is strictly required — changes affect live game clients.
+
 ## Standalone constraint
 
 This package is shipped inside the game (`ba_data/python/bacommon/`). It must

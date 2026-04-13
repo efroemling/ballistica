@@ -89,6 +89,11 @@ class Spaz(bs.Actor):
 
         factory = SpazFactory.get()
 
+        classic = bs.app.classic
+        assert classic is not None
+
+        protocol_version = classic.scene_v1_protocol_version()
+
         # We need to behave slightly different in the tutorial.
         self._demo_mode = demo_mode
 
@@ -128,12 +133,15 @@ class Spaz(bs.Actor):
         media = factory.get_media(character)
         punchmats = (factory.punch_material, shared.attack_material)
         pickupmats = (factory.pickup_material, shared.pickup_material)
+
         self.node: bs.Node = bs.newnode(
             type='spaz',
             delegate=self,
             attrs={
                 'color': color,
-                'behavior_version': 0 if demo_mode else 1,
+                'behavior_version': (
+                    0 if demo_mode else 1 if protocol_version < 37 else 2
+                ),
                 'demo_mode': demo_mode,
                 'highlight': highlight,
                 'jump_sounds': media['jump_sounds'],
@@ -212,9 +220,6 @@ class Spaz(bs.Actor):
         self.last_run_time_ms = -9999
         self._last_run_value = 0.0
         self.last_bomb_time_ms = -9999
-        self._turbo_filter_times: dict[str, int] = {}
-        self._turbo_filter_time_bucket = 0
-        self._turbo_filter_counts: dict[str, int] = {}
         self.frozen = False
         self.shattered = False
         self._last_hit_time: int | None = None
@@ -270,55 +275,6 @@ class Spaz(bs.Actor):
                 'scale',
                 {0.0: self._score_text.scale, 0.2: 0.0},
             )
-
-    def _turbo_filter_add_press(self, source: str) -> None:
-        """
-        Can pass all button presses through here; if we see an obscene number
-        of them in a short time let's shame/pushish this guy for using turbo.
-        """
-        t_ms = int(bs.basetime() * 1000.0)
-        assert isinstance(t_ms, int)
-        t_bucket = int(t_ms / 1000)
-        if t_bucket == self._turbo_filter_time_bucket:
-            # Add only once per timestep (filter out buttons triggering
-            # multiple actions).
-            if t_ms != self._turbo_filter_times.get(source, 0):
-                self._turbo_filter_counts[source] = (
-                    self._turbo_filter_counts.get(source, 0) + 1
-                )
-                self._turbo_filter_times[source] = t_ms
-                # (uncomment to debug; prints what this count is at)
-                # bs.broadcastmessage( str(source) + " "
-                #                   + str(self._turbo_filter_counts[source]))
-                if self._turbo_filter_counts[source] == 15:
-                    # Knock 'em out.  That'll learn 'em.
-                    assert self.node
-                    self.node.handlemessage('knockout', 500.0)
-
-                    # Also issue periodic notices about who is turbo-ing.
-                    now = bs.apptime()
-                    assert bs.app.classic is not None
-                    if now > bs.app.classic.last_spaz_turbo_warn_time + 30.0:
-                        bs.app.classic.last_spaz_turbo_warn_time = now
-                        bs.broadcastmessage(
-                            bs.Lstr(
-                                translate=(
-                                    'statements',
-                                    (
-                                        'Warning to ${NAME}:  '
-                                        'turbo / button-spamming knocks'
-                                        ' you out.'
-                                    ),
-                                ),
-                                subs=[('${NAME}', self.node.name)],
-                            ),
-                            color=(1, 0.5, 0),
-                        )
-                        bs.getsound('error').play()
-        else:
-            self._turbo_filter_times = {}
-            self._turbo_filter_time_bucket = t_bucket
-            self._turbo_filter_counts = {source: 1}
 
     def set_score_text(
         self,
@@ -387,14 +343,18 @@ class Spaz(bs.Actor):
         Called to 'press jump' on this spaz;
         used by player or AI connections.
         """
-        if not self.node:
+        if (
+            not self.node
+            or self._dead
+            or self.frozen
+            or self.node.knockout > 0.0
+        ):
             return
         t_ms = int(bs.time() * 1000.0)
         assert isinstance(t_ms, int)
         if t_ms - self.last_jump_time_ms >= self._jump_cooldown:
             self.node.jump_pressed = True
             self.last_jump_time_ms = t_ms
-        self._turbo_filter_add_press('jump')
 
     def on_jump_release(self) -> None:
         """
@@ -410,14 +370,18 @@ class Spaz(bs.Actor):
         Called to 'press pick-up' on this spaz;
         used by player or AI connections.
         """
-        if not self.node:
+        if (
+            not self.node
+            or self._dead
+            or self.frozen
+            or self.node.knockout > 0.0
+        ):
             return
         t_ms = int(bs.time() * 1000.0)
         assert isinstance(t_ms, int)
         if t_ms - self.last_pickup_time_ms >= self._pickup_cooldown:
             self.node.pickup_pressed = True
             self.last_pickup_time_ms = t_ms
-        self._turbo_filter_add_press('pickup')
 
     def on_pickup_release(self) -> None:
         """
@@ -436,7 +400,6 @@ class Spaz(bs.Actor):
         if not self.node:
             return
         self.node.hold_position_pressed = True
-        self._turbo_filter_add_press('holdposition')
 
     def on_hold_position_release(self) -> None:
         """
@@ -452,7 +415,12 @@ class Spaz(bs.Actor):
         Called to 'press punch' on this spaz;
         used for player or AI connections.
         """
-        if not self.node or self.frozen or self.node.knockout > 0.0:
+        if (
+            not self.node
+            or self._dead
+            or self.frozen
+            or self.node.knockout > 0.0
+        ):
             return
         t_ms = int(bs.time() * 1000.0)
         assert isinstance(t_ms, int)
@@ -462,7 +430,12 @@ class Spaz(bs.Actor):
             self._punched_nodes = set()  # Reset this.
             self.last_punch_time_ms = t_ms
             self.node.punch_pressed = True
-            if not self.node.hold_node:
+            play_swish_sound = (
+                not self.node.pickup_before_hitbox
+                if self.node.behavior_version >= 2
+                else True
+            )
+            if not self.node.hold_node and play_swish_sound:
                 bs.timer(
                     0.06,
                     bs.WeakCallStrict(
@@ -471,7 +444,6 @@ class Spaz(bs.Actor):
                         0.8,
                     ),
                 )
-        self._turbo_filter_add_press('punch')
 
     def _safe_play_sound(self, sound: bs.Sound, volume: float) -> None:
         """Plays a sound at our position if we exist."""
@@ -506,7 +478,6 @@ class Spaz(bs.Actor):
             self.node.bomb_pressed = True
             if not self.node.hold_node:
                 self.drop_bomb()
-        self._turbo_filter_add_press('bomb')
 
     def on_bomb_release(self) -> None:
         """
@@ -528,13 +499,6 @@ class Spaz(bs.Actor):
         assert isinstance(t_ms, int)
         self.last_run_time_ms = t_ms
         self.node.run = value
-
-        # Filtering these events would be tough since its an analog
-        # value, but lets still pass full 0-to-1 presses along to
-        # the turbo filter to punish players if it looks like they're turbo-ing.
-        if self._last_run_value < 0.01 and value > 0.99:
-            self._turbo_filter_add_press('run')
-
         self._last_run_value = value
 
     def on_fly_press(self) -> None:
@@ -548,7 +512,6 @@ class Spaz(bs.Actor):
         # input events get clustered up during net-games and we'd wind up
         # killing a lot and making it hard to fly.. should look into this.
         self.node.fly_pressed = True
-        self._turbo_filter_add_press('fly')
 
     def on_fly_release(self) -> None:
         """
@@ -723,12 +686,18 @@ class Spaz(bs.Actor):
             # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
             # NOTE: should test to see if that's still the case.
-            bs.timer(0.001, bs.WeakCallStrict(self.shatter))
+            # UPDATE (March 2026): Using bs.pushcall instead of bs.timer -
+            # executes at end of current frame (faster) while still being safe.
+            # Tested and works perfectly.
+            bs.pushcall(bs.WeakCallStrict(self.shatter))
 
         elif isinstance(msg, bs.ImpactDamageMessage):
             # Eww; seems we have to do this in a timer or it wont work right.
             # (since we're getting called from within update() perhaps?..)
-            bs.timer(0.001, bs.WeakCallStrict(self._hit_self, msg.intensity))
+            # UPDATE (March 2026): Using bs.pushcall instead of bs.timer -
+            # executes at end of current frame (faster), making hits feel
+            # immediate while still being safe.
+            bs.pushcall(bs.WeakCallStrict(self._hit_self, msg.intensity))
 
         elif isinstance(msg, bs.PowerupMessage):
             if self._dead or not self.node:
@@ -1159,22 +1128,26 @@ class Spaz(bs.Actor):
                     damage = newdamage
                 self.node.handlemessage('flash')
 
-                # If we're holding something, drop it.
-                if damage > 0.0 and self.node.hold_node:
-                    self.node.hold_node = None
+                if damage > 0:
+                    # If we're holding something, drop it.
+                    if self.node.hold_node:
+                        self.node.hold_node = None
+
+                    # If we're cursed, *any* damage blows us up.
+                    if self._cursed:
+                        bs.timer(
+                            0.05,
+                            bs.WeakCallStrict(
+                                self.curse_explode,
+                                msg.get_source_player(
+                                    bs.Player,
+                                ),
+                            ),
+                        )
                 self.hitpoints -= damage
                 self.node.hurt = (
                     1.0 - float(self.hitpoints) / self.hitpoints_max
                 )
-
-                # If we're cursed, *any* damage blows us up.
-                if self._cursed and damage > 0:
-                    bs.timer(
-                        0.05,
-                        bs.WeakCallStrict(
-                            self.curse_explode, msg.get_source_player(bs.Player)
-                        ),
-                    )
 
                 # If we're frozen, shatter.. otherwise die if we hit zero
                 if self.frozen and (damage > 200 or self.hitpoints <= 0):

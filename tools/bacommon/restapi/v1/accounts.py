@@ -17,7 +17,8 @@ from efro.dataclassio import ioprepped, IOAttrs
 class AccountResponse:
     """Public info for a single account.
 
-    Returned by :attr:`~bacommon.restapi.v1.Endpoint.ACCOUNT`.
+    Returned by :attr:`~bacommon.restapi.v1.Endpoint.ACCOUNT` and
+    :attr:`~bacommon.restapi.v1.Endpoint.ACCOUNT_BY_TAG`.
     """
 
     #: Unique account ID (e.g. ``'a-12345'``).

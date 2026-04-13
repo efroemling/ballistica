@@ -10,6 +10,7 @@
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
@@ -409,8 +410,8 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
 
   address = Python::GetString(address_obj);
 
-  // Disallow in headless build (people were using this for spam-bots).
-
+  // Block outbound connects from headless binaries — prevents
+  // shipped server binaries being repurposed as spam bots.
   if (g_core->HeadlessMode()) {
     throw Exception("Not available in headless mode.");
   }
@@ -430,6 +431,10 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
         {1, 0, 0});
     Py_RETURN_NONE;
   }
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [&s] {
+    return "connect_to_party: enqueuing UDP connect to " + s.AddressString()
+           + ":" + std::to_string(s.Port()) + ".";
+  });
   appmode->connections()->PushHostConnectedUDPCall(
       s, static_cast<bool>(print_progress));
   Py_RETURN_NONE;

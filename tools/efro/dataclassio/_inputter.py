@@ -130,6 +130,7 @@ class _Inputter:
         assert isinstance(out, outcls)
 
         if is_ext:
+            assert isinstance(out, IOExtendedData)
             out.did_input()
 
         # If we're running in lossy mode, flag the object as such so we

@@ -1,3 +1,6 @@
+# EfroSynced from ballistica-internal.
+# EFRO_SYNC_HASH=108254279322450116963957420935737493125
+#
 # Released under the MIT License. See LICENSE for details.
 #
 # pylint: disable=too-many-lines

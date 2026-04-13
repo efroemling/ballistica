@@ -962,7 +962,8 @@ static auto PyPreEnv(PyObject* self) -> PyObject* {
         "}",
         "build_number", kEngineBuildNumber,
         "debug_build", g_buildconfig.debug_build() ? Py_True : Py_False,
-        "test_build", g_buildconfig.variant_test_build() ? Py_True : Py_False);
+        "test_build", g_buildconfig.variant_test_build() ? Py_True : Py_False
+    );  // NOLINT(whitespace/parens)
     // clang-format on
     g_base->python->StorePreEnv(env);
   }

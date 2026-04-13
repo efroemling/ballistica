@@ -500,6 +500,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/workspace/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/workspace/assetsv1.py \
   $(BUILD_DIR)/ba_data/python/bacommontools/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommontools/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommontools/pcommands.py \
   $(BUILD_DIR)/ba_data/python/efro/__init__.py \
   $(BUILD_DIR)/ba_data/python/efro/call.py \
@@ -523,6 +524,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/efro/message/_receiver.py \
   $(BUILD_DIR)/ba_data/python/efro/message/_sender.py \
   $(BUILD_DIR)/ba_data/python/efro/rpc.py \
+  $(BUILD_DIR)/ba_data/python/efro/rpcws.py \
   $(BUILD_DIR)/ba_data/python/efro/terminal.py \
   $(BUILD_DIR)/ba_data/python/efro/threadpool.py \
   $(BUILD_DIR)/ba_data/python/efro/util.py

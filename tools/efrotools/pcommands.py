@@ -13,36 +13,6 @@ if TYPE_CHECKING:
     pass
 
 
-def _spelling(words: list[str]) -> None:
-    from efrotools.code import sort_jetbrains_dict
-    import os
-
-    num_modded_dictionaries = 0
-    for fname in [
-        '.idea/dictionaries/ericf.xml',
-        'ballisticakit-cmake/.idea/dictionaries/ericf.xml',
-    ]:
-        if not os.path.exists(fname):
-            continue
-        with open(fname, encoding='utf-8') as infile:
-            lines = infile.read().splitlines()
-        if lines[2] != '    <words>':
-            raise RuntimeError('Unexpected dictionary format.')
-        added_count = 0
-        for word in words:
-            line = f'      <w>{word.lower()}</w>'
-            if line not in lines:
-                lines.insert(3, line)
-                added_count += 1
-
-        with open(fname, 'w', encoding='utf-8') as outfile:
-            outfile.write(sort_jetbrains_dict('\n'.join(lines)))
-
-        print(f'Added {added_count} words to {fname}.')
-        num_modded_dictionaries += 1
-    print(f'Modified {num_modded_dictionaries} dictionaries.')
-
-
 def requirements_upgrade() -> None:
     """Upgrade project requirements."""
     import os
@@ -112,37 +82,6 @@ def requirements_upgrade() -> None:
         if reqs_new != reqs:
             with open(reqpath, 'w', encoding='utf-8') as outfile:
                 outfile.write(reqs_new)
-
-
-def spelling_all() -> None:
-    """Add all misspellings from a pycharm run."""
-    import subprocess
-
-    print('Running "make pycharm-full"...')
-    lines = [
-        line
-        for line in subprocess.run(
-            ['make', 'pycharm-full'], check=False, capture_output=True
-        )
-        .stdout.decode()
-        .splitlines()
-        if 'Typo: In word' in line
-    ]
-    words = [line.split('Typo: In word')[1].strip() for line in lines]
-
-    # Strip enclosing quotes but not internal ones.
-    for i, word in enumerate(words):
-        assert word[0] == "'"
-        assert word[-1] == "'"
-        words[i] = word[1:-1]
-
-    _spelling(words)
-
-
-def spelling() -> None:
-    """Add words to the PyCharm dictionary."""
-
-    _spelling(sys.argv[2:])
 
 
 def xcodebuild() -> None:
@@ -412,24 +351,6 @@ def dmypy() -> None:
     efrotools.code.dmypy(pcommand.PROJROOT)
 
 
-def pycharm() -> None:
-    """Run PyCharm checks on our scripts."""
-    import efrotools.code
-
-    full = '-full' in sys.argv
-    verbose = '-v' in sys.argv
-    efrotools.code.check_pycharm(pcommand.PROJROOT, full, verbose)
-
-
-def clioncode() -> None:
-    """Run CLion checks on our code."""
-    import efrotools.code
-
-    full = '-full' in sys.argv
-    verbose = '-v' in sys.argv
-    efrotools.code.check_clioncode(pcommand.PROJROOT, full, verbose)
-
-
 def androidstudiocode() -> None:
     """Run Android Studio checks on our code."""
     import efrotools.code
@@ -456,80 +377,11 @@ def tool_config_install() -> None:
     efrotools.toolconfig.install_tool_config(pcommand.PROJROOT, src, dst)
 
 
-def sync_all() -> None:
-    """Runs full syncs between all efrotools projects.
+def efrosync() -> None:
+    """Centralized file sync across local repos."""
+    from efrotools.efrosync import efrosync_main
 
-    This list is defined in the EFROTOOLS_SYNC_PROJECTS env var.
-    This assumes that there is a 'sync-full' and 'sync-list' Makefile target
-    under each project.
-    """
-    import os
-    import subprocess
-    import concurrent.futures
-    from efro.error import CleanError
-    from efro.terminal import Clr
-
-    print(f'{Clr.BLD}Updating formatting for all projects...{Clr.RST}')
-    projects_str = os.environ.get('EFROTOOLS_SYNC_PROJECTS')
-    if projects_str is None:
-        raise CleanError('EFROTOOL_SYNC_PROJECTS is not defined.')
-    projects = projects_str.split(':')
-
-    def _format_project(fproject: str) -> None:
-        fcmd = f'cd "{fproject}" && make format'
-        # print(fcmd)
-        subprocess.run(fcmd, shell=True, check=True)
-
-    # No matter what we're doing (even if just listing), run formatting
-    # in all projects before beginning. Otherwise if we do a sync and then
-    # a preflight we'll often wind up getting out-of-sync errors due to
-    # formatting changing after the sync.
-    with concurrent.futures.ThreadPoolExecutor(
-        max_workers=len(projects)
-    ) as executor:
-        # Converting this to a list will propagate any errors.
-        list(executor.map(_format_project, projects))
-
-    if len(sys.argv) > 2 and sys.argv[2] == 'list':
-        # List mode
-        for project in projects_str.split(':'):
-            cmd = f'cd "{project}" && make sync-list'
-            print(cmd)
-            subprocess.run(cmd, shell=True, check=True)
-
-    else:
-        # Real mode
-        for i in range(2):
-            if i == 0:
-                print(
-                    f'{Clr.BLD}Running sync pass 1'
-                    f' (ensures all changes at dsts are pushed to src):'
-                    f'{Clr.RST}'
-                )
-            else:
-                print(
-                    f'{Clr.BLD}Running sync pass 2'
-                    f' (ensures latest src is pulled to all dsts):{Clr.RST}'
-                )
-            for project in projects_str.split(':'):
-                cmd = f'cd "{project}" && make sync-full'
-                subprocess.run(cmd, shell=True, check=True)
-        print(Clr.BLD + 'Sync-all successful!' + Clr.RST)
-
-
-def sync() -> None:
-    """Runs standard syncs between this project and others."""
-    from efrotools.project import getprojectconfig
-    from efrotools.sync import Mode, SyncItem, run_standard_syncs
-
-    mode = Mode(sys.argv[2]) if len(sys.argv) > 2 else Mode.PULL
-
-    # Load sync-items from project config and run them
-    sync_items = [
-        SyncItem(**i)
-        for i in getprojectconfig(pcommand.PROJROOT).get('sync_items', [])
-    ]
-    run_standard_syncs(pcommand.PROJROOT, mode, sync_items)
+    efrosync_main()
 
 
 def copy_win_extra_file() -> None:

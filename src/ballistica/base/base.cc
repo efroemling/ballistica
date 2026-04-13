@@ -457,14 +457,9 @@ void BaseFeatureSet::OnAppShutdownComplete() {
 
 void BaseFeatureSet::LogStartupMessage_() {
   char buffer[256];
-  if (g_buildconfig.headless_build()) {
-    snprintf(buffer, sizeof(buffer),
-             "BallisticaKit Headless %s build %d starting...", kEngineVersion,
-             kEngineBuildNumber);
-  } else {
-    snprintf(buffer, sizeof(buffer), "BallisticaKit %s build %d starting...",
-             kEngineVersion, kEngineBuildNumber);
-  }
+  const char* headless_tag = g_buildconfig.headless_build() ? " Headless" : "";
+  snprintf(buffer, sizeof(buffer), "BallisticaKit%s %s build %d starting...",
+           headless_tag, kEngineVersion, kEngineBuildNumber);
   g_core->logging->Log(LogName::kBaApp, LogLevel::kInfo, buffer);
 }
 

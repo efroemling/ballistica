@@ -256,7 +256,6 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'Makefile',
                 'tools',
                 'src/assets',
-                'src/external/python-apple',
                 '.efrocachemap',
                 # Needed to rebuild on asset-package changes.
                 'config/projectconfig.json',
@@ -527,7 +526,7 @@ def _get_server_config_template_toml(projroot: str) -> str:
     cfg.unclean_exit_minutes = 90
     cfg.idle_exit_minutes = 20
     cfg.admins = ['a-YOUR-ID-HERE', 'a-ANOTHER-ID-HERE']
-    cfg.protocol_version = 36
+    cfg.protocol_version = 37
     cfg.session_max_players_override = 8
     cfg.playlist_inline = []
     cfg.team_names = ('Red', 'Blue')
@@ -620,7 +619,7 @@ def _cmake_cache_has_missing_cellar_path(dirname: str) -> bool:
     with open(cmake_cache_path, encoding='utf-8') as cache_file:
         cache_text = cache_file.read()
     for cellar_path in sorted(
-        set(re.findall(r'\S+/Cellar/[^/\s]+/[^/\s]+', cache_text))
+        set(re.findall(r'/[^\s;]+/Cellar/[^/\s;]+/[^/\s;]+', cache_text))
     ):
         if not os.path.isdir(cellar_path):
             print(

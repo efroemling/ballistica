@@ -1,3 +1,6 @@
+# EfroSynced from ballistica-internal.
+# EFRO_SYNC_HASH=86684659705397036487744621506447988418
+#
 # Released under the MIT License. See LICENSE for details.
 #
 """Utilities for debugging memory leaks or other issues.

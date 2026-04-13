@@ -1,7 +1,24 @@
-### 1.7.62 (build 22782, api 9, 2026-03-18)
+### 1.7.62 (build 22812, api 9, 2026-04-10)
 - Added `tests/test_restapi` which can be useful as reference for the
   ballistica.net REST api. Run `make test-restapi` to run all REST api tests
   (you just need to supply an API Key).
+- Fixed Spaz being able to punch very shortly after executing a grab, but
+  before actually grabbing. This fixes the long standing punch grab infinite
+  exploit that allows for effortless kills on players. (Thanks TheMikirog!).
+- Added protocol 37 which allows spaz behavior_version to be set to 2 which
+  enables the above behavior. Default protocol version is still 33.
+- Spaz turbo-filter code has been moved from Spaz to PlayerSpaz and button press
+  logic has been cleaned up (Thanks vinnytherabbit!)
+- Added `BA_LOG_LEVELS` env var to override log levels at launch (e.g.
+  `BA_LOG_LEVELS='ba.net=DEBUG,ba.connectivity=DEBUG'`).
+- Added `test_game_run` and `test_game_kill` pcommands for automated game
+  testing.
+- Players finally have all their unlocked characters accurately available when
+  connecting to servers with v2-auth enabled.
+- Servers with v2-auth enabled can now see verified classic_purchases for
+  connected clients (without v2-auth this will show up as None).
+- Workspace uploads are no longer are limited to 10mb (applies to web UI, REST,
+  and bacloud).
 
 ### 1.7.61 (build 22772, api 9, 2026-03-16)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)

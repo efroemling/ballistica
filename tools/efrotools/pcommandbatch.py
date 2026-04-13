@@ -19,10 +19,7 @@ and client are handled automatically, and systems which are unable to
 compile a client binary can fall back to using vanilla pcommand in those
 cases.
 
-A few considerations must be made when using pcommandbatch. By default,
-all existing pcommands have been fitted with a disallow_in_batch() call
-which triggers an error under batch mode. These calls should be removed
-if/when each call is updated to work cleanly in batch mode. Guidelines
+A few considerations must be made when using pcommandbatch. Guidelines
 for batch-friendly pcommands follow:
 
 - Batch mode runs parallel pcommands in different background threads

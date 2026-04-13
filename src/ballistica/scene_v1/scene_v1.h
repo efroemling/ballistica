@@ -42,7 +42,7 @@ const int kProtocolVersionHostMin = 33;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 36;
+const int kProtocolVersionMax = 37;
 
 // The protocol version we actually host is now read as a setting; see
 // kSceneV1HostProtocol in ballistica/base/support/app_config.h.
@@ -80,6 +80,10 @@ const int kProtocolVersionMax = 36;
 //     allows screening them before they are even allowed in the game,
 //     unlike V1 auth. It is also free from V1 auth's spoofing
 //     vulnerabilities.
+//
+// 37: Allows behavior_version 2 on spaz nodes which has punch-grab-spam
+//     protection. Note that if you are running a server and prefer the
+//     old behavior, you can still set that attr to 1 in mod code.
 
 // Sim step size in milliseconds.
 const int kGameStepMilliseconds = 8;

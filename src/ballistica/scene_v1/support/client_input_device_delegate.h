@@ -23,6 +23,8 @@ class ClientInputDeviceDelegate : public SceneV1InputDeviceDelegate {
   auto GetAccountName(bool full) const -> std::string override;
   // Return player-profiles dict if available; otherwise nullptr.
   auto GetPlayerProfiles() const -> PyObject* override;
+  // Return classic-purchases list if available; otherwise nullptr.
+  auto GetClassicPurchases() const -> PyObject* override;
   auto IsRemoteClient() const -> bool override;
 
  private:

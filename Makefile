@@ -24,6 +24,17 @@
 #                                                                              #
 ################################################################################
 
+# Which asset-build target the cmake/cmake-server build and the
+# prefab-*-server-release-build targets depend on. Defaults build the
+# full asset bundle, but acquire_binary (tools/batools/apprun.py) can
+# override these to assets-cmake-scripts when its caller only needs the
+# binary + python scripts (e.g. dummymodule generation). This lets
+# check/test/docs workflows run against a stripped-down asset source
+# tree (such as the ba-check cloudshell env, which omits audio/
+# textures/meshes).
+CMAKE_ASSETS_TARGET ?= assets-cmake
+CMAKE_SERVER_ASSETS_TARGET ?= assets-server
+
 # List targets in this Makefile and basic descriptions for them.
 help: env
 	@$(PCOMMAND) makefile_target_list Makefile
@@ -62,13 +73,37 @@ ENV_REQS_POST_UPDATE_ONLY = $(ENV_COMPILE_COMMANDS_DB)
 
 # Target that should be built before building almost any other target. This
 # installs tool config files, sets up the Python virtual environment, etc.
-env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY)
+env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY) config/localconfig.json
 
 # Set of prereqs safe to run if the project state is dirty.
-env-pre-update: $(ENV_REQS_SAFE)
+env-pre-update: $(ENV_REQS_SAFE) config/localconfig.json
 
 env-clean:
 	rm -rf $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY)
+
+# Bootstrap config/localconfig.json on first run so env is always
+# satisfied. In a worktree we try to mirror the main checkout's file
+# (following any existing symlink to its ultimate target); otherwise
+# we create an empty JSON dict, which is behaviorally equivalent to
+# no file for any code path that reads values via getlocalconfig()
+# (returns {} for missing keys). This is a normal file target so
+# make skips it entirely after the first run, leaving zero per-
+# invocation overhead for the common env dependency.
+config/localconfig.json:
+	@GITDIR=$$(git rev-parse --git-dir 2>/dev/null); \
+	 CMNDIR=$$(git rev-parse --git-common-dir 2>/dev/null); \
+	 if [ -n "$$GITDIR" ] && [ "$$GITDIR" != "$$CMNDIR" ]; then \
+	   MAINROOT=$$(cd "$$(dirname "$$CMNDIR")" && pwd); \
+	   SRC="$$MAINROOT/config/localconfig.json"; \
+	   if [ -e "$$SRC" ]; then \
+	     TARGET=$$(readlink "$$SRC" 2>/dev/null || echo "$$SRC"); \
+	     ln -s "$$TARGET" $@; \
+	     echo "Auto-linked $@ -> $$TARGET (from main checkout)."; \
+	     exit 0; \
+	   fi; \
+	 fi; \
+	 echo '{}' > $@; \
+	 echo "Created empty $@ (no main-checkout source found)."
 
 # Build all assets for all platforms.
 assets: env meta
@@ -376,12 +411,12 @@ prefab-mac-arm64-server-release: prefab-mac-arm64-server-release-build
 	@$(PCOMMAND) ensure_prefab_platform mac_arm64
 	$(RUN_PREFAB_MAC_ARM64_SERVER_RELEASE)
 
-prefab-mac-x86-64-server-release-build: env assets-server \
+prefab-mac-x86-64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
    build/prefab/full/mac_x86_64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/mac_x86_64_server/release
 
-prefab-mac-arm64-server-release-build: env assets-server \
+prefab-mac-arm64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
    build/prefab/full/mac_arm64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/mac_arm64_server/release
@@ -500,12 +535,12 @@ prefab-linux-arm64-server-release: prefab-linux-arm64-server-release-build
 	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_arm64
 	$(RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE)
 
-prefab-linux-x86-64-server-release-build: env assets-server \
+prefab-linux-x86-64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
    build/prefab/full/linux_x86_64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/linux_x86_64_server/release
 
-prefab-linux-arm64-server-release-build: env assets-server \
+prefab-linux-arm64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
    build/prefab/full/linux_arm64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/linux_arm64_server/release
@@ -866,14 +901,6 @@ dmypy-stop: py_check_prepass
 pyright: py_check_prepass
 	@$(PCOMMAND) pyright
 
-# Run PyCharm checks on all Python code.
-pycharm: py_check_prepass
-	@$(PCOMMAND) pycharm
-
-# Run PyCharm checks without caching (all files are checked).
-pycharm-full: py_check_prepass
-	@$(PCOMMAND) pycharm -full
-
 # Build prerequisites needed for python checks.
 #
 # IMPORTANT - this target may kick off new meta/asset/binary builds/cleans as
@@ -891,7 +918,7 @@ py_check_prepass: dummymodules
 # Tell make which of these targets don't represent files.
 .PHONY: check check-full check-ex check-ex-full cpplint cpplint-full pylint		\
         pylint-ex pylint-full pylint-ex-full mypy mypy-full dmypy dmypy-stop	\
-        pycharm pycharm-full py_check_prepass
+        py_check_prepass
 
 
 ################################################################################
@@ -1128,7 +1155,7 @@ cmake-lldb: cmake-build
       BA_DEBUGGER_ATTACHED=1 lldb ./ballisticakit
 
 # Build but don't run it.
-cmake-build: assets-cmake resources cmake-binary
+cmake-build: $(CMAKE_ASSETS_TARGET) resources cmake-binary
 	@$(STAGE_BUILD) -cmake -$(CM_BT_LC) -builddir build/cmake/$(CM_BT_LC) \
       build/cmake/$(CM_BT_LC)/staged
 	@$(PCOMMANDBATCH) echo BLD Build complete: BLU build/cmake/$(CM_BT_LC)/staged
@@ -1136,8 +1163,7 @@ cmake-build: assets-cmake resources cmake-binary
 cmake-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/$(CM_BT_LC)
 	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS)\
-      $(shell pwd)/ballisticakit-cmake
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) \
       build/cmake/$(CM_BT_LC)
 	@cd build/cmake/$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakitbin
@@ -1148,7 +1174,7 @@ cmake-clean:
 cmake-server: cmake-server-build
 	cd build/cmake/server-$(CM_BT_LC)/staged && ./ballisticakit_server
 
-cmake-server-build: assets-server meta cmake-server-binary
+cmake-server-build: $(CMAKE_SERVER_ASSETS_TARGET) meta cmake-server-binary
 	@$(STAGE_BUILD) -cmakeserver -$(CM_BT_LC) \
       -builddir build/cmake/server-$(CM_BT_LC) \
       build/cmake/server-$(CM_BT_LC)/staged
@@ -1158,8 +1184,7 @@ cmake-server-build: assets-server meta cmake-server-binary
 cmake-server-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/server-$(CM_BT_LC)
 	@cd build/cmake/server-$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true \
-      $(shell pwd)/ballisticakit-cmake
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) \
       build/cmake/server-$(CM_BT_LC)
 	@cd build/cmake/server-$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakitbin
@@ -1180,8 +1205,7 @@ cmake-modular: cmake-modular-build
 cmake-modular-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/modular-$(CM_BT_LC)
 	@cd build/cmake/modular-$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) \
-      $(shell pwd)/ballisticakit-cmake
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) \
       build/cmake/modular-$(CM_BT_LC)
 	@cd build/cmake/modular-$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakitso
@@ -1202,8 +1226,7 @@ cmake-modular-server-build: assets-server meta cmake-modular-server-binary
 cmake-modular-server-binary: meta
 	@$(PCOMMAND) cmake_prep_dir build/cmake/modular-server-$(CM_BT_LC)
 	@cd build/cmake/modular-server-$(CM_BT_LC) && test -f Makefile \
-      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true \
-      $(shell pwd)/ballisticakit-cmake
+      || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib server $(CM_BT_LC) \
       build/cmake/modular-server-$(CM_BT_LC)
 	@cd build/cmake/modular-server-$(CM_BT_LC) && $(MAKE) \
@@ -1212,17 +1235,12 @@ cmake-modular-server-binary: meta
 cmake-modular-server-clean:
 	rm -rf build/cmake/modular-server-$(CM_BT_LC)
 
-# Stage assets for building/running within CLion.
-clion-staging: assets-cmake resources meta
-	@$(STAGE_BUILD) -cmake -debug build/clion_debug
-	@$(STAGE_BUILD) -cmake -release build/clion_release
-
 # Tell make which of these targets don't represent files.
 .PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build	\
         cmake-server-clean cmake-modular-build cmake-modular					\
         cmake-modular-binary cmake-modular-clean cmake-modular-server	\
         cmake-modular-server-build cmake-modular-server-binary				\
-        cmake-modular-server-clean clion-staging
+        cmake-modular-server-clean
 
 
 ################################################################################
@@ -1368,7 +1386,7 @@ tools/cloudshell: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 tools/bacloud: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@echo Generating tools/bacloud...
 	@PYTHONPATH=tools python3 -m \
- efrotools.genwrapper bacloud batools.bacloud tools/bacloud
+ efrotools.genwrapper bacloud bacommontools.bacloud tools/bacloud
 
 .clang-format: config/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
@@ -1474,7 +1492,9 @@ WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)
 WINCFGLC = $(shell echo $(WINDOWS_CONFIGURATION) | tr A-Z a-z)
 
-# When using CLion, our cmake dir is root. Expose .clang-format there too.
+# Our cmake dir acts as a secondary project root for some IDEs/tools.
+# Expose .clang-format there too so clangd picks it up for files whose
+# paths resolve through ballisticakit-cmake.
 ballisticakit-cmake/.clang-format: .clang-format
 	@mkdir -p ballisticakit-cmake
 	@cd ballisticakit-cmake && ln -sf ../.clang-format .

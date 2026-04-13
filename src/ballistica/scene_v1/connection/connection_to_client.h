@@ -27,6 +27,15 @@ class ConnectionToClient : public Connection {
   virtual auto GetAsUDP() -> ConnectionToClientUDP*;
   void SetController(ClientControllerInterface* c);
   auto GetPlayerProfiles() const -> PyObject* { return player_profiles_.get(); }
+  /// The classic-inventory purchase legacy-ids owned by this client's
+  /// account as provided by the master server, or ``Py_None`` /
+  /// ``nullptr`` when no list was provided (non-v2-auth connection,
+  /// older master-server version, or master-server-side unknown).
+  /// Python-side callers should treat all "absent" cases as
+  /// ``None``.
+  auto GetClassicPurchases() const -> PyObject* {
+    return classic_purchases_.get();
+  }
   auto build_number() const -> int { return build_number_; }
   void SendScreenMessage(const std::string& s, float r = 1.0f, float g = 1.0f,
                          float b = 1.0f);
@@ -82,6 +91,7 @@ class ConnectionToClient : public Connection {
   std::string token_;
   std::string peer_hash_;
   PythonRef player_profiles_;
+  PythonRef classic_purchases_;
   bool got_v1_auth_from_master_server_{};
   std::vector<millisecs_t> last_chat_times_;
   millisecs_t next_kick_vote_allow_time_{};

@@ -523,7 +523,9 @@ def v2_auth_request(global_app_instance_id: str) -> None | tuple[bool, str]:
     return out
 
 
-def v2_auth_data(token: str) -> None | tuple[str, str, dict]:
+def v2_auth_data(
+    token: str,
+) -> None | tuple[str, str, dict, list[str] | None]:
     """Look up autheneticated v2 account data via a token."""
     assert _babase.in_logic_thread()
 
@@ -541,4 +543,5 @@ def v2_auth_data(token: str) -> None | tuple[str, str, dict]:
         authdata.account_id,
         authdata.account_tag,
         authdata.player_profiles,
+        authdata.classic_purchases,
     )

@@ -85,6 +85,15 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         #: device but should be mostly constant.
         device_signature: str
 
+        #: List of classic-inventory purchase legacy-ids owned by
+        #: the connecting account (e.g. ``'characters.kronk'``).
+        #: ``None`` when the master server isn't able to determine
+        #: this — for example on older master-server versions or
+        #: when the account has no classic-inventory record. Custom
+        #: handlers should treat ``None`` as "unknown" and not as
+        #: "owns nothing".
+        classic_purchases: list[str] | None = None
+
     @dataclass
     class V2AuthResponse:
         """What a V2 auth handler returns."""
@@ -106,6 +115,11 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         account_id: str
         account_tag: str
         player_profiles: dict
+        #: List of classic-inventory purchase legacy-ids owned by
+        #: the connecting account, or ``None`` when the master
+        #: server didn't provide one (unknown — fall back to the
+        #: legacy hacky character-list path).
+        classic_purchases: list[str] | None
         expire_time: float
 
     from baclassic._music import MusicPlayMode
@@ -216,7 +230,11 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
     @final
     async def run_v2_auth_handler(
-        self, request: V2AuthRequest, player_profiles: Any, token: str
+        self,
+        request: V2AuthRequest,
+        player_profiles: Any,
+        classic_purchases: list[str] | None,
+        token: str,
     ) -> V2AuthResponse:
         """:meta private:"""
         assert babase.in_logic_thread()
@@ -230,6 +248,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                 account_id=request.account_id,
                 account_tag=request.account_tag,
                 player_profiles=player_profiles,
+                classic_purchases=classic_purchases,
                 expire_time=now + 30.0,
             )
 

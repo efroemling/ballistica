@@ -70,14 +70,20 @@ class DirectoryManifest:
             fullfilepath = os.path.join(pathstr, filepath)
             if not os.path.isfile(fullfilepath):
                 raise RuntimeError(f'File not found: "{fullfilepath}".')
+            # Stream the file through sha256 to keep peak memory
+            # bounded — manifest generation must not load arbitrarily
+            # large files into RAM, since the whole point of streaming
+            # uploads is to handle files larger than process memory.
+            filesize = 0
             with open(fullfilepath, 'rb') as infile:
-                filebytes = infile.read()
-                filesize = len(filebytes)
-                sha.update(filebytes)
+                for chunk in iter(lambda: infile.read(1024 * 1024), b''):
+                    sha.update(chunk)
+                    filesize += len(chunk)
             return (
                 filepath,
                 DirectoryManifestFile(
-                    hash_sha256=sha.hexdigest(), size=filesize
+                    hash_sha256=sha.hexdigest(),
+                    size=filesize,
                 ),
             )
 

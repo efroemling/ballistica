@@ -593,7 +593,11 @@ def check_sync_states(self: ProjectUpdater) -> None:
     # their last sync.
     if (
         subprocess.run(
-            [os.path.join(self.projroot, 'tools/pcommand'), 'sync', 'check'],
+            [
+                os.path.join(self.projroot, 'tools/pcommand'),
+                'efrosync',
+                '--check',
+            ],
             check=False,
         ).returncode
         != 0
@@ -617,9 +621,10 @@ def check_misc(self: ProjectUpdater) -> None:
         ) as infile:
             msconfig = infile.read()
             if (
-                '// V2 Master Server ------------------------'
-                '------------------------------------\n'
+                '// Compile-Time Fleet Selection '
+                '------------------------------------------------\n'
                 '\n'
+                '// Exactly one of these should be 1.\n'
                 '// PROD\n'
                 '#if 1\n'
             ) not in msconfig:

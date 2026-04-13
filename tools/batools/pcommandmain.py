@@ -19,6 +19,7 @@ from efrotools import pcommand
 # in modules rather than inline here because we'll be able to load them
 # via pyc. pylint: disable=unused-import
 from efrotools.pcommands import (
+    efrosync,
     formatcode,
     formatscripts,
     formatmakefile,
@@ -31,15 +32,9 @@ from efrotools.pcommands import (
     mypy_files,
     dmypy,
     tool_config_install,
-    sync,
-    sync_all,
     scriptfiles,
-    pycharm,
-    clioncode,
     androidstudiocode,
     makefile_target_list,
-    spelling,
-    spelling_all,
     pytest,
     echo,
     copy_win_extra_file,
@@ -72,7 +67,7 @@ from efrotools.pcommands2 import (
     pcommandbatch_speed_test,
     null,
 )
-from bacommontools.pcommands import require_ballistica_api_key
+from bacommontools.pcommands import bacurl, require_ballistica_api_key
 from batools.pcommands import (
     resize_image,
     check_clean_safety,
@@ -145,6 +140,8 @@ from batools.pcommands2 import (
     cst_test,
 )
 from batools.pcommands3 import (
+    test_game_run,
+    test_game_kill,
     compose_docker_gui_release,
     compose_docker_gui_debug,
     compose_docker_server_release,
