@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import weakref
 import logging
 from typing import TYPE_CHECKING, override
 
@@ -39,7 +40,7 @@ class CTFFlag(Flag):
             position=team.base_pos,
             color=team.color,
         )
-        self._team = team
+        self._team = weakref.ref(team)  # Avoid ref cycles.
         self.held_count = 0
         self.counter = bs.newnode(
             'text',
@@ -59,7 +60,10 @@ class CTFFlag(Flag):
     @property
     def team(self) -> Team:
         """The flag's team."""
-        return self._team
+        team = self._team()
+        if team is None:
+            raise RuntimeError('Team no longer exists.')
+        return team
 
 
 class Player(bs.Player['Team']):
@@ -152,6 +156,8 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
     @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         assert bs.app.classic is not None
         return bs.app.classic.getmaps('team_flag')
 
@@ -180,18 +186,24 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def get_instance_description(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if self._score_to_win == 1:
             return 'Steal the enemy flag.'
         return 'Steal the enemy flag ${ARG1} times.', self._score_to_win
 
     @override
     def get_instance_description_short(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if self._score_to_win == 1:
             return 'return 1 flag'
         return 'return ${ARG1} flags', self._score_to_win
 
     @override
     def create_team(self, sessionteam: bs.SessionTeam) -> Team:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # Create our team instance and its initial values.
 
         base_pos = self.map.get_flag_position(sessionteam.id)
@@ -282,6 +294,8 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def on_team_join(self, team: Team) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # Can't do this in create_team because the team's color/etc. have
         # not been wired up yet at that point.
         self._spawn_flag_for_team(team)
@@ -418,6 +432,8 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         results = bs.GameResults()
         for team in self.teams:
             results.set_team_score(team, team.score)
@@ -518,7 +534,7 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
                 if team.flag_return_touches == 1:
                     team.touch_return_timer = bs.Timer(
                         0.1,
-                        call=bs.Call(self._touch_return_update, team),
+                        call=bs.CallStrict(self._touch_return_update, team),
                         repeat=True,
                     )
                     team.touch_return_timer_ticking = None
@@ -621,6 +637,8 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, bs.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment standard behavior.
             self._handle_death_flag_capture(msg.getplayer(Player))
@@ -628,7 +646,9 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
 
         elif isinstance(msg, FlagDiedMessage):
             assert isinstance(msg.flag, CTFFlag)
-            bs.timer(0.1, bs.Call(self._spawn_flag_for_team, msg.flag.team))
+            bs.timer(
+                0.1, bs.CallStrict(self._spawn_flag_for_team, msg.flag.team)
+            )
 
         elif isinstance(msg, FlagPickedUpMessage):
             # Store the last player to hold the flag for scoring purposes.

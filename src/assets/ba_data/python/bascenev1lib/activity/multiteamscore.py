@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to teams mode score screen."""
+
 from __future__ import annotations
 
 from typing import override
@@ -66,7 +67,6 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
     ) -> None:
         """Show scores for individual players."""
         # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
 
         ts_v_offset = 150.0 + y_offset
         ts_h_offs = 80.0 + x_offset
@@ -101,7 +101,6 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
             player_records = []
             valid_players = list(self.stats.get_records().items())
 
-            # noinspection PyUnresolvedReferences
             def _get_player_score_set_entry(
                 player: bs.SessionPlayer,
             ) -> bs.PlayerRecord | None:

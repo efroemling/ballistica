@@ -4,7 +4,6 @@
 # This file was automatically generated from "hockey_stadium.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (0.0, 0.7956858119, 0.0)

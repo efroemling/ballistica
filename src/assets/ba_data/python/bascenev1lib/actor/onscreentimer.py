@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Defines Actor(s)."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
@@ -14,8 +15,6 @@ if TYPE_CHECKING:
 
 class OnScreenTimer(bs.Actor):
     """A handy on-screen timer.
-
-    category: Gameplay Classes
 
     Useful for time-based games where time increases.
     """

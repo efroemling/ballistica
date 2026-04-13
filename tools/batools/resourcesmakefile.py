@@ -13,7 +13,6 @@ from dataclasses import dataclass
 
 from efro.error import CleanError
 
-
 # These paths need to be relative to the dir we're writing the Makefile to.
 ROOT_DIR = '$(PROJ_DIR)'
 TOOLS_DIR = '$(TOOLS_DIR)'

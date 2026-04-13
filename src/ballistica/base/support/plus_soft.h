@@ -23,7 +23,7 @@ class PlusSoftInterface {
   virtual void OnAppUnsuspend() = 0;
   virtual void OnAppShutdown() = 0;
   virtual void OnAppShutdownComplete() = 0;
-  virtual void DoApplyAppConfig() = 0;
+  virtual void ApplyAppConfig() = 0;
   virtual void OnScreenSizeChange() = 0;
   virtual void StepDisplayTime() = 0;
 
@@ -53,7 +53,7 @@ class PlusSoftInterface {
                                            const std::string& signature,
                                            const std::string& order_id,
                                            bool user_initiated) = 0;
-  virtual auto GetPublicV1AccountID() -> std::string = 0;
+  virtual auto GetAccountID() -> std::string = 0;
   virtual void DirectSendV1CloudLogs(const std::string& prefix,
                                      const std::string& suffix, bool instant,
                                      int* result) = 0;
@@ -63,6 +63,8 @@ class PlusSoftInterface {
       -> std::string = 0;
   virtual void V1SetClientInfo(JsonDict* dict) = 0;
   virtual void DoPushSubmitAnalyticsCountsCall(const std::string& sval) = 0;
+  virtual void SetHaveIncentivizedAd(bool val) = 0;
+  virtual auto HaveIncentivizedAd() -> bool = 0;
 };
 
 }  // namespace ballistica::base

@@ -24,10 +24,9 @@ struct WidgetMessage {
     // In order to work in all-joystick environments,
     // don't rely on the following to be available (they're just a luxury).
     kKey,
-    kTabNext,
-    kTabPrev,
     kMouseDown,
     kMouseUp,
+    kMouseCancel,
     kMouseWheel,
     kMouseWheelH,
     kMouseWheelVelocity,

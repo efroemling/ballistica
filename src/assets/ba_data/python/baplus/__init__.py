@@ -3,23 +3,27 @@
 """Closed-source bits of ballistica.
 
 This code concerns sensitive things like accounts and master-server
-communication so the native C++ parts of it remain closed. Native
+communication, so the native C++ parts of it remain closed. Native
 precompiled static libraries of this portion are provided for those who
-want to compile the rest of the engine, or a fully open-source app
-can also be built by removing this feature-set.
+want to compile the rest of the engine, or a fully open-source app can
+also be built by removing this feature-set.
 """
 
-from __future__ import annotations
+# ba_meta require api 9
 
-# Note: there's not much here. Most interaction with this feature-set
-# should go through ba*.app.plus.
+# Note: Stuff in this module mostly exists for type-checking and docs
+# generation and should generally not be imported or used at runtime.
+# Generally all interaction with this feature-set should go through
+# `ba*.app.plus`.
 
 import logging
 
 from baplus._cloud import CloudSubsystem
 from baplus._appsubsystem import PlusAppSubsystem
+from baplus._ads import AdsSubsystem
 
 __all__ = [
+    'AdsSubsystem',
     'CloudSubsystem',
     'PlusAppSubsystem',
 ]

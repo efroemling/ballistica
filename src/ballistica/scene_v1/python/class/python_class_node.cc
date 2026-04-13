@@ -28,26 +28,24 @@ void PythonClassNode::SetupType(PyTypeObject* cls) {
   PythonClass::SetupType(cls);
   cls->tp_repr = (reprfunc)tp_repr;
   // Fully qualified type path we will be exposed as:
-  cls->tp_name = "babase.Node";
+  cls->tp_name = "bascenev1.Node";
   cls->tp_basicsize = sizeof(PythonClassNode);
   cls->tp_doc =
       "Reference to a Node; the low level building block of a game.\n"
       "\n"
-      "Category: **Gameplay Classes**\n"
-      "\n"
       "At its core, a game is nothing more than a scene of Nodes\n"
       "with attributes getting interconnected or set over time.\n"
       "\n"
-      "A bascenev1.Node instance should be thought of as a weak-reference\n"
-      "to a game node; *not* the node itself. This means a Node's\n"
-      "lifecycle is completely independent of how many Python references\n"
-      "to it exist. To explicitly add a new node to the game, use\n"
-      "bascenev1.newnode(), and to explicitly delete one,\n"
-      " use bascenev1.Node.delete().\n"
-      "babase.Node.exists() can be used to determine if a Node still points\n"
-      "to a live node in the game.\n"
+      "A :class:`bascenev1.Node` instance should be thought of as a\n"
+      "weak-reference to a game node; *not* the node itself. This means\n"
+      "a Node's lifecycle is completely independent of how many Python\n"
+      "references to it exist. To explicitly add a new node to the game, use\n"
+      ":meth:`bascenev1.newnode()`, and to explicitly delete one, use\n"
+      ":meth:`bascenev1.Node.delete()`.\n"
+      ":meth:`bascenev1.Node.exists()` can be used to determine if a Node\n"
+      "still points to a live node in the game.\n"
       "\n"
-      "You can use `ba.Node(None)` to instantiate an invalid\n"
+      "You can use ``bascenev1.Node(None)`` to instantiate an invalid\n"
       "Node reference (sometimes used as attr values/etc).";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
@@ -99,7 +97,7 @@ auto PythonClassNode::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
   // Clion incorrectly things s_create_empty will always be false.
 #pragma clang diagnostic push
@@ -214,20 +212,22 @@ auto PythonClassNode::GetDelegate(PythonClassNode* self, PyObject* args,
   if (!PyType_Check(tp_obj)) {
     throw Exception("Passed type arg is not a type.", PyExcType::kType);
   }
-  if (PyObject* obj = node->GetDelegate()) {
-    int isinst = PyObject_IsInstance(obj, tp_obj);
+  // GetDelegate() returns a new ref or nullptr.
+  auto obj{PythonRef::StolenSoft(node->GetDelegate())};
+  if (obj.exists()) {
+    // if (PyObject* obj = node->GetDelegateOld()) {
+    int isinst = PyObject_IsInstance(obj.get(), tp_obj);
     if (isinst == -1) {
       return nullptr;
     }
     if (isinst) {
-      Py_INCREF(obj);
-      return obj;
+      return obj.NewRef();
     } else {
       if (doraise) {
         throw Exception("Requested delegate type not found on '"
                             + node->type()->name()
                             + "' node. (type=" + Python::ObjToString(tp_obj)
-                            + ", delegate=" + Python::ObjToString(obj) + ")",
+                            + ", delegate=" + obj.Str() + ")",
                         PyExcType::kDelegateNotFound);
       }
     }
@@ -411,9 +411,9 @@ PyMethodDef PythonClassNode::tp_methods[] = {
     {"getnodetype", (PyCFunction)GetNodeType, METH_NOARGS,
      "getnodetype() -> str\n"
      "\n"
-     "Return the type of Node referenced by this object as a string.\n"
+     "Return the internal type of node referenced by this object as a string.\n"
      "(Note this is different from the Python type which is always\n"
-     " bascenev1.Node)"},
+     ":class:`bascenev1.Node`)"},
     {"getname", (PyCFunction)GetName, METH_NOARGS,
      "getname() -> str\n"
      "\n"
@@ -426,28 +426,27 @@ PyMethodDef PythonClassNode::tp_methods[] = {
      "\n"
      "If the node has no delegate or it is not an instance of the passed\n"
      "type, then None will be returned. If 'doraise' is True, then an\n"
-     "babase.DelegateNotFoundError will be raised instead."},
+     "bascenev1.DelegateNotFoundError will be raised instead."},
     {"delete", (PyCFunction)Delete, METH_VARARGS | METH_KEYWORDS,
      "delete(ignore_missing: bool = True) -> None\n"
      "\n"
      "Delete the node. Ignores already-deleted nodes if `ignore_missing`\n"
-     "is True; otherwise a bascenev1.NodeNotFoundError is thrown."},
+     "is True; otherwise a :class:`babase.NodeNotFoundError` is thrown."},
     {"handlemessage", (PyCFunction)HandleMessage, METH_VARARGS,
      "handlemessage(*args: Any) -> None\n"
      "\n"
      "General message handling; can be passed any message object.\n"
      "\n"
-     "All standard message objects are forwarded along to the\n"
-     "bascenev1.Node's delegate for handling (generally the bascenev1.Actor\n"
-     "that made the node).\n"
+     "All standard message objects are forwarded along to the node's\n"
+     "delegate for handling (generally the :class:`bascenev1.Actor` that\n"
+     "made the node).\n"
      "\n"
-     "bascenev1.Node-s are unique, however, in that they can be passed a\n"
-     "second form of message; 'node-messages'.  These consist of a string\n"
-     "type-name as a first argument along with the args specific to that type\n"
-     "name as additional arguments.\n"
-     "Node-messages communicate directly with the low-level node layer\n"
-     "and are delivered simultaneously on all game clients,\n"
-     "acting as an alternative to setting node attributes."},
+     "Nodes also support a second form of message; 'node-messages'.\n"
+     "These consist of a string type-name as a first argument along with\n"
+     "the args specific to that type name as additional arguments.\n"
+     "Node-messages communicate directly with the low-level node\n"
+     "layer and are delivered simultaneously on all game clients, acting\n"
+     "as an alternative to setting node attributes."},
     {"add_death_action", (PyCFunction)AddDeathAction, METH_VARARGS,
      "add_death_action(action: Callable[[], None]) -> None\n"
      "\n"
@@ -463,11 +462,11 @@ PyMethodDef PythonClassNode::tp_methods[] = {
      "setting the target attribute to any value or connecting another\n"
      "node attribute to it.\n"
      "\n"
-     "##### Example\n"
-     "Create a locator and attach a light to it:\n"
-     ">>> light = bascenev1.newnode('light')\n"
-     "... loc = bascenev1.newnode('locator', attrs={'position': (0, 10, 0)})\n"
-     "... loc.connectattr('position', light, 'position')\n"},
+     "Example: Create a locator and attach a light to it::\n"
+     "\n"
+     "    light = bascenev1.newnode('light')\n"
+     "    loc = bascenev1.newnode('locator', attrs={'position': (0, 10, 0)})\n"
+     "    loc.connectattr('position', light, 'position')\n"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};

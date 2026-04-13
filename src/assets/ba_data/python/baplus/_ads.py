@@ -1,0 +1,236 @@
+# Released under the MIT License. See LICENSE for details.
+#
+"""Functionality related to ads."""
+
+from __future__ import annotations
+
+import time
+import asyncio
+import logging
+from typing import TYPE_CHECKING
+
+import babase
+
+import _baplus
+
+if TYPE_CHECKING:
+    from typing import Callable, Any
+
+
+class AdsSubsystem:
+    """Subsystem for ads functionality in the app.
+
+    Access the single shared instance of this class via the
+    :attr:`~baplus.PlusAppSubsystem.ads` attr on the
+    :class:`~baplus.PlusAppSubsystem` class.
+    """
+
+    def __init__(self) -> None:
+        self.last_ad_network = 'unknown'
+        self.last_ad_network_set_time = time.time()
+        self.ad_amt: float | None = None
+        self.last_ad_purpose = 'invalid'
+        self.attempted_first_ad = False
+        self.last_in_game_ad_remove_message_show_time: float | None = None
+        self.last_ad_completion_time: float | None = None
+        self.last_ad_was_short = False
+        self._fallback_task: asyncio.Task | None = None
+
+    def do_remove_in_game_ads_message(self) -> None:
+        """:meta private:"""
+
+        # Print this message once every 10 minutes at most.
+        tval = babase.apptime()
+        if self.last_in_game_ad_remove_message_show_time is None or (
+            tval - self.last_in_game_ad_remove_message_show_time > 60 * 10
+        ):
+            self.last_in_game_ad_remove_message_show_time = tval
+            with babase.ContextRef.empty():
+                babase.apptimer(
+                    1.0,
+                    lambda: babase.screenmessage(
+                        babase.Lstr(
+                            resource='removeInGameAdsTokenPurchaseText'
+                        ),
+                        color=(1, 1, 0),
+                    ),
+                )
+
+    def can_show_ad(self) -> bool:
+        """Can we show an ad?
+
+        :meta private:
+        """
+        return _baplus.can_show_ad()
+
+    def has_video_ads(self) -> bool:
+        """Are video ads available?
+
+        :meta private:
+        """
+        return _baplus.has_video_ads()
+
+    def have_incentivized_ad(self) -> bool:
+        """Is an incentivized ad available?
+
+        :meta private:
+        """
+        return _baplus.have_incentivized_ad()
+
+    def show_ad(
+        self, purpose: str, on_completion_call: Callable[[], Any] | None = None
+    ) -> None:
+        """:meta private:"""
+        self.last_ad_purpose = purpose
+        _baplus.show_ad(purpose, on_completion_call)
+
+    def show_ad_2(
+        self,
+        purpose: str,
+        on_completion_call: Callable[[bool], Any] | None = None,
+    ) -> None:
+        """:meta private:"""
+        self.last_ad_purpose = purpose
+        _baplus.show_ad_2(purpose, on_completion_call)
+
+    def call_after_ad(self, call: Callable[[], Any]) -> None:
+        """Run a call after potentially showing an ad."""
+
+        app = babase.app
+        plus = app.plus
+        classic = app.classic
+        assert plus is not None
+        assert classic is not None
+
+        show = True
+
+        # No ads without net-connections, etc.
+        if not self.can_show_ad():
+            show = False
+
+        if show:
+            interval: float | None
+            launch_count = app.config.get('launchCount', 0)
+
+            # If we're seeing short ads we may want to space them differently.
+            interval_mult = (
+                plus.get_v1_account_misc_read_val('ads.shortIntervalMult', 1.0)
+                if self.last_ad_was_short
+                else 1.0
+            )
+            if self.ad_amt is None:
+                if launch_count <= 1:
+                    self.ad_amt = plus.get_v1_account_misc_read_val(
+                        'ads.startVal1', 0.99
+                    )
+                else:
+                    self.ad_amt = plus.get_v1_account_misc_read_val(
+                        'ads.startVal2', 1.0
+                    )
+                interval = None
+            else:
+                # So far we're cleared to show; now calc our
+                # ad-show-threshold and see if we should *actually* show
+                # (we reach our threshold faster the longer we've been
+                # playing).
+                base = 'ads' if self.has_video_ads() else 'ads2'
+                min_lc = plus.get_v1_account_misc_read_val(base + '.minLC', 0.0)
+                max_lc = plus.get_v1_account_misc_read_val(base + '.maxLC', 5.0)
+                min_lc_scale = plus.get_v1_account_misc_read_val(
+                    base + '.minLCScale', 0.25
+                )
+                max_lc_scale = plus.get_v1_account_misc_read_val(
+                    base + '.maxLCScale', 0.34
+                )
+                min_lc_interval = plus.get_v1_account_misc_read_val(
+                    base + '.minLCInterval', 360
+                )
+                max_lc_interval = plus.get_v1_account_misc_read_val(
+                    base + '.maxLCInterval', 300
+                )
+                if launch_count < min_lc:
+                    lc_amt = 0.0
+                elif launch_count > max_lc:
+                    lc_amt = 1.0
+                else:
+                    lc_amt = (float(launch_count) - min_lc) / (max_lc - min_lc)
+                incr = (1.0 - lc_amt) * min_lc_scale + lc_amt * max_lc_scale
+                interval = (
+                    1.0 - lc_amt
+                ) * min_lc_interval + lc_amt * max_lc_interval
+                self.ad_amt += incr
+            assert self.ad_amt is not None
+            if self.ad_amt >= 1.0:
+                self.ad_amt = self.ad_amt % 1.0
+                self.attempted_first_ad = True
+
+            # After we've reached the traditional show-threshold once,
+            # try again whenever its been INTERVAL since our last successful
+            # show.
+            elif self.attempted_first_ad and (
+                self.last_ad_completion_time is None
+                or (
+                    interval is not None
+                    and babase.apptime() - self.last_ad_completion_time
+                    > (interval * interval_mult)
+                )
+            ):
+                # Reset our other counter too in this case.
+                self.ad_amt = 0.0
+            else:
+                show = False
+
+        # If we're *still* cleared to show, tell the system to show.
+        if show:
+            # As a safety-check, we set up an object that will run the
+            # completion callback if we've returned and sat for several
+            # seconds (in case some random ad network doesn't properly
+            # deliver its completion callback).
+
+            payload = _AdPayload(call)
+
+            # Set up our backup.
+            with babase.ContextRef.empty():
+                # Note to self: Previously this was a simple 5 second
+                # timer because the app got totally suspended while ads
+                # were showing (which delayed the timer), but these days
+                # the app may continue to run, so we need to be more
+                # careful and only fire the fallback after we see that
+                # the app has been front-and-center for several seconds.
+                async def add_fallback_task() -> None:
+                    activesecs = 5
+                    while activesecs > 0:
+                        if babase.app.active:
+                            activesecs -= 1
+                        await asyncio.sleep(1.0)
+                    payload.run(fallback=True)
+
+                babase.app.create_async_task(add_fallback_task())
+
+            self.show_ad('between_game', on_completion_call=payload.run)
+        else:
+            babase.pushcall(call)  # Just run the callback without the ad.
+
+
+class _AdPayload:
+    def __init__(self, pcall: Callable[[], Any]):
+        self._call = pcall
+        self._ran = False
+
+    def run(self, fallback: bool = False) -> None:
+        """Run the payload."""
+        plus = babase.app.plus
+        assert plus is not None
+        if not self._ran:
+            if fallback:
+                lanst = plus.ads.last_ad_network_set_time
+                logging.error(
+                    'Relying on fallback ad-callback! '
+                    'last network: %s (set %s seconds ago);'
+                    ' purpose=%s.',
+                    plus.ads.last_ad_network,
+                    time.time() - lanst,
+                    plus.ads.last_ad_purpose,
+                )
+            babase.pushcall(self._call)
+            self._ran = True

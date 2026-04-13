@@ -9,17 +9,24 @@ import random
 import weakref
 from typing import TYPE_CHECKING, override
 
+from bacommon.locale import LocaleResolved
 import bascenev1 as bs
 import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any
 
+    import bacommon.classic
+
+    from bascenev1lib.actor.spazbot import DemoSpazBotSet
+
 
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
     """Activity showing the rotating main menu bg stuff."""
 
     _stdassets = bs.Dependency(bs.AssetPackage, 'stdassets@1')
+
+    _did_initial_transition = False
 
     def __init__(self, settings: dict):
         super().__init__(settings)
@@ -31,12 +38,9 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         self.version: bs.NodeActor | None = None
         self.beta_info: bs.NodeActor | None = None
         self.beta_info_2: bs.NodeActor | None = None
-        self.bottom: bs.NodeActor | None = None
-        self.vr_bottom_fill: bs.NodeActor | None = None
-        self.vr_top_fill: bs.NodeActor | None = None
-        self.terrain: bs.NodeActor | None = None
+        self.map: bs.Map | None = None
+        self.bot_sets: list[DemoSpazBotSet] = []
         self.trees: bs.NodeActor | None = None
-        self.bgterrain: bs.NodeActor | None = None
         self._ts = 0.86
         self._language: str | None = None
         self._update_timer: bs.Timer | None = None
@@ -46,9 +50,13 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
     @override
     def on_transition_in(self) -> None:
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         super().on_transition_in()
+
+        from bascenev1lib.maps import ThePad
+
+        ThePad.preload()
+        self.map = ThePad(main_menu_style=True)
+
         random.seed(123)
         app = bs.app
         env = app.env
@@ -76,17 +84,14 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 },
             )
         )
-        if (
-            not app.classic.main_menu_did_initial_transition
-            and self.my_name is not None
-        ):
+        if not self._did_initial_transition and self.my_name is not None:
             assert self.my_name.node
             bs.animate(self.my_name.node, 'opacity', {2.3: 0, 3.0: 1.0})
 
         # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
-        if env.test:
-            pos = (230, -5)
+        if env.variant is type(env.variant).TEST_BUILD:
+            pos = (230, 35)
             self.beta_info = bs.NodeActor(
                 bs.newnode(
                     'text',
@@ -103,21 +108,12 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     },
                 )
             )
-            if not app.classic.main_menu_did_initial_transition:
+            if not self._did_initial_transition:
                 assert self.beta_info.node
                 bs.animate(self.beta_info.node, 'opacity', {1.3: 0, 1.8: 1.0})
 
-        mesh = bs.getmesh('thePadLevel')
         trees_mesh = bs.getmesh('trees')
-        bottom_mesh = bs.getmesh('thePadLevelBottom')
-        color_texture = bs.gettexture('thePadLevelColor')
         trees_texture = bs.gettexture('treesColor')
-        bgtex = bs.gettexture('menuBG')
-        bgmesh = bs.getmesh('thePadBG')
-
-        # Load these last since most platforms don't use them.
-        vr_bottom_fill_mesh = bs.getmesh('thePadVRFillBottom')
-        vr_top_fill_mesh = bs.getmesh('thePadVRFillTop')
 
         gnode = self.globalsnode
         gnode.camera_mode = 'rotate'
@@ -128,51 +124,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         gnode.vignette_outer = (0.45, 0.55, 0.54)
         gnode.vignette_inner = (0.99, 0.98, 0.98)
 
-        self.bottom = bs.NodeActor(
-            bs.newnode(
-                'terrain',
-                attrs={
-                    'mesh': bottom_mesh,
-                    'lighting': False,
-                    'reflection': 'soft',
-                    'reflection_scale': [0.45],
-                    'color_texture': color_texture,
-                },
-            )
-        )
-        self.vr_bottom_fill = bs.NodeActor(
-            bs.newnode(
-                'terrain',
-                attrs={
-                    'mesh': vr_bottom_fill_mesh,
-                    'lighting': False,
-                    'vr_only': True,
-                    'color_texture': color_texture,
-                },
-            )
-        )
-        self.vr_top_fill = bs.NodeActor(
-            bs.newnode(
-                'terrain',
-                attrs={
-                    'mesh': vr_top_fill_mesh,
-                    'vr_only': True,
-                    'lighting': False,
-                    'color_texture': bgtex,
-                },
-            )
-        )
-        self.terrain = bs.NodeActor(
-            bs.newnode(
-                'terrain',
-                attrs={
-                    'mesh': mesh,
-                    'color_texture': color_texture,
-                    'reflection': 'soft',
-                    'reflection_scale': [0.3],
-                },
-            )
-        )
         self.trees = bs.NodeActor(
             bs.newnode(
                 'terrain',
@@ -185,31 +136,19 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 },
             )
         )
-        self.bgterrain = bs.NodeActor(
-            bs.newnode(
-                'terrain',
-                attrs={
-                    'mesh': bgmesh,
-                    'color': (0.92, 0.91, 0.9),
-                    'lighting': False,
-                    'background': True,
-                    'color_texture': bgtex,
-                },
-            )
-        )
 
-        self._update_timer = bs.Timer(1.0, self._update, repeat=True)
+        self._update_timer = bs.Timer(0.1, self._update, repeat=True)
         self._update()
 
         # Hopefully this won't hitch but lets space these out anyway.
-        bs.add_clean_frame_callback(bs.WeakCall(self._start_preloads))
+        bs.add_clean_frame_callback(bs.WeakCallStrict(self._start_preloads))
 
         random.seed()
 
         # Need to update this for toolbar mode; currenly doesn't fit.
-        if bool(False):
-            if not (env.demo or env.arcade):
-                self._news = NewsDisplay(self)
+        # if bool(False):
+        #     if not (env.demo or env.arcade):
+        #         self._news = NewsDisplay(self)
 
         self._attract_mode_timer = bs.Timer(
             3.12, self._update_attract_mode, repeat=True
@@ -217,13 +156,9 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
         app.classic.invoke_main_menu_ui()
 
-        app.classic.main_menu_did_initial_transition = True
-
     def _update(self) -> None:
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-statements
         app = bs.app
-        env = app.env
         assert app.classic is not None
 
         # Update logo in case it changes.
@@ -247,7 +182,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         lang = app.lang.language
         if lang != self._language:
             self._language = lang
-            y = -15
+            y = 20
             base_scale = 1.1
             self._word_actors = []
             base_delay = 0.8
@@ -255,7 +190,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             delay_inc = 0.02
 
             # Come on faster after the first time.
-            if app.classic.main_menu_did_initial_transition:
+            if self._did_initial_transition:
                 base_delay = 0.0
                 delay = base_delay
                 delay_inc = 0.02
@@ -263,11 +198,14 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             # We draw higher in kiosk mode (make sure to test this
             # when making adjustments) for now we're hard-coded for
             # a few languages.. should maybe look into generalizing this?..
-            if app.lang.language == 'Chinese':
+            if (
+                app.locale.current_locale.resolved
+                is LocaleResolved.CHINESE_SIMPLIFIED
+            ):
                 base_x = -270.0
                 x = base_x - 20.0
                 spacing = 85.0 * base_scale
-                y_extra = 0.0 if (env.demo or env.arcade) else 0.0
+                y_extra = 0.0
                 self._make_logo(
                     x - 110 + 50,
                     113 + y + 1.2 * y_extra,
@@ -332,7 +270,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 base_x = -170
                 x = base_x - 20
                 spacing = 55 * base_scale
-                y_extra = 0 if (env.demo or env.arcade) else 0
+                y_extra = 0
                 xv1 = x
                 delay1 = delay
                 for shadow in (True, False):
@@ -341,7 +279,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     self._make_word(
                         'B',
                         x - 50,
-                        y - 14 + 0.8 * y_extra,
+                        y - 23 + 0.8 * y_extra,
                         scale=1.3 * base_scale,
                         delay=delay,
                         vr_depth_offset=3,
@@ -373,7 +311,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     self._make_word(
                         'S',
                         x,
-                        y - 15 + 0.8 * y_extra,
+                        y - 25 + 0.8 * y_extra,
                         scale=1.35 * base_scale,
                         delay=delay,
                         vr_depth_offset=14,
@@ -440,8 +378,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         shadow: bool = False,
     ) -> None:
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         if shadow:
             word_obj = bs.NodeActor(
                 bs.newnode(
@@ -568,7 +504,6 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         rotate: float = 0.0,
         vr_depth_offset: float = 0.0,
     ) -> None:
-        # pylint: disable=too-many-locals
         if custom_texture is None:
             custom_texture = self._get_custom_logo_tex_name()
         self._custom_logo_tex_name = custom_texture
@@ -629,7 +564,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         if (
             custom_texture is None
             and bs.app.classic is not None
-            and not bs.app.classic.main_menu_did_initial_transition
+            and not self._did_initial_transition
         ):
             jitter()
             cmb = bs.newnode('combine', owner=logo.node, attrs={'size': 2})
@@ -654,6 +589,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 delay + 0.5: 360.0,
             }
             bs.animate(logo.node, 'rotate', keys)
+            type(self)._did_initial_transition = True
         else:
             # For all other cases do a simple scale up animation.
             jitter()
@@ -719,7 +655,7 @@ class NewsDisplay:
         # If we're signed in, fetch news immediately. Otherwise wait
         # until we are signed in.
         self._fetch_timer: bs.Timer | None = bs.Timer(
-            1.0, bs.WeakCall(self._try_fetching_news), repeat=True
+            1.0, bs.WeakCallStrict(self._try_fetching_news), repeat=True
         )
         self._try_fetching_news()
 
@@ -833,7 +769,7 @@ class NewsDisplay:
             ]
             self._phrase_change_timer = bs.Timer(
                 (self._message_duration + self._message_spacing),
-                bs.WeakCall(self._change_phrase),
+                bs.WeakCallStrict(self._change_phrase),
                 repeat=True,
             )
 

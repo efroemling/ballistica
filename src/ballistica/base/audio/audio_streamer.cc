@@ -5,6 +5,8 @@
 #include <cstdio>
 
 #include "ballistica/base/base.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 
 // Need to move away from OpenAL on Apple stuff.
 #if __clang__
@@ -89,9 +91,10 @@ void AudioStreamer::Update() {
   // A fun anomaly in the linux version; we sometimes get more
   // "processed" buffers than we have queued.
   if (queued < processed) {
-    g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                "Streamer oddness: queued(" + std::to_string(queued)
-                    + "); processed(" + std::to_string(processed) + ")");
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                         "Streamer oddness: queued(" + std::to_string(queued)
+                             + "); processed(" + std::to_string(processed)
+                             + ")");
     processed = queued;
   }
 

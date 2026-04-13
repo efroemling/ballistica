@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to coop-mode sessions."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
@@ -20,13 +21,10 @@ TEAM_NAMES = ['Good Guys']
 
 
 class CoopSession(Session):
-    """A bascenev1.Session which runs cooperative-mode games.
+    """A session which runs cooperative-mode games.
 
-    Category: **Gameplay Classes**
-
-    These generally consist of 1-4 players against
-    the computer and include functionality such as
-    high score lists.
+    These generally consist of 1-4 players against the computer and
+    include functionality such as high score lists.
     """
 
     use_teams = True
@@ -188,7 +186,9 @@ class CoopSession(Session):
     def on_player_leave(self, sessionplayer: bascenev1.SessionPlayer) -> None:
         super().on_player_leave(sessionplayer)
 
-        _bascenev1.timer(2.0, babase.WeakCall(self._handle_empty_activity))
+        _bascenev1.timer(
+            2.0, babase.WeakCallStrict(self._handle_empty_activity)
+        )
 
     def _handle_empty_activity(self) -> None:
         """Handle cases where all players have left the current activity."""
@@ -263,18 +263,17 @@ class CoopSession(Session):
             with activity.context:
                 activity.end(results={'outcome': 'restart'}, force=True)
 
-    # noinspection PyUnresolvedReferences
     @override
     def on_activity_end(
         self, activity: bascenev1.Activity, results: Any
     ) -> None:
+        # pylint: disable=too-many-statements
         """Method override for co-op sessions.
 
         Jumps between co-op games and score screens.
         """
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         # pylint: disable=cyclic-import
         from bascenev1lib.activity.coopscore import CoopScoreScreen
         from bascenev1lib.tutorial import TutorialActivity
@@ -321,13 +320,17 @@ class CoopSession(Session):
             else:
                 next_game = self._current_game_instance
 
+            variant = babase.app.env.variant
+            vart = type(variant)
+            arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
             # Special case: if we're coming from a joining-activity
             # and will be going into onslaught-training, show the
             # tutorial first.
             if (
                 isinstance(activity, JoinActivity)
                 and self.campaign_level_name == 'Onslaught Training'
-                and not (env.demo or env.arcade)
+                and not arcade_or_demo
             ):
                 if self._tutorial_activity is None:
                     raise RuntimeError('Tutorial not preloaded properly.')
@@ -349,7 +352,7 @@ class CoopSession(Session):
                 # Now flip the current activity..
                 self.setactivity(next_game)
 
-                if not (env.demo or env.arcade):
+                if not arcade_or_demo:
                     if (
                         self.tournament_id is not None
                         and classic.coop_session_args['submit_score']
@@ -358,7 +361,7 @@ class CoopSession(Session):
                             {
                                 'label': babase.Lstr(resource='restartText'),
                                 'resume_on_call': False,
-                                'call': babase.WeakCall(
+                                'call': babase.WeakCallPartial(
                                     self._on_tournament_restart_menu_press
                                 ),
                             }
@@ -367,7 +370,7 @@ class CoopSession(Session):
                         self._custom_menu_ui = [
                             {
                                 'label': babase.Lstr(resource='restartText'),
-                                'call': babase.WeakCall(self.restart),
+                                'call': babase.WeakCallStrict(self.restart),
                             }
                         ]
 

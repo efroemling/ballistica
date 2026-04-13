@@ -29,8 +29,14 @@ class Team(bs.Team[Player]):
     """Our team type for this game."""
 
     def __init__(self, base_pos: Sequence[float], flag: Flag) -> None:
+
+        #: Where our base is.
         self.base_pos = base_pos
+
+        #: Flag for this team.
         self.flag = flag
+
+        #: Current score.
         self.score = 0
 
 
@@ -80,6 +86,7 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
     @override
     @classmethod
     def get_supported_maps(cls, sessiontype: type[bs.Session]) -> list[str]:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         assert bs.app.classic is not None
         return bs.app.classic.getmaps('team_flag')
 
@@ -101,18 +108,21 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def get_instance_description(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         if self._score_to_win == 1:
             return 'Touch the enemy flag.'
         return 'Touch the enemy flag ${ARG1} times.', self._score_to_win
 
     @override
     def get_instance_description_short(self) -> str | Sequence:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         if self._score_to_win == 1:
             return 'touch 1 flag'
         return 'touch ${ARG1} flags', self._score_to_win
 
     @override
     def create_team(self, sessionteam: bs.SessionTeam) -> Team:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
         shared = SharedObjects.get()
         base_pos = self.map.get_flag_position(sessionteam.id)
         bs.newnode(
@@ -139,7 +149,7 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                 (
                     'call',
                     'at_connect',
-                    bs.Call(self._handle_base_collide, team),
+                    bs.CallStrict(self._handle_base_collide, team),
                 ),
             ),
         )
@@ -159,6 +169,8 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def on_team_join(self, team: Team) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # Can't do this in create_team because the team's color/etc. have
         # not been wired up yet at that point.
         self._update_scoreboard()
@@ -171,6 +183,8 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, bs.PlayerDiedMessage):
             super().handlemessage(msg)  # Augment standard.
             self.respawn_player(msg.getplayer(Player))
@@ -256,7 +270,7 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
                             self._teleport(player, new_pos, random_num)
                             bs.timer(
                                 0.01,
-                                bs.Call(
+                                bs.CallStrict(
                                     self._teleport, player, new_pos, random_num
                                 ),
                             )

@@ -29,6 +29,7 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/event_loop.h"
 
@@ -36,7 +37,7 @@ namespace ballistica::base {
 
 const float kScreenTextZDepth{-0.06f};
 const float kProgressBarZDepth{0.0f};
-const int kProgressBarFadeTime{500};
+const int kProgressBarFadeTime{250};
 const float kDebugImgZDepth{-0.04f};
 const float kScreenMeshZDepth{-0.05f};
 
@@ -108,11 +109,11 @@ void Graphics::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
 void Graphics::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 
-void Graphics::DoApplyAppConfig() {
+void Graphics::ApplyAppConfig() {
   assert(g_base->InLogicThread());
 
-  // Any time we load the config we ship a new graphics-settings to
-  // the graphics server since something likely changed.
+  // Any time we load the config we ship a new graphics-settings to the
+  // graphics server since something likely changed.
   graphics_settings_dirty_ = true;
 
   show_fps_ = g_base->app_config->Resolve(AppConfig::BoolID::kShowFPS);
@@ -184,7 +185,8 @@ void Graphics::AddCleanFrameCommand(const Object::Ref<PythonContextCall>& c) {
 void Graphics::RunCleanFrameCommands() {
   assert(g_base->InLogicThread());
   for (auto&& i : clean_frame_commands_) {
-    i->Run();
+    // Can't run immediately as we're in a frame-draw.
+    i->Schedule();
   }
   clean_frame_commands_.clear();
 }
@@ -204,7 +206,7 @@ auto Graphics::TextureQualityFromAppConfig() -> TextureQualityRequest {
   } else if (texqualstr == "Low") {
     texture_quality_requested = TextureQualityRequest::kLow;
   } else {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBaGraphics, LogLevel::kError,
         "Invalid texture quality: '" + texqualstr + "'; defaulting to low.");
     texture_quality_requested = TextureQualityRequest::kLow;
@@ -222,8 +224,8 @@ auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
   } else if (v_sync == "Never") {
     return VSyncRequest::kNever;
   }
-  g_core->Log(LogName::kBaGraphics, LogLevel::kError,
-              "Invalid 'Vertical Sync' value: '" + v_sync + "'");
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                       "Invalid 'Vertical Sync' value: '" + v_sync + "'");
   return VSyncRequest::kNever;
 }
 
@@ -242,7 +244,7 @@ auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
   } else if (gqualstr == "Low") {
     graphics_quality_requested = GraphicsQualityRequest::kLow;
   } else {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBaGraphics, LogLevel::kError,
         "Invalid graphics quality: '" + gqualstr + "'; defaulting to auto.");
     graphics_quality_requested = GraphicsQualityRequest::kAuto;
@@ -253,13 +255,13 @@ auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
 void Graphics::SetGyroEnabled(bool enable) {
   // If we're turning back on, suppress gyro updates for a bit.
   if (enable && !gyro_enabled_) {
-    last_suppress_gyro_time_ = g_core->GetAppTimeMicrosecs();
+    last_suppress_gyro_time_ = g_core->AppTimeMicrosecs();
   }
   gyro_enabled_ = enable;
 }
 
 void Graphics::UpdateProgressBarProgress(float target) {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
   float p = target;
   if (p < 0) {
     p = 0;
@@ -274,7 +276,7 @@ void Graphics::UpdateProgressBarProgress(float target) {
 }
 
 void Graphics::DrawProgressBar(RenderPass* pass, float opacity) {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
   float amount = progress_bar_progress_;
   if (amount < 0) {
     amount = 0;
@@ -296,7 +298,7 @@ void Graphics::DrawProgressBar(RenderPass* pass, float opacity) {
     }
   }
 
-  // Fade out at the end.
+  // Fade out towards the end.
   if (amount > 0.75f) {
     o *= (1.0f - amount) * 4.0f;
   }
@@ -361,9 +363,9 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
   assert(g_base && g_base->InLogicThread());
 
   // Every now and then, update our stats.
-  while (g_core->GetAppTimeMillisecs() >= next_stat_update_time_) {
-    if (g_core->GetAppTimeMillisecs() - next_stat_update_time_ > 1000) {
-      next_stat_update_time_ = g_core->GetAppTimeMillisecs() + 1000;
+  while (g_core->AppTimeMillisecs() >= next_stat_update_time_) {
+    if (g_core->AppTimeMillisecs() - next_stat_update_time_ > 1000) {
+      next_stat_update_time_ = g_core->AppTimeMillisecs() + 1000;
     } else {
       next_stat_update_time_ += 1000;
     }
@@ -373,6 +375,10 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
     last_total_frames_rendered_ = total_frames_rendered;
   }
 
+  float bot_left_offset{};
+  if (show_fps_ || show_ping_) {
+    bot_left_offset = g_base->app_mode()->GetBottomLeftEdgeHeight();
+  }
   if (show_fps_) {
     char fps_str[32];
     snprintf(fps_str, sizeof(fps_str), "%d", last_fps_);
@@ -401,7 +407,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
       c.SetFlatness(1.0f);
       {
         auto xf = c.ScopedTransform();
-        c.Translate(6.0f, 6.0f, kScreenTextZDepth);
+        c.Translate(6.0f, bot_left_offset + 6.0f, kScreenTextZDepth);
         c.DrawMesh(fps_text_group_->GetElementMesh(e));
       }
     }
@@ -436,8 +442,9 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
         c.SetFlatness(1.0f);
         {
           auto xf = c.ScopedTransform();
-          c.Translate(6.0f + 14.0f + (show_fps_ ? 35.0f : 0.0f), 6.0f + 1.0f,
-                      kScreenTextZDepth);
+          c.Translate(
+              6.0f, bot_left_offset + 6.0f + 1.0f + (show_fps_ ? 30.0f : 0.0f),
+              kScreenTextZDepth);
           c.Scale(0.7f, 0.7f);
           c.DrawMesh(ping_text_group_->GetElementMesh(e));
         }
@@ -477,7 +484,7 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
   // Draw any debug graphs.
   {
     float debug_graph_y = 50.0;
-    auto now = g_core->GetAppTimeMillisecs();
+    auto now = g_core->AppTimeMillisecs();
     for (auto it = debug_graphs_.begin(); it != debug_graphs_.end();) {
       assert(it->second.exists());
       if (now - it->second->LastUsedTime() > 1000) {
@@ -503,7 +510,7 @@ auto Graphics::GetDebugGraph(const std::string& name, bool smoothed)
     debug_graphs_[name]->SetLabel(name);
     debug_graphs_[name]->SetSmoothed(smoothed);
   }
-  debug_graphs_[name]->SetLastUsedTime(g_core->GetAppTimeMillisecs());
+  debug_graphs_[name]->SetLastUsedTime(g_core->AppTimeMillisecs());
   return debug_graphs_[name].get();
 }
 
@@ -541,7 +548,7 @@ void Graphics::GetSafeColor(float* red, float* green, float* blue,
 void Graphics::Reset() {
   assert(g_base->InLogicThread());
   fade_ = 0;
-  fade_start_ = 0;
+  fade_start_ = fade_cancel_start_ = fade_time_ = 0;
 
   if (!camera_.exists()) {
     camera_ = Object::New<Camera>();
@@ -626,12 +633,13 @@ void Graphics::ClearFrameDefDeleteList() {
 
 void Graphics::FadeScreen(bool to, millisecs_t time, PyObject* endcall) {
   assert(g_base->InLogicThread());
-  // If there's an ourstanding fade-end command, go ahead and run it.
-  // (otherwise, overlapping fades can cause things to get lost)
+  // If there's an ourstanding fade-end command, go ahead and run it
+  // (otherwise, overlapping fades can cause things to get lost).
   if (fade_end_call_.exists()) {
     if (g_buildconfig.debug_build()) {
-      g_core->Log(LogName::kBaGraphics, LogLevel::kWarning,
-                  "2 fades overlapping; running first fade-end-call early.");
+      g_core->logging->Log(
+          LogName::kBaGraphics, LogLevel::kWarning,
+          "2 fades overlapping; running first fade-end-call early.");
     }
     fade_end_call_->Schedule();
     fade_end_call_.Clear();
@@ -711,7 +719,7 @@ void Graphics::UpdateGyro(microsecs_t time_microsecs,
     gyro_mag_test_ += tilt_vel_.Length() * 0.01f * timescale;
     gyro_mag_test_ = std::max(0.0f, gyro_mag_test_ - 0.02f * timescale);
     if (gyro_mag_test_ > 100.0f) {
-      ScreenMessage("Wonky gyro; disabling tilt.", {1, 0, 0});
+      g_base->ScreenMessage("Wonky gyro; disabling tilt.", {1, 0, 0});
       gyro_broken_ = true;
     }
   }
@@ -743,8 +751,8 @@ void Graphics::DrawUI(FrameDef* frame_def) {
   // Special variants like GraphicsVR may do fancier stuff here.
   g_base->ui->Draw(frame_def);
 
-  // We may want to see the bounds of our virtual screen.
-  DrawUIBounds(frame_def->overlay_pass());
+  // We may want to see the virtual screen safe area.
+  DrawVirtualSafeAreaBounds(frame_def->overlay_pass());
 }
 
 void Graphics::DrawDevUI(FrameDef* frame_def) {
@@ -765,7 +773,7 @@ void Graphics::BuildAndPushFrameDef() {
   assert(!building_frame_def_);
   building_frame_def_ = true;
 
-  microsecs_t app_time_microsecs = g_core->GetAppTimeMicrosecs();
+  microsecs_t app_time_microsecs = g_core->AppTimeMicrosecs();
 
   // Store how much time this frame_def represents.
   auto display_time_microsecs = g_base->logic->display_time_microsecs();
@@ -824,7 +832,7 @@ void Graphics::BuildAndPushFrameDef() {
 
   if (progress_bar_) {
     frame_def->set_needs_clear(true);
-    UpdateAndDrawProgressBar(frame_def);
+    UpdateAndDrawOnlyProgressBar(frame_def);
   } else {
     // Ok, we're drawing a real frame.
 
@@ -842,8 +850,6 @@ void Graphics::BuildAndPushFrameDef() {
     // Let UI draw dev console and whatever else.
     DrawDevUI(frame_def);
 
-    DrawCursor(frame_def);
-
     // Draw our light/shadow images to the screen if desired.
     DrawDebugBuffers(overlay_pass);
 
@@ -857,13 +863,14 @@ void Graphics::BuildAndPushFrameDef() {
     }
 
     DrawFades(frame_def);
+    DrawCursor(frame_def);
 
     // Sanity test: If we're in VR, the only reason we should have stuff in
     // the flat overlay pass is if there's windows present (we want to avoid
     // drawing/blitting the 2d UI buffer during gameplay for efficiency).
     if (g_core->vr_mode()) {
       if (frame_def->GetOverlayFlatPass()->HasDrawCommands()) {
-        if (!g_base->ui->MainMenuVisible()) {
+        if (!g_base->ui->IsMainUIVisible()) {
           BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
                       "Drawing in overlay pass in VR mode with no UI present; "
                       "shouldn't happen!");
@@ -986,7 +993,7 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
   }
 }
 
-void Graphics::UpdateAndDrawProgressBar(FrameDef* frame_def) {
+void Graphics::UpdateAndDrawOnlyProgressBar(FrameDef* frame_def) {
   RenderPass* pass = frame_def->overlay_pass();
   UpdateProgressBarProgress(
       1.0f
@@ -1009,21 +1016,41 @@ void Graphics::UpdateAndDrawProgressBar(FrameDef* frame_def) {
 void Graphics::DrawFades(FrameDef* frame_def) {
   RenderPass* overlay_pass = frame_def->overlay_pass();
 
-  millisecs_t real_time = frame_def->app_time_millisecs();
+  millisecs_t frame_time = frame_def->display_time_millisecs();
 
-  // Guard against accidental fades that never fade back in.
+  // We want to guard against accidental fades that never fade back in. To
+  // do that, let's measure the total time we've been faded and cancel if it
+  // gets too big. However, we reset this counter any time we're inactive or
+  // whenever substantial clock time passes between drawing - there are
+  // cases where we fade out and then show an ad or other screen before
+  // becoming active again and fading back in, and we want to allow for such
+  // cases.
   if (fade_ <= 0.0f && fade_out_) {
-    millisecs_t faded_time = real_time - (fade_start_ + fade_time_);
+    millisecs_t cancel_time = frame_time - fade_cancel_start_;
 
-    // TEMP HACK - don't trigger this while inactive.
-    // Need to make overall fade logic smarter.
-    if (faded_time > 15000 && g_base->app_active()) {
-      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
-                  "FORCE-ENDING STUCK FADE");
+    // Reset if a substantial amount of real time passes between frame draws.
+    auto real_ms = core::Platform::TimeMonotonicMillisecs();
+    if (real_ms - fade_cancel_last_real_ms_ > 1000) {
+      fade_cancel_start_ = frame_time;
+    }
+    fade_cancel_last_real_ms_ = real_ms;
+
+    // Also reset any time we're inactive (we may still be technically
+    // drawing behind some foreground thing).
+    if (!g_base->app_active()) {
+      fade_cancel_start_ = frame_time;
+    }
+
+    // g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+    //                      "DOING FADE " + std::to_string(cancel_time));
+
+    if (cancel_time > 15000) {
+      g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                           "FORCE-ENDING STUCK FADE");
       fade_out_ = false;
       fade_ = 1.0f;
       fade_time_ = 1000;
-      fade_start_ = real_time;
+      fade_start_ = frame_time;
     }
   }
 
@@ -1031,14 +1058,17 @@ void Graphics::DrawFades(FrameDef* frame_def) {
   if (fade_ > 0) {
     if (set_fade_start_on_next_draw_) {
       set_fade_start_on_next_draw_ = false;
-      fade_start_ = real_time;
+      fade_start_ = frame_time;
+      // Calc when we should start counting for force-ending.
+      fade_cancel_start_ = fade_start_ + fade_time_;
+      fade_cancel_last_real_ms_ = core::Platform::TimeMonotonicMillisecs();
     }
     bool was_done = fade_ <= 0;
-    if (real_time <= fade_start_) {
+    if (frame_time <= fade_start_) {
       fade_ = 1;
-    } else if ((real_time - fade_start_) < fade_time_) {
+    } else if ((frame_time - fade_start_) < fade_time_) {
       fade_ = 1.0f
-              - (static_cast<float>(real_time - fade_start_)
+              - (static_cast<float>(frame_time - fade_start_)
                  / static_cast<float>(fade_time_));
       if (fade_ <= 0) {
         fade_ = 0.00001f;
@@ -1055,12 +1085,12 @@ void Graphics::DrawFades(FrameDef* frame_def) {
   // Draw a fade if we're either in a fade or fading back in from a
   // progress-bar screen.
   if (fade_ > 0.00001f || fade_out_
-      || (real_time - progress_bar_end_time_ < kProgressBarFadeTime)) {
+      || (frame_time - progress_bar_end_time_ < kProgressBarFadeTime)) {
     float a = fade_out_ ? 1 - fade_ : fade_;
-    if (real_time - progress_bar_end_time_ < kProgressBarFadeTime) {
+    if (frame_time - progress_bar_end_time_ < kProgressBarFadeTime) {
       a = 1.0f * a
           + (1.0f
-             - static_cast<float>(real_time - progress_bar_end_time_)
+             - static_cast<float>(frame_time - progress_bar_end_time_)
                    / static_cast<float>(kProgressBarFadeTime))
                 * (1.0f - a);
     }
@@ -1068,12 +1098,15 @@ void Graphics::DrawFades(FrameDef* frame_def) {
     DoDrawFade(frame_def, a);
 
     // If we're doing a progress-bar fade, throw in the fading progress bar.
-    if (real_time - progress_bar_end_time_ < kProgressBarFadeTime / 2) {
-      float o = (1.0f
-                 - static_cast<float>(real_time - progress_bar_end_time_)
-                       / (static_cast<float>(kProgressBarFadeTime) * 0.5f));
+    if (frame_time - progress_bar_end_time_ < kProgressBarFadeTime * 0.5) {
+      //      float o = std::min(
+      //          1.0f, (1.0f
+      //                 - static_cast<float>(frame_time -
+      //                 progress_bar_end_time_)
+      //                       / (static_cast<float>(kProgressBarFadeTime) *
+      //                       0.5f)));
       UpdateProgressBarProgress(1.0f);
-      DrawProgressBar(overlay_pass, o);
+      DrawProgressBar(overlay_pass, 1.0);
     }
   }
 }
@@ -1109,10 +1142,19 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
       new_cursor_visibility = true;
     }
 
+    // As of macOS 15.6.1 there seems to be a bug where moving the cursor down
+    // from the top portion of a fullscreen window flips it back to the arrow
+    // cursor. Should submit a bug to Apple if this is still the case in macOS
+    // 16, but for now am just forcing cursor resets at a higher frequency there
+    // to hide that.
+    seconds_t fudge_secs =
+        (g_buildconfig.platform_macos() && g_buildconfig.xcode_build()) ? 0.235
+                                                                        : 2.345;
+
     // Ship this state when it changes and also every now and then just in
     // case things go wonky.
     if (new_cursor_visibility != hardware_cursor_visible_
-        || app_time - last_cursor_visibility_event_time_ > 2.137) {
+        || app_time - last_cursor_visibility_event_time_ > fudge_secs) {
       hardware_cursor_visible_ = new_cursor_visibility;
       last_cursor_visibility_event_time_ = app_time;
       g_base->app_adapter->PushMainThreadCall([this] {
@@ -1217,7 +1259,7 @@ void Graphics::EnableProgressBar(bool fade_in) {
   if (progress_bar_loads_ > 0) {
     progress_bar_ = true;
     progress_bar_fade_in_ = fade_in;
-    last_progress_bar_draw_time_ = g_core->GetAppTimeMillisecs();
+    last_progress_bar_draw_time_ = g_core->AppTimeMillisecs();
     last_progress_bar_start_time_ = last_progress_bar_draw_time_;
     progress_bar_progress_ = 0.0f;
   }
@@ -1227,9 +1269,9 @@ void Graphics::ToggleManualCamera() {
   assert(g_base->InLogicThread());
   camera_->SetManual(!camera_->manual());
   if (camera_->manual()) {
-    ScreenMessage("Manual Camera On");
+    g_base->ScreenMessage("Manual Camera On");
   } else {
-    ScreenMessage("Manual Camera Off");
+    g_base->ScreenMessage("Manual Camera Off");
   }
 }
 
@@ -1244,9 +1286,9 @@ void Graphics::ToggleNetworkDebugDisplay() {
   assert(g_base->InLogicThread());
   network_debug_display_enabled_ = !network_debug_display_enabled_;
   if (network_debug_display_enabled_) {
-    ScreenMessage("Network Debug Display Enabled");
+    g_base->ScreenMessage("Network Debug Display Enabled");
   } else {
-    ScreenMessage("Network Debug Display Disabled");
+    g_base->ScreenMessage("Network Debug Display Disabled");
   }
 }
 
@@ -1522,13 +1564,13 @@ void Graphics::GetBaseVirtualRes(float* x, float* y) {
   assert(y);
   float base_virtual_res_x;
   float base_virtual_res_y;
-  if (g_base->ui->scale() == UIScale::kSmall) {
-    base_virtual_res_x = kBaseVirtualResSmallX;
-    base_virtual_res_y = kBaseVirtualResSmallY;
-  } else {
-    base_virtual_res_x = kBaseVirtualResX;
-    base_virtual_res_y = kBaseVirtualResY;
-  }
+  // if (g_base->ui->scale() == UIScale::kSmall) {
+  //   base_virtual_res_x = kBaseVirtualResSmallX;
+  //   base_virtual_res_y = kBaseVirtualResSmallY;
+  // } else {
+  base_virtual_res_x = kBaseVirtualResX;
+  base_virtual_res_y = kBaseVirtualResY;
+  // }
   *x = base_virtual_res_x;
   *y = base_virtual_res_y;
 }
@@ -1676,7 +1718,7 @@ auto Graphics::ReflectionTypeFromString(const std::string& s)
 void Graphics::LanguageChanged() {
   assert(g_base && g_base->InLogicThread());
   if (building_frame_def_) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kWarning,
         "Graphics::LanguageChanged() called during draw; should not happen.");
   }
@@ -1698,9 +1740,9 @@ auto Graphics::GraphicsQualityFromRequest(GraphicsQualityRequest request,
     case GraphicsQualityRequest::kAuto:
       return auto_val;
     default:
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "Unhandled GraphicsQualityRequest value: "
-                      + std::to_string(static_cast<int>(request)));
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "Unhandled GraphicsQualityRequest value: "
+                               + std::to_string(static_cast<int>(request)));
       return GraphicsQuality::kLow;
   }
 }
@@ -1718,9 +1760,9 @@ auto Graphics::TextureQualityFromRequest(TextureQualityRequest request,
     case TextureQualityRequest::kAuto:
       return auto_val;
     default:
-      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
-                  "Unhandled TextureQualityRequest value: "
-                      + std::to_string(static_cast<int>(request)));
+      g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                           "Unhandled TextureQualityRequest value: "
+                               + std::to_string(static_cast<int>(request)));
       return TextureQuality::kLow;
   }
 }
@@ -1755,9 +1797,9 @@ void Graphics::UpdatePlaceholderSettings() {
       settings()->texture_quality, client_context()->auto_texture_quality);
 }
 
-void Graphics::DrawUIBounds(RenderPass* pass) {
+void Graphics::DrawVirtualSafeAreaBounds(RenderPass* pass) {
   // We can optionally draw a guide to show the edges of the overlay pass
-  if (draw_ui_bounds_) {
+  if (draw_virtual_safe_area_bounds_) {
     SimpleComponent c(pass);
     c.SetColor(1, 0, 0);
     {

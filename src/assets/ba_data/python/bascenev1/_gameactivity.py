@@ -1,13 +1,16 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Provides GameActivity class."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
 
 import random
 import logging
-from typing import TYPE_CHECKING, TypeVar, override
+import time
+import uuid
+from typing import TYPE_CHECKING, override
 
 import babase
 
@@ -24,17 +27,20 @@ if TYPE_CHECKING:
 
     from bascenev1lib.actor.playerspaz import PlayerSpaz
     from bascenev1lib.actor.bomb import TNTSpawner
+
     import bascenev1
 
-PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
-TeamT = TypeVar('TeamT', bound='bascenev1.Team')
+
+# Note: Need to suppress an undefined variable here because our pylint
+# plugin clears type-arg declarations (which we don't require to be
+# present at runtime) but keeps parent type-args (which we sometimes use
+# at runtime).
 
 
-class GameActivity(Activity[PlayerT, TeamT]):
-    """Common base class for all game bascenev1.Activities.
-
-    Category: **Gameplay Classes**
-    """
+class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
+    Activity[PlayerT, TeamT]  # pylint: disable=undefined-variable
+):
+    """Common base class for all game activities."""
 
     # pylint: disable=too-many-public-methods
 
@@ -198,7 +204,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
     def supports_session_type(
         cls, sessiontype: type[bascenev1.Session]
     ) -> bool:
-        """Return whether this game supports the provided Session type."""
+        """Return whether this game supports the provided session type."""
         from bascenev1._multiteamsession import MultiTeamSession
 
         # By default, games support any versus mode
@@ -208,8 +214,8 @@ class GameActivity(Activity[PlayerT, TeamT]):
         """Instantiate the Activity."""
         super().__init__(settings)
 
-        # Holds some flattened info about the player set at the point
-        # when on_begin() is called.
+        #: Holds some flattened info about the player set at the point
+        #: when :meth:`on_begin()` is called.
         self.initialplayerinfos: list[bascenev1.PlayerInfo] | None = None
 
         # Go ahead and get our map loading.
@@ -253,7 +259,6 @@ class GameActivity(Activity[PlayerT, TeamT]):
         """Return a name for this particular game instance."""
         return self.get_display_string(self.settings_raw)
 
-    # noinspection PyUnresolvedReferences
     def get_instance_scoreboard_display_string(self) -> babase.Lstr:
         """Return a name for this particular game instance.
 
@@ -335,8 +340,27 @@ class GameActivity(Activity[PlayerT, TeamT]):
         # Make our map.
         self._map = self._map_type()
 
-        # Give our map a chance to override the music.
-        # (for happy-thoughts and other such themed maps)
+        # Add default activities for our map.
+        mapname = getattr(self._map_type, 'name', None)
+        map_preview = getattr(self._map_type, 'get_preview_texture_name', None)
+
+        if babase.app.discord.is_ready and mapname and map_preview:
+            preview = map_preview().lower().removesuffix('preview')
+            babase.app.discord.set_presence(
+                state=self.getname(),
+                details=f"Playing on {mapname}",
+                large_image_key=preview,
+                large_image_text=mapname,
+                small_image_key=(
+                    babase.app.classic.platform if babase.app.classic else None
+                ),
+                small_image_text=(
+                    babase.app.classic.platform if babase.app.classic else None
+                ),
+                start_timestamp=int(time.time()),
+            )
+
+        # Give our map a chance to override the music
         map_music = self._map_type.get_music_type()
         music = map_music if map_music is not None else self.default_music
 
@@ -350,8 +374,14 @@ class GameActivity(Activity[PlayerT, TeamT]):
         if babase.app.classic is not None:
             babase.app.classic.game_begin_analytics()
 
-        # We don't do this in on_transition_in because it may depend on
-        # players/teams which aren't available until now.
+        # Update Discord party info
+        if babase.app.discord.is_ready:
+            party_size = len(self.players)
+            max_size = max(8, party_size)
+            babase.app.discord.set_presence(
+                party_id=str(uuid.uuid4()), party_size=(party_size, max_size)
+            )
+
         _bascenev1.timer(0.001, self._show_scoreboard_info)
         _bascenev1.timer(1.0, self._show_info)
         _bascenev1.timer(2.5, self._show_tip)
@@ -376,7 +406,9 @@ class GameActivity(Activity[PlayerT, TeamT]):
                     'tournamentIDs': [tournament_id],
                     'source': 'in-game time remaining query',
                 },
-                callback=babase.WeakCall(self._on_tournament_query_response),
+                callback=babase.WeakCallPartial(
+                    self._on_tournament_query_response
+                ),
             )
 
     def _on_tournament_query_response(
@@ -438,7 +470,6 @@ class GameActivity(Activity[PlayerT, TeamT]):
         This is the thing in the top left corner showing the name
         and short description of the game.
         """
-        # pylint: disable=too-many-locals
         from bascenev1._freeforallsession import FreeForAllSession
         from bascenev1._gameutils import animate
         from bascenev1._nodeactor import NodeActor
@@ -598,7 +629,6 @@ class GameActivity(Activity[PlayerT, TeamT]):
         _bascenev1.timer(4.0, dnode.delete)
 
     def _show_tip(self) -> None:
-        # pylint: disable=too-many-locals
         from bascenev1._gameutils import animate, GameTip
 
         # If there's any tips left on the list, display one.
@@ -776,7 +806,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
 
             player.customdata['respawn_timer'] = _bascenev1.Timer(
                 respawn_time,
-                babase.WeakCall(self.spawn_player_if_exists, player),
+                babase.WeakCallStrict(self.spawn_player_if_exists, player),
             )
             player.customdata['respawn_icon'] = RespawnIcon(
                 player, respawn_time
@@ -794,9 +824,10 @@ class GameActivity(Activity[PlayerT, TeamT]):
             self.spawn_player(player)
 
     def spawn_player(self, player: PlayerT) -> bascenev1.Actor:
-        """Spawn *something* for the provided bascenev1.Player.
+        """Spawn *something* for the provided player.
 
-        The default implementation simply calls spawn_player_spaz().
+        The default implementation simply calls
+        :meth:`spawn_player_spaz()`.
         """
         assert player  # Dead references should never be passed as args.
 
@@ -808,8 +839,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         position: Sequence[float] = (0, 0, 0),
         angle: float | None = None,
     ) -> PlayerSpaz:
-        """Create and wire up a bascenev1.PlayerSpaz for the provided Player."""
-        # pylint: disable=too-many-locals
+        """Create and wire up a player-spaz for the provided player."""
         # pylint: disable=cyclic-import
         from bascenev1._gameutils import animate
         from bascenev1._coopsession import CoopSession
@@ -872,7 +902,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
 
         self._powerup_drop_timer = _bascenev1.Timer(
             DEFAULT_POWERUP_INTERVAL,
-            babase.WeakCall(self._standard_drop_powerups),
+            babase.WeakCallStrict(self._standard_drop_powerups),
             repeat=True,
         )
         self._standard_drop_powerups()
@@ -897,7 +927,7 @@ class GameActivity(Activity[PlayerT, TeamT]):
         points = self.map.powerup_spawn_points
         for i in range(len(points)):
             _bascenev1.timer(
-                i * 0.4, babase.WeakCall(self._standard_drop_powerup, i)
+                i * 0.4, babase.WeakCallStrict(self._standard_drop_powerup, i)
             )
 
     def _setup_standard_tnt_drops(self) -> None:
@@ -923,7 +953,9 @@ class GameActivity(Activity[PlayerT, TeamT]):
             return
         self._standard_time_limit_time = int(duration)
         self._standard_time_limit_timer = _bascenev1.Timer(
-            1.0, babase.WeakCall(self._standard_time_limit_tick), repeat=True
+            1.0,
+            babase.WeakCallStrict(self._standard_time_limit_tick),
+            repeat=True,
         )
         self._standard_time_limit_text = NodeActor(
             _bascenev1.newnode(
@@ -1013,20 +1045,22 @@ class GameActivity(Activity[PlayerT, TeamT]):
         # then we have to mess with contexts and whatnot since its currently
         # not available in activity contexts. :-/
         self._tournament_time_limit_timer = _bascenev1.BaseTimer(
-            1.0, babase.WeakCall(self._tournament_time_limit_tick), repeat=True
+            1.0,
+            babase.WeakCallStrict(self._tournament_time_limit_tick),
+            repeat=True,
         )
         self._tournament_time_limit_title_text = NodeActor(
             _bascenev1.newnode(
                 'text',
                 attrs={
                     'v_attach': 'bottom',
-                    'h_attach': 'left',
+                    'h_attach': 'right',
                     'h_align': 'center',
                     'v_align': 'center',
                     'vr_depth': 300,
                     'maxwidth': 100,
                     'color': (1.0, 1.0, 1.0, 0.5),
-                    'position': (60, 50),
+                    'position': (-60, 50),
                     'flatness': 1.0,
                     'scale': 0.5,
                     'text': babase.Lstr(resource='tournamentText'),
@@ -1038,13 +1072,13 @@ class GameActivity(Activity[PlayerT, TeamT]):
                 'text',
                 attrs={
                     'v_attach': 'bottom',
-                    'h_attach': 'left',
+                    'h_attach': 'right',
                     'h_align': 'center',
                     'v_align': 'center',
                     'vr_depth': 300,
                     'maxwidth': 100,
                     'color': (1.0, 1.0, 1.0, 0.5),
-                    'position': (60, 30),
+                    'position': (-60, 30),
                     'flatness': 1.0,
                     'scale': 0.9,
                 },
@@ -1078,8 +1112,8 @@ class GameActivity(Activity[PlayerT, TeamT]):
                 assert self._tournament_time_limit_text.node
                 self._tournament_time_limit_title_text.node.scale = 1.0
                 self._tournament_time_limit_text.node.scale = 1.3
-                self._tournament_time_limit_title_text.node.position = (80, 85)
-                self._tournament_time_limit_text.node.position = (80, 60)
+                self._tournament_time_limit_title_text.node.position = (-80, 85)
+                self._tournament_time_limit_text.node.position = (-80, 60)
                 cnode = _bascenev1.newnode(
                     'combine',
                     owner=self._tournament_time_limit_text.node,

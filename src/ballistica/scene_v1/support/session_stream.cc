@@ -2,13 +2,15 @@
 
 #include "ballistica/scene_v1/support/session_stream.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -21,6 +23,7 @@
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_session.h"
+#include "ballistica/scene_v1/support/replay_writer.h"
 #include "ballistica/scene_v1/support/scene.h"
 
 namespace ballistica::scene_v1 {
@@ -31,13 +34,14 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
   if (save_replay) {
     // Sanity check - we should only ever be writing one replay at once.
     if (g_scene_v1->replay_open) {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "g_scene_v1->replay_open true at replay start;"
-                  " shouldn't happen.");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "g_scene_v1->replay_open true at replay start;"
+                           " shouldn't happen.");
     }
     // We always write replays as the max protocol version we support.
     assert(g_base->assets_server);
-    g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersionMax);
+
+    replay_writer_ = new ReplayWriter;
     writing_replay_ = true;
     g_scene_v1->replay_open = true;
   }
@@ -57,13 +61,16 @@ SessionStream::~SessionStream() {
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
     if (!g_scene_v1->replay_open) {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "g_scene_v1->replay_open false at replay close;"
-                  " shouldn't happen.");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "g_scene_v1->replay_open false at replay close;"
+                           " shouldn't happen.");
     }
     g_scene_v1->replay_open = false;
     assert(g_base->assets_server);
-    g_base->assets_server->PushEndWriteReplayCall();
+
+    replay_writer_->Finish();
+    replay_writer_ = nullptr;
+
     writing_replay_ = false;
   }
 
@@ -78,45 +85,47 @@ SessionStream::~SessionStream() {
       size_t count;
       count = GetPointerCount(scenes_);
       if (count != 0) {
-        g_core->Log(LogName::kBa, LogLevel::kError,
-                    std::to_string(count)
-                        + " scene graphs in output stream at shutdown");
+        g_core->logging->Log(
+            LogName::kBa, LogLevel::kError,
+            std::to_string(count)
+                + " scene graphs in output stream at shutdown");
       }
       count = GetPointerCount(nodes_);
       if (count != 0) {
-        g_core->Log(
+        g_core->logging->Log(
             LogName::kBa, LogLevel::kError,
             std::to_string(count) + " nodes in output stream at shutdown");
       }
       count = GetPointerCount(materials_);
       if (count != 0) {
-        g_core->Log(
+        g_core->logging->Log(
             LogName::kBa, LogLevel::kError,
             std::to_string(count) + " materials in output stream at shutdown");
       }
       count = GetPointerCount(textures_);
       if (count != 0) {
-        g_core->Log(
+        g_core->logging->Log(
             LogName::kBa, LogLevel::kError,
             std::to_string(count) + " textures in output stream at shutdown");
       }
       count = GetPointerCount(meshes_);
       if (count != 0) {
-        g_core->Log(
+        g_core->logging->Log(
             LogName::kBa, LogLevel::kError,
             std::to_string(count) + " meshes in output stream at shutdown");
       }
       count = GetPointerCount(sounds_);
       if (count != 0) {
-        g_core->Log(
+        g_core->logging->Log(
             LogName::kBa, LogLevel::kError,
             std::to_string(count) + " sounds in output stream at shutdown");
       }
       count = GetPointerCount(collision_meshes_);
       if (count != 0) {
-        g_core->Log(LogName::kBa, LogLevel::kError,
-                    std::to_string(count)
-                        + " collision_meshes in output stream at shutdown");
+        g_core->logging->Log(
+            LogName::kBa, LogLevel::kError,
+            std::to_string(count)
+                + " collision_meshes in output stream at shutdown");
       }
     }
   }
@@ -127,8 +136,8 @@ auto SessionStream::GetOutMessage() const -> std::vector<uint8_t> {
   assert(!host_session_);  // this should only be getting used for
   // standalone temp ones..
   if (!out_command_.empty()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "SceneStream shutting down with non-empty outCommand");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "SceneStream shutting down with non-empty outCommand");
   }
   return out_message_;
 }
@@ -193,16 +202,18 @@ void SessionStream::Remove(T* val, std::vector<T*>* vec,
 }
 
 void SessionStream::Fail() {
-  g_core->Log(LogName::kBa, LogLevel::kError, "Error writing replay file");
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       "Error writing replay file");
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
     if (!g_scene_v1->replay_open) {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "g_scene_v1->replay_open false at replay close;"
-                  " shouldn't happen.");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "g_scene_v1->replay_open false at replay close;"
+                           " shouldn't happen.");
     }
     assert(g_base->assets_server);
-    g_base->assets_server->PushEndWriteReplayCall();
+    replay_writer_->Finish();
+    replay_writer_ = nullptr;
     writing_replay_ = false;
     g_scene_v1->replay_open = false;
   }
@@ -210,8 +221,8 @@ void SessionStream::Fail() {
 
 void SessionStream::Flush() {
   if (!out_command_.empty())
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "SceneStream flushing down with non-empty outCommand");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "SceneStream flushing down with non-empty outCommand");
   if (!out_message_.empty()) {
     ShipSessionCommandsMessage();
   }
@@ -374,7 +385,7 @@ void SessionStream::ShipSessionCommandsMessage() {
     AddMessageToReplay(out_message_);
   }
   out_message_.clear();
-  last_send_time_ = g_core->GetAppTimeMillisecs();
+  last_send_time_ = g_core->AppTimeMillisecs();
 }
 
 void SessionStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
@@ -394,7 +405,8 @@ void SessionStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
     }
   }
 
-  g_base->assets_server->PushAddMessageToReplayCall(message);
+  assert(replay_writer_);
+  replay_writer_->PushAddMessageToReplayCall(message);
 }
 
 void SessionStream::SendPhysicsCorrection(bool blend) {
@@ -441,7 +453,7 @@ void SessionStream::EndCommand(bool is_time_set) {
   if (host_session_) {
     auto* appmode = classic::ClassicAppMode::GetSingleton();
     // Now if its been long enough *AND* this is a time-step command, send.
-    millisecs_t real_time = g_core->GetAppTimeMillisecs();
+    millisecs_t real_time = g_core->AppTimeMillisecs();
     millisecs_t diff = real_time - last_send_time_;
     if (is_time_set && diff >= app_mode_->buffer_time()) {
       ShipSessionCommandsMessage();
@@ -540,8 +552,8 @@ void SessionStream::SetTime(millisecs_t t) {
   }
   millisecs_t diff = t - time_;
   if (diff > 255) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "SceneStream got time diff > 255; not expected.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "SceneStream got time diff > 255; not expected.");
     diff = 255;
   }
   WriteCommandInt64(SessionCommand::kBaseTimeStep, diff);
@@ -862,7 +874,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
     if (g_buildconfig.debug_build()) {
-      for (auto val : vals) {
+      for ([[maybe_unused]] auto val : vals) {
         assert(IsValidNode(val));
       }
     }
@@ -895,7 +907,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<Material*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
-    for (auto val : vals) {
+    for ([[maybe_unused]] auto val : vals) {
       assert(IsValidMaterial(val));
     }
   }
@@ -940,7 +952,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneTexture*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
-    for (auto val : vals) {
+    for ([[maybe_unused]] auto val : vals) {
       assert(IsValidTexture(val));
     }
   }
@@ -985,7 +997,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneSound*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
-    for (auto val : vals) {
+    for ([[maybe_unused]] auto val : vals) {
       assert(IsValidSound(val));
     }
   }
@@ -1030,7 +1042,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneMesh*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
-    for (auto val : vals) {
+    for ([[maybe_unused]] auto val : vals) {
       assert(IsValidMesh(val));
     }
   }
@@ -1074,7 +1086,7 @@ void SessionStream::SetNodeAttr(const NodeAttribute& attr,
                                 const std::vector<SceneCollisionMesh*>& vals) {
   assert(IsValidNode(attr.node));
   if (g_buildconfig.debug_build()) {
-    for (auto val : vals) {
+    for ([[maybe_unused]] auto val : vals) {
       assert(IsValidCollisionMesh(val));
     }
   }
@@ -1200,15 +1212,17 @@ void SessionStream::OnClientConnected(ConnectionToClient* c) {
   // Sanity check - abort if its on either of our lists already.
   for (auto& connections_to_client : connections_to_clients_) {
     if (connections_to_client == c) {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "SceneStream::OnClientConnected() got duplicate connection.");
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kError,
+          "SceneStream::OnClientConnected() got duplicate connection.");
       return;
     }
   }
   for (auto& i : connections_to_clients_ignored_) {
     if (i == c) {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "SceneStream::OnClientConnected() got duplicate connection.");
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kError,
+          "SceneStream::OnClientConnected() got duplicate connection.");
       return;
     }
   }
@@ -1261,7 +1275,7 @@ void SessionStream::OnClientDisconnected(ConnectionToClient* c) {
       return;
     }
   }
-  g_core->Log(
+  g_core->logging->Log(
       LogName::kBaNetworking, LogLevel::kError,
       "SceneStream::OnClientDisconnected() called for connection not on "
       "lists");

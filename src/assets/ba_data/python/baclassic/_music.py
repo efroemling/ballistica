@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Music related functionality."""
+
 from __future__ import annotations
 
 import copy
@@ -20,10 +21,7 @@ if TYPE_CHECKING:
 
 
 class MusicPlayMode(Enum):
-    """Influences behavior when playing music.
-
-    Category: **Enums**
-    """
+    """Influences behavior when playing music."""
 
     REGULAR = 'regular'
     TEST = 'test'
@@ -31,10 +29,7 @@ class MusicPlayMode(Enum):
 
 @dataclass
 class AssetSoundtrackEntry:
-    """A music entry using an internal asset.
-
-    Category: **App Classes**
-    """
+    """A music entry using an internal asset."""
 
     assetname: str
     volume: float = 1.0
@@ -80,8 +75,6 @@ ASSET_SOUNDTRACK_ENTRIES: dict[MusicType, AssetSoundtrackEntry] = {
 
 class MusicSubsystem:
     """Subsystem for music playback in the app.
-
-    Category: **App Classes**
 
     Access the single shared instance of this class at 'ba.app.music'.
     """
@@ -373,8 +366,6 @@ class MusicSubsystem:
 
 class MusicPlayer:
     """Wrangles soundtrack music playback.
-
-    Category: **App Classes**
 
     Music can be played either through the game itself
     or via a platform-specific external player.

@@ -13,12 +13,14 @@
 #include "ballistica/base/graphics/support/graphics_client_context.h"
 #include "ballistica/base/graphics/support/graphics_settings.h"
 #include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/snapshot.h"
 #include "ballistica/shared/math/vector2f.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
+
+const float kTVBorder = 0.075f;
+const float kVRBorder = 0.085f;
 
 // Light/shadow res is divided by this to get pure light res.
 const int kLightResDiv{4};
@@ -47,7 +49,7 @@ const float kBackingDepth1{0.0f};
 const float kShadowNeutral{0.5f};
 
 // Cursor depth within the front-overlay (not related to above depths).
-const float kCursorZDepth{0.9f};
+const float kCursorZDepth{1.0f};
 
 // Client class for graphics operations (used from the logic thread).
 class Graphics {
@@ -60,7 +62,7 @@ class Graphics {
   void OnAppShutdown();
   void OnAppShutdownComplete();
   void OnScreenSizeChange();
-  void DoApplyAppConfig();
+  void ApplyAppConfig();
 
   /// Should be called by the app-adapter to keep the engine informed on the
   /// drawable area it has to work with (in pixels).
@@ -152,7 +154,7 @@ class Graphics {
                  r, g, b, a);
   }
 
-  void DrawUIBounds(RenderPass* pass);
+  void DrawVirtualSafeAreaBounds(RenderPass* pass);
   static void GetBaseVirtualRes(float* x, float* y);
 
   // Enable progress bar drawing locally.
@@ -362,8 +364,13 @@ class Graphics {
     assert(client_context_snapshot_.exists());
     return client_context_snapshot_.get()->get();
   }
-  auto draw_ui_bounds() const { return draw_ui_bounds_; }
-  void set_draw_ui_bounds(bool val) { draw_ui_bounds_ = val; }
+  auto draw_virtual_safe_area_bounds() const {
+    return draw_virtual_safe_area_bounds_;
+  }
+  void set_draw_virtual_safe_area_bounds(bool val) {
+    draw_virtual_safe_area_bounds_ = val;
+  }
+  auto building_frame_def() const { return building_frame_def_; }
 
   ScreenMessages* const screenmessages;
 
@@ -377,7 +384,7 @@ class Graphics {
   void DrawCursor(FrameDef* frame_def);
   void DrawFades(FrameDef* frame_def);
   void DrawDebugBuffers(RenderPass* pass);
-  void UpdateAndDrawProgressBar(FrameDef* frame_def);
+  void UpdateAndDrawOnlyProgressBar(FrameDef* frame_def);
   void DoDrawBlotch(std::vector<uint16_t>* indices,
                     std::vector<VertexSprite>* verts, const Vector3f& pos,
                     float size, float r, float g, float b, float a);
@@ -424,7 +431,7 @@ class Graphics {
   bool applied_app_config_{};
   bool sent_initial_graphics_settings_{};
   bool got_screen_resolution_{};
-  bool draw_ui_bounds_{};
+  bool draw_virtual_safe_area_bounds_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};
@@ -471,6 +478,8 @@ class Graphics {
   float shadow_upper_top_{40.0f};
   seconds_t last_cursor_visibility_event_time_{};
   millisecs_t fade_start_{};
+  millisecs_t fade_cancel_start_{};
+  millisecs_t fade_cancel_last_real_ms_{};
   millisecs_t fade_time_{};
   millisecs_t next_stat_update_time_{};
   millisecs_t progress_bar_end_time_{-9999};

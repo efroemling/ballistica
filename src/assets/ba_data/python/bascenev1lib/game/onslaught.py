@@ -225,6 +225,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def on_transition_in(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         super().on_transition_in()
         customdata = bs.getsession().customdata
 
@@ -625,9 +627,12 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             ]
 
         elif self._preset in {Preset.UBER, Preset.UBER_EASY}:
-            # Show controls help in demo or arcade modes.
-            env = bs.app.env
-            if env.demo or env.arcade:
+            # Show controls help in demo or arcade variants.
+            variant = bs.app.env.variant
+            vart = type(variant)
+            arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
+            if arcade_or_demo:
                 ControlsGuide(
                     delay=3.0, lifespan=10.0, bright=True
                 ).autoretain()
@@ -967,7 +972,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     def _start_powerup_drops(self) -> None:
         self._powerup_drop_timer = bs.Timer(
-            3.0, bs.WeakCall(self._drop_powerups), repeat=True
+            3.0, bs.WeakCallStrict(self._drop_powerups), repeat=True
         )
 
     def _drop_powerups(
@@ -979,7 +984,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             for i in range(len(points)):
                 bs.timer(
                     1.0 + i * 0.5,
-                    bs.WeakCall(
+                    bs.WeakCallStrict(
                         self._drop_powerup, i, poweruptype if i == 0 else None
                     ),
                 )
@@ -1065,7 +1070,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 bs.timer(0, self._cashregistersound.play)
                 bs.timer(
                     base_delay,
-                    bs.WeakCall(self._award_time_bonus, self._time_bonus),
+                    bs.WeakCallStrict(self._award_time_bonus, self._time_bonus),
                 )
                 base_delay += 1.0
 
@@ -1077,7 +1082,9 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                         have_flawless = True
                         bs.timer(
                             base_delay,
-                            bs.WeakCall(self._award_flawless_bonus, player),
+                            bs.WeakCallStrict(
+                                self._award_flawless_bonus, player
+                            ),
                         )
                     player.has_been_hurt = False  # reset
                 if have_flawless:
@@ -1089,7 +1096,9 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 )
                 self.celebrate(20.0)
                 self._award_completion_achievements()
-                bs.timer(base_delay, bs.WeakCall(self._award_completion_bonus))
+                bs.timer(
+                    base_delay, bs.WeakCallStrict(self._award_completion_bonus)
+                )
                 base_delay += 0.85
                 self._winsound.play()
                 bs.cameraflash()
@@ -1099,7 +1108,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 # Can't just pass delay to do_end because our extra bonuses
                 # haven't been added yet (once we call do_end the score
                 # gets locked in).
-                bs.timer(base_delay, bs.WeakCall(self.do_end, 'victory'))
+                bs.timer(base_delay, bs.WeakCallStrict(self.do_end, 'victory'))
                 return
 
             self._wavenum += 1
@@ -1107,7 +1116,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             # Short celebration after waves.
             if self._wavenum > 1:
                 self.celebrate(0.5)
-            bs.timer(base_delay, bs.WeakCall(self._start_next_wave))
+            bs.timer(base_delay, bs.WeakCallStrict(self._start_next_wave))
 
     def _award_completion_bonus(self) -> None:
         self._cashregistersound.play()
@@ -1161,7 +1170,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     def _start_time_bonus_timer(self) -> None:
         self._time_bonus_timer = bs.Timer(
-            1.0, bs.WeakCall(self._update_time_bonus), repeat=True
+            1.0, bs.WeakCallStrict(self._update_time_bonus), repeat=True
         )
 
     def _update_player_spawn_info(self) -> None:
@@ -1235,7 +1244,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             point = info.point
             if point is not None:
                 assert bot_type_2 is not None
-                spcall = bs.WeakCall(
+                spcall = bs.WeakCallStrict(
                     self.add_bot_at_point, point, bot_type_2, spawn_time
                 )
                 bs.timer(tval, spcall)
@@ -1244,7 +1253,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 spacing = info.spacing
                 bot_angle += spacing * 0.5
                 if bot_type_2 is not None:
-                    tcall = bs.WeakCall(
+                    tcall = bs.WeakCallStrict(
                         self.add_bot_at_angle, bot_angle, bot_type_2, spawn_time
                     )
                     bs.timer(tval, tcall)
@@ -1254,7 +1263,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         # We can end the wave after all the spawning happens.
         bs.timer(
             tval + spawn_time - dtime + 0.01,
-            bs.WeakCall(self._set_can_end_wave),
+            bs.WeakCallStrict(self._set_can_end_wave),
         )
 
     def _start_next_wave(self) -> None:
@@ -1313,7 +1322,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             )
         )
 
-        bs.timer(5.0, bs.WeakCall(self._start_time_bonus_timer))
+        bs.timer(5.0, bs.WeakCallStrict(self._start_time_bonus_timer))
         wtcolor = (1, 1, 1, 1)
         wttxt = bs.Lstr(
             value='${A} ${B}',
@@ -1505,7 +1514,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     def _start_updating_waves(self) -> None:
         self._wave_update_timer = bs.Timer(
-            2.0, bs.WeakCall(self._update_waves), repeat=True
+            2.0, bs.WeakCallStrict(self._update_waves), repeat=True
         )
 
     def _update_scores(self) -> None:
@@ -1522,6 +1531,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, PlayerSpazHurtMessage):
             msg.spaz.getplayer(Player, True).has_been_hurt = True
             self._a_player_has_been_hurt = True
@@ -1599,7 +1610,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             self._tnt_kills += 1
             if self._tnt_kills >= 6:
                 bs.timer(
-                    0.5, bs.WeakCall(self._award_achievement, 'TNT Terror')
+                    0.5,
+                    bs.WeakCallStrict(self._award_achievement, 'TNT Terror'),
                 )
 
     def _handle_pro_kill_achievements(self, msg: SpazBotDiedMessage) -> None:
@@ -1609,7 +1621,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             if self._tnt_kills >= 3:
                 bs.timer(
                     0.5,
-                    bs.WeakCall(
+                    bs.WeakCallStrict(
                         self._award_achievement, 'Boom Goes the Dynamite'
                     ),
                 )
@@ -1635,6 +1647,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         # Tell our bots to celebrate just to rub it in.
         assert self._bots is not None
         self._bots.final_celebrate()

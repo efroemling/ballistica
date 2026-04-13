@@ -29,7 +29,6 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         select_get_more_maps_button: bool = False,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-positional-arguments
 
         from bascenev1 import get_filtered_map_name
@@ -63,12 +62,14 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(width, height),
                 scale=(
-                    1.95
+                    2.3
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
+                toolbar_visibility=(
+                    'menu_minimal_no_back'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
             ),
             transition=transition,
@@ -111,6 +112,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(40 + x_inset, v - self._scroll_height),
             size=(self._scroll_width, self._scroll_height),
+            border_opacity=0.4,
         )
         bui.containerwidget(
             edit=self._root_widget, selected_child=self._scrollwidget
@@ -147,9 +149,11 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return False
+
     def _refresh(self, select_get_more_maps_button: bool = False) -> None:
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
         from bascenev1 import (
             get_map_class,
@@ -225,7 +229,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
                     mesh_transparent=mesh_transparent,
                     label='',
                     color=(1, 1, 1),
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._select_with_delay, self._maps[index][0]
                     ),
                     position=pos,
@@ -283,8 +287,12 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             )
 
     def _on_store_press(self) -> None:
-        from bauiv1lib import account
-        from bauiv1lib.store.browser import StoreBrowserWindow
+        import bacommon.docui.v1 as dui1
+
+        from bauiv1lib.docui import DocUIWindow
+        from bauiv1lib.connectivity import wait_for_connectivity
+        from bauiv1lib.store import StoreUIController
+        from bauiv1lib.account.signin import show_sign_in_prompt
 
         # No-op if we're not in control.
         if not self.main_window_has_control():
@@ -293,17 +301,28 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        if plus.get_v1_account_state() != 'signed_in':
-            account.show_sign_in_prompt()
+        if plus.accounts.primary is None:
+            show_sign_in_prompt()
             return
 
         self._selected_get_more_maps = True
 
-        self.main_window_replace(
-            StoreBrowserWindow(
-                show_tab=StoreBrowserWindow.TabID.MAPS,
-                origin_widget=self._get_more_maps_button,
-                minimal_toolbars=True,
+        # Playlist editing happens in the regular non-auxiliary window
+        # stack so we can just pop up the regular auxiliary-mode store
+        # and it'll do the right thing and take us back to our editing
+        # when we close it.
+        wait_for_connectivity(
+            on_connected=lambda: bui.app.ui_v1.auxiliary_window_activate(
+                win_type=DocUIWindow,
+                win_create_call=bui.CallStrict(
+                    StoreUIController().create_window,
+                    dui1.Request('/'),
+                    origin_widget=self._get_more_maps_button,
+                    uiopenstateid='classicstore',
+                ),
+                win_extra_type_id=(
+                    StoreUIController.get_window_extra_type_id()
+                ),
             )
         )
 
@@ -319,4 +338,4 @@ class PlaylistMapSelectWindow(bui.MainWindow):
     def _select_with_delay(self, map_name: str) -> None:
         bui.lock_all_input()
         bui.apptimer(0.1, bui.unlock_all_input)
-        bui.apptimer(0.1, bui.WeakCall(self._select, map_name))
+        bui.apptimer(0.1, bui.WeakCallStrict(self._select, map_name))

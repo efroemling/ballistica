@@ -1,43 +1,42 @@
+# Released under the MIT License. See LICENSE for details.
+#
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
+# pylint: disable=invalid-name, redefined-builtin
+# pylint: disable=missing-module-docstring
+
+from __future__ import annotations
+
 import os
-import sys
+import types
+import logging
+from typing import TYPE_CHECKING, override
 
-sphinx_settings = eval(os.getenv('SPHINX_SETTINGS')) # set in tools/batools/docs.py
-ballistica_root = os.getenv('BALLISTICA_ROOT') + '/'
+from efro.terminal import Clr
 
-assets_dirs: dict = {
-    'ba_data': 'src/assets/ba_data/python/',
-    'dummy_modules': 'build/dummymodules/',
-    'efro_tools': 'tools/',  # for efro and bacommon package
-}
+from batools.docs import get_sphinx_settings
+from sphinx.util.logging import WarningStreamHandler
 
-sys.path.append(os.path.abspath(ballistica_root + assets_dirs['ba_data']))
-sys.path.append(os.path.abspath(ballistica_root + assets_dirs['dummy_modules']))
-sys.path.append(os.path.abspath(ballistica_root + assets_dirs['efro_tools']))
+if TYPE_CHECKING:
+    from docutils import nodes
+    from typing import Any
 
-# -- Project information -----------------------------------------------------
-project = sphinx_settings['project_name']
-copyright = sphinx_settings['copyright']
-author = sphinx_settings['project_author']
-# The full version, including alpha/beta/rc tags
-version = str(sphinx_settings['version'])
-release = str(sphinx_settings['buildnum'])
+    from sphinx.application import Sphinx
 
+
+settings = get_sphinx_settings(projroot=os.environ['BALLISTICA_ROOT'])
 
 # -- Options for HTML output -------------------------------------------------
-# for more themes visit https://sphinx-themes.org/
-html_theme = 'furo'  # python_docs_theme, groundwork, furo, sphinx_rtd_theme 
-html_title = project + ' ' + version + ' documentation'
-html_show_sphinx = False
+# For more themes visit https://sphinx-themes.org/
+html_theme = 'furo'  # python_docs_theme, groundwork, furo, sphinx_rtd_theme
+html_title = f'{settings.project_name} Developer\'s Guide'
 
-# do not remove, sets the logo on side panel
-html_logo = sphinx_settings['ballistica_logo']
+# Sets logo on side panel.
+html_logo = settings.logo_small
 
 if html_theme == 'furo':
     html_theme_options = {
@@ -50,7 +49,8 @@ if html_theme == 'furo':
             'color-brand-primary': '#3cda0b',
             'color-brand-content': '#7C4DFF',
         },
-        'footer_icons': [{
+        'footer_icons': [
+            {
                 'name': 'GitHub',
                 'url': 'https://github.com/efroemling/ballistica/',
                 'html': """
@@ -59,44 +59,292 @@ if html_theme == 'furo':
                     </svg>
                 """,
                 'class': '',
-                },
-            ],
+            },
+        ],
         'top_of_page_button': 'edit',
         'navigation_with_keys': True,
     }
 
+# -- Project information -----------------------------------------------------
+project = settings.project_name
+copyright = settings.copyright
+author = settings.project_author
+
+# The full version, including alpha/beta/rc tags.
+version = str(settings.version)
+release = str(settings.buildnum)
+
 # -- General configuration ---------------------------------------------------
 
-# append to pages
+# Prepend to pages.
+# rst_prolog = f"""
+# .. image:: {settings.logo_large}
+#     :target: index.html
+#     :alt: Ballistica Logo
+# """
+rst_prolog = """
+"""
+
+# Append to pages.
 rst_epilog = """
 """
-# prepend to pages
-rst_prolog = f"""
-.. image:: {html_logo}
-    :target: index.html
-    :alt: Ballistica Logo 
-"""
-# intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}   
-autosummary_generate = True
-extensions = [
-    'sphinx.ext.napoleon',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
-    # might want to use this in future
-    # for linking with efro and bacommon packages
-    'sphinx.ext.intersphinx',
+
+# We want to be warned of refs to missing things. We should either fix
+# broken refs or add them to the ignore list here.
+nitpicky = True
+nitpick_ignore = [
+    #
+    # Stuff that is part of 'private' apis that we've intentionally
+    # hidden despite having public naming. See 'skip_prefixes' below.
+    ('py:class', 'v1prep.PagePrep'),
+    ('py:class', 'bacommon.displayitem.Wrapper'),
+    ('py:class', 'bacommon.displayitem.Item'),
+    ('py:class', 'bacommon.displayitem.ItemTypeID'),
+    #
+    # Stuff that seems like we could fix (presumably issues due to not
+    # importing things at runtime (only if TYPE_CHECKING), etc.)
+    ('py:class', 'Enum'),
+    ('py:class', 'Path'),
+    ('py:class', 'bui.Widget'),
+    ('py:class', 'bui.MainWindow'),
+    ('py:class', 'bui.Lstr'),
+    ('py:class', 'bs.Session'),
+    ('py:class', 'bs.Activity'),
+    ('py:class', 'bs.GameActivity'),
+    ('py:class', 'bs.GameTip'),
+    ('py:class', 'bs.Lstr'),
+    ('py:class', 'bs.Texture'),
+    ('py:class', 'bs.Mesh'),
+    ('py:class', 'bascenev1.Time'),
+    ('py:class', 'babase.SimpleSound'),
+    ('py:meth', 'spawn_player_spaz'),
+    ('py:class', 'Logger'),
+    ('py:class', 'PlaylistType'),
+    ('py:class', 'ValueDispatcherMethod'),
+    #
+    # 'Fake' classes declared with typing.NewType() so don't have
+    # doctrings.
+    ('py:class', 'babase.AppTime'),
+    ('py:class', 'babase.DisplayTime'),
+    ('py:class', 'bascenev1.BaseTime'),
+    #
+    # 3rd party stuff we don't gen docs for (could look into intersphinx).
+    ('py:class', 'astroid.nodes.node_ng.NodeNG'),
+    ('py:class', 'astroid.Manager'),
+    #
+    # TypeVars have no docs.
+    ('py:class', 'T'),
+    ('py:class', 'EnumT'),
+    ('py:class', 'RetT'),
+    ('py:class', 'ValT'),
+    ('py:class', 'SelfT'),
+    ('py:class', 'ArgT'),
+    ('py:class', 'ExistableT'),
+    ('py:class', 'PlayerT'),
+    ('py:class', 'TeamT'),
+    ('py:class', 'P'),
+    ('py:class', 'P.args'),
+    ('py:class', 'P.kwargs'),
+    ('py:obj', 'typing.P'),
+    ('py:obj', 'typing.T'),
+    #
+    # Unexposed internal types (should possibly just make these public?).
+    ('py:class', '_MissingType'),
+    #
+    # Stdlib stuff for whatever reason coming up as having no docs.
+    ('py:class', '_thread.lock'),
+    ('py:meth', 'asyncio.get_running_loop'),
+    ('py:class', 'asyncio.events.AbstractEventLoop'),
+    ('py:class', 'asyncio.streams.StreamReader'),
+    ('py:class', 'asyncio.streams.StreamWriter'),
+    ('py:class', 'concurrent.futures.thread.ThreadPoolExecutor'),
+    ('py:class', 'urllib3.response.BaseHTTPResponse'),
+    ('py:class', 'socket.AddressFamily'),
+    ('py:attr', 'socket.AF_INET'),
+    ('py:attr', 'socket.AF_INET6'),
+    ('py:class', 'weakref.ReferenceType'),
+    #
+    # Additional bs.* types not yet covered above.
+    ('py:class', 'bs.NodeActor'),
+    ('py:class', 'bs.Player'),
+    ('py:class', 'bs.Timer'),
+    ('py:class', 'bs.Vec3'),
+    #
+    # Private module types.
+    ('py:class', 'bascenev1._dependency.DependencyEntry'),
 ]
 
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+# Regex-based nitpick ignores for whole categories of references.
+nitpick_ignore_regex = [
+    # Types from private/skipped namespaces. Sphinx 9.x generates
+    # cross-references to these from public API signatures even though
+    # the modules themselves are excluded (see skip_prefixes below).
+    ('py:class', r'bacommon\.classic\..*'),
+    ('py:class', r'bacommon\.clienteffect\..*'),
+    ('py:class', r'bacommon\.cloud\..*'),
+    # 'cdlg' is an alias for bacommon.clouddialog (a skipped namespace).
+    ('py:class', r'cdlg\..*'),
+    # Truncated generic type strings that Sphinx 9.x emits as cross-reference
+    # targets when processing complex type annotations such as
+    # dict[str, X], list[tuple[str, ...]], Callable[[], X], Literal['a', 'b'].
+    # The warning targets are malformed (e.g. 'dict[str' with no closing
+    # bracket), which strongly suggests this is a Sphinx bug — it appears to be
+    # splitting annotation strings at commas before fully parsing them. Worth
+    # re-checking on future Sphinx versions to see if it has been fixed.
+    ('py:class', r'Callable\[.*'),
+    ('py:class', r'dict\[.*'),
+    ('py:class', r'list\[.*'),
+    ('py:class', r'Literal\[.*'),
+]
+
+# Gives us links to common Python types.
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+
+extensions = [
+    'sphinx.ext.napoleon',  # Allows google/numpy style docstrings.
+    'sphinx.ext.autodoc',  # Parse docstrings.
+    'sphinx.ext.viewcode',  # Adds 'source' links.
+    'sphinx.ext.intersphinx',  # Allows linking to base Python types.
+]
+
+# Reduces ugly wrapping in the on-this-page sidebar.
+toc_object_entries_show_parents = 'hide'
 
 # List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+# directories to ignore when looking for source files. This pattern also
+# affects html_static_path and html_extra_path.
+exclude_patterns = [
+    '_build',
+    'Thumbs.db',
+    '.DS_Store',
+]
 
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+def _wrangle_logging() -> None:
+    """Modify sphinx's warning handler to ignore very specific warnings
+    (we don't want to ignore entire categories).
+    """
+    logger = logging.getLogger('sphinx')
+    assert len(logger.handlers) == 3
+    warning_handler = logger.handlers[1]
+    assert isinstance(warning_handler, WarningStreamHandler)
+
+    class _EfroCustomSphinxFilter(logging.Filter):
+
+        _cross_ref_ignores_noted = set[str]()
+
+        @override
+        def filter(self, record: logging.LogRecord) -> bool:
+
+            # Getting lots of warnings such as:
+            # /Users/ericf/LocalDocs/ballistica-internal/
+            # .cache/sphinxfiltered/ba_data/babase/__init__.py:docstring
+            # of babase._error.ActivityNotFoundError:1: WARNING:
+            # duplicate object description of
+            # babase._error.ActivityNotFoundError, other instance in
+            # bascenev1, use :no-index: for one of them
+            #
+            # These seem harmless and I assume are related to the fact
+            # that we're re-exposing various classes through our various
+            # high level package classes (babase, bauiv1, bascenev1,
+            # etc.). So Just ignoring as long as one of our modules is
+            # mentioned.
+            if record.msg == (
+                'duplicate object description of %s,'
+                ' other instance in %s, use :no-index: for one of them'
+            ):
+                assert isinstance(record.args, tuple) and isinstance(
+                    record.args[0], str
+                )
+                if any(
+                    record.args[0].startswith(p)
+                    for p in ['babase.', '_babase.']
+                ):
+                    return False  # Ignore.
+
+            # Am seeing a fair number of 'more than one target found'
+            # warnings for annotations with common type names such as
+            # 'State'. In some of these cases such as nested dataclasses
+            # we can't actually use fully qualified types, and Sphinx
+            # seems to be linking to the correct places, so just
+            # ignoring these.
+            if (
+                record.msg
+                == 'more than one target found for cross-reference %r: %s'
+            ):
+                assert isinstance(record.args, tuple)
+                classname = record.args[0]
+                assert isinstance(classname, str)
+                if classname not in self._cross_ref_ignores_noted:
+                    print(
+                        f'{Clr.BLD}efro-note:{Clr.RST}'
+                        f' Ignoring (most-likely-harmless)'
+                        f' more-than-one-target warning for'
+                        f' "{classname}".'
+                    )
+                    self._cross_ref_ignores_noted.add(classname)
+                return False  # Ignore.
+
+            return True  # Don't ignore.
+
+    # Explicitly insert our filter *before* sphinx's built in ones so we
+    # can prevent sphinx from failing on warnings that we want to
+    # ignore.
+    warning_handler.filters.insert(0, _EfroCustomSphinxFilter())
+
+
+_wrangle_logging()
+
+
+# Prevent docs generation for particular packages that we consider
+# 'private' despite having public naming. Note that these will still be
+# listed under their parent package's page, but the only thing visible
+# in them will be their module docstring (which should explain that they
+# are private).
+skip_prefixes = [
+    'bauiv1lib.docui.v1prep.',
+    'bacommon.displayitem.',
+    'bacommon.net.',
+    'bacommon.cloud.',
+    'bacommon.transfer.',
+    'bacommon.build.',
+    'bacommon.bacloud.',
+    'bacommon.assets.',
+    'bacommon.classic.',
+    'bacommon.clouddialog.',
+    'bacommon.clienteffect.',
+]
+
+# Make sure we don't unintentionally skip 'foo.bar' by adding 'foo.b'
+assert all(p.endswith('.') for p in skip_prefixes)
+
+
+def skip_private_submodules(
+    app: Sphinx, what: str, name: str, obj: Any, skip: bool, options: Any
+) -> bool | None:
+    """Skip submodules we consider private despite looking public."""
+    # pylint: disable=too-many-positional-arguments
+    del app, options  # Unused.
+
+    # If this member is an actual module object
+    if what == 'module' and isinstance(obj, types.ModuleType):
+        fqname = obj.__name__
+    # For everything else (functions, classes, etc.)
+    else:
+        modname = getattr(obj, '__module__', None)
+        fqname = f'{modname}.{name}' if modname else name
+
+    if any(fqname.startswith(p) for p in skip_prefixes):
+        return True
+
+    return skip
+
+
+def setup(app: Sphinx) -> Any:
+    """Do the thing."""
+    app.connect('autodoc-skip-member', skip_private_submodules)
+    return {
+        'version': '1.0',
+        'parallel_read_safe': True,
+        'parallel_write_safe': True,
+    }

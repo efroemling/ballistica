@@ -44,6 +44,10 @@ class ContainerWidget : public Widget {
   void set_background(bool enable) { background_ = enable; }
   void SetRootSelectable(bool enable);
   void set_selectable(bool val) { selectable_ = val; }
+  void set_darken_behind(bool val) { darken_behind_ = val; }
+  void set_darken_behind_is_permanent(bool val) {
+    darken_behind_is_permanent_ = val;
+  }
 
   virtual void SetWidth(float w) {
     bg_dirty_ = glow_dirty_ = true;
@@ -90,8 +94,8 @@ class ContainerWidget : public Widget {
 
   void Activate() override;
 
-  // Add a newly allocated widget to the container.
-  // This widget is now owned by the container and will be disposed by it.
+  /// Add a newly allocated widget to the container. This widget is now
+  /// owned by the container and will be disposed by it.
   void AddWidget(Widget* w);
 
   // Remove a widget from the container.
@@ -127,8 +131,8 @@ class ContainerWidget : public Widget {
 
   void set_draggable(bool d) { draggable_ = d; }
 
-  auto claims_tab() const -> bool { return claims_tab_; }
-  void set_claims_tab(bool c) { claims_tab_ = c; }
+  // auto claims_tab() const -> bool { return claims_tab_; }
+  // void set_claims_tab(bool c) { claims_tab_ = c; }
 
   auto claims_left_right() const -> bool { return claims_left_right_; }
   void set_claims_left_right(bool c) { claims_left_right_ = c; }
@@ -214,8 +218,8 @@ class ContainerWidget : public Widget {
   Object::WeakRef<ButtonWidget> start_button_;
   Widget* selected_widget_{};
   Widget* prev_selected_widget_{};
-  base::SysMeshID bg_mesh_transparent_i_d_{};
-  base::SysMeshID bg_mesh_opaque_i_d_{};
+  base::SysMeshID bg_mesh_transparent_id_{};
+  base::SysMeshID bg_mesh_opaque_id_{};
   TransitionType transition_type_{};
   float width_{};
   float height_{};
@@ -240,6 +244,8 @@ class ContainerWidget : public Widget {
   float transition_start_offset_{};
   float transition_scale_{1.0f};
   float d_transition_scale_{};
+  float bg_center_fudge_x_{};
+  float bg_center_fudge_y_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t transition_start_time_{};
   millisecs_t dynamics_update_time_millisecs_{};
@@ -268,6 +274,8 @@ class ContainerWidget : public Widget {
   bool selection_loops_to_parent_{};
   bool is_window_stack_{};
   bool background_{true};
+  bool darken_behind_{};
+  bool darken_behind_is_permanent_{};
   bool root_selectable_{};
   bool selectable_{true};
   bool ignore_input_{};

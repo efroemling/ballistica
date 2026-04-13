@@ -18,10 +18,7 @@ void PythonClassUIMesh::SetupType(PyTypeObject* cls) {
   // Fully qualified type path we will be exposed as:
   cls->tp_name = "babase.Mesh";
   cls->tp_basicsize = sizeof(PythonClassUIMesh);
-  cls->tp_doc =
-      "Mesh asset for local user interface purposes.\n"
-      "\n"
-      "Category: **User Interface Classes**";
+  cls->tp_doc = "Mesh asset for local user interface purposes.";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
   cls->tp_repr = (reprfunc)tp_repr;
@@ -60,7 +57,7 @@ auto PythonClassUIMesh::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
   self->mesh_ = new Object::Ref<base::MeshAsset>();
   return reinterpret_cast<PyObject*>(self);

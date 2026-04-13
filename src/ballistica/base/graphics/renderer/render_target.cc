@@ -3,7 +3,9 @@
 #include "ballistica/base/graphics/renderer/render_target.h"
 
 #include "ballistica/base/app_adapter/app_adapter.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/core/core.h"
 
 namespace ballistica::base {
 

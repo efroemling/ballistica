@@ -10,7 +10,6 @@ RowWidget::RowWidget() {
   set_background(false);  // Influences default event handling.
   set_draggable(false);
   set_claims_left_right(false);
-  set_claims_tab(false);
   set_selection_loops_to_parent(true);
   set_selection_loops(false);
 }
@@ -30,7 +29,7 @@ auto RowWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 }
 
 void RowWidget::UpdateLayout() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
   float border = 2;
   float b = border;
   float l = 0;

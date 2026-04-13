@@ -23,6 +23,26 @@ class UnregisteredMessageIDError(Exception):
 class Message:
     """Base class for messages."""
 
+    class RetryPolicy(Enum):
+        """Defines if/when/how retries are attempted for a message."""
+
+        #: The default retry policy - disallow any retries since we
+        #: assume it could lead to unintended effects on the server side
+        #: if repeat messages come in.
+        DISALLOW = 'disallow'
+
+        #: Allow reasonable retry attempts for this message. By returning
+        #: this value, a message acknowledges that there will be no bad
+        #: effects if the server were to receive this message multiple
+        #: times.
+        ALLOW = 'allow'
+
+        #: Like the :attr:`ALLOW` option, but retries may be attempted
+        #: for a longer period of time. Using this too much may gum up
+        #: servers, so limit its use to special cases on important
+        #: messages and use regular :attr:`ALLOW` for all others.
+        ALLOW_EXTRA = 'allow_extra'
+
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
         """Return all Response types this Message can return when sent.
@@ -30,6 +50,18 @@ class Message:
         The default implementation specifies a None return type.
         """
         return [None]
+
+    def get_retry_policy(self) -> RetryPolicy:
+        """Define how retries should be handled for this message.
+
+        This returns :attr:`~RetryPolicy.DISALLOW` by default, but message
+        classes can override it depending on the behavior they desire.
+        Note that the implementation (or lack thereof) for these
+        policies is up to the particular messaging system; for example
+        something built on reliable transport probably has no need for
+        the concept of retries.
+        """
+        return self.RetryPolicy.DISALLOW
 
 
 class Response:
@@ -41,6 +73,18 @@ class SysResponse:
 
     These are only sent/handled by the messaging system itself;
     users of the api never see them.
+    """
+
+
+# Some standard response types:
+
+
+@ioprepped
+@dataclass
+class ErrorSysResponse(SysResponse):
+    """SysResponse saying some error has occurred for the send.
+
+    This generally results in an Exception being raised for the caller.
     """
 
     def set_local_exception(self, exc: Exception) -> None:
@@ -56,18 +100,6 @@ class SysResponse:
         value = getattr(self, '_sr_local_exception', None)
         assert isinstance(value, Exception | None)
         return value
-
-
-# Some standard response types:
-
-
-@ioprepped
-@dataclass
-class ErrorSysResponse(SysResponse):
-    """SysResponse saying some error has occurred for the send.
-
-    This generally results in an Exception being raised for the caller.
-    """
 
     class ErrorType(Enum):
         """Type of error that occurred while sending a message."""

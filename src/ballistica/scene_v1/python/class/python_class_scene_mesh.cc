@@ -14,7 +14,7 @@ auto PythonClassSceneMesh::tp_repr(PythonClassSceneMesh* self) -> PyObject* {
   BA_PYTHON_TRY;
   auto&& m = *(self->mesh_);
   return Py_BuildValue(
-      "s", (std::string("<bascenev1.Mesh ")
+      "s", (std::string("<_bascenev1.Mesh ")
             + (m.exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
@@ -25,15 +25,13 @@ auto PythonClassSceneMesh::type_name() -> const char* { return "Mesh"; }
 void PythonClassSceneMesh::SetupType(PyTypeObject* cls) {
   PythonClass::SetupType(cls);
   // Fully qualified type path we will be exposed as:
-  cls->tp_name = "bascenev1.Mesh";
+  cls->tp_name = "_bascenev1.Mesh";
   cls->tp_basicsize = sizeof(PythonClassSceneMesh);
   cls->tp_doc =
       "A reference to a mesh.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
       "Meshes are used for drawing.\n"
-      "Use bascenev1.getmesh() to instantiate one.";
+      "Use :meth:`bascenev1.getmesh()` to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
@@ -77,7 +75,7 @@ auto PythonClassSceneMesh::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
   if (!s_create_empty_) {
     throw Exception(

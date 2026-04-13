@@ -116,6 +116,9 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           c.SetColor(color_red_ * db, color_green_ * db, color_blue_ * db,
                      opacity_);
           c.SetTexture(texture_);
+          if (flatness_ != 0.0f) {
+            c.SetFlatness(flatness_);
+          }
           if (tint_texture_.exists()) {
             c.SetColorizeTexture(tint_texture_.get());
             c.SetColorizeColor(tint_color_red_, tint_color_green_,
@@ -153,6 +156,9 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.SetColor(color_red_ * db, color_green_ * db, color_blue_ * db,
                    opacity_);
         c.SetTexture(texture_);
+        if (flatness_ != 0.0f) {
+          c.SetFlatness(flatness_);
+        }
         if (tint_texture_.exists()) {
           c.SetColorizeTexture(tint_texture_.get());
           c.SetColorizeColor(tint_color_red_, tint_color_green_,

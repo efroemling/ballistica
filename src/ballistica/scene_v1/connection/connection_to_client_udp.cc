@@ -9,6 +9,8 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 
 namespace ballistica::scene_v1 {
@@ -53,11 +55,13 @@ void ConnectionToClientUDP::Update() {
   auto current_time_millisecs =
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
-  // if its been long enough since we've heard anything from the host, error.
+  // If its been long enough since we've heard anything from the host,
+  // error.
   if (current_time_millisecs - last_client_response_time_millisecs_
-      > (can_communicate() ? 10000u : 5000u)) {
-    // die immediately in this case; no use trying to wait for a
-    // disconnect-ack since we've already given up hope of hearing from them..
+      > (can_communicate() ? 30000u : 10000u)) {
+    // Die immediately in this case; no use trying to wait for a
+    // disconnect-ack since we've already given up hope of hearing from
+    // them.
     Die();
     return;
   }
@@ -72,8 +76,8 @@ void ConnectionToClientUDP::HandleGamePacket(
 
 void ConnectionToClientUDP::Die() {
   if (did_die_) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "Posting multiple die messages; probably not good.");
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "Posting multiple die messages; probably not good.");
     return;
   }
   // this will actually clear the object..

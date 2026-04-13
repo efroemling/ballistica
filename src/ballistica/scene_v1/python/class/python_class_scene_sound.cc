@@ -23,9 +23,7 @@ void PythonClassSceneSound::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a sound.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
-      "Use bascenev1.getsound() to instantiate one.";
+      "Use :meth:`bascenev1.getsound()` to instantiate one.";
   cls->tp_methods = tp_methods;
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
@@ -49,7 +47,7 @@ auto PythonClassSceneSound::Create(SceneSound* sound) -> PyObject* {
       PyObject_CallObject(reinterpret_cast<PyObject*>(&type_obj), nullptr));
   s_create_empty_ = false;
   if (!t) {
-    throw Exception("babase.Sound creation failed.");
+    throw Exception("bascenev1.Sound creation failed.");
   }
   *t->sound_ = sound;
   return reinterpret_cast<PyObject*>(t);
@@ -81,7 +79,7 @@ auto PythonClassSceneSound::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
   if (!s_create_empty_) {
     throw Exception(
@@ -117,7 +115,7 @@ auto PythonClassSceneSound::Play(PythonClassSceneSound* self, PyObject* args,
                       PyExcType::kContext);
     }
     if (pos_obj != Py_None) {
-      std::vector<float> vals = Python::GetPyFloats(pos_obj);
+      std::vector<float> vals = Python::GetFloats(pos_obj);
       if (vals.size() != 3) {
         throw Exception("Expected 3 floats for pos (got "
                             + std::to_string(vals.size()) + ")",
@@ -161,8 +159,6 @@ PyMethodDef PythonClassSceneSound::tp_methods[] = {
         "     host_only: bool = False) -> None\n"
         "\n"
         "Play the sound a single time.\n"
-        "\n"
-        "Category: **Gameplay Functions**\n"
         "\n"
         "If position is not provided, the sound will be at a constant volume\n"
         "everywhere. Position should be a float tuple of size 3.",

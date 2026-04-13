@@ -1,0 +1,17 @@
+when:
+  - event: push
+  - event: pull_request
+  - event: cron
+    cron: ci
+
+steps:
+  - name: build-and-test
+    image: python:3.12-windowsservercore
+    commands:
+      - $env:PYTHONPATH = "tools"
+      - python -m efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
+      - python -m pip install --upgrade pip
+      - pip install pytest typing_extensions
+      - python tools/pcommand win_ci_install_prereqs
+      - python tools/pcommand win_ci_binary_build
+      - python tools/pcommand pytest -v tests

@@ -8,19 +8,74 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/ui/ui.h"
 
 namespace ballistica::base {
 
 InputDevice::InputDevice() = default;
+
+auto InputDevice::GetAllowsConfiguring() -> bool { return true; }
+auto InputDevice::IsController() -> bool { return false; }
+auto InputDevice::IsSDLController() -> bool { return false; }
+auto InputDevice::IsTouchScreen() -> bool { return false; }
+auto InputDevice::IsRemoteControl() -> bool { return false; }
+auto InputDevice::IsTestInput() -> bool { return false; }
+auto InputDevice::IsKeyboard() -> bool { return false; }
+auto InputDevice::IsMFiController() -> bool { return false; }
+auto InputDevice::IsLocal() -> bool { return true; }
+auto InputDevice::IsUIOnly() -> bool { return false; }
+auto InputDevice::IsRemoteApp() -> bool { return false; }
+
+void InputDevice::ApplyAppConfig() {}
+
+#if BA_SDL_BUILD || BA_MINSDL_BUILD
+void InputDevice::HandleSDLEvent(const SDL_Event* e) {}
+#endif
 
 auto InputDevice::ShouldBeHiddenFromUser() -> bool {
   // Ask the input system whether they want to ignore us..
   return g_base->input->ShouldCompletelyIgnoreInputDevice(this);
 }
 
+auto InputDevice::start_button_activates_default_widget() -> bool {
+  return false;
+}
+
+auto InputDevice::DoGetDeviceName() -> std::string { return "Input Device"; }
+
+void InputDevice::OnAdded() {}
+
 auto InputDevice::GetDeviceName() -> std::string {
   assert(g_base->InLogicThread());
-  return GetRawDeviceName();
+  return DoGetDeviceName();
+}
+
+auto InputDevice::GetDeviceNameUnique() -> std::string {
+  assert(g_base->InLogicThread());
+  return DoGetDeviceName() + " " + GetPersistentIdentifier();
+}
+
+auto InputDevice::GetDeviceNamePretty() -> std::string {
+  assert(g_base->InLogicThread());
+
+  auto device_name{GetDeviceName()};
+  std::string translated_name;
+
+  auto devices_with_name = g_base->input->GetInputDevicesWithName(device_name);
+
+  if (device_name == "Keyboard") {
+    translated_name = g_base->assets->GetResourceString("keyboardText");
+  } else if (GetDeviceName() == "TouchScreen") {
+    translated_name = g_base->assets->GetResourceString("touchScreenText");
+  } else {
+    translated_name = device_name;
+  }
+
+  // If there's just one, no need to tack on the '#2' or whatever.
+  if (devices_with_name.size() == 1) {
+    return translated_name;
+  }
+  return translated_name + " " + GetPersistentIdentifier();
 }
 
 auto InputDevice::GetButtonName(int id) -> std::string {
@@ -77,6 +132,8 @@ auto InputDevice::AttachedToPlayer() const -> bool {
 void InputDevice::DetachFromPlayer() { delegate_->DetachFromPlayer(); }
 
 void InputDevice::UpdateLastActiveTime() {
+  assert(g_base->InLogicThread());
+
   // Special case: in attract-mode, prevent our virtual test devices from
   // affecting input last-active times otherwise it'll kick us out of
   // attract mode.
@@ -89,7 +146,10 @@ void InputDevice::UpdateLastActiveTime() {
       static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0);
 
   // Mark input in general as active also.
-  g_base->input->MarkInputActive();
+  g_base->input->mark_input_active();
+
+  // Let UI know this particular device is active.
+  g_base->ui->OnInputDeviceActive(this);
 }
 
 void InputDevice::InputCommand(InputType type, float value) {

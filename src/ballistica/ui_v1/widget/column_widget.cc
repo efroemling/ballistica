@@ -7,7 +7,6 @@ namespace ballistica::ui_v1 {
 ColumnWidget::ColumnWidget() {
   set_background(false);  // Influences default event handling; ew.
   set_claims_left_right(false);
-  set_claims_tab(false);
   set_draggable(false);
   set_selection_loops(false);
 }
@@ -32,7 +31,7 @@ auto ColumnWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 }
 
 void ColumnWidget::UpdateLayout() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   float total_height{2.0f * margin_};
   for (const auto& i : widgets()) {

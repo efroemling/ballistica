@@ -47,6 +47,7 @@ class ClientSessionNet : public ClientSession {
   millisecs_t leading_base_time_receive_time_{};
   Object::WeakRef<ConnectionToHost> connection_to_host_;
   std::vector<SampleBucket> buckets_{5};
+  ReplayWriter* replay_writer_{};
 };
 
 }  // namespace ballistica::scene_v1

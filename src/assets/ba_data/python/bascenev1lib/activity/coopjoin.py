@@ -62,15 +62,19 @@ class CoopJoinActivity(bs.JoinActivity):
         vpos = -140.0
 
         # Now list our remaining achievements for this level.
-        assert self.session.campaign is not None
         assert isinstance(self.session, bs.CoopSession)
+        assert self.session.campaign is not None
         levelname = (
-            self.session.campaign.name + ':' + self.session.campaign_level_name
+            f'{self.session.campaign.name}:{self.session.campaign_level_name}'
         )
         ts_h_offs = 60
 
+        variant = bs.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
         # Show remaining achievements in some cases.
-        if app.classic is not None and not (env.demo or env.arcade):
+        if app.classic is not None and not arcade_or_demo:
             achievements = [
                 a
                 for a in app.classic.ach.achievements_for_coop_level(levelname)

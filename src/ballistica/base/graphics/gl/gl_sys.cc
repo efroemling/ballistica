@@ -9,25 +9,25 @@
 // #include "ballistica/base/base.h"
 // #include "ballistica/core/core.h"
 
-// #if BA_OSTYPE_ANDROID
+// #if BA_PLATFORM_ANDROID
 // #include <EGL/egl.h>
 // #if !BA_USE_ES3_INCLUDES
 // #include "ballistica/core/platform/android/android_gl3.h"
 // #endif
 // #endif
 
-// #if BA_OSTYPE_MACOS
+// #if BA_PLATFORM_MACOS
 // #include <OpenGL/CGLContext.h>
 // #include <OpenGL/CGLTypes.h>
 // #include <OpenGL/OpenGL.h>
 // #endif
 
-// #if BA_OSTYPE_IOS
+// #if BA_PLATFORM_IOS
 // void (*glInvalidateFramebuffer)(GLenum target, GLsizei num_attachments,
 //                                 const GLenum* attachments) = nullptr;
 // #endif
 
-// #if BA_OSTYPE_ANDROID
+// #if BA_PLATFORM_ANDROID
 // PFNGLDISCARDFRAMEBUFFEREXTPROC _glDiscardFramebufferEXT = nullptr;
 // #endif
 
@@ -37,7 +37,7 @@ bool g_sys_gl_inited{};
 
 // #if 0
 //   // Fetch needed android gl stuff.
-// #if BA_OSTYPE_ANDROID
+// #if BA_PLATFORM_ANDROID
 // #define GET(PTRTYPE, FUNC, REQUIRED)                         \
 //   FUNC = (PTRTYPE)eglGetProcAddress(#FUNC);                  \
 //   if (!FUNC) FUNC = (PTRTYPE)eglGetProcAddress(#FUNC "EXT"); \
@@ -45,7 +45,7 @@ bool g_sys_gl_inited{};
 //     BA_PRECONDITION(FUNC != nullptr);                        \
 //   }
 //   GET(PFNGLDISCARDFRAMEBUFFEREXTPROC, _glDiscardFramebufferEXT, false);
-// #endif  // BA_OSTYPE_ANDROID
+// #endif  // BA_PLATFORM_ANDROID
 
 // #endif  // 0
 

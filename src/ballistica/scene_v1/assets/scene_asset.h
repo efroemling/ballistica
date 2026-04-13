@@ -75,7 +75,7 @@ class SceneAsset : public Object {
   auto GetPyRef(bool new_ref = true) -> PyObject*;
   std::string name_;
   ContextRefSceneV1 context_;
-  bool dead_{false};
+  bool dead_{};
 };
 
 }  // namespace ballistica::scene_v1

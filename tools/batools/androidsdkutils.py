@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Utilities for wrangling Android SDK bits."""
+
 from __future__ import annotations
 
 import os
@@ -84,8 +85,6 @@ def _gen_lprop_file(local_properties_path: str) -> str:
 
 def run(projroot: str, args: list[str]) -> None:
     """Main script entry point."""
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
 
     if len(args) != 1:
         raise CleanError('Expected 1 arg')

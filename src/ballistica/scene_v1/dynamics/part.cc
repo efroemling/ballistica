@@ -4,6 +4,8 @@
 
 #include <vector>
 
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/material/material.h"
 #include "ballistica/scene_v1/support/scene.h"
@@ -99,8 +101,9 @@ void Part::SetCollidingWith(int64_t node_id, int part, bool colliding,
     for (auto&& i : collisions_) {
       if (i.node == node_id && i.part == part) {
         BA_PRECONDITION(node());
-        g_core->Log(LogName::kBa, LogLevel::kError,
-                    "Got SetCollidingWith for part already colliding with.");
+        g_core->logging->Log(
+            LogName::kBa, LogLevel::kError,
+            "Got SetCollidingWith for part already colliding with.");
         return;
       }
     }
@@ -120,9 +123,9 @@ void Part::SetCollidingWith(int64_t node_id, int part, bool colliding,
         return;
       }
     }
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Got SetCollidingWith (separated) call for part we're "
-                "not colliding with.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Got SetCollidingWith (separated) call for part we're "
+                         "not colliding with.");
   }
 }
 

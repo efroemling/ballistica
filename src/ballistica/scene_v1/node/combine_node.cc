@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 

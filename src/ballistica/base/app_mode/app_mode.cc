@@ -27,6 +27,8 @@ auto AppMode::CreateInputDeviceDelegate(InputDevice* device)
   return Object::NewDeferred<InputDeviceDelegate>();
 }
 
+void AppMode::RequestMainUI() {}
+
 auto AppMode::HandleJSONPing(const std::string& data_str) -> std::string {
   return "";
 }
@@ -59,7 +61,7 @@ auto AppMode::HasConnectionToHost() const -> bool { return false; }
 
 auto AppMode::HasConnectionToClients() const -> bool { return false; }
 
-void AppMode::DoApplyAppConfig() {}
+void AppMode::ApplyAppConfig() {}
 
 auto AppMode::GetForegroundContext() -> ContextRef { return {}; }
 
@@ -70,5 +72,7 @@ void AppMode::LanguageChanged() {}
 auto AppMode::LastClientJoinTime() const -> millisecs_t { return -1; }
 
 auto AppMode::IsInMainMenu() const -> bool { return false; }
+
+auto AppMode::GetBottomLeftEdgeHeight() -> float { return 0.0f; }
 
 }  // namespace ballistica::base

@@ -3,14 +3,15 @@
 #ifndef BALLISTICA_BASE_GRAPHICS_GL_MESH_MESH_DATA_GL_H_
 #define BALLISTICA_BASE_GRAPHICS_GL_MESH_MESH_DATA_GL_H_
 
-#include "ballistica/base/graphics/mesh/mesh_index_buffer_16.h"
-#include "ballistica/base/graphics/mesh/mesh_index_buffer_32.h"
 #if BA_ENABLE_OPENGL
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/graphics/mesh/mesh_index_buffer_16.h"
+#include "ballistica/base/graphics/mesh/mesh_index_buffer_32.h"
 #include "ballistica/base/graphics/mesh/mesh_renderer_data.h"
+#include "ballistica/core/logging/logging_macros.h"
 
 namespace ballistica::base {
 
@@ -167,7 +168,7 @@ class RendererGL::MeshDataGL : public MeshRendererData {
 
       // Hmmm didnt think we had to have vao bound here but causes problems
       // on qualcomm if not.
-      // #if BA_OSTYPE_ANDROID
+      // #if BA_PLATFORM_ANDROID
       //       if (g_vao_support && renderer_->is_adreno_) {
       //         renderer_->BindVertexArray(vao_);
       //       }

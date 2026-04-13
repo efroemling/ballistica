@@ -7,7 +7,8 @@
 #include <string>
 #endif
 
-#include "ballistica/shared/foundation/types.h"
+#include "ballistica/shared/ballistica.h"
+#include "ballistica/shared/foundation/exception.h"  // IWYU pragma: keep.
 
 // Various utility macros and related support calls.
 // Trying to contain the evil to this one place.
@@ -26,7 +27,7 @@
 #define BA_BUILD_COMMAND_FILENAME \
   "<string: " __FILE__ " line " BA_TOSTRING(__LINE__) ">"
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #define BA_DIRSLASH "\\"
 #else
 #define BA_DIRSLASH "/"
@@ -43,7 +44,7 @@
 // FIXME: Turn these into C++ classes.
 #if BA_DEBUG_BUILD
 #define BA_DEBUG_FUNCTION_TIMER_BEGIN() \
-  millisecs_t _dfts = g_core->platform->GetTicks()
+  millisecs_t _dfts = ::ballistica::MacroFunctionTimerStartTime()
 #define BA_DEBUG_FUNCTION_TIMER_END(time) \
   ::ballistica::MacroFunctionTimerEnd(g_core, _dfts, time, __PRETTY_FUNCTION__)
 #define BA_DEBUG_FUNCTION_TIMER_END_THREAD(time)                 \
@@ -55,7 +56,7 @@
   ::ballistica::MacroFunctionTimerEndThreadEx(g_core, _dfts, time, \
                                               __PRETTY_FUNCTION__, what)
 #define BA_DEBUG_TIME_CHECK_BEGIN(name) \
-  millisecs_t name##_ts = g_core->platform->GetTicks()
+  millisecs_t name##_ts = ::ballistica::MacroFunctionTimerStartTime()
 #define BA_DEBUG_TIME_CHECK_END(name, time)                                 \
   ::ballistica::MacroTimeCheckEnd(g_core, name##_ts, time, #name, __FILE__, \
                                   __LINE__)
@@ -74,58 +75,6 @@
   type(const type& foo) = delete;      \
   type& operator=(const type& src) = delete; /* NOLINT (macro parens) */
 
-// Call this for errors which are non-fatal but should be noted so they can
-// be fixed.
-#define BA_LOG_ERROR_NATIVE_TRACE(msg) \
-  ::ballistica::MacroLogErrorNativeTrace(g_core, msg, __FILE__, __LINE__)
-
-#define BA_LOG_ERROR_NATIVE_TRACE_ONCE(msg)                                    \
-  {                                                                            \
-    static bool did_log_error_trace_here = false;                              \
-    if (!did_log_error_trace_here) {                                           \
-      ::ballistica::MacroLogErrorNativeTrace(g_core, msg, __FILE__, __LINE__); \
-      did_log_error_trace_here = true;                                         \
-    }                                                                          \
-  }                                                                            \
-  ((void)0)  // (see 'Trailing-semicolon note' at top)
-
-// Call this for errors which are non-fatal but should be noted so they can
-// be fixed.
-#define BA_LOG_ERROR_PYTHON_TRACE(msg) \
-  ::ballistica::MacroLogErrorPythonTrace(g_core, msg, __FILE__, __LINE__)
-
-#define BA_LOG_ERROR_PYTHON_TRACE_ONCE(msg)                                    \
-  {                                                                            \
-    static bool did_log_error_trace_here = false;                              \
-    if (!did_log_error_trace_here) {                                           \
-      ::ballistica::MacroLogErrorPythonTrace(g_core, msg, __FILE__, __LINE__); \
-      did_log_error_trace_here = true;                                         \
-    }                                                                          \
-  }                                                                            \
-  ((void)0)  // (see 'Trailing-semicolon note' at top)
-
-#define BA_LOG_ONCE(nm, lvl, msg) \
-  {                               \
-    static bool did_log_here{};   \
-    if (!did_log_here) {          \
-      g_core->Log(nm, lvl, msg);  \
-      did_log_here = true;        \
-    }                             \
-  }                               \
-  ((void)0)  // (see 'Trailing-semicolon note' at top)
-
-#define BA_LOG_PYTHON_TRACE(msg) ::ballistica::MacroLogPythonTrace(g_core, msg)
-
-#define BA_LOG_PYTHON_TRACE_ONCE(msg)                 \
-  {                                                   \
-    static bool did_log_python_trace_here = false;    \
-    if (!did_log_python_trace_here) {                 \
-      ::ballistica::MacroLogPythonTrace(g_core, msg); \
-      did_log_python_trace_here = true;               \
-    }                                                 \
-  }                                                   \
-  ((void)0)  // (see 'Trailing-semicolon note' at top)
-
 /// Test a condition and throw an exception if it fails (on both debug and
 /// release builds)
 #define BA_PRECONDITION(b)                                                \
@@ -140,14 +89,17 @@
 
 /// Test a condition and simply print a log message if it fails (on both debug
 /// and release builds)
-#define BA_PRECONDITION_LOG(b)                                        \
-  {                                                                   \
-    if (!(b)) {                                                       \
-      Log(LogLevel::kError, std::string("Precondition failed @ ")     \
-                                + cxpr_base_name(__FILE__)            \
-                                + ":" BA_TOSTRING(__LINE__) ": " #b); \
-    }                                                                 \
-  }                                                                   \
+#define BA_PRECONDITION_LOG_ONCE(b)                                  \
+  {                                                                  \
+    static bool did_log_here{};                                      \
+    if (!did_log_here && !(b)) {                                     \
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,           \
+                           std::string("Precondition failed @ ")     \
+                               + cxpr_base_name(__FILE__)            \
+                               + ":" BA_TOSTRING(__LINE__) ": " #b); \
+      did_log_here = true;                                           \
+    }                                                                \
+  }                                                                  \
   ((void)0)  // (see 'Trailing-semicolon note' at top)
 
 /// Test a condition and abort the program if it fails (on both debug
@@ -174,6 +126,7 @@ namespace ballistica {
 // directly.
 auto MacroPathFilter(core::CoreFeatureSet* corefs, const char* filename)
     -> const char*;
+auto MacroFunctionTimerStartTime() -> millisecs_t;
 void MacroFunctionTimerEnd(core::CoreFeatureSet* corefs, millisecs_t starttime,
                            millisecs_t time, const char* funcname);
 void MacroFunctionTimerEndThread(core::CoreFeatureSet* corefs,

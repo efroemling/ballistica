@@ -12,13 +12,19 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we're defining here.
 fset = FeatureSet.get_active()
 
+# Stuff we need.
 fset.requirements = {'core', 'base'}
+
+# Stuff we use but don't *need* (and only access via app-subsystems).
 fset.soft_requirements = {'classic'}
 
 fset.internal = True
 
-# We provide 'babase.app.plus'.
+# We provide 'ba*.app.plus'.
 fset.has_python_app_subsystem = True
 
-# We want things to work without us.
+# Allow things to soft-require us so they can work when we're not
+# present. Note that this will cause our app-subsystem's type annotation
+# to be `PlusAppSubsystem | None` instead of the default
+# `PlusAppSubsystem`.
 fset.allow_as_soft_requirement = True

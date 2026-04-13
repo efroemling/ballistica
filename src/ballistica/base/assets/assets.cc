@@ -23,7 +23,9 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/python/python.h"
@@ -165,6 +167,23 @@ void Assets::StartLoading() {
   LoadSystemTexture(SysTextureID::kCharacterIconMask, "characterIconMask");
   LoadSystemTexture(SysTextureID::kBlack, "black");
   LoadSystemTexture(SysTextureID::kWings, "wings");
+  LoadSystemTexture(SysTextureID::kSpinner, "spinner");
+  LoadSystemTexture(SysTextureID::kSpinner0, "spinner0");
+  LoadSystemTexture(SysTextureID::kSpinner1, "spinner1");
+  LoadSystemTexture(SysTextureID::kSpinner2, "spinner2");
+  LoadSystemTexture(SysTextureID::kSpinner3, "spinner3");
+  LoadSystemTexture(SysTextureID::kSpinner4, "spinner4");
+  LoadSystemTexture(SysTextureID::kSpinner5, "spinner5");
+  LoadSystemTexture(SysTextureID::kSpinner6, "spinner6");
+  LoadSystemTexture(SysTextureID::kSpinner7, "spinner7");
+  LoadSystemTexture(SysTextureID::kSpinner8, "spinner8");
+  LoadSystemTexture(SysTextureID::kSpinner9, "spinner9");
+  LoadSystemTexture(SysTextureID::kSpinner10, "spinner10");
+  LoadSystemTexture(SysTextureID::kSpinner11, "spinner11");
+  LoadSystemTexture(SysTextureID::kCircleSoft, "circleSoft");
+  LoadSystemTexture(SysTextureID::kButtonSquareWide, "buttonSquareWide");
+  LoadSystemTexture(SysTextureID::kPageLeftRight, "pageLeftRight");
+  LoadSystemTexture(SysTextureID::kFontExtras5, "fontExtras5");
 
   // System cube map textures:
   LoadSystemCubeMapTexture(SysCubeMapTextureID::kReflectionChar,
@@ -197,6 +216,10 @@ void Assets::StartLoading() {
   LoadSystemSound(SysSoundID::kSparkle, "sparkle01");
   LoadSystemSound(SysSoundID::kSparkle2, "sparkle02");
   LoadSystemSound(SysSoundID::kSparkle3, "sparkle03");
+  LoadSystemSound(SysSoundID::kScoreIncrease, "scoreIncrease");
+  LoadSystemSound(SysSoundID::kCashRegister, "cashRegister");
+  LoadSystemSound(SysSoundID::kPowerDown, "powerdown01");
+  LoadSystemSound(SysSoundID::kDing, "ding");
 
   // System datas:
   // (crickets)
@@ -303,7 +326,7 @@ void Assets::PrintLoadInfo() {
   snprintf(buffer, sizeof(buffer), "    %-50s %10s %10s", "FILE",
            "PRELOAD_TIME", "LOAD_TIME");
   s += buffer;
-  g_core->Log(LogName::kBaAssets, LogLevel::kInfo, s);
+  g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, s);
   millisecs_t total_preload_time = 0;
   millisecs_t total_load_time = 0;
   assert(asset_lists_locked_);
@@ -316,7 +339,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -329,7 +352,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -342,7 +365,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -355,7 +378,7 @@ void Assets::PrintLoadInfo() {
              i.second->GetName().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
     num++;
   }
   assert(asset_lists_locked_);
@@ -368,7 +391,7 @@ void Assets::PrintLoadInfo() {
              i.second->file_name_full().c_str(),
              static_cast_check_fit<int>(preload_time),
              static_cast_check_fit<int>(load_time));
-    g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
     num++;
   }
   snprintf(buffer, sizeof(buffer),
@@ -376,7 +399,7 @@ void Assets::PrintLoadInfo() {
            "(feeding data to OpenGL, etc): %i",
            static_cast<int>(total_preload_time),
            static_cast<int>(total_load_time));
-  g_core->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
+  g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo, buffer);
 }
 
 void Assets::MarkAllAssetsForLoad() {
@@ -479,7 +502,7 @@ auto Assets::GetAsset(const std::string& file_name,
       have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
       MarkAssetForLoad(d.get());
     }
-    d->set_last_used_time(g_core->GetAppTimeMillisecs());
+    d->set_last_used_time(g_core->AppTimeMillisecs());
     return Object::Ref<T>(d);
   }
 }
@@ -499,7 +522,7 @@ auto Assets::GetTexture(TextPacker* packer) -> Object::Ref<TextureAsset> {
       have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
       MarkAssetForLoad(d.get());
     }
-    d->set_last_used_time(g_core->GetAppTimeMillisecs());
+    d->set_last_used_time(g_core->AppTimeMillisecs());
     return Object::Ref<TextureAsset>(d);
   }
 }
@@ -519,7 +542,7 @@ auto Assets::GetQRCodeTexture(const std::string& url)
       have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
       MarkAssetForLoad(d.get());
     }
-    d->set_last_used_time(g_core->GetAppTimeMillisecs());
+    d->set_last_used_time(g_core->AppTimeMillisecs());
     return Object::Ref<TextureAsset>(d);
   }
 }
@@ -542,7 +565,7 @@ auto Assets::GetCubeMapTexture(const std::string& file_name)
       have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
       MarkAssetForLoad(d.get());
     }
-    d->set_last_used_time(g_core->GetAppTimeMillisecs());
+    d->set_last_used_time(g_core->AppTimeMillisecs());
     return Object::Ref<TextureAsset>(d);
   }
 }
@@ -598,7 +621,7 @@ auto Assets::GetTexture(const std::string& file_name)
       have_pending_loads_[static_cast<int>(d->GetAssetType())] = true;
       MarkAssetForLoad(d.get());
     }
-    d->set_last_used_time(g_core->GetAppTimeMillisecs());
+    d->set_last_used_time(g_core->AppTimeMillisecs());
     return Object::Ref<TextureAsset>(d);
   }
 }
@@ -750,7 +773,7 @@ auto Assets::RunPendingLoadsLogicThread() -> bool {
 template <typename T>
 auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
   bool flush = false;
-  millisecs_t starttime = g_core->GetAppTimeMillisecs();
+  millisecs_t starttime = g_core->AppTimeMillisecs();
 
   std::vector<Object::Ref<T>*> l;
   std::vector<Object::Ref<T>*> l_unfinished;
@@ -760,8 +783,7 @@ auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
 
     // If we're already out of time.
     if (!flush
-        && g_core->GetAppTimeMillisecs() - starttime
-               > PENDING_LOAD_PROCESS_TIME) {
+        && g_core->AppTimeMillisecs() - starttime > PENDING_LOAD_PROCESS_TIME) {
       bool return_val = (!c_list->empty());
       return return_val;
     }
@@ -790,8 +812,7 @@ auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
           // If the load finished, pop it on our "done-loading" list.. otherwise
           // keep it around.
           l_finished.push_back(*i);  // else l_unfinished.push_back(*i);
-          if (g_core->GetAppTimeMillisecs() - starttime
-                  > PENDING_LOAD_PROCESS_TIME
+          if (g_core->AppTimeMillisecs() - starttime > PENDING_LOAD_PROCESS_TIME
               && !flush) {
             out_of_time = true;
           }
@@ -832,7 +853,7 @@ auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
 
 void Assets::Prune(int level) {
   assert(g_base->InLogicThread());
-  millisecs_t current_time = g_core->GetAppTimeMillisecs();
+  millisecs_t current_time = g_core->AppTimeMillisecs();
 
   // Need lists locked while accessing/modifying them.
   AssetListLock lock;
@@ -1030,37 +1051,41 @@ void Assets::Prune(int level) {
   if (kShowPruningInfo) {
     assert(asset_lists_locked_);
     if (textures_.size() != old_texture_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "Textures pruned from " + std::to_string(old_texture_count)
-                      + " to " + std::to_string(textures_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "Textures pruned from "
+                               + std::to_string(old_texture_count) + " to "
+                               + std::to_string(textures_.size()));
     }
     if (text_textures_.size() != old_text_texture_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "TextTextures pruned from "
-                      + std::to_string(old_text_texture_count) + " to "
-                      + std::to_string(text_textures_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "TextTextures pruned from "
+                               + std::to_string(old_text_texture_count) + " to "
+                               + std::to_string(text_textures_.size()));
     }
     if (qr_textures_.size() != old_qr_texture_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "QrTextures pruned from "
-                      + std::to_string(old_qr_texture_count) + " to "
-                      + std::to_string(qr_textures_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "QrTextures pruned from "
+                               + std::to_string(old_qr_texture_count) + " to "
+                               + std::to_string(qr_textures_.size()));
     }
     if (meshes_.size() != old_mesh_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "Meshes pruned from " + std::to_string(old_mesh_count)
-                      + " to " + std::to_string(meshes_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "Meshes pruned from "
+                               + std::to_string(old_mesh_count) + " to "
+                               + std::to_string(meshes_.size()));
     }
     if (collision_meshes_.size() != old_collision_mesh_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "CollisionMeshes pruned from "
-                      + std::to_string(old_collision_mesh_count) + " to "
-                      + std::to_string(collision_meshes_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "CollisionMeshes pruned from "
+                               + std::to_string(old_collision_mesh_count)
+                               + " to "
+                               + std::to_string(collision_meshes_.size()));
     }
     if (sounds_.size() != old_sound_count) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kInfo,
-                  "Sounds pruned from " + std::to_string(old_sound_count)
-                      + " to " + std::to_string(sounds_.size()));
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kInfo,
+                           "Sounds pruned from "
+                               + std::to_string(old_sound_count) + " to "
+                               + std::to_string(sounds_.size()));
     }
   }
 }
@@ -1126,10 +1151,10 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
       prefix1 = "textures/";
       prefix2 = "textures2/";
 
-#if BA_OSTYPE_ANDROID && !BA_ANDROID_DDS_BUILD
+#if BA_PLATFORM_ANDROID && !BA_ANDROID_DDS_BUILD
       // On most android builds we go for .ktx, which contains etc2 and etc1.
       ext = ".ktx";
-#elif BA_OSTYPE_IOS_TVOS
+#elif BA_PLATFORM_IOS_TVOS
       // On iOS we use pvr.
       ext = ".pvr";
 #else
@@ -1167,12 +1192,12 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
 
   // We wanna fail gracefully for some types.
   if (type == FileType::kSound && name != "blank") {
-    g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "Unable to load audio: '" + name + "'; trying fallback...");
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+                         "Unable to load audio: '" + name + "'.");
     return FindAssetFile(type, "blank");
   } else if (type == FileType::kTexture && name != "white") {
-    g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "Unable to load texture: '" + name + "'; trying fallback...");
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+                         "Unable to load texture: '" + name + "'.");
     return FindAssetFile(type, "white");
   }
 
@@ -1231,8 +1256,8 @@ void Assets::AddPackage(const std::string& name, const std::string& path) {
   assert(g_base->InLogicThread());
   if (g_buildconfig.debug_build()) {
     if (packages_.find(name) != packages_.end()) {
-      g_core->Log(LogName::kBaAssets, LogLevel::kWarning,
-                  "adding duplicate package: '" + name + "'");
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                           "adding duplicate package: '" + name + "'");
     }
   }
   packages_[name] = path;
@@ -1264,6 +1289,7 @@ void Assets::InitSpecialChars() {
   special_char_strings_[SpecialChar::kPlayStationSquareButton] = "\xee\x80\x94";
   special_char_strings_[SpecialChar::kPlayButton] = "\xee\x80\x95";
   special_char_strings_[SpecialChar::kPauseButton] = "\xee\x80\x96";
+  special_char_strings_[SpecialChar::kClose] = "\xee\x80\x97";
 
   special_char_strings_[SpecialChar::kOuyaButtonO] = "\xee\x80\x99";
   special_char_strings_[SpecialChar::kOuyaButtonU] = "\xee\x80\x9A";
@@ -1347,6 +1373,10 @@ void Assets::InitSpecialChars() {
 
   special_char_strings_[SpecialChar::kMikirog] = "\xee\x81\xA2";
   special_char_strings_[SpecialChar::kV2Logo] = "\xee\x81\xA3";
+  special_char_strings_[SpecialChar::kSantaHat] = "\xee\x81\xA4";
+  special_char_strings_[SpecialChar::kPotato] = "\xee\x81\xA5";
+  special_char_strings_[SpecialChar::kPalmTree] = "\xee\x81\xA6";
+  special_char_strings_[SpecialChar::kBoxingGlove] = "\xee\x81\xA7";
 }
 
 void Assets::SetLanguageKeys(
@@ -1380,43 +1410,19 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
 
   // If its got a "r" key, look it up as a resource.. (with optional fallback).
   cJSON* resource = cJSON_GetObjectItem(obj, "r");
-  if (resource == nullptr) {
-    resource = cJSON_GetObjectItem(obj, "resource");
-    // As of build 14318, complain if we find long key names; hope to remove
-    // them soon.
-    if (resource != nullptr) {
-      static bool printed = false;
-      if (!printed) {
-        printed = true;
-        char* c = cJSON_Print(obj);
-        BA_LOG_ONCE(
-            LogName::kBaAssets, LogLevel::kError,
-            "found long key 'resource' in raw lstr json: " + std::string(c));
-        free(c);
-      }
-    }
-  }
   if (resource != nullptr) {
+    if (!cJSON_IsString(resource)) {
+      throw Exception("expected a string for resource");
+    }
     // Look for fallback-resource.
     cJSON* fallback_resource = cJSON_GetObjectItem(obj, "f");
-    if (fallback_resource == nullptr) {
-      fallback_resource = cJSON_GetObjectItem(obj, "fallback");
-
-      // As of build 14318, complain if we find old long key names; hope to
-      // remove them soon.
-      if (fallback_resource != nullptr) {
-        static bool printed = false;
-        if (!printed) {
-          printed = true;
-          char* c = cJSON_Print(obj);
-          BA_LOG_ONCE(
-              LogName::kBaAssets, LogLevel::kError,
-              "found long key 'fallback' in raw lstr json: " + std::string(c));
-          free(c);
-        }
-      }
-    }
     cJSON* fallback_value = cJSON_GetObjectItem(obj, "fv");
+    if (fallback_resource && !cJSON_IsString(fallback_resource)) {
+      throw Exception("expected a string for fallback_resource");
+    }
+    if (fallback_value && !cJSON_IsString(fallback_value)) {
+      throw Exception("expected a string for fallback_value");
+    }
     result = g_base->python->GetResource(
         resource->valuestring,
         fallback_resource ? fallback_resource->valuestring : nullptr,
@@ -1424,35 +1430,17 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
   } else {
     // Apparently not a resource; lets try as a translation ("t" keys).
     cJSON* translate = cJSON_GetObjectItem(obj, "t");
-    if (translate == nullptr) {
-      translate = cJSON_GetObjectItem(obj, "translate");
-
-      // As of build 14318, complain if we find long key names; hope to remove
-      // them soon.
-      if (translate != nullptr) {
-        static bool printed = false;
-        if (!printed) {
-          printed = true;
-          char* c = cJSON_Print(obj);
-          BA_LOG_ONCE(
-              LogName::kBaAssets, LogLevel::kError,
-              "found long key 'translate' in raw lstr json: " + std::string(c));
-          free(c);
-        }
-      }
-    }
     if (translate != nullptr) {
-      if (translate->type != cJSON_Array
-          || cJSON_GetArraySize(translate) != 2) {
+      if (!cJSON_IsArray(translate) || cJSON_GetArraySize(translate) != 2) {
         throw Exception("Expected a 2 member array for translate");
       }
       cJSON* category = cJSON_GetArrayItem(translate, 0);
-      if (category->type != cJSON_String) {
+      if (!cJSON_IsString(category)) {
         throw Exception(
             "First member of translate array (category) must be a string");
       }
       cJSON* value = cJSON_GetArrayItem(translate, 1);
-      if (value->type != cJSON_String) {
+      if (!cJSON_IsString(value)) {
         throw Exception(
             "Second member of translate array (value) must be a string");
       }
@@ -1463,25 +1451,8 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
       // (can be useful for feeding explicit strings while still allowing
       // translated subs
       cJSON* value = cJSON_GetObjectItem(obj, "v");
-      if (value == nullptr) {
-        value = cJSON_GetObjectItem(obj, "value");
-
-        // As of build 14318, complain if we find long key names; hope to remove
-        // them soon.
-        if (value != nullptr) {
-          static bool printed = false;
-          if (!printed) {
-            printed = true;
-            char* c = cJSON_Print(obj);
-            BA_LOG_ONCE(
-                LogName::kBaAssets, LogLevel::kError,
-                "found long key 'value' in raw lstr json: " + std::string(c));
-            free(c);
-          }
-        }
-      }
       if (value != nullptr) {
-        if (value->type != cJSON_String) {
+        if (!cJSON_IsString(value)) {
           throw Exception("Expected a string for value");
         }
         result = value->valuestring;
@@ -1492,59 +1463,44 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
   }
 
   // Ok; now no matter what it was, see if it contains any subs and replace
-  // them.
-  // ("subs" or "s")
+  // them ("s").
   cJSON* subs = cJSON_GetObjectItem(obj, "s");
-  if (subs == nullptr) {
-    subs = cJSON_GetObjectItem(obj, "subs");
-
-    // As of build 14318, complain if we find long key names; hope to remove
-    // them soon.
-    if (subs != nullptr) {
-      static bool printed = false;
-      if (!printed) {
-        printed = true;
-        char* c = cJSON_Print(obj);
-        BA_LOG_ONCE(
-            LogName::kBaAssets, LogLevel::kError,
-            "found long key 'subs' in raw lstr json: " + std::string(c));
-        free(c);
-      }
-    }
-  }
   if (subs != nullptr) {
-    if (subs->type != cJSON_Array) {
+    if (!cJSON_IsArray(subs)) {
       throw Exception("expected an array for 'subs'");
     }
     int subs_count = cJSON_GetArraySize(subs);
     for (int i = 0; i < subs_count; i++) {
       cJSON* sub = cJSON_GetArrayItem(subs, i);
-      if (sub->type != cJSON_Array || cJSON_GetArraySize(sub) != 2) {
+      if (!cJSON_IsArray(sub) || cJSON_GetArraySize(sub) != 2) {
         throw Exception(
             "Invalid subs entry; expected length 2 list of sub/replacement.");
       }
 
       // First item should be a string.
       cJSON* key = cJSON_GetArrayItem(sub, 0);
-      if (key->type != cJSON_String) {
+      if (!cJSON_IsString(key)) {
         throw Exception("Sub keys must be strings.");
       }
       std::string s_key = key->valuestring;
 
-      // Second item can be a string or a dict; if its a dict, we go recursive.
+      // Second item can be a string or a dict; if its a dict, we go
+      // recursive.
       cJSON* value = cJSON_GetArrayItem(sub, 1);
       std::string s_val;
-      if (value->type == cJSON_String) {
+      if (cJSON_IsString(value)) {
         s_val = value->valuestring;
-      } else if (value->type == cJSON_Object) {
+      } else if (cJSON_IsObject(value)) {
         s_val = DoCompileResourceString(value);
       } else {
         throw Exception("Sub values must be strings or dicts.");
       }
 
       // Replace *ALL* occurrences.
+      //
       // FIXME: Using this simple logic, If our replace value contains our
-      // search value we get an infinite loop. For now, just error in that case.
+      // search value we get an infinite loop. For now, just error in that
+      // case.
       if (s_val.find(s_key) != std::string::npos) {
         throw Exception("Subs replace string cannot contain search string.");
       }
@@ -1560,8 +1516,8 @@ auto DoCompileResourceString(cJSON* obj) -> std::string {
   return result;
 }
 
-auto Assets::CompileResourceString(const std::string& s, const std::string& loc,
-                                   bool* valid) -> std::string {
+auto Assets::CompileResourceString(const std::string& s, bool* valid)
+    -> std::string {
   bool dummyvalid;
   if (valid == nullptr) {
     valid = &dummyvalid;
@@ -1575,10 +1531,15 @@ auto Assets::CompileResourceString(const std::string& s, const std::string& loc,
   }
 
   cJSON* root = cJSON_Parse(s.c_str());
+  if (root && !cJSON_IsObject(root)) {
+    cJSON_Delete(root);
+    root = nullptr;
+  }
+
   if (root == nullptr) {
-    g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "CompileResourceString failed (loc " + loc
-                    + "); invalid json: '" + s + "'");
+    g_core->logging->Log(
+        LogName::kBaAssets, LogLevel::kError,
+        "CompileResourceString failed; invalid json: '" + s + "'");
     *valid = false;
     return "";
   }
@@ -1587,9 +1548,9 @@ auto Assets::CompileResourceString(const std::string& s, const std::string& loc,
     result = DoCompileResourceString(root);
     *valid = true;
   } catch (const std::exception& e) {
-    g_core->Log(LogName::kBaAssets, LogLevel::kError,
-                "CompileResourceString failed (loc " + loc
-                    + "): " + std::string(e.what()) + "; str='" + s + "'");
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+                         "CompileResourceString failed: "
+                             + std::string(e.what()) + "; str='" + s + "'");
     result = "<error>";
     *valid = false;
   }

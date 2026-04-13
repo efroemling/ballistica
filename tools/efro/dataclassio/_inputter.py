@@ -18,8 +18,9 @@ from typing import TYPE_CHECKING
 from efro.util import check_utc
 from efro.dataclassio._base import (
     Codec,
-    _parse_annotated,
+    parse_annotated,
     EXTRA_ATTRS_ATTR,
+    LOSSY_ATTR,
     _is_valid_for_codec,
     _get_origin,
     SIMPLE_TYPES,
@@ -27,10 +28,12 @@ from efro.dataclassio._base import (
     IOExtendedData,
     _get_multitype_type,
     IOMultiType,
+    TypeNotPresentError,
 )
 from efro.dataclassio._prep import PrepSession
 
 if TYPE_CHECKING:
+
     from typing import Any
 
     from efro.dataclassio._base import IOAttrs
@@ -46,6 +49,7 @@ class _Inputter:
         coerce_to_float: bool,
         allow_unknown_attrs: bool = True,
         discard_unknown_attrs: bool = False,
+        lossy: bool = False,
     ):
         self._cls = cls
         self._codec = codec
@@ -53,6 +57,7 @@ class _Inputter:
         self._allow_unknown_attrs = allow_unknown_attrs
         self._discard_unknown_attrs = discard_unknown_attrs
         self._soft_default_validator: _Outputter | None = None
+        self._lossy = lossy
 
         if not allow_unknown_attrs and discard_unknown_attrs:
             raise ValueError(
@@ -63,26 +68,53 @@ class _Inputter:
     def run(self, values: dict) -> Any:
         """Do the thing."""
 
+        if self._codec is Codec.HUMAN:
+            raise ValueError(
+                'Codec.HUMAN is output-only and cannot be used for decoding.'
+            )
+
         outcls: type[Any]
 
         # If we're dealing with a multi-type subclass which is NOT a
-        # dataclass, we must rely on its stored type to figure out
-        # what type of dataclass we're going to. If we are a dataclass
-        # then we already know what type we're going to so we can
-        # survive without this, which is often necessary when reading
-        # old data that doesn't have a type id attr yet.
+        # dataclass (generally a custom multitype base class), then we
+        # must rely on its stored type enum to figure out what type of
+        # dataclass we're going to create. If we *are* dealing with a
+        # dataclass then we already know what type we're going to so we
+        # can survive without this, which is often necessary when
+        # reading old data that doesn't have a type id attr yet.
         if issubclass(self._cls, IOMultiType) and not dataclasses.is_dataclass(
             self._cls
         ):
-            type_id_val = values.get(self._cls.get_type_id_storage_name())
+            storename = self._cls.get_type_id_storage_name()
+            type_id_val = values.get(storename)
             if type_id_val is None:
                 raise ValueError(
-                    f'No type id value present for multi-type object:'
-                    f' {values}.'
+                    f'\'{storename}\' type id value'
+                    f' not found in \'{self._cls.__name__}\' input data.'
                 )
             type_id_enum = self._cls.get_type_id_type()
-            enum_val = type_id_enum(type_id_val)
-            outcls = self._cls.get_type(enum_val)
+            try:
+                enum_val = type_id_enum(type_id_val)
+            except ValueError as exc:
+
+                fallback_obj = self._get_fallback_object(exc, 'unrecognized')
+                if fallback_obj is not None:
+                    return fallback_obj
+
+                # Otherwise the error stands as-is.
+                raise
+
+            try:
+                outcls = self._cls.get_type_cached(enum_val)
+            except TypeNotPresentError as exc:
+
+                fallback_obj = self._get_fallback_object(exc, 'not-present')
+                if fallback_obj is not None:
+                    return fallback_obj
+
+                # Otherwise the error stands as-is.
+                raise
+
         else:
             outcls = self._cls
 
@@ -98,9 +130,50 @@ class _Inputter:
         assert isinstance(out, outcls)
 
         if is_ext:
+            assert isinstance(out, IOExtendedData)
             out.did_input()
 
+        # If we're running in lossy mode, flag the object as such so we
+        # don't allow writing it back out and potentially accidentally
+        # losing data.
+        #
+        # FIXME - We are currently only flagging this at the top level,
+        # but this will not prevent sub-objects from being written out.
+        # Is that worth worrying about? Though perfect is the enemy of
+        # good I suppose.
+        if self._lossy:
+            setattr(out, LOSSY_ATTR, True)
+
         return out
+
+    def _get_fallback_object(self, exc: Exception, desc: str) -> Any | None:
+        # Check the fallback even if not in lossy mode, as we
+        # inform the user of its existence in errors in that
+        # case.
+        fallback = self._cls.get_unknown_type_fallback()
+
+        # Sanity check that fallback is correct type.
+        assert isinstance(fallback, self._cls | None)
+
+        # If we're in lossy mode, provide the fallback value.
+        if self._lossy:
+            if fallback is not None:
+                # Ok; they provided a fallback. Flag it as lossy
+                # to prevent it from being written back out by
+                # default, and return it.
+                setattr(fallback, LOSSY_ATTR, True)
+                return fallback
+        else:
+            # If we're *not* in lossy mode, inform the user if
+            # we *would* have succeeded if we were. This is
+            # useful for debugging these sorts of situations.
+            if fallback is not None:
+                raise ValueError(
+                    f'Failed loading {desc} multitype object.'
+                    f' Note that the multitype provides a fallback'
+                    f' and thus would succeed in lossy mode.'
+                ) from exc
+        return None
 
     def _value_from_input(
         self,
@@ -128,7 +201,6 @@ class _Inputter:
                 )
             return value
 
-        # noinspection PyPep8
         if origin is typing.Union or origin is types.UnionType:
             # Currently, the only unions we support are None/Value
             # (translated from Optional), which we verified on prep. So
@@ -183,26 +255,42 @@ class _Inputter:
         # dataclass (all dataclasses inheriting from the multi-type
         # should just be processed as dataclasses).
         if issubclass(origin, IOMultiType):
-            return self._dataclass_from_input(
-                _get_multitype_type(anntype, fieldpath, value),
-                fieldpath,
-                value,
-            )
+            return self._multitype_obj(anntype, fieldpath, value)
 
         if issubclass(origin, Enum):
             try:
                 return origin(value)
-            except ValueError:
-                # If a fallback enum was provided in ioattrs, return
-                # that for unrecognized values.
+            except ValueError as exc:
+                # If a fallback enum was provided in ioattrs AND we're
+                # in lossy mode, return that for unrecognized values. If
+                # one was provided but we're *not* in lossy mode, note
+                # that we could have loaded it if lossy mode was
+                # enabled.
                 if ioattrs is not None and ioattrs.enum_fallback is not None:
+                    # Sanity check; make sure fallback is valid.
                     assert type(ioattrs.enum_fallback) is origin
-                    return ioattrs.enum_fallback
-                # Otherwise the error stands.
+                    if self._lossy:
+                        return ioattrs.enum_fallback
+                    raise ValueError(
+                        'Failed to load Enum.  Note that it has a fallback'
+                        ' value and thus would succeed in lossy mode.'
+                    ) from exc
+
+                # Otherwise the error stands as-is.
                 raise
 
+        # IMPORTANT: datetime.datetime is a subclass of datetime.date, so the
+        # datetime.datetime check MUST come before the datetime.date check
+        # below.
         if issubclass(origin, datetime.datetime):
             return self._datetime_from_input(cls, fieldpath, value, ioattrs)
+
+        # Note: the datetime.datetime check above must precede this since
+        # datetime.datetime is a subclass of datetime.date.
+        if issubclass(origin, datetime.date) and not issubclass(
+            origin, datetime.datetime
+        ):
+            return self._date_from_input(cls, fieldpath, value, ioattrs)
 
         if issubclass(origin, datetime.timedelta):
             return self._timedelta_from_input(cls, fieldpath, value, ioattrs)
@@ -243,16 +331,17 @@ class _Inputter:
         """Given a dict, instantiates a dataclass of the given type.
 
         The dict must be in the json-friendly format as emitted from
-        dataclass_to_dict. This means that sequence values such as tuples or
-        sets should be passed as lists, enums should be passed as their
-        associated values, and nested dataclasses should be passed as dicts.
+        dataclass_to_dict. This means that sequence values such as
+        tuples or sets should be passed as lists, enums should be passed
+        as their associated values, and nested dataclasses should be
+        passed as dicts.
         """
         try:
             return self._do_dataclass_from_input(cls, fieldpath, values)
         except Exception as exc:
-            # Extended data types can choose to sub default data in case
-            # of failures (generally not a good idea but occasionally
-            # useful).
+            # Extended data types can choose to substitute default data
+            # in case of failures (generally not a good idea but
+            # occasionally useful).
             if issubclass(cls, IOExtendedData):
                 fallback = cls.handle_input_error(exc)
                 if fallback is None:
@@ -269,8 +358,6 @@ class _Inputter:
     def _do_dataclass_from_input(
         self, cls: type, fieldpath: str, values: dict
     ) -> Any:
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         if not isinstance(values, dict):
             raise TypeError(
@@ -285,14 +372,13 @@ class _Inputter:
 
         extra_attrs = {}
 
-        # noinspection PyDataclass
         fields = dataclasses.fields(cls)
         fields_by_name = {f.name: f for f in fields}
 
         # Preprocess all fields to convert Annotated[] to contained
         # types and IOAttrs.
         parsed_field_annotations = {
-            f.name: _parse_annotated(prep.annotations[f.name]) for f in fields
+            f.name: parse_annotated(prep.annotations[f.name]) for f in fields
         }
 
         # Special case: if this is a multi-type class it probably has a
@@ -304,8 +390,8 @@ class _Inputter:
             # However we do want to make sure the class we're loading
             # doesn't itself use this same name, as this could lead to
             # tricky breakage. We can't verify this for types at prep
-            # time because IOMultiTypes are lazy-loaded, so this is
-            # the best we can do.
+            # time because IOMultiTypes are lazy-loaded, so this is the
+            # best we can do.
             if type_id_store_name in fields_by_name:
                 raise RuntimeError(
                     f"{cls} contains a '{type_id_store_name}' field"
@@ -426,7 +512,6 @@ class _Inputter:
     ) -> Any:
         # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
 
         if not isinstance(value, dict):
             raise TypeError(
@@ -486,7 +571,7 @@ class _Inputter:
                         keyint = int(key)
                     except ValueError as exc:
                         raise TypeError(
-                            f'Got invalid key value {key} for'
+                            f'Got invalid key value {repr(key)} for'
                             f' dict key at \'{fieldpath}\' on {cls.__name__};'
                             f' expected an int in string form.'
                         ) from exc
@@ -506,7 +591,7 @@ class _Inputter:
                             enumval = keyanntype(key)
                         except ValueError as exc:
                             raise ValueError(
-                                f'Got invalid key value {key} for'
+                                f'Got invalid key value {repr(key)} for'
                                 f' dict key at \'{fieldpath}\''
                                 f' on {cls.__name__};'
                                 f' expected a value corresponding to'
@@ -521,7 +606,7 @@ class _Inputter:
                             enumval = keyanntype(int(key))
                         except (ValueError, TypeError) as exc:
                             raise ValueError(
-                                f'Got invalid key value {key} for'
+                                f'Got invalid key value {repr(key)} for'
                                 f' dict key at \'{fieldpath}\''
                                 f' on {cls.__name__};'
                                 f' expected {keyanntype} value (though'
@@ -572,20 +657,36 @@ class _Inputter:
 
         # If our annotation type inherits from IOMultiType, use type-id
         # values to determine which type to load for each element.
-        if issubclass(childanntype, IOMultiType):
+        # Make sure we only pass actual types to issubclass; it will error
+        # if we give it something like typing.Any.
+        if isinstance(childanntype, type) and issubclass(
+            childanntype, IOMultiType
+        ):
             return seqtype(
-                self._dataclass_from_input(
-                    _get_multitype_type(childanntype, fieldpath, i),
-                    fieldpath,
-                    i,
-                )
-                for i in value
+                self._multitype_obj(childanntype, fieldpath, i) for i in value
             )
 
         return seqtype(
             self._value_from_input(cls, fieldpath, childanntype, i, ioattrs)
             for i in value
         )
+
+    def _multitype_obj(self, anntype: Any, fieldpath: str, value: Any) -> Any:
+        try:
+            mttype = _get_multitype_type(anntype, fieldpath, value)
+        # NOTE: We may want to tighten this up; ValueError might be
+        # covering more than the missing enum case we intend here.
+        except (ValueError, TypeNotPresentError):
+            if self._lossy:
+                out = anntype.get_unknown_type_fallback()
+                if out is not None:
+                    # Ok; they provided a fallback. Make sure its of our
+                    # expected type and return it.
+                    assert isinstance(out, anntype)
+                    return out
+            raise
+
+        return self._dataclass_from_input(mttype, fieldpath, value)
 
     def _tuple_from_input(
         self,
@@ -657,20 +758,38 @@ class _Inputter:
 
         assert self._codec is Codec.JSON
 
-        # We expect a list of 7 ints.
-        if type(value) is not list:
-            raise TypeError(
-                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
-                f' expected a list, got a {type(value).__name__}'
+        # We expect a list of 7 ints (exact datetime value dump),
+        # a float/int (Unix timestamp), or an ISO 8601 string with Z
+        # or +00:00 suffix.
+        valt = type(value)
+        if valt is str:
+            # Accept RFC 3339 / ISO 8601 with Z or +00:00 suffix.
+            # The replace handles Python < 3.11 where fromisoformat
+            # does not accept 'Z' directly.
+            out = datetime.datetime.fromisoformat(value.replace('Z', '+00:00'))
+        elif valt is float or valt is int:
+            out = datetime.datetime.fromtimestamp(
+                value, tz=datetime.timezone.utc
             )
-        if len(value) != 7 or not all(isinstance(x, int) for x in value):
-            raise ValueError(
-                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
-                f' expected a list of 7 ints, got {[type(v) for v in value]}.'
+        else:
+            if valt is not list:
+                raise TypeError(
+                    f'Invalid input value for "{fieldpath}"'
+                    f' on "{cls.__name__}";'
+                    f' expected a timestamp, ISO string, or list,'
+                    f' got a {type(value).__name__}'
+                )
+            if len(value) != 7 or not all(isinstance(x, int) for x in value):
+                raise ValueError(
+                    f'Invalid input value for "{fieldpath}"'
+                    f' on "{cls.__name__}";'
+                    f' expected a list of 7 ints,'
+                    f' got {[type(v) for v in value]}.'
+                )
+            out = datetime.datetime(  # type: ignore
+                *value, tzinfo=datetime.timezone.utc
             )
-        out = datetime.datetime(  # type: ignore
-            *value, tzinfo=datetime.timezone.utc
-        )
+
         if ioattrs is not None:
             ioattrs.validate_datetime(out, fieldpath)
         return out
@@ -679,18 +798,49 @@ class _Inputter:
         self, cls: type, fieldpath: str, value: Any, ioattrs: IOAttrs | None
     ) -> Any:
         del ioattrs  # Unused.
-        # We expect a list of 3 ints.
-        if type(value) is not list:
-            raise TypeError(
-                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
-                f' expected a list, got a {type(value).__name__}'
+
+        # We expect a list of 3 ints (exact timedelta value dump) OR a
+        # float/int (seconds).
+        valt = type(value)
+        if valt is float or valt is int:
+            out = datetime.timedelta(seconds=value)
+        else:
+            if valt is not list:
+                raise TypeError(
+                    f'Invalid input value for "{fieldpath}"'
+                    f' on "{cls.__name__}";'
+                    f' expected a number or list, got a {type(value).__name__}'
+                )
+            if len(value) != 3 or not all(isinstance(x, int) for x in value):
+                raise ValueError(
+                    f'Invalid input value for "{fieldpath}"'
+                    f' on "{cls.__name__}";'
+                    f' expected a list of 3 ints,'
+                    f' got {[type(v) for v in value]}.'
+                )
+            out = datetime.timedelta(
+                days=value[0], seconds=value[1], microseconds=value[2]
             )
-        if len(value) != 3 or not all(isinstance(x, int) for x in value):
-            raise ValueError(
-                f'Invalid input value for "{fieldpath}" on "{cls.__name__}";'
-                f' expected a list of 3 ints, got {[type(v) for v in value]}.'
-            )
-        out = datetime.timedelta(
-            days=value[0], seconds=value[1], microseconds=value[2]
-        )
         return out
+
+    def _date_from_input(
+        self, cls: type, fieldpath: str, value: Any, ioattrs: IOAttrs | None
+    ) -> Any:
+        del ioattrs  # Unused; no options for date fields.
+        # Both JSON and Firestore codecs use YYYY-MM-DD strings.
+        if not isinstance(value, str):
+            raise TypeError(
+                f'Invalid input value for "{fieldpath}"'
+                f' on "{cls.__name__}";'
+                f' expected a YYYY-MM-DD date string,'
+                f' got a {type(value).__name__}.'
+            )
+        try:
+            return datetime.date.fromisoformat(value)
+        except ValueError as exc:
+            raise ValueError(
+                f'Invalid input value for "{fieldpath}"'
+                f' on "{cls.__name__}";'
+                f' expected a date in YYYY-MM-DD format,'
+                f' got {value!r}.'
+            ) from exc

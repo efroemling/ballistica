@@ -4,19 +4,10 @@
 # pylint: disable=useless-suppression, missing-module-docstring, line-too-long
 from __future__ import annotations
 
-# noinspection PyProtectedMember
+from bacommon.app import AppArchitecture, AppPlatform, AppVariant
 from babase._mgen import enums
 
-# noinspection PyProtectedMember
-from babase import (
-    _language,
-    _apputils,
-    _hooks,
-    _env,
-    _error,
-    _general,
-    _ui,
-)
+from babase import _language, _apputils, _hooks, _env, _error, _general, _ui
 
 # The C++ layer looks for this variable:
 values = [
@@ -61,8 +52,7 @@ values = [
     _hooks.get_v2_account_id,  # kGetV2AccountIdCall
     _hooks.copy_dev_console_history,  # kCopyDevConsoleHistoryCall
     _language.Lstr,  # kLStrClass
-    _general.Call,  # kCallClass
-    _apputils.garbage_collect_session_end,  # kGarbageCollectSessionEndCall
+    _general.CallPartial,  # kCallPartialClass
     _error.ContextError,  # kContextError
     _error.NotFoundError,  # kNotFoundError
     _error.NodeNotFoundError,  # kNodeNotFoundError
@@ -78,7 +68,6 @@ values = [
     enums.Permission,  # kPermissionClass
     enums.SpecialChar,  # kSpecialCharClass
     _language.Lstr.from_json,  # kLstrFromJsonCall
-    _hooks.uuid_str,  # kUUIDStrCall
     _hooks.hash_strings,  # kHashStringsCall
     _hooks.have_account_v2_credentials,  # kHaveAccountV2CredentialsCall
     _hooks.implicit_sign_in,  # kImplicitSignInCall
@@ -88,4 +77,10 @@ values = [
     _env.on_native_module_import,  # kEnvOnNativeModuleImportCall
     _env.on_main_thread_start_app,  # kOnMainThreadStartAppCall
     _ui.DevConsoleStringEditAdapter,  # kDevConsoleStringEditAdapterClass
+    AppArchitecture,  # kAppArchitectureType
+    AppPlatform,  # kAppPlatformType
+    AppVariant,  # kAppVariantType
+    _hooks.v2_auth_request,  # kV2AuthRequestCall
+    _hooks.v2_auth_data,  # kV2AuthDataCall
+    _hooks.start_native_repl,  # kStartNativeReplCall
 ]

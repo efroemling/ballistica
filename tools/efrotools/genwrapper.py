@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to android builds."""
+
 from __future__ import annotations
 
 import os
@@ -8,10 +9,14 @@ import sys
 import stat
 from typing import TYPE_CHECKING
 
+from efrotools.pyver import PYVER
+
 if TYPE_CHECKING:
     pass
 
 if __name__ == '__main__':
+
+    # pylint: disable=invalid-name
 
     from efrotools.project import (
         getprojectconfig,
@@ -31,7 +36,7 @@ if __name__ == '__main__':
     # we're using currently. Just need to make sure this gets re-run
     # when that changes.
     pybinpath = os.path.join(
-        os.path.abspath(os.getcwd()), '.venv', 'bin', 'python3.12'
+        os.path.abspath(os.getcwd()), '.venv', 'bin', f'python{PYVER}'
     )
 
     public = getprojectconfig(projroot='.').get('public', False)
@@ -46,9 +51,10 @@ if __name__ == '__main__':
     # For some reason 'contents' is triggering Constant-name-not-uppercase
     # errors only in spinoff projects.
 
-    # pylint: disable=useless-suppression
-    # pylint: disable=invalid-name
-    # pylint: enable=useless-suppression
+    # (disabling this to see if its still a problem)
+    # py lint: disable=useless-suppression
+    # py lint: disable=invalid-name
+    # py lint: enable=useless-suppression
 
     contents = (
         f'#!{pybinpath}\n'

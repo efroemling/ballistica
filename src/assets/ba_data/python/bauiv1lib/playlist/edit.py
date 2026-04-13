@@ -23,8 +23,6 @@ class PlaylistEditWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         prev_selection: str | None
         self._editcontroller = editcontroller
         self._r = 'editGameListWindow'
@@ -45,12 +43,14 @@ class PlaylistEditWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
                 scale=(
-                    1.76
+                    2.0
                     if uiscale is bui.UIScale.SMALL
                     else 1.3 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
+                toolbar_visibility=(
+                    'menu_minimal_no_back'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
             ),
             transition=transition,
@@ -156,7 +156,7 @@ class PlaylistEditWindow(bui.MainWindow):
             position=(h, v),
             size=(110, 61.0 * scl),
             on_activate_call=self._add,
-            on_select_call=bui.Call(self._set_ui_selection, 'add_button'),
+            on_select_call=bui.CallStrict(self._set_ui_selection, 'add_button'),
             autoselect=True,
             button_type='square',
             color=b_color,
@@ -172,7 +172,7 @@ class PlaylistEditWindow(bui.MainWindow):
             position=(h, v),
             size=(110, 61.0 * scl),
             on_activate_call=self._edit,
-            on_select_call=bui.Call(self._set_ui_selection, 'editButton'),
+            on_select_call=bui.CallStrict(self._set_ui_selection, 'editButton'),
             autoselect=True,
             button_type='square',
             color=b_color,
@@ -230,8 +230,9 @@ class PlaylistEditWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(160 + x_inset, v - scroll_height),
             highlight=False,
-            on_select_call=bui.Call(self._set_ui_selection, 'gameList'),
+            on_select_call=bui.CallStrict(self._set_ui_selection, 'gameList'),
             size=(self._scroll_width, (scroll_height - 15)),
+            border_opacity=0.4,
         )
         bui.widget(
             edit=scrollwidget,
@@ -287,6 +288,10 @@ class PlaylistEditWindow(bui.MainWindow):
                 editcontroller=editcontroller,
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return False
 
     def _set_ui_selection(self, selection: str) -> None:
         self._editcontroller.set_edit_ui_selection(selection)
@@ -410,7 +415,7 @@ class PlaylistEditWindow(bui.MainWindow):
             txtw = bui.textwidget(
                 parent=self._columnwidget,
                 size=(self._width - 80, 30),
-                on_select_call=bui.Call(self._select, index),
+                on_select_call=bui.CallStrict(self._select, index),
                 always_highlight=True,
                 color=(0.8, 0.8, 0.8, 1.0),
                 padding=0,

@@ -29,7 +29,7 @@ class HostActivity : public SceneV1Context {
   void DeleteTimer(TimeType timetype, int timer_id) override;
   auto GetTime(TimeType timetype) -> millisecs_t override;
 
-  /// Return a borrowed ref to the python activity; Py_None if nonexistent.
+  /// Return a NEW ref to the Python activity or nullptr if nonexistent.
   auto GetPyActivity() const -> PyObject*;
 
   // All these commands are propagated into the output stream

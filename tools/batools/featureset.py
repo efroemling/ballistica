@@ -29,66 +29,84 @@ class FeatureSet:
 
     _active_feature_set: FeatureSet | None = None
 
+    # Define our types here at the class level so docs generators can do
+    # a better job.
+    requirements: set[str]
+    soft_requirements: set[str]
+    has_python_binary_module: bool
+    has_python_app_subsystem: bool
+    python_app_subsystem_dependencies: set[str]
+    allow_as_soft_requirement: bool
+    dummy_module_def: DummyModuleDef
+    cpp_namespace_check_disable_files: set[str]
+
     def __init__(self, name: str):
+
         # (internal; don't set this)
         self.internal = False
 
-        # Other feature-sets this one requires. Any spinoff project this
-        # feature-set is included in will implicitly include these as
-        # well.
-        self.requirements = set[str]()
+        #: Other feature-sets this one requires. Any spinoff project that
+        #: includes our feature-set will implicitly include our
+        #: requirements as well. We are allowed to access Python modules
+        #: of our requirements directly, unlike soft-requirements where
+        #: we must limit our access to their app subsystem.
+        self.requirements = set()
 
-        # Feature-sets this one can use but can survive without. Note
-        # that each of these requirements must have
-        # 'allow_as_soft_requirement' enabled. While it is possible to
-        # programmatically check for the presence of *any* feature-set,
-        # officially listing soft-requirements ensures that any expected
-        # python-app-subsystems are in place even for feature-sets not
-        # included in the spinoff project (though be aware their type
-        # annotations will be 'Any | None' in that case instead of the
-        # usual 'FooBarSubsystem | None' due to 'FooBarSubsystem' not
-        # actually existing).
-        self.soft_requirements = set[str]()
+        #: Feature-sets we can use but can survive without. All usage of
+        #: soft requirements must be through app-subsystems
+        #: (`ba*.app.foo_bar` for feature-set `foo_bar`, etc.). We must
+        #: be prepared for these subsystems to be missing (set to None)
+        #: and we must never import their modules directly (since they
+        #: might not exist). Note that all featuresets we soft-require
+        #: must have 'allow_as_soft_requirement' enabled. While it is
+        #: possible to programmatically check for the presence of *any*
+        #: feature-set, officially listing soft-requirements ensures that
+        #: any expected app-subsystems are in place even for feature-sets
+        #: not included in the spinoff project (though be aware their
+        #: type annotations will be 'Any | None' in that case instead of
+        #: the usual 'FooBarSubsystem | None' due to 'FooBarSubsystem'
+        #: not actually existing).
+        self.soft_requirements = set()
 
-        # Whether this featureset defines a native Python module within
-        # its C++ code. The build process will try to create dummy
-        # modules for all native modules, so to avoid errors you must
-        # tell it if you don't have one.
+        #: Whether this featureset defines a native Python module within
+        #: its C++ code. The build process will try to create dummy
+        #: modules for all native modules, so to avoid errors you must
+        #: tell it if you don't have one.
         self.has_python_binary_module = True
 
-        # If True, for feature-set 'foo_bar', the build system will
-        # define a 'babase.app.foo_bar' attr which points to a lazy
-        # loaded instance of type 'bafoobar.FooBarSubsystem'.
+        #: If True, for feature-set 'foo_bar', the build system will
+        #: define a 'ba*.app.foo_bar' attr which points to a lazy
+        #: loaded instance of type 'bafoobar.FooBarSubsystem'.
         self.has_python_app_subsystem = False
 
-        # By default, Python app subsystems will be created in
-        # alphabetical order based on their feature set name. All
-        # subsystem callbacks adhere to this ordering. If there are any
-        # feature sets whose subsystems should always be created before
-        # this one's, list them here. Note that this does not affect
-        # whether or not the feature set is included in the build; only
-        # the init order in cases when it is.
-        self.python_app_subsystem_dependencies = set[str]()
+        #: By default, Python app subsystems will be created in
+        #: alphabetical order based on their feature set name. All
+        #: subsystem callbacks adhere to this ordering. If there are any
+        #: feature sets whose subsystems should always be created before
+        #: this one's, list them here. Note that this does not affect
+        #: whether or not the feature set is included in the build; only
+        #: the init order in cases when it is.
+        self.python_app_subsystem_dependencies = set()
 
-        # If True, feature-set 'foo_bar', will be allowed to be listed
-        # as a soft-requirement of other feature sets and its
-        # python-app-subsystem will be annotated as type
-        # 'bafoobar.FooBarSubsystem | None' instead of simply
-        # 'bafoobar.FooBarSubsystem'. This forces type-checked code to
-        # account for the possibility that it will not be present. Note
-        # that this currently requires has_python_app_subsystem to be
-        # True (because if a soft-required feature-set is missing we
-        # must assume that is the case anyway because there's no way to
-        # know).
+        #: If True, feature-set 'foo_bar', will be allowed to be listed
+        #: as a soft-requirement of other feature sets and its
+        #: python-app-subsystem will be annotated as type
+        #: 'bafoobar.FooBarSubsystem | None' instead of simply
+        #: 'bafoobar.FooBarSubsystem'. This forces type-checked code to
+        #: account for the possibility that it will not be present. Note
+        #: that this currently requires has_python_app_subsystem to be
+        #: True (because if a soft-required feature-set is missing we
+        #: must assume that is the case anyway because there's no way to
+        #: know).
         self.allow_as_soft_requirement = False
 
-        # Override this to customize how your dummy module is generated.
+        #: Override this to customize how your dummy module is generated.
         self.dummy_module_def = DummyModuleDef()
 
-        # Paths of files we should disable c++ namespace checks for.
-        # (generally external-originating code that doesn't conform to our
-        # ballistica feature-set based namespace scheme)
-        self.cpp_namespace_check_disable_files = set[str]()
+        #: Paths of files we should disable c++ namespace checks for.
+        #: (generally external-originating code that doesn't conform to our
+        #: ballistica feature-set based namespace scheme)
+        self.cpp_namespace_check_disable_files = set()
 
         self.validate_name(name)
 

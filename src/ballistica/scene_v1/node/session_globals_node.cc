@@ -12,7 +12,7 @@ class SessionGlobalsNodeType : public NodeType {
  public:
 #define BA_NODE_TYPE_CLASS SessionGlobalsNode
   BA_NODE_CREATE_CALL(CreateSessionGlobals);
-  BA_INT64_ATTR_READONLY(real_time, GetAppTimeMillisecs);
+  BA_INT64_ATTR_READONLY(real_time, AppTimeMillisecs);
   BA_INT64_ATTR_READONLY(time, GetTime);
   BA_INT64_ATTR_READONLY(step, GetStep);
 #undef BA_NODE_TYPE_CLASS
@@ -38,7 +38,7 @@ SessionGlobalsNode::SessionGlobalsNode(Scene* scene) : Node(scene, node_type) {
 
 SessionGlobalsNode::~SessionGlobalsNode() = default;
 
-auto SessionGlobalsNode::GetAppTimeMillisecs() -> millisecs_t {
+auto SessionGlobalsNode::AppTimeMillisecs() -> millisecs_t {
   // Pull this from our scene so we return consistent values throughout a step.
   return scene()->last_step_real_time();
 }

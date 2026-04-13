@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import weakref
 import logging
-from typing import TYPE_CHECKING, TypeVar, overload
+from typing import TYPE_CHECKING, overload
 
 import babase
 
@@ -19,61 +19,63 @@ from bascenev1._messages import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Literal
+    from typing import Any, Literal, Self
 
     import bascenev1
 
-ActorT = TypeVar('ActorT', bound='Actor')
-
 
 class Actor:
-    """High level logical entities in a bascenev1.Activity.
+    """High level logical entities in an :class:`~bascenev1.Activity`.
 
-    Category: **Gameplay Classes**
+    Actors act as controllers, combining some number of
+    :class:`~bascenev1.Node`, :class:`~bascenev1.Texture`,
+    :class:`~bascenev1.Sound`, and other type objects into a high-level
+    cohesive unit.
 
-    Actors act as controllers, combining some number of Nodes, Textures,
-    Sounds, etc. into a high-level cohesive unit.
+    Some example actors include the :class:`~bascenev1lib.actor.bomb.Bomb`,
+    :class:`~bascenev1lib.actor.flag.Flag`, and
+    :class:`~bascenev1lib.actor.spaz.Spaz`, classes that live in the
+    :mod:`bascenev1lib.actor` package.
 
-    Some example actors include the Bomb, Flag, and Spaz classes that
-    live in the bascenev1lib.actor.* modules.
+    One key feature of actors is that they generally 'die' (killing off
+    or transitioning out their nodes) when the last Python reference to
+    them disappears, so you can use logic such as::
 
-    One key feature of Actors is that they generally 'die'
-    (killing off or transitioning out their nodes) when the last Python
-    reference to them disappears, so you can use logic such as:
+        # Create a flag actor in our game activity (self):
+        from bascenev1lib.actor.flag import Flag
 
-    ##### Example
-    >>> # Create a flag Actor in our game activity:
-    ... from bascenev1lib.actor.flag import Flag
-    ... self.flag = Flag(position=(0, 10, 0))
-    ...
-    ... # Later, destroy the flag.
-    ... # (provided nothing else is holding a reference to it)
-    ... # We could also just assign a new flag to this value.
-    ... # Either way, the old flag disappears.
-    ... self.flag = None
+        self.flag = Flag(position=(0, 10, 0))
+
+        # Later, destroy the flag (provided nothing else is holding a
+        # reference to it). We could also just assign a new flag to this
+        # value. Either way, the old flag should disappear.
+        self.flag = None
 
     This is in contrast to the behavior of the more low level
-    bascenev1.Node, which is always explicitly created and destroyed
-    and doesn't care how many Python references to it exist.
+    :class:`~bascenev1.Node` class, which is always explicitly created
+    and destroyed and doesn't care how many Python references to it
+    exist.
 
-    Note, however, that you can use the bascenev1.Actor.autoretain() method
-    if you want an Actor to stick around until explicitly killed
+    Note, however, that you can use the :meth:`~bascenev1.Actor.autoretain()`
+    method if you want an actor to stick around until explicitly killed
     regardless of references.
 
-    Another key feature of bascenev1.Actor is its
-    bascenev1.Actor.handlemessage() method, which takes a single arbitrary
-    object as an argument. This provides a safe way to communicate between
-    bascenev1.Actor, bascenev1.Activity, bascenev1.Session, and any other
-    class providing a handlemessage() method. The most universally handled
-    message type for Actors is the bascenev1.DieMessage.
+    Another key feature of actors is their
+    :meth:`~bascenev1.Actor.handlemessage()` method, which takes a single
+    arbitrary object as an argument. This provides a safe way to communicate
+    between :class:`~bascenev1.Actor`, :class:`~bascenev1.Activity`,
+    :class:`~bascenev1.Session`, and any other class providing a
+    ``handlemessage()`` method. The most universally handled
+    message type for actors is the :class:`~bascenev1.DieMessage`.
 
     Another way to kill the flag from the example above:
-    We can safely call this on any type with a 'handlemessage' method
+    We can safely call this on any type with a ``handlemessage`` method
     (though its not guaranteed to always have a meaningful effect).
-    In this case the Actor instance will still be around, but its
-    bascenev1.Actor.exists() and bascenev1.Actor.is_alive() methods will
-    both return False.
-    >>> self.flag.handlemessage(bascenev1.DieMessage())
+    In this case the actor instance will still be around, but its
+    :meth:`~bascenev1.Actor.exists()` and :meth:`~bascenev1.Actor.is_alive()`
+    methods will both return False::
+
+        self.flag.handlemessage(bascenev1.DieMessage())
     """
 
     def __init__(self) -> None:
@@ -107,18 +109,18 @@ class Actor:
 
         return UNHANDLED
 
-    def autoretain(self: ActorT) -> ActorT:
-        """Keep this Actor alive without needing to hold a reference to it.
+    def autoretain(self) -> Self:
+        """Keep this actor alive without needing to hold a reference to it.
 
-        This keeps the bascenev1.Actor in existence by storing a reference
-        to it with the bascenev1.Activity it was created in. The reference
-        is lazily released once bascenev1.Actor.exists() returns False for
-        it or when the Activity is set as expired.  This can be a convenient
-        alternative to storing references explicitly just to keep a
-        bascenev1.Actor from dying.
-        For convenience, this method returns the bascenev1.Actor it is called
-        with, enabling chained statements such as:
-        myflag = bascenev1.Flag().autoretain()
+        This keeps the actor in existence by storing a reference to it
+        with the :class:`~bascenev1.Activity` it was created in. The
+        reference is lazily released once
+        :meth:`~bascenev1.Actor.exists()` returns False for the actor or
+        when the :class:`~bascenev1.Activity` is set as expired. This
+        can be a convenient alternative to storing references explicitly
+        just to keep an actor from dying. For convenience, this method
+        returns the actor it is called with, enabling chained statements
+        such as: ``myflag = bascenev1.Flag().autoretain()``
         """
         activity = self._activity()
         if activity is None:
@@ -127,43 +129,44 @@ class Actor:
         return self
 
     def on_expire(self) -> None:
-        """Called for remaining `bascenev1.Actor`s when their activity dies.
+        """Called for remaining actors when their activity dies.
 
         Actors can use this opportunity to clear callbacks or other
-        references which have the potential of keeping the bascenev1.Activity
-        alive inadvertently (Activities can not exit cleanly while
-        any Python references to them remain.)
+        references which have the potential of keeping the
+        :class:`~bascenev1.Activity` alive inadvertently (activities can
+        not exit cleanly while any Python references to them remain.)
 
-        Once an actor is expired (see bascenev1.Actor.is_expired()) it should
-        no longer perform any game-affecting operations (creating, modifying,
-        or deleting nodes, media, timers, etc.) Attempts to do so will
-        likely result in errors.
+        Once an actor is expired (see :attr:`~bascenev1.Actor.expired`)
+        it should no longer perform any game-affecting operations
+        (creating, modifying, or deleting nodes, media, timers, etc.)
+        Attempts to do so will likely result in errors.
         """
 
     @property
     def expired(self) -> bool:
-        """Whether the Actor is expired.
+        """Whether the actor is expired.
 
-        (see bascenev1.Actor.on_expire())
+        (see :meth:`~bascenev1.Actor.on_expire()`)
         """
         activity = self.getactivity(doraise=False)
         return True if activity is None else activity.expired
 
     def exists(self) -> bool:
-        """Returns whether the Actor is still present in a meaningful way.
+        """Returns whether the actor is still present in a meaningful way.
 
         Note that a dying character should still return True here as long as
         their corpse is visible; this is about presence, not being 'alive'
-        (see bascenev1.Actor.is_alive() for that).
+        (see :meth:`~bascenev1.Actor.is_alive()` for that).
 
-        If this returns False, it is assumed the Actor can be completely
-        deleted without affecting the game; this call is often used
-        when pruning lists of Actors, such as with bascenev1.Actor.autoretain()
+        If this returns False, it is assumed the actor can be completely
+        deleted without affecting the game; this call is often used when
+        pruning lists of actors, such as with
+        :meth:`bascenev1.Actor.autoretain()`
 
         The default implementation of this method always return True.
 
-        Note that the boolean operator for the Actor class calls this method,
-        so a simple "if myactor" test will conveniently do the right thing
+        Note that the boolean operator for the actor class calls this method,
+        so a simple ``if myactor`` test will conveniently do the right thing
         even if myactor is set to None.
         """
         return True
@@ -173,22 +176,21 @@ class Actor:
         return self.exists()
 
     def is_alive(self) -> bool:
-        """Returns whether the Actor is 'alive'.
+        """Returns whether the actor is 'alive'.
 
-        What this means is up to the Actor.
-        It is not a requirement for Actors to be able to die;
-        just that they report whether they consider themselves
-        to be alive or not. In cases where dead/alive is
-        irrelevant, True should be returned.
+        What this means is up to the actor. It is not a requirement for
+        actors to be able to die; just that they report whether they
+        consider themselves to be alive or not. In cases where
+        dead/alive is irrelevant, True should be returned.
         """
         return True
 
     @property
     def activity(self) -> bascenev1.Activity:
-        """The Activity this Actor was created in.
+        """The activity this actor was created in.
 
-        Raises a bascenev1.ActivityNotFoundError if the Activity no longer
-        exists.
+        Raises a :class:`~bascenev1.ActivityNotFoundError` if the
+        activity no longer exists.
         """
         activity = self._activity()
         if activity is None:
@@ -208,11 +210,11 @@ class Actor:
     ) -> bascenev1.Activity | None: ...
 
     def getactivity(self, doraise: bool = True) -> bascenev1.Activity | None:
-        """Return the bascenev1.Activity this Actor is associated with.
+        """Return the activity this actor is associated with.
 
-        If the Activity no longer exists, raises a
-        bascenev1.ActivityNotFoundError or returns None depending on whether
-        'doraise' is True.
+        If the activity no longer exists, raises a
+        :class:`~bascenev1.ActivityNotFoundError` or returns None
+        depending on whether ``doraise`` is True.
         """
         activity = self._activity()
         if activity is None and doraise:

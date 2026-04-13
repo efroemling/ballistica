@@ -10,7 +10,9 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/input/support/remote_app_server.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/math/vector3f.h"
@@ -34,7 +36,7 @@ void NetworkReader::OnAppSuspend() {
   assert(g_core->InMainThread());
   assert(!paused_);
   {
-    std::unique_lock<std::mutex> lock(paused_mutex_);
+    std::scoped_lock<std::mutex> lock(paused_mutex_);
     paused_ = true;
   }
 
@@ -50,7 +52,7 @@ void NetworkReader::OnAppUnsuspend() {
   assert(paused_);
 
   {
-    std::unique_lock<std::mutex> lock(paused_mutex_);
+    std::scoped_lock<std::mutex> lock(paused_mutex_);
     paused_ = false;
   }
 
@@ -61,33 +63,33 @@ void NetworkReader::OnAppUnsuspend() {
 void NetworkReader::PokeSelf_() {
   int sd = socket(AF_INET, SOCK_DGRAM, 0);
   if (sd < 0) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "Unable to create sleep ping socket; errno "
-                    + g_core->platform->GetSocketErrorString());
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "Error creating poke socket: "
+                             + g_core->platform->GetSocketErrorString());
   } else {
     struct sockaddr_in serv_addr{};
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);  // NOLINT
-    serv_addr.sin_port = 0;                         // any
+    serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    serv_addr.sin_port = 0;  // any
     int bresult = ::bind(sd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
-    if (bresult == 1) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "Unable to bind sleep socket: "
-                      + g_core->platform->GetSocketErrorString());
+    if (bresult != 0) {
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "Error binding poke socket: "
+                               + g_core->platform->GetSocketErrorString());
     } else {
       struct sockaddr_in t_addr{};
       memset(&t_addr, 0, sizeof(t_addr));
       t_addr.sin_family = AF_INET;
-      t_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);  // NOLINT
-      t_addr.sin_port = htons(port4_);                  // NOLINT
+      t_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+      t_addr.sin_port = htons(port4_);
       char b[1] = {BA_PACKET_POKE};
       ssize_t sresult =
           sendto(sd, b, 1, 0, (struct sockaddr*)(&t_addr), sizeof(t_addr));
       if (sresult == -1) {
-        g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                    "Error on sleep self-sendto: "
-                        + g_core->platform->GetSocketErrorString());
+        g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                             "Error on poke socket send: "
+                                 + g_core->platform->GetSocketErrorString());
       }
     }
     g_core->platform->CloseSocket(sd);
@@ -118,7 +120,7 @@ void NetworkReader::DoPoll_(bool* can_read_4, bool* can_read_6) {
         // Aint no thang.
       } else {
         // Let's complain for anything else though.
-        g_core->Log(
+        g_core->logging->Log(
             LogName::kBaNetworking, LogLevel::kError,
             "Error on select: " + g_core->platform->GetSocketErrorString());
       }
@@ -137,7 +139,7 @@ void NetworkReader::DoSelect_(bool* can_read_4, bool* can_read_6) {
   FD_ZERO(&readset);
 
   if (sd4_ != -1) {
-    if (!g_buildconfig.ostype_windows()) {
+    if (!g_buildconfig.platform_windows()) {
       // Try to get a clean error instead of a crash if we exceed our
       // open file descriptor limit (except on windows where FD_SETSIZE
       // is apparently a dummy value).
@@ -151,7 +153,7 @@ void NetworkReader::DoSelect_(bool* can_read_4, bool* can_read_6) {
   }
 
   if (sd6_ != -1) {
-    if (!g_buildconfig.ostype_windows()) {
+    if (!g_buildconfig.platform_windows()) {
       // Try to get a clean error instead of a crash if we exceed our
       // open file descriptor limit (except on windows where FD_SETSIZE
       // is apparently a dummy value).
@@ -172,7 +174,7 @@ void NetworkReader::DoSelect_(bool* can_read_4, bool* can_read_6) {
       // Aint no thang.
     } else {
       // Let's complain for anything else though.
-      g_core->Log(
+      g_core->logging->Log(
           LogName::kBaNetworking, LogLevel::kError,
           "Error on select: " + g_core->platform->GetSocketErrorString());
     }
@@ -189,7 +191,8 @@ auto NetworkReader::RunThread_() -> int {
     remote_server_ = std::make_unique<RemoteAppServer>();
   }
 
-  // Do this whole thing in a loop. If we get put to sleep we just start over.
+  // Do this whole thing in a loop. If we get put to sleep we just start
+  // over.
   while (true) {
     // Sleep until we're unpaused.
     if (paused_) {
@@ -211,8 +214,8 @@ auto NetworkReader::RunThread_() -> int {
       // A bit of history here: Had been using select() to wait for input
       // here, but recently I've started seeing newer versions of android
       // crashing due to file descriptor counts going over the standard set
-      // limit size of ~1000 or whatnot. So switching to poll() instead which
-      // sounds like it
+      // limit size of ~1000 or whatnot. So switching to poll() instead
+      // which should not have such limitations.
       if (explicit_bool(true)) {
         DoPoll_(&can_read_4, &can_read_6);
       } else {
@@ -252,8 +255,7 @@ auto NetworkReader::RunThread_() -> int {
           // This needs to be locked during any sd changes/writes.
           std::scoped_lock lock(sd_mutex_);
 
-          // If either of our sockets goes down lets close *both* of
-          // them.
+          // If either of our sockets goes down lets close *both* of them.
           if (sd4_ != -1) {
             g_core->platform->CloseSocket(sd4_);
             sd4_ = -1;
@@ -265,8 +267,8 @@ auto NetworkReader::RunThread_() -> int {
         } else {
           assert(from_size >= 0);
           auto rresult2{static_cast<size_t>(rresult)};
-          // If we get *any* data while paused, kill both our
-          // sockets (we ping ourself for this purpose).
+          // If we get *any* data while paused, kill both our sockets (we
+          // ping ourself for this purpose).
           if (paused_) {
             // This needs to be locked during any sd changes/writes.
             std::scoped_lock lock(sd_mutex_);
@@ -335,7 +337,7 @@ auto NetworkReader::RunThread_() -> int {
             case BA_PACKET_REMOTE_GAME_QUERY:
             case BA_PACKET_REMOTE_GAME_RESPONSE:
               // These packets are associated with the remote app; let the
-              // remote server handle them.
+              // remote-server handle them.
               if (remote_server_) {
                 remote_server_->HandleData(
                     sd, reinterpret_cast<uint8_t*>(buffer), rresult2,
@@ -357,7 +359,7 @@ auto NetworkReader::RunThread_() -> int {
             case BA_PACKET_CLIENT_GAMEPACKET_COMPRESSED:
             case BA_PACKET_HOST_GAMEPACKET_COMPRESSED: {
               // These messages are associated with udp host/client
-              // connections.. pass them to the logic thread to wrangle.
+              // connections; pass them to the logic thread to wrangle.
               std::vector<uint8_t> msg_buffer(rresult2);
               memcpy(msg_buffer.data(), buffer, rresult2);
               PushIncomingUDPPacketCall_(msg_buffer, SockAddr(from));
@@ -366,8 +368,6 @@ auto NetworkReader::RunThread_() -> int {
 
             case BA_PACKET_HOST_QUERY: {
               g_base->app_mode()->HandleGameQuery(buffer, rresult2, &from);
-
-              // HandleGameQuery(buffer, rresult2, &from);
               break;
             }
 
@@ -384,7 +384,7 @@ auto NetworkReader::RunThread_() -> int {
     }
 
     // Sleep for a moment to keep us from running wild if we're unable to block.
-    core::CorePlatform::SleepMillisecs(1000);
+    core::Platform::SleepMillisecs(1000);
   }
 }
 
@@ -393,10 +393,12 @@ void NetworkReader::PushIncomingUDPPacketCall_(const std::vector<uint8_t>& data,
   // Avoid buffer-full errors if something is causing us to write too often;
   // these are unreliable messages so its ok to just drop them.
   if (!g_base->logic->event_loop()->CheckPushSafety()) {
-    BA_LOG_ONCE(
-        LogName::kBaNetworking, LogLevel::kError,
-        "Ignoring excessive udp-connection input packets; (could this be a "
-        "flood attack?).");
+    // NOTE: Disabling this log. A single udp packet coming in when the
+    // engine is already in a gummed up state could misleadingly trigger
+    // this warning.
+    //
+    //   BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+    //               "Ignoring excessive incoming udp packets.");
     return;
   }
 
@@ -423,16 +425,16 @@ void NetworkReader::OpenSockets_() {
 
   sd4_ = socket(AF_INET, SOCK_DGRAM, 0);
   if (sd4_ < 0) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "Unable to open host socket; errno "
-                    + g_core->platform->GetSocketErrorString());
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "Unable to open host socket; errno "
+                             + g_core->platform->GetSocketErrorString());
   } else {
     g_core->platform->SetSocketNonBlocking(sd4_);
 
     // Bind to local server port.
     struct sockaddr_in serv_addr{};
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);  // NOLINT
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     // Try our requested port for v4, then go with any available if that
     // doesn't work.
@@ -470,15 +472,15 @@ void NetworkReader::OpenSockets_() {
     }
   }
 
-  // Ok now lets try to create an ipv6 socket on the same port.
-  // (its actually possible to just create a v6 socket and let the OSs
-  // dual-stack support provide v4 connectivity too, but that's not
-  // available everywhere (win XP, etc) so let's do this for now.
+  // Ok now lets try to create an ipv6 socket on the same port. Its actually
+  // possible to just create a v6 socket and let the OS's dual-stack support
+  // provide v4 connectivity too, but not sure that's available everywhere;
+  // should look into it.
   sd6_ = socket(AF_INET6, SOCK_DGRAM, 0);
   if (sd6_ < 0) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "Unable to open ipv6 socket: "
-                    + g_core->platform->GetSocketErrorString());
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "Unable to open ipv6 socket: "
+                             + g_core->platform->GetSocketErrorString());
   } else {
     // Since we're explicitly creating both a v4 and v6 socket, tell the v6
     // to *not* do both itself (not sure if this is necessary; on mac it
@@ -487,8 +489,8 @@ void NetworkReader::OpenSockets_() {
     if (setsockopt(sd6_, IPPROTO_IPV6, IPV6_V6ONLY,
                    reinterpret_cast<char*>(&on), sizeof(on))
         == -1) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "Error setting socket as ipv6-only");
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "Error setting socket as ipv6-only");
     }
 
     g_core->platform->SetSocketNonBlocking(sd6_);
@@ -531,14 +533,14 @@ void NetworkReader::OpenSockets_() {
   }
   if (print_port_unavailable) {
     // FIXME - use translations here
-    ScreenMessage("Unable to bind udp port "
-                      + std::to_string(initial_requested_port)
-                      + "; some network functionality may fail.",
-                  {1, 0.5f, 0});
-    g_core->Log(LogName::kBaNetworking, LogLevel::kWarning,
-                "Unable to bind udp port "
-                    + std::to_string(initial_requested_port)
-                    + "; some network functionality may fail.");
+    g_base->ScreenMessage("Unable to bind udp port "
+                              + std::to_string(initial_requested_port)
+                              + "; some network functionality may fail.",
+                          {1, 0.5f, 0});
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                         "Unable to bind udp port "
+                             + std::to_string(initial_requested_port)
+                             + "; some network functionality may fail.");
   }
 }
 

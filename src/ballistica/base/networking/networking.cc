@@ -7,13 +7,14 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/core/core.h"
 #include "ballistica/shared/networking/sockaddr.h"
 
 namespace ballistica::base {
 
 Networking::Networking() = default;
 
-void Networking::DoApplyAppConfig() {
+void Networking::ApplyAppConfig() {
   // Be aware this runs in the logic thread; not the main thread like
   // most of our stuff.
   assert(g_base->InLogicThread());

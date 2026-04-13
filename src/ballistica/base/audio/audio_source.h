@@ -42,7 +42,7 @@ class AudioSource {
   void Unlock();
   explicit AudioSource(int id);
   auto id() const -> int { return id_; }
-#if BA_DEBUG_BUILD || BA_TEST_BUILD
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   auto last_lock_time() const -> millisecs_t { return last_lock_time_; }
   auto lock_debug_id() const -> int { return lock_debug_id_; }
   auto locked() const -> bool { return locked_; }
@@ -56,7 +56,7 @@ class AudioSource {
 
  private:
   std::mutex mutex_;
-#if BA_DEBUG_BUILD || BA_TEST_BUILD
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   millisecs_t last_lock_time_{};
   int lock_debug_id_{};
   bool locked_{};

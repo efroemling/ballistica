@@ -2,20 +2,21 @@
 #
 """Public types for assets-v1 workspaces.
 
-These types may only be used server-side, but they are exposed here
-for reference when setting workspace config data by hand or for use
-in client-side workspace modification tools. There may be advanced
-settings that are not accessible through the UI/etc.
+While this module is currently only used server-side, its source code
+can be useful as reference when setting workspace config data by hand or
+for use in client-side workspace modification tools. There may be
+advanced settings that are not accessible through the UI/etc.
 """
 
 from __future__ import annotations
 
+import datetime
 from enum import Enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
-
+from bacommon.locale import Locale
 
 if TYPE_CHECKING:
     pass
@@ -35,10 +36,91 @@ class AssetsV1GlobalVals:
     ] = ''
 
 
+class AssetsV1StringFileTypeID(Enum):
+    """Type ID for each of our subclasses."""
+
+    V1 = 'v1'
+
+
+class AssetsV1StringFile(IOMultiType[AssetsV1StringFileTypeID]):
+    """Top level class for our multitype."""
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return 'string_file_version'
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1StringFileTypeID:
+        # Require child classes to supply this themselves. If we did a
+        # full type registry/lookup here it would require us to import
+        # everything and would prevent lazy loading.
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_type(
+        cls, type_id: AssetsV1StringFileTypeID
+    ) -> type[AssetsV1StringFile]:
+        """Return the subclass for each of our type-ids."""
+        # pylint: disable=cyclic-import
+
+        t = AssetsV1StringFileTypeID
+        if type_id is t.V1:
+            return AssetsV1StringFileV1
+
+        # Important to make sure we provide all types.
+        assert_never(type_id)
+
+
+@ioprepped
+@dataclass
+class AssetsV1StringFileV1(AssetsV1StringFile):
+    """Our initial version of string file data."""
+
+    class StylePreset(Enum):
+        """Preset for general styling in translated strings."""
+
+        NONE = 'none'
+        TITLE = 'title'
+        LOUD = 'loud'
+        SOFT = 'soft'
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1StringFileTypeID:
+        return AssetsV1StringFileTypeID.V1
+
+    @dataclass
+    class Output:
+        """Represents a single localized output."""
+
+        #: When this output was last changed.
+        modtime: Annotated[
+            datetime.datetime, IOAttrs('modtime', time_format='float')
+        ]
+
+        #: Default value (no counts involved).
+        value: Annotated[str, IOAttrs('value')]
+
+    input: Annotated[str, IOAttrs('input')]
+    input_modtime: Annotated[
+        datetime.datetime, IOAttrs('input_modtime', time_format='float')
+    ]
+    style_preset: Annotated[
+        StylePreset, IOAttrs('style_preset', store_default=False)
+    ] = StylePreset.NONE
+    outputs: Annotated[dict[Locale, Output], IOAttrs('outputs')] = field(
+        default_factory=dict
+    )
+
+
 class AssetsV1PathValsTypeID(Enum):
     """Types of vals we can store for paths."""
 
     TEX_V1 = 'tex_v1'
+    STR_V1 = 'str_v1'
 
 
 class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
@@ -63,15 +145,16 @@ class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
         cls, type_id: AssetsV1PathValsTypeID
     ) -> type[AssetsV1PathVals]:
         # pylint: disable=cyclic-import
-        out: type[AssetsV1PathVals]
         t = AssetsV1PathValsTypeID
 
         if type_id is t.TEX_V1:
-            out = AssetsV1PathValsTexV1
-        else:
-            # Important to make sure we provide all types.
-            assert_never(type_id)
-        return out
+            return AssetsV1PathValsTexV1
+
+        if type_id is t.STR_V1:
+            return AssetsV1PathValsStrV1
+
+        # Important to make sure we provide all types.
+        assert_never(type_id)
 
 
 @ioprepped
@@ -95,3 +178,20 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
         return AssetsV1PathValsTypeID.TEX_V1
+
+
+@ioprepped
+@dataclass
+class AssetsV1PathValsStrV1(AssetsV1PathVals):
+    """Path-specific values for an assets_v1 workspace path."""
+
+    #: Hash generated when all translations for this entry are complete.
+    #: Used as a fast-out for checking whether updates are needed.
+    up_to_date_state: Annotated[
+        str | None, IOAttrs('up_to_date_state', store_default=False)
+    ] = None
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1PathValsTypeID:
+        return AssetsV1PathValsTypeID.STR_V1

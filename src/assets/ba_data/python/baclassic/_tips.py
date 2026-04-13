@@ -3,6 +3,7 @@
 """Functionality related to classic game tips.
 
 These can be shown at opportune times such as between rounds."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -110,6 +111,7 @@ def get_all_tips() -> list[str]:
         'If your framerate is choppy, try turning down resolution\nor '
         'visuals in the game\'s graphics settings.'
     ]
+
     if (
         app.classic is not None
         and app.classic.platform in ('android', 'ios')

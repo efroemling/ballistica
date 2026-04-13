@@ -9,6 +9,8 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"
@@ -36,9 +38,15 @@ ConnectionToHostUDP::ConnectionToHostUDP(const SockAddr& addr)
       last_host_response_time_millisecs_(
           static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)) {
   GetRequestID_();
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this, &addr] {
+    return "ConnectionToHostUDP: created for " + addr.AddressString() + ":"
+           + std::to_string(addr.Port()) + " with request_id "
+           + std::to_string(request_id_) + ".";
+  });
   if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
     if (appmode->connections()->GetPrintUDPConnectProgress()) {
-      ScreenMessage(g_base->assets->GetResourceString("connectingToPartyText"));
+      g_base->ScreenMessage(
+          g_base->assets->GetResourceString("connectingToPartyText"));
     }
   }
 }
@@ -76,9 +84,9 @@ void ConnectionToHostUDP::Update() {
       last_client_id_request_time_ = current_time_millisecs;
 
       // Client request packet: contains our protocol version (2 bytes), our
-      // request id (1 byte), and our session-identifier (remainder of the
+      // request id (1 byte), and our app-instance-uuid (remainder of the
       // message).
-      const std::string& uuid{g_base->GetAppInstanceUUID()};
+      const std::string& uuid{g_base->LocalAppInstanceUUID()};
       std::vector<uint8_t> msg(4 + uuid.size());
       msg[0] = BA_PACKET_CLIENT_REQUEST;
       auto p_version = static_cast<uint16_t>(protocol_version());
@@ -86,16 +94,24 @@ void ConnectionToHostUDP::Update() {
       msg[3] = request_id_;
       memcpy(&(msg[4]), uuid.c_str(), uuid.size());
       g_base->network_writer->PushSendToCall(msg, *addr_);
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kDebug, [this, p_version] {
+            return "ConnectionToHostUDP: sent CLIENT_REQUEST to "
+                   + addr_->AddressString() + ":"
+                   + std::to_string(addr_->Port()) + " (protocol "
+                   + std::to_string(p_version) + ", request_id "
+                   + std::to_string(request_id_) + ").";
+          });
     }
   }
 
   // If its been long enough since we've heard anything from the host, error.
   if (current_time_millisecs - last_host_response_time_millisecs_
-      > (can_communicate() ? 10000u : 5000u)) {
+      > (can_communicate() ? 30000u : 10000u)) {
     // If the connection never got established, announce it failed.
     if (!can_communicate()) {
-      ScreenMessage(g_base->assets->GetResourceString("connectionFailedText"),
-                    {1, 0, 0});
+      g_base->ScreenMessage(
+          g_base->assets->GetResourceString("connectionFailedText"), {1, 0, 0});
     }
 
     // Die immediately in this case; no use trying to wait for a
@@ -125,8 +141,8 @@ void ConnectionToHostUDP::Update() {
 // departure before doing this when possible.
 void ConnectionToHostUDP::Die() {
   if (did_die_) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "Posting multiple die messages; probably not good.");
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "Posting multiple die messages; probably not good.");
     return;
   }
   if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
@@ -134,9 +150,10 @@ void ConnectionToHostUDP::Die() {
       appmode->connections()->PushDisconnectedFromHostCall();
       did_die_ = true;
     } else {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "Running update for non-current host-connection; shouldn't "
-                  "happen.");
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kError,
+          "Running update for non-current host-connection; shouldn't "
+          "happen.");
     }
   }
 }

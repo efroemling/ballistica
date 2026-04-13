@@ -32,6 +32,8 @@ class AboutGatherTab(GatherTab):
         plus = bui.app.plus
         assert plus is not None
 
+        idprefix = f'{self.window.main_window_id_prefix}|about'
+
         try_tickets = plus.get_v1_account_misc_read_val(
             'friendTryTickets', None
         )
@@ -147,6 +149,7 @@ class AboutGatherTab(GatherTab):
             )
             invite_button = bui.buttonwidget(
                 parent=container,
+                id=f'{idprefix}|invitefriend',
                 position=(region_width * 0.59, y - 25),
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
@@ -156,7 +159,7 @@ class AboutGatherTab(GatherTab):
                     fallback_resource='gatherWindow.getFriendInviteCodeText',
                 ),
                 autoselect=True,
-                on_activate_call=bui.WeakCall(self._invite_to_try_press),
+                on_activate_call=bui.WeakCallStrict(self._invite_to_try_press),
                 up_widget=tab_button,
                 show_buffer_top=500,
             )
@@ -179,13 +182,16 @@ class AboutGatherTab(GatherTab):
             )
             discord_button = bui.buttonwidget(
                 parent=container,
+                id=f'{idprefix}|discordjoin',
                 position=(region_width * 0.59, y - 25),
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
                 textcolor=(0.6, 0.6, 1),
                 label=bui.Lstr(resource='discordJoinText'),
                 autoselect=True,
-                on_activate_call=bui.WeakCall(self._join_the_discord_press),
+                on_activate_call=bui.WeakCallStrict(
+                    self._join_the_discord_press
+                ),
                 up_widget=(
                     invite_button if invite_button is not None else tab_button
                 ),
@@ -200,7 +206,7 @@ class AboutGatherTab(GatherTab):
         return scroll_widget
 
     def _invite_to_try_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.appinvite import handle_app_invites_press
 
         plus = bui.app.plus

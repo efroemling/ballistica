@@ -16,8 +16,6 @@ if TYPE_CHECKING:
 class MusicType(Enum):
     """Types of music available to play in-game.
 
-    Category: **Enums**
-
     These do not correspond to specific pieces of music, but rather to
     'situations'. The actual music played for each type can be overridden
     by the game or by the user.
@@ -50,16 +48,15 @@ class MusicType(Enum):
 def setmusic(musictype: MusicType | None, continuous: bool = False) -> None:
     """Set the app to play (or stop playing) a certain type of music.
 
-    category: **Gameplay Functions**
+    This function will handle loading and playing sound assets as
+    necessary, and also supports custom user soundtracks on specific
+    platforms so the user can override particular game music with their
+    own.
 
-    This function will handle loading and playing sound assets as necessary,
-    and also supports custom user soundtracks on specific platforms so the
-    user can override particular game music with their own.
+    Pass ``None`` to stop music.
 
-    Pass None to stop music.
-
-    if 'continuous' is True and musictype is the same as what is already
-    playing, the playing track will not be restarted.
+    if ``continuous`` is True and musictype is the same as what is
+    already playing, the playing track will not be restarted.
     """
 
     # All we do here now is set a few music attrs on the current globals

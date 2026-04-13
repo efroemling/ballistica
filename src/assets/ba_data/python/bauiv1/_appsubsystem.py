@@ -4,11 +4,14 @@
 
 from __future__ import annotations
 
+import os
+import time
 import logging
 import inspect
 import weakref
 import warnings
 from enum import Enum
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 from efro.util import empty_weakref
@@ -19,19 +22,16 @@ import _bauiv1
 if TYPE_CHECKING:
     from typing import Any, Callable
 
-    from bauiv1._uitypes import (
-        UICleanupCheck,
-        Window,
-        MainWindow,
-        MainWindowState,
-    )
+    from bauiv1._window import Window, MainWindow, MainWindowState
     import bauiv1
+
+# Set environment variable BA_DEBUG_UI_CLEANUP_CHECKS to 1
+# to print detailed info about what is getting cleaned up when.
+DEBUG_UI_CLEANUP_CHECKS = os.environ.get('BA_DEBUG_UI_CLEANUP_CHECKS') == '1'
 
 
 class UIV1AppSubsystem(babase.AppSubsystem):
     """Consolidated UI functionality for the app.
-
-    Category: **App Classes**
 
     To use this class, access the single instance of it at 'ba.app.ui'.
     """
@@ -52,13 +52,13 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         TOKENS_METER = 'tokens_meter'
         TROPHY_METER = 'trophy_meter'
         LEVEL_METER = 'level_meter'
+        CHEST_SLOT_0 = 'chest_slot_0'
         CHEST_SLOT_1 = 'chest_slot_1'
         CHEST_SLOT_2 = 'chest_slot_2'
         CHEST_SLOT_3 = 'chest_slot_3'
-        CHEST_SLOT_4 = 'chest_slot_4'
 
     def __init__(self) -> None:
-        from bauiv1._uitypes import MainWindow
+        from bauiv1._window import MainWindow
 
         super().__init__()
 
@@ -74,22 +74,38 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # For storing arbitrary class-level state data for Windows or
         # other UI related classes.
         self.window_states: dict[type, Any] = {}
-
-        self._uiscale: babase.UIScale
-        self._update_ui_scale()
-
-        self.cleanupchecks: list[UICleanupCheck] = []
-        self.upkeeptimer: babase.AppTimer | None = None
+        self.main_window_shared_states: dict = {}
 
         self.title_color = (0.72, 0.7, 0.75)
         self.heading_color = (0.72, 0.7, 0.75)
         self.infotextcolor = (0.7, 0.9, 0.7)
+
+        self.window_auto_recreate_suppress_count = 0
+
+        self._uiscale: babase.UIScale
+        self._update_ui_scale()
+        self._upkeeptimer: babase.AppTimer | None = None
+        self._cleanupchecks: list[_UICleanupCheck] = []
+        self._last_win_recreate_screen_size: tuple[float, float] | None = None
+        self._last_win_recreate_uiscale: bauiv1.UIScale | None = None
+        self._last_win_recreate_time: float | None = None
+        self._win_recreate_timer: babase.AppTimer | None = None
+        self._base_ids: dict[str, int] = {}
 
         # Elements in our root UI will call anything here when
         # activated.
         self.root_ui_calls: dict[
             UIV1AppSubsystem.RootUIElement, Callable[[], None]
         ] = {}
+
+    def new_id_prefix(self, name: str) -> str:
+        """Generate a unique id given a base name.
+
+        Useful to ensure widgets have globally unique ids even if
+        a particular window type is instantiated multiple times.
+        """
+        val = self._base_ids[name] = self._base_ids.get(name, 0) + 1
+        return f'{name}{val}'
 
     def _update_ui_scale(self) -> None:
         uiscalestr = babase.get_ui_scale()
@@ -115,7 +131,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
     @override
     def reset(self) -> None:
-        from bauiv1._uitypes import MainWindow
+        from bauiv1._window import MainWindow
 
         self.root_ui_calls.clear()
         self._main_window = empty_weakref(MainWindow)
@@ -128,73 +144,9 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
     @override
     def on_app_loading(self) -> None:
-        from bauiv1._uitypes import ui_upkeep
-
-        # IMPORTANT: If tweaking UI stuff, make sure it behaves for
-        # small, medium, and large UI modes. (doesn't run off screen,
-        # etc). The overrides below can be used to test with different
-        # sizes. Generally small is used on phones, medium is used on
-        # tablets/tvs, and large is on desktop computers or perhaps
-        # large tablets. When possible, run in windowed mode and resize
-        # the window to assure this holds true at all aspect ratios.
-
-        # UPDATE: A better way to test this is now by setting the
-        # environment variable BA_UI_SCALE to "small", "medium", or
-        # "large". This will affect system UIs not covered by the values
-        # below such as screen-messages. The below values remain
-        # functional, however, for cases such as Android where
-        # environment variables can't be set easily.
-
-        if bool(False):  # force-test ui scale
-            self._uiscale = babase.UIScale.SMALL
-            with babase.ContextRef.empty():
-                babase.pushcall(
-                    lambda: babase.screenmessage(
-                        f'FORCING UISCALE {self._uiscale.name} FOR TESTING',
-                        color=(1, 0, 1),
-                        log=True,
-                    )
-                )
 
         # Kick off our periodic UI upkeep.
-
-        # FIXME: Can probably kill this if we do immediate UI death
-        # checks.
-        self.upkeeptimer = babase.AppTimer(2.6543, ui_upkeep, repeat=True)
-
-    def auto_set_back_window(self, from_window: MainWindow) -> None:
-        """Sets the main menu window automatically from a parent WindowState."""
-
-        main_window = self._main_window()
-
-        # This should never get called for top-level main-windows.
-        assert (
-            main_window is None or main_window.main_window_is_top_level is False
-        )
-
-        back_state = (
-            None if main_window is None else main_window.main_window_back_state
-        )
-        if back_state is None:
-            raise RuntimeError(
-                f'Main window {main_window} provides no back-state;'
-                f' cannot use auto-back.'
-            )
-
-        # Valid states should have values here.
-        assert back_state.is_top_level is not None
-        assert back_state.is_auxiliary is not None
-        assert back_state.window_type is not None
-
-        backwin = back_state.create_window(transition='in_left')
-
-        self.set_main_window(
-            backwin,
-            from_window=from_window,
-            is_back=True,
-            back_state=back_state,
-            suppress_warning=True,
-        )
+        self._upkeeptimer = babase.AppTimer(2.6543, self._upkeep, repeat=True)
 
     def get_main_window(self) -> bauiv1.MainWindow | None:
         """Return main window, if any."""
@@ -204,23 +156,35 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self,
         window: bauiv1.MainWindow,
         *,
+        back_state: MainWindowState | None,
+        extra_type_id: str = '',
         from_window: bauiv1.MainWindow | None | bool = True,
         is_back: bool = False,
         is_top_level: bool = False,
         is_auxiliary: bool = False,
-        back_state: MainWindowState | None = None,
         suppress_warning: bool = False,
+        restore_shared_state: bool = True,
     ) -> None:
-        """Set the current 'main' window, replacing any existing.
+        """Set the current 'main' window.
 
         Generally this should not be called directly; The high level
         MainWindow methods main_window_replace() and main_window_back()
-        should be used when possible for navigation.
+        should be used whenever possible to implement navigation.
+
+        The caller is responsible for cleaning up any previous main
+        window.
         """
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
-        from bauiv1._uitypes import MainWindow
+        from bauiv1._window import MainWindow
+
+        # If we haven't grabbed initial uiscale or screen size for
+        # recreate comparision purposes, this is a good time to do so.
+        if self._last_win_recreate_screen_size is None:
+            self._last_win_recreate_screen_size = (
+                babase.get_virtual_screen_size()
+            )
+        if self._last_win_recreate_uiscale is None:
+            self._last_win_recreate_uiscale = babase.app.ui_v1.uiscale
 
         # Encourage migration to the new higher level nav calls.
         if not suppress_warning:
@@ -236,6 +200,10 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
         # We used to accept Widgets but now want MainWindows.
         if not isinstance(window, MainWindow):
+
+            # if callable(window):
+            #     window = window()
+            # else:
             raise RuntimeError(
                 f'set_main_window() now takes a MainWindow as its "window" arg.'
                 f' You passed a {type(window)}.',
@@ -259,14 +227,15 @@ class UIV1AppSubsystem(babase.AppSubsystem):
                 back_state.is_top_level is None
                 or back_state.is_auxiliary is None
                 or back_state.window_type is None
+                or back_state.extra_type_id is None
             ):
                 raise RuntimeError(
                     'Provided back_state is incomplete.'
                     ' Make sure to only pass fully-filled-out MainWindowStates.'
                 )
 
-        # If a top-level main-window is being set, complain if there already
-        # is a main-window.
+        # If a top-level main-window is being set, complain if there
+        # already is a main-window.
         if is_top_level:
             if existing:
                 logging.warning(
@@ -323,45 +292,33 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             assert back_state.is_top_level is not None
             assert back_state.is_auxiliary is not None
             assert back_state.window_type is type(window)
+            assert back_state.extra_type_id is not None
             window.main_window_back_state = back_state.parent
             window.main_window_is_top_level = back_state.is_top_level
             window.main_window_is_auxiliary = back_state.is_auxiliary
+            window.main_window_extra_type_id = back_state.extra_type_id
         else:
-            # Store if the window is top-level so we won't complain later if
-            # we go back from it and there's nowhere to go to.
+            # Store if the window is top-level so we won't complain
+            # later if we go back from it and there's nowhere to go to.
             window.main_window_is_top_level = is_top_level
 
             window.main_window_is_auxiliary = is_auxiliary
+            window.main_window_extra_type_id = extra_type_id
 
             # When navigating forward, generate a back-window-state from
             # the outgoing window.
             if is_top_level:
-                # Top level windows don't have or expect anywhere to
-                # go back to.
-                window.main_window_back_state = None
-            elif back_state is not None:
-                window.main_window_back_state = back_state
-            else:
-                oldwin = self._main_window()
-                if oldwin is None:
-                    # We currenty only hold weak refs to windows so that
-                    # they are free to die on their own, but we expect
-                    # the main menu window to keep itself alive as long
-                    # as its the main one. Holler if that seems to not
-                    # be happening.
-                    logging.warning(
-                        'set_main_window: No old MainWindow found'
-                        ' and is_top_level is False;'
-                        ' this should not happen.'
-                    )
-                    window.main_window_back_state = None
-                else:
-                    window.main_window_back_state = self.save_main_window_state(
-                        oldwin
-                    )
+                # Top level windows don't have or expect anywhere to go
+                # back to.
+                assert back_state is None
+            window.main_window_back_state = back_state
 
         self._main_window = window_weakref
         self._main_window_widget = window_widget
+
+        # Now that we're all set up, restore any state.
+        if restore_shared_state:
+            window.main_window_restore_shared_state()
 
     def has_main_window(self) -> bool:
         """Return whether a main menu window is present."""
@@ -369,7 +326,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
 
     def clear_main_window(self, transition: str | None = None) -> None:
         """Clear any existing main window."""
-        from bauiv1._uitypes import MainWindow
+        from bauiv1._window import MainWindow
 
         main_window = self._main_window()
         if main_window:
@@ -400,8 +357,25 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         winstate.is_top_level = window.main_window_is_top_level
         winstate.is_auxiliary = window.main_window_is_auxiliary
         winstate.window_type = type(window)
+        winstate.extra_type_id = window.main_window_extra_type_id
 
         return winstate
+
+    def save_current_main_window_state(self) -> MainWindowState | None:
+        """Save state for the current window, if any."""
+        # Calc a state from the current window.
+        current_main_win = self._main_window()
+        if current_main_win is None:
+            # We currenty only hold weak refs to windows so that they
+            # are free to die on their own, but we expect the main menu
+            # window to keep itself alive as long as its the main one.
+            # Holler if that seems to not be happening.
+            babase.uilog.warning(
+                'save_current_main_window_state: No old MainWindow found;'
+                ' this should not happen.'
+            )
+            return None
+        return self.save_main_window_state(current_main_win)
 
     def restore_main_window_state(self, state: MainWindowState) -> None:
         """Restore UI to a saved state."""
@@ -413,6 +387,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         assert state.is_top_level is not None
         assert state.is_auxiliary is not None
         assert state.window_type is not None
+        assert state.extra_type_id is not None
 
         win = state.create_window(transition=None)
         self.set_main_window(
@@ -422,20 +397,309 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             is_auxiliary=state.is_auxiliary,
             back_state=state.parent,
             suppress_warning=True,
+            extra_type_id=state.extra_type_id,
         )
 
+    def should_suppress_window_recreates(self) -> bool:
+        """Should we avoid auto-recreating windows at the current time?"""
+
+        # This is slightly hack-ish and ideally we can get to the point
+        # where we never need this and can remove it.
+
+        # Currently string-edits grab a weak-ref to the exact text
+        # widget they're targeting. So we need to suppress recreates
+        # while edits are in progress. Ideally we should change that to
+        # use ids or something that would survive a recreate.
+        if babase.app.stringedit.active_adapter() is not None:
+            return True
+
+        # Suppress if anything else is requesting suppression (such as
+        # generic Windows that don't handle being recreated).
+        return babase.app.ui_v1.window_auto_recreate_suppress_count > 0
+
     @override
-    def on_screen_change(self) -> None:
+    def on_ui_scale_change(self) -> None:
         # Update our stored UIScale.
         self._update_ui_scale()
 
         # Update native bits (allow root widget to rebuild itself/etc.)
-        _bauiv1.on_screen_change()
+        _bauiv1.on_ui_scale_change()
 
-        # Lastly, if we have a main window, recreate it to pick up the
-        # new UIScale/etc.
+        self._schedule_main_win_recreate()
+
+    @override
+    def on_screen_size_change(self) -> None:
+
+        self._schedule_main_win_recreate()
+
+    def add_ui_cleanup_check(self, obj: Any, widget: bauiv1.Widget) -> None:
+        """Checks to ensure a widget-owning object gets cleaned up properly.
+
+        This adds a check which will print an error message if the provided
+        object still exists ~5 seconds after the provided bauiv1.Widget
+        dies.
+
+        This is a good sanity check for any sort of object that wraps or
+        controls a bauiv1.Widget. For instance, a 'Window' class instance
+        has no reason to still exist once its root container bauiv1.Widget
+        has fully transitioned out and been destroyed. Circular references
+        or careless strong referencing can lead to such objects never
+        getting destroyed, however, and this helps detect such cases to
+        avoid memory leaks.
+        """
+        if DEBUG_UI_CLEANUP_CHECKS:
+            print(f'adding uicleanup to {obj}')
+        if not isinstance(widget, _bauiv1.Widget):
+            raise TypeError('widget arg is not a bauiv1.Widget')
+
+        if bool(False):
+
+            def foobar() -> None:
+                """Just testing."""
+                if DEBUG_UI_CLEANUP_CHECKS:
+                    print('uicleanupcheck widget dying...')
+
+            widget.add_delete_callback(foobar)
+
+        self._cleanupchecks.append(
+            _UICleanupCheck(
+                obj=weakref.ref(obj), widget=widget, widget_death_time=None
+            )
+        )
+
+    def auxiliary_window_activate(
+        self,
+        win_type: type[bauiv1.MainWindow],
+        win_create_call: Callable[[], bauiv1.MainWindow],
+        win_extra_type_id: str = '',
+    ) -> None:
+        """Navigate to or away from an Auxiliary window.
+
+        Auxiliary windows can be thought of as 'side quests' in the
+        window hierarchy; places such as settings windows or league
+        ranking windows that the user might want to visit without losing
+        their place in the regular hierarchy.
+
+        If an auxiliary window matching the provided type and
+        extra-type-id exists in the stack, this call will back out past
+        it (think of it as toggling the side-quest back off).
+
+        If a non-matching auxiliary window exists in the stack, this
+        call will back out past that and replace it with this
+        (effectively ending the old side-quest and starting a new one).
+        """
+        # pylint: disable=unidiomatic-typecheck
+
+        current_main_window = self.get_main_window()
+
+        # Scan our ancestors for auxiliary states matching our type as
+        # well as auxiliary states in general.
+        aux_matching_state: bauiv1.MainWindowState | None = None
+        aux_state: bauiv1.MainWindowState | None = None
+
+        if current_main_window is None:
+            raise RuntimeError(
+                'Not currently handling no-top-level-window case.'
+            )
+
+        state = current_main_window.main_window_back_state
+        while state is not None:
+            assert state.window_type is not None
+            assert state.extra_type_id is not None
+            if state.is_auxiliary:
+                if (
+                    state.window_type is win_type
+                    and state.extra_type_id == win_extra_type_id
+                ):
+                    aux_matching_state = state
+                else:
+                    aux_state = state
+
+            state = state.parent
+
+        # If there's an ancestor auxiliary window-state matching our
+        # type, back out past it (example: poking settings, navigating
+        # down a level or two, and then poking settings again should
+        # back out of settings).
+        if aux_matching_state is not None:
+            current_main_window.main_window_back_state = (
+                aux_matching_state.parent
+            )
+            current_main_window.main_window_back()
+            return
+
+        # If there's an ancestor auxiliary state *not* matching our
+        # type, crop the state and swap in our new auxiliary UI
+        # (example: poking settings, then poking account, then poking
+        # back should end up where things were before the settings
+        # poke).
+        if aux_state is not None:
+            # Blow away the window stack and build a fresh one.
+            self.clear_main_window()
+            self.set_main_window(
+                win_create_call(),
+                from_window=False,  # Disable from-check.
+                back_state=aux_state.parent,
+                suppress_warning=True,
+                is_auxiliary=True,
+                extra_type_id=win_extra_type_id,
+            )
+            return
+
+        # Ok, no auxiliary states found. Now if current window is
+        # auxiliary and the type/extra-id matches, simply do a back.
+        if (
+            current_main_window.main_window_is_auxiliary
+            and type(current_main_window) is win_type
+            and current_main_window.main_window_extra_type_id
+            == win_extra_type_id
+        ):
+            current_main_window.main_window_back()
+            return
+
+        # If current window is auxiliary but type/extra-id doesn't match,
+        # swap it out for our new auxiliary UI.
+        if current_main_window.main_window_is_auxiliary:
+            self.clear_main_window()
+            self.set_main_window(
+                win_create_call(),
+                from_window=False,  # Disable from-check.
+                back_state=current_main_window.main_window_back_state,
+                suppress_warning=True,
+                is_auxiliary=True,
+                extra_type_id=win_extra_type_id,
+            )
+            return
+
+        # Ok, no existing auxiliary stuff was found period. Just
+        # navigate forward to this UI.
+        new_main_win = current_main_window.main_window_replace(
+            win_create_call,
+            is_auxiliary=True,
+            extra_type_id=win_extra_type_id,
+        )
+
+        # We should always be allowed to replace the main win in this
+        # case.
+        assert new_main_win is not None
+
+        # Make sure what got made exactly matches the type we were passed.
+        assert type(new_main_win) is win_type
+
+    def _schedule_main_win_recreate(self) -> None:
+
+        # If there is a timer set already, do nothing.
+        if self._win_recreate_timer is not None:
+            return
+
+        # Recreating a MainWindow is a kinda heavy thing and it doesn't
+        # seem like we should be doing it at 120hz during a live window
+        # resize, so let's limit the max rate we do it. We also use the
+        # same mechanism to defer window recreates while anything is
+        # suppressing them.
+        now = time.monotonic()
+
+        # Up to 4 refreshes per second seems reasonable.
+        interval = 0.25
+
+        # Ok; there's no timer. Schedule one.
+        till_update = (
+            interval
+            if self.should_suppress_window_recreates()
+            else (
+                0.0
+                if self._last_win_recreate_time is None
+                else max(0.0, self._last_win_recreate_time + interval - now)
+            )
+        )
+        self._win_recreate_timer = babase.AppTimer(
+            till_update, self._do_main_win_recreate
+        )
+
+    def _do_main_win_recreate(self) -> None:
+        self._last_win_recreate_time = time.monotonic()
+        self._win_recreate_timer = None
+
+        # If win-recreates are currently suppressed, just kick off
+        # another timer. We'll do our actual thing once suppression
+        # finally ends.
+        if self.should_suppress_window_recreates():
+            self._schedule_main_win_recreate()
+            return
+
         mainwindow = self.get_main_window()
-        if mainwindow is not None:
-            winstate = self.save_main_window_state(mainwindow)
-            self.clear_main_window(transition='instant')
-            self.restore_main_window_state(winstate)
+
+        # Can't recreate what doesn't exist.
+        if mainwindow is None:
+            return
+
+        virtual_screen_size = babase.get_virtual_screen_size()
+        uiscale = babase.app.ui_v1.uiscale
+
+        # These should always get actual values when a main-window is
+        # assigned so should never still be None here.
+        assert self._last_win_recreate_uiscale is not None
+        assert self._last_win_recreate_screen_size is not None
+
+        # If uiscale hasn't changed and our screen-size hasn't either
+        # (or it has but we don't care) then we're done.
+        if uiscale is self._last_win_recreate_uiscale and (
+            virtual_screen_size == self._last_win_recreate_screen_size
+            or not mainwindow.refreshes_on_screen_size_changes
+        ):
+            return
+
+        # Do the recreate.
+        winstate = self.save_main_window_state(mainwindow)
+        self.clear_main_window(transition='instant')
+        self.restore_main_window_state(winstate)
+
+        # Store the size we created this for to avoid redundant
+        # future recreates.
+        self._last_win_recreate_uiscale = uiscale
+        self._last_win_recreate_screen_size = virtual_screen_size
+
+    def _upkeep(self) -> None:
+        """Run UI cleanup checks, etc. should be called periodically."""
+
+        assert babase.app.classic is not None
+        remainingchecks = []
+        now = babase.apptime()
+        for check in self._cleanupchecks:
+            obj = check.obj()
+
+            # If the object has died, ignore and don't re-add.
+            if obj is None:
+                if DEBUG_UI_CLEANUP_CHECKS:
+                    print('uicleanupcheck object is dead; hooray!')
+                continue
+
+            # If the widget hadn't died yet, note if it has.
+            if check.widget_death_time is None:
+                remainingchecks.append(check)
+                if not check.widget:
+                    check.widget_death_time = now
+            else:
+                # Widget was already dead; complain if its been too long.
+                if now - check.widget_death_time > 5.0:
+                    print(
+                        'WARNING:',
+                        obj,
+                        'is still alive 5 second after its Widget died;'
+                        ' you might have a memory leak. Look for circular'
+                        ' references or outside things referencing your Window'
+                        ' class instance. See efro.debug module'
+                        ' for tools that can help debug this sort of thing.',
+                    )
+                else:
+                    remainingchecks.append(check)
+        self._cleanupchecks = remainingchecks
+
+
+@dataclass
+class _UICleanupCheck:
+    """Holds info about a uicleanupcheck target."""
+
+    obj: weakref.ref
+    widget: bauiv1.Widget
+    widget_death_time: float | None

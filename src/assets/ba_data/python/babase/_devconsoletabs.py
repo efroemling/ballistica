@@ -1,16 +1,18 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Predefined tabs for the dev console."""
+
 from __future__ import annotations
 
 import math
 import random
 import logging
 from functools import partial
-from typing import TYPE_CHECKING, override, TypeVar, Generic
+from typing import TYPE_CHECKING, override
 
 import _babase
 
+from babase._logging import description_for_logger
 from babase._devconsole import DevConsoleTab
 
 if TYPE_CHECKING:
@@ -18,8 +20,6 @@ if TYPE_CHECKING:
 
     from bacommon.loggercontrol import LoggerControlConfig
     from babase import AppMode
-
-T = TypeVar('T')
 
 
 class DevConsoleTabPython(DevConsoleTab):
@@ -56,7 +56,7 @@ class DevConsoleTabAppModes(DevConsoleTab):
         # Kick off a load if applicable.
         if self._app_modes is None and not self._app_modes_loading:
             _babase.app.meta.load_exported_classes(
-                AppMode, self._on_app_modes_loaded
+                'babase.AppMode', AppMode, self._on_app_modes_loaded
             )
 
         # Just say 'loading' if we don't have app-modes yet.
@@ -66,7 +66,7 @@ class DevConsoleTabAppModes(DevConsoleTab):
             )
             return
 
-        bwidth = 260
+        bwidth = 300
         bpadding = 5
 
         xoffs = -0.5 * bwidth * len(self._app_modes)
@@ -74,7 +74,7 @@ class DevConsoleTabAppModes(DevConsoleTab):
         self.text(
             'Available AppModes:',
             scale=0.8,
-            pos=(0, 75),
+            pos=(0, 78),
             h_align='center',
             v_align='center',
         )
@@ -82,7 +82,7 @@ class DevConsoleTabAppModes(DevConsoleTab):
         for i, mode in enumerate(self._app_modes):
             self.button(
                 f'{mode.__module__}.{mode.__qualname__}',
-                pos=(xoffs + i * bwidth + bpadding, 10),
+                pos=(xoffs + i * bwidth + bpadding, 15),
                 size=(bwidth - 2.0 * bpadding, 40),
                 label_scale=0.6,
                 call=partial(self._set_app_mode, mode),
@@ -120,27 +120,39 @@ class DevConsoleTabUI(DevConsoleTab):
     def refresh(self) -> None:
         from babase._mgen.enums import UIScale
 
-        xoffs = -375
+        xoffs = -305.0
+        yoffs = 10.0
+
+        custom_buttons = _babase.app.mode.get_dev_console_ui_tab_buttons()
+        cboffs = 50
+        cbwidth = 180
+        cbspacing = 10
+
+        if custom_buttons:
+            cbtotalwidth = (
+                len(custom_buttons) * cbwidth
+                + max(0, len(custom_buttons) - 1) * cbspacing
+                + cboffs
+            )
+        else:
+            cbtotalwidth = 0
+
+        xoffs -= cbtotalwidth * 0.5
 
         self.text(
-            'Make sure all interactive UI fits in the'
-            ' virtual bounds at all UI-scales (not counting things'
-            ' that follow screen edges).\n'
-            'Note that some elements may not reflect UI-scale changes'
-            ' until recreated.',
+            'A UI should either fit in the virtual safe area'
+            ' or dynamically respond to screen size changes.',
             scale=0.6,
-            pos=(xoffs + 15, 70),
-            # h_anchor='left',
+            pos=(xoffs + 8, yoffs + 65),
             h_align='left',
             v_align='center',
         )
 
-        ui_overlay = _babase.get_draw_ui_bounds()
+        ui_overlay = _babase.get_draw_virtual_safe_area_bounds()
         self.button(
-            'Virtual Bounds ON' if ui_overlay else 'Virtual Bounds OFF',
-            pos=(xoffs + 10, 10),
+            'Virtual Safe Area ON' if ui_overlay else 'Virtual Safe Area OFF',
+            pos=(xoffs + 10, yoffs + 10),
             size=(200, 30),
-            # h_anchor='left',
             label_scale=0.6,
             call=self.toggle_ui_overlay,
             style='bright' if ui_overlay else 'normal',
@@ -148,8 +160,7 @@ class DevConsoleTabUI(DevConsoleTab):
         x = 300
         self.text(
             'UI-Scale',
-            pos=(xoffs + x - 5, 15),
-            # h_anchor='left',
+            pos=(xoffs + x - 5, yoffs + 15),
             h_align='right',
             v_align='none',
             scale=0.6,
@@ -159,9 +170,8 @@ class DevConsoleTabUI(DevConsoleTab):
         for scale in UIScale:
             self.button(
                 scale.name.capitalize(),
-                pos=(xoffs + x, 10),
+                pos=(xoffs + x, yoffs + 10),
                 size=(bwidth, 30),
-                # h_anchor='left',
                 label_scale=0.6,
                 call=partial(_babase.app.set_ui_scale, scale),
                 style=(
@@ -172,13 +182,28 @@ class DevConsoleTabUI(DevConsoleTab):
             )
             x += bwidth + 2
 
+        if custom_buttons:
+            x += cboffs
+            for custom_button in custom_buttons:
+                self.button(
+                    custom_button.name,
+                    pos=(xoffs + x, yoffs + 15),
+                    size=(cbwidth, 40),
+                    label_scale=0.6,
+                    call=custom_button.call,
+                    corner_radius=10.0,
+                )
+                x += cbwidth + cbspacing
+
     def toggle_ui_overlay(self) -> None:
         """Toggle UI overlay drawing."""
-        _babase.set_draw_ui_bounds(not _babase.get_draw_ui_bounds())
+        _babase.set_draw_virtual_safe_area_bounds(
+            not _babase.get_draw_virtual_safe_area_bounds()
+        )
         self.request_refresh()
 
 
-class Table(Generic[T]):
+class Table[T]:
     """Used to show controls for arbitrarily large data in a grid form."""
 
     def __init__(
@@ -194,6 +219,7 @@ class Table(Generic[T]):
         margin_left_right: float = 60.0,
         debug_bounds: bool = False,
         max_columns: int | None = None,
+        focus_entry_config_key: str | None = None,
     ) -> None:
         self._title = title
         self._entry_width = entry_width
@@ -205,11 +231,18 @@ class Table(Generic[T]):
         self._entries = entries
         self._draw_entry_call = draw_entry_call
         self._max_columns = max_columns
+        self._focus_entry_config_key = focus_entry_config_key
 
         # Values updated on refresh (for aligning other custom
         # widgets/etc.)
         self.top_left: tuple[float, float] = (0.0, 0.0)
         self.top_right: tuple[float, float] = (0.0, 0.0)
+
+        # If we've got a config key, restore any value there.
+        if self._focus_entry_config_key is not None:
+            val = _babase.app.config.get(self._focus_entry_config_key)
+            if isinstance(val, int):
+                self._focus_entry_index = val
 
     def set_entries(self, entries: list[T]) -> None:
         """Update table entries."""
@@ -226,10 +259,14 @@ class Table(Generic[T]):
         This affects which page is shown at the next refresh.
         """
         self._focus_entry_index = max(0, min(len(self._entries) - 1, index))
+        if self._focus_entry_config_key is not None:
+            _babase.app.config[self._focus_entry_config_key] = (
+                self._focus_entry_index
+            )
+            _babase.app.config.commit()
 
     def refresh(self, tab: DevConsoleTab) -> None:
         """Call to refresh the data."""
-        # pylint: disable=too-many-locals
 
         margin_top = 50.0
         margin_bottom = 10.0
@@ -393,21 +430,28 @@ class DevConsoleTabLogging(DevConsoleTab):
         self._table = Table(
             title='Logging Levels',
             entry_width=800,
-            entry_height=42,
+            entry_height=44,
             debug_bounds=False,
             entries=list[str](),
             draw_entry_call=self._draw_entry,
             max_columns=1,
+            focus_entry_config_key='Logging Levels Focus Entry',
         )
 
     @override
     def refresh(self) -> None:
+
         assert self._table is not None
 
         # Update table entries with the latest set of loggers (this can
-        # change over time).
+        # change over time). Sort with 'root' first, followed by all our
+        # 'ba' loggers, followed by everything else.
         self._table.set_entries(
-            ['root'] + sorted(logging.root.manager.loggerDict)
+            ['root']
+            + sorted(
+                logging.root.manager.loggerDict,
+                key=lambda name: (name.split('.')[0] != 'ba', name),
+            )
         )
 
         # Draw the table.
@@ -492,18 +536,34 @@ class DevConsoleTabLogging(DevConsoleTab):
         height: float,
     ) -> None:
         # pylint: disable=too-many-positional-arguments
-        # pylint: disable=too-many-locals
 
         xoffs = -15.0
         bwidth = 80.0
         btextscale = 0.5
+        if desc := description_for_logger(entry):
+            tab.text(
+                desc,
+                (
+                    # x + width - bwidth * 6.5 - 10.0 + xoffs,
+                    x + 12,
+                    y + height * 0.5 - 12,
+                ),
+                h_align='left',
+                scale=0.4,
+                style='faded',
+            )
+            yoffs = 4
+        else:
+            yoffs = 0
+
         tab.text(
             entry,
             (
-                x + width - bwidth * 6.5 - 10.0 + xoffs,
-                y + height * 0.5,
+                # x + width - bwidth * 6.5 - 10.0 + xoffs,
+                x + 12,
+                y + height * 0.5 + yoffs,
             ),
-            h_align='right',
+            h_align='left',
             scale=0.7,
         )
 
@@ -511,21 +571,16 @@ class DevConsoleTabLogging(DevConsoleTab):
         level = logger.level
         index = 0
         effectivelevel = logger.getEffectiveLevel()
-        # if entry != 'root' and level == logging.NOTSET:
-        #     # Show the level being inherited in NOTSET cases.
-        #     notsetlevelname = logging.getLevelName(logger.getEffectiveLevel())
-        #     if notsetlevelname == 'NOTSET':
-        #         notsetname = 'Not Set'
-        #     else:
-        #         notsetname = f'Not Set ({notsetlevelname.capitalize()})'
-        # else:
         notsetname = 'Not Set'
+        bradius = 5.0
+        bspacing = 2.0
         tab.button(
             notsetname,
             pos=(x + width - bwidth * 6.5 + xoffs + 1.0, y + 5.0),
-            size=(bwidth * 1.0 - 2.0, height - 10),
+            size=(bwidth * 1.0 - bspacing, height - 10),
             label_scale=btextscale,
             style='white_bright' if level == logging.NOTSET else 'black',
+            corner_radius=bradius,
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.NOTSET
             ),
@@ -534,14 +589,14 @@ class DevConsoleTabLogging(DevConsoleTab):
         tab.button(
             'Debug',
             pos=(x + width - bwidth * 5 + xoffs + 1.0, y + 5.0),
-            size=(bwidth - 2.0, height - 10),
+            size=(bwidth - bspacing, height - 10),
             label_scale=btextscale,
             style=(
                 'white_bright'
                 if level == logging.DEBUG
                 else 'blue' if effectivelevel <= logging.DEBUG else 'black'
             ),
-            # style='bright' if level == logging.DEBUG else 'normal',
+            corner_radius=bradius,
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.DEBUG
             ),
@@ -550,27 +605,28 @@ class DevConsoleTabLogging(DevConsoleTab):
         tab.button(
             'Info',
             pos=(x + width - bwidth * 4 + xoffs + 1.0, y + 5.0),
-            size=(bwidth - 2.0, height - 10),
+            size=(bwidth - bspacing, height - 10),
             label_scale=btextscale,
             style=(
                 'white_bright'
                 if level == logging.INFO
                 else 'white' if effectivelevel <= logging.INFO else 'black'
             ),
-            # style='bright' if level == logging.INFO else 'normal',
+            corner_radius=bradius,
             call=partial(self._set_entry_val, entry_index, entry, logging.INFO),
         )
         index += 1
         tab.button(
             'Warning',
             pos=(x + width - bwidth * 3 + xoffs + 1.0, y + 5.0),
-            size=(bwidth - 2.0, height - 10),
+            size=(bwidth - bspacing, height - 10),
             label_scale=btextscale,
             style=(
                 'white_bright'
                 if level == logging.WARNING
                 else 'yellow' if effectivelevel <= logging.WARNING else 'black'
             ),
+            corner_radius=bradius,
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.WARNING
             ),
@@ -579,13 +635,14 @@ class DevConsoleTabLogging(DevConsoleTab):
         tab.button(
             'Error',
             pos=(x + width - bwidth * 2 + xoffs + 1.0, y + 5.0),
-            size=(bwidth - 2.0, height - 10),
+            size=(bwidth - bspacing, height - 10),
             label_scale=btextscale,
             style=(
                 'white_bright'
                 if level == logging.ERROR
                 else 'red' if effectivelevel <= logging.ERROR else 'black'
             ),
+            corner_radius=bradius,
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.ERROR
             ),
@@ -594,7 +651,7 @@ class DevConsoleTabLogging(DevConsoleTab):
         tab.button(
             'Critical',
             pos=(x + width - bwidth * 1 + xoffs + 1.0, y + 5.0),
-            size=(bwidth - 2.0, height - 10),
+            size=(bwidth - bspacing, height - 10),
             label_scale=btextscale,
             style=(
                 'white_bright'
@@ -603,6 +660,7 @@ class DevConsoleTabLogging(DevConsoleTab):
                     'purple' if effectivelevel <= logging.CRITICAL else 'black'
                 )
             ),
+            corner_radius=bradius,
             call=partial(
                 self._set_entry_val, entry_index, entry, logging.CRITICAL
             ),

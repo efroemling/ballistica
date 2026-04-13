@@ -6,6 +6,8 @@
 
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
@@ -142,7 +144,7 @@ void SoundNode::Step() {
     }
   }
   if (positional_ && position_dirty_ && playing_) {
-    millisecs_t t = g_core->GetAppTimeMillisecs();
+    millisecs_t t = g_core->AppTimeMillisecs();
     if (t - last_position_update_time_ > 100) {
       base::AudioSource* s = g_base->audio->SourceBeginExisting(play_id_, 107);
       if (s) {

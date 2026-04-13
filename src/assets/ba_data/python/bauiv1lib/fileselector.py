@@ -164,6 +164,11 @@ class FileSelectorWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # TODO - wire this up.
+        return False
+
     def _on_up_press(self) -> None:
         self._on_entry_activated('..')
 
@@ -181,7 +186,6 @@ class FileSelectorWindow(bui.MainWindow):
             self._callback(self._path)
 
     def _on_entry_activated(self, entry: str) -> None:
-        # pylint: disable=too-many-branches
         new_path = None
         try:
             assert self._path is not None
@@ -244,7 +248,7 @@ class FileSelectorWindow(bui.MainWindow):
                 if duration < min_time:
                     time.sleep(min_time - duration)
                 bui.pushcall(
-                    bui.Call(self._callback, files, None),
+                    bui.CallStrict(self._callback, files, None),
                     from_other_thread=True,
                 )
             except Exception as exc:
@@ -253,7 +257,7 @@ class FileSelectorWindow(bui.MainWindow):
                     logging.exception('Error in fileselector refresh thread.')
                 nofiles: list[str] = []
                 bui.pushcall(
-                    bui.Call(self._callback, nofiles, str(exc)),
+                    bui.CallStrict(self._callback, nofiles, str(exc)),
                     from_other_thread=True,
                 )
 
@@ -264,9 +268,7 @@ class FileSelectorWindow(bui.MainWindow):
         self._RefreshThread(path, self._refresh).start()
 
     def _refresh(self, file_names: list[str], error: str | None) -> None:
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         if not self._root_widget:
             return
 
@@ -387,12 +389,10 @@ class FileSelectorWindow(bui.MainWindow):
             bui.containerwidget(
                 edit=self._scrollwidget,
                 claims_left_right=False,
-                claims_tab=False,
             )
             bui.containerwidget(
                 edit=self._subcontainer,
                 claims_left_right=False,
-                claims_tab=False,
                 selection_loops=False,
                 print_list_exit_instructions=False,
             )
@@ -428,7 +428,9 @@ class FileSelectorWindow(bui.MainWindow):
                     root_selectable=True,
                     background=False,
                     click_activate=True,
-                    on_activate_call=bui.Call(self._on_entry_activated, entry),
+                    on_activate_call=bui.CallStrict(
+                        self._on_entry_activated, entry
+                    ),
                 )
                 if num == 0:
                     bui.widget(edit=cnt, up_widget=self._back_button)

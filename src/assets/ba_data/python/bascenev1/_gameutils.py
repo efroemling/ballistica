@@ -31,10 +31,7 @@ TROPHY_CHARS = {
 
 @dataclass
 class GameTip:
-    """Defines a tip presentable to the user at the start of a game.
-
-    Category: **Gameplay Classes**
-    """
+    """Defines a tip presentable to the user at the start of a game."""
 
     text: str
     icon: bascenev1.Texture | None = None
@@ -56,8 +53,6 @@ def animate(
     offset: float = 0,
 ) -> bascenev1.Node:
     """Animate values on a target bascenev1.Node.
-
-    Category: **Gameplay Functions**
 
     Creates an 'animcurve' node with the provided values and time as an input,
     connect it to the provided attribute, and set it to die with the target.
@@ -88,7 +83,6 @@ def animate(
     # FIXME: Even if we are looping we should have a way to die once we
     #  get disconnected.
     if not loop:
-        # noinspection PyUnresolvedReferences
         _bascenev1.timer(
             (int(mult * items[-1][0]) + 1000) / 1000.0, curve.delete
         )
@@ -117,8 +111,6 @@ def animate_array(
     offset: float = 0,
 ) -> None:
     """Animate an array of values on a target bascenev1.Node.
-
-    Category: **Gameplay Functions**
 
     Like bs.animate, but operates on array attributes.
     """
@@ -153,8 +145,6 @@ def animate_array(
         # If we're not looping, set a timer to kill this
         # curve after its done its job.
         if not loop:
-            # (PyCharm seems to think item is a float, not a tuple)
-            # noinspection PyUnresolvedReferences
             _bascenev1.timer(
                 (int(mult * items[-1][0]) + 1000) / 1000.0,
                 curve.delete,
@@ -166,20 +156,18 @@ def animate_array(
     # FIXME: Even if we are looping we should have a way to die
     #  once we get disconnected.
     if not loop:
-        # (PyCharm seems to think item is a float, not a tuple)
-        # noinspection PyUnresolvedReferences
         _bascenev1.timer(
             (int(mult * items[-1][0]) + 1000) / 1000.0, combine.delete
         )
 
 
 def show_damage_count(
-    damage: str, position: Sequence[float], direction: Sequence[float]
+    damage: str,
+    position: Sequence[float],
+    direction: Sequence[float],
+    dead: bool = False,
 ) -> None:
-    """Pop up a damage count at a position in space.
-
-    Category: **Gameplay Functions**
-    """
+    """Pop up a damage count at a position in space."""
     lifespan = 1.0
     app = babase.app
 
@@ -196,7 +184,7 @@ def show_damage_count(
             'h_align': 'center',
             'flatness': 1.0,
             'shadow': 1.0 if do_big else 0.7,
-            'color': (1, 0.25, 0.25, 1),
+            'color': (0.2, 0.2, 0.2, 1) if dead else (1, 0.25, 0.25, 1),
             'scale': 0.015 if do_big else 0.01,
         },
     )
@@ -239,12 +227,9 @@ def show_damage_count(
 def cameraflash(duration: float = 999.0) -> None:
     """Create a strobing camera flash effect.
 
-    Category: **Gameplay Functions**
-
     (as seen when a team wins a game)
     Duration is in seconds.
     """
-    # pylint: disable=too-many-locals
     from bascenev1._nodeactor import NodeActor
 
     x_spread = 10

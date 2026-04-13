@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
 
@@ -46,6 +47,11 @@ class ClassicSoftInterface {
   virtual auto GetV1AccountTypeIconString(int account_type) -> std::string = 0;
   virtual auto V1AccountTypeToString(int account_type) -> std::string = 0;
   virtual void PlayMusic(const std::string& music_type, bool continuous) = 0;
+  virtual void GetClassicChestDisplayInfo(const std::string& id,
+                                          std::string* texclosed,
+                                          std::string* texclosedtint,
+                                          Vector3f* color, Vector3f* tint,
+                                          Vector3f* tint2) = 0;
 };
 
 }  // namespace ballistica::base

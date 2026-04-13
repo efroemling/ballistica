@@ -20,7 +20,7 @@
 #include <malloc.h>
 #endif
 
-#if BA_OSTYPE_LINUX
+#if BA_PLATFORM_LINUX
 #include <cstring>
 #endif
 

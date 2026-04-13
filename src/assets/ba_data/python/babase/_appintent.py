@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Provides AppIntent functionality."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -10,10 +11,7 @@ if TYPE_CHECKING:
 
 
 class AppIntent:
-    """A high level directive given to the app.
-
-    Category: **App Classes**
-    """
+    """Base class for high level directives given to the app."""
 
 
 class AppIntentDefault(AppIntent):

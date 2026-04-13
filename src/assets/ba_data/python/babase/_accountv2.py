@@ -4,36 +4,50 @@
 
 from __future__ import annotations
 
+import time
 import hashlib
 import logging
 from functools import partial
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never
 
 from efro.error import CommunicationError
 from efro.call import CallbackSet
 from bacommon.login import LoginType
+
+from babase._logging import accountlog, netlog
 import _babase
 
 if TYPE_CHECKING:
     from typing import Any, Callable
 
-    from babase._login import LoginAdapter, LoginInfo
+    import bacommon.cloud
 
-logger = logging.getLogger('ba.accountv2')
+    from babase._login import LoginAdapter, LoginInfo
 
 
 class AccountV2Subsystem:
     """Subsystem for modern account handling in the app.
 
-    Category: **App Classes**
-
-    Access the single shared instance of this class at 'ba.app.plus.accounts'.
+    Access the single shared instance of this class via the
+    :attr:`~baplus.PlusAppSubsystem.accounts` attr on the
+    :class:`~baplus.PlusAppSubsystem` class.
     """
 
     def __init__(self) -> None:
         assert _babase.in_logic_thread()
 
         from babase._login import LoginAdapterGPGS, LoginAdapterGameCenter
+
+        # Register to be informed when connectivity changes.
+        plus = _babase.app.plus
+        self._connectivity_changed_cb = (
+            None
+            if plus is None
+            else plus.cloud.on_connectivity_changed_callbacks.register(
+                self._on_cloud_connectivity_changed
+            )
+        )
 
         # Whether or not everything related to an initial sign in (or
         # lack thereof) has completed. This includes things like
@@ -52,6 +66,9 @@ class AccountV2Subsystem:
             Callable[[AccountV2Handle | None], None]
         ] = CallbackSet()
 
+        # Request state per global-app-instance-id
+        self._auth_requests: dict[str, _AuthRequest] = {}
+
         adapter: LoginAdapter
         if _babase.using_google_play_game_services():
             adapter = LoginAdapterGPGS()
@@ -61,8 +78,10 @@ class AccountV2Subsystem:
             self.login_adapters[adapter.login_type] = adapter
 
     def on_app_loading(self) -> None:
-        """Should be called at standard on_app_loading time."""
+        """Internal; Called at standard on_app_loading time.
 
+        :meta private:
+        """
         for adapter in self.login_adapters.values():
             adapter.on_app_loading()
 
@@ -71,7 +90,7 @@ class AccountV2Subsystem:
 
         Note that this does not mean these credentials have been checked
         for validity; only that they exist. If/when credentials are
-        validated, the 'primary' account handle will be set.
+        validated, the :attr:`primary` account handle will be set.
         """
         raise NotImplementedError()
 
@@ -87,8 +106,19 @@ class AccountV2Subsystem:
 
         Will be called with None on log-outs and when new credentials
         are set but have not yet been verified.
+
+        :meta private:
         """
         assert _babase.in_logic_thread()
+
+        # Blow away any outstanding auth-requests.
+        self._auth_requests = {}
+
+        # Inform the base layer of new names/etc.
+        if account is not None:
+            _babase.set_account_sign_in_state(True, account.tag)
+        else:
+            _babase.set_account_sign_in_state(False)
 
         # Fire any registered callbacks.
         for call in self.on_primary_account_changed_callbacks.getcalls():
@@ -134,15 +164,20 @@ class AccountV2Subsystem:
             _babase.app.on_initial_sign_in_complete()
 
     def on_active_logins_changed(self, logins: dict[LoginType, str]) -> None:
-        """Should be called when logins for the active account change."""
+        """Called when logins for the active account change.
 
+        :meta private:
+        """
         for adapter in self.login_adapters.values():
             adapter.set_active_logins(logins)
 
     def on_implicit_sign_in(
         self, login_type: LoginType, login_id: str, display_name: str
     ) -> None:
-        """An implicit sign-in happened (called by native layer)."""
+        """An implicit sign-in happened (called by native layer).
+
+        :meta private:
+        """
         from babase._login import LoginAdapter
 
         assert _babase.in_logic_thread()
@@ -155,21 +190,106 @@ class AccountV2Subsystem:
             )
 
     def on_implicit_sign_out(self, login_type: LoginType) -> None:
-        """An implicit sign-out happened (called by native layer)."""
+        """An implicit sign-out happened (called by native layer).
+
+        :meta private:
+        """
         assert _babase.in_logic_thread()
         with _babase.ContextRef.empty():
             self.login_adapters[login_type].set_implicit_login_state(None)
 
     def on_no_initial_primary_account(self) -> None:
-        """Callback run if the app has no primary account after launch.
+        """Internal; run if the app has no primary account after launch.
 
-        Either this callback or on_primary_account_changed will be called
-        within a few seconds of app launch; the app can move forward
-        with the startup sequence at that point.
+        Either this callback or on_primary_account_changed will be
+        called within a few seconds of app launch; the app can move
+        forward with the startup sequence at that point.
+
+        :meta private:
         """
         if not self._initial_sign_in_completed:
             self._initial_sign_in_completed = True
             _babase.app.on_initial_sign_in_complete()
+
+    def auth_request(
+        self, global_app_instance_id: str
+    ) -> None | tuple[bool, str]:
+        """Start/process an auth request."""
+        import bacommon.cloud
+
+        assert _babase.in_logic_thread()
+        plus = _babase.app.plus
+        assert plus is not None
+
+        now = time.monotonic()
+
+        # If there are any expired ones, do a prune pass.
+        if any(r.expire_time <= now for r in self._auth_requests.values()):
+            self._auth_requests = {
+                rid: r
+                for rid, r in self._auth_requests.items()
+                if r.expire_time > now
+            }
+
+        auth_request = self._auth_requests.get(global_app_instance_id)
+
+        # If we find no attempt in progress, kick one off (or fail fast).
+        if auth_request is None:
+            if self.primary is None:
+                return (False, 'You must sign in to do this.')
+        if (
+            auth_request is None
+            and plus.cloud.connected
+            and self.primary is not None
+        ):
+            netlog.debug('Sending v2 auth request...')
+            auth_request = self._auth_requests[global_app_instance_id] = (
+                _AuthRequest(expire_time=now + 10.0, error=None, token=None)
+            )
+            with self.primary:
+                plus.cloud.send_message_cb(
+                    bacommon.cloud.AuthRequestMessage(global_app_instance_id),
+                    on_response=partial(
+                        self._on_auth_request_response, auth_request
+                    ),
+                )
+
+        # If we found results, return them.
+        if auth_request is None:
+            return None
+        if auth_request.error is not None:
+            assert auth_request.token is None
+            return (False, auth_request.error)
+        if auth_request.token is not None:
+            assert auth_request.error is None
+            return (True, auth_request.token)
+        # No error or token; its still in flight.
+        return None
+
+    def _on_auth_request_response(
+        self,
+        auth_request: _AuthRequest,
+        response: bacommon.cloud.AuthRequestResponse | Exception,
+    ) -> None:
+        assert _babase.in_logic_thread()
+
+        assert auth_request.error is None
+        assert auth_request.token is None
+
+        if isinstance(response, Exception):
+            auth_request.error = 'An error has occurred.'
+        else:
+            netlog.debug(
+                'Got V2 auth response with error %s and token %s.',
+                response.error,
+                response.token,
+            )
+            auth_request.error = response.error
+            auth_request.token = response.token
+
+            # Make sure this sticks around for long enough to complete
+            # the connection.
+            auth_request.expire_time = time.monotonic() + 10.0
 
     @staticmethod
     def _hashstr(val: str) -> str:
@@ -182,13 +302,15 @@ class AccountV2Subsystem:
         login_type: LoginType,
         state: LoginAdapter.ImplicitLoginState | None,
     ) -> None:
-        """Called when implicit login state changes.
+        """Internal; Called when implicit login state changes.
 
         Login systems that tend to sign themselves in/out in the
         background are considered implicit. We may choose to honor or
         ignore their states, allowing the user to opt for other login
         types even if the default implicit one can't be explicitly
         logged out or otherwise controlled.
+
+        :meta private:
         """
         from babase._language import Lstr
 
@@ -254,7 +376,7 @@ class AccountV2Subsystem:
         # generally this means the user has explicitly signed in/out or
         # switched accounts within that back-end.
         if prev_state != new_state:
-            logger.debug(
+            accountlog.debug(
                 'Implicit state changed (%s -> %s);'
                 ' will update app sign-in state accordingly.',
                 prev_state,
@@ -265,7 +387,7 @@ class AccountV2Subsystem:
         # We may want to auto-sign-in based on this new state.
         self._update_auto_sign_in()
 
-    def on_cloud_connectivity_changed(self, connected: bool) -> None:
+    def _on_cloud_connectivity_changed(self, connected: bool) -> None:
         """Should be called with cloud connectivity changes."""
         del connected  # Unused.
         assert _babase.in_logic_thread()
@@ -274,11 +396,19 @@ class AccountV2Subsystem:
         self._update_auto_sign_in()
 
     def do_get_primary(self) -> AccountV2Handle | None:
-        """Internal - should be overridden by subclass."""
+        """Internal; should be overridden by subclass.
+
+        :meta private:
+        """
         raise NotImplementedError()
 
     def set_primary_credentials(self, credentials: str | None) -> None:
-        """Set credentials for the primary app account."""
+        """Set credentials for the primary app account.
+
+        Once credentials are set, they will be verified in the cloud
+        asynchronously. If verification is successful, the
+        :attr:`primary` attr will be set to the resulting account.
+        """
         raise NotImplementedError()
 
     def _update_auto_sign_in(self) -> None:
@@ -290,7 +420,7 @@ class AccountV2Subsystem:
             if self._implicit_signed_in_adapter is None:
                 # If implicit back-end has signed out, we follow suit
                 # immediately; no need to wait for network connectivity.
-                logger.debug(
+                accountlog.debug(
                     'Signing out as result of implicit state change...',
                 )
                 plus.accounts.set_primary_credentials(None)
@@ -309,7 +439,7 @@ class AccountV2Subsystem:
                 # switching accounts via the back-end). NOTE: should
                 # test case where we don't have connectivity here.
                 if plus.cloud.is_connected():
-                    logger.debug(
+                    accountlog.debug(
                         'Signing in as result of implicit state change...',
                     )
                     self._implicit_signed_in_adapter.sign_in(
@@ -318,15 +448,15 @@ class AccountV2Subsystem:
                     )
                     self._implicit_state_changed = False
 
-                    # Once we've made a move here we don't want to
-                    # do any more automatic stuff.
+                    # Once we've made a move here we don't want to do
+                    # any more automatic stuff.
                     self._can_do_auto_sign_in = False
 
         if not self._can_do_auto_sign_in:
             return
 
-        # If we're not currently signed in, we have connectivity, and
-        # we have an available implicit login, auto-sign-in with it once.
+        # If we're not currently signed in, we have connectivity, and we
+        # have an available implicit login, auto-sign-in with it once.
         # The implicit-state-change logic above should keep things
         # mostly in-sync, but that might not always be the case due to
         # connectivity or other issues. We prefer to keep people signed
@@ -342,7 +472,7 @@ class AccountV2Subsystem:
             and not signed_in_v2
             and self._implicit_signed_in_adapter is not None
         ):
-            logger.debug(
+            accountlog.debug(
                 'Signing in due to on-launch-auto-sign-in...',
             )
             self._can_do_auto_sign_in = False  # Only ATTEMPT once
@@ -363,11 +493,11 @@ class AccountV2Subsystem:
         plus = _babase.app.plus
         assert plus is not None
 
-        # Make some noise on errors since the user knows a
-        # sign-in attempt is happening in this case (the 'explicit' part).
+        # Make some noise on errors since the user knows a sign-in
+        # attempt is happening in this case (the 'explicit' part).
         if isinstance(result, Exception):
-            # We expect the occasional communication errors;
-            # Log a full exception for anything else though.
+            # We expect the occasional communication errors; Log a full
+            # exception for anything else though.
             if not isinstance(result, CommunicationError):
                 logging.warning(
                     'Error on explicit accountv2 sign in attempt.',
@@ -431,14 +561,39 @@ class AccountV2Subsystem:
 class AccountV2Handle:
     """Handle for interacting with a V2 account.
 
-    This class supports the 'with' statement, which is how it is
+    This class supports the ``with`` statement, which is how it is
     used with some operations such as cloud messaging.
+
+    Do not instantiate this class directly. Always access account
+    handles through the accounts subsystem; for example via
+    :attr:`babase.AccountV2Subsystem.primary`.
     """
 
+    def __init__(self) -> None:
+        # We use type() instead of isinstance() here intentionally;
+        # subclasses should be allowed to instantiate.
+        if (  # pylint: disable=unidiomatic-typecheck
+            type(self) is AccountV2Handle
+        ):
+            raise TypeError(
+                'AccountV2Handle cannot be instantiated directly.'
+                ' Access account handles through the accounts subsystem'
+                ' (e.g. babase.app.plus.accounts.primary).'
+            )
+
+    #: The id of this account.
     accountid: str
+
+    #: The last known tag for this account.
     tag: str
+
+    #: The name of the workspace being synced to this client.
     workspacename: str | None
+
+    #: The id of the workspace being synced to this client, if any.
     workspaceid: str | None
+
+    #: Info about last known logins associated with this account.
     logins: dict[LoginType, LoginInfo]
 
     def __enter__(self) -> None:
@@ -452,3 +607,50 @@ class AccountV2Handle:
 
         This allows cloud messages to be sent on our behalf.
         """
+
+    def request_transient_api_key(
+        self, on_response: Callable[[str | Exception], None]
+    ) -> None:
+        """Request a transient API key for this account.
+
+        Calls on_response with the key string on success, or an Exception
+        on failure. Always called in the logic thread.
+
+        Note that keys may be rotated in some cases, so it is best to
+        re-request a key at least once per hour rather than caching it
+        indefinitely.
+        """
+        import bacommon.cloud
+
+        assert _babase.in_logic_thread()
+
+        plus = _babase.app.plus
+        assert plus is not None
+
+        def _on_raw_response(
+            response: bacommon.cloud.TransientAPIKeyResponse | Exception,
+        ) -> None:
+            if isinstance(response, Exception):
+                on_response(response)
+                return
+            if response.key is not None:
+                on_response(response.key)
+                return
+            on_response(
+                RuntimeError(
+                    f'Transient API key request failed: {response.error}'
+                )
+            )
+
+        with self:
+            plus.cloud.send_message_cb(
+                bacommon.cloud.TransientAPIKeyRequest(),
+                on_response=_on_raw_response,
+            )
+
+
+@dataclass
+class _AuthRequest:
+    expire_time: float
+    error: str | None
+    token: str | None

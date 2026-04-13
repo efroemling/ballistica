@@ -4,7 +4,6 @@
 # This file was automatically generated from "football_stadium.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (0.0, 1.185751251, 0.4326226188)

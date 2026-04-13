@@ -9,10 +9,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
-    from typing import Sequence, Literal
     from pathlib import Path
+    from typing import Sequence, Literal
 
 
 def explicit_bool(value: bool) -> bool:

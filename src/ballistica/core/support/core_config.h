@@ -10,8 +10,8 @@
 
 namespace ballistica::core {
 
-/// Collection of low level options for a run of the engine; passed
-/// when initing the core feature-set.
+/// A collection of low level options for a run of the engine; passed when
+/// initing the core feature-set.
 class CoreConfig {
  public:
   static auto ForArgsAndEnvVars(int argc, char** argv) -> CoreConfig;
@@ -29,9 +29,6 @@ class CoreConfig {
   /// Enable vr mode on supported platforms.
   bool vr_mode{};
 
-  /// Log various stages/times in the bootstrapping process.
-  // bool lifecycle_log{};
-
   /// Let the engine know there's a debugger attached so it should do things
   /// like abort() instead of exiting with error codes.
   bool debugger_attached{};
@@ -45,8 +42,8 @@ class CoreConfig {
   /// immediately in their entirety.
   std::optional<int> immediate_return_code{};
 
-  /// If set, this single Python command will be run instead of the
-  /// normal app loop (monolithic builds only).
+  /// If set, this single Python command will be run instead of the normal
+  /// app loop (monolithic builds only).
   std::optional<std::string> call_command{};
 
   /// Python command to be run within the normal app loop.
@@ -60,6 +57,12 @@ class CoreConfig {
 
   /// Explicitly passed user-python (mods) dir.
   std::optional<std::string> user_python_dir{};
+
+  /// Explicitly passed cache dir.
+  std::optional<std::string> cache_dir{};
+
+  /// Disable writing of bytecode (.pyc) files.
+  bool dont_write_bytecode{};
 };
 
 }  // namespace ballistica::core

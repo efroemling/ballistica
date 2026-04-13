@@ -17,10 +17,10 @@ values = [
     _hooks.root_ui_settings_button_press,  # kRootUISettingsButtonPressCall
     _hooks.root_ui_achievements_button_press,  # kRootUIAchievementsButtonPressCall
     _hooks.root_ui_store_button_press,  # kRootUIStoreButtonPressCall
+    _hooks.root_ui_chest_slot_0_press,  # kRootUIChestSlot0PressCall
     _hooks.root_ui_chest_slot_1_press,  # kRootUIChestSlot1PressCall
     _hooks.root_ui_chest_slot_2_press,  # kRootUIChestSlot2PressCall
     _hooks.root_ui_chest_slot_3_press,  # kRootUIChestSlot3PressCall
-    _hooks.root_ui_chest_slot_4_press,  # kRootUIChestSlot4PressCall
     _hooks.root_ui_inventory_button_press,  # kRootUIInventoryButtonPressCall
     _hooks.root_ui_ticket_icon_press,  # kRootUITicketIconPressCall
     _hooks.root_ui_get_tokens_button_press,  # kRootUIGetTokensButtonPressCall
@@ -31,7 +31,6 @@ values = [
     _hooks.root_ui_back_button_press,  # kRootUIBackButtonPressCall
     _hooks.root_ui_squad_button_press,  # kRootUISquadButtonPressCall
     _hooks.quit_window,  # kQuitWindowCall
-    _hooks.device_menu_press,  # kDeviceMenuPressCall
     _hooks.show_url_window,  # kShowURLWindowCall
     _hooks.double_transition_out_warning,  # kDoubleTransitionOutWarningCall
     TextWidgetStringEditAdapter,  # kTextWidgetStringEditAdapterClass

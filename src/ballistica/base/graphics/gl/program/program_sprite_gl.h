@@ -89,7 +89,7 @@ class RendererGL::ProgramSpriteGL : public RendererGL::ProgramGL {
     }
 
     if (flags & SHD_OVERLAY) {
-      s += BA_GLSL_VERTEX_OUT " " BA_GLSL_LOWP "vec4 vScreenCoord;\n";
+      s += BA_GLSL_VERTEX_OUT " " BA_GLSL_MEDIUMP "vec4 vScreenCoord;\n";
     }
 
     s += BA_GLSL_VERTEX_IN " " BA_GLSL_LOWP "vec4 color;\n" BA_GLSL_VERTEX_OUT
@@ -122,8 +122,9 @@ class RendererGL::ProgramSpriteGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT) {
-      g_core->Log(LogName::kBaGraphics, LogLevel::kInfo,
-                  "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
+      g_core->logging->Log(
+          LogName::kBaGraphics, LogLevel::kInfo,
+          "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     }
     return s;
   }
@@ -164,7 +165,7 @@ class RendererGL::ProgramSpriteGL : public RendererGL::ProgramGL {
     }
     s += "}";
     if (flags & SHD_DEBUG_PRINT) {
-      g_core->Log(
+      g_core->logging->Log(
           LogName::kBaGraphics, LogLevel::kInfo,
           "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     }

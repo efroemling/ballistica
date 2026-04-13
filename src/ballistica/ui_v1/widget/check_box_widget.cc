@@ -11,7 +11,8 @@
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/python/support/python_context_call.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/base/ui/ui.h"
+#include "ballistica/core/platform/platform.h"
 
 namespace ballistica::ui_v1 {
 
@@ -46,7 +47,7 @@ void CheckBoxWidget::SetHeight(float height_in) {
 }
 
 void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   have_drawn_ = true;
   float l = 0.0f;
@@ -236,7 +237,7 @@ void CheckBoxWidget::SetValue(bool value) {
 
   // Don't animate if we're setting initial values.
   if (checked_ != value && have_drawn_) {
-    last_change_time_ = g_core->GetAppTimeMillisecs();
+    last_change_time_ = g_core->AppTimeMillisecs();
   }
   checked_ = value;
 }
@@ -245,7 +246,7 @@ void CheckBoxWidget::Activate() {
   g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish3);
   checked_ = !checked_;
   check_dirty_ = true;
-  last_change_time_ = g_core->GetAppTimeMillisecs();
+  last_change_time_ = g_core->AppTimeMillisecs();
   if (auto* call = on_value_change_call_.get()) {
     PythonRef args(Py_BuildValue("(O)", checked_ ? Py_True : Py_False),
                    PythonRef::kSteal);
@@ -296,7 +297,8 @@ auto CheckBoxWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         return false;
       }
     }
-    case base::WidgetMessage::Type::kMouseUp: {
+    case base::WidgetMessage::Type::kMouseUp:
+    case base::WidgetMessage::Type::kMouseCancel: {
       float x = m.fval1;
       float y = m.fval2;
       bool claimed = (m.fval3 > 0.0f);
@@ -305,16 +307,19 @@ auto CheckBoxWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       if (pressed_) {
         pressed_ = false;
 
-        // if they're still over us and unclaimed, toggle.
-        if ((x >= (-left_overlap)) && (x < (width_ + right_overlap))
-            && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))
-            && !claimed) {
-          // Radio-style buttons don't allow unchecking.
-          if (!is_radio_button_ || !checked_) {
-            Activate();
+        if (m.type == base::WidgetMessage::Type::kMouseUp) {
+          // If they're still over us and unclaimed, toggle.
+          if ((x >= (-left_overlap)) && (x < (width_ + right_overlap))
+              && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))
+              && !claimed) {
+            // Radio-style buttons don't allow unchecking.
+            if (!is_radio_button_ || !checked_) {
+              Activate();
+            }
           }
         }
-        return true;  // If we're pressed, claim any mouse-ups presented to us.
+        // If we're pressed, claim any mouse-ups/cancels presented to us.
+        return true;
       }
       break;
     }

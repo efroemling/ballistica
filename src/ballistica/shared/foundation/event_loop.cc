@@ -9,11 +9,21 @@
 #include <unordered_map>
 #include <vector>
 
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/fatal_error.h"
 
 namespace ballistica {
+
+// Special flags we can safely access from interrupt/ctrl handlers.
+#if BA_PLATFORM_WINDOWS
+std::atomic<bool> g_event_loop_got_ctrl_c{};
+#else
+volatile sig_atomic_t g_event_loop_got_sigint{};
+volatile sig_atomic_t g_event_loop_got_sigterm{};
+#endif
 
 // Note: implicitly using core here so will fail spectacularly if that has
 // not been imported by someone.
@@ -78,7 +88,7 @@ EventLoop::EventLoop(EventLoopID identifier_in, ThreadSource source)
         // to get custom stack sizes; std::thread stupidly doesn't support it.
 
         // FIXME - move this to platform.
-#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
+#if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS || BA_PLATFORM_LINUX
       pthread_attr_t attr;
       BA_PRECONDITION(pthread_attr_init(&attr) == 0);
       BA_PRECONDITION(pthread_attr_setstacksize(&attr, 1024 * 1024) == 0);
@@ -206,7 +216,7 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
   // If we've got active timers, wait for messages with a timeout so we can
   // run the next timer payload.
   if (!suspended_ && timers_.ActiveTimerCount() > 0) {
-    microsecs_t apptime = g_core->GetAppTimeMicrosecs();
+    microsecs_t apptime = g_core->AppTimeMicrosecs();
     microsecs_t wait_time = timers_.TimeToNextExpire(apptime);
     if (wait_time > 0) {
       std::unique_lock<std::mutex> lock(thread_message_mutex_);
@@ -237,35 +247,15 @@ void EventLoop::WaitForNextEvent_(bool single_cycle) {
   }
 }
 
-// Note to self (Oct '23): can probably kill this at some point,
-// but am still using some non-ARC objc stuff from logic thread
-// so should keep it around just a bit longer just in case.
-// void EventLoop::LoopUpkeep_(bool single_cycle) {
-//  assert(g_core);
-//  // Keep our autorelease pool clean on mac/ios
-//  // FIXME: Should define a CorePlatform::ThreadHelper or something
-//  //  so we don't have platform-specific code here.
-// #if BA_XCODE_BUILD
-//  // Let's not do autorelease pools when being called ad-hoc,
-//  // since in that case we're part of another run loop
-//  // (and its crashing on drain for some reason)
-//  if (!single_cycle) {
-//    if (auto_release_pool_) {
-//      g_core->platform->DrainAutoReleasePool(auto_release_pool_);
-//      auto_release_pool_ = nullptr;
-//    }
-//    auto_release_pool_ = g_core->platform->NewAutoReleasePool();
-//  }
-// #endif
-//}
-
 void EventLoop::RunToCompletion() { Run_(false); }
 void EventLoop::RunSingleCycle() { Run_(true); }
 
 void EventLoop::Run_(bool single_cycle) {
   assert(g_core);
   while (true) {
-    // LoopUpkeep_(single_cycle);
+    if (identifier_ == EventLoopID::kLogic) {
+      CheckInterrupts_();
+    }
 
     WaitForNextEvent_(single_cycle);
 
@@ -306,7 +296,7 @@ void EventLoop::Run_(bool single_cycle) {
     }
 
     if (!suspended_) {
-      timers_.Run(g_core->GetAppTimeMicrosecs());
+      timers_.Run(g_core->AppTimeMicrosecs());
       RunPendingRunnables_();
     }
 
@@ -314,6 +304,30 @@ void EventLoop::Run_(bool single_cycle) {
       break;
     }
   }
+}
+
+void EventLoop::CheckInterrupts_() {
+  // This might get called once or twice before we've been assigned as
+  // the logic-thread; avoid until that point.
+  if (!g_base_soft || !g_base_soft->InLogicThread()) {
+    return;
+  }
+
+#if BA_PLATFORM_WINDOWS
+  if (g_event_loop_got_ctrl_c) {
+    PushCall([] { g_base_soft->HandleInterruptSignal(); });
+    g_event_loop_got_ctrl_c = false;
+  }
+#else
+  if (g_event_loop_got_sigint) {
+    PushCall([] { g_base_soft->HandleInterruptSignal(); });
+    g_event_loop_got_sigint = 0;
+  }
+  if (g_event_loop_got_sigterm) {
+    PushCall([] { g_base_soft->HandleTerminateSignal(); });
+    g_event_loop_got_sigterm = 0;
+  }
+#endif
 }
 
 void EventLoop::GetThreadMessages_(std::list<ThreadMessage_>* messages) {
@@ -379,7 +393,7 @@ auto EventLoop::ThreadMain_() -> int {
       // waiting for our notification. If we skipped this, it would be
       // possible to zip through and send the notification before they
       // start listening for it which would lead to a hang.
-      std::unique_lock lock(client_listener_mutex_);
+      std::scoped_lock lock(client_listener_mutex_);
     }
     client_listener_cv_.notify_all();
 
@@ -389,9 +403,9 @@ auto EventLoop::ThreadMain_() -> int {
     return 0;
   } catch (const std::exception& e) {
     auto error_msg = std::string("Unhandled exception in ")
-                     + CurrentThreadName() + " thread:\n" + e.what();
+                     + g_core->CurrentThreadName() + " thread:\n" + e.what();
 
-    FatalError::ReportFatalError(error_msg, true);
+    FatalErrorHandling::ReportFatalError(error_msg, true);
 
     // Exiting the app via an exception leads to crash reports on various
     // platforms. If it seems we're not on an official live build then we'd
@@ -400,7 +414,8 @@ auto EventLoop::ThreadMain_() -> int {
     bool try_to_exit_cleanly =
         !(g_base_soft && g_base_soft->IsUnmodifiedBlessedBuild());
 
-    bool handled = FatalError::HandleFatalError(try_to_exit_cleanly, true);
+    bool handled =
+        FatalErrorHandling::HandleFatalError(try_to_exit_cleanly, true);
 
     // Do the default thing if platform didn't handle it.
     if (!handled) {
@@ -494,10 +509,12 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
   // So tally up any logs and send them after.
   std::vector<std::pair<LogLevel, std::string>> log_entries;
   {
-    std::unique_lock lock(thread_message_mutex_);
+    std::scoped_lock lock(thread_message_mutex_);
 
     // Plop the data on to the list; we're assuming the mutex is locked.
     thread_messages_.push_back(t);
+    thread_messages_size_approx_.store(thread_messages_.size(),
+                                       std::memory_order_relaxed);
 
     // Debugging: show message count states.
     if (explicit_bool(false)) {
@@ -545,7 +562,7 @@ void EventLoop::PushThreadMessage_(const ThreadMessage_& t) {
 
   // Now log anything we accumulated safely outside of the locked section.
   for (auto&& log_entry : log_entries) {
-    g_core->Log(LogName::kBa, log_entry.first, log_entry.second);
+    g_core->logging->Log(LogName::kBa, log_entry.first, log_entry.second);
   }
 }
 
@@ -560,18 +577,18 @@ void EventLoop::SetEventLoopsSuspended(bool suspended) {
 
 auto EventLoop::GetStillSuspendingEventLoops() -> std::vector<EventLoop*> {
   assert(g_core);
-  std::vector<EventLoop*> threads;
+  std::vector<EventLoop*> event_loops;
   assert(std::this_thread::get_id() == g_core->main_thread_id());
 
   // Only return results if an actual suspend is in effect.
   if (g_core->event_loops_suspended()) {
     for (auto&& i : g_core->suspendable_event_loops) {
       if (!i->suspended()) {
-        threads.push_back(i);
+        event_loops.push_back(i);
       }
     }
   }
-  return threads;
+  return event_loops;
 }
 
 auto EventLoop::AreEventLoopsSuspended() -> bool {
@@ -584,7 +601,7 @@ auto EventLoop::NewTimer(microsecs_t length, bool repeat, Runnable* runnable)
   assert(g_core);
   assert(ThreadIsCurrent());
   assert(Object::IsValidManagedObject(runnable));
-  return timers_.NewTimer(g_core->GetAppTimeMicrosecs(), length, 0,
+  return timers_.NewTimer(g_core->AppTimeMicrosecs(), length, 0,
                           repeat ? -1 : 0, runnable);
 }
 
@@ -609,8 +626,8 @@ void EventLoop::RunPendingRunnables_() {
     i.first->RunAndLogErrors();
     delete i.first;
 
-    // If this runnable wanted to be flagged when done, set its flag
-    // and make a note to wake all client listeners.
+    // If this runnable wanted to be flagged when done, set its flag and
+    // make a note to wake all client listeners.
     if (i.second != nullptr) {
       *(i.second) = true;
       do_notify_listeners = true;
@@ -622,7 +639,7 @@ void EventLoop::RunPendingRunnables_() {
       // now actively waiting for completion notification. If we skipped
       // this it would be possible to notify before they start listening
       // which leads to a hang.
-      std::unique_lock lock(client_listener_mutex_);
+      std::scoped_lock lock(client_listener_mutex_);
     }
     client_listener_cv_.notify_all();
   }
@@ -663,8 +680,8 @@ void EventLoop::AddUnsuspendCallback(Runnable* runnable) {
 
 void EventLoop::PushRunnable(Runnable* runnable) {
   assert(Object::IsValidUnmanagedObject(runnable));
-  // If we're being called from withing our thread, just drop it in the list.
-  // otherwise send it as a message to the other thread.
+  // If we're being called from withing our thread, just drop it in the
+  // list. otherwise send it as a message to the other thread.
   if (std::this_thread::get_id() == thread_id()) {
     PushLocalRunnable_(runnable, nullptr);
   } else {
@@ -695,30 +712,47 @@ void EventLoop::PushRunnableSynchronous(Runnable* runnable) {
 
   // Now listen until our completion flag gets set.
   client_listener_cv_.wait(lock, [complete_ptr] {
-    // Go back to sleep on spurious wakeups
-    // (if we're not actually complete yet).
+    // Go back to sleep on spurious wakeups (if we're not actually complete
+    // yet).
     return *complete_ptr;
   });
 }
 
 auto EventLoop::CheckPushSafety() -> bool {
   if (std::this_thread::get_id() == thread_id()) {
-    // behave the same as the thread-message safety check.
+    // Behave the same as the thread-message safety check.
     return (runnables_.size() < kThreadMessageSafetyThreshold);
   } else {
     return CheckPushRunnableSafety_();
   }
 }
+
 auto EventLoop::CheckPushRunnableSafety_() -> bool {
-  std::unique_lock lock(thread_message_mutex_);
-  return thread_messages_.size() < kThreadMessageSafetyThreshold;
+  // Use our approximate value here to avoid blocking acquiring the list
+  // lock (was seeing this spot show up a lot in ANR reports).
+  auto have_space{thread_messages_size_approx_.load(std::memory_order_relaxed)
+                  < kThreadMessageSafetyThreshold};
+
+  // If we've hit the safety threshold, log the traceback once so we can
+  // hopefully fix the problem at the call site instead of dropping calls.
+  //
+  // UPDATE: No longer logging here for now. Logging itself acquires the GIL
+  // which is likely to block (especially if the thread itself is busy
+  // working which is likely what leads to this condition being true). The
+  // whole point of this call is to *avoid* blocking.
+  // if (!have_space) {
+  //   BA_LOG_ERROR_NATIVE_TRACE_ONCE(
+  //       "CheckPushSafety threshold reached; are you calling something too "
+  //       "much?");
+  // }
+  return have_space;
 }
 
 void EventLoop::AcquireGIL_() {
   assert(g_base_soft && g_base_soft->InLogicThread());
   auto debug_timing{g_core->core_config().debug_timing};
   millisecs_t startmillisecs{
-      debug_timing ? core::CorePlatform::GetCurrentMillisecs() : 0};
+      debug_timing ? core::Platform::TimeMonotonicMillisecs() : 0};
 
   if (py_thread_state_) {
     PyEval_RestoreThread(py_thread_state_);
@@ -726,11 +760,11 @@ void EventLoop::AcquireGIL_() {
   }
 
   if (debug_timing) {
-    auto duration{core::CorePlatform::GetCurrentMillisecs() - startmillisecs};
+    auto duration{core::Platform::TimeMonotonicMillisecs() - startmillisecs};
     if (duration > (1000 / 120)) {
-      g_core->Log(LogName::kBa, LogLevel::kInfo,
-                  "GIL acquire took too long (" + std::to_string(duration)
-                      + " millisecs).");
+      g_core->logging->Log(LogName::kBa, LogLevel::kInfo,
+                           "GIL acquire took too long ("
+                               + std::to_string(duration) + " millisecs).");
     }
   }
 }

@@ -20,11 +20,11 @@ class UIV1Python {
   void ImportPythonObjs();
 
   void InvokeStringEditor(PyObject* string_edit_adapter_instance);
-  void HandleDeviceMenuPress(base::InputDevice* device);
   void ShowURL(const std::string& url);
 
   static auto GetPyWidget(PyObject* o) -> Widget*;
   void InvokeQuitWindow(QuitType quit_type);
+  void ReloadHooks();
 
   /// Specific Python objects we hold in objs_.
   enum class ObjID {
@@ -36,10 +36,10 @@ class UIV1Python {
     kRootUISettingsButtonPressCall,
     kRootUIAchievementsButtonPressCall,
     kRootUIStoreButtonPressCall,
+    kRootUIChestSlot0PressCall,
     kRootUIChestSlot1PressCall,
     kRootUIChestSlot2PressCall,
     kRootUIChestSlot3PressCall,
-    kRootUIChestSlot4PressCall,
     kRootUIInventoryButtonPressCall,
     kRootUITrophyMeterPressCall,
     kRootUILevelIconPressCall,
@@ -49,7 +49,6 @@ class UIV1Python {
     kRootUIBackButtonPressCall,
     kRootUISquadButtonPressCall,
     kQuitWindowCall,
-    kDeviceMenuPressCall,
     kShowURLWindowCall,
     kDoubleTransitionOutWarningCall,
     kTextWidgetStringEditAdapterClass,

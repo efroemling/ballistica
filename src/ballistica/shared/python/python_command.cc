@@ -7,7 +7,7 @@
 
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
+#include "ballistica/shared/python/python_macros.h"
 
 // Save/restore current command for logging/etc.
 // this isn't exception-safe, but we should never let
@@ -246,7 +246,7 @@ void PythonCommand::PrintContext() {
   if (command().find('\n') == std::string::npos) {
     s += std::string("  call: ") + command() + "\n";
   }
-  s += Python::GetContextBaseString();
+  s += Python::ContextBaseString();
   PySys_WriteStderr("%s\n", s.c_str());
 }
 

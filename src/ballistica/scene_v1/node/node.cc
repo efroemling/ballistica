@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/dynamics/part.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_attribute_connection.h"
@@ -18,8 +19,8 @@
 namespace ballistica::scene_v1 {
 
 NodeType::~NodeType() {
-  g_core->Log(LogName::kBa, LogLevel::kError,
-              "SHOULD NOT BE DESTRUCTING A TYPE type=(" + name_ + ")");
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       "SHOULD NOT BE DESTRUCTING A TYPE type=(" + name_ + ")");
 }
 
 Node::Node(Scene* scene_in, NodeType* node_type)
@@ -236,11 +237,24 @@ auto Node::GetPyRef(bool new_ref) -> PyObject* {
 }
 
 auto Node::GetDelegate() -> PyObject* {
-  PyObject* ref = delegate_.get();
-  if (!ref) {
+  PyObject* delegate = delegate_.get();
+  if (!delegate) {
     return nullptr;
   }
-  return PyWeakref_GetObject(ref);
+  PyObject* obj{};
+  int result = PyWeakref_GetRef(delegate, &obj);
+
+  // The object is valid (1) or has since died (0).
+  if (result == 1 || result == 0) {
+    return obj;
+  }
+  // Something went wrong and an exception is set. We don't expect this to
+  // ever happen so currently just providing a simple error msg.
+  assert(result == -1);
+  PyErr_Clear();
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       "Node::GetDelegate(): error getting weakref obj.");
+  return nullptr;
 }
 
 void Node::DispatchNodeMessage(const char* buffer) {
@@ -265,8 +279,8 @@ void Node::DispatchOutOfBoundsMessage() {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node OutOfBoundsMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating OutOfBoundsMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating OutOfBoundsMessage");
   }
 }
 
@@ -283,7 +297,8 @@ void Node::DispatchPickUpMessage(Node* node) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node PickUpMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError, "Error creating PickUpMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating PickUpMessage");
   }
 }
 
@@ -298,7 +313,8 @@ void Node::DispatchDropMessage() {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node DropMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError, "Error creating DropMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating DropMessage");
   }
 }
 
@@ -316,8 +332,8 @@ void Node::DispatchPickedUpMessage(Node* by_node) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node PickedUpMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating PickedUpMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating PickedUpMessage");
   }
 }
 
@@ -335,8 +351,8 @@ void Node::DispatchDroppedMessage(Node* by_node) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node DroppedMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating DroppedMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating DroppedMessage");
   }
 }
 
@@ -351,8 +367,8 @@ void Node::DispatchShouldShatterMessage() {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node ShouldShatterMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating ShouldShatterMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating ShouldShatterMessage");
   }
 }
 
@@ -368,8 +384,8 @@ void Node::DispatchImpactDamageMessage(float intensity) {
   if (instance.exists()) {
     DispatchUserMessage(instance.get(), "Node ImpactDamageMessage dispatch");
   } else {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating ImpactDamageMessage");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error creating ImpactDamageMessage");
   }
 }
 
@@ -380,16 +396,18 @@ void Node::DispatchUserMessage(PyObject* obj, const char* label) {
   }
 
   base::ScopedSetContext ssc(context_ref());
-  PyObject* delegate = GetDelegate();
-  if (delegate && delegate != Py_None) {
+
+  // GetDelegate() returns a new ref or nullptr.
+  auto delegate{PythonRef::StolenSoft(GetDelegate())};
+  if (delegate.exists() && delegate.get() != Py_None) {
     try {
       PyObject* handlemessage_obj =
-          PyObject_GetAttrString(delegate, "handlemessage");
+          PyObject_GetAttrString(delegate.get(), "handlemessage");
       if (!handlemessage_obj) {
         PyErr_Clear();
         throw Exception("No 'handlemessage' found on delegate object for '"
                         + type()->name() + "' node ("
-                        + Python::ObjToString(delegate) + ")");
+                        + Python::ObjToString(delegate.get()) + ")");
       }
       PythonRef c(handlemessage_obj, PythonRef::kSteal);
       {
@@ -397,10 +415,10 @@ void Node::DispatchUserMessage(PyObject* obj, const char* label) {
         c.Call(PythonRef(Py_BuildValue("(O)", obj), PythonRef::kSteal));
       }
     } catch (const std::exception& e) {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  std::string("Error in handlemessage() with message ")
-                      + PythonRef(obj, PythonRef::kAcquire).Str() + ": '"
-                      + e.what() + "'");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           std::string("Error in handlemessage() with message ")
+                               + PythonRef(obj, PythonRef::kAcquire).Str()
+                               + ": '" + e.what() + "'");
     }
   }
 }

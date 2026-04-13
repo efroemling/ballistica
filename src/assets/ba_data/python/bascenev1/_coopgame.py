@@ -1,10 +1,11 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to co-op games."""
+
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, TypeVar, override
+from typing import TYPE_CHECKING, override
 
 import babase
 
@@ -18,15 +19,17 @@ if TYPE_CHECKING:
 
     import bascenev1
 
-PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
-TeamT = TypeVar('TeamT', bound='bascenev1.Team')
+
+# Note: Need to suppress an undefined variable here because our pylint
+# plugin clears type-arg declarations (which we don't require to be
+# present at runtime) but keeps parent type-args (which we sometimes use
+# at runtime).
 
 
-class CoopGameActivity(GameActivity[PlayerT, TeamT]):
-    """Base class for cooperative-mode games.
-
-    Category: **Gameplay Classes**
-    """
+class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
+    GameActivity[PlayerT, TeamT]  # pylint: disable=undefined-variable
+):
+    """Base class for cooperative-mode games."""
 
     # We can assume our session is a CoopSession.
     session: bascenev1.CoopSession
@@ -55,14 +58,18 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
         super().on_begin()
 
         # Show achievements remaining.
-        env = babase.app.env
-        if not (env.demo or env.arcade):
+
+        variant = babase.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
+        if not arcade_or_demo:
             _bascenev1.timer(
-                3.8, babase.WeakCall(self._show_remaining_achievements)
+                3.8, babase.WeakCallStrict(self._show_remaining_achievements)
             )
 
         # Preload achievement images in case we get some.
-        _bascenev1.timer(2.0, babase.WeakCall(self._preload_achievements))
+        _bascenev1.timer(2.0, babase.WeakCallStrict(self._preload_achievements))
 
     # FIXME: this is now redundant with activityutils.getscoreconfig();
     #  need to kill this.
@@ -226,7 +233,7 @@ class CoopGameActivity(GameActivity[PlayerT, TeamT]):
         """Set up a beeping noise to play when any players are near death."""
         self._life_warning_beep = None
         self._life_warning_beep_timer = _bascenev1.Timer(
-            1.0, babase.WeakCall(self._update_life_warning), repeat=True
+            1.0, babase.WeakCallStrict(self._update_life_warning), repeat=True
         )
 
     def _update_life_warning(self) -> None:

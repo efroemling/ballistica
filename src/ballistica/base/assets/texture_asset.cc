@@ -19,10 +19,17 @@
 #include "ballistica/base/graphics/texture/dds.h"
 #include "ballistica/base/graphics/texture/ktx.h"
 #include "ballistica/base/graphics/texture/pvr.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/platform/platform.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
 namespace ballistica::base {
+
+// TEMP: set to true to force all DDS textures through CPU decompression
+// (RGBA8 upload) regardless of hardware S3TC support. Useful for diagnosing
+// whether DXT compression is the source of visual artifacts on ANGLE/Windows.
+static constexpr bool kForceUncompressedDDS = false;
 
 static void Rgba8888UnpremultiplyInPlace_(uint8_t* src, size_t cb) {
   // Compute the actual number of pixel elements in the buffer.
@@ -83,7 +90,7 @@ TextureAsset::TextureAsset(const std::string& qr_url) : is_qr_code_(true) {
              "QR code url byte length %zu exceeds soft-limit of %zu;"
              " please use shorter urls. (url=%s)",
              qr_url.size(), soft_limit, qr_url.c_str());
-    g_core->Log(LogName::kBaAssets, LogLevel::kWarning, buffer);
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning, buffer);
   }
   file_name_ = qr_url;
   valid_ = true;
@@ -255,9 +262,10 @@ void TextureAsset::DoPreload() {
                 &preload_datas_[0].base_level);
 
         // Decompress dxt1/dxt5 if we don't natively support it.
-        if (!g_base->graphics->placeholder_client_context()
-                 ->SupportsTextureCompressionType(
-                     TextureCompressionType::kS3TC)) {
+        if (kForceUncompressedDDS
+            || !g_base->graphics->placeholder_client_context()
+                    ->SupportsTextureCompressionType(
+                        TextureCompressionType::kS3TC)) {
           preload_datas_[0].ConvertToUncompressed(this);
         }
       } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
@@ -385,9 +393,10 @@ void TextureAsset::DoPreload() {
                   &preload_datas_[d].base_level);
 
           // Decompress dxt1/dxt5 if we don't natively support it.
-          if (!g_base->graphics->placeholder_client_context()
-                   ->SupportsTextureCompressionType(
-                       TextureCompressionType::kS3TC)) {
+          if (kForceUncompressedDDS
+              || !g_base->graphics->placeholder_client_context()
+                      ->SupportsTextureCompressionType(
+                          TextureCompressionType::kS3TC)) {
             preload_datas_[d].ConvertToUncompressed(this);
           }
         } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,

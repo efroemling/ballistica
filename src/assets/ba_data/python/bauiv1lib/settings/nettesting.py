@@ -7,10 +7,12 @@ from __future__ import annotations
 import time
 import copy
 import weakref
+from dataclasses import dataclass
 from threading import Thread
 from typing import TYPE_CHECKING, override
 
 from efro.error import CleanError
+from efro.util import strip_exception_tracebacks, strict_partial
 from bauiv1lib.settings.testing import TestingWindow
 import bauiv1 as bui
 
@@ -31,21 +33,43 @@ class NetTestingWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
     ):
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 820
-        self._height = 500 if uiscale is bui.UIScale.SMALL else 500
-        yoffs = -50 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1200 if uiscale is bui.UIScale.SMALL else 820
+        self._height = (
+            800
+            if uiscale is bui.UIScale.SMALL
+            else 550 if uiscale is bui.UIScale.MEDIUM else 650
+        )
 
         self._printed_lines: list[str] = []
         assert bui.app.classic is not None
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.75
+            if uiscale is bui.UIScale.SMALL
+            else 1.0 if uiscale is bui.UIScale.MEDIUM else 0.75
+        )
+
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 90, screensize[0] / scale)
+        target_height = min(self._height - 90, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        scroll_width = target_width
+        scroll_height = target_height - 52
+        scroll_bottom = yoffs - 82 - scroll_height
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                scale=(
-                    1.75
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.2 if uiscale is bui.UIScale.MEDIUM else 0.8
-                ),
-                stack_offset=(0, -4 if uiscale is bui.UIScale.SMALL else 0.0),
+                scale=scale,
                 toolbar_visibility=(
                     'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
@@ -54,17 +78,20 @@ class NetTestingWindow(bui.MainWindow):
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
-        self._done_button: bui.Widget | None
+        self._back_button: bui.Widget | None
         if uiscale is bui.UIScale.SMALL:
             bui.containerwidget(
                 edit=self._root_widget, on_cancel_call=self.main_window_back
             )
-            self._done_button = None
+            self._back_button = None
         else:
-            self._done_button = bui.buttonwidget(
+            self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(46, self._height - 77 + yoffs),
+                id=f'{self.main_window_id_prefix}|back',
+                position=(46, yoffs - 77),
                 size=(60, 60),
                 scale=0.9,
                 label=bui.charstr(bui.SpecialChar.BACK),
@@ -73,15 +100,20 @@ class NetTestingWindow(bui.MainWindow):
                 on_activate_call=self.main_window_back,
             )
             bui.containerwidget(
-                edit=self._root_widget, cancel_button=self._done_button
+                edit=self._root_widget, cancel_button=self._back_button
             )
 
         # Avoid squads button on small mode.
-        xinset = -50 if uiscale is bui.UIScale.SMALL else 0
+        # xinset = -50 if uiscale is bui.UIScale.SMALL else 0
 
+        xextra = -80 if uiscale is bui.UIScale.SMALL else 0
         self._copy_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - 200 + xinset, self._height - 77 + yoffs),
+            id=f'{self.main_window_id_prefix}|copy',
+            position=(
+                self._width * 0.5 + scroll_width * 0.5 - 210 + 80 + xextra,
+                yoffs - 79,
+            ),
             size=(100, 60),
             scale=0.8,
             autoselect=True,
@@ -91,7 +123,11 @@ class NetTestingWindow(bui.MainWindow):
 
         self._settings_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - 100 + xinset, self._height - 77 + yoffs),
+            id=f'{self.main_window_id_prefix}|settings',
+            position=(
+                self._width * 0.5 + scroll_width * 0.5 - 110 + 80 + xextra,
+                yoffs - 77,
+            ),
             size=(60, 60),
             scale=0.8,
             autoselect=True,
@@ -99,40 +135,36 @@ class NetTestingWindow(bui.MainWindow):
             on_activate_call=self._show_val_testing,
         )
 
-        twidth = self._width - 540
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 55 + yoffs),
+            position=(self._width * 0.5, yoffs - 55),
             size=(0, 0),
             text=bui.Lstr(resource='settingsWindowAdvanced.netTestingText'),
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='center',
             v_align='center',
-            maxwidth=twidth,
+            maxwidth=250,
         )
 
         self._scroll = bui.scrollwidget(
             parent=self._root_widget,
-            position=(
-                50,
-                (140 if uiscale is bui.UIScale.SMALL else 50) + yoffs,
-            ),
-            size=(
-                self._width - 100,
-                self._height - (220 if uiscale is bui.UIScale.SMALL else 140),
-            ),
+            size=(scroll_width, scroll_height),
+            position=(self._width * 0.5 - scroll_width * 0.5, scroll_bottom),
             capture_arrows=True,
             autoselect=True,
+            border_opacity=0.4,
         )
-        self._rows = bui.columnwidget(parent=self._scroll)
+        self._rows = bui.columnwidget(
+            parent=self._scroll,
+            id=f'{self.main_window_id_prefix}|content',
+        )
 
         # Now kick off the tests.
         # Pass a weak-ref to this window so we don't keep it alive
         # if we back out before it completes. Also set is as daemon
         # so it doesn't keep the app running if the user is trying to quit.
         Thread(
-            daemon=True,
-            target=bui.Call(_run_diagnostics, weakref.ref(self)),
+            target=bui.CallStrict(_run_diagnostics, weakref.ref(self))
         ).start()
 
     @override
@@ -144,6 +176,10 @@ class NetTestingWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     def print(self, text: str, color: tuple[float, float, float]) -> None:
         """Print text to our console thingie."""
@@ -172,16 +208,10 @@ class NetTestingWindow(bui.MainWindow):
     def _show_val_testing(self) -> None:
         assert bui.app.classic is not None
 
-        # no-op if we're not in control.
-        if not self.main_window_has_control():
-            return
-
-        self.main_window_replace(get_net_val_testing_window())
+        self.main_window_replace(get_net_val_testing_window)
 
 
 def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
-    # pylint: disable=too-many-statements
-    # pylint: disable=too-many-branches
 
     from efro.util import utc_now
 
@@ -205,7 +235,7 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
         try:
             call()
             duration = time.monotonic() - starttime
-            _print(f'Succeeded in {duration:.2f}s.', color=(0, 1, 0))
+            _print(f'Succeeded in {duration:.3f}s.', color=(0, 1, 0))
             return True
         except Exception as exc:
             import traceback
@@ -219,6 +249,11 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             _print(msg, color=(1.0, 1.0, 0.3))
             _print(f'Failed in {duration:.2f}s.', color=(1, 0, 0))
             have_error[0] = True
+
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
+
             return False
 
     try:
@@ -240,47 +275,29 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             _print('\nRunning dummy fail test...')
             _print_test_results(_dummy_fail)
 
-        # V1 ping
-        baseaddr = plus.get_master_server_address(source=0, version=1)
-        _print(f'\nContacting V1 master-server src0 ({baseaddr})...')
-        v1worked = _print_test_results(lambda: _test_fetch(baseaddr))
-
-        # V1 alternate ping (only if primary fails since this often fails).
-        if v1worked:
-            _print('\nSkipping V1 master-server src1 test since src0 worked.')
-        else:
-            baseaddr = plus.get_master_server_address(source=1, version=1)
-            _print(f'\nContacting V1 master-server src1 ({baseaddr})...')
-            _print_test_results(lambda: _test_fetch(baseaddr))
-
-        if 'none succeeded' in bui.app.net.v1_test_log:
+        # Bootstrap pings
+        bootstrap_addrs = plus.get_bootstrap_server_addresses()
+        for i, addr in enumerate(bootstrap_addrs):
             _print(
-                f'\nV1-test-log failed: {bui.app.net.v1_test_log}',
-                color=(1, 0, 0),
+                f'\nContacting bootstrap addr {i+1}'
+                f' of {len(bootstrap_addrs)} ({addr})...'
             )
-            have_error[0] = True
-        else:
-            _print(f'\nV1-test-log ok: {bui.app.net.v1_test_log}')
+            _print_test_results(strict_partial(_test_fetch, addr))
 
-        for srcid, result in sorted(bui.app.net.v1_ctest_results.items()):
-            _print(f'\nV1 src{srcid} result: {result}')
+        # V2 ping
+        # (UPDATE: Disabling since this is also a bootstrap server).
+        # baseaddr = plus.get_master_server_address()
+        # _print(f'\nContacting V2 master-server ({baseaddr})...')
+        # _print_test_results(lambda: _test_fetch(baseaddr))
 
-        curv1addr = plus.get_master_server_address(version=1)
-        _print(f'\nUsing V1 address: {curv1addr}')
+        _print('\nComparing local time to V2 server...')
+        _print_test_results(_test_v2_time)
 
         if plus.get_v1_account_state() == 'signed_in':
             _print('\nRunning V1 transaction...')
             _print_test_results(_test_v1_transaction)
         else:
             _print('\nSkipping V1 transaction (Not signed into V1).')
-
-        # V2 ping
-        baseaddr = plus.get_master_server_address(version=2)
-        _print(f'\nContacting V2 master-server ({baseaddr})...')
-        _print_test_results(lambda: _test_fetch(baseaddr))
-
-        _print('\nComparing local time to V2 server...')
-        _print_test_results(_test_v2_time)
 
         # Get V2 nearby zone
         with bui.app.net.zone_pings_lock:
@@ -311,7 +328,7 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
                 '\nDiagnostics complete. Everything looks good!',
                 color=(0, 1, 0),
             )
-    except Exception:
+    except Exception as exc:
         import traceback
 
         _print(
@@ -320,6 +337,9 @@ def _run_diagnostics(weakwin: weakref.ref[NetTestingWindow]) -> None:
             f'{traceback.format_exc()}',
             color=(1, 0, 0),
         )
+        # We're done with the exception, so strip its tracebacks to
+        # avoid reference cycles.
+        strip_exception_tracebacks(exc)
 
 
 def _dummy_success() -> None:
@@ -378,17 +398,17 @@ def _test_v1_transaction() -> None:
         raise RuntimeError(results[0])
 
 
+@dataclass
+class _V2CloudMessageResults:
+    errstr: str | None = None
+    send_time: float | None = None
+    response_time: float | None = None
+
+
 def _test_v2_cloud_message() -> None:
-    from dataclasses import dataclass
     import bacommon.cloud
 
-    @dataclass
-    class _Results:
-        errstr: str | None = None
-        send_time: float | None = None
-        response_time: float | None = None
-
-    results = _Results()
+    results = _V2CloudMessageResults()
 
     def _cb(response: bacommon.cloud.PingResponse | Exception) -> None:
         # Note: this runs in another thread so need to avoid exceptions.
@@ -438,24 +458,12 @@ def _test_v2_time() -> None:
 
 
 def _test_fetch(baseaddr: str) -> None:
-    # pylint: disable=consider-using-with
-    import urllib.request
 
-    assert bui.app.classic is not None
-    response = urllib.request.urlopen(
-        urllib.request.Request(
-            f'{baseaddr}/ping',
-            None,
-            {'User-Agent': bui.app.classic.legacy_user_agent_string},
-        ),
-        context=bui.app.net.sslcontext,
-        timeout=MAX_TEST_SECONDS,
-    )
-    if response.getcode() != 200:
-        raise RuntimeError(
-            f'Got unexpected response code {response.getcode()}.'
-        )
-    data = response.read()
+    upool = bui.app.net.urllib3pool
+    response = upool.request('GET', f'{baseaddr}/ping')
+    if response.status != 200:
+        raise RuntimeError(f'Got unexpected response code {response.status}.')
+    data = response.data
     if data != b'pong':
         raise RuntimeError('Got unexpected response data.')
 

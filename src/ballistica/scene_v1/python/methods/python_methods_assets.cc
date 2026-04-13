@@ -11,7 +11,7 @@
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
-#include "ballistica/shared/python/python_sys.h"
+#include "ballistica/shared/python/python_macros.h"
 
 namespace ballistica::scene_v1 {
 
@@ -43,12 +43,11 @@ static PyMethodDef PyGetTextureDef = {
     "\n"
     "Return a texture, loading it if necessary.\n"
     "\n"
-    "Category: **Asset Functions**\n"
-    "\n"
     "Note that this function returns immediately even if the asset has yet\n"
-    "to be loaded. To avoid hitches, instantiate your asset objects in\n"
-    "advance of when you will be using them, allowing time for them to\n"
-    "load in the background if necessary."};
+    "to be loaded. Loading will happen in the background or on-demand. To\n"
+    "avoid hitches, try to instantiate asset objects a bit earlier than\n"
+    "they are actually needed, giving them time to load gracefully\n"
+    "in the background."};
 
 // -------------------------- get_package_texture ------------------------------
 
@@ -103,12 +102,11 @@ static PyMethodDef PyGetSoundDef = {
     "\n"
     "Return a sound, loading it if necessary.\n"
     "\n"
-    "Category: **Asset Functions**\n"
-    "\n"
     "Note that this function returns immediately even if the asset has yet\n"
-    "to be loaded. To avoid hitches, instantiate your asset objects in\n"
-    "advance of when you will be using them, allowing time for them to\n"
-    "load in the background if necessary."};
+    "to be loaded. Loading will happen in the background or on-demand. To\n"
+    "avoid hitches, try to instantiate asset objects a bit earlier than\n"
+    "they are actually needed, giving them time to load gracefully\n"
+    "in the background."};
 
 // --------------------------- get_package_sound -------------------------------
 
@@ -163,12 +161,11 @@ static PyMethodDef PyGetDataDef = {
     "\n"
     "Return a data, loading it if necessary.\n"
     "\n"
-    "Category: **Asset Functions**\n"
-    "\n"
     "Note that this function returns immediately even if the asset has yet\n"
-    "to be loaded. To avoid hitches, instantiate your asset objects in\n"
-    "advance of when you will be using them, allowing time for them to\n"
-    "load in the background if necessary."};
+    "to be loaded. Loading will happen in the background or on-demand. To\n"
+    "avoid hitches, try to instantiate asset objects a bit earlier than\n"
+    "they are actually needed, giving them time to load gracefully\n"
+    "in the background."};
 
 // --------------------------- get_package_data --------------------------------
 
@@ -223,12 +220,11 @@ static PyMethodDef PyGetMeshDef = {
     "\n"
     "Return a mesh, loading it if necessary.\n"
     "\n"
-    "Category: **Asset Functions**\n"
-    "\n"
     "Note that this function returns immediately even if the asset has yet\n"
-    "to be loaded. To avoid hitches, instantiate your asset objects in\n"
-    "advance of when you will be using them, allowing time for them to\n "
-    "load in the background if necessary."};
+    "to be loaded. Loading will happen in the background or on-demand. To\n"
+    "avoid hitches, try to instantiate asset objects a bit earlier than\n"
+    "they are actually needed, giving them time to load gracefully\n"
+    "in the background."};
 
 // ---------------------------- get_package_mesh -------------------------------
 
@@ -284,15 +280,14 @@ static PyMethodDef PyGetCollisionMeshDef = {
     "\n"
     "Return a collision-mesh, loading it if necessary.\n"
     "\n"
-    "Category: **Asset Functions**\n"
-    "\n"
     "Collision-meshes are used in physics calculations for such things as\n"
     "terrain.\n"
     "\n"
     "Note that this function returns immediately even if the asset has yet\n"
-    "to be loaded. To avoid hitches, instantiate your asset objects in\n"
-    "advance of when you will be using them, allowing time for them to\n"
-    "load in the background if necessary."};
+    "to be loaded. Loading will happen in the background or on-demand. To\n"
+    "avoid hitches, try to instantiate asset objects a bit earlier than\n"
+    "they are actually needed, giving them time to load gracefully\n"
+    "in the background."};
 
 // ------------------------ get_package_collision_mesh -------------------------
 

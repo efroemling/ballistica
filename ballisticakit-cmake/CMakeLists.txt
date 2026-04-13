@@ -1,93 +1,131 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 project(BallisticaKit)
-include(CheckIncludeFile)
 
 option(HEADLESS "build headless server" OFF)
 option(TEST_BUILD "include testing features" OFF)
-
+option(DISCORD "enable Discord" OFF)
+option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" OFF)
+option(STATIC_BUILD "build with static libs" OFF)
 # Requiring minimum of C++20 currently.
 set(CMAKE_CXX_STANDARD 20)
+set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
 
-if (APPLE)
-  # Seems as of Mojave we need to explicitly pull in homebrew paths.
-  # Just hard-coding recommended homebrew install paths for now.
-  # Is there a more elegant way to do this?
-  if (CMAKE_SYSTEM_PROCESSOR MATCHES arm64)
-    list(APPEND CMAKE_PREFIX_PATH /opt/homebrew)
-    include_directories("/opt/homebrew/include")
-    link_directories("/opt/homebrew/lib")
-  else()
-    list(APPEND CMAKE_PREFIX_PATH /usr/local)
-    include_directories("/usr/local/include")
-    link_directories("/usr/local/lib")
+# ============= STATIC BUILD CONFIGURATION =============
+if(STATIC_BUILD)
+  # Prefer static libraries for find_package
+  # set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".lib" ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  set(BA_OPENAL_LIB "${PROJECT_ROOT_DIR}/build/static_dependencies/libopenal.a")
+  set(BA_OPENAL_INCLUDE_DIR "${PROJECT_ROOT_DIR}/build/static_dependencies/include")
+
+  set(PKG_CONFIG_STATIC ON)
+  set(Python3_USE_STATIC_LIBS ON)
+  message(STATUS "Static build enabled - configuring for static libraries")
+endif() #STATIC_BUILD
+# =======================================================
+
+# Stuff applying everywhere.
+add_library(common_deps INTERFACE)
+  
+# Stuff applying to all ba targets.
+add_library(ba_deps INTERFACE)
+
+if(APPLE)
+  # Look for homebrew's keg-only OpenAL Soft. We don't want to use Apple's
+  # OpenAL anymore since its deprecated (and buggy as of Tahoe).
+  execute_process(
+    COMMAND brew --prefix openal-soft
+    OUTPUT_VARIABLE _OPENAL_SOFT_PREFIX
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE _brew_rc
+  )
+  if(_brew_rc EQUAL 0)
+    set(_pcdir "${_OPENAL_SOFT_PREFIX}/lib/pkgconfig")
+    set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${_pcdir}")
+  endif()  
+  
+endif()  # APPLE
+
+set(Python3_FIND_FRAMEWORK NEVER)
+# TODO: Look into using Development.Module/Development.Embed here.
+find_package(Python3 3.13 EXACT REQUIRED COMPONENTS Development)
+
+  
+if(HEADLESS)
+  target_compile_definitions(common_deps INTERFACE BA_HEADLESS_BUILD=1)
+else()
+  find_package(PkgConfig REQUIRED)
+  
+  pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
+  pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
+  
+  if(STATIC_BUILD)
+    message(WARNING "Static build enabled - ensure that all dependencies are available as static libraries and that the appropriate -dev packages are installed.")
+    add_library(openal STATIC IMPORTED)
+    set_target_properties(openal PROPERTIES IMPORTED_LOCATION ${BA_OPENAL_LIB})
+    set_target_properties(openal PROPERTIES IMPORTED_INCLUDE_DIRECTORIES "${BA_OPENAL_INCLUDE_DIR}")
+    target_include_directories(ba_deps INTERFACE ${BA_OPENAL_INCLUDE_DIR})
   endif()
-
-  # On Mac with homebrew it seems that Requesting 3.X when we've got
-  # 3.(X+1) installed will point us at the 3.(X+1) framework but will attempt
-  # to load a 3.X library from within it which doesn't exist. So we need
-  # to be a bit more explicit telling it where to look. Note: this was last
-  # tested with 3.7; should revisit sometime to make sure still applies.
-  execute_process(COMMAND "python3.12-config" "--prefix"
-    OUTPUT_VARIABLE Python_ROOT_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-endif ()
-find_package (Python 3.12 REQUIRED EXACT COMPONENTS Development)
+  pkg_check_modules(OGG REQUIRED IMPORTED_TARGET ogg)
+  pkg_check_modules(VORBISFILE REQUIRED IMPORTED_TARGET vorbisfile)
+  
+  # On linux, prefer modern libOpenGL.so over legacy libGL.so.
+  set(OpenGL_GL_PREFERENCE GLVND)
+  find_package(OpenGL REQUIRED)
   
 
-if (HEADLESS)
-  add_definitions(-DBA_HEADLESS_BUILD=1)
- else ()
-  find_package(SDL2 QUIET)
-  if (SDL2_FOUND)
-    if ("${SDL2_LIBRARIES}" STREQUAL "")
-      message(WARNING "SDL2_LIBRARIES wasn't set, manually setting to SDL2::SDL2")
-      set(SDL2_LIBRARIES "SDL2::SDL2")
-    endif ()
-    # Getting complaint about space at the end of this on ubuntu16.
-    string(STRIP "${SDL2_LIBRARIES}" SDL2_LIBRARIES)
-  else ()
-    message(FATAL_ERROR "SDL2 not found")
-  endif ()
-  find_package(OpenGL REQUIRED)
-  find_package(OpenAL REQUIRED)
-  find_library(OGG_LIBRARY ogg)
-  find_library(VORBISFILE_LIBRARY vorbisfile)
-  if (NOT OGG_LIBRARY)
-    message(FATAL_ERROR "ogg library not found")
-  endif ()
-  if (NOT VORBISFILE_LIBRARY)
-    message(FATAL_ERROR "vorbisfile library not found")
-  endif ()
-  set(EXTRA_INCLUDE_DIRS ${OPENGL_INCLUDE_DIRS}
-    ${OPENAL_INCLUDE_DIR} ${SDL2_INCLUDE_DIRS})
-  set(EXTRA_LIBRARIES ogg vorbisfile ${OPENGL_LIBRARIES} ${OPENAL_LIBRARY})
-endif ()
+  if(STATIC_BUILD)
+    target_link_libraries(ba_deps INTERFACE
+      openal
+      PkgConfig::SDL2
+      PkgConfig::OGG
+      PkgConfig::VORBISFILE
+      OpenGL::GL
+    )
+  else()
+    target_link_libraries(ba_deps INTERFACE
+      PkgConfig::OPENAL
+      PkgConfig::SDL2
+      PkgConfig::OGG
+      PkgConfig::VORBISFILE
+      OpenGL::GL
+    )
+  endif()
 
-if (TEST_BUILD)
-  add_definitions(-DBA_TEST_BUILD=1)
-endif ()
+  # Optional: Pango+Cairo for OS font rendering on Linux/macOS cmake builds.
+  # Pass -DREQUIRE_OS_FONT_RENDERING=ON to make this a hard requirement.
+  if(REQUIRE_OS_FONT_RENDERING)
+    pkg_check_modules(PANGOCAIRO REQUIRED IMPORTED_TARGET pangocairo)
+  else()
+    pkg_check_modules(PANGOCAIRO IMPORTED_TARGET pangocairo)
+  endif()
+  if(PANGOCAIRO_FOUND)
+    target_compile_definitions(common_deps INTERFACE BA_ENABLE_OS_FONT_RENDERING=1)
+    target_link_libraries(ba_deps INTERFACE PkgConfig::PANGOCAIRO)
+  endif()
 
-# Currently seeing warnings about parameter order changing in GCC 7.1
-# on Raspberry Pi builds. We never need to care about C++ abi compatibility
-# so just silencing them for now. Can maybe remove this later if they stop.
-if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
 endif()
 
-set(BA_SRC_ROOT ../src)
-include_directories(${BA_SRC_ROOT})
-add_compile_options(-include ballistica/shared/buildconfig/buildconfig_cmake.h)
+if(TEST_BUILD)
+  target_compile_definitions(common_deps INTERFACE BA_VARIANT_TEST_BUILD=1)
+endif()
 
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-  add_definitions(-DBA_DEBUG_BUILD=1)
-else ()
-  # It seems that cmake can choose -O2 sometimes and -O3 sometimes
-  # for release builds (depending on Release vs RelWithDebInfo, etc).
-  # Let's keep all our non-debug builds consistent at -O3 for now; can
-  # revisit if it causes problems.
-  add_definitions(-O3)
-endif ()
+set(BA_SRC_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../src")
+target_include_directories(common_deps INTERFACE
+  "${BA_SRC_ROOT}"
+)
+target_compile_options(common_deps INTERFACE
+  -include "${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_cmake.h"
+)
+
+# Define BA_DEBUG_BUILD for debug builds.
+target_compile_definitions(common_deps INTERFACE
+  $<$<CONFIG:Debug>:BA_DEBUG_BUILD=1>
+)
+
+# Go with -O3 for non-debug builds.
+target_compile_options(common_deps INTERFACE
+  $<$<NOT:$<CONFIG:Debug>>:-O3>
+)
 
 set(ODE_SRC_ROOT ${BA_SRC_ROOT}/external/open_dynamics_engine-ef)
 
@@ -171,28 +209,14 @@ add_library(ode
   )
 target_include_directories(ode PRIVATE ${ODE_SRC_ROOT})
 
-# Necessary on GCC to allow linking in to our .so version.
-# (but disabling semantic-interposition should lessen the associated speed hit).
-if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
-  target_compile_options(ode PRIVATE -fPIC -fno-semantic-interposition)
-endif ()
+# Necessary on GCC to allow linking in to our .so version. (but disabling
+# semantic-interposition should lessen the associated speed hit).
+set_property(TARGET ode PROPERTY POSITION_INDEPENDENT_CODE ON)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(ode PRIVATE -fno-semantic-interposition)
+endif()
 
-# NOTE: There used to be an issue with optimized GCC builds where mesh
-# collisions would fail randomly, leading to characters falling through
-# floors somewhat regularly. For this reason I was limiting optimization to
-# -O1 for the rigid body library. However, as of April 2021, all seems
-# well when testing on arm64 and x86-64 linux builds. (I think)
-# The last time I remember seeing this bug was around 2016 I believe, but I
-# haven't looked for it since. Perhaps GCC was fixed or perhaps the error
-# was limited to 32 bit x86 builds; in either case we should be good, as
-# we're no longer building any 32 bit x86 builds using GCC.
-# Keeping this in here commented out just in case it rears its ugly head
-# again though.
-# if (CMAKE_BUILD_TYPE MATCHES Release)
-#   if (CMAKE_CXX_COMPILER_ID MATCHES GNU)
-#     target_compile_options(ode PRIVATE -O1)
-#   endif()
-# endif ()
+target_link_libraries(ode PRIVATE common_deps)
 
 set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/external/qr_code_generator/QrCode.cpp
@@ -211,6 +235,15 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/app_mode/app_mode.h
   ${BA_SRC_ROOT}/ballistica/base/app_mode/empty_app_mode.cc
   ${BA_SRC_ROOT}/ballistica/base/app_mode/empty_app_mode.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/app_platform.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/app_platform.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/apple/app_platform_apple.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/apple/app_platform_apple.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/linux/app_platform_linux.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/linux/app_platform_linux.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/support/min_sdl_key_names.h
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows.cc
+  ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows.h
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.h
   ${BA_SRC_ROOT}/ballistica/base/assets/assets.cc
@@ -245,6 +278,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/audio/ogg_stream.h
   ${BA_SRC_ROOT}/ballistica/base/base.cc
   ${BA_SRC_ROOT}/ballistica/base/base.h
+  ${BA_SRC_ROOT}/ballistica/base/discord/discord.cc
+  ${BA_SRC_ROOT}/ballistica/base/discord/discord.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics.cc
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_draw_snapshot.h
@@ -399,15 +434,6 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/networking/network_writer.h
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.cc
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/apple/base_platform_apple.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/apple/base_platform_apple.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/base_platform.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/base_platform.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/linux/base_platform_linux.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/linux/base_platform_linux.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/support/min_sdl_key_names.h
-  ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows.cc
-  ${BA_SRC_ROOT}/ballistica/base/platform/windows/base_platform_windows.h
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.cc
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_app_timer.cc
@@ -432,6 +458,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_2.h
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.cc
   ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_base_3.h
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_test.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/methods/python_methods_test.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.cc
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call.h
   ${BA_SRC_ROOT}/ballistica/base/python/support/python_context_call_runnable.h
@@ -444,8 +472,6 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/context.cc
   ${BA_SRC_ROOT}/ballistica/base/support/context.h
   ${BA_SRC_ROOT}/ballistica/base/support/display_timer.h
-  ${BA_SRC_ROOT}/ballistica/base/support/huffman.cc
-  ${BA_SRC_ROOT}/ballistica/base/support/huffman.h
   ${BA_SRC_ROOT}/ballistica/base/support/plus_soft.h
   ${BA_SRC_ROOT}/ballistica/base/support/repeater.cc
   ${BA_SRC_ROOT}/ballistica/base/support/repeater.h
@@ -471,15 +497,19 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/classic/support/v1_account.h
   ${BA_SRC_ROOT}/ballistica/core/core.cc
   ${BA_SRC_ROOT}/ballistica/core/core.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/apple/core_platform_apple.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/apple/core_platform_apple.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/core_platform.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/core_platform.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/linux/core_platform_linux.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/linux/core_platform_linux.h
+  ${BA_SRC_ROOT}/ballistica/core/logging/logging.cc
+  ${BA_SRC_ROOT}/ballistica/core/logging/logging.h
+  ${BA_SRC_ROOT}/ballistica/core/logging/logging_macros.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/apple/platform_apple.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/apple/platform_apple.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/linux/platform_linux.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/linux/platform_linux.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/platform.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/platform.h
   ${BA_SRC_ROOT}/ballistica/core/platform/support/min_sdl.h
-  ${BA_SRC_ROOT}/ballistica/core/platform/windows/core_platform_windows.cc
-  ${BA_SRC_ROOT}/ballistica/core/platform/windows/core_platform_windows.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/support/platform_pango.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.h
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.cc
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.h
   ${BA_SRC_ROOT}/ballistica/core/support/base_soft.h
@@ -653,10 +683,14 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/host_activity.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/host_session.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/host_session.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/huffman.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/huffman.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player_spec.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/player_spec.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/replay_writer.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/support/replay_writer.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/support/scene_v1_context.cc
@@ -672,8 +706,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_cmake.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_common.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_common.h
-  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_generic.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_headless.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_testbuild.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/event_loop.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/event_loop.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/exception.cc
@@ -683,14 +717,12 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/inline.cc
-  ${BA_SRC_ROOT}/ballistica/shared/foundation/inline.h
-  ${BA_SRC_ROOT}/ballistica/shared/foundation/logging.cc
-  ${BA_SRC_ROOT}/ballistica/shared/foundation/logging.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/macros.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/macros.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/object.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/object.h
-  ${BA_SRC_ROOT}/ballistica/shared/foundation/types.h
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/object_test.cc
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/object_test.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/base64.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/base64.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/buffer.h
@@ -707,6 +739,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/generic/utf8.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/utils.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/utils.h
+  ${BA_SRC_ROOT}/ballistica/shared/math/lerp.h
   ${BA_SRC_ROOT}/ballistica/shared/math/matrix44f.cc
   ${BA_SRC_ROOT}/ballistica/shared/math/matrix44f.h
   ${BA_SRC_ROOT}/ballistica/shared/math/point2d.h
@@ -726,12 +759,12 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/python/python_class.h
   ${BA_SRC_ROOT}/ballistica/shared/python/python_command.cc
   ${BA_SRC_ROOT}/ballistica/shared/python/python_command.h
+  ${BA_SRC_ROOT}/ballistica/shared/python/python_macros.h
   ${BA_SRC_ROOT}/ballistica/shared/python/python_module_builder.h
   ${BA_SRC_ROOT}/ballistica/shared/python/python_object_set.cc
   ${BA_SRC_ROOT}/ballistica/shared/python/python_object_set.h
   ${BA_SRC_ROOT}/ballistica/shared/python/python_ref.cc
   ${BA_SRC_ROOT}/ballistica/shared/python/python_ref.h
-  ${BA_SRC_ROOT}/ballistica/shared/python/python_sys.h
   ${BA_SRC_ROOT}/ballistica/template_fs/python/class/python_class_hello.cc
   ${BA_SRC_ROOT}/ballistica/template_fs/python/class/python_class_hello.h
   ${BA_SRC_ROOT}/ballistica/template_fs/python/methods/python_methods_template_fs.cc
@@ -772,6 +805,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/row_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/scroll_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/scroll_widget.h
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/spinner_widget.cc
+  ${BA_SRC_ROOT}/ballistica/ui_v1/widget/spinner_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/stack_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/stack_widget.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/widget/text_widget.cc
@@ -784,26 +819,75 @@ set(BALLISTICA_SOURCES
 # BallisticaKit monolithic binary.
 add_executable(ballisticakitbin ${BALLISTICA_SOURCES})
 
-# Gets -rdynamic added when linking gcc builds which exports all symbols
-# which gives us more meaningful stack traces using backtrace_symbols().  
+#================== Discord Platform SDK ==================
+if(DISCORD)
+  set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../src/external/discord_social_sdk")
+  set(DISCORD_SDK_INCLUDE_DIR "${DISCORD_SDK_ROOT}/include")
+  set(DISCORD_SDK_LIB_DIR "${DISCORD_SDK_ROOT}/lib/release")
+  set(DISCORD_SDK_BIN_DIR "${DISCORD_SDK_ROOT}/bin/release")
+
+  # Include Discord SDK headers.
+  include_directories(${DISCORD_SDK_INCLUDE_DIR})
+
+  # Platform-specific Social SDK library paths
+  if(WIN32)
+    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/discord_partner_sdk.lib")
+    set(DISCORD_SHARED_LIB "${DISCORD_SDK_BIN_DIR}/discord_partner_sdk.dll")
+  elseif(APPLE)
+    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
+    set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
+  else()  # Linux
+    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
+    set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
+  endif()
+  
+  # Need to link to this instead.
+  # Copy the Discord shared library to the output directory.
+  add_custom_command(TARGET ballisticakitbin
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${DISCORD_SHARED_LIB}"
+    $<TARGET_FILE_DIR:ballisticakitbin>)
+  
+  target_include_directories(ba_deps INTERFACE ${DISCORD_SDK_INCLUDE_DIR})
+  target_link_libraries(ba_deps INTERFACE ${DISCORD_LIB_PATH})
+endif()  # DISCORD
+# ==============================================================
+
+
+# ============= STATIC BUILD LINKING CONFIGURATION =============
+if(STATIC_BUILD)
+  if(MSVC)
+    add_link_options(/SUBSYSTEM:CONSOLE)
+  else()
+    add_link_options(-static-libgcc -static-libstdc++)
+  endif()
+  message(STATUS "Static build: C++ runtime linked statically")
+endif()
+# ==============================================================
+
+# Gets -rdynamic added when linking gcc builds which exports all symbols which
+# gives us more meaningful stack traces using backtrace_symbols().
 set_target_properties(ballisticakitbin PROPERTIES ENABLE_EXPORTS 1)
   
-if (HEADLESS)
+if(HEADLESS)
   set_target_properties(ballisticakitbin
-    PROPERTIES OUTPUT_NAME "ballisticakit_headless")
-else ()
+    PROPERTIES OUTPUT_NAME "ballisticakit_headless"
+  )
+else()
   set_target_properties(ballisticakitbin
-    PROPERTIES OUTPUT_NAME "ballisticakit")
-endif ()
+    PROPERTIES OUTPUT_NAME "ballisticakit"
+  )
+endif()
 
 target_include_directories(ballisticakitbin PRIVATE
-  ${Python_INCLUDE_DIRS}
   ${BA_SRC_ROOT}/external/open_dynamics_engine-ef
-  ${EXTRA_INCLUDE_DIRS})
+  ${EXTRA_INCLUDE_DIRS}
+)
 
 target_link_libraries(ballisticakitbin PRIVATE
-  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread ${Python_LIBRARIES}
-  ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl)
+  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread dl common_deps ba_deps Python3::Python
+)
 
 
 # BallisticaKit modular shared library
@@ -813,29 +897,38 @@ add_library(ballisticakitso SHARED ${BALLISTICA_SOURCES})
 # This is a 'modular' build.
 target_compile_definitions(ballisticakitso PRIVATE BA_MONOLITHIC_BUILD=0)
 
+# Improves speed on GCC.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+target_compile_options(ballisticakitso PRIVATE -fno-semantic-interposition)
+endif()
+
 # Gets -rdynamic added when linking gcc builds which exports all symbols
-# which gives us more meaningful stack traces using backtrace_symbols().  
+# which gives us more meaningful stack traces using backtrace_symbols().
+# This involves a speed/size hit so ideally we should turn this off and
+# use .dSYMs to get pretty stack traces, but that would be a technical
+# challenge to do from the client end.
+# UPDATE: Apparently .so targets have thisenabled anyway?.. Should read
+#  up on that.
 set_target_properties(ballisticakitso PROPERTIES ENABLE_EXPORTS 1)
 
-set_target_properties(ballisticakitso
-  PROPERTIES PREFIX "")
-set_target_properties(ballisticakitso
-  PROPERTIES SUFFIX ".so")
+set_target_properties(ballisticakitso PROPERTIES PREFIX "")
+# TODO: Look into ${PYTHON3_EXTENSION_SUFFIX} (.cpython-313-arm64-gnu.so, etc)
+set_target_properties(ballisticakitso PROPERTIES SUFFIX ".so")
 
-if (HEADLESS)
+if(HEADLESS)
   set_target_properties(ballisticakitso
     PROPERTIES OUTPUT_NAME "ballisticakit_headless")
-else ()
+else()
   set_target_properties(ballisticakitso
     PROPERTIES OUTPUT_NAME "ballisticakit")
-endif ()
+endif()
 
 target_include_directories(ballisticakitso PRIVATE
-  ${Python_INCLUDE_DIRS}
   ${BA_SRC_ROOT}/external/open_dynamics_engine-ef
-  ${EXTRA_INCLUDE_DIRS})
+  ${EXTRA_INCLUDE_DIRS}
+)
 
 target_link_libraries(ballisticakitso PRIVATE
-  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread ${Python_LIBRARIES}
-  ${SDL2_LIBRARIES} ${EXTRA_LIBRARIES} dl)
+  ${CMAKE_CURRENT_BINARY_DIR}/prefablib/libballisticaplus.a ode pthread dl common_deps ba_deps Python3::Python
+)
 

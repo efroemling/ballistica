@@ -31,7 +31,7 @@ class AppMode {
   virtual void OnAppUnsuspend();
   virtual void OnAppShutdown();
   virtual void OnAppShutdownComplete();
-  virtual void DoApplyAppConfig();
+  virtual void ApplyAppConfig();
 
   /// Update the logic thread for a new display-time. Can be called at any
   /// frequency. In gui builds, generally corresponds with frame drawing. In
@@ -51,6 +51,9 @@ class AppMode {
   /// Return a raw pointer allocated using Object::NewDeferred.
   virtual auto CreateInputDeviceDelegate(InputDevice* device)
       -> InputDeviceDelegate*;
+
+  /// Attempt to bring up a main ui (generally an in-game menu).
+  virtual void RequestMainUI();
 
   /// Speed/slow stuff (generally debug builds only).
   virtual void ChangeGameSpeed(int offs);
@@ -104,6 +107,11 @@ class AppMode {
 
   /// Get a string for current ping display.
   virtual auto GetDisplayPing() -> std::optional<float>;
+
+  /// Return the offset used when drawing elements such as fps counters at
+  /// the bottom left of the screen. Should be used to avoid overlap with
+  /// icons or toolbars placed there by the app-mode.
+  virtual auto GetBottomLeftEdgeHeight() -> float;
 };
 
 }  // namespace ballistica::base

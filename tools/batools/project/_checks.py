@@ -16,7 +16,7 @@ from efrotools.project import (
     get_non_public_legal_notice,
     get_non_public_legal_notice_prev,
 )
-from efrotools.pyver import PYVER, PYVERNODOT
+from efrotools.pyver import PYVER
 
 if TYPE_CHECKING:
     from batools.project._updater import ProjectUpdater
@@ -104,12 +104,20 @@ def _source_file_feature_set_namespace_check(
         if line.startswith('namespace '):
             namespace, predecs_only = _get_namespace_info(lines, i)
             if namespace != f'ballistica::{toplevelname}' and not predecs_only:
-                raise CleanError(
-                    f'Invalid line "{line}" at {fname} line {i+1}.\n'
-                    f"This file is associated with the '{toplevelname}'"
-                    ' FeatureSet so should be using the'
-                    f" 'ballistica::{toplevelname}' namespace."
-                )
+
+                # Special case - allow our 'from_swift' namespace.
+                if line == 'namespace from_swift {' and (
+                    fname.endswith('/from_swift.h')
+                    or fname.endswith('/from_swift.cc')
+                ):
+                    pass
+                else:
+                    raise CleanError(
+                        f'Invalid line "{line}" at {fname} line {i+1}.\n'
+                        f"This file is associated with the '{toplevelname}'"
+                        ' FeatureSet so should be using the'
+                        f" 'ballistica::{toplevelname}' namespace."
+                    )
 
 
 def _get_namespace_info(lines: list[str], index: int) -> tuple[str, bool]:
@@ -310,33 +318,37 @@ def check_python_files(self: ProjectUpdater) -> None:
                 packagedirs.append(fullpath)
 
     for packagedir in packagedirs:
-        # Special case: if this dir contains ONLY __pycache__ dirs and
-        # hidden files like .DS_Store, blow it away. It probably is left
-        # over bits from a since-removed-or-renamed package.
-        if _contains_only_pycache_and_cruft(packagedir):
-            print(
-                f"{Clr.MAG}NOTE: Directory '{packagedir}' contains only"
-                ' __pycache__ and hidden files/dirs; assuming it is'
-                ' left over from a deleted package and blowing it away.'
-                f'{Clr.RST}'
-            )
-            subprocess.run(['rm', '-rf', packagedir], check=True)
 
         for root, dirs, files in os.walk(packagedir, topdown=True):
             # Skip over hidden and pycache dirs.
             for dirname in dirs:
                 if dirname.startswith('.'):
                     dirs.remove(dirname)
+
+            # Don't delve into pycache dirs.
             if '__pycache__' in dirs:
                 dirs.remove('__pycache__')
 
-            # Check our packages and make sure all subdirs contain an
-            # __init__.py (I tend to forget this sometimes).
+            # Make sure there's an__init__.py (I tend to forget this
+            # sometimes).
             if '__init__.py' not in files:
-                raise CleanError(
-                    f'No __init__.py under (presumed)'
-                    f" Python package dir: '{root}'."
-                )
+
+                # Special case: If there's *nothing* in this dir except
+                # a pycache dir, blow it away - it was probably a
+                # removed package/subpackage.
+                if _contains_only_pycache_and_cruft(root):
+                    print(
+                        f"{Clr.MAG}NOTE: Directory '{root}' contains only"
+                        f' __pycache__ and hidden files/dirs; assuming it is'
+                        f' left over from a deleted (sub)package and blowing'
+                        f' it away. {Clr.RST}'
+                    )
+                    subprocess.run(['rm', '-rf', root], check=True)
+                else:
+                    raise CleanError(
+                        f'No __init__.py under (presumed)'
+                        f" Python package dir: '{root}'."
+                    )
 
 
 def _check_python_file(self: ProjectUpdater, fname: str) -> None:
@@ -352,7 +364,6 @@ def _check_python_file(self: ProjectUpdater, fname: str) -> None:
 def _check_python_file_imports(
     self: ProjectUpdater, fname: str, lines: list[str]
 ) -> None:
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
     fspackagesroot = 'src/assets/ba_data/python/'
 
@@ -385,6 +396,8 @@ def _check_python_file_imports(
             importparts = linewords[3:]
         else:
             continue
+
+        single_import: str | None
 
         # Look for simple cases of 'from foo import bar'.
         if (
@@ -525,7 +538,7 @@ def _calc_python_file_copyright_line(
     ):
         copyrightline += 2
 
-    if lines[copyrightline].startswith('# Synced from '):
+    if lines[copyrightline].startswith('# EfroSynced from '):
         copyrightline += 3
 
     return copyrightline
@@ -540,7 +553,10 @@ def _check_python_file_shebang(
         # of Python (with a few exceptions where it needs to differ)
         if fname not in ['tools/vmshell']:
             expected = f'#!/usr/bin/env python{PYVER}'
-            if not contents.startswith(expected):
+            expected2 = f'#!/usr/bin/env -S python{PYVER} -B'
+            if not contents.startswith(expected) and not contents.startswith(
+                expected2
+            ):
                 raise CleanError(
                     f'Incorrect shebang (first line) for {fname}.\n'
                     f'Expected:\n{expected}\n\n'
@@ -577,7 +593,11 @@ def check_sync_states(self: ProjectUpdater) -> None:
     # their last sync.
     if (
         subprocess.run(
-            [os.path.join(self.projroot, 'tools/pcommand'), 'sync', 'check'],
+            [
+                os.path.join(self.projroot, 'tools/pcommand'),
+                'efrosync',
+                '--check',
+            ],
             check=False,
         ).returncode
         != 0
@@ -601,9 +621,10 @@ def check_misc(self: ProjectUpdater) -> None:
         ) as infile:
             msconfig = infile.read()
             if (
-                '// V2 Master Server ------------------------'
-                '------------------------------------\n'
+                '// Compile-Time Fleet Selection '
+                '------------------------------------------------\n'
                 '\n'
+                '// Exactly one of these should be 1.\n'
                 '// PROD\n'
                 '#if 1\n'
             ) not in msconfig:
@@ -624,16 +645,6 @@ def check_misc(self: ProjectUpdater) -> None:
         _ = replace_exact(contents, f'libpython{PYVER}d.a', 'DUMMYVAL')
         _ = replace_exact(contents, f'libpython{PYVER}.a', 'DUMMYVAL')
 
-    # Make sure assets Makefile is compiling pyc files for current
-    # Python version.
-    contents = readfile(os.path.join(self.projroot, 'src/assets/Makefile'))
-    _ = replace_exact(
-        contents,
-        f'$1: $$(subst /__pycache__,,$$(subst .cpython-{PYVERNODOT}'
-        f'.opt-1.pyc,.py,$1))',
-        'DUMMYVAL',
-    )
-
     # Make sure staged wrapper script is invoking current Python version
     # on modular builds.
     contents = readfile(os.path.join(self.projroot, 'tools/batools/staging.py'))
@@ -643,8 +654,12 @@ def check_misc(self: ProjectUpdater) -> None:
         'DUMMYVAL',
     )
 
-    # Our XCode project should refer to the current Python lib serveral times.
-    if not self.public:
+    # Our XCode project should refer to the current Python lib several
+    # times.
+    #
+    # UPDATE: We are now using xcframework; would need to update this
+    # but just disabling for now.
+    if not self.public and bool(False):
         contents = readfile(
             os.path.join(
                 self.projroot,

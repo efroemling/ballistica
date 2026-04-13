@@ -105,10 +105,12 @@ class GamepadSelectWindow(bui.MainWindow):
                 v_align='top',
             )
 
-        bs.capture_gamepad_input(bui.WeakCall(self.gamepad_configure_callback))
+        bs.capture_game_controller_input(
+            bui.WeakCallPartial(self.gamepad_configure_callback)
+        )
 
     def __del__(self) -> None:
-        bs.release_gamepad_input()
+        bs.release_game_controller_input()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -120,17 +122,20 @@ class GamepadSelectWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # Not really needed here.
+        return False
+
     def gamepad_configure_callback(self, event: dict[str, Any]) -> None:
         """Respond to a gamepad button press during config selection."""
         from bauiv1lib.settings.gamepad import GamepadSettingsWindow
 
-        if not self.main_window_has_control():
-            return
-
         # Ignore all but button-presses.
         if event['type'] not in ['BUTTONDOWN', 'HATMOTION']:
             return
-        bs.release_gamepad_input()
+
+        bs.release_game_controller_input()
 
         assert bui.app.classic is not None
 
@@ -146,11 +151,11 @@ class GamepadSelectWindow(bui.MainWindow):
 
         if device.allows_configuring:
             self.main_window_replace(
-                GamepadSettingsWindow(device), back_state=back_state
+                lambda: GamepadSettingsWindow(device), back_state=back_state
             )
         else:
             self.main_window_replace(
-                _NotConfigurableWindow(device), back_state=back_state
+                lambda: _NotConfigurableWindow(device), back_state=back_state
             )
 
 

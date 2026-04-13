@@ -10,7 +10,7 @@ import logging
 from pathlib import Path
 from threading import Thread
 from functools import partial
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 
 import _babase
@@ -23,13 +23,13 @@ if TYPE_CHECKING:
 # This is purely a convenience; it is possible to use full class paths
 # instead of these or to make the meta system aware of arbitrary classes.
 EXPORT_CLASS_NAME_SHORTCUTS: dict[str, str] = {
+    # DEPRECATED as of 6/2025. Currently am warning if finding these
+    # but should take this out eventually.
     'plugin': 'babase.Plugin',
     # DEPRECATED as of 12/2023. Currently am warning if finding these
     # but should take this out eventually.
     'keyboard': 'bauiv1.Keyboard',
 }
-
-T = TypeVar('T')
 
 
 @dataclass
@@ -40,17 +40,16 @@ class ScanResults:
     incorrect_api_modules: list[str] = field(default_factory=list)
     announce_errors_occurred: bool = False
 
-    def exports_of_class(self, cls: type) -> list[str]:
-        """Return exports of a given class."""
-        return self.exports.get(f'{cls.__module__}.{cls.__qualname__}', [])
+    def exports_by_name(self, name: str) -> list[str]:
+        """Return exports matching a given name."""
+        return self.exports.get(name, [])
 
 
 class MetadataSubsystem:
     """Subsystem for working with script metadata in the app.
 
-    Category: **App Classes**
-
-    Access the single shared instance of this class at 'babase.app.meta'.
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.meta` attr on the :class:`~babase.App` class.
     """
 
     def __init__(self) -> None:
@@ -68,8 +67,10 @@ class MetadataSubsystem:
         """Begin the overall scan.
 
         This will start scanning built in directories (which for vanilla
-        installs should be the vast majority of the work). This should only
-        be called once.
+        installs should be the vast majority of the work). This should
+        only be called once.
+
+        :meta private:
         """
         assert self._scan_complete_cb is None
         assert self._scan is None
@@ -87,7 +88,7 @@ class MetadataSubsystem:
             ]
         )
 
-        Thread(target=self._run_scan_in_bg, daemon=True).start()
+        Thread(target=self._run_scan_in_bg).start()
 
     def start_extra_scan(self) -> None:
         """Proceed to the extra_scan_dirs portion of the scan.
@@ -95,12 +96,15 @@ class MetadataSubsystem:
         This is for parts of the scan that must be delayed until
         workspace sync completion or other such events. This must be
         called exactly once.
+
+        :meta private:
         """
         assert self._scan is not None
         self._scan.set_extras(self.extra_scan_dirs)
 
-    def load_exported_classes(
+    def load_exported_classes[T](
         self,
+        exportname: str,
         cls: type[T],
         completion_cb: Callable[[list[type[T]]], None],
         completion_cb_in_bg_thread: bool = False,
@@ -113,20 +117,21 @@ class MetadataSubsystem:
         to messaged to the user in some way but the callback will be called
         regardless.
         To run the completion callback directly in the bg thread where the
-        loading work happens, pass completion_cb_in_bg_thread=True.
+        loading work happens, pass ``completion_cb_in_bg_thread=True``.
         """
         Thread(
             target=partial(
                 self._load_exported_classes,
+                exportname,
                 cls,
                 completion_cb,
                 completion_cb_in_bg_thread,
-            ),
-            daemon=True,
+            )
         ).start()
 
-    def _load_exported_classes(
+    def _load_exported_classes[T](
         self,
+        exportname: str,
         cls: type[T],
         completion_cb: Callable[[list[type[T]]], None],
         completion_cb_in_bg_thread: bool,
@@ -135,7 +140,10 @@ class MetadataSubsystem:
 
         classes: list[type[T]] = []
         try:
-            classnames = self._wait_for_scan_results().exports_of_class(cls)
+            # classnames = self._wait_for_scan_results().exports_of_class(cls)
+            classnames = self._wait_for_scan_results().exports.get(
+                exportname, []
+            )
             for classname in classnames:
                 try:
                     classes.append(getclass(classname, cls))
@@ -161,8 +169,8 @@ class MetadataSubsystem:
                     ' this can cause hitches.'
                 )
 
-            # Now wait a bit for the scan to complete.
-            # Eventually error though if it doesn't.
+            # Now wait a bit for the scan to complete. Eventually error
+            # though if it doesn't.
             starttime = time.time()
             while self.scanresults is None:
                 time.sleep(0.05)
@@ -170,6 +178,7 @@ class MetadataSubsystem:
                     raise TimeoutError(
                         'timeout waiting for meta scan to complete.'
                     )
+
         return self.scanresults
 
     def _run_scan_in_bg(self) -> None:
@@ -327,7 +336,11 @@ class DirectoryScan:
         meta_lines = {
             lnum: l[1:].split()
             for lnum, l in enumerate(flines)
-            if '# ba_meta ' in l
+            # Do a simple 'in' check for speed but then make sure its
+            # also at the beginning of the line. This allows disabling
+            # meta-lines and avoids false positives from code that
+            # wrangles them.
+            if ('# ba_meta' in l and l.strip().startswith('# ba_meta '))
         }
         is_top_level = len(subpath.parts) <= 1
         required_api = self._get_api_requirement(
@@ -418,8 +431,20 @@ class DirectoryScan:
                 if export_class_name is not None:
                     classname = modulename + '.' + export_class_name
 
-                    # Migrating away from the 'keyboard' name shortcut
-                    # since it's specific to bauiv1; warn if we find it.
+                    # Migrating away from the 'plugin' name shortcut;
+                    # warn if we find it.
+                    if exporttypestr == 'plugin':
+                        logging.warning(
+                            "metascan: %s:%d: '# ba_meta export"
+                            " plugin' tag should be replaced by '# ba_meta"
+                            " export babase.Plugin'.",
+                            subpath,
+                            lindex + 1,
+                        )
+                        self.results.announce_errors_occurred = True
+
+                    # Migrating away from the 'keyboard' name shortcut;
+                    # warn if we find it.
                     if exporttypestr == 'keyboard':
                         logging.warning(
                             "metascan: %s:%d: '# ba_meta export"

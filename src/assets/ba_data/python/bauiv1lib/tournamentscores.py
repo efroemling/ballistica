@@ -22,33 +22,20 @@ class TournamentScoresWindow(PopupWindow):
         self,
         tournament_id: str,
         *,
-        tournament_activity: bs.GameActivity | None = None,
         position: tuple[float, float] = (0.0, 0.0),
-        scale: float | None = None,
-        offset: tuple[float, float] = (0.0, 0.0),
-        tint_color: Sequence[float] = (1.0, 1.0, 1.0),
-        tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
-        selected_character: str | None = None,
-        on_close_call: Callable[[], Any] | None = None,
     ):
         plus = bui.app.plus
         assert plus is not None
 
-        del tournament_activity  # unused arg
-        del tint_color  # unused arg
-        del tint2_color  # unused arg
-        del selected_character  # unused arg
         self._tournament_id = tournament_id
         self._subcontainer: bui.Widget | None = None
-        self._on_close_call = on_close_call
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        if scale is None:
-            scale = (
-                2.3
-                if uiscale is bui.UIScale.SMALL
-                else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
-            )
+        scale = (
+            2.3
+            if uiscale is bui.UIScale.SMALL
+            else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
+        )
         self._transitioning_out = False
 
         self._width = 400
@@ -60,13 +47,12 @@ class TournamentScoresWindow(PopupWindow):
 
         bg_color = (0.5, 0.4, 0.6)
 
-        # creates our _root_widget
+        # Creates our _root_widget.
         super().__init__(
             position=position,
             size=(self._width, self._height),
             scale=scale,
             bg_color=bg_color,
-            offset=offset,
         )
 
         self._cancel_button = bui.buttonwidget(
@@ -74,12 +60,11 @@ class TournamentScoresWindow(PopupWindow):
             position=(50, self._height - 30),
             size=(50, 50),
             scale=0.5,
-            label='',
+            label=bui.charstr(bui.SpecialChar.CLOSE),
+            textcolor=(1, 1, 1),
             color=bg_color,
             on_activate_call=self._on_cancel_press,
             autoselect=True,
-            icon=bui.gettexture('crossOut'),
-            iconscale=1.2,
         )
 
         self._title_text = bui.textwidget(
@@ -91,7 +76,7 @@ class TournamentScoresWindow(PopupWindow):
             scale=0.6,
             text=bui.Lstr(resource='tournamentStandingsText'),
             maxwidth=200,
-            color=(1, 1, 1, 0.4),
+            color=bui.app.ui_v1.title_color,
         )
 
         self._scrollwidget = bui.scrollwidget(
@@ -100,16 +85,20 @@ class TournamentScoresWindow(PopupWindow):
             position=(30, 30),
             highlight=False,
             simple_culling_v=10,
+            border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
 
+        self._loading_spinner = bui.spinnerwidget(
+            parent=self.root_widget,
+            position=(self._width * 0.5, self._height * 0.5),
+            style='bomb',
+            size=48,
+        )
         self._loading_text = bui.textwidget(
             parent=self._scrollwidget,
             scale=0.5,
-            text=bui.Lstr(
-                value='${A}...',
-                subs=[('${A}', bui.Lstr(resource='loadingText'))],
-            ),
+            text='',
             size=(self._width - 60, 100),
             h_align='center',
             v_align='center',
@@ -125,17 +114,19 @@ class TournamentScoresWindow(PopupWindow):
                 'numScores': 50,
                 'source': 'scores window',
             },
-            callback=bui.WeakCall(self._on_tournament_query_response),
+            callback=bui.WeakCallPartial(self._on_tournament_query_response),
         )
 
     def _on_tournament_query_response(
         self, data: dict[str, Any] | None
     ) -> None:
         if data is not None:
-            # this used to be the whole payload
+            # This used to be the whole payload.
             data_t: list[dict[str, Any]] = data['t']
-            # kill our loading text if we've got scores.. otherwise just
-            # replace it with 'no scores yet'
+
+            # Kill our loading text if we've got scores; otherwise just
+            # replace it with 'no scores yet'.
+            bui.spinnerwidget(edit=self._loading_spinner, visible=False)
             if data_t[0]['scores']:
                 self._loading_text.delete()
             else:
@@ -209,7 +200,7 @@ class TournamentScoresWindow(PopupWindow):
 
                 bui.textwidget(
                     edit=txt,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._show_player_info, entry, txt
                     ),
                 )
@@ -219,7 +210,8 @@ class TournamentScoresWindow(PopupWindow):
     def _show_player_info(self, entry: Any, textwidget: bui.Widget) -> None:
         from bauiv1lib.account.viewer import AccountViewerWindow
 
-        # for the moment we only work if a single player-info is present..
+        # For the moment we only work if a single player-info is
+        # present.
         if len(entry[2]) != 1:
             bui.getsound('error').play()
             return
@@ -238,8 +230,6 @@ class TournamentScoresWindow(PopupWindow):
         if not self._transitioning_out:
             self._transitioning_out = True
             bui.containerwidget(edit=self.root_widget, transition='out_scale')
-            if self._on_close_call is not None:
-                self._on_close_call()
 
     @override
     def on_popup_cancel(self) -> None:

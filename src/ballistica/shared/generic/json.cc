@@ -77,9 +77,15 @@ char* cJSON_GetStringValue(const cJSON* const item) {
 }
 
 double cJSON_GetNumberValue(const cJSON* const item) {
-  if (!cJSON_IsNumber(item)) {
-    return (double)NAN;
-  }
+  // ericf note: we build with fast-math mode which assumes nan is not a
+  // thing, so explicitly returning it here give us clang warnings about
+  // undefined behavior. Just gonna consider it the caller's behavior to
+  // make sure only numbers are passed here.
+  assert(cJSON_IsNumber(item));
+
+  // if (!cJSON_IsNumber(item)) {
+  //   return (double)NAN;
+  // }
 
   return item->valuedouble;
 }

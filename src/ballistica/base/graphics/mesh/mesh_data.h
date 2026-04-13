@@ -15,12 +15,7 @@ class MeshData {
  public:
   MeshData(MeshDataType type, MeshDrawType draw_type)
       : type_(type), draw_type_(draw_type) {}
-  virtual ~MeshData() {
-    if (renderer_data_) {
-      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
-                  "MeshData going down with rendererData intact!");
-    }
-  }
+  virtual ~MeshData();
   std::list<MeshData*>::iterator iterator_;
   auto type() -> MeshDataType { return type_; }
   auto draw_type() -> MeshDrawType { return draw_type_; }

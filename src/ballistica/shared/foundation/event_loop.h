@@ -4,18 +4,26 @@
 #define BALLISTICA_SHARED_FOUNDATION_EVENT_LOOP_H_
 
 #include <condition_variable>
+#include <csignal>
 #include <list>
 #include <mutex>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
-#include "ballistica/core/core.h"
-#include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/timer_list.h"
 
 namespace ballistica {
+
+// Special flags we can safely access from interrupt/ctrl handlers.
+#if BA_PLATFORM_WINDOWS
+extern std::atomic<bool> g_event_loop_got_ctrl_c;
+#else
+extern volatile sig_atomic_t g_event_loop_got_sigint;
+extern volatile sig_atomic_t g_event_loop_got_sigterm;
+#endif
 
 const int kThreadMessageSafetyThreshold{500};
 
@@ -39,7 +47,10 @@ class EventLoop {
 
   void PushSetSuspended(bool suspended);
 
-  auto thread_id() const -> std::thread::id { return thread_id_; }
+  auto thread_id() const -> std::thread::id {
+    assert(this);
+    return thread_id_;
+  }
 
   void RunToCompletion();
   void RunSingleCycle();
@@ -117,6 +128,7 @@ class EventLoop {
   void PushCrossThreadRunnable_(Runnable* runnable, bool* completion_flag);
   void NotifyClientListeners_();
   void Run_(bool single_cycle);
+  void CheckInterrupts_();
 
   // These are all exactly the same, but running different ones for
   // different threads can help identify threads in profilers, backtraces,
@@ -154,6 +166,7 @@ class EventLoop {
   bool suspended_{};
   bool done_{};
   bool acquires_python_gil_{};
+  std::atomic<size_t> thread_messages_size_approx_{};
   std::thread::id thread_id_{};
   std::condition_variable thread_message_cv_;
   std::condition_variable client_listener_cv_;

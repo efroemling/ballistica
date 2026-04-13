@@ -41,7 +41,6 @@ class IconPicker(PopupWindow):
         tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
         selected_icon: str | None = None,
     ):
-        # pylint: disable=too-many-locals
         del parent  # unused here
         del tint_color  # unused_here
         del tint2_color  # unused here
@@ -130,7 +129,7 @@ class IconPicker(PopupWindow):
                     text_scale=1.2,
                     label='',
                     color=(0.65, 0.65, 0.65),
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._select_icon, self._icons[index]
                     ),
                     position=pos,
@@ -171,12 +170,12 @@ class IconPicker(PopupWindow):
         bui.widget(edit=btn, show_buffer_top=30, show_buffer_bottom=30)
 
     def _on_store_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
 
         plus = bui.app.plus
         assert plus is not None
 
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             show_sign_in_prompt()
             return
 

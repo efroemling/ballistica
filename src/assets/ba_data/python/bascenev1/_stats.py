@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to scores and statistics."""
+
 from __future__ import annotations
 
 import random
@@ -13,7 +14,6 @@ import babase
 
 import _bascenev1
 
-
 if TYPE_CHECKING:
     from typing import Any, Sequence
 
@@ -22,10 +22,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class PlayerScoredMessage:
-    """Informs something that a bascenev1.Player scored.
-
-    Category: **Message Classes**
-    """
+    """Informs something that a bascenev1.Player scored."""
 
     score: int
     """The score value."""
@@ -33,8 +30,6 @@ class PlayerScoredMessage:
 
 class PlayerRecord:
     """Stats for an individual player in a bascenev1.Stats object.
-
-    Category: **Gameplay Classes**
 
     This does not necessarily correspond to a bascenev1.Player that is
     still present (stats may be retained for players that leave
@@ -137,7 +132,6 @@ class PlayerRecord:
     def submit_kill(self, showpoints: bool = True) -> None:
         """Submit a kill for this player entry."""
         # FIXME Clean this up.
-        # pylint: disable=too-many-statements
 
         self._multi_kill_count += 1
         stats = self._stats()
@@ -242,7 +236,7 @@ class PlayerRecord:
         if name is not None:
             _bascenev1.timer(
                 0.3 + delay,
-                babase.Call(
+                babase.CallStrict(
                     _apply, name, score, showpoints, color, scale, sound
                 ),
             )
@@ -253,10 +247,7 @@ class PlayerRecord:
 
 
 class Stats:
-    """Manages scores and statistics for a bascenev1.Session.
-
-    Category: **Gameplay Classes**
-    """
+    """Manages scores and statistics for a bascenev1.Session."""
 
     def __init__(self) -> None:
         self._activity: weakref.ref[bascenev1.Activity] | None = None
@@ -362,7 +353,6 @@ class Stats:
         # FIXME: Tidy this up.
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         from bascenev1lib.actor.popuptext import PopupText
 
         from bascenev1._gameactivity import GameActivity

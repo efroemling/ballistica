@@ -5,7 +5,6 @@
 
 #include <string>
 
-#include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_class.h"
 
 namespace ballistica::base {

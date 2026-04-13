@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import logging
 
 import bauiv1 as bui
 
@@ -30,8 +29,14 @@ class ConfirmWindow:
         ok_text: str | bui.Lstr | None = None,
         cancel_text: str | bui.Lstr | None = None,
         origin_widget: bui.Widget | None = None,
+        permanent_ok_fade: bool = False,
     ):
-        # pylint: disable=too-many-locals
+
+        ui = bui.app.ui_v1
+
+        # Make sure our widgets have globally unique ids.
+        self._id_prefix = ui.new_id_prefix('confirm')
+
         if text is None:
             text = bui.Lstr(resource='areYouSureText')
         if ok_text is None:
@@ -42,7 +47,9 @@ class ConfirmWindow:
         width = max(width, 360)
         self._action = action
 
-        # if they provided an origin-widget, scale up from that
+        self._permanent_ok_fade = permanent_ok_fade
+
+        # If they provided an origin-widget, scale up from that.
         self._transition_out: str | None
         scale_origin: tuple[float, float] | None
         if origin_widget is not None:
@@ -67,6 +74,7 @@ class ConfirmWindow:
                 else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
             ),
             scale_origin_stack_offset=scale_origin,
+            darken_behind=True,
         )
 
         bui.textwidget(
@@ -86,6 +94,7 @@ class ConfirmWindow:
         if cancel_button:
             cbtn = btn = bui.buttonwidget(
                 parent=self.root_widget,
+                id=f'{self._id_prefix}|cancel',
                 autoselect=True,
                 position=(20, 20),
                 size=(150, 50),
@@ -95,13 +104,14 @@ class ConfirmWindow:
             bui.containerwidget(edit=self.root_widget, cancel_button=btn)
             ok_button_h = width - 175
         else:
-            # if they don't want a cancel button, we still want back presses to
-            # be able to dismiss the window; just wire it up to do the ok
-            # button
+            # if they don't want a cancel button, we still want back
+            # presses to be able to dismiss the window; just wire it up
+            # to do the ok button
             ok_button_h = width * 0.5 - 75
             cbtn = None
         btn = bui.buttonwidget(
             parent=self.root_widget,
+            id=f'{self._id_prefix}|ok',
             autoselect=True,
             position=(ok_button_h, 20),
             size=(150, 50),
@@ -109,8 +119,8 @@ class ConfirmWindow:
             on_activate_call=self._ok,
         )
 
-        # if they didn't want a cancel button, we still want to be able to hit
-        # cancel/back/etc to dismiss the window
+        # if they didn't want a cancel button, we still want to be able
+        # to hit cancel/back/etc to dismiss the window
         if not cancel_button:
             bui.containerwidget(
                 edit=self.root_widget, on_cancel_call=btn.activate
@@ -139,6 +149,7 @@ class ConfirmWindow:
             return
         bui.containerwidget(
             edit=self.root_widget,
+            darken_behind_is_permanent=self._permanent_ok_fade,
             transition=(
                 'out_left'
                 if self._transition_out is None
@@ -158,10 +169,9 @@ class QuitWindow:
         swish: bool = False,
         origin_widget: bui.Widget | None = None,
     ):
-        classic = bui.app.classic
-        assert classic is not None
         ui = bui.app.ui_v1
-        app = bui.app
+        platform = bui.app.env.platform
+
         self._quit_type = quit_type
 
         # If there's already one of us up somewhere, kill it.
@@ -171,18 +181,13 @@ class QuitWindow:
         if swish:
             bui.getsound('swish').play()
 
-        if app.classic is None:
-            if bui.do_once():
-                logging.warning(
-                    'QuitWindow needs to be updated to work without classic.'
-                )
-            quit_resource = 'exitGameText'
-        else:
-            quit_resource = (
-                'quitGameText'
-                if app.classic.platform == 'mac'
-                else 'exitGameText'
-            )
+        # Generally Macs say Quit and other stuff says Exit
+        quit_resource = (
+            'quitGameText'
+            if platform is type(platform).MACOS
+            else 'exitGameText'
+        )
+
         self._root_widget = ui.quit_window = ConfirmWindow(
             bui.Lstr(
                 resource=quit_resource,
@@ -194,4 +199,10 @@ class QuitWindow:
                 else bui.quit(confirm=False)
             ),
             origin_widget=origin_widget,
+            # In situations where the quit action will *actually* kill
+            # the process, tell the confirm to not fade back in when the
+            # confirm button is pressed. It just looks a bit visually
+            # odd if the confirm fades back in just before the app fades
+            # out to quit.
+            permanent_ok_fade=not bui.app.env.supports_soft_quit,
         ).root_widget

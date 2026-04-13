@@ -4,7 +4,6 @@
 # This file was automatically generated from "rampage.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (0.3544110667, 5.616383286, -4.066055072)

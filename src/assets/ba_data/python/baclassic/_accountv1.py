@@ -17,9 +17,8 @@ if TYPE_CHECKING:
 class AccountV1Subsystem:
     """Subsystem for legacy account handling in the app.
 
-    Category: **App Classes**
-
-    Access the single instance of this class at 'ba.app.classic.accounts'.
+    Access the single instance of this class at
+    'ba.app.classic.accounts'.
     """
 
     def __init__(self) -> None:
@@ -125,7 +124,11 @@ class AccountV1Subsystem:
         if subset is not None:
             raise ValueError('invalid subset value: ' + str(subset))
 
-        if data['p']:
+        # We used to give this bonus for pro, but on recent versions of
+        # the game give it for everyone (since we are phasing out Pro).
+
+        # if data['p']:
+        if bool(True):
             if babase.app.plus is None:
                 pro_mult = 1.0
             else:
@@ -165,9 +168,10 @@ class AccountV1Subsystem:
         """(internal)"""
         # pylint: disable=cyclic-import
         plus = babase.app.plus
-        if plus is None:
+        classic = babase.app.classic
+        if plus is None or classic is None:
             return []
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             return []
         icons = []
         store_items: dict[str, Any] = (
@@ -176,9 +180,10 @@ class AccountV1Subsystem:
             else {}
         )
         for item_name, item in list(store_items.items()):
-            if item_name.startswith(
-                'icons.'
-            ) and plus.get_v1_account_product_purchased(item_name):
+            if (
+                item_name.startswith('icons.')
+                and item_name in classic.purchases
+            ):
                 icons.append(item['icon'])
         return icons
 
@@ -198,7 +203,7 @@ class AccountV1Subsystem:
 
         # If the short version of our account name currently cant be
         # displayed by the game, cancel.
-        if not babase.have_chars(
+        if not babase.can_display_chars(
             plus.get_v1_account_display_string(full=False)
         ):
             return
@@ -225,17 +230,17 @@ class AccountV1Subsystem:
     def have_pro(self) -> bool:
         """Return whether pro is currently unlocked."""
 
-        plus = babase.app.plus
-        if plus is None:
+        classic = babase.app.classic
+        if classic is None:
             return False
+        purchases = classic.purchases
 
-        # Check our tickets-based pro upgrade and our two real-IAP based
-        # upgrades. Also always unlock this stuff in ballistica-core builds.
-        return bool(
-            plus.get_v1_account_product_purchased('upgrades.pro')
-            or plus.get_v1_account_product_purchased('static.pro')
-            or plus.get_v1_account_product_purchased('static.pro_sale')
-            or 'ballistica' + 'kit' == babase.appname()
+        # Check various server-side purchases that mean we have pro.
+        return (
+            'gold_pass' in purchases
+            or 'upgrades.pro' in purchases
+            or 'static.pro' in purchases
+            or 'static.pro_sale' in purchases
         )
 
     def have_pro_options(self) -> bool:
@@ -249,10 +254,9 @@ class AccountV1Subsystem:
         if plus is None:
             return False
 
-        # We expose pro options if the server tells us to
-        # (which is generally just when we own pro),
-        # or also if we've been grandfathered in
-        # or are using ballistica-core builds.
+        # We expose pro options if the server tells us to (which is
+        # generally just when we own pro), or also if we've been
+        # grandfathered in.
         return self.have_pro() or bool(
             plus.get_v1_account_misc_read_val_2('proOptionsUnlocked', False)
             or babase.app.config.get('lc14292', 0) > 1

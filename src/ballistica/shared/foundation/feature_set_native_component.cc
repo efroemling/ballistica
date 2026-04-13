@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "ballistica/core/core.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/python/python.h"
 

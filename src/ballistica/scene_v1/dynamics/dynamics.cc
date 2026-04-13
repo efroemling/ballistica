@@ -9,6 +9,7 @@
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/dynamics/collision_cache.h"
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/dynamics/collision.h"
 #include "ballistica/scene_v1/dynamics/material/material_action.h"
@@ -143,9 +144,9 @@ Dynamics::Dynamics(Scene* scene_in)
 
 Dynamics::~Dynamics() {
   if (in_process_) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Dynamics going down within Process() call;"
-                " should not happen.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Dynamics going down within Process() call;"
+                         " should not happen.");
   }
   ShutdownODE_();
 }
@@ -514,7 +515,7 @@ void Dynamics::ProcessCollision_() {
 void Dynamics::Process() {
   in_process_ = true;
   // Update this once so we can recycle results.
-  real_time_ = g_core->GetAppTimeMillisecs();
+  real_time_ = g_core->AppTimeMillisecs();
   ProcessCollision_();
   dWorldQuickStep(ode_world_, kGameStepSeconds);
   dJointGroupEmpty(ode_contact_group_);

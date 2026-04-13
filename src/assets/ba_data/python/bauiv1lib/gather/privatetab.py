@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, cast, override
 
 from efro.error import CommunicationError
 from efro.dataclassio import dataclass_from_dict, dataclass_to_dict
+from bacommon.analytics import ClassicAnalyticsEvent
 import bacommon.cloud
 from bacommon.net import (
     PrivateHostingState,
@@ -58,11 +59,12 @@ class PrivateGatherTab(GatherTab):
 
     def __init__(self, window: GatherWindow) -> None:
         super().__init__(window)
+        self._idprefix = f'{window.main_window_id_prefix}|private'
         self._container: bui.Widget | None = None
         self._state: State = State()
         self._last_datacode_refresh_time: float | None = None
         self._hostingstate = PrivateHostingState()
-        self._v2state: bacommon.cloud.BSPrivatePartyResponse | None = None
+        self._v2state: bacommon.classic.PrivatePartyResponse | None = None
         self._join_sub_tab_text: bui.Widget | None = None
         self._host_sub_tab_text: bui.Widget | None = None
         self._update_timer: bui.AppTimer | None = None
@@ -115,6 +117,7 @@ class PrivateGatherTab(GatherTab):
         v = self._c_height - 30.0
         self._join_sub_tab_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|jointab',
             position=(self._c_width * 0.5 - 245, v - 13),
             color=(0.6, 1.0, 0.6),
             scale=1.3,
@@ -134,6 +137,7 @@ class PrivateGatherTab(GatherTab):
         )
         self._host_sub_tab_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|hosttab',
             position=(self._c_width * 0.5 + 45, v - 13),
             color=(0.6, 1.0, 0.6),
             scale=1.3,
@@ -162,7 +166,7 @@ class PrivateGatherTab(GatherTab):
         )
 
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
 
         # Prevent taking any action until we've updated our state.
@@ -181,7 +185,6 @@ class PrivateGatherTab(GatherTab):
 
     def _build_hosting_config(self) -> PrivateHostingConfig:
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
         from bauiv1lib.playlist import PlaylistTypeVars
         from bascenev1 import filter_playlist
 
@@ -303,8 +306,7 @@ class PrivateGatherTab(GatherTab):
         if self._state.sub_tab is SubTabType.HOST:
             # If we're not signed in, just refresh to show that.
             if (
-                plus.get_v1_account_state() != 'signed_in'
-                or plus.accounts.primary is None
+                plus.accounts.primary is None
             ) and not self._showing_not_signed_in_screen:
                 self._refresh_sub_tab()
             else:
@@ -320,7 +322,7 @@ class PrivateGatherTab(GatherTab):
                                 'type': 'PRIVATE_PARTY_QUERY',
                                 'expire_time': time.time() + 20,
                             },
-                            callback=bui.WeakCall(
+                            callback=bui.WeakCallPartial(
                                 self._idle_hosting_state_response
                             ),
                         )
@@ -339,7 +341,7 @@ class PrivateGatherTab(GatherTab):
                     if plus.accounts.primary is not None:
                         with plus.accounts.primary:
                             plus.cloud.send_message_cb(
-                                bacommon.cloud.BSPrivatePartyMessage(
+                                bacommon.classic.PrivatePartyMessage(
                                     need_datacode=(
                                         self._last_datacode_refresh_time is None
                                         or time.monotonic()
@@ -347,7 +349,7 @@ class PrivateGatherTab(GatherTab):
                                         > 30.0
                                     )
                                 ),
-                                on_response=bui.WeakCall(
+                                on_response=bui.WeakCallPartial(
                                     self._on_private_party_query_response
                                 ),
                             )
@@ -355,7 +357,7 @@ class PrivateGatherTab(GatherTab):
                     self._last_v2_state_query_time = now
 
     def _on_private_party_query_response(
-        self, response: bacommon.cloud.BSPrivatePartyResponse | Exception
+        self, response: bacommon.classic.PrivatePartyResponse | Exception
     ) -> None:
         if isinstance(response, Exception):
             self._debug_server_comm('got pp v2 state response (err)')
@@ -527,6 +529,7 @@ class PrivateGatherTab(GatherTab):
 
         self._join_party_code_text = bui.textwidget(
             parent=self._container,
+            id=f'{self._idprefix}|joinpartycode',
             position=(self._c_width * 0.5 - 150, self._c_height - 250),
             flatness=1.0,
             scale=1.5,
@@ -541,8 +544,9 @@ class PrivateGatherTab(GatherTab):
         )
         btn = bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|connect',
             size=(300, 70),
-            label=bui.Lstr(resource='gatherWindow.' 'manualConnectText'),
+            label=bui.Lstr(resource='gatherWindow.manualConnectText'),
             position=(self._c_width * 0.5 - 150, self._c_height - 350),
             on_activate_call=self._join_connect_press,
             autoselect=True,
@@ -551,17 +555,9 @@ class PrivateGatherTab(GatherTab):
             edit=self._join_party_code_text, on_return_press_call=btn.activate
         )
 
-    # def _on_get_tokens_press(self) -> None:
-    #     if self._waiting_for_start_stop_response:
-    #         return
-
-    #     # Bring up get-tickets window and then kill ourself (we're on
-    #     # the overlay layer so we'd show up above it).
-    #     GetTokensWindow(origin_widget=self._get_tokens_button)
-
     def _build_host_tab(self) -> None:
-        # pylint: disable=too-many-branches
         # pylint: disable=too-many-statements
+        # pylint: disable=too-many-branches
         classic = bui.app.classic
         assert classic is not None
 
@@ -676,6 +672,7 @@ class PrivateGatherTab(GatherTab):
             )
             self._host_playlist_button = bui.buttonwidget(
                 parent=self._container,
+                id=f'{self._idprefix}|host',
                 size=(400, 70),
                 color=(0.6, 0.5, 0.6),
                 textcolor=(0.8, 0.75, 0.8),
@@ -735,6 +732,7 @@ class PrivateGatherTab(GatherTab):
                 cbtnoffs = 10
                 self._host_copy_button = bui.buttonwidget(
                     parent=self._container,
+                    id=f'{self._idprefix}|hostcopy',
                     size=(140, 40),
                     color=(0.6, 0.5, 0.6),
                     textcolor=(0.8, 0.75, 0.8),
@@ -747,6 +745,7 @@ class PrivateGatherTab(GatherTab):
                 cbtnoffs = -70
             self._host_connect_button = bui.buttonwidget(
                 parent=self._container,
+                id=f'{self._idprefix}|hostconnect',
                 size=(140, 40),
                 color=(0.6, 0.5, 0.6),
                 textcolor=(0.8, 0.75, 0.8),
@@ -907,6 +906,7 @@ class PrivateGatherTab(GatherTab):
         waiting = self._waiting_for_start_stop_response
         self._host_start_stop_button = bui.buttonwidget(
             parent=self._container,
+            id=f'{self._idprefix}|hoststartstop',
             size=(400, 80),
             color=(
                 (0.6, 0.6, 0.6)
@@ -948,8 +948,15 @@ class PrivateGatherTab(GatherTab):
             )
 
     def _connect_to_party_code(self, code: str) -> None:
-        # Ignore attempted followup sends for a few seconds. (this will
-        # reset if we get a response)
+
+        bui.app.analytics.submit_event(
+            ClassicAnalyticsEvent(
+                ClassicAnalyticsEvent.EventType.JOIN_PRIVATE_PARTY
+            )
+        )
+
+        # Ignore attempted followup sends for a few seconds (this will
+        # reset if we get a response).
         plus = bui.app.plus
         assert plus is not None
 
@@ -971,7 +978,7 @@ class PrivateGatherTab(GatherTab):
                 'expire_time': time.time() + 20,
                 'code': code,
             },
-            callback=bui.WeakCall(self._connect_response),
+            callback=bui.WeakCallPartial(self._connect_response),
         )
         plus.run_v1_account_transactions()
 
@@ -1029,7 +1036,7 @@ class PrivateGatherTab(GatherTab):
                     'expire_time': time.time() + 20,
                     'datacode': self._v2state.datacode,
                 },
-                callback=bui.WeakCall(self._hosting_state_response),
+                callback=bui.WeakCallPartial(self._hosting_state_response),
             )
             plus.run_v1_account_transactions()
 
@@ -1040,7 +1047,7 @@ class PrivateGatherTab(GatherTab):
                     'type': 'PRIVATE_PARTY_STOP',
                     'expire_time': time.time() + 20,
                 },
-                callback=bui.WeakCall(self._hosting_state_response),
+                callback=bui.WeakCallPartial(self._hosting_state_response),
             )
             plus.run_v1_account_transactions()
         bui.getsound('click01').play()

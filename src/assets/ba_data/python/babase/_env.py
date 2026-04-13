@@ -1,22 +1,37 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Environment related functionality."""
+
 from __future__ import annotations
 
+import os
 import sys
+import ssl
+import time
 import signal
 import logging
 import warnings
+import threading
 from typing import TYPE_CHECKING, override
 
+import urllib3
 from efro.logging import LogLevel
 
 if TYPE_CHECKING:
     from typing import Any
+
     from efro.logging import LogEntry, LogHandler
 
-_g_babase_imported = False  # pylint: disable=invalid-name
-_g_babase_app_started = False  # pylint: disable=invalid-name
+# Timeout for standard functions talking to the master-server/etc. We
+# generally try to fail fast and retry instead of waiting a long time
+# for things.
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 10
+
+_g_babase_imported: bool = False
+_g_babase_app_started: bool = False
+_g_net_warm_start_thread: threading.Thread | None = None
+_g_net_warm_start_ssl_context: ssl.SSLContext | None = None
+_g_net_warm_start_pool_manager: urllib3.PoolManager | None = None
 
 
 def on_native_module_import() -> None:
@@ -26,6 +41,7 @@ def on_native_module_import() -> None:
     environment modifications until we actually commit to running an
     app.
     """
+    # pylint: disable=cyclic-import
     import _babase
     import baenv
 
@@ -36,7 +52,7 @@ def on_native_module_import() -> None:
 
     # If we have a log_handler set up, wire it up to feed _babase its
     # output.
-    envconfig = baenv.get_config()
+    envconfig = baenv.get_env_config()
     if envconfig.log_handler is not None:
         _feed_logs_to_babase(envconfig.log_handler)
 
@@ -45,22 +61,24 @@ def on_native_module_import() -> None:
             lambda: _babase.set_thread_name('ballistica logging')
         )
 
-    env = _babase.pre_env()
+    pre_env = _babase.pre_env()
 
     # Give a soft warning if we're being used with a different binary
     # version than we were built for.
-    running_build: int = env['build_number']
+    running_build: int = pre_env['build_number']
+    assert isinstance(running_build, int)
+
     if running_build != baenv.TARGET_BALLISTICA_BUILD:
-        logging.warning(
+        logging.error(
             'These scripts are meant to be used with'
             ' Ballistica build %d, but you are running build %d.'
-            " This might cause problems. Module path: '%s'.",
+            " This is likely to cause problems. Module path: '%s'.",
             baenv.TARGET_BALLISTICA_BUILD,
             running_build,
             __file__,
         )
 
-    debug_build = env['debug_build']
+    debug_build = pre_env['debug_build']
 
     # We expect dev_mode on in debug builds and off otherwise;
     # make noise if that's not the case.
@@ -82,6 +100,7 @@ def on_main_thread_start_app() -> None:
     as we like it for running our app stuff. This includes things like
     signal-handling, garbage-collection, and logging.
     """
+    # pylint: disable=cyclic-import
     import gc
     import baenv
     import _babase
@@ -91,7 +110,7 @@ def on_main_thread_start_app() -> None:
     _g_babase_app_started = True
 
     assert _g_babase_imported
-    assert baenv.config_exists()
+    assert baenv.env_config_exists()
 
     # If we were unable to set paths earlier, complain now.
     if baenv.did_paths_set_fail():
@@ -115,24 +134,20 @@ def on_main_thread_start_app() -> None:
     # release builds so its good to have this on everywhere.
     warnings.simplefilter('default', DeprecationWarning)
 
-    # Turn off fancy-pants cyclic garbage-collection. We run it only at
-    # explicit times to avoid random hitches and keep things more
-    # deterministic. Non-reference-looped objects will still get cleaned
-    # up immediately, so we should try to structure things to avoid
-    # reference loops (just like Swift, ObjC, etc).
+    # Set up our garbage collection stuff.
+    _babase.app.gc.set_initial_mode()
 
-    # FIXME - move this to Python bootstrapping code. or perhaps disable
-    #  it completely since we've got more bg stuff happening now?...
-    #  (but put safeguards in place to time/minimize gc pauses).
-    gc.disable()
+    if os.environ.get('BA_GC_DEBUG_LEAK') == '1':
+        print('ENABLING GC DEBUG LEAK CHECKS', file=sys.stderr)
+        gc.set_debug(gc.DEBUG_LEAK)
 
     # pylint: disable=c-extension-no-member
     if not TYPE_CHECKING:
         import __main__
 
         # Clear out the standard quit/exit messages since they don't
-        # work in our embedded situation (should revisit this once we're
-        # usable from a standard interpreter). Note that these don't
+        # work in our embedded situations and we wouldn't want to use them
+        # if they did since Note that these don't
         # exist in the first place for our monolithic builds which don't
         # use site.py.
         for attr in ('quit', 'exit'):
@@ -144,21 +159,333 @@ def on_main_thread_start_app() -> None:
         # situations.
         __main__.__builtins__.help = _CustomHelper()
 
-    # On Windows I'm seeing the following error creating asyncio loops
-    # in background threads with the default proactor setup:
+    # Kick off networking bootstrapping. We do this here instead of in
+    # our app net-subsystem so that it can proceed in parallel with the
+    # rest of our bootstrapping (as networking stuff is often an overall
+    # bottleneck). Our net-subsystem then pulls this stuff into itself
+    # when it comes up.
+    global _g_net_warm_start_thread  # pylint: disable=global-statement
+    _g_net_warm_start_thread = threading.Thread(target=_bootstrap_networking)
+    _g_net_warm_start_thread.start()
 
-    # ValueError: set_wakeup_fd only works in main thread of the main
-    # interpreter.
+    # Kick off some background cache cleanup operations.
+    threading.Thread(target=_pycache_upkeep).start()
 
-    # So let's explicitly request selector loops. Interestingly this
-    # error only started showing up once I moved Python init to the main
-    # thread; previously the various asyncio bg thread loops were
-    # working fine (maybe something caused them to default to selector
-    # in that case?..
-    if sys.platform == 'win32':
-        import asyncio
 
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+def _bootstrap_networking() -> None:
+    """Early networking bootstrapping.
+
+    We start this as early as we can after start-app is called to
+    give it as much time to warm-start network connections/etc. while
+    we're spinning up other stuff.
+    """
+
+    from efro.util import strict_partial
+
+    import _babase
+    from babase._logging import netlog
+
+    netlog.debug('_bootstrap_networking() begin')
+
+    # Our shared SSL context. Creating these can be expensive so we
+    # create it here once and recycle for our various connections.
+    global _g_net_warm_start_ssl_context  # pylint: disable=global-statement
+    _g_net_warm_start_ssl_context = ssl.create_default_context()
+
+    # I'm finding that urllib3 exceptions tend to give us reference
+    # cycles, which we want to avoid as much as possible. We can work
+    # around this by gutting the exceptions using
+    # efro.util.strip_exception_tracebacks() after handling them.
+    # Unfortunately this means we need to turn off retries here since
+    # the retry mechanism effectively hides exceptions from us.
+    global _g_net_warm_start_pool_manager  # pylint: disable=global-statement
+    _g_net_warm_start_pool_manager = urllib3.PoolManager(
+        retries=False,
+        ssl_context=_g_net_warm_start_ssl_context,
+        timeout=urllib3.util.Timeout(total=DEFAULT_REQUEST_TIMEOUT_SECONDS),
+        maxsize=10,
+        headers={'User-Agent': _babase.user_agent_string()},
+    )
+    # Kick off a request to our first-choice bootstrap server. This can
+    # get dns lookup and ssl negotiation and whatnot going in the
+    # background while the rest of our app is coming up, and our first
+    # actual request to the server will ideally have an established
+    # connection already waiting for it.
+    #
+    # We kick off a separate thread to handle this though since we don't
+    # want the bootstrap process to block on it if its still going when
+    # our bootstrapping results are needed.
+    threading.Thread(
+        target=strict_partial(
+            _warm_start_bootstrap_connection, _g_net_warm_start_pool_manager
+        )
+    ).start()
+    netlog.debug('_bootstrap_networking() end')
+
+
+def _warm_start_bootstrap_connection(pool: urllib3.PoolManager) -> None:
+    from efro.util import strip_exception_tracebacks
+    from babase._logging import netlog
+    import _babase
+
+    starttime = time.monotonic()
+    try:
+        netlog.debug('Warm starting urllib3 pool...')
+        # Slightly hacky: this runs early enough that the plus subsystem
+        # doesn't exist yet so we need to hard-code this address (the
+        # first bootstrap address that Plus returns). Note that we don't
+        # actually *use* the results of this request; we're just getting
+        # urllib3 to establish a connection to our first-choice server
+        # to hopefully have it available for immediate use when needed.
+        response = pool.request('GET', 'https://regional.ballistica.net/ping')
+        _data = response.data
+        netlog.debug(
+            'Warm starting urllib3 pool succeeded in %.3fs.',
+            time.monotonic() - starttime,
+        )
+    except Exception as exc:
+        netlog.debug(
+            'Warm starting urllib3 pool failed in %.3fs.',
+            time.monotonic() - starttime,
+            exc_info=True,
+        )
+        # Hopefully avoid reference cycles.
+        strip_exception_tracebacks(exc)
+
+
+def _pycache_upkeep() -> None:
+    from babase._logging import cachelog
+
+    try:
+        _do_pycache_upkeep()
+    except Exception:
+        cachelog.exception('Error in pycache upkeep.')
+
+
+def _do_pycache_upkeep() -> None:
+    # pylint: disable=too-many-statements
+    """Take a quick pass at generating pycs for all .py files."""
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-locals
+    import py_compile
+    import importlib.util
+
+    from efro.util import prune_empty_dirs
+
+    import _babase
+    from babase._logging import cachelog
+
+    # Skip this all if bytecode writing is disabled.
+    if sys.dont_write_bytecode:
+        return
+
+    def should_abort() -> bool:
+        appstate = _babase.app.state
+        appstate_t = type(appstate)
+        return (
+            appstate is appstate_t.SHUTTING_DOWN
+            or appstate is appstate_t.SHUTDOWN_COMPLETE
+        )
+
+    # Let's wait until the app has been in the running state for a wee
+    # bit before doing our thing; that way we're out of the way of more
+    # high priority stuff like meta-scans that happen at first launch.
+    # Packing too much work in at once is likely to lead to visible
+    # stutters and ANR issues and whatnot.
+    time_in_running_state = 0.0
+    sleep_inc = 0.1
+    while time_in_running_state < 10.0:
+        time.sleep(sleep_inc)
+        appstate = _babase.app.state
+        appstate_t = type(appstate)
+        if appstate is appstate_t.RUNNING:
+            time_in_running_state += sleep_inc
+        if should_abort():
+            cachelog.debug('Aborting pycache update early due to app shutdown.')
+            return
+
+    cachelog.info('Running pycache upkeep...')
+
+    # Measure time from when we actually start working.
+    starttime = time.monotonic()
+
+    env = _babase.app.env
+
+    stdlibpath = os.path.dirname(py_compile.__file__)
+
+    srcdirs: list[str | None] = [
+        env.python_directory_app,
+        env.python_directory_app_site,
+        stdlibpath,
+        env.python_directory_user,
+    ]
+
+    # Skip over particular dirnames; namely stuff in stdlib we're very
+    # unlikely to ever use. This shaves off quite a bit of work.
+    skip_dirs = {
+        'test',
+        'email',
+        '__pycache__',
+        'idlelib',
+        'tkinter',
+        'turtledemo',
+        'unittest',
+        'encodings',
+    }
+
+    # We do lots of stuff and if everything spits an error it's gonna
+    # get messy, so let's only warn on the first thing that goes wrong
+    # (the rest can be debug messages).
+    complained = False
+
+    def complain(msg: str) -> None:
+        nonlocal complained
+        if complained:
+            cachelog.debug('(repeat) Error updating pycache dir: %s', msg)
+            return
+        cachelog.warning('Error updating pycache dir: %s', msg)
+
+    # Build a dict of dst pyc paths mapped to src py paths and
+    # src py modtimes.
+    entries: dict[str, tuple[str, float]] = {}
+    for srcdir in srcdirs:
+        if srcdir is None or not os.path.isdir(srcdir):
+            continue
+        for dpath, dnames, fnames in os.walk(srcdir):
+            # Modify dirnames in-place to prevent walk from descending
+            # into them.
+            dnames[:] = [d for d in dnames if d not in skip_dirs]
+            for fname in fnames:
+                if not fname.endswith('.py'):
+                    continue
+                srcpath = os.path.join(dpath, fname)
+                dstpath = importlib.util.cache_from_source(srcpath)
+                srcmodtime = os.path.getmtime(srcpath)
+                entries[dstpath] = (srcpath, srcmodtime)
+
+                if should_abort():
+                    cachelog.debug(
+                        'Aborting pycache update early due to app shutdown.'
+                    )
+                    return
+
+    pycdir = os.path.join(env.cache_directory, 'pyc')
+
+    # Sanity test: make sure these pyc paths appear to be under our
+    # designated cache dir.
+    for entry in entries:
+        if not entry.startswith(pycdir):
+            complain(
+                f'pyc target {entry}'
+                f' does not start with expected prefix {pycdir}.'
+            )
+
+        # Just check the first.
+        break
+
+    def _has_py_source(path: str) -> bool:
+        """Does this .pyc path have an associated existing .py file?"""
+        if not path.endswith('.pyc'):
+            return False
+        try:
+            srcpath = importlib.util.source_from_cache(fullpath)
+        except Exception as exc:
+            # Have gotten reports of failures here on a file named
+            # hook-mitmproxy.addons.onboardingapp.cpython-313.pyc'
+            # (found in site-packages on a linux install).
+            if 'expected only 2 or 3 dots' in str(exc):
+                pass
+            else:
+                complain(f'Error looking for py src for "{path}": {exc}')
+
+            # If anything goes wrong, just assume it *does* have a source;
+            # let's only kill stuff when we're sure it doesn't.
+            return True
+
+        return os.path.exists(srcpath)
+
+    def _is_older_than_a_few_seconds(path: str) -> bool:
+        try:
+            return os.path.getmtime(path) < time.time() - 10
+        except FileNotFoundError:
+            # Transient files such as in-progress pycache temp files are
+            # likely to disappear under us. Just consider that as 'not
+            # old'.
+            return False
+
+    # Now kill all files in our dst pyc dir that *don't* appear in our
+    # dict of dst paths.
+    for dpath, dnames, fnames in os.walk(pycdir):
+        for fname in fnames:
+            fullpath = os.path.join(dpath, fname)
+            # We excluded skip_dirs when we generated entries, but its
+            # still possible that stuff from those dirs has been cached
+            # on-demand. So to be extra sure we can delete something we
+            # make sure it isn't a .pyc file with an existing src .py
+            # file. Technically we could check *everything* this way but
+            # it should be lots faster to fast-out with the entries dict
+            # lookup first.
+            #
+            # We also now check to make sure files are older than a few
+            # seconds before deleting them; this keeps us out of the way
+            # of in-progress .pyc temp files.
+
+            if (
+                fullpath not in entries
+                and _is_older_than_a_few_seconds(fullpath)
+                and not _has_py_source(fullpath)
+            ):
+                try:
+                    cachelog.debug(
+                        'pycache-upkeep: pruning file \'%s\'.', fullpath
+                    )
+                    os.unlink(fullpath)
+                except Exception as exc:
+                    complain(f'Failed to delete file "{fullpath}": {exc}')
+
+    # Ok, we've killed all files that aren't valid cache files. Now
+    # prune all empty dirs.
+    try:
+        prune_empty_dirs(pycdir)
+    except Exception as exc:
+        complain(str(exc))
+
+    # Lastly, go through all src paths and compile all dst paths that
+    # don't exist or are outdated.
+    for dstpath, (srcpath, srcmtime) in entries.items():
+        if not os.path.exists(dstpath) or srcmtime > os.path.getmtime(dstpath):
+            try:
+                cachelog.debug('pycache-upkeep: precompiling \'%s\'.', srcpath)
+                py_compile.compile(srcpath, doraise=True)
+
+                # Sleep a bit to limit speed to roughly 100/second max.
+                # Hopefully that will reduce any stuttering effects from
+                # this and it should still take only a few seconds on
+                # fast hardware.
+                time.sleep(0.01)
+
+            except Exception as exc:
+                # The first time a compile fails, let's pause and see if
+                # it actually wound up updated first. There's a chance
+                # we could hit the odd sporadic issue trying to update a
+                # file that Python is already updating.
+                if not complained:
+                    time.sleep(0.2)
+                    still_out_of_date = not os.path.exists(
+                        dstpath
+                    ) or srcmtime > os.path.getmtime(dstpath)
+                    if still_out_of_date:
+                        complain(f'Error precompiling {fullpath}: {exc}')
+                        assert complained
+
+            if should_abort():
+                cachelog.debug(
+                    'Aborting pycache update early due to app shutdown.'
+                )
+                return
+
+    duration = time.monotonic() - starttime
+    cachelog.info('Pycache upkeep completed in %.3fs.', duration)
 
 
 def on_app_state_initing() -> None:
@@ -170,11 +497,61 @@ def on_app_state_initing() -> None:
 
     # Let the user know if the app Python dir is a 'user' one. This is a
     # risky thing to be doing so don't let them forget they're doing it.
-    envconfig = baenv.get_config()
+    envconfig = baenv.get_env_config()
     if envconfig.is_user_app_python_dir:
         _babase.screenmessage(
             f"Using user system scripts: '{envconfig.app_python_dir}'",
             color=(0.6, 0.6, 1.0),
+        )
+
+
+def interpreter_shutdown_sanity_checks() -> None:
+    """Run sanity checks just before finalizing after an app run."""
+    import baenv
+    from babase._logging import applog
+
+    env_config = baenv.get_env_config()
+    main_thread = threading.main_thread()
+
+    # Warn about any still-running threads that we don't expect to find.
+    warn_threads: list[threading.Thread] = []
+    for thread in threading.enumerate():
+
+        if thread is main_thread:
+            continue
+
+        # Our log-handler thread gets set up early and will get torn
+        # down after us; we expect it to still be around.
+        if (
+            env_config.log_handler is not None
+            and thread
+            is env_config.log_handler._thread  # pylint: disable=W0212
+        ):
+            continue
+
+        # Dummy threads are native threads that happen to have Python
+        # stuff called in them. Ideally we should be using all Python
+        # threads so should clear these out at some point. Just ignoring
+        # them for now though.
+        #
+        if isinstance(thread, threading._DummyThread):  # pylint: disable=W0212
+            continue
+
+        warn_threads.append(thread)
+
+    if warn_threads:
+        applog.warning(
+            '%s',
+            '\n '.join(
+                [
+                    f'{len(warn_threads)}'
+                    f' unexpected thread(s) still running at'
+                    f' Python shutdown:'
+                ]
+                + [str(t) for t in warn_threads]
+            )
+            + '\nThreads should spin themselves down at app shutdown'
+            ' (see App.add_shutdown_task()).',
         )
 
 
@@ -251,5 +628,5 @@ class _CustomHelper:
                 'Interactive help is not available in this environment.\n'
                 'Type help(object) for help about object.'
             )
-            return None
-        return pydoc.help(*args, **kwds)
+            return
+        pydoc.help(*args, **kwds)

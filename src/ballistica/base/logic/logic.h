@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_LOGIC_LOGIC_H_
 #define BALLISTICA_BASE_LOGIC_LOGIC_H_
 
+#include <atomic>
 #include <memory>
 
 #include "ballistica/shared/generic/runnable.h"
@@ -11,9 +12,9 @@ namespace ballistica::base {
 
 const int kDisplayTimeSampleCount{15};
 
-/// The max amount of time a headless app can sleep if no events are pending.
-/// This should not be *too* high or it might cause delays when going from
-/// no events present to events present.
+/// The max amount of time a headless app can sleep if no events are
+/// pending. This should not be *too* high or it might cause delays when
+/// going from no events present to events present.
 const microsecs_t kHeadlessMaxDisplayTimeStep{500000};
 
 /// The min amount of time a headless app can sleep. This provides an upper
@@ -64,7 +65,7 @@ class Logic {
 
   void OnAppModeChanged();
 
-  void DoApplyAppConfig();
+  void ApplyAppConfig();
   void OnScreenSizeChange(float virtual_width, float virtual_height,
                           float pixel_width, float pixel_height);
 
@@ -118,6 +119,7 @@ class Logic {
   auto shutdown_completed() const { return shutdown_completed_; }
   auto graphics_ready() const { return graphics_ready_; }
   auto app_active() const { return app_active_; }
+  auto app_active_applied() -> bool const { return app_active_applied_; }
 
  private:
   void UpdateDisplayTimeForFrameDraw_();
@@ -141,9 +143,15 @@ class Logic {
   seconds_t recent_display_time_increments_[kDisplayTimeSampleCount]{};
   int recent_display_time_increments_index_{-1};
 
-  /// The logic thread maintains its own app-active state which is
-  /// driven by the app-thread's state in g_base.
+  /// The logic thread maintains its own app-active state which is driven by
+  /// the app-thread's state in g_base.
   bool app_active_{true};
+
+  /// We maintain an app-active value that gets changed once we're done
+  /// calling the Python layer's app-active-changed callback. App suspension
+  /// looks at this to try to ensure that said Python callbacks complete
+  /// before the app gets fully suspended.
+  std::atomic_bool app_active_applied_{true};
   bool app_bootstrapping_complete_{};
   bool have_pending_loads_{};
   bool applied_app_config_{};

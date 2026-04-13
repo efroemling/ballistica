@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from efro.threadpool import ThreadPoolExecutorPlus
+from efro.threadpool import ThreadPoolExecutorEx
 
 if TYPE_CHECKING:
     from typing import Awaitable
@@ -26,7 +26,7 @@ def test_no_wait_back_pressure(caplog: pytest.LogCaptureFixture) -> None:
     tasktime = 0.1
 
     def _do_test(max_no_wait_count: int) -> None:
-        threadpool = ThreadPoolExecutorPlus(
+        threadpool = ThreadPoolExecutorEx(
             max_workers=10, max_no_wait_count=max_no_wait_count
         )
 

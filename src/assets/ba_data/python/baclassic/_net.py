@@ -1,14 +1,21 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Networking related functionality."""
+
 from __future__ import annotations
 
+import zlib
 import copy
+import time
+import base64
 import weakref
 import threading
 from enum import Enum
 from typing import TYPE_CHECKING, override
 
+from efro.error import CommunicationError
+from efro.util import strip_exception_tracebacks
+import bacommon.classic
 import babase
 import bascenev1
 
@@ -37,9 +44,7 @@ class MasterServerV1CallThread(threading.Thread):
     ):
         # pylint: disable=too-many-positional-arguments
 
-        # Set daemon=True so long-running requests don't keep us from
-        # quitting the app.
-        super().__init__(daemon=True)
+        super().__init__()
         self._request = request
         self._request_type = request_type
         if not isinstance(response_type, MasterServerResponseType):
@@ -49,9 +54,16 @@ class MasterServerV1CallThread(threading.Thread):
         self._callback: MasterServerCallback | None = callback
         self._context = babase.ContextRef()
 
+        appstate = babase.app.state
+        if appstate.value < type(appstate).LOADING.value:
+            raise RuntimeError(
+                'Cannot use MasterServerV1CallThread'
+                ' until app reaches LOADING state.'
+            )
+
         # Save and restore the context we were created from.
         activity = bascenev1.getactivity(doraise=False)
-        self._activity = weakref.ref(activity) if activity is not None else None
+        self._activity = None if activity is None else weakref.ref(activity)
 
     def _run_callback(self, arg: None | dict[str, Any]) -> None:
         # If we were created in an activity context and that activity
@@ -72,23 +84,24 @@ class MasterServerV1CallThread(threading.Thread):
             self._callback(arg)
 
     @override
-    def run(self) -> None:
-        # pylint: disable=consider-using-with
-        # pylint: disable=too-many-branches
-        import urllib.request
-        import urllib.parse
-        import urllib.error
-        import json
+    def __str__(self) -> str:
+        return (
+            f'<MasterServerV1CallThread id={id(self)}'
+            f' request={self._request}>'
+        )
 
-        from efro.error import is_urllib_communication_error
+    @override
+    def run(self) -> None:
+        import urllib.parse
+        import json
 
         plus = babase.app.plus
         assert plus is not None
         response_data: Any = None
-        url: str | None = None
 
-        # Tearing the app down while this is running can lead to
-        # rare crashes in LibSSL, so avoid that if at all possible.
+        starttime = time.monotonic()
+
+        # Disallow shutdown while we're working.
         if not babase.shutdown_suppress_begin():
             # App is already shutting down, so we're a no-op.
             return
@@ -96,71 +109,83 @@ class MasterServerV1CallThread(threading.Thread):
         try:
             classic = babase.app.classic
             assert classic is not None
-            self._data = babase.utf8_all(self._data)
+            self._data = _utf8_all(self._data)
             babase.set_thread_name('BA_ServerCallThread')
-            if self._request_type == 'get':
-                msaddr = plus.get_master_server_address()
-                dataenc = urllib.parse.urlencode(self._data)
-                url = f'{msaddr}/{self._request}?{dataenc}'
-                assert url is not None
-                response = urllib.request.urlopen(
-                    urllib.request.Request(
-                        url,
-                        None,
-                        {'User-Agent': classic.legacy_user_agent_string},
-                    ),
-                    context=babase.app.net.sslcontext,
-                    timeout=babase.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                )
-            elif self._request_type == 'post':
-                url = f'{plus.get_master_server_address()}/{self._request}'
-                assert url is not None
-                response = urllib.request.urlopen(
-                    urllib.request.Request(
-                        url,
-                        urllib.parse.urlencode(self._data).encode(),
-                        {'User-Agent': classic.legacy_user_agent_string},
-                    ),
-                    context=babase.app.net.sslcontext,
-                    timeout=babase.DEFAULT_REQUEST_TIMEOUT_SECONDS,
-                )
-            else:
-                raise TypeError('Invalid request_type: ' + self._request_type)
+            dataenc = urllib.parse.urlencode(self._data)
 
-            # If html request failed.
-            if response.getcode() != 200:
+            mresponse = plus.cloud.send_message(
+                bacommon.classic.LegacyRequest(
+                    self._request,
+                    self._request_type,
+                    classic.legacy_user_agent_string,
+                    dataenc,
+                )
+            )
+            mrdata: str | None
+            if mresponse.data is None:
+                mrdata = None
+            elif mresponse.zipped:
+                mrdata = zlib.decompress(
+                    base64.b85decode(mresponse.data)
+                ).decode()
+            else:
+                mrdata = mresponse.data
+
+            if mrdata is None:
                 response_data = None
-            elif self._response_type == MasterServerResponseType.JSON:
-                raw_data = response.read()
-
-                # Empty string here means something failed server side.
-                if raw_data == b'':
-                    response_data = None
-                else:
-                    response_data = json.loads(raw_data)
             else:
-                raise TypeError(f'invalid responsetype: {self._response_type}')
+                assert self._response_type == MasterServerResponseType.JSON
+                response_data = json.loads(mrdata)
 
         except Exception as exc:
+            duration = time.monotonic() - starttime
             # Ignore common network errors; note unexpected ones.
-            if not is_urllib_communication_error(exc, url=url):
-                print(
-                    f'Error in MasterServerCallThread'
-                    f' (url={url},'
-                    f' response-type={self._response_type},'
-                    f' response-data={response_data}):'
+            if isinstance(exc, CommunicationError):
+                babase.netlog.debug(
+                    'Legacy %s request failed in %.3fs (communication error).',
+                    self._request,
+                    duration,
                 )
-                import traceback
-
-                traceback.print_exc()
-
+            else:
+                babase.netlog.exception(
+                    'Legacy %s request failed in %.3fs.',
+                    self._request,
+                    duration,
+                )
             response_data = None
+
+            # We're done with the exception, so strip its tracebacks to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)
 
         finally:
             babase.shutdown_suppress_end()
 
+        if response_data is not None:
+            duration = time.monotonic() - starttime
+            babase.netlog.debug(
+                'Legacy %s request succeeded in %.3fs.', self._request, duration
+            )
+
         if self._callback is not None:
             babase.pushcall(
-                babase.Call(self._run_callback, response_data),
+                babase.CallStrict(self._run_callback, response_data),
                 from_other_thread=True,
             )
+
+
+def _utf8_all(data: Any) -> Any:
+    """Convert all strings in provided data to utf-8 bytes."""
+    if isinstance(data, dict):
+        return dict(
+            (_utf8_all(key), _utf8_all(value))
+            for key, value in list(data.items())
+        )
+    if isinstance(data, list):
+        return [_utf8_all(element) for element in data]
+    if isinstance(data, tuple):
+        return tuple(_utf8_all(element) for element in data)
+    if isinstance(data, str):
+        # return data.encode('utf-8', errors='ignore')
+        return data.encode()
+    return data

@@ -8,6 +8,7 @@ generally a better direction to go since introspecting Python objects
 or source code ast is more foolproof than the text based parsing we
 are doing here.
 """
+
 from __future__ import annotations
 
 import re
@@ -48,7 +49,7 @@ def _gen_enums(infilename: str) -> str:
         if len(doclines) > 1:
             out += '\n    """\n\n'
         else:
-            out += '"""\n'
+            out += '"""\n\n'
 
         lnumend = _find_enum_end(lines, lnum)
         out = _parse_values(lines, lnum, lnumend, out)

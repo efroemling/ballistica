@@ -26,30 +26,48 @@ class PlaylistAddGameWindow(bui.MainWindow):
         self._r = 'addGameWindow'
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 750 if uiscale is bui.UIScale.SMALL else 650
-        x_inset = 50 if uiscale is bui.UIScale.SMALL else 0
-        yoffs = -44 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 900 if uiscale is bui.UIScale.SMALL else 650
 
         self._height = (
-            400
+            1200.0
             if uiscale is bui.UIScale.SMALL
-            else 400 if uiscale is bui.UIScale.MEDIUM else 460
+            else 450.0 if uiscale is bui.UIScale.MEDIUM else 500.0
         )
         self._scroll_width = 210
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            2.4
+            if uiscale is bui.UIScale.SMALL
+            else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 50, screensize[0] / scale)
+        target_height = min(self._height - 70, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 5.0
+        x_inset = 0.5 * self._width - 0.5 * target_width
 
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
-                scale=(
-                    1.95
+                scale=scale,
+                toolbar_visibility=(
+                    'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
-                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+                    else 'menu_full'
                 ),
-                stack_offset=(0, 1) if uiscale is bui.UIScale.SMALL else (0, 0),
-                toolbar_visibility='menu_minimal',
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         if uiscale is bui.UIScale.SMALL:
@@ -57,16 +75,20 @@ class PlaylistAddGameWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(58 + x_inset, self._height - 53 + yoffs),
+                position=(58 + x_inset, yoffs - 53),
                 size=(60, 48),
                 label=bui.charstr(bui.SpecialChar.BACK),
                 autoselect=True,
                 button_type='backSmall',
                 on_activate_call=self.main_window_back,
             )
+
         self._select_button = select_button = bui.buttonwidget(
             parent=self._root_widget,
-            position=(self._width - (172 + x_inset), self._height - 50 + yoffs),
+            position=(
+                x_inset + target_width - 172,
+                yoffs - 50,
+            ),
             autoselect=True,
             size=(160, 60),
             scale=0.75,
@@ -82,7 +104,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            position=(self._width * 0.5, self._height - 28 + yoffs),
+            position=(self._width * 0.5, yoffs - 28),
             size=(0, 0),
             scale=1.0,
             text=bui.Lstr(resource=f'{self._r}.titleText'),
@@ -91,7 +113,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
             maxwidth=250,
             v_align='center',
         )
-        v = self._height - 64 + yoffs
+        v = yoffs - 64
 
         self._selected_title_text = bui.textwidget(
             parent=self._root_widget,
@@ -115,17 +137,16 @@ class PlaylistAddGameWindow(bui.MainWindow):
             h_align='left',
         )
 
-        scroll_height = self._height - (
-            160 if uiscale is bui.UIScale.SMALL else 100
-        )
+        scroll_height = target_height - 60
 
-        v = self._height - 60 + yoffs
+        v = yoffs - 60
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             position=(x_inset + 61, v - scroll_height),
             size=(self._scroll_width, scroll_height),
             highlight=False,
+            border_opacity=0.4,
         )
         bui.widget(
             edit=self._scrollwidget,
@@ -158,6 +179,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
 
         # Get actual games loading in the bg.
         bui.app.meta.load_exported_classes(
+            'bascenev1.GameActivity',
             bs.GameActivity,
             self._on_game_types_loaded,
             completion_cb_in_bg_thread=True,
@@ -183,6 +205,10 @@ class PlaylistAddGameWindow(bui.MainWindow):
                 editcontroller=editcontroller,
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return False
 
     def _on_game_types_loaded(
         self, gametypes: list[type[bs.GameActivity]]
@@ -230,7 +256,9 @@ class PlaylistAddGameWindow(bui.MainWindow):
                 v_align='center',
                 color=(0.8, 0.8, 0.8, 1.0),
                 maxwidth=self._scroll_width * 0.8,
-                on_select_call=bui.Call(self._set_selected_game_type, gametype),
+                on_select_call=bui.CallStrict(
+                    self._set_selected_game_type, gametype
+                ),
                 always_highlight=True,
                 selectable=True,
                 on_activate_call=_doit,
@@ -255,32 +283,37 @@ class PlaylistAddGameWindow(bui.MainWindow):
             )
 
     def _on_get_more_games_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
-        from bauiv1lib.store.browser import StoreBrowserWindow
+        import bacommon.docui.v1 as dui1
 
-        # No-op if we're not in control.
-        if self.main_window_has_control():
-            return
+        from bauiv1lib.docui import DocUIWindow
+        from bauiv1lib.account.signin import show_sign_in_prompt
+        from bauiv1lib.store import StoreUIController
+        from bauiv1lib.connectivity import wait_for_connectivity
 
         plus = bui.app.plus
         assert plus is not None
-
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             show_sign_in_prompt()
             return
 
-        self.main_window_replace(
-            StoreBrowserWindow(
-                # modal=True,
-                show_tab=StoreBrowserWindow.TabID.MINIGAMES,
-                # on_close_call=self._on_store_close,
-                origin_widget=self._get_more_games_button,
-                minimal_toolbars=True,
+        # Playlist editing happens in the regular non-auxiliary window
+        # stack so we can just pop up the regular auxiliary-mode store
+        # and it'll do the right thing and take us back to our editing
+        # when we close it.
+        wait_for_connectivity(
+            on_connected=lambda: bui.app.ui_v1.auxiliary_window_activate(
+                win_type=DocUIWindow,
+                win_create_call=bui.CallStrict(
+                    StoreUIController().create_window,
+                    dui1.Request('/'),
+                    origin_widget=self._get_more_games_button,
+                    uiopenstateid='classicstore',
+                ),
+                win_extra_type_id=(
+                    StoreUIController.get_window_extra_type_id()
+                ),
             )
         )
-
-    # def _on_store_close(self) -> None:
-    #     self._refresh(select_get_more_games_button=True)
 
     def _add(self) -> None:
         bui.lock_all_input()  # Make sure no more commands happen.

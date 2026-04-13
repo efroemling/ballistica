@@ -6,7 +6,7 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
@@ -43,8 +43,8 @@ void AudioSource::SetPosition(float x, float y, float z) {
   assert(client_queue_size_ > 0);
 #if BA_DEBUG_BUILD
   if (std::isnan(x) || std::isnan(y) || std::isnan(z)) {
-    g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                "Got nan value in AudioSource::SetPosition.");
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                         "Got nan value in AudioSource::SetPosition.");
   }
 #endif
   g_base->audio_server->PushSourceSetPositionCall(play_id_, Vector3f(x, y, z));
@@ -73,11 +73,10 @@ auto AudioSource::Play(SoundAsset* ptr_in) -> uint32_t {
   assert(g_base->audio_server);
   assert(client_queue_size_ > 0);
 
-  // allocate a new reference to this guy and pass it along
-  // to the thread... (these refs can't be created or destroyed
-  // or have their ref-counts changed outside the main thread...)
-  // the thread will then send back this allocated ptr when it's done
-  // with it for the main thread to destroy.
+  // Allocate a new reference to this guy and pass it along to the thread
+  // (these refs can't be created or destroyed or have their ref-counts
+  // changed outside the main thread). The thread will then send back this
+  // allocated ptr when it's done with it for the main thread to destroy.
 
   ptr_in->UpdatePlayTime();
   auto ptr = new Object::Ref<SoundAsset>(ptr_in);
@@ -103,7 +102,7 @@ void AudioSource::Lock(int debug_id) {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
   mutex_.lock();
 #if BA_DEBUG_BUILD
-  last_lock_time_ = g_core->GetAppTimeMillisecs();
+  last_lock_time_ = g_core->AppTimeMillisecs();
   lock_debug_id_ = debug_id;
   locked_ = true;
 #endif
@@ -112,10 +111,10 @@ void AudioSource::Lock(int debug_id) {
 
 auto AudioSource::TryLock(int debug_id) -> bool {
   bool locked = mutex_.try_lock();
-#if (BA_DEBUG_BUILD || BA_TEST_BUILD)
+#if (BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD)
   if (locked) {
     locked_ = true;
-    last_lock_time_ = g_core->GetAppTimeMillisecs();
+    last_lock_time_ = g_core->AppTimeMillisecs();
     lock_debug_id_ = debug_id;
   }
 #endif
@@ -126,7 +125,7 @@ void AudioSource::Unlock() {
   BA_DEBUG_FUNCTION_TIMER_BEGIN();
   mutex_.unlock();
   BA_DEBUG_FUNCTION_TIMER_END_THREAD(20);
-#if BA_DEBUG_BUILD || BA_TEST_BUILD
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   locked_ = false;
 #endif
 }

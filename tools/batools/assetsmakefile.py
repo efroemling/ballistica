@@ -8,12 +8,10 @@ import json
 import os
 from typing import TYPE_CHECKING
 
-from efrotools.pyver import PYVERNODOT
+from efrotools.pyver import PYVER
 
 if TYPE_CHECKING:
     pass
-
-PYC_SUFFIX = f'.cpython-{PYVERNODOT}.opt-1.pyc'
 
 ASSETS_SRC = 'src/assets'
 BUILD_DIR = 'build/assets'
@@ -28,7 +26,6 @@ def _get_targets(
     limit_to_prefix: str | None = None,
 ) -> str:
     """Generic function to map source extension to dst files."""
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-positional-arguments
 
     src = ASSETS_SRC
@@ -63,14 +60,13 @@ def _get_py_targets(
     src: str,
     dst: str,
     py_targets: list[str],
-    pyc_targets: list[str],
+    # pyc_targets: list[str],
+    so_targets: list[str],
     all_targets: set[str],
     subset: str,
 ) -> None:
     # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
 
     py_generated_root = f'{ASSETS_SRC}/ba_data/python/babase/_mgen'
 
@@ -84,6 +80,11 @@ def _get_py_targets(
             f'{ASSETS_SRC}/workspace',
         }:
             return
+
+        # Special case: exclude test modules.
+        if f'/python{PYVER}/test/' in f'{proot}/':
+            return
+
         assert proot.startswith(src), f'{proot} does not start with {src}'
         assert dst.startswith(BUILD_DIR)
         dstrootvar = (
@@ -92,10 +93,11 @@ def _get_py_targets(
             + proot.removeprefix(src)
         )
         dstfin = dst + proot[len(src) :]
+
         for fname in fnames:
             # Ignore non-python files and flycheck/emacs temp files.
             if (
-                not fname.endswith('.py')
+                (not fname.endswith('.py') and not fname.endswith('.so'))
                 or fname.startswith('flycheck_')
                 or fname.startswith('.#')
             ):
@@ -129,7 +131,7 @@ def _get_py_targets(
             elif proot.startswith(f'{ASSETS_SRC}/windows/Win32'):
                 in_subset = 'private-windows-Win32'
             elif proot.startswith(f'{ASSETS_SRC}/pylib-apple'):
-                in_subset = 'private-apple'
+                in_subset = 'private-apple-mac'
             elif proot.startswith(f'{ASSETS_SRC}/pylib-android'):
                 in_subset = 'private-android'
             else:
@@ -140,20 +142,26 @@ def _get_py_targets(
             elif subset != in_subset:
                 continue
 
-            # gamedata pass includes only data; otherwise do all else
+            if fname.endswith('.so'):
+                # .so:
+                targetpath = os.path.join(dstfin, fname)
+                assert targetpath not in all_targets
+                all_targets.add(targetpath)
+                so_targets.append(os.path.join(dstrootvar, fname))
+            else:
+                # .py:
+                targetpath = os.path.join(dstfin, fname)
+                assert targetpath not in all_targets
+                all_targets.add(targetpath)
+                py_targets.append(os.path.join(dstrootvar, fname))
 
-            # .py:
-            targetpath = os.path.join(dstfin, fname)
-            assert targetpath not in all_targets
-            all_targets.add(targetpath)
-            py_targets.append(os.path.join(dstrootvar, fname))
-
-            # and .pyc:
-            fname_pyc = fname[:-3] + PYC_SUFFIX
-            all_targets.add(os.path.join(dstfin, '__pycache__', fname_pyc))
-            pyc_targets.append(
-                os.path.join(dstrootvar, '__pycache__', fname_pyc)
-            )
+                # and .pyc:
+                # fname_pyc = fname[:-3] + PYC_SUFFIX
+                # all_targets.add(os.path.join(dstfin,
+                # '__pycache__', fname_pyc))
+                # pyc_targets.append(
+                #     os.path.join(dstrootvar, '__pycache__', fname_pyc)
+                # )
 
     # Create py and pyc targets for all physical scripts in src, with
     # the exception of our dynamically generated stuff.
@@ -214,20 +222,40 @@ def _get_py_targets_subset(
     subset: str,
     suffix: str,
 ) -> str:
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-positional-arguments
+
+    copyrule_so: str | None = None
+
+    # Map stuff from tools/ to build/assets/ba_data/python/
     if subset == 'public_tools':
         src = 'tools'
         dst = f'{BUILD_DIR}/ba_data/python'
         copyrule = '$(BUILD_DIR)/ba_data/python/%.py : $(TOOLS_DIR)/%.py'
+
+    # Map stuff from src/assets/pylib-apple to build/assets/pylib-apple
+    elif subset == 'private-apple-mac':
+        src = f'{ASSETS_SRC}/pylib-apple'
+        dst = f'{BUILD_DIR}/pylib-apple'
+        copyrule = '$(BUILD_DIR)/%.py : %.py'
+
+    # Default - map stuff from src/assets/ to build/assets/
     else:
         src = ASSETS_SRC
         dst = BUILD_DIR
         copyrule = '$(BUILD_DIR)/%.py : %.py'
 
-    # Separate these into '1' and '2'.
+    # This could be a nice sanity check but some src paths aren't present
+    # on various cloud-builds we do. Perhaps we could somehow only check
+    # when we know everything is present?..
+    if bool(False):
+        if not os.path.exists(os.path.join(projroot, src)):
+            raise RuntimeError(
+                f'Expected src path not found in project: "{src}"'
+            )
+
     py_targets: list[str] = []
-    pyc_targets: list[str] = []
+    # pyc_targets: list[str] = []
+    so_targets: list[str] = []
 
     _get_py_targets(
         projroot,
@@ -236,18 +264,22 @@ def _get_py_targets_subset(
         src,
         dst,
         py_targets,
-        pyc_targets,
+        # pyc_targets,
+        so_targets,
         all_targets,
         subset=subset,
     )
 
-    # Need to sort these combined to keep pairs together.
-    combined_targets = [
-        (py_targets[i], pyc_targets[i]) for i in range(len(py_targets))
-    ]
-    combined_targets.sort()
-    py_targets = [t[0] for t in combined_targets]
-    pyc_targets = [t[1] for t in combined_targets]
+    # Need to sort py and pyc combined to keep pairs together.
+    # combined_targets = [
+    #     (py_targets[i], pyc_targets[i]) for i in range(len(py_targets))
+    # ]
+    # combined_targets.sort()
+    py_targets.sort()
+    so_targets.sort()
+
+    # py_targets = [t[0] for t in combined_targets]
+    # pyc_targets = [t[1] for t in combined_targets]
 
     out = (
         f'\nSCRIPT_TARGETS_PY{suffix} = \\\n  '
@@ -255,9 +287,15 @@ def _get_py_targets_subset(
         + '\n'
     )
 
+    # out += (
+    #     f'\nSCRIPT_TARGETS_PYC{suffix} = \\\n  '
+    #     + ' \\\n  '.join(pyc_targets)
+    #     + '\n'
+    # )
+
     out += (
-        f'\nSCRIPT_TARGETS_PYC{suffix} = \\\n  '
-        + ' \\\n  '.join(pyc_targets)
+        f'\nSCRIPT_TARGETS_SO{suffix} = \\\n  '
+        + ' \\\n  '.join(so_targets)
         + '\n'
     )
 
@@ -269,9 +307,18 @@ def _get_py_targets_subset(
         '# (and make non-writable so I\'m less likely to '
         'accidentally edit them there)\n'
         f'{efc}$(SCRIPT_TARGETS_PY{suffix}) : {copyrule}\n'
-        # '#\t@echo Copying script: $(subst $(BUILD_DIR)/,,$@)\n'
         '\t@$(PCOMMANDBATCH) copy_python_file $^ $@\n'
     )
+
+    if so_targets:
+        assert copyrule_so is not None
+        out += (
+            '\n# Rule to copy src asset binary modules to dst.\n'
+            '# (and make non-writable so I\'m less likely to '
+            'accidentally edit them there)\n'
+            f'{efc}$(SCRIPT_TARGETS_SO{suffix}) : {copyrule_so}\n'
+            '\t@$(PCOMMANDBATCH) copy_python_file $^ $@\n'
+        )
 
     # out += (
     #     '\n# Rule to copy src asset scripts to dst.\n'
@@ -286,37 +333,37 @@ def _get_py_targets_subset(
     # )
 
     # Fancy new simple loop-based target generation.
-    out += (
-        f'\n# These are too complex to define in a pattern rule;\n'
-        f'# Instead we generate individual targets in a loop.\n'
-        f'$(foreach element,$(SCRIPT_TARGETS_PYC{suffix}),\\\n'
-        f'$(eval $(call make-opt-pyc-target,$(element))))'
-    )
+    # out += (
+    #     f'\n# These are too complex to define in a pattern rule;\n'
+    #     f'# Instead we generate individual targets in a loop.\n'
+    #     f'$(foreach element,$(SCRIPT_TARGETS_PYC{suffix}),\\\n'
+    #     f'$(eval $(call make-opt-pyc-target,$(element))))'
+    # )
 
     # Old code to explicitly emit individual targets.
-    if bool(False):
-        out += (
-            '\n# Looks like path mangling from py to pyc is too complex for'
-            ' pattern rules so\n# just generating explicit targets'
-            ' for each. Could perhaps look into using a\n# fancy for-loop'
-            ' instead, but perhaps listing these explicitly isn\'t so bad.\n'
-        )
-        for i, target in enumerate(pyc_targets):
-            # Note: there's currently a bug which can cause python bytecode
-            # generation to be non-deterministic. This can break our blessing
-            # process since we bless in core but then regenerate bytecode in
-            # spinoffs. See https://bugs.python.org/issue34722
-            # For now setting PYTHONHASHSEED=1 is a workaround.
-            out += (
-                '\n'
-                + target
-                + ': \\\n      '
-                + py_targets[i]
-                + '\n\t@echo Compiling script: $(subst $(BUILD_DIR),,$^)\n'
-                '\t@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/pcommand'
-                ' compile_python_file $^'
-                ' && chmod 444 $@\n'
-            )
+    # if bool(False):
+    #     out += (
+    #         '\n# Looks like path mangling from py to pyc is too complex for'
+    #         ' pattern rules so\n# just generating explicit targets'
+    #         ' for each. Could perhaps look into using a\n# fancy for-loop'
+    #         ' instead, but perhaps listing these explicitly isn\'t so bad.\n'
+    #     )
+    #     for i, target in enumerate(pyc_targets):
+    #         # Note: there's currently a bug which can cause python bytecode
+    #         # generation to be non-deterministic. This can break our blessing
+    #         # process since we bless in core but then regenerate bytecode in
+    #         # spinoffs. See https://bugs.python.org/issue34722
+    #         # For now setting PYTHONHASHSEED=1 is a workaround.
+    #         out += (
+    #             '\n'
+    #             + target
+    #             + ': \\\n      '
+    #             + py_targets[i]
+    #             + '\n\t@echo Compiling script: $(subst $(BUILD_DIR),,$^)\n'
+    #             '\t@rm -rf $@ && PYTHONHASHSEED=1 $(TOOLS_DIR)/pcommand'
+    #             ' compile_python_file $^'
+    #             ' && chmod 444 $@\n'
+    #         )
 
     return out
 
@@ -385,7 +432,7 @@ def _get_extras_targets_win(
 
             # Complain if something new shows up instead of blindly
             # including it.
-            raise RuntimeError(f'Unexpected extras file: {fname}')
+            raise RuntimeError(f'Unexpected extras file: {root}/{fname}')
 
     targets.sort()
     p_up = platform.upper()
@@ -417,7 +464,6 @@ def generate_assets_makefile(
     explicit_sources: set[str],
 ) -> dict[str, str]:
     """Main script entry point."""
-    # pylint: disable=too-many-locals
     from efrotools.project import getprojectconfig
     from pathlib import Path
 
@@ -465,8 +511,8 @@ def generate_assets_makefile(
                 meta_manifests,
                 explicit_sources,
                 all_targets_private,
-                subset='private-apple',
-                suffix='_PRIVATE_APPLE',
+                subset='private-apple-mac',
+                suffix='_PRIVATE_APPLE_MAC',
             ),
             _get_py_targets_subset(
                 projroot,

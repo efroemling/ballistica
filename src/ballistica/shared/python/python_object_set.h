@@ -3,8 +3,6 @@
 #ifndef BALLISTICA_SHARED_PYTHON_PYTHON_OBJECT_SET_H_
 #define BALLISTICA_SHARED_PYTHON_PYTHON_OBJECT_SET_H_
 
-#include <Python.h>
-
 #include <string>
 #include <vector>
 
@@ -43,8 +41,12 @@ class PythonObjectSetBase {
   /// Push a call with a single string arg.
   void PushObjCall(int id, const std::string& arg) const;
 
+  void set_allow_overwrites(bool val) { allow_overwrites_ = val; }
+  auto allow_overwrites() const { return allow_overwrites_; }
+
  private:
   std::vector<PythonRef> objs_;
+  bool allow_overwrites_;
 };
 
 /// A class to store and retrieve different Python objects based on enums.
@@ -56,7 +58,8 @@ class PythonObjectSet : public PythonObjectSetBase {
  public:
   PythonObjectSet() : PythonObjectSetBase(static_cast<int>(T::kLast)) {}
 
-  /// Set the value for a named object.
+  /// Set the value for a named object. This grabs a new reference to the
+  /// passed PyObject.
   void Store(T id, PyObject* pyobj) { StoreObj(static_cast<int>(id), pyobj); }
 
   /// Set the value for a named object and verify that it is a callable.

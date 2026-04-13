@@ -17,7 +17,7 @@ class AppAdapterHeadless : public AppAdapter {
 
   void OnMainThreadStartApp() override;
 
-  void DoApplyAppConfig() override;
+  void ApplyAppConfig() override;
 
   auto GetGraphicsClientContext() -> GraphicsClientContext* override;
 

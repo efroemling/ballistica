@@ -4,7 +4,6 @@
 # This file was automatically generated from "monkey_face.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (-1.657177611, 4.132574186, -1.580485661)

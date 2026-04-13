@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import weakref
-from typing import Generic, TypeVar, TYPE_CHECKING, override
+from typing import TYPE_CHECKING, override
 
 import babase
 
@@ -16,13 +16,9 @@ if TYPE_CHECKING:
 
     import bascenev1
 
-T = TypeVar('T', bound='DependencyComponent')
 
-
-class Dependency(Generic[T]):
+class Dependency[T: DependencyComponent]:
     """A dependency on a DependencyComponent (with an optional config).
-
-    Category: **Dependency Classes**
 
     This class is used to request and access functionality provided
     by other DependencyComponent classes from a DependencyComponent class.
@@ -92,10 +88,7 @@ class Dependency(Generic[T]):
 
 
 class DependencyComponent:
-    """Base class for all classes that can act as or use dependencies.
-
-    Category: **Dependency Classes**
-    """
+    """Base class for all classes that can act as or use dependencies."""
 
     _dep_entry: weakref.ref[DependencyEntry]
 
@@ -127,7 +120,7 @@ class DependencyComponent:
         return []
 
 
-class DependencyEntry:
+class DependencyEntry[T: DependencyComponent]:
     """Data associated with a dep/config pair in bascenev1.DependencySet."""
 
     # def __del__(self) -> None:
@@ -170,10 +163,8 @@ class DependencyEntry:
         return component
 
 
-class DependencySet(Generic[T]):
+class DependencySet[T: DependencyComponent]:
     """Set of resolved dependencies and their associated data.
-
-    Category: **Dependency Classes**
 
     To use DependencyComponents, a set must be created, resolved, and then
     loaded. The DependencyComponents are only valid while the set remains
@@ -296,10 +287,7 @@ class DependencySet(Generic[T]):
 
 
 class AssetPackage(DependencyComponent):
-    """bascenev1.DependencyComponent representing a bundled package of assets.
-
-    Category: **Asset Classes**
-    """
+    """bascenev1.DependencyComponent representing a package of assets."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -430,9 +418,7 @@ def test_depset() -> None:
 
 
 class DependencyError(Exception):
-    """Exception raised when one or more bascenev1.Dependency items are missing.
-
-    Category: **Exception Classes**
+    """:class:`Exception` raised when bascenev1.Dependency items are missing.
 
     (this will generally be missing assets).
     """

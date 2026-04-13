@@ -30,7 +30,7 @@ class AppAdapterApple : public AppAdapter {
   void OnMainThreadStartApp() override;
 
   auto ManagesMainThreadEventLoop() const -> bool override;
-  void DoApplyAppConfig() override;
+  void ApplyAppConfig() override;
 
   /// Called by FromSwift.
   auto TryRender() -> bool;

@@ -117,8 +117,7 @@ void TextNode::SetText(const std::string& val) {
 
     if (do_format_check) {
       bool valid;
-      g_base->assets->CompileResourceString(val, "setText format check",
-                                            &valid);
+      g_base->assets->CompileResourceString(val, &valid);
       if (!valid) {
         BA_LOG_ONCE(
             LogName::kBa, LogLevel::kError,
@@ -354,8 +353,7 @@ void TextNode::Draw(base::FrameDef* frame_def) {
 
   // Apply subs/resources to get our actual text if need be.
   if (text_translation_dirty_) {
-    text_translated_ =
-        g_base->assets->CompileResourceString(text_raw_, "TextNode::OnDraw");
+    text_translated_ = g_base->assets->CompileResourceString(text_raw_);
     text_translation_dirty_ = false;
     text_group_dirty_ = true;
     text_width_dirty_ = true;

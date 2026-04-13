@@ -1,4 +1,5 @@
 # build/temp files
+src/external/discord_social_sdk
 Bin/
 build/
 build-server/
@@ -28,6 +29,7 @@ local.properties
 .clang-format
 .style.yapf
 .irony
+.claude/worktrees/
 PUBSYNC_IN_PROGRESS
 _fulltest_buildfile_*
 ballistica_files/

@@ -11,6 +11,9 @@
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_activity.h"
@@ -27,7 +30,7 @@ class GlobalsNodeType : public NodeType {
  public:
 #define BA_NODE_TYPE_CLASS GlobalsNode
   BA_NODE_CREATE_CALL(CreateGlobals);
-  BA_INT64_ATTR_READONLY(real_time, GetAppTimeMillisecs);
+  BA_INT64_ATTR_READONLY(real_time, AppTimeMillisecs);
   BA_INT64_ATTR_READONLY(time, GetTime);
   BA_INT64_ATTR_READONLY(step, GetStep);
   BA_FLOAT_ATTR(debris_friction, debris_friction, SetDebrisFriction);
@@ -112,9 +115,10 @@ GlobalsNode::GlobalsNode(Scene* scene) : Node(scene, node_type) {
   // FIXME: Need to update this for non-host activities at some point.
   if (HostActivity* ha = context_ref().GetHostActivity()) {
     if (ha->globals_node()) {
-      g_core->Log(LogName::kBa, LogLevel::kWarning,
-                  "More than one globals node created in HostActivity; this "
-                  "shouldn't happen");
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kWarning,
+          "More than one globals node created in HostActivity; this "
+          "shouldn't happen");
     }
     ha->SetGlobalsNode(this);
 
@@ -206,7 +210,7 @@ auto GlobalsNode::IsCurrentGlobals() const -> bool {
           && scene->globals_node() == this);
 }
 
-auto GlobalsNode::GetAppTimeMillisecs() -> millisecs_t {
+auto GlobalsNode::AppTimeMillisecs() -> millisecs_t {
   // Pull this from our scene so we return consistent values throughout a step.
   return scene()->last_step_real_time();
 }

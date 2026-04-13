@@ -158,26 +158,27 @@ class RendererGL::ProgramPostProcessGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      g_core->Log(LogName::kBaGraphics, LogLevel::kInfo,
-                  "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
+      g_core->logging->Log(
+          LogName::kBaGraphics, LogLevel::kInfo,
+          "\nVertex code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;
   }
 
   auto GetFragmentCode(int flags) -> std::string {
     std::string s;
-    s = "uniform " BA_GLSL_LOWP
+    s = "uniform " BA_GLSL_MEDIUMP
         "sampler2D colorTex;\n"
-        "uniform " BA_GLSL_LOWP
+        "uniform " BA_GLSL_MEDIUMP
         "sampler2D colorBlurredMoreTex;\n"
         "uniform " BA_GLSL_HIGHP "sampler2D depthTex;\n" BA_GLSL_FRAG_IN
         " " BA_GLSL_MEDIUMP
         "vec4 vScreenCoord;\n"
-        "uniform " BA_GLSL_LOWP "float dofRange[4];\n";
+        "uniform " BA_GLSL_MEDIUMP "float dofRange[4];\n";
     if (flags & (SHD_HIGHER_QUALITY | SHD_EYES)) {
-      s += "uniform " BA_GLSL_LOWP "sampler2D colorBlurredTex;\n";
+      s += "uniform " BA_GLSL_MEDIUMP "sampler2D colorBlurredTex;\n";
     }
     if (flags & SHD_EYES) {
-      s += "uniform " BA_GLSL_LOWP
+      s += "uniform " BA_GLSL_MEDIUMP
            "sampler2D colorSlightBlurredTex;\n" BA_GLSL_FRAG_IN
            " " BA_GLSL_HIGHP "float calcedDepth;\n";
     }
@@ -193,11 +194,11 @@ class RendererGL::ProgramPostProcessGL : public RendererGL::ProgramGL {
       // areas.
       s += "  if (depth > dofRange[1] && depth < dofRange[2]) {\n";
       if (flags & SHD_HIGHER_QUALITY) {
-        s += "   " BA_GLSL_LOWP "vec4 color = " BA_GLSL_TEXTURE2DPROJ
+        s += "   " BA_GLSL_MEDIUMP "vec4 color = " BA_GLSL_TEXTURE2DPROJ
              "(colorTex,vScreenCoord);\n"
-             "   " BA_GLSL_LOWP "vec4 colorBlurred = " BA_GLSL_TEXTURE2DPROJ
+             "   " BA_GLSL_MEDIUMP "vec4 colorBlurred = " BA_GLSL_TEXTURE2DPROJ
              "(colorBlurredTex,vScreenCoord);\n"
-             "   " BA_GLSL_LOWP
+             "   " BA_GLSL_MEDIUMP
              "vec4 colorBlurredMore = "
              "0.4*" BA_GLSL_TEXTURE2DPROJ
              "(colorBlurredMoreTex,vScreenCoord);\n"
@@ -214,9 +215,9 @@ class RendererGL::ProgramPostProcessGL : public RendererGL::ProgramGL {
       s += "   }\n"
            "   else if (depth < dofRange[0] || depth > dofRange[3]) {\n";
       if (flags & SHD_HIGHER_QUALITY) {
-        s += "   " BA_GLSL_LOWP "vec4 colorBlurred = " BA_GLSL_TEXTURE2DPROJ
+        s += "   " BA_GLSL_MEDIUMP "vec4 colorBlurred = " BA_GLSL_TEXTURE2DPROJ
              "(colorBlurredTex,vScreenCoord);\n"
-             "   " BA_GLSL_LOWP
+             "   " BA_GLSL_MEDIUMP
              "vec4 colorBlurredMore = "
              "0.4*" BA_GLSL_TEXTURE2DPROJ
              "(colorBlurredMoreTex,vScreenCoord);\n"
@@ -233,10 +234,10 @@ class RendererGL::ProgramPostProcessGL : public RendererGL::ProgramGL {
     }
 
     // Transition areas.
-    s += "   " BA_GLSL_LOWP "vec4 color = " BA_GLSL_TEXTURE2DPROJ
+    s += "   " BA_GLSL_MEDIUMP "vec4 color = " BA_GLSL_TEXTURE2DPROJ
          "(colorTex,vScreenCoord);\n";
     if (flags & SHD_EYES)
-      s += "   " BA_GLSL_LOWP
+      s += "   " BA_GLSL_MEDIUMP
            "vec4 colorSlightBlurred = "
            "" BA_GLSL_TEXTURE2DPROJ "(colorSlightBlurredTex,vScreenCoord);\n";
 
@@ -249,9 +250,9 @@ class RendererGL::ProgramPostProcessGL : public RendererGL::ProgramGL {
     // #endif
 
     if (flags & (SHD_HIGHER_QUALITY | SHD_EYES)) {
-      s += "   " BA_GLSL_LOWP "vec4 colorBlurred = " BA_GLSL_TEXTURE2DPROJ
+      s += "   " BA_GLSL_MEDIUMP "vec4 colorBlurred = " BA_GLSL_TEXTURE2DPROJ
            "(colorBlurredTex,vScreenCoord);\n"
-           "   " BA_GLSL_LOWP
+           "   " BA_GLSL_MEDIUMP
            "vec4 colorBlurredMore = "
            "0.4*" BA_GLSL_TEXTURE2DPROJ
            "(colorBlurredMoreTex,vScreenCoord);\n"
@@ -266,7 +267,7 @@ class RendererGL::ProgramPostProcessGL : public RendererGL::ProgramGL {
            " = (0.55*colorBlurredMore) + "
            "(0.62+colorBlurredMore)*mix(color-diff,colorBlurred,blur);\n\n";
     } else {
-      s += "   " BA_GLSL_LOWP
+      s += "   " BA_GLSL_MEDIUMP
            "vec4 colorBlurredMore = "
            "" BA_GLSL_TEXTURE2DPROJ
            "(colorBlurredMoreTex,vScreenCoord);\n"
@@ -282,10 +283,10 @@ class RendererGL::ProgramPostProcessGL : public RendererGL::ProgramGL {
     if (flags & SHD_EYES) {
       s += "   " BA_GLSL_MEDIUMP "vec4 diffEye = colorBlurred-color;\n";
       s += "    diffEye = sign(diffEye) * max(vec4(0.0),abs(diffEye)-0.06);\n";
-      s += "   " BA_GLSL_LOWP
+      s += "   " BA_GLSL_MEDIUMP
            "vec4 baseColorEye = "
            "mix(color-10.0*(diffEye),colorSlightBlurred,0.83);\n";
-      s += "   " BA_GLSL_LOWP
+      s += "   " BA_GLSL_MEDIUMP
            "vec4 eyeColor = (0.55*colorBlurredMore) + "
            "(0.62+colorBlurredMore)*mix(baseColorEye,colorBlurred,blur);\n\n";
       s += "   " BA_GLSL_LOWP
@@ -306,7 +307,7 @@ class RendererGL::ProgramPostProcessGL : public RendererGL::ProgramGL {
     s += "}";
 
     if (flags & SHD_DEBUG_PRINT)
-      g_core->Log(
+      g_core->logging->Log(
           LogName::kBaGraphics, LogLevel::kInfo,
           "\nFragment code for shader '" + GetName(flags) + "':\n\n" + s);
     return s;

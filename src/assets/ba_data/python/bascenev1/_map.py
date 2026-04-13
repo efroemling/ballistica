@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Map related functionality."""
+
 from __future__ import annotations
 
 import random
@@ -20,8 +21,6 @@ if TYPE_CHECKING:
 def get_filtered_map_name(name: str) -> str:
     """Filter a map name to account for name changes, etc.
 
-    Category: **Asset Functions**
-
     This can be used to support old playlists, etc.
     """
     # Some legacy name fallbacks... can remove these eventually.
@@ -33,18 +32,12 @@ def get_filtered_map_name(name: str) -> str:
 
 
 def get_map_display_string(name: str) -> babase.Lstr:
-    """Return a babase.Lstr for displaying a given map\'s name.
-
-    Category: **Asset Functions**
-    """
+    """Return a babase.Lstr for displaying a given map's name."""
     return babase.Lstr(translate=('mapsNames', name))
 
 
 def get_map_class(name: str) -> type[Map]:
-    """Return a map type given a name.
-
-    Category: **Asset Functions**
-    """
+    """Return a map type given a name."""
     assert babase.app.classic is not None
     name = get_filtered_map_name(name)
     try:
@@ -56,8 +49,6 @@ def get_map_class(name: str) -> type[Map]:
 
 class Map(Actor):
     """A game map.
-
-    Category: **Gameplay Classes**
 
     Consists of a collection of terrain nodes, metadata, and other
     functionality comprising a game map.
@@ -343,7 +334,7 @@ class Map(Actor):
     ) -> Sequence[float]:
         """Return a flag position on the map for the given team index.
 
-        Pass None to get the default flag point.
+        Pass ``None`` to get the default flag point.
         (used for things such as king-of-the-hill)
         """
         if team_index is None:

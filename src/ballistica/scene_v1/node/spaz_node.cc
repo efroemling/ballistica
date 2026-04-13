@@ -27,6 +27,7 @@
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
 #include "ode/ode_collision_util.h"
@@ -116,6 +117,7 @@ const float kHairPonytailBottomAngularDamping = 0.000001f;
 
 const int kPunchDuration = 35;
 const int kPickupCooldown = 40;
+const int kPickupHitboxDelay = 4;
 
 const float kWingAttachX = 0.3f;
 const float kWingAttachY = 0.0f;
@@ -504,6 +506,7 @@ class SpazNodeType : public NodeType {
   BA_FLOAT_ATTR(move_up_down, move_up_down, SetMoveUpDown);
   BA_BOOL_ATTR(demo_mode, demo_mode, set_demo_mode);
   BA_INT_ATTR(behavior_version, behavior_version, set_behavior_version);
+  BA_BOOL_ATTR_READONLY(pickup_before_hitbox, get_pickup_before_hitbox);
 #undef BA_NODE_TYPE_CLASS
 
   SpazNodeType()
@@ -587,7 +590,8 @@ class SpazNodeType : public NodeType {
         move_left_right(this),
         move_up_down(this),
         demo_mode(this),
-        behavior_version(this) {}
+        behavior_version(this),
+        pickup_before_hitbox(this) {}
 };
 
 static NodeType* node_type{};
@@ -938,8 +942,10 @@ void SpazNode::SetPickupPressed(bool val) {
     if (holding_something_) {
       Throw(false);
     } else {
-      if ((pickup_ == 0) && (!knockout_) && (!frozen_))
-        pickup_ = kPickupCooldown + 4;
+      if ((pickup_ == 0) && (!knockout_) && (!frozen_)) {
+        pickup_ = kPickupCooldown + kPickupHitboxDelay;
+        pickup_before_hitbox_ = true;
+      }
     }
   } else {
     // Release
@@ -1020,6 +1026,12 @@ void SpazNode::SetPunchPressed(bool val) {
     if (holding_something_) {
       Throw(false);
     } else {
+      // Do not punch before grab hitbox comes out, if it's coming
+      if (behavior_version_ >= 2
+          && (pickup_ >= kPickupCooldown - kPickupHitboxDelay)) {
+        return;
+      }
+
       if (!holding_something_ && (!knockout_) && (!frozen_)) {
         punch_ = kPunchDuration;
 
@@ -1797,7 +1809,7 @@ void SpazNode::DoFlyPress() {
 
     // Keep from doing too many sparkles.
     static millisecs_t last_sparkle_time = 0;
-    millisecs_t t = g_core->GetAppTimeMillisecs();
+    millisecs_t t = g_core->AppTimeMillisecs();
     if (t - last_sparkle_time > 200) {
       last_sparkle_time = t;
       auto* s = g_base->audio->SourceBeginNew();
@@ -3834,8 +3846,9 @@ void SpazNode::Step() {
     if (!holding_something_ && hold_node_.exists()) hold_node_.Clear();
   }
 
-  if (pickup_ == kPickupCooldown - 4) {
+  if (pickup_ == kPickupCooldown - kPickupHitboxDelay) {
     if (!body_pickup_.exists()) {
+      pickup_before_hitbox_ = false;
       body_pickup_ = Object::New<RigidBody>(
           kPickupBodyID, &pickup_part_, RigidBody::Type::kGeomOnly,
           RigidBody::Shape::kSphere, RigidBody::kCollideRegion,
@@ -4518,7 +4531,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     UpdateForGraphicsQuality(graphics_quality_);
   }
 
-#if BA_OSTYPE_MACOS
+#if BA_PLATFORM_MACOS
   if (g_base->graphics_server->renderer()->debug_draw_mode()) {
     base::SimpleComponent c(frame_def->overlay_3d_pass());
     c.SetTransparent(true);
@@ -4643,7 +4656,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
 
     c.Submit();
   }
-#endif  // BA_OSTYPE_MACOS
+#endif  // BA_PLATFORM_MACOS
 
   millisecs_t scenetime = scene()->time();
   int64_t render_frame_count = frame_def->frame_number_filtered();
@@ -4974,8 +4987,9 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
 
       int elem_count = name_text_group_.GetElementCount();
       float s_extra =
-          (g_core->vr_mode() || g_base->ui->scale() == UIScale::kSmall) ? 1.2f
-                                                                        : 1.0f;
+          (g_core->vr_mode() || g_base->ui->uiscale() == UIScale::kSmall)
+              ? 1.2f
+              : 1.0f;
 
       for (int e = 0; e < elem_count; e++) {
         // Gracefully skip unloaded textures.
@@ -5977,8 +5991,9 @@ auto SpazNode::GetRigidBody(int id) -> RigidBody* {
       return hair_ponytail_bottom_body_.get();
       break;
     default:
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "Request for unknown spaz body: " + std::to_string(id));
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kError,
+          "Request for unknown spaz body: " + std::to_string(id));
       break;
   }
 
@@ -6698,30 +6713,31 @@ void SpazNode::SetHoldNode(Node* val) {
         assert(dynamics);
         Collision* c = dynamics->active_collision();
         if (c) {
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBa, LogLevel::kError,
               "SRC NODE: " + ObjToString(dynamics->GetActiveCollideSrcNode()));
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBa, LogLevel::kError,
               "OPP NODE: " + ObjToString(dynamics->GetActiveCollideDstNode()));
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBa, LogLevel::kError,
               "SRC BODY "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()
                                        ? c->body_id_1
                                        : c->body_id_2));
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBa, LogLevel::kError,
               "OPP BODY "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()
                                        ? c->body_id_2
                                        : c->body_id_1));
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBa, LogLevel::kError,
               "REVERSE "
                   + std::to_string(dynamics->GetCollideMessageReverseOrder()));
         } else {
-          g_core->Log(LogName::kBa, LogLevel::kError, "<NO ACTIVE COLLISION>");
+          g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                               "<NO ACTIVE COLLISION>");
         }
       }
       throw Exception("specified hold_body (" + std::to_string(hold_body_)

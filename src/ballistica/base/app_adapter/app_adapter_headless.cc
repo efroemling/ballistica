@@ -5,6 +5,7 @@
 
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/graphics/support/graphics_client_context.h"
+#include "ballistica/core/core.h"
 #include "ballistica/shared/ballistica.h"
 
 namespace ballistica::base {
@@ -20,7 +21,7 @@ void AppAdapterHeadless::OnMainThreadStartApp() {
       new EventLoop(EventLoopID::kMain, ThreadSource::kWrapCurrent);
 }
 
-void AppAdapterHeadless::DoApplyAppConfig() {}
+void AppAdapterHeadless::ApplyAppConfig() {}
 
 void AppAdapterHeadless::RunMainThreadEventLoopToCompletion() {
   assert(g_core->InMainThread());

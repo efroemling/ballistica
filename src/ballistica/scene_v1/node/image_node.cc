@@ -318,13 +318,13 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
 
     // If we're fullscreen and are tilting, crank our dimensions up
     // slightly to account for tiltage.
-#if BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
+#if BA_PLATFORM_IOS_TVOS || BA_PLATFORM_ANDROID
     if (fill_screen_) {
       float s = 1.0f - tilt_translate_ * 0.2f;
       fin_width *= s;
       fin_height *= s;
     }
-#endif  // BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
+#endif  // BA_PLATFORM_IOS_TVOS || BA_PLATFORM_ANDROID
   }
 
   bool has_alpha_channel = has_alpha_channel_;

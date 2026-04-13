@@ -3,28 +3,31 @@
 #include "ballistica/scene_v1/support/client_session_net.h"
 
 #include <algorithm>
+#include <memory>
 #include <vector>
 
-#include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/net_graph.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
+#include "ballistica/scene_v1/support/replay_writer.h"
 
 namespace ballistica::scene_v1 {
 
 ClientSessionNet::ClientSessionNet() {
   // Sanity check: we should only ever be writing one replay at once.
   if (g_scene_v1->replay_open) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "g_scene_v1->replay_open true at netclient start;"
-                " shouldn't happen.");
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                         "g_scene_v1->replay_open true at netclient start;"
+                         " shouldn't happen.");
   }
   assert(g_base->assets_server);
 
   // We always write replays as the highest protocol version we support.
-  g_base->assets_server->PushBeginWriteReplayCall(kProtocolVersionMax);
+  replay_writer_ = new ReplayWriter;
   writing_replay_ = true;
   g_scene_v1->replay_open = true;
 }
@@ -33,13 +36,14 @@ ClientSessionNet::~ClientSessionNet() {
   if (writing_replay_) {
     // Sanity check: we should only ever be writing one replay at once.
     if (!g_scene_v1->replay_open) {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                  "g_scene_v1->replay_open false at net-client close;"
-                  " shouldn't happen.");
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "g_scene_v1->replay_open false at net-client close;"
+                           " shouldn't happen.");
     }
     g_scene_v1->replay_open = false;
     assert(g_base->assets_server);
-    g_base->assets_server->PushEndWriteReplayCall();
+    replay_writer_->Finish();
+    replay_writer_ = nullptr;
     writing_replay_ = false;
   }
 }
@@ -52,7 +56,7 @@ void ClientSessionNet::OnCommandBufferUnderrun() {
   // We currently don't do anything here; we want to just power
   // through hitches and keep aiming for our target time.
   // (though perhaps we could take note here for analytics purposes).
-  // printf("Underrun at %d\n", GetAppTimeMillisecs());
+  // printf("Underrun at %d\n", AppTimeMillisecs());
   // fflush(stdout);
 }
 
@@ -100,7 +104,7 @@ void ClientSessionNet::UpdateBuffering() {
           + (1.0f - smoothing)
                 * static_cast<float>(bucket.max_delay_from_projection);
     }
-    auto now = g_core->GetAppTimeMillisecs();
+    auto now = g_core->AppTimeMillisecs();
 
     // We want target-base-time to wind up at our projected time minus some
     // safety offset to account for buffering fluctuations.
@@ -160,7 +164,7 @@ void ClientSessionNet::OnReset(bool rewind) {
 }
 
 void ClientSessionNet::OnBaseTimeStepAdded(int step) {
-  auto now = g_core->GetAppTimeMillisecs();
+  auto now = g_core->AppTimeMillisecs();
 
   millisecs_t new_base_time_received = base_time_received_ + step;
 
@@ -209,7 +213,8 @@ void ClientSessionNet::HandleSessionMessage(
 
   if (writing_replay_) {
     assert(g_base->assets_server);
-    g_base->assets_server->PushAddMessageToReplayCall(message);
+    assert(replay_writer_);
+    replay_writer_->PushAddMessageToReplayCall(message);
   }
 }
 

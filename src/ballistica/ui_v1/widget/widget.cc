@@ -2,19 +2,30 @@
 
 #include "ballistica/ui_v1/widget/widget.h"
 
+#include <string>
 #include <vector>
 
 #include "ballistica/base/python/support/python_context_call.h"
-#include "ballistica/base/ui/ui.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/ui_v1/python/class/python_class_widget.h"
 #include "ballistica/ui_v1/widget/container_widget.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 namespace ballistica::ui_v1 {
 
-Widget::Widget() = default;
+Widget::Widget() : source_location_{Python::PythonFileLocation()} {}
 
 Widget::~Widget() {
+  assert(g_base->InLogicThread());
+
+  if (in_hierarchy_) {
+    if (id().has_value()) {
+      g_ui_v1->UnregisterWidgetID(*id(), this);
+    }
+    in_hierarchy_ = false;
+  }
+
   // Release our ref to ourself if we have one.
   if (py_ref_) {
     Py_DECREF(py_ref_);
@@ -23,12 +34,20 @@ Widget::~Widget() {
   auto on_delete_calls = on_delete_calls_;
   for (auto&& i : on_delete_calls) {
     i->ScheduleInUIOperation();
-    // i->Run();
   }
 }
 
 void Widget::SetToolbarVisibility(ToolbarVisibility v) {
   toolbar_visibility_ = v;
+  // Most widgets can never influence the global toolbar so we can
+  // do a quick out.
+  if (parent_widget_ != nullptr && parent_widget_->is_window_stack()) {
+    g_ui_v1->root_widget()->UpdateForFocusedWindow();
+  }
+}
+
+void Widget::SetToolbarCancelButtonStyle(ToolbarCancelButtonStyle s) {
+  toolbar_cancel_button_style_ = s;
   // Most widgets can never influence the global toolbar so we can
   // do a quick out.
   if (parent_widget_ != nullptr && parent_widget_->is_window_stack()) {
@@ -86,6 +105,7 @@ void Widget::SetSelected(bool s, SelectionCause cause) {
 }
 
 auto Widget::IsHierarchySelected() const -> bool {
+  assert(g_base->InLogicThread());
   const Widget* p = this;
   while (true) {
     if (!p->selected()) {
@@ -108,6 +128,7 @@ void Widget::AddOnDeleteCall(PyObject* call_obj) {
 }
 
 void Widget::GlobalSelect() {
+  assert(g_base->InLogicThread());
   Widget* w = this;
   ContainerWidget* c = parent_widget();
   if (!c) {
@@ -123,7 +144,8 @@ void Widget::GlobalSelect() {
   }
 }
 
-void Widget::Show() {
+void Widget::ScrollIntoView() {
+  assert(g_base->InLogicThread());
   Widget* w = this;
   ContainerWidget* c = parent_widget();
   if (!c) {
@@ -166,7 +188,7 @@ auto Widget::GetDrawBrightness(millisecs_t current_time) const -> float {
 }
 
 void Widget::ScreenPointToWidget(float* x, float* y) const {
-#if BA_DEBUG_BUILD || BA_TEST_BUILD
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   float x_old = *x;
   float y_old = *y;
 #endif
@@ -188,18 +210,18 @@ void Widget::ScreenPointToWidget(float* x, float* y) const {
   }
 
   // Sanity test: do the reverse and make sure it comes out the same.
-#if BA_DEBUG_BUILD || BA_TEST_BUILD
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
   float x_test = *x;
   float y_test = *y;
   WidgetPointToScreen(&x_test, &y_test);
   if (std::abs(x_test - x_old) > 0.01f || std::abs(y_test - y_old) > 0.01f) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "ScreenPointToWidget sanity check error: expected ("
-                    + std::to_string(x_old) + "," + std::to_string(y_old)
-                    + ") got (" + std::to_string(x_test) + ","
-                    + std::to_string(y_test) + ")");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "ScreenPointToWidget sanity check error: expected ("
+            + std::to_string(x_old) + "," + std::to_string(y_old) + ") got ("
+            + std::to_string(x_test) + "," + std::to_string(y_test) + ")");
   }
-#endif  // BA_DEBUG_BUILD || BA_TEST_BUILD
+#endif  // BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
 }
 
 auto Widget::GetPyWidget_(bool new_ref) -> PyObject* {
@@ -252,6 +274,19 @@ void Widget::SetUpWidget(Widget* w) {
 void Widget::SetDownWidget(Widget* w) {
   BA_PRECONDITION(!neighbors_locked_);
   down_widget_ = w;
+}
+
+void Widget::SetID(const std::string& id) {
+  // It is caller's responsibility to only call us once before we are
+  // added to a parent widget.
+  assert(!id_.has_value());
+  assert(!in_hierarchy_);
+
+  // Validate IDs. UPDATE: Not validating IDs anymore. We have no structure
+  // to our IDs (path dividers, etc) so its easiest to just allow anything
+  // so we don't have to be careful when constructing ids.
+
+  id_ = id;
 }
 
 }  // namespace ballistica::ui_v1

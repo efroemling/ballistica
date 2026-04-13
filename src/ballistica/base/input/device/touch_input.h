@@ -24,12 +24,12 @@ class TouchInput : public InputDevice {
   void set_editing(bool e) { editing_ = e; }
   auto editing() const -> bool { return editing_; }
   auto IsTouchScreen() -> bool override { return true; }
-  void UpdateMapping() override;
+  void ApplyAppConfig() override;
   enum class MovementControlType { kJoystick, kSwipe };
   enum class ActionControlType { kButtons, kSwipe };
 
  protected:
-  auto GetRawDeviceName() -> std::string override;
+  auto DoGetDeviceName() -> std::string override;
 
  private:
   void UpdateDPad();

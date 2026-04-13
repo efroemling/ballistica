@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Snippets of code for use by the c++ layer."""
+
 # (most of these are self-explanatory)
 # pylint: disable=missing-function-docstring
 from __future__ import annotations
@@ -63,6 +64,12 @@ def root_ui_store_button_press() -> None:
     _root_ui_button_press(UIV1AppSubsystem.RootUIElement.STORE_BUTTON)
 
 
+def root_ui_chest_slot_0_press() -> None:
+    from bauiv1._appsubsystem import UIV1AppSubsystem
+
+    _root_ui_button_press(UIV1AppSubsystem.RootUIElement.CHEST_SLOT_0)
+
+
 def root_ui_chest_slot_1_press() -> None:
     from bauiv1._appsubsystem import UIV1AppSubsystem
 
@@ -79,12 +86,6 @@ def root_ui_chest_slot_3_press() -> None:
     from bauiv1._appsubsystem import UIV1AppSubsystem
 
     _root_ui_button_press(UIV1AppSubsystem.RootUIElement.CHEST_SLOT_3)
-
-
-def root_ui_chest_slot_4_press() -> None:
-    from bauiv1._appsubsystem import UIV1AppSubsystem
-
-    _root_ui_button_press(UIV1AppSubsystem.RootUIElement.CHEST_SLOT_4)
 
 
 def root_ui_inventory_button_press() -> None:
@@ -149,16 +150,6 @@ def quit_window(quit_type: babase.QuitType) -> None:
         return
 
     app.classic.quit_window(quit_type)
-
-
-def device_menu_press(device_id: int | None) -> None:
-    from babase import app
-
-    if app.classic is None:
-        logging.exception('Classic not present.')
-        return
-
-    app.classic.device_menu_press(device_id)
 
 
 def show_url_window(address: str) -> None:

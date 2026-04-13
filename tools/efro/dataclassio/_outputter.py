@@ -19,8 +19,9 @@ from typing import TYPE_CHECKING, cast, Any
 from efro.util import check_utc
 from efro.dataclassio._base import (
     Codec,
-    _parse_annotated,
+    parse_annotated,
     EXTRA_ATTRS_ATTR,
+    LOSSY_ATTR,
     _is_valid_for_codec,
     _get_origin,
     SIMPLE_TYPES,
@@ -61,6 +62,14 @@ class _Outputter:
         # isinstance call below fails.
         assert dataclasses.is_dataclass(self._obj)
 
+        # If this data has been flagged as lossy, don't allow outputting
+        # it. This hopefully helps avoid unintentional data
+        # modification/loss.
+        if getattr(obj, LOSSY_ATTR, False):
+            raise ValueError(
+                'Object has been flagged as lossy; output is disallowed.'
+            )
+
         # For special extended data types, call their 'will_output' callback.
         # FIXME - should probably move this into _process_dataclass so it
         # can work on nested values.
@@ -82,9 +91,7 @@ class _Outputter:
         )
 
     def _process_dataclass(self, cls: type, obj: Any, fieldpath: str) -> Any:
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         prep = PrepSession(explicit=False).prep_dataclass(
             type(obj), recursion_level=0
         )
@@ -100,7 +107,7 @@ class _Outputter:
             anntype = prep.annotations[fieldname]
             value = getattr(obj, fieldname)
 
-            anntype, ioattrs = _parse_annotated(anntype)
+            anntype, ioattrs = parse_annotated(anntype)
 
             # If we're not storing default values for this fella,
             # we can skip all output processing if we've got a default value.
@@ -136,11 +143,12 @@ class _Outputter:
             )
             if self._create:
                 assert out is not None
-                storagename = (
-                    fieldname
-                    if (ioattrs is None or ioattrs.storagename is None)
-                    else ioattrs.storagename
-                )
+                if self._codec is Codec.HUMAN:
+                    storagename = fieldname.replace('_', ' ')
+                elif ioattrs is None or ioattrs.storagename is None:
+                    storagename = fieldname
+                else:
+                    storagename = ioattrs.storagename
                 out[storagename] = outvalue
 
         # If there's extra-attrs stored on us, check/include them.
@@ -164,13 +172,13 @@ class _Outputter:
             # Sanity checks; make sure looking up this id gets us this
             # type.
             assert isinstance(type_id.value, str)
-            if obj.get_type(type_id) is not type(obj):
+            if obj.get_type_cached(type_id) is not type(obj):
                 raise RuntimeError(
                     f'dataclassio: object of type {type(obj)}'
                     f' gives type-id {type_id} but that id gives type'
-                    f' {obj.get_type(type_id)}. Something is out of sync.'
+                    f' {obj.get_type_cached(type_id)}.'
+                    f' Something is out of sync.'
                 )
-            assert obj.get_type(type_id) is type(obj)
             if self._create:
                 assert out is not None
                 storagename = obj.get_type_id_storage_name()
@@ -181,7 +189,13 @@ class _Outputter:
                         f' the type-id-storage-name of the IOMulticlass'
                         f' it inherits from.'
                     )
-                out[storagename] = type_id.value
+                if self._codec is Codec.HUMAN:
+                    storagename = storagename.replace('_', ' ')
+                out[storagename] = (
+                    type_id.name.lower().replace('_', ' ')
+                    if self._codec is Codec.HUMAN
+                    else type_id.value
+                )
 
         return out
 
@@ -193,10 +207,10 @@ class _Outputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
+        # pylint: disable=too-many-statements
         # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
 
         origin = _get_origin(anntype)
 
@@ -297,7 +311,11 @@ class _Outputter:
             childanntype = childanntypes[0]
 
             # If that type is a multi-type, we determine our type per-object.
-            if issubclass(childanntype, IOMultiType):
+            # Make sure we only pass actual types to issubclass; it will error
+            # if we give it something like typing.Any.
+            if isinstance(childanntype, type) and issubclass(
+                childanntype, IOMultiType
+            ):
                 # In the multi-type case, we use each object's own type
                 # to do its conversion, but lets at least make sure each
                 # of those types inherits from the annotated multi-type
@@ -441,8 +459,17 @@ class _Outputter:
                 )
             # At prep-time we verified that these enums had valid value
             # types, so we can blindly return it here.
-            return value.value if self._create else None
+            if self._create:
+                return (
+                    value.name.lower().replace('_', ' ')
+                    if self._codec is Codec.HUMAN
+                    else value.value
+                )
+            return None
 
+        # IMPORTANT: datetime.datetime is a subclass of datetime.date, so the
+        # datetime.datetime check MUST come before the datetime.date check
+        # below.
         if issubclass(origin, datetime.datetime):
             if not isinstance(value, origin):
                 raise TypeError(
@@ -452,9 +479,28 @@ class _Outputter:
             check_utc(value)
             if ioattrs is not None:
                 ioattrs.validate_datetime(value, fieldpath)
+                time_format = ioattrs.time_format
+            else:
+                time_format = 'ints'
             if self._codec is Codec.FIRESTORE:
                 return value
+            if self._codec is Codec.HUMAN:
+                return (
+                    value.isoformat().replace('+00:00', 'Z')
+                    if self._create
+                    else None
+                )
             assert self._codec is Codec.JSON
+
+            if time_format == 'float':
+                return value.timestamp() if self._create else None
+            if time_format == 'iso':
+                return (
+                    value.isoformat().replace('+00:00', 'Z')
+                    if self._create
+                    else None
+                )
+            # Default 'ints': lossless list of ints.
             return (
                 [
                     value.year,
@@ -474,11 +520,36 @@ class _Outputter:
                     f'Expected a {origin} for {fieldpath};'
                     f' found a {type(value)}.'
                 )
+            if ioattrs is not None:
+                time_format = ioattrs.time_format
+            else:
+                time_format = 'ints'
+
+            if time_format == 'float':
+                return value.total_seconds() if self._create else None
+            if self._codec is Codec.HUMAN:
+                return str(value) if self._create else None
+            # Default 'ints' ('iso' is rejected at prep time).
             return (
                 [value.days, value.seconds, value.microseconds]
                 if self._create
                 else None
             )
+
+        # Note: the datetime.datetime check above must precede this since
+        # datetime.datetime is a subclass of datetime.date.
+        if issubclass(origin, datetime.date) and not issubclass(
+            origin, datetime.datetime
+        ):
+            if not isinstance(value, datetime.date):
+                raise TypeError(
+                    f'Expected a datetime.date for {fieldpath};'
+                    f' found a {type(value)}.'
+                )
+            # Always serialize as ISO 8601 date string: YYYY-MM-DD.
+            # Both JSON and Firestore codecs use this format since
+            # Firestore has no native date-only type.
+            return value.isoformat() if self._create else None
 
         if origin is bytes:
             return self._process_bytes(cls, fieldpath, value)
@@ -499,8 +570,9 @@ class _Outputter:
         if not self._create:
             return None
 
-        # In JSON we convert to base64, but firestore directly supports bytes.
-        if self._codec is Codec.JSON:
+        # In JSON/HUMAN we convert to base64, but firestore directly
+        # supports bytes.
+        if self._codec in (Codec.JSON, Codec.HUMAN):
             return base64.b64encode(value).decode()
 
         assert self._codec is Codec.FIRESTORE
@@ -530,7 +602,7 @@ class _Outputter:
                 value, self._codec
             ):
                 raise TypeError(
-                    f'Invalid value for Dict[Any, Any]'
+                    f'Invalid value for dict[Any, Any]'
                     f' at \'{fieldpath}\' on {cls.__name__};'
                     f' all keys and values must be directly compatible'
                     f' with the specified codec ({self._codec.name})'

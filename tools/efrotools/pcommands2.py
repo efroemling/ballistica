@@ -6,6 +6,7 @@ A snippet is a mini-program that directly takes input from stdin and does
 some focused task. This module is a repository of common snippets that can
 be imported into projects' pcommand script for easy reuse.
 """
+
 from __future__ import annotations
 
 import sys
@@ -24,8 +25,6 @@ def with_build_lock() -> None:
 
     import subprocess
 
-    pcommand.disallow_in_batch()
-
     args = sys.argv[2:]
     if len(args) < 2:
         raise CleanError(
@@ -39,8 +38,6 @@ def sortlines() -> None:
     """Sort provided lines. For tidying import lists, etc."""
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 arg.')
     val = sys.argv[2]
@@ -48,12 +45,10 @@ def sortlines() -> None:
     print('\n'.join(sorted(lines, key=lambda l: l.lower())))
 
 
-def openal_build_android() -> None:
+def openal_android_build() -> None:
     """Build openalsoft for android."""
     from efro.error import CleanError
-    from efrotools.openalbuild import build_openal
-
-    pcommand.disallow_in_batch()
+    from efrotools.openalbuildandroid import build_openal
 
     args = sys.argv[2:]
     if len(args) != 2:
@@ -65,12 +60,24 @@ def openal_build_android() -> None:
     build_openal(args[0], args[1])
 
 
-def openal_gather() -> None:
+def openal_mac_build() -> None:
+    """Build openalsoft for mac."""
+    from efrotools.openalbuildapple import build_openal_mac
+
+    build_openal_mac()
+
+
+def openal_mac_gather() -> None:
+    """Gather openalsoft for mac."""
+    from efrotools.openalbuildapple import gather_openal_mac
+
+    gather_openal_mac()
+
+
+def openal_android_gather() -> None:
     """Gather built opealsoft libs into src."""
     from efro.error import CleanError
-    from efrotools.openalbuild import gather
-
-    pcommand.disallow_in_batch()
+    from efrotools.openalbuildandroid import gather
 
     args = sys.argv[2:]
     if args:
@@ -86,8 +93,6 @@ def pyright() -> None:
     from efro.terminal import Clr
 
     from efro.error import CleanError
-
-    pcommand.disallow_in_batch()
 
     print(f'{Clr.BLU}Running Pyright (experimental)...{Clr.RST}')
     try:
@@ -106,8 +111,6 @@ def build_pcommandbatch() -> None:
 
     import efrotools.pcommandbatch as pcb
 
-    pcommand.disallow_in_batch()
-
     args = pcommand.get_args()
     if len(args) < 2:
         raise CleanError('Expected at least 2 args.')
@@ -124,8 +127,6 @@ def batchserver() -> None:
     from efro.util import extract_arg
 
     import efrotools.pcommandbatch as pcb
-
-    pcommand.disallow_in_batch()
 
     args = pcommand.get_args()
 
@@ -145,7 +146,6 @@ def batchserver() -> None:
 
 def pcommandbatch_speed_test() -> None:
     """Test batch mode speeds."""
-    # pylint: disable=too-many-locals
 
     import time
     import subprocess

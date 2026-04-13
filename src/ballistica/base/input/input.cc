@@ -18,7 +18,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -35,8 +35,9 @@ void Input::PushCreateKeyboardInputDevices() {
 void Input::CreateKeyboardInputDevices_() {
   assert(g_base->InLogicThread());
   if (keyboard_input_ != nullptr || keyboard_input_2_ != nullptr) {
-    g_core->Log(LogName::kBaInput, LogLevel::kError,
-                "CreateKeyboardInputDevices called with existing kbs.");
+    g_core->logging->Log(
+        LogName::kBaInput, LogLevel::kError,
+        "CreateKeyboardInputDevices called with existing kbs.");
     return;
   }
   keyboard_input_ = Object::NewDeferred<KeyboardInput>(nullptr);
@@ -54,8 +55,8 @@ void Input::PushDestroyKeyboardInputDevices() {
 void Input::DestroyKeyboardInputDevices_() {
   assert(g_base->InLogicThread());
   if (keyboard_input_ == nullptr || keyboard_input_2_ == nullptr) {
-    g_core->Log(LogName::kBaInput, LogLevel::kError,
-                "DestroyKeyboardInputDevices called with null kb(s).");
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kError,
+                         "DestroyKeyboardInputDevices called with null kb(s).");
     return;
   }
   RemoveInputDevice(keyboard_input_, false);
@@ -83,68 +84,47 @@ auto Input::GetInputDevice(const std::string& name,
   return nullptr;
 }
 
-auto Input::GetNewNumberedIdentifier_(const std::string& name,
-                                      const std::string& identifier) -> int {
+auto Input::GetFuzzyInputDeviceForEscapeKey() -> InputDevice* {
   assert(g_base->InLogicThread());
 
-  // Stuff like reserved_identifiers["JoyStickType"]["0x812312314"] = 2;
-
-  // First off, if we came with an identifier, see if we've got a reserved
-  // number already.
-  if (!identifier.empty()) {
-    auto i = reserved_identifiers_.find(name);
-    if (i != reserved_identifiers_.end()) {
-      auto j = i->second.find(identifier);
-      if (j != i->second.end()) {
-        return j->second;
-      }
-    }
+  auto* pdevice = GetFuzzyInputDevice_();
+  if (pdevice) {
+    return pdevice;
   }
+  return keyboard_input_;
+}
+
+auto Input::GetFuzzyInputDeviceForMenuButton() -> InputDevice* {
+  assert(g_base->InLogicThread());
+
+  auto* pdevice = GetFuzzyInputDevice_();
+  if (pdevice) {
+    return pdevice;
+  }
+  return touch_input_;
+}
+
+auto Input::GetNewNumberedIdentifier_(const std::string& name) -> int {
+  assert(g_base->InLogicThread());
 
   int num = 1;
   int full_id;
   while (true) {
     bool in_use = false;
 
-    // Scan other devices with the same device-name and find the first number
-    // suffix that's not taken.
+    // Scan other devices with the same device-name and find the first
+    // number suffix that's not taken.
     for (auto&& i : input_devices_) {
       if (i.exists()) {
-        if ((i->GetRawDeviceName() == name) && i->number() == num) {
+        if ((i->DoGetDeviceName() == name) && i->number() == num) {
           in_use = true;
           break;
         }
       }
     }
     if (!in_use) {
-      // Ok so far its unused.. however input devices that provide non-empty
-      // identifiers (serial number, usb-id, etc) reserve their number for
-      // the duration of the game, so we need to check against all reserved
-      // numbers so we don't steal someones... (so that if they disconnect
-      // and reconnect they'll get the same number and thus the same name,
-      // etc)
-      if (!identifier.empty()) {
-        auto i = reserved_identifiers_.find(name);
-        if (i != reserved_identifiers_.end()) {
-          for (auto&& j : i->second) {
-            if (j.second == num) {
-              in_use = true;
-              break;
-            }
-          }
-        }
-      }
-
-      // If its *still* clear lets nab it.
-      if (!in_use) {
-        full_id = num;
-
-        // If we have an identifier, reserve it.
-        if (!identifier.empty()) {
-          reserved_identifiers_[name][identifier] = num;
-        }
-        break;
-      }
+      full_id = num;
+      break;
     }
     num++;
   }
@@ -158,7 +138,7 @@ void Input::AnnounceConnects_() {
 
   // For the first announcement just say "X controllers detected" and don't
   // have a sound.
-  if (first_print && g_core->GetAppTimeSeconds() < 3.0) {
+  if (first_print && g_core->AppTimeSeconds() < 3.0) {
     first_print = false;
 
     // If there's been several connected, just give a number.
@@ -167,9 +147,9 @@ void Input::AnnounceConnects_() {
           g_base->assets->GetResourceString("controllersDetectedText");
       Utils::StringReplaceOne(
           &s, "${COUNT}", std::to_string(newly_connected_controllers_.size()));
-      ScreenMessage(s);
+      g_base->ScreenMessage(s);
     } else {
-      ScreenMessage(
+      g_base->ScreenMessage(
           g_base->assets->GetResourceString("controllerDetectedText"));
     }
 
@@ -180,14 +160,14 @@ void Input::AnnounceConnects_() {
           g_base->assets->GetResourceString("controllersConnectedText");
       Utils::StringReplaceOne(
           &s, "${COUNT}", std::to_string(newly_connected_controllers_.size()));
-      ScreenMessage(s);
+      g_base->ScreenMessage(s);
     } else {
       // If its just one, give its name.
       std::string s =
           g_base->assets->GetResourceString("controllerConnectedText");
       Utils::StringReplaceOne(&s, "${CONTROLLER}",
                               newly_connected_controllers_.front());
-      ScreenMessage(s);
+      g_base->ScreenMessage(s);
     }
     if (g_base->assets->sys_assets_loaded()) {
       g_base->audio->SafePlaySysSound(SysSoundID::kGunCock);
@@ -203,14 +183,14 @@ void Input::AnnounceDisconnects_() {
         g_base->assets->GetResourceString("controllersDisconnectedText");
     Utils::StringReplaceOne(
         &s, "${COUNT}", std::to_string(newly_disconnected_controllers_.size()));
-    ScreenMessage(s);
+    g_base->ScreenMessage(s);
   } else {
     // If its just one, name it.
     std::string s =
         g_base->assets->GetResourceString("controllerDisconnectedText");
     Utils::StringReplaceOne(&s, "${CONTROLLER}",
                             newly_disconnected_controllers_.front());
-    ScreenMessage(s);
+    g_base->ScreenMessage(s);
   }
   if (g_base->assets->sys_assets_loaded()) {
     g_base->audio->SafePlaySysSound(SysSoundID::kCorkPop);
@@ -225,13 +205,12 @@ void Input::ShowStandardInputDeviceConnectedMessage_(InputDevice* j) {
   // On Android we never show messages for initial input-devices; we often
   // get large numbers of strange virtual devices that aren't actually
   // controllers so this is more confusing than helpful.
-  if (g_buildconfig.ostype_android() && g_core->GetAppTimeSeconds() < 3.0) {
+  if (g_buildconfig.platform_android() && g_core->AppTimeSeconds() < 3.0) {
     return;
   }
 
   std::string suffix;
   suffix += j->GetPersistentIdentifier();
-  suffix += j->GetDeviceExtraDescription();
   if (!suffix.empty()) {
     suffix = " " + suffix;
   }
@@ -252,8 +231,7 @@ void Input::ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j) {
   assert(g_base->InLogicThread());
 
   newly_disconnected_controllers_.push_back(j->GetDeviceName() + " "
-                                            + j->GetPersistentIdentifier()
-                                            + j->GetDeviceExtraDescription());
+                                            + j->GetPersistentIdentifier());
 
   // Set a timer to go off and announce the accumulated additions.
   if (disconnect_print_timer_id_ != 0) {
@@ -287,6 +265,12 @@ void Input::RebuildInputDeviceDelegates() {
 void Input::AddInputDevice(InputDevice* device, bool standard_message) {
   assert(g_base->InLogicThread());
 
+  device->set_number(GetNewNumberedIdentifier_(device->DoGetDeviceName()));
+
+  g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug, [device] {
+    return "InputDevice added: " + device->GetDeviceNameUnique() + ".";
+  });
+
   // Let the current app-mode assign it a delegate.
   auto delegate = Object::CompleteDeferred(
       g_base->app_mode()->CreateInputDeviceDelegate(device));
@@ -311,22 +295,14 @@ void Input::AddInputDevice(InputDevice* device, bool standard_message) {
     device->set_index(static_cast<int>(input_devices_.size() - 1));
   }
 
-  // We also want to give this input-device as unique an identifier as
-  // possible. We ask it for its own string which hopefully includes a
-  // serial or something, but if it doesn't and thus matches an
-  // already-existing one, we tack an index on to it. that way we can at
-  // least uniquely address them based off how many are connected.
-  device->set_number(GetNewNumberedIdentifier_(device->GetRawDeviceName(),
-                                               device->GetDeviceIdentifier()));
-
   // Let the device know it's been added (for custom announcements, etc.)
   device->OnAdded();
 
-  // Immediately apply controls if initial app-config has already been
+  // Immediately apply app-config if initial app-config has already been
   // applied; otherwise it'll happen as part of that.
   if (g_base->logic->applied_app_config()) {
     // Update controls for just this guy.
-    device->UpdateMapping();
+    device->ApplyAppConfig();
 
     // Need to do this after updating controls, as some control settings can
     // affect things we count (such as whether start activates default
@@ -347,17 +323,23 @@ void Input::PushRemoveInputDeviceCall(InputDevice* input_device,
   });
 }
 
-void Input::RemoveInputDevice(InputDevice* input, bool standard_message) {
+void Input::RemoveInputDevice(InputDevice* device, bool standard_message) {
   assert(g_base->InLogicThread());
 
-  if (standard_message && !input->ShouldBeHiddenFromUser()) {
-    ShowStandardInputDeviceDisconnectedMessage_(input);
+  g_base->ui->OnInputDeviceRemoved(device);
+
+  g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug, [device] {
+    return "InputDevice removed: " + device->GetDeviceNameUnique() + ".";
+  });
+
+  if (standard_message && !device->ShouldBeHiddenFromUser()) {
+    ShowStandardInputDeviceDisconnectedMessage_(device);
   }
 
-  // Just look for it in our list.. if we find it, simply clear the ref (we
+  // Look for it in our list, and if we find it, simply clear the ref (we
   // need to keep the ref around so our list indices don't change).
   for (auto& input_device : input_devices_) {
-    if (input_device.exists() && (input_device.get() == input)) {
+    if (input_device.exists() && (input_device.get() == device)) {
       // Pull it off the list before killing it (in case it tries to trigger
       // another kill itself).
       auto device = Object::Ref<InputDevice>(input_device);
@@ -388,27 +370,27 @@ void Input::UpdateInputDeviceCounts_() {
   have_non_touch_inputs_ = false;
   int total = 0;
   int controller_count = 0;
-  for (auto& input_device : input_devices_) {
-    // Ok, we now limit non-keyboard non-touchscreen devices to ones that
-    // have been active recently.. (we're starting to get lots of virtual
-    // devices and other cruft on android; don't wanna show controller UIs
-    // just due to those)
-    if (input_device.exists()
-        && ((*input_device).IsTouchScreen() || (*input_device).IsKeyboard()
-            || ((*input_device).last_active_time_millisecs() != 0
+  for (auto& input_device_ref : input_devices_) {
+    auto* input_device = input_device_ref.get();
+    // Ok, we now limit our count for non-keyboard non-touchscreen devices
+    // to ones that have been active recently.. (we're starting to get lots
+    // of virtual devices and other cruft on android).
+    if (input_device
+        && (input_device->IsTouchScreen() || input_device->IsKeyboard()
+            || (input_device->last_active_time_millisecs() != 0
                 && current_time_millisecs
-                           - (*input_device).last_active_time_millisecs()
+                           - input_device->last_active_time_millisecs()
                        < 60000))) {
       total++;
-      if (!(*input_device).IsTouchScreen()) {
+      if (!input_device->IsTouchScreen()) {
         have_non_touch_inputs_ = true;
       }
-      if ((*input_device).start_button_activates_default_widget()) {
+      if (input_device->start_button_activates_default_widget()) {
         have_start_activated_default_button_inputs_ = true;
       }
-      if ((*input_device).IsController()) {
+      if (input_device->IsController()) {
         have_button_using_inputs_ = true;
-        if (!(*input_device).IsUIOnly() && !(*input_device).IsTestInput()) {
+        if (!input_device->IsUIOnly() && !input_device->IsTestInput()) {
           controller_count++;
         }
       }
@@ -424,6 +406,10 @@ void Input::UpdateInputDeviceCounts_() {
           BasePython::ObjID::kAwardDualWieldingAchievementCall);
     }
   }
+}
+
+auto Input::HaveManyLocalActiveInputDevices() -> bool {
+  return GetLocalActiveInputDeviceCount() > 1;
 }
 
 auto Input::GetLocalActiveInputDeviceCount() -> int {
@@ -454,6 +440,30 @@ auto Input::GetLocalActiveInputDeviceCount() -> int {
     local_active_input_device_count_ = count;
   }
   return local_active_input_device_count_;
+}
+
+auto Input::GetFuzzyInputDevice_() -> InputDevice* {
+  assert(g_base->InLogicThread());
+
+  InputDevice* pdevice{};
+  int pdevicecount{};
+
+  // Never return fuzzy devices if it seems that there's multiple active
+  // devices.
+  if (HaveManyLocalActiveInputDevices()) {
+    return nullptr;
+  }
+
+  // Tally up local devices with a player attached. If there is exactly one,
+  // that's our guy.
+  for (auto& input_device : input_devices_) {
+    if (input_device.exists() && input_device->IsLocal()
+        && input_device->AttachedToPlayer()) {
+      pdevice = input_device.get();
+      pdevicecount += 1;
+    }
+  }
+  return pdevicecount == 1 ? pdevice : nullptr;
 }
 
 auto Input::HaveControllerWithPlayer() -> bool {
@@ -493,7 +503,7 @@ auto Input::GetInputDevicesWithName(const std::string& name)
   return vals;
 }
 
-auto Input::GetConfigurableGamePads() -> std::vector<InputDevice*> {
+auto Input::GetConfigurableGameControllers() -> std::vector<InputDevice*> {
   assert(g_base->InLogicThread());
   std::vector<InputDevice*> vals;
   if (!g_core->HeadlessMode()) {
@@ -532,7 +542,7 @@ void Input::OnAppShutdown() { assert(g_base->InLogicThread()); }
 void Input::OnAppShutdownComplete() { assert(g_base->InLogicThread()); }
 
 // Tells all inputs to update their controls based on the app config.
-void Input::DoApplyAppConfig() {
+void Input::ApplyAppConfig() {
   assert(g_base->InLogicThread());
 
   // It's technically possible that updating these controls will add or
@@ -541,7 +551,7 @@ void Input::DoApplyAppConfig() {
   std::vector<Object::Ref<InputDevice> > input_devices = input_devices_;
   for (auto& input_device : input_devices) {
     if (input_device.exists()) {
-      input_device->UpdateMapping();
+      input_device->ApplyAppConfig();
     }
   }
 
@@ -554,13 +564,14 @@ void Input::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
 void Input::StepDisplayTime() {
   assert(g_base->InLogicThread());
 
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   // If input has been locked an excessively long amount of time, unlock it.
   if (input_lock_count_temp_) {
     if (real_time - last_input_temp_lock_time_ > 10000) {
-      g_core->Log(LogName::kBaInput, LogLevel::kError,
-                  "Input has been temp-locked for 10 seconds; unlocking.");
+      g_core->logging->Log(
+          LogName::kBaInput, LogLevel::kError,
+          "Input has been temp-locked for 10 seconds; unlocking.");
       input_lock_count_temp_ = 0;
       PrintLockLabels_();
       input_lock_temp_labels_.clear();
@@ -573,7 +584,6 @@ void Input::StepDisplayTime() {
   // for the first few seconds to keep controller-usage from being as
   // annoying.
 
-  // millisecs_t incr = (real_time > 10000) ? 468 : 98;
   // Update: don't remember why that was annoying; trying a single value for
   // now.
   millisecs_t incr = 249;
@@ -622,13 +632,13 @@ void Input::LockAllInput(bool permanent, const std::string& label) {
   } else {
     input_lock_count_temp_++;
     if (input_lock_count_temp_ == 1) {
-      last_input_temp_lock_time_ = g_core->GetAppTimeMillisecs();
+      last_input_temp_lock_time_ = g_core->AppTimeMillisecs();
     }
     input_lock_temp_labels_.push_back(label);
 
     recent_input_locks_unlocks_.push_back(
         "temp lock: " + label + " time "
-        + std::to_string(g_core->GetAppTimeMillisecs()));
+        + std::to_string(g_core->AppTimeMillisecs()));
     while (recent_input_locks_unlocks_.size() > 10) {
       recent_input_locks_unlocks_.pop_front();
     }
@@ -641,7 +651,7 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
   recent_input_locks_unlocks_.push_back(
       permanent ? "permanent unlock: "
                 : "temp unlock: " + label + " time "
-                      + std::to_string(g_core->GetAppTimeMillisecs()));
+                      + std::to_string(g_core->AppTimeMillisecs()));
   while (recent_input_locks_unlocks_.size() > 10) {
     recent_input_locks_unlocks_.pop_front();
   }
@@ -665,10 +675,10 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
     input_lock_count_temp_--;
     input_unlock_temp_labels_.push_back(label);
     if (input_lock_count_temp_ < 0) {
-      g_core->Log(LogName::kBaInput, LogLevel::kWarning,
-                  "temp input unlock at time "
-                      + std::to_string(g_core->GetAppTimeMillisecs())
-                      + " with no active lock: '" + label + "'");
+      g_core->logging->Log(LogName::kBaInput, LogLevel::kWarning,
+                           "temp input unlock at time "
+                               + std::to_string(g_core->AppTimeMillisecs())
+                               + " with no active lock: '" + label + "'");
       // This is to be expected since we can reset this to 0.
       input_lock_count_temp_ = 0;
     }
@@ -684,7 +694,7 @@ void Input::UnlockAllInput(bool permanent, const std::string& label) {
 
 void Input::PrintLockLabels_() {
   std::string s = "INPUT LOCK REPORT (time="
-                  + std::to_string(g_core->GetAppTimeMillisecs()) + "):";
+                  + std::to_string(g_core->AppTimeMillisecs()) + "):";
   int num;
 
   s += "\n " + std::to_string(input_lock_temp_labels_.size()) + " TEMP LOCKS:";
@@ -720,14 +730,14 @@ void Input::PrintLockLabels_() {
     s += "\n   " + std::to_string(num++) + ": " + recent_input_locks_unlock;
   }
 
-  g_core->Log(LogName::kBaInput, LogLevel::kError, s);
+  g_core->logging->Log(LogName::kBaInput, LogLevel::kError, s);
 }
 
 void Input::PushTextInputEvent(const std::string& text) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall([this, text] {
     // Mark as active even if input is locked.
-    MarkInputActive();
+    mark_input_active();
 
     if (IsInputLocked()) {
       return;
@@ -758,8 +768,8 @@ void Input::PushTextInputEvent(const std::string& text) {
     // platforms) but make a stink if they sent us something that we can't
     // at least translate to unicode.
     if (!Utils::IsValidUTF8(text)) {
-      g_core->Log(LogName::kBaInput, LogLevel::kWarning,
-                  "PushTextInputEvent passed invalid utf-8 text.");
+      g_core->logging->Log(LogName::kBaInput, LogLevel::kWarning,
+                           "PushTextInputEvent passed invalid utf-8 text.");
       return;
     }
 
@@ -846,8 +856,8 @@ void Input::CaptureKeyboardInput(HandleKeyPressCall* press_call,
                                  HandleKeyReleaseCall* release_call) {
   assert(g_base->InLogicThread());
   if (keyboard_input_capture_press_ || keyboard_input_capture_release_) {
-    g_core->Log(LogName::kBaInput, LogLevel::kError,
-                "Setting key capture redundantly.");
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kError,
+                         "Setting key capture redundantly.");
   }
   keyboard_input_capture_press_ = press_call;
   keyboard_input_capture_release_ = release_call;
@@ -862,8 +872,8 @@ void Input::ReleaseKeyboardInput() {
 void Input::CaptureJoystickInput(HandleJoystickEventCall* call) {
   assert(g_base->InLogicThread());
   if (joystick_input_capture_) {
-    g_core->Log(LogName::kBaInput, LogLevel::kError,
-                "Setting joystick capture redundantly.");
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kError,
+                         "Setting joystick capture redundantly.");
   }
   joystick_input_capture_ = call;
 }
@@ -873,7 +883,7 @@ void Input::ReleaseJoystickInput() {
   joystick_input_capture_ = nullptr;
 }
 
-void Input::AddFakeMods_(SDL_Keysym* sym) {
+void Input::AddFakeKeyMods_(SDL_Keysym* sym) {
   // In cases where we are only passed simple keycodes, we fill in modifiers
   // ourself by looking at currently held key states. This is less than
   // ideal because modifier key states can fall out of sync in some cases
@@ -895,7 +905,7 @@ void Input::AddFakeMods_(SDL_Keysym* sym) {
 void Input::HandleKeyPressSimple_(int keycode) {
   SDL_Keysym keysym{};
   keysym.sym = keycode;
-  AddFakeMods_(&keysym);
+  AddFakeKeyMods_(&keysym);
   HandleKeyPress_(keysym);
 }
 
@@ -903,7 +913,7 @@ void Input::HandleKeyReleaseSimple_(int keycode) {
   // See notes above.
   SDL_Keysym keysym{};
   keysym.sym = keycode;
-  AddFakeMods_(&keysym);
+  AddFakeKeyMods_(&keysym);
   HandleKeyRelease_(keysym);
 }
 
@@ -911,7 +921,12 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
+
+  // Also mark keyboard input as recently active.
+  if (keyboard_input_) {
+    keyboard_input_->UpdateLastActiveTime();
+  }
 
   if (IsInputLocked()) {
     return;
@@ -926,7 +941,7 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     // fluke repeat key press event due to funky OS circumstances.
     static int count{};
     static seconds_t last_count_reset_time{};
-    auto now = g_core->GetAppTimeSeconds();
+    auto now = g_core->AppTimeSeconds();
     if (now - last_count_reset_time > 2.0) {
       count = 0;
       last_count_reset_time = now;
@@ -955,28 +970,6 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   // things like manual camera moves. For individual key presses ideally we
   // should use the modifiers bundled with the key presses)
   UpdateModKeyStates_(&keysym, true);
-
-  // Mobile-specific stuff.
-  //  if (g_buildconfig.ostype_ios_tvos() || g_buildconfig.ostype_android()) {
-  //    switch (keysym.sym) {
-  //      // FIXME: See if this stuff is still necessary. Was this perhaps
-  //      //  specifically to support the console?
-  //      case SDLK_DELETE:
-  //      case SDLK_RETURN:
-  //      case SDLK_KP_ENTER:
-  //      case SDLK_BACKSPACE: {
-  //        // FIXME: I don't remember what this was put here for, but now that
-  //        //  we have hardware keyboards it crashes text fields by sending
-  //        //  them a TEXT_INPUT message with no string.. I made them resistant
-  //        //  to that case but wondering if we can take this out?
-  //        g_base->ui->SendWidgetMessage(
-  //            WidgetMessage(WidgetMessage::Type::kTextInput, &keysym));
-  //        break;
-  //      }
-  //      default:
-  //        break;
-  //    }
-  //  }
 
   // Explicitly handle fullscreen-toggles in some cases.
   if (g_base->app_adapter->FullscreenControlAvailable()) {
@@ -1013,9 +1006,10 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   // Dev Console.
   if (auto* console = g_base->ui->dev_console()) {
     if (keysym.sym == SDLK_BACKQUOTE || keysym.sym == SDLK_F2) {
-      // (reset input so characters don't continue walking and stuff)
+      // Reset input so characters don't continue walking and stuff.
       g_base->input->ResetHoldStates();
-      console->ToggleState();
+      auto backwards = (keysym.mod & KMOD_SHIFT) != 0;
+      console->CycleState(backwards);
       return;
     }
     if (console->HandleKeyPress(&keysym)) {
@@ -1026,10 +1020,10 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   bool handled = false;
 
   switch (keysym.sym) {
-    // Menu button on android/etc. pops up the menu.
+      // Menu button on android/etc. pops up the menu.
     case SDLK_MENU: {
-      if (!g_base->ui->MainMenuVisible()) {
-        g_base->ui->PushMainMenuPressCall(touch_input_);
+      if (!g_base->ui->IsMainUIVisible()) {
+        g_base->ui->RequestMainUI(GetFuzzyInputDeviceForMenuButton());
       }
       handled = true;
       break;
@@ -1051,7 +1045,7 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
       break;
 
     case SDLK_F5: {
-      if (g_base->ui->PartyIconVisible()) {
+      if (g_base->ui->IsPartyIconVisible()) {
         g_base->ui->ActivatePartyIcon();
       }
       handled = true;
@@ -1086,14 +1080,11 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
       break;
 
     case SDLK_ESCAPE:
-      if (!g_base->ui->MainMenuVisible()) {
+      if (!g_base->ui->IsMainUIVisible()) {
         // There's no main menu up. Ask for one.
-
-        // Note: keyboard_input_ may be nullptr but escape key should
-        // still function for menus; it just won't claim ownership.
-        g_base->ui->PushMainMenuPressCall(keyboard_input_);
+        g_base->ui->RequestMainUI(GetFuzzyInputDeviceForEscapeKey());
       } else {
-        // Ok there *is* a main menu up. Send it a cancel message.
+        // Ok there *is* a main ui up. Send it a cancel message.
         g_base->ui->SendWidgetMessage(
             WidgetMessage(WidgetMessage::Type::kCancel));
       }
@@ -1113,12 +1104,11 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
 }
 
 void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
-  assert(g_base);
   assert(g_base->InLogicThread());
 
   // Note: we want to let releases through even if input is locked.
 
-  MarkInputActive();
+  mark_input_active();
 
   // In some cases we may receive duplicate key-release events (if a
   // keyboard reset was run, it deals out key releases, but then the
@@ -1186,7 +1176,7 @@ void Input::HandleMouseScroll_(const Vector2f& amount) {
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
 
   if (IsInputLocked()) {
     return;
@@ -1224,7 +1214,7 @@ void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
 
   if (IsInputLocked()) {
     return;
@@ -1238,7 +1228,7 @@ void Input::HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum) {
       WidgetMessage(WidgetMessage::Type::kMouseWheelVelocityH, nullptr,
                     cursor_pos_x_, cursor_pos_y_, velocity.x, momentum));
 
-  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
+  last_mouse_move_time_ = g_core->AppTimeSeconds();
   mouse_move_count_++;
 
   Camera* camera = g_base->graphics->camera();
@@ -1263,15 +1253,19 @@ void Input::PushMouseMotionEvent(const Vector2f& position) {
 }
 
 void Input::HandleMouseMotion_(const Vector2f& position) {
-  assert(g_base);
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
 
-  if (IsInputLocked()) {
-    return;
-  }
+  // Just noticed that blocking these events leads to the cursor freezing up
+  // on fades and whatnot (when we're drawing the cursor at least). So gonna
+  // just let these go through for now. If that ever causes problems we can
+  // reconsider.
+  //
+  // if (IsInputLocked()) {
+  //   return;
+  // }
 
   float old_cursor_pos_x = cursor_pos_x_;
   float old_cursor_pos_y = cursor_pos_y_;
@@ -1282,7 +1276,7 @@ void Input::HandleMouseMotion_(const Vector2f& position) {
   cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
       position.y * g_base->graphics->screen_pixel_height());
 
-  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
+  last_mouse_move_time_ = g_core->AppTimeSeconds();
   mouse_move_count_++;
 
   // If we have a touch-input in editing mode, pass along events to it. (it
@@ -1314,17 +1308,18 @@ void Input::PushMouseDownEvent(int button, const Vector2f& position) {
 }
 
 void Input::HandleMouseDown_(int button, const Vector2f& position) {
-  assert(g_base);
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
+  // Also let UI know taps/clicks are occurring.
+  g_base->ui->OnClickOrTap();
 
   if (IsInputLocked()) {
     return;
   }
 
-  last_mouse_move_time_ = g_core->GetAppTimeSeconds();
+  last_mouse_move_time_ = g_core->AppTimeSeconds();
   mouse_move_count_++;
 
   // Convert normalized view coords to our virtual ones.
@@ -1333,7 +1328,7 @@ void Input::HandleMouseDown_(int button, const Vector2f& position) {
   cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
       position.y * g_base->graphics->screen_pixel_height());
 
-  millisecs_t click_time = g_core->GetAppTimeMillisecs();
+  millisecs_t click_time = g_core->AppTimeMillisecs();
   bool double_click = (click_time - last_click_time_ <= double_click_time_);
   last_click_time_ = click_time;
 
@@ -1378,24 +1373,7 @@ void Input::PushMouseUpEvent(int button, const Vector2f& position) {
       [this, button, position] { HandleMouseUp_(button, position); });
 }
 
-void Input::HandleMouseUp_(int button, const Vector2f& position) {
-  assert(g_base->InLogicThread());
-  MarkInputActive();
-
-  // Convert normalized view coords to our virtual ones.
-  cursor_pos_x_ = g_base->graphics->PixelToVirtualX(
-      position.x * g_base->graphics->screen_pixel_width());
-  cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
-      position.y * g_base->graphics->screen_pixel_height());
-
-  // If we have a touch-input in editing mode, pass along events to it.
-  // It usually handles its own events but here we want it to play nice
-  // with stuff under it by blocking touches, etc.
-  if (touch_input_ && touch_input_->editing()) {
-    touch_input_->HandleTouchUp(reinterpret_cast<void*>(1), cursor_pos_x_,
-                                cursor_pos_y_);
-  }
-
+static void ApplyMouseUpCancelToCamera(int button) {
   if (Camera* camera = g_base->graphics->camera()) {
     switch (button) {
       case SDL_BUTTON_LEFT:
@@ -1412,13 +1390,62 @@ void Input::HandleMouseUp_(int button, const Vector2f& position) {
     }
     camera->UpdateManualMode();
   }
+}
+
+void Input::HandleMouseUp_(int button, const Vector2f& position) {
+  assert(g_base->InLogicThread());
+  mark_input_active();
+
+  // Convert normalized view coords to our virtual ones.
+  cursor_pos_x_ = g_base->graphics->PixelToVirtualX(
+      position.x * g_base->graphics->screen_pixel_width());
+  cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
+      position.y * g_base->graphics->screen_pixel_height());
+
+  // If we have a touch-input in editing mode, pass along events to it.
+  // It usually handles its own events but here we want it to play nice
+  // with stuff under it by blocking touches, etc.
+  if (touch_input_ && touch_input_->editing()) {
+    touch_input_->HandleTouchUp(reinterpret_cast<void*>(1), cursor_pos_x_,
+                                cursor_pos_y_);
+  }
+
+  ApplyMouseUpCancelToCamera(button);
 
   g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
 }
 
+void Input::HandleMouseCancel_(int button, const Vector2f& position) {
+  assert(g_base->InLogicThread());
+  mark_input_active();
+
+  // Convert normalized view coords to our virtual ones.
+  cursor_pos_x_ = g_base->graphics->PixelToVirtualX(
+      position.x * g_base->graphics->screen_pixel_width());
+  cursor_pos_y_ = g_base->graphics->PixelToVirtualY(
+      position.y * g_base->graphics->screen_pixel_height());
+
+  // If we have a touch-input in editing mode, pass along events to it.
+  // It usually handles its own events but here we want it to play nice
+  // with stuff under it by blocking touches, etc.
+  //
+  // FIXME - passing as touch-up.
+  if (touch_input_ && touch_input_->editing()) {
+    touch_input_->HandleTouchUp(reinterpret_cast<void*>(1), cursor_pos_x_,
+                                cursor_pos_y_);
+  }
+
+  ApplyMouseUpCancelToCamera(button);
+
+  g_base->ui->HandleMouseCancel(button, cursor_pos_x_, cursor_pos_y_);
+}
+
 void Input::PushTouchEvent(const TouchEvent& e) {
   assert(g_base->logic->event_loop());
-  g_base->logic->event_loop()->PushCall([e, this] { HandleTouchEvent_(e); });
+  auto* loop{g_base->logic->event_loop()};
+  if (loop->CheckPushSafety()) {
+    loop->PushCall([e, this] { HandleTouchEvent_(e); });
+  }
 }
 
 void Input::HandleTouchEvent_(const TouchEvent& e) {
@@ -1426,13 +1453,13 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
   assert(g_base->graphics);
 
   // Mark as active even if input is locked.
-  MarkInputActive();
+  mark_input_active();
 
   if (IsInputLocked()) {
     return;
   }
 
-  if (g_buildconfig.ostype_ios_tvos()) {
+  if (g_buildconfig.platform_ios_tvos()) {
     printf("FIXME: update touch handling\n");
   }
 
@@ -1472,14 +1499,17 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     HandleMouseMotion_(Vector2f(e.x, e.y));
   }
 
-  // Currently just applying touch-cancel the same as touch-up here; perhaps
-  // should be smarter in the future.
-  if ((e.type == TouchEvent::Type::kUp || e.type == TouchEvent::Type::kCanceled)
+  if ((e.type == TouchEvent::Type::kUp)
       && (e.touch == single_touch_ || e.overall)) {
     single_touch_ = nullptr;
     HandleMouseUp_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
   }
 
+  if ((e.type == TouchEvent::Type::kCanceled)
+      && (e.touch == single_touch_ || e.overall)) {
+    single_touch_ = nullptr;
+    HandleMouseCancel_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
+  }
   // If we've got a touch input device, forward events along to it.
   if (touch_input_) {
     touch_input_->HandleTouchEvent(e.type, e.touch, x, y);
@@ -1516,21 +1546,26 @@ void Input::Draw(FrameDef* frame_def) {
 }
 
 auto Input::IsCursorVisible() const -> bool {
-  if (!g_base) {
-    return false;
-  }
   assert(g_base->InLogicThread());
 
   // Keeps mouse hidden to start with.
   if (mouse_move_count_ < 2) {
     return false;
   }
-  bool val;
+
+  // If cursor has been flagged as outside the window.
+  if (!cursor_in_window_) {
+    return false;
+  }
+
+  // Hide our cursor as soon as we start shutting down (don't want software
+  // cursor to be frozen on screen with our last frame).
+  if (g_base->logic->shutting_down()) {
+    return false;
+  }
 
   // Show our cursor only if its been moved recently.
-  val = (g_core->GetAppTimeSeconds() - last_mouse_move_time_ < 2.071);
-
-  return val;
+  return (g_core->AppTimeSeconds() - last_mouse_move_time_ < 2.071);
 }
 
 void Input::LsInputDevices() {
@@ -1571,7 +1606,7 @@ void Input::LsInputDevices() {
     ++index;
   }
 
-  g_core->Log(LogName::kBaInput, LogLevel::kInfo, out);
+  g_core->logging->Log(LogName::kBaInput, LogLevel::kInfo, out);
 }
 
 auto Input::ShouldAllowInputInAttractMode_(InputDevice* device) const -> bool {

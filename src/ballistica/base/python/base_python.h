@@ -23,7 +23,7 @@ class BasePython {
   void OnAppUnsuspend();
   void OnAppShutdown();
   void OnAppShutdownComplete();
-  void DoApplyAppConfig();
+  void ApplyAppConfig();
   void OnScreenSizeChange();
   void StepDisplayTime();
 
@@ -39,8 +39,8 @@ class BasePython {
     kGetResourceCall,
     kTranslateCall,
     kLStrClass,
-    kCallClass,
-    kGarbageCollectSessionEndCall,
+    kCallPartialClass,
+    kAppGCCollectCall,
     kConfig,
     kAppOnNativeBootstrappingCompleteCall,
     kResetToMainMenuCall,
@@ -99,7 +99,6 @@ class BasePython {
     kPermissionClass,
     kSpecialCharClass,
     kLstrFromJsonCall,
-    kUUIDStrCall,
     kHashStringsCall,
     kHaveAccountV2CredentialsCall,
     kImplicitSignInCall,
@@ -114,10 +113,21 @@ class BasePython {
     kDevConsoleStringEditAdapterClass,
     kGetDevConsoleTabNamesCall,
     kAppDevConsoleDoRefreshTabCall,
+    kAppDevConsoleSaveTabCall,
     kUnsupportedControllerMessageCall,
     kGetV2AccountIdCall,
     kAppOnNativeActiveChangedCall,
     kCopyDevConsoleHistoryCall,
+    kAppOnScreenSizeChangeCall,
+    kAppArchitectureType,
+    kAppArchitecture,
+    kAppPlatformType,
+    kAppPlatform,
+    kAppVariantType,
+    kAppVariant,
+    kV2AuthRequestCall,
+    kV2AuthDataCall,
+    kStartNativeReplCall,
     kLast  // Sentinel; must be at end.
   };
 
@@ -127,6 +137,8 @@ class BasePython {
   void SetConfig(PyObject* config);
 
   const auto& objs() { return objs_; }
+
+  void ReloadHooks();
 
   static void EnsureContextAllowsDefaultTimerTypes();
 
@@ -156,11 +168,11 @@ class BasePython {
   auto GetRawConfigValue(const char* name, bool default_value) -> bool;
   void SetRawConfigValue(const char* name, float value);
 
-  static auto GetPyEnum_Permission(PyObject* obj) -> Permission;
-  static auto GetPyEnum_SpecialChar(PyObject* obj) -> SpecialChar;
-  static auto IsPyEnum_InputType(PyObject* obj) -> bool;
-  static auto GetPyEnum_InputType(PyObject* obj) -> InputType;
-  static auto GetPyEnum_QuitType(PyObject* obj) -> QuitType;
+  auto GetPyEnum_Permission(PyObject* obj) -> Permission;
+  auto GetPyEnum_SpecialChar(PyObject* obj) -> SpecialChar;
+  auto IsPyEnum_InputType(PyObject* obj) -> bool;
+  auto GetPyEnum_InputType(PyObject* obj) -> InputType;
+  auto GetPyEnum_QuitType(PyObject* obj) -> QuitType;
 
   auto PyQuitType(QuitType val) -> PythonRef;
 
@@ -181,8 +193,15 @@ class BasePython {
   void SoftImportClassic();
 
  private:
+  template <typename T>
+  auto IsPyEnum_(BasePython::ObjID enum_class_id, PyObject* obj) -> bool;
+  template <typename T>
+  auto GetPyEnum_(BasePython::ObjID enum_class_id, PyObject* obj) -> T;
+
   std::set<std::string> do_once_locations_;
   PythonObjectSet<ObjID> objs_;
+  float last_screen_res_x_{-1.0f};
+  float last_screen_res_y_{-1.0f};
 };
 
 }  // namespace ballistica::base

@@ -19,7 +19,7 @@ ClientInputDevice::ClientInputDevice(int remote_device_id,
 // the other end will free the input-device up
 ClientInputDevice::~ClientInputDevice() = default;
 
-auto ClientInputDevice::GetRawDeviceName() -> std::string {
+auto ClientInputDevice::DoGetDeviceName() -> std::string {
   return "Client Input Device";
 }
 

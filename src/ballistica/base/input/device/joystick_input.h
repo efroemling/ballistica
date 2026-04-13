@@ -32,7 +32,7 @@ class JoystickInput : public InputDevice {
 
   void HandleSDLEvent(const SDL_Event* e) override;
 
-  void UpdateMapping() override;
+  void ApplyAppConfig() override;
   void Update() override;
   void ResetHeldStates() override;
 
@@ -81,9 +81,7 @@ class JoystickInput : public InputDevice {
   void SetButtonName(int button, const std::string& name);
 
  protected:
-  auto GetRawDeviceName() -> std::string override;
-  auto GetDeviceExtraDescription() -> std::string override;
-  auto GetDeviceIdentifier() -> std::string override;
+  auto DoGetDeviceName() -> std::string override;
   void OnAdded() override;
 
   auto start_button_activates_default_widget() -> bool override {
@@ -191,7 +189,6 @@ class JoystickInput : public InputDevice {
   std::set<int> run_buttons_held_;
   std::string custom_device_name_;
   std::string raw_sdl_joystick_name_;
-  std::string raw_sdl_joystick_identifier_;
   std::map<int, std::string> button_names_;
   Object::Ref<Repeater> ui_repeater_;
 

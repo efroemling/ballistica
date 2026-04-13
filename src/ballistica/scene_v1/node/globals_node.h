@@ -17,7 +17,7 @@ class GlobalsNode : public Node {
   ~GlobalsNode() override;
   void SetAsForeground();
   auto IsCurrentGlobals() const -> bool;
-  auto GetAppTimeMillisecs() -> millisecs_t;
+  auto AppTimeMillisecs() -> millisecs_t;
   auto GetTime() -> millisecs_t;
   auto GetStep() -> int64_t;
   auto debris_friction() const -> float { return debris_friction_; }

@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Annotated
 from dataclasses import dataclass, field
 from pathlib import Path
 import threading
-import urllib.request
 import logging
 import weakref
 import time
@@ -21,9 +20,10 @@ from efro.dataclassio import (
     dataclass_from_json,
     dataclass_to_json,
 )
-import _babase
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from bacommon.assets import AssetPackageFlavor
 
 
@@ -174,23 +174,28 @@ class AssetGather:
 
 def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
     """Fetch a given url to a given filename for a given AssetGather."""
-    # pylint: disable=consider-using-with
     import socket
+
+    del url  # Unused.
 
     # We don't want to keep the provided AssetGather alive, but we want
     # to abort if it dies.
     assert isinstance(asset_gather, AssetGather)
     # weak_gather = weakref.ref(asset_gather)
 
+    if bool(True):
+        raise RuntimeError('should not be using this')
+
     # Pass a very short timeout to urllib so we have opportunities
     # to cancel even with network blockage.
-    req = urllib.request.urlopen(
-        urllib.request.Request(
-            url, None, {'User-Agent': _babase.user_agent_string()}
-        ),
-        context=_babase.app.net.sslcontext,
-        timeout=1,
-    )
+    req: Any = None
+    # req = urllib.request.urlopen(
+    #     urllib.request.Request(
+    #         url, None, {'User-Agent': _babase.user_agent_string()}
+    #     ),
+    #     context=_babase.app.net.sslcontext,
+    #     timeout=1,
+    # )
     file_size = int(req.headers['Content-Length'])
     print(f'\nDownloading: {filename} Bytes: {file_size:,}')
 
@@ -201,7 +206,7 @@ def fetch_url(url: str, filename: Path, asset_gather: AssetGather) -> None:
         # req.close()
         # req.fp.close()
 
-    threading.Thread(target=doit).run()
+    threading.Thread(target=doit).start()
 
     with open(filename, 'wb') as outfile:
         file_size_dl = 0

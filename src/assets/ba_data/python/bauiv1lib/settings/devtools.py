@@ -8,7 +8,6 @@ from typing import override
 
 import babase
 import bauiv1 as bui
-from bauiv1lib.popup import PopupMenu
 from bauiv1lib.confirm import ConfirmWindow
 from bauiv1lib.config import ConfigCheckBox
 
@@ -26,41 +25,53 @@ class DevToolsWindow(bui.MainWindow):
         assert app.classic is not None
 
         uiscale = app.ui_v1.uiscale
-        self._width = 1000.0 if uiscale is bui.UIScale.SMALL else 670.0
-        x_inset = 150 if uiscale is bui.UIScale.SMALL else 0
+        self._width = 1200.0 if uiscale is bui.UIScale.SMALL else 670.0
         self._height = (
-            370.0
+            800
             if uiscale is bui.UIScale.SMALL
             else 450.0 if uiscale is bui.UIScale.MEDIUM else 520.0
         )
-
         self._spacing = 32
-        top_extra = 10 if uiscale is bui.UIScale.SMALL else 0
 
-        self._scroll_width = self._width - (100 + 2 * x_inset)
-        self._scroll_height = self._height - 115.0
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            2.13
+            if uiscale is bui.UIScale.SMALL
+            else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_width = min(self._width - 80, screensize[0] / scale)
+        target_height = min(self._height - 90, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * self._height + 0.5 * target_height + 30.0
+
+        self._scroll_width = target_width
+        self._scroll_height = target_height - 35
+        self._scroll_bottom = yoffs - 64 - self._scroll_height
+
         self._sub_width = self._scroll_width * 0.95
         self._sub_height = 300.0
 
         super().__init__(
             root_widget=bui.containerwidget(
-                size=(self._width, self._height + top_extra),
+                size=(self._width, self._height),
                 toolbar_visibility=(
                     'menu_minimal'
                     if uiscale is bui.UIScale.SMALL
                     else 'menu_full'
                 ),
-                scale=(
-                    2.13
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
-                ),
+                scale=scale,
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
         self._r = 'settingsDevTools'
@@ -73,7 +84,8 @@ class DevToolsWindow(bui.MainWindow):
         else:
             self._back_button = bui.buttonwidget(
                 parent=self._root_widget,
-                position=(53 + x_inset, self._height - 60),
+                id=f'{self.main_window_id_prefix}|back',
+                position=(53, yoffs - 50),
                 size=(140, 60),
                 scale=0.8,
                 autoselect=True,
@@ -89,7 +101,7 @@ class DevToolsWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(
                 self._width * 0.5,
-                self._height - (64 if uiscale is bui.UIScale.SMALL else 48),
+                yoffs - (60 if uiscale is bui.UIScale.SMALL else 42),
             ),
             size=(0, 25),
             scale=(0.8 if uiscale is bui.UIScale.SMALL else 1.0),
@@ -110,11 +122,15 @@ class DevToolsWindow(bui.MainWindow):
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            position=(50 + x_inset, 50),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5,
+                self._scroll_bottom,
+            ),
             simple_culling_v=20.0,
             highlight=False,
             size=(self._scroll_width, self._scroll_height),
             selection_loops_to_parent=True,
+            border_opacity=0.4,
         )
         bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
         self._subcontainer = bui.containerwidget(
@@ -130,6 +146,7 @@ class DevToolsWindow(bui.MainWindow):
         v -= self._spacing * 2.5
         self._show_dev_console_button_check_box = ConfigCheckBox(
             parent=self._subcontainer,
+            check_box_id=f'{self.main_window_id_prefix}|showdevsonsole',
             position=(90, v + 40),
             size=(self._sub_width - 100, 30),
             configkey='Show Dev Console Button',
@@ -148,6 +165,7 @@ class DevToolsWindow(bui.MainWindow):
         v -= self._spacing * 1.2
         self._create_user_system_scripts_button = bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|createusersystemscripts',
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
@@ -159,6 +177,7 @@ class DevToolsWindow(bui.MainWindow):
         v -= self._spacing * 2.5
         self._delete_user_system_scripts_button = bui.buttonwidget(
             parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|deleteusersystemscripts',
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
@@ -169,42 +188,6 @@ class DevToolsWindow(bui.MainWindow):
             ),
         )
 
-        # Currently this is not wired up. The current official way to test
-        # UIScales is either to use the switcher in the dev-console or to
-        # set the BA_UI_SCALE env var.
-        if bool(False):
-            v -= self._spacing * 2.5
-            bui.textwidget(
-                parent=self._subcontainer,
-                position=(170, v + 10),
-                size=(0, 0),
-                text=bui.Lstr(resource='uiScaleText'),
-                color=app.ui_v1.title_color,
-                h_align='center',
-                v_align='center',
-            )
-
-            PopupMenu(
-                parent=self._subcontainer,
-                position=(230, v - 20),
-                button_size=(200.0, 60.0),
-                width=100.0,
-                choices=[
-                    'auto',
-                    'small',
-                    'medium',
-                    'large',
-                ],
-                choices_display=[
-                    bui.Lstr(resource='autoText'),
-                    bui.Lstr(resource='sizeSmallText'),
-                    bui.Lstr(resource='sizeMediumText'),
-                    bui.Lstr(resource='sizeLargeText'),
-                ],
-                current_choice=app.config.get('UI Scale', 'auto'),
-                on_value_change_call=self._set_uiscale,
-            )
-
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
         # Support recreating our window for back/refresh purposes.
@@ -214,6 +197,10 @@ class DevToolsWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return True
 
     def _set_uiscale(self, val: str) -> None:
         cfg = bui.app.config

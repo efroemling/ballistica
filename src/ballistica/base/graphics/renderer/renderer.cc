@@ -61,7 +61,7 @@ void Renderer::PreprocessFrameDef(FrameDef* frame_def) {
   UpdateSizesQualitiesAndColors(frame_def);
 
   // Handle a weird gamma reset issue on our legacy mac build (SDL 1.2).
-  // #if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
+  // #if BA_PLATFORM_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
   //   HandleFunkyMacGammaIssue(frame_def);
   // #endif
 
@@ -131,7 +131,7 @@ void Renderer::RenderFrameDef(FrameDef* frame_def) {
   }
 
   bool backing_needs_clear = frame_def->needs_clear();
-#if BA_CARDBOARD_BUILD
+#if BA_VARIANT_CARDBOARD
   // On cardboard, our two eyes are drawn into the same FBO,
   // so we can't invalidate the buffer when drawing our second eye
   // (since that could wipe out the first eye which has already been drawn)
@@ -650,7 +650,7 @@ void Renderer::UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def) {
 }
 
 void Renderer::LoadMedia(FrameDef* frame_def) {
-  millisecs_t t = g_core->GetAppTimeMillisecs();
+  millisecs_t t = g_core->AppTimeMillisecs();
   for (auto&& i : frame_def->media_components()) {
     Asset* mc = i.get();
     assert(mc);
@@ -661,13 +661,13 @@ void Renderer::LoadMedia(FrameDef* frame_def) {
   }
 }
 
-// #if BA_OSTYPE_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
+// #if BA_PLATFORM_MACOS && BA_SDL_BUILD && !BA_SDL2_BUILD
 // void Renderer::HandleFunkyMacGammaIssue(FrameDef* frame_def) {
 //   // FIXME - for some reason, on mac, gamma is getting switched back to
 //   //  default about 1 second after a res change, etc...
 //   //  so if we're using a non-1.0 gamma, lets keep setting it periodically
 //   //  to force the issue
-//   millisecs_t t = g_core->GetAppTimeMillisecs();
+//   millisecs_t t = g_core->AppTimeMillisecs();
 //   if (screen_gamma_requested_ != screen_gamma_
 //       || (t - last_screen_gamma_update_time_ > 300 && screen_gamma_ != 1.0f))
 //       {
@@ -679,7 +679,7 @@ void Renderer::LoadMedia(FrameDef* frame_def) {
 // #endif
 
 void Renderer::DrawWorldToCameraBuffer(FrameDef* frame_def) {
-#if BA_CARDBOARD_BUILD
+#if BA_VARIANT_CARDBOARD
   // On cardboard theres a scissor setup enabled when we come in;
   // we need to turn that off while drawing to our other framebuffer since it
   // screws things up there.
@@ -717,7 +717,7 @@ void Renderer::DrawWorldToCameraBuffer(FrameDef* frame_def) {
   GenerateCameraBufferBlurPasses();
   PopGroupMarker();
 
-#if BA_CARDBOARD_BUILD
+#if BA_VARIANT_CARDBOARD
   CardboardEnableScissor();
 #endif
 }

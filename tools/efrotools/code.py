@@ -121,7 +121,6 @@ def format_project_cpp_files(projroot: Path, full: bool) -> None:
 
 def check_cpplint(projroot: Path, full: bool) -> None:
     """Run cpplint on all our applicable code."""
-    # pylint: disable=too-many-locals
     from concurrent.futures import ThreadPoolExecutor
     from multiprocessing import cpu_count
 
@@ -367,7 +366,7 @@ def get_script_filenames(projroot: Path) -> list[str]:
     return out
 
 
-def runpylint(projroot: Path, filenames: list[str]) -> None:
+def runpylint(projroot: Path, filenames: list[str], extra: bool) -> None:
     """Run Pylint explicitly on files."""
 
     pylintrc = Path(projroot, '.pylintrc')
@@ -378,11 +377,16 @@ def runpylint(projroot: Path, filenames: list[str]) -> None:
     # but let's go ahead and run it inline so we're consistent with our cached
     # full-project version.
     _run_pylint(
-        projroot, pylintrc, cache=None, dirtyfiles=filenames, allfiles=None
+        projroot,
+        pylintrc,
+        cache=None,
+        dirtyfiles=filenames,
+        allfiles=None,
+        extra=extra,
     )
 
 
-def pylint(projroot: Path, full: bool, fast: bool) -> None:
+def pylint(projroot: Path, full: bool, fast: bool, extra: bool) -> None:
     """Run Pylint on all scripts in our project (with smart dep tracking)."""
     from efrotools.util import get_files_hash
     from efro.terminal import Clr
@@ -424,7 +428,7 @@ def pylint(projroot: Path, full: bool, fast: bool) -> None:
             flush=True,
         )
         try:
-            _run_pylint(projroot, pylintrc, cache, dirtyfiles, filenames)
+            _run_pylint(projroot, pylintrc, cache, dirtyfiles, filenames, extra)
         finally:
             # No matter what happens, we still want to
             # update our disk cache (since some lints may have passed).
@@ -445,7 +449,6 @@ def _dirty_dep_check(
     recursion: int,
 ) -> bool:
     """Recursively check a file's deps and return whether it is dirty."""
-    # pylint: disable=too-many-branches
 
     if not fast:
         # Check for existing dirty state (only applies in non-fast where
@@ -455,6 +458,7 @@ def _dirty_dep_check(
             return curstate
 
         # Ok; there's no current state for this file.
+        #
         # First lets immediately mark it as clean so if a dependency of ours
         # queries it we won't loop infinitely.  (If we're actually dirty that
         # will be reflected properly once we're done).
@@ -494,7 +498,8 @@ def _dirty_dep_check(
                         dirty = True
                         break
 
-    # Cache and return our dirty state..
+    # Cache and return our dirty state.
+    #
     # Note: for fast mode we limit to recursion==0 so we only write when
     # the file itself is being directly visited.
     if recursion == 0:
@@ -508,12 +513,29 @@ def _run_pylint(
     cache: FileCache | None,
     dirtyfiles: list[str],
     allfiles: list[str] | None,
+    extra: bool,
 ) -> dict[str, Any]:
+    # pylint: disable=too-many-positional-arguments
     from pylint import lint
     from efro.terminal import Clr
 
+    # By default we use up to 8 cpus if available. However if they pass
+    # 'extra' we limit to one. This is intended to keep things as
+    # deterministic as possible for things such as CI where speed isn't
+    # as important.
+    cpucount = os.cpu_count()
+    if cpucount is None:
+        cpucount = 1
+    jobcount = 1 if extra else max(cpucount, 8)
+
     start_time = time.monotonic()
-    args = ['--rcfile', str(pylintrc), '--output-format=colorized']
+    args = [
+        '--rcfile',
+        str(pylintrc),
+        '--output-format=colorized',
+        '--jobs',
+        str(jobcount),
+    ]
 
     args += dirtyfiles
     name = f'{len(dirtyfiles)} file(s)'
@@ -526,9 +548,9 @@ def _run_pylint(
         if result != 0:
             raise CleanError(f'Pylint failed for {result} file(s).')
 
-        # Sanity check: when the linter fails we should always be failing too.
-        # If not, it means we're probably missing something and incorrectly
-        # marking a failed file as clean.
+        # Sanity check: when the linter fails we should always be
+        # failing too. If not, it means we're probably missing something
+        # and incorrectly marking a failed file as clean.
         if run.linter.msg_status != 0 and result == 0:
             raise RuntimeError(
                 'Pylint linter returned non-zero result'
@@ -556,14 +578,13 @@ def _apply_pylint_run_to_cache(
 ) -> int:
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
 
     from astroid import modutils
 
     from efrotools.project import getprojectconfig
 
-    # First off, build a map of dirtyfiles to module names
-    # (and the corresponding reverse map).
+    # First off, build a map of dirtyfiles to module names (and the
+    # corresponding reverse map).
     paths_to_names: dict[str, str] = {}
     names_to_paths: dict[str, str] = {}
     for fname in allfiles:
@@ -581,17 +602,19 @@ def _apply_pylint_run_to_cache(
         names_to_paths[val] = key
 
     # If there's any cyclic-import errors, just mark all deps as dirty;
-    # don't want to add the logic to figure out which ones the cycles cover
-    # since they all seems to appear as errors for the last file in the list.
+    # don't want to add the logic to figure out which ones the cycles
+    # cover since they all seems to appear as errors for the last file
+    # in the list.
     cycles: int = run.linter.stats.by_msg.get('cyclic-import', 0)
     have_dep_cycles: bool = cycles > 0
     if have_dep_cycles:
         print(f'Found {cycles} cycle-errors; keeping all dirty files dirty.')
 
     # Update dependencies for what we just ran.
-    # A run leaves us with a map of modules to a list of the modules that
-    # imports them. We want the opposite though: for each of our modules
-    # we want a list of the modules it imports.
+    #
+    # A run leaves us with a map of modules to a list of the modules
+    # that imports them. We want the opposite though: for each of our
+    # modules we want a list of the modules it imports.
     reversedeps = {}
 
     # Make sure these are all proper module names; no foo.bar.__init__ stuff.
@@ -614,10 +637,10 @@ def _apply_pylint_run_to_cache(
     # Add a few that this package itself triggers.
     ignored_untracked_deps |= {'pylint.lint', 'astroid.modutils', 'astroid'}
 
-    # EW; as of Python 3.9, suddenly I'm seeing system modules showing up
-    # here where I wasn't before. I wonder what changed. Anyway, explicitly
-    # suppressing them here but should come up with a more robust system
-    # as I feel this will get annoying fast.
+    # EW; as of Python 3.9, suddenly I'm seeing system modules showing
+    # up here where I wasn't before. I wonder what changed. Anyway,
+    # explicitly suppressing them here but should come up with a more
+    # robust system as I feel this will get annoying fast.
     ignored_untracked_deps |= {
         're',
         'importlib',
@@ -682,6 +705,7 @@ def _apply_pylint_run_to_cache(
     }
 
     # Special case:
+    #
     # Ignore generated dummy-modules (we don't directly check those anymore
     # so they'll be listed as external).
     if os.path.exists('build/dummymodules'):
@@ -719,17 +743,17 @@ def _apply_pylint_run_to_cache(
             depsval = [names_to_paths[dep] for dep in deps[fmod]]
         cache.entries[fname]['deps'] = depsval
 
-    # Let's print a list of modules with no detected deps so we can make sure
-    # this is behaving.
+    # Let's print a list of modules with no detected deps so we can make
+    # sure this is behaving.
     if no_deps_modules:
         if bool(False):
             print(
                 'NOTE: no dependencies found for:', ', '.join(no_deps_modules)
             )
 
-    # Ok, now go through all dirtyfiles involved in this run.
-    # Mark them as either errored or clean depending on whether there's
-    # error info for them in the run stats.
+    # Ok, now go through all dirtyfiles involved in this run. Mark them
+    # as either errored or clean depending on whether there's error info
+    # for them in the run stats.
 
     # Once again need to convert any foo.bar.__init__ to foo.bar.
     stats_by_module: dict[str, Any] = {
@@ -766,6 +790,43 @@ def _filter_module_name(mpath: str) -> str:
     # and not in others.  Could dig into it, but for now just filtering them
     # out...
     return mpath[:-9] if mpath.endswith('.__init__') else mpath
+
+
+def zmypy_files(
+    projroot: Path, filenames: list[str], full: bool = False, check: bool = True
+) -> None:
+    """Run zuban mypy on provided filenames."""
+
+    args = [
+        # sys.executable,
+        # '-m',
+        'zmypy',
+        '--pretty',
+        '--no-error-summary',
+        '--config-file',
+        str(Path(projroot, '.mypy.ini')),
+    ] + filenames
+    if full:
+        args.insert(args.index('zmypy') + 1, '--no-incremental')
+    subprocess.run(args, check=check)
+
+
+def zmypy(projroot: Path, full: bool) -> None:
+    """Type check all of our scripts using mypy."""
+    from efro.terminal import Clr
+
+    filenames = get_script_filenames(projroot)
+    desc = '(full)' if full else '(incremental)'
+    print(f'{Clr.BLU}Running Zmypy {desc}...{Clr.RST}', flush=True)
+    starttime = time.monotonic()
+    try:
+        zmypy_files(projroot, filenames, full)
+    except Exception as exc:
+        raise CleanError('Zmypy failed.') from exc
+    duration = time.monotonic() - starttime
+    print(
+        f'{Clr.GRN}Zmypy passed in {duration:.1f} seconds.{Clr.RST}', flush=True
+    )
 
 
 def mypy_files(
@@ -887,7 +948,6 @@ def _run_idea_inspections(
     Throw an Exception if anything is found or goes wrong.
     """
     # pylint: disable=too-many-positional-arguments
-    # pylint: disable=too-many-locals
     # pylint: disable=consider-using-with
 
     from efro.terminal import Clr
@@ -961,7 +1021,6 @@ def _run_idea_inspections_cached(
     verbose: bool,
     inspectdir: Path | None = None,
 ) -> None:
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-positional-arguments
     import hashlib
     import json
@@ -1012,141 +1071,6 @@ def _run_idea_inspections_cached(
         f'{Clr.GRN}{displayname}: all {len(filenames)}'
         f' files are passing.{Clr.RST}',
         flush=True,
-    )
-
-
-def check_pycharm(projroot: Path, full: bool, verbose: bool) -> None:
-    """Run pycharm inspections on all our scripts."""
-
-    # FIXME: Generalize this to work with at least linux, possibly windows.
-    cachepath = Path('.cache/check_pycharm')
-    filenames = get_script_filenames(projroot)
-    pycharmroot = Path('/Applications/PyCharm CE.app')
-    pycharmbin = Path(pycharmroot, 'Contents/MacOS/pycharm')
-    inspect = Path(pycharmroot, 'Contents/bin/inspect.sh')
-
-    # In full mode, clear out pycharm's caches first.
-    # It seems we need to spin up the GUI and give it a bit to
-    # re-cache system python for this to work...
-
-    # UPDATE: This really slows things down, so we now only do it in
-    # very specific cases where time isn't important.
-    # (such as our daily full-test-runs)
-
-    # UPDATE 2: Looks like we might no longer need to do the GUI spin-up bit.
-    # If we can be certain of this, we can go back to simply blowing away
-    # the cache for 'full' mode checks without the env var.
-    if full and os.environ.get('EFROTOOLS_FULL_PYCHARM_RECACHE') == '1':
-        print('Clearing PyCharm caches...', flush=True)
-        subprocess.run(
-            'rm -rf ~/Library/Caches/JetBrains/PyCharmCE*',
-            shell=True,
-            check=True,
-        )
-
-        # Hoping this isn't necessary anymore. Need to rework this if it is,
-        # since it now gets run through ssh and gui stuff doesn't seem to
-        # work that way.
-        if bool(False):
-            print('Launching GUI PyCharm to rebuild caches...', flush=True)
-            with subprocess.Popen(str(pycharmbin)) as process:
-                # Wait a bit and ask it nicely to die.
-                # We need to make sure it has enough time to do its
-                # cache updating thing even if the system is fully under load.
-                time.sleep(5 * 60)
-
-                # Seems killing it via applescript is more likely to leave it
-                # in a working state for offline inspections than TERM signal..
-                subprocess.run(
-                    "osascript -e 'tell application \"PyCharm CE\" to quit'",
-                    shell=True,
-                    check=False,
-                )
-                print('Waiting for GUI PyCharm to quit...', flush=True)
-                process.wait()
-
-    _run_idea_inspections_cached(
-        cachepath=cachepath,
-        filenames=filenames,
-        full=full,
-        projroot=projroot,
-        displayname='PyCharm',
-        inspect=inspect,
-        verbose=verbose,
-    )
-
-
-def check_clioncode(projroot: Path, full: bool, verbose: bool) -> None:
-    """Run clion inspections on all our code."""
-
-    cachepath = Path('.cache/check_clioncode')
-    filenames = get_code_filenames(projroot, include_generated=True)
-    clionroot = Path('/Applications/CLion.app')
-    # clionbin = Path(clionroot, 'Contents/MacOS/clion')
-    inspect = Path(clionroot, 'Contents/bin/inspect.sh')
-
-    # At the moment offline clion inspections seem a bit flaky.
-    # They don't seem to run at all if we haven't opened the project
-    # in the GUI, and it seems recent changes can get ignored for that
-    # reason too.
-    # So for now let's try blowing away caches, launching the gui
-    # temporarily, and then kicking off inspections after that. Sigh.
-    print('Clearing CLion caches...', flush=True)
-    caches_root = os.environ['HOME'] + '/Library/Caches/JetBrains'
-    if not os.path.exists(caches_root):
-        raise RuntimeError(f'CLion caches root not found: {caches_root}')
-    subprocess.run(
-        'rm -rf ~/Library/Caches/JetBrains/CLion*', shell=True, check=True
-    )
-
-    # UPDATE: seems this is unnecessary now; should double check.
-    # Note: I'm assuming this project needs to be open when the GUI
-    # comes up. Currently just have one project so can rely on auto-open
-    # but may need to get fancier later if that changes.
-    if bool(True):
-        print('Launching GUI CLion to rebuild caches...', flush=True)
-        # process = subprocess.Popen(str(clionbin))
-        subprocess.run(
-            ['open', '-a', clionroot, Path(projroot, 'ballisticakit-cmake')],
-            check=True,
-        )
-
-        # Wait a moment and ask it nicely to die.
-        waittime = 60
-        while waittime > 0:
-            print(f'Waiting for {waittime} more seconds.', flush=True)
-            time.sleep(10)
-            waittime -= 10
-
-        # For some reason this is giving a return-code 1 although
-        # it appears to be working.
-        print('Waiting for GUI CLion to quit...', flush=True)
-        subprocess.run(
-            [
-                'osascript',
-                '-e',
-                'tell application "CLion" to quit\n'
-                'repeat until application "CLion" is not running\n'
-                '    delay 1\n'
-                'end repeat',
-            ],
-            check=False,
-        )
-        time.sleep(5)
-
-        # process.terminate()
-        # process.wait(timeout=60)
-
-    print('Launching Offline CLion to run inspections...', flush=True)
-    _run_idea_inspections_cached(
-        cachepath=cachepath,
-        filenames=filenames,
-        full=full,
-        projroot=Path(projroot, 'ballisticakit-cmake'),
-        inspectdir=Path(projroot, 'src/ballistica'),
-        displayname='CLion',
-        inspect=inspect,
-        verbose=verbose,
     )
 
 

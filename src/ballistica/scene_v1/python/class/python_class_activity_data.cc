@@ -28,7 +28,10 @@ void PythonClassActivityData::SetupType(PyTypeObject* cls) {
   // Fully qualified type path we will be exposed as:
   cls->tp_name = "bascenev1.ActivityData";
   cls->tp_basicsize = sizeof(PythonClassActivityData);
-  cls->tp_doc = "(internal)";
+  cls->tp_doc =
+      "Internal; holds native data for the activity.\n"
+      "\n"
+      ":meta private:";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
   cls->tp_repr = (reprfunc)tp_repr;
@@ -80,7 +83,7 @@ auto PythonClassActivityData::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
   self->host_activity_ = new Object::WeakRef<HostActivity>();
   return reinterpret_cast<PyObject*>(self);
@@ -188,7 +191,7 @@ PyMethodDef PythonClassActivityData::tp_methods[] = {
     {"exists", (PyCFunction)Exists, METH_NOARGS,
      "exists() -> bool\n"
      "\n"
-     "Returns whether the ActivityData still exists.\n"
+     "Returns whether the activity-data still exists.\n"
      "Most functionality will fail on a nonexistent instance."},
     {"make_foreground", (PyCFunction)MakeForeground, METH_NOARGS,
      "make_foreground() -> None\n"

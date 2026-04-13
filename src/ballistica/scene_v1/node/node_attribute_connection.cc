@@ -4,6 +4,8 @@
 
 #include <string>
 
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/node/node.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
@@ -97,13 +99,14 @@ void NodeAttributeConnection::Update() {
           src_node->type()->GetAttribute(src_attr_index);
       NodeAttributeUnbound* dst_attr =
           dst_node->type()->GetAttribute(dst_attr_index);
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "Attribute connection update: " + std::string(e.what())
-                      + "; srcAttr='" + src_attr->name() + "', src_node='"
-                      + src_node->type()->name() + "', srcNodeName='"
-                      + src_node->label() + "', dstAttr='" + dst_attr->name()
-                      + "', dstNode='" + dst_node->type()->name()
-                      + "', dstNodeName='" + dst_node->label() + "'");
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kError,
+          "Attribute connection update: " + std::string(e.what())
+              + "; srcAttr='" + src_attr->name() + "', src_node='"
+              + src_node->type()->name() + "', srcNodeName='"
+              + src_node->label() + "', dstAttr='" + dst_attr->name()
+              + "', dstNode='" + dst_node->type()->name() + "', dstNodeName='"
+              + dst_node->label() + "'");
     }
   }
 }

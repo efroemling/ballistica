@@ -92,8 +92,10 @@ class PlaylistEditController:
             # and that's all they can do.
             self._edit_ui_selection = 'add_button'
 
-        editwindow = PlaylistEditWindow(editcontroller=self)
-        from_window.main_window_replace(editwindow)
+        editwindow = from_window.main_window_replace(
+            lambda: PlaylistEditWindow(editcontroller=self)
+        )
+        assert editwindow is not None
 
         # Once we've set our start window, store the back state. We'll
         # skip back to there once we're fully done.
@@ -151,17 +153,17 @@ class PlaylistEditController:
         """(internal)"""
         from bauiv1lib.playlist.addgame import PlaylistAddGameWindow
 
-        # assert bui.app.classic is not None
-
         # No op if we're not in control.
         if not from_window.main_window_has_control():
             return
 
-        addwindow = PlaylistAddGameWindow(editcontroller=self)
-        from_window.main_window_replace(addwindow)
+        addwindow = from_window.main_window_replace(
+            lambda: PlaylistAddGameWindow(editcontroller=self)
+        )
+        assert addwindow is not None
 
         # Once we're there, store the back state. We'll use that to jump
-        # back to our current location once the edit is done.
+        # back out to our current location once the edit is done.
         assert self._pre_game_add_state is None
         self._pre_game_add_state = addwindow.main_window_back_state
 
@@ -197,16 +199,18 @@ class PlaylistEditController:
         assert self._sessiontype is not None
 
         # Jump into an edit window.
-        editwindow = PlaylistEditGameWindow(
-            gametype,
-            self._sessiontype,
-            copy.deepcopy(settings),
-            completion_call=self._edit_game_done,
+        editwindow = from_window.main_window_replace(
+            lambda: PlaylistEditGameWindow(
+                gametype,
+                self._sessiontype,
+                copy.deepcopy(settings),
+                completion_call=self._edit_game_done,
+            )
         )
-        from_window.main_window_replace(editwindow)
+        assert editwindow is not None
 
         # Once we're there, store the back state. We'll use that to jump
-        # back to our current location once the edit is done.
+        # back out to our current location once the edit is done.
         assert self._pre_game_edit_state is None
         self._pre_game_edit_state = editwindow.main_window_back_state
 

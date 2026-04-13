@@ -6,6 +6,7 @@ A snippet is a mini-program that directly takes input from stdin and does
 some focused task. This module is a repository of common snippets that can
 be imported into projects' pcommand script for easy reuse.
 """
+
 from __future__ import annotations
 
 # Note: import as little as possible here at the module level to keep
@@ -298,17 +299,6 @@ def run_client_pcommand(
         stderr_str = stderr.getvalue()
 
     return resultcode, stdout_str, stderr_str
-
-
-def disallow_in_batch() -> None:
-    """Utility call to raise a clean error if running under batch mode."""
-    from efro.error import CleanError
-
-    if _g_batch_server_mode:
-        raise CleanError(
-            'This pcommand does not support batch mode.\n'
-            'See docs in efrotools.pcommand if you want to add it.'
-        )
 
 
 def _trim_docstring(docstring: str) -> str:

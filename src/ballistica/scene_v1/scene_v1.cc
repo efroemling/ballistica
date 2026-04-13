@@ -30,6 +30,7 @@
 #include "ballistica/scene_v1/node/texture_sequence_node.h"
 #include "ballistica/scene_v1/node/time_display_node.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
+#include "ballistica/scene_v1/support/huffman.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::scene_v1 {
@@ -48,7 +49,8 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bascenev1 exec begin");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "_bascenev1 exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_scene_v1 == nullptr);
@@ -68,10 +70,12 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);
   g_base = base::BaseFeatureSet::Import();
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bascenev1 exec end");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "_bascenev1 exec end");
 }
 
-SceneV1FeatureSet::SceneV1FeatureSet() : python{new SceneV1Python()} {
+SceneV1FeatureSet::SceneV1FeatureSet()
+    : python{new SceneV1Python()}, huffman{new Huffman()} {
   NodeType* init_node_types[] = {NullNode::InitType(),
                                  GlobalsNode::InitType(),
                                  SessionGlobalsNode::InitType(),

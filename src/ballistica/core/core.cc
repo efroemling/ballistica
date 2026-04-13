@@ -8,12 +8,10 @@
 #include <utility>
 #include <vector>
 
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/core/python/core_python.h"
-#include "ballistica/shared/foundation/inline.h"
-#include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/foundation/macros.h"
-#include "ballistica/shared/foundation/types.h"
 #include "ballistica/shared/generic/runnable.h"
 
 namespace ballistica::core {
@@ -72,22 +70,22 @@ auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
 }
 
 void CoreFeatureSet::DoImport_(const CoreConfig& config) {
-  millisecs_t start_millisecs = CorePlatform::GetCurrentMillisecs();
-
   assert(g_core == nullptr);
   g_core = new CoreFeatureSet(config);
   g_core->PostInit_();
 
   // We can't report core import begin since core didn't exist at that point.
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "core import end");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "core import end");
 }
 
 CoreFeatureSet::CoreFeatureSet(CoreConfig config)
     : main_thread_id_{std::this_thread::get_id()},
       python{new CorePython()},
-      platform{CorePlatform::Create()},
+      platform{Platform::Create()},
       core_config_{std::move(config)},
-      last_app_time_measure_microsecs_{CorePlatform::GetCurrentMicrosecs()},
+      logging{new Logging()},
+      last_app_time_measure_microsecs_{Platform::TimeMonotonicMicrosecs()},
       vr_mode_{config.vr_mode} {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_core == nullptr);
@@ -152,6 +150,7 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   // Pull everything we want out of it.
   ba_env_config_dir_ = envcfg.GetAttr("config_dir").ValueAsString();
   ba_env_data_dir_ = envcfg.GetAttr("data_dir").ValueAsString();
+  ba_env_cache_dir_ = envcfg.GetAttr("cache_dir").ValueAsString();
   ba_env_app_python_dir_ =
       envcfg.GetAttr("app_python_dir").ValueAsOptionalString();
   ba_env_user_python_dir_ =
@@ -164,10 +163,7 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   auto appcfg = envcfg.GetAttr("initial_app_config");
   initial_app_config_ = appcfg.NewRef();
 
-  // This is also a reasonable time to grab initial logger levels that baenv
-  // likely mucked with. For any changes after this to make it to the native
-  // layer, babase.update_internal_logger_levels() must be called.
-  UpdateInternalLoggerLevels();
+  logging->ApplyBaEnvConfig();
 
   // Consider app-python-dir to be 'custom' if baenv provided a value for it
   // AND that value differs from baenv's default.
@@ -185,10 +181,6 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   }
 }
 
-void CoreFeatureSet::UpdateInternalLoggerLevels() {
-  python->UpdateInternalLoggerLevels(log_levels_);
-}
-
 auto CoreFeatureSet::GetAppPythonDirectory() -> std::optional<std::string> {
   BA_PRECONDITION(have_ba_env_vals_);
   return ba_env_app_python_dir_;
@@ -203,6 +195,20 @@ auto CoreFeatureSet::GetUserPythonDirectory() -> std::optional<std::string> {
 auto CoreFeatureSet::GetConfigDirectory() -> std::string {
   BA_PRECONDITION(have_ba_env_vals_);
   return ba_env_config_dir_;
+}
+
+auto CoreFeatureSet::GetConfigFilePath() -> std::string {
+  return g_core->GetConfigDirectory() + BA_DIRSLASH + "config.json";
+}
+
+auto CoreFeatureSet::GetBackupConfigFilePath() -> std::string {
+  return g_core->GetConfigDirectory() + BA_DIRSLASH + ".config_prev.json";
+}
+
+// Return the ballisticakit config dir. This does not vary across versions.
+auto CoreFeatureSet::GetCacheDirectory() -> std::string {
+  BA_PRECONDITION(have_ba_env_vals_);
+  return ba_env_cache_dir_;
 }
 
 auto CoreFeatureSet::GetDataDirectory() -> std::string {
@@ -223,8 +229,9 @@ auto CoreFeatureSet::CalcBuildSrcDir_() -> std::string {
   auto* f_end = strstr(f, "src" BA_DIRSLASH "ballistica" BA_DIRSLASH
                           "core" BA_DIRSLASH "core.cc");
   if (!f_end) {
-    Log(LogName::kBa, LogLevel::kWarning,
-        [] { return "Unable to calc build source dir from __FILE__."; });
+    logging->Log(LogName::kBa, LogLevel::kWarning, [] {
+      return std::string("Unable to calc build source dir from __FILE__.");
+    });
     return "";
   } else {
     return std::string(f).substr(0, f_end - f);
@@ -274,12 +281,12 @@ void CoreFeatureSet::RunSanityChecks_() {
   // from. Use this to adjust the filtering as necessary so the resulting
   // type name matches what is expected.
   if (explicit_bool(false)) {
-    Log(LogName::kBa, LogLevel::kError, [] {
+    logging->Log(LogName::kBa, LogLevel::kError, [] {
       return "static_type_name check; name is '"
              + static_type_name<decltype(g_core)>() + "' debug_full is '"
              + static_type_name<decltype(g_core)>(true) + "'";
     });
-    Log(LogName::kBa, LogLevel::kError, [] {
+    logging->Log(LogName::kBa, LogLevel::kError, [] {
       return "static_type_name check; name is '"
              + static_type_name<decltype(testrunnable)>() + "' debug_full is '"
              + static_type_name<decltype(testrunnable)>(true) + "'";
@@ -301,49 +308,6 @@ auto CoreFeatureSet::SoftImportBase() -> BaseSoftInterface* {
   return g_base_soft;
 }
 
-// void CoreFeatureSet::LifecycleLog(const char* msg, double offset_seconds) {
-//   // Early out to avoid work if we won't show anyway.
-//   if (!LogLevelEnabled(LogName::kBaLifecycle, LogLevel::kDebug)) {
-//     return;
-//   }
-
-//   // We're now showing relative timestamps in more places so trying without
-//   // adding that to the message...
-//   if (explicit_bool(false)) {
-//     // We include time-since-start as part of the message here.
-//     char buffer[128];
-//     snprintf(buffer, sizeof(buffer), "%s @ %.3fs.", msg,
-//              g_core->GetAppTimeSeconds() + offset_seconds);
-//     Log(LogName::kBaLifecycle, LogLevel::kDebug, buffer);
-//   } else {
-//     Log(LogName::kBaLifecycle, LogLevel::kDebug, msg);
-//   }
-// }
-
-void CoreFeatureSet::Log(LogName name, LogLevel level, char* msg) {
-  // Avoid touching the Python layer if the log will get ignored there
-  // anyway.
-  if (LogLevelEnabled(name, level)) {
-    Logging::Log(name, level, msg);
-  }
-}
-
-void CoreFeatureSet::Log(LogName name, LogLevel level, const char* msg) {
-  // Avoid touching the Python layer if the log will get ignored there
-  // anyway.
-  if (LogLevelEnabled(name, level)) {
-    Logging::Log(name, level, msg);
-  }
-}
-
-void CoreFeatureSet::Log(LogName name, LogLevel level, const std::string& msg) {
-  // Avoid touching the Python layer if the log will get ignored there
-  // anyway.
-  if (LogLevelEnabled(name, level)) {
-    Logging::Log(name, level, msg);
-  }
-}
-
 auto CoreFeatureSet::HeadlessMode() -> bool {
   // This is currently a hard-coded value but could theoretically change
   // later if we support running in headless mode from a gui build/etc.
@@ -351,27 +315,27 @@ auto CoreFeatureSet::HeadlessMode() -> bool {
 }
 
 static void WaitThenDie(millisecs_t wait, const std::string& action) {
-  CorePlatform::SleepMillisecs(wait);
+  Platform::SleepMillisecs(wait);
   FatalError("Timed out waiting for " + action + ".");
 }
 
-auto CoreFeatureSet::GetAppTimeMillisecs() -> millisecs_t {
+auto CoreFeatureSet::AppTimeMillisecs() -> millisecs_t {
   UpdateAppTime_();
   return app_time_microsecs_ / 1000;
 }
 
-auto CoreFeatureSet::GetAppTimeMicrosecs() -> microsecs_t {
+auto CoreFeatureSet::AppTimeMicrosecs() -> microsecs_t {
   UpdateAppTime_();
   return app_time_microsecs_;
 }
 
-auto CoreFeatureSet::GetAppTimeSeconds() -> seconds_t {
+auto CoreFeatureSet::AppTimeSeconds() -> seconds_t {
   UpdateAppTime_();
   return static_cast<seconds_t>(app_time_microsecs_) / 1000000;
 }
 
 void CoreFeatureSet::UpdateAppTime_() {
-  microsecs_t t = CorePlatform::GetCurrentMicrosecs();
+  microsecs_t t = Platform::TimeMonotonicMicrosecs();
 
   // If we're at a different time than our last query, do our funky math.
   if (t != last_app_time_measure_microsecs_) {
@@ -436,20 +400,20 @@ void CoreFeatureSet::UnregisterThread() {
 }
 
 auto CoreFeatureSet::CurrentThreadName() -> std::string {
-  if (g_core == nullptr) {
-    return "unknown(not-yet-inited)";
-  }
+  // if (g_core == nullptr) {
+  //   return "unknown(not-yet-inited)";
+  // }
   {
-    std::scoped_lock lock(g_core->thread_info_map_mutex_);
-    auto i = g_core->thread_info_map_.find(std::this_thread::get_id());
-    if (i != g_core->thread_info_map_.end()) {
+    std::scoped_lock lock(thread_info_map_mutex_);
+    auto i = thread_info_map_.find(std::this_thread::get_id());
+    if (i != thread_info_map_.end()) {
       return i->second;
     }
   }
 
   // Ask pthread for the thread name if we don't have one.
   // FIXME - move this to platform.
-#if BA_OSTYPE_MACOS || BA_OSTYPE_IOS_TVOS || BA_OSTYPE_LINUX
+#if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS || BA_PLATFORM_LINUX
   std::string name = "unknown (sys-name=";
   char buffer[256];
   int result = pthread_getname_np(pthread_self(), buffer, sizeof(buffer));

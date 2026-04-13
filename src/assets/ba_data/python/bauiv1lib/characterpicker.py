@@ -40,7 +40,6 @@ class CharacterPicker(PopupWindow):
         tint2_color: Sequence[float] = (1.0, 1.0, 1.0),
         selected_character: str | None = None,
     ):
-        # pylint: disable=too-many-locals
         # pylint: disable=too-many-positional-arguments
         from bascenev1lib.actor import spazappearance
 
@@ -147,7 +146,7 @@ class CharacterPicker(PopupWindow):
                     color=(1, 1, 1),
                     tint_color=tint_color,
                     tint2_color=tint2_color,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._select_character, self._spazzes[index]
                     ),
                     position=pos,
@@ -193,13 +192,14 @@ class CharacterPicker(PopupWindow):
         bui.widget(edit=btn, show_buffer_top=30, show_buffer_bottom=30)
 
     def _on_store_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
+        from bauiv1lib.account.signin import show_sign_in_prompt
 
         plus = bui.app.plus
         assert plus is not None
 
-        if plus.get_v1_account_state() != 'signed_in':
+        if plus.accounts.primary is None:
             show_sign_in_prompt()
+            self._transition_out()
             return
 
         if self._delegate is not None:

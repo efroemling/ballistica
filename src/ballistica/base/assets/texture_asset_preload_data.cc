@@ -4,9 +4,12 @@
 
 #include <algorithm>
 #include <cstring>
+#include <string>
 
 #include "ballistica/base/assets/texture_asset.h"
 #include "ballistica/base/graphics/texture/ktx.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 
 namespace ballistica::base {
 
@@ -405,6 +408,11 @@ static void BlockDecompressImageDXT5(uint32_t width, uint32_t height,
 }
 
 void TextureAssetPreloadData::ConvertToUncompressed(TextureAsset* texture) {
+  g_core->logging->Log(LogName::kBaAssets, LogLevel::kDebug, [texture, this] {
+    return std::string("ConvertToUncompressed: '") + texture->file_name()
+           + "' base_level_format="
+           + std::to_string(static_cast<int>(formats[base_level]));
+  });
   // FIXME; we could technically get better quality on our
   //  lower mip levels by dynamically generating them in this
   //  case instead of decompressing each level.

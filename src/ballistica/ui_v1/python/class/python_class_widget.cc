@@ -6,6 +6,7 @@
 
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
@@ -21,9 +22,17 @@ PyNumberMethods PythonClassWidget::as_number_;
 
 // Attrs we expose through our custom getattr/setattr.
 #define ATTR_TRANSITIONING_OUT "transitioning_out"
+#define ATTR_ID "id"
+#define ATTR_ALLOW_PRESERVE_SELECTION "allow_preserve_selection"
+#define ATTR_SELECTABLE "selectable"
+#define ATTR_CENTER "center"
+#define ATTR_PARENT "parent"
 
 // The set we expose via dir().
-static const char* extra_dir_attrs[] = {ATTR_TRANSITIONING_OUT, nullptr};
+static const char* extra_dir_attrs[] = {
+    ATTR_TRANSITIONING_OUT, ATTR_ID, ATTR_ALLOW_PRESERVE_SELECTION,
+    ATTR_SELECTABLE,        nullptr,
+};
 
 auto PythonClassWidget::type_name() -> const char* { return "Widget"; }
 
@@ -38,8 +47,6 @@ void PythonClassWidget::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "Internal type for low level UI elements; buttons, windows, etc.\n"
       "\n"
-      "Category: **User Interface Classes**\n"
-      "\n"
       "This class represents a weak reference to a widget object\n"
       "in the internal C++ layer. Currently, functions such as\n"
       "bauiv1.buttonwidget() must be used to instantiate or edit these.\n"
@@ -49,7 +56,23 @@ void PythonClassWidget::SetupType(PyTypeObject* cls) {
       "\n"
       "        It can be useful to check this on a window's root widget to\n"
       "        prevent multiple window actions from firing simultaneously,\n"
-      "        potentially leaving the UI in a broken state.\n";
+      "        potentially leaving the UI in a broken state.\n"
+     "\n"
+      "    " ATTR_ID " (str | None):\n"
+      "        ID for this widget (if any).\n"
+     "\n"
+      "    " ATTR_ALLOW_PRESERVE_SELECTION " (bool):\n"
+      "        Whether this widget should participate in auto selection\n"
+      "        save/restore.\n"
+      "\n"
+      "    " ATTR_CENTER " (tuple[float, float]):\n"
+      "        The center of this widget in its parent widget's space.\n"
+      "\n"
+      "    " ATTR_PARENT " (bauiv1.Widget | None):\n"
+      "        The parent widget (if any).\n"
+      "\n"
+      "    " ATTR_SELECTABLE " (bool):\n"
+      "        Whether this widget can be selected.\n";
 
   // clang-format on
 
@@ -112,6 +135,55 @@ auto PythonClassWidget::tp_getattro(PythonClassWidget* self, PyObject* attr)
     }
     Py_RETURN_FALSE;
   }
+  if (!strcmp(s, ATTR_ID)) {
+    Widget* w = self->widget_->get();
+    if (!w) {
+      throw Exception("Invalid Widget", PyExcType::kReference);
+    }
+    if (w->id().has_value()) {
+      return PyUnicode_FromString(w->id()->c_str());
+    }
+    Py_RETURN_NONE;
+  }
+  if (!strcmp(s, ATTR_ALLOW_PRESERVE_SELECTION)) {
+    Widget* w = self->widget_->get();
+    if (!w) {
+      throw Exception("Invalid Widget", PyExcType::kReference);
+    }
+    if (w->allow_preserve_selection()) {
+      Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
+  }
+  if (!strcmp(s, ATTR_SELECTABLE)) {
+    Widget* w = self->widget_->get();
+    if (!w) {
+      throw Exception("Invalid Widget", PyExcType::kReference);
+    }
+    if (w->IsSelectable()) {
+      Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
+  }
+  if (!strcmp(s, ATTR_CENTER)) {
+    Widget* w = self->widget_->get();
+    if (!w) {
+      throw Exception("Invalid Widget", PyExcType::kReference);
+    }
+    float x, y;
+    w->GetCenter(&x, &y);
+    return Py_BuildValue("(ff)", x, y);
+  }
+  if (!strcmp(s, ATTR_PARENT)) {
+    Widget* w = self->widget_->get();
+    if (!w) {
+      throw Exception("Invalid Widget", PyExcType::kReference);
+    }
+    if (Widget* parent = w->parent_widget()) {
+      return parent->NewPyRef();
+    }
+    Py_RETURN_NONE;
+  }
 
   // Fall back to generic behavior.
   PyObject* val;
@@ -138,10 +210,25 @@ auto PythonClassWidget::tp_setattro(PythonClassWidget* self, PyObject* attr,
 auto PythonClassWidget::tp_repr(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_TRY;
   Widget* w = self->widget_->get();
-  return Py_BuildValue("s", (std::string("<bauiv1 '")
-                             + (w ? w->GetWidgetTypeName() : "<invalid>")
-                             + "' widget " + Utils::PtrToString(w) + ">")
-                                .c_str());
+
+  std::string typestr{(w ? ("'" + w->GetWidgetTypeName() + "'") : "<invalid>")};
+
+  std::string idstr;
+  if (w && w->id().has_value()) {
+    idstr = "'" + *w->id() + "'";
+  } else {
+    idstr = "None";
+  }
+
+  std::string originstr;
+  if (w) {
+    originstr = "'" + w->source_location() + "'";
+  }
+
+  return Py_BuildValue(
+      "s", ("<_bauiv1.Widget at " + Utils::PtrToString(w) + " (type=" + typestr
+            + ", id=" + idstr + ", origin=" + originstr + ")>")
+               .c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -156,7 +243,7 @@ auto PythonClassWidget::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
   self->widget_ = new Object::WeakRef<Widget>();
   return reinterpret_cast<PyObject*>(self);
@@ -303,8 +390,8 @@ auto PythonClassWidget::Delete(PythonClassWidget* self, PyObject* args,
     if (p) {
       p->DeleteWidget(w);
     } else {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "Can't delete widget: no parent.");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "Can't delete widget: no parent.");
     }
   }
 
@@ -330,6 +417,30 @@ auto PythonClassWidget::AddDeleteCallback(PythonClassWidget* self,
     throw Exception(PyExcType::kWidgetNotFound);
   }
   w->AddOnDeleteCall(call_obj);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassWidget::GlobalSelect(PythonClassWidget* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
+  if (!w) {
+    throw Exception(PyExcType::kWidgetNotFound);
+  }
+  w->GlobalSelect();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassWidget::ScrollIntoView(PythonClassWidget* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
+  if (!w) {
+    throw Exception(PyExcType::kWidgetNotFound);
+  }
+  w->ScrollIntoView();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -399,6 +510,21 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      "add_delete_callback(call: Callable) -> None\n"
      "\n"
      "Add a call to be run immediately after this widget is destroyed."},
+    {"global_select", (PyCFunction)GlobalSelect,
+     METH_NOARGS,  // NOLINT (signed bitwise stuff)
+     "global_select() -> None\n"
+     "\n"
+     "Select this widget globally.\n"
+     "\n"
+     "This should be used with caution. In general it is better to set\n"
+     " selected-child on container widgets.\n"
+     "\n"
+     ":meta private:"},
+    {"scroll_into_view", (PyCFunction)ScrollIntoView,
+     METH_NOARGS,  // NOLINT (signed bitwise stuff)
+     "scroll_into_view() -> None\n"
+     "\n"
+     "Scroll to show this widget if possible."},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};

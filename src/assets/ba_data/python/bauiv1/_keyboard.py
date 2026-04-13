@@ -13,11 +13,9 @@ if TYPE_CHECKING:
 class Keyboard:
     """Chars definitions for on-screen keyboard.
 
-    Category: **App Classes**
-
-    Keyboards are discoverable by the meta-tag system
-    and the user can select which one they want to use.
-    On-screen keyboard uses chars from active babase.Keyboard.
+    Keyboards are discoverable by the meta-tag system and the user can
+    select which one they want to use. On-screen keyboard uses chars
+    from active babase.Keyboard.
     """
 
     name: str

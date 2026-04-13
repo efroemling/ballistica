@@ -24,12 +24,10 @@ auto PythonClassInputDevice::type_name() -> const char* {
 void PythonClassInputDevice::SetupType(PyTypeObject* cls) {
   PythonClass::SetupType(cls);
   // Fully qualified type path we will be exposed as:
-  cls->tp_name = "babase.InputDevice";
+  cls->tp_name = "bascenev1.InputDevice";
   cls->tp_basicsize = sizeof(PythonClassInputDevice);
   cls->tp_doc =
       "An input-device such as a gamepad, touchscreen, or keyboard.\n"
-      "\n"
-      "Category: **Gameplay Classes**\n"
       "\n"
       "Attributes:\n"
       "\n"
@@ -103,7 +101,7 @@ auto PythonClassInputDevice::Create(SceneV1InputDeviceDelegate* input_device)
   auto* py_input_device = reinterpret_cast<PythonClassInputDevice*>(
       PyObject_CallObject(reinterpret_cast<PyObject*>(&type_obj), nullptr));
   if (!py_input_device) {
-    throw Exception("babase.InputDevice creation failed.");
+    throw Exception("bascenev1.InputDevice creation failed.");
   }
   *py_input_device->input_device_delegate_ = input_device;
   return reinterpret_cast<PyObject*>(py_input_device);
@@ -149,7 +147,7 @@ auto PythonClassInputDevice::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
   self->input_device_delegate_ =
       new Object::WeakRef<SceneV1InputDeviceDelegate>();
@@ -249,7 +247,7 @@ auto PythonClassInputDevice::tp_getattro(PythonClassInputDevice* self,
     if (!d) {
       throw Exception(PyExcType::kInputDeviceNotFound);
     }
-    return PyLong_FromLong(d->input_device().device_number());
+    return PyLong_FromLong(d->input_device().number());
   } else if (!strcmp(s, "is_controller_app")) {
     auto* d = self->input_device_delegate_->get();
     if (!d) {
@@ -342,6 +340,26 @@ auto PythonClassInputDevice::GetPlayerProfiles(PythonClassInputDevice* self)
   } else {
     return Py_BuildValue("{}");  // Empty dict.
   }
+  BA_PYTHON_CATCH;
+}
+
+auto PythonClassInputDevice::GetClassicPurchases(PythonClassInputDevice* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->get();
+  if (!d) {
+    throw Exception(PyExcType::kInputDeviceNotFound);
+  }
+  PyObject* purchases = d->GetClassicPurchases();
+  // Distinguish "unknown" (None) from "owns nothing" (empty list):
+  // a missing or Py_None backing object means the master server
+  // didn't provide a list, so we return None. Only a real list is
+  // propagated.
+  if (purchases == nullptr || purchases == Py_None) {
+    Py_RETURN_NONE;
+  }
+  Py_INCREF(purchases);
+  return purchases;
   BA_PYTHON_CATCH;
 }
 
@@ -439,8 +457,9 @@ auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
                           .Get(base::BasePython::ObjID::kLstrFromJsonCall)
                           .Call(args2);
   if (!results.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error creating Lstr from raw button name: '" + bname + "'");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "Error creating Lstr from raw button name: '" + bname + "'");
     PythonRef args3(Py_BuildValue("(s)", "?"), PythonRef::kSteal);
     results = g_base->python->objs()
                   .Get(base::BasePython::ObjID::kLstrFromJsonCall)
@@ -503,6 +522,21 @@ PyMethodDef PythonClassInputDevice::tp_methods[] = {
      "(can be used to get account names for remote players)"},
     {"get_player_profiles", (PyCFunction)GetPlayerProfiles, METH_NOARGS,
      "get_player_profiles() -> dict\n"
+     "\n"
+     "(internal)"},
+    {"get_classic_purchases", (PyCFunction)GetClassicPurchases, METH_NOARGS,
+     "get_classic_purchases() -> list[str] | None\n"
+     "\n"
+     "Return classic-inventory purchase legacy-ids owned by this\n"
+     "device's account, as provided by the master server.\n"
+     "\n"
+     "Returns ``None`` when the master server isn't providing this\n"
+     "data — e.g. when this device isn't connected via a v2-auth\n"
+     "handshake, when an older master-server version didn't send\n"
+     "it, or when the account has no classic-inventory record.\n"
+     "Callers should treat ``None`` as 'unknown', not as\n"
+     "'owns nothing'; an empty list is the correct way to\n"
+     "represent 'owns nothing'.\n"
      "\n"
      "(internal)"},
     {nullptr}};  // namespace ballistica

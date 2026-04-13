@@ -12,4 +12,8 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we're defining here.
 fset = FeatureSet.get_active()
 
+# Stuff we need.
+#
+# Ideally we shouldn't need scene_v1_lib, but things are tangled for
+# historical reasons.
 fset.requirements = {'core', 'base', 'classic', 'scene_v1_lib'}

@@ -28,7 +28,6 @@ from efro.dataclassio import (
 )
 from efro.terminal import Clr
 
-
 if TYPE_CHECKING:
     import efro.terminal
 
@@ -52,8 +51,8 @@ class CacheMetadata:
     executable: Annotated[bool, IOAttrs('e')]
 
 
-g_cache_prefix_noexec: bytes | None = None
-g_cache_prefix_exec: bytes | None = None
+_g_cache_prefix_noexec: bytes | None = None
+_g_cache_prefix_exec: bytes | None = None
 
 
 def get_local_cache_dir() -> str:
@@ -116,7 +115,6 @@ def _project_centric_path(path: str) -> str:
 def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
     """Fetch a target path from the cache, downloading if need be."""
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-statements
     # pylint: disable=too-many-branches
     import tempfile
 
@@ -205,8 +203,8 @@ def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
             if result.returncode != 0:
                 raise CleanError('Download failed; is your internet working?')
 
-            # Ok; cache download finished. Lastly move it in place to be as
-            # atomic as possible.
+            # Ok; cache download finished. Lastly move it in place to be
+            # as atomic as possible.
             os.makedirs(os.path.dirname(local_cache_path), exist_ok=True)
             subprocess.run(
                 ['mv', local_cache_dl_path, local_cache_path], check=True
@@ -221,11 +219,11 @@ def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
     else:
         print(msg)
 
-    # Extract and stage the file in a temp dir before doing
-    # a final move to the target location to be as atomic as possible.
+    # Extract and stage the file in a temp dir before doing a final move
+    # to the target location to be as atomic as possible.
     with tempfile.TemporaryDirectory() as tmpdir:
-        with open(local_cache_path, 'rb') as infile:
-            data = infile.read()
+        with open(local_cache_path, 'rb') as infileb:
+            data = infileb.read()
         header = data[:4]
         if header != CACHE_HEADER:
             raise RuntimeError('Invalid cache header.')
@@ -297,8 +295,6 @@ def filter_makefile(makefile_dir: str, contents: str) -> str:
 
 def update_cache(makefile_dirs: list[str]) -> None:
     """Given a list of directories containing Makefiles, update caches."""
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-branches
 
     import multiprocessing
 
@@ -461,7 +457,11 @@ def _gen_complete_state_hashes(fnames: list[str]) -> str:
     with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
         hashes = dict(executor.map(_get_simple_file_hash, fnames))
 
-    return json.dumps(hashes, separators=(',', ':'))
+    return json.dumps(
+        hashes,
+        separators=(',', ':'),
+        allow_nan=False,
+    )
 
 
 def _update_cloud_cache(
@@ -549,7 +549,6 @@ def _gather_cache_files(
     staging_dir: str,
     mapping_file: str,
 ) -> None:
-    # pylint: disable=too-many-locals
     import functools
 
     fhashpaths_all: set[str] = set()
@@ -661,8 +660,8 @@ def _cache_prefix_for_file(fname: str) -> bytes:
     # pylint: disable=global-statement
     from efrotools.util import is_wsl_windows_build_path
 
-    global g_cache_prefix_exec
-    global g_cache_prefix_noexec
+    global _g_cache_prefix_exec
+    global _g_cache_prefix_noexec
 
     # We'll be calling this a lot when checking existing files, so we
     # want it to be efficient. Let's cache the two options there are at
@@ -686,21 +685,21 @@ def _cache_prefix_for_file(fname: str) -> bytes:
         executable = False
 
     if executable:
-        if g_cache_prefix_exec is None:
+        if _g_cache_prefix_exec is None:
             metadata = dataclass_to_json(
                 CacheMetadata(executable=True)
             ).encode()
             assert len(metadata) < 256
-            g_cache_prefix_exec = (
+            _g_cache_prefix_exec = (
                 CACHE_HEADER + len(metadata).to_bytes() + metadata
             )
-        return g_cache_prefix_exec
+        return _g_cache_prefix_exec
 
     # Ok; non-executable it is.
     metadata = dataclass_to_json(CacheMetadata(executable=False)).encode()
     assert len(metadata) < 256
-    g_cache_prefix_noexec = CACHE_HEADER + len(metadata).to_bytes() + metadata
-    return g_cache_prefix_noexec
+    _g_cache_prefix_noexec = CACHE_HEADER + len(metadata).to_bytes() + metadata
+    return _g_cache_prefix_noexec
 
 
 def _check_warm_start_entry(entry: tuple[str, str]) -> None:
@@ -766,7 +765,9 @@ def warm_start_cache(cachetype: str) -> None:
             )
             print('Decompressing starter-cache...', flush=True)
             subprocess.run(
-                ['tar', '-xf', starter_cache_file_path], cwd=tmpdir, check=True
+                ['tar', '--no-same-owner', '-xf', starter_cache_file_path],
+                cwd=tmpdir,
+                check=True,
             )
             os.makedirs(os.path.dirname(local_cache_dir), exist_ok=True)
             subprocess.run(

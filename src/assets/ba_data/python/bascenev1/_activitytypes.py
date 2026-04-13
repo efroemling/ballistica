@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Some handy base class and special purpose Activity types."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
@@ -13,7 +14,6 @@ from bascenev1._activity import Activity
 from bascenev1._player import EmptyPlayer
 from bascenev1._team import EmptyTeam
 from bascenev1._music import MusicType, setmusic
-
 
 if TYPE_CHECKING:
     import bascenev1
@@ -43,16 +43,22 @@ class EndSessionActivity(Activity[EmptyPlayer, EmptyTeam]):
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
 
-        assert babase.app.classic is not None
+        classic = babase.app.classic
+        plus = babase.app.plus
+        assert classic is not None
+        assert plus is not None
 
-        main_menu_session = babase.app.classic.get_main_menu_session()
+        main_menu_session = classic.get_main_menu_session()
 
         super().on_begin()
         babase.unlock_all_input()
-        assert babase.app.classic is not None
-        babase.app.classic.ads.call_after_ad(
-            babase.Call(_bascenev1.new_host_session, main_menu_session)
-        )
+        assert babase.app.plus is not None
+
+        call = babase.CallStrict(_bascenev1.new_host_session, main_menu_session)
+        if classic.can_show_interstitial():
+            plus.ads.call_after_ad(call)
+        else:
+            babase.pushcall(call)
 
 
 class JoinActivity(Activity[EmptyPlayer, EmptyTeam]):
@@ -166,7 +172,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         # If we're still kicking at the end of our assign-delay, assign this
         # guy's input to trigger us.
         _bascenev1.timer(
-            time_till_assign, babase.WeakCall(self._safe_assign, player)
+            time_till_assign, babase.WeakCallStrict(self._safe_assign, player)
         )
 
     @override

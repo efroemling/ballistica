@@ -16,7 +16,7 @@ class PythonClassUISound : public PythonClass {
  public:
   static void SetupType(PyTypeObject* cls);
   static auto type_name() -> const char*;
-  static auto Create(const Object::Ref<base::SoundAsset>& sound) -> PyObject*;
+  static auto Create(base::SoundAsset* sound) -> PyObject*;
   static auto Check(PyObject* o) -> bool {
     return PyObject_TypeCheck(o, &type_obj);
   }

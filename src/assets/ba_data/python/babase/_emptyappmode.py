@@ -1,11 +1,10 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Provides AppMode functionality."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
-
-from bacommon.app import AppExperience
 
 import _babase
 from babase._appmode import AppMode
@@ -17,16 +16,14 @@ if TYPE_CHECKING:
 
 # ba_meta export babase.AppMode
 class EmptyAppMode(AppMode):
-    """An AppMode that does not do much at all."""
+    """An AppMode that does not do much at all.
+
+    :meta private:
+    """
 
     @override
     @classmethod
-    def get_app_experience(cls) -> AppExperience:
-        return AppExperience.EMPTY
-
-    @override
-    @classmethod
-    def _supports_intent(cls, intent: AppIntent) -> bool:
+    def can_handle_intent(cls, intent: AppIntent) -> bool:
         # We support default and exec intents currently.
         return isinstance(intent, AppIntentExec | AppIntentDefault)
 

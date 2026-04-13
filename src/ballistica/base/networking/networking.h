@@ -117,7 +117,7 @@ namespace ballistica::base {
 class Networking {
  public:
   // Called in the logic thread when the app is reading its config.
-  void DoApplyAppConfig();
+  void ApplyAppConfig();
 
   // Send a message to an address.  This may block for a brief moment, so it can
   // be more efficient to send a SendToMessage to the NetworkWrite thread which

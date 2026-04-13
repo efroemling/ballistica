@@ -10,15 +10,18 @@
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/connection/connection_to_host_udp.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"
 #include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_sys.h"
+#include "ballistica/shared/python/python_macros.h"
 
 namespace ballistica::scene_v1 {
 
@@ -124,7 +127,7 @@ static auto PySetPublicPartyStatsURL(PyObject* self, PyObject* args,
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
   // The call expects an empty string for the no-url option.
-  std::string url = (url_obj == Py_None) ? "" : Python::GetPyString(url_obj);
+  std::string url = (url_obj == Py_None) ? "" : Python::GetString(url_obj);
   appmode->SetPublicPartyStatsURL(url);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -237,7 +240,7 @@ static auto PySetPublicPartyPublicAddressIPV4(PyObject* self, PyObject* args,
 
   std::optional<std::string> address{};
   if (address_obj != Py_None) {
-    address = Python::GetPyString(address_obj);
+    address = Python::GetString(address_obj);
   }
   appmode->set_public_party_public_address_ipv4(address);
   Py_RETURN_NONE;
@@ -271,7 +274,7 @@ static auto PySetPublicPartyPublicAddressIPV6(PyObject* self, PyObject* args,
 
   std::optional<std::string> address{};
   if (address_obj != Py_None) {
-    address = Python::GetPyString(address_obj);
+    address = Python::GetString(address_obj);
   }
   appmode->set_public_party_public_address_ipv6(address);
   Py_RETURN_NONE;
@@ -294,9 +297,10 @@ static auto PySetAuthenticateClients(PyObject* self, PyObject* args,
                                      PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   int enable;
+  int version;
   static const char* kwlist[] = {"enable", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
-                                   const_cast<char**>(kwlist), &enable)) {
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "p", const_cast<char**>(kwlist), &enable, &version)) {
     return nullptr;
   }
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
@@ -328,7 +332,7 @@ static auto PySetAdmins(PyObject* self, PyObject* args, PyObject* keywds)
   }
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
-  auto admins = g_base->python->GetPyLStrings(admins_obj);
+  auto admins = Python::GetStrings(admins_obj);
   std::set<std::string> adminset;
   for (auto&& admin : admins) {
     adminset.insert(admin);
@@ -404,10 +408,10 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
   // Error if we're not in our app-mode.
   auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
 
-  address = Python::GetPyString(address_obj);
+  address = Python::GetString(address_obj);
 
-  // Disallow in headless build (people were using this for spam-bots).
-
+  // Block outbound connects from headless binaries — prevents
+  // shipped server binaries being repurposed as spam bots.
   if (g_core->HeadlessMode()) {
     throw Exception("Not available in headless mode.");
   }
@@ -422,10 +426,15 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
       throw Exception();
     }
   } catch (const std::exception&) {
-    ScreenMessage(g_base->assets->GetResourceString("invalidAddressErrorText"),
-                  {1, 0, 0});
+    g_base->ScreenMessage(
+        g_base->assets->GetResourceString("invalidAddressErrorText"),
+        {1, 0, 0});
     Py_RETURN_NONE;
   }
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [&s] {
+    return "connect_to_party: enqueuing UDP connect to " + s.AddressString()
+           + ":" + std::to_string(s.Port()) + ".";
+  });
   appmode->connections()->PushHostConnectedUDPCall(
       s, static_cast<bool>(print_progress));
   Py_RETURN_NONE;
@@ -587,9 +596,7 @@ static PyMethodDef PyDisconnectFromHostDef = {
 
     "disconnect_from_host() -> None\n"
     "\n"
-    "(internal)\n"
-    "\n"
-    "Category: General Utility Functions",
+    "(internal)",
 };
 
 // --------------------------- disconnect_client -------------------------------
@@ -669,14 +676,57 @@ static PyMethodDef PyGetClientPublicDeviceUUIDDef = {
     "\n"
     "(internal)\n"
     "\n"
-    "Category: General Utility Functions\n"
-    "\n"
     "Return a public device UUID for a client. If the client does not\n"
     "exist or is running a version older than 1.6.10, returns None.\n"
     "Public device UUID uniquely identifies the device the client is\n"
     "using in a semi-permanent way. The UUID value will change\n"
     "periodically with updates to the game or operating system.",
 };
+
+// ----------------------- get_client_ping -----------------------------
+
+static PyObject* PyGetClientPing(PyObject* self, PyObject* args,
+                                 PyObject* keywds) {
+  BA_PYTHON_TRY;
+
+  int client_id;
+  static const char* kwlist[] = {"client_id", nullptr};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &client_id)) {
+    return nullptr;
+  }
+
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+
+  auto&& connection_iter{
+      appmode->connections()->connections_to_clients().find(client_id)};
+
+  if (connection_iter
+      == appmode->connections()->connections_to_clients().end()) {
+    return PyFloat_FromDouble(-1.0f);
+  }
+
+  assert(connection_iter->second.exists());
+
+  ConnectionToClient* connection = connection_iter->second.get();
+
+  float ping = connection->current_ping();
+
+  return PyFloat_FromDouble(ping);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetClientPingDef = {
+    "get_client_ping",             // name
+    (PyCFunction)PyGetClientPing,  // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "get_client_ping(client_id: int) -> float\n"
+    "\n"
+    "Return the current ping (RTT in ms) for a connected client.\n"
+    "Returns -1.0 if client_id is invalid.\n"};
 
 // ----------------------------- get_game_port ---------------------------------
 
@@ -754,9 +804,11 @@ static PyMethodDef PyHostScanCycleDef = {
     (PyCFunction)PyHostScanCycle,  // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "host_scan_cycle() -> list\n"
+    "host_scan_cycle() -> list[dict[str, str]]\n"
     "\n"
-    "(internal)",
+    "(internal)\n"
+    "\n"
+    ":meta private:",
 };
 
 // ---------------------------- end_host_scanning ------------------------------
@@ -777,9 +829,7 @@ static PyMethodDef PyEndHostScanningDef = {
 
     "end_host_scanning() -> None\n"
     "\n"
-    "(internal)\n"
-    "\n"
-    "Category: General Utility Functions",
+    "(internal)",
 };
 
 // ------------------------- have_connected_clients ----------------------------
@@ -804,7 +854,7 @@ static PyMethodDef PyHaveConnectedClientsDef = {
     "\n"
     "(internal)\n"
     "\n"
-    "Category: General Utility Functions",
+    ":meta private:",
 };
 
 // ------------------------------ chatmessage ----------------------------------
@@ -838,7 +888,7 @@ static auto PyChatMessage(PyObject* self, PyObject* args, PyObject* keywds)
   }
 
   if (clients_obj != Py_None) {
-    clients = Python::GetPyInts(clients_obj);
+    clients = Python::GetInts(clients_obj);
     clients_p = &clients;
   }
   appmode->connections()->SendChatMessage(message, clients_p,
@@ -902,6 +952,7 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PyDisconnectFromHostDef,
       PyDisconnectClientDef,
       PyGetClientPublicDeviceUUIDDef,
+      PyGetClientPingDef,
       PyGetConnectionToHostInfoDef,
       PyGetConnectionToHostInfo2Def,
       PyClientInfoQueryResponseDef,

@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """UI settings functionality related to touchscreens."""
+
 from __future__ import annotations
 
 from typing import override
@@ -89,7 +90,6 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             ),
             size=(self._scroll_width, self._scroll_height),
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         self._subcontainer = bui.containerwidget(
@@ -97,7 +97,6 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             size=(self._sub_width, self._sub_height),
             background=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         self._build_gui()
@@ -112,8 +111,12 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # TODO: Wire this up.
+        return False
+
     def _build_gui(self) -> None:
-        # pylint: disable=too-many-locals
         from bauiv1lib.config import ConfigNumberEdit, ConfigCheckBox
         from bauiv1lib.radiogroup import make_radio_group
 

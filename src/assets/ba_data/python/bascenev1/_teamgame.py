@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, TypeVar, override
+from typing import TYPE_CHECKING, override
 
 import babase
 
@@ -22,17 +22,20 @@ if TYPE_CHECKING:
 
     import bascenev1
 
-PlayerT = TypeVar('PlayerT', bound='bascenev1.Player')
-TeamT = TypeVar('TeamT', bound='bascenev1.Team')
+
+# Note: Need to suppress an undefined variable here because our pylint
+# plugin clears type-arg declarations (which we don't require to be
+# present at runtime) but keeps parent type-args (which we sometimes use
+# at runtime).
 
 
-class TeamGameActivity(GameActivity[PlayerT, TeamT]):
+class TeamGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
+    GameActivity[PlayerT, TeamT]  # pylint: disable=undefined-variable
+):
     """Base class for teams and free-for-all mode games.
 
-    Category: **Gameplay Classes**
-
-    (Free-for-all is essentially just a special case where every
-    bascenev1.Player has their own bascenev1.Team)
+    (Free-for-all is essentially just a special case where every player
+    has their own team)
     """
 
     @override
@@ -40,11 +43,7 @@ class TeamGameActivity(GameActivity[PlayerT, TeamT]):
     def supports_session_type(
         cls, sessiontype: type[bascenev1.Session]
     ) -> bool:
-        """
-        Class method override;
-        returns True for ba.DualTeamSessions and ba.FreeForAllSessions;
-        False otherwise.
-        """
+        # By default, team games support dual-teams and ffa.
         return issubclass(sessiontype, DualTeamSession) or issubclass(
             sessiontype, FreeForAllSession
         )
@@ -52,9 +51,9 @@ class TeamGameActivity(GameActivity[PlayerT, TeamT]):
     def __init__(self, settings: dict):
         super().__init__(settings)
 
-        # By default we don't show kill-points in free-for-all sessions.
+        # By default we don't show kill-points in free-for-all sessions
         # (there's usually some activity-specific score and we don't
-        # wanna confuse things)
+        # wanna confuse things).
         if isinstance(self.session, FreeForAllSession):
             self.show_kill_points = False
 
@@ -66,9 +65,9 @@ class TeamGameActivity(GameActivity[PlayerT, TeamT]):
 
         super().on_transition_in()
 
-        # On the first game, show the controls UI momentarily.
-        # (unless we're being run in co-op mode, in which case we leave
-        # it up to them)
+        # On the first game, show the controls UI momentarily (unless
+        # we're being run in co-op mode, in which case we leave it up to
+        # them).
         if not isinstance(self.session, CoopSession) and getattr(
             self, 'show_controls_guide', True
         ):
@@ -114,12 +113,13 @@ class TeamGameActivity(GameActivity[PlayerT, TeamT]):
         position: Sequence[float] | None = None,
         angle: float | None = None,
     ) -> PlayerSpaz:
-        """
-        Method override; spawns and wires up a standard bascenev1.PlayerSpaz
-        for a bascenev1.Player.
+        """Override to spawn and wire up a standard
+        :class:`~bascenev1lib.actor.playerspaz.PlayerSpaz` for a
+        :class:`~bascenev1.Player`.
 
-        If position or angle is not supplied, a default will be chosen based
-        on the bascenev1.Player and their bascenev1.Team.
+        If position or angle is not supplied, a default will be chosen
+        based on the :class:`~bascenev1.Player` and their
+        :class:`~bascenev1.Team`.
         """
         if position is None:
             # In teams-mode get our team-start-location.

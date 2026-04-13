@@ -12,8 +12,6 @@ import bauiv1 as bui
 if TYPE_CHECKING:
     from typing import Any, Sequence
 
-REQUIRE_PRO = False
-
 
 class ColorPicker(PopupWindow):
     """A popup UI to select from a set of colors.
@@ -32,7 +30,6 @@ class ColorPicker(PopupWindow):
         offset: tuple[float, float] = (0.0, 0.0),
         tag: Any = '',
     ):
-        # pylint: disable=too-many-locals
         assert bui.app.classic is not None
 
         c_raw = bui.app.classic.get_player_colors()
@@ -87,7 +84,7 @@ class ColorPicker(PopupWindow):
                     size=(35, 40),
                     label='',
                     button_type='square',
-                    on_activate_call=bui.WeakCall(self._select, x, y),
+                    on_activate_call=bui.WeakCallStrict(self._select, x, y),
                     autoselect=True,
                     color=color,
                     extra_touch_border_scale=0.0,
@@ -105,18 +102,8 @@ class ColorPicker(PopupWindow):
                 fallback_resource='coopSelectWindow.customText',
             ),
             autoselect=True,
-            on_activate_call=bui.WeakCall(self._select_other),
+            on_activate_call=bui.WeakCallStrict(self._select_other),
         )
-
-        assert bui.app.classic is not None
-        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro():
-            bui.imagewidget(
-                parent=self.root_widget,
-                position=(50, 12),
-                size=(30, 30),
-                texture=bui.gettexture('lock'),
-                draw_controller=other_button,
-            )
 
         # If their color is close to one of our swatches, select it.
         # Otherwise select 'other'.
@@ -135,14 +122,6 @@ class ColorPicker(PopupWindow):
         return self._tag
 
     def _select_other(self) -> None:
-        from bauiv1lib import purchase
-
-        # Requires pro.
-        assert bui.app.classic is not None
-        if REQUIRE_PRO and not bui.app.classic.accounts.have_pro():
-            purchase.PurchaseWindow(items=['pro'])
-            self._transition_out()
-            return
         ColorPickerExact(
             parent=self._parent,
             position=self._position,
@@ -192,7 +171,6 @@ class ColorPickerExact(PopupWindow):
         offset: tuple[float, float] = (0.0, 0.0),
         tag: Any = '',
     ):
-        # pylint: disable=too-many-locals
         del parent  # Unused var.
         assert bui.app.classic is not None
 
@@ -248,7 +226,6 @@ class ColorPickerExact(PopupWindow):
             editable=True,
             maxwidth=70,
             allow_clear_button=False,
-            force_internal_editing=True,
             glow_type='uniform',
         )
 
@@ -283,7 +260,7 @@ class ColorPickerExact(PopupWindow):
                     label=b_label,
                     autoselect=True,
                     enable_sound=False,
-                    on_activate_call=bui.WeakCall(
+                    on_activate_call=bui.WeakCallStrict(
                         self._color_change_press, color_name, binc
                     ),
                 )
@@ -297,7 +274,7 @@ class ColorPickerExact(PopupWindow):
             color=(0.6, 0.6, 0.6),
             textcolor=(0.7, 0.7, 0.7),
             label=bui.Lstr(resource='doneText'),
-            on_activate_call=bui.WeakCall(self._transition_out),
+            on_activate_call=bui.WeakCallStrict(self._transition_out),
             autoselect=True,
         )
         bui.containerwidget(edit=self.root_widget, start_button=btn)
@@ -337,7 +314,6 @@ class ColorPickerExact(PopupWindow):
         # Store the current text for our next comparison.
         self._hex_prev_text = hextext
 
-    # noinspection PyUnresolvedReferences
     def _update_for_color(self) -> None:
         if not self.root_widget:
             return
@@ -445,10 +421,10 @@ def color_to_hex(r: float, g: float, b: float, a: float | None = 1.0) -> str:
     """Converts an rgb1 tuple to a HEX color code.
 
     Args:
-        r (float): Red.
-        g (float): Green.
-        b (float): Blue.
-        a (float, optional): Alpha. Defaults to 1.0.
+        r: Red.
+        g: Green.
+        b: Blue.
+        a: Alpha. Defaults to 1.0.
 
     Returns:
         str: The hexified rgba values.
@@ -468,14 +444,14 @@ def color_to_hex(r: float, g: float, b: float, a: float | None = 1.0) -> str:
 
 def color_overlay_func(
     r: float, g: float, b: float, a: float | None = None
-) -> tuple:
+) -> tuple[float, ...]:
     """I could NOT come up with a better function name.
 
     Args:
-        r (float): Red.
-        g (float): Green.
-        b (float): Blue.
-        a (float | None, optional): Alpha. Defaults to None.
+        r: Red.
+        g: Green.
+        b: Blue.
+        a: Alpha. Defaults to None.
 
     Returns:
         tuple: A brighter color if the provided one is dark,

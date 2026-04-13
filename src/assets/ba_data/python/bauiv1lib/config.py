@@ -34,6 +34,7 @@ class ConfigCheckBox:
         maxwidth: float | None = None,
         autoselect: bool = True,
         value_change_call: Callable[[Any], Any] | None = None,
+        check_box_id: str | None = None,
     ):
         if displayname is None:
             displayname = configkey
@@ -41,6 +42,7 @@ class ConfigCheckBox:
         self._configkey = configkey
         self.widget = bui.checkboxwidget(
             parent=parent,
+            id=check_box_id,
             autoselect=autoselect,
             position=position,
             size=size,
@@ -51,8 +53,8 @@ class ConfigCheckBox:
             scale=scale,
             maxwidth=maxwidth,
         )
-        # complain if we outlive our checkbox
-        bui.uicleanupcheck(self, self.widget)
+        # Complain if we outlive our checkbox.
+        bui.app.ui_v1.add_ui_cleanup_check(self, self.widget)
 
     def _value_changed(self, val: bool) -> None:
         cfg = bui.app.config
@@ -98,6 +100,7 @@ class ConfigNumberEdit:
         as_percent: bool = False,
         fallback_value: float = 0.0,
         f: int = 1,
+        idprefix: str | None = None,
     ):
         if displayname is None:
             displayname = configkey
@@ -109,7 +112,7 @@ class ConfigNumberEdit:
         self._callback = callback
         try:
             self._value = bui.app.config.resolve(configkey)
-        except ValueError:
+        except KeyError:
             self._value = bui.app.config.get(configkey, fallback_value)
         self._value = (
             self._minval
@@ -143,26 +146,28 @@ class ConfigNumberEdit:
         )
         self.minusbutton = bui.buttonwidget(
             parent=parent,
+            id=None if idprefix is None else f'{idprefix}|minus',
             position=(position[0] + 230 + xoffset, position[1]),
             size=(28, 28),
             label='-',
             autoselect=True,
-            on_activate_call=bui.Call(self._down),
+            on_activate_call=bui.CallStrict(self._down),
             repeat=True,
             enable_sound=changesound,
         )
         self.plusbutton = bui.buttonwidget(
             parent=parent,
+            id=None if idprefix is None else f'{idprefix}|plus',
             position=(position[0] + 280 + xoffset, position[1]),
             size=(28, 28),
             label='+',
             autoselect=True,
-            on_activate_call=bui.Call(self._up),
+            on_activate_call=bui.CallStrict(self._up),
             repeat=True,
             enable_sound=changesound,
         )
         # Complain if we outlive our widgets.
-        bui.uicleanupcheck(self, self.nametext)
+        bui.app.ui_v1.add_ui_cleanup_check(self, self.nametext)
         self._update_display()
 
     def _up(self) -> None:

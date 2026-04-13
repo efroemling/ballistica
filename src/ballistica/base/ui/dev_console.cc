@@ -12,13 +12,14 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/base/platform/base_platform.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
@@ -35,10 +36,14 @@ const float kDevConsoleMiniSize{100.0f};
 const int kDevConsoleLineLimit{80};
 const int kDevConsoleStringBreakUpSize{1950};
 const float kDevConsoleTabButtonCornerRadius{16.0f};
-
 const double kTransitionSeconds{0.15};
 
-enum class DevConsoleHAnchor_ { kLeft, kCenter, kRight };
+enum class DevConsoleHAnchor_ {
+  kLeft,
+  kCenter,
+  kRight,
+};
+
 enum class DevButtonStyle_ {
   kNormal,
   kBright,
@@ -53,10 +58,15 @@ enum class DevButtonStyle_ {
   kWhite,
   kWhiteBright,
   kBlack,
-  kBlackBright
+  kBlackBright,
 };
 
-static auto DevButtonStyleFromStr_(const char* strval) {
+enum class DevConsoleTextStyle_ {
+  kNormal,
+  kFaded,
+};
+
+static auto ButtonStyleFromStr_(const char* strval) {
   if (!strcmp(strval, "normal")) {
     return DevButtonStyle_::kNormal;
   }
@@ -99,13 +109,24 @@ static auto DevButtonStyleFromStr_(const char* strval) {
   if (!strcmp(strval, "black_bright")) {
     return DevButtonStyle_::kBlackBright;
   }
-
-  g_core->Log(LogName::kBa, LogLevel::kError,
-              std::string("Invalid button-style: ") + strval);
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       std::string("Invalid button-style: ") + strval);
   return DevButtonStyle_::kNormal;
 }
 
-static auto DevConsoleHAttachFromStr_(const char* strval) {
+static auto TextStyleFromStr_(const char* strval) {
+  if (!strcmp(strval, "normal")) {
+    return DevConsoleTextStyle_::kNormal;
+  }
+  if (!strcmp(strval, "faded")) {
+    return DevConsoleTextStyle_::kFaded;
+  }
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       std::string("Invalid text-style: ") + strval);
+  return DevConsoleTextStyle_::kNormal;
+}
+
+static auto HAttachFromStr_(const char* strval) {
   if (!strcmp(strval, "left")) {
     return DevConsoleHAnchor_::kLeft;
   } else if (!strcmp(strval, "right")) {
@@ -115,7 +136,7 @@ static auto DevConsoleHAttachFromStr_(const char* strval) {
   return DevConsoleHAnchor_::kCenter;
 }
 
-static auto TextMeshHAlignFromStr_(const char* strval) {
+static auto MeshHAlignFromStr_(const char* strval) {
   if (!strcmp(strval, "left")) {
     return TextMesh::HAlign::kLeft;
   } else if (!strcmp(strval, "right")) {
@@ -125,7 +146,7 @@ static auto TextMeshHAlignFromStr_(const char* strval) {
   return TextMesh::HAlign::kCenter;
 }
 
-static auto TextMeshVAlignFromStr_(const char* strval) {
+static auto MeshVAlignFromStr_(const char* strval) {
   if (!strcmp(strval, "top")) {
     return TextMesh::VAlign::kTop;
   } else if (!strcmp(strval, "bottom")) {
@@ -217,6 +238,7 @@ class DevConsole::Widget_ {
   virtual ~Widget_() = default;
   virtual auto HandleMouseDown(float mx, float my) -> bool { return false; }
   virtual void HandleMouseUp(float mx, float my) {}
+  virtual void HandleMouseCancel(float mx, float my) {}
   virtual void Draw(RenderPass* pass, float bottom) = 0;
 };
 
@@ -229,21 +251,25 @@ class DevConsole::Text_ : public DevConsole::Widget_ {
   float y;
   float scale;
   TextGroup text_group;
-  DevButtonStyle_ style;
+  DevConsoleTextStyle_ style;
 
   Text_(const std::string& text, float x, float y, DevConsoleHAnchor_ h_attach,
-        TextMesh::HAlign h_align, TextMesh::VAlign v_align, float scale)
+        TextMesh::HAlign h_align, TextMesh::VAlign v_align, float scale,
+        DevConsoleTextStyle_ style)
       : h_attach{h_attach},
         h_align(h_align),
         v_align(v_align),
         x{x},
         y{y},
-        scale{scale} {
+        scale{scale},
+        style{style} {
     text_group.SetText(text, h_align, v_align);
   }
 
   void Draw(RenderPass* pass, float bottom) override {
-    auto fgcolor = Vector3f{0.8f, 0.7f, 0.8f};
+    auto fgcolor = style == DevConsoleTextStyle_::kFaded
+                       ? Vector3f{0.5f, 0.42f, 0.5f}
+                       : Vector3f{0.8f, 0.7f, 0.8f};
     DrawText(pass, &text_group, scale, x + XOffs(h_attach), bottom + y,
              fgcolor);
   }
@@ -309,6 +335,11 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
           call.get()->Run();
         }
       }
+    }
+  }
+  void HandleMouseCancel(float mx, float my) override {
+    if (pressed) {
+      pressed = false;
     }
   }
 
@@ -471,6 +502,11 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
       }
     }
   }
+  void HandleMouseCancel(float mx, float my) override {
+    if (pressed) {
+      pressed = false;
+    }
+  }
 
   void Draw(RenderPass* pass, float bottom) override {
     DrawRect(pass, &mesh, x + XOffs(attach), bottom + y, width, height,
@@ -552,6 +588,11 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
       }
     }
   }
+  void HandleMouseCancel(float mx, float my) override {
+    if (pressed) {
+      pressed = false;
+    }
+  }
 
   void Draw(RenderPass* pass, float bottom) override {
     DrawRect(pass, &mesh, x + XOffs(attach), bottom + y, width, height,
@@ -597,12 +638,22 @@ DevConsole::DevConsole() {
   if (g_buildconfig.debug_build()) {
     title += " (debug)";
   }
-  if (g_buildconfig.test_build()) {
+  if (g_buildconfig.variant_test_build()) {
     title += " (test)";
   }
   title_text_group_.SetText(title);
   built_text_group_.SetText("Built: " __DATE__ " " __TIME__);
   prompt_text_group_.SetText(">");
+}
+
+void DevConsole::ApplyAppConfig() {
+  assert(g_base->InLogicThread());
+
+  // Read our active tab from app-config only if we don't have one set.
+  if (active_tab_.empty()) {
+    active_tab_ =
+        g_base->app_config->Resolve(AppConfig::StringID::kDevConsoleActiveTab);
+  }
 }
 
 void DevConsole::OnUIScaleChanged() {
@@ -668,10 +719,20 @@ void DevConsole::RefreshTabButtons_() {
             RefreshCloseButton_();
             RefreshTabButtons_();
             RefreshTabContents_();
+            SaveActiveTab_();
           });
         }));
     x += bwidth;
   }
+}
+
+void DevConsole::SaveActiveTab_() {
+  assert(g_base->InLogicThread());
+
+  PythonRef args(Py_BuildValue("(s)", active_tab_.c_str()), PythonRef::kSteal);
+  g_base->python->objs()
+      .Get(BasePython::ObjID::kAppDevConsoleSaveTabCall)
+      .Call(args);
 }
 
 void DevConsole::RefreshTabContents_() {
@@ -699,13 +760,15 @@ void DevConsole::RefreshTabContents_() {
 
 void DevConsole::AddText(const char* text, float x, float y,
                          const char* h_anchor_str, const char* h_align_str,
-                         const char* v_align_str, float scale) {
-  auto h_anchor = DevConsoleHAttachFromStr_(h_anchor_str);
-  auto h_align = TextMeshHAlignFromStr_(h_align_str);
-  auto v_align = TextMeshVAlignFromStr_(v_align_str);
+                         const char* v_align_str, float scale,
+                         const char* style_str) {
+  auto h_anchor = HAttachFromStr_(h_anchor_str);
+  auto h_align = MeshHAlignFromStr_(h_align_str);
+  auto v_align = MeshVAlignFromStr_(v_align_str);
+  auto style = TextStyleFromStr_(style_str);
 
-  widgets_.emplace_back(
-      std::make_unique<Text_>(text, x, y, h_anchor, h_align, v_align, scale));
+  widgets_.emplace_back(std::make_unique<Text_>(text, x, y, h_anchor, h_align,
+                                                v_align, scale, style));
 }
 
 void DevConsole::AddButton(const char* label, float x, float y, float width,
@@ -715,8 +778,8 @@ void DevConsole::AddButton(const char* label, float x, float y, float width,
                            bool disabled) {
   assert(g_base->InLogicThread());
 
-  auto style = DevButtonStyleFromStr_(style_str);
-  auto h_anchor = DevConsoleHAttachFromStr_(h_anchor_str);
+  auto style = ButtonStyleFromStr_(style_str);
+  auto h_anchor = HAttachFromStr_(h_anchor_str);
 
   widgets_.emplace_back(std::make_unique<Button_>(
       label, label_scale, h_anchor, x, y, width, height, corner_radius, style,
@@ -734,8 +797,8 @@ void DevConsole::AddPythonTerminal() {
       32.0f * bs, 13.0f * bs, 2.0 * bs, DevButtonStyle_::kNormal, false,
       [this] { Exec(); }));
   widgets_.emplace_back(std::make_unique<Button_>(
-      "Copy History", 0.5f * bs, DevConsoleHAnchor_::kRight, -85.0f * bs,
-      Height() - 25.0f * bs, 80.0f * bs, 20.0f * bs, 4.0 * bs,
+      "Copy History", 0.4f * bs, DevConsoleHAnchor_::kRight, -75.0f * bs,
+      Height() - 18.0f * bs, 72.0f * bs, 15.0f * bs, 4.0 * bs,
       DevButtonStyle_::kNormal, false, [this] { CopyHistory(); }));
   python_terminal_visible_ = true;
 }
@@ -836,6 +899,31 @@ void DevConsole::HandleMouseUp(int button, float x, float y) {
   }
 }
 
+void DevConsole::HandleMouseCancel(int button, float x, float y) {
+  assert(g_base->InLogicThread());
+  float bottom{Bottom_()};
+
+  if (button == 1) {
+    // Make sure we don't muck with our UI while we're in here.
+    auto lock = ScopedUILock_(this);
+
+    if (close_button_) {
+      close_button_->HandleMouseCancel(x, y - bottom);
+    }
+
+    for (auto&& button : tab_buttons_) {
+      button->HandleMouseCancel(x, y - bottom);
+    }
+    for (auto&& button : widgets_) {
+      button->HandleMouseCancel(x, y - bottom);
+    }
+  }
+
+  if (button == 1 && python_terminal_pressed_) {
+    python_terminal_pressed_ = false;
+  }
+}
+
 void DevConsole::InvokeStringEditor_() {
   // If there's already a valid edit-adapter attached to us, do nothing.
   if (string_edit_adapter_.exists()
@@ -850,8 +938,8 @@ void DevConsole::InvokeStringEditor_() {
                     .Get(BasePython::ObjID::kDevConsoleStringEditAdapterClass)
                     .Call();
   if (!result.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Error invoking string edit dialog.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Error invoking string edit dialog.");
     return;
   }
 
@@ -1193,7 +1281,7 @@ auto DevConsole::HandleTextEditing(const std::string& text) -> bool {
                   addunichars.end());
   input_string_ = Utils::UTF8FromUnicode(unichars);
   input_text_dirty_ = true;
-  carat_char_ += addunichars.size();
+  carat_char_ += static_cast<int>(addunichars.size());
   assert(CaratCharValid_());
   carat_dirty_ = true;
   return true;
@@ -1217,8 +1305,8 @@ void DevConsole::CopyHistory() {
 void DevConsole::Exec() {
   BA_PRECONDITION(g_base->InLogicThread());
   if (!input_enabled_) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "Console input is not allowed yet.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "Console input is not allowed yet.");
     return;
   }
   input_history_position_ = 0;
@@ -1257,7 +1345,7 @@ void DevConsole::SubmitPythonCommand_(const std::string& command) {
     if (cmd.CanEval()) {
       auto obj = cmd.Eval(true, nullptr, nullptr);
       if (obj.exists() && obj.get() != Py_None) {
-        Print(obj.Repr(), 1.0f, kVector4f1);
+        Print(obj.Repr().c_str(), 1.0f, kVector4f1);
       }
     } else {
       // Not eval-able; just exec it.
@@ -1282,12 +1370,27 @@ void DevConsole::Dismiss() {
   transition_start_ = g_base->logic->display_time();
 }
 
-void DevConsole::ToggleState() {
+void DevConsole::CycleState(bool backwards) {
   assert(g_base->InLogicThread());
   state_prev_ = state_;
+
+  // Set our new state.
   switch (state_) {
     case State_::kInactive:
-      state_ = State_::kMini;
+      state_ = backwards ? State_::kFull : State_::kMini;
+      break;
+    case State_::kMini:
+      state_ = backwards ? State_::kInactive : State_::kFull;
+      break;
+    case State_::kFull:
+      state_ = backwards ? State_::kMini : State_::kInactive;
+      break;
+  }
+
+  if (state_ == State_::kMini || state_ == State_::kFull) {
+    if (state_prev_ == State_::kInactive) {
+      // Was inactive; refresh everything.
+      //
       // Can't muck with UI from code (potentially) called while iterating
       // through UI. So defer it.
       g_base->logic->event_loop()->PushCall([this] {
@@ -1295,24 +1398,23 @@ void DevConsole::ToggleState() {
         RefreshTabButtons_();
         RefreshTabContents_();
       });
-      break;
-    case State_::kMini:
-      state_ = State_::kFull;
+    } else {
+      // Was already active; just refresh tab contents.
+      //
       // Can't muck with UI from code (potentially) called while iterating
       // through UI. So defer it.
       g_base->logic->event_loop()->PushCall([this] { RefreshTabContents_(); });
-      break;
-    case State_::kFull:
-      state_ = State_::kInactive;
-      break;
+    }
   }
   g_base->audio->SafePlaySysSound(SysSoundID::kBlip);
   transition_start_ = g_base->logic->display_time();
 }
 
-void DevConsole::Print(const std::string& s_in, float scale, Vector4f color) {
+void DevConsole::Print(const char* s_in, float scale, Vector4f color) {
   assert(g_base->InLogicThread());
-  std::string s = Utils::GetValidUTF8(s_in.c_str(), "cspr");
+
+  std::string s = Utils::GetValidUTF8(s_in, "cspr");
+
   std::vector<std::string> broken_up;
   g_base->text_graphics->BreakUpString(
       s.c_str(), kDevConsoleStringBreakUpSize / scale, &broken_up);
@@ -1611,7 +1713,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
 }
 
 auto DevConsole::BaseScale() const -> float {
-  switch (g_base->ui->scale()) {
+  switch (g_base->ui->uiscale()) {
     case UIScale::kLarge:
       return 1.5f;
     case UIScale::kMedium:
@@ -1668,8 +1770,8 @@ auto DevConsole::PasteFromClipboard() -> bool {
 
           if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
             g_base->audio->SafePlaySysSound(SysSoundID::kErrorBeep);
-            ScreenMessage("Can only paste single lines of text.",
-                          Vector3f(1.0f, 0.0f, 0.0f));
+            g_base->ScreenMessage("Can only paste single lines of text.",
+                                  Vector3f(1.0f, 0.0f, 0.0f));
           } else {
             HandleTextEditing(text);
           }
@@ -1683,7 +1785,7 @@ auto DevConsole::PasteFromClipboard() -> bool {
 }
 
 void DevConsole::UpdateCarat_() {
-  last_carat_x_change_time_ = g_core->GetAppTimeMillisecs();
+  last_carat_x_change_time_ = g_core->AppTimeMillisecs();
   auto unichars = Utils::UnicodeFromUTF8(input_string_, "fjfwef");
   auto unichars_clamped = unichars;
 

@@ -3,6 +3,8 @@
 #include "ballistica/scene_v1/support/session.h"
 
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 
 namespace ballistica::scene_v1 {
 
@@ -36,8 +38,9 @@ void Session::LanguageChanged() {}
 void Session::DebugSpeedMultChanged() {}
 
 void Session::DumpFullState(SessionStream* out) {
-  g_core->Log(LogName::kBa, LogLevel::kError,
-              "Session::DumpFullState() being called; shouldn't happen.");
+  g_core->logging->Log(
+      LogName::kBa, LogLevel::kError,
+      "Session::DumpFullState() being called; shouldn't happen.");
 }
 
 }  // namespace ballistica::scene_v1

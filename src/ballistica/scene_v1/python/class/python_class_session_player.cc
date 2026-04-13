@@ -7,6 +7,7 @@
 
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
@@ -54,55 +55,55 @@ void PythonClassSessionPlayer::SetupType(PyTypeObject* cls) {
   // clang-format off
 
   cls->tp_doc =
-      "A reference to a player in the bascenev1.Session.\n"
-      "\n"
-      "Category: **Gameplay Classes**\n"
-      "\n"
-      "These are created and managed internally and\n"
-      "provided to your bascenev1.Session/bascenev1.Activity instances.\n"
-      "Be aware that, like `ba.Node`s, bascenev1.SessionPlayer objects are\n"
-      "'weak' references under-the-hood; a player can leave the game at\n"
-      " any point. For this reason, you should make judicious use of the\n"
-      "babase.SessionPlayer.exists() method (or boolean operator) to ensure\n"
-      "that a SessionPlayer is still present if retaining references to one\n"
-      "for any length of time.\n"
-      "\n"
-      "Attributes:\n"
-      "    " ATTR_ID " (int):\n"
-      "        The unique numeric ID of the Player.\n"
-      "\n"
-      "        Note that you can also use the boolean operator for this same\n"
-      "        functionality, so a statement such as \"if player\" will do\n"
-      "        the right thing both for Player objects and values of None.\n"
-      "\n"
-      "    " ATTR_IN_GAME " (bool):\n"
-      "        This bool value will be True once the Player has completed\n"
-      "        any lobby character/team selection.\n"
-      "\n"
-      "    " ATTR_SESSIONTEAM " (bascenev1.SessionTeam):\n"
-      "        The bascenev1.SessionTeam this Player is on. If the\n"
-      "        SessionPlayer is still in its lobby selecting a team/etc.\n"
-      "        then a bascenev1.SessionTeamNotFoundError will be raised.\n"
-      "\n"
-      "    " ATTR_INPUT_DEVICE " (bascenev1.InputDevice):\n"
-      "        The input device associated with the player.\n"
-      "\n"
-      "    " ATTR_COLOR " (Sequence[float]):\n"
-      "        The base color for this Player.\n"
-      "        In team games this will match the bascenev1.SessionTeam's\n"
-      "        color.\n"
-      "\n"
-      "    " ATTR_HIGHLIGHT " (Sequence[float]):\n"
-      "        A secondary color for this player.\n"
-      "        This is used for minor highlights and accents\n"
-      "        to allow a player to stand apart from his teammates\n"
-      "        who may all share the same team (primary) color.\n"
-      "\n"
-      "    " ATTR_CHARACTER " (str):\n"
-      "        The character this player has selected in their profile.\n"
-      "\n"
-      "    " ATTR_ACTIVITYPLAYER " (bascenev1.Player | None):\n"
-      "        The current game-specific instance for this player.\n";
+    "A reference to a player in a :class:`~bascenev1.Session`.\n"
+    "\n"
+    "These are created and managed internally and provided to your\n"
+    ":class:`~bascenev1.Session`/:class:`~bascenev1.Activity`\n"
+    "instances. Be aware that, like :class:`~bascenev1.Node` objects,\n"
+    ":class:`~bascenev1.SessionPlayer` objects are effectively 'weak'\n"
+    "references under-the-hood; a player can leave the game at any point.\n"
+    "For this reason, you should make judicious use of the\n"
+    ":meth:`bascenev1.SessionPlayer.exists()` method (or boolean operator) to\n"
+    "ensure that a :class:`SessionPlayer` is still present if retaining\n"
+    "references to one for any length of time.\n"
+    "\n"
+    "Attributes:\n"
+    "    " ATTR_ID " (int):\n"
+    "        The unique numeric id of the player.\n"
+    "\n"
+    "        Note that you can also use the boolean operator for this same\n"
+    "        functionality, so a statement such as ``if player:`` will do\n"
+    "        the right thing both for :class:`~bascenev1.SessionPlayer`\n"
+    "        objects as well as values of ``None``.\n"
+    "\n"
+    "    " ATTR_IN_GAME " (bool):\n"
+    "        This bool value will be True once the player has completed\n"
+    "        any lobby character/team selection.\n"
+    "\n"
+    "    " ATTR_SESSIONTEAM " (bascenev1.SessionTeam):\n"
+    "        The session-team this session-player is on. If the player is\n"
+    "        still in its lobby selecting a team/etc. then a\n"
+    "        :class:`~bascenev1.SessionTeamNotFoundError` will be raised.\n"
+    "\n"
+    "    " ATTR_INPUT_DEVICE " (bascenev1.InputDevice):\n"
+    "        The input device associated with the player.\n"
+    "\n"
+    "    " ATTR_COLOR " (Sequence[float]):\n"
+    "        The base color for this player.\n"
+    "        In team games this will match the team's\n"
+    "        color.\n"
+    "\n"
+    "    " ATTR_HIGHLIGHT " (Sequence[float]):\n"
+    "        A secondary color for this player.\n"
+    "        This is used for minor highlights and accents\n"
+    "        to allow a player to stand apart from his teammates\n"
+    "        who may all share the same team (primary) color.\n"
+    "\n"
+    "    " ATTR_CHARACTER " (str):\n"
+    "        The character this player has selected in their profile.\n"
+    "\n"
+    "    " ATTR_ACTIVITYPLAYER " (bascenev1.Player | None):\n"
+    "        The current game-specific instance for this player.\n";
 
   // clang-format on
 
@@ -171,7 +172,7 @@ auto PythonClassSessionPlayer::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
 
   // If the user is creating one, make sure they passed None to get an
@@ -224,11 +225,11 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
 
+    // GetPyTeam returns a new ref or nullptr.
+    auto team{PythonRef::StolenSoft(p->GetPyTeam())};
     // We get placed on a team as soon as we finish in the lobby
     // so lets use that as whether we're in-game or not.
-    PyObject* team = p->GetPyTeam();
-    assert(team != nullptr);
-    if (team == Py_None) {
+    if (!team.exists()) {
       Py_RETURN_FALSE;
     } else {
       Py_RETURN_TRUE;
@@ -254,9 +255,9 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
     if (!p) {
       throw Exception(PyExcType::kSessionPlayerNotFound);
     }
-    PyObject* team = p->GetPyTeam();
-    assert(team != nullptr);
-    if (team == Py_None) {
+    // GetPyTeam returns a new ref or nullptr.
+    auto team{PythonRef::StolenSoft(p->GetPyTeam())};
+    if (!team.exists()) {
       PyErr_SetString(
           g_base->python->objs()
               .Get(base::BasePython::ObjID::kSessionTeamNotFoundError)
@@ -264,8 +265,7 @@ auto PythonClassSessionPlayer::tp_getattro(PythonClassSessionPlayer* self,
           "SessionTeam does not exist.");
       return nullptr;
     }
-    Py_INCREF(team);
-    return team;
+    return team.NewRef();
   } else if (!strcmp(s, ATTR_CHARACTER)) {
     Player* p = self->player_->get();
     if (!p) {
@@ -445,9 +445,8 @@ auto PythonClassSessionPlayer::AssignInputCall(PythonClassSessionPlayer* self,
   if (!player) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  if (base::BasePython::IsPyEnum_InputType(input_type_obj)) {
-    InputType input_type =
-        base::BasePython::GetPyEnum_InputType(input_type_obj);
+  if (g_base->python->IsPyEnum_InputType(input_type_obj)) {
+    InputType input_type = g_base->python->GetPyEnum_InputType(input_type_obj);
     player->AssignInputCall(input_type, call_obj);
   } else {
     if (!PyTuple_Check(input_type_obj)) {
@@ -458,11 +457,11 @@ auto PythonClassSessionPlayer::AssignInputCall(PythonClassSessionPlayer* self,
     Py_ssize_t tuple_size = PyTuple_GET_SIZE(input_type_obj);
     for (Py_ssize_t i = 0; i < tuple_size; i++) {
       PyObject* obj = PyTuple_GET_ITEM(input_type_obj, i);
-      if (!base::BasePython::IsPyEnum_InputType(obj)) {
+      if (!g_base->python->IsPyEnum_InputType(obj)) {
         PyErr_SetString(PyExc_TypeError, "Expected tuple of InputTypes.");
         return nullptr;
       }
-      InputType input_type = base::BasePython::GetPyEnum_InputType(obj);
+      InputType input_type = g_base->python->GetPyEnum_InputType(obj);
       player->AssignInputCall(input_type, call_obj);
     }
   }
@@ -497,15 +496,13 @@ auto PythonClassSessionPlayer::GetTeam(PythonClassSessionPlayer* self)
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  PyObject* team = p->GetPyTeam();
-  Py_INCREF(team);
-  return team;
+  // GetPyTeam() returns a new ref or nullptr.
+  auto team{PythonRef::StolenSoft(p->GetPyTeam())};
+  return team.NewRef();
   BA_PYTHON_CATCH;
 }
 
-// NOTE: this returns their PUBLIC account-id; we want to keep
-// actual account-ids as hidden as possible for now.
-auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
+auto PythonClassSessionPlayer::GetAccountID(PythonClassSessionPlayer* self)
     -> PyObject* {
   BA_PYTHON_TRY;
   assert(g_base->InLogicThread());
@@ -513,7 +510,32 @@ auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  std::string account_id = p->GetPublicV1AccountID();
+  std::string account_id = p->GetAccountID();
+  if (account_id.empty()) {
+    Py_RETURN_NONE;
+  }
+  return PyUnicode_FromString(account_id.c_str());
+  BA_PYTHON_CATCH;
+}
+
+// REMOVE WHEN API 9 SUPPORT ENDS
+auto PythonClassSessionPlayer::GetV1AccountID(PythonClassSessionPlayer* self)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+  if (PyErr_WarnEx(
+          PyExc_DeprecationWarning,
+          "get_v1_account_id() will be removed when api 9 support ends;"
+          " use get_account_id() instead.",
+          1)
+      == -1) {
+    return nullptr;
+  }
+  Player* p = self->player_->get();
+  if (!p) {
+    throw Exception(PyExcType::kSessionPlayerNotFound);
+  }
+  std::string account_id = p->GetAccountID();
   if (account_id.empty()) {
     Py_RETURN_NONE;
   }
@@ -587,13 +609,13 @@ auto PythonClassSessionPlayer::SetIconInfo(PythonClassSessionPlayer* self,
   if (!p) {
     throw Exception(PyExcType::kSessionPlayerNotFound);
   }
-  std::string texture_name = Python::GetPyString(texture_name_obj);
-  std::string tint_texture_name = Python::GetPyString(tint_texture_name_obj);
-  std::vector<float> tint_color = Python::GetPyFloats(tint_color_obj);
+  std::string texture_name = Python::GetString(texture_name_obj);
+  std::string tint_texture_name = Python::GetString(tint_texture_name_obj);
+  std::vector<float> tint_color = Python::GetFloats(tint_color_obj);
   if (tint_color.size() != 3) {
     throw Exception("Expected 3 floats for tint-color.", PyExcType::kValue);
   }
-  std::vector<float> tint2_color = Python::GetPyFloats(tint2_color_obj);
+  std::vector<float> tint2_color = Python::GetFloats(tint2_color_obj);
   if (tint2_color.size() != 3) {
     throw Exception("Expected 3 floats for tint-color.", PyExcType::kValue);
   }
@@ -703,7 +725,7 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
     {"getname", (PyCFunction)GetName, METH_VARARGS | METH_KEYWORDS,
      "getname(full: bool = False, icon: bool = True) -> str\n"
      "\n"
-     "Returns the player's name. If icon is True, the long version of the\n"
+     "Returns the player's name. If ``icon`` is True, the long version of the\n"
      "name may include an icon."},
     {"setname", (PyCFunction)SetName, METH_VARARGS | METH_KEYWORDS,
      "setname(name: str, full_name: str | None = None, real: bool = True)\n"
@@ -729,16 +751,26 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "remove_from_game() -> None\n"
      "\n"
      "Removes the player from the game."},
+    {"get_account_id", (PyCFunction)GetAccountID, METH_NOARGS,
+     "get_account_id() -> str | None\n"
+     "\n"
+     "Return the account id this player is signed in under, or None if\n"
+     "not available. For players connected via protocol < 36 this\n"
+     "will be a V1 account id; for protocol >= 36 it will be a V2\n"
+     "account id. Note that this may require an active internet\n"
+     "connection (especially for network-connected players) and may\n"
+     "return None for a short while after a player initially joins\n"
+     "(while verification occurs)."},
     {"get_v1_account_id", (PyCFunction)GetV1AccountID,
      METH_VARARGS | METH_KEYWORDS,
-     "get_v1_account_id() -> str\n"
+     "get_v1_account_id() -> str | None\n"
      "\n"
-     "Return the V1 Account ID this player is signed in under, if\n"
-     "there is one and it can be determined with relative certainty.\n"
-     "Returns None otherwise. Note that this may require an active\n"
-     "internet connection (especially for network-connected players)\n"
-     "and may return None for a short while after a player initially\n"
-     "joins (while verification occurs)."},
+     ".. deprecated::\n"
+     "   Use :meth:`get_account_id` instead. This method will be\n"
+     "   removed when api 9 support ends.\n"
+     "\n"
+     "Return the account id this player is signed in under, if it can\n"
+     "be determined with relative certainty. Returns None otherwise."},
     {"setdata", (PyCFunction)SetData, METH_VARARGS | METH_KEYWORDS,
      "setdata(team: bascenev1.SessionTeam, character: str,\n"
      "  color: Sequence[float], highlight: Sequence[float]) -> None\n"
@@ -748,26 +780,34 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "set_icon_info(texture: str, tint_texture: str,\n"
      "  tint_color: Sequence[float], tint2_color: Sequence[float]) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"setactivity", (PyCFunction)SetActivity, METH_VARARGS | METH_KEYWORDS,
      "setactivity(activity: bascenev1.Activity | None) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"setnode", (PyCFunction)SetNode, METH_VARARGS | METH_KEYWORDS,
      "setnode(node: bascenev1.Node | None) -> None\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"get_icon", (PyCFunction)GetIcon, METH_NOARGS,
      "get_icon() -> dict[str, Any]\n"
      "\n"
-     "Returns the character's icon (images, colors, etc contained\n"
+     "Return the character's icon (images, colors, etc contained\n"
      "in a dict."},
     {"get_icon_info", (PyCFunction)GetIconInfo, METH_NOARGS,
      "get_icon_info() -> dict[str, Any]\n"
      "\n"
-     "(internal)"},
+     "(internal)\n"
+     "\n"
+     ":meta private:"},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
-     "allows inclusion of our custom attrs in standard python dir()"},
+     "Allows inclusion of our custom attrs in standard python dir()."},
     {nullptr}};
 
 #pragma clang diagnostic pop

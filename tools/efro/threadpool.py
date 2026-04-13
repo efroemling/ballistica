@@ -10,6 +10,8 @@ import threading
 from typing import TYPE_CHECKING, ParamSpec
 from concurrent.futures import ThreadPoolExecutor
 
+from efro.util import strip_exception_tracebacks
+
 if TYPE_CHECKING:
     from typing import Any, Callable
     from concurrent.futures import Future
@@ -19,7 +21,7 @@ P = ParamSpec('P')
 logger = logging.getLogger(__name__)
 
 
-class ThreadPoolExecutorPlus(ThreadPoolExecutor):
+class ThreadPoolExecutorEx(ThreadPoolExecutor):
     """A ThreadPoolExecutor with additional functionality added."""
 
     def __init__(
@@ -39,7 +41,7 @@ class ThreadPoolExecutorPlus(ThreadPoolExecutor):
         self._max_no_wait_count = (
             max_no_wait_count
             if max_no_wait_count is not None
-            else 50 if max_workers is None else max_workers * 4
+            else 50 if max_workers is None else max_workers * 2
         )
         self._last_no_wait_warn_time: float | None = None
         self._no_wait_count_lock = threading.Lock()
@@ -49,9 +51,11 @@ class ThreadPoolExecutorPlus(ThreadPoolExecutor):
     ) -> None:
         """Submit work to the threadpool with no expectation of waiting.
 
-        Any errors occurring in the passed callable will be logged. This
-        call will block and log a warning if the threadpool reaches its
-        max queued no-wait call count.
+        Any exceptions raised by the callable are automatically caught
+        and logged via ``logger.exception()``, so callers do not need
+        their own error handling for fire-and-forget work. This call will
+        block and log a warning if the threadpool reaches its max queued
+        no-wait call count.
         """
         # If we're too backlogged, issue a warning and block until we
         # aren't. We don't bother with the lock here since this can be
@@ -65,7 +69,7 @@ class ThreadPoolExecutorPlus(ThreadPoolExecutor):
                 or now - self._last_no_wait_warn_time > 10.0
             ):
                 logger.warning(
-                    'ThreadPoolExecutorPlus hit max no-wait limit of %s;'
+                    'ThreadPoolExecutorEx hit max no-wait limit of %s;'
                     ' blocking.',
                     self._max_no_wait_count,
                 )
@@ -83,5 +87,8 @@ class ThreadPoolExecutorPlus(ThreadPoolExecutor):
             self.no_wait_count -= 1
         try:
             fut.result()
-        except Exception:
+        except Exception as exc:
             logger.exception('Error in work submitted via submit_no_wait().')
+            # We're done with this exception, so strip its traceback to
+            # avoid reference cycles.
+            strip_exception_tracebacks(exc)

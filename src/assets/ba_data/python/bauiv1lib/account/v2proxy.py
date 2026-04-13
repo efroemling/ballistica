@@ -23,6 +23,7 @@ class V2ProxySignInWindow(bui.Window):
         self._proxyid: str | None = None
         self._proxykey: str | None = None
         self._overlay_web_browser_open = False
+        self._idprefix = bui.app.ui_v1.new_id_prefix('resourcetypeinfo')
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -34,13 +35,19 @@ class V2ProxySignInWindow(bui.Window):
                     origin_widget.get_screen_space_center()
                 ),
                 scale=(
-                    1.25
+                    1.16
                     if uiscale is bui.UIScale.SMALL
-                    else 1.05 if uiscale is bui.UIScale.MEDIUM else 0.9
+                    else 1.0 if uiscale is bui.UIScale.MEDIUM else 0.9
                 ),
             )
         )
 
+        self._loading_spinner = bui.spinnerwidget(
+            parent=self._root_widget,
+            position=(self._width * 0.5, self._height * 0.5),
+            size=60,
+            style='bomb',
+        )
         self._state_text = bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, self._height * 0.6),
@@ -49,10 +56,11 @@ class V2ProxySignInWindow(bui.Window):
             size=(0, 0),
             scale=1.4,
             maxwidth=0.9 * self._width,
-            text=bui.Lstr(
-                value='${A}...',
-                subs=[('${A}', bui.Lstr(resource='loadingText'))],
-            ),
+            # text=bui.Lstr(
+            #     value='${A}...',
+            #     subs=[('${A}', bui.Lstr(resource='loadingText'))],
+            # ),
+            text='',
             color=(1, 1, 1),
         )
         self._sub_state_text = bui.textwidget(
@@ -95,9 +103,9 @@ class V2ProxySignInWindow(bui.Window):
         self._connection_wait_timeout_time = time.monotonic() + 10.0
 
         self._update_timer = bui.AppTimer(
-            0.371, bui.WeakCall(self._update), repeat=True
+            0.371, bui.WeakCallStrict(self._update), repeat=True
         )
-        bui.pushcall(bui.WeakCall(self._update))
+        bui.pushcall(bui.WeakCallStrict(self._update))
 
     def _update(self) -> None:
 
@@ -127,20 +135,21 @@ class V2ProxySignInWindow(bui.Window):
 
         plus.cloud.send_message_cb(
             bacommon.cloud.LoginProxyRequestMessage(),
-            on_response=bui.WeakCall(self._on_proxy_request_response),
+            on_response=bui.WeakCallPartial(self._on_proxy_request_response),
         )
         self._message_in_flight = True
 
     def _get_server_address(self) -> str:
         plus = bui.app.plus
         assert plus is not None
-        out = plus.get_master_server_address(version=2)
+        out = plus.get_master_server_address()
         assert isinstance(out, str)
         return out
 
     def _set_error_state(self, error_location: str) -> None:
         msaddress = self._get_server_address()
         addr = msaddress.removeprefix('https://')
+        bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         bui.textwidget(
             edit=self._state_text,
             text=f'Unable to connect to {addr}.',
@@ -190,6 +199,7 @@ class V2ProxySignInWindow(bui.Window):
         self._complete = True
 
         # Clear out stuff we use to show progress/errors.
+        self._loading_spinner.delete()
         self._sub_state_text.delete()
         self._sub_state_text2.delete()
 
@@ -211,7 +221,8 @@ class V2ProxySignInWindow(bui.Window):
         self._proxyid = response.proxyid
         self._proxykey = response.proxykey
         bui.apptimer(
-            STATUS_CHECK_INTERVAL_SECONDS, bui.WeakCall(self._ask_for_status)
+            STATUS_CHECK_INTERVAL_SECONDS,
+            bui.WeakCallStrict(self._ask_for_status),
         )
 
     def _show_overlay_sign_in_ui(
@@ -247,6 +258,7 @@ class V2ProxySignInWindow(bui.Window):
         if bui.is_browser_likely_available():
             bui.buttonwidget(
                 parent=self._root_widget,
+                id=f'{self._idprefix}|address',
                 position=(
                     (self._width * 0.5 - button_width * 0.5),
                     self._height - 185,
@@ -271,7 +283,9 @@ class V2ProxySignInWindow(bui.Window):
                 h_align='center',
                 v_align='center',
                 autoselect=True,
-                on_activate_call=bui.Call(self._copy_link, address_pretty),
+                on_activate_call=bui.CallStrict(
+                    self._copy_link, address_pretty
+                ),
                 selectable=True,
             )
             qroffs = 20.0
@@ -295,7 +309,7 @@ class V2ProxySignInWindow(bui.Window):
             bacommon.cloud.LoginProxyStateQueryMessage(
                 proxyid=self._proxyid, proxykey=self._proxykey
             ),
-            on_response=bui.WeakCall(self._got_status),
+            on_response=bui.WeakCallPartial(self._got_status),
         )
 
     def _got_status(
@@ -329,7 +343,9 @@ class V2ProxySignInWindow(bui.Window):
                     bacommon.cloud.LoginProxyCompleteMessage(
                         proxyid=self._proxyid
                     ),
-                    on_response=bui.WeakCall(self._proxy_complete_response),
+                    on_response=bui.WeakCallPartial(
+                        self._proxy_complete_response
+                    ),
                 )
             except CommunicationError:
                 pass
@@ -349,7 +365,7 @@ class V2ProxySignInWindow(bui.Window):
         ):
             bui.apptimer(
                 STATUS_CHECK_INTERVAL_SECONDS,
-                bui.WeakCall(self._ask_for_status),
+                bui.WeakCallStrict(self._ask_for_status),
             )
 
     def _proxy_complete_response(self, response: None | Exception) -> None:

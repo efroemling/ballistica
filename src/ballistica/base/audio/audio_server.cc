@@ -10,10 +10,11 @@
 #include <utility>
 #include <vector>
 
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 
 // Ew fixme.
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
 #include <android/log.h>
 #endif
 
@@ -27,7 +28,7 @@
 #include "ballistica/base/audio/ogg_stream.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/math/vector3f.h"
 
@@ -42,21 +43,62 @@ namespace ballistica::base {
 extern std::string g_rift_audio_device_name;
 #endif
 
-#if BA_OPENAL_IS_SOFT
-LPALCDEVICEPAUSESOFT alcDevicePauseSOFT{};
-LPALCDEVICERESUMESOFT alcDeviceResumeSOFT{};
-LPALCRESETDEVICESOFT alcResetDeviceSOFT{};
-LPALEVENTCALLBACKSOFT alEventCallbackSOFT{};
-LPALEVENTCONTROLSOFT alEventControlSOFT{};
-// LPALSOFTSETLOGCALLBACK alsoft_set_log_callback{};
+// Define A few OpenALSoft extensions and other new bits ourself. This way
+// we can still compile under older versions and we'll pick up available
+// features at runtime.
+#if BA_ENABLE_AUDIO
+#define ALC_API_NOEXCEPT17_ noexcept
+#define AL_API_NOEXCEPT17_ noexcept
+typedef void(ALC_APIENTRY* LPALCDEVICEPAUSESOFT_)(ALCdevice* device)
+    ALC_API_NOEXCEPT17_;
+typedef void(ALC_APIENTRY* LPALCDEVICERESUMESOFT_)(ALCdevice* device)
+    ALC_API_NOEXCEPT17_;
+typedef ALCboolean(ALC_APIENTRY* LPALCRESETDEVICESOFT_)(
+    ALCdevice* device, const ALCint* attribs) ALC_API_NOEXCEPT17_;
+typedef ALCboolean(ALC_APIENTRY* LPALCREOPENDEVICESOFT_)(
+    ALCdevice* device, const ALCchar* deviceName,
+    const ALCint* attribs) ALC_API_NOEXCEPT17_;
+typedef void(AL_APIENTRY* ALEVENTPROCSOFT_)(ALenum eventType, ALuint object,
+                                            ALuint param, ALsizei length,
+                                            const ALchar* message,
+                                            void* userParam) AL_API_NOEXCEPT17_;
+typedef void(AL_APIENTRY* LPALEVENTCALLBACKSOFT_)(
+    ALEVENTPROCSOFT_ callback, void* userParam) AL_API_NOEXCEPT17_;
+typedef void(AL_APIENTRY* LPALEVENTCONTROLSOFT_)(
+    ALsizei count, const ALenum* types, ALboolean enable) AL_API_NOEXCEPT17_;
+typedef void(ALC_APIENTRY* ALCEVENTPROCTYPESOFT_)(
+    ALCenum eventType, ALCenum deviceType, ALCdevice* device, ALCsizei length,
+    const ALCchar* message, void* userParam) ALC_API_NOEXCEPT17_;
+typedef void(ALC_APIENTRY* LPALCEVENTCALLBACKSOFT_)(
+    ALCEVENTPROCTYPESOFT_ callback, void* userParam) ALC_API_NOEXCEPT17_;
+typedef ALCboolean(ALC_APIENTRY* LPALCEVENTCONTROLSOFT_)(
+    ALCsizei count, const ALCenum* events,
+    ALCboolean enable) ALC_API_NOEXCEPT17_;
+typedef ALCenum(ALC_APIENTRY* LPALCEVENTISSUPPORTEDSOFT_)(
+    ALCenum eventType, ALCenum deviceType) ALC_API_NOEXCEPT17_;
 
-#endif
+#define ALC_CONNECTED_ 0x313
+#define AL_EVENT_TYPE_DISCONNECTED_SOFT_ 0x19A6
+#define ALC_EVENT_TYPE_DEFAULT_DEVICE_CHANGED_SOFT_ 0x19D6
+#define ALC_PLAYBACK_DEVICE_SOFT_ 0x19D4
+#define ALC_EVENT_SUPPORTED_SOFT_ 0x19D9
+
+static LPALCDEVICEPAUSESOFT_ alcDevicePauseSOFT{};
+static LPALCDEVICERESUMESOFT_ alcDeviceResumeSOFT{};
+static LPALCRESETDEVICESOFT_ alcResetDeviceSOFT{};
+static LPALCREOPENDEVICESOFT_ alcReopenDeviceSOFT{};
+static LPALEVENTCALLBACKSOFT_ alEventCallbackSOFT{};
+static LPALEVENTCONTROLSOFT_ alEventControlSOFT{};
+static LPALCEVENTCALLBACKSOFT_ alcEventCallbackSOFT{};
+static LPALCEVENTCONTROLSOFT_ alcEventControlSOFT{};
+static LPALCEVENTISSUPPORTEDSOFT_ alcEventIsSupportedSOFT{};
+#endif  // BA_ENABLE_AUDIO
 
 const int kAudioProcessIntervalNormal{500 * 1000};
 const int kAudioProcessIntervalFade{50 * 1000};
 const int kAudioProcessIntervalPendingLoad{1 * 1000};
 
-#if BA_DEBUG_BUILD || BA_TEST_BUILD
+#if BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD
 const bool kShowInUseSounds{};
 #endif
 
@@ -158,54 +200,51 @@ void AudioServer::OnMainThreadStartApp() {
   event_loop_ = new EventLoop(EventLoopID::kAudio);
   g_core->suspendable_event_loops.push_back(event_loop_);
 
-  // Run some setup stuff from our shiny new thread.
-  event_loop_->PushCall([this] {
-    // We want to be informed when our event-loop is pausing and unpausing.
-    event_loop()->AddSuspendCallback(
-        NewLambdaRunnableUnmanaged([this] { OnThreadSuspend_(); }));
-    event_loop()->AddUnsuspendCallback(
-        NewLambdaRunnableUnmanaged([this] { OnThreadUnsuspend_(); }));
-  });
-
-  event_loop_->PushCallSynchronous([this] { OnAppStartInThread_(); });
+  event_loop_->PushCallSynchronous([this] { StartSync_(); });
+  event_loop_->PushCall([this] { Start_(); });
 }
 
-#if BA_OPENAL_IS_SOFT
+#if BA_ENABLE_AUDIO
 static void ALEventCallback_(ALenum eventType, ALuint object, ALuint param,
                              ALsizei length, const ALchar* message,
                              ALvoid* userParam) noexcept {
-  if (eventType == AL_EVENT_TYPE_DISCONNECTED_SOFT) {
+  if (eventType == AL_EVENT_TYPE_DISCONNECTED_SOFT_) {
     if (g_base->audio_server) {
       g_base->audio_server->event_loop()->PushCall(
           [] { g_base->audio_server->OnDeviceDisconnected(); });
     }
   } else {
-    g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
-                "Got unexpected OpenAL callback event "
-                    + std::to_string(static_cast<int>(eventType)));
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                         "Got unexpected OpenAL callback event "
+                             + std::to_string(static_cast<int>(eventType)));
+  }
+}
+static void ALCEventCallback_(ALCenum eventType, ALCenum deviceType,
+                              ALCdevice* eventDevice, ALCsizei msgLen,
+                              const ALCchar* msg, void* user) noexcept {
+  if (eventType == ALC_EVENT_TYPE_DEFAULT_DEVICE_CHANGED_SOFT_
+      && deviceType == ALC_PLAYBACK_DEVICE_SOFT_) {
+    g_base->audio_server->event_loop()->PushCall(
+        [] { g_base->audio_server->OnDefaultDeviceChanged(); });
   }
 }
 
 // FIXME: Should convert this to a generalized OpenALSoft log handler since
 // we might want to wire it up on other platforms too.
-#if BA_OSTYPE_ANDROID
+#if BA_PLATFORM_ANDROID
 static void ALCustomAndroidLogCallback_(int severity, const char* msg) {
   // Let's log everything directly that is a warning or worse and store
   // everything else (up to some size limit). We can then explicitly ship
   // the full log if a serious problem occurs.
   if (severity >= ANDROID_LOG_WARN) {
+    // Log(LogName::kAudio, LogLevel::k
     __android_log_print(severity, "BallisticaKit", "openal-log: %s", msg);
   }
   g_base->audio_server->OpenALSoftLogCallback(msg);
 }
-#endif  // BA_OSTYPE_ANDROID
+#endif  // BA_PLATFORM_ANDROID
 
-void ALCustomLogCallback_(void* userptr, char level, const char* message,
-                          int length) noexcept {
-  // Log(LogLevel::kInfo, "HELLO FROM GENERIC CUSTOM LOGGER");
-}
-
-#endif  // BA_OPENAL_IS_SOFT
+#endif  // BA_ENABLE_AUDIO
 
 void AudioServer::OpenALSoftLogCallback(const std::string& msg) {
   size_t log_cap{1024 * 11};
@@ -213,16 +252,24 @@ void AudioServer::OpenALSoftLogCallback(const std::string& msg) {
 
   if (openalsoft_android_log_.size() < log_cap) {
     openalsoft_android_log_ += "openal-log("
-                               + std::to_string(g_core->GetAppTimeSeconds())
-                               + "s): " + msg;
+                               + std::to_string(g_core->AppTimeSeconds())
+                               + "s): " + msg + "\n";
     if (openalsoft_android_log_.size() >= log_cap) {
       openalsoft_android_log_ +=
           "\n<max openalsoft log storage size reached>\n";
     }
   }
 }
+void AudioServer::StartSync_() {
+  assert(g_base->InAudioThread());
+  // We want to be informed when our event-loop is pausing and unpausing.
+  event_loop()->AddSuspendCallback(
+      NewLambdaRunnableUnmanaged([this] { OnThreadSuspend_(); }));
+  event_loop()->AddUnsuspendCallback(
+      NewLambdaRunnableUnmanaged([this] { OnThreadUnsuspend_(); }));
+}
 
-void AudioServer::OnAppStartInThread_() {
+void AudioServer::Start_() {
   assert(g_base->InAudioThread());
 
   // Get our thread to give us periodic processing time.
@@ -246,7 +293,7 @@ void AudioServer::OnAppStartInThread_() {
         if (g_core->platform->GetOSVersionString().compare(0, prefix2.size(),
                                                            prefix2)
             == 0) {
-          g_core->Log(
+          g_core->logging->Log(
               LogName::kBaAudio, LogLevel::kInfo,
               "Xiaomi Android 11 detected; using OpenSL instead of AAudio.");
           g_core->platform->SetEnv("BA_OBOE_USE_OPENSLES", "1");
@@ -263,8 +310,8 @@ void AudioServer::OnAppStartInThread_() {
       ALboolean enumeration =
           alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT");
       if (enumeration == AL_FALSE) {
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                    "OpenAL enumeration extensions missing.");
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                             "OpenAL enumeration extensions missing.");
       } else {
         const ALCchar* devices =
             alcGetString(nullptr, ALC_ALL_DEVICES_SPECIFIER);
@@ -293,16 +340,15 @@ void AudioServer::OnAppStartInThread_() {
 #endif  // BA_RIFT_BUILD
 
     // Wire up our custom log callback where applicable.
-#if BA_OSTYPE_ANDROID
-    // alsoft_set_log_callback(ALCustomLogCallback_, nullptr);
+#if BA_PLATFORM_ANDROID
     alcSetCustomAndroidLogger(ALCustomAndroidLogCallback_);
 #endif
 
     auto* device = alcOpenDevice(al_device_name);
     if (!device) {
-      if (g_buildconfig.ostype_android()) {
+      if (g_buildconfig.platform_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
             "------------------------"
             " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
                 + openalsoft_android_log_
@@ -310,20 +356,25 @@ void AudioServer::OnAppStartInThread_() {
               " OPENALSOFT-FATAL-ERROR-LOG-END -----------------------");
         openalsoft_android_log_.clear();
       }
-      FatalError(
-          "No audio devices found. Do you have speakers/headphones/etc. "
-          "connected?");
+      g_core->logging->Log(
+          LogName::kBaAudio, LogLevel::kWarning,
+          "No audio devices found. Falling back to null audio device.");
+      using_null_device_ = true;
+      if (!g_buildconfig.platform_android()) {
+        return;
+      }
     }
 
     impl_->alc_context = alcCreateContext(device, nullptr);
 
     // Android special case: if we fail, try again after a few seconds.
-    if (!impl_->alc_context && g_buildconfig.ostype_android()) {
-      g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                  "Failed creating AL context; waiting and trying again.");
+    if (!impl_->alc_context && g_buildconfig.platform_android()) {
+      g_core->logging->Log(
+          LogName::kBaAudio, LogLevel::kError,
+          "Failed creating AL context; waiting and trying again.");
       {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
-        g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
             "------------------------"
             " OPENALSOFT-ERROR-LOG-BEGIN ----------------------\n"
                 + openalsoft_android_log_
@@ -338,7 +389,7 @@ void AudioServer::OnAppStartInThread_() {
 
       if (!device) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
             "------------------------"
             " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
                 + openalsoft_android_log_
@@ -350,19 +401,19 @@ void AudioServer::OnAppStartInThread_() {
       impl_->alc_context = alcCreateContext(device, nullptr);
       if (impl_->alc_context) {
         // For now want to explicitly know if this works.
-        g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
-                    "Backup AL context creation successful!");
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                             "Backup AL context creation successful!");
       }
     }
 
     // Android special case: if we fail, try OpenSL back-end.
-    if (!impl_->alc_context && g_buildconfig.ostype_android()) {
-      g_core->Log(
+    if (!impl_->alc_context && g_buildconfig.platform_android()) {
+      g_core->logging->Log(
           LogName::kBaAudio, LogLevel::kError,
           "Failed second time creating AL context; trying OpenSL backend.");
       {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
-        g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
             "------------------------"
             " OPENALSOFT-ERROR-LOG-BEGIN ----------------------\n"
                 + openalsoft_android_log_
@@ -376,7 +427,7 @@ void AudioServer::OnAppStartInThread_() {
       alGetError();  // Clear any errors.
       if (!device) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
             "------------------------"
             " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
                 + openalsoft_android_log_
@@ -388,16 +439,16 @@ void AudioServer::OnAppStartInThread_() {
       impl_->alc_context = alcCreateContext(device, nullptr);
       if (impl_->alc_context) {
         // For now want to explicitly know if this works.
-        g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
-                    "Backup AL context creation 2 successful!");
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                             "Backup AL context creation 2 successful!");
       }
     }
 
     // Fail at this point if we've got nothing.
     if (!impl_->alc_context) {
-      if (g_buildconfig.ostype_android()) {
+      if (g_buildconfig.platform_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
             "------------------------"
             " OPENALSOFT-FATAL-ERROR-LOG-BEGIN ----------------------\n"
                 + openalsoft_android_log_
@@ -413,37 +464,108 @@ void AudioServer::OnAppStartInThread_() {
     BA_PRECONDITION_FATAL(alcMakeContextCurrent(impl_->alc_context));
     CHECK_AL_ERROR;
 
-#if BA_OPENAL_IS_SOFT
-    // Currently assuming the pause/resume and reset extensions are present.
-    // if (alcIsExtensionPresent(device, "ALC_SOFT_pause_device")) {
-    alcDevicePauseSOFT = reinterpret_cast<LPALCDEVICEPAUSESOFT>(
-        alcGetProcAddress(device, "alcDevicePauseSOFT"));
-    BA_PRECONDITION_FATAL(alcDevicePauseSOFT != nullptr);
-    alcDeviceResumeSOFT = reinterpret_cast<LPALCDEVICERESUMESOFT>(
-        alcGetProcAddress(device, "alcDeviceResumeSOFT"));
-    BA_PRECONDITION_FATAL(alcDeviceResumeSOFT != nullptr);
-    alcResetDeviceSOFT = reinterpret_cast<LPALCRESETDEVICESOFT>(
-        alcGetProcAddress(device, "alcResetDeviceSOFT"));
-    BA_PRECONDITION_FATAL(alcResetDeviceSOFT != nullptr);
-    alEventCallbackSOFT = reinterpret_cast<LPALEVENTCALLBACKSOFT>(
-        alcGetProcAddress(device, "alEventCallbackSOFT"));
-    BA_PRECONDITION_FATAL(alEventCallbackSOFT != nullptr);
-    alEventControlSOFT = reinterpret_cast<LPALEVENTCONTROLSOFT>(
-        alcGetProcAddress(device, "alEventControlSOFT"));
-    BA_PRECONDITION_FATAL(alEventControlSOFT != nullptr);
-    // alsoft_set_log_callback = reinterpret_cast<LPALSOFTSETLOGCALLBACK>(
-    //     alcGetProcAddress(device, "alsoft_set_log_callback"));
-    // BA_PRECONDITION_FATAL(alsoft_set_log_callback != nullptr);
+    // Log some general OpenAL info if desired:
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo, [device] {
+      const ALchar* renderer = alGetString(AL_RENDERER);
+      const ALchar* vendor = alGetString(AL_VENDOR);
+      const ALchar* version = alGetString(AL_VERSION);
+      const ALCchar* device_name = alcGetString(device, ALC_DEVICE_SPECIFIER);
 
-    // Ask to be notified when a device is disconnected.
-    alEventCallbackSOFT(ALEventCallback_, nullptr);
-    CHECK_AL_ERROR;
-    ALenum types[] = {AL_EVENT_TYPE_DISCONNECTED_SOFT};
-    alEventControlSOFT(1, types, AL_TRUE);
-    // } else {
-    //   FatalError("ALC_SOFT pause/resume functionality not found.");
-    // }
-#endif
+      // With OpenAL Soft on desktop, make a note that full OpenAL logs can
+      // be enabled by setting an env var.
+      const char* env_note = (renderer == std::string("OpenAL Soft")
+                              && (g_buildconfig.platform_windows()
+                                  || g_buildconfig.platform_linux()
+                                  || g_buildconfig.platform_macos()))
+                                 ? "\n  Set env-var ALSOFT_LOGLEVEL=3 for "
+                                   "detailed OpenAL logs on stderr."
+                                 : "";
+      return std::string("OpenAL inited.\n  Renderer: ") + renderer
+             + "\n  Vendor: " + vendor + "\n  Version: " + version
+             + "\n  Device: " + device_name + env_note;
+    });
+
+    alcDevicePauseSOFT = reinterpret_cast<LPALCDEVICEPAUSESOFT_>(
+        alcGetProcAddress(device, "alcDevicePauseSOFT"));
+    alcDeviceResumeSOFT = reinterpret_cast<LPALCDEVICERESUMESOFT_>(
+        alcGetProcAddress(device, "alcDeviceResumeSOFT"));
+
+    // Sanity check: we expect neither or both of these to be present.
+    assert((alcDevicePauseSOFT != nullptr) == (alcDeviceResumeSOFT != nullptr));
+    if (alcDevicePauseSOFT != nullptr && alcDeviceResumeSOFT != nullptr) {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL device pause/resume AVAILABLE.");
+    } else {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL device pause/resume UNAVAILABLE.");
+    }
+
+    alcResetDeviceSOFT = reinterpret_cast<LPALCRESETDEVICESOFT_>(
+        alcGetProcAddress(device, "alcResetDeviceSOFT"));
+
+    alcReopenDeviceSOFT = reinterpret_cast<LPALCREOPENDEVICESOFT_>(
+        alcGetProcAddress(device, "alcReopenDeviceSOFT"));
+
+    alEventCallbackSOFT = reinterpret_cast<LPALEVENTCALLBACKSOFT_>(
+        alcGetProcAddress(device, "alEventCallbackSOFT"));
+
+    alEventControlSOFT = reinterpret_cast<LPALEVENTCONTROLSOFT_>(
+        alcGetProcAddress(device, "alEventControlSOFT"));
+
+    alcEventCallbackSOFT = reinterpret_cast<LPALCEVENTCALLBACKSOFT_>(
+        alcGetProcAddress(device, "alcEventCallbackSOFT"));
+
+    alcEventControlSOFT = reinterpret_cast<LPALCEVENTCONTROLSOFT_>(
+        alcGetProcAddress(device, "alcEventControlSOFT"));
+
+    alcEventIsSupportedSOFT = reinterpret_cast<LPALCEVENTISSUPPORTEDSOFT_>(
+        alcGetProcAddress(device, "alcEventIsSupportedSOFT"));
+
+    if (alEventCallbackSOFT != nullptr && alEventControlSOFT != nullptr) {
+      // Set ourself up to recieve these type of callbacks.
+      alEventCallbackSOFT(ALEventCallback_, nullptr);
+      CHECK_AL_ERROR;
+
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL disconnect events AVAILABLE.");
+
+      // Ask to be notified when a context is disconnected from its device.
+      ALenum types[] = {AL_EVENT_TYPE_DISCONNECTED_SOFT_};
+      alEventControlSOFT(1, types, AL_TRUE);
+      CHECK_AL_ERROR;
+    } else {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL disconnect events UNAVAILABLE.");
+    }
+
+    bool set_default_device_changed_callback{};
+    if (alcEventCallbackSOFT != nullptr && alcEventIsSupportedSOFT != nullptr
+        && alcEventControlSOFT != nullptr) {
+      // Set ourself up to recieve these type of callbacks.
+      alcEventCallbackSOFT(ALCEventCallback_, nullptr);
+      CHECK_AL_ERROR;
+
+      if (alcEventIsSupportedSOFT(ALC_EVENT_TYPE_DEFAULT_DEVICE_CHANGED_SOFT_,
+                                  ALC_PLAYBACK_DEVICE_SOFT_)
+          == ALC_EVENT_SUPPORTED_SOFT_) {
+        // Ask to be notified when default output device changes.
+        ALenum types[] = {ALC_EVENT_TYPE_DEFAULT_DEVICE_CHANGED_SOFT_};
+        auto success = alcEventControlSOFT(1, types, AL_TRUE);
+        if (success) {
+          set_default_device_changed_callback = true;
+        }
+        CHECK_AL_ERROR;
+      }
+    }
+    if (set_default_device_changed_callback) {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL default-device-change events AVAILABLE.");
+    } else {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "OpenAL default-device-change events UNAVAILABLE.");
+    }
+
+    // #endif
   }
 
   ALfloat listener_pos[] = {0.0f, 0.0f, 0.0f};
@@ -466,9 +588,9 @@ void AudioServer::OnAppStartInThread_() {
       sound_source_refs_.push_back(s);
       sources_.push_back(&(*s));
     } else {
-      g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                  "Made " + std::to_string(i) + " sources; (wanted "
-                      + std::to_string(target_source_count) + ").");
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                           "Made " + std::to_string(i) + " sources; (wanted "
+                               + std::to_string(target_source_count) + ").");
       break;
     }
   }
@@ -477,7 +599,7 @@ void AudioServer::OnAppStartInThread_() {
   // Now make available any stopped sources (should be all of them).
   UpdateAvailableSources_();
 
-  last_started_playing_time_ = g_core->GetAppTimeSeconds();
+  last_started_playing_time_ = g_core->AppTimeSeconds();
 #endif  // BA_ENABLE_AUDIO
 }
 
@@ -487,7 +609,7 @@ void AudioServer::Shutdown() {
     return;
   }
   shutting_down_ = true;
-  shutdown_start_time_ = g_core->GetAppTimeSeconds();
+  shutdown_start_time_ = g_core->AppTimeSeconds();
 
   // Stop all playing sounds and note the time. We'll then give everything a
   // moment to come to a halt before we tear down the audio context to
@@ -506,24 +628,24 @@ void AudioServer::CompleteShutdown_() {
 #if BA_ENABLE_AUDIO
   ALCboolean check = alcMakeContextCurrent(nullptr);
   if (!check) {
-    g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
-                "Error on alcMakeContextCurrent at shutdown.");
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                         "Error on alcMakeContextCurrent at shutdown.");
   }
   auto* device = alcGetContextsDevice(impl_->alc_context);
   if (!device) {
-    g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
-                "Unable to get ALCdevice at shutdown.");
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                         "Unable to get ALCdevice at shutdown.");
   } else {
     alcDestroyContext(impl_->alc_context);
     ALenum err = alcGetError(device);
     if (err != ALC_NO_ERROR) {
-      g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
-                  "Error on AL shutdown.");
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                           "Error on AL shutdown.");
     }
     check = alcCloseDevice(device);
     if (!check) {
-      g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
-                  "Error on alcCloseDevice at shutdown.");
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
+                           "Error on alcCloseDevice at shutdown.");
     }
   }
 #endif
@@ -538,59 +660,63 @@ struct AudioServer::SoundFadeNode_ {
   bool out;
   SoundFadeNode_(uint32_t play_id_in, millisecs_t duration_in, bool out_in)
       : play_id(play_id_in),
-        starttime(g_core->GetAppTimeMillisecs()),
-        endtime(g_core->GetAppTimeMillisecs() + duration_in),
+        starttime(g_core->AppTimeMillisecs()),
+        endtime(g_core->AppTimeMillisecs() + duration_in),
         out(out_in) {}
 };
 
 void AudioServer::SetSuspended_(bool suspend) {
   if (!suspended_) {
     if (!suspend) {
-      g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                  "Got audio unsuspend request when already unsuspended.");
+      g_core->logging->Log(
+          LogName::kBaAudio, LogLevel::kError,
+          "Got audio unsuspend request when already unsuspended.");
     } else {
-#if BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_IOS_TVOS
       // apple recommends this during audio-interruptions..
       // http://developer.apple.com/library/ios/#documentation/Audio/Conceptual/AudioSessionProgrammingGuide/Cookbook/
       // Cookbook.html#//apple_ref/doc/uid/TP40007875-CH6-SW38
       alcMakeContextCurrent(nullptr);
 #endif
 
-      // Pause OpenALSoft.
-#if BA_OPENAL_IS_SOFT
-      BA_PRECONDITION_FATAL(alcDevicePauseSOFT != nullptr);
-      BA_PRECONDITION_FATAL(impl_ != nullptr && impl_->alc_context != nullptr);
-      auto* device = alcGetContextsDevice(impl_->alc_context);
-      BA_PRECONDITION_FATAL(device != nullptr);
+      // Pause OpenAL (when supported).
+#if BA_ENABLE_AUDIO
+      if (alcDevicePauseSOFT != nullptr) {
+        BA_PRECONDITION_FATAL(impl_ != nullptr
+                              && impl_->alc_context != nullptr);
+        auto* device = alcGetContextsDevice(impl_->alc_context);
+        BA_PRECONDITION_FATAL(device != nullptr);
 
-      try {
-        g_core->platform->LowLevelDebugLog(
-            "Calling alcDevicePauseSOFT at "
-            + std::to_string(g_core->GetAppTimeSeconds()));
-        alcDevicePauseSOFT(device);
-      } catch (const std::exception& e) {
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                    "Error in alcDevicePauseSOFT at time "
-                        + std::to_string(g_core->GetAppTimeSeconds())
-                        + "( playing since "
-                        + std::to_string(last_started_playing_time_) + "): "
-                        + g_core->platform->DemangleCXXSymbol(typeid(e).name())
-                        + " " + e.what());
-      } catch (...) {
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                    "Unknown error in alcDevicePauseSOFT");
+        try {
+          g_core->platform->LowLevelDebugLog(
+              "Calling alcDevicePauseSOFT at "
+              + std::to_string(g_core->AppTimeSeconds()));
+          alcDevicePauseSOFT(device);
+        } catch (const std::exception& e) {
+          g_core->logging->Log(
+              LogName::kBaAudio, LogLevel::kError,
+              "Error in alcDevicePauseSOFT at time "
+                  + std::to_string(g_core->AppTimeSeconds())
+                  + "( playing since "
+                  + std::to_string(last_started_playing_time_) + "): "
+                  + g_core->platform->DemangleCXXSymbol(typeid(e).name()) + " "
+                  + e.what());
+        } catch (...) {
+          g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                               "Unknown error in alcDevicePauseSOFT");
+        }
       }
-#endif
+#endif  // BA_ENABLE_AUDIO
 
       suspended_ = true;
     }
   } else {
     // Unsuspend if requested.
     if (suspend) {
-      g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                  "Got audio suspend request when already suspended.");
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                           "Got audio suspend request when already suspended.");
     } else {
-#if BA_OSTYPE_IOS_TVOS
+#if BA_PLATFORM_IOS_TVOS
       // Apple recommends this during audio-interruptions.
       // http://developer.apple.com/library/ios/#documentation/Audio/
       // Conceptual/AudioSessionProgrammingGuide/Cookbook/
@@ -600,29 +726,32 @@ void AudioServer::SetSuspended_(bool suspend) {
 #endif
 #endif
 
-// With OpenALSoft lets tell openal-soft to resume processing.
-#if BA_OPENAL_IS_SOFT
-      BA_PRECONDITION_FATAL(alcDeviceResumeSOFT != nullptr);
-      BA_PRECONDITION_FATAL(impl_ != nullptr && impl_->alc_context != nullptr);
-      auto* device = alcGetContextsDevice(impl_->alc_context);
-      BA_PRECONDITION_FATAL(device != nullptr);
-      try {
-        g_core->platform->LowLevelDebugLog(
-            "Calling alcDeviceResumeSOFT at "
-            + std::to_string(g_core->GetAppTimeSeconds()));
-        alcDeviceResumeSOFT(device);
-      } catch (const std::exception& e) {
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                    "Error in alcDeviceResumeSOFT at time "
-                        + std::to_string(g_core->GetAppTimeSeconds()) + ": "
-                        + g_core->platform->DemangleCXXSymbol(typeid(e).name())
-                        + " " + e.what());
-      } catch (...) {
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                    "Unknown error in alcDeviceResumeSOFT");
+      // Resume OpenAL (when supported).
+#if BA_ENABLE_AUDIO
+      if (alcDeviceResumeSOFT != nullptr) {
+        BA_PRECONDITION_FATAL(impl_ != nullptr
+                              && impl_->alc_context != nullptr);
+        auto* device = alcGetContextsDevice(impl_->alc_context);
+        BA_PRECONDITION_FATAL(device != nullptr);
+        try {
+          g_core->platform->LowLevelDebugLog(
+              "Calling alcDeviceResumeSOFT at "
+              + std::to_string(g_core->AppTimeSeconds()));
+          alcDeviceResumeSOFT(device);
+        } catch (const std::exception& e) {
+          g_core->logging->Log(
+              LogName::kBaAudio, LogLevel::kError,
+              "Error in alcDeviceResumeSOFT at time "
+                  + std::to_string(g_core->AppTimeSeconds()) + ": "
+                  + g_core->platform->DemangleCXXSymbol(typeid(e).name()) + " "
+                  + e.what());
+        } catch (...) {
+          g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                               "Unknown error in alcDeviceResumeSOFT");
+        }
       }
-#endif
-      last_started_playing_time_ = g_core->GetAppTimeSeconds();
+#endif  // BA_ENABLE_AUDIO
+      last_started_playing_time_ = g_core->AppTimeSeconds();
       suspended_ = false;
 #if BA_ENABLE_AUDIO
       CHECK_AL_ERROR;
@@ -743,7 +872,7 @@ void AudioServer::PushResetCall() {
 void AudioServer::PushSetListenerPositionCall(const Vector3f& p) {
   event_loop()->PushCall([this, p] {
 #if BA_ENABLE_AUDIO
-    if (!suspended_ && !shutting_down_) {
+    if (!using_null_device_ && !suspended_ && !shutting_down_) {
       ALfloat lpos[3] = {p.x, p.y, p.z};
       alListenerfv(AL_POSITION, lpos);
       CHECK_AL_ERROR;
@@ -756,7 +885,7 @@ void AudioServer::PushSetListenerOrientationCall(const Vector3f& forward,
                                                  const Vector3f& up) {
   event_loop()->PushCall([this, forward, up] {
 #if BA_ENABLE_AUDIO
-    if (!suspended_ && !shutting_down_) {
+    if (!using_null_device_ && !suspended_ && !shutting_down_) {
       ALfloat lorient[6] = {forward.x, forward.y, forward.z, up.x, up.y, up.z};
       alListenerfv(AL_ORIENTATION, lorient);
       CHECK_AL_ERROR;
@@ -773,8 +902,8 @@ void AudioServer::UpdateAvailableSources_() {
 // Some sanity checking. Occasionally lets go through our sources
 // and see how many are in use, how many are currently locked by the client,
 // etc.
-#if (BA_DEBUG_BUILD || BA_TEST_BUILD)
-  millisecs_t t = g_core->GetAppTimeMillisecs();
+#if (BA_DEBUG_BUILD || BA_VARIANT_TEST_BUILD)
+  millisecs_t t = g_core->AppTimeMillisecs();
   if (t - last_sanity_check_time_ > 5000) {
     last_sanity_check_time_ = t;
 
@@ -791,11 +920,11 @@ void AudioServer::UpdateAvailableSources_() {
         // that probably means somebody's grabbing a source but never
         // resubmitting it.
         if (t - i->client_source()->last_lock_time() > 10000) {
-          g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                      "Client audio source has been locked for too long; "
-                      "probably leaked. (debug id "
-                          + std::to_string(i->client_source()->lock_debug_id())
-                          + ")");
+          g_core->logging->Log(
+              LogName::kBaAudio, LogLevel::kError,
+              "Client audio source has been locked for too long; "
+              "probably leaked. (debug id "
+                  + std::to_string(i->client_source()->lock_debug_id()) + ")");
         }
         continue;
       }
@@ -881,18 +1010,28 @@ void AudioServer::SetSoundPitch_(float pitch) {
 }
 
 void AudioServer::SetSoundVolume_(float volume) {
-  sound_volume_ = std::clamp(volume, 0.0f, 3.0f);
+  // Clamp to 3.0 rather than 1.0 to allow overdriving via script or config.
+  sound_volume_ = std::clamp(GetPerceivedVolume_(volume), 0.0f, 3.0f);
   for (auto&& i : sources_) {
     i->UpdateVolume();
   }
 }
 
 void AudioServer::SetMusicVolume_(float volume) {
-  music_volume_ = std::clamp(volume, 0.0f, 3.0f);
+  // Clamp to 3.0 rather than 1.0 to allow overdriving via script or config.
+  music_volume_ = std::clamp(GetPerceivedVolume_(volume), 0.0f, 3.0f);
   UpdateMusicPlayState_();
   for (auto&& i : sources_) {
     i->UpdateVolume();
   }
+}
+
+float AudioServer::GetPerceivedVolume_(float volume_linear) {
+  // Apply a cubic curve to convert a linear slider value to a perceptually
+  // even volume. AL_GAIN is a linear amplitude multiplier, so without this
+  // correction a linear slider would feel like it jumps quickly at the low
+  // end.
+  return powf(volume_linear, 3.0f);
 }
 
 // Start or stop music playback based on volume/suspend-state/etc.
@@ -918,22 +1057,50 @@ void AudioServer::UpdateMusicPlayState_() {
   }
 }
 
+void AudioServer::ProcessDefaultDeviceChange_() {
+#if BA_ENABLE_AUDIO
+  // Skip device re-opening in null device mode.
+  if (using_null_device_) {
+    return;
+  }
+
+  if (should_reopen_) {
+    should_reopen_ = false;
+    auto* device = alcGetContextsDevice(impl_->alc_context);
+    assert(device);
+    if (alcReopenDeviceSOFT(device, nullptr, nullptr)) {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                           "Device re-opened for default-device-change.");
+    } else {
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                           "Device re-open for default-device-change failed.");
+    }
+  }
+#endif  // BA_ENABLE_AUDIO
+}
+
 void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
-#if BA_OPENAL_IS_SOFT
-  // If our device has been disconnected, try to reconnect it
-  // periodically.
+#if BA_ENABLE_AUDIO
+  // Skip device disconnect handling in null device mode.
+  if (using_null_device_) {
+    return;
+  }
+
+  // If our context device has been disconnected, try to reconnect it
+  // periodically. The Android back-end in particular uses uses this - with
+  // Android there is a single system device and plugging or unplugging
+  // headphones manifests as the device disconnecting and needing to be
+  // reset. For more info, see:
+  // https://github.com/kcat/openal-soft/issues/941
+
   auto* device = alcGetContextsDevice(impl_->alc_context);
   BA_PRECONDITION_FATAL(device != nullptr);
   ALCint connected{-1};
-  alcGetIntegerv(device, ALC_CONNECTED, sizeof(connected), &connected);
+  alcGetIntegerv(device, ALC_CONNECTED_, sizeof(connected), &connected);
   CHECK_AL_ERROR;
   if (connected != 0) {
     last_connected_time_ = real_time_seconds;
-    // reconnect_fail_count_ = 0;
   }
-  // else {
-  // reconnect_fail_count_ = 0;
-  // }
 
   // Retry less often once we've been failing for a while.
   seconds_t retry_interval =
@@ -941,9 +1108,9 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
 
   if (connected == 0
       && real_time_seconds - last_reset_attempt_time_ >= retry_interval) {
-    g_core->Log(LogName::kBaAudio, LogLevel::kInfo,
-                "OpenAL device disconnected; resetting...");
-    if (g_buildconfig.ostype_android()) {
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kInfo,
+                         "OpenAL device disconnected; resetting...");
+    if (g_buildconfig.platform_android()) {
       std::scoped_lock lock(openalsoft_android_log_mutex_);
       openalsoft_android_log_ +=
           "DEVICE DISCONNECT DETECTED; ATTEMPTING RESET\n";
@@ -953,65 +1120,30 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
     auto result = alcResetDeviceSOFT(device, nullptr);
     CHECK_AL_ERROR;
 
-    // Log(LogLevel::kInfo, std::string("alcResetDeviceSOFT returned ")
-    //                          + (result == ALC_TRUE ? "ALC_TRUE" :
-    //                          "ALC_FALSE"));
-
-    // Check to see if this brought the device back.
-    // ALCint connected{-1};
-    // alcGetIntegerv(device, ALC_CONNECTED, sizeof(connected), &connected);
-    // CHECK_AL_ERROR;
-
     // If we were successful, clear out the wait for the next reset.
     // Otherwise plugging in headphones and then unplugging them immediately
     // will result in 10 seconds of silence.
     if (result == ALC_TRUE) {
       // last_reset_attempt_time_ = -999.0;
-      if (g_buildconfig.ostype_android()) {
+      if (g_buildconfig.platform_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
         openalsoft_android_log_ += "DEVICE RESET CALL SUCCESSFUL\n";
       }
     } else {
-      if (g_buildconfig.ostype_android()) {
+      if (g_buildconfig.platform_android()) {
         std::scoped_lock lock(openalsoft_android_log_mutex_);
         openalsoft_android_log_ += "DEVICE RESET CALL FAILED\n";
       }
     }
-
-    // If we're ever *not* immediately successful, flip on reporting to try
-    // and figure out what's going on. After that point we'll report subsequent
-    // if (connected == 0) {
-    //   report_reset_results_ = true;
-    // }
-    // if (report_reset_results_ && reset_result_reports_remaining_ > 0) {
-    //   reset_result_reports_remaining_ -= 1;
-    //   if (connected != 0) {
-    //     Log(LogLevel::kInfo,
-    //         "alcResetDeviceSOFT successfully reconnected device.");
-    //   } else {
-    //     Log(LogLevel::kError, "alcResetDeviceSOFT failed to reconnect
-    //     device.");
-    //   }
-    //   if (g_buildconfig.ostype_android()) {
-    //     std::scoped_lock lock(openalsoft_android_log_mutex_);
-    //     Log(LogLevel::kWarning,
-    //         "------------------------"
-    //         " OPENALSOFT-RECONNECT-LOG-BEGIN ----------------------\n"
-    //             + openalsoft_android_log_
-    //         + "\n-------------------------"
-    //           " OPENALSOFT-RECONNECT-LOG-END -----------------------");
-    //     openalsoft_android_log_.clear();
-    //   }
-    // }
   }
 
   // If we've failed at reconnecting for a while, ship logs once.
   if (real_time_seconds - last_connected_time_ > 20.0
       && !shipped_reconnect_logs_) {
     shipped_reconnect_logs_ = true;
-    if (g_buildconfig.ostype_android()) {
+    if (g_buildconfig.platform_android()) {
       std::scoped_lock lock(openalsoft_android_log_mutex_);
-      g_core->Log(LogName::kBaAudio, LogLevel::kWarning,
+      g_core->logging->Log(LogName::kBaAudio, LogLevel::kWarning,
             "Have been disconnected for a while; dumping OpenAL log.\n"
             "------------------------"
             " OPENALSOFT-RECONNECT-LOG-BEGIN ----------------------\n"
@@ -1021,7 +1153,7 @@ void AudioServer::ProcessDeviceDisconnects_(seconds_t real_time_seconds) {
       openalsoft_android_log_.clear();
     }
   }
-#endif  // BA_OPENAL_IS_SOFT
+#endif  // BA_ENABLE_AUDIO
 }
 
 void AudioServer::OnDeviceDisconnected() {
@@ -1031,16 +1163,32 @@ void AudioServer::OnDeviceDisconnected() {
   Process_();
 }
 
+void AudioServer::OnDefaultDeviceChanged() {
+  assert(g_base->InAudioThread());
+  // All we do here is run an explicit Process_. This only saves us a half
+  // second or so over letting the timer do it, but hey we'll take it.
+  should_reopen_ = true;
+  Process_();
+}
+
 void AudioServer::Process_() {
   assert(g_base->InAudioThread());
-  seconds_t real_time_seconds = g_core->GetAppTimeSeconds();
+  seconds_t real_time_seconds = g_core->AppTimeSeconds();
   millisecs_t real_time_millisecs = real_time_seconds * 1000;
 
   // Only do real work if we're in normal running mode.
   if (!suspended_ && !shutting_down_) {
-    ProcessDeviceDisconnects_(real_time_seconds);
+    // Handle audio output switching on Android (involves single system
+    // device disconnecting/reconnecting).
+    if (g_buildconfig.platform_android()) {
+      ProcessDeviceDisconnects_(real_time_seconds);
+    } else {
+      // Handle default audio device changing on multi-device systems.
+      // (plugging in headphones on a Mac, etc.)
+      ProcessDefaultDeviceChange_();
+    }
 
-    // Do some loading...
+    // Do some loading.
     have_pending_loads_ = g_base->assets->RunPendingAudioLoads();
 
     // Keep that available-sources list filled.
@@ -1075,7 +1223,9 @@ void AudioServer::Process_() {
     }
 
 #if BA_ENABLE_AUDIO
-    CHECK_AL_ERROR;
+    if (!using_null_device_) {
+      CHECK_AL_ERROR;
+    }
 #endif
   }
   UpdateTimerInterval_();
@@ -1085,7 +1235,7 @@ void AudioServer::Process_() {
   // for the mixer to spit out some silence so we don't hear sudden cut-offs
   // in one or both ears.
   if (shutting_down_ && !shutdown_completed_) {
-    if (g_core->GetAppTimeSeconds() - shutdown_start_time_ > 0.2) {
+    if (g_core->AppTimeSeconds() - shutdown_start_time_ > 0.2) {
       CompleteShutdown_();
     }
   }
@@ -1101,10 +1251,10 @@ void AudioServer::Reset_() {
   // no longer found is being cut off by the initial app-mode switch.
 
   // So I'm disabling the stop behavior for now and hoping that doesn't bite
-  // us. Ideally we should have sounds contexts so that we can stop sounds
-  // for a particular scene when that scene ends/etc. This could also
-  // address our current problem where epic mode screws up the pitch on our
-  // UI sounds.
+  // us too badly. In the future we should implement sounds contexts so that
+  // we can stop sounds for a particular scene when that scene ends/etc.
+  // This could also address our current problem where epic mode screws up
+  // the pitch on UI sounds.
 
   if (explicit_bool(false)) {
     // Stop all playing sounds.
@@ -1125,13 +1275,13 @@ void AudioServer::ProcessSoundFades_() {
 
     AudioServer::ThreadSource_* s = GetPlayingSound_(i->second.play_id);
     if (s) {
-      if (g_core->GetAppTimeMillisecs() > i->second.endtime) {
+      if (g_core->AppTimeMillisecs() > i->second.endtime) {
         StopSound(i->second.play_id);
         sound_fade_nodes_.erase(i);
       } else {
         float fade_val =
             1
-            - (static_cast<float>(g_core->GetAppTimeMillisecs()
+            - (static_cast<float>(g_core->AppTimeMillisecs()
                                   - i->second.starttime)
                / static_cast<float>(i->second.endtime - i->second.starttime));
         s->SetFade(fade_val);
@@ -1150,18 +1300,20 @@ void AudioServer::FadeSoundOut(uint32_t play_id, uint32_t time) {
       std::make_pair(play_id, SoundFadeNode_(play_id, time, true)));
 }
 
-// void AudioServer::DeleteAssetComponent_(Asset* c) {
-//   assert(g_base->InAudioThread());
-//   c->Unload();
-//   delete c;
-// }
-
 AudioServer::ThreadSource_::ThreadSource_(AudioServer* audio_server_in,
                                           int id_in, bool* valid_out)
     : id_(id_in), audio_server_(audio_server_in) {
 #if BA_ENABLE_AUDIO
   assert(g_core);
   assert(valid_out != nullptr);
+
+  // In null device mode, mark all sources as valid but don't initialize OpenAL.
+  if (audio_server_in->using_null_device_) {
+    valid_ = true;
+    *valid_out = true;
+    return;
+  }
+
   CHECK_AL_ERROR;
 
   // Generate our sources.
@@ -1169,9 +1321,9 @@ AudioServer::ThreadSource_::ThreadSource_(AudioServer* audio_server_in,
   ALenum err = alGetError();
   valid_ = (err == AL_NO_ERROR);
   if (!valid_) {
-    g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                std::string("AL Error ") + GetALErrorString(err)
-                    + " on source creation.");
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                         std::string("AL Error ") + GetALErrorString(err)
+                             + " on source creation.");
   } else {
     // In vr mode we keep the microphone a bit closer to the camera
     // for realism purposes, so we need stuff louder in general.
@@ -1197,6 +1349,11 @@ AudioServer::ThreadSource_::ThreadSource_(AudioServer* audio_server_in,
 
 AudioServer::ThreadSource_::~ThreadSource_() {
 #if BA_ENABLE_AUDIO
+
+  // Skip OpenAL operations in null device mode.
+  if (audio_server_->using_null_device_) {
+    return;
+  }
 
   if (!valid_) {
     return;
@@ -1231,13 +1388,19 @@ void AudioServer::ThreadSource_::UpdateAvailability() {
 
   assert(g_base->InAudioThread());
 
+  // Skip in null device mode.
+  if (audio_server_->using_null_device_) {
+    return;
+  }
+
   // If it's waiting to be picked up by a client or has pending client
   // commands, skip.
   if (!client_source_->TryLock(6)) {
     return;
   }
 
-  // Already available or has pending client commands; don't change anything.
+  // Already available or has pending client commands; don't change
+  // anything.
   if (client_source_->available() || client_source_->client_queue_size() > 0) {
     client_source_->Unlock();
     return;
@@ -1245,14 +1408,14 @@ void AudioServer::ThreadSource_::UpdateAvailability() {
 
   // We consider ourselves busy if there's an active looping play command
   // (regardless of its actual physical play state - music could be turned
-  // off, stuttering, etc.). If it's non-looping, we check its play state and
-  // snatch it if it's not playing.
+  // off, stuttering, etc.). If it's non-looping, we check its play state
+  // and snatch it if it's not playing.
   bool busy;
   if (looping_ || (is_streamed_ && streamer_.exists() && streamer_->loops())) {
     busy = want_to_play_;
   } else {
-    // If our context is suspended, we know nothing is playing
-    // (and we can't ask AL cuz we have no context).
+    // If our context is suspended, we know nothing is playing (and we can't
+    // ask AL cuz we have no context).
     if (g_base->audio_server->suspended_
         || g_base->audio_server->shutting_down_) {
       busy = false;
@@ -1291,6 +1454,9 @@ void AudioServer::ThreadSource_::UpdateAvailability() {
 
 void AudioServer::ThreadSource_::Update() {
 #if BA_ENABLE_AUDIO
+  if (audio_server_->using_null_device_) {
+    return;
+  }
   assert(is_streamed_ && is_actually_playing_);
   streamer_->Update();
 #endif
@@ -1322,13 +1488,13 @@ void AudioServer::ThreadSource_::SetLooping(bool loop) {
 
 void AudioServer::ThreadSource_::SetPositional(bool p) {
 #if BA_ENABLE_AUDIO
-  if (g_base->audio_server->suspended_
+  if (g_base->audio_server->using_null_device_
+      || g_base->audio_server->suspended_
       || g_base->audio_server->shutting_down_) {
     return;
   }
-  // TODO(ericf): Don't allow setting of positional
-  //  on stereo sounds - we check this at initial play()
-  //  but should do it here too.
+  // TODO(ericf): Don't allow setting of positional on stereo sounds - we
+  //  check this at initial play() but should do it here too.
   alSourcei(source_, AL_SOURCE_RELATIVE, !p);
   CHECK_AL_ERROR;
 
@@ -1337,7 +1503,8 @@ void AudioServer::ThreadSource_::SetPositional(bool p) {
 
 void AudioServer::ThreadSource_::SetPosition(float x, float y, float z) {
 #if BA_ENABLE_AUDIO
-  if (g_base->audio_server->suspended_
+  if (g_base->audio_server->using_null_device_
+      || g_base->audio_server->suspended_
       || g_base->audio_server->shutting_down_) {
     return;
   }
@@ -1388,10 +1555,11 @@ auto AudioServer::ThreadSource_::Play(const Object::Ref<SoundAsset>* sound)
   assert(source_sound_ == nullptr);
   source_sound_ = sound;
 
-  if (!g_base->audio_server->suspended_
+  if (!g_base->audio_server->using_null_device_
+      && !g_base->audio_server->suspended_
       && !g_base->audio_server->shutting_down_) {
-    // Ok, here's where we might start needing to access our media... can't
-    // hold off any longer...
+    // Ok, here's where we might start needing to access our media; can't
+    // hold off any longer.
     (**source_sound_).Load();
 
     is_streamed_ = (**source_sound_).is_streamed();
@@ -1429,6 +1597,12 @@ auto AudioServer::ThreadSource_::Play(const Object::Ref<SoundAsset>* sound)
 void AudioServer::ThreadSource_::ExecPlay() {
 #if BA_ENABLE_AUDIO
 
+  // Skip playback in null device mode.
+  if (audio_server_->using_null_device_) {
+    is_actually_playing_ = true;
+    return;
+  }
+
   assert(g_core);
   assert(source_sound_->exists());
   assert((**source_sound_).valid());
@@ -1450,9 +1624,9 @@ void AudioServer::ThreadSource_::ExecPlay() {
     }
     audio_server_->streaming_sources_.push_back(this);
 
-    // Make sure stereo sounds aren't positional.
-    // This is default behavior on Mac/Win, but we enforce it for linux.
-    // (though currently linux stereo sounds play in mono... eww))
+    // Make sure stereo sounds aren't positional. This is default behavior
+    // on Mac/Win, but we enforce it for linux. (though currently linux
+    // stereo sounds play in mono... eww))
 
     bool do_normal = true;
     // In vr mode, play non-positional sounds positionally in space roughly
@@ -1473,10 +1647,12 @@ void AudioServer::ThreadSource_::ExecPlay() {
       throw Exception();
     }
 
-  } else {  // Not streamed
-    // Make sure stereo sounds aren't positional.
-    // This is default behavior on Mac/Win, but we enforce it for linux.
-    // (though currently linux stereo sounds play in mono... eww))
+  } else {
+    // Not streamed.
+    //
+    // Make sure stereo sounds aren't positional. This is default behavior
+    // on Mac/Win, but we enforce it for linux. (though currently linux
+    // stereo sounds play in mono... eww))
     if ((**source_sound_).format() == AL_FORMAT_STEREO16) {
       SetPositional(false);
       SetPosition(0, 0, 0);
@@ -1494,6 +1670,12 @@ void AudioServer::ThreadSource_::Stop() {
 #if BA_ENABLE_AUDIO
   assert(g_base->audio_server);
 
+  // Skip if in null device mode.
+  if (g_base->audio_server->using_null_device_) {
+    want_to_play_ = false;
+    return;
+  }
+
   // If our context is suspended we can't actually stop now; just record our
   // intent.
   if (g_base->audio_server->suspended_) {
@@ -1505,9 +1687,8 @@ void AudioServer::ThreadSource_::Stop() {
     if (streamer_.exists()) {
       streamer_.Clear();
     }
-    // If we've got an attached sound, toss it back to the main thread
-    // to free up...
-    // (we can't kill media-refs outside the main thread)
+    // If we've got an attached sound, toss it back to the main thread to
+    // free up. (we can't kill media-refs outside the main thread)
     if (source_sound_) {
       assert(g_base->assets);
       g_base->audio_server->AddSoundRefDelete(source_sound_);
@@ -1521,6 +1702,13 @@ void AudioServer::ThreadSource_::Stop() {
 void AudioServer::ThreadSource_::ExecStop() {
 #if BA_ENABLE_AUDIO
   assert(g_base->InAudioThread());
+
+  // Skip OpenAL operations in null device mode.
+  if (audio_server_->using_null_device_) {
+    is_actually_playing_ = false;
+    return;
+  }
+
   assert(!g_base->audio_server->suspended_);
   assert(is_actually_playing_);
   if (streamer_.exists()) {
@@ -1546,7 +1734,8 @@ void AudioServer::ThreadSource_::ExecStop() {
 void AudioServer::ThreadSource_::UpdateVolume() {
 #if BA_ENABLE_AUDIO
   assert(g_base->InAudioThread());
-  if (audio_server_->suspended_ || audio_server_->shutting_down_) {
+  if (audio_server_->using_null_device_ || audio_server_->suspended_
+      || audio_server_->shutting_down_) {
     return;
   }
   float val = gain_ * fade_;
@@ -1566,7 +1755,8 @@ void AudioServer::ThreadSource_::UpdateVolume() {
 void AudioServer::ThreadSource_::UpdatePitch() {
 #if BA_ENABLE_AUDIO
   assert(g_base->InAudioThread());
-  if (g_base->audio_server->suspended_
+  if (g_base->audio_server->using_null_device_
+      || g_base->audio_server->suspended_
       || g_base->audio_server->shutting_down_) {
     return;
   }
@@ -1621,11 +1811,10 @@ void AudioServer::AddSoundRefDelete(const Object::Ref<SoundAsset>* c) {
     sound_ref_delete_list_.push_back(c);
   }
   // Now push a call to the logic thread to do the deletes.
-  g_base->logic->event_loop()->PushCall(
-      [] { g_base->audio_server->ClearSoundRefDeleteList(); });
+  g_base->logic->event_loop()->PushCall([this] { ClearSoundRefDeleteList_(); });
 }
 
-void AudioServer::ClearSoundRefDeleteList() {
+void AudioServer::ClearSoundRefDeleteList_() {
   assert(g_base->InLogicThread());
   std::scoped_lock lock(sound_ref_delete_list_mutex_);
   for (const Object::Ref<SoundAsset>* i : sound_ref_delete_list_) {
@@ -1633,42 +1822,6 @@ void AudioServer::ClearSoundRefDeleteList() {
   }
   sound_ref_delete_list_.clear();
 }
-
-// void AudioServer::BeginInterruption() {
-//   assert(!g_base->InAudioThread());
-//   g_base->audio_server->PushSetSuspendedCall(true);
-
-//   // Wait a reasonable amount of time for the thread to act on it.
-//   millisecs_t t = g_core->GetAppTimeMillisecs();
-//   while (true) {
-//     if (g_base->audio_server->suspended()) {
-//       break;
-//     }
-//     if (g_core->GetAppTimeMillisecs() - t > 1000) {
-//       Log(LogLevel::kError, "Timed out waiting for audio suspend.");
-//       break;
-//     }
-//     core::CorePlatform::SleepMillisecs(2);
-//   }
-// }
-
-// void AudioServer::EndInterruption() {
-//   assert(!g_base->InAudioThread());
-//   g_base->audio_server->PushSetSuspendedCall(false);
-
-//   // Wait a reasonable amount of time for the thread to act on it.
-//   millisecs_t t = g_core->GetAppTimeMillisecs();
-//   while (true) {
-//     if (!g_base->audio_server->suspended()) {
-//       break;
-//     }
-//     if (g_core->GetAppTimeMillisecs() - t > 1000) {
-//       Log(LogLevel::kError, "Timed out waiting for audio unsuspend.");
-//       break;
-//     }
-//     core::CorePlatform::SleepMillisecs(2);
-//   }
-// }
 
 void AudioServer::OnThreadSuspend_() { SetSuspended_(true); }
 

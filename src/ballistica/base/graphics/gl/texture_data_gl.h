@@ -27,8 +27,8 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
 
   ~TextureDataGL() override {
     if (!g_base->app_adapter->InGraphicsContext()) {
-      g_core->Log(LogName::kBaGraphics, LogLevel::kError,
-                  "TextureDataGL dying outside of graphics thread.");
+      g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                           "TextureDataGL dying outside of graphics thread.");
     } else {
       // If we're currently bound as anything, clear that out (otherwise a
       // new texture with that same ID won't be bindable).

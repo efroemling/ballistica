@@ -3,6 +3,8 @@
 #include "ballistica/scene_v1/dynamics/rigid_body.h"
 
 #include "ballistica/base/graphics/component/render_component.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/part.h"
@@ -212,7 +214,8 @@ void RigidBody::Check() {
     if (std::isnan(q[3])) err = true;
 
     if (err) {
-      g_core->Log(LogName::kBa, LogLevel::kError, "Got error in rbd values!");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "Got error in rbd values!");
     }
 #if BA_DEBUG_BUILD
     for (int i = 0; i < 3; i++) {

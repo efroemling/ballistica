@@ -6,6 +6,8 @@
 #include <ballistica/base/input/device/input_device.h>
 
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
@@ -14,14 +16,16 @@
 // It predeclares our feature-set's various types and globals and other
 // bits.
 
-// UI-Locks: make sure widget-lists don't change under you. Use a read-lock
-// if you just need to ensure lists remain intact but won't be changing
-// anything. Use a write-lock whenever modifying a list.
+// UI-Locks: make sure widget-hierarchy doesn't change when its not supposed
+// to. Hold a read-lock if you want to make sure things remain constant but
+// won't be changing anything (draw code, etc.). Hold a write-lock whenever
+// modifying hierarchies to make sure nothing is expecting them to be
+// constant.
 #if BA_DEBUG_BUILD
 #define BA_DEBUG_UI_READ_LOCK \
-  ::ballistica::ui_v1::UIV1FeatureSet::UILock ui_lock(false)
+  ::ballistica::ui_v1::UIV1FeatureSet::UIReadLock ui_read_lock
 #define BA_DEBUG_UI_WRITE_LOCK \
-  ::ballistica::ui_v1::UIV1FeatureSet::UILock ui_lock(true)
+  ::ballistica::ui_v1::UIV1FeatureSet::UIWriteLock ui_write_lock
 #else
 #define BA_DEBUG_UI_READ_LOCK
 #define BA_DEBUG_UI_WRITE_LOCK
@@ -71,34 +75,41 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
 
   /// Used to ensure widgets are not created or destroyed at certain times
   /// (while traversing widget hierarchy, etc).
-  class UILock {
+  class UIReadLock {
    public:
-    explicit UILock(bool write);
-    ~UILock();
+    explicit UIReadLock();
+    ~UIReadLock();
 
    private:
-    BA_DISALLOW_CLASS_COPIES(UILock);
+    BA_DISALLOW_CLASS_COPIES(UIReadLock);
+  };
+  class UIWriteLock {
+   public:
+    explicit UIWriteLock();
+    ~UIWriteLock();
+
+   private:
+    BA_DISALLOW_CLASS_COPIES(UIWriteLock);
   };
 
   /// Called when our associated Python module is instantiated.
   static void OnModuleExec(PyObject* module);
 
-  void DoHandleDeviceMenuPress(base::InputDevice* device) override;
   void DoShowURL(const std::string& url) override;
-  auto MainMenuVisible() -> bool override;
-  auto PartyIconVisible() -> bool override;
+  auto IsMainUIVisible() -> bool override;
+  auto IsPartyIconVisible() -> bool override;
   void ActivatePartyIcon() override;
   void Draw(base::FrameDef* frame_def) override;
 
   void SetSquadSizeLabel(int num) override;
-  void SetAccountState(bool signed_in, const std::string& name) override;
+  void SetAccountSignInState(bool signed_in, const std::string& name) override;
 
   UIV1Python* const python;
 
   void OnActivate() override;
   void OnDeactivate() override;
 
-  auto PartyWindowOpen() -> bool override;
+  auto IsPartyWindowOpen() -> bool override;
 
   // Return the root widget containing all windows & dialogs. Whenever this
   // contains children, the UI is considered to be in focus
@@ -113,41 +124,54 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   // Return the absolute root widget; this includes persistent UI bits such
   // as the top/bottom bars
   auto root_widget() -> ui_v1::RootWidget* { return root_widget_.get(); }
-  // void Reset() override;
 
   // Add a widget to a container. If a parent is provided, the widget is
   // added to it; otherwise it is added to the root widget.
   void AddWidget(Widget* w, ContainerWidget* to);
   void DeleteWidget(Widget* widget);
 
+  /// Return the current globally selected widget, or nullptr if none
+  /// exists. Must be called from the logic thread.
+  auto GetSelectedWidget() -> Widget*;
+
   void OnScreenSizeChange() override;
-  void OnScreenChange();
+  void OnUIScaleChange();
 
   void OnLanguageChange() override;
   auto GetRootWidget() -> ui_v1::Widget* override;
   auto SendWidgetMessage(const base::WidgetMessage& m) -> int override;
-  void DoApplyAppConfig() override;
+  void ApplyAppConfig() override;
 
   auto always_use_internal_on_screen_keyboard() const {
     return always_use_internal_on_screen_keyboard_;
   }
-  auto set_party_window_open(bool value) { party_window_open_ = value; }
+
+  void RegisterWidgetID(const std::string& id, Widget* w);
+  void UnregisterWidgetID(const std::string& id, Widget* w);
 
   auto HasQuitConfirmDialog() -> bool override;
   void ConfirmQuit(QuitType quit_type) override;
 
+  auto WidgetByID(const std::string& val) -> Widget*;
+
+  void UIOpenStateChange(const std::string& tag, int increment);
+
+  const auto ui_open_counts() const {
+    assert(g_base->InLogicThread());
+    return ui_open_counts_;
+  }
+
  private:
   UIV1FeatureSet();
+  std::unordered_map<std::string, int> ui_open_counts_;
   Object::Ref<ContainerWidget> screen_root_widget_;
   Object::Ref<ContainerWidget> overlay_root_widget_;
   Object::Ref<RootWidget> root_widget_;
-  int ui_lock_count_{};
+  std::unordered_map<std::string, std::vector<Widget*>> widgets_by_id_;
+  int ui_read_lock_count_{};
+  int ui_write_lock_count_{};
   int language_state_{};
-  // int party_icon_number_{};
   bool always_use_internal_on_screen_keyboard_{};
-  bool party_window_open_{};
-  // bool account_signed_in_{};
-  // std::string account_name_{};
 };
 
 }  // namespace ballistica::ui_v1

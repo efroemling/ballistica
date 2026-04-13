@@ -10,6 +10,9 @@
 
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -20,6 +23,7 @@
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/player.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/utils.h"
@@ -111,7 +115,7 @@ HostActivity::~HostActivity() {
       for (auto& python_call : context_calls_)
         s += "\n  " + std::to_string(count++) + ": "
              + (*python_call).GetObjectDescription();
-      g_core->Log(LogName::kBa, LogLevel::kWarning, s);
+      g_core->logging->Log(LogName::kBa, LogLevel::kWarning, s);
     }
   }
 }
@@ -157,29 +161,31 @@ void HostActivity::RegisterContextCall(base::PythonContextCall* call) {
   // If we're shutting down, just kill the call immediately.
   // (we turn all of our calls to no-ops as we shut down)
   if (shutting_down_) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "Adding call to expired activity; call will not function: "
-                    + call->GetObjectDescription());
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kWarning,
+        "Adding call to expired activity; call will not function: "
+            + call->GetObjectDescription());
     call->MarkDead();
   }
 }
 
 void HostActivity::Start() {
   if (started_) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "HostActivity::Start() called twice.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "HostActivity::Start() called twice.");
     return;
   }
   started_ = true;
   if (shutting_down_) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "HostActivity::Start() called for shutting-down activity.");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "HostActivity::Start() called for shutting-down activity.");
     return;
   }
   auto* host_session = host_session_.get();
   if (!host_session) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "HostActivity::Start() called with dead session.");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "HostActivity::Start() called with dead session.");
     return;
   }
   // Create our step timer - gets called whenever scene should step.
@@ -291,24 +297,25 @@ void HostActivity::HandleOutOfBoundsNodes() {
   // Make sure someone's handling our out-of-bounds messages.
   out_of_bounds_in_a_row_++;
   if (out_of_bounds_in_a_row_ > 100) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "100 consecutive out-of-bounds messages sent."
-                " They are probably not being handled properly");
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "100 consecutive out-of-bounds messages sent."
+                         " They are probably not being handled properly");
     int j = 0;
     for (auto&& i : scene()->out_of_bounds_nodes()) {
       j++;
       Node* n = i.get();
       if (n) {
         std::string dstr;
-        PyObject* delegate = n->GetDelegate();
-        if (delegate) {
-          dstr = PythonRef(delegate, PythonRef::kAcquire).Str();
+        // GetDelegate() returns a new ref or nullptr.
+        auto delegate{PythonRef::StolenSoft(n->GetDelegate())};
+        if (delegate.exists()) {
+          dstr = delegate.Str();
         }
-        g_core->Log(LogName::kBa, LogLevel::kWarning,
-                    "   node #" + std::to_string(j) + ": type='"
-                        + n->type()->name()
-                        + "' addr=" + Utils::PtrToString(i.get()) + " name='"
-                        + n->label() + "' delegate=" + dstr);
+        g_core->logging->Log(
+            LogName::kBa, LogLevel::kWarning,
+            "   node #" + std::to_string(j) + ": type='" + n->type()->name()
+                + "' addr=" + Utils::PtrToString(i.get()) + " name='"
+                + n->label() + "' delegate=" + dstr);
       }
     }
     out_of_bounds_in_a_row_ = 0;
@@ -332,11 +339,24 @@ void HostActivity::RegisterPyActivity(PyObject* pyActivityObj) {
 }
 
 auto HostActivity::GetPyActivity() const -> PyObject* {
-  PyObject* obj = py_activity_weak_ref_.get();
-  if (!obj) {
-    return Py_None;
+  auto* ref_obj{py_activity_weak_ref_.get()};
+  if (!ref_obj) {
+    return nullptr;
   }
-  return PyWeakref_GetObject(obj);
+  PyObject* obj{};
+  int result = PyWeakref_GetRef(ref_obj, &obj);
+  // Return new obj ref (result 1) or nullptr for dead objs (result 0).
+  if (result == 0 || result == 1) {
+    return obj;
+  }
+  // Something went wrong and an exception is set. We don't expect this to
+  // ever happen so currently just providing a simple error msg.
+  assert(result == -1);
+  PyErr_Clear();
+  g_core->logging->Log(
+      LogName::kBa, LogLevel::kError,
+      "HostActivity::GetPyActivity(): error getting weakref obj.");
+  return nullptr;
 }
 
 auto HostActivity::GetHostSession() -> HostSession* {

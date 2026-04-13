@@ -3,10 +3,11 @@
 #ifndef BALLISTICA_SHARED_NETWORKING_SOCKADDR_H_
 #define BALLISTICA_SHARED_NETWORKING_SOCKADDR_H_
 
+#include <cassert>
 #include <cstring>
 #include <string>
 
-#include "ballistica/shared/ballistica.h"
+#include "ballistica/shared/foundation/exception.h"
 #include "ballistica/shared/networking/networking_sys.h"
 
 namespace ballistica {

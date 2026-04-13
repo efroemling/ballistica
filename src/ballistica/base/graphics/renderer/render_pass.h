@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/foundation/exception.h"
 #include "ballistica/shared/math/matrix44f.h"
 
 namespace ballistica::base {

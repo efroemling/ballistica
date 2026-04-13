@@ -9,13 +9,16 @@
 #include <vector>
 
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/support/base_soft.h"
 
 // Sanity test: our XCode, Android, and Windows builds should be
 // using a debug build of the Python library.
-// Todo: could also verify this at runtime by checking for
-//  existence of sys.gettotalrefcount(). (is that still valid in 3.8?)
-#if BA_XCODE_BUILD || BA_OSTYPE_ANDROID || BA_OSTYPE_WINDOWS
+//
+// TODO(ericf): could also verify this at runtime by checking for existence
+//  of sys.gettotalrefcount() (is that still valid in 3.8?).
+
+#if BA_PLATFORM_ANDROID || BA_PLATFORM_WINDOWS
 #if BA_DEBUG_BUILD
 #ifndef Py_DEBUG
 #error Expected Py_DEBUG to be defined for this build.
@@ -25,19 +28,14 @@
 #error Expected Py_DEBUG to NOT be defined for this build.
 #endif  // Py_DEBUG
 #endif  // BA_DEBUG_BUILD
-#endif  // BA_XCODE_BUILD || BA_OSTYPE_ANDROID
+#endif  // BA_XCODE_BUILD || BA_PLATFORM_ANDROID || BA_PLATFORM_WINDOWS
 
 namespace ballistica {
 
-// We implicitly use core functionality here; our behavior is undefined
-// if nobody has imported core yet.
+// We implicitly use core functionality here; our behavior is undefined if
+// nobody has imported core yet.
 using core::g_base_soft;
 using core::g_core;
-
-// Ignore signed bitwise stuff; python macros do it quite a bit.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "hicpp-signed-bitwise"
-#pragma ide diagnostic ignored "RedundantCast"
 
 void Python::SetPythonException(const Exception& exc) {
   PyExcType exctype{exc.python_type()};
@@ -52,6 +50,9 @@ void Python::SetPythonException(const Exception& exc) {
       break;
     case PyExcType::kIndex:
       pytype = PyExc_IndexError;
+      break;
+    case PyExcType::kKey:
+      pytype = PyExc_KeyError;
       break;
     case PyExcType::kValue:
       pytype = PyExc_ValueError;
@@ -79,6 +80,7 @@ void Python::SetPythonException(const Exception& exc) {
     pytype = PyExc_RuntimeError;
   }
   assert(pytype != nullptr && PyType_Check(pytype));
+
   PyErr_SetString(pytype, description);
 }
 
@@ -97,51 +99,74 @@ void Python::PrintStackTrace() {
     available = g_base_soft->PrintPythonStackTrace();
   }
   if (!available) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "Python::PrintStackTrace() called before _babase set up; "
-                "not printing.");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kWarning,
+        "Python::PrintStackTrace() called before _babase set up; "
+        "not printing.");
   }
 }
 
-auto Python::IsPyString(PyObject* o) -> bool {
+auto Python::IsString(PyObject* o) -> bool {
   assert(HaveGIL());
-  assert(o != nullptr);
+
+  // We now gracefully handle null values.
+  if (o == nullptr) {
+    return false;
+  }
 
   return PyUnicode_Check(o);
 }
 
-auto Python::GetPyString(PyObject* o) -> std::string {
+auto Python::IsSequence(PyObject* o) -> bool {
   assert(HaveGIL());
-  assert(o != nullptr);
 
-  PyExcType exctype{PyExcType::kType};
+  // We now gracefully handle null values.
+  if (o == nullptr) {
+    return false;
+  }
+
+  return PySequence_Check(o);
+}
+
+auto Python::GetString(PyObject* o) -> std::string {
+  assert(HaveGIL());
+
+  // We now gracefully handle null values.
+  if (o == nullptr) {
+    throw Exception("NULL PyObject passed.", PyExcType::kValue);
+  }
+
   if (PyUnicode_Check(o)) {
     return PyUnicode_AsUTF8(o);
   }
   throw Exception(
       "Expected a string object; got type " + Python::ObjTypeToString(o) + ".",
-      exctype);
+      PyExcType::kType);
 }
 
 template <typename T>
-auto GetPyIntT(PyObject* o) -> T {
+auto GetIntT(PyObject* o) -> T {
   assert(Python::HaveGIL());
-  assert(o != nullptr);
 
-  if (PyLong_Check(o)) {
-    return static_cast_check_fit<T>(PyLong_AS_LONG(o));
+  // We now gracefully handle null values.
+  if (o == nullptr) {
+    throw Exception("NULL PyObject passed.", PyExcType::kValue);
   }
+
+  // Note: Now skipping the quick-out exact case and always going through
+  // number protocol. This simply gives us an incref/decref if its already
+  // an int so shouldn't add significant overhead there, and it removes
+  // overhead in other cases.
   if (PyNumber_Check(o)) {
-    PyObject* f = PyNumber_Long(o);
-    if (f) {
-      auto val = static_cast_check_fit<T>(PyLong_AS_LONG(f));
+    if (PyObject* f = PyNumber_Long(o)) {
+      auto val{static_cast_check_fit<T>(PyLong_AS_LONG(f))};
       Py_DECREF(f);
       return val;
     }
   }
 
-  // Failed, we have.
-  // Clear any Python error that got us here; we're in C++ Exception land now.
+  // Failed, we have. Clear any Python error that got us here; we're in C++
+  // Exception land now.
   PyErr_Clear();
 
   // Assuming any failure here was type related.
@@ -149,24 +174,23 @@ auto GetPyIntT(PyObject* o) -> T {
                   PyExcType::kType);
 }
 
-auto Python::GetPyInt64(PyObject* o) -> int64_t {
-  return GetPyIntT<int64_t>(o);
-}
+auto Python::GetInt64(PyObject* o) -> int64_t { return GetIntT<int64_t>(o); }
 
-auto Python::GetPyInt(PyObject* o) -> int { return GetPyIntT<int>(o); }
+auto Python::GetInt(PyObject* o) -> int { return GetIntT<int>(o); }
 
-auto Python::GetPyBool(PyObject* o) -> bool {
+auto Python::GetBool(PyObject* o) -> bool {
   assert(HaveGIL());
-  assert(o != nullptr);
+
+  // We now gracefully handle null values.
+  if (o == nullptr) {
+    throw Exception("NULL PyObject passed.", PyExcType::kValue);
+  }
 
   if (o == Py_True) {
     return true;
   }
   if (o == Py_False) {
     return false;
-  }
-  if (PyLong_Check(o)) {
-    return (PyLong_AS_LONG(o) != 0);
   }
   if (PyNumber_Check(o)) {
     if (PyObject* o2 = PyNumber_Long(o)) {
@@ -176,8 +200,8 @@ auto Python::GetPyBool(PyObject* o) -> bool {
     }
   }
 
-  // Failed, we have.
-  // Clear any Python error that got us here; we're in C++ Exception land now.
+  // Failed, we have. Clear any Python error that got us here; we're in C++
+  // Exception land now.
   PyErr_Clear();
 
   // Assuming any failure here was type related.
@@ -185,21 +209,24 @@ auto Python::GetPyBool(PyObject* o) -> bool {
                   PyExcType::kType);
 }
 
-auto Python::CanGetPyDouble(PyObject* o) -> bool {
+auto Python::IsNumber(PyObject* o) -> bool {
   assert(HaveGIL());
-  assert(o != nullptr);
 
-  return static_cast<bool>(PyNumber_Check(o));
+  return PyNumber_Check(o);
 }
 
-auto Python::GetPyDouble(PyObject* o) -> double {
+auto Python::GetDouble(PyObject* o) -> double {
   assert(HaveGIL());
-  BA_PRECONDITION_FATAL(o != nullptr);
 
-  // Try to take the fast path if its a float.
-  if (PyFloat_Check(o)) {
-    return PyFloat_AS_DOUBLE(o);
+  // We now gracefully handle null values.
+  if (o == nullptr) {
+    throw Exception("NULL PyObject passed.", PyExcType::kValue);
   }
+
+  // Note: Now skipping the quick-out exact case and always going through
+  // number protocol. This simply gives us an incref/decref if its already
+  // an int so shouldn't add significant overhead there, and it removes
+  // overhead in other cases.
   if (PyNumber_Check(o)) {
     if (PyObject* f = PyNumber_Float(o)) {
       double val = PyFloat_AS_DOUBLE(f);
@@ -208,36 +235,46 @@ auto Python::GetPyDouble(PyObject* o) -> double {
     }
   }
 
-  // Failed, we have.
-  // Clear any Python error that got us here; we're in C++ Exception land now.
+  // Failed, we have. Clear any Python error that got us here; we're in C++
+  // Exception land now.
   PyErr_Clear();
+
+  // Assuming any failure here was type related.
   throw Exception(
       "Can't get double from value: " + Python::ObjToString(o) + ".",
       PyExcType::kType);
 }
 
-auto Python::GetPyFloats(PyObject* o) -> std::vector<float> {
+auto Python::GetFloats(PyObject* o) -> std::vector<float> {
   assert(HaveGIL());
-  BA_PRECONDITION_FATAL(o != nullptr);
+
+  // We now gracefully handle null values.
+  if (o == nullptr) {
+    throw Exception("NULL PyObject passed.", PyExcType::kValue);
+  }
 
   if (!PySequence_Check(o)) {
     throw Exception("Object is not a sequence.", PyExcType::kType);
   }
-  PythonRef sequence(PySequence_Fast(o, "Not a sequence."), PythonRef::kSteal);
+  auto sequence{PythonRef::Stolen(PySequence_Fast(o, "Not a sequence."))};
   assert(sequence.exists());
   Py_ssize_t size = PySequence_Fast_GET_SIZE(sequence.get());
   PyObject** py_objects = PySequence_Fast_ITEMS(sequence.get());
   std::vector<float> vals(static_cast<size_t>(size));
   assert(vals.size() == size);
   for (Py_ssize_t i = 0; i < size; i++) {
-    vals[i] = Python::GetPyFloat(py_objects[i]);
+    vals[i] = Python::GetFloat(py_objects[i]);
   }
   return vals;
 }
 
-auto Python::GetPyStringSequence(PyObject* o) -> std::list<std::string> {
+auto Python::GetStrings(PyObject* o) -> std::vector<std::string> {
   assert(HaveGIL());
-  BA_PRECONDITION_FATAL(o != nullptr);
+
+  // We now gracefully handle null values.
+  if (o == nullptr) {
+    throw Exception("NULL PyObject passed.", PyExcType::kValue);
+  }
 
   if (!PySequence_Check(o)) {
     throw Exception("Object is not a sequence.", PyExcType::kType);
@@ -246,17 +283,22 @@ auto Python::GetPyStringSequence(PyObject* o) -> std::list<std::string> {
   assert(sequence.exists());
   Py_ssize_t size = PySequence_Fast_GET_SIZE(sequence.get());
   PyObject** py_objects = PySequence_Fast_ITEMS(sequence.get());
-  std::list<std::string> vals;
+  std::vector<std::string> vals;
+  vals.reserve(size);
   for (Py_ssize_t i = 0; i < size; i++) {
-    vals.emplace_back(Python::GetPyString(py_objects[i]));
+    vals.emplace_back(Python::GetString(py_objects[i]));
   }
   return vals;
 }
 
 template <typename T>
-auto GetPyIntsT(PyObject* o) -> std::vector<T> {
+auto GetIntsT(PyObject* o) -> std::vector<T> {
   assert(Python::HaveGIL());
-  BA_PRECONDITION_FATAL(o != nullptr);
+
+  // We now gracefully handle null values.
+  if (o == nullptr) {
+    throw Exception("NULL PyObject passed.", PyExcType::kValue);
+  }
 
   if (!PySequence_Check(o)) {
     throw Exception("Object is not a sequence.", PyExcType::kType);
@@ -268,41 +310,44 @@ auto GetPyIntsT(PyObject* o) -> std::vector<T> {
   std::vector<T> vals(static_cast<size_t>(size));
   assert(vals.size() == size);
   for (Py_ssize_t i = 0; i < size; i++) {
-    vals[i] = GetPyIntT<T>(pyobjs[i]);
+    vals[i] = GetIntT<T>(pyobjs[i]);
   }
   return vals;
 }
 
-auto Python::GetPyInts64(PyObject* o) -> std::vector<int64_t> {
-  return GetPyIntsT<int64_t>(o);
+auto Python::GetInts(PyObject* o) -> std::vector<int> {
+  return GetIntsT<int>(o);
 }
 
-auto Python::GetPyInts(PyObject* o) -> std::vector<int> {
-  return GetPyIntsT<int>(o);
+auto Python::GetInts64(PyObject* o) -> std::vector<int64_t> {
+  return GetIntsT<int64_t>(o);
 }
 
-// Hmm should just template the above func?
 auto Python::GetPyUInts64(PyObject* o) -> std::vector<uint64_t> {
-  return GetPyIntsT<uint64_t>(o);
+  return GetIntsT<uint64_t>(o);
 }
 
-auto Python::GetPyPoint2D(PyObject* o) -> Point2D {
+auto Python::GetPoint2D(PyObject* o) -> Point2D {
   assert(HaveGIL());
-  BA_PRECONDITION_FATAL(o != nullptr);
+
+  // We now gracefully handle null values.
+  if (o == nullptr) {
+    throw Exception("NULL PyObject passed.", PyExcType::kValue);
+  }
 
   Point2D p;
   if (!PyTuple_Check(o) || (PyTuple_GET_SIZE(o) != 2)) {
-    throw Exception("Expected 2 member tuple for point.", PyExcType::kType);
+    throw Exception("Expected a 2 member tuple.", PyExcType::kValue);
   }
-  p.x = Python::GetPyFloat(PyTuple_GET_ITEM(o, 0));
-  p.y = Python::GetPyFloat(PyTuple_GET_ITEM(o, 1));
+  p.x = Python::GetFloat(PyTuple_GET_ITEM(o, 0));
+  p.y = Python::GetFloat(PyTuple_GET_ITEM(o, 1));
   return p;
 }
 
 auto Python::StringList(const std::list<std::string>& values) -> PythonRef {
   assert(HaveGIL());
   auto size{static_cast<Py_ssize_t>(values.size())};
-  PythonRef pylist{PyList_New(size), PythonRef::kSteal};
+  auto pylist{PythonRef::Stolen(PyList_New(size))};
   int i{};
   for (auto&& value : values) {
     PyObject* item{PyUnicode_FromString(value.c_str())};
@@ -318,7 +363,7 @@ auto Python::SingleMemberTuple(const PythonRef& member) -> PythonRef {
   return {Py_BuildValue("(O)", member.NewRef()), PythonRef::kSteal};
 }
 
-auto Python::GetPythonFileLocation(bool pretty) -> std::string {
+auto Python::PythonFileLocation(bool pretty) -> std::string {
   assert(HaveGIL());
   if (PyFrameObject* f = PyEval_GetFrame()) {
     const char* path;
@@ -360,25 +405,26 @@ auto Python::GetPythonFileLocation(bool pretty) -> std::string {
   return "<unknown>";
 }
 
-auto Python::GetContextBaseString() -> std::string {
+auto Python::ContextBaseString() -> std::string {
   // Allow this to survive before core is bootstrapped.
   if (!g_base_soft) {
     return "  context_ref: <base not yet bootstrapped>";
   }
-  return g_base_soft->DoGetContextBaseString();
+  return g_base_soft->DoContextBaseString();
 }
 
 void Python::PrintContextNotYetBootstrapped() {
-  // (no logic-thread-check here; can be called early or from other threads)
+  // No logic-thread-check here; can be called early or from other threads.
   std::string s = std::string("  root call: <not yet bootstrapped>\n");
-  s += Python::GetContextBaseString();
+  s += Python::ContextBaseString();
   PySys_WriteStderr("%s\n", s.c_str());
 }
 
 void Python::PrintContextAuto() {
   // Lets print whatever context info is available.
-  // FIXME: If we have recursive calls this may not print
-  //  the context we'd expect; we'd need a unified stack.
+  //
+  // FIXME: If we have recursive calls this may not print the context we'd
+  // expect; we'd need a unified stack.
   if (!g_base_soft) {
     PrintContextNotYetBootstrapped();
   }
@@ -457,8 +503,8 @@ Python::ScopedInterpreterLockRelease::~ScopedInterpreterLockRelease() {
   delete impl_;
 }
 
-// (some stuff borrowed from python's source code - used in our overriding of
-// objects' dir() results)
+// Some stuff borrowed from python's source code - used in our overriding of
+// objects' dir() results.
 
 /* alphabetical order */
 _Py_IDENTIFIER(__class__);
@@ -467,11 +513,11 @@ _Py_IDENTIFIER(__dict__);
 /* ------------------------- PyObject_Dir() helpers ------------------------- */
 
 /*
- Merge the __dict__ of aclass into dict, and recursively also all
- the __dict__s of aclass's base classes.  The order of merging isn't
- defined, as it's expected that only the final set of dict keys is
- interesting.
- Return 0 on success, -1 on error.
+  Merge the __dict__ of aclass into dict, and recursively also all
+  the __dict__s of aclass's base classes.  The order of merging isn't
+  defined, as it's expected that only the final set of dict keys is
+  interesting.
+  Return 0 on success, -1 on error.
  */
 
 static auto merge_class_dict(PyObject* dict, PyObject* aclass) -> int {
@@ -525,7 +571,7 @@ static auto merge_class_dict(PyObject* dict, PyObject* aclass) -> int {
 }
 
 /* __dir__ for generic objects: returns __dict__, __class__,
- and recursively up the __class__.__bases__ chain.
+   and recursively up the __class__.__bases__ chain.
  */
 auto Python::generic_dir(PyObject* self) -> PyObject* {
   PyObject* result = nullptr;
@@ -553,7 +599,7 @@ auto Python::generic_dir(PyObject* self) -> PyObject* {
   itsclass = _PyObject_GetAttrId(self, &PyId___class__);
   if (itsclass == nullptr)
     /* XXX(tomer): Perhaps fall back to obj->ob_type if no
-     __class__ exists? */
+       __class__ exists? */
     PyErr_Clear();
   else if (merge_class_dict(dict, itsclass) != 0)
     goto error;
@@ -566,7 +612,5 @@ error:
   return result;
 }
 ////////////////   end __dir__ helpers
-
-#pragma clang diagnostic pop
 
 }  // namespace ballistica

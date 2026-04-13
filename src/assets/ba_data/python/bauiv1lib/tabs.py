@@ -5,12 +5,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, TypeVar, Generic
+from typing import TYPE_CHECKING
 
 import bauiv1 as bui
 
 if TYPE_CHECKING:
     from typing import Any, Callable
+    from enum import Enum
 
 
 @dataclass
@@ -22,10 +23,7 @@ class Tab:
     size: tuple[float, float]
 
 
-T = TypeVar('T')
-
-
-class TabRow(Generic[T]):
+class TabRow[T: Enum]:
     """Encapsulates a row of tab-styled buttons.
 
     Tabs are indexed by id which is an arbitrary user-provided type.
@@ -39,6 +37,7 @@ class TabRow(Generic[T]):
         size: tuple[float, float],
         *,
         on_select_call: Callable[[T], None] | None = None,
+        idprefix: str | None = None,
     ) -> None:
         if not tabdefs:
             raise ValueError('At least one tab def is required')
@@ -52,13 +51,18 @@ class TabRow(Generic[T]):
             size = (tab_button_width - tab_spacing, 50.0)
             btn = bui.buttonwidget(
                 parent=parent,
+                id=(
+                    None
+                    if idprefix is None
+                    else f'{idprefix}|tab_button.{tab_id.value}'
+                ),
                 position=pos,
                 autoselect=True,
                 button_type='tab',
                 size=size,
                 label=tab_label,
                 enable_sound=False,
-                on_activate_call=bui.Call(
+                on_activate_call=bui.CallStrict(
                     self._tick_and_call, on_select_call, tab_id
                 ),
             )
@@ -72,12 +76,12 @@ class TabRow(Generic[T]):
                 bui.buttonwidget(
                     edit=tab.button,
                     color=(0.5, 0.4, 0.93),
-                    textcolor=(0.85, 0.75, 0.95),
+                    textcolor=(0.82, 0.72, 0.92),
                 )  # lit
             else:
                 bui.buttonwidget(
                     edit=tab.button,
-                    color=(0.52, 0.48, 0.63),
+                    color=(0.50, 0.44, 0.63),
                     textcolor=(0.65, 0.6, 0.7),
                 )  # unlit
 

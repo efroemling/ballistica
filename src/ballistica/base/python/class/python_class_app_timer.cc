@@ -8,7 +8,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/python/python_sys.h"
+#include "ballistica/shared/python/python_macros.h"
 
 namespace ballistica::base {
 
@@ -24,41 +24,42 @@ void PythonClassAppTimer::SetupType(PyTypeObject* cls) {
       "\n"
       "Timers are used to run code at later points in time.\n"
       "\n"
-      "Category: **General Utility Classes**\n"
-      "\n"
       "This class encapsulates a timer based on app-time.\n"
       "The underlying timer will be destroyed when this object is no longer\n"
       "referenced. If you do not want to worry about keeping a reference to\n"
-      "your timer around, use the babase.apptimer() function instead to get a\n"
-      "one-off timer.\n"
+      "your timer around, use the :meth:`~babase.apptimer()` function instead\n"
+      "to get a one-off timer.\n"
       "\n"
-      "##### Arguments\n"
-      "###### time\n"
-      "> Length of time in seconds that the timer will wait before firing.\n"
+      "Args:\n"
       "\n"
-      "###### call\n"
-      "> A callable Python object. Remember that the timer will retain a\n"
-      "strong reference to the callable for as long as it exists, so you\n"
-      "may want to look into concepts such as babase.WeakCall if that is not\n"
-      "desired.\n"
+      "  time:\n"
+      "    Length of time in seconds that the timer will wait before firing.\n"
       "\n"
-      "###### repeat\n"
-      "> If True, the timer will fire repeatedly, with each successive\n"
-      "firing having the same delay as the first.\n"
+      "  call:\n"
+      "    A callable Python object. Remember that the timer will retain a\n"
+      "    strong reference to the callable for as long as it exists, so you\n"
+      "    may want to look into concepts such as :class:`~babase.WeakCall`\n"
+      "    if that is not desired.\n"
       "\n"
-      "##### Example\n"
+      "  repeat:\n"
+      "    If True, the timer will fire repeatedly, with each successive\n"
+      "    firing having the same delay as the first.\n"
       "\n"
-      "Use a Timer object to print repeatedly for a few seconds:\n"
-      "... def say_it():\n"
-      "...     babase.screenmessage('BADGER!')\n"
-      "... def stop_saying_it():\n"
-      "...     global g_timer\n"
-      "...     g_timer = None\n"
-      "...     babase.screenmessage('MUSHROOM MUSHROOM!')\n"
-      "... # Create our timer; it will run as long as we have the self.t ref.\n"
-      "... g_timer = babase.AppTimer(0.3, say_it, repeat=True)\n"
-      "... # Now fire off a one-shot timer to kill it.\n"
-      "... babase.apptimer(3.89, stop_saying_it)\n";
+      "Example: Use a timer object to print repeatedly for a few seconds::\n"
+      "\n"
+      "    def say_it():\n"
+      "        babase.screenmessage('BADGER!')\n"
+      "\n"
+      "    def stop_saying_it():\n"
+      "        global g_timer\n"
+      "        g_timer = None\n"
+      "        babase.screenmessage('MUSHROOM MUSHROOM!')\n"
+      "\n"
+      "    # Create our timer; it will run as long as we keep its ref alive.\n"
+      "    g_timer = babase.AppTimer(0.3, say_it, repeat=True)\n"
+      "\n"
+      "    # Now fire off a one-shot timer to kill the ref.\n"
+      "    babase.apptimer(3.89, stop_saying_it)\n";
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
 }
@@ -76,7 +77,7 @@ auto PythonClassAppTimer::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
 
   double length;

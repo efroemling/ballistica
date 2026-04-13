@@ -4,7 +4,6 @@
 # This file was automatically generated from "doom_shroom.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (0.4687647786, 2.320345088, -3.219423694)

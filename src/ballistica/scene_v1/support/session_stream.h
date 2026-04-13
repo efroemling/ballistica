@@ -160,6 +160,7 @@ class SessionStream : public Object, public ClientControllerInterface {
   std::vector<size_t> free_indices_datas_;
   std::vector<SceneCollisionMesh*> collision_meshes_;
   std::vector<size_t> free_indices_collision_meshes_;
+  ReplayWriter* replay_writer_{};
 };
 
 }  // namespace ballistica::scene_v1

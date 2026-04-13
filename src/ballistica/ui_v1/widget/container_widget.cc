@@ -11,6 +11,9 @@
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/ui/ui.h"
+#include "ballistica/base/ui/widget_message.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
@@ -40,11 +43,7 @@ ContainerWidget::ContainerWidget(float width_in, float height_in)
       dynamics_update_time_millisecs_(
           static_cast<millisecs_t>(g_base->logic->display_time() * 1000.0)) {}
 
-ContainerWidget::~ContainerWidget() {
-  BA_DEBUG_UI_READ_LOCK;
-  // Wipe out our children.
-  widgets_.clear();
-}
+ContainerWidget::~ContainerWidget() { Clear(); }
 
 void ContainerWidget::SetOnActivateCall(PyObject* c) {
   on_activate_call_ = Object::New<base::PythonContextCall>(c);
@@ -57,10 +56,10 @@ void ContainerWidget::SetOnOutsideClickCall(PyObject* c) {
 void ContainerWidget::DrawChildren(base::RenderPass* pass,
                                    bool draw_transparent, float x_offset,
                                    float y_offset, float scale) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
-  // We're expected to fill z space 0..1 when we draw... so we need to divide
-  // that space between our child widgets plus our bg layer.
+  // We're expected to fill z space 0..1 when we draw... so we need to
+  // divide that space between our child widgets plus our bg layer.
   float layer_thickness{};
   float layer_spacing{};
   float base_offset{};
@@ -74,8 +73,8 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
   float base_offset2{};
   float base_offset3{};
 
-  // In single-depth mode we draw all widgets at the same depth so they each get
-  // our full depth resolution. however they may overlap incorrectly.
+  // In single-depth mode we draw all widgets at the same depth so they each
+  // get our full depth resolution. however they may overlap incorrectly.
   if (background_) {
     assert(!single_depth_root_);
     if (single_depth_) {
@@ -90,8 +89,8 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
     }
   } else {
     if (single_depth_) {
-      // Single-depth-root is a special mode for our root container
-      // where the first child (the screen stack) gets most of the depth range,
+      // Single-depth-root is a special mode for our root container where
+      // the first child (the screen stack) gets most of the depth range,
       // the last child (the overlay stack) gets a bit of the rest, and the
       // remainder is shared between root widget children (toolbars, etc).
       if (single_depth_root_) {
@@ -302,7 +301,7 @@ void ContainerWidget::DrawChildren(base::RenderPass* pass,
 }
 
 auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   bool claimed = false;
   if (ignore_input_) {
@@ -368,12 +367,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       break;
     }
 
-    case base::WidgetMessage::Type::kTabNext:
+    // case base::WidgetMessage::Type::kTabNext:
     case base::WidgetMessage::Type::kMoveRight:
     case base::WidgetMessage::Type::kMoveDown: {
-      if (m.type == base::WidgetMessage::Type::kTabNext && !claims_tab_) {
-        break;
-      }
       if (m.type == base::WidgetMessage::Type::kMoveRight
           && !claims_left_right_) {
         break;
@@ -404,12 +400,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       break;
     }
 
-    case base::WidgetMessage::Type::kTabPrev:
+    // case base::WidgetMessage::Type::kTabPrev:
     case base::WidgetMessage::Type::kMoveLeft:
     case base::WidgetMessage::Type::kMoveUp: {
-      if (m.type == base::WidgetMessage::Type::kTabPrev && !claims_tab_) {
-        break;
-      }
       if (m.type == base::WidgetMessage::Type::kMoveLeft
           && !claims_left_right_) {
         break;
@@ -463,6 +456,13 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     case base::WidgetMessage::Type::kMouseMove: {
       CheckLayout();
 
+      // Make sure our child widgets know if someone above already claimed
+      // this.
+      bool was_claimed = (m.fval3 > 0.0f);
+      if (was_claimed) {
+        claimed = true;
+      }
+
       // Ignore mouse stuff while transitioning out.
       if (transitioning_ && transitioning_out_) {
         break;
@@ -484,9 +484,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       }
 
       if (!root_selectable_) {
-        // Go through all widgets backwards until one claims the cursor position
-        // (we still send it to other widgets even then though in case they
-        // case).
+        // Go through all widgets backwards until one claims the cursor
+        // position (we still send it to other widgets even then though in
+        // case they case).
         for (auto i = widgets_.rbegin(); i != widgets_.rend(); i++) {
           float cx = x;
           float cy = y;
@@ -515,6 +515,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       } else {
         mouse_over_ = false;
       }
+      // printf("BREAKING %s %d\n", GetWidgetTypeName().c_str(),
+      //        static_cast<int>(claimed));
       break;
     }
 
@@ -539,7 +541,7 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float b = 0;
       float t = height_;
 
-      // Go through all widgets backwards until one claims the wheel.
+      // Go through all widgets backwards until one claims the event.
       for (auto i = widgets_.rbegin(); i != widgets_.rend(); i++) {
         float cx = x;
         float cy = y;
@@ -549,7 +551,9 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           claimed = true;
           break;
         }
-        if (modal_children_) break;
+        if (modal_children_) {
+          break;
+        }
       }
 
       // If its not yet claimed, see if its within our contained region, in
@@ -652,7 +656,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       }
       break;
     }
-    case base::WidgetMessage::Type::kMouseUp: {
+    case base::WidgetMessage::Type::kMouseUp:
+    case base::WidgetMessage::Type::kMouseCancel: {
       CheckLayout();
       dragging_ = false;
       float x = m.fval1;
@@ -683,14 +688,16 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float bottom_overlap = 2;
       float top_overlap = 2;
 
-      // When pressed, we *always* claim mouse-ups.
+      // When pressed, we *always* claim mouse-ups/cancels.
       if (pressed_) {
         pressed_ = false;
 
         // If we're pressed, mouse-ups within our region trigger activation.
         if (pressed_activate_ && !claimed && x >= l && x < r
             && y >= b - bottom_overlap && y < t + top_overlap) {
-          Activate();
+          if (m.type == base::WidgetMessage::Type::kMouseUp) {
+            Activate();
+          }
           pressed_activate_ = false;
         }
         return true;
@@ -698,9 +705,12 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       // If its not yet claimed, see if its within our contained region, in
       // which case we claim it but do nothing.
       if (!claimed) {
-        if (background_)
-          if (x >= l && x < r && y >= b - bottom_overlap && y < t + top_overlap)
+        if (background_) {
+          if (x >= l && x < r && y >= b - bottom_overlap
+              && y < t + top_overlap) {
             claimed = true;
+          }
+        }
       }
       break;
     }
@@ -793,10 +803,10 @@ void ContainerWidget::SetRootSelectable(bool enable) {
 }
 
 void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   CheckLayout();
-  millisecs_t net_time = pass->frame_def()->display_time_millisecs();
+  millisecs_t display_time_ms = pass->frame_def()->display_time_millisecs();
   float offset_h = 0.0f;
 
   // If we're transitioning, update our offsets in the first (opaque) pass.
@@ -805,14 +815,16 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
     if (!draw_transparent) {
       if (transition_type_ == TransitionType::kInScale) {
-        if (net_time - dynamics_update_time_millisecs_ > 1000)
-          dynamics_update_time_millisecs_ = net_time - 1000;
-        while (net_time - dynamics_update_time_millisecs_ > 5) {
+        if (display_time_ms - dynamics_update_time_millisecs_ > 1000) {
+          dynamics_update_time_millisecs_ = display_time_ms - 1000;
+        }
+        while (display_time_ms - dynamics_update_time_millisecs_ > 5) {
           dynamics_update_time_millisecs_ += 5;
           d_transition_scale_ +=
-              std::min(0.2f, (1.0f - transition_scale_)) * 0.04f;
+              std::min(0.2f, (1.0f - transition_scale_)) * 0.03f;
           d_transition_scale_ *= 0.87f;
           transition_scale_ += d_transition_scale_;
+
           if (std::abs(transition_scale_ - 1.0f) < 0.001
               && std::abs(d_transition_scale_) < 0.0001f) {
             transition_scale_ = 1.0f;
@@ -820,31 +832,39 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           }
         }
       } else if (transition_type_ == TransitionType::kOutScale) {
-        if (net_time - dynamics_update_time_millisecs_ > 1000)
-          dynamics_update_time_millisecs_ = net_time - 1000;
-        while (net_time - dynamics_update_time_millisecs_ > 5) {
+        if (display_time_ms - dynamics_update_time_millisecs_ > 1000)
+          dynamics_update_time_millisecs_ = display_time_ms - 1000;
+
+        // Special case: for permanent darkens we never fade back in or
+        // die.
+        auto permanent = darken_behind_ && darken_behind_is_permanent_;
+
+        while (display_time_ms - dynamics_update_time_millisecs_ > 5) {
           dynamics_update_time_millisecs_ += 5;
-          transition_scale_ -= 0.04f;
+          // transition_scale_ -= 0.03f;
+          transition_scale_ -= 0.025f;
           if (transition_scale_ <= 0.0f) {
             transition_scale_ = 0.0f;
 
-            // Probably not safe to delete ourself here since we're in
-            // the draw loop, but we can push a call to do it.
-            Object::WeakRef<Widget> weakref(this);
-            g_base->logic->event_loop()->PushCall([weakref] {
-              Widget* w = weakref.get();
-              if (w) {
-                g_ui_v1->DeleteWidget(w);
-              }
-            });
+            if (!permanent) {
+              // Probably not safe to delete ourself here since we're in
+              // the draw loop, but we can push a call to do it.
+              Object::WeakRef<Widget> weakref(this);
+              g_base->logic->event_loop()->PushCall([weakref] {
+                Widget* w = weakref.get();
+                if (w) {
+                  g_ui_v1->DeleteWidget(w);
+                }
+              });
+            }
             return;
           }
         }
       } else {
         // Step our dynamics up to the present.
-        if (net_time - dynamics_update_time_millisecs_ > 1000)
-          dynamics_update_time_millisecs_ = net_time - 1000;
-        while (net_time - dynamics_update_time_millisecs_ > 5) {
+        if (display_time_ms - dynamics_update_time_millisecs_ > 1000)
+          dynamics_update_time_millisecs_ = display_time_ms - 1000;
+        while (display_time_ms - dynamics_update_time_millisecs_ > 5) {
           dynamics_update_time_millisecs_ += 5;
 
           if (transitioning_) {
@@ -880,17 +900,21 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                         && (std::abs(transition_offset_x_smoothed_) < 0.05f)
                         && (std::abs(transition_offset_y_smoothed_) < 0.05f));
               }
-              if (done) {
+
+              // Special case: for permanent darkens we never fade back in
+              // or die.
+              auto permanent = darken_behind_ && darken_behind_is_permanent_;
+
+              if (done && !permanent) {
                 transitioning_ = false;
                 transition_offset_x_smoothed_ = 0.0f;
                 transition_offset_y_smoothed_ = 0.0f;
                 if (transitioning_out_) {
-                  // Probably not safe to delete ourself here since we're in the
-                  // draw loop, but we can set up an event to do it.
+                  // Can't delete ourself here during drawing; push a call
+                  // to do it.
                   Object::WeakRef<Widget> weakref(this);
                   g_base->logic->event_loop()->PushCall([weakref] {
-                    Widget* w = weakref.get();
-                    if (w) {
+                    if (Widget* w = weakref.get()) {
                       g_ui_v1->DeleteWidget(w);
                     }
                   });
@@ -917,15 +941,14 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         }
       }
 
-      // If we're scaling in or out, update our transition offset
-      // (so we can zoom from a point somewhere else on screen).
+      // If we're scaling in or out, update our transition offset (so we can
+      // zoom from a point somewhere else on screen).
       if (transition_type_ == TransitionType::kInScale
           || transition_type_ == TransitionType::kOutScale) {
-        // Add a fudge factor since our scale point isn't exactly in our center.
-        // :-(
         float xdiff = scale_origin_stack_offset_x_ - stack_offset_x()
-                      + GetWidth() * -0.05f;
-        float ydiff = scale_origin_stack_offset_y_ - stack_offset_y();
+                      + GetWidth() * bg_center_fudge_x_;
+        float ydiff = scale_origin_stack_offset_y_ - stack_offset_y()
+                      + GetHeight() * bg_center_fudge_y_;
         transition_scale_offset_x_ =
             ((1.0f - transition_scale_) * xdiff) / scale();
         transition_scale_offset_y_ =
@@ -947,30 +970,39 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   float w = width_;
   float h = height_;
 
-  // Update bg vals if need be
-  // (we may need these even if bg is turned off so always calc them).
+  // Update bg vals if need be (we may need these even if bg is turned off
+  // so always calc them).
   if (bg_dirty_) {
     base::SysTextureID tex_id;
     float l_border, r_border, b_border, t_border;
+    [[maybe_unused]] float center_x_amt;
+    [[maybe_unused]] float center_y_amt;
     float width = r - l;
     float height = t - b;
     if (height > width * 0.6f) {
       tex_id = base::SysTextureID::kWindowHSmallVMed;
-      bg_mesh_transparent_i_d_ = base::SysMeshID::kWindowHSmallVMedTransparent;
-      bg_mesh_opaque_i_d_ = base::SysMeshID::kWindowHSmallVMedOpaque;
+      bg_mesh_transparent_id_ = base::SysMeshID::kWindowHSmallVMedTransparent;
+      bg_mesh_opaque_id_ = base::SysMeshID::kWindowHSmallVMedOpaque;
       l_border = width * 0.07f;
       r_border = width * 0.19f;
       b_border = height * 0.1f;
       t_border = height * 0.07f;
+      // These need to be fudged until scaling in/out hits exact target
+      // point. Should look into why this math is off.
+      bg_center_fudge_x_ = -0.05f;
+      bg_center_fudge_y_ = 0.0f;
     } else {
       tex_id = base::SysTextureID::kWindowHSmallVSmall;
-      bg_mesh_transparent_i_d_ =
-          base::SysMeshID::kWindowHSmallVSmallTransparent;
-      bg_mesh_opaque_i_d_ = base::SysMeshID::kWindowHSmallVSmallOpaque;
+      bg_mesh_transparent_id_ = base::SysMeshID::kWindowHSmallVSmallTransparent;
+      bg_mesh_opaque_id_ = base::SysMeshID::kWindowHSmallVSmallOpaque;
       l_border = width * 0.12f;
       r_border = width * 0.19f;
       b_border = height * 0.45f;
       t_border = height * 0.23f;
+      // These need to be fudged until scaling in/out hits exact target
+      // point. Should look into why this math is off.
+      bg_center_fudge_x_ = -0.03f;
+      bg_center_fudge_y_ = 0.1f;
     }
     bg_width_ = r - l + l_border + r_border;
     bg_height_ = t - b + b_border + t_border;
@@ -989,8 +1021,69 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   }
 
   // Draw our window backing if we have one.
-  if ((w > 0) && (h > 0)) {
+  if (w > 0.0f && h > 0.0f) {
     if (background_) {
+      float zoffs{};
+      if (darken_behind_) {
+        // Draw the regular bg a bit in front of us.
+        zoffs = 0.1f;
+        if (draw_transparent) {
+          // Currently we only work with single-depth since we reserve a
+          // slice of 0.2 there.
+          if (!single_depth_) {
+            BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
+                        "darken_behind only works with single-depth enabled.");
+          }
+          base::SimpleComponent c(pass);
+          c.SetTransparent(true);
+
+          // Fade our darkening in/out with transitions.
+          float amt;
+          if (transitioning_) {
+            if (transitioning_out_) {
+              if (darken_behind_is_permanent_) {
+                amt = 1.0f;
+              } else {
+                // 1.0 is a 1 second fade. Note that we'll snap to 1 or 0 once
+                // fades end so we need to make sure we're fast enough to show
+                // our whole range.
+                auto fade_speed{10.0f};
+                amt = std::max(
+                    0.0f, std::min(1.0f, 1.0f
+                                             - static_cast<float>(
+                                                   display_time_ms
+                                                   - transition_start_time_)
+                                                   / 1000.0f * fade_speed));
+              }
+            } else {
+              // 1.0 is a 1 second fade. Note that we'll snap to 1 or 0 once
+              // fades end so we need to make sure we're fast enough to show
+              // our whole range.
+              auto fade_speed{5.0f};
+              amt = std::max(
+                  0.0f,
+                  std::min(1.0f, static_cast<float>(display_time_ms
+                                                    - transition_start_time_)
+                                     / 1000.0f * fade_speed));
+            }
+          } else {
+            amt = 1.0f;
+          }
+          c.SetColor(0.0f, 0.0f, 0.0f, 0.6 * amt);
+          c.SetTexture(
+              g_base->assets->SysTexture(base::SysTextureID::kCircleSoft));
+          auto s{8.0f * std::max(bg_width_, bg_height_)};
+          {
+            auto xf = c.ScopedTransform();
+            c.Translate(bg_center_x_, bg_center_y_);
+            c.Scale(s, s);
+            c.DrawMeshAsset(
+                g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          }
+          c.Submit();
+        }
+      }
+
       base::SimpleComponent c(pass);
       c.SetTransparent(draw_transparent);
       float s = 1.0f;
@@ -1002,10 +1095,10 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetTexture(tex_.get());
       {
         auto xf = c.ScopedTransform();
-        c.Translate(bg_center_x_, bg_center_y_);
+        c.Translate(bg_center_x_, bg_center_y_, zoffs);
         c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
         c.DrawMeshAsset(g_base->assets->SysMesh(
-            draw_transparent ? bg_mesh_transparent_i_d_ : bg_mesh_opaque_i_d_));
+            draw_transparent ? bg_mesh_transparent_id_ : bg_mesh_opaque_id_));
       }
       c.Submit();
     }
@@ -1018,7 +1111,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   // Draw overlay glow.
   if (root_selectable_ && selected()) {
-    float m = GetMult(net_time, true);
+    float m = GetMult(display_time_ms, true);
     if (draw_transparent) {
       if (glow_dirty_) {
         float l_border, r_border, b_border, t_border;
@@ -1086,22 +1179,34 @@ void ContainerWidget::Activate() {
 }
 
 void ContainerWidget::AddWidget(Widget* w) {
-  BA_PRECONDITION(g_base->InLogicThread());
+  assert(g_base->InLogicThread());
   Object::WeakRef<ContainerWidget> weakthis(this);
   {
-    BA_DEBUG_UI_WRITE_LOCK;
+    BA_DEBUG_UI_WRITE_LOCK;  // We are changing widget hierarchy.
+
+    // We expect to be adding a not-in-hierarchy widget to an in-hierarchy
+    // one.
+    assert(w->parent_widget() == nullptr);
+    assert(in_hierarchy());
+    assert(!w->in_hierarchy());
+
+    if (w->id().has_value()) {
+      g_ui_v1->RegisterWidgetID(*w->id(), w);
+    }
     w->set_parent_widget(this);
+    w->set_in_hierarchy(true);
     widgets_.insert(widgets_.end(), Object::Ref<Widget>(w));
   }
 
-  // If we're not selectable ourself and our child is, select it.
+  // If we're not selectable ourself and our new child is, select it.
   if (!root_selectable_
       && ((selected_widget_ == nullptr) || is_window_stack_)) {
     if (w->IsSelectable()) {
       // A change on the main or overlay window stack changes the global
       // selection (unless its on the main window stack and there's already
-      // something on the overlay stack) in all other cases we just shift our
-      // direct selected child (which may not affect the global selection).
+      // something on the overlay stack). In all other cases we just shift
+      // our direct selected child (which may not affect the global
+      // selection).
       if (is_window_stack_
           && (is_overlay_window_stack_
               || !g_ui_v1->root_widget()
@@ -1109,8 +1214,8 @@ void ContainerWidget::AddWidget(Widget* w) {
                       ->HasChildren())) {
         w->GlobalSelect();
 
-        // Special case for the main window stack; whenever a window is added,
-        // update the toolbar state for the topmost living container.
+        // Special case for the main window stack; whenever a window is
+        // added, update the toolbar state for the topmost living container.
         if (is_main_window_stack_) {
           g_ui_v1->root_widget()->UpdateForFocusedWindow();
         }
@@ -1134,7 +1239,8 @@ auto ContainerWidget::IsAcceptingInput() const -> bool {
 
 // Delete all widgets.
 void ContainerWidget::Clear() {
-  BA_DEBUG_UI_WRITE_LOCK;
+  assert(g_base->InLogicThread());
+  BA_DEBUG_UI_WRITE_LOCK;  // We are changing widget hierarchy.
   widgets_.clear();
   selected_widget_ = nullptr;
   prev_selected_widget_ = nullptr;
@@ -1187,7 +1293,7 @@ static auto _IsTransitionOut(ContainerWidget::TransitionType type) {
 }
 
 void ContainerWidget::SetTransition(TransitionType t) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
   assert(g_base->InLogicThread());
 
   bg_dirty_ = glow_dirty_ = true;
@@ -1287,7 +1393,8 @@ void ContainerWidget::SetTransition(TransitionType t) {
 
 void ContainerWidget::ReselectLastSelectedWidget() {
   if (prev_selected_widget_ != nullptr
-      && prev_selected_widget_ != selected_widget_) {
+      && prev_selected_widget_ != selected_widget_
+      && prev_selected_widget_->IsSelectable()) {
     SelectWidget(prev_selected_widget_);
   }
 }
@@ -1296,7 +1403,7 @@ void ContainerWidget::ReselectLastSelectedWidget() {
 void ContainerWidget::DeleteWidget(Widget* w) {
   bool found = false;
   {
-    BA_DEBUG_UI_WRITE_LOCK;
+    BA_DEBUG_UI_WRITE_LOCK;  // We are changing widget hierarchy.
     // Hmmm couldn't we do this without having to iterate here?
     // (at least in release build).
     for (auto i = widgets_.begin(); i != widgets_.end(); i++) {
@@ -1330,27 +1437,33 @@ void ContainerWidget::DeleteWidget(Widget* w) {
     }
   }
 
-  // in some cases we want to auto select a new child widget
+  // In some cases we want to auto select a new child widget.
   if (selected_widget_ == nullptr || is_window_stack_) {
-    BA_DEBUG_UI_READ_LOCK;
-    // no UI lock needed here.. we don't change anything until SelectWidget,
-    // at which point we exit the loop..
+    BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
     for (auto i = widgets_.rbegin(); i != widgets_.rend(); i++) {
       if ((**i).IsSelectable()) {
+        SelectWidget(&(**i));
+
+        // NOTE: Disabling the code below for now, as it was causing
+        // problems with automatic selection restore. Not sure if it is
+        // still relevant; will see if anything breaks.
+        //
         // A change on the main or overlay window stack changes the global
-        // selection (unless its on the main window stack and there's already
-        // something on the overlay stack) in all other cases we just shift
-        // our direct selected child (which may not affect the global
-        // selection).
-        if (is_window_stack_
-            && (is_overlay_window_stack_
-                || !g_ui_v1->root_widget()
-                        ->overlay_window_stack()
-                        ->HasChildren())) {
-          (**i).GlobalSelect();
-        } else {
-          SelectWidget(&(**i));
-        }
+        // selection (unless its on the main window stack and there's
+        // already something on the overlay stack). In all other cases we
+        // just shift our direct selected child (which may not affect the
+        // global selection).
+        // if (is_window_stack_
+        //     && (is_overlay_window_stack_
+        //         || !g_ui_v1->root_widget()
+        //                 ->overlay_window_stack()
+        //                 ->HasChildren())) {
+        //   (**i).GlobalSelect();
+        // } else {
+        //   // In other cases we just select a new child,
+        //   // which may or may not affect the global selection.
+        //   SelectWidget(&(**i));
+        // }
         break;
       }
     }
@@ -1383,7 +1496,7 @@ void ContainerWidget::ShowWidget(Widget* w) {
   // Hacky exception; scroll-widgets don't respond directly to this
   // (it always arrives via a child's child.. need to clean this up)
   // it causes double-shows to happen otherwise and odd jumpy behavior.
-  if (GetWidgetTypeName() == "scroll") {
+  if (GetWidgetTypeName() == "scroll" || GetWidgetTypeName() == "hscroll") {
     return;
   }
 
@@ -1395,14 +1508,14 @@ void ContainerWidget::ShowWidget(Widget* w) {
   float buffer_left = w->show_buffer_left();
   float tx = (w->tx() - buffer_left) * s;
   float ty = (w->ty() - buffer_bottom) * s;
-  float width = (w->GetWidth() + buffer_left + buffer_right) * s;
-  float height = (w->GetHeight() + buffer_bottom + buffer_top) * s;
+  float width = (w->GetWidth() * w->scale() + buffer_left + buffer_right) * s;
+  float height = (w->GetHeight() * w->scale() + buffer_bottom + buffer_top) * s;
   HandleMessage(base::WidgetMessage(base::WidgetMessage::Type::kShow, nullptr,
                                     tx, ty, width, height));
 }
 
 void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (w == nullptr) {
     if (selected_widget_) {
@@ -1412,9 +1525,10 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
     }
   } else {
     if (root_selectable_) {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "SelectWidget() called on a ContainerWidget which is itself "
-                  "selectable. Ignoring.");
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kError,
+          "SelectWidget() called on a ContainerWidget which is itself "
+          "selectable. Ignoring.");
       return;
     }
     for (auto& widget : widgets_) {
@@ -1431,17 +1545,19 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
           selected_widget_ = &(*widget);
 
           // Store the old one as prev-selected if its not the one we're
-          // selecting now. (otherwise re-selecting repeatedly kills our prev
-          // mechanism).
+          // selecting now. (otherwise re-selecting repeatedly kills our
+          // prev mechanism).
           if (prev_selected_widget != selected_widget_) {
             prev_selected_widget_ = prev_selected_widget;
           }
         } else {
           static bool printed = false;
           if (!printed) {
-            g_core->Log(LogName::kBa, LogLevel::kWarning,
-                        "SelectWidget called on unselectable widget: "
-                            + w->GetWidgetTypeName());
+            g_core->logging->Log(
+                LogName::kBa, LogLevel::kWarning,
+                "SelectWidget called on unselectable widget: (type='"
+                    + w->GetWidgetTypeName() + "', id '"
+                    + (w->id().has_value() ? *w->id() : "None") + "')");
             Python::PrintStackTrace();
             printed = true;
           }
@@ -1453,7 +1569,7 @@ void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {
 }
 
 void ContainerWidget::SetSelected(bool s, SelectionCause cause) {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   Widget::SetSelected(s, cause);
 
@@ -1479,10 +1595,6 @@ void ContainerWidget::SetSelected(bool s, SelectionCause cause) {
         }
       }
     }
-  } else {
-    // if we're being deselected and we have a selected child, tell them
-    // they're deselected if (selected_widget_) {
-    // }
   }
 }
 
@@ -1607,7 +1719,7 @@ auto ContainerWidget::GetClosestDownWidget(float our_x, float our_y,
 }
 
 void ContainerWidget::SelectDownWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
@@ -1623,7 +1735,9 @@ void ContainerWidget::SelectDownWidget() {
     if (!w && selected_widget_->auto_select()) {
       float our_x, our_y;
       selected_widget_->GetCenter(&our_x, &our_y);
-      w = GetClosestDownWidget(our_x, our_y, selected_widget_);
+      if (!selected_widget_->auto_select_toolbars_only()) {
+        w = GetClosestDownWidget(our_x, our_y, selected_widget_);
+      }
       if (!w) {
         // If we found no viable children and we're under the main window
         // stack, see if we should pass focus to a toolbar widget.
@@ -1644,10 +1758,10 @@ void ContainerWidget::SelectDownWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        g_core->Log(LogName::kBa, LogLevel::kError,
-                    "Down_widget is not selectable.");
+        g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                             "Down_widget is not selectable.");
       } else {
-        w->Show();
+        w->ScrollIntoView();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
@@ -1673,7 +1787,7 @@ void ContainerWidget::SelectDownWidget() {
 }
 
 void ContainerWidget::SelectUpWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
@@ -1689,7 +1803,9 @@ void ContainerWidget::SelectUpWidget() {
     if (!w && selected_widget_->auto_select()) {
       float our_x, our_y;
       selected_widget_->GetCenter(&our_x, &our_y);
-      w = GetClosestUpWidget(our_x, our_y, selected_widget_);
+      if (!selected_widget_->auto_select_toolbars_only()) {
+        w = GetClosestUpWidget(our_x, our_y, selected_widget_);
+      }
       if (!w) {
         // If we found no viable children and we're on the main window stack,
         // see if we should pass focus to a toolbar widget.
@@ -1710,10 +1826,10 @@ void ContainerWidget::SelectUpWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        g_core->Log(LogName::kBa, LogLevel::kError,
-                    "up_widget is not selectable.");
+        g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                             "up_widget is not selectable.");
       } else {
-        w->Show();
+        w->ScrollIntoView();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
@@ -1739,7 +1855,7 @@ void ContainerWidget::SelectUpWidget() {
 }
 
 void ContainerWidget::SelectLeftWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (!g_ui_v1 || !g_ui_v1->root_widget() || !g_ui_v1->screen_root_widget()) {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
@@ -1755,7 +1871,9 @@ void ContainerWidget::SelectLeftWidget() {
     if (!w && selected_widget_->auto_select()) {
       float our_x, our_y;
       selected_widget_->GetCenter(&our_x, &our_y);
-      w = GetClosestLeftWidget(our_x, our_y, selected_widget_);
+      if (!selected_widget_->auto_select_toolbars_only()) {
+        w = GetClosestLeftWidget(our_x, our_y, selected_widget_);
+      }
       // When we find no viable targets for an autoselect widget we do
       // nothing.
       if (!w) {
@@ -1764,10 +1882,10 @@ void ContainerWidget::SelectLeftWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        g_core->Log(LogName::kBa, LogLevel::kError,
-                    "left_widget is not selectable.");
+        g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                             "left_widget is not selectable.");
       } else {
-        w->Show();
+        w->ScrollIntoView();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
@@ -1792,7 +1910,7 @@ void ContainerWidget::SelectLeftWidget() {
   }
 }
 void ContainerWidget::SelectRightWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (!g_base->ui || !g_ui_v1->root_widget()
       || !g_ui_v1->screen_root_widget()) {
@@ -1809,7 +1927,9 @@ void ContainerWidget::SelectRightWidget() {
     if (!w && selected_widget_->auto_select()) {
       float our_x, our_y;
       selected_widget_->GetCenter(&our_x, &our_y);
-      w = GetClosestRightWidget(our_x, our_y, selected_widget_);
+      if (!selected_widget_->auto_select_toolbars_only()) {
+        w = GetClosestRightWidget(our_x, our_y, selected_widget_);
+      }
 
       // For autoselect widgets, if we find no viable targets, we do nothing.
       if (!w) {
@@ -1818,10 +1938,10 @@ void ContainerWidget::SelectRightWidget() {
     }
     if (w) {
       if (!w->IsSelectable()) {
-        g_core->Log(LogName::kBa, LogLevel::kError,
-                    "right_widget is not selectable.");
+        g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                             "right_widget is not selectable.");
       } else {
-        w->Show();
+        w->ScrollIntoView();
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
@@ -1847,7 +1967,7 @@ void ContainerWidget::SelectRightWidget() {
 }
 
 void ContainerWidget::SelectNextWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   if (!g_base->ui || !g_ui_v1->root_widget()
       || !g_ui_v1->screen_root_widget()) {
@@ -1935,13 +2055,13 @@ void ContainerWidget::PrintExitListInstructions(
         Utils::StringReplaceOne(
             &s, "${RIGHT}", g_base->assets->CharStr(SpecialChar::kRightArrow));
       }
-      ScreenMessage(s);
+      g_base->ScreenMessage(s);
     }
   }
 }
 
 void ContainerWidget::SelectPrevWidget() {
-  BA_DEBUG_UI_READ_LOCK;
+  BA_DEBUG_UI_READ_LOCK;  // Make sure hierarchy doesn't change under us.
 
   millisecs_t old_last_prev_next_time = last_prev_next_time_millisecs_;
   if (should_print_list_exit_instructions_) {

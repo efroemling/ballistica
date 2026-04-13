@@ -2,12 +2,16 @@
 
 #include "ballistica/ui_v1/ui_v1.h"
 
+#include <algorithm>
 #include <string>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/stack_widget.h"
@@ -32,7 +36,8 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   // Various ballistica functionality will fail if this has not been done.
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bauiv1 exec begin");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "_bauiv1 exec begin");
 
   // Create our feature-set's C++ front-end.
   assert(g_ui_v1 == nullptr);
@@ -52,7 +57,8 @@ void UIV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);  // Should be getting set once here.
   g_base = base::BaseFeatureSet::Import();
 
-  g_core->Log(LogName::kBaLifecycle, LogLevel::kInfo, "_bauiv1 exec end");
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                       "_bauiv1 exec end");
 }
 
 auto UIV1FeatureSet::Import() -> UIV1FeatureSet* {
@@ -62,29 +68,25 @@ auto UIV1FeatureSet::Import() -> UIV1FeatureSet* {
   return ImportThroughPythonModule<UIV1FeatureSet>("_bauiv1");
 }
 
-void UIV1FeatureSet::DoHandleDeviceMenuPress(base::InputDevice* device) {
-  python->HandleDeviceMenuPress(device);
-}
-
 void UIV1FeatureSet::DoShowURL(const std::string& url) { python->ShowURL(url); }
 
-bool UIV1FeatureSet::MainMenuVisible() {
-  // We consider anything on our screen or overlay stacks to be a 'main menu'.
-  // Probably need a better name than 'main menu' though.
+bool UIV1FeatureSet::IsMainUIVisible() {
+  // We consider anything on our screen or overlay stacks to be a 'main ui'.
   auto* screen_root = screen_root_widget();
   auto* overlay_root = overlay_root_widget();
   return ((screen_root && screen_root->HasChildren())
           || (overlay_root && overlay_root->HasChildren()));
 }
 
-bool UIV1FeatureSet::PartyIconVisible() {
+bool UIV1FeatureSet::IsPartyIconVisible() {
   // Currently this is always visible.
   return true;
 }
 
-void UIV1FeatureSet::SetAccountState(bool signed_in, const std::string& name) {
+void UIV1FeatureSet::SetAccountSignInState(bool signed_in,
+                                           const std::string& name) {
   assert(root_widget_.exists());
-  root_widget_->SetAccountState(signed_in, name);
+  root_widget_->SetAccountSignInState(signed_in, name);
 }
 
 void UIV1FeatureSet::SetSquadSizeLabel(int num) {
@@ -98,7 +100,10 @@ void UIV1FeatureSet::ActivatePartyIcon() {
   }
 }
 
-bool UIV1FeatureSet::PartyWindowOpen() { return party_window_open_; }
+bool UIV1FeatureSet::IsPartyWindowOpen() {
+  assert(g_base->InLogicThread());
+  return ui_open_counts_.find("classicparty") != ui_open_counts_.end();
+}
 
 void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
   base::RenderPass* overlay_flat_pass = frame_def->GetOverlayFlatPass();
@@ -151,23 +156,47 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
   }
 }
 
+auto UIV1FeatureSet::GetSelectedWidget() -> Widget* {
+  assert(g_base->InLogicThread());
+  assert(root_widget_.exists());
+  Widget* w{root_widget_.get()};
+
+  while (true) {
+    // If this widget has a selected child, recurse down.
+    if (auto* cw = dynamic_cast<ContainerWidget*>(w)) {
+      if (Widget* selected_widget = cw->selected_widget()) {
+        w = selected_widget;
+        continue;
+      }
+    }
+    // Ok; no more children. Return the widget itself if its selectable, or
+    // nothing otherwise.
+    if (w->IsSelectable()) {
+      return w;
+    }
+    return nullptr;
+  }
+}
+
 void UIV1FeatureSet::OnActivate() {
   assert(g_base->InLogicThread());
 
-  // (Re)create our screen-root widget.
+  // (Re)create our screen window stack.
   auto sw(Object::New<StackWidget>());
   sw->set_is_main_window_stack(true);
   sw->SetWidth(g_base->graphics->screen_virtual_width());
   sw->SetHeight(g_base->graphics->screen_virtual_height());
   sw->set_translate(0, 0);
+  sw->SetID("screen_root");
   screen_root_widget_ = sw;
 
-  // (Re)create our screen-overlay widget.
+  // (Re)create our overlay window stack.
   auto ow(Object::New<StackWidget>());
   ow->set_is_overlay_window_stack(true);
   ow->SetWidth(g_base->graphics->screen_virtual_width());
   ow->SetHeight(g_base->graphics->screen_virtual_height());
   ow->set_translate(0, 0);
+  ow->SetID("overlay_root");
   overlay_root_widget_ = ow;
 
   // (Re)create our abs-root widget.
@@ -175,13 +204,15 @@ void UIV1FeatureSet::OnActivate() {
   root_widget_ = rw;
   rw->SetWidth(g_base->graphics->screen_virtual_width());
   rw->SetHeight(g_base->graphics->screen_virtual_height());
+  rw->SetID("root");
+  // We don't call AddWidget on this so we need to manually register stuff:
+  RegisterWidgetID(*rw->id(), rw.get());
+  rw->set_in_hierarchy(true);
+  // In order, add the screen stack, root's own ui bits, and then the
+  // overlay stack.
   rw->SetScreenWidget(sw.get());
   rw->Setup();
   rw->SetOverlayWidget(ow.get());
-
-  // Plug in all values we're storing.
-  // rw->SetSquadSizeLabel(party_icon_number_);
-  // rw->SetAccountState(account_signed_in_, account_name_);
 
   sw->GlobalSelect();
 }
@@ -191,6 +222,10 @@ void UIV1FeatureSet::OnDeactivate() {
 
   root_widget_.Clear();
   screen_root_widget_.Clear();
+  overlay_root_widget_.Clear();
+
+  // All widgets should have unregistered their IDs by this point.
+  assert(widgets_by_id_.empty());
 }
 
 void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
@@ -215,6 +250,24 @@ void UIV1FeatureSet::AddWidget(Widget* w, ContainerWidget* parent) {
   parent->AddWidget(w);
 }
 
+void UIV1FeatureSet::UIOpenStateChange(const std::string& tag, int increment) {
+  assert(g_base->InLogicThread());
+
+  auto& count = ui_open_counts_[tag];
+  count += increment;
+
+  // Remove the entry if the count is now zero (or less, for safety).
+  if (count <= 0) {
+    assert(count == 0);  // Negative should not be possible.
+    ui_open_counts_.erase(tag);
+  }
+
+  // Inform root ui that this changed.
+  if (auto* root_widget = root_widget_.get()) {
+    root_widget->OnUIOpenStateChange();
+  }
+}
+
 void UIV1FeatureSet::OnScreenSizeChange() {
   // This gets called by the native layer as window is resized/etc.
   if (root_widget_.exists()) {
@@ -223,7 +276,7 @@ void UIV1FeatureSet::OnScreenSizeChange() {
   }
 }
 
-void UIV1FeatureSet::OnScreenChange() {
+void UIV1FeatureSet::OnUIScaleChange() {
   // This gets called by the Python layer when UIScale or window size
   // changes.
   assert(g_base->InLogicThread());
@@ -267,7 +320,7 @@ void UIV1FeatureSet::DeleteWidget(Widget* widget) {
   }
 }
 
-void UIV1FeatureSet::DoApplyAppConfig() {
+void UIV1FeatureSet::ApplyAppConfig() {
   always_use_internal_on_screen_keyboard_ = g_base->app_config->Resolve(
       base::AppConfig::BoolID::kAlwaysUseInternalKeyboard);
 }
@@ -277,22 +330,102 @@ void UIV1FeatureSet::ConfirmQuit(QuitType quit_type) {
   python->InvokeQuitWindow(quit_type);
 }
 
-UIV1FeatureSet::UILock::UILock(bool write) {
-  assert(g_base->ui);
+UIV1FeatureSet::UIReadLock::UIReadLock() {
   assert(g_base->InLogicThread());
 
-  if (write && g_ui_v1->ui_lock_count_ != 0) {
-    BA_LOG_ERROR_NATIVE_TRACE_ONCE("Illegal operation: UI is locked.");
+  // Grabbing a read-lock while writing is happening is an error.
+  if (g_ui_v1->ui_write_lock_count_ != 0) {
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE("Can't read-lock UI: is write-locked");
   }
-  g_ui_v1->ui_lock_count_++;
+  g_ui_v1->ui_read_lock_count_++;
 }
 
-UIV1FeatureSet::UILock::~UILock() {
-  g_ui_v1->ui_lock_count_--;
-  if (g_ui_v1->ui_lock_count_ < 0) {
-    BA_LOG_ERROR_NATIVE_TRACE_ONCE("ui_lock_count_ < 0");
-    g_ui_v1->ui_lock_count_ = 0;
+UIV1FeatureSet::UIReadLock::~UIReadLock() {
+  g_ui_v1->ui_read_lock_count_--;
+  if (g_ui_v1->ui_read_lock_count_ < 0) {
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE("ui_read_lock_count_ < 0");
+    g_ui_v1->ui_read_lock_count_ = 0;
   }
+}
+
+UIV1FeatureSet::UIWriteLock::UIWriteLock() {
+  assert(g_base->InLogicThread());
+
+  // Grabbing a write-lock while reads are happening is an error.
+  if (g_ui_v1->ui_read_lock_count_ != 0) {
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE("Can't write-lock UI: is read-locked.");
+  }
+  g_ui_v1->ui_write_lock_count_++;
+}
+
+UIV1FeatureSet::UIWriteLock::~UIWriteLock() {
+  g_ui_v1->ui_write_lock_count_--;
+  if (g_ui_v1->ui_write_lock_count_ < 0) {
+    BA_LOG_ERROR_NATIVE_TRACE_ONCE("ui_write_lock_count_ < 0");
+    g_ui_v1->ui_write_lock_count_ = 0;
+  }
+}
+void UIV1FeatureSet::RegisterWidgetID(const std::string& id, Widget* w) {
+  assert(g_base->InLogicThread());
+  g_core->logging->Log(LogName::kBaUI, LogLevel::kDebug,
+                       [&id] { return "Registering widget id '" + id + "'."; });
+
+  // Warn if there is already a widget with this ID.
+  auto it = widgets_by_id_.find(id);
+  if (it != widgets_by_id_.end()) {
+    g_core->logging->Log(LogName::kBaUI, LogLevel::kWarning, [&id] {
+      return "Widget id '" + id
+             + "' is already in use;"
+               " all widgets should have unique IDs.";
+    });
+  }
+  auto& vec = widgets_by_id_[id];
+  vec.push_back(w);
+}
+
+void UIV1FeatureSet::UnregisterWidgetID(const std::string& id, Widget* w) {
+  assert(g_base->InLogicThread());
+  g_core->logging->Log(LogName::kBaUI, LogLevel::kDebug, [&id] {
+    return "Unregistering widget id '" + id + "'.";
+  });
+
+  auto it = widgets_by_id_.find(id);
+  if (it == widgets_by_id_.end()) {
+    g_core->logging->Log(LogName::kBaUI, LogLevel::kError, [&id] {
+      return "Widget id '" + id + "' not found at unregister.";
+    });
+    return;
+  }
+
+  auto& vec = it->second;
+  auto vit = std::find(vec.begin(), vec.end(), w);
+  if (vit == vec.end()) {
+    g_core->logging->Log(LogName::kBaUI, LogLevel::kError, [&id] {
+      return "Widget id '" + id
+             + "' does not point to provided widget at unregister.";
+    });
+    return;
+  }
+
+  // Remove the widget pointer from the vector.
+  vec.erase(vit);
+
+  // Remove the id entirely if its vector is now empty.
+  if (vec.empty()) {
+    widgets_by_id_.erase(it);
+  }
+}
+
+auto UIV1FeatureSet::WidgetByID(const std::string& id) -> Widget* {
+  assert(g_base->InLogicThread());
+  auto it = widgets_by_id_.find(id);
+  if (it == widgets_by_id_.end()) {
+    return nullptr;
+  }
+  auto& vec = it->second;
+  assert(!vec.empty());  // Should not be holding empty vecs.
+  // In the case of multiple registrations, grab the most recent.
+  return vec.back();
 }
 
 }  // namespace ballistica::ui_v1

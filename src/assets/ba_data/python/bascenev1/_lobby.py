@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Implements lobby system for gathering before games, char select, etc."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -65,7 +66,10 @@ class JoinInfo:
             )
         )
 
-        if babase.app.env.demo or babase.app.env.arcade:
+        variant = babase.app.env.variant
+        vart = type(variant)
+
+        if variant is vart.DEMO or variant is vart.ARCADE:
             self._messages = [self._joinmsg]
         else:
             msg1 = babase.Lstr(
@@ -115,7 +119,7 @@ class JoinInfo:
             )
 
         self._timer = _bascenev1.Timer(
-            4.0, babase.WeakCall(self._update), repeat=True
+            4.0, babase.WeakCallStrict(self._update), repeat=True
         )
 
     def _update_for_keyboard(self, keyboard: bascenev1.InputDevice) -> None:
@@ -178,10 +182,7 @@ class ChangeMessage:
 
 
 class Chooser:
-    """A character/team selector for a bascenev1.Player.
-
-    Category: Gameplay Classes
-    """
+    """A character/team selector for a player."""
 
     def __del__(self) -> None:
         # Just kill off our base node; the rest should go down with it.
@@ -338,10 +339,10 @@ class Chooser:
         if inputdevice.is_controller_app and '_random' in profilenames:
             return profilenames.index('_random')
 
-        # If its a client connection, for now just force
-        # the account profile if possible.. (need to provide a
-        # way for clients to specify/remember their default
-        # profile on remote servers that do not already know them).
+        # If its a client connection, for now just force the account
+        # profile if possible. (need to provide a way for clients to
+        # specify/remember their default profile on remote servers that
+        # do not already know them).
         if inputdevice.is_remote_client and '__account__' in profilenames:
             return profilenames.index('__account__')
 
@@ -364,7 +365,7 @@ class Chooser:
 
     @property
     def sessionplayer(self) -> bascenev1.SessionPlayer:
-        """The bascenev1.SessionPlayer associated with this chooser."""
+        """The session-player associated with this chooser."""
         return self._sessionplayer
 
     @property
@@ -373,11 +374,17 @@ class Chooser:
         return self._ready
 
     def set_vpos(self, vpos: float) -> None:
-        """(internal)"""
+        """(internal)
+
+        :meta private:
+        """
         self._vpos = vpos
 
     def set_dead(self, val: bool) -> None:
-        """(internal)"""
+        """(internal)
+
+        :meta private:
+        """
         self._dead = val
 
     @property
@@ -387,7 +394,7 @@ class Chooser:
 
     @property
     def lobby(self) -> bascenev1.Lobby:
-        """The chooser's baclassic.Lobby."""
+        """The chooser's lobby."""
         lobby = self._lobby()
         if lobby is None:
             raise babase.NotFoundError('Lobby does not exist.')
@@ -434,7 +441,6 @@ class Chooser:
         """Reload all player profiles."""
 
         app = babase.app
-        env = app.env
         assert app.classic is not None
 
         # Re-construct our profile index and other stuff since the profile
@@ -445,9 +451,39 @@ class Chooser:
 
         # Pull this player's list of unlocked characters.
         if is_remote:
-            # TODO: Pull this from the remote player.
-            # (but make sure to filter it to the ones we've got).
-            self._character_names = ['Spaz']
+            # v2-auth hosts can get an authoritative purchases list
+            # from the master server — see
+            # ``input_device.get_classic_purchases()``. When that
+            # returns ``None`` (non-v2-auth connection, older
+            # master, etc.) fall back to the legacy behavior: start
+            # with just 'Spaz' and let ``update_from_profile()``
+            # lazily append characters referenced in the remote
+            # player's (master-server-validated) profiles. The
+            # purchases snapshot is captured at handshake time, so
+            # characters unlocked mid-match won't appear until
+            # rejoin — mirrors local-player behavior
+            # (``character_names_local_unlocked`` is only refreshed
+            # at lobby reload).
+            classic_purchases: list[str] | None = (
+                input_device.get_classic_purchases()
+            )
+            if classic_purchases is None:
+                self._character_names = ['Spaz']
+            else:
+                # Run through the same mapper local players use so
+                # the legacy-id → in-game-name translation lives in
+                # one place.
+                # pylint: disable=cyclic-import
+                from bascenev1lib.actor.spazappearance import (
+                    get_appearances,
+                )
+
+                self._character_names = get_appearances(
+                    purchases=classic_purchases
+                )
+                self._character_names.sort(key=lambda x: x.lower())
+                if not self._character_names:
+                    self._character_names = ['Spaz']
         else:
             self._character_names = self.lobby.character_names_local_unlocked
 
@@ -476,13 +512,17 @@ class Chooser:
         self._profiles['_random'] = {}
 
         # In kiosk mode we disable account profiles to force random.
-        if env.demo or env.arcade:
+        variant = babase.app.env.variant
+        vart = type(variant)
+        arcade_or_demo = variant is vart.ARCADE or variant is vart.DEMO
+
+        if arcade_or_demo:
             if '__account__' in self._profiles:
                 del self._profiles['__account__']
 
         # For local devices, add it an 'edit' option which will pop up
         # the profile window.
-        if not is_remote and not is_test_input and not (env.demo or env.arcade):
+        if not is_remote and not is_test_input and not arcade_or_demo:
             self._profiles['_edit'] = {}
 
         # Build a sorted name list we can iterate through.
@@ -493,7 +533,6 @@ class Chooser:
             self._profileindex = self._profilenames.index(self._profilename)
         else:
             self._profileindex = 0
-            # noinspection PyUnresolvedReferences
             self._profilename = self._profilenames[self._profileindex]
 
     def update_position(self) -> None:
@@ -591,33 +630,39 @@ class Chooser:
 
                 classic.profile_browser_window()
 
-                # Give their input-device UI ownership too (prevent
+                # Give their input-device main-UI ownership too (prevent
                 # someone else from snatching it in crowded games).
-                babase.set_ui_input_device(self._sessionplayer.inputdevice.id)
+                babase.set_main_ui_input_device(
+                    self._sessionplayer.inputdevice.id
+                )
             return
 
         if not ready:
             self._sessionplayer.assigninput(
                 babase.InputType.LEFT_PRESS,
-                babase.Call(self.handlemessage, ChangeMessage('team', -1)),
+                babase.CallStrict(
+                    self.handlemessage, ChangeMessage('team', -1)
+                ),
             )
             self._sessionplayer.assigninput(
                 babase.InputType.RIGHT_PRESS,
-                babase.Call(self.handlemessage, ChangeMessage('team', 1)),
+                babase.CallStrict(self.handlemessage, ChangeMessage('team', 1)),
             )
             self._sessionplayer.assigninput(
                 babase.InputType.BOMB_PRESS,
-                babase.Call(self.handlemessage, ChangeMessage('character', 1)),
+                babase.CallStrict(
+                    self.handlemessage, ChangeMessage('character', 1)
+                ),
             )
             self._sessionplayer.assigninput(
                 babase.InputType.UP_PRESS,
-                babase.Call(
+                babase.CallStrict(
                     self.handlemessage, ChangeMessage('profileindex', -1)
                 ),
             )
             self._sessionplayer.assigninput(
                 babase.InputType.DOWN_PRESS,
-                babase.Call(
+                babase.CallStrict(
                     self.handlemessage, ChangeMessage('profileindex', 1)
                 ),
             )
@@ -627,7 +672,9 @@ class Chooser:
                     babase.InputType.PICK_UP_PRESS,
                     babase.InputType.PUNCH_PRESS,
                 ),
-                babase.Call(self.handlemessage, ChangeMessage('ready', 1)),
+                babase.CallStrict(
+                    self.handlemessage, ChangeMessage('ready', 1)
+                ),
             )
             self._ready = False
             self._update_text()
@@ -652,7 +699,9 @@ class Chooser:
                     babase.InputType.PICK_UP_PRESS,
                     babase.InputType.PUNCH_PRESS,
                 ),
-                babase.Call(self.handlemessage, ChangeMessage('ready', 0)),
+                babase.CallStrict(
+                    self.handlemessage, ChangeMessage('ready', 0)
+                ),
             )
 
             # Store the last profile picked by this input for reuse.
@@ -940,10 +989,7 @@ class Chooser:
 
 
 class Lobby:
-    """Container for baclassic.Choosers.
-
-    Category: Gameplay Classes
-    """
+    """Environment where players can selecting characters, etc."""
 
     def __del__(self) -> None:
         # Reset any players that still have a chooser in us.
@@ -987,7 +1033,7 @@ class Lobby:
 
     @property
     def use_team_colors(self) -> bool:
-        """A bool for whether this lobby is using team colors.
+        """Whether this lobby is using team colors.
 
         If False, inidividual player colors are used instead.
         """
@@ -995,7 +1041,7 @@ class Lobby:
 
     @property
     def sessionteams(self) -> list[bascenev1.SessionTeam]:
-        """bascenev1.SessionTeams available in this lobby."""
+        """The teams available in this lobby."""
         allteams = []
         for tref in self._sessionteams:
             team = tref()
@@ -1004,7 +1050,7 @@ class Lobby:
         return allteams
 
     def get_choosers(self) -> list[Chooser]:
-        """Return the lobby's current choosers."""
+        """The current choosers present."""
         return self.choosers
 
     def create_join_info(self) -> JoinInfo:
@@ -1070,8 +1116,8 @@ class Lobby:
                 found = True
 
                 # Mark it as dead since there could be more
-                # change-commands/etc coming in still for it;
-                # want to avoid duplicate player-adds/etc.
+                # change-commands/etc coming in still for it; want to
+                # avoid duplicate player-adds/etc.
                 chooser.set_dead(True)
                 self.choosers.remove(chooser)
                 break

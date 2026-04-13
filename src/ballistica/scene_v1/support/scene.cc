@@ -12,6 +12,8 @@
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/dynamics/part.h"
@@ -40,7 +42,7 @@ void Scene::SetMapBounds(float xmin, float ymin, float zmin, float xmax,
 Scene::Scene(millisecs_t start_time)
     : time_(start_time),
       stepnum_(start_time / kGameStepMilliseconds),
-      last_step_real_time_(g_core->GetAppTimeMillisecs()) {
+      last_step_real_time_(g_core->AppTimeMillisecs()) {
   dynamics_ = Object::New<Dynamics>(this);
 
   // Reset world bounds to default.
@@ -145,7 +147,7 @@ void Scene::Step() {
   // Step all our nodes.
   {
     in_step_ = true;
-    last_step_real_time_ = g_core->GetAppTimeMillisecs();
+    last_step_real_time_ = g_core->AppTimeMillisecs();
     for (auto&& i : nodes_) {
       Node* node = i.get();
       node->Step();
@@ -216,8 +218,8 @@ void Scene::DeleteNode(Node* node) {
   // Sanity test: at this point the node should be dead.
 #if BA_DEBUG_BUILD
   if (temp_weak_ref.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "Node still exists after ref release!!");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "Node still exists after ref release!!");
   }
 #endif  // BA_DEBUG_BUILD
 
@@ -401,9 +403,10 @@ void Scene::DumpNodes(SessionStream* out) {
             break;
           }
           default:
-            g_core->Log(LogName::kBa, LogLevel::kError,
-                        "Invalid attr type for Scene::DumpNodes() attr set: "
-                            + std::to_string(static_cast<int>(attr.type())));
+            g_core->logging->Log(
+                LogName::kBa, LogLevel::kError,
+                "Invalid attr type for Scene::DumpNodes() attr set: "
+                    + std::to_string(static_cast<int>(attr.type())));
             break;
         }
       }

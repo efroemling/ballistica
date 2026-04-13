@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to android builds."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -20,7 +21,7 @@ class GradleFilterSection:
 
 
 def filter_gradle_file(buildfilename: str, enabled_tags: set[str]) -> None:
-    """Filter 'EFRO_IF' sections in a gradle file."""
+    """Filter ``EFRO_IF`` sections in a gradle file."""
 
     sections: list[GradleFilterSection] = []
 

@@ -7,8 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "ballistica/base/input/input.h"
-#include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/scene_v1/node/node.h"
+#include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/math/vector3f.h"
 
@@ -51,6 +51,7 @@ class Player : public Object {
     node_ = node;
   }
 
+  /// Returns a NEW ref or nullptr.
   auto GetPyTeam() -> PyObject*;  // Returns a borrowed ref.
   void SetPyTeam(PyObject* team);
 
@@ -79,10 +80,9 @@ class Player : public Object {
 
   void SetPosition(const Vector3f& position);
 
-  // If an public account-id can be determined with relative
-  // certainty for this player, returns it. Otherwise returns
-  // an empty string.
-  auto GetPublicV1AccountID() const -> std::string;
+  // Returns the account-id for this player, or an empty string if
+  // not available.
+  auto GetAccountID() const -> std::string;
 
   void SetHostActivity(HostActivity* host_activity);
   auto GetHostActivity() const -> HostActivity*;

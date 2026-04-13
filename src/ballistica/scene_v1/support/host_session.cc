@@ -12,12 +12,16 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/support/host_activity.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
@@ -27,7 +31,7 @@
 namespace ballistica::scene_v1 {
 
 HostSession::HostSession(PyObject* session_type_obj)
-    : last_kick_idle_players_decrement_time_(g_core->GetAppTimeMillisecs()) {
+    : last_kick_idle_players_decrement_time_(g_core->AppTimeMillisecs()) {
   assert(g_base->logic);
   assert(g_base->InLogicThread());
   assert(session_type_obj != nullptr);
@@ -66,18 +70,13 @@ HostSession::HostSession(PyObject* session_type_obj)
     output_stream_->AddScene(scene_.get());
   }
 
-  // Fade in from our current blackness.
-  // g_base->graphics->FadeScreen(true, 250, nullptr);
-
   // Start by showing the progress bar instead of hitching.
   g_base->graphics->EnableProgressBar(true);
 
   // Now's a good time to run garbage collection; there should be pretty much
   // no game stuff to speak of in existence (provided the last session went
   // down peacefully).
-  g_base->python->objs()
-      .Get(base::BasePython::ObjID::kGarbageCollectSessionEndCall)
-      .Call();
+  g_base->python->objs().Get(base::BasePython::ObjID::kAppGCCollectCall).Call();
 
   // Instantiate our Python Session instance.
   PythonRef obj;
@@ -219,8 +218,9 @@ void HostSession::RequestPlayer(SceneV1InputDeviceDelegate* device) {
 
   // Ignore if we have no Python session Obj.
   if (!GetSessionPyObj()) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                "HostSession::RequestPlayer() called w/no session_py_obj_.");
+    g_core->logging->Log(
+        LogName::kBaNetworking, LogLevel::kError,
+        "HostSession::RequestPlayer() called w/no session_py_obj_.");
     return;
   }
 
@@ -313,13 +313,14 @@ void HostSession::IssuePlayerLeft(Player* player) {
         BA_LOG_PYTHON_TRACE_ONCE("missing player on IssuePlayerLeft");
       }
     } else {
-      g_core->Log(LogName::kBaNetworking, LogLevel::kWarning,
-                  "HostSession: IssuePlayerLeft caled with no "
-                  "session_py_obj_");
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                           "HostSession: IssuePlayerLeft caled with no "
+                           "session_py_obj_");
     }
   } catch (const std::exception& e) {
-    g_core->Log(LogName::kBaNetworking, LogLevel::kError,
-                std::string("Error calling on_player_leave(): ") + e.what());
+    g_core->logging->Log(
+        LogName::kBaNetworking, LogLevel::kError,
+        std::string("Error calling on_player_leave(): ") + e.what());
   }
 }
 
@@ -327,7 +328,7 @@ void HostSession::SetKickIdlePlayers(bool enable) {
   // If this has changed, reset our disconnect-time reporting.
   assert(g_base->InLogicThread());
   if (enable != kick_idle_players_) {
-    last_kick_idle_players_decrement_time_ = g_core->GetAppTimeMillisecs();
+    last_kick_idle_players_decrement_time_ = g_core->AppTimeMillisecs();
   }
   kick_idle_players_ = enable;
 }
@@ -339,9 +340,10 @@ void HostSession::SetForegroundHostActivity(HostActivity* a) {
   auto* appmode = classic::ClassicAppMode::GetActiveOrFatal();
 
   if (shutting_down_) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "SetForegroundHostActivity called during session shutdown; "
-                "ignoring.");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kWarning,
+        "SetForegroundHostActivity called during session shutdown; "
+        "ignoring.");
     return;
   }
 
@@ -405,16 +407,17 @@ auto HostSession::NewHostActivity(PyObject* activity_type_obj,
     throw Exception("HostActivity creation failed");
   }
 
-  // If all went well, the python activity constructor should have called
-  // register_activity(), so we should be able to get at the same python
+  // If all went well, the Python activity constructor should have called
+  // register_activity(), so we should be able to get at the same Python
   // activity we just instantiated through the c++ class.
-  if (activity->GetPyActivity() != result.get()) {
+
+  // GetPyActivity returns a new ref or nullptr.
+  auto py_activity{PythonRef::StolenSoft(activity->GetPyActivity())};
+  if (!py_activity.exists() || py_activity.get() != result.get()) {
     throw Exception("Error on HostActivity construction");
   }
 
-  PyObject* obj = result.get();
-  Py_INCREF(obj);
-  return obj;
+  return result.NewRef();
 }
 
 auto HostSession::RegisterPyActivity(PyObject* activity_obj) -> HostActivity* {
@@ -437,7 +440,7 @@ void HostSession::DecrementPlayerTimeOuts(millisecs_t millisecs) {
       std::string kick_str =
           g_base->assets->GetResourceString("kickIdlePlayersKickedText");
       Utils::StringReplaceOne(&kick_str, "${NAME}", player->GetName());
-      ScreenMessage(kick_str);
+      g_base->ScreenMessage(kick_str);
       RemovePlayer(player);
       return;  // Bail for this round since we prolly mucked with the list.
     } else if (player->time_out() > BA_PLAYER_TIME_OUT_WARN
@@ -447,8 +450,8 @@ void HostSession::DecrementPlayerTimeOuts(millisecs_t millisecs) {
       Utils::StringReplaceOne(&kick_str_1, "${NAME}", player->GetName());
       Utils::StringReplaceOne(&kick_str_1, "${COUNT}",
                               std::to_string(BA_PLAYER_TIME_OUT_WARN / 1000));
-      ScreenMessage(kick_str_1);
-      ScreenMessage(
+      g_base->ScreenMessage(kick_str_1);
+      g_base->ScreenMessage(
           g_base->assets->GetResourceString("kickIdlePlayersWarning2Text"));
     }
     player->set_time_out(player->time_out() - millisecs);
@@ -456,7 +459,7 @@ void HostSession::DecrementPlayerTimeOuts(millisecs_t millisecs) {
 }
 
 void HostSession::ProcessPlayerTimeOuts() {
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   if (foreground_host_activity_.exists()
       && foreground_host_activity_->game_speed() > 0.0
@@ -487,7 +490,7 @@ void HostSession::StepScene() {
 void HostSession::Update(int time_advance_millisecs, double time_advance) {
   assert(g_base->InLogicThread());
 
-  millisecs_t update_time_start = core::CorePlatform::GetCurrentMillisecs();
+  millisecs_t update_time_start = core::Platform::TimeMonotonicMillisecs();
 
   // HACK: we used to do a bunch of fudging to try and advance time by
   // exactly 16 milliseconds per frame which would give us a clean 2 sim
@@ -545,8 +548,7 @@ void HostSession::Update(int time_advance_millisecs, double time_advance) {
     // After each time we step time, abort if we're taking too long. This way we
     // slow down if we're overloaded and have a better chance at maintaining
     // a reasonable frame-rate/etc.
-    auto elapsed =
-        core::CorePlatform::GetCurrentMillisecs() - update_time_start;
+    auto elapsed = core::Platform::TimeMonotonicMillisecs() - update_time_start;
     if (elapsed >= 1000 / 30) {
       too_slow = true;
       break;
@@ -666,11 +668,11 @@ HostSession::~HostSession() {
           s += ("\n  " + std::to_string(count++) + ": "
                 + i->GetObjectDescription());
         }
-        g_core->Log(LogName::kBa, LogLevel::kWarning, s);
+        g_core->logging->Log(LogName::kBa, LogLevel::kWarning, s);
       }
     }
   } catch (const std::exception& e) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBa, LogLevel::kError,
         "Exception in HostSession destructor: " + std::string(e.what()));
   }
@@ -689,9 +691,10 @@ void HostSession::RegisterContextCall(base::PythonContextCall* call) {
   // If we're shutting down, just kill the call immediately.
   // (we turn all of our calls to no-ops as we shut down).
   if (shutting_down_) {
-    g_core->Log(LogName::kBa, LogLevel::kWarning,
-                "Adding call to expired session; call will not function: "
-                    + call->GetObjectDescription());
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kWarning,
+        "Adding call to expired session; call will not function: "
+            + call->GetObjectDescription());
     call->MarkDead();
   }
 }

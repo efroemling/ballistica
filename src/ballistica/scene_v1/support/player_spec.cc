@@ -6,7 +6,9 @@
 
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -18,32 +20,36 @@ PlayerSpec::PlayerSpec(const std::string& s) {
   cJSON* root_obj = cJSON_Parse(s.c_str());
   bool success = false;
   if (root_obj) {
-    cJSON* name_obj = cJSON_GetObjectItem(root_obj, "n");
-    cJSON* short_name_obj = cJSON_GetObjectItem(root_obj, "sn");
-    cJSON* account_obj = cJSON_GetObjectItem(root_obj, "a");
-    if (name_obj && short_name_obj && account_obj) {
-      name_ = Utils::GetValidUTF8(name_obj->valuestring, "psps");
-      short_name_ = Utils::GetValidUTF8(short_name_obj->valuestring, "psps2");
+    if (cJSON_IsObject(root_obj)) {
+      cJSON* name_obj = cJSON_GetObjectItem(root_obj, "n");
+      cJSON* short_name_obj = cJSON_GetObjectItem(root_obj, "sn");
+      cJSON* account_obj = cJSON_GetObjectItem(root_obj, "a");
+      if (cJSON_IsString(name_obj) && cJSON_IsString(short_name_obj)
+          && cJSON_IsString(account_obj)) {
+        name_ = Utils::GetValidUTF8(name_obj->valuestring, "psps");
+        short_name_ = Utils::GetValidUTF8(short_name_obj->valuestring, "psps2");
 
-      // Account type may technically be something we don't recognize,
-      // but that's ok.. it'll just be 'invalid' to us in that case
-      if (g_base->HaveClassic()) {
-        v1_account_type_ = g_base->classic()->GetV1AccountTypeFromString(
-            account_obj->valuestring);
-        // classic::V1Account::AccountTypeFromString(account_obj->valuestring);
-      } else {
-        v1_account_type_ = 0;  // kInvalid.
+        // Account type may technically be something we don't recognize,
+        // but that's ok.. it'll just be 'invalid' to us in that case
+        if (g_base->HaveClassic()) {
+          v1_account_type_ = g_base->classic()->GetV1AccountTypeFromString(
+              account_obj->valuestring);
+        } else {
+          v1_account_type_ = 0;  // kInvalid.
+        }
+        success = true;
       }
-      success = true;
     }
     cJSON_Delete(root_obj);
   }
   if (!success) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
+    valid_ = false;
+
+    // Only log this once in case it is used as an attack.
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                 "Error creating PlayerSpec from string: '" + s + "'");
     name_ = "<error>";
-    short_name_ = "";
-    // account_type_ = classic::V1AccountType::kInvalid;
+    short_name_ = "<error>";
     v1_account_type_ = 0;  // kInvalid.
   }
 }
@@ -54,7 +60,6 @@ auto PlayerSpec::GetDisplayString() const -> std::string {
            + name_;
   }
   return name_;
-  // return classic::V1Account::AccountTypeToIconString(account_type_) + name_;
 }
 
 auto PlayerSpec::GetShortName() const -> std::string {
@@ -76,7 +81,6 @@ auto PlayerSpec::GetSpecString() const -> std::string {
   cJSON_AddStringToObject(root, "n", name_.c_str());
   cJSON_AddStringToObject(
       root, "a",
-      // classic::V1Account::AccountTypeToString(account_type_).c_str()
       g_base->HaveClassic()
           ? g_base->classic()->V1AccountTypeToString(v1_account_type_).c_str()
           : "");
@@ -114,8 +118,8 @@ auto PlayerSpec::GetAccountPlayerSpec() -> PlayerSpec {
   }
   if (spec.name_.size() > 100) {
     // FIXME should perhaps clamp this in unicode space
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "account name size too long: '" + spec.name_ + "'");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "account name size too long: '" + spec.name_ + "'");
     spec.name_.resize(100);
     spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgaps3");
   }
@@ -127,8 +131,9 @@ auto PlayerSpec::GetDummyPlayerSpec(const std::string& name) -> PlayerSpec {
   spec.name_ = Utils::GetValidUTF8(name.c_str(), "bsgdps1");
   if (spec.name_.size() > 100) {
     // FIXME should perhaps clamp this in unicode space
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "dummy player spec name too long: '" + spec.name_ + "'");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "dummy player spec name too long: '" + spec.name_ + "'");
     spec.name_.resize(100);
     spec.name_ = Utils::GetValidUTF8(spec.name_.c_str(), "bsgdps2");
   }

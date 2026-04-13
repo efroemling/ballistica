@@ -51,6 +51,7 @@ ctx.src_omit_paths = {
     'tools/spinoff',
     '.editorconfig',
     'src/assets/workspace',
+    '.claude',
 }
 
 # Use this to 'carve out' files or directories which will be git-managed
@@ -193,11 +194,19 @@ ctx.filter_file_names = {
     'flycheck-dir-locals.el',
     '.projectile',
     '.editorconfig',
+    'action.yml',
     'ci.yml',
     'cd.yml',
     'deploy_docs.yml',
     'nightly.yml',
     'release.yml',
+    'ballistica_dev_dockerfile',
+    'ballistica_dev_image.yaml',
+    'ci.yaml',
+    'ci_build_and_test_windows.yaml',
+    'cd.yaml',
+    'deploy_docs.yaml',
+    'release.yaml',
     'LICENSE',
     'cloudtool',
     'bacloud',
@@ -282,6 +291,7 @@ ctx.filter_file_extensions = {
     '.xcstrings',
     '.filters',
     '.rst_t',
+    '.ps1',
 }
 
 # ELSE files with these extensions will NOT be filtered.

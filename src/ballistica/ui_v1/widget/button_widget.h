@@ -47,11 +47,26 @@ class ButtonWidget : public Widget {
     icon_color_blue_ = b;
     icon_color_alpha_ = a;
   }
+  void set_flatness(float val) { flatness_ = val; }
+
   auto set_text_flatness(float f) { text_flatness_ = f; }
-  enum class Style : uint8_t { kRegular, kBack, kBackSmall, kTab, kSquare };
+  enum class Style : uint8_t {
+    kRegular,
+    kBack,
+    kBackSmall,
+    kTab,
+    kSquare,
+    kSmall,
+    kMedium,
+    kLarge,
+    kLarger,
+    kSquareWide,
+  };
+  void set_better_bg_fit(bool val) { better_bg_fit_ = val; }
   auto set_style(Style s) { style_ = s; }
   enum class IconType : uint8_t { kNone, kCancel, kStart };
-  void set_text(const std::string& text);
+  void SetTextLiteral(bool val);
+  void SetText(const std::string& text);
   auto text() const -> std::string { return text_->text_raw(); }
   auto set_icon_type(IconType i) { icon_type_ = i; }
   auto set_repeat(bool repeat) { repeat_ = repeat; }
@@ -100,9 +115,10 @@ class ButtonWidget : public Widget {
   bool enabled_{true};
   bool selectable_{true};
   bool sound_enabled_{true};
-  bool mouse_over_{};
+  bool hover_{};
   bool repeat_{};
   bool pressed_{};
+  bool better_bg_fit_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t birth_time_millisecs_{};
   millisecs_t transition_delay_{};
@@ -121,6 +137,7 @@ class ButtonWidget : public Widget {
   float icon_color_alpha_{1.0f};
   float icon_scale_{1.0f};
   float opacity_{1.0f};
+  float flatness_{0.0f};
   float text_flatness_{0.5f};
   float text_color_r_{0.75f};
   float text_color_g_{1.0f};

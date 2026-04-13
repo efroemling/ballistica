@@ -40,12 +40,13 @@ def _handle_args(args: list[str]) -> Mode:
     return mode
 
 
-def get_current_version() -> tuple[str, int]:
+def get_current_version(projroot: str = '') -> tuple[str, int]:
     """Pull current version and build_number from the project."""
     version = None
     build_number = None
     with open(
-        'src/ballistica/shared/ballistica.cc', encoding='utf-8'
+        os.path.join(projroot, 'src/ballistica/shared/ballistica.cc'),
+        encoding='utf-8',
     ) as infile:
         lines = infile.readlines()
     for line in lines:

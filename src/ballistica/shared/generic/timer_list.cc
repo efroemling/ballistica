@@ -3,6 +3,7 @@
 #include "ballistica/shared/generic/timer_list.h"
 
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/shared/generic/runnable.h"
 
 namespace ballistica {
@@ -20,17 +21,17 @@ TimerList::~TimerList() {
 
   if (g_buildconfig.debug_build()) {
     if (timer_count_active_ != 0) {
-      core::g_core->Log(LogName::kBa, LogLevel::kError,
-                        "Invalid timerlist state on teardown.");
+      core::g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                                 "Invalid timerlist state on teardown.");
     }
     if (timer_count_inactive_ != 0) {
-      core::g_core->Log(LogName::kBa, LogLevel::kError,
-                        "Invalid timerlist state on teardown.");
+      core::g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                                 "Invalid timerlist state on teardown.");
     }
     if (!((timer_count_total_ == 0)
           || (client_timer_ != nullptr && timer_count_total_ == 1))) {
-      core::g_core->Log(LogName::kBa, LogLevel::kError,
-                        "Invalid timerlist state on teardown.");
+      core::g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                                 "Invalid timerlist state on teardown.");
     }
   }
 }

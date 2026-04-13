@@ -12,4 +12,18 @@ from batools.featureset import FeatureSet
 # Grab the FeatureSet we're defining here.
 fset = FeatureSet.get_active()
 
+# Stuff we need.
 fset.requirements = {'core', 'base'}
+
+# Uncomment to define stuff we use but don't *need* (and only access via
+# app-subsystems).
+# fset.soft_requirements = {'plus'}
+
+# Uncomment to create a TemplateFsAppSubsystem at 'ba*.app.template_fs'.
+# fset.has_python_app_subsystem = True
+
+# Uncomment to support being a 'soft' requirement (something other
+# feature-sets can use but can live without). In that case our
+# app-subsystem will be defined as `TemplateFsAppSubsystem | None`
+# instead of `TemplateFsAppSubsystem`.
+# fset.allow_as_soft_requirement = True

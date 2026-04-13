@@ -42,7 +42,7 @@ const int kProtocolVersionHostMin = 33;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 35;
+const int kProtocolVersionMax = 37;
 
 // The protocol version we actually host is now read as a setting; see
 // kSceneV1HostProtocol in ballistica/base/support/app_config.h.
@@ -74,6 +74,16 @@ const int kProtocolVersionMax = 35;
 // 34: New image_node enums, data assets.
 //
 // 35: Camera shake in netplay. how did I apparently miss this for 10 years!?!
+//
+// 36: Enables V2 auth for servers when authenticate-clients is enabled.
+//     This gives servers verified v2 account info for all joiners and
+//     allows screening them before they are even allowed in the game,
+//     unlike V1 auth. It is also free from V1 auth's spoofing
+//     vulnerabilities.
+//
+// 37: Allows behavior_version 2 on spaz nodes which has punch-grab-spam
+//     protection. Note that if you are running a server and prefer the
+//     old behavior, you can still set that attr to 1 in mod code.
 
 // Sim step size in milliseconds.
 const int kGameStepMilliseconds = 8;
@@ -81,6 +91,13 @@ const int kGameStepMilliseconds = 8;
 // Sim step size in seconds.
 const float kGameStepSeconds =
     (static_cast<float>(kGameStepMilliseconds) / 1000.0f);
+
+// Magic numbers at the start of our file types.
+const int kBrpFileID = 83749;
+
+// Largest UDP packets we attempt to send.
+// (is there a definitive answer on what this should be?)
+const int kMaxPacketSize = 700;
 
 // Predeclare types we use throughout our FeatureSet so most headers can get
 // away with just including this header.
@@ -97,6 +114,7 @@ class ConnectionToHostUDP;
 class ConnectionSet;
 class SceneV1Context;
 class ContextRefSceneV1;
+class Huffman;
 class SceneCubeMapTexture;
 class SceneDataAsset;
 class Dynamics;
@@ -137,6 +155,7 @@ class SceneV1FeatureSet;
 class Session;
 class SceneSound;
 class SceneTexture;
+class ReplayWriter;
 typedef Node* NodeCreateFunc(Scene* sg);
 
 /// Specifies the type of time for various operations to target/use.
@@ -405,6 +424,7 @@ class SceneV1FeatureSet : public FeatureSetNativeComponent {
 
   // Our subcomponents.
   SceneV1Python* const python;
+  Huffman* const huffman;
 
   // FIXME: should be private.
   int session_count{};

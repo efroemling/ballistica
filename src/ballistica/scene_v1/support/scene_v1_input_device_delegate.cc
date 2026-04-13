@@ -10,12 +10,14 @@
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
 #include "ballistica/scene_v1/connection/connection_to_host.h"
 #include "ballistica/scene_v1/node/player_node.h"
 #include "ballistica/scene_v1/python/class/python_class_input_device.h"
 #include "ballistica/scene_v1/support/client_session_net.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
+#include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
@@ -65,15 +67,16 @@ void SceneV1InputDeviceDelegate::RequestPlayer() {
   BA_PRECONDITION_FATAL(appmode);
 
   if (player_.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "InputDevice::RequestPlayer()"
-                " called with already-existing player");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "InputDevice::RequestPlayer()"
+                         " called with already-existing player");
     return;
   }
   if (remote_player_.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "InputDevice::RequestPlayer() called with already-existing "
-                "remote-player");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "InputDevice::RequestPlayer() called with already-existing "
+        "remote-player");
     return;
   }
 
@@ -101,17 +104,19 @@ void SceneV1InputDeviceDelegate::RequestPlayer() {
 // When the host-session tells us to attach to a player
 void SceneV1InputDeviceDelegate::AttachToLocalPlayer(Player* player) {
   if (player_.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "InputDevice::AttachToLocalPlayer() called with already "
-                "existing "
-                "player");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "InputDevice::AttachToLocalPlayer() called with already "
+        "existing "
+        "player");
     return;
   }
   if (remote_player_.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "InputDevice::AttachToLocalPlayer() called with already "
-                "existing "
-                "remote-player");
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kError,
+        "InputDevice::AttachToLocalPlayer() called with already "
+        "existing "
+        "remote-player");
     return;
   }
   player_ = player;
@@ -122,17 +127,17 @@ void SceneV1InputDeviceDelegate::AttachToRemotePlayer(
     ConnectionToHost* connection_to_host, int remote_player_id) {
   assert(connection_to_host);
   if (player_.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "InputDevice::AttachToRemotePlayer()"
-                " called with already existing "
-                "player");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "InputDevice::AttachToRemotePlayer()"
+                         " called with already existing "
+                         "player");
     return;
   }
   if (remote_player_.exists()) {
-    g_core->Log(LogName::kBa, LogLevel::kError,
-                "InputDevice::AttachToRemotePlayer()"
-                " called with already existing "
-                "remote-player");
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "InputDevice::AttachToRemotePlayer()"
+                         " called with already existing "
+                         "remote-player");
     return;
   }
   remote_player_ = connection_to_host;
@@ -201,7 +206,7 @@ void SceneV1InputDeviceDelegate::ShipBufferIfFull() {
   ConnectionToHost* hc = remote_player_.get();
 
   // Ship the buffer once it gets big enough or once enough time has passed.
-  millisecs_t real_time = g_core->GetAppTimeMillisecs();
+  millisecs_t real_time = g_core->AppTimeMillisecs();
 
   size_t size = remote_input_commands_buffer_.size();
   if (size > 2
@@ -241,16 +246,20 @@ void SceneV1InputDeviceDelegate::InvalidateConnectionToHost() {
   remote_player_.Clear();
 }
 
-auto SceneV1InputDeviceDelegate::GetPublicV1AccountID() const -> std::string {
+auto SceneV1InputDeviceDelegate::GetAccountID() const -> std::string {
   assert(g_base->InLogicThread());
 
-  // This default implementation assumes the device is local
-  // so just returns the locally signed in account's public id.
+  // This default implementation assumes the device is local so just returns
+  // the locally signed in account's id.
 
-  return g_base->plus()->GetPublicV1AccountID();
+  return g_base->Plus()->GetAccountID();
 }
 
 auto SceneV1InputDeviceDelegate::GetPlayerProfiles() const -> PyObject* {
+  return nullptr;
+}
+
+auto SceneV1InputDeviceDelegate::GetClassicPurchases() const -> PyObject* {
   return nullptr;
 }
 

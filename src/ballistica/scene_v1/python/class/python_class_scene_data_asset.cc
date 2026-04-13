@@ -15,7 +15,7 @@ auto PythonClassSceneDataAsset::tp_repr(PythonClassSceneDataAsset* self)
   BA_PYTHON_TRY;
   auto&& m = *self->data_;
   return Py_BuildValue(
-      "s", (std::string("<ba.Data ")
+      "s", (std::string("<bascenev1.Data ")
             + (m.exists() ? ("\"" + m->name() + "\"") : "(empty ref)") + ">")
                .c_str());
   BA_PYTHON_CATCH;
@@ -31,9 +31,7 @@ void PythonClassSceneDataAsset::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a data object.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
-      "Use bascenev1.getdata() to instantiate one.";
+      "Use :meth:`bascenev1.getdata()` to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
@@ -78,7 +76,7 @@ auto PythonClassSceneDataAsset::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
 
   if (!s_create_empty_) {
@@ -115,7 +113,7 @@ auto PythonClassSceneDataAsset::GetValue(PythonClassSceneDataAsset* self)
   // haha really need to rename this class.
   base::DataAsset* datadata = data->data_data();
   datadata->Load();
-  datadata->set_last_used_time(g_core->GetAppTimeMillisecs());
+  datadata->set_last_used_time(g_core->AppTimeMillisecs());
   PyObject* obj = datadata->object().get();
   assert(obj);
   Py_INCREF(obj);

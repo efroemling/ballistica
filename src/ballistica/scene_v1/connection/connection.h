@@ -9,38 +9,40 @@
 
 #include "ballistica/scene_v1/support/player_spec.h"
 #include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/python/python_ref.h"
 
 namespace ballistica::scene_v1 {
 
 // Start near the top of the range to make sure looping works as expected.
 const int kFirstConnectionStateNum = 65520;
 
+// Extra bytes added to message packets.
+const int kMessagePacketHeaderSize = 6;
+
 /// Connection to a remote session; either as a host or client.
 class Connection : public Object {
  public:
   Connection();
 
-  // Send a reliable message to the client
-  // these will always be delivered in the order sent
+  /// Send a reliable message to the client. These will always be delivered
+  /// in the order sent.
   void SendReliableMessage(const std::vector<uint8_t>& data);
 
-  // Send an unreliable message to the client; these are not guaranteed
-  // to be delivered, but when they are, they're delivered properly in order
-  // between other unreliable/reliable messages.
+  /// Send an unreliable message to the client; these are not guaranteed to
+  /// be delivered, but when they are, they're delivered properly in order
+  /// between other unreliable/reliable messages.
   void SendUnreliableMessage(const std::vector<uint8_t>& data);
 
-  // Send a json-based reliable message.
+  /// Send a json-based reliable message.
   void SendJMessage(cJSON* val);
   virtual void Update();
 
-  // Called with raw packets as they come in from the network.
+  /// Called with raw packets as they come in from the network.
   virtual void HandleGamePacket(const std::vector<uint8_t>& buffer);
 
-  // Called when the next in-order message is available.
+  /// Called when the next in-order message is available.
   virtual void HandleMessagePacket(const std::vector<uint8_t>& buffer) = 0;
 
-  // Request an orderly disconnect.
+  /// Request an orderly disconnect.
   virtual void RequestDisconnect() = 0;
 
   auto GetBytesOutPerSecond() const -> int64_t { return last_bytes_out_; }
@@ -103,10 +105,9 @@ class Connection : public Object {
     bool acked;
   };
 
-  // Leaf classes should set this when they start dying.
-  // This prevents any SendGamePacketCompressed() calls from happening.
-  bool connection_dying_{};
-  float current_ping_{};
+  PlayerSpec peer_spec_;  // Name of the account/device on the other end.
+  std::unordered_map<uint16_t, ReliableMessageIn> in_messages_;
+  std::unordered_map<uint16_t, ReliableMessageOut> out_messages_;
   int64_t last_resend_bytes_out_{};
   int64_t last_bytes_out_{};
   int64_t last_bytes_out_compressed_{};
@@ -125,19 +126,21 @@ class Connection : public Object {
   int64_t packet_count_in_{};
   millisecs_t last_average_update_time_{};
   millisecs_t creation_time_{};
-  PlayerSpec peer_spec_;  // Name of the account/device on the other end.
-  std::unordered_map<uint16_t, ReliableMessageIn> in_messages_;
-  std::unordered_map<uint16_t, ReliableMessageOut> out_messages_;
-  bool can_communicate_{};
-  bool errored_{};
   millisecs_t last_prune_time_{};
   millisecs_t last_ack_send_time_{};
   millisecs_t last_ping_measure_time_{};
+  float current_ping_{};
+  int huffman_error_count_{};
   // These are explicitly 16 bit values.
   uint16_t next_out_message_num_ = kFirstConnectionStateNum;
   uint16_t next_out_unreliable_message_num_{};
   uint16_t next_in_message_num_ = kFirstConnectionStateNum;
   uint16_t next_in_unreliable_message_num_{};
+  bool can_communicate_{};
+  bool errored_{};
+  // Leaf classes should set this when they start dying.
+  // This prevents any SendGamePacketCompressed() calls from happening.
+  bool connection_dying_{};
 };
 
 }  // namespace ballistica::scene_v1

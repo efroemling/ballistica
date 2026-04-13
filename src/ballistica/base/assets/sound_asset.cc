@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/core/logging/logging.h"
+
 #if BA_ENABLE_AUDIO
 #if BA_USE_TREMOR_VORBIS
 #include "ivorbisfile.h"  // NOLINT
@@ -19,7 +21,7 @@
 #include "ballistica/base/audio/audio_server.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/platform/platform.h"
 
 // Need to move away from OpenAL on Apple stuff.
 #if __clang__
@@ -63,9 +65,9 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
   f = g_core->platform->FOpen(file_name, "rb");
   if (f == nullptr) {
     fallback = true;
-    g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                std::string("Can't open sound file '") + file_name
-                    + "' for reading...");
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                         std::string("Can't open sound file '") + file_name
+                             + "' for reading...");
 
     // Attempt a fallback standin; if that doesn't work, throw in the towel.
     file_name = "data/global/audio/blank.ogg";
@@ -85,8 +87,9 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
 
   // Try opening the given file
   if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0) {
-    g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                std::string("Error decoding sound file '") + file_name + "'");
+    g_core->logging->Log(
+        LogName::kBaAudio, LogLevel::kError,
+        std::string("Error decoding sound file '") + file_name + "'");
 
     fclose(f);
 
@@ -164,7 +167,7 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
 static void LoadCachedOgg(const char* file_name, std::vector<char>* buffer,
                           ALenum* format, ALsizei* freq) {
   std::string sound_cache_dir =
-      g_core->platform->GetVolatileDataDirectory() + BA_DIRSLASH + "audiocache";
+      g_core->GetCacheDirectory() + BA_DIRSLASH + "audio";
   static bool made_sound_cache_dir = false;
   if (!made_sound_cache_dir) {
     g_core->platform->MakeDir(sound_cache_dir);
@@ -179,7 +182,7 @@ static void LoadCachedOgg(const char* file_name, std::vector<char>* buffer,
 
   // If we have a cache file and it matches the mod time on the ogg, attempt to
   // load it.
-  struct BA_STAT stat_ogg{};
+  struct BA_STAT stat_ogg {};
   time_t ogg_mod_time = 0;
   if (g_core->platform->Stat(file_name, &stat_ogg) == 0) {
     ogg_mod_time = stat_ogg.st_mtime;
@@ -209,9 +212,10 @@ static void LoadCachedOgg(const char* file_name, std::vector<char>* buffer,
       // with invalid formats of 0 once. Report and ignore if we see
       // something like that.
       if (*format != AL_FORMAT_MONO16 && *format != AL_FORMAT_STEREO16) {
-        g_core->Log(LogName::kBaAudio, LogLevel::kError,
-                    std::string("Ignoring invalid audio cache of ") + file_name
-                        + " with format " + std::to_string(*format));
+        g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                             std::string("Ignoring invalid audio cache of ")
+                                 + file_name + " with format "
+                                 + std::to_string(*format));
       } else {
         return;  // SUCCESS!!!!
       }
@@ -289,6 +293,11 @@ void SoundAsset::DoLoad() {
 #if BA_ENABLE_AUDIO
   assert(!g_base->audio_server->paused());
 
+  // Skip actual loading in null device mode.
+  if (g_base->audio_server->using_null_device()) {
+    return;
+  }
+
   // Note: streamed sources create buffers as they're used; not here.
   if (!is_streamed_) {
     // Generate our buffer.
@@ -314,6 +323,11 @@ void SoundAsset::DoUnload() {
   assert(g_base->InAudioThread());
   assert(valid_);
 #if BA_ENABLE_AUDIO
+  // Skip unload in null device mode.
+  if (g_base->audio_server->using_null_device()) {
+    return;
+  }
+
   if (!is_streamed_) {
     assert(buffer_);
     CHECK_AL_ERROR;
@@ -324,7 +338,7 @@ void SoundAsset::DoUnload() {
 }
 
 void SoundAsset::UpdatePlayTime() {
-  last_play_time_ = g_core->GetAppTimeMillisecs();
+  last_play_time_ = g_core->AppTimeMillisecs();
 }
 
 }  // namespace ballistica::base

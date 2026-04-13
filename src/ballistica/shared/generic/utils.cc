@@ -10,7 +10,9 @@
 #include <vector>
 
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/support/base_soft.h"
+#include "ballistica/shared/foundation/exception.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utf8.h"
 #include "ballistica/shared/math/random.h"
@@ -22,7 +24,7 @@ using core::g_core;
 
 #define USE_BAKED_RANDS 1
 
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #endif
 
 #if USE_BAKED_RANDS
@@ -192,28 +194,27 @@ static auto utf8_check_is_valid(const std::string& string) -> bool {
   return true;
 }
 
-// added by ericf from http://stackoverflow.com/questions/17316506/
+// Added by ericf from: http://stackoverflow.com/questions/17316506/
 // strip-invalid-utf8-from-string-in-c-c
-// static std::string correct_non_utf_8(std::string *str) {
 auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
   int i, f_size = static_cast<int>(strlen(str));
   unsigned char c, c2 = 0, c3, c4;
   std::string to;
   to.reserve(static_cast<size_t>(f_size));
 
-  // ok, it seems we're somehow letting some funky utf8 through that's
-  // causing crashes.. for now lets try this all-or-nothing func and return
-  // ascii only if it fails
+  // Ok, it seems we're somehow letting some funky utf8 through that's
+  // causing crashes. For now lets try this all-or-nothing func and return
+  // ascii only if it fails.
   if (!utf8_check_is_valid(str)) {
-    // now strip out anything but normal ascii...
+    // Now strip out anything but normal ascii.
     for (i = 0; i < f_size; i++) {
       c = (unsigned char)(str)[i];
-      if (c < 127) {  // normal ASCII
+      if (c < 127) {  // Normal ASCII.
         to.append(1, static_cast<char>(c));
       }
     }
 
-    // phone home a few times for bad strings
+    // Phone home a few times for bad strings.
     static int logged_count = 0;
     if (logged_count < 10) {
       std::string log_str;
@@ -225,9 +226,10 @@ auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
         }
       }
       logged_count++;
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "GOT INVALID UTF8 SEQUENCE: (" + log_str + "); RETURNING '"
-                      + to + "'; LOC '" + loc + "'");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "GOT INVALID UTF8 SEQUENCE: (" + log_str
+                               + "); RETURNING '" + to + "'; LOC '" + loc
+                               + "'");
     }
 
   } else {
@@ -317,11 +319,11 @@ auto Utils::GetUTF8Value(const char* c) -> uint32_t {
   uint32_t val = u8_nextchar(c, &offset);
 
   // Hack: allow showing euro even if we don't support unicode font rendering.
-  if (!g_buildconfig.enable_os_font_rendering()) {
-    if (val == 8364) {
-      val = 0xE000;
-    }
-  }
+  // if (!g_buildconfig.enable_os_font_rendering()) {
+  //   if (val == 8364) {
+  //     val = 0xE000;
+  //   }
+  // }
   return val;
 }
 
@@ -329,8 +331,9 @@ auto Utils::UTF8FromUnicode(std::vector<uint32_t> unichars) -> std::string {
   int buffer_size = static_cast<int>(unichars.size() * 4 + 1);
   // at most 4 chars per unichar plus ending zero
   std::vector<char> buffer(static_cast<size_t>(buffer_size));
-  int len = u8_toutf8(buffer.data(), buffer_size, unichars.data(),
-                      static_cast<int>(unichars.size()));
+  [[maybe_unused]] int len =
+      u8_toutf8(buffer.data(), buffer_size, unichars.data(),
+                static_cast<int>(unichars.size()));
   assert(len == unichars.size());
   buffer.resize(strlen(buffer.data()) + 1);
   return buffer.data();
@@ -397,14 +400,10 @@ auto Utils::GetRandomNameList() -> const std::list<std::string>& {
     SetRandomNameList(std::list<std::string>(1, "DEFAULT_NAMES"));
   }
 
-  // Clion incorrectly thinks this might be null.
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "NullDereferences"
   if (g_random_names_list != nullptr) {
     return *g_random_names_list;
   }
   throw Exception("random name list uninited");
-#pragma clang diagnostic pop
 }
 
 void Utils::SetRandomNameList(const std::list<std::string>& custom_names) {

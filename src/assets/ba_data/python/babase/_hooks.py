@@ -9,6 +9,7 @@ until it broke at runtime. By instead defining such snippets here and then
 capturing references to them all at launch it is possible to allow linting
 and type-checking magic to happen and most issues will be caught immediately.
 """
+
 # (most of these are self-explanatory)
 # pylint: disable=missing-function-docstring
 from __future__ import annotations
@@ -42,7 +43,7 @@ def get_v2_account_id() -> str | None:
             if account is not None:
                 accountid = account.accountid
                 # (Avoids mypy complaints when plus is not present)
-                assert isinstance(accountid, (str, type(None)))
+                assert isinstance(accountid, str | None)
                 return accountid
         return None
     except Exception:
@@ -174,12 +175,6 @@ def purchase_already_in_progress_error() -> None:
         )
 
 
-def uuid_str() -> str:
-    import uuid
-
-    return str(uuid.uuid4())
-
-
 def orientation_reset_cb_message() -> None:
     from babase._language import Lstr
 
@@ -251,9 +246,9 @@ def unavailable_message() -> None:
 
 
 def set_last_ad_network(sval: str) -> None:
-    if _babase.app.classic is not None:
-        _babase.app.classic.ads.last_ad_network = sval
-        _babase.app.classic.ads.last_ad_network_set_time = time.time()
+    if _babase.app.plus is not None:
+        _babase.app.plus.ads.last_ad_network = sval
+        _babase.app.plus.ads.last_ad_network_set_time = time.time()
 
 
 def google_play_purchases_not_available_message() -> None:
@@ -305,8 +300,8 @@ def ui_remote_press() -> None:
 
 
 def remove_in_game_ads_message() -> None:
-    if _babase.app.classic is not None:
-        _babase.app.classic.ads.do_remove_in_game_ads_message()
+    if _babase.app.plus is not None:
+        _babase.app.plus.ads.do_remove_in_game_ads_message()
 
 
 def do_quit() -> None:
@@ -446,7 +441,7 @@ def copy_dev_console_history() -> None:
         return
 
     # This requires us to be running with a log-handler set up.
-    envconfig = baenv.get_config()
+    envconfig = baenv.get_env_config()
     if envconfig.log_handler is None:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(
@@ -467,3 +462,86 @@ def copy_dev_console_history() -> None:
     _babase.clipboard_set_text('\n'.join(lines))
     _babase.screenmessage(Lstr(resource='copyConfirmText'), color=(0, 1, 0))
     _babase.getsimplesound('gunCocking').play()
+
+
+def start_native_repl() -> bool:
+    """Called when the native Python REPL is starting up."""
+    from babase._logging import balog
+
+    try:
+        _do_start_native_repl()
+        return True
+    except Exception:
+        balog.warning('Unable to start native repl; will fall back to legacy.')
+    return False
+
+
+def _do_start_native_repl() -> None:
+    import sys
+    import importlib
+    import readline
+    import rlcompleter
+
+    from efro.terminal import Clr
+    from babase._logging import balog
+
+    main_globals = sys.modules['__main__'].__dict__
+
+    default_imports = _babase.app.get_convenience_imports()
+    for module_name, alias in default_imports.items():
+        try:
+            mod = importlib.import_module(module_name)
+            if alias is not None:
+                main_globals[alias] = mod
+        except Exception:
+            balog.exception('Error in convenience import of %s.', module_name)
+
+    if default_imports:
+        parts = [
+            f'{name} as {alias}' if alias is not None else name
+            for name, alias in default_imports.items()
+        ]
+        sep = ', '
+        print(
+            f'{Clr.SBLK}Convenience Imports: {sep.join(parts)}{Clr.RST}',
+            file=sys.stderr,
+        )
+
+    readline.set_completer(rlcompleter.Completer(main_globals).complete)
+    readline.parse_and_bind('tab: complete')
+
+
+def v2_auth_request(global_app_instance_id: str) -> None | tuple[bool, str]:
+    """Kick off or process v2 auth requests.
+
+    Return None if no results or (success, error/token)
+    """
+    assert _babase.app.plus is not None
+    out: None | tuple[bool, str] = _babase.app.plus.accounts.auth_request(
+        global_app_instance_id
+    )
+    return out
+
+
+def v2_auth_data(
+    token: str,
+) -> None | tuple[str, str, dict, list[str] | None]:
+    """Look up autheneticated v2 account data via a token."""
+    assert _babase.in_logic_thread()
+
+    classic = _babase.app.classic
+    if classic is None:
+        return None
+
+    now = time.monotonic()
+    authdata = classic.v2_auth_datas.get(token)
+    if authdata is None or authdata.expire_time <= now:
+        return None
+
+    # Success!
+    return (
+        authdata.account_id,
+        authdata.account_tag,
+        authdata.player_profiles,
+        authdata.classic_purchases,
+    )

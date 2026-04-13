@@ -9,6 +9,8 @@
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/python/class/python_class_session_player.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
@@ -19,7 +21,7 @@ namespace ballistica::scene_v1 {
 
 Player::Player(int id_in, HostSession* host_session)
     : id_(id_in),
-      creation_time_(g_core->GetAppTimeMillisecs()),
+      creation_time_(g_core->AppTimeMillisecs()),
       host_session_(host_session) {
   assert(host_session);
   assert(g_base->InLogicThread());
@@ -40,7 +42,7 @@ Player::~Player() {
 }
 
 auto Player::GetAge() const -> millisecs_t {
-  return g_core->GetAppTimeMillisecs() - creation_time_;
+  return g_core->AppTimeMillisecs() - creation_time_;
 }
 
 auto Player::GetName(bool full, bool icon) const -> std::string {
@@ -66,18 +68,20 @@ auto Player::GetHostActivity() const -> HostActivity* {
 void Player::SetHostActivity(HostActivity* a) {
   assert(g_base->InLogicThread());
 
-  // Make sure we get pulled out of one activity before being added to another.
+  // Make sure we get pulled out of one activity before being added to
+  // another.
   if (a && in_activity_) {
     std::string old_name =
         host_activity_.exists()
-            ? PythonRef(host_activity_->GetPyActivity(), PythonRef::kAcquire)
-                  .Str()
+            ? PythonRef::StolenSoft(host_activity_->GetPyActivity()).Str()
             : "<nullptr>";
-    std::string new_name =
-        PythonRef(a->GetPyActivity(), PythonRef::kAcquire).Str();
+
+    // GetPyActivity returns a new ref or nullptr.
+    auto py_activity{PythonRef::StolenSoft(a->GetPyActivity())};
+
     BA_LOG_PYTHON_TRACE_ONCE(
         "Player::SetHostActivity() called when already in an activity (old="
-        + old_name + ", new=" + new_name + ")");
+        + old_name + ", new=" + py_activity.Str() + ")");
   } else if (!a && !in_activity_) {
     BA_LOG_PYTHON_TRACE_ONCE(
         "Player::SetHostActivity() called with nullptr when not in an "
@@ -112,11 +116,23 @@ void Player::SetPyTeam(PyObject* team) {
 }
 
 auto Player::GetPyTeam() -> PyObject* {
-  PyObject* obj = py_team_weak_ref_.get();
-  if (!obj) {
-    return Py_None;
+  auto* ref_obj{py_team_weak_ref_.get()};
+  if (!ref_obj) {
+    return nullptr;
   }
-  return PyWeakref_GetObject(obj);
+  PyObject* obj{};
+  int result = PyWeakref_GetRef(ref_obj, &obj);
+  // Return new obj ref (result 1) or nullptr for dead objs (result 0).
+  if (result == 0 || result == 1) {
+    return obj;
+  }
+  // Something went wrong and an exception is set. We don't expect this to
+  // ever happen so currently just providing a simple error msg.
+  assert(result == -1);
+  PyErr_Clear();
+  g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                       "Player::GetPyTeam(): error getting weakref obj.");
+  return nullptr;
 }
 
 void Player::SetPyCharacter(PyObject* character) {
@@ -406,10 +422,10 @@ void Player::set_input_device_delegate(
   input_device_delegate_ = input_device;
 }
 
-auto Player::GetPublicV1AccountID() const -> std::string {
+auto Player::GetAccountID() const -> std::string {
   assert(g_base->InLogicThread());
   if (input_device_delegate_.exists()) {
-    return input_device_delegate_->GetPublicV1AccountID();
+    return input_device_delegate_->GetAccountID();
   }
   return "";
 }

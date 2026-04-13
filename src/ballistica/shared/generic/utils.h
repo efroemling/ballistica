@@ -11,7 +11,7 @@
 
 // Need platform-specific headers here so we can inline calls to htonl/etc.
 // (perhaps should move those functions to their own file?)
-#if BA_OSTYPE_WINDOWS
+#if BA_PLATFORM_WINDOWS
 #include <winsock2.h>
 #else
 #include <netinet/in.h>
@@ -376,7 +376,6 @@ class Utils {
   static float precalc_rands_1_[];
   static float precalc_rands_2_[];
   static float precalc_rands_3_[];
-  // std::unique_ptr<Huffman> huffman_;
 };
 
 }  // namespace ballistica

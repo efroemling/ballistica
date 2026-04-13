@@ -7,6 +7,7 @@
 #include "ballistica/base/input/device/test_input.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/classic/classic.h"
+#include "ballistica/core/core.h"
 
 namespace ballistica::classic {
 
@@ -53,7 +54,7 @@ void StressTest::ProcessInputs(int player_count) {
   assert(g_base->InLogicThread());
   assert(player_count >= 0);
 
-  millisecs_t time = g_core->GetAppTimeMillisecs();
+  millisecs_t time = g_core->AppTimeMillisecs();
 
   // FIXME: If we don't check for stress_test_last_leave_time_ we totally
   //  confuse the game.. need to be able to survive that.

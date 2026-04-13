@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to player profiles."""
+
 from __future__ import annotations
 
 import random
@@ -69,7 +70,11 @@ def get_player_profile_colors(
 
     # Special case: when being asked for a random color in kiosk mode,
     # always return default purple.
-    if (babase.app.env.demo or babase.app.env.arcade) and profilename is None:
+
+    variant = babase.app.env.variant
+    vart = type(variant)
+
+    if (variant is vart.ARCADE or variant is vart.DEMO) and profilename is None:
         color = (0.5, 0.4, 1.0)
         highlight = (0.4, 0.4, 0.5)
     else:

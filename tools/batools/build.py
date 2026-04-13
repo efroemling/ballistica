@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import os
 import sys
+import socket
 import subprocess
 from enum import Enum
-from pathlib import Path
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_never
 
@@ -45,13 +45,12 @@ class PrefabPlatform(Enum):
     MAC_X86_64 = 'mac_x86_64'
     MAC_ARM64 = 'mac_arm64'
     WINDOWS_X86 = 'windows_x86'
+    WINDOWS_X86_64 = 'windows_x86_64'
     LINUX_X86_64 = 'linux_x86_64'
     LINUX_ARM64 = 'linux_arm64'
 
-    @classmethod
-    def get_current(
-        cls, wsl_targets_windows: bool | None = None
-    ) -> PrefabPlatform:
+    @staticmethod
+    def get_current(wsl_targets_windows: bool | None = None) -> PrefabPlatform:
         """Get an identifier for the platform running this build.
 
         Pass a bool `wsl_targets_windows` value to cause WSL to target
@@ -63,6 +62,8 @@ class PrefabPlatform(Enum):
         """
         import platform
 
+        cls = PrefabPlatform
+
         if wsl_targets_windows is None:
             wsl_targets_windows = (
                 os.environ.get('BA_WSL_TARGETS_WINDOWS', '0') == '1'
@@ -73,7 +74,9 @@ class PrefabPlatform(Enum):
 
         if system == 'Darwin':
             if machine == 'x86_64':
-                if bool(True):
+                # Had turned these off but flipping them back on for
+                # now.
+                if bool(False):
                     raise CleanError(
                         'Prefab builds now require an Apple Silicon mac.'
                     )
@@ -86,13 +89,14 @@ class PrefabPlatform(Enum):
                 f' {machine}.'
             )
         if system == 'Linux':
-            # If it looks like we're in Windows Subsystem for Linux, we may
-            # want to operate on Windows versions.
+            # If it looks like we're in Windows Subsystem for Linux, we
+            # may want to operate on Windows versions.
             if wsl_targets_windows:
                 if 'microsoft' in platform.uname().release.lower():
                     if machine == 'x86_64':
-                        # Currently always targeting 32 bit for prefab stuff.
-                        return cls.WINDOWS_X86
+                        # Currently always targeting 64 bit for prefab
+                        # stuff.
+                        return cls.WINDOWS_X86_64
                     # TODO: add support for arm windows
                     raise RuntimeError(
                         f'make_prefab: unsupported win machine type: {machine}.'
@@ -141,7 +145,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             srcpaths=[
                 'Makefile',
                 'src/meta',
-                'src/ballistica/shared/foundation/types.h',
+                'src/ballistica/shared/ballistica.h',
                 '.efrocachemap',
             ],
             # Our meta Makefile targets generally don't list tools
@@ -246,12 +250,8 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 return False
             return True
 
-        LazyBuildContext(
+        ctx = LazyBuildContext(
             target=target,
-            # Even though this category currently doesn't run any clean
-            # commands, going to restrict to one use at a time for now
-            # in case we want to add that.
-            # buildlockname=category.value,
             srcpaths=[
                 'Makefile',
                 'tools',
@@ -268,7 +268,20 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             ],
             command=command,
             filefilter=_filefilter,
-        ).run()
+        )
+
+        # TEMP HACK - rebuild with any src-master assets change on my
+        # work machine. This should go away once we've migrated to cloud
+        # assets.
+        master_assets_dir = '/Users/ericf/Documents/ballisticakit_master_assets'
+        hostname = socket.gethostname()
+        if (
+            os.path.exists(master_assets_dir)
+            and hostname == 'MacBook-Fro.local'
+        ):
+            ctx.srcpaths.append(master_assets_dir)
+
+        ctx.run()
 
     # Dummymodule builds.
     elif category is LazyBuildCategory.DUMMYMODULES:
@@ -354,7 +367,7 @@ def checkenv() -> None:
     # Make sure they've got cmake.
     #
     # UPDATE - don't want to do this since they might just be using
-    # prefab builds.
+    # prefab builds, in which case they won't need cmake.
     if bool(False):
         if (
             subprocess.run(
@@ -365,6 +378,18 @@ def checkenv() -> None:
             raise CleanError(
                 'cmake is required; please install it via apt, brew, etc.'
             )
+
+    # Make sure they've got zstd (we're starting to use that for various
+    # compression purposes).
+    if (
+        subprocess.run(
+            ['which', 'zstd'], check=False, capture_output=True
+        ).returncode
+        != 0
+    ):
+        raise CleanError(
+            'zstd is required; please install it via apt, brew, etc.'
+        )
 
     # Make sure they've got curl.
     if (
@@ -500,8 +525,8 @@ def _get_server_config_template_toml(projroot: str) -> str:
     cfg.clean_exit_minutes = 60
     cfg.unclean_exit_minutes = 90
     cfg.idle_exit_minutes = 20
-    cfg.admins = ['pb-yOuRAccOuNtIdHErE', 'pb-aNdMayBeAnotherHeRE']
-    cfg.protocol_version = 35
+    cfg.admins = ['a-YOUR-ID-HERE', 'a-ANOTHER-ID-HERE']
+    cfg.protocol_version = 37
     cfg.session_max_players_override = 8
     cfg.playlist_inline = []
     cfg.team_names = ('Red', 'Blue')
@@ -575,13 +600,44 @@ def filter_server_config_toml(projroot: str, infilepath: str) -> str:
     )
 
 
+def _cmake_cache_has_missing_cellar_path(dirname: str) -> bool:
+    """Return whether any Homebrew Cellar paths in a cmake cache are gone.
+
+    CMake resolves pkg-config results to versioned Cellar paths at configure
+    time. When homebrew updates a package the old versioned path is removed,
+    causing linker errors on the next build. Scanning CMakeCache.txt for any
+    path matching ``*/Cellar/<pkg>/<ver>`` and checking whether it still
+    exists on disk catches all affected packages automatically without
+    needing to enumerate them individually. No-op on Linux, where packages
+    live at stable paths with no Cellar directories.
+    """
+    import re
+
+    cmake_cache_path = os.path.join(dirname, 'CMakeCache.txt')
+    if not os.path.isfile(cmake_cache_path):
+        return False
+    with open(cmake_cache_path, encoding='utf-8') as cache_file:
+        cache_text = cache_file.read()
+    for cellar_path in sorted(
+        set(re.findall(r'/[^\s;]+/Cellar/[^/\s;]+/[^/\s;]+', cache_text))
+    ):
+        if not os.path.isdir(cellar_path):
+            print(
+                f'{Clr.BLU}Homebrew Cellar path no longer exists:'
+                f' {cellar_path}; package was likely updated.'
+                f' Clearing existing build at "{dirname}" to'
+                f' avoid stale cmake cache linker errors.{Clr.RST}'
+            )
+            return True
+    return False
+
+
 def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     """Create a dir, recreating it when cmake/python/etc. versions change.
 
     Useful to prevent builds from breaking when cmake or other components
     are updated.
     """
-    # pylint: disable=too-many-locals
     import json
 
     from efrotools.pyver import PYVER
@@ -645,13 +701,6 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     )
     entries.append(Entry('mac_xcode_sdks', mac_xcode_sdks))
 
-    # ...or if homebrew SDL.h resolved path changes (happens for updates)
-    sdl_h_path = Path('/opt/homebrew/include/SDL2/SDL.h')
-    homebrew_sdl_h_resolved: str = (
-        str(sdl_h_path.resolve()) if sdl_h_path.exists() else ''
-    )
-    entries.append(Entry('homebrew_sdl_h_resolved', homebrew_sdl_h_resolved))
-
     # Ok; do the thing.
     verfilename = os.path.join(dirname, '.ba_cmake_env')
     title = 'cmake_prep_dir'
@@ -676,6 +725,9 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
             )
             changed = True
             break
+
+    if not changed:
+        changed = _cmake_cache_has_missing_cellar_path(dirname)
 
     if changed:
         if verbose:

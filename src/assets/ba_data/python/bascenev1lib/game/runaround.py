@@ -72,7 +72,6 @@ class Point(Enum):
 class Spawn:
     """Defines a bot spawn event."""
 
-    # noinspection PyUnresolvedReferences
     type: type[SpazBot]
     path: int = 0
     point: Point | None = None
@@ -198,6 +197,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def on_transition_in(self) -> None:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         super().on_transition_in()
         self._scoreboard = Scoreboard(
             label=bs.Lstr(resource='scoreText'), score_split=0.5
@@ -487,9 +488,9 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         assert bs.app.classic is not None
         uiscale = bs.app.ui_v1.uiscale
         l_offs = (
-            -80
+            -120
             if uiscale is bs.UIScale.SMALL
-            else -40 if uiscale is bs.UIScale.MEDIUM else 0
+            else -60 if uiscale is bs.UIScale.MEDIUM else -30
         )
 
         self._lives_bg = bs.NodeActor(
@@ -575,7 +576,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             for _i in range(4):
                 bs.timer(
                     delay,
-                    bs.Call(
+                    bs.CallStrict(
                         _safesetattr,
                         self._lives_text.node,
                         'color',
@@ -586,12 +587,14 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 assert self._lives_bg.node
                 bs.timer(
                     delay,
-                    bs.Call(_safesetattr, self._lives_bg.node, 'opacity', 0.5),
+                    bs.CallStrict(
+                        _safesetattr, self._lives_bg.node, 'opacity', 0.5
+                    ),
                 )
                 delay += 0.125
                 bs.timer(
                     delay,
-                    bs.Call(
+                    bs.CallStrict(
                         _safesetattr,
                         self._lives_text.node,
                         'color',
@@ -600,12 +603,14 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 )
                 bs.timer(
                     delay,
-                    bs.Call(_safesetattr, self._lives_bg.node, 'opacity', 1.0),
+                    bs.CallStrict(
+                        _safesetattr, self._lives_bg.node, 'opacity', 1.0
+                    ),
                 )
                 delay += 0.125
             bs.timer(
                 delay,
-                bs.Call(
+                bs.CallStrict(
                     _safesetattr,
                     self._lives_text.node,
                     'color',
@@ -615,6 +620,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def spawn_player(self, player: Player) -> bs.Actor:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         pos = (
             self._spawn_center[0] + random.uniform(-1.5, 1.5),
             self._spawn_center[1],
@@ -663,7 +670,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             for i in range(len(points)):
                 bs.timer(
                     1.0 + i * 0.5,
-                    bs.Call(
+                    bs.CallStrict(
                         self._drop_powerup, i, force_first if i == 0 else None
                     ),
                 )
@@ -692,7 +699,9 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def end_game(self) -> None:
-        bs.pushcall(bs.Call(self.do_end, 'defeat'))
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
+        bs.pushcall(bs.CallStrict(self.do_end, 'defeat'))
         bs.setmusic(None)
         self._player_death_sound.play()
 
@@ -724,7 +733,6 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         )
 
     def _update_waves(self) -> None:
-        # pylint: disable=too-many-branches
 
         # If we have no living bots, go to the next wave.
         if (
@@ -749,7 +757,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 bs.timer(0, self._cashregistersound.play)
                 bs.timer(
                     base_delay,
-                    bs.Call(self._award_time_bonus, self._time_bonus),
+                    bs.CallStrict(self._award_time_bonus, self._time_bonus),
                 )
                 base_delay += 1.0
 
@@ -795,7 +803,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
                 bs.cameraflash()
                 bs.setmusic(bs.MusicType.VICTORY)
                 self._game_over = True
-                bs.timer(base_delay, bs.Call(self.do_end, 'victory'))
+                bs.timer(base_delay, bs.CallStrict(self.do_end, 'victory'))
                 return
 
             self._wavenum += 1
@@ -885,10 +893,10 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         )
 
     def _start_next_wave(self) -> None:
+        # pylint: disable=too-many-statements
         # FIXME: Need to split this up.
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         self.show_zoom_message(
             bs.Lstr(
                 value='${A} ${B}',
@@ -1097,7 +1105,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             delay = base_delay
             delay /= self._get_bot_speed(bot_type)
             t_sec += delay * 0.5
-            tcall = bs.Call(
+            tcall = bs.CallStrict(
                 self.add_bot_at_point,
                 point,
                 bot_type,
@@ -1214,7 +1222,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             spaztype,
             pos=pos,
             spawn_time=spawn_time,
-            on_spawn_call=bs.Call(self._on_bot_spawn, path),
+            on_spawn_call=bs.CallPartial(self._on_bot_spawn, path),
         )
 
     def _update_time_bonus(self) -> None:
@@ -1325,6 +1333,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     @override
     def handlemessage(self, msg: Any) -> Any:
+        # (Pylint Bug?) pylint: disable=missing-function-docstring
+
         if isinstance(msg, bs.PlayerScoredMessage):
             self._score += msg.score
             self._update_scores()
@@ -1340,7 +1350,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             assert self.initialplayerinfos is not None
             respawn_time = 2.0 + len(self.initialplayerinfos) * 1.0
             player.respawn_timer = bs.Timer(
-                respawn_time, bs.Call(self.spawn_player_if_exists, player)
+                respawn_time, bs.CallStrict(self.spawn_player_if_exists, player)
             )
             player.respawn_icon = RespawnIcon(player, respawn_time)
 

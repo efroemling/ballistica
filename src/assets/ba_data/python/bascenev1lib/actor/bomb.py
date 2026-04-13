@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, TypeVar, override
+from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 
@@ -17,121 +17,118 @@ from bascenev1lib.gameutils import SharedObjects
 if TYPE_CHECKING:
     from typing import Any, Sequence, Callable
 
-PlayerT = TypeVar('PlayerT', bound='bs.Player')
-
 
 class BombFactory:
-    """Wraps up media and other resources used by bs.Bombs.
+    """Wraps up media and other resources used by the
+    :class:`~bascenev1lib.actor.bomb.Bomb` actor.
 
-    Category: **Gameplay Classes**
-
-    A single instance of this is shared between all bombs
-    and can be retrieved via bascenev1lib.actor.bomb.get_factory().
+    A single instance of this is shared between all bombs and can be
+    retrieved via the static :meth:`BombFactory.get()` method.
     """
 
+    #: The mesh used for standard or ice bombs.
     bomb_mesh: bs.Mesh
-    """The bs.Mesh of a standard or ice bomb."""
 
+    #: The mesh used for sticky-bombs.
     sticky_bomb_mesh: bs.Mesh
-    """The bs.Mesh of a sticky-bomb."""
 
+    #: The mesh used for impact-bombs.
     impact_bomb_mesh: bs.Mesh
-    """The bs.Mesh of an impact-bomb."""
 
+    #: The mesh used for land-mines.
     land_mine_mesh: bs.Mesh
-    """The bs.Mesh of a land-mine."""
 
+    #: The mesh used of a tnt box.
     tnt_mesh: bs.Mesh
-    """The bs.Mesh of a tnt box."""
 
+    #: The texture used for regular bombs.
     regular_tex: bs.Texture
-    """The bs.Texture for regular bombs."""
 
+    #: The bs.Texture for ice bombs.
     ice_tex: bs.Texture
-    """The bs.Texture for ice bombs."""
 
+    #: The bs.Texture for sticky bombs.
     sticky_tex: bs.Texture
-    """The bs.Texture for sticky bombs."""
 
+    #: The bs.Texture for impact bombs.
     impact_tex: bs.Texture
-    """The bs.Texture for impact bombs."""
 
+    #: The texture for impact bombs with lights lit.
     impact_lit_tex: bs.Texture
-    """The bs.Texture for impact bombs with lights lit."""
 
+    #: The texture for land-mines.
     land_mine_tex: bs.Texture
-    """The bs.Texture for land-mines."""
 
+    #: The texture for land-mines with the light lit.
     land_mine_lit_tex: bs.Texture
-    """The bs.Texture for land-mines with the light lit."""
 
+    #: The texture for tnt boxes.
     tnt_tex: bs.Texture
-    """The bs.Texture for tnt boxes."""
 
+    #: The sound for the hiss sound an ice bomb makes.
     hiss_sound: bs.Sound
-    """The bs.Sound for the hiss sound an ice bomb makes."""
 
+    #: The sound for random falling debris after an explosion.
     debris_fall_sound: bs.Sound
-    """The bs.Sound for random falling debris after an explosion."""
 
+    #: A sound for random wood debris falling after an explosion.
     wood_debris_fall_sound: bs.Sound
-    """A bs.Sound for random wood debris falling after an explosion."""
 
+    #: A tuple of sounds for explosions.
     explode_sounds: Sequence[bs.Sound]
-    """A tuple of bs.Sound-s for explosions."""
 
+    #: A sound of an ice bomb freezing something.
     freeze_sound: bs.Sound
-    """A bs.Sound of an ice bomb freezing something."""
 
+    #: A sound of a burning fuse.
     fuse_sound: bs.Sound
-    """A bs.Sound of a burning fuse."""
 
+    #: A sound for an activating impact bomb.
     activate_sound: bs.Sound
-    """A bs.Sound for an activating impact bomb."""
 
+    #: A sound for an impact bomb about to explode due to time-out.
     warn_sound: bs.Sound
-    """A bs.Sound for an impact bomb about to explode due to time-out."""
 
+    #: A material applied to all bombs.
     bomb_material: bs.Material
-    """A bs.Material applied to all bombs."""
 
+    #: A material that generates standard bomb noises on impacts, etc.
     normal_sound_material: bs.Material
-    """A bs.Material that generates standard bomb noises on impacts, etc."""
 
+    #: A material that makes 'splat' sounds and makes collisions softer.
     sticky_material: bs.Material
-    """A bs.Material that makes 'splat' sounds and makes collisions softer."""
 
+    #: A material that keeps land-mines from blowing up. Applied to
+    #: land-mines when they are created to allow land-mines to touch
+    #: without exploding."""
     land_mine_no_explode_material: bs.Material
-    """A bs.Material that keeps land-mines from blowing up.
-       Applied to land-mines when they are created to allow land-mines to
-       touch without exploding."""
 
+    #: A bs.Material applied to activated land-mines that causes them to
+    #: explode on impact."""
     land_mine_blast_material: bs.Material
-    """A bs.Material applied to activated land-mines that causes them to
-       explode on impact."""
 
+    #: A material applied to activated impact-bombs that causes them
+    #: to explode on impact."""
     impact_blast_material: bs.Material
-    """A bs.Material applied to activated impact-bombs that causes them to
-       explode on impact."""
 
     blast_material: bs.Material
-    """A bs.Material applied to bomb blast geometry which triggers impact
-       events with what it touches."""
+    #: A bs.Material applied to bomb blast geometry which triggers impact
+    #: events with what it touches.
 
+    #: A tuple of sounds for when bombs hit the ground.
     dink_sounds: Sequence[bs.Sound]
-    """A tuple of bs.Sound-s for when bombs hit the ground."""
 
+    #: The sound for a squish made by a sticky bomb hitting something.
     sticky_impact_sound: bs.Sound
-    """The bs.Sound for a squish made by a sticky bomb hitting something."""
 
+    #: The sound for a rolling bomb.
     roll_sound: bs.Sound
-    """bs.Sound for a rolling bomb."""
 
     _STORENAME = bs.storagename()
 
     @classmethod
     def get(cls) -> BombFactory:
-        """Get/create a shared bascenev1lib.actor.bomb.BombFactory object."""
+        """Create and/or return the single shared instance of this class."""
         activity = bs.getactivity()
         factory = activity.customdata.get(cls._STORENAME)
         if factory is None:
@@ -141,7 +138,7 @@ class BombFactory:
         return factory
 
     def random_explode_sound(self) -> bs.Sound:
-        """Return a random explosion bs.Sound from the factory."""
+        """Return a random explosion sound from the factory."""
         return self.explode_sounds[random.randrange(len(self.explode_sounds))]
 
     def __init__(self) -> None:
@@ -342,11 +339,10 @@ class Blast(bs.Actor):
         hit_type: str = 'explosion',
         hit_subtype: str = 'normal',
     ):
+        # pylint: disable=too-many-statements
         """Instantiate with given values."""
 
         # bah; get off my lawn!
-        # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
 
         super().__init__()
 
@@ -710,9 +706,7 @@ class Bomb(bs.Actor):
     """
 
     # Ew; should try to clean this up later.
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
-    # pylint: disable=too-many-statements
 
     def __init__(
         self,
@@ -725,6 +719,7 @@ class Bomb(bs.Actor):
         source_player: bs.Player | None = None,
         owner: bs.Node | None = None,
     ):
+        # pylint: disable=too-many-statements
         """Create a new Bomb.
 
         bomb_type can be 'ice','impact','land_mine','normal','sticky', or
@@ -867,10 +862,11 @@ class Bomb(bs.Actor):
                 },
             )
             self.arm_timer = bs.Timer(
-                0.2, bs.WeakCall(self.handlemessage, ArmMessage())
+                0.2, bs.WeakCallStrict(self.handlemessage, ArmMessage())
             )
             self.warn_timer = bs.Timer(
-                fuse_time - 1.7, bs.WeakCall(self.handlemessage, WarnMessage())
+                fuse_time - 1.7,
+                bs.WeakCallStrict(self.handlemessage, WarnMessage()),
             )
 
         else:
@@ -921,7 +917,8 @@ class Bomb(bs.Actor):
         if self.bomb_type not in ('land_mine', 'tnt'):
             assert fuse_time is not None
             bs.timer(
-                fuse_time, bs.WeakCall(self.handlemessage, ExplodeMessage())
+                fuse_time,
+                bs.WeakCallStrict(self.handlemessage, ExplodeMessage()),
             )
 
         bs.animate(
@@ -930,7 +927,9 @@ class Bomb(bs.Actor):
             {0: 0, 0.2: 1.3 * self.scale, 0.26: self.scale},
         )
 
-    def get_source_player(self, playertype: type[PlayerT]) -> PlayerT | None:
+    def get_source_player[PlayerT: bs.Player](
+        self, playertype: type[PlayerT]
+    ) -> PlayerT | None:
         """Return the source-player if one exists and is the provided type."""
         player: Any = self._source_player
         return (
@@ -977,7 +976,7 @@ class Bomb(bs.Actor):
     def _handle_dropped(self) -> None:
         if self.bomb_type == 'land_mine':
             self.arm_timer = bs.Timer(
-                1.25, bs.WeakCall(self.handlemessage, ArmMessage())
+                1.25, bs.WeakCallStrict(self.handlemessage, ArmMessage())
             )
 
         # Once we've thrown a sticky bomb we can stick to it.
@@ -1029,7 +1028,7 @@ class Bomb(bs.Actor):
 
         # We blew up so we need to go away.
         # NOTE TO SELF: do we actually need this delay?
-        bs.timer(0.001, bs.WeakCall(self.handlemessage, bs.DieMessage()))
+        bs.timer(0.001, bs.WeakCallStrict(self.handlemessage, bs.DieMessage()))
 
     def _handle_warn(self) -> None:
         if self.texture_sequence and self.node:
@@ -1065,7 +1064,7 @@ class Bomb(bs.Actor):
             # We now make it explodable.
             bs.timer(
                 0.25,
-                bs.WeakCall(
+                bs.WeakCallStrict(
                     self._add_material, factory.land_mine_blast_material
                 ),
             )
@@ -1082,7 +1081,7 @@ class Bomb(bs.Actor):
             )
             bs.timer(
                 0.25,
-                bs.WeakCall(
+                bs.WeakCallStrict(
                     self._add_material, factory.land_mine_blast_material
                 ),
             )
@@ -1122,7 +1121,7 @@ class Bomb(bs.Actor):
 
             bs.timer(
                 0.1 + random.random() * 0.1,
-                bs.WeakCall(self.handlemessage, ExplodeMessage()),
+                bs.WeakCallStrict(self.handlemessage, ExplodeMessage()),
             )
         assert self.node
         self.node.handlemessage(
@@ -1191,7 +1190,7 @@ class TNTSpawner:
 
         # Go with slightly more than 1 second to avoid timer stacking.
         self._update_timer = bs.Timer(
-            1.1, bs.WeakCall(self._update), repeat=True
+            1.1, bs.WeakCallStrict(self._update), repeat=True
         )
 
     def _update(self) -> None:

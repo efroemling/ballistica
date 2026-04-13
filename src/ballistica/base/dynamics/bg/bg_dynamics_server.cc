@@ -16,7 +16,7 @@
 #include "ballistica/base/dynamics/collision_cache.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/core/platform/core_platform.h"  // IWYU pragma: keep.
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -96,7 +96,7 @@ class BGDynamicsServer::Terrain {
     if (collision_mesh_) {
       Object::Ref<CollisionMeshAsset>* ref = collision_mesh_;
       g_base->logic->event_loop()->PushCall([ref] {
-        (**ref).set_last_used_time(g_core->GetAppTimeMillisecs());
+        (**ref).set_last_used_time(g_core->AppTimeMillisecs());
         delete ref;
       });
       collision_mesh_ = nullptr;
@@ -234,8 +234,8 @@ class BGDynamicsServer::Tendril {
   };
 
   explicit Tendril(BGDynamicsServer* t)
-      : has_updated_{false},
-        controller_{nullptr},
+      : has_updated_{},
+        controller_{},
         emitting_{true},
         emit_rate_{0.8f + 0.4f * RandomFloat()},
         birth_time_{t->time_ms()},
@@ -1047,27 +1047,17 @@ void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
         static_cast<int>(static_cast<float>(tendril_thin_max) * 0.6f);
     chunk_max = static_cast<int>(static_cast<float>(chunk_max) * 0.75f);
   } else {
-// (higher-quality)
-
-// On k1 android let's ramp things up even more.
-#if BA_OSTYPE_ANDROID
-    if (g_core->platform->is_tegra_k1()) {
-      chunk_max = static_cast<int>(static_cast<float>(chunk_max) * 1.5f);
-      emit_count = static_cast<int>(static_cast<float>(emit_count) * 1.5f);
-      tendril_thin_max =
-          static_cast<int>(static_cast<float>(tendril_thin_max) * 1.25f);
-    }
-#endif  // BA_OSTYPE_ANDROID
+    // (higher-quality)
 
 #if BA_RIFT_BUILD
-    // rift build is gonna be running on beefy hardware; let's go crazy
+    // Rift build is gonna be running on beefy hardware; let's go crazy
     // here..
     chunk_max *= 2.5f;
     emit_count *= 2.5f;
     tendril_thin_max *= 2.5f;
 #endif
 
-#if BA_DEMO_BUILD
+#if BA_VARIANT_DEMO
     // lets beef up our demo kiosk build too.. what the heck.
     chunk_max *= 2.5f;
     emit_count *= 2.5f;

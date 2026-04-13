@@ -34,9 +34,7 @@ void PythonClassSceneCollisionMesh::SetupType(PyTypeObject* cls) {
   cls->tp_doc =
       "A reference to a collision-mesh.\n"
       "\n"
-      "Category: **Asset Classes**\n"
-      "\n"
-      "Use bascenev1.getcollisionmesh() to instantiate one.";
+      "Use :meth:`bascenev1.getcollisionmesh()` to instantiate one.";
   cls->tp_repr = (reprfunc)tp_repr;
   cls->tp_new = tp_new;
   cls->tp_dealloc = (destructor)tp_dealloc;
@@ -83,7 +81,7 @@ auto PythonClassSceneCollisionMesh::tp_new(PyTypeObject* type, PyObject* args,
     throw Exception(
         "ERROR: " + std::string(type_obj.tp_name)
         + " objects must only be created in the logic thread (current is ("
-        + CurrentThreadName() + ").");
+        + g_core->CurrentThreadName() + ").");
   }
 
   if (!s_create_empty_) {

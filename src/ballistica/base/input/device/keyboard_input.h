@@ -17,8 +17,8 @@ class KeyboardInput : public InputDevice {
   explicit KeyboardInput(KeyboardInput* parent);
   ~KeyboardInput() override;
   auto HandleKey(const SDL_Keysym* keysym, bool down) -> bool;
-  void UpdateMapping() override;
-  auto GetRawDeviceName() -> std::string override;
+  void ApplyAppConfig() override;
+  auto DoGetDeviceName() -> std::string override;
   void ResetHeldStates() override;
   auto left_key_assigned() const { return left_key_assigned_; }
   auto right_key_assigned() const { return right_key_assigned_; }

@@ -4,7 +4,6 @@
 # This file was automatically generated from "lake_frigid.ma"
 # pylint: disable=all
 points = {}
-# noinspection PyDictCreation
 boxes = {}
 boxes['area_of_interest_bounds'] = (
     (0.622753268, 3.958431362, -2.48708008)

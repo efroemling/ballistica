@@ -5,7 +5,24 @@
 
 // System GL bits for windows.
 
-#if BA_ENABLE_OPENGL && BA_OSTYPE_WINDOWS
+#if BA_ENABLE_OPENGL && BA_PLATFORM_WINDOWS
+
+#if BA_OPENGL_IS_ES
+
+// ANGLE provides OpenGL ES via Direct3D 11 on Windows. All core GLES3
+// functions are resolved through the libGLESv2 import library; no manual
+// function-pointer loading is needed.
+// clang-format off
+#include <GLES3/gl3.h>
+#include <GLES2/gl2ext.h>  // GL_KHR_debug constants and typedefs (needs gl3.h first)
+// clang-format on
+
+// We run some init code (SDL_GL_LoadLibrary + version check).
+#define BA_HAS_SYS_GL_INIT
+
+#else  // BA_OPENGL_IS_ES
+
+// Desktop OpenGL path (used by Oculus/VR builds).
 
 // We don't *actually* need this because gl_sys.h includes it before
 // it includes us, but this keeps things from erroring if we look at
@@ -89,6 +106,8 @@ extern PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
 extern PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
 extern PFNGLGETSTRINGIPROC glGetStringi;
 
-#endif  // BA_ENABLE_OPENGL && BA_OSTYPE_WINDOWS
+#endif  // BA_OPENGL_IS_ES
+
+#endif  // BA_ENABLE_OPENGL && BA_PLATFORM_WINDOWS
 
 #endif  // BALLISTICA_BASE_GRAPHICS_GL_GL_SYS_WINDOWS_H_

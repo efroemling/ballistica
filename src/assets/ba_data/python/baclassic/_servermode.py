@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to running the game in server-mode."""
+
 from __future__ import annotations
 
 import sys
@@ -87,10 +88,7 @@ def _cmd(command_data: bytes) -> None:
 
 
 class ServerController:
-    """Overall controller for the app in server mode.
-
-    Category: **App Classes**
-    """
+    """Overall controller for the app in server mode."""
 
     def __init__(self, config: ServerConfig) -> None:
         self._config = config
@@ -98,6 +96,7 @@ class ServerController:
         self._ran_access_check = False
         self._prep_timer: babase.AppTimer | None = None
         self._next_stuck_login_warn_time = time.time() + 10.0
+        self._next_connectivity_warn_time = time.time() + 5.0
         self._first_run = True
         self._shutdown_reason: ShutdownReason | None = None
         self._executing_shutdown = False
@@ -108,6 +107,12 @@ class ServerController:
         self._playlist_fetch_sent_request = False
         self._playlist_fetch_got_response = False
         self._playlist_fetch_code = -1
+
+        # We do most configuration *after* we've fetched playlists or
+        # whatever other prep stuff we need to do, but this we should
+        # set immediately; otherwise unauthenticated clients can sneak
+        # into auth-enabled servers while they're bootstrapping.
+        bascenev1.set_authenticate_clients(self._config.authenticate_clients)
 
         # Now sit around doing any pre-launch prep such as waiting for
         # account sign-in or fetching playlists; this will kick off the
@@ -258,6 +263,18 @@ class ServerController:
         """Run in a timer to do prep before beginning to serve."""
         plus = babase.app.plus
         assert plus is not None
+
+        # Cloud connectivity is a prerequisite (v1 comms goes through this now).
+        if not plus.cloud.connected:
+            # Bringing up a cloud connection should not take long;
+            # complain if it does.
+            curtime = time.time()
+            if curtime > self._next_connectivity_warn_time:
+                print('Still waiting for cloud connectivity...')
+                self._next_connectivity_warn_time = curtime + 5.0
+            return
+
+        # Being signed in via v1 is a prerequisite.
         signed_in = plus.get_v1_account_state() == 'signed_in'
         if not signed_in:
             # Signing in to the local server account should not take long;
@@ -333,8 +350,6 @@ class ServerController:
 
     def _launch_server_session(self) -> None:
         """Kick off a host-session based on the current server config."""
-        # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         app = babase.app
         classic = app.classic
         plus = app.plus
@@ -413,8 +428,6 @@ class ServerController:
         classic.teams_series_length = self._config.teams_series_length
         classic.ffa_series_length = self._config.ffa_series_length
 
-        bascenev1.set_authenticate_clients(self._config.authenticate_clients)
-
         bascenev1.set_enable_default_kick_voting(
             self._config.enable_default_kick_voting
         )
@@ -437,7 +450,6 @@ class ServerController:
         bascenev1.set_player_rejoin_cooldown(
             self._config.player_rejoin_cooldown
         )
-
         bascenev1.set_max_players_override(
             self._config.session_max_players_override
         )
@@ -456,6 +468,6 @@ class ServerController:
             bascenev1.new_host_session(sessiontype)
 
         # Run an access check if we're trying to make a public party.
-        if not self._ran_access_check and self._config.party_is_public:
+        if self._config.party_is_public and not self._ran_access_check:
             self._run_access_check()
             self._ran_access_check = True

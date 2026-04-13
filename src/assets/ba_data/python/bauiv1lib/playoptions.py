@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, override
 
+from bacommon.analytics import ClassicAnalyticsEvent
 import bascenev1 as bs
 import bauiv1 as bui
 
@@ -30,13 +31,15 @@ class PlayOptionsWindow(PopupWindow):
         delegate: Any = None,
         playlist_select_context: PlaylistSelectContext | None = None,
     ):
+        # pylint: disable=too-many-statements
         # FIXME: Tidy this up.
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         from bascenev1 import filter_playlist, get_map_class
         from bauiv1lib.playlist import PlaylistTypeVars
         from bauiv1lib.config import ConfigNumberEdit
+
+        ui = bui.app.ui_v1
 
         self._r = 'gameListWindow'
         self._delegate = delegate
@@ -143,7 +146,7 @@ class PlayOptionsWindow(PopupWindow):
         if show_shuffle_check_box:
             self._height += 40
 
-        uiscale = bui.app.ui_v1.uiscale
+        uiscale = ui.uiscale
         scale = (
             1.69
             if uiscale is bui.UIScale.SMALL
@@ -176,13 +179,13 @@ class PlayOptionsWindow(PopupWindow):
             position=(25, self._height - 53),
             size=(50, 50),
             scale=0.7,
-            label='',
+            label=bui.charstr(bui.SpecialChar.CLOSE),
+            textcolor=(1, 1, 1),
             color=(0.42, 0.73, 0.2),
             on_activate_call=self._on_cancel_press,
             autoselect=True,
-            icon=bui.gettexture('crossOut'),
-            iconscale=1.2,
         )
+        bui.widget(edit=self._cancel_button, allow_preserve_selection=False)
 
         h_offs_img = self._width * 0.5 - c_width_total * 0.5
         v_offs_img = self._height - 118 - scl * 125.0 + 50
@@ -236,7 +239,7 @@ class PlayOptionsWindow(PopupWindow):
                         position=(h, v),
                         texture=bui.gettexture(tex_name if owned else 'empty'),
                         mesh_opaque=mesh_opaque if owned else None,
-                        on_activate_call=bui.Call(
+                        on_activate_call=bui.CallStrict(
                             bui.screenmessage, desc, desc_color
                         ),
                         label='',
@@ -246,6 +249,8 @@ class PlayOptionsWindow(PopupWindow):
                         mesh_transparent=mesh_transparent if owned else None,
                         mask_texture=mask_tex if owned else None,
                     )
+                    bui.widget(edit=btn, allow_preserve_selection=False)
+
                     if row == 0 and col == 0:
                         bui.widget(edit=self._cancel_button, down_widget=btn)
                     if row == rows - 1:
@@ -310,20 +315,17 @@ class PlayOptionsWindow(PopupWindow):
                 parent=self.root_widget,
                 position=(100, 195 + y_offs),
                 size=(290, 35),
-                on_activate_call=bui.WeakCall(self._custom_colors_names_press),
+                on_activate_call=bui.WeakCallStrict(
+                    self._custom_colors_names_press
+                ),
                 autoselect=True,
                 textcolor=(0.8, 0.8, 0.8),
                 label=bui.Lstr(resource='teamNamesColorText'),
             )
-            assert bui.app.classic is not None
-            if not bui.app.classic.accounts.have_pro():
-                bui.imagewidget(
-                    parent=self.root_widget,
-                    size=(30, 30),
-                    position=(95, 202 + y_offs),
-                    texture=bui.gettexture('lock'),
-                    draw_controller=self._custom_colors_names_button,
-                )
+            bui.widget(
+                edit=self._custom_colors_names_button,
+                allow_preserve_selection=False,
+            )
         else:
             self._custom_colors_names_button = None
 
@@ -413,6 +415,7 @@ class PlayOptionsWindow(PopupWindow):
                 )
             ),
         )
+        bui.widget(edit=self._ok_button, allow_preserve_selection=False)
 
         bui.widget(
             edit=self._ok_button, up_widget=self._show_tutorial_check_box
@@ -427,26 +430,17 @@ class PlayOptionsWindow(PopupWindow):
 
         # Update now and once per second.
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
         self._update()
 
     def _custom_colors_names_press(self) -> None:
-        from bauiv1lib.account import show_sign_in_prompt
         from bauiv1lib.teamnamescolors import TeamNamesColorsWindow
-        from bauiv1lib.purchase import PurchaseWindow
 
         plus = bui.app.plus
         assert plus is not None
 
         assert bui.app.classic is not None
-        if not bui.app.classic.accounts.have_pro():
-            if plus.get_v1_account_state() != 'signed_in':
-                show_sign_in_prompt()
-            else:
-                PurchaseWindow(items=['pro'])
-            self._transition_out()
-            return
         assert self._custom_colors_names_button
         TeamNamesColorsWindow(
             scale_origin=(
@@ -504,8 +498,6 @@ class PlayOptionsWindow(PopupWindow):
         # Head back to the gather window in playlist-select mode or
         # start the game in regular mode.
         if self._playlist_select_context is not None:
-            # from bauiv1lib.gather import GatherWindow
-
             if self._sessiontype is bs.FreeForAllSession:
                 typename = 'ffa'
             elif self._sessiontype is bs.DualTeamSession:
@@ -533,6 +525,21 @@ class PlayOptionsWindow(PopupWindow):
         # Save our place in the UI that we'll return to when done.
         if bs.app.classic is not None:
             bs.app.classic.save_ui_state()
+
+        # Log analytics for when teams/ffa sessions are started from the
+        # UI.
+        if self._sessiontype is bs.FreeForAllSession:
+            bui.app.analytics.submit_event(
+                ClassicAnalyticsEvent(
+                    ClassicAnalyticsEvent.EventType.START_FFA_SESSION
+                )
+            )
+        elif self._sessiontype is bs.DualTeamSession:
+            bui.app.analytics.submit_event(
+                ClassicAnalyticsEvent(
+                    ClassicAnalyticsEvent.EventType.START_TEAMS_SESSION
+                )
+            )
 
         try:
             bs.new_host_session(self._sessiontype)

@@ -78,6 +78,10 @@ class ConfigKeyboardWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return False
+
     def _get_config_mapping(self, default: bool = False) -> None:
         for button in [
             'buttonJump',
@@ -306,7 +310,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
             bui.buttonwidget(
                 edit=btn,
                 autoselect=True,
-                on_activate_call=bui.Call(
+                on_activate_call=bui.CallStrict(
                     AwaitKeyboardInputWindow, button, txt, self._settings
                 ),
             )
@@ -464,7 +468,7 @@ class AwaitKeyboardInputWindow(bui.Window):
         self._decrement_timer: bui.AppTimer | None = bui.AppTimer(
             1.0, self._decrement, repeat=True
         )
-        bs.capture_keyboard_input(bui.WeakCall(self._button_callback))
+        bs.capture_keyboard_input(bui.WeakCallPartial(self._button_callback))
 
     def __del__(self) -> None:
         bs.release_keyboard_input()

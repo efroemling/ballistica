@@ -1,8 +1,9 @@
-#!/usr/bin/env python3.12
+#!/usr/bin/env -S python3.13 -B
 # Released under the MIT License. See LICENSE for details.
 #
 # pylint: disable=too-many-lines
 """BallisticaKit server manager."""
+
 from __future__ import annotations
 
 import os
@@ -34,9 +35,26 @@ if TYPE_CHECKING:
     from types import FrameType
     from bacommon.servermanager import ServerCommand
 
-VERSION_STR = '1.3.3'
+VERSION_STR = '1.3.6'
 
 # Version history:
+#
+# 1.3.6
+#
+#  - Minor tweak to disable new native REPL since we rely on the simple old
+#    one to feed input into the game.
+#
+# 1.3.5
+#
+#  - Minor updates accounting for the fact that the game binary no longer
+#    bundles .pyc files but rather generates them itself in a dedicated
+#    directory. So we now run this wrapper with bytecode disabled (-B)
+#    to keep the source tree tidy; the wrapper isn't performance sensitive
+#    so this should have no impact on performance.
+#
+# 1.3.4
+#
+#  - Updated to use Python 3.13.
 #
 # 1.3.3
 #
@@ -121,6 +139,7 @@ class ServerManagerApp:
         self._user_provided_config_path: str | None = None
         self._config = ServerConfig()
         self._ba_root_path = os.path.abspath('dist/ba_root')
+        self._initial_exec_code: str | None = None
         self._interactive = sys.stdin.isatty()
         self._wrapper_shutdown_desired = False
         self._done = False
@@ -460,6 +479,15 @@ class ServerManagerApp:
             elif arg == '--no-config-auto-restart':
                 self._config_auto_restart = False
                 i += 1
+            elif arg == '--exec':
+                if i + 1 >= argc:
+                    raise CleanError('Expected a Python snippet as next arg.')
+                # Forward this through to the underlying headless
+                # binary as its own --exec arg; the binary runs it
+                # once classic app mode is active, which is after
+                # StartServerModeCommand has set up ServerController.
+                self._initial_exec_code = sys.argv[i + 1]
+                i += 2
             else:
                 raise CleanError(f"Invalid arg: '{arg}'.")
 
@@ -706,6 +734,19 @@ class ServerManagerApp:
         # instead?
         os.environ['BA_SERVER_WRAPPER_MANAGED'] = '1'
 
+        # Set particular things that can *only* be passed as args and
+        # not config vals (because they need to be handled by the binary
+        # before spinning up Python or whatnot).
+        extra_args: list[str] = []
+
+        if self._config.dont_write_bytecode:
+            extra_args += ['--dont-write-bytecode']
+
+        if self._initial_exec_code is not None:
+            # Forward the wrapper's --exec value through to the
+            # subprocess binary's own --exec arg.
+            extra_args += ['--exec', self._initial_exec_code]
+
         # Set an environment var to change the device name. Device name
         # is used while making connection with master server,
         # cloud-console recognize us with this name.
@@ -723,7 +764,7 @@ class ServerManagerApp:
         # Launch!
         try:
             self._subprocess = subprocess.Popen(
-                [binary_name, '--config-dir', self._ba_root_path],
+                [binary_name, '--config-dir', self._ba_root_path] + extra_args,
                 stdin=subprocess.PIPE,
                 cwd='dist',
             )
@@ -842,6 +883,10 @@ class ServerManagerApp:
         elif binkey in bincfg:
             del bincfg[binkey]
 
+        # We feed the binary commands through stdin, so make sure it
+        # is using the simple old dumb path for that.
+        bincfg['Use Native Python REPL'] = False
+
         with open(cfgpath, 'w', encoding='utf-8') as outfile:
             outfile.write(json.dumps(bincfg))
 
@@ -934,7 +979,6 @@ class ServerManagerApp:
             time.sleep(0.25)
 
     def _request_shutdowns_or_restarts(self) -> None:
-        # pylint: disable=too-many-branches
         assert current_thread() is self._subprocess_thread
         assert self._subprocess_launch_time is not None
         now = time.time()

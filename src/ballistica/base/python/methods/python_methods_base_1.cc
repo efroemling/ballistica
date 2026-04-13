@@ -10,18 +10,19 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/empty_app_mode.h"
 #include "ballistica/base/audio/audio_server.h"
+#include "ballistica/base/discord/discord.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/foundation/logging.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
-#include "ballistica/shared/python/python_sys.h"
+#include "ballistica/shared/python/python_macros.h"
 
 namespace ballistica::base {
 
@@ -29,6 +30,300 @@ namespace ballistica::base {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 #pragma ide diagnostic ignored "RedundantCast"
+
+// -------------------------- discord_start------------------------------
+
+static auto PyDiscordStart(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+#if BA_ENABLE_DISCORD
+  g_base->discord->client = g_base->discord->init();
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordStartDef = {
+    "discord_start",               // name
+    (PyCFunction)PyDiscordStart,   // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+    "discord_start() -> None\n"
+    "\n"
+    "start the discord sdk and connect the client."};
+
+// -------------------------- discord_is_ready------------------------------
+
+static auto PyDiscordIsReady(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+#else
+  // If Discord is not enabled, we return None.
+  Py_RETURN_NONE;
+#endif
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordIsReadyDef = {
+    "discord_is_ready",             // name
+    (PyCFunction)PyDiscordIsReady,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
+    "discord_is_ready() -> bool\n"
+    "\n"};
+
+// -------------------------- discord_richpresence------------------------------
+
+static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char *state = nullptr, *details = nullptr, *large_image_key = nullptr,
+             *large_image_text = nullptr, *small_image_key = nullptr,
+             *small_image_text = nullptr;
+  int64_t start_timestamp = 0, end_timestamp = 0;
+  static const char* kwlist[] = {const_cast<char*>("state"),
+                                 const_cast<char*>("details"),
+                                 const_cast<char*>("large_image_key"),
+                                 const_cast<char*>("large_image_text"),
+                                 const_cast<char*>("small_image_key"),
+                                 const_cast<char*>("small_image_text"),
+                                 const_cast<char*>("start_timestamp"),
+                                 const_cast<char*>("end_timestamp"),
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "|ssssssLL", const_cast<char**>(kwlist), &state,
+          &details, &large_image_key, &large_image_text, &small_image_key,
+          &small_image_text, &start_timestamp, &end_timestamp)) {
+    return nullptr;
+  }
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->SetActivity(
+        state, details, large_image_key, large_image_text, small_image_key,
+        small_image_text, start_timestamp, end_timestamp);
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordRichpresenceDef = {
+    "discord_richpresence",              // name
+    (PyCFunction)PyDiscordRichpresence,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+    "discord_richpresence(state: str | None = None,"
+    "details: str | None = None,"
+    "large_image_key: str | None = None,"
+    "large_image_text: str | None = None,"
+    "small_image_key: str | None = None,"
+    "small_image_text: str | None = None,"
+    "start_timestamp: str | None = None,"
+    "end_timestamp: str | None = None,) -> None\n"
+    "\n"
+    "Set Discord Rich Presence information."
+    "\n"
+    "Args:"
+    "\n"
+    "   state: The user's current status"
+    "\n"
+    "   details: What the user is currently doing"
+    "\n"
+    "   large_image_key: Key for the large image"
+    "\n"
+    "   large_image_text: Text displayed when hovering over the large image"
+    "\n"
+    "   small_image_key: Key for the small image"
+    "\n"
+    "   small_image_text: Text displayed when hovering over the small image"
+    "\n"
+    "   start_timestamp: Unix timestamp for game start time"
+    "\n"
+    "   end_timestamp: Unix timestamp for game end time"};
+
+// -------------------------- discord_set_party ------------------------------
+
+static auto PyDiscordSetParty(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* partyId = nullptr;
+  int64_t currentPartySize = 0, maxPartySize = 0;
+  static char* kwlist[] = {const_cast<char*>("party_id"),
+                           const_cast<char*>("current_party_size"),
+                           const_cast<char*>("max_party_size"), nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sLL", kwlist, &partyId,
+                                   &currentPartySize, &maxPartySize)) {
+    return nullptr;
+  }
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->SetParty(partyId, currentPartySize, maxPartySize);
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordSetPartyDef = {
+    "discord_set_party",             // name
+    (PyCFunction)PyDiscordSetParty,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+    "discord_set_party(party_id: str | None = None,"
+    "current_party_size: int | None = None, "
+    "max_party_size: int | None = None) -> None\n"
+    "\n"
+    "Set Discord Party information."
+    "\n"
+    "Args:"
+    "\n"
+    "   party_id: Unique identifier for the party"
+    "\n"
+    "   current_party_size: Current number of members in the party"
+    "\n"
+    "   max_party_size: Maximum number of members allowed in the party"};
+
+// -------------------------- discord_add_button ------------------------------
+
+static auto PyDiscordAddButton(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char *label = nullptr, *url = nullptr;
+  static char* kwlist[] = {const_cast<char*>("label"), const_cast<char*>("url"),
+                           nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ss", kwlist, &label, &url)) {
+    return nullptr;
+  }
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->AddButton(label, url);
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordAddButtonDef = {
+    "discord_add_button",             // name
+    (PyCFunction)PyDiscordAddButton,  // method
+    METH_VARARGS | METH_KEYWORDS,     // flags
+    "discord_add_button(label: str, url: str) -> None\n"
+    "\n"
+    "Add Discord rich presence button."
+    "\n"
+    "Args:"
+    "\n"
+    "   label: Label for the button"
+    "\n"
+    "   url: URL to open when the button is clicked"};
+
+// -------------------------- discord_join_lobby ------------------------------
+
+static auto PyDiscordJoinLobby(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* lobbySecret = nullptr;
+  static char* kwlist[] = {const_cast<char*>("lobby_secret"), nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s", kwlist, &lobbySecret)) {
+    return nullptr;
+  }
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->JoinLobby(lobbySecret);
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordJoinLobbyDef = {
+    "discord_join_lobby",             // name
+    (PyCFunction)PyDiscordJoinLobby,  // method
+    METH_VARARGS | METH_KEYWORDS,     // flags
+    "discord_join_lobby(lobby_secret: str) -> None\n"
+    "\n"
+    "Join a discord lobby."
+    "\n"
+    "Args:"
+    "\n"
+    "   lobby_secret: Unique identifier for the lobby"};
+
+// -------------------------- discord_leave_lobby ------------------------------
+
+static auto PyDiscordLeaveLobby(PyObject* self, PyObject* args,
+                                PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->LeaveLobby();
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordLeaveLobbyDef = {
+    "discord_leave_lobby",             // name
+    (PyCFunction)PyDiscordLeaveLobby,  // method
+    METH_VARARGS | METH_KEYWORDS,      // flags
+    "discord_leave_lobby() -> None\n"
+    "\n"
+    "Leave a discord lobby."};
+
+// ---------------------- discord_send_lobby_message ---------------------------
+
+static auto PyDiscordSendLobbyMessage(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* message = nullptr;
+  static char* kwlist[] = {const_cast<char*>("message"), nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s", kwlist, &message)) {
+    return nullptr;
+  }
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->SendLobbyMessage(message);
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordSendLobbyMessageDef = {
+    "discord_send_lobby_message",            // name
+    (PyCFunction)PyDiscordSendLobbyMessage,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+    "discord_send_lobby_message(message: str) -> None\n"
+    "\n"
+    "Args:"
+    "\n"
+    "       message: Message to send to a discord lobby."};
+
+// -------------------------- discord_shutdown ------------------------------
+
+static auto PyDiscordShutdown(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+#if BA_ENABLE_DISCORD
+  if (g_base->discord->client_is_ready) {
+    g_base->discord->Shutdown();
+  }
+#endif
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordShutdownDef = {
+    "discord_shutdown",              // name
+    (PyCFunction)PyDiscordShutdown,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+    "discord_shutdown() -> None\n"
+    "\n"
+    "Shutdown and disconnect the Discord client."};
 
 // --------------------------------- appname -----------------------------------
 
@@ -47,7 +342,27 @@ static PyMethodDef PyAppNameDef = {
 
     "appname() -> str\n"
     "\n"
-    "(internal)\n",
+    "Return current app name (all lowercase).\n",
+};
+
+// -------------------------------- appnameupper -------------------------------
+
+static auto PyAppNameUpper(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  // This will get subbed out by standard filtering.
+  return PyUnicode_FromString("BallisticaKit");
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAppNameUpperDef = {
+    "appnameupper",               // name
+    (PyCFunction)PyAppNameUpper,  // method
+    METH_NOARGS,                  // flags
+
+    "appnameupper() -> str\n"
+    "\n"
+    "Return current app name with capitalized characters.",
 };
 
 // ------------------------------ app_is_active --------------------------------
@@ -73,7 +388,7 @@ static PyMethodDef PyAppIsActiveDef = {
 
     "app_is_active() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 // --------------------------------- run_app -----------------------------------
 
@@ -122,30 +437,6 @@ static PyMethodDef PyCompleteShutdownDef = {
     "Complete the shutdown process, triggering the app to exit.\n",
 };
 
-// -------------------------------- appnameupper -------------------------------
-
-static auto PyAppNameUpper(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-
-  // This will get subbed out by standard filtering.
-  return PyUnicode_FromString("BallisticaKit");
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyAppNameUpperDef = {
-    "appnameupper",               // name
-    (PyCFunction)PyAppNameUpper,  // method
-    METH_NOARGS,                  // flags
-
-    "appnameupper() -> str\n"
-    "\n"
-    "(internal)\n"
-    "\n"
-    "Return whether this build of the game can display full unicode such "
-    "as\n"
-    "Emoji, Asian languages, etc.",
-};
-
 // ---------------------------- is_xcode_build ---------------------------------
 
 static auto PyIsXCodeBuild(PyObject* self) -> PyObject* {
@@ -164,28 +455,7 @@ static PyMethodDef PyIsXCodeBuildDef = {
 
     "is_xcode_build() -> bool\n"
     "\n"
-    "(internal)\n",
-};
-
-// ----------------------- can_display_full_unicode ----------------------------
-
-static auto PyCanDisplayFullUnicode(PyObject* self) -> PyObject* {
-  BA_PYTHON_TRY;
-  if (g_buildconfig.enable_os_font_rendering()) {
-    Py_RETURN_TRUE;
-  }
-  Py_RETURN_FALSE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyCanDisplayFullUnicodeDef = {
-    "can_display_full_unicode",            // name
-    (PyCFunction)PyCanDisplayFullUnicode,  // method
-    METH_NOARGS,                           // flags
-
-    "can_display_full_unicode() -> bool\n"
-    "\n"
-    "(internal)",
+    ":meta private:\n",
 };
 
 // -------------------------- app_instance_uuid --------------------------------
@@ -198,7 +468,7 @@ static auto PyAppInstanceUUID(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  return PyUnicode_FromString(g_base->GetAppInstanceUUID().c_str());
+  return PyUnicode_FromString(g_base->LocalAppInstanceUUID().c_str());
   BA_PYTHON_CATCH;
 }
 
@@ -209,7 +479,7 @@ static PyMethodDef PyAppInstanceUUIDDef = {
 
     "app_instance_uuid() -> str\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------------- user_ran_commands -------------------------------
@@ -234,7 +504,7 @@ static PyMethodDef PyUserRanCommandsDef = {
 
     "user_ran_commands() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------------------- pushcall ----------------------------------
@@ -276,12 +546,13 @@ static auto PyPushCall(PyObject* self, PyObject* args, PyObject* keywds)
     // Warn the user not to use this from the logic thread since it doesnt
     // save/restore context.
     if (!suppress_warning && g_base->InLogicThread()) {
-      g_core->Log(LogName::kBa, LogLevel::kWarning,
-                  "babase.pushcall() called from the logic thread with "
-                  "from_other_thread set to true (call "
-                      + Python::ObjToString(call_obj) + " at "
-                      + Python::GetPythonFileLocation()
-                      + "). That arg should only be used from other threads.");
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kWarning,
+          "babase.pushcall() called from the logic thread with "
+          "from_other_thread set to true (call "
+              + Python::ObjToString(call_obj) + " at "
+              + Python::PythonFileLocation()
+              + "). That arg should only be used from other threads.");
     }
 
     assert(Python::HaveGIL());
@@ -326,20 +597,17 @@ static PyMethodDef PyPushCallDef = {
     "     other_thread_use_fg_context: bool = False,\n"
     "     raw: bool = False) -> None\n"
     "\n"
-    "Push a call to the logic event-loop.\n"
-    "Category: **General Utility Functions**\n"
+    "Push a call to the logic-thread's event loop.\n"
     "\n"
-    "This call expects to be used in the logic thread, and will "
-    "automatically\n"
-    "save and restore the babase.Context to behave seamlessly.\n"
+    "This function expects to be called from the logic thread, and will\n"
+    "automatically save and restore the context to behave seamlessly.\n"
     "\n"
-    "If you want to push a call from outside of the logic thread,\n"
-    "however, you can pass 'from_other_thread' as True. In this case\n"
-    "the call will always run in the UI context_ref on the logic thread\n"
-    "or whichever context_ref is in the foreground if\n"
-    "other_thread_use_fg_context is True.\n"
-    "Passing raw=True will disable thread checks and context_ref"
-    " sets/restores."};
+    "To push a call from outside of the logic thread, pass\n"
+    "``from_other_thread=True``. In that case the call will run with no\n"
+    "context set. To instead run in whichever context is currently active\n"
+    "on the logic thread, pass ``other_thread_use_fg_context=True``.\n"
+    "Passing ``raw=True`` will skip thread checks and context\n"
+    "saves/restores altogether."};
 
 // ------------------------------ apptime --------------------------------------
 
@@ -351,8 +619,8 @@ static auto PyAppTime(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist))) {
     return nullptr;
   }
-  return PyFloat_FromDouble(
-      0.001 * static_cast<double>(g_core->GetAppTimeMillisecs()));
+  return PyFloat_FromDouble(0.001
+                            * static_cast<double>(g_core->AppTimeMillisecs()));
   BA_PYTHON_CATCH;
 }
 
@@ -364,8 +632,6 @@ static PyMethodDef PyAppTimeDef = {
     "apptime() -> babase.AppTime\n"
     "\n"
     "Return the current app-time in seconds.\n"
-    "\n"
-    "Category: **General Utility Functions**\n"
     "\n"
     "App-time is a monotonic time value; it starts at 0.0 when the app\n"
     "launches and will never jump by large amounts or go backwards, even if\n"
@@ -410,29 +676,28 @@ static PyMethodDef PyAppTimerDef = {
     "\n"
     "Schedule a callable object to run based on app-time.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "This function creates a one-off timer which cannot be canceled or\n"
     "modified once created. If you require the ability to do so, or need\n"
     "a repeating timer, use the babase.AppTimer class instead.\n"
     "\n"
-    "##### Arguments\n"
-    "###### time (float)\n"
-    "> Length of time in seconds that the timer will wait before firing.\n"
+    "Args:\n"
+    "    time: Length of time in seconds that the timer will wait before\n"
+    "        firing.\n"
     "\n"
-    "###### call (Callable[[], Any])\n"
-    "> A callable Python object. Note that the timer will retain a\n"
-    "strong reference to the callable for as long as the timer exists, so you\n"
-    "may want to look into concepts such as babase.WeakCall if that is not\n"
-    "desired.\n"
+    "    call: A callable Python object. Note that the timer will retain a\n"
+    "        strong reference to the callable for as long as the timer\n"
+    "        exists, so you may want to look into concepts such as\n"
+    "        :class:`~babase.WeakCall` if that is not desired.\n"
     "\n"
-    "##### Examples\n"
-    "Print some stuff through time:\n"
-    ">>> babase.screenmessage('hello from now!')\n"
-    ">>> babase.apptimer(1.0, babase.Call(babase.screenmessage,\n"
-    "                          'hello from the future!'))\n"
-    ">>> babase.apptimer(2.0, babase.Call(babase.screenmessage,\n"
-    "...                       'hello from the future 2!'))\n",
+    "Example: Print some stuff through time::\n"
+    "\n"
+    "   import babase\n"
+    "\n"
+    "   babase.screenmessage('hello from now!')\n"
+    "   babase.apptimer(1.0, babase.Call(babase.screenmessage,\n"
+    "                   'hello from the future!'))\n"
+    "   babase.apptimer(2.0, babase.Call(babase.screenmessage,\n"
+    "                   'hello from the future 2!'))\n",
 };
 
 // --------------------------- displaytime -------------------------------------
@@ -458,11 +723,9 @@ static PyMethodDef PyDisplayTimeDef = {
     "\n"
     "Return the current display-time in seconds.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "Display-time is a time value intended to be used for animation and other\n"
     "visual purposes. It will generally increment by a consistent amount each\n"
-    "frame. It will pass at an overall similar rate to AppTime, but trades\n"
+    "frame. It will pass at an overall similar rate to app-time, but trades\n"
     "accuracy for smoothness.\n"
     "\n"
     "Note that the value returned here is simply a float; it just has a\n"
@@ -503,34 +766,33 @@ static PyMethodDef PyDisplayTimerDef = {
     "\n"
     "Schedule a callable object to run based on display-time.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
     "This function creates a one-off timer which cannot be canceled or\n"
     "modified once created. If you require the ability to do so, or need\n"
-    "a repeating timer, use the babase.DisplayTimer class instead.\n"
+    "a repeating timer, use the :class:`~babase.DisplayTimer` class instead.\n"
     "\n"
     "Display-time is a time value intended to be used for animation and other\n"
     "visual purposes. It will generally increment by a consistent amount each\n"
-    "frame. It will pass at an overall similar rate to AppTime, but trades\n"
+    "frame. It will pass at an overall similar rate to app-time, but trades\n"
     "accuracy for smoothness.\n"
     "\n"
-    "##### Arguments\n"
-    "###### time (float)\n"
-    "> Length of time in seconds that the timer will wait before firing.\n"
+    "Args:\n"
     "\n"
-    "###### call (Callable[[], Any])\n"
-    "> A callable Python object. Note that the timer will retain a\n"
-    "strong reference to the callable for as long as the timer exists, so you\n"
-    "may want to look into concepts such as babase.WeakCall if that is not\n"
-    "desired.\n"
+    "  time:\n"
+    "    Length of time in seconds that the timer will wait before firing.\n"
     "\n"
-    "##### Examples\n"
-    "Print some stuff through time:\n"
-    ">>> babase.screenmessage('hello from now!')\n"
-    ">>> babase.displaytimer(1.0, babase.Call(babase.screenmessage,\n"
-    "...                       'hello from the future!'))\n"
-    ">>> babase.displaytimer(2.0, babase.Call(babase.screenmessage,\n"
-    "...                       'hello from the future 2!'))\n",
+    "  call:\n"
+    "    A callable Python object. Note that the timer will retain a\n"
+    "    strong reference to the callable for as long as the timer exists, so\n"
+    "    you may want to look into concepts such as :class:`~babase.WeakCall`\n"
+    "    if that is not desired.\n"
+    "\n"
+    "Example: Print some stuff through time::\n"
+    "\n"
+    "    babase.screenmessage('hello from now!')\n"
+    "    babase.displaytimer(1.0, babase.Call(babase.screenmessage,\n"
+    "                        'hello from the future!'))\n"
+    "    babase.displaytimer(2.0, babase.Call(babase.screenmessage,\n"
+    "                        'hello from the future 2!'))\n",
 };
 
 // ----------------------------------- quit ------------------------------------
@@ -550,7 +812,7 @@ static auto PyQuit(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   if (quit_type_obj != Py_None) {
-    quit_type = BasePython::GetPyEnum_QuitType(quit_type_obj);
+    quit_type = g_base->python->GetPyEnum_QuitType(quit_type_obj);
   }
 
   g_base->QuitApp(confirm, quit_type);
@@ -569,53 +831,60 @@ static PyMethodDef PyQuitDef = {
     "\n"
     "Quit the app.\n"
     "\n"
-    "Category: **General Utility Functions**\n"
-    "\n"
-    "If 'confirm' is True, a confirm dialog will be presented if conditions\n"
+    "If ``confirm`` is True, a confirm dialog will be presented if conditions\n"
     "allow; otherwise the quit will still be immediate.\n"
-    "See docs for babase.QuitType for explanations of the optional\n"
-    "'quit_type' arg."};
+    "See docs for :class:`~babase.QuitType` for explanations of the optional\n"
+    "``quit_type`` arg."};
 
-// ----------------------------- apply_config ----------------------------------
+// ---------------------------- apply_app_config -------------------------------
 
-static auto PyDoApplyAppConfig(PyObject* self, PyObject* args) -> PyObject* {
+static auto PyApplyAppConfig(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
 
   BA_PRECONDITION(g_base->InLogicThread());
-  g_base->logic->DoApplyAppConfig();
+  g_base->logic->ApplyAppConfig();
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDoApplyAppConfigDef = {
-    "do_apply_app_config",  // name
-    PyDoApplyAppConfig,     // method
-    METH_VARARGS,           // flags
+static PyMethodDef PyApplyAppConfigDef = {
+    "apply_app_config",  // name
+    PyApplyAppConfig,    // method
+    METH_VARARGS,        // flags
 
-    "do_apply_app_config() -> None\n"
+    "apply_app_config() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
-// ----------------------------- commit_config ---------------------------------
+// --------------------------- commit_app_config -------------------------------
 
-static auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
+static auto PyCommitAppConfig(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
+
+  // If writes are suppressed, no-op.
+  if (g_base->config_and_state_writes_suppressed()) {
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kDebug,
+        "Skipping app-config write due to config-and-state-writes-suppressed.");
+    Py_RETURN_NONE;
+  }
+
   PyObject* config_obj;
   static const char* kwlist[] = {"config", nullptr};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
                                    const_cast<char**>(kwlist), &config_obj)) {
     return nullptr;
   }
-  if (config_obj == nullptr || !g_base->python->IsPyLString(config_obj)) {
+  if (config_obj == nullptr || !Python::IsString(config_obj)) {
     throw Exception("ERROR ON JSON DUMP");
   }
-  std::string final_str = g_base->python->GetPyLString(config_obj);
-  std::string path = g_core->platform->GetConfigFilePath();
+  std::string final_str = Python::GetString(config_obj);
+  std::string path = g_core->GetConfigFilePath();
   std::string path_temp = path + ".tmp";
-  std::string path_prev = path + ".prev";
+  std::string path_prev = g_core->GetBackupConfigFilePath();
   if (explicit_bool(true)) {
     FILE* f_out = g_core->platform->FOpen(path_temp.c_str(), "wb");
     if (f_out == nullptr) {
@@ -632,12 +901,12 @@ static auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
     }
     fclose(f_out);
 
-    // Now move any existing config to .prev.
+    // Now move any existing config to prev path.
     if (g_core->platform->FilePathExists(path)) {
       // On windows, rename doesn't overwrite existing files.. need to kill
       // the old explicitly.
       // (hmm; should we just do this everywhere for consistency?)
-      if (g_buildconfig.ostype_windows()) {
+      if (g_buildconfig.platform_windows()) {
         if (g_core->platform->FilePathExists(path_prev)) {
           int result2 = g_core->platform->Remove(path_prev.c_str());
           if (result2 != 0) {
@@ -664,14 +933,14 @@ static auto PyCommitConfig(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyCommitConfigDef = {
-    "commit_config",               // name
-    (PyCFunction)PyCommitConfig,   // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
+static PyMethodDef PyCommitAppConfigDef = {
+    "commit_app_config",             // name
+    (PyCFunction)PyCommitAppConfig,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
 
-    "commit_config(config: str) -> None\n"
+    "commit_app_config(config: str) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------------- pre_env -------------------------------------
@@ -693,7 +962,8 @@ static auto PyPreEnv(PyObject* self) -> PyObject* {
         "}",
         "build_number", kEngineBuildNumber,
         "debug_build", g_buildconfig.debug_build() ? Py_True : Py_False,
-        "test_build", g_buildconfig.test_build() ? Py_True : Py_False);
+        "test_build", g_buildconfig.variant_test_build() ? Py_True : Py_False
+    );  // NOLINT(whitespace/parens)
     // clang-format on
     g_base->python->StorePreEnv(env);
   }
@@ -708,13 +978,11 @@ static PyMethodDef PyPreEnvDef = {
 
     "pre_env() -> dict\n"
     "\n"
-    "(internal)\n"
+    "Return a dict containing general env info.\n"
     "\n"
-    "Returns a dict containing general info about the operating "
-    "environment\n"
-    "such as version, platform, etc.\n"
-    "This info is now exposed through babase.App; refer to those docs for\n"
-    "info on specific elements."};
+    "This has been superseded by :class:`~babase.Env` for most purposes.\n"
+    "\n"
+    ":meta private:"};
 
 // --------------------------------- env ---------------------------------------
 
@@ -734,6 +1002,7 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "{"
         "si"  // build_number
         "ss"  // config_file_path
+        "ss"  // ba_locale
         "ss"  // locale
         "ss"  // legacy_user_agent_string
         "ss"  // version
@@ -753,22 +1022,23 @@ static auto PyEnv(PyObject* self) -> PyObject* {
         "ss"  // data_directory
         "}",
         "build_number", kEngineBuildNumber,
-        "config_file_path", g_core->platform->GetConfigFilePath().c_str(),
-        "locale", g_core->platform->GetLocale().c_str(),
+        "config_file_path", g_core->GetConfigFilePath().c_str(),
+        "ba_locale", g_core->platform->GetBaLocale().c_str(),
+        "locale", g_core->platform->GetLocaleTag().c_str(),
         "legacy_user_agent_string", g_core->legacy_user_agent_string().c_str(),
         "version", kEngineVersion,
         "debug_build", g_buildconfig.debug_build() ? Py_True : Py_False,
-        "test_build", g_buildconfig.test_build() ? Py_True : Py_False,
+        "test_build", g_buildconfig.variant_test_build() ? Py_True : Py_False,
         "python_directory_user",
           user_py_dir ? *PythonRef::FromString(*user_py_dir) : Py_None,
         "python_directory_app",
           app_py_dir ? *PythonRef::FromString(*app_py_dir) : Py_None,
-        "platform", g_core->platform->GetPlatformName().c_str(),
-        "subplatform", g_core->platform->GetSubplatformName().c_str(),
+        "platform", g_core->platform->GetLegacyPlatformName().c_str(),
+        "subplatform", g_core->platform->GetLegacySubplatformName().c_str(),
         "on_tv", g_core->platform->IsRunningOnTV() ? Py_True : Py_False,
         "vr_mode", g_core->vr_mode() ? Py_True : Py_False,
-        "demo_mode", g_buildconfig.demo_build() ? Py_True : Py_False,
-        "arcade_mode", g_buildconfig.arcade_build() ? Py_True : Py_False,
+        "demo_mode", g_buildconfig.variant_demo() ? Py_True : Py_False,
+        "arcade_mode", g_buildconfig.variant_arcade() ? Py_True : Py_False,
         "headless_mode", g_core->HeadlessMode() ? Py_True : Py_False,
         "python_directory_app_site",
           site_py_dir ? *PythonRef::FromString(*site_py_dir) : Py_None,
@@ -790,13 +1060,11 @@ static PyMethodDef PyEnvDef = {
 
     "env() -> dict\n"
     "\n"
-    "(internal)\n"
+    "Return a dict containing general env info.\n"
     "\n"
-    "Returns a dict containing general info about the operating "
-    "environment\n"
-    "such as version, platform, etc.\n"
-    "This info is now exposed through babase.App; refer to those docs for\n"
-    "info on specific elements."};
+    "This has been superseded by :class:`~babase.Env` for most purposes.\n"
+    "\n"
+    ":meta private:"};
 
 // -------------------------------- emit_log -----------------------------------
 
@@ -832,7 +1100,7 @@ static auto PyEmitLog(PyObject* self, PyObject* args, PyObject* keywds)
     fprintf(stderr, "Invalid log level to emit_log(): %s\n", levelstr);
     level = LogLevel::kInfo;
   }
-  Logging::EmitLog(name, level, timestamp, message);
+  g_core->logging->EmitLog(name, level, timestamp, message);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -846,40 +1114,14 @@ static PyMethodDef PyEmitLogDef = {
     "emit_log(name: str, level: str, timestamp: float, message: str)"
     " -> None\n"
     "\n"
-    "(internal)\n"
+    "Sends a log message to the in-app console/etc.\n"
     "\n"
-    "Sends a log message to the in-app console and any per-platform\n"
-    "log destinations (Android log, etc.). This generally is not called\n"
-    "directly and should instead be fed Python logging output.",
+    "This also includes any per-platform log destinations (Android log,\n"
+    "etc.). This generally is not called directly and should instead be\n"
+    "fed Python logging output."
+    "\n"
+    ":meta private:",
 };
-
-// ------------------------------ lifecyclelog ---------------------------------
-
-// static auto PyLifecycleLog(PyObject* self, PyObject* args, PyObject* keywds)
-//     -> PyObject* {
-//   BA_PYTHON_TRY;
-//   static const char* kwlist[] = {"message", nullptr};
-//   const char* message;
-//   if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-//                                    const_cast<char**>(kwlist), &message)) {
-//     return nullptr;
-//   }
-
-//   g_core->LifecycleLog(message);
-
-//   Py_RETURN_NONE;
-//   BA_PYTHON_CATCH;
-// }
-
-// static PyMethodDef PyLifecycleLogDef = {
-//     "lifecyclelog",                // name
-//     (PyCFunction)PyLifecycleLog,   // method
-//     METH_VARARGS | METH_KEYWORDS,  // flags
-
-//     "lifecyclelog(message: str) -> None\n"
-//     "\n"
-//     "(internal)",
-// };
 
 // ----------------------------- v1_cloud_log ----------------------------------
 
@@ -892,7 +1134,7 @@ static auto PyV1CloudLog(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &message)) {
     return nullptr;
   }
-  Logging::V1CloudLog(message);
+  g_core->logging->V1CloudLog(message);
 
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -905,9 +1147,9 @@ static PyMethodDef PyV1CloudLogDef = {
 
     "v1_cloud_log(message: str) -> None\n"
     "\n"
-    "(internal)\n"
+    "Push messages to the old v1 cloud log.\n"
     "\n"
-    "Push messages to the old v1 cloud log.",
+    ":meta private:",
 };
 
 // --------------------------- music_player_stop -------------------------------
@@ -932,9 +1174,9 @@ static PyMethodDef PyMusicPlayerStopDef = {
 
     "music_player_stop() -> None\n"
     "\n"
-    "(internal)\n"
+    "Stops internal music file playback.\n"
     "\n"
-    "Stops internal music file playback (for internal use)"};
+    ":meta private:"};
 
 // ---------------------------- music_player_play ------------------------------
 
@@ -959,9 +1201,9 @@ static PyMethodDef PyMusicPlayerPlayDef = {
 
     "music_player_play(files: Any) -> None\n"
     "\n"
-    "(internal)\n"
+    "Start internal music file playback.\n"
     "\n"
-    "Starts internal music file playback (for internal use)",
+    ":meta private:",
 };
 
 // ----------------------- music_player_set_volume -----------------------------
@@ -987,9 +1229,9 @@ static PyMethodDef PyMusicPlayerSetVolumeDef = {
 
     "music_player_set_volume(volume: float) -> None\n"
     "\n"
-    "(internal)\n"
+    "Set internal music player volume.\n"
     "\n"
-    "Sets internal music player volume (for internal use)",
+    ":meta private:",
 };
 
 // ------------------------- music_player_shutdown -----------------------------
@@ -1014,9 +1256,9 @@ static PyMethodDef PyMusicPlayerShutdownDef = {
 
     "music_player_shutdown() -> None\n"
     "\n"
-    "(internal)\n"
+    "Finalize internal music file playback.\n"
     "\n"
-    "Finalizes internal music file playback (for internal use)",
+    ":meta private:",
 };
 
 // ----------------------------- reload_media ----------------------------------
@@ -1036,10 +1278,11 @@ static PyMethodDef PyReloadMediaDef = {
 
     "reload_media() -> None\n"
     "\n"
-    "(internal)\n"
+    "Reload all currently loaded game media.\n"
     "\n"
-    "Reload all currently loaded game media; useful for\n"
-    "development/debugging.",
+    "Mainly for development/debugging.\n"
+    "\n"
+    ":meta private:",
 };
 
 // --------------------------- mac_music_app_init ------------------------------
@@ -1059,7 +1302,7 @@ static PyMethodDef PyMacMusicAppInitDef = {
 
     "mac_music_app_init() -> None\n"
     "\n"
-    "(internal)"};
+    ":meta private:"};
 
 // ------------------------- mac_music_app_get_volume --------------------------
 
@@ -1077,7 +1320,7 @@ static PyMethodDef PyMacMusicAppGetVolumeDef = {
 
     "mac_music_app_get_volume() -> int\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ------------------------- mac_music_app_set_volume --------------------------
@@ -1103,7 +1346,7 @@ static PyMethodDef PyMacMusicAppSetVolumeDef = {
 
     "mac_music_app_set_volume(volume: int) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // --------------------------- mac_music_app_stop ------------------------------
@@ -1123,7 +1366,7 @@ static PyMethodDef PyMacMusicAppStopDef = {
 
     "mac_music_app_stop() -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ----------------------- mac_music_app_play_playlist -------------------------
@@ -1138,7 +1381,7 @@ static auto PyMacMusicAppPlayPlaylist(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &playlist_obj)) {
     return nullptr;
   }
-  playlist = g_base->python->GetPyLString(playlist_obj);
+  playlist = Python::GetString(playlist_obj);
   if (g_core->platform->MacMusicAppPlayPlaylist(playlist)) {
     Py_RETURN_TRUE;
   } else {
@@ -1154,7 +1397,7 @@ static PyMethodDef PyMacMusicAppPlayPlaylistDef = {
 
     "mac_music_app_play_playlist(playlist: str) -> bool\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------- mac_music_app_get_playlists --------------------------
@@ -1181,7 +1424,7 @@ static PyMethodDef PyMacMusicAppGetPlaylistsDef = {
 
     "mac_music_app_get_playlists() -> list[str]\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // -------------------------- is_os_playing_music ------------------------------
@@ -1204,11 +1447,11 @@ static PyMethodDef PyIsOSPlayingMusicDef = {
 
     "is_os_playing_music() -> bool\n"
     "\n"
-    "(internal)\n"
+    "Return whether the OS is currently playing music of some sort.\n"
     "\n"
-    "Tells whether the OS is currently playing music of some sort.\n"
+    "Used to determine whether the app should avoid playing its own.\n"
     "\n"
-    "(Used to determine whether the app should avoid playing its own)",
+    ":meta private:",
 };
 
 // -------------------------------- exec_arg -----------------------------------
@@ -1230,7 +1473,7 @@ static PyMethodDef PyExecArgDef = {
 
     "exec_arg() -> str | None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------------- on_app_running --------------------------------
@@ -1250,7 +1493,7 @@ static PyMethodDef PyOnAppRunningDef = {
 
     "on_app_running() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ------------------------ on_initial_app_mode_set ----------------------------
@@ -1270,7 +1513,7 @@ static PyMethodDef PyOnInitialAppModeSetDef = {
 
     "on_initial_app_mode_set() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ------------------------- reached_end_of_babase -----------------------------
@@ -1311,7 +1554,7 @@ static PyMethodDef PyUserAgentStringDef = {
 
     "user_agent_string() -> str\n"
     "\n"
-    "(internal)\n",
+    ":meta private:",
 };
 
 // --------------------- empty_app_mode_activate ----------------------------
@@ -1331,7 +1574,7 @@ static PyMethodDef PyOnEmptyAppModeActivateDef = {
 
     "empty_app_mode_activate() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:",
 };
 
 // --------------------- empty_app_mode_deactivate --------------------------
@@ -1351,7 +1594,7 @@ static PyMethodDef PyOnEmptyAppModeDeactivateDef = {
 
     "empty_app_mode_deactivate() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:",
 };
 
 // --------------- empty_app_mode_handle_app_intent_default --------------------
@@ -1370,7 +1613,7 @@ static PyMethodDef PyEmptyAppModeHandleAppIntentDefaultDef = {
 
     "empty_app_mode_handle_app_intent_default() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ---------------- empty_app_mode_handle_app_intent_exec ----------------------
@@ -1406,7 +1649,7 @@ static PyMethodDef PyEmptyAppModeHandleAppIntentExecDef = {
 
     "empty_app_mode_handle_app_intent_exec(command: str) -> None\n"
     "\n"
-    "(internal)",
+    ":meta private:",
 };
 
 // ---------------------- get_immediate_return_code ----------------------------
@@ -1429,7 +1672,7 @@ static PyMethodDef PyGetImmediateReturnCodeDef = {
 
     "get_immediate_return_code() -> int | None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------- shutdown_suppress_begin -----------------------------
@@ -1453,7 +1696,7 @@ static PyMethodDef PyShutdownSuppressBeginDef = {
 
     "shutdown_suppress_begin() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ------------------------ shutdown_suppress_end ------------------------------
@@ -1473,7 +1716,7 @@ static PyMethodDef PyShutdownSuppressEndDef = {
 
     "shutdown_suppress_end() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------- shutdown_suppress_count -----------------------------
@@ -1493,7 +1736,7 @@ static PyMethodDef PyShutdownSuppressCountDef = {
 
     "shutdown_suppress_count() -> int\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // --------------------- get_dev_console_input_text ----------------------------
@@ -1514,7 +1757,7 @@ static PyMethodDef PyGetDevConsoleInputTextDef = {
 
     "get_dev_console_input_text() -> str\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // --------------------- set_dev_console_input_text ----------------------------
@@ -1544,7 +1787,7 @@ static PyMethodDef PySetDevConsoleInputTextDef = {
 
     "set_dev_console_input_text(val: str) -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ------------------ dev_console_input_adapter_finish -------------------------
@@ -1566,7 +1809,7 @@ static PyMethodDef PyDevConsoleInputAdapterFinishDef = {
 
     "dev_console_input_adapter_finish() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // -------------------------- audio_shutdown_begin -----------------------------
@@ -1589,7 +1832,7 @@ static PyMethodDef PyAudioShutdownBeginDef = {
 
     "audio_shutdown_begin() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------- audio_shutdown_is_complete --------------------------
@@ -1612,7 +1855,7 @@ static PyMethodDef PyAudioShutdownIsCompleteDef = {
 
     "audio_shutdown_is_complete() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // ----------------------- graphics_shutdown_begin -----------------------------
@@ -1635,7 +1878,7 @@ static PyMethodDef PyGraphicsShutdownBeginDef = {
 
     "graphics_shutdown_begin() -> None\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
 // -------------------- graphics_shutdown_is_complete --------------------------
@@ -1658,50 +1901,73 @@ static PyMethodDef PyGraphicsShutdownIsCompleteDef = {
 
     "graphics_shutdown_is_complete() -> bool\n"
     "\n"
-    "(internal)\n",
+    ":meta private:\n",
 };
 
-// --------------------------- invoke_main_menu --------------------------------
+// ---------------------------------- crash ------------------------------------
 
-static auto PyInvokeMainMenu(PyObject* self) -> PyObject* {
+static auto PyCrash(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
 
-  BA_PRECONDITION(g_base->InLogicThread());
-  if (!g_base->ui->MainMenuVisible()) {
-    g_base->ui->PushMainMenuPressCall(nullptr);
+  if (!g_buildconfig.variant_generic() && !g_buildconfig.variant_test_build()) {
+    throw Exception(
+        "crash() is only available in generic and test-build variants.");
   }
-  Py_RETURN_NONE;
 
+  // Dereference a null pointer; same mechanism as the --crash arg.
+  int dummyval{};
+  int* invalid_ptr{&dummyval};
+  if (explicit_bool(true)) {
+    invalid_ptr = nullptr;
+  }
+  if (explicit_bool(true)) {
+    *invalid_ptr = 1;
+  }
+
+  Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyInvokeMainMenuDef = {
-    "invoke_main_menu",             // name
-    (PyCFunction)PyInvokeMainMenu,  // method
-    METH_NOARGS,                    // flags
+static PyMethodDef PyCrashDef = {
+    "crash",               // name
+    (PyCFunction)PyCrash,  // method
+    METH_NOARGS,           // flags
 
-    "invoke_main_menu() -> None\n"
+    "crash() -> None\n"
     "\n"
-    "High level call to bring up the main menu if it is not present.\n"
+    "Intentionally crash the engine (for testing crash handling).\n"
     "\n"
-    "This is essentially the same as pressing the menu button on a controller.",
+    "Triggers an immediate hard crash via null pointer dereference,\n"
+    "which will exercise crash-dump mechanisms such as minidump\n"
+    "generation on Windows. Only available in generic and test-build\n"
+    "variants.\n",
 };
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      // should this also be in #if BA_ENABLE_DISCORD?
+      PyDiscordStartDef,
+      PyDiscordIsReadyDef,
+      PyDiscordRichpresenceDef,
+      PyDiscordSetPartyDef,
+      PyDiscordAddButtonDef,
+      PyDiscordJoinLobbyDef,
+      PyDiscordLeaveLobbyDef,
+      PyDiscordSendLobbyMessageDef,
+      PyDiscordShutdownDef,
       PyAppNameDef,
       PyAppIsActiveDef,
       PyRunAppDef,
       PyAppNameUpperDef,
       PyIsXCodeBuildDef,
-      PyCanDisplayFullUnicodeDef,
       PyEmitLogDef,
       PyV1CloudLogDef,
       PyEnvDef,
       PyPreEnvDef,
-      PyCommitConfigDef,
-      PyDoApplyAppConfigDef,
+      PyCommitAppConfigDef,
+      PyApplyAppConfigDef,
       PyQuitDef,
       PyAppTimerDef,
       PyAppTimeDef,
@@ -1722,7 +1988,6 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyMacMusicAppPlayPlaylistDef,
       PyMacMusicAppGetPlaylistsDef,
       PyIsOSPlayingMusicDef,
-      // PyLifecycleLogDef,
       PyExecArgDef,
       PyOnAppRunningDef,
       PyOnInitialAppModeSetDef,
@@ -1744,7 +2009,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyAudioShutdownIsCompleteDef,
       PyGraphicsShutdownBeginDef,
       PyGraphicsShutdownIsCompleteDef,
-      PyInvokeMainMenuDef,
+      PyCrashDef,
   };
 }
 

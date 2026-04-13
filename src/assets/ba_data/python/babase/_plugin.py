@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
+from babase._logging import balog
 
 if TYPE_CHECKING:
     from typing import Any
@@ -18,31 +19,36 @@ if TYPE_CHECKING:
 
 
 class PluginSubsystem(AppSubsystem):
-    """Subsystem for plugin handling in the app.
+    """Subsystem for wrangling plugins.
 
-    Category: **App Classes**
-
-    Access the single shared instance of this class at `ba.app.plugins`.
+    Access the single shared instance of this class via the
+    :attr:`~babase.App.plugins` attr on the :class:`~babase.App` class.
     """
 
+    #: :meta private:
     AUTO_ENABLE_NEW_PLUGINS_CONFIG_KEY = 'Auto Enable New Plugins'
+
+    #: :meta private:
     AUTO_ENABLE_NEW_PLUGINS_DEFAULT = True
 
     def __init__(self) -> None:
         super().__init__()
 
-        # Info about plugins that we are aware of. This may include
-        # plugins discovered through meta-scanning as well as plugins
-        # registered in the app-config. This may include plugins that
-        # cannot be loaded for various reasons or that have been
-        # intentionally disabled.
+        #: Info about plugins that we are aware of. This may include
+        #: plugins discovered through meta-scanning as well as plugins
+        #: registered in the app-config. This may include plugins that
+        #: cannot be loaded for various reasons or that have been
+        #: intentionally disabled.
         self.plugin_specs: dict[str, babase.PluginSpec] = {}
 
-        # The set of live active plugin objects.
+        #: The set of live active plugin instances.
         self.active_plugins: list[babase.Plugin] = []
 
     def on_meta_scan_complete(self) -> None:
-        """Called when meta-scanning is complete."""
+        """Called when meta-scanning is complete.
+
+        :meta private:
+        """
         from babase._language import Lstr
 
         config_changed = False
@@ -68,7 +74,7 @@ class PluginSubsystem(AppSubsystem):
 
         # Create a plugin-spec for each plugin class we found in the
         # meta-scan.
-        for class_path in results.exports_of_class(Plugin):
+        for class_path in results.exports_by_name('babase.Plugin'):
             assert class_path not in self.plugin_specs
             plugspec = self.plugin_specs[class_path] = PluginSpec(
                 class_path=class_path, loadable=True
@@ -160,61 +166,53 @@ class PluginSubsystem(AppSubsystem):
 
     @override
     def on_app_running(self) -> None:
+        """:meta private:"""
         # Load up our plugins and go ahead and call their on_app_running
         # calls.
-        self.load_plugins()
+        self._load_plugins()
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_running()
             except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_running()')
+                balog.exception('Error in plugin on_app_running().')
 
     @override
     def on_app_suspend(self) -> None:
+        """:meta private:"""
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_suspend()
             except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_suspend()')
+                balog.exception('Error in plugin on_app_suspend().')
 
     @override
     def on_app_unsuspend(self) -> None:
+        """:meta private:"""
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_unsuspend()
             except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_unsuspend()')
+                balog.exception('Error in plugin on_app_unsuspend().')
 
     @override
     def on_app_shutdown(self) -> None:
+        """:meta private:"""
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_shutdown()
             except Exception:
-                from babase import _error
-
-                _error.print_exception('Error in plugin on_app_shutdown()')
+                balog.exception('Error in plugin on_app_shutdown().')
 
     @override
     def on_app_shutdown_complete(self) -> None:
+        """:meta private:"""
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_shutdown_complete()
             except Exception:
-                from babase import _error
+                balog.exception('Error in plugin on_app_shutdown_complete().')
 
-                _error.print_exception(
-                    'Error in plugin on_app_shutdown_complete()'
-                )
-
-    def load_plugins(self) -> None:
-        """(internal)"""
+    def _load_plugins(self) -> None:
 
         # Load plugins from any specs that are enabled & able to.
         for _class_path, plug_spec in sorted(self.plugin_specs.items()):
@@ -224,32 +222,36 @@ class PluginSubsystem(AppSubsystem):
 
 
 class PluginSpec:
-    """Represents a plugin the engine knows about.
-
-    Category: **App Classes**
-
-    The 'enabled' attr represents whether this plugin is set to load.
-    Getting or setting that attr affects the corresponding app-config
-    key. Remember to commit the app-config after making any changes.
-
-    The 'attempted_load' attr will be True if the engine has attempted
-    to load the plugin. If 'attempted_load' is True for a PluginSpec
-    but the 'plugin' attr is None, it means there was an error loading
-    the plugin. If a plugin's api-version does not match the running
-    app, if a new plugin is detected with auto-enable-plugins disabled,
-    or if the user has explicitly disabled a plugin, the engine will not
-    even attempt to load it.
-    """
+    """Represents a plugin the engine knows about."""
 
     def __init__(self, class_path: str, loadable: bool):
+
+        #: Fully qualified class path for the plugin.
         self.class_path = class_path
+
+        #: Can we attempt to load the plugin?
         self.loadable = loadable
+
+        #: Whether the engine has attempted to load the plugin. If this
+        #: is True but the value of :attr:`plugin` is None, it means
+        #: there was an error loading the plugin. If a plugin's
+        #: api-version does not match the running app, if a new plugin is
+        #: detected with auto-enable-plugins disabled, or if the user has
+        #: explicitly disabled a plugin, the engine will not even attempt
+        #: to load it.
         self.attempted_load = False
+
+        #: The associated :class:`~babase.Plugin`, if any.
         self.plugin: Plugin | None = None
 
     @property
     def enabled(self) -> bool:
-        """Whether the user wants this plugin to load."""
+        """Whether this plugin is set to load.
+
+        Getting or setting this attr affects the corresponding
+        app-config key. Remember to commit the app-config after making any
+        changes.
+        """
         plugstates: dict[str, dict] = _babase.app.config.get('Plugins', {})
         assert isinstance(plugstates, dict)
         val = plugstates.get(self.class_path, {}).get('enabled', False) is True
@@ -321,12 +323,10 @@ class PluginSpec:
 class Plugin:
     """A plugin to alter app behavior in some way.
 
-    Category: **App Classes**
-
-    Plugins are discoverable by the meta-tag system
-    and the user can select which ones they want to enable.
-    Enabled plugins are then called at specific times as the
-    app is running in order to modify its behavior in some way.
+    Plugins are discoverable by the :class:`~babase.MetadataSubsystem`
+    system and the user can select which ones they want to enable.
+    Enabled plugins are then called at specific times as the app is
+    running in order to modify its behavior in some way.
     """
 
     def on_app_running(self) -> None:

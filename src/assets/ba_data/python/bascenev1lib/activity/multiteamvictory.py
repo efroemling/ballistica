@@ -4,14 +4,14 @@
 
 from __future__ import annotations
 
-from typing import override, TYPE_CHECKING
+from typing import override, TYPE_CHECKING, Any, cast
 
 import bascenev1 as bs
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
 if TYPE_CHECKING:
-    from typing import Any
+    pass
 
 
 class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
@@ -32,9 +32,9 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
     @override
     def on_begin(self) -> None:
+        # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-locals
-        # pylint: disable=too-many-statements
         from bascenev1lib.actor.text import Text
         from bascenev1lib.actor.image import Image
 
@@ -54,9 +54,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         winning_sessionteam = self.settings_raw['winner']
 
         # Pause a moment before playing victory music.
-        bs.timer(0.6, bs.WeakCall(self._play_victory_music))
+        bs.timer(0.6, bs.WeakCallStrict(self._play_victory_music))
         bs.timer(
-            4.4, bs.WeakCall(self._show_winner, self.settings_raw['winner'])
+            4.4,
+            bs.WeakCallStrict(self._show_winner, self.settings_raw['winner']),
         )
         bs.timer(4.6, self._score_display_sound.play)
 
@@ -76,9 +77,9 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                     )
             player_entries.sort(reverse=True, key=lambda x: x[0])
             if len(player_entries) > 0:
-                # Store some info for the top ffa player so we can
-                # show winner info even if they leave.
-                self._ffa_top_player_info = list(player_entries[0])
+                # Store some info for the top ffa player so we can show
+                # winner info even if they leave.
+                self._ffa_top_player_info = cast(Any, list(player_entries[0]))
                 self._ffa_top_player_info[1] = self._ffa_top_player_info[
                     2
                 ].getname()
@@ -178,6 +179,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             transition_delay=t_incr * 4,
         ).autoretain()
 
+        assert isinstance(session, bs.MultiTeamSession)
         win_score = (session.get_series_length() - 1) // 2 + 1
         lose_score = 0
         for team in self.teams:
@@ -323,7 +325,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_killed = entry[2].killed_count
         if mkp is not None:
             Text(
-                bs.Lstr(resource='mostViolatedPlayerText'),
+                bs.Lstr(resource='mostDestroyedPlayerText'),
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -421,7 +423,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tdelay,
             ).autoretain()
 
-        bs.timer(15.0, bs.WeakCall(self._show_tips))
+        bs.timer(15.0, bs.WeakCallStrict(self._show_tips))
 
     def _show_tips(self) -> None:
         from bascenev1lib.actor.tipstext import TipsText

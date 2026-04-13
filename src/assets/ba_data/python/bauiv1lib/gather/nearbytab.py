@@ -7,6 +7,7 @@ from __future__ import annotations
 import weakref
 from typing import TYPE_CHECKING, override
 
+from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
 import bascenev1 as bs
 
@@ -23,28 +24,38 @@ class NetScanner:
 
     def __init__(
         self,
+        *,
         tab: GatherTab,
         scrollwidget: bui.Widget,
         tab_button: bui.Widget,
         width: float,
+        idprefix: str,
     ):
+        self._idprefix = idprefix
         self._tab = weakref.ref(tab)
         self._scrollwidget = scrollwidget
         self._tab_button = tab_button
         self._columnwidget = bui.columnwidget(
-            parent=self._scrollwidget, border=2, margin=0, left_border=10
+            parent=self._scrollwidget,
+            id=f'{self._idprefix}|col',
+            border=2,
+            margin=0,
+            left_border=10,
         )
         bui.widget(edit=self._columnwidget, up_widget=tab_button)
         self._width = width
         self._last_selected_host: dict[str, Any] | None = None
+        self._last_scan: list[dict[str, str]] | None = None
 
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self.update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
-        # Go ahead and run a few *almost* immediately so we don't
-        # have to wait a second.
-        self.update()
-        bui.apptimer(0.25, bui.WeakCall(self.update))
+        # Run two cycles pretty immediately - this should send out a
+        # "who's there" and update the list with any immediate-ish
+        # results so we may not have to wait a second to see things
+        # appear.
+        self._update()
+        bui.apptimer(0.25, bui.WeakCallStrict(self._update))
 
     def __del__(self) -> None:
         bs.end_host_scanning()
@@ -54,21 +65,38 @@ class NetScanner:
 
     def _on_activate(self, host: dict[str, Any]) -> None:
 
+        bui.app.analytics.submit_event(
+            ClassicAnalyticsEvent(
+                ClassicAnalyticsEvent.EventType.JOIN_NEARBY_PARTY
+            )
+        )
+
         # Store UI location to return to when done.
         if bs.app.classic is not None:
             bs.app.classic.save_ui_state()
 
         bs.connect_to_party(host['address'])
 
-    def update(self) -> None:
+    def _update(self) -> None:
         """(internal)"""
 
         # In case our UI was killed from under us.
         if not self._columnwidget:
-            print(
-                f'ERROR: NetScanner running without UI at time {bui.apptime()}.'
+            bui.uilog.error(
+                'nearbytab NetScanner running without UI at time %s.',
+                bui.apptime(),
             )
             return
+
+        hosts = bs.host_scan_cycle()
+
+        # If nothing has changed since our last run, do nothing. If we
+        # do redundant rebuilds then we are likely to lose some clicks
+        # due to rebuilding after a click starts but before it ends.
+        if hosts == self._last_scan:
+            return
+
+        self._last_scan = hosts
 
         t_scale = 1.6
         for child in self._columnwidget.get_children():
@@ -76,15 +104,14 @@ class NetScanner:
 
         # Grab this now this since adding widgets will change it.
         last_selected_host = self._last_selected_host
-        hosts = bs.host_scan_cycle()
         for i, host in enumerate(hosts):
             txt3 = bui.textwidget(
                 parent=self._columnwidget,
                 size=(self._width / t_scale, 30),
                 selectable=True,
                 color=(1, 1, 1),
-                on_select_call=bui.Call(self._on_select, host),
-                on_activate_call=bui.Call(self._on_activate, host),
+                on_select_call=bui.CallStrict(self._on_select, host),
+                on_activate_call=bui.CallStrict(self._on_activate, host),
                 click_activate=True,
                 text=host['display_string'],
                 h_align='left',
@@ -92,6 +119,11 @@ class NetScanner:
                 corner_scale=t_scale,
                 maxwidth=(self._width / t_scale) * 0.93,
             )
+            # We don't give these ids since they pop in and out and it
+            # doesn't make sense to save/restore selections for them.
+            # But we need to suppress the warning from that.
+            bui.widget(edit=txt3, allow_preserve_selection=False)
+
             if host == last_selected_host:
                 bui.containerwidget(
                     edit=self._columnwidget,
@@ -107,6 +139,7 @@ class NearbyGatherTab(GatherTab):
 
     def __init__(self, window: GatherWindow) -> None:
         super().__init__(window)
+        self._idprefix = f'{window.main_window_id_prefix}|nearby'
         self._net_scanner: NetScanner | None = None
         self._container: bui.Widget | None = None
 
@@ -158,7 +191,11 @@ class NearbyGatherTab(GatherTab):
         )
 
         self._net_scanner = NetScanner(
-            self, scrollw, tab_button, width=sub_scroll_width
+            idprefix=self._idprefix,
+            tab=self,
+            scrollwidget=scrollw,
+            tab_button=tab_button,
+            width=sub_scroll_width,
         )
 
         bui.widget(edit=scrollw, autoselect=True, up_widget=tab_button)

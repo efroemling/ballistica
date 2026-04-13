@@ -30,9 +30,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
         edit_info: dict[str, Any] | None = None,
     ):
+        # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-positional-arguments
-        # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
         from bascenev1 import (
             get_filtered_map_name,
@@ -128,12 +128,14 @@ class PlaylistEditGameWindow(bui.MainWindow):
             root_widget=bui.containerwidget(
                 size=(width, height + top_extra),
                 scale=(
-                    1.95
+                    2.3
                     if uiscale is bui.UIScale.SMALL
                     else 1.35 if uiscale is bui.UIScale.MEDIUM else 1.0
                 ),
-                stack_offset=(
-                    (0, 0) if uiscale is bui.UIScale.SMALL else (0, 0)
+                toolbar_visibility=(
+                    'menu_minimal_no_back'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
                 ),
             ),
             transition=transition,
@@ -153,7 +155,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             autoselect=True,
             scale=1.0 if is_add else 0.75,
             text_scale=1.3,
-            on_activate_call=bui.Call(self._cancel),
+            on_activate_call=bui.CallStrict(self._cancel),
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
@@ -205,15 +207,14 @@ class PlaylistEditGameWindow(bui.MainWindow):
             ),
             highlight=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
+            border_opacity=0.4,
         )
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
             size=(scroll_width, scroll_height),
             background=False,
             claims_left_right=True,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 
@@ -249,7 +250,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             parent=self._subcontainer,
             size=(140, 60),
             position=(h + 448, v - 72),
-            on_activate_call=bui.Call(self._select_map),
+            on_activate_call=bui.CallStrict(self._select_map),
             scale=0.7,
             label=bui.Lstr(resource='mapSelectText'),
         )
@@ -360,7 +361,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     size=(28, 28),
                     label='<',
                     autoselect=True,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._choice_inc, setting.name, txt, setting, -1
                     ),
                     repeat=True,
@@ -371,7 +372,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     size=(28, 28),
                     label='>',
                     autoselect=True,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._choice_inc, setting.name, txt, setting, 1
                     ),
                     repeat=True,
@@ -411,7 +412,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     size=(28, 28),
                     label='-',
                     autoselect=True,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._inc,
                         txt,
                         min_value,
@@ -428,7 +429,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     size=(28, 28),
                     label='+',
                     autoselect=True,
-                    on_activate_call=bui.Call(
+                    on_activate_call=bui.CallStrict(
                         self._inc,
                         txt,
                         min_value,
@@ -477,7 +478,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     autoselect=True,
                     textcolor=(0.8, 0.8, 0.8),
                     value=value,
-                    on_value_change_call=bui.Call(
+                    on_value_change_call=bui.CallPartial(
                         self._check_value_change, setting.name, txt
                     ),
                 )
@@ -504,7 +505,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
                 'Error wiring up game-settings-select widget column.'
             )
 
-        bui.buttonwidget(edit=add_button, on_activate_call=bui.Call(self._add))
+        bui.buttonwidget(
+            edit=add_button, on_activate_call=bui.CallStrict(self._add)
+        )
         bui.containerwidget(
             edit=self._root_widget,
             selected_child=add_button,
@@ -542,6 +545,10 @@ class PlaylistEditGameWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        return False
+
     def _get_localized_setting_name(self, name: str) -> bui.Lstr:
         return bui.Lstr(translate=('settingNames', name))
 
@@ -553,14 +560,14 @@ class PlaylistEditGameWindow(bui.MainWindow):
         if not self.main_window_has_control():
             return
 
-        self._config = self._getconfig()
+        config = self._config = self._getconfig()
 
         # Replace ourself with the map-select UI.
         self.main_window_replace(
-            PlaylistMapSelectWindow(
+            lambda: PlaylistMapSelectWindow(
                 self._gametype,
                 self._sessiontype,
-                self._config,
+                config,
                 self._edit_info,
                 self._completion_call,
             )

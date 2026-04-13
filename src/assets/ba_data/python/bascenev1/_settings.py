@@ -13,10 +13,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class Setting:
-    """Defines a user-controllable setting for a game or other entity.
-
-    Category: Gameplay Classes
-    """
+    """Defines a user-controllable setting for a game or other entity."""
 
     name: str
     default: Any
@@ -24,20 +21,14 @@ class Setting:
 
 @dataclass
 class BoolSetting(Setting):
-    """A boolean game setting.
-
-    Category: Settings Classes
-    """
+    """A boolean game setting."""
 
     default: bool
 
 
 @dataclass
 class IntSetting(Setting):
-    """An integer game setting.
-
-    Category: Settings Classes
-    """
+    """An integer game setting."""
 
     default: int
     min_value: int = 0
@@ -47,10 +38,7 @@ class IntSetting(Setting):
 
 @dataclass
 class FloatSetting(Setting):
-    """A floating point game setting.
-
-    Category: Settings Classes
-    """
+    """A floating point game setting."""
 
     default: float
     min_value: float = 0.0
@@ -60,20 +48,14 @@ class FloatSetting(Setting):
 
 @dataclass
 class ChoiceSetting(Setting):
-    """A setting with multiple choices.
-
-    Category: Settings Classes
-    """
+    """A setting with multiple choices."""
 
     choices: list[tuple[str, Any]]
 
 
 @dataclass
 class IntChoiceSetting(ChoiceSetting):
-    """An int setting with multiple choices.
-
-    Category: Settings Classes
-    """
+    """An int setting with multiple choices."""
 
     default: int
     choices: list[tuple[str, int]]
@@ -81,10 +63,7 @@ class IntChoiceSetting(ChoiceSetting):
 
 @dataclass
 class FloatChoiceSetting(ChoiceSetting):
-    """A float setting with multiple choices.
-
-    Category: Settings Classes
-    """
+    """A float setting with multiple choices."""
 
     default: float
     choices: list[tuple[str, float]]

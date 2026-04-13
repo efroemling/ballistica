@@ -3,11 +3,12 @@
 #ifndef BALLISTICA_SHARED_PYTHON_PYTHON_REF_H_
 #define BALLISTICA_SHARED_PYTHON_PYTHON_REF_H_
 
-#include <list>
+#include <cassert>
 #include <optional>
 #include <string>
+#include <vector>
 
-#include "ballistica/shared/ballistica.h"  // IWYU pragma: keep.
+#include "ballistica/shared/foundation/exception.h"
 
 namespace ballistica {
 
@@ -153,6 +154,9 @@ class PythonRef {
   /// Throws Exception if an error occurs.
   auto DictGetItem(const char* name) const -> PythonRef;
 
+  /// Return all items in a dict as C++ structures.
+  auto DictItems() const -> std::vector<std::pair<PythonRef, PythonRef>>;
+
   /// The equivalent of calling Python str() on the contained PyObject, and
   /// gracefully handles invalid refs. To throw exceptions on invalid refs,
   /// use ValueAsString();
@@ -167,17 +171,21 @@ class PythonRef {
 
   auto ValueIsNone() const -> bool;
 
-  /// For string and babase.Lstr types, returns a utf8 string.
-  /// Throws an exception for other types.
+  /// For string and babase.Lstr types, returns a utf8 string. Throws an
+  /// exception for other types.
   auto ValueAsLString() const -> std::string;
 
   auto ValueIsString() const -> bool;
   auto ValueAsString() const -> std::string;
-  auto ValueAsStringSequence() const -> std::list<std::string>;
+  auto ValueAsStringSequence() const -> std::vector<std::string>;
   auto ValueAsOptionalString() const -> std::optional<std::string>;
   auto ValueAsOptionalStringSequence() const
-      -> std::optional<std::list<std::string>>;
+      -> std::optional<std::vector<std::string>>;
 
+  auto ValueIsSequence() const -> bool;
+  auto ValueAsSequence() const -> std::vector<PythonRef>;
+
+  auto ValueAsBool() const -> bool;
   auto ValueAsInt() const -> int64_t;
   auto ValueAsDouble() const -> double;
   auto ValueAsOptionalInt() const -> std::optional<int64_t>;

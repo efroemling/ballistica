@@ -65,13 +65,11 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(40, v - 340),
             size=(self._width - 80, 400),
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
         bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
         self._column = bui.columnwidget(
             parent=self._scrollwidget,
-            claims_tab=True,
             selection_loops_to_parent=True,
         )
 
@@ -111,6 +109,11 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
             )
         )
 
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # Todo: wire this up.
+        return False
+
     def _playlists_cb(self, playlists: list[str]) -> None:
         if self._column:
             for widget in self._column.get_children():
@@ -123,7 +126,7 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
                     v_align='center',
                     maxwidth=self._width - 110,
                     selectable=True,
-                    on_activate_call=bui.Call(self._sel, playlist),
+                    on_activate_call=bui.CallStrict(self._sel, playlist),
                     click_activate=True,
                 )
                 bui.widget(edit=txt, show_buffer_top=40, show_buffer_bottom=40)

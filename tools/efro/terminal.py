@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Functionality related to terminal IO."""
+
 from __future__ import annotations
 
 import sys
@@ -95,7 +96,6 @@ def _default_color_enabled() -> bool:
     return True
 
 
-# noinspection PyPep8Naming
 def _windows_enable_color() -> bool:
     """Attempt to enable ANSI color on windows terminal; return success."""
     # pylint: disable=invalid-name, import-error, undefined-variable
@@ -315,7 +315,7 @@ class ClrNever(ClrBase):
 
 
 _envval = os.environ.get('EFRO_TERMCOLORS')
-color_enabled: bool = (
+color_enabled: bool = (  # pylint: disable=invalid-name
     True
     if _envval == '1'
     else False if _envval == '0' else _default_color_enabled()

@@ -1,0 +1,4 @@
+FROM python:3.13
+COPY config/requirements.txt ballistica_requirements.txt
+RUN apt update; apt -y --no-install-recommends install libopenal-dev libsdl2-dev libvorbis-dev cmake clang-format rsync zip zstd
+RUN pip install --upgrade pip; pip install -r ballistica_requirements.txt

@@ -9,7 +9,7 @@
 // It predeclares our feature-set's various types and globals and other
 // bits.
 
-// Predeclared types from other feature sets that we use.
+// Predeclare types from other feature sets that we use.
 namespace ballistica::core {
 class CoreFeatureSet;
 }

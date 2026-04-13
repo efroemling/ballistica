@@ -1,6 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 """Testing message functionality."""
+
 # pylint: disable=too-many-lines
 
 from __future__ import annotations
@@ -769,10 +770,8 @@ def test_receiver_creation() -> None:
 
 
 def test_full_pipeline(caplog: pytest.LogCaptureFixture) -> None:
-    """Test the full pipeline."""
-
-    # pylint: disable=too-many-locals
     # pylint: disable=too-many-statements
+    """Test the full pipeline."""
 
     # Define a class that can send messages and one that can receive them.
     class TestClassS:

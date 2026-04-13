@@ -34,6 +34,8 @@ class CorePython {
     kLoggerRootLogCall,
     kLoggerBa,
     kLoggerBaLogCall,
+    kLoggerBaAccount,
+    kLoggerBaAccountLogCall,
     kLoggerBaApp,
     kLoggerBaAppLogCall,
     kLoggerBaAudio,
@@ -42,24 +44,39 @@ class CorePython {
     kLoggerBaDisplayTimeLogCall,
     kLoggerBaGraphics,
     kLoggerBaGraphicsLogCall,
+    kLoggerBaPerformance,
+    kLoggerBaPerformanceLogCall,
     kLoggerBaLifecycle,
     kLoggerBaLifecycleLogCall,
     kLoggerBaAssets,
     kLoggerBaAssetsLogCall,
     kLoggerBaInput,
     kLoggerBaInputLogCall,
+    kLoggerBaUI,
+    kLoggerBaUILogCall,
     kLoggerBaNetworking,
     kLoggerBaNetworkingLogCall,
     kPrependSysPathCall,
+    kWarmStart1Call,
+    kWarmStart1CompletedCall,
     kBaEnvConfigureCall,
     kBaEnvGetConfigCall,
+    kBaEnvAtExitCall,
+    kBaEnvPreFinalizeCall,
+    kUUIDStrCall,
     kLast  // Sentinel; must be at end.
   };
 
-  /// Bring up Python itself. Only needed in Monolithic builds.
+  /// Bring up Python itself. Only applicable to monolithic builds.
   void InitPython();
 
+  /// Finalize Python itself. Only applicable to monolithic builds. This
+  /// will block waiting for all remaining (non-daemon) Python threads to
+  /// join. Any further Python use must be avoided after calling this.
+  void FinalizePython();
+
   /// Run baenv.configure() with all of our monolithic-mode paths/etc.
+  void MonolithicModeBaEnvImport();
   void MonolithicModeBaEnvConfigure();
 
   /// Call once we should start forwarding our Log calls (along with all
@@ -70,11 +87,12 @@ class CorePython {
   /// Can be called from any thread at any time. If called before Python
   /// logging is available, logs locally using Logging::EmitPlatformLog()
   /// (with an added warning).
-  void LoggingCall(LogName logname, LogLevel loglevel, const std::string& msg);
+  void LoggingCall(LogName logname, LogLevel loglevel, const char* msg);
   void ImportPythonObjs();
   void VerifyPythonEnvironment();
   void SoftImportBase();
   void UpdateInternalLoggerLevels(LogLevel* log_levels);
+  void AtExit(PyObject*);
 
   static auto WasModularMainCalled() -> bool;
 
@@ -85,12 +103,18 @@ class CorePython {
 
   const auto& objs() { return objs_; }
 
+  void WarmStart1();
+  auto WarmStart1Completed() -> bool;
+
  private:
   PythonObjectSet<ObjID> objs_;
 
+  bool monolithic_init_complete_{};
+  bool python_logging_calls_enabled_{};
+  bool finalize_called_{};
+
   // Log calls we make before we're set up to ship logs through Python
   // go here. They all get shipped at once as soon as it is possible.
-  bool python_logging_calls_enabled_{};
   std::mutex early_log_lock_;
   std::list<std::tuple<LogName, LogLevel, std::string>> early_logs_;
 };

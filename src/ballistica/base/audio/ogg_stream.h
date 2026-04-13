@@ -6,11 +6,11 @@
 #include "ballistica/base/audio/audio_streamer.h"
 
 #if BA_ENABLE_AUDIO
-#if BA_OSTYPE_IOS_TVOS || BA_OSTYPE_ANDROID
+#if BA_PLATFORM_IOS_TVOS || BA_PLATFORM_ANDROID
 #include "ivorbisfile.h"  // NOLINT
 #else
 #include <vorbis/vorbisfile.h>
-#endif  // BA_OSTYPE_IOS_TVOS
+#endif  // BA_PLATFORM_IOS_TVOS
 #endif  // BA_ENABLE_AUDIO
 
 #include <string>

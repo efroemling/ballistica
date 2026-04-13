@@ -10,8 +10,11 @@
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/logic/logic.h"
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/macros.h"
 
 namespace ballistica::base {
 
@@ -85,13 +88,13 @@ void GraphicsServer::ApplySettings(const GraphicsSettings* settings) {
 void GraphicsServer::set_client_context(GraphicsClientContext* context) {
   assert(g_base->InGraphicsContext());
 
-  // We have to do a bit of a song and dance with these context pointers.
-  // We wrap the context in an immutable object wrapper which is owned by
-  // the logic thread and that takes care of killing it when no longer
-  // used there, but we also need to keep it alive here in our thread.
-  // (which may not be the logic thread). So to accomplish that, we
-  // immediately ship a refcount increment over to the logic thread, and
-  // once we're done with an obj we ship a decrement.
+  // We have to do a bit of a song and dance with these context pointers. We
+  // wrap the context in an immutable object wrapper which is owned by the
+  // logic thread and that takes care of killing it when no longer used
+  // there, but we also need to keep it alive here in our thread. (which may
+  // not be the logic thread). So to accomplish that, we immediately ship a
+  // refcount increment over to the logic thread, and once we're done with
+  // an obj we ship a decrement.
 
   auto* old_wrapper = client_context_;
   auto* new_wrapper =
@@ -138,7 +141,8 @@ auto GraphicsServer::TryRender() -> bool {
       success = true;
     }
 
-    // Send this frame_def back to the logic thread for deletion or recycling.
+    // Send this frame_def back to the logic thread for deletion or
+    // recycling.
     g_base->graphics->ReturnCompletedFrameDef(frame_def);
   }
 
@@ -146,13 +150,14 @@ auto GraphicsServer::TryRender() -> bool {
 }
 
 auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
-  assert(g_base->app_adapter->InGraphicsContext());
-  millisecs_t start_time = g_core->GetAppTimeMillisecs();
+  BA_PRECONDITION_LOG_ONCE(g_base->app_adapter->InGraphicsContext());
+  millisecs_t start_time = g_core->AppTimeMillisecs();
 
   // Spin and wait for a short bit for a frame_def to appear.
   while (true) {
     // Stop waiting if we can't/shouldn't render anyway.
-    if (!renderer_ || shutting_down_ || g_base->app_suspended()) {
+    if (!renderer_ || !renderer_loaded_ || shutting_down_
+        || g_base->app_suspended()) {
       return nullptr;
     }
 
@@ -176,16 +181,17 @@ auto GraphicsServer::WaitForRenderFrameDef_() -> FrameDef* {
     }
 
     // If there's no frame_def for us, sleep for a bit and wait for it.
-    millisecs_t t = g_core->GetAppTimeMillisecs() - start_time;
+    millisecs_t t = g_core->AppTimeMillisecs() - start_time;
     if (t >= 1000) {
       if (g_buildconfig.debug_build()) {
-        g_core->Log(LogName::kBaGraphics, LogLevel::kWarning,
-                    "GraphicsServer: timed out at " + std::to_string(t)
-                        + "ms waiting for logic thread to send us a FrameDef.");
+        g_core->logging->Log(
+            LogName::kBaGraphics, LogLevel::kWarning,
+            "GraphicsServer: timed out at " + std::to_string(t)
+                + "ms waiting for logic thread to send us a FrameDef.");
       }
       break;  // Fail.
     }
-    core::CorePlatform::SleepMillisecs(1);
+    core::Platform::SleepMillisecs(1);
   }
   return nullptr;
 }
@@ -214,7 +220,8 @@ void GraphicsServer::PreprocessRenderFrameDef(FrameDef* frame_def) {
 
   // Now let the renderer do any preprocess passes (shadows, etc).
   assert(renderer_);
-  if (renderer_ != nullptr) {
+  assert(renderer_loaded_);
+  if (renderer_ && renderer_loaded_) {
     renderer_->PreprocessFrameDef(frame_def);
   }
 }
@@ -223,7 +230,8 @@ void GraphicsServer::PreprocessRenderFrameDef(FrameDef* frame_def) {
 // stereo eye or in mono.
 void GraphicsServer::DrawRenderFrameDef(FrameDef* frame_def, int eye) {
   assert(renderer_);
-  if (renderer_) {
+  assert(renderer_loaded_);
+  if (renderer_ && renderer_loaded_) {
     renderer_->RenderFrameDef(frame_def);
   }
 }
@@ -231,7 +239,8 @@ void GraphicsServer::DrawRenderFrameDef(FrameDef* frame_def, int eye) {
 // Clean up the frame_def once done drawing it.
 void GraphicsServer::FinishRenderFrameDef(FrameDef* frame_def) {
   assert(renderer_);
-  if (renderer_) {
+  assert(renderer_loaded_);
+  if (renderer_ && renderer_loaded_) {
     renderer_->FinishFrameDef(frame_def);
   }
 }
@@ -241,14 +250,14 @@ void GraphicsServer::ReloadMedia_() {
   assert(g_base->app_adapter->InGraphicsContext());
 
   // Immediately unload all renderer data here in this thread.
-  if (renderer_) {
+  if (renderer_ && renderer_loaded_) {
     g_base->assets->UnloadRendererBits(true, true);
   }
 
-  // Set a render-hold so we ignore all frame_defs up until the point at which
-  // we receive the corresponding remove-hold.
-  // (At which point subsequent frame-defs will be be progress-bar frame_defs so
-  // we won't hitch if we actually render them.)
+  // Set a render-hold so we ignore all frame_defs up until the point at
+  // which we receive the corresponding remove-hold. (At which point
+  // subsequent frame-defs will be be progress-bar frame_defs so we won't
+  // hitch if we actually render them.)
   assert(g_base->graphics_server);
   SetRenderHold();
 
@@ -266,14 +275,17 @@ void GraphicsServer::ReloadMedia_() {
 void GraphicsServer::ReloadLostRenderer() {
   assert(g_base->app_adapter->InGraphicsContext());
 
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kDebug,
+                       "ReloadLostRenderer() called.");
   if (!renderer_) {
-    g_core->Log(LogName::kBaGraphics, LogLevel::kError,
-                "No renderer on GraphicsServer::ReloadLostRenderer.");
+    g_core->logging->Log(
+        LogName::kBaGraphics, LogLevel::kError,
+        "No renderer on GraphicsServer::ReloadLostRenderer().");
     return;
   }
 
-  // Mark our context as lost so the renderer knows to not try and tear things
-  // down itself.
+  // Mark our context as lost so the renderer knows to not try and tear
+  // things down itself.
   set_renderer_context_lost(true);
 
   // Unload all texture and mesh data here in the graphics thread.
@@ -325,12 +337,12 @@ void GraphicsServer::set_renderer(Renderer* renderer) {
 void GraphicsServer::LoadRenderer() {
   assert(g_base->app_adapter->InGraphicsContext());
   if (!renderer_) {
-    g_core->Log(LogName::kBaGraphics, LogLevel::kError,
-                "LoadRenderer() called with no renderer present.");
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                         "LoadRenderer() called with no renderer present.");
     return;
   }
   if (renderer_loaded_) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBaGraphics, LogLevel::kError,
         "LoadRenderer() called with an already-loaded renderer present.");
     return;
@@ -373,12 +385,12 @@ void GraphicsServer::LoadRenderer() {
 void GraphicsServer::UnloadRenderer() {
   assert(g_base->app_adapter->InGraphicsContext());
   if (!renderer_) {
-    g_core->Log(LogName::kBaGraphics, LogLevel::kError,
-                "UnloadRenderer() called with no renderer present.");
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                         "UnloadRenderer() called with no renderer present.");
     return;
   }
   if (!renderer_loaded_) {
-    g_core->Log(
+    g_core->logging->Log(
         LogName::kBaGraphics, LogLevel::kError,
         "UnloadRenderer() called with an already unloaded renderer present.");
     return;
@@ -538,7 +550,8 @@ void GraphicsServer::PushRemoveRenderHoldCall() {
     assert(render_hold_);
     render_hold_--;
     if (render_hold_ < 0) {
-      g_core->Log(LogName::kBaGraphics, LogLevel::kError, "RenderHold < 0");
+      g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                           "RenderHold < 0");
       render_hold_ = 0;
     }
   });

@@ -2,14 +2,19 @@
 
 #include "ballistica/shared/ballistica.h"
 
+#include <chrono>
+#include <cstdio>
+#include <memory>
 #include <string>
+#include <thread>
 
-#include "ballistica/core/platform/core_platform.h"
+#include "ballistica/core/logging/logging.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
+#include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/fatal_error.h"
-#include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 
@@ -39,8 +44,8 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22130;
-const char* kEngineVersion = "1.7.37";
+const int kEngineBuildNumber = 22812;
+const char* kEngineVersion = "1.7.62";
 const int kEngineApiVersion = 9;
 
 #if BA_MONOLITHIC_BUILD
@@ -53,7 +58,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
   core::BaseSoftInterface* l_base{};
 
   try {
-    auto time1 = core::CorePlatform::GetCurrentMillisecs();
+    auto time1 = core::Platform::TimeMonotonicMillisecs();
 
     // Even at the absolute start of execution we should be able to
     // reasonably log errors. Set env var BA_CRASH_TEST=1 to test this.
@@ -68,7 +73,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // import it first thing even if we don't explicitly use it.
     l_core = core::CoreFeatureSet::Import(&core_config);
 
-    auto time2 = core::CorePlatform::GetCurrentMillisecs();
+    auto time2 = core::Platform::TimeMonotonicMillisecs();
 
     // If a command was passed, simply run it and exit. We want to act
     // simply as a Python interpreter in that case; we don't do any
@@ -83,6 +88,11 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       // Let anyone interested know we're trying to go down NOW.
       l_core->set_engine_done();
 
+      // Take the Python interpreter down gracefully. This will block for
+      // any outstanding threads/etc.
+      l_core->python->FinalizePython();
+
+      // Laterz.
       exit(success ? 0 : 1);
     }
 
@@ -96,9 +106,10 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // (essentially the baenv.configure() call). This needs to be done
     // before any other ba* modules are imported since it may affect where
     // those modules get loaded from in the first place.
+    l_core->python->MonolithicModeBaEnvImport();
     l_core->python->MonolithicModeBaEnvConfigure();
 
-    auto time3 = core::CorePlatform::GetCurrentMillisecs();
+    auto time3 = core::Platform::TimeMonotonicMillisecs();
 
     // We need the base feature-set to run a full app but we don't have a hard
     // dependency to it. Let's see if it's available.
@@ -107,7 +118,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       FatalError("Base module unavailable; can't run app.");
     }
 
-    auto time4 = core::CorePlatform::GetCurrentMillisecs();
+    auto time4 = core::Platform::TimeMonotonicMillisecs();
 
     // -------------------------------------------------------------------------
     // Phase 2: "The pieces are moving."
@@ -126,14 +137,14 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // environment do that part).
 
     // Make noise if it takes us too long to get to this point.
-    auto time5 = core::CorePlatform::GetCurrentMillisecs();
+    auto time5 = core::Platform::TimeMonotonicMillisecs();
     auto total_duration = time5 - time1;
     if (total_duration > 5000) {
       auto core_import_duration = time2 - time1;
       auto env_config_duration = time3 - time2;
       auto base_import_duration = time4 - time3;
       auto start_app_duration = time5 - time4;
-      core::g_core->Log(LogName::kBa, LogLevel::kWarning, [=] {
+      core::g_core->logging->Log(LogName::kBa, LogLevel::kWarning, [=] {
         return "MonolithicMain took too long (" + std::to_string(total_duration)
                + " ms; " + std::to_string(core_import_duration)
                + " core-import, " + std::to_string(env_config_duration)
@@ -146,8 +157,14 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     if (l_base->AppManagesMainThreadEventLoop()) {
       // In environments where we control the event loop, do that.
       l_base->RunAppToCompletion();
+
       // Let anyone interested know we're trying to go down NOW.
       l_core->set_engine_done();
+
+      // Take the Python interpreter down gracefully. This will block for
+      // any outstanding threads/etc.
+      l_core->python->FinalizePython();
+
     } else {
       // If the environment is managing events, we now simply return and let
       // it feed us those events.
@@ -163,7 +180,7 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
         std::string("Unhandled exception in MonolithicMain(): ") + exc.what();
 
     // Let the user and/or master-server know what killed us.
-    FatalError::ReportFatalError(error_msg, true);
+    FatalErrorHandling::ReportFatalError(error_msg, true);
 
     // Exiting the app via an exception tends to lead to crash reports. If
     // it seems we're not on an official live build then we'd rather just
@@ -174,13 +191,16 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // If this returns true, it means the platform/app-adapter is handling
     // things (showing a fatal error dialog, etc.) and it's out of our
     // hands.
-    bool handled = FatalError::HandleFatalError(try_to_exit_cleanly, true);
+    bool handled =
+        FatalErrorHandling::HandleFatalError(try_to_exit_cleanly, true);
 
     // If it's not been handled, take the app down ourself.
     if (!handled) {
       // Let anyone interested know we're trying to go down NOW.
       if (l_core) {
         l_core->set_engine_done();
+        // Note: We DO NOT call FinalizePython() in this case; we're already
+        // going down in flames so that might just make things worse.
       }
       if (try_to_exit_cleanly) {
         exit(1);
@@ -207,24 +227,103 @@ class IncrementalInitRunner_ {
       switch (step_) {
         case 0:
           core_ = core::CoreFeatureSet::Import(&config_);
+          // At this point, go ahead and release the GIL. We'll need to
+          // explicitly grab it when we need it going forward.
+          Python::PermanentlyReleaseGIL();
+
+          step_++;
+          last_step_time_ = core::Platform::TimeMonotonicSeconds();
+          return false;
+
+        case 1: {
+          Python::ScopedInterpreterLock gil_acquire;
+          core_->python->WarmStart1();
+
+          // Launch a thread which spins and waits for the Python bg stuff
+          // we just launched to complete. We do this in a separate thread
+          // because even acquiring the GIL to make the check in the main
+          // thread can be enough to trigger ANRs on slower hardware.
+          thread_ = std::make_unique<std::thread>([this] {
+            while (explicit_bool(true)) {
+              {
+                Python::ScopedInterpreterLock gil_acquire;
+                if (core_->python->WarmStart1Completed()) {
+                  warm_start_completed_ = true;
+                  break;
+                }
+              }
+              std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+          });
+
+          LogStepTime_(step_);
           step_++;
           return false;
-        case 1:
+        }
+
+        case 2: {
+          // This step is a special case; the previous step kicked off a
+          // bunch of background work and in this step we simply poll for it
+          // to finish, returning periodically to avoid ANRs. Note that we
+          // DON'T need to acquire the GIL here since we kicked off a
+          // background thread to set a plain old bool we can watch for.
+          auto starttime{core::Platform::TimeMonotonicMillisecs()};
+          while (explicit_bool(true)) {
+            if (core::Platform::TimeMonotonicMillisecs() - starttime > 1000) {
+              // Out of time this pass.
+              LogStepTime_(step_);
+              return false;
+            }
+            if (warm_start_completed_) {
+              // Our thread that set this should be done.
+              thread_->join();
+
+              // We finished this step.
+              LogStepTime_(step_);
+              step_++;
+              return false;
+            }
+            // Sleep for short bits while the warm start bg stuff is going
+            // so they get most of the cpu.
+            core::Platform::SleepMillisecs(1);
+          }
+        }
+
+        case 3: {
+          Python::ScopedInterpreterLock gil_acquire;
+          core_->python->MonolithicModeBaEnvImport();
+          LogStepTime_(step_);
+          step_++;
+          return false;
+        }
+
+        case 4: {
+          Python::ScopedInterpreterLock gil_acquire;
           core_->python->MonolithicModeBaEnvConfigure();
+          LogStepTime_(step_);
           step_++;
           return false;
-        case 2:
+        }
+
+        case 5: {
+          Python::ScopedInterpreterLock gil_acquire;
           base_ = core_->SoftImportBase();
           if (!base_) {
             FatalError("Base module unavailable; can't run app.");
           }
+          LogStepTime_(step_);
           step_++;
           return false;
-        case 3:
+        }
+
+        case 6: {
+          Python::ScopedInterpreterLock gil_acquire;
           base_->StartApp();
-          Python::PermanentlyReleaseGIL();
+          LogStepTime_(step_);
           step_++;
           return false;
+        }
+
         default:
           return true;
       }
@@ -233,7 +332,7 @@ class IncrementalInitRunner_ {
           std::string("Unhandled exception in MonolithicMain(): ") + exc.what();
 
       // Let the user and/or master-server know what killed us.
-      FatalError::ReportFatalError(error_msg, true);
+      FatalErrorHandling::ReportFatalError(error_msg, true);
 
       // Exiting the app via an exception tends to lead to crash reports. If
       // it seems we're not on an official live build then we'd rather just
@@ -244,7 +343,8 @@ class IncrementalInitRunner_ {
       // If this returns true, it means the platform/app-adapter is handling
       // things (showing a fatal error dialog, etc.) and it's out of our
       // hands.
-      bool handled = FatalError::HandleFatalError(try_to_exit_cleanly, true);
+      bool handled =
+          FatalErrorHandling::HandleFatalError(try_to_exit_cleanly, true);
 
       // If it's not been handled, take the app down ourself.
       if (!handled) {
@@ -262,8 +362,29 @@ class IncrementalInitRunner_ {
   }
 
  private:
+  /// On Android we want to try and space our steps out (namely our
+  /// warm-start steps) so that they take roughly equal amounts of time (and
+  /// minimize the chances of us triggering ANR reports by hogging the main
+  /// thread too long). Use this log message to calibrate that.
+  void LogStepTime_(int step) {
+    // Currently only showing this on Android where its relevant.
+    if (!g_buildconfig.platform_android() || !g_buildconfig.debug_build()) {
+      return;
+    }
+    char buffer[256];
+    auto now{core::Platform::TimeMonotonicSeconds()};
+    snprintf(buffer, sizeof(buffer), "Incremental init step %d took %.3fs.",
+             step, now - last_step_time_);
+    core_->platform->EmitPlatformLog("ba_native_incr_init", LogLevel::kDebug,
+                                     buffer);
+    last_step_time_ = now;
+  }
+
   int step_{};
+  seconds_t last_step_time_{};
   bool zombie_{};
+  bool warm_start_completed_{};
+  std::unique_ptr<std::thread> thread_{};
   core::CoreConfig config_;
   core::CoreFeatureSet* core_{};
   core::BaseSoftInterface* base_{};
@@ -281,36 +402,7 @@ auto MonolithicMainIncremental(const core::CoreConfig* config) -> bool {
 #endif  // BA_MONOLITHIC_BUILD
 
 void FatalError(const std::string& message) {
-  FatalError::DoFatalError(message);
-}
-
-// void Log(LogName name, LogLevel level, const std::string& msg) {
-//   Logging::Log(name, level, msg);
-// }
-
-// void Log(LogName name, LogLevel level, std::string (*msg_generator)()) {
-//   Logging::Log(name, level, msg_generator());
-// }
-
-void ScreenMessage(const std::string& s, const Vector3f& color) {
-  if (core::g_base_soft) {
-    core::g_base_soft->ScreenMessage(s, color);
-  } else {
-    core::g_core->Log(
-        LogName::kBa, LogLevel::kError,
-        "ScreenMessage called without base feature-set loaded (will be lost): '"
-            + s + "'");
-  }
-}
-
-void ScreenMessage(const std::string& msg) {
-  ScreenMessage(msg, {1.0f, 1.0f, 1.0f});
-}
-
-auto CurrentThreadName() -> std::string {
-  // Currently just ask event-loop for this but perhaps should be talking
-  // more directly to the OS/etc. to cover more cases.
-  return core::CoreFeatureSet::CurrentThreadName();
+  FatalErrorHandling::DoFatalError(message);
 }
 
 }  // namespace ballistica

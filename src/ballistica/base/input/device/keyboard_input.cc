@@ -51,17 +51,17 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
     // Any new event coming in cancels repeats.
     ui_repeater_.Clear();
 
-    if (g_base->ui->GetWidgetForInput(this)) {
+    if (g_base->ui->RequestMainUIControl(this)) {
       bool pass = false;
       auto c = WidgetMessage::Type::kEmptyMessage;
       if (down) {
         switch (keysym->sym) {
           case SDLK_TAB:
-            if (keysym->mod & KMOD_SHIFT) {  // NOLINT (signed bitwise)
-              c = WidgetMessage::Type::kTabPrev;
-            } else {
-              c = WidgetMessage::Type::kTabNext;
-            }
+            // if (keysym->mod & KMOD_SHIFT) {  // NOLINT (signed bitwise)
+            //   c = WidgetMessage::Type::kTabPrev;
+            // } else {
+            //   c = WidgetMessage::Type::kTabNext;
+            // }
             pass = true;
             break;
           case SDLK_LEFT:
@@ -152,8 +152,8 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
   }
 
   // Bring up menu if start is pressed.
-  if (keysym->sym == start_key_ && !g_base->ui->MainMenuVisible()) {
-    g_base->ui->PushMainMenuPressCall(this);
+  if (keysym->sym == start_key_ && !g_base->ui->IsMainUIVisible()) {
+    g_base->ui->RequestMainUI(this);
     return true;
   }
 
@@ -170,8 +170,8 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
             || (keysym->sym == bomb_key_)
             || (keysym->sym == pick_up_key_)
             // Main keyboard accepts enter/return as join-request.
-            || (device_number() == 1 && (keysym->sym == SDLK_KP_ENTER))
-            || (device_number() == 1 && (keysym->sym == SDLK_RETURN)))) {
+            || (number() == 1 && (keysym->sym == SDLK_KP_ENTER))
+            || (number() == 1 && (keysym->sym == SDLK_RETURN)))) {
       RequestPlayer();
       return true;
     }
@@ -194,8 +194,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
 
   // Keyboard 1 supports assigned keys plus arrow keys if they're unused.
   if (keysym->sym == left_key_
-      || (device_number() == 1 && keysym->sym == SDLK_LEFT
-          && !left_key_assigned())) {
+      || (number() == 1 && keysym->sym == SDLK_LEFT && !left_key_assigned())) {
     player_input = true;
     input_type = InputType::kLeftRight;
     left_held_ = down;
@@ -211,7 +210,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
       }
     }
   } else if (keysym->sym == right_key_
-             || (device_number() == 1 && keysym->sym == SDLK_RIGHT
+             || (number() == 1 && keysym->sym == SDLK_RIGHT
                  && !right_key_assigned())) {
     // Keyboard 1 supports assigned keys plus arrow keys if they're unused.
     player_input = true;
@@ -229,7 +228,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
       }
     }
   } else if (keysym->sym == up_key_
-             || (device_number() == 1 && keysym->sym == SDLK_UP
+             || (number() == 1 && keysym->sym == SDLK_UP
                  && !up_key_assigned())) {
     player_input = true;
     input_type = InputType::kUpDown;
@@ -244,7 +243,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
       if (down_held_) input_value = -32767;
     }
   } else if (keysym->sym == down_key_
-             || (device_number() == 1 && keysym->sym == SDLK_DOWN
+             || (number() == 1 && keysym->sym == SDLK_DOWN
                  && !down_key_assigned())) {
     player_input = true;
     input_type = InputType::kUpDown;
@@ -288,8 +287,8 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
     } else {
       input_type = InputType::kPickUpRelease;
     }
-  } else if ((device_number() == 1 && keysym->sym == SDLK_RETURN)
-             || (device_number() == 1 && keysym->sym == SDLK_KP_ENTER)
+  } else if ((number() == 1 && keysym->sym == SDLK_RETURN)
+             || (number() == 1 && keysym->sym == SDLK_KP_ENTER)
              || keysym->sym == jump_key_) {
     // Keyboard 1 claims certain keys if they are otherwise unclaimed
     // (arrow keys, enter/return, etc).
@@ -321,13 +320,13 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
       case SDLK_KP_PLUS:
       case SDLK_KP_MINUS:
       case SDLK_KP_ENTER:
-        if (device_number() == 2) {
+        if (number() == 2) {
           UpdateRun_(keysym->sym, down);
           return true;
         }
         break;
       default:
-        if (device_number() == 1) {
+        if (number() == 1) {
           UpdateRun_(keysym->sym, down);
           return true;
         }
@@ -378,7 +377,7 @@ void KeyboardInput::UpdateRun_(SDL_Keycode key, bool down) {
   }
 }
 
-void KeyboardInput::UpdateMapping() {
+void KeyboardInput::ApplyAppConfig() {
   assert(g_base->InLogicThread());
 
   auto* cl{g_base->HaveClassic() ? g_base->classic() : nullptr};
@@ -481,7 +480,7 @@ auto KeyboardInput::GetButtonName(int index) -> std::string {
   return g_base->app_adapter->GetKeyName(index);
 }
 
-auto KeyboardInput::GetRawDeviceName() -> std::string { return "Keyboard"; }
+auto KeyboardInput::DoGetDeviceName() -> std::string { return "Keyboard"; }
 auto KeyboardInput::GetPartyButtonName() const -> std::string { return "F5"; }
 auto KeyboardInput::HasMeaningfulButtonNames() -> bool { return true; }
 

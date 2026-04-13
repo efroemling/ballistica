@@ -16,19 +16,23 @@ import logging
 # other modules; the goal is to let most simple mods rely solely on this
 # module to keep things simple.
 
-from efro.util import set_canonical_module_names
 from babase import (
+    ActivityNotFoundError,
     add_clean_frame_callback,
     app,
+    App,
     AppIntent,
     AppIntentDefault,
     AppIntentExec,
     AppMode,
+    AppState,
     apptime,
     AppTime,
     apptimer,
     AppTimer,
     Call,
+    CallPartial,
+    CallStrict,
     ContextError,
     ContextRef,
     displaytime,
@@ -52,12 +56,16 @@ from babase import (
     safecolor,
     screenmessage,
     set_analytics_screen,
+    SessionNotFoundError,
+    SessionTeamNotFoundError,
     storagename,
     timestring,
     UIScale,
     unlock_all_input,
     Vec3,
     WeakCall,
+    WeakCallPartial,
+    WeakCallStrict,
 )
 
 from _bascenev1 import (
@@ -66,7 +74,7 @@ from _bascenev1 import (
     basetimer,
     BaseTimer,
     camerashake,
-    capture_gamepad_input,
+    capture_game_controller_input,
     capture_keyboard_input,
     chatmessage,
     client_info_query_response,
@@ -78,6 +86,7 @@ from _bascenev1 import (
     emitfx,
     end_host_scanning,
     get_chat_messages,
+    get_client_ping,
     get_connection_to_host_info,
     get_connection_to_host_info_2,
     get_foreground_host_activity,
@@ -89,7 +98,7 @@ from _bascenev1 import (
     get_public_party_max_size,
     get_random_names,
     get_replay_speed_exponent,
-    get_ui_input_device,
+    get_main_ui_input_device,
     getactivity,
     getcollisionmesh,
     getdata,
@@ -117,8 +126,9 @@ from _bascenev1 import (
     pause_replay,
     printnodes,
     protocol_version,
-    release_gamepad_input,
+    release_game_controller_input,
     release_keyboard_input,
+    reload_hooks,
     reset_random_player_names,
     resume_replay,
     seek_replay,
@@ -164,7 +174,7 @@ from bascenev1._dependency import (
 from bascenev1._dualteamsession import DualTeamSession
 from bascenev1._freeforallsession import FreeForAllSession
 from bascenev1._gameactivity import GameActivity
-from bascenev1._gameresults import GameResults
+from bascenev1._gameresults import GameResults, WinnerGroup
 from bascenev1._gameutils import (
     animate,
     animate_array,
@@ -176,7 +186,7 @@ from bascenev1._gameutils import (
     Time,
 )
 from bascenev1._level import Level
-from bascenev1._lobby import Lobby, Chooser
+from bascenev1._lobby import Lobby, Chooser, JoinInfo
 from bascenev1._map import (
     get_filtered_map_name,
     get_map_class,
@@ -246,15 +256,18 @@ from bascenev1._teamgame import TeamGameActivity
 __all__ = [
     'Activity',
     'ActivityData',
+    'ActivityNotFoundError',
     'Actor',
     'animate',
     'animate_array',
     'add_clean_frame_callback',
     'app',
+    'App',
     'AppIntent',
     'AppIntentDefault',
     'AppIntentExec',
     'AppMode',
+    'AppState',
     'AppTime',
     'apptime',
     'apptimer',
@@ -266,10 +279,12 @@ __all__ = [
     'BaseTimer',
     'BoolSetting',
     'Call',
+    'CallPartial',
+    'CallStrict',
     'cameraflash',
     'camerashake',
     'Campaign',
-    'capture_gamepad_input',
+    'capture_game_controller_input',
     'capture_keyboard_input',
     'CelebrateMessage',
     'chatmessage',
@@ -315,6 +330,7 @@ __all__ = [
     'GameResults',
     'GameTip',
     'get_chat_messages',
+    'get_client_ping',
     'get_connection_to_host_info',
     'get_connection_to_host_info_2',
     'get_default_free_for_all_playlist',
@@ -338,7 +354,7 @@ __all__ = [
     'get_remote_app_name',
     'get_replay_speed_exponent',
     'get_trophy_string',
-    'get_ui_input_device',
+    'get_main_ui_input_device',
     'getactivity',
     'getcollision',
     'getcollisionmesh',
@@ -365,6 +381,7 @@ __all__ = [
     'is_point_in_box',
     'is_replay_paused',
     'JoinActivity',
+    'JoinInfo',
     'Level',
     'Lobby',
     'lock_all_input',
@@ -404,8 +421,9 @@ __all__ = [
     'protocol_version',
     'pushcall',
     'register_map',
-    'release_gamepad_input',
+    'release_game_controller_input',
     'release_keyboard_input',
+    'reload_hooks',
     'reset_random_player_names',
     'resume_replay',
     'seek_replay',
@@ -414,6 +432,8 @@ __all__ = [
     'ScoreConfig',
     'ScoreScreenActivity',
     'ScoreType',
+    'SessionNotFoundError',
+    'SessionTeamNotFoundError',
     'broadcastmessage',
     'Session',
     'SessionData',
@@ -462,11 +482,10 @@ __all__ = [
     'unlock_all_input',
     'Vec3',
     'WeakCall',
+    'WeakCallPartial',
+    'WeakCallStrict',
+    'WinnerGroup',
 ]
-
-# We want stuff here to show up as bascenev1.Foo instead of
-# bascenev1._submodule.Foo.
-set_canonical_module_names(globals())
 
 # Sanity check: we want to keep ballistica's dependencies and
 # bootstrapping order clearly defined; let's check a few particular

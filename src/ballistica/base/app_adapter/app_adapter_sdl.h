@@ -75,6 +75,7 @@ class AppAdapterSDL : public AppAdapter {
   void AddSDLInputDevice_(JoystickInput* input, int index);
   void RemoveSDLInputDevice_(int index);
   void SleepUntilNextEventCycle_(microsecs_t cycle_start_time);
+  void LogEventProcessingTime_(microsecs_t duration, int count);
 
   int max_fps_{60};
   bool done_{};

@@ -69,6 +69,11 @@ class Node : public Object {
 
   /// Return the delegate, or nullptr if it doesn't have one (or if the
   /// delegate has since died).
+  // auto GetDelegateOld() -> PyObject*;
+
+  /// Return a NEW ref to the delegate or else nullptr if it doesn't have
+  /// one (or if the delegate has since died). If an error occurs, return
+  /// nullptr and clear any Python exception state.
   auto GetDelegate() -> PyObject*;
 
   void AddNodeDeathAction(PyObject* call_obj);

@@ -33,7 +33,7 @@ def make_radio_group(
             edit=check_box,
             value=(value == value_names[i]),
             is_radio_button=True,
-            on_value_change_call=bui.Call(
+            on_value_change_call=bui.CallPartial(
                 _radio_press,
                 value_names[i],
                 [c for c in check_boxes if c != check_box],

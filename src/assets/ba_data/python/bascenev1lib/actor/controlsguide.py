@@ -41,8 +41,6 @@ class ControlsGuide(bs.Actor):
         bright: if True, brighter colors will be used; handy when showing
                 over gameplay but may be too bright for join-screens, etc.
         """
-        # pylint: disable=too-many-statements
-        # pylint: disable=too-many-locals
         super().__init__()
         show_title = True
         scale *= 0.75
@@ -263,7 +261,7 @@ class ControlsGuide(bs.Actor):
             node.opacity = 0.0
 
         # Don't do anything until our delay has passed.
-        bs.timer(delay, bs.WeakCall(self._start_updating))
+        bs.timer(delay, bs.WeakCallStrict(self._start_updating))
 
     @staticmethod
     def _meaningful_button_name(
@@ -290,10 +288,12 @@ class ControlsGuide(bs.Actor):
         if self._lifespan is not None:
             self._cancel_timer = bs.Timer(
                 self._lifespan,
-                bs.WeakCall(self.handlemessage, bs.DieMessage(immediate=True)),
+                bs.WeakCallStrict(
+                    self.handlemessage, bs.DieMessage(immediate=True)
+                ),
             )
         self._fade_in_timer = bs.Timer(
-            1.0, bs.WeakCall(self._check_fade_in), repeat=True
+            1.0, bs.WeakCallStrict(self._check_fade_in), repeat=True
         )
         self._check_fade_in()  # Do one check immediately.
 
@@ -349,17 +349,17 @@ class ControlsGuide(bs.Actor):
         # If we were given a lifespan, transition out after it.
         if self._lifespan is not None:
             bs.timer(
-                self._lifespan, bs.WeakCall(self.handlemessage, bs.DieMessage())
+                self._lifespan,
+                bs.WeakCallStrict(self.handlemessage, bs.DieMessage()),
             )
         self._update()
         self._update_timer = bs.Timer(
-            1.0, bs.WeakCall(self._update), repeat=True
+            1.0, bs.WeakCallStrict(self._update), repeat=True
         )
 
     def _update(self) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-branches
-        # pylint: disable=too-many-locals
 
         if self._dead:
             return
@@ -565,6 +565,6 @@ class ControlsGuide(bs.Actor):
                 # die later.
                 for node in self._nodes:
                     bs.animate(node, 'opacity', {0: node.opacity, 3.0: 0.0})
-                bs.timer(3.1, bs.WeakCall(self._die))
+                bs.timer(3.1, bs.WeakCallStrict(self._die))
             return None
         return super().handlemessage(msg)

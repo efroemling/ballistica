@@ -6,6 +6,8 @@
 #include <utility>
 #include <vector>
 
+#include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/scene_v1/node/node.h"
 #include "ballistica/scene_v1/node/node_attribute_connection.h"
 #include "ballistica/scene_v1/node/node_type.h"
@@ -52,7 +54,7 @@ auto NodeAttributeUnbound::GetNodeAttributeTypeName(NodeAttributeType t)
     case NodeAttributeType::kCollisionMeshArray:
       return "collision-mesh-array";
     default:
-      g_core->Log(
+      g_core->logging->Log(
           LogName::kBa, LogLevel::kError,
           "Unknown attr type name: " + std::to_string(static_cast<int>(t)));
       return "unknown";
@@ -103,8 +105,8 @@ void NodeAttributeUnbound::DisconnectIncoming(Node* node) {
 
 #if BA_DEBUG_BUILD
     if (test_ref.exists()) {
-      g_core->Log(LogName::kBa, LogLevel::kError,
-                  "Attr connection still exists after ref releases!");
+      g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                           "Attr connection still exists after ref releases!");
     }
 #endif
   }

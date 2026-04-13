@@ -8,7 +8,7 @@
 
 namespace ballistica::base {
 
-// a simple runnable that stores and runs a python context call
+// A simple runnable that stores and runs a Python context-call.
 class PythonContextCallRunnable : public Runnable {
  public:
   explicit PythonContextCallRunnable(PyObject* o)

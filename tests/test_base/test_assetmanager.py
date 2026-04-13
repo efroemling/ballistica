@@ -23,7 +23,6 @@ def test_assetmanager() -> None:
 
     # Disabling for now...
     if bool(False):
-        # noinspection PyProtectedMember
         from babase._assetmanager import AssetManager
 
         with tempfile.TemporaryDirectory() as tmpdir:

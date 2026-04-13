@@ -16,24 +16,29 @@ namespace ballistica::ui_v1 {
 // Base class for interface widgets.
 class Widget : public Object {
  public:
-  /// Only relevant for direct children of the main stack widget. Note that
-  /// these are bitmask values so that internal root elements can specific
-  /// the entire set of visibilities they apply to.
-  enum class ToolbarVisibility {
-    kInherit = 0,             // For popups and whatnot - leave toolbar as-is.
-    kMenuMinimal = 1,         // Squad and back buttons.
-    kMenuMinimalNoBack = 2,   // Squad button only.
-    kMenuStore = 4,           // Squad, level, and soft currency buttons.
-    kMenuStoreNoBack = 8,     // Squad, level, and soft currency buttons.
-    kMenuReduced = 16,        // Squad, account, inbox, settings, back.
-    kMenuReducedNoBack = 32,  // Squad, account, inbox, settings.
-    kMenuFull = 64,           // Everything.
-    kMenuFullNoBack = 128,    // Everything.
-    kMenuFullRoot = 256,      // Obsolete.
-    kInGame = 512,            // Menu, squad.
-    kGetTokens = 1024,        // Squad, tokens without plus.
-    kMenuInGame = 2048,       // Squad, settings.
-    kMenuTokens = 4096        // Squad, tokens.
+  /// Only relevant for direct children of the main stack widget. These are
+  /// bitmask values so that internal root elements can specify the entire
+  /// set of visibilities they apply to.
+  enum class ToolbarVisibility : uint16_t {
+    kInherit = 0x00,           // For popups and whatnot - leave toolbar as-is.
+    kMenuMinimal = 0x01 << 0,  // Menu, squad, back.
+    kMenuMinimalNoBack = 0x01 << 1,  // Menu, squad.
+    kMenuStore = 0x01 << 2,          // Menu, squad, level, and soft currency.
+    kMenuStoreNoBack = 0x01 << 3,    // Menu, squad, level, and soft currency.
+    kMenuReduced = 0x01 << 4,  // Menu, squad, account, inbox, settings, back.
+    kMenuReducedNoBack = 0x01 << 5,  // Menu, squad, account, inbox, settings.
+    kMenuFull = 0x01 << 6,           // Everything.
+    kMenuFullNoBack = 0x01 << 7,     // Everything minus back.
+    kMenuFullRoot = 0x01 << 8,       // Obsolete.
+    kInGame = 0x01 << 9,             // Menu, squad.
+    kMenuInGame = 0x01 << 10,        // Squad, settings.
+    kMenuTokens = 0x01 << 11,        // Squad, tokens.
+    kNoMenuMinimal = 0x01 << 12,     // Squad.
+  };
+
+  enum class ToolbarCancelButtonStyle : uint8_t {
+    kBack = 0,
+    kClose = 1,
   };
 
   Widget();
@@ -71,7 +76,7 @@ class Widget : public Object {
   void GlobalSelect();
 
   /// Show this widget if possible (by scrolling to it, etc).
-  void Show();
+  void ScrollIntoView();
 
   /// Returns true if the widget is the currently selected child of its
   /// parent. Note that this does not mean that the parent is selected,
@@ -83,8 +88,11 @@ class Widget : public Object {
 
   /// Only really applicable to container widgets.
   void SetToolbarVisibility(ToolbarVisibility v);
-  auto toolbar_visibility() const -> ToolbarVisibility {
-    return toolbar_visibility_;
+  auto toolbar_visibility() const { return toolbar_visibility_; }
+
+  void SetToolbarCancelButtonStyle(ToolbarCancelButtonStyle s);
+  auto toolbar_cancel_button_style() const {
+    return toolbar_cancel_button_style_;
   }
 
   // FIXME: Replace this with GetBounds so we can do different alignments/etc.
@@ -92,23 +100,35 @@ class Widget : public Object {
   virtual auto GetHeight() -> float { return 0.0f; }
 
   /// If this widget is in a container, return it.
-  auto parent_widget() const -> ContainerWidget* { return parent_widget_; }
+  auto parent_widget() const { return parent_widget_; }
 
   /// Return the container_widget containing this widget, or the
   /// owner-widget if there is no parent.
   auto GetOwnerWidget() const -> Widget*;
 
-  auto down_widget() const -> Widget* { return down_widget_.get(); }
+  auto down_widget() const { return down_widget_.get(); }
   void SetDownWidget(Widget* w);
-  auto up_widget() const -> Widget* { return up_widget_.get(); }
+  auto up_widget() const { return up_widget_.get(); }
   void SetUpWidget(Widget* w);
-  auto left_widget() const -> Widget* { return left_widget_.get(); }
+  auto left_widget() const { return left_widget_.get(); }
   void SetLeftWidget(Widget* w);
-  auto right_widget() const -> Widget* { return right_widget_.get(); }
+  auto right_widget() const { return right_widget_.get(); }
   void SetRightWidget(Widget* w);
 
   void set_auto_select(bool enable) { auto_select_ = enable; }
-  auto auto_select() const -> bool { return auto_select_; }
+  auto auto_select() const { return auto_select_; }
+
+  void set_auto_select_toolbars_only(bool enable) {
+    auto_select_toolbars_only_ = enable;
+  }
+  auto auto_select_toolbars_only() const { return auto_select_toolbars_only_; }
+
+  void set_allow_preserve_selection(bool val) {
+    allow_preserve_selection_ = val;
+  }
+  auto allow_preserve_selection() const -> bool {
+    return allow_preserve_selection_;
+  }
 
   // If neighbors are locked, calls to set the up/down/left/right widget
   // will fail. (useful for global toolbar widgets where we don't want users
@@ -225,20 +245,17 @@ class Widget : public Object {
   void set_simple_culling_right(float val) { simple_culling_right_ = val; }
   void set_simple_culling_bottom(float val) { simple_culling_bottom_ = val; }
   void set_simple_culling_top(float val) { simple_culling_top_ = val; }
+  auto in_hierarchy() const { return in_hierarchy_; }
 
   /// Should only be called by a widget's parent container.
   virtual void SetSelected(bool s, SelectionCause cause);
 
   /// Set widget ID; can be used to lookup particular widgets.
-  void set_id(const std::string& id) {
-    // It is caller's responsibility to only call us once before we are
-    // added to a parent widget.
-    assert(!id_.has_value());
-    assert(parent_widget_ == nullptr);
-
-    id_ = id;
-  }
+  void SetID(const std::string& id);
   auto id() const { return id_; }
+
+  void set_in_hierarchy(bool val) { in_hierarchy_ = val; }
+  auto source_location() const { return source_location_; }
 
  private:
   auto GetPyWidget_(bool new_ref) -> PyObject*;
@@ -246,6 +263,7 @@ class Widget : public Object {
   std::optional<std::string> id_;
   Object::Ref<base::PythonContextCall> on_select_call_;
   std::vector<Object::Ref<base::PythonContextCall> > on_delete_calls_;
+  std::string source_location_;
   Object::WeakRef<Widget> draw_control_parent_;
   Object::WeakRef<Widget> down_widget_;
   Object::WeakRef<Widget> up_widget_;
@@ -255,6 +273,8 @@ class Widget : public Object {
   PyObject* py_ref_{};
   Widget* owner_widget_{};
   ToolbarVisibility toolbar_visibility_{ToolbarVisibility::kMenuMinimalNoBack};
+  ToolbarCancelButtonStyle toolbar_cancel_button_style_{
+      ToolbarCancelButtonStyle::kBack};
   float simple_culling_h_{-1.0f};
   float simple_culling_v_{-1.0f};
   float simple_culling_left_{};
@@ -276,6 +296,9 @@ class Widget : public Object {
   bool visible_in_container_{true};
   bool neighbors_locked_{};
   bool auto_select_{};
+  bool auto_select_toolbars_only_{};
+  bool in_hierarchy_{};
+  bool allow_preserve_selection_{true};
 };
 
 }  // namespace ballistica::ui_v1

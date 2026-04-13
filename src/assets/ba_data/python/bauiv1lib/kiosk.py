@@ -18,7 +18,7 @@ class KioskWindow(bui.MainWindow):
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
     ):
-        # pylint: disable=too-many-locals, too-many-statements
+        # pylint: disable=too-many-statements
         from bauiv1lib.confirm import QuitWindow
 
         assert bui.app.classic is not None
@@ -70,6 +70,9 @@ class KioskWindow(bui.MainWindow):
         img_width = 180.0
         img_v = 158.0 + y_extra
 
+        variant = bui.app.env.variant
+        vart = type(variant)
+
         if self._show_multiplayer:
             tdelay = t_delay_base + t_delay_scale * 1.3
             bui.textwidget(
@@ -96,7 +99,7 @@ class KioskWindow(bui.MainWindow):
                         resource='demoText',
                         fallback_resource='mainMenu.demoMenuText',
                     )
-                    if bui.app.env.demo
+                    if variant is vart.DEMO
                     else 'ARCADE'
                 ),
                 flatness=1.0,
@@ -111,7 +114,7 @@ class KioskWindow(bui.MainWindow):
             parent=self._root_widget,
             autoselect=True,
             size=(b_width, b_height),
-            on_activate_call=bui.Call(self._do_game, 'easy'),
+            on_activate_call=bui.CallStrict(self._do_game, 'easy'),
             transition_delay=tdelay,
             position=(h - b_width * 0.5, b_v),
             label='',
@@ -146,7 +149,7 @@ class KioskWindow(bui.MainWindow):
             parent=self._root_widget,
             autoselect=True,
             size=(b_width, b_height),
-            on_activate_call=bui.Call(self._do_game, 'medium'),
+            on_activate_call=bui.CallStrict(self._do_game, 'medium'),
             position=(h - b_width * 0.5, b_v),
             label='',
             button_type='square',
@@ -181,7 +184,7 @@ class KioskWindow(bui.MainWindow):
             parent=self._root_widget,
             autoselect=True,
             size=(b_width, b_height),
-            on_activate_call=bui.Call(self._do_game, 'hard'),
+            on_activate_call=bui.CallStrict(self._do_game, 'hard'),
             transition_delay=tdelay,
             position=(h - b_width * 0.5, b_v),
             label='',
@@ -236,7 +239,7 @@ class KioskWindow(bui.MainWindow):
                 parent=self._root_widget,
                 autoselect=True,
                 size=(b_width, b_height),
-                on_activate_call=bui.Call(self._do_game, 'ctf'),
+                on_activate_call=bui.CallStrict(self._do_game, 'ctf'),
                 transition_delay=tdelay,
                 position=(h - b_width * 0.5, b_v),
                 label='',
@@ -272,7 +275,7 @@ class KioskWindow(bui.MainWindow):
                 parent=self._root_widget,
                 autoselect=True,
                 size=(b_width, b_height),
-                on_activate_call=bui.Call(self._do_game, 'hockey'),
+                on_activate_call=bui.CallStrict(self._do_game, 'hockey'),
                 position=(h - b_width * 0.5, b_v),
                 label='',
                 button_type='square',
@@ -307,7 +310,7 @@ class KioskWindow(bui.MainWindow):
                 parent=self._root_widget,
                 autoselect=True,
                 size=(b_width, b_height),
-                on_activate_call=bui.Call(self._do_game, 'epic'),
+                on_activate_call=bui.CallStrict(self._do_game, 'epic'),
                 transition_delay=tdelay,
                 position=(h - b_width * 0.5, b_v),
                 label='',
@@ -340,7 +343,7 @@ class KioskWindow(bui.MainWindow):
             self._b4 = self._b5 = self._b6 = None
 
         self._b7: bui.Widget | None
-        if bui.app.env.arcade:
+        if variant is vart.ARCADE:
             self._b7 = bui.buttonwidget(
                 parent=self._root_widget,
                 autoselect=True,
@@ -358,7 +361,7 @@ class KioskWindow(bui.MainWindow):
         self._restore_state()
         self._update()
         self._update_timer = bui.AppTimer(
-            1.0, bui.WeakCall(self._update), repeat=True
+            1.0, bui.WeakCallStrict(self._update), repeat=True
         )
 
     @override
@@ -370,6 +373,11 @@ class KioskWindow(bui.MainWindow):
                 transition=transition, origin_widget=origin_widget
             )
         )
+
+    @override
+    def main_window_should_preserve_selection(self) -> bool:
+        # TODO: Wire this up.
+        return False
 
     @override
     def on_main_window_close(self) -> None:
@@ -460,9 +468,11 @@ class KioskWindow(bui.MainWindow):
                 appconfig['Free-for-All Playlist Selection'] = 'Just Epic Elim'
                 bui.fade_screen(
                     False,
-                    endcall=bui.Call(
+                    endcall=bui.CallStrict(
                         bui.pushcall,
-                        bui.Call(bs.new_host_session, bs.FreeForAllSession),
+                        bui.CallStrict(
+                            bs.new_host_session, bs.FreeForAllSession
+                        ),
                     ),
                 )
             else:
@@ -499,9 +509,9 @@ class KioskWindow(bui.MainWindow):
                     )
                 bui.fade_screen(
                     False,
-                    endcall=bui.Call(
+                    endcall=bui.CallStrict(
                         bui.pushcall,
-                        bui.Call(bs.new_host_session, bs.DualTeamSession),
+                        bui.CallStrict(bs.new_host_session, bs.DualTeamSession),
                     ),
                 )
             bui.containerwidget(edit=self._root_widget, transition='out_left')
@@ -526,13 +536,15 @@ class KioskWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.mainmenu import MainMenuWindow
 
-        # no-op if we're not in control.
+        # No-op if we're not in control.
         if not self.main_window_has_control():
             return
 
         assert bui.app.classic is not None
 
         self._save_state()
-        bui.app.classic.did_menu_intro = True  # prevent delayed transition-in
 
-        self.main_window_replace(MainMenuWindow())
+        # Prevent delayed transition-in.
+        bui.app.classic.did_menu_intro = True
+
+        self.main_window_replace(MainMenuWindow)
