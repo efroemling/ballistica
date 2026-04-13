@@ -437,7 +437,7 @@ class Spaz(bs.Actor):
             )
             if not self.node.hold_node and play_swish_sound:
                 bs.timer(
-                    0.06,
+                    0.05,
                     bs.WeakCallStrict(
                         self._safe_play_sound,
                         SpazFactory.get().swish_sound,
