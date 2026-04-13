@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated
 
 from efro.dataclassio import ioprepped, IOAttrs
@@ -37,7 +37,12 @@ if TYPE_CHECKING:
 #               response-size cap for CloudFile-backed downloads.
 #               ``downloads_inline`` remains for small ad-hoc blobs
 #               (asset manifests, admin test payloads).
-BACLOUD_VERSION = 17
+# 18 (2026-04): Added ``upload_plan`` response field for a simpler,
+#               framework-managed upload protocol used by new admin
+#               archive commands (and eventually the workspace put
+#               path). Old clients don't understand the new field
+#               and would silently skip uploads.
+BACLOUD_VERSION = 18
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -69,6 +74,109 @@ class RequestData:
     payload: Annotated[dict, IOAttrs('p')]
     tzoffset: Annotated[float, IOAttrs('z')]
     isatty: Annotated[bool, IOAttrs('y')]
+
+
+# Types used by the UploadPlan protocol. See ResponseData.UploadPlan.
+
+
+@ioprepped
+@dataclass
+class UploadPlanFileInfo:
+    """A single file entry the client is reporting to the server."""
+
+    #: Relative path (from the upload plan's source_dir).
+    name: Annotated[str, IOAttrs('n')]
+
+    #: SHA-256 hex digest of the file body.
+    sha256: Annotated[str, IOAttrs('h')]
+
+    #: Size in bytes.
+    size: Annotated[int, IOAttrs('s')]
+
+
+@ioprepped
+@dataclass
+class UploadPlanPrepareRequest:
+    """Client → server: request signed upload sessions for files."""
+
+    files: Annotated[list[UploadPlanFileInfo], IOAttrs('f')]
+
+    #: CloudFileCategory value (e.g. 'archive_misc'). Tells the
+    #: server which bucket new uploads should land in.
+    cloud_file_category: Annotated[str, IOAttrs('ct')]
+
+
+@ioprepped
+@dataclass
+class UploadPlanPrepareItem:
+    """Server → client: one file's prepare result."""
+
+    #: Relative path matching the request entry.
+    name: Annotated[str, IOAttrs('n')]
+
+    #: The cloud_file_id this file maps to. Present when the file
+    #: already exists server-side (dedup hit) — no upload needed.
+    cloud_file_id: Annotated[str | None, IOAttrs('c', store_default=False)] = (
+        None
+    )
+
+    #: Signed URL the client should PUT bytes to. Present when the
+    #: file does not yet exist and needs to be uploaded.
+    upload_url: Annotated[str | None, IOAttrs('u', store_default=False)] = None
+
+    #: Headers the client must include on the PUT. Present when
+    #: upload_url is set.
+    upload_headers: Annotated[
+        dict[str, str], IOAttrs('h', store_default=False)
+    ] = field(default_factory=dict)
+
+    #: Server-side upload session id. Present when upload_url is set.
+    #: Passed back to the server in the finalize request.
+    session_id: Annotated[str | None, IOAttrs('s', store_default=False)] = None
+
+
+@ioprepped
+@dataclass
+class UploadPlanPrepareResponse:
+    """Server → client: prepare results for each file."""
+
+    items: Annotated[list[UploadPlanPrepareItem], IOAttrs('i')]
+
+
+@ioprepped
+@dataclass
+class UploadPlanFinalizeRequest:
+    """Client → server: finalize uploaded files by session id."""
+
+    #: Map of file name → session_id for files that were uploaded.
+    sessions: Annotated[dict[str, str], IOAttrs('s')]
+
+
+@ioprepped
+@dataclass
+class UploadPlanFinalizeResponse:
+    """Server → client: cloud-file-ids for each finalized upload."""
+
+    #: Map of file name → cloud_file_id.
+    cloud_file_ids: Annotated[dict[str, str], IOAttrs('c')]
+
+
+@ioprepped
+@dataclass
+class UploadPlanCommit:
+    """Client → command's finalize handler: full upload results.
+
+    The client builds this after completing the prepare/upload/
+    finalize cycle and invokes the upload-plan's
+    ``finalize_command`` with it as the payload.
+    """
+
+    #: Complete mapping of {relative_path: cloud_file_id} for every
+    #: file in the plan's source_dir.
+    files: Annotated[dict[str, str], IOAttrs('f')]
+
+    #: The opaque state dict from the original UploadPlan.
+    state: Annotated[dict, IOAttrs('s')]
 
 
 @ioprepped
@@ -125,6 +233,46 @@ class ResponseData:
         #: Expected file size in bytes, for progress reporting and a
         #: belt-and-suspenders sanity check against the streamed total.
         size: Annotated[int, IOAttrs('s')]
+
+    @ioprepped
+    @dataclass
+    class UploadPlan:
+        """Declarative plan for uploading a set of local files.
+
+        When a command returns an ``UploadPlan`` in its response, the
+        bacloud client takes over: it walks ``source_dir``, computes
+        sha256+size for each file, checks which ones already exist
+        server-side (dedup), streams the missing ones direct-to-GCS
+        via signed URLs, and then invokes ``finalize_command`` with
+        the resulting ``{relative_path: cloud_file_id}`` mapping.
+
+        The entire upload protocol (manifest, dedup, signed uploads,
+        finalize) is handled by shared client/server infrastructure.
+        Individual commands only need to describe *what* to upload
+        and *what to do* with the cloud-file-ids afterward.
+        """
+
+        #: Local directory to upload. All files under this directory
+        #: (recursively) will be uploaded.
+        source_dir: Annotated[str, IOAttrs('sd')]
+
+        #: Command the client should invoke after all uploads are
+        #: complete. The client will pass a ``UploadPlanCommit``
+        #: payload to this command.
+        finalize_command: Annotated[str, IOAttrs('fc')]
+
+        #: Opaque state dict passed back to ``finalize_command`` so
+        #: the originating command can remember its context (e.g.
+        #: archive-id, version-number) without storing server-side.
+        finalize_state: Annotated[dict, IOAttrs('fs')]
+
+        #: Which CloudFileCategory new uploads should land in. Carried
+        #: through to the prepare step, which embeds it into the
+        #: signed upload session. Stored as the enum value string.
+        cloud_file_category: Annotated[str, IOAttrs('ct')]
+
+        #: Optional description shown to the user during the upload.
+        description: Annotated[str, IOAttrs('de', store_default=False)] = ''
 
     @ioprepped
     @dataclass
@@ -216,6 +364,22 @@ class ResponseData:
         list[SignedUploadEntry] | None,
         IOAttrs('usgn', store_default=False),
     ] = None
+
+    #: If present, an upload plan the client should execute. See
+    #: :class:`UploadPlan` for details. The client handles the full
+    #: upload protocol (manifest, dedup, signed uploads, finalize)
+    #: and then invokes the plan's ``finalize_command`` with the
+    #: resulting cloud-file-id mapping.
+    upload_plan: Annotated[
+        UploadPlan | None, IOAttrs('upl', store_default=False)
+    ] = None
+
+    #: Free-form structured payload the server can return for
+    #: client-internal consumption (e.g. upload-plan prepare/finalize
+    #: results). Not displayed to the user and not written to disk.
+    raw_result: Annotated[dict | None, IOAttrs('rr', store_default=False)] = (
+        None
+    )
 
     #: If present, file paths that should be deleted on the client.
     deletes: Annotated[
