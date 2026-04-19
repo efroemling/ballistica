@@ -411,6 +411,19 @@ void NetworkReader::OpenSockets_() {
   // This needs to be locked during any socket-descriptor changes/writes.
   std::scoped_lock lock(sd_mutex_);
 
+  // Opt out of the inbound-UDP listener entirely. sd4_/sd6_ stay -1,
+  // so the read loop polls nothing and reject-incoming is a no-op.
+  // For test processes that only exercise outbound connections —
+  // avoids port-conflict fatals on shared CI hosts, OS firewall
+  // prompts, and wasted fds. Different from BA_BIND_LOOPBACK_ONLY,
+  // which still opens a listener bound to 127.0.0.1.
+  auto no_listener_env_var = g_core->platform->GetEnv("BA_NO_UDP_LISTENER");
+  if (no_listener_env_var && *no_listener_env_var == "1") {
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kInfo,
+                         "BA_NO_UDP_LISTENER set; skipping UDP listener.");
+    return;
+  }
+
   int result;
   int print_port_unavailable = false;
   int initial_requested_port = port4_;

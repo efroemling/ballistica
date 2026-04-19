@@ -68,9 +68,10 @@ def _run_until(
     env_final.setdefault(
         'BA_LOG_LEVELS', 'ba.v2transport=DEBUG,ba.connectivity=DEBUG'
     )
-    # Transport tests only connect outbound to basn; binding UDP to
-    # INADDR_ANY isn't needed and gets denied under network sandboxes.
-    env_final.setdefault('BA_BIND_LOOPBACK_ONLY', '1')
+    # Transport tests only exercise outbound connections; skip the
+    # UDP listener entirely. Avoids port-conflict fatals on shared CI
+    # hosts, OS firewall prompts, and wasted file descriptors.
+    env_final.setdefault('BA_NO_UDP_LISTENER', '1')
 
     cmd = [binpath, '--config-dir', config_dir]
     captured: list[str] = []
