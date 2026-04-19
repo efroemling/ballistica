@@ -69,6 +69,8 @@ def test_signed_directive_on_http_force() -> None:
     embedded public key, payload decodes, expiry is in the expected
     window. Any of these breaking means the feature is broken.
     """
+    pytest.importorskip('cryptography')
+
     import datetime
     import base64
     from cryptography.hazmat.primitives.asymmetric import ed25519
@@ -130,6 +132,8 @@ def test_ws_insecure_endpoint_accepts_handshake() -> None:
     raw dict using the IOAttrs short keys, since the pyembed
     dataclass definitions aren't importable from a pytest context.
     """
+    pytest.importorskip('websockets')
+
     response = _servernodequery('http', force=True)
     hosts = response.get('h') or []
     assert hosts, f'No hosts returned in servernodequery response: {response}'

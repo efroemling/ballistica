@@ -1155,7 +1155,7 @@ cmake-binary: meta
 	@cd $(CMAKE_BUILD_DIR) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) \
-      $(CMAKE_BUILD_DIR)
+      build/cmake/$(CM_BT_LC)
 	@cd $(CMAKE_BUILD_DIR) && $(MAKE) -j$(CPUS) ballisticakitbin
 
 cmake-clean:
