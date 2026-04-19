@@ -67,7 +67,6 @@
 - Added sphinx documentation generation
 - Added docker build system
 - Various CI/CD improvements
-- Added discord social sdk support
 - Added flatpak build
 - added bombsquad on flathub :DD
 - added python's native repl :O

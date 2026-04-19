@@ -10,6 +10,7 @@ import logging
 from typing import TYPE_CHECKING, Protocol
 
 from efro.error import CommunicationError
+from efro.util import gather_strip
 
 if TYPE_CHECKING:
     from typing import Awaitable, Callable, Literal
@@ -287,7 +288,7 @@ class RPCWSEndpoint:
         self._tasks = []
 
         if live_tasks:
-            results = await asyncio.gather(*live_tasks, return_exceptions=True)
+            results = await gather_strip(*live_tasks)
             for result in results:
                 if isinstance(result, Exception):
                     logger.warning(

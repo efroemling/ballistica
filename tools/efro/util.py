@@ -1075,6 +1075,29 @@ def prune_empty_dirs(prunedir: str) -> None:
                 ) from exc
 
 
+async def gather_strip(*coros: Any) -> list[Any]:
+    """asyncio.gather() with return_exceptions=True, traceback-stripped.
+
+    A common cause of reference cycles in async code is
+    asyncio.gather called with return_exceptions=True: each
+    coroutine that raised has its exception stored in the result
+    list with its full __traceback__, which keeps the originating
+    frames alive (see :func:`strip_exception_tracebacks`).
+
+    Use this anywhere you'd use ``gather(..., return_exceptions=True)``.
+    It returns the same list of results, but with exception
+    tracebacks already cleared so callers can log/inspect them
+    without creating a cycle.
+    """
+    import asyncio
+
+    results = await asyncio.gather(*coros, return_exceptions=True)
+    for r in results:
+        if isinstance(r, BaseException):
+            strip_exception_tracebacks(r)
+    return results
+
+
 def strip_exception_tracebacks(exc: BaseException) -> None:
     """Strip tracebacks from exceptions to break reference cycles.
 

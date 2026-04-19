@@ -75,7 +75,16 @@ BaseFeatureSet::BaseFeatureSet()
       text_graphics{new TextGraphics()},
       ui{new UI()},
       utils{new Utils()},
-      discord{g_buildconfig.enable_discord() ? new Discord() : nullptr} {
+      // Only spin up Discord where we've actually done the per-platform
+      // plumbing (desktop today). The compile flag alone is not enough:
+      // the SDK itself builds on mobile, but OAuth redirects there need
+      // a registered URL scheme which we haven't wired up. Leaving the
+      // belt-and-suspenders runtime guard prevents an accidental flag
+      // flip from activating a broken code path.
+      discord(
+          (g_buildconfig.enable_discord() && !g_buildconfig.platform_mobile())
+              ? new Discord()
+              : nullptr) {
   // We're a singleton. If there's already one of us, something's wrong.
   assert(g_base == nullptr);
 

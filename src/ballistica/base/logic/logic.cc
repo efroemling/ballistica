@@ -12,6 +12,7 @@
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/audio/audio.h"
+#include "ballistica/base/discord/discord.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
@@ -365,6 +366,9 @@ void Logic::StepDisplayTime_() {
   g_base->app_mode()->StepDisplayTime();
   if (g_base->HavePlus()) {
     g_base->Plus()->StepDisplayTime();
+  }
+  if (g_base->discord) {
+    g_base->discord->StepDisplayTime();
   }
   g_base->python->StepDisplayTime();
 

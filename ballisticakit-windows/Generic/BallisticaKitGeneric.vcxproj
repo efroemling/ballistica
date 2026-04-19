@@ -676,6 +676,7 @@
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_cmake.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_common.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_common.h" />
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_generic.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_headless.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_testbuild.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\event_loop.cc" />
@@ -859,6 +860,16 @@
     <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_TreeBuilders.cpp" />
     <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_TreeCollider.cpp" />
     <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_VolumeCollider.cpp" />
+    <ClInclude Include="..\..\src\external\monocypher\monocypher.h" />
+    <ClCompile Include="..\..\src\external\monocypher\monocypher.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles />
+    </ClCompile>
+    <ClInclude Include="..\..\src\external\monocypher\monocypher-ed25519.h" />
+    <ClCompile Include="..\..\src\external\monocypher\monocypher-ed25519.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles />
+    </ClCompile>
     <ClCompile Include="..\..\src\external\qr_code_generator\QrCode.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

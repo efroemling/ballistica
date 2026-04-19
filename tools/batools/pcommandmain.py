@@ -141,7 +141,6 @@ from batools.pcommands2 import (
 )
 from batools.pcommands3 import (
     test_game_run,
-    test_game_kill,
     compose_docker_gui_release,
     compose_docker_gui_debug,
     compose_docker_server_release,

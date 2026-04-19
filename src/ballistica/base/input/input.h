@@ -141,6 +141,25 @@ class Input {
   void PushMouseDownEvent(int button, const Vector2f& position);
   void PushMouseUpEvent(int button, const Vector2f& position);
   void PushMouseMotionEvent(const Vector2f& position);
+
+  /// Synthesize a complete mouse-click (down + up at the same point)
+  /// at the given coordinates in *virtual screen space* (the same
+  /// coordinate system Widget::GetCenter returns, with origin at the
+  /// top-left corner of the virtual screen). Routes through the
+  /// normal UI dispatch path, so modals, hit-testing, and focus all
+  /// behave as they would for a real user click.
+  void PushMouseClickAtVirtualCoords(int button, float virtual_x,
+                                     float virtual_y);
+
+  /// Synthesize a mouse-wheel scroll event at the given virtual-screen
+  /// coordinates. ``amount_x`` / ``amount_y`` are mouse-wheel units in
+  /// the same sign convention real wheel events use (positive y = scroll
+  /// up, positive x = scroll right). Cursor position is first moved to
+  /// the target point since the UI wheel dispatch routes the event to
+  /// whatever's under the cursor.
+  void PushMouseScrollAtVirtualCoords(float virtual_x, float virtual_y,
+                                      float amount_x, float amount_y);
+
   void PushSmoothMouseScrollEvent(const Vector2f& velocity, bool momentum);
   void PushMouseScrollEvent(const Vector2f& amount);
   void PushJoystickEvent(const SDL_Event& event, InputDevice* input_device);

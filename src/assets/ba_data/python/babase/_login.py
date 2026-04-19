@@ -27,15 +27,17 @@ class LoginInfo:
 
 
 class LoginAdapter:
-    """Allows using implicit login types in an explicit way.
+    """Adapts a platform-implicit login so it can be used explicitly.
 
-    Some login types such as Google Play Game Services or Game Center
-    are basically always present and often do not provide a way to log
-    out from within a running app, so this adapter exists to use them in
-    a flexible manner by 'attaching to' and 'detaching from' an
-    always-present login, allowing for its use alongside other login
-    types. It also provides common functionality for server-side account
-    verification and other handy bits.
+    For login types like Google Play Game Services and Game Center, the
+    user is silently/implicitly signed in at the platform level and
+    typically has no in-app way to sign out. This adapter tracks the
+    current implicit state, lets the app 'attach to' or 'detach from' it,
+    and exposes an explicit :meth:`sign_in` call that produces V2
+    credentials.
+
+    Login types with no implicit platform state (e.g. Discord, email)
+    don't use this class — they run their own explicit flows.
     """
 
     @dataclass
@@ -165,110 +167,54 @@ class LoginAdapter:
 
         assert _babase.in_logic_thread()
 
-        # Have been seeing multiple sign-in attempts come through
-        # nearly simultaneously which can be problematic server-side.
-        # Let's error if a sign-in attempt is made within a few seconds
-        # of the last one to try and address this.
-        now = time.monotonic()
-        appnow = _babase.apptime()
-        if self._last_sign_in_time is not None:
-            since_last = now - self._last_sign_in_time
-            if since_last < 1.0:
-                logging.warning(
-                    'LoginAdapter: %s adapter sign_in() called too soon'
-                    ' (%.2fs) after last; this-desc="%s", last-desc="%s",'
-                    ' ba-app-time=%.2f.',
-                    self.login_type.name,
-                    since_last,
-                    description,
-                    self._last_sign_in_desc,
-                    appnow,
-                )
-                _babase.pushcall(
-                    partial(
-                        result_cb,
-                        self,
-                        RuntimeError('sign_in called too soon after last.'),
-                    )
-                )
-                return
+        too_soon = _check_sign_in_rate_limit(
+            f'LoginAdapter: {self.login_type.name} adapter',
+            self._last_sign_in_time,
+            self._last_sign_in_desc,
+            description,
+        )
+        if too_soon is not None:
+            _babase.pushcall(partial(result_cb, self, too_soon))
+            return
 
         self._last_sign_in_desc = description
-        self._last_sign_in_time = now
+        self._last_sign_in_time = time.monotonic()
 
         loginadapterlog.debug(
             '%s adapter sign_in() called; fetching sign-in-token...',
             self.login_type.name,
         )
 
-        def _got_sign_in_token_result(result: str | None) -> None:
-            import bacommon.cloud
+        def _on_credentials(credentials: str | Exception) -> None:
+            if isinstance(credentials, Exception):
+                result: LoginAdapter.SignInResult | Exception = credentials
+            else:
+                result = self.SignInResult(credentials=credentials)
+            _babase.pushcall(partial(result_cb, self, result))
 
-            # Failed to get a sign-in-token.
-            if result is None:
+        def _on_token(token: str | None) -> None:
+            if token is None:
                 loginadapterlog.debug(
                     '%s adapter sign-in-token fetch failed;'
                     ' aborting sign-in.',
                     self.login_type.name,
                 )
-                _babase.pushcall(
-                    partial(
-                        result_cb,
-                        self,
-                        RuntimeError('fetch-sign-in-token failed.'),
-                    )
-                )
+                _on_credentials(RuntimeError('fetch-sign-in-token failed.'))
                 return
-
-            # Got a sign-in token! Now pass it to the cloud which will use
-            # it to verify our identity and give us app credentials on
-            # success.
             loginadapterlog.debug(
                 '%s adapter sign-in-token fetch succeeded;'
                 ' passing to cloud for verification...',
                 self.login_type.name,
             )
-
-            def _got_sign_in_response(
-                response: bacommon.cloud.SignInResponse | Exception,
-            ) -> None:
-                # This likely means we couldn't communicate with the server.
-                if isinstance(response, Exception):
-                    loginadapterlog.debug(
-                        '%s adapter got error sign-in response: %s',
-                        self.login_type.name,
-                        response,
-                    )
-                    _babase.pushcall(partial(result_cb, self, response))
-                else:
-                    # This means our credentials were explicitly rejected.
-                    if response.credentials is None:
-                        result2: LoginAdapter.SignInResult | Exception = (
-                            RuntimeError('Sign-in-token was rejected.')
-                        )
-                    else:
-                        loginadapterlog.debug(
-                            '%s adapter got successful sign-in response',
-                            self.login_type.name,
-                        )
-                        result2 = self.SignInResult(
-                            credentials=response.credentials
-                        )
-                    _babase.pushcall(partial(result_cb, self, result2))
-
-            assert _babase.app.plus is not None
-            _babase.app.plus.cloud.send_message_cb(
-                bacommon.cloud.SignInMessage(
-                    self.login_type,
-                    result,
-                    description=description,
-                    apptime=appnow,
-                ),
-                on_response=_got_sign_in_response,
+            exchange_sign_in_token(
+                login_type=self.login_type,
+                token=token,
+                description=description,
+                on_result=_on_credentials,
             )
 
         # Kick off the sign-in process by fetching a sign-in token.
-        self.get_sign_in_token(completion_cb=_got_sign_in_token_result)
+        self.get_sign_in_token(completion_cb=_on_token)
 
     def is_back_end_active(self) -> bool:
         """Is this adapter's back-end currently active?"""
@@ -380,3 +326,179 @@ class LoginAdapterGameCenter(LoginAdapterNative):
 
     def __init__(self) -> None:
         super().__init__(LoginType.GAME_CENTER)
+
+
+# -- Shared explicit-sign-in helpers -----------------------------------
+
+# Rate-limit state for explicit flows (Discord, email-proxy, etc.)
+# that don't have their own adapter instance. Keyed on a caller-supplied
+# bucket string.
+_last_explicit_sign_in_time: dict[str, float] = {}
+_last_explicit_sign_in_desc: dict[str, str] = {}
+
+
+def _check_sign_in_rate_limit(
+    subject: str,
+    last_time: float | None,
+    last_desc: str | None,
+    description: str,
+) -> RuntimeError | None:
+    """Return an exception if a sign-in is happening too soon; else None.
+
+    Multiple sign-in attempts within a short window can be problematic
+    server-side, so both :class:`LoginAdapter` and the free
+    :func:`discord_sign_in` flow gate on this.
+    """
+    if last_time is None:
+        return None
+    now = time.monotonic()
+    since_last = now - last_time
+    if since_last >= 1.0:
+        return None
+    logging.warning(
+        '%s sign_in() called too soon (%.2fs) after last;'
+        ' this-desc="%s", last-desc="%s", ba-app-time=%.2f.',
+        subject,
+        since_last,
+        description,
+        last_desc,
+        _babase.apptime(),
+    )
+    return RuntimeError('sign_in called too soon after last.')
+
+
+def exchange_sign_in_token(
+    login_type: LoginType,
+    token: str,
+    description: str,
+    on_result: Callable[[str | Exception], None],
+) -> None:
+    """Exchange a platform-specific sign-in token for V2 credentials.
+
+    Sends a ``SignInMessage`` to the cloud and invokes ``on_result`` on
+    the logic thread with the returned credentials string, or with an
+    ``Exception`` if the cloud rejects the token or can't be reached.
+
+    Shared by :class:`LoginAdapter` and by explicit flows that don't
+    have an adapter (Discord).
+    """
+    import bacommon.cloud
+
+    assert _babase.in_logic_thread()
+
+    def _on_response(
+        response: bacommon.cloud.SignInResponse | Exception,
+    ) -> None:
+        if isinstance(response, Exception):
+            loginadapterlog.debug(
+                '%s got error sign-in response: %s',
+                login_type.name,
+                response,
+            )
+            _babase.pushcall(partial(on_result, response))
+        elif response.credentials is None:
+            _babase.pushcall(
+                partial(on_result, RuntimeError('Sign-in-token was rejected.'))
+            )
+        else:
+            loginadapterlog.debug(
+                '%s got successful sign-in response',
+                login_type.name,
+            )
+            _babase.pushcall(partial(on_result, response.credentials))
+
+    assert _babase.app.plus is not None
+    _babase.app.plus.cloud.send_message_cb(
+        bacommon.cloud.SignInMessage(
+            login_type,
+            token,
+            description=description,
+            apptime=_babase.apptime(),
+        ),
+        on_response=_on_response,
+    )
+
+
+# -- Discord explicit-sign-in flow -------------------------------------
+
+# Pending sign-in attempts keyed on attempt_id. Native layer sends
+# attempt_id back with the OAuth token via the
+# discord_sign_in_token_response hook.
+_discord_sign_in_attempts: dict[int, Callable[[str | None], None]] = {}
+_g_discord_sign_in_attempt_num = 1
+
+
+def discord_sign_in(
+    result_cb: Callable[[str | Exception], None],
+    description: str,
+) -> None:
+    """Run the Discord OAuth sign-in flow and return V2 credentials.
+
+    Kicks off the native OAuth flow (browser-based), exchanges the
+    resulting token with the cloud for V2 credentials, and invokes
+    ``result_cb`` on the logic thread with a credentials string on
+    success or with an ``Exception`` on any failure.
+
+    Discord has no implicit/background sign-in on any platform, so it
+    doesn't use :class:`LoginAdapter`. This mirrors the email/V2-proxy
+    flow in structure: an explicit credential-producing flow that drops
+    directly into ``set_primary_credentials``.
+    """
+    global _g_discord_sign_in_attempt_num  # pylint: disable=global-statement
+
+    assert _babase.in_logic_thread()
+
+    too_soon = _check_sign_in_rate_limit(
+        'discord_sign_in',
+        _last_explicit_sign_in_time.get('discord'),
+        _last_explicit_sign_in_desc.get('discord'),
+        description,
+    )
+    if too_soon is not None:
+        _babase.pushcall(partial(result_cb, too_soon))
+        return
+
+    _last_explicit_sign_in_time['discord'] = time.monotonic()
+    _last_explicit_sign_in_desc['discord'] = description
+
+    loginadapterlog.debug('discord_sign_in() called; fetching sign-in-token...')
+
+    def _on_token(token: str | None) -> None:
+        if token is None:
+            loginadapterlog.debug(
+                'discord sign-in-token fetch failed; aborting sign-in.'
+            )
+            _babase.pushcall(
+                partial(result_cb, RuntimeError('fetch-sign-in-token failed.'))
+            )
+            return
+        loginadapterlog.debug(
+            'discord sign-in-token fetch succeeded;'
+            ' passing to cloud for verification...'
+        )
+        exchange_sign_in_token(
+            login_type=LoginType.DISCORD,
+            token=token,
+            description=description,
+            on_result=result_cb,
+        )
+
+    attempt_id = _g_discord_sign_in_attempt_num
+    _g_discord_sign_in_attempt_num += 1
+    _discord_sign_in_attempts[attempt_id] = _on_token
+    _babase.discord_request_sign_in_token(attempt_id)
+
+
+def on_discord_sign_in_token_response(
+    attempt_id: int, result: str | None
+) -> None:
+    """Called by the native layer when a Discord sign-in attempt finishes.
+
+    :meta private:
+    """
+    assert _babase.in_logic_thread()
+    callback = _discord_sign_in_attempts.pop(attempt_id, None)
+    if callback is None:
+        logging.exception('discord sign-in attempt_id %d not found', attempt_id)
+        return
+    callback(result)

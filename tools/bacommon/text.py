@@ -53,7 +53,7 @@ class SpecialChar(Enum):
     DICE_BUTTON2 = '\ue023'
     DICE_BUTTON3 = '\ue024'
     DICE_BUTTON4 = '\ue025'
-    GAME_CIRCLE_LOGO = '\ue026'
+    DISCORD_LOGO = '\ue026'
     PARTY_ICON = '\ue027'
     TEST_ACCOUNT = '\ue028'
     TICKET_BACKING = '\ue029'

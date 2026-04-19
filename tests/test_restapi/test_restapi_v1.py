@@ -10,11 +10,13 @@ import os
 from typing import TYPE_CHECKING
 
 import pytest
-import urllib3
 
 from bacommon.restapi.v1 import Endpoint
+from restapi_test_fixtures import make_pool
 
 if TYPE_CHECKING:
+    import urllib3
+
     from restapi_test_fixtures import AuthedClient
 
 FAST_MODE = os.environ.get('BA_TEST_FAST_MODE') == '1'
@@ -63,7 +65,7 @@ def _upload_workspace_file(
         return  # Dedup hit — server already wired the file in.
 
     assert init['status'] == 'upload_required'
-    put_pool = urllib3.PoolManager()
+    put_pool = make_pool()
     gcs_r = put_pool.request(
         'PUT',
         init['upload_url'],

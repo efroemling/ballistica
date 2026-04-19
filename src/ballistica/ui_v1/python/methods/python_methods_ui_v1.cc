@@ -198,6 +198,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* opacity_obj{Py_None};
   PyObject* enabled_obj{Py_None};
   PyObject* better_bg_fit_obj{Py_None};
+  PyObject* transition_type_obj{Py_None};
   static const char* kwlist[] = {"edit",
                                  "parent",
                                  "id",
@@ -239,9 +240,10 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "text_literal",
                                  "opacity",
                                  "better_bg_fit",
+                                 "transition_type",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &on_activate_call_obj, &label_obj, &color_obj,
           &down_widget_obj, &up_widget_obj, &left_widget_obj, &right_widget_obj,
@@ -253,7 +255,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &autoselect_obj, &mask_texture_obj, &tint_texture_obj,
           &tint_color_obj, &tint2_color_obj, &text_flatness_obj,
           &text_res_scale_obj, &enabled_obj, &text_literal_obj, &opacity_obj,
-          &better_bg_fit_obj))
+          &better_bg_fit_obj, &transition_type_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -465,6 +467,17 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->set_transition_delay(static_cast<millisecs_t>(
         1000.0f * Python::GetFloat(transition_delay_obj)));
   }
+  if (transition_type_obj != Py_None) {
+    std::string transition_type = Python::GetString(transition_type_obj);
+    if (transition_type == "in_left") {
+      b->set_transition_type(ButtonWidget::TransitionType::kInLeft);
+    } else if (transition_type == "scale") {
+      b->set_transition_type(ButtonWidget::TransitionType::kScale);
+    } else {
+      throw Exception("Invalid transition_type: '" + transition_type + "'.",
+                      PyExcType::kValue);
+    }
+  }
   if (text_res_scale_obj != Py_None) {
     b->SetTextResScale(Python::GetFloat(text_res_scale_obj));
   }
@@ -534,6 +547,7 @@ static PyMethodDef PyButtonWidgetDef = {
     "  text_literal: bool | None = None,\n"
     "  opacity: float | None = None,\n"
     "  better_bg_fit: bool | None = None,\n"
+    "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a button widget.\n"
@@ -749,6 +763,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* radial_amount_obj{Py_None};
   PyObject* draw_controller_mult_obj{Py_None};
   PyObject* depth_range_obj{Py_None};
+  PyObject* transition_type_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -770,15 +785,16 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "radial_amount",
                                  "draw_controller_mult",
                                  "depth_range",
+                                 "transition_type",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &color_obj, &texture_obj,
           &opacity_obj, &mesh_transparent_obj, &mesh_opaque_obj,
           &has_alpha_channel_obj, &tint_texture_obj, &tint_color_obj,
           &transition_delay_obj, &draw_controller_obj, &tint2_color_obj,
           &tilt_scale_obj, &mask_texture_obj, &radial_amount_obj,
-          &draw_controller_mult_obj, &depth_range_obj))
+          &draw_controller_mult_obj, &depth_range_obj, &transition_type_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -854,6 +870,17 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (transition_delay_obj != Py_None) {
     // We accept this as seconds; widget takes milliseconds.
     b->set_transition_delay(1000.0f * Python::GetFloat(transition_delay_obj));
+  }
+  if (transition_type_obj != Py_None) {
+    std::string transition_type = Python::GetString(transition_type_obj);
+    if (transition_type == "in_left") {
+      b->set_transition_type(ImageWidget::TransitionType::kInLeft);
+    } else if (transition_type == "scale") {
+      b->set_transition_type(ImageWidget::TransitionType::kScale);
+    } else {
+      throw Exception("Invalid transition_type: '" + transition_type + "'.",
+                      PyExcType::kValue);
+    }
   }
   if (color_obj != Py_None) {
     std::vector<float> c = Python::GetFloats(color_obj);
@@ -935,6 +962,7 @@ static PyMethodDef PyImageWidgetDef = {
     "  radial_amount: float | None = None,\n"
     "  draw_controller_mult: float | None = None,\n"
     "  depth_range: tuple[float, float] | None = None,\n"
+    "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit an image widget.\n"
@@ -2164,6 +2192,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* id_obj{Py_None};
   PyObject* literal_obj{Py_None};
   PyObject* depth_range_obj{Py_None};
+  PyObject* transition_type_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2208,9 +2237,10 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "allow_clear_button",
                                  "literal",
                                  "depth_range",
+                                 "transition_type",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &text_obj, &v_align_obj, &h_align_obj,
           &editable_obj, &padding_obj, &on_return_press_call_obj,
@@ -2223,7 +2253,8 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &force_internal_editing_obj, &always_show_carat_obj, &big_obj,
           &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
           &query_description_obj, &adapter_finished_obj, &glow_type_obj,
-          &allow_clear_button_obj, &literal_obj, &depth_range_obj))
+          &allow_clear_button_obj, &literal_obj, &depth_range_obj,
+          &transition_type_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2304,6 +2335,17 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (autoselect_obj != Py_None) {
     widget->set_auto_select(Python::GetBool(autoselect_obj));
+  }
+  if (transition_type_obj != Py_None) {
+    std::string transition_type = Python::GetString(transition_type_obj);
+    if (transition_type == "in_left") {
+      widget->set_transition_type(TextWidget::TransitionType::kInLeft);
+    } else if (transition_type == "scale") {
+      widget->set_transition_type(TextWidget::TransitionType::kScale);
+    } else {
+      throw Exception("Invalid transition_type: '" + transition_type + "'.",
+                      PyExcType::kValue);
+    }
   }
   if (transition_delay_obj != Py_None) {
     // We accept this as seconds; widget takes milliseconds.
@@ -2536,6 +2578,7 @@ static PyMethodDef PyTextWidgetDef = {
     "  allow_clear_button: bool | None = None,\n"
     "  literal: bool | None = None,\n"
     "  depth_range: tuple[float, float] | None = None,\n"
+    "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"

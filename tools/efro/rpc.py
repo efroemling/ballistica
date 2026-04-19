@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from threading import current_thread
 from typing import TYPE_CHECKING, Annotated, assert_never
 
-from efro.util import strip_exception_tracebacks
+from efro.util import strip_exception_tracebacks, gather_strip
 from efro.error import (
     CommunicationError,
     is_asyncio_streams_communication_error,
@@ -256,7 +256,7 @@ class RPCEndpoint:
         self._tasks += core_tasks
 
         # Run our core tasks until they all complete.
-        results = await asyncio.gather(*core_tasks, return_exceptions=True)
+        results = await gather_strip(*core_tasks)
 
         # Core tasks should handle their own errors; the only ones
         # we expect to bubble up are CancelledError.
@@ -269,10 +269,6 @@ class RPCEndpoint:
                     self._label,
                     result,
                 )
-            if isinstance(result, BaseException):
-                # We're done with these exceptions, so strip their
-                # tracebacks to avoid reference cycles.
-                strip_exception_tracebacks(result)
 
         if not all(task.done() for task in core_tasks):
             logger.warning(
@@ -526,7 +522,7 @@ class RPCEndpoint:
             )
 
         # Wait for all of our in-flight tasks to wrap up.
-        results = await asyncio.gather(*live_tasks, return_exceptions=True)
+        results = await gather_strip(*live_tasks)
         for result in results:
             # We want to know if any errors happened aside from CancelledError
             # (which are BaseExceptions, not Exception).

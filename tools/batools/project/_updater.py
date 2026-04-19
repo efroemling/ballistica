@@ -569,6 +569,8 @@ class ProjectUpdater:
             self._update_visual_studio_project('HeadlessPlus')
             self._update_visual_studio_project('Oculus')
             self._update_visual_studio_project('OculusPlus')
+            self._update_visual_studio_project('TestBuild')
+            self._update_visual_studio_project('TestBuildPlus')
 
     def _is_public_source_file(self, filename: str) -> bool:
         assert filename.startswith('/')

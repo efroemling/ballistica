@@ -2,6 +2,8 @@
 
 #include "ballistica/ui_v1/widget/image_widget.h"
 
+#include <algorithm>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
@@ -34,8 +36,17 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   float transition =
       (static_cast<float>(birth_time_millisecs_) + transition_delay_)
       - static_cast<float>(current_time);
+  float transition_scale = 1.0f;
   if (transition > 0) {
-    extra_offs_x -= transition * 4.0f;
+    if (transition_type_ == TransitionType::kScale) {
+      // Fixed 150ms scale-up at the tail of the transition window
+      // (quadratic ease-out; decelerates as it settles at 1.0).
+      constexpr float kScaleDurationMs = 150.0f;
+      float t = std::max(0.0f, 1.0f - transition / kScaleDurationMs);
+      transition_scale = 1.0f - (1.0f - t) * (1.0f - t);
+    } else {
+      extra_offs_x -= transition * 4.0f;
+    }
   }
 
   float l = 0;
@@ -131,7 +142,8 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             auto xf = c.ScopedTransform();
             c.Translate(image_center_x_ + extra_offs_x,
                         image_center_y_ + extra_offs_y);
-            c.Scale(image_width_, image_height_, 1.0f);
+            c.Scale(image_width_ * transition_scale,
+                    image_height_ * transition_scale, 1.0f);
             if (draw_radial_opaque) {
               if (!radial_mesh_.exists()) {
                 radial_mesh_ =
@@ -171,7 +183,8 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           auto xf = c.ScopedTransform();
           c.Translate(image_center_x_ + extra_offs_x,
                       image_center_y_ + extra_offs_y);
-          c.Scale(image_width_, image_height_, 1.0f);
+          c.Scale(image_width_ * transition_scale,
+                  image_height_ * transition_scale, 1.0f);
           if (draw_radial_transparent) {
             if (!radial_mesh_.exists()) {
               radial_mesh_ = Object::New<base::MeshIndexedSimpleFull>();

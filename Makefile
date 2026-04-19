@@ -24,17 +24,6 @@
 #                                                                              #
 ################################################################################
 
-# Which asset-build target the cmake/cmake-server build and the
-# prefab-*-server-release-build targets depend on. Defaults build the
-# full asset bundle, but acquire_binary (tools/batools/apprun.py) can
-# override these to assets-cmake-scripts when its caller only needs the
-# binary + python scripts (e.g. dummymodule generation). This lets
-# check/test/docs workflows run against a stripped-down asset source
-# tree (such as the ba-check cloudshell env, which omits audio/
-# textures/meshes).
-CMAKE_ASSETS_TARGET ?= assets-cmake
-CMAKE_SERVER_ASSETS_TARGET ?= assets-server
-
 # List targets in this Makefile and basic descriptions for them.
 help: env
 	@$(PCOMMAND) makefile_target_list Makefile
@@ -114,11 +103,6 @@ assets: env meta
 assets-cmake: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) cmake
-
-# Build only script assets for cmake builds (linux, mac).
-assets-cmake-scripts: env meta
-	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
- cd src/assets \&\& $(MAKE) -j$(CPUS) scripts-cmake
 
 # Build assets required for server builds.
 assets-server: env meta
@@ -242,7 +226,7 @@ pcommandbatch_speed_test: env
 
 # Tell make which of these targets don't represent files.
 .PHONY: help env env-pre-update env-clean assets assets-cmake			\
-        assets-cmake-scripts assets-windows assets-windows-Win32							\
+        assets-windows assets-windows-Win32													\
         assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
         resources resources-clean meta meta-clean clean clean-list						\
         dummymodules venv venv-clean docs docs-clean pcommandbatch_speed_test
@@ -411,12 +395,12 @@ prefab-mac-arm64-server-release: prefab-mac-arm64-server-release-build
 	@$(PCOMMAND) ensure_prefab_platform mac_arm64
 	$(RUN_PREFAB_MAC_ARM64_SERVER_RELEASE)
 
-prefab-mac-x86-64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
+prefab-mac-x86-64-server-release-build: env assets-server \
    build/prefab/full/mac_x86_64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/mac_x86_64_server/release
 
-prefab-mac-arm64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
+prefab-mac-arm64-server-release-build: env assets-server \
    build/prefab/full/mac_arm64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/mac_arm64_server/release
@@ -535,12 +519,12 @@ prefab-linux-arm64-server-release: prefab-linux-arm64-server-release-build
 	@$(WSLL) $(PCOMMAND) ensure_prefab_platform linux_arm64
 	$(RUN_PREFAB_LINUX_ARM64_SERVER_RELEASE)
 
-prefab-linux-x86-64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
+prefab-linux-x86-64-server-release-build: env assets-server \
    build/prefab/full/linux_x86_64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/linux_x86_64_server/release
 
-prefab-linux-arm64-server-release-build: env $(CMAKE_SERVER_ASSETS_TARGET) \
+prefab-linux-arm64-server-release-build: env assets-server \
    build/prefab/full/linux_arm64_server/release/dist/ballisticakit_headless
 	@$(STAGE_BUILD) -cmakeserver -release \
       build/prefab/full/linux_arm64_server/release
@@ -1136,45 +1120,51 @@ windows-clean-list: env
 CMAKE_BUILD_TYPE ?= Debug
 CMAKE_EXTRA_ARGS ?=
 
+# Optional suffix appended to the cmake build dir. Used by ex-flavor targets
+# (cmake-build-ex, etc.) to keep parallel build trees isolated from vanilla
+# ones. Leave empty for the default build.
+CMAKE_BUILD_SUFFIX ?=
+CMAKE_BUILD_DIR = build/cmake/$(CM_BT_LC)$(CMAKE_BUILD_SUFFIX)
+
 # Build and run the cmake build.
 cmake: cmake-build
-	cd build/cmake/$(CM_BT_LC)/staged && ./ballisticakit
+	cd $(CMAKE_BUILD_DIR)/staged && ./ballisticakit
 
 # Build and run the cmake build under the gdb debugger.
 # Sets up the ballistica environment to do things like abort() out to the
 # debugger on errors instead of trying to cleanly exit.
 cmake-gdb: cmake-build
-	cd build/cmake/$(CM_BT_LC)/staged && \
+	cd $(CMAKE_BUILD_DIR)/staged && \
       BA_DEBUGGER_ATTACHED=1 gdb ./ballisticakit
 
 # Build and run the cmake build under the lldb debugger.
 # Sets up the ballistica environment to do things like abort() out to the
 # debugger on errors instead of trying to cleanly exit.
 cmake-lldb: cmake-build
-	cd build/cmake/$(CM_BT_LC)/staged && \
+	cd $(CMAKE_BUILD_DIR)/staged && \
       BA_DEBUGGER_ATTACHED=1 lldb ./ballisticakit
 
 # Build but don't run it.
-cmake-build: $(CMAKE_ASSETS_TARGET) resources cmake-binary
-	@$(STAGE_BUILD) -cmake -$(CM_BT_LC) -builddir build/cmake/$(CM_BT_LC) \
-      build/cmake/$(CM_BT_LC)/staged
-	@$(PCOMMANDBATCH) echo BLD Build complete: BLU build/cmake/$(CM_BT_LC)/staged
+cmake-build: assets-cmake resources cmake-binary
+	@$(STAGE_BUILD) -cmake -$(CM_BT_LC) -builddir $(CMAKE_BUILD_DIR) \
+      $(CMAKE_BUILD_DIR)/staged
+	@$(PCOMMANDBATCH) echo BLD Build complete: BLU $(CMAKE_BUILD_DIR)/staged
 
 cmake-binary: meta
-	@$(PCOMMAND) cmake_prep_dir build/cmake/$(CM_BT_LC)
-	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
+	@$(PCOMMAND) cmake_prep_dir $(CMAKE_BUILD_DIR)
+	@cd $(CMAKE_BUILD_DIR) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) \
-      build/cmake/$(CM_BT_LC)
-	@cd build/cmake/$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakitbin
+      $(CMAKE_BUILD_DIR)
+	@cd $(CMAKE_BUILD_DIR) && $(MAKE) -j$(CPUS) ballisticakitbin
 
 cmake-clean:
-	rm -rf build/cmake/$(CM_BT_LC)
+	rm -rf $(CMAKE_BUILD_DIR)
 
 cmake-server: cmake-server-build
 	cd build/cmake/server-$(CM_BT_LC)/staged && ./ballisticakit_server
 
-cmake-server-build: $(CMAKE_SERVER_ASSETS_TARGET) meta cmake-server-binary
+cmake-server-build: assets-server meta cmake-server-binary
 	@$(STAGE_BUILD) -cmakeserver -$(CM_BT_LC) \
       -builddir build/cmake/server-$(CM_BT_LC) \
       build/cmake/server-$(CM_BT_LC)/staged

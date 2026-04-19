@@ -1,4 +1,14 @@
-### 1.7.62 (build 22812, api 9, 2026-04-10)
+### 1.7.62 (build 22815, api 9, 2026-04-19)
+- Added initial support for signing in with a Discord account as a first-class
+  V2 login type, via Discord's Social SDK. Discord support is included in Mac,
+  Windows, and Linux test-builds for now, but will expand to Android and Mac App
+  Store builds soon. We can also start taking advantage of other features of the
+  Discord SDK such as rich presence or voice chat once any initial bugs are
+  ironed out. (Thanks Loup-Garou911XD for the proof-of-concept implementation!).
+- Regional server connections have been overhauled and now use websockets on
+  standard http/https ports. This should help reduce blocking and should
+  establish connections much faster. Please holler if you run into connectivity
+  problems as this is a significant code overhaul.
 - Added `tests/test_restapi` which can be useful as reference for the
   ballistica.net REST api. Run `make test-restapi` to run all REST api tests
   (you just need to supply an API Key).
@@ -11,14 +21,20 @@
   logic has been cleaned up (Thanks vinnytherabbit!)
 - Added `BA_LOG_LEVELS` env var to override log levels at launch (e.g.
   `BA_LOG_LEVELS='ba.net=DEBUG,ba.connectivity=DEBUG'`).
-- Added `test_game_run` and `test_game_kill` pcommands for automated game
-  testing.
+- The engine's networking now honors the standard `HTTPS_PROXY`
+  environment variable, so the game works behind corporate /
+  sandboxed proxies without manual configuration.
+- Added `test_game_run` pcommand for automated game testing.
 - Players finally have all their unlocked characters accurately available when
   connecting to servers with v2-auth enabled.
 - Servers with v2-auth enabled can now see verified classic_purchases for
   connected clients (without v2-auth this will show up as None).
 - Workspace uploads are no longer are limited to 10mb (applies to web UI, REST,
-  and bacloud).
+  and bacloud). Note that syncing workspaces to the client currently does not
+  support workspaces with such large files (that will mainly be for assets).
+- Added scale transition option for widget and wired up doc-ui to use that
+  instead of in-left transitions.
+  
 
 ### 1.7.61 (build 22772, api 9, 2026-03-16)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)
@@ -486,8 +502,6 @@
   garbage collection due to reference loops, and it offers some tips and
   functionality to help track down and eliminate said loops. Check out the
   `GarbageCollectionSubsystem` documentation for more info.
-- Added `DiscordSubsystem` class which wraps the underlying `_babase` 
-  implementation of discord sdk
 - Added proper support for mouse-cancel events. This fixes an annoying issue
   where using home-bar nav gestures on Android to switch apps could lead to
   unintended button presses (namely on chest slots since that is near the home

@@ -539,6 +539,21 @@ def _run_pylint(
 
     args += dirtyfiles
     name = f'{len(dirtyfiles)} file(s)'
+
+    # Pylint's parallel path constructs a ProcessPoolExecutor, which
+    # calls os.sysconf('SC_SEM_NSEMS_MAX') to verify enough POSIX
+    # semaphores are available. Some agent sandboxes deny that syscall;
+    # when that happens, stub the check out so parallel pylint can
+    # proceed. Non-sandboxed runs probe successfully and are untouched.
+    try:
+        os.sysconf('SC_SEM_NSEMS_MAX')
+    except PermissionError:
+        import concurrent.futures.process as _cfp
+
+        # pylint: disable=protected-access
+        _cfp._check_system_limits = lambda: None
+        # pylint: enable=protected-access
+
     run = lint.Run(args, exit=False)
     if cache is not None:
         assert allfiles is not None

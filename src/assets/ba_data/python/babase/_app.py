@@ -17,7 +17,6 @@ from efro.threadpool import ThreadPoolExecutorEx
 from efro.util import strip_exception_tracebacks
 
 import _babase
-from babase._discord import DiscordSubsystem
 from babase._language import LanguageSubsystem
 from babase._locale import LocaleSubsystem
 from babase._plugin import PluginSubsystem
@@ -131,11 +130,6 @@ class App:
         #: Subsystem for wrangling plugins.
         self.plugins: PluginSubsystem = self.register_subsystem(
             PluginSubsystem()
-        )
-
-        #: Subsystem for discord functionality
-        self.discord: DiscordSubsystem = self.register_subsystem(
-            DiscordSubsystem()
         )
 
         #: Subsystem for wrangling metadata.

@@ -181,6 +181,21 @@ class GarbageCollectionSubsystem(AppSubsystem):
         self._showed_standard_mode_warning = False
         self._mode: GarbageCollectionSubsystem.Mode | None = None
 
+        # Optional override for the warning-threshold object count;
+        # default is 50. Useful when iterating on cycle hunts (lower
+        # the bar to surface smaller leaks, or raise it to silence
+        # known library-internal cycles temporarily).
+        self._warning_threshold = 50
+        envval = os.environ.get('BA_GC_WARNING_THRESHOLD')
+        if envval:
+            try:
+                self._warning_threshold = int(envval)
+            except ValueError:
+                gc_log.warning(
+                    'Invalid BA_GC_WARNING_THRESHOLD %r; expected integer.',
+                    envval,
+                )
+
     @override
     def on_app_running(self) -> None:
         """:meta private:"""
@@ -327,8 +342,6 @@ class GarbageCollectionSubsystem(AppSubsystem):
 
         # Make more noise (warning instead of info) if there's a
         # substantial number of collections in a single cycle.
-        gc_threshold = 50
-
         starttime = now
         num_affected_objs = gc.collect()
         now2 = self.last_actual_collect_time = time.monotonic()
@@ -336,7 +349,7 @@ class GarbageCollectionSubsystem(AppSubsystem):
         self._total_num_gc_objects += num_affected_objs
 
         if (
-            num_affected_objs >= gc_threshold
+            num_affected_objs >= self._warning_threshold
             and not self._showed_standard_mode_warning
         ):
             loglevel: int = logging.WARNING

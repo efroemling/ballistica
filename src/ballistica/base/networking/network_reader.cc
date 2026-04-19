@@ -423,6 +423,16 @@ void NetworkReader::OpenSockets_() {
   auto suppress_headless_port_in_use_error =
       (suppress_env_var && *suppress_env_var == "1");
 
+  // Bind UDP sockets to loopback instead of INADDR_ANY/in6addr_any
+  // when requested. Intended for sandboxed test runs where binds on
+  // non-loopback interfaces are denied; breaks anything needing
+  // inbound UDP from other machines (LAN games, direct-peer hosting,
+  // and receiving game-state from remote game servers as a client).
+  auto loopback_only_env_var =
+      g_core->platform->GetEnv("BA_BIND_LOOPBACK_ONLY");
+  auto bind_loopback_only =
+      (loopback_only_env_var && *loopback_only_env_var == "1");
+
   sd4_ = socket(AF_INET, SOCK_DGRAM, 0);
   if (sd4_ < 0) {
     g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
@@ -434,7 +444,8 @@ void NetworkReader::OpenSockets_() {
     // Bind to local server port.
     struct sockaddr_in serv_addr{};
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serv_addr.sin_addr.s_addr =
+        htonl(bind_loopback_only ? INADDR_LOOPBACK : INADDR_ANY);
 
     // Try our requested port for v4, then go with any available if that
     // doesn't work.
@@ -498,7 +509,7 @@ void NetworkReader::OpenSockets_() {
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin6_family = AF_INET6;
     serv_addr.sin6_port = htons(port6_);  // NOLINT
-    serv_addr.sin6_addr = in6addr_any;
+    serv_addr.sin6_addr = bind_loopback_only ? in6addr_loopback : in6addr_any;
     result = ::bind(sd6_, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
 
     if (result != 0) {

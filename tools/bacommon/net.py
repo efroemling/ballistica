@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import datetime
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Annotated
 from dataclasses import dataclass, field
 
@@ -22,6 +23,35 @@ if TYPE_CHECKING:
 
 @ioprepped
 @dataclass
+class ClientRejection:
+    """Tells a client to stop or slow its contact with the server.
+
+    Carried on :class:`ServerNodeQueryResponse` so the client can
+    notice at app launch (rather than after a failed WS handshake).
+    """
+
+    class Kind(Enum):
+        """What the client should do in response."""
+
+        #: Stop contacting the server from this build — nothing is
+        #: going to change. Client should stop its reconnect loop.
+        PERMANENT = 'p'
+
+        #: Back off but keep retrying — the condition is expected to
+        #: clear on its own.
+        TRANSIENT = 't'
+
+    kind: Annotated[Kind, IOAttrs('k')]
+
+    #: Optional English text to show the user. Must be a key from the
+    #: ``serverResponses`` translation catalog (so localized
+    #: translations are already present). ``None`` means apply the
+    #: behavior silently with no user-visible message.
+    message: Annotated[str | None, IOAttrs('m', soft_default=None)] = None
+
+
+@ioprepped
+@dataclass
 class ServerNodeEntry:
     """Information about a specific server."""
 
@@ -29,6 +59,39 @@ class ServerNodeEntry:
     latlong: Annotated[tuple[float, float] | None, IOAttrs('ll')]
     address: Annotated[str, IOAttrs('a')]
     port: Annotated[int, IOAttrs('p')]
+
+
+@ioprepped
+@dataclass
+class InsecureDirectivePayload:
+    """Payload of a signed ``InsecureDirective``.
+
+    Serialized to JSON bytes and Ed25519-signed by the master server.
+    Clients verify using a long-lived public key embedded at compile
+    time.
+    """
+
+    #: Whether the server is telling the client it's OK to use
+    #: insecure (non-TLS) connections — used in regions where TLS is
+    #: blocked/degraded and the client would otherwise have no way to
+    #: reach the service.
+    allow_insecure: Annotated[bool, IOAttrs('a')]
+
+    #: Directive is invalid after this time. Short-lived to limit the
+    #: replay window if a signed response is intercepted.
+    expires: Annotated[datetime.datetime, IOAttrs('e')]
+
+
+@ioprepped
+@dataclass
+class InsecureDirective:
+    """A server-signed directive delivered over plain HTTP."""
+
+    #: JSON-serialized :class:`InsecureDirectivePayload`.
+    payload: Annotated[bytes, IOAttrs('p')]
+
+    #: Ed25519 signature over ``payload`` bytes.
+    signature: Annotated[bytes, IOAttrs('s')]
 
 
 @ioprepped
@@ -59,6 +122,32 @@ class ServerNodeQueryResponse:
     servers: Annotated[
         list[ServerNodeEntry], IOAttrs('s', store_default=False)
     ] = field(default_factory=list)
+
+    # Ranked basn hostnames for transport-agent connection. Ordered
+    # by preference given the client's reported zones (via the
+    # ``zones`` query param) with a geographic-proximity fallback.
+    # Clients try these in order via ``wss://<host>/ws_transport``.
+    hosts: Annotated[list[str], IOAttrs('h', store_default=False)] = field(
+        default_factory=list
+    )
+
+    # Signed directive telling the client whether to allow insecure
+    # (non-TLS) connections. Populated only on HTTP responses — HTTPS
+    # responses rely on the TLS channel for authenticity. Clients
+    # verify the embedded signature using a compile-time public key
+    # before trusting the flag.
+    insecure_directive: Annotated[
+        InsecureDirective | None,
+        IOAttrs('id', soft_default=None, store_default=False),
+    ] = None
+
+    # Instruct the client to stop or slow down — they are too old,
+    # banned, waiting out a maintenance window, etc. See
+    # :class:`ClientRejection`. ``None`` means no rejection.
+    rejection: Annotated[
+        ClientRejection | None,
+        IOAttrs('rj', soft_default=None, store_default=False),
+    ] = None
 
 
 @ioprepped

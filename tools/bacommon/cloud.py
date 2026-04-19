@@ -317,29 +317,6 @@ class StoreQueryResponse(Response):
 
 @ioprepped
 @dataclass
-class SecureDataCheckMessage(Message):
-    """Was this data signed by the master-server?."""
-
-    data: Annotated[bytes, IOAttrs('d')]
-    signature: Annotated[bytes, IOAttrs('s')]
-
-    @override
-    @classmethod
-    def get_response_types(cls) -> list[type[Response] | None]:
-        return [SecureDataCheckResponse]
-
-
-@ioprepped
-@dataclass
-class SecureDataCheckResponse(Response):
-    """Here's the result of that data check, boss."""
-
-    # Whether the data signature was valid.
-    result: Annotated[bool, IOAttrs('v')]
-
-
-@ioprepped
-@dataclass
 class SecureDataCheckerRequest(Message):
     """Can I get a checker over here?."""
 

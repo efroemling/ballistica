@@ -152,8 +152,33 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // Simple transition.
   millisecs_t transition =
       (birth_time_millisecs_ + transition_delay_) - current_time;
+  float transition_scale = 1.0f;
+  bool apply_scale_transform = false;
   if (transition > 0) {
-    extra_offs_x -= static_cast<float>(transition) * 4.0f / scale();
+    if (transition_type_ == TransitionType::kScale) {
+      // Fixed 150ms scale-up at the tail of the transition window
+      // (quadratic ease-out; decelerates as it settles at 1.0).
+      constexpr float kScaleDurationMs = 150.0f;
+      float t = std::max(
+          0.0f, 1.0f - static_cast<float>(transition) / kScaleDurationMs);
+      transition_scale = 1.0f - (1.0f - t) * (1.0f - t);
+      apply_scale_transform = true;
+    } else {
+      extra_offs_x -= static_cast<float>(transition) * 4.0f / scale();
+    }
+  }
+
+  // Push a scaled-around-center transform if we're mid scale-in.
+  if (apply_scale_transform) {
+    base::EmptyComponent c(pass);
+    c.SetTransparent(draw_transparent);
+    c.PushTransform();
+    float cx = width_ * 0.5f;
+    float cy = height_ * 0.5f;
+    c.Translate(cx, cy, 0.0f);
+    c.Scale(transition_scale, transition_scale, 1.0f);
+    c.Translate(-cx, -cy, 0.0f);
+    c.Submit();
   }
 
   if (text_width_dirty_) {
@@ -593,6 +618,14 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       text_->set_flatness(text_flatness_);
       text_->Draw(pass, draw_transparent);
     }
+    c.Submit();
+  }
+
+  // Pop scale-in transform we pushed at the top.
+  if (apply_scale_transform) {
+    base::EmptyComponent c(pass);
+    c.SetTransparent(draw_transparent);
+    c.PopTransform();
     c.Submit();
   }
 }

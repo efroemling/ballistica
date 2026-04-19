@@ -351,6 +351,50 @@ void CorePython::ImportPythonObjs() {
   }
 }
 
+// Single source of truth mapping each LogName to its Python-side logger
+// ObjIDs: the logger object itself (for getEffectiveLevel queries) and its
+// .log bound method (for dispatching log calls). Entries must be in LogName
+// enum order; the static_assert + runtime assert below pin this down.
+struct LoggerEntry {
+  LogName logname;
+  CorePython::ObjID logger_id;
+  CorePython::ObjID logcall_id;
+};
+
+static constexpr LoggerEntry kLoggerEntries[] = {
+    {LogName::kRoot, CorePython::ObjID::kLoggerRoot,
+     CorePython::ObjID::kLoggerRootLogCall},
+    {LogName::kBa, CorePython::ObjID::kLoggerBa,
+     CorePython::ObjID::kLoggerBaLogCall},
+    {LogName::kBaApp, CorePython::ObjID::kLoggerBaApp,
+     CorePython::ObjID::kLoggerBaAppLogCall},
+    {LogName::kBaAccount, CorePython::ObjID::kLoggerBaAccount,
+     CorePython::ObjID::kLoggerBaAccountLogCall},
+    {LogName::kBaDisplayTime, CorePython::ObjID::kLoggerBaDisplayTime,
+     CorePython::ObjID::kLoggerBaDisplayTimeLogCall},
+    {LogName::kBaLifecycle, CorePython::ObjID::kLoggerBaLifecycle,
+     CorePython::ObjID::kLoggerBaLifecycleLogCall},
+    {LogName::kBaAudio, CorePython::ObjID::kLoggerBaAudio,
+     CorePython::ObjID::kLoggerBaAudioLogCall},
+    {LogName::kBaGraphics, CorePython::ObjID::kLoggerBaGraphics,
+     CorePython::ObjID::kLoggerBaGraphicsLogCall},
+    {LogName::kBaPerformance, CorePython::ObjID::kLoggerBaPerformance,
+     CorePython::ObjID::kLoggerBaPerformanceLogCall},
+    {LogName::kBaAssets, CorePython::ObjID::kLoggerBaAssets,
+     CorePython::ObjID::kLoggerBaAssetsLogCall},
+    {LogName::kBaInput, CorePython::ObjID::kLoggerBaInput,
+     CorePython::ObjID::kLoggerBaInputLogCall},
+    {LogName::kBaUI, CorePython::ObjID::kLoggerBaUI,
+     CorePython::ObjID::kLoggerBaUILogCall},
+    {LogName::kBaNetworking, CorePython::ObjID::kLoggerBaNetworking,
+     CorePython::ObjID::kLoggerBaNetworkingLogCall},
+    {LogName::kBaDiscord, CorePython::ObjID::kLoggerBaDiscord,
+     CorePython::ObjID::kLoggerBaDiscordLogCall},
+};
+static_assert(std::size(kLoggerEntries) == static_cast<size_t>(LogName::kLast),
+              "kLoggerEntries must have one entry per LogName value "
+              "(excluding the kLast sentinel).");
+
 void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
   assert(python_logging_calls_enabled_);
   assert(Python::HaveGIL());
@@ -371,27 +415,12 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
   assert(log_level_critical
          == objs().Get(ObjID::kLoggingLevelCritical).ValueAsInt());
 
-  std::pair<LogName, ObjID> pairs[] = {
-      {LogName::kRoot, ObjID::kLoggerRoot},
-      {LogName::kBa, ObjID::kLoggerBa},
-      {LogName::kBaApp, ObjID::kLoggerBaApp},
-      {LogName::kBaAccount, ObjID::kLoggerBaAccount},
-      {LogName::kBaAudio, ObjID::kLoggerBaAudio},
-      {LogName::kBaGraphics, ObjID::kLoggerBaGraphics},
-      {LogName::kBaPerformance, ObjID::kLoggerBaPerformance},
-      {LogName::kBaDisplayTime, ObjID::kLoggerBaDisplayTime},
-      {LogName::kBaLifecycle, ObjID::kLoggerBaLifecycle},
-      {LogName::kBaAssets, ObjID::kLoggerBaAssets},
-      {LogName::kBaInput, ObjID::kLoggerBaInput},
-      {LogName::kBaUI, ObjID::kLoggerBaUI},
-      {LogName::kBaNetworking, ObjID::kLoggerBaNetworking},
-  };
-
-  int count{};
-  for (const auto& pair : pairs) {
-    count++;
-    auto logname{pair.first};
-    auto objid{pair.second};
+  for (size_t i = 0; i < std::size(kLoggerEntries); ++i) {
+    // Ordering invariant: entries[i].logname == LogName(i). This lets
+    // LoggingCall() index kLoggerEntries directly by LogName.
+    assert(static_cast<int>(kLoggerEntries[i].logname) == static_cast<int>(i));
+    auto logname{kLoggerEntries[i].logname};
+    auto objid{kLoggerEntries[i].logger_id};
     auto out{objs().Get(objid).GetAttr("getEffectiveLevel").Call()};
     assert(out.exists());
     auto outval{static_cast<int>(out.ValueAsInt())};
@@ -419,12 +448,6 @@ void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
       default:
         fprintf(stderr, "Found unexpected resolved logging level %d\n", outval);
     }
-  }
-  // Sanity check: Make sure we covered our full set of LogNames.
-  if (count != static_cast<int>(LogName::kLast)) {
-    fprintf(stderr,
-            "WARNING: UpdateInternalLoggerLevels does not seem to be covering "
-            "all log names.\n");
   }
 }
 
@@ -568,70 +591,17 @@ void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
   // Make sure we're good to go from any thread.
   Python::ScopedInterpreterLock lock;
 
+  // Look up the logger's .log method via the kLoggerEntries table. The
+  // ordering invariant (entries[i].logname == LogName(i)) is enforced by
+  // UpdateInternalLoggerLevels, so a direct index is safe.
+  auto lognameidx{static_cast<size_t>(logname)};
   ObjID logcallobj;
-  bool handled{};
-  switch (logname) {
-    case LogName::kRoot:
-      logcallobj = ObjID::kLoggerRootLogCall;
-      handled = true;
-      break;
-    case LogName::kBa:
-      logcallobj = ObjID::kLoggerBaLogCall;
-      handled = true;
-      break;
-    case LogName::kBaAccount:
-      logcallobj = ObjID::kLoggerBaAccountLogCall;
-      handled = true;
-      break;
-    case LogName::kBaApp:
-      logcallobj = ObjID::kLoggerBaAppLogCall;
-      handled = true;
-      break;
-    case LogName::kBaAudio:
-      logcallobj = ObjID::kLoggerBaAudioLogCall;
-      handled = true;
-      break;
-    case LogName::kBaGraphics:
-      logcallobj = ObjID::kLoggerBaGraphicsLogCall;
-      handled = true;
-      break;
-    case LogName::kBaPerformance:
-      logcallobj = ObjID::kLoggerBaPerformanceLogCall;
-      handled = true;
-      break;
-    case LogName::kBaDisplayTime:
-      logcallobj = ObjID::kLoggerBaDisplayTimeLogCall;
-      handled = true;
-      break;
-    case LogName::kBaAssets:
-      logcallobj = ObjID::kLoggerBaAssetsLogCall;
-      handled = true;
-      break;
-    case LogName::kBaInput:
-      logcallobj = ObjID::kLoggerBaInputLogCall;
-      handled = true;
-      break;
-    case LogName::kBaNetworking:
-      logcallobj = ObjID::kLoggerBaNetworkingLogCall;
-      handled = true;
-      break;
-    case LogName::kBaLifecycle:
-      logcallobj = ObjID::kLoggerBaLifecycleLogCall;
-      handled = true;
-      break;
-    case LogName::kBaUI:
-      logcallobj = ObjID::kLoggerBaUILogCall;
-      handled = true;
-      break;
-    case LogName::kLast:
-      logcallobj = ObjID::kLoggerRootLogCall;
-      break;
-  }
-  // Handle this here instead of via default clause so we get warnings about
-  // new unhandled enum values.
-  if (!handled) {
+  if (lognameidx >= std::size(kLoggerEntries)) {
     logcallobj = ObjID::kLoggerRootLogCall;
     fprintf(stderr, "Unexpected LogName %d\n", static_cast<int>(logname));
+  } else {
+    logcallobj = kLoggerEntries[lognameidx].logcall_id;
+    assert(kLoggerEntries[lognameidx].logname == logname);
   }
 
   ObjID loglevelobjid;

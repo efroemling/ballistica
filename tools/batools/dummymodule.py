@@ -999,12 +999,9 @@ def generate_dummy_modules(projroot: str) -> None:
         )
 
     # Dummy-module generation launches the binary and introspects its
-    # Python bindings; it never touches audio/textures/meshes, so a
-    # scripts-only asset bundle is sufficient (and lets this work in
-    # environments that don't sync the media assets).
-    binary_path = apprun.acquire_binary(
-        assets='scripts', purpose='dummy-module generation'
-    )
+    # Python bindings; a headless-server binary is sufficient (and lets
+    # this work in environments that don't sync media assets).
+    binary_path = apprun.acquire_binary(purpose='dummy-module generation')
 
     # We need access to things like black that are installed into the project
     # venv.

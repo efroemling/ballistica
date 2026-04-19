@@ -400,7 +400,7 @@ def tests_warm_start() -> None:
     # We do lots of apprun.python_command() within test. Pre-build the
     # binary that they need to do their thing.
     if not apprun.test_runs_disabled():
-        apprun.acquire_binary_for_python_command(purpose='running tests')
+        apprun.acquire_binary(purpose='running tests')
 
 
 def wsl_build_check_win_drive() -> None:

@@ -602,7 +602,7 @@ def check_sync_states(self: ProjectUpdater) -> None:
         ).returncode
         != 0
     ):
-        raise CleanError('Sync check failed; you may need to run "sync".')
+        raise CleanError('efrosync check failed; you may need to run a sync.')
 
 
 def check_misc(self: ProjectUpdater) -> None:
