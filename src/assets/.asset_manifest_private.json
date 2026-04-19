@@ -1049,6 +1049,8 @@
  "ba_data/python-site-packages/websockets/uri.py",
  "ba_data/python-site-packages/websockets/utils.py",
  "ba_data/python-site-packages/websockets/version.py",
+ "ba_data/python/babase/automation.py",
+ "ba_data/python/bauiv1/automation.py",
  "ba_data/textures/achievementBoxer.dds",
  "ba_data/textures/achievementBoxer.ktx",
  "ba_data/textures/achievementBoxer.pvr",

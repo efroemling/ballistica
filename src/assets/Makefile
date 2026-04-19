@@ -195,7 +195,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_text.py \
   $(BUILD_DIR)/ba_data/python/babase/_ui.py \
   $(BUILD_DIR)/ba_data/python/babase/_workspace.py \
-  $(BUILD_DIR)/ba_data/python/babase/automation.py \
   $(BUILD_DIR)/ba_data/python/babase/modutils.py \
   $(BUILD_DIR)/ba_data/python/baclassic/__init__.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_accountv1.py \
@@ -340,7 +339,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/automation.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \
@@ -1625,6 +1623,8 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/uri.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/utils.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/version.py \
+  $(BUILD_DIR)/ba_data/python/babase/automation.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/automation.py \
   $(BUILD_DIR)/sphinx/static/conf.py
 
 SCRIPT_TARGETS_SO_PRIVATE_COMMON = \
