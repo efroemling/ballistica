@@ -15,7 +15,7 @@ from efro.error import CommunicationError
 from efro.call import CallbackSet
 from bacommon.login import LoginType
 
-from babase._logging import accountlog, netlog
+from babase._logging import accountlog, lifecyclelog, netlog
 import _babase
 
 if TYPE_CHECKING:
@@ -165,6 +165,7 @@ class AccountV2Subsystem:
 
         # Ok; no workspace to worry about; carry on.
         if not self._initial_sign_in_completed:
+            lifecyclelog.info('initial-sign-in path: account-no-workspace')
             self._initial_sign_in_completed = True
             _babase.app.on_initial_sign_in_complete()
 
@@ -213,6 +214,7 @@ class AccountV2Subsystem:
         :meta private:
         """
         if not self._initial_sign_in_completed:
+            lifecyclelog.info('initial-sign-in path: no-account')
             self._initial_sign_in_completed = True
             _babase.app.on_initial_sign_in_complete()
 
@@ -577,6 +579,7 @@ class AccountV2Subsystem:
 
     def _on_set_active_workspace_completed(self) -> None:
         if not self._initial_sign_in_completed:
+            lifecyclelog.info('initial-sign-in path: workspace-loaded')
             self._initial_sign_in_completed = True
             _babase.app.on_initial_sign_in_complete()
 

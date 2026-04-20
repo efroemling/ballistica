@@ -30,6 +30,7 @@ def import_baenv_and_run_configure(
     contains_python_dist: bool,
     strict_threads_atexit: Callable[[Callable[[], None]], None],
     setup_pycache_prefix: bool,
+    launch_time: float | None,
 ) -> None | str:
     """Import baenv and run its configure method.
 
@@ -49,6 +50,7 @@ def import_baenv_and_run_configure(
             contains_python_dist=contains_python_dist,
             strict_threads_atexit=strict_threads_atexit,
             setup_pycache_prefix=setup_pycache_prefix,
+            launch_time=launch_time,
         )
         return None
     except Exception:
@@ -62,6 +64,25 @@ def get_env_config() -> baenv.EnvConfig:
     import baenv
 
     return baenv.get_env_config()
+
+
+def emit_held_log(logger: object, level: int, msg: str, created: float) -> None:
+    """Emit a LogRecord on a given logger with an overridden creation time.
+
+    Used by the C++ layer to replay early logs captured before our
+    LogHandler was wired up, preserving their original timestamps so the
+    replayed lines display at the moment the underlying event happened
+    rather than at flush time.
+    """
+    import logging
+
+    assert isinstance(logger, logging.Logger)
+
+    record = logger.makeRecord(logger.name, level, '(held)', 0, msg, (), None)
+    record.created = created
+    whole = int(created)
+    record.msecs = (created - whole) * 1000.0
+    logger.handle(record)
 
 
 def atexit(call: Callable[[], None]) -> None:

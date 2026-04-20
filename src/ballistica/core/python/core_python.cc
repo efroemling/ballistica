@@ -2,13 +2,16 @@
 
 #include "ballistica/core/python/core_python.h"
 
+#include <Python.h>
+#include <marshal.h>
+
 #include <cstdio>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "ballistica/core/mgen/python_modules_monolithic.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/core/python/pyembed.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/python/python.h"
@@ -271,90 +274,11 @@ void CorePython::FinalizePython() {
   }
 }
 
-void CorePython::EnablePythonLoggingCalls() {
-  if (python_logging_calls_enabled_) {
-    return;
-  }
-  auto gil{Python::ScopedInterpreterLock()};
-
-  // Make sure we've got all our logging Python bits we need.
-  assert(objs().Exists(ObjID::kLoggingLevelNotSet));
-  assert(objs().Exists(ObjID::kLoggingLevelDebug));
-  assert(objs().Exists(ObjID::kLoggingLevelInfo));
-  assert(objs().Exists(ObjID::kLoggingLevelWarning));
-  assert(objs().Exists(ObjID::kLoggingLevelError));
-  assert(objs().Exists(ObjID::kLoggingLevelCritical));
-  assert(objs().Exists(ObjID::kLoggerRoot));
-  assert(objs().Exists(ObjID::kLoggerRootLogCall));
-  assert(objs().Exists(ObjID::kLoggerBa));
-  assert(objs().Exists(ObjID::kLoggerBaLogCall));
-  assert(objs().Exists(ObjID::kLoggerBaAccount));
-  assert(objs().Exists(ObjID::kLoggerBaAccountLogCall));
-  assert(objs().Exists(ObjID::kLoggerBaApp));
-  assert(objs().Exists(ObjID::kLoggerBaAppLogCall));
-  assert(objs().Exists(ObjID::kLoggerBaAudio));
-  assert(objs().Exists(ObjID::kLoggerBaAudioLogCall));
-  assert(objs().Exists(ObjID::kLoggerBaDisplayTime));
-  assert(objs().Exists(ObjID::kLoggerBaDisplayTimeLogCall));
-  assert(objs().Exists(ObjID::kLoggerBaGraphics));
-  assert(objs().Exists(ObjID::kLoggerBaGraphicsLogCall));
-  assert(objs().Exists(ObjID::kLoggerBaLifecycle));
-  assert(objs().Exists(ObjID::kLoggerBaLifecycleLogCall));
-  assert(objs().Exists(ObjID::kLoggerBaAssets));
-  assert(objs().Exists(ObjID::kLoggerBaAssetsLogCall));
-  assert(objs().Exists(ObjID::kLoggerBaInput));
-  assert(objs().Exists(ObjID::kLoggerBaInputLogCall));
-  assert(objs().Exists(ObjID::kLoggerBaUI));
-  assert(objs().Exists(ObjID::kLoggerBaUILogCall));
-  assert(objs().Exists(ObjID::kLoggerBaNetworking));
-  assert(objs().Exists(ObjID::kLoggerBaNetworkingLogCall));
-
-  // Push any early log calls we've been holding on to along to Python.
-  {
-    std::scoped_lock lock(early_log_lock_);
-    python_logging_calls_enabled_ = true;
-    for (auto&& entry : early_logs_) {
-      LoggingCall(std::get<0>(entry), std::get<1>(entry),
-                  ("[HELD] " + std::get<2>(entry)).c_str());
-    }
-    early_logs_.clear();
-  }
-}
-
-void CorePython::ImportPythonObjs() {
-  // Grab core Python objs we use.
-#include "ballistica/core/mgen/pyembed/binding_core.inc"
-
-  // Also grab a few things we define in env.inc. Normally this sort of
-  // thing would go in _hooks.py in our Python package, but because we are
-  // core we don't have one, so we have to do it via inline code.
-  {
-#include "ballistica/core/mgen/pyembed/env.inc"
-    auto ctx = PythonRef(PyDict_New(), PythonRef::kSteal);
-    if (!PythonCommand(env_code, "bameta/pyembed/env.py")
-             .Exec(true, *ctx, *ctx)) {
-      FatalError("Error in ba Python env code. See log for details.");
-    }
-    objs_.StoreCallable(ObjID::kPrependSysPathCall,
-                        *ctx.DictGetItem("prepend_sys_path"));
-    objs_.StoreCallable(ObjID::kWarmStart1Call,
-                        *ctx.DictGetItem("warm_start_1"));
-    objs_.StoreCallable(ObjID::kWarmStart1CompletedCall,
-                        *ctx.DictGetItem("warm_start_1_completed"));
-    objs_.StoreCallable(ObjID::kBaEnvConfigureCall,
-                        *ctx.DictGetItem("import_baenv_and_run_configure"));
-    objs_.StoreCallable(ObjID::kBaEnvGetConfigCall,
-                        *ctx.DictGetItem("get_env_config"));
-    objs_.StoreCallable(ObjID::kBaEnvAtExitCall, *ctx.DictGetItem("atexit"));
-    objs_.StoreCallable(ObjID::kBaEnvPreFinalizeCall,
-                        *ctx.DictGetItem("pre_finalize"));
-  }
-}
-
 // Single source of truth mapping each LogName to its Python-side logger
-// ObjIDs: the logger object itself (for getEffectiveLevel queries) and its
-// .log bound method (for dispatching log calls). Entries must be in LogName
-// enum order; the static_assert + runtime assert below pin this down.
+// ObjIDs: the logger object itself (for getEffectiveLevel queries and
+// held-log replay) and its .log bound method (for direct dispatching of
+// log calls). Entries must be in LogName enum order; the static_assert +
+// runtime assert below pin this down.
 struct LoggerEntry {
   LogName logname;
   CorePython::ObjID logger_id;
@@ -394,6 +318,159 @@ static constexpr LoggerEntry kLoggerEntries[] = {
 static_assert(std::size(kLoggerEntries) == static_cast<size_t>(LogName::kLast),
               "kLoggerEntries must have one entry per LogName value "
               "(excluding the kLast sentinel).");
+
+void CorePython::EnablePythonLoggingCalls() {
+  if (python_logging_calls_enabled_) {
+    return;
+  }
+  auto gil{Python::ScopedInterpreterLock()};
+
+  // Make sure we've got all our logging Python bits we need.
+  assert(objs().Exists(ObjID::kLoggingLevelNotSet));
+  assert(objs().Exists(ObjID::kLoggingLevelDebug));
+  assert(objs().Exists(ObjID::kLoggingLevelInfo));
+  assert(objs().Exists(ObjID::kLoggingLevelWarning));
+  assert(objs().Exists(ObjID::kLoggingLevelError));
+  assert(objs().Exists(ObjID::kLoggingLevelCritical));
+  assert(objs().Exists(ObjID::kLoggerRoot));
+  assert(objs().Exists(ObjID::kLoggerRootLogCall));
+  assert(objs().Exists(ObjID::kLoggerBa));
+  assert(objs().Exists(ObjID::kLoggerBaLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaAccount));
+  assert(objs().Exists(ObjID::kLoggerBaAccountLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaApp));
+  assert(objs().Exists(ObjID::kLoggerBaAppLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaAudio));
+  assert(objs().Exists(ObjID::kLoggerBaAudioLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaDisplayTime));
+  assert(objs().Exists(ObjID::kLoggerBaDisplayTimeLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaGraphics));
+  assert(objs().Exists(ObjID::kLoggerBaGraphicsLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaLifecycle));
+  assert(objs().Exists(ObjID::kLoggerBaLifecycleLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaAssets));
+  assert(objs().Exists(ObjID::kLoggerBaAssetsLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaInput));
+  assert(objs().Exists(ObjID::kLoggerBaInputLogCall));
+  assert(objs().Exists(ObjID::kLoggerBaUI));
+  assert(objs().Exists(ObjID::kLoggerBaUILogCall));
+  assert(objs().Exists(ObjID::kLoggerBaNetworking));
+  assert(objs().Exists(ObjID::kLoggerBaNetworkingLogCall));
+  assert(objs().Exists(ObjID::kEmitHeldLogCall));
+
+  // If the caller plans to bring up a Python LogHandler later (the full
+  // app path), keep buffering for now; OnLogHandlerReady() will do the
+  // flush once the handler is actually wired up. Otherwise flip now so
+  // log calls flow straight through to Python's bare logging tree.
+  if (!g_core->core_config().expect_log_handler_setup) {
+    FlushEarlyLogs_();
+  }
+}
+
+void CorePython::OnLogHandlerReady() {
+  if (python_logging_calls_enabled_) {
+    return;
+  }
+  // Safe to call before EnablePythonLoggingCalls() only on paths that
+  // bypass it entirely, which don't exist today; guard just in case.
+  assert(objs().Exists(ObjID::kEmitHeldLogCall));
+  auto gil{Python::ScopedInterpreterLock()};
+  FlushEarlyLogs_();
+}
+
+void CorePython::FlushEarlyLogs_() {
+  // Caller must hold the GIL.
+  assert(Python::HaveGIL());
+  std::scoped_lock lock(early_log_lock_);
+  python_logging_calls_enabled_ = true;
+  for (auto&& entry : early_logs_) {
+    auto logname = std::get<0>(entry);
+    auto loglevel = std::get<1>(entry);
+    const auto& msg = std::get<2>(entry);
+    auto created = std::get<3>(entry);
+
+    auto lognameidx = static_cast<size_t>(logname);
+    ObjID logger_objid;
+    if (lognameidx >= std::size(kLoggerEntries)) {
+      logger_objid = ObjID::kLoggerRoot;
+      fprintf(stderr, "Unexpected LogName %d in held log.\n",
+              static_cast<int>(logname));
+    } else {
+      logger_objid = kLoggerEntries[lognameidx].logger_id;
+    }
+
+    ObjID loglevelobjid;
+    switch (loglevel) {
+      case LogLevel::kDebug:
+        loglevelobjid = ObjID::kLoggingLevelDebug;
+        break;
+      case LogLevel::kInfo:
+        loglevelobjid = ObjID::kLoggingLevelInfo;
+        break;
+      case LogLevel::kWarning:
+        loglevelobjid = ObjID::kLoggingLevelWarning;
+        break;
+      case LogLevel::kError:
+        loglevelobjid = ObjID::kLoggingLevelError;
+        break;
+      case LogLevel::kCritical:
+        loglevelobjid = ObjID::kLoggingLevelCritical;
+        break;
+      default:
+        loglevelobjid = ObjID::kLoggingLevelInfo;
+        fprintf(stderr, "Unexpected LogLevel %d in held log.\n",
+                static_cast<int>(loglevel));
+        break;
+    }
+    PythonRef args(
+        Py_BuildValue("(OOsd)", objs().Get(logger_objid).get(),
+                      objs().Get(loglevelobjid).get(), msg.c_str(), created),
+        PythonRef::kSteal);
+    objs().Get(ObjID::kEmitHeldLogCall).Call(args);
+  }
+  early_logs_.clear();
+}
+
+void CorePython::DrainEarlyLogsToStderr() {
+  std::scoped_lock lock(early_log_lock_);
+  for (auto&& entry : early_logs_) {
+    auto loglevel = std::get<1>(entry);
+    const auto& msg = std::get<2>(entry);
+    fprintf(stderr, "[held-log] %s\n", msg.c_str());
+    if (g_core && g_core->platform) {
+      g_core->platform->EmitPlatformLog("root", loglevel, msg);
+    }
+  }
+  early_logs_.clear();
+}
+
+void CorePython::ImportPythonObjs() {
+  // Grab core Python objs we use.
+#include "ballistica/core/mgen/pyembed/binding_core.inc"
+
+  // Also grab a few things we define in env.inc. Normally this sort of
+  // thing would go in _hooks.py in our Python package, but because we are
+  // core we don't have one, so we have to do it via inline code.
+  {
+    auto ctx = PythonRef(PyDict_New(), PythonRef::kSteal);
+#include "ballistica/core/mgen/pyembed/env.inc"
+    objs_.StoreCallable(ObjID::kPrependSysPathCall,
+                        *ctx.DictGetItem("prepend_sys_path"));
+    objs_.StoreCallable(ObjID::kWarmStart1Call,
+                        *ctx.DictGetItem("warm_start_1"));
+    objs_.StoreCallable(ObjID::kWarmStart1CompletedCall,
+                        *ctx.DictGetItem("warm_start_1_completed"));
+    objs_.StoreCallable(ObjID::kBaEnvConfigureCall,
+                        *ctx.DictGetItem("import_baenv_and_run_configure"));
+    objs_.StoreCallable(ObjID::kBaEnvGetConfigCall,
+                        *ctx.DictGetItem("get_env_config"));
+    objs_.StoreCallable(ObjID::kBaEnvAtExitCall, *ctx.DictGetItem("atexit"));
+    objs_.StoreCallable(ObjID::kBaEnvPreFinalizeCall,
+                        *ctx.DictGetItem("pre_finalize"));
+    objs_.StoreCallable(ObjID::kEmitHeldLogCall,
+                        *ctx.DictGetItem("emit_held_log"));
+  }
+}
 
 void CorePython::UpdateInternalLoggerLevels(LogLevel* log_levels) {
   assert(python_logging_calls_enabled_);
@@ -519,6 +596,13 @@ void CorePython::MonolithicModeBaEnvConfigure() {
   std::optional<std::string> cache_dir =
       g_core->platform->GetCacheDirectoryMonolithicDefault();
 
+  // Pass launch_time as a float when we have a positive value (captured
+  // at main() entry); otherwise pass None so baenv falls back to its own
+  // time.time() sample.
+  auto launch_time = g_core->core_config().launch_time;
+  auto launch_time_obj = PythonRef::Stolen(
+      launch_time > 0.0 ? PyFloat_FromDouble(launch_time) : Py_NewRef(Py_None));
+
   // clang-format off
   auto kwargs =
     PythonRef::Stolen(Py_BuildValue(
@@ -530,6 +614,7 @@ void CorePython::MonolithicModeBaEnvConfigure() {
       "sO"  // contains_python_dist
       "sO"  // strict_threads_atexit
       "sO"  // setup_pycache_prefix
+      "sO"  // launch_time
       "}",
       "config_dir",
         config_dir ? *PythonRef::FromString(*config_dir) : Py_None,
@@ -544,7 +629,9 @@ void CorePython::MonolithicModeBaEnvConfigure() {
       "strict_threads_atexit",
         *objs().Get(ObjID::kBaEnvAtExitCall),
       "setup_pycache_prefix",
-        Py_True));
+        Py_True,
+      "launch_time",
+        *launch_time_obj));
   // clang-format on
 
   auto result = objs()
@@ -556,35 +643,29 @@ void CorePython::MonolithicModeBaEnvConfigure() {
   if (result.ValueIsString()) {
     FatalError("Environment setup failed:\n" + result.ValueAsString());
   }
+
+  // Whatever LogHandler setup baenv.configure() was going to do is done
+  // now (including the case where it declined via setup_logging=False).
+  // Flush any early logs we were holding so they display at their
+  // captured timestamps.
+  OnLogHandlerReady();
+
   g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
                        "baenv.configure() end");
 }
 
 void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
                              const char* msg) {
-  // If we're not yet sending logs to Python, store this one away until we
-  // are.
+  // If we're not yet sending logs to Python, store this one away (along
+  // with a wall-clock capture time) until we are. On the normal path
+  // these will be replayed through Python logging via
+  // FlushEarlyLogs_()/emit_held_log with their original timestamps. On
+  // abnormal-exit paths FatalErrorHandling::DrainHeldLogs_() dumps them
+  // to stderr so nothing is silently lost.
   if (!python_logging_calls_enabled_) {
+    auto captured = Platform::TimeSinceEpochSeconds();
     std::scoped_lock lock(early_log_lock_);
-    early_logs_.emplace_back(logname, loglevel, msg);
-
-    // UPDATE - trying to disable this for now to make the concept of
-    // delayed logs a bit less scary. Perhaps we can update fatal-error to
-    // dump these or have a mode to immediate-print them as needed.
-    if (explicit_bool(false)) {
-      // There's a chance that we're going down in flames and this log might
-      // be useful to see even if we never get a chance to chip it to
-      // Python. So let's make an attempt to get it at least seen now in
-      // whatever way we can. (platform display-log call and stderr).
-      const char* errmsg{
-          "CorePython::LoggingCall() called before Python logging "
-          "available."};
-      if (g_core->platform) {
-        g_core->platform->EmitPlatformLog("root", LogLevel::kError, errmsg);
-        g_core->platform->EmitPlatformLog("root", loglevel, msg);
-      }
-      fprintf(stderr, "%s\n%s\n", errmsg, msg);
-    }
+    early_logs_.emplace_back(logname, loglevel, msg, captured);
     return;
   }
 
@@ -703,6 +784,43 @@ auto CorePython::FetchPythonArgs(std::vector<std::string>* buffer)
     out.push_back(const_cast<char*>((*buffer)[i].c_str()));
   }
   return out;
+}
+
+void PyembedExec(const uint8_t* bytes, size_t n, const char* filename,
+                 PyObject* ctx, bool encrypted) {
+  assert(Python::HaveGIL());
+  assert(ctx != nullptr);
+
+  const uint8_t* marshal_bytes = bytes;
+  std::vector<uint8_t> decrypted;
+  if (encrypted) {
+    // XOR with the same key used by gen_pyembed's _pyembed_xor in
+    // tools/batoolsinternal/meta.py. Keep in sync if ever changed.
+    static constexpr char kKey[] = "create an account";
+    static constexpr size_t kKeyLen = sizeof(kKey) - 1;  // drop null term
+    decrypted.resize(n);
+    for (size_t i = 0; i < n; ++i) {
+      decrypted[i] = bytes[i] ^ static_cast<uint8_t>(kKey[i % kKeyLen]);
+    }
+    marshal_bytes = decrypted.data();
+  }
+
+  PyObject* code_obj = PyMarshal_ReadObjectFromString(
+      reinterpret_cast<const char*>(marshal_bytes), static_cast<Py_ssize_t>(n));
+  if (code_obj == nullptr) {
+    PyErr_PrintEx(0);
+    FatalError(std::string("Failed to unmarshal pyembed ") + filename
+               + "; see log for details.");
+  }
+
+  PyObject* result = PyEval_EvalCode(code_obj, ctx, ctx);
+  Py_DECREF(code_obj);
+  if (result == nullptr) {
+    PyErr_PrintEx(0);
+    FatalError(std::string("Error running pyembed ") + filename
+               + "; see log for details.");
+  }
+  Py_DECREF(result);
 }
 
 }  // namespace ballistica::core

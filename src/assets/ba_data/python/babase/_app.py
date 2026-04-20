@@ -621,6 +621,8 @@ class App:
         assert _babase.in_logic_thread()
         assert not self._initial_sign_in_completed
 
+        lifecyclelog.info('initial-sign-in complete')
+
         # Tell meta it can start scanning extra stuff that just showed
         # up (namely account workspaces).
         self.meta.start_extra_scan()
@@ -846,6 +848,7 @@ class App:
         itself to really 'run'.
         """
         assert _babase.in_logic_thread()
+        lifecyclelog.info('on-loading begin')
 
         # Get meta-system scanning built-in stuff in the bg.
         self.meta.start_scan(scan_complete_cb=self._on_meta_scan_complete)
@@ -867,9 +870,12 @@ class App:
         if self.plus is None:
             _babase.pushcall(self.on_initial_sign_in_complete)
 
+        lifecyclelog.info('on-loading end')
+
     def _on_meta_scan_complete(self) -> None:
         """Called when meta-scan is done doing its thing."""
         assert _babase.in_logic_thread()
+        lifecyclelog.info('meta-scan complete')
 
         # Now that we know what's out there, build our final plugin set.
         self.plugins.on_meta_scan_complete()
@@ -885,6 +891,7 @@ class App:
         and we can actually get started doing whatever we're gonna do.
         """
         assert _babase.in_logic_thread()
+        lifecyclelog.info('on-running begin')
 
         # Let our native layer know.
         _babase.on_app_running()
@@ -922,6 +929,8 @@ class App:
             # Otherwise tell the app to do its default thing *only* if a
             # plugin hasn't already told it to do something.
             self.set_intent(AppIntentDefault())
+
+        lifecyclelog.info('on-running end')
 
     def _apply_app_config(self) -> None:
         assert _babase.in_logic_thread()

@@ -874,6 +874,9 @@
     <ClInclude Include="..\..\src\ballistica\core\python\core_python.h">
       <Filter>ballistica\core\python</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\core\python\pyembed.h">
+      <Filter>ballistica\core\python</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\core\support\base_soft.h">
       <Filter>ballistica\core\support</Filter>
     </ClInclude>

@@ -823,21 +823,6 @@ def gen_binding_code() -> None:
     batools.metabuild.gen_binding_code(str(pcommand.PROJROOT), inpath, outpath)
 
 
-def gen_flat_data_code() -> None:
-    """Generate a C++ include file from a Python file."""
-    from efro.error import CleanError
-    import batools.metabuild
-
-    if len(sys.argv) != 5:
-        raise CleanError('Expected 3 args (srcfile, dstfile, varname)')
-    inpath = sys.argv[2]
-    outpath = sys.argv[3]
-    varname = sys.argv[4]
-    batools.metabuild.gen_flat_data_code(
-        str(pcommand.PROJROOT), inpath, outpath, varname
-    )
-
-
 def genchangelog() -> None:
     """Gen a pretty html changelog."""
     from batools.changelog import generate

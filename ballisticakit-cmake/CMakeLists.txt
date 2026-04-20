@@ -514,6 +514,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.h
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.cc
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.h
+  ${BA_SRC_ROOT}/ballistica/core/python/pyembed.h
   ${BA_SRC_ROOT}/ballistica/core/support/base_soft.h
   ${BA_SRC_ROOT}/ballistica/core/support/core_config.cc
   ${BA_SRC_ROOT}/ballistica/core/support/core_config.h

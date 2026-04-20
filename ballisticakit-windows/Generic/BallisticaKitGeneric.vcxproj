@@ -482,6 +482,7 @@
     <ClInclude Include="..\..\src\ballistica\core\platform\windows\platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\core\python\core_python.cc" />
     <ClInclude Include="..\..\src\ballistica\core\python\core_python.h" />
+    <ClInclude Include="..\..\src\ballistica\core\python\pyembed.h" />
     <ClInclude Include="..\..\src\ballistica\core\support\base_soft.h" />
     <ClCompile Include="..\..\src\ballistica\core\support\core_config.cc" />
     <ClInclude Include="..\..\src\ballistica\core\support\core_config.h" />

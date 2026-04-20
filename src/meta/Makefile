@@ -50,7 +50,7 @@ $(PROJ_SRC_DIR)/ballistica/core/mgen/pyembed/binding_core.inc : bacoremeta/pyemb
 	@$(PCOMMAND) gen_binding_code $< $@
 
 $(PROJ_SRC_DIR)/ballistica/core/mgen/pyembed/env.inc : bacoremeta/pyembed/env.py
-	@$(PCOMMAND) gen_flat_data_code $< $@ env_code
+	@$(PCOMMAND) gen_pyembed $< $@ encrypt=0 ctx=*ctx
 
 $(PROJ_SRC_DIR)/ballistica/scene_v1/mgen/pyembed/binding_scene_v1.inc : bascenev1meta/pyembed/binding_scene_v1.py
 	@$(PCOMMAND) gen_binding_code $< $@

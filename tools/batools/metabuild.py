@@ -5,49 +5,12 @@
 from __future__ import annotations
 
 import os
-import json
 
 from efro.terminal import Clr
 
 # Can be plugged into hashes/etc to give us a convenient way to blow away
 # all built meta output on CI/etc. (by incrementing this value).
 META_BUILD_MAGIC_NUMBER = 1
-
-
-def gen_flat_data_code(
-    projroot: str, in_path: str, out_path: str, var_name: str
-) -> None:
-    """Generate a C++ include file from a Python file."""
-
-    out_dir = os.path.dirname(out_path)
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir, exist_ok=True)
-
-    with open(in_path, 'rb') as infileb:
-        svalin = infileb.read()
-
-    # JSON should do the trick for us here as far as char escaping/etc.
-    # There's corner cases where it can differ from C strings but in this
-    # simple case we shouldn't run into them.
-    sval_out = f'const char* {var_name} ='
-
-    # Store in ballistica's simple xor encryption to at least
-    # slightly slow down hackers.
-    sval = svalin
-
-    sval1: bytes | None
-    sval1 = sval
-    while sval1:
-        sval_out += ' ' + json.dumps(sval1[:1000].decode())
-        sval1 = sval1[1000:]
-    sval_out += ';\n'
-
-    pretty_path = os.path.abspath(out_path)
-    if pretty_path.startswith(projroot + '/'):
-        pretty_path = pretty_path[len(projroot) + 1 :]
-    print(f'Meta-building {Clr.BLD}{pretty_path}{Clr.RST}')
-    with open(out_path, 'w', encoding='utf-8') as outfile:
-        outfile.write(sval_out)
 
 
 def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:

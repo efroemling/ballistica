@@ -799,3 +799,39 @@ def generate_flatpak_release_manifest(
         )
     except Exception as e:
         raise CleanError(f'Failed to write releases.xml: {e}') from e
+
+
+def gen_pyembed() -> None:
+    """Gen a pyembed .inc file using compiled bytecode.
+
+    Args: <in_path> <out_path> [encrypt={0,1}] [ctx=<var_name>]
+
+    Replaces gen_encrypted_python_code (encrypt=1) and
+    gen_flat_data_code (encrypt=0) for pyembed modules.
+    """
+    from efro.error import CleanError
+    from batools.meta import gen_pyembed as gen
+
+    if len(sys.argv) < 4:
+        raise CleanError(
+            'Expected at least 2 args: <in_path> <out_path> '
+            '[encrypt={0,1}] [ctx=<var>]'
+        )
+
+    encrypt = True
+    ctx_var = 'internal_py_context'
+    for arg in sys.argv[4:]:
+        if arg.startswith('encrypt='):
+            encrypt = arg.removeprefix('encrypt=') == '1'
+        elif arg.startswith('ctx='):
+            ctx_var = arg.removeprefix('ctx=')
+        else:
+            raise CleanError(f'Unrecognized arg: {arg!r}')
+
+    gen(
+        projroot=str(pcommand.PROJROOT),
+        in_path=sys.argv[2],
+        out_path=sys.argv[3],
+        encrypt=encrypt,
+        ctx_var=ctx_var,
+    )

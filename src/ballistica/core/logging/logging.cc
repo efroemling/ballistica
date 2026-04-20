@@ -16,18 +16,20 @@ int g_early_v1_cloud_log_writes{10};
 
 void Logging::EmitLog(std::string_view name, LogLevel level, double timestamp,
                       std::string_view msg) {
-  assert(g_base_soft);
-  // Print to the dev console.
-  if (name == "stdout" || name == "stderr") {
-    // Print stdout/stderr entries with no extra info.
-    g_base_soft->PushDevConsolePrintCall(msg, 1.0f, kVector4f1);
-  } else {
-    auto elt{g_core->ba_env_launch_timestamp()};
+  // Dev-console printing is only possible once base is up. Callers from
+  // early startup (e.g. fatal-error reporting during
+  // CoreFeatureSet::Import) will skip this branch and fall through to
+  // platform-log routing below.
+  if (g_base_soft) {
+    if (name == "stdout" || name == "stderr") {
+      // Print stdout/stderr entries with no extra info.
+      g_base_soft->PushDevConsolePrintCall(msg, 1.0f, kVector4f1);
+    } else {
+      auto elt{g_core->ba_env_launch_timestamp()};
 
-    // Show -1 for time if we don't have a launch timestamp yet.
-    auto rel_time{elt > 0.0 ? (timestamp - elt) : -1.0};
+      // Show -1 for time if we don't have a launch timestamp yet.
+      auto rel_time{elt > 0.0 ? (timestamp - elt) : -1.0};
 
-    if (g_base_soft) {
       Vector4f logcolor;
       switch (level) {
         case LogLevel::kDebug:

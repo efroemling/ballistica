@@ -58,8 +58,9 @@ auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
         // between monolithic and modular.
         std::vector<std::string> argbuffer;
         std::vector<char*> argv = CorePython::FetchPythonArgs(&argbuffer);
-        DoImport_(CoreConfig::ForArgsAndEnvVars(static_cast<int>(argv.size()),
-                                                argv.data()));
+        DoImport_(CoreConfig::ForArgsAndEnvVars(
+            static_cast<int>(argv.size()), argv.data(),
+            Platform::TimeSinceEpochSeconds()));
       } else {
         // Not using Python sys args but we still want to process env vars.
         DoImport_(CoreConfig::ForEnvVars());

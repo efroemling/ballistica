@@ -57,7 +57,7 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22817
+TARGET_BALLISTICA_BUILD = 22818
 TARGET_BALLISTICA_VERSION = '1.7.62'
 
 
@@ -176,18 +176,25 @@ def configure(
     setup_logging: bool = True,
     setup_pycache_prefix: bool = False,
     strict_threads_atexit: Callable[[Callable[[], None]], None] | None = None,
+    launch_time: float | None = None,
 ) -> None:
     """Set up the environment for running a Ballistica app.
 
     This includes things such as Python path wrangling and app directory
     creation. This must be called before any actual Ballistica modules
     are imported; the environment is locked in as soon as that happens.
+
+    ``launch_time`` is an optional epoch-seconds value (from
+    :func:`time.time`) captured earlier in startup — typically at C++
+    ``main()`` entry — used as the anchor for relative log timestamps.
+    If not supplied, we fall back to sampling :func:`time.time` here.
     """
 
-    # Measure when we start doing this stuff. We plug this in to show
-    # relative times in our log timestamp displays and also pass this to
-    # the engine to do the same there.
-    launch_time = time.time()
+    # Prefer a caller-supplied launch_time (captured earlier in startup)
+    # over our own sample so that log-timestamp 'relative time' reflects
+    # real process start.
+    if launch_time is None:
+        launch_time = time.time()
 
     envglobals = _EnvGlobals.get()
 

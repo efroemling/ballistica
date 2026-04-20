@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 
 import _babase
 
+from babase._logging import lifecyclelog
+
 if TYPE_CHECKING:
     from typing import Callable
 
@@ -88,6 +90,7 @@ class MetadataSubsystem:
             ]
         )
 
+        lifecyclelog.info('meta-scan bg thread kicked off')
         Thread(target=self._run_scan_in_bg).start()
 
     def start_extra_scan(self) -> None:
@@ -194,6 +197,7 @@ class MetadataSubsystem:
 
         # Place results and tell the logic thread they're ready.
         self.scanresults = results
+        lifecyclelog.info('meta-scan bg thread done')
         _babase.pushcall(self._handle_scan_results, from_other_thread=True)
 
     def _handle_scan_results(self) -> None:

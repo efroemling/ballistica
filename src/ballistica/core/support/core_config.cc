@@ -209,12 +209,20 @@ auto CoreConfig::ForEnvVars() -> CoreConfig {
   return cfg;
 }
 
-auto CoreConfig::ForArgsAndEnvVars(int argc, char** argv) -> CoreConfig {
+auto CoreConfig::ForArgsAndEnvVars(int argc, char** argv, seconds_t launch_time)
+    -> CoreConfig {
   CoreConfig cfg{};
+  cfg.launch_time = launch_time;
 
   // Apply env-vars first. We want explicit args to override these.
   cfg.ApplyEnvVars();
   cfg.ApplyArgs(argc, argv);
+
+  // Unless we're acting as a bare Python interpreter (-c), assume the
+  // caller is going to bring up a LogHandler via baenv.configure() and
+  // defer C++ log emission until then. This keeps pre-handler log lines
+  // from being dropped silently by Python's default root-logger filter.
+  cfg.expect_log_handler_setup = !cfg.call_command.has_value();
 
   return cfg;
 }

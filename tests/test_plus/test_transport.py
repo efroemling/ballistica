@@ -53,12 +53,21 @@ def _run_until(
     env: Mapping[str, str],
     pattern: str,
     hard_timeout: float = 10.0,
+    gate_pattern: str | None = None,
 ) -> str:
     """Stream binary stdout until ``pattern`` appears, then terminate.
 
     Returns all captured output. If ``pattern`` never appears before
     ``hard_timeout``, returns whatever was captured so the caller can
     produce a useful failure message.
+
+    If ``gate_pattern`` is supplied, ``pattern`` matches are only
+    treated as terminators after ``gate_pattern`` has appeared at
+    least once. This is how the handoff test avoids terminating on a
+    retry-spawned session that happens to match the same
+    ``session_1: Connected to`` line the real handoff produces — we
+    gate on ``_LOG_PRELOAD_SPAWN``, which only fires on a genuine
+    shutdown-warning-driven preload.
     """
     binpath = os.path.abspath(apprun.acquire_binary(purpose='transport test'))
     bindir = os.path.dirname(binpath)
@@ -84,11 +93,18 @@ def _run_until(
     ) as proc:
         assert proc.stdout is not None
         deadline = time.monotonic() + hard_timeout
+        gate_passed = gate_pattern is None
         try:
             for raw in iter(proc.stdout.readline, b''):
                 line = raw.decode(errors='replace')
                 captured.append(line)
-                if pattern in line:
+                if (
+                    not gate_passed
+                    and gate_pattern is not None
+                    and gate_pattern in line
+                ):
+                    gate_passed = True
+                if gate_passed and pattern in line:
                     break
                 if time.monotonic() > deadline:
                     break
@@ -153,6 +169,11 @@ def test_session_handoff() -> None:
             cfgdir,
             env={'BA_DEBUG_V2_TRANSPORT_SHORT_DURATION': '1'},
             pattern=_LOG_SESSION_1_CONNECTED,
+            # Gate on preload spawn so a retry-after-failure session
+            # (e.g. from basn capacity rejection) doesn't falsely
+            # trigger termination — only the preload-driven session_1
+            # connect counts.
+            gate_pattern=_LOG_PRELOAD_SPAWN,
             hard_timeout=45.0,
         )
     assert _LOG_SHUTDOWN_WARNING in out, (
