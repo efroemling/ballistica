@@ -368,7 +368,7 @@ class Blast(bs.Actor):
             },
         )
 
-        bs.timer(0.05, bs.CallStrict(self.handlemessage, bs.DieMessage()))
+        bs.timer(0.05, bs.WeakCallStrict(self.handlemessage, bs.DieMessage()))
 
         # Throw in an explosion and flash.
         evel = (velocity[0], max(-1.0, velocity[1]), velocity[2])
