@@ -9,9 +9,12 @@
 #include <string>
 #include <string_view>
 
-#include "ballistica/base/discord/discord.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
+
+namespace ballistica::base {
+class Discord;
+}  // namespace ballistica::base
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other
@@ -884,7 +887,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   UI* const ui;
   Utils* const utils;
   Discord* const discord;
-
   // Non-const components (fixme: clean up access to these).
   TouchInput* touch_input{};
 

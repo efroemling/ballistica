@@ -32,8 +32,9 @@ def _test_game_run_parse_args() -> dict[str, object]:
     """Parse ``test_game_run`` argv.
 
     Returns a dict with keys ``instance``, ``log_levels``, ``timeout``,
-    ``fleet``, ``headless``, ``exec_code``, ``background``, and
-    ``port``.
+    ``fleet``, ``headless``, ``exec_code``, and ``port``. Default is a
+    headless server build; pass ``--gui`` for an interactive GUI
+    client build.
     """
     args = sys.argv[2:]
     out: dict[str, object] = {
@@ -41,10 +42,11 @@ def _test_game_run_parse_args() -> dict[str, object]:
         'log_levels': '',
         'timeout': 10,
         'fleet': '',
-        'headless': False,
+        'headless': True,
         'exec_code': None,
-        'background': False,
         'port': None,
+        'ex_build': False,
+        'user_data': False,
     }
     while args:
         if args[0] == '--instance' and len(args) > 1:
@@ -59,22 +61,29 @@ def _test_game_run_parse_args() -> dict[str, object]:
         elif args[0] == '--fleet' and len(args) > 1:
             out['fleet'] = args[1]
             args = args[2:]
-        elif args[0] == '--headless':
-            out['headless'] = True
+        elif args[0] == '--gui':
+            out['headless'] = False
             args = args[1:]
         elif args[0] == '--exec' and len(args) > 1:
             out['exec_code'] = args[1]
             args = args[2:]
-        elif args[0] == '--background':
-            out['background'] = True
-            args = args[1:]
         elif args[0] == '--port' and len(args) > 1:
             out['port'] = int(args[1])
             args = args[2:]
+        elif args[0] == '--ex':
+            out['ex_build'] = True
+            args = args[1:]
+        elif args[0] == '--user-data':
+            out['user_data'] = True
+            args = args[1:]
         else:
             raise RuntimeError(f'Unexpected arg: {args[0]}')
     if out['port'] is not None and not out['headless']:
-        raise RuntimeError('--port only applies to --headless instances.')
+        raise RuntimeError('--port only applies to headless instances.')
+    if out['user_data'] and out['headless']:
+        raise RuntimeError(
+            '--user-data is GUI-only; headless has no per-user data dir.'
+        )
     return out
 
 
@@ -108,6 +117,26 @@ def _test_game_write_server_config_toml(
         )
 
 
+def _test_game_ensure_binary(*, headless: bool, ex_build: bool) -> None:
+    """Run the appropriate ``make`` target to bring the binary current.
+
+    Lazybuild makes this a near-noop when nothing has changed, and
+    ensures edits to ``.py`` / ``.cc`` sources actually land in the
+    binary we're about to launch. Avoids a class of "why isn't my edit
+    showing up" bugs where editors reach for ``make cmake-build`` but
+    are actually running the headless binary (or vice versa).
+    """
+    import subprocess
+
+    if headless:
+        target = 'cmake-server-build'
+    elif ex_build:
+        target = 'cmake-build-ex'
+    else:
+        target = 'cmake-build'
+    subprocess.run(['make', target], check=True)
+
+
 def _test_game_ensure_server_silo(
     silo: str, *, instance: str, port: int | None
 ) -> None:
@@ -115,7 +144,8 @@ def _test_game_ensure_server_silo(
 
     Creates ``ba_root/``, symlinks the ``ballisticakit_server`` wrapper
     + its ``dist/`` sibling from the staging dir, and writes a
-    ``config.toml`` template on first use.
+    ``config.toml`` template on first use. Assumes the server build has
+    already been brought current (see ``_test_game_ensure_binary``).
     """
     import os
 
@@ -123,16 +153,12 @@ def _test_game_ensure_server_silo(
     staged_wrapper = os.path.join(staged, 'ballisticakit_server')
     staged_dist = os.path.join(staged, 'dist')
     staged_headless = os.path.join(staged_dist, 'ballisticakit_headless')
-    if not os.path.exists(staged_headless):
-        raise RuntimeError(
-            f'Headless binary not found at {staged_headless}. '
-            f'Run "make cmake-server-build" first.'
-        )
-    if not os.path.exists(staged_wrapper):
-        raise RuntimeError(
-            f'Server wrapper not found at {staged_wrapper}. '
-            f'Run "make cmake-server-build" first.'
-        )
+    assert os.path.exists(
+        staged_headless
+    ), f'Headless binary missing at {staged_headless} after build.'
+    assert os.path.exists(
+        staged_wrapper
+    ), f'Server wrapper missing at {staged_wrapper} after build.'
 
     os.makedirs(silo, exist_ok=True)
     os.makedirs(os.path.join(silo, 'ba_root'), exist_ok=True)
@@ -184,8 +210,22 @@ def _test_game_build_cmd(
     silo: str,
     headless: bool,
     exec_code: str | None,
+    ex_build: bool = False,
+    user_data: bool = False,
 ) -> tuple[str, list[str]]:
-    """Return ``(cwd, cmd)`` for launching the binary against a silo."""
+    """Return ``(cwd, cmd)`` for launching the binary against a silo.
+
+    If ``ex_build`` is True, target the ``cmake-build-ex`` staged
+    directory instead of the vanilla ``cmake-build`` one. The ex
+    build adds optional integrations (Discord SDK, etc.) that aren't
+    compiled into the default build — needed for automation of
+    Discord sign-in and similar flows.
+
+    If ``user_data`` is True (GUI only), omit ``--config-dir`` so the
+    binary uses its default per-user data dir — reproduces the
+    caller's real signed-in state, saved options, etc. instead of
+    a fresh silo.
+    """
     import os
 
     if headless:
@@ -209,18 +249,18 @@ def _test_game_build_cmd(
 
     # Client: run the GUI binary from its staging dir (so bundled
     # ba_data is found) with --config-dir pointing at the silo's
-    # ba_root. No need to mirror the binary into the silo.
-    staged = os.path.abspath('build/cmake/debug/staged')
+    # ba_root. No need to mirror the binary into the silo. Assumes
+    # the GUI build has already been brought current (see
+    # ``_test_game_ensure_binary``).
+    staged_subdir = 'debug-ex' if ex_build else 'debug'
+    staged = os.path.abspath(f'build/cmake/{staged_subdir}/staged')
     binary = os.path.join(staged, 'ballisticakit')
-    if not os.path.exists(binary):
-        raise RuntimeError(
-            f'Binary not found at {binary}. Run "make cmake-build" first.'
-        )
-    cmd = [
-        './ballisticakit',
-        '--config-dir',
-        os.path.join(silo, 'ba_root'),
-    ]
+    assert os.path.exists(
+        binary
+    ), f'GUI binary missing at {binary} after build.'
+    cmd = ['./ballisticakit']
+    if not user_data:
+        cmd += ['--config-dir', os.path.join(silo, 'ba_root')]
     if exec_code is not None:
         cmd += ['--exec', exec_code]
     return (staged, cmd)
@@ -231,44 +271,65 @@ def test_game_run() -> None:
 
     Usage::
 
-        tools/pcommand test_game_run [--instance NAME] [--headless]
+        tools/pcommand test_game_run [--instance NAME] [--gui]
             [--port N] [--exec CODE] [--log LEVELS] [--timeout SECONDS]
-            [--fleet FLEET] [--background]
+            [--fleet FLEET] [--user-data]
+
+    Always runs in the foreground and blocks until the process exits
+    or ``--timeout`` elapses. Callers that want to supervise multiple
+    concurrent instances, keep a server alive across sessions, or
+    manage output on their own should wrap their own invocation (e.g.
+    a terminal multiplexer, ``nohup ... &``, or the host automation's
+    background-task mechanism) rather than relying on backgrounding
+    baked into this command.
+
+    Default is a headless server build; the headless binary starts
+    faster, pops no window, and is the right fit for the programmatic
+    testing this command is optimized for. Pass ``--gui`` when you
+    actually want to interact with the UI.
+
+    Every run invokes the appropriate ``make`` target first so edits
+    to ``.py`` / ``.cc`` sources land in the binary we launch. Lazybuild
+    makes this a near-noop when nothing changed, so there's no need to
+    manually ``make cmake-build`` / ``make cmake-server-build`` before
+    running this — the pcommand handles it.
 
     Each instance lives under ``build/test_run/<name>/`` with its own
-    ``ba_root/``, ``config.toml`` (server only), ``pid``, and ``out``.
-    Silos auto-create on first use. Run two instances concurrently by
-    passing different ``--instance`` names; give server instances
-    distinct ``--port`` values so they don't fight over UDP 43210.
+    ``ba_root/`` and ``config.toml`` (server only). Silos auto-create
+    on first use. Run two instances concurrently by passing different
+    ``--instance`` names; give server instances distinct ``--port``
+    values so they don't fight over UDP 43210.
 
     Flags:
 
     - ``--instance NAME``: Silo name under ``build/test_run/``.
       Defaults to ``default``.
-    - ``--headless``: Launch the headless server build via the
-      ``ballisticakit_server`` wrapper (honors ``config.toml`` and
-      sends ``StartServerModeCommand``). Without this flag, the GUI
-      build is launched as a client.
-    - ``--port N``: Only valid at silo creation time for
-      ``--headless`` instances. Writes the port into the silo's new
-      ``config.toml``. Ignored (with a note) for pre-existing silos.
+    - ``--gui``: Launch the interactive GUI client build instead of
+      the default headless server build.
+    - ``--port N``: Only valid at silo creation time for headless
+      instances. Writes the port into the silo's new ``config.toml``.
+      Ignored (with a note) for pre-existing silos.
     - ``--exec CODE``: Python snippet passed via the binary's
       ``--exec`` flag. Works for both GUI and headless builds;
       for headless, ``connect_to_party`` calls are allowed in
       developer builds only (shipped builds hard-block this path).
     - ``--log LEVELS``: Comma-separated logger=LEVEL pairs (e.g.
       ``ba.net=DEBUG``). Passed via ``BA_LOG_LEVELS``.
-    - ``--timeout SECONDS``: Foreground-mode hard timeout (default 10).
+    - ``--timeout SECONDS``: Hard timeout before the process is
+      killed (default 10).
     - ``--fleet FLEET``: Override master-server fleet (``prod``,
       ``test``, ``dev``).
-    - ``--background``: Detach and return immediately. Output is
-      captured to ``<silo>/out``. Use ``test_game_kill`` to terminate.
+    - ``--user-data``: GUI only. Drop ``--config-dir`` so the binary
+      uses its default per-user data dir — you see the caller's real
+      signed-in state, saved options, unlocked characters, etc.
+      instead of the silo's fresh slate. Handy for reproducing
+      user-reported issues that only manifest with real account
+      state. Incompatible with headless (servers have no user data
+      dir in the same sense).
     """
     import os
     import signal
     import subprocess
-
-    pcommand.disallow_in_batch()
 
     opts = _test_game_run_parse_args()
     instance = opts['instance']
@@ -277,16 +338,22 @@ def test_game_run() -> None:
     fleet = opts['fleet']
     headless = opts['headless']
     exec_code = opts['exec_code']
-    background = opts['background']
     port = opts['port']
+    user_data = opts['user_data']
     assert isinstance(instance, str)
     assert isinstance(log_levels, str)
     assert isinstance(timeout, int)
     assert isinstance(fleet, str)
     assert isinstance(headless, bool)
-    assert isinstance(background, bool)
+    assert isinstance(user_data, bool)
     assert exec_code is None or isinstance(exec_code, str)
     assert port is None or isinstance(port, int)
+
+    # Bring the binary current before touching the silo. Lazybuild
+    # makes this near-instant on the noop case and eliminates the
+    # stale-binary class of bug where a .py/.cc edit regenerates the
+    # .inc but the binary we're about to launch was built before that.
+    _test_game_ensure_binary(headless=headless, ex_build=bool(opts['ex_build']))
 
     silo = _test_game_silo_path(instance)
     if headless:
@@ -294,157 +361,67 @@ def test_game_run() -> None:
     else:
         _test_game_ensure_client_silo(silo)
 
+    # Start with a clean screenshots dir per launch so automation
+    # output always reflects the current session; screenshots don't
+    # accumulate across reruns of the same silo.
+    if os.path.isdir(os.path.join(silo, 'screenshots')):
+        import shutil
+
+        shutil.rmtree(os.path.join(silo, 'screenshots'))
+
     cwd, cmd = _test_game_build_cmd(
-        silo=silo, headless=headless, exec_code=exec_code
+        silo=silo,
+        headless=headless,
+        exec_code=exec_code,
+        ex_build=bool(opts['ex_build']),
+        user_data=user_data,
     )
-    pid_file = os.path.join(silo, 'pid')
-    out_path = os.path.join(silo, 'out')
 
     env = dict(os.environ)
     if log_levels:
         env['BA_LOG_LEVELS'] = log_levels
     if fleet:
         env['BA_FLEET'] = fleet
+    # Hand the silo's automation FIFO path to the binary; it'll create
+    # the fifo on startup if it doesn't exist and start a reader thread.
+    # See src/ballistica/base/automation/automation.h. Ignored entirely
+    # in non-developer builds.
+    env['BA_AUTOMATION_FIFO'] = os.path.join(silo, 'cmd.fifo')
 
-    if background:
-        # pylint: disable=consider-using-with
-        out_f = open(out_path, 'wb')
-        proc = subprocess.Popen(
-            cmd,
-            cwd=cwd,
-            stdout=out_f,
-            stderr=subprocess.STDOUT,
-            stdin=subprocess.DEVNULL,
-            env=env,
-            # New session so signals reach the whole process group —
-            # important for the wrapper script, which spawns the
-            # headless binary as a child.
-            start_new_session=True,
-        )
-        with open(pid_file, 'w', encoding='utf-8') as f:
-            f.write(str(proc.pid))
-        joined_cmd = ' '.join(cmd)
-        role = 'server' if headless else 'client'
-        print(f'Launched test game {role} "{instance}" (pid={proc.pid}).')
-        print(f'  cmd:    {joined_cmd}')
-        print(f'  cwd:    {cwd}')
-        print(f'  output: {out_path}')
-        print(f'  pidfile: {pid_file}')
-        return
+    # Default to loopback-only UDP binding when the runtime proxy
+    # pattern of Claude Code's sandbox is present. That sandbox denies
+    # 0.0.0.0 UDP binds, and forcing callers to set this env var
+    # themselves changes the command signature and triggers extra
+    # permission prompts. setdefault so an explicit override (including
+    # BA_BIND_LOOPBACK_ONLY=0) still wins.
+    all_proxy = os.environ.get('ALL_PROXY', '')
+    if all_proxy.startswith(('socks5://', 'socks5h://')):
+        env.setdefault('BA_BIND_LOOPBACK_ONLY', '1')
 
-    # Foreground mode.
+    # Put the child in its own session so a ``--timeout`` SIGTERM can
+    # reach the wrapper + headless subprocess together via killpg,
+    # without risking signaling ourselves. Inherit stdout/stderr so
+    # output streams through in real time; callers that want the
+    # output in a file should redirect at invocation site.
     with subprocess.Popen(
         cmd,
         cwd=cwd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
         stdin=subprocess.DEVNULL,
         env=env,
         start_new_session=True,
     ) as proc:
-        with open(pid_file, 'w', encoding='utf-8') as f:
-            f.write(str(proc.pid))
-
         try:
-            stdout, _ = proc.communicate(timeout=timeout)
+            proc.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
-            # Signal the whole group so the wrapper + its subprocess
-            # both come down when --headless.
             try:
                 os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
             except ProcessLookupError:
                 proc.send_signal(signal.SIGTERM)
-            stdout, _ = proc.communicate(timeout=5)
-        finally:
-            if os.path.exists(pid_file):
-                os.remove(pid_file)
-
-    if stdout:
-        sys.stdout.buffer.write(stdout)
-        sys.stdout.buffer.flush()
-
-
-def _test_game_kill_pid_file(pid_file: str) -> bool:
-    """Kill the process referenced by ``pid_file`` if it exists.
-
-    Returns True iff the pid file was present (regardless of whether
-    the process itself was still alive).
-    """
-    import os
-    import signal
-
-    if not os.path.exists(pid_file):
-        return False
-
-    with open(pid_file, 'r', encoding='utf-8') as f:
-        pid = int(f.read().strip())
-
-    # Try killing the whole process group first so wrapper +
-    # subprocess both come down; fall back to a plain kill if the
-    # group is gone or we can't reach it.
-    try:
-        os.killpg(os.getpgid(pid), signal.SIGTERM)
-        print(f'Sent SIGTERM to process group {pid} ({pid_file}).')
-    except (ProcessLookupError, PermissionError):
-        try:
-            os.kill(pid, signal.SIGTERM)
-            print(f'Sent SIGTERM to process {pid} ({pid_file}).')
-        except ProcessLookupError:
-            print(f'Process {pid} not found ({pid_file}).')
-
-    os.remove(pid_file)
-    return True
-
-
-def test_game_kill() -> None:
-    """Kill running test game instances started by ``test_game_run``.
-
-    Usage::
-
-        tools/pcommand test_game_kill [--instance NAME]
-
-    With no ``--instance`` argument, kills every silo that has a live
-    ``pid`` file under ``build/test_run/``. With ``--instance NAME``,
-    kills only that one. Also sweeps any legacy PID files at the old
-    ``build/tmp/test_game_run*.pid`` locations so older runs don't
-    strand processes.
-    """
-    import glob
-    import os
-
-    pcommand.disallow_in_batch()
-
-    args = sys.argv[2:]
-    only_instance: str | None = None
-    while args:
-        if args[0] == '--instance' and len(args) > 1:
-            only_instance = args[1]
-            args = args[2:]
-        else:
-            raise RuntimeError(f'Unexpected arg: {args[0]}')
-
-    targets: list[str] = []
-    if only_instance is not None:
-        targets.append(os.path.join(_test_game_silo_path(only_instance), 'pid'))
-    else:
-        targets.extend(sorted(glob.glob(f'{_TEST_GAME_SILO_ROOT}/*/pid')))
-        # Legacy single-slot filenames from before the silo refactor;
-        # keep killing them so stale runs don't strand processes.
-        for legacy in (
-            'build/tmp/test_game_run.pid',
-            'build/tmp/test_game_run_client.pid',
-            'build/tmp/test_game_run_server.pid',
-        ):
-            if os.path.exists(legacy):
-                targets.append(legacy)
-
-    found_any = False
-    for pid_file in targets:
-        if _test_game_kill_pid_file(pid_file):
-            found_any = True
-
-    if not found_any:
-        print('No test game PID files found.')
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait()
 
 
 def compose_docker_gui_release() -> None:
@@ -537,7 +514,6 @@ def generate_flathub_manifest() -> None:
     from efro.error import CleanError
     from efro.terminal import Clr
 
-    pcommand.disallow_in_batch()
     try:
         github_repo = os.environ['GITHUB_REPOSITORY']
     except KeyError:
@@ -715,8 +691,6 @@ def generate_flatpak_release_manifest(
     from efro.terminal import Clr
     from batools.changelog import get_version_changelog
 
-    pcommand.disallow_in_batch()
-
     # Paths
     flathub_dir = os.path.join(pcommand.PROJROOT, 'build', 'flathub')
     releases_xml_path = os.path.join(
@@ -825,3 +799,39 @@ def generate_flatpak_release_manifest(
         )
     except Exception as e:
         raise CleanError(f'Failed to write releases.xml: {e}') from e
+
+
+def gen_pyembed() -> None:
+    """Gen a pyembed .inc file using compiled bytecode.
+
+    Args: <in_path> <out_path> [encrypt={0,1}] [ctx=<var_name>]
+
+    Replaces gen_encrypted_python_code (encrypt=1) and
+    gen_flat_data_code (encrypt=0) for pyembed modules.
+    """
+    from efro.error import CleanError
+    from batools.meta import gen_pyembed as gen
+
+    if len(sys.argv) < 4:
+        raise CleanError(
+            'Expected at least 2 args: <in_path> <out_path> '
+            '[encrypt={0,1}] [ctx=<var>]'
+        )
+
+    encrypt = True
+    ctx_var = 'internal_py_context'
+    for arg in sys.argv[4:]:
+        if arg.startswith('encrypt='):
+            encrypt = arg.removeprefix('encrypt=') == '1'
+        elif arg.startswith('ctx='):
+            ctx_var = arg.removeprefix('ctx=')
+        else:
+            raise CleanError(f'Unrecognized arg: {arg!r}')
+
+    gen(
+        projroot=str(pcommand.PROJROOT),
+        in_path=sys.argv[2],
+        out_path=sys.argv[3],
+        encrypt=encrypt,
+        ctx_var=ctx_var,
+    )

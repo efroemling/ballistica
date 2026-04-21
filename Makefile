@@ -104,11 +104,6 @@ assets-cmake: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) cmake
 
-# Build only script assets for cmake builds (linux, mac).
-assets-cmake-scripts: env meta
-	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
- cd src/assets \&\& $(MAKE) -j$(CPUS) scripts-cmake
-
 # Build assets required for server builds.
 assets-server: env meta
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
@@ -231,7 +226,7 @@ pcommandbatch_speed_test: env
 
 # Tell make which of these targets don't represent files.
 .PHONY: help env env-pre-update env-clean assets assets-cmake			\
-        assets-cmake-scripts assets-windows assets-windows-Win32							\
+        assets-windows assets-windows-Win32													\
         assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
         resources resources-clean meta meta-clean clean clean-list						\
         dummymodules venv venv-clean docs docs-clean pcommandbatch_speed_test
@@ -890,14 +885,6 @@ dmypy-stop: py_check_prepass
 pyright: py_check_prepass
 	@$(PCOMMAND) pyright
 
-# Run PyCharm checks on all Python code.
-pycharm: py_check_prepass
-	@$(PCOMMAND) pycharm
-
-# Run PyCharm checks without caching (all files are checked).
-pycharm-full: py_check_prepass
-	@$(PCOMMAND) pycharm -full
-
 # Build prerequisites needed for python checks.
 #
 # IMPORTANT - this target may kick off new meta/asset/binary builds/cleans as
@@ -915,7 +902,7 @@ py_check_prepass: dummymodules
 # Tell make which of these targets don't represent files.
 .PHONY: check check-full check-ex check-ex-full cpplint cpplint-full pylint		\
         pylint-ex pylint-full pylint-ex-full mypy mypy-full dmypy dmypy-stop	\
-        pycharm pycharm-full py_check_prepass
+        py_check_prepass
 
 
 ################################################################################
@@ -1133,40 +1120,46 @@ windows-clean-list: env
 CMAKE_BUILD_TYPE ?= Debug
 CMAKE_EXTRA_ARGS ?=
 
+# Optional suffix appended to the cmake build dir. Used by ex-flavor targets
+# (cmake-build-ex, etc.) to keep parallel build trees isolated from vanilla
+# ones. Leave empty for the default build.
+CMAKE_BUILD_SUFFIX ?=
+CMAKE_BUILD_DIR = build/cmake/$(CM_BT_LC)$(CMAKE_BUILD_SUFFIX)
+
 # Build and run the cmake build.
 cmake: cmake-build
-	cd build/cmake/$(CM_BT_LC)/staged && ./ballisticakit
+	cd $(CMAKE_BUILD_DIR)/staged && ./ballisticakit
 
 # Build and run the cmake build under the gdb debugger.
 # Sets up the ballistica environment to do things like abort() out to the
 # debugger on errors instead of trying to cleanly exit.
 cmake-gdb: cmake-build
-	cd build/cmake/$(CM_BT_LC)/staged && \
+	cd $(CMAKE_BUILD_DIR)/staged && \
       BA_DEBUGGER_ATTACHED=1 gdb ./ballisticakit
 
 # Build and run the cmake build under the lldb debugger.
 # Sets up the ballistica environment to do things like abort() out to the
 # debugger on errors instead of trying to cleanly exit.
 cmake-lldb: cmake-build
-	cd build/cmake/$(CM_BT_LC)/staged && \
+	cd $(CMAKE_BUILD_DIR)/staged && \
       BA_DEBUGGER_ATTACHED=1 lldb ./ballisticakit
 
 # Build but don't run it.
 cmake-build: assets-cmake resources cmake-binary
-	@$(STAGE_BUILD) -cmake -$(CM_BT_LC) -builddir build/cmake/$(CM_BT_LC) \
-      build/cmake/$(CM_BT_LC)/staged
-	@$(PCOMMANDBATCH) echo BLD Build complete: BLU build/cmake/$(CM_BT_LC)/staged
+	@$(STAGE_BUILD) -cmake -$(CM_BT_LC) -builddir $(CMAKE_BUILD_DIR) \
+      $(CMAKE_BUILD_DIR)/staged
+	@$(PCOMMANDBATCH) echo BLD Build complete: BLU $(CMAKE_BUILD_DIR)/staged
 
 cmake-binary: meta
-	@$(PCOMMAND) cmake_prep_dir build/cmake/$(CM_BT_LC)
-	@cd build/cmake/$(CM_BT_LC) && test -f Makefile \
+	@$(PCOMMAND) cmake_prep_dir $(CMAKE_BUILD_DIR)
+	@cd $(CMAKE_BUILD_DIR) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) $(shell pwd)/ballisticakit-cmake
 	@tools/pcommand update_cmake_prefab_lib standard $(CM_BT_LC) \
       build/cmake/$(CM_BT_LC)
-	@cd build/cmake/$(CM_BT_LC) && $(MAKE) -j$(CPUS) ballisticakitbin
+	@cd $(CMAKE_BUILD_DIR) && $(MAKE) -j$(CPUS) ballisticakitbin
 
 cmake-clean:
-	rm -rf build/cmake/$(CM_BT_LC)
+	rm -rf $(CMAKE_BUILD_DIR)
 
 cmake-server: cmake-server-build
 	cd build/cmake/server-$(CM_BT_LC)/staged && ./ballisticakit_server
@@ -1232,17 +1225,12 @@ cmake-modular-server-binary: meta
 cmake-modular-server-clean:
 	rm -rf build/cmake/modular-server-$(CM_BT_LC)
 
-# Stage assets for building/running within CLion.
-clion-staging: assets-cmake resources meta
-	@$(STAGE_BUILD) -cmake -debug build/clion_debug
-	@$(STAGE_BUILD) -cmake -release build/clion_release
-
 # Tell make which of these targets don't represent files.
 .PHONY: cmake cmake-build cmake-clean cmake-server cmake-server-build	\
         cmake-server-clean cmake-modular-build cmake-modular					\
         cmake-modular-binary cmake-modular-clean cmake-modular-server	\
         cmake-modular-server-build cmake-modular-server-binary				\
-        cmake-modular-server-clean clion-staging
+        cmake-modular-server-clean
 
 
 ################################################################################
@@ -1494,7 +1482,9 @@ WINPLT = $(WINDOWS_PLATFORM)
 WINCFG = $(WINDOWS_CONFIGURATION)
 WINCFGLC = $(shell echo $(WINDOWS_CONFIGURATION) | tr A-Z a-z)
 
-# When using CLion, our cmake dir is root. Expose .clang-format there too.
+# Our cmake dir acts as a secondary project root for some IDEs/tools.
+# Expose .clang-format there too so clangd picks it up for files whose
+# paths resolve through ballisticakit-cmake.
 ballisticakit-cmake/.clang-format: .clang-format
 	@mkdir -p ballisticakit-cmake
 	@cd ballisticakit-cmake && ln -sf ../.clang-format .

@@ -97,6 +97,20 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   millisecs_t current_time = pass->frame_def()->display_time_millisecs();
 
+  // Precompute transition factor (scale-type pre-scales the whole widget).
+  float transition_in_progress =
+      (static_cast<float>(birth_time_millisecs_) + transition_delay_)
+      - static_cast<float>(current_time);
+  float transition_scale = 1.0f;
+  if (transition_in_progress > 0
+      && transition_type_ == TransitionType::kScale) {
+    // Fixed 150ms scale-up at the tail of the transition window
+    // (quadratic ease-out; decelerates as it settles at 1.0).
+    constexpr float kScaleDurationMs = 150.0f;
+    float t = std::max(0.0f, 1.0f - transition_in_progress / kScaleDurationMs);
+    transition_scale = 1.0f - (1.0f - t) * (1.0f - t);
+  }
+
   float l = padding_;
   float r = l + width_ - padding_;
   float b = padding_;
@@ -132,7 +146,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     float offs_x = (r + l) / 2;
     float offs_y = (t + b) / 2;
     c.Translate(offs_x, offs_y, 0);
-    c.Scale(center_scale_, center_scale_, 1.0f);
+    c.Scale(center_scale_ * transition_scale, center_scale_ * transition_scale,
+            1.0f);
     c.Translate(-offs_x, -offs_y, 0);
     c.Submit();
   }
@@ -334,11 +349,10 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       throw Exception("Invalid VAlign");
   }
 
-  float transition =
-      (static_cast<float>(birth_time_millisecs_) + transition_delay_)
-      - static_cast<float>(current_time);
-  if (transition > 0) {
-    x_offset -= transition * 4.0f / (std::max(0.001f, center_scale_));
+  if (transition_in_progress > 0
+      && transition_type_ == TransitionType::kInLeft) {
+    x_offset -=
+        transition_in_progress * 4.0f / (std::max(0.001f, center_scale_));
   }
 
   // Apply subs/resources to get our actual text if need be.

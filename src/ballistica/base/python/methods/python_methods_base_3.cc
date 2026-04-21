@@ -24,6 +24,7 @@
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
+#include "external/monocypher/monocypher-ed25519.h"
 
 namespace ballistica::base {
 
@@ -2164,6 +2165,62 @@ static PyMethodDef PyReloadHooksDef = {
     "native layer to see your changes.",
 };
 
+// ---------------------------- verify_ed25519 ---------------------------------
+
+static auto PyVerifyEd25519(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* public_key;
+  Py_ssize_t public_key_len;
+  const char* signature;
+  Py_ssize_t signature_len;
+  const char* message;
+  Py_ssize_t message_len;
+  static const char* kwlist[] = {"public_key", "signature", "message", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#y#y#",
+                                   const_cast<char**>(kwlist), &public_key,
+                                   &public_key_len, &signature, &signature_len,
+                                   &message, &message_len)) {
+    return nullptr;
+  }
+  if (public_key_len != 32) {
+    PyErr_SetString(PyExc_ValueError, "public_key must be exactly 32 bytes");
+    return nullptr;
+  }
+  if (signature_len != 64) {
+    PyErr_SetString(PyExc_ValueError, "signature must be exactly 64 bytes");
+    return nullptr;
+  }
+  int result =
+      crypto_ed25519_check(reinterpret_cast<const uint8_t*>(signature),
+                           reinterpret_cast<const uint8_t*>(public_key),
+                           reinterpret_cast<const uint8_t*>(message),
+                           static_cast<size_t>(message_len));
+  if (result == 0) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVerifyEd25519Def = {
+    "verify_ed25519",              // name
+    (PyCFunction)PyVerifyEd25519,  // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "verify_ed25519(public_key: bytes, signature: bytes,\n"
+    "  message: bytes) -> bool\n"
+    "\n"
+    "Verify an Ed25519 signature (RFC 8032).\n"
+    "\n"
+    "``public_key`` must be exactly 32 bytes and ``signature`` exactly\n"
+    "64 bytes; ``message`` may be any length. Returns ``True`` when\n"
+    "the signature is valid for this key and message, ``False``\n"
+    "otherwise. Backed by Monocypher's SHA-512 variant so signatures\n"
+    "produced by any RFC-8032-compliant signer (e.g. OpenSSL, the\n"
+    "Python ``cryptography`` package) verify correctly.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
@@ -2173,6 +2230,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyClipboardSetTextDef,
       PyClipboardGetTextDef,
       PyDoOnceDef,
+      PyVerifyEd25519Def,
       PyGetAppDef,
       PyAndroidGetExternalFilesDirDef,
       PySetInternalLanguageKeysDef,

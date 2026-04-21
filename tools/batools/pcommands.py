@@ -18,8 +18,6 @@ def prune_includes() -> None:
     """
     from batools.pruneincludes import Pruner
 
-    pcommand.disallow_in_batch()
-
     args = sys.argv.copy()[2:]
     commit = False
     if '--commit' in args:
@@ -37,8 +35,6 @@ def resize_image() -> None:
     """
     import os
     import subprocess
-
-    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 6:
         raise RuntimeError('Expected 5 args.')
@@ -72,8 +68,6 @@ def check_clean_safety() -> None:
 
     import efrotools.pcommands
 
-    pcommand.disallow_in_batch()
-
     ignorevar = 'BA_IGNORE_CLEAN_SAFETY_CHECK'
     if os.environ.get(ignorevar) == '1':
         return
@@ -105,8 +99,6 @@ def archive_old_builds() -> None:
     """
     import batools.build
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) < 3:
         raise RuntimeError('Invalid arguments.')
     ssh_server = sys.argv[2]
@@ -129,8 +121,6 @@ def lazy_increment_build() -> None:
     from efro.error import CleanError
     from efrotools.util import get_files_hash
     from efrotools.code import get_code_filenames
-
-    pcommand.disallow_in_batch()
 
     if sys.argv[2:] not in [[], ['--update-hash-only']]:
         raise CleanError('Invalid arguments')
@@ -165,8 +155,6 @@ def get_master_asset_src_dir() -> None:
     """Print master-asset-source dir for this repo."""
     import socket
     import os
-
-    pcommand.disallow_in_batch()
 
     hostname = socket.gethostname()
 
@@ -208,8 +196,6 @@ def androidaddr() -> None:
     import batools.android
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 5:
         raise CleanError(
             f'ERROR: expected 3 args; got {len(sys.argv) - 2}\n'
@@ -228,8 +214,6 @@ def push_ipa() -> None:
     from efro.util import extract_arg
     import efrotools.ios
 
-    pcommand.disallow_in_batch()
-
     args = sys.argv[2:]
     signing_config = extract_arg(args, '--signing-config')
 
@@ -245,8 +229,6 @@ def printcolors() -> None:
     """Print all colors available in efro.terminals.TerminalColor."""
     from efro.error import CleanError
     from efro.terminal import TerminalColor, Clr
-
-    pcommand.disallow_in_batch()
 
     if Clr.RED == '':
         raise CleanError('Efro color terminal output is disabled.')
@@ -272,8 +254,6 @@ def python_version_android_base() -> None:
     """Print built Python base version."""
     from efrotools.pybuild import PY_VER_ANDROID
 
-    pcommand.disallow_in_batch()
-
     print(PY_VER_ANDROID, end='')
 
 
@@ -281,15 +261,11 @@ def python_version_android() -> None:
     """Print Android embedded Python version."""
     from efrotools.pybuild import PY_VER_EXACT_ANDROID
 
-    pcommand.disallow_in_batch()
-
     print(PY_VER_EXACT_ANDROID, end='')
 
 
 def python_build_android_old() -> None:
     """Build an embeddable Python lib for Android (old pipeline)."""
-
-    pcommand.disallow_in_batch()
 
     _python_build_android_old(debug=False)
 
@@ -297,15 +273,11 @@ def python_build_android_old() -> None:
 def python_android_build() -> None:
     """Build Android Python lib using new in-tree build script."""
 
-    pcommand.disallow_in_batch()
-
     _python_build_android(debug=False)
 
 
 def python_android_build_debug() -> None:
     """Build Android Python lib using new in-tree script (debug)."""
-
-    pcommand.disallow_in_batch()
 
     _python_build_android(debug=True)
 
@@ -314,8 +286,6 @@ def _python_build_android(debug: bool) -> None:
     import os
     from efro.error import CleanError
     from efrotools import python_build_android as _python_build_android_mod
-
-    pcommand.disallow_in_batch()
 
     os.chdir(pcommand.PROJROOT)
     archs = ('arm', 'arm64', 'x86', 'x86_64')
@@ -332,7 +302,6 @@ def _python_build_android(debug: bool) -> None:
 def static_dependencies_build_debug() -> None:
     """Build static dependencies for Android and Apple platforms."""
 
-    pcommand.disallow_in_batch()
     _static_dependencies_build(debug=True)
 
 
@@ -343,8 +312,6 @@ def _static_dependencies_build(debug: bool) -> None:
     from efrotools import (
         static_dependencies_build as static_dependencies_build__mod,
     )
-
-    pcommand.disallow_in_batch()
 
     os.chdir(pcommand.PROJROOT)
     archs = ('arm', 'arm64', 'x86', 'x86_64')
@@ -364,8 +331,6 @@ def python_android_gather() -> None:
     """Gather Android Python build into project."""
     from efrotools import python_build_android as _python_build_android_mod
 
-    pcommand.disallow_in_batch()
-
     _python_build_android_mod.gather(str(pcommand.PROJROOT))
 
 
@@ -374,8 +339,6 @@ def python_build_apple() -> None:
     import os
     from efro.error import CleanError
     from efrotools import python_build_apple as _python_build_apple_mod
-
-    pcommand.disallow_in_batch()
 
     slices = _python_build_apple_mod.SLICES
     if len(sys.argv) != 3 or sys.argv[2] not in slices:
@@ -389,16 +352,12 @@ def python_apple_gather() -> None:
     import os
     from efrotools import python_build_apple as _python_build_apple_mod
 
-    pcommand.disallow_in_batch()
-
     os.chdir(pcommand.PROJROOT)
     _python_build_apple_mod.gather(str(pcommand.PROJROOT))
 
 
 def python_build_android_old_debug() -> None:
     """Build embeddable Android Python lib (old pipeline, debug ver)."""
-
-    pcommand.disallow_in_batch()
 
     _python_build_android_old(debug=True)
 
@@ -407,8 +366,6 @@ def _python_build_android_old(debug: bool) -> None:
     import os
     from efro.error import CleanError
     from efrotools import pybuild
-
-    pcommand.disallow_in_batch()
 
     os.chdir(pcommand.PROJROOT)
     archs = ('arm', 'arm64', 'x86', 'x86_64')
@@ -427,8 +384,6 @@ def python_android_patch_old() -> None:
     import os
     from efrotools import pybuild
 
-    pcommand.disallow_in_batch()
-
     os.chdir(sys.argv[2])
     pybuild.android_patch()
 
@@ -436,8 +391,6 @@ def python_android_patch_old() -> None:
 def python_android_patch_ssl_old() -> None:
     """Patches Python ssl to prep for building for Android (old pipeline)."""
     from efrotools import pybuild
-
-    pcommand.disallow_in_batch()
 
     pybuild.android_patch_ssl()
 
@@ -450,8 +403,6 @@ def python_gather() -> None:
     import os
     from efrotools import pybuild
 
-    pcommand.disallow_in_batch()
-
     os.chdir(pcommand.PROJROOT)
     pybuild.gather(do_android=True)
 
@@ -460,8 +411,6 @@ def python_gather_android_old() -> None:
     """python_gather but only android bits (old pipeline)."""
     import os
     from efrotools import pybuild
-
-    pcommand.disallow_in_batch()
 
     os.chdir(pcommand.PROJROOT)
     pybuild.gather(do_android=True)
@@ -472,16 +421,12 @@ def python_winprune() -> None:
     import os
     from efrotools import pybuild
 
-    pcommand.disallow_in_batch()
-
     os.chdir(pcommand.PROJROOT)
     pybuild.winprune()
 
 
 def capitalize() -> None:
     """Print args capitalized."""
-
-    pcommand.disallow_in_batch()
 
     print(' '.join(w.capitalize() for w in sys.argv[2:]), end='')
 
@@ -497,8 +442,6 @@ def upper() -> None:
 def efrocache_update() -> None:
     """Build & push files to efrocache for public access."""
     from efrotools.efrocache import update_cache
-
-    pcommand.disallow_in_batch()
 
     makefile_dirs = ['', 'src/assets', 'src/resources', 'src/meta']
     update_cache(makefile_dirs)
@@ -525,8 +468,6 @@ def warm_start_asset_build() -> None:
 
     from efrotools.project import getprojectconfig
     from efro.error import CleanError
-
-    pcommand.disallow_in_batch()
 
     args = pcommand.get_args()
     if len(args) != 1:
@@ -564,8 +505,6 @@ def checkenv() -> None:
     """Check for tools necessary to build and run the app."""
     import batools.build
 
-    pcommand.disallow_in_batch()
-
     batools.build.checkenv()
 
 
@@ -576,7 +515,6 @@ def prefab_platform() -> None:
     from batools.build import PrefabPlatform
 
     # Platform determination uses env vars; won't work in batch.
-    pcommand.disallow_in_batch()
 
     args = pcommand.get_args()
     if len(args) != 0:
@@ -600,7 +538,6 @@ def ensure_prefab_platform() -> None:
     from batools.build import PrefabPlatform
 
     # Platform determination uses env vars; won't work in batch.
-    pcommand.disallow_in_batch()
 
     args = pcommand.get_args()
     if len(args) != 1:
@@ -622,7 +559,6 @@ def prefab_run_var() -> None:
     from batools.build import PrefabPlatform
 
     # Platform determination uses env vars; won't work in batch.
-    pcommand.disallow_in_batch()
 
     args = pcommand.get_args()
     if len(args) != 1:
@@ -641,7 +577,6 @@ def prefab_binary_path() -> None:
     from batools.build import PrefabPlatform, PrefabTarget
 
     # Platform determination uses env vars; won't work in batch.
-    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
         options = ', '.join(t.value for t in PrefabTarget)
@@ -695,7 +630,6 @@ def make_prefab() -> None:
     from batools.build import PrefabPlatform, PrefabTarget
 
     # Platform determination uses env vars; won't work in batch.
-    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
         raise RuntimeError('Expected one argument')
@@ -723,7 +657,6 @@ def lazybuild() -> None:
 
     # This command is not a good candidate for batch since it can be
     # long running and prints various stuff throughout the process.
-    pcommand.disallow_in_batch()
 
     args = pcommand.get_args()
 
@@ -747,8 +680,6 @@ def logcat() -> None:
     from efro.terminal import Clr
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args')
     adb = sys.argv[2]
@@ -767,7 +698,6 @@ def logcat() -> None:
 
 
 def _camel_case_split(string: str) -> list[str]:
-    pcommand.disallow_in_batch()
 
     words = [[string[0]]]
     for char in string[1:]:
@@ -783,8 +713,6 @@ def efro_gradle() -> None:
     import subprocess
     from efro.terminal import Clr
     from efrotools.android import filter_gradle_file
-
-    pcommand.disallow_in_batch()
 
     args = ['./gradlew'] + sys.argv[2:]
     print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
@@ -826,8 +754,6 @@ def stage_build() -> None:
     import batools.staging
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
     try:
         batools.staging.stage_build(
             projroot=str(pcommand.PROJROOT), args=pcommand.get_args()
@@ -856,8 +782,6 @@ def update_project() -> None:
     import os
     from batools.project import ProjectUpdater
 
-    pcommand.disallow_in_batch()
-
     check = '--check' in sys.argv
     fix = '--fix' in sys.argv
 
@@ -879,8 +803,6 @@ def cmake_prep_dir() -> None:
     from efro.error import CleanError
     import batools.build
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 arg (dir name)')
     dirname = sys.argv[2]
@@ -894,8 +816,6 @@ def gen_binding_code() -> None:
     from efro.error import CleanError
     import batools.metabuild
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args (srcfile, dstfile)')
     inpath = sys.argv[2]
@@ -903,28 +823,9 @@ def gen_binding_code() -> None:
     batools.metabuild.gen_binding_code(str(pcommand.PROJROOT), inpath, outpath)
 
 
-def gen_flat_data_code() -> None:
-    """Generate a C++ include file from a Python file."""
-    from efro.error import CleanError
-    import batools.metabuild
-
-    pcommand.disallow_in_batch()
-
-    if len(sys.argv) != 5:
-        raise CleanError('Expected 3 args (srcfile, dstfile, varname)')
-    inpath = sys.argv[2]
-    outpath = sys.argv[3]
-    varname = sys.argv[4]
-    batools.metabuild.gen_flat_data_code(
-        str(pcommand.PROJROOT), inpath, outpath, varname
-    )
-
-
 def genchangelog() -> None:
     """Gen a pretty html changelog."""
     from batools.changelog import generate
-
-    pcommand.disallow_in_batch()
 
     generate(projroot=str(pcommand.PROJROOT))
 
@@ -935,8 +836,6 @@ def get_changelog() -> None:
     from efro.terminal import Clr
 
     from batools.changelog import get_version_changelog
-
-    pcommand.disallow_in_batch()
 
     args = pcommand.get_args()
     if len(args) != 1:
@@ -955,16 +854,12 @@ def android_sdk_utils() -> None:
     """Wrangle android sdk stuff."""
     from batools.androidsdkutils import run
 
-    pcommand.disallow_in_batch()
-
     run(projroot=str(pcommand.PROJROOT), args=sys.argv[2:])
 
 
 def gen_python_enums_module() -> None:
     """Update our procedurally generated python enums."""
     from batools.enumspython import generate
-
-    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 4:
         raise RuntimeError('Expected infile and outfile args.')
@@ -980,8 +875,6 @@ def gen_dummy_modules() -> None:
     from efro.error import CleanError
     from batools.dummymodule import generate_dummy_modules
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 2:
         raise CleanError(f'Expected no args; got {len(sys.argv)-2}.')
 
@@ -991,7 +884,5 @@ def gen_dummy_modules() -> None:
 def version() -> None:
     """Check app versions."""
     from batools.version import run
-
-    pcommand.disallow_in_batch()
 
     run(projroot=str(pcommand.PROJROOT), args=sys.argv[2:])

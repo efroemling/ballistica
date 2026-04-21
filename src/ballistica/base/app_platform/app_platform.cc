@@ -19,6 +19,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/discord/discord.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
@@ -40,6 +41,9 @@ AppPlatform::~AppPlatform() = default;
 void AppPlatform::LoginAdapterGetSignInToken(const std::string& login_type,
                                              int attempt_id) {
   // Default implementation simply calls completion callback immediately.
+  // Platform subclasses (Apple Game Center, Android GPGS) override for
+  // their own adapters. Discord has its own non-adapter flow via
+  // discord_request_sign_in_token.
   g_base->logic->event_loop()->PushCall([login_type, attempt_id] {
     PythonRef args(Py_BuildValue("(sss)", login_type.c_str(),
                                  std::to_string(attempt_id).c_str(), ""),

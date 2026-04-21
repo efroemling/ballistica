@@ -320,26 +320,25 @@ class MetaMakefileGenerator:
                         )
                     )
                 else:
-                    if internal:
-                        targets.append(
-                            Target(
-                                src=src,
-                                dst=dst,
-                                cmd=(
-                                    '$(PCOMMAND) gen_encrypted_python_code'
-                                    ' $< $@'
-                                ),
-                            )
+                    # Route all non-binding pyembed through the unified
+                    # bytecode-based gen_pyembed. Internal builds encrypt
+                    # (casual obfuscation); spinoff builds emit plain
+                    # bytecode. env.py runs before the core context is
+                    # fully plumbed so uses a caller-supplied ``ctx``
+                    # variable instead of ``internal_py_context``.
+                    encrypt_flag = '1' if internal else '0'
+                    extra_args = f' encrypt={encrypt_flag}'
+                    if name == 'env':
+                        extra_args += ' ctx=*ctx'
+                    targets.append(
+                        Target(
+                            src=src,
+                            dst=dst,
+                            cmd=(
+                                f'$(PCOMMAND) gen_pyembed' f' $< $@{extra_args}'
+                            ),
                         )
-                    else:
-                        targets.append(
-                            Target(
-                                src=src,
-                                dst=dst,
-                                cmd=f'$(PCOMMAND) gen_flat_data_code'
-                                f' $< $@ {name}_code',
-                            )
-                        )
+                    )
 
     def _add_pyembed_targets(self, targets: list[Target]) -> None:
         entries: list[tuple[str, str]] = []
@@ -389,7 +388,7 @@ class MetaMakefileGenerator:
                             'pyembed',
                             f'{name}.inc',
                         ),
-                        cmd='$(PCOMMAND) gen_encrypted_python_code $< $@',
+                        cmd='$(PCOMMAND) gen_pyembed $< $@ encrypt=1',
                     )
                 )
 

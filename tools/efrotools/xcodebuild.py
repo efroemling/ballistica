@@ -195,18 +195,18 @@ class XCodeBuild:
             # In some failure cases we may want to run a clean and try again.
             if self._returncode != 0:
                 if self._returncode == 65:
-                    # Signing error.
+                    # Generic xcodebuild build-failure code; can be
+                    # anything from signing issues to filesystem
+                    # denials. Re-run with XCODEBUILDVERBOSE=1 to see
+                    # xcodebuild's actual output.
                     raise CleanError(
-                        'Build failed with code 65 (signing error).\n'
-                        'Make sure the new device is registered in your'
-                        ' provisioning profile - just build AND run something'
-                        ' manually in xcode to do so\n.'
-                        # 'To upgrade/fix signing config for a new device:\n'
-                        # '  1: Manually open xcode project on new device.\n'
-                        # '  2: Run builds for all platforms to update'
-                        # ' auto-signing.\n'
-                        # '  3: Export that signing config to expected location'
-                        # ' with expected password (see localconfig).'
+                        'Build failed with code 65.\n'
+                        'Re-run with XCODEBUILDVERBOSE=1 to see the'
+                        ' underlying xcodebuild output. Common causes'
+                        ' include expired/misconfigured signing certs'
+                        ' (make sure the current device is registered in'
+                        ' your provisioning profile) and filesystem'
+                        ' denials under sandboxes.'
                     )
 
                 # Getting this error sometimes after xcode updates.

@@ -33,12 +33,8 @@ from efrotools.pcommands import (
     dmypy,
     tool_config_install,
     scriptfiles,
-    pycharm,
-    clioncode,
     androidstudiocode,
     makefile_target_list,
-    spelling,
-    spelling_all,
     pytest,
     echo,
     copy_win_extra_file,
@@ -115,7 +111,6 @@ from batools.pcommands import (
     update_project,
     cmake_prep_dir,
     gen_binding_code,
-    gen_flat_data_code,
     genchangelog,
     get_changelog,
     android_sdk_utils,
@@ -145,7 +140,6 @@ from batools.pcommands2 import (
 )
 from batools.pcommands3 import (
     test_game_run,
-    test_game_kill,
     compose_docker_gui_release,
     compose_docker_gui_debug,
     compose_docker_server_release,
@@ -157,6 +151,7 @@ from batools.pcommands3 import (
     save_docker_images,
     remove_docker_images,
     generate_flathub_manifest,
+    gen_pyembed,
 )
 
 # pylint: enable=unused-import

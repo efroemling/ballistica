@@ -56,6 +56,8 @@ class CorePython {
     kLoggerBaUILogCall,
     kLoggerBaNetworking,
     kLoggerBaNetworkingLogCall,
+    kLoggerBaDiscord,
+    kLoggerBaDiscordLogCall,
     kPrependSysPathCall,
     kWarmStart1Call,
     kWarmStart1CompletedCall,
@@ -63,6 +65,7 @@ class CorePython {
     kBaEnvGetConfigCall,
     kBaEnvAtExitCall,
     kBaEnvPreFinalizeCall,
+    kEmitHeldLogCall,
     kUUIDStrCall,
     kLast  // Sentinel; must be at end.
   };
@@ -79,9 +82,23 @@ class CorePython {
   void MonolithicModeBaEnvImport();
   void MonolithicModeBaEnvConfigure();
 
-  /// Call once we should start forwarding our Log calls (along with all
-  /// pent up ones) to Python.
+  /// Enables Python-side log dispatch. If
+  /// CoreConfig::expect_log_handler_setup is false, any buffered early
+  /// logs are flushed immediately. If true, dispatch stays deferred and
+  /// logs continue to buffer until OnLogHandlerReady() is invoked.
   void EnablePythonLoggingCalls();
+
+  /// Called once any intended LogHandler setup is complete (or has been
+  /// explicitly declined), typically right after baenv.configure()
+  /// returns. Flushes any buffered early logs to Python with their
+  /// original timestamps preserved. Safe to call more than once; only
+  /// the first call does work.
+  void OnLogHandlerReady();
+
+  /// Emit any buffered early logs directly to stderr and the platform
+  /// log without going through Python. Used as a last-resort drain on
+  /// abnormal paths (FatalError, etc.) so nothing is silently lost.
+  void DrainEarlyLogsToStderr();
 
   /// Calls Python logging function (logging.error, logging.warning, etc.)
   /// Can be called from any thread at any time. If called before Python
@@ -107,6 +124,12 @@ class CorePython {
   auto WarmStart1Completed() -> bool;
 
  private:
+  // Internal helper: flips python_logging_calls_enabled_ true and
+  // replays any buffered early logs via the emit_held_log pyembed
+  // helper, preserving their captured timestamps. GIL must be held by
+  // the caller.
+  void FlushEarlyLogs_();
+
   PythonObjectSet<ObjID> objs_;
 
   bool monolithic_init_complete_{};
@@ -115,8 +138,11 @@ class CorePython {
 
   // Log calls we make before we're set up to ship logs through Python
   // go here. They all get shipped at once as soon as it is possible.
+  // The trailing double is the wall-clock seconds-since-epoch captured
+  // at log time so that the original timing can be reconstructed when
+  // these get replayed into Python's logging system.
   std::mutex early_log_lock_;
-  std::list<std::tuple<LogName, LogLevel, std::string>> early_logs_;
+  std::list<std::tuple<LogName, LogLevel, std::string, double>> early_logs_;
 };
 
 }  // namespace ballistica::core

@@ -24,6 +24,7 @@ class TextWidget : public Widget {
   enum class HAlign : uint8_t { kLeft, kCenter, kRight };
   enum class VAlign : uint8_t { kTop, kCenter, kBottom };
   enum class GlowType : uint8_t { kGradient, kUniform };
+  enum class TransitionType : uint8_t { kInLeft, kScale };
   auto HandleMessage(const base::WidgetMessage& m) -> bool override;
   auto IsSelectable() -> bool override {
     return (enabled_ && (editable_ || selectable_));
@@ -61,6 +62,7 @@ class TextWidget : public Widget {
   void set_description(const std::string& d) { description_ = d; }
   auto description() const -> std::string { return description_; }
   void set_transition_delay(float val) { transition_delay_ = val; }
+  void set_transition_type(TransitionType val) { transition_type_ = val; }
   void set_flatness(float flatness) { flatness_ = flatness; }
   void set_shadow(float shadow) { shadow_ = shadow; }
   void set_res_scale(float res_scale);
@@ -99,6 +101,7 @@ class TextWidget : public Widget {
   HAlign alignment_h_{HAlign::kLeft};
   VAlign alignment_v_{VAlign::kTop};
   GlowType glow_type_{GlowType::kGradient};
+  TransitionType transition_type_{TransitionType::kInLeft};
   bool enabled_{true};
   bool big_{};
   bool force_internal_editing_{};

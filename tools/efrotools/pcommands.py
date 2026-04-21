@@ -13,36 +13,6 @@ if TYPE_CHECKING:
     pass
 
 
-def _spelling(words: list[str]) -> None:
-    from efrotools.code import sort_jetbrains_dict
-    import os
-
-    num_modded_dictionaries = 0
-    for fname in [
-        '.idea/dictionaries/ericf.xml',
-        'ballisticakit-cmake/.idea/dictionaries/ericf.xml',
-    ]:
-        if not os.path.exists(fname):
-            continue
-        with open(fname, encoding='utf-8') as infile:
-            lines = infile.read().splitlines()
-        if lines[2] != '    <words>':
-            raise RuntimeError('Unexpected dictionary format.')
-        added_count = 0
-        for word in words:
-            line = f'      <w>{word.lower()}</w>'
-            if line not in lines:
-                lines.insert(3, line)
-                added_count += 1
-
-        with open(fname, 'w', encoding='utf-8') as outfile:
-            outfile.write(sort_jetbrains_dict('\n'.join(lines)))
-
-        print(f'Added {added_count} words to {fname}.')
-        num_modded_dictionaries += 1
-    print(f'Modified {num_modded_dictionaries} dictionaries.')
-
-
 def requirements_upgrade() -> None:
     """Upgrade project requirements."""
     import os
@@ -112,37 +82,6 @@ def requirements_upgrade() -> None:
         if reqs_new != reqs:
             with open(reqpath, 'w', encoding='utf-8') as outfile:
                 outfile.write(reqs_new)
-
-
-def spelling_all() -> None:
-    """Add all misspellings from a pycharm run."""
-    import subprocess
-
-    print('Running "make pycharm-full"...')
-    lines = [
-        line
-        for line in subprocess.run(
-            ['make', 'pycharm-full'], check=False, capture_output=True
-        )
-        .stdout.decode()
-        .splitlines()
-        if 'Typo: In word' in line
-    ]
-    words = [line.split('Typo: In word')[1].strip() for line in lines]
-
-    # Strip enclosing quotes but not internal ones.
-    for i, word in enumerate(words):
-        assert word[0] == "'"
-        assert word[-1] == "'"
-        words[i] = word[1:-1]
-
-    _spelling(words)
-
-
-def spelling() -> None:
-    """Add words to the PyCharm dictionary."""
-
-    _spelling(sys.argv[2:])
 
 
 def xcodebuild() -> None:
@@ -410,24 +349,6 @@ def dmypy() -> None:
     import efrotools.code
 
     efrotools.code.dmypy(pcommand.PROJROOT)
-
-
-def pycharm() -> None:
-    """Run PyCharm checks on our scripts."""
-    import efrotools.code
-
-    full = '-full' in sys.argv
-    verbose = '-v' in sys.argv
-    efrotools.code.check_pycharm(pcommand.PROJROOT, full, verbose)
-
-
-def clioncode() -> None:
-    """Run CLion checks on our code."""
-    import efrotools.code
-
-    full = '-full' in sys.argv
-    verbose = '-v' in sys.argv
-    efrotools.code.check_clioncode(pcommand.PROJROOT, full, verbose)
 
 
 def androidstudiocode() -> None:

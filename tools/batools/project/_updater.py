@@ -569,6 +569,8 @@ class ProjectUpdater:
             self._update_visual_studio_project('HeadlessPlus')
             self._update_visual_studio_project('Oculus')
             self._update_visual_studio_project('OculusPlus')
+            self._update_visual_studio_project('TestBuild')
+            self._update_visual_studio_project('TestBuildPlus')
 
     def _is_public_source_file(self, filename: str) -> bool:
         assert filename.startswith('/')
@@ -656,6 +658,33 @@ class ProjectUpdater:
 
     def _generate_assets_makefile(self, path: str, existing_data: str) -> None:
         from batools.assetsmakefile import generate_assets_makefile
+
+        # HACK: The ba-check cloudshell env is a stripped-down copy
+        # of the project that omits media sources (audio, textures,
+        # meshes) to reduce sync time for check/test/docs workloads.
+        # The assets Makefile and its companion manifest files are
+        # synced intact from the full project, but if we regenerate
+        # them here the scanner would see only the stripped sources
+        # and produce a truncated Makefile that fails update-check.
+        # We key off BA_CLOUDSHELL_ENV (set by cloudshell when
+        # running with --env) to skip regeneration in ba-check.
+        #
+        # Exception: spinoff *test* projects (created fresh under
+        # build/spinofftest/ during CI) need regeneration because
+        # their Makefile must match their reduced feature sets. We
+        # detect these by checking whether projroot is under a
+        # 'build/spinofftest' path.
+        if os.environ.get('BA_CLOUDSHELL_ENV') == 'ba-check':
+            if '/build/spinofftest/' not in self.projroot:
+                self._generated_files[path] = existing_data
+                for mantype in ['public', 'private']:
+                    manpath = f'src/assets/.asset_manifest_{mantype}.json'
+                    if manpath not in self._generated_files:
+                        manfullpath = os.path.join(self.projroot, manpath)
+                        if os.path.isfile(manfullpath):
+                            with open(manfullpath, encoding='utf-8') as infile:
+                                self._generated_files[manpath] = infile.read()
+                return
 
         # We need to know what files meta will be creating (since they
         # can be asset sources).

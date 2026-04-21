@@ -22,6 +22,14 @@ def _read_ballistica_api_key() -> str | None:
     return str(val) if val is not None else None
 
 
+def make_pool() -> urllib3.PoolManager:
+    """PoolManager that honors HTTPS_PROXY (urllib3 doesn't by default)."""
+    proxy = os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
+    if proxy:
+        return urllib3.ProxyManager(proxy)
+    return urllib3.PoolManager()
+
+
 class AuthedClient:
     """urllib3 PoolManager wrapper with a pre-set Authorization header."""
 
@@ -74,7 +82,7 @@ class AuthedClient:
 @pytest.fixture(scope='session')
 def http() -> urllib3.PoolManager:
     """Unauthenticated urllib3 connection pool."""
-    return urllib3.PoolManager()
+    return make_pool()
 
 
 @pytest.fixture(scope='session')
@@ -100,4 +108,4 @@ def authed(
     api_key: str,
 ) -> AuthedClient:  # pylint: disable=redefined-outer-name
     """AuthedClient with the Bearer token pre-set."""
-    return AuthedClient(urllib3.PoolManager(), api_key)
+    return AuthedClient(make_pool(), api_key)

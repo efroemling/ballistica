@@ -358,8 +358,12 @@ def test_server_interrupt() -> None:
             tester.server.endpoint.close()
 
         _task = asyncio.create_task(_kill_connection())
+        starttime = time.monotonic()
         with pytest.raises(CommunicationError):
             await tester.server.send_message(_Message(_MessageType.TEST_SLOW))
+        # Interrupt should abort the in-flight send promptly via the
+        # peer's transport close, not wait out DEFAULT_MESSAGE_TIMEOUT.
+        assert (time.monotonic() - starttime) < 5.0
 
     tester.run(_do_it())
 
@@ -375,7 +379,11 @@ def test_client_interrupt() -> None:
             tester.client.endpoint.close()
 
         _task = asyncio.create_task(_kill_connection())
+        starttime = time.monotonic()
         with pytest.raises(CommunicationError):
             await tester.server.send_message(_Message(_MessageType.TEST_SLOW))
+        # Interrupt should abort the in-flight send promptly via the
+        # peer's transport close, not wait out DEFAULT_MESSAGE_TIMEOUT.
+        assert (time.monotonic() - starttime) < 5.0
 
     tester.run(_do_it())

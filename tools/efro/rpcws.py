@@ -10,6 +10,7 @@ import logging
 from typing import TYPE_CHECKING, Protocol
 
 from efro.error import CommunicationError
+from efro.util import gather_strip
 
 if TYPE_CHECKING:
     from typing import Awaitable, Callable, Literal
@@ -85,7 +86,9 @@ class RPCWSEndpoint:
         debug_print: bool = False,
         debug_print_call: Callable[[str], None] | None = None,
     ) -> None:
-        self._handle_raw_message_call = handle_raw_message_call
+        self._handle_raw_message_call: (
+            Callable[[bytes], Awaitable[bytes]] | None
+        ) = handle_raw_message_call
         self._transport = transport
         self._label = label
         self.debug_print = debug_print
@@ -263,8 +266,11 @@ class RPCWSEndpoint:
             name=f'{self._label} transport close',
         )
 
-        # We don't need this anymore and it may create a dependency loop.
-        del self._handle_raw_message_call
+        # Drop our reference to the user-supplied handler so we don't
+        # keep a dependency loop alive. Set to None rather than deleting
+        # so dispatched-but-not-yet-run handler tasks can see we're
+        # closed instead of hitting AttributeError.
+        self._handle_raw_message_call = None
 
     def is_closing(self) -> bool:
         """Have we begun the process of closing?"""
@@ -287,7 +293,7 @@ class RPCWSEndpoint:
         self._tasks = []
 
         if live_tasks:
-            results = await asyncio.gather(*live_tasks, return_exceptions=True)
+            results = await gather_strip(*live_tasks)
             for result in results:
                 if isinstance(result, Exception):
                     logger.warning(
@@ -360,8 +366,12 @@ class RPCWSEndpoint:
     async def _handle_raw_message(
         self, message_id: int, message: bytes
     ) -> None:
+        handler = self._handle_raw_message_call
+        if handler is None:
+            # Endpoint closed between dispatch and this task running.
+            return
         try:
-            response = await self._handle_raw_message_call(message)
+            response = await handler(message)
         except Exception:
             logger.exception('Error handling raw rpcws message')
             return

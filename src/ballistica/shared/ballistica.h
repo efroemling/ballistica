@@ -189,7 +189,7 @@ enum class SpecialChar : uint8_t {
   kDiceButton2,
   kDiceButton3,
   kDiceButton4,
-  kGameCircleLogo,
+  kDiscordLogo,
   kPartyIcon,
   kTestAccount,
   kTicketBacking,
@@ -296,6 +296,7 @@ enum class LogName : uint8_t {
   kBaInput,
   kBaUI,
   kBaNetworking,
+  kBaDiscord,
   kLast  // Sentinel
 };
 

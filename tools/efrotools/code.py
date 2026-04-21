@@ -539,6 +539,21 @@ def _run_pylint(
 
     args += dirtyfiles
     name = f'{len(dirtyfiles)} file(s)'
+
+    # Pylint's parallel path constructs a ProcessPoolExecutor, which
+    # calls os.sysconf('SC_SEM_NSEMS_MAX') to verify enough POSIX
+    # semaphores are available. Some agent sandboxes deny that syscall;
+    # when that happens, stub the check out so parallel pylint can
+    # proceed. Non-sandboxed runs probe successfully and are untouched.
+    try:
+        os.sysconf('SC_SEM_NSEMS_MAX')
+    except PermissionError:
+        import concurrent.futures.process as _cfp
+
+        # pylint: disable=protected-access
+        _cfp._check_system_limits = lambda: None
+        # pylint: enable=protected-access
+
     run = lint.Run(args, exit=False)
     if cache is not None:
         assert allfiles is not None
@@ -1071,141 +1086,6 @@ def _run_idea_inspections_cached(
         f'{Clr.GRN}{displayname}: all {len(filenames)}'
         f' files are passing.{Clr.RST}',
         flush=True,
-    )
-
-
-def check_pycharm(projroot: Path, full: bool, verbose: bool) -> None:
-    """Run pycharm inspections on all our scripts."""
-
-    # FIXME: Generalize this to work with at least linux, possibly windows.
-    cachepath = Path('.cache/check_pycharm')
-    filenames = get_script_filenames(projroot)
-    pycharmroot = Path('/Applications/PyCharm CE.app')
-    pycharmbin = Path(pycharmroot, 'Contents/MacOS/pycharm')
-    inspect = Path(pycharmroot, 'Contents/bin/inspect.sh')
-
-    # In full mode, clear out pycharm's caches first.
-    # It seems we need to spin up the GUI and give it a bit to
-    # re-cache system python for this to work...
-
-    # UPDATE: This really slows things down, so we now only do it in
-    # very specific cases where time isn't important.
-    # (such as our daily full-test-runs)
-
-    # UPDATE 2: Looks like we might no longer need to do the GUI spin-up bit.
-    # If we can be certain of this, we can go back to simply blowing away
-    # the cache for 'full' mode checks without the env var.
-    if full and os.environ.get('EFROTOOLS_FULL_PYCHARM_RECACHE') == '1':
-        print('Clearing PyCharm caches...', flush=True)
-        subprocess.run(
-            'rm -rf ~/Library/Caches/JetBrains/PyCharmCE*',
-            shell=True,
-            check=True,
-        )
-
-        # Hoping this isn't necessary anymore. Need to rework this if it is,
-        # since it now gets run through ssh and gui stuff doesn't seem to
-        # work that way.
-        if bool(False):
-            print('Launching GUI PyCharm to rebuild caches...', flush=True)
-            with subprocess.Popen(str(pycharmbin)) as process:
-                # Wait a bit and ask it nicely to die.
-                # We need to make sure it has enough time to do its
-                # cache updating thing even if the system is fully under load.
-                time.sleep(5 * 60)
-
-                # Seems killing it via applescript is more likely to leave it
-                # in a working state for offline inspections than TERM signal..
-                subprocess.run(
-                    "osascript -e 'tell application \"PyCharm CE\" to quit'",
-                    shell=True,
-                    check=False,
-                )
-                print('Waiting for GUI PyCharm to quit...', flush=True)
-                process.wait()
-
-    _run_idea_inspections_cached(
-        cachepath=cachepath,
-        filenames=filenames,
-        full=full,
-        projroot=projroot,
-        displayname='PyCharm',
-        inspect=inspect,
-        verbose=verbose,
-    )
-
-
-def check_clioncode(projroot: Path, full: bool, verbose: bool) -> None:
-    """Run clion inspections on all our code."""
-
-    cachepath = Path('.cache/check_clioncode')
-    filenames = get_code_filenames(projroot, include_generated=True)
-    clionroot = Path('/Applications/CLion.app')
-    # clionbin = Path(clionroot, 'Contents/MacOS/clion')
-    inspect = Path(clionroot, 'Contents/bin/inspect.sh')
-
-    # At the moment offline clion inspections seem a bit flaky.
-    # They don't seem to run at all if we haven't opened the project
-    # in the GUI, and it seems recent changes can get ignored for that
-    # reason too.
-    # So for now let's try blowing away caches, launching the gui
-    # temporarily, and then kicking off inspections after that. Sigh.
-    print('Clearing CLion caches...', flush=True)
-    caches_root = os.environ['HOME'] + '/Library/Caches/JetBrains'
-    if not os.path.exists(caches_root):
-        raise RuntimeError(f'CLion caches root not found: {caches_root}')
-    subprocess.run(
-        'rm -rf ~/Library/Caches/JetBrains/CLion*', shell=True, check=True
-    )
-
-    # UPDATE: seems this is unnecessary now; should double check.
-    # Note: I'm assuming this project needs to be open when the GUI
-    # comes up. Currently just have one project so can rely on auto-open
-    # but may need to get fancier later if that changes.
-    if bool(True):
-        print('Launching GUI CLion to rebuild caches...', flush=True)
-        # process = subprocess.Popen(str(clionbin))
-        subprocess.run(
-            ['open', '-a', clionroot, Path(projroot, 'ballisticakit-cmake')],
-            check=True,
-        )
-
-        # Wait a moment and ask it nicely to die.
-        waittime = 60
-        while waittime > 0:
-            print(f'Waiting for {waittime} more seconds.', flush=True)
-            time.sleep(10)
-            waittime -= 10
-
-        # For some reason this is giving a return-code 1 although
-        # it appears to be working.
-        print('Waiting for GUI CLion to quit...', flush=True)
-        subprocess.run(
-            [
-                'osascript',
-                '-e',
-                'tell application "CLion" to quit\n'
-                'repeat until application "CLion" is not running\n'
-                '    delay 1\n'
-                'end repeat',
-            ],
-            check=False,
-        )
-        time.sleep(5)
-
-        # process.terminate()
-        # process.wait(timeout=60)
-
-    print('Launching Offline CLion to run inspections...', flush=True)
-    _run_idea_inspections_cached(
-        cachepath=cachepath,
-        filenames=filenames,
-        full=full,
-        projroot=Path(projroot, 'ballisticakit-cmake'),
-        inspectdir=Path(projroot, 'src/ballistica'),
-        displayname='CLion',
-        inspect=inspect,
-        verbose=verbose,
     )
 
 

@@ -175,7 +175,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsoletabs.py \
-  $(BUILD_DIR)/ba_data/python/babase/_discord.py \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_env.py \
   $(BUILD_DIR)/ba_data/python/babase/_error.py \
@@ -1576,6 +1575,56 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/url.py \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/util.py \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/util/wait.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/__main__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/async_timeout.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/client.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/compatibility.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/messages.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/router.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/server.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/auth.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/cli.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/client.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/datastructures.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/exceptions.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/extensions/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/extensions/base.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/extensions/permessage_deflate.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/frames.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/headers.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/http.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/http11.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/imports.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/legacy/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/legacy/auth.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/legacy/client.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/legacy/exceptions.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/legacy/framing.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/legacy/handshake.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/legacy/http.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/legacy/protocol.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/legacy/server.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/protocol.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/proxy.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/server.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/streams.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/client.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/messages.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/router.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/server.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/utils.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/typing.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/uri.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/utils.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/version.py \
+  $(BUILD_DIR)/ba_data/python/babase/automation.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/automation.py \
   $(BUILD_DIR)/sphinx/static/conf.py
 
 SCRIPT_TARGETS_SO_PRIVATE_COMMON = \
@@ -3657,6 +3706,7 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon.dds \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask.dds \
+  $(BUILD_DIR)/ba_data/textures/discordIcon.dds \
   $(BUILD_DIR)/ba_data/textures/discordLogo.dds \
   $(BUILD_DIR)/ba_data/textures/discordServer.dds \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor.dds \
@@ -3701,7 +3751,6 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/frostyIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/fuse.dds \
   $(BUILD_DIR)/ba_data/textures/gameCenterIcon.dds \
-  $(BUILD_DIR)/ba_data/textures/gameCircleIcon.dds \
   $(BUILD_DIR)/ba_data/textures/githubLogo.dds \
   $(BUILD_DIR)/ba_data/textures/gladiatorColor.dds \
   $(BUILD_DIR)/ba_data/textures/gladiatorColorMask.dds \
@@ -4090,6 +4139,7 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask.pvr \
+  $(BUILD_DIR)/ba_data/textures/discordIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/discordLogo.pvr \
   $(BUILD_DIR)/ba_data/textures/discordServer.pvr \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor.pvr \
@@ -4134,7 +4184,6 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/frostyIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/fuse.pvr \
   $(BUILD_DIR)/ba_data/textures/gameCenterIcon.pvr \
-  $(BUILD_DIR)/ba_data/textures/gameCircleIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/githubLogo.pvr \
   $(BUILD_DIR)/ba_data/textures/gladiatorColor.pvr \
   $(BUILD_DIR)/ba_data/textures/gladiatorColorMask.pvr \
@@ -4523,6 +4572,7 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask.ktx \
+  $(BUILD_DIR)/ba_data/textures/discordIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/discordLogo.ktx \
   $(BUILD_DIR)/ba_data/textures/discordServer.ktx \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor.ktx \
@@ -4567,7 +4617,6 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/frostyIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/fuse.ktx \
   $(BUILD_DIR)/ba_data/textures/gameCenterIcon.ktx \
-  $(BUILD_DIR)/ba_data/textures/gameCircleIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/githubLogo.ktx \
   $(BUILD_DIR)/ba_data/textures/gladiatorColor.ktx \
   $(BUILD_DIR)/ba_data/textures/gladiatorColorMask.ktx \
@@ -4956,6 +5005,7 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cyborgColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/cyborgIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/cyborgIcon_preview.png \
+  $(BUILD_DIR)/ba_data/textures/discordIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/discordLogo_preview.png \
   $(BUILD_DIR)/ba_data/textures/discordServer_preview.png \
   $(BUILD_DIR)/ba_data/textures/doomShroomBGColor_preview.png \
@@ -5000,7 +5050,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/frostyIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/fuse_preview.png \
   $(BUILD_DIR)/ba_data/textures/gameCenterIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/gameCircleIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/githubLogo_preview.png \
   $(BUILD_DIR)/ba_data/textures/gladiatorColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/gladiatorColor_preview.png \

@@ -35,11 +35,6 @@ def test_runs_disabled_reason() -> str:
     return 'App test runs disabled here.'
 
 
-def acquire_binary_for_python_command(purpose: str) -> str:
-    """Run acquire_binary as used for python_command call."""
-    return acquire_binary(assets=True, purpose=purpose)
-
-
 def python_command(
     cmd: str,
     purpose: str,
@@ -48,7 +43,7 @@ def python_command(
 ) -> None:
     """Run a cmd with a built bin and PYTHONPATH set to its scripts."""
 
-    binpath = acquire_binary_for_python_command(purpose=purpose)
+    binpath = acquire_binary(purpose=purpose)
     bindir = os.path.dirname(binpath)
 
     # We'll set both the app python dir and its site-python-dir. This
@@ -71,17 +66,21 @@ def python_command(
     subprocess.run(cmdargs, env=env_final, check=True)
 
 
-def acquire_binary(assets: bool, purpose: str) -> str:
+def acquire_binary(purpose: str, *, gui: bool = False) -> str:
     """Return path to a runnable binary, building/downloading as needed.
 
-    If 'assets' is False, only the binary itself will be fetched or
-    assembled; no scripts or assets. This generally saves some time, but
-    must only be used for very simple '-c' command cases where no assets
-    will be needed.
+    By default this provides a headless-server binary along with the
+    full server asset bundle (Python scripts + fonts + data, but no
+    audio/textures/meshes). That is enough for the binary to fully boot
+    and is the right choice for the vast majority of tool/test
+    workflows (dummy-module generation, import tests, transport tests,
+    etc.).
 
-    Be aware that it is up to the particular environment whether a gui
-    or headless binary will be provided. Commands should be designed to
-    work with either.
+    Pass ``gui=True`` when the caller genuinely needs a GUI binary and
+    the full (including media) asset bundle — e.g. a test that
+    exercises rendering. This only works in environments that have the
+    full asset source tree available; environments like ba-check that
+    strip audio/textures/meshes will fail the asset build in this mode.
 
     By default, downloaded prefab builds will be used here. This allows
     people without full compiler setups to still perform app runs for
@@ -90,14 +89,6 @@ def acquire_binary(assets: bool, purpose: str) -> str:
     here so that changes to their local repo are properly reflected in
     app runs and whatnot. Set environment variable
     BA_APP_RUN_ENABLE_BUILDS=1 to enable that.
-
-    When local builds are enabled, we use the same gui build targets as
-    the 'make cmake-build' command. This works well if you are iterating
-    using that build target anyway, minimizing redundant rebuilds. You
-    may, however, prefer to instead assemble headless builds for various
-    reasons including faster build times and fewer dependencies
-    (equivalent to 'make cmake-server-build'). To do so, set environment
-    variable BA_APP_RUN_BUILD_HEADLESS=1.
     """
     import textwrap
 
@@ -105,46 +96,27 @@ def acquire_binary(assets: bool, purpose: str) -> str:
     if os.environ.get('BA_APP_RUN_ENABLE_BUILDS') == '1':
         # Going the build-it-ourselves route.
 
-        # Don't need any env mods for this path.
-        env = None
-
-        if os.environ.get('BA_APP_RUN_BUILD_HEADLESS') == '1':
-            # User has opted for headless builds.
-            if assets:
-                print(
-                    f'{Clr.SMAG}Building headless binary & assets for'
-                    f' {purpose}...{Clr.RST}',
-                    flush=True,
-                )
-                binary_build_command = ['make', 'cmake-server-build']
-            else:
-                print(
-                    f'{Clr.SMAG}Building headless binary for'
-                    f' {purpose}...{Clr.RST}',
-                    flush=True,
-                )
-                binary_build_command = ['make', 'cmake-server-binary']
+        if gui:
+            print(
+                f'{Clr.SMAG}Building gui binary & assets for'
+                f' {purpose}...{Clr.RST}',
+                flush=True,
+            )
+            binary_build_command = ['make', 'cmake-build']
+            binary_path = 'build/cmake/debug/staged/ballisticakit'
+        else:
+            print(
+                f'{Clr.SMAG}Building headless binary & assets for'
+                f' {purpose}...{Clr.RST}',
+                flush=True,
+            )
+            binary_build_command = ['make', 'cmake-server-build']
             binary_path = (
                 'build/cmake/server-debug/staged/dist/ballisticakit_headless'
             )
-        else:
-            # Using default gui builds.
-            if assets:
-                print(
-                    f'{Clr.SMAG}Building gui binary & assets for'
-                    f' {purpose}...{Clr.RST}',
-                    flush=True,
-                )
-                binary_build_command = ['make', 'cmake-build']
-            else:
-                print(
-                    f'{Clr.SMAG}Building gui binary for {purpose}...{Clr.RST}',
-                    flush=True,
-                )
-                binary_build_command = ['make', 'cmake-binary']
-            binary_path = 'build/cmake/debug/staged/ballisticakit'
+        env = None
     else:
-        # Ok; going with a downloaded prefab headless build.
+        # Ok; going with a downloaded prefab build.
 
         # By default, prefab build targets on WSL (Linux running on
         # Windows) will give us Windows builds which won't work right
@@ -161,15 +133,16 @@ def acquire_binary(assets: bool, purpose: str) -> str:
             80,
         )
 
-        if assets:
+        if gui:
             print(
-                f'{Clr.SMAG}Fetching prefab binary & assets for'
+                f'{Clr.SMAG}Fetching prefab gui binary & assets for'
                 f' {purpose}...{note}{Clr.RST}',
                 flush=True,
             )
+            binary_build_command = ['make', 'prefab-gui-release-build']
             binary_path = (
                 subprocess.run(
-                    ['tools/pcommand', 'prefab_binary_path', 'server-release'],
+                    ['tools/pcommand', 'prefab_binary_path', 'gui-release'],
                     env=env,
                     check=True,
                     capture_output=True,
@@ -177,13 +150,13 @@ def acquire_binary(assets: bool, purpose: str) -> str:
                 .stdout.decode()
                 .strip()
             )
-            binary_build_command = ['make', 'prefab-server-release-build']
         else:
             print(
-                f'{Clr.SMAG}Fetching prefab binary for {purpose}...'
-                f'{note}{Clr.RST}',
+                f'{Clr.SMAG}Fetching prefab headless binary & assets for'
+                f' {purpose}...{note}{Clr.RST}',
                 flush=True,
             )
+            binary_build_command = ['make', 'prefab-server-release-build']
             binary_path = (
                 subprocess.run(
                     ['tools/pcommand', 'prefab_binary_path', 'server-release'],
@@ -194,7 +167,6 @@ def acquire_binary(assets: bool, purpose: str) -> str:
                 .stdout.decode()
                 .strip()
             )
-            binary_build_command = ['make', binary_path]
 
     subprocess.run(binary_build_command, env=env, check=True)
     if not os.path.exists(binary_path):

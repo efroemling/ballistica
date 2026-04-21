@@ -66,6 +66,7 @@
     "cryptography.hazmat.primitives.asymmetric.ed25519",
     "sphinx.util.logging",
     "pylint.checkers",
+    "websockets",
     "websockets.asyncio.client",
     "websockets.asyncio.connection",
     "websockets.asyncio.server"

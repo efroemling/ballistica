@@ -19,6 +19,7 @@ import requests
 from efro.terminal import Clr
 from efro.error import CleanError
 from efro.dataclassio import (
+    dataclass_from_dict,
     dataclass_from_json,
     dataclass_to_dict,
     dataclass_to_json,
@@ -36,6 +37,42 @@ VERBOSE = os.environ.get('BACLOUD_VERBOSE') == '1'
 BACLOUD_SERVER = os.getenv('BACLOUD_SERVER', 'ballistica.net')
 
 
+def _hash_file(path: str) -> tuple[int, str]:
+    """Return (size, sha256_hex) for a local file."""
+    import hashlib
+
+    size = os.path.getsize(path)
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        while True:
+            chunk = f.read(1024 * 1024)
+            if not chunk:
+                break
+            h.update(chunk)
+    return size, h.hexdigest()
+
+
+def _upload_plan_sibling(finalize_command: str, sibling: str) -> str:
+    """Derive a sibling command path from a finalize command.
+
+    The prepare/finalize endpoints live as siblings of the finalize
+    command's parent. For example, if the finalize command is
+    ``admin.archive._archive_publish_finalize``, the resulting
+    prepare sibling is ``admin._upload_plan_prepare`` (one level
+    above, since the upload infrastructure lives at the admin level).
+    """
+    parts = finalize_command.split('.')
+    # Walk up until we find the 'admin' segment and place the
+    # sibling directly under it.
+    for i, part in enumerate(parts):
+        if part == 'admin':
+            return '.'.join(parts[: i + 1] + [sibling])
+    raise RuntimeError(
+        f'Could not locate admin segment in command path'
+        f' {finalize_command!r}.'
+    )
+
+
 @ioprepped
 @dataclass
 class StateData:
@@ -50,7 +87,13 @@ def _resolve_api_key(project_root: Path) -> str | None:
     Precedence:
 
     1. ``BALLISTICA_API_KEY`` env var.
-    2. ``ballistica_api_key`` in
+    2. ``ballistica_api_key`` in the localconfig.json pointed to by
+       ``EFRO_LOCALCONFIG_PATH`` (absolute or relative to
+       ``project_root``). This matches the override used by
+       ``efrotools.project.getlocalconfig`` and is how CI runs on
+       build hosts (fromini/etc.) see credentials bound via
+       Jenkins ``withCredentials``.
+    3. ``ballistica_api_key`` in
        ``<project_root>/config/localconfig.json``.
     """
     import json
@@ -58,13 +101,22 @@ def _resolve_api_key(project_root: Path) -> str | None:
     key = os.environ.get('BALLISTICA_API_KEY')
     if key:
         return key
-    cfgpath = project_root / 'config' / 'localconfig.json'
-    if cfgpath.exists():
+
+    cfgpaths: list[Path] = []
+    override = os.environ.get('EFRO_LOCALCONFIG_PATH')
+    if override:
+        opath = Path(override)
+        cfgpaths.append(opath if opath.is_absolute() else project_root / opath)
+    cfgpaths.append(project_root / 'config' / 'localconfig.json')
+
+    for cfgpath in cfgpaths:
+        if not cfgpath.exists():
+            continue
         try:
             with cfgpath.open(encoding='utf-8') as infile:
                 cfg = json.load(infile)
         except Exception:
-            return None
+            continue
         val = cfg.get('ballistica_api_key')
         if isinstance(val, str) and val:
             return val
@@ -278,6 +330,7 @@ class App:
     def _download_file(
         self, filename: str, call: str, args: dict
     ) -> int | None:
+        import hashlib
 
         # Fast out - for repeat batch downloads, most of the time these
         # will already exist and we can ignore them.
@@ -292,22 +345,60 @@ class App:
 
         response = self._servercmd(call, args)
 
-        # We currently expect a single 'default' entry in
-        # downloads_inline for this.
-        assert response.downloads_inline is not None
-        assert len(response.downloads_inline) == 1
-        data_zipped = response.downloads_inline.get('default')
-        assert isinstance(data_zipped, bytes)
+        # We expect a single sentinel entry in downloads_signed keyed
+        # at 'default'. The server-side per-file handler doesn't know
+        # the client's destination path, so it hands back one signed
+        # URL + hash under that sentinel and we stream it into
+        # ``filename`` here.
+        assert response.downloads_signed is not None
+        assert len(response.downloads_signed) == 1
+        entry = response.downloads_signed[0]
+        assert entry.path == 'default'
 
-        data = zlib.decompress(data_zipped)
+        tmp = f'{filename}.tmp'
+        chunk_size = 1024 * 1024
+        hasher = hashlib.sha256()
+        total = 0
+        with requests.get(
+            entry.download_url,
+            stream=True,
+            timeout=TIMEOUT_SECONDS,
+        ) as resp:
+            if not 200 <= resp.status_code < 300:
+                raise CleanError(
+                    f'GCS download of {filename} failed:'
+                    f' status={resp.status_code}'
+                    f' body={resp.text!r}'
+                )
+            with open(tmp, 'wb') as outfile:
+                for chunk in resp.iter_content(chunk_size=chunk_size):
+                    if not chunk:
+                        continue
+                    outfile.write(chunk)
+                    hasher.update(chunk)
+                    total += len(chunk)
 
-        # Write to tmp files first and then move into place. This way
-        # crashes are less likely to lead to corrupt data.
-        fnametmp = f'{filename}.tmp'
-        with open(fnametmp, 'wb') as outfile:
-            outfile.write(data)
-        os.rename(fnametmp, filename)
-        return len(data)
+        if total != entry.size:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise CleanError(
+                f'GCS download of {filename} returned'
+                f' {total} bytes; expected {entry.size}.'
+            )
+        digest = hasher.hexdigest()
+        if digest != entry.sha256:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise CleanError(
+                f'GCS download of {filename} sha256 mismatch:'
+                f' got {digest}, expected {entry.sha256}.'
+            )
+        os.rename(tmp, filename)
+        return total
 
     def _handle_dir_manifest_response(self, dirmanifest: str) -> None:
         from bacommon.transfer import DirectoryManifest
@@ -463,6 +554,207 @@ class App:
             sessions[entry.path] = entry.session_id
         self._end_command_args['uploads_signed'] = sessions
 
+    def _handle_upload_plan(  # pylint: disable=too-many-locals
+        self, plan: ResponseData.UploadPlan
+    ) -> tuple[str, dict]:
+        """Execute an upload plan end-to-end.
+
+        Walks ``plan.source_dir``, computes sha256+size for every
+        file, asks the server which need uploading (dedup check),
+        streams the missing ones direct-to-GCS, finalizes the
+        upload sessions, and returns the next call tuple for the
+        command's ``finalize_command``.
+        """
+        from bacommon.bacloud import (
+            UploadPlanFileInfo,
+            UploadPlanPrepareRequest,
+            UploadPlanPrepareResponse,
+            UploadPlanFinalizeRequest,
+            UploadPlanFinalizeResponse,
+            UploadPlanCommit,
+        )
+
+        source_dir = plan.source_dir
+        if not os.path.isdir(source_dir):
+            raise CleanError(f'upload_plan source dir not found: {source_dir}')
+
+        # Phase 1: enumerate files and compute hashes.
+        files: list[UploadPlanFileInfo] = []
+        local_paths: dict[str, str] = {}  # name -> absolute path
+        for basepath, _dirs, filenames in os.walk(source_dir):
+            for fn in filenames:
+                full = os.path.join(basepath, fn)
+                rel = os.path.relpath(full, source_dir)
+                size, sha256 = _hash_file(full)
+                files.append(
+                    UploadPlanFileInfo(name=rel, sha256=sha256, size=size)
+                )
+                local_paths[rel] = full
+
+        if not files:
+            raise CleanError(f'upload_plan source dir {source_dir} is empty.')
+
+        # Phase 2: prepare (dedup + allocate uploads).
+        prepare_req = UploadPlanPrepareRequest(
+            files=files,
+            cloud_file_category=plan.cloud_file_category,
+        )
+        prepare_cmd = _upload_plan_sibling(
+            plan.finalize_command, '_upload_plan_prepare'
+        )
+        prepare_resp_raw = self._servercmd(
+            prepare_cmd, dataclass_to_dict(prepare_req)
+        )
+        if prepare_resp_raw.raw_result is None:
+            raise CleanError('Prepare response missing raw_result.')
+        prepare_resp = dataclass_from_dict(
+            UploadPlanPrepareResponse, prepare_resp_raw.raw_result
+        )
+
+        # Phase 3: stream any needs-upload files to GCS.
+        sessions: dict[str, str] = {}
+        resolved: dict[str, str] = {}  # name -> cloud_file_id
+        for item in prepare_resp.items:
+            if item.cloud_file_id is not None:
+                resolved[item.name] = item.cloud_file_id
+                continue
+            assert item.upload_url is not None
+            assert item.session_id is not None
+            local = local_paths[item.name]
+            file_size = os.path.getsize(local)
+            put_headers = dict(item.upload_headers)
+            put_headers['Content-Length'] = str(file_size)
+            with open(local, 'rb') as infile:
+                resp = requests.put(
+                    item.upload_url,
+                    data=infile,
+                    headers=put_headers,
+                    timeout=TIMEOUT_SECONDS,
+                )
+            if not 200 <= resp.status_code < 300:
+                raise CleanError(
+                    f'GCS upload of {item.name} failed:'
+                    f' status={resp.status_code}'
+                    f' body={resp.text!r}'
+                )
+            sessions[item.name] = item.session_id
+
+        # Phase 4: finalize uploaded files (if any).
+        if sessions:
+            finalize_cmd = _upload_plan_sibling(
+                plan.finalize_command, '_upload_plan_finalize'
+            )
+            finalize_req = UploadPlanFinalizeRequest(sessions=sessions)
+            finalize_resp_raw = self._servercmd(
+                finalize_cmd, dataclass_to_dict(finalize_req)
+            )
+            if finalize_resp_raw.raw_result is None:
+                raise CleanError('Finalize response missing raw_result.')
+            finalize_resp = dataclass_from_dict(
+                UploadPlanFinalizeResponse, finalize_resp_raw.raw_result
+            )
+            for name, cfid in finalize_resp.cloud_file_ids.items():
+                resolved[name] = cfid
+
+        # Phase 5: hand off to the plan's finalize command.
+        commit = UploadPlanCommit(files=resolved, state=plan.finalize_state)
+        return (plan.finalize_command, dataclass_to_dict(commit))
+
+    def _handle_downloads_signed(
+        self, downloads_signed: list[ResponseData.SignedDownloadEntry]
+    ) -> None:
+        """Handle direct-from-GCS streaming downloads via signed URLs.
+
+        For each entry, stream the GCS body straight to ``<path>.tmp``
+        while feeding bytes through ``hashlib.sha256``. On a successful
+        digest + size match we atomic-rename into place; on mismatch
+        we delete the tmp file and raise. Memory use is bounded by the
+        stream chunk size regardless of file size, so this bypasses
+        the Cloud Run 32 MB response cap entirely.
+
+        Downloads run through a thread pool so large workspaces fan
+        out over the network instead of serializing through one TCP
+        connection.
+        """
+        import hashlib
+        from concurrent.futures import ThreadPoolExecutor
+
+        # 1 MiB read chunk — large enough to keep per-chunk overhead
+        # negligible, small enough that peak memory stays bounded even
+        # when running several fetches concurrently.
+        chunk_size = 1024 * 1024
+
+        def _fetch(entry: ResponseData.SignedDownloadEntry) -> None:
+            # Clear out any existing dir where we want the file to go
+            # (mirrors the _handle_downloads_inline contract — file
+            # deletes should have run before this, so anything still
+            # here should be empty and killable via rmdir).
+            if os.path.isdir(entry.path):
+                for basename, dirnames, _fn in os.walk(
+                    entry.path, topdown=False
+                ):
+                    for dirname in dirnames:
+                        os.rmdir(os.path.join(basename, dirname))
+                os.rmdir(entry.path)
+
+            # Ensure the parent dir exists. For the workspace-get path
+            # the server supplies absolute paths the client chose, and
+            # the intermediate dirs may not exist yet.
+            parent = os.path.dirname(entry.path)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
+
+            tmp = f'{entry.path}.tmp'
+            hasher = hashlib.sha256()
+            total = 0
+            with requests.get(
+                entry.download_url,
+                stream=True,
+                timeout=TIMEOUT_SECONDS,
+            ) as resp:
+                if not 200 <= resp.status_code < 300:
+                    raise CleanError(
+                        f'GCS download of {entry.path} failed:'
+                        f' status={resp.status_code}'
+                        f' body={resp.text!r}'
+                    )
+                with open(tmp, 'wb') as outfile:
+                    for chunk in resp.iter_content(chunk_size=chunk_size):
+                        if not chunk:
+                            continue
+                        outfile.write(chunk)
+                        hasher.update(chunk)
+                        total += len(chunk)
+
+            if total != entry.size:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                raise CleanError(
+                    f'GCS download of {entry.path} returned'
+                    f' {total} bytes; expected {entry.size}.'
+                )
+            digest = hasher.hexdigest()
+            if digest != entry.sha256:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                raise CleanError(
+                    f'GCS download of {entry.path} sha256'
+                    f' mismatch: got {digest}, expected {entry.sha256}.'
+                )
+            os.rename(tmp, entry.path)
+
+        if not downloads_signed:
+            return
+        # Cap parallelism at 4 to match _handle_downloads — this is
+        # enough to saturate a typical client uplink without piling
+        # pressure on GCS or running the client out of fds.
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            list(executor.map(_fetch, downloads_signed))
+
     def _handle_open_url(self, url: str) -> None:
         import webbrowser
 
@@ -503,6 +795,16 @@ class App:
                 self._handle_dir_manifest_response(response.dir_manifest)
             if response.uploads_signed is not None:
                 self._handle_uploads_signed(response.uploads_signed)
+            if response.upload_plan is not None:
+                nextcall = self._handle_upload_plan(response.upload_plan)
+                # Upload plan overrides end_command; skip the rest of
+                # response processing for this round.
+                if response.end_command is not None:
+                    raise CleanError(
+                        'Response has both upload_plan and end_command;'
+                        ' these are mutually exclusive.'
+                    )
+                continue
 
             # Note: we handle file deletes *before* downloads. This way
             # our file-download code only has to worry about creating or
@@ -524,6 +826,8 @@ class App:
                 self._handle_downloads(response.downloads)
             if response.downloads_inline:
                 self._handle_downloads_inline(response.downloads_inline)
+            if response.downloads_signed:
+                self._handle_downloads_signed(response.downloads_signed)
             if response.dir_prune_empty:
                 self._handle_dir_prune_empty(response.dir_prune_empty)
 

@@ -199,13 +199,29 @@ def _bootstrap_networking() -> None:
     # Unfortunately this means we need to turn off retries here since
     # the retry mechanism effectively hides exceptions from us.
     global _g_net_warm_start_pool_manager  # pylint: disable=global-statement
-    _g_net_warm_start_pool_manager = urllib3.PoolManager(
-        retries=False,
-        ssl_context=_g_net_warm_start_ssl_context,
-        timeout=urllib3.util.Timeout(total=DEFAULT_REQUEST_TIMEOUT_SECONDS),
-        maxsize=10,
-        headers={'User-Agent': _babase.user_agent_string()},
-    )
+    # Honor HTTPS_PROXY if set; urllib3's PoolManager doesn't read it
+    # on its own. Lets the engine work behind corporate proxies and
+    # sandboxes that only permit outbound HTTPS via a proxy endpoint.
+    timeout = urllib3.util.Timeout(total=DEFAULT_REQUEST_TIMEOUT_SECONDS)
+    headers = {'User-Agent': _babase.user_agent_string()}
+    proxy_url = os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
+    if proxy_url:
+        _g_net_warm_start_pool_manager = urllib3.ProxyManager(
+            proxy_url,
+            retries=False,
+            ssl_context=_g_net_warm_start_ssl_context,
+            timeout=timeout,
+            maxsize=10,
+            headers=headers,
+        )
+    else:
+        _g_net_warm_start_pool_manager = urllib3.PoolManager(
+            retries=False,
+            ssl_context=_g_net_warm_start_ssl_context,
+            timeout=timeout,
+            maxsize=10,
+            headers=headers,
+        )
     # Kick off a request to our first-choice bootstrap server. This can
     # get dns lookup and ssl negotiation and whatnot going in the
     # background while the rest of our app is coming up, and our first
@@ -540,6 +556,18 @@ def interpreter_shutdown_sanity_checks() -> None:
         warn_threads.append(thread)
 
     if warn_threads:
+
+        def _describe(t: threading.Thread) -> str:
+            target = getattr(t, '_target', None)
+            target_desc = (
+                f'{target.__module__}.{target.__qualname__}'
+                if target is not None
+                and hasattr(target, '__qualname__')
+                and hasattr(target, '__module__')
+                else repr(target)
+            )
+            return f'{t} target={target_desc}'
+
         applog.warning(
             '%s',
             '\n '.join(
@@ -548,7 +576,7 @@ def interpreter_shutdown_sanity_checks() -> None:
                     f' unexpected thread(s) still running at'
                     f' Python shutdown:'
                 ]
-                + [str(t) for t in warn_threads]
+                + [_describe(t) for t in warn_threads]
             )
             + '\nThreads should spin themselves down at app shutdown'
             ' (see App.add_shutdown_task()).',

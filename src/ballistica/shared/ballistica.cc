@@ -29,8 +29,13 @@
 // If desired, define main() in the global namespace.
 #if BA_MONOLITHIC_BUILD && BA_DEFINE_MAIN
 auto main(int argc, char** argv) -> int {
+  // Capture an epoch-seconds time as early as possible so logs can show
+  // timings relative to actual process start. Matches Python's
+  // time.time() so the two share an anchor.
+  auto launch_time = ballistica::core::Platform::TimeSinceEpochSeconds();
+
   auto core_config =
-      ballistica::core::CoreConfig::ForArgsAndEnvVars(argc, argv);
+      ballistica::core::CoreConfig::ForArgsAndEnvVars(argc, argv, launch_time);
 
   // Arg-parsing may have yielded an error or printed simple output for
   // things such as '--help', in which case we're done.
@@ -44,7 +49,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22804;
+const int kEngineBuildNumber = 22822;
 const char* kEngineVersion = "1.7.62";
 const int kEngineApiVersion = 9;
 
@@ -72,6 +77,28 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // Ballistica functionality implicitly uses core, so we should always
     // import it first thing even if we don't explicitly use it.
     l_core = core::CoreFeatureSet::Import(&core_config);
+
+    // Test hook for the early-log drain path used by
+    // FatalErrorHandling::ReportFatalError. Exercised by
+    // tests/test_base/test_held_logs.py. At this point core import has
+    // flipped python_logging_calls_enabled_ to false-and-deferred (since
+    // expect_log_handler_setup defaulted true for any invocation that
+    // isn't a -c command), so these log calls land in the early-log
+    // buffer. FatalError then runs ReportFatalError, which drains the
+    // buffer to stderr before aborting. If that path breaks, the test
+    // detects the missing [held-log] lines. Keep the message strings
+    // stable — the test asserts on their substrings.
+    if (const char* crashenv = getenv("BA_CRASH_TEST")) {
+      if (!strcmp(crashenv, "held_logs")) {
+        l_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                             "held-log-test: line 1");
+        l_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                             "held-log-test: line 2");
+        l_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                             "held-log-test: line 3");
+        FatalError("held-log-test: triggered fatal");
+      }
+    }
 
     auto time2 = core::Platform::TimeMonotonicMillisecs();
 

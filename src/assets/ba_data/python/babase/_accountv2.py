@@ -15,7 +15,7 @@ from efro.error import CommunicationError
 from efro.call import CallbackSet
 from bacommon.login import LoginType
 
-from babase._logging import accountlog, netlog
+from babase._logging import accountlog, lifecyclelog, netlog
 import _babase
 
 if TYPE_CHECKING:
@@ -58,6 +58,11 @@ class AccountV2Subsystem:
         self._kicked_off_workspace_load = False
 
         self.login_adapters: dict[LoginType, LoginAdapter] = {}
+
+        #: Whether Discord SDK support is compiled into this build. True
+        #: means the Discord sign-in flow and reconnect-on-launch are
+        #: usable; gate Discord-specific UI on this.
+        self.discord_available: bool = _babase.discord_available()
 
         self._implicit_signed_in_adapter: LoginAdapter | None = None
         self._implicit_state_changed = False
@@ -160,6 +165,7 @@ class AccountV2Subsystem:
 
         # Ok; no workspace to worry about; carry on.
         if not self._initial_sign_in_completed:
+            lifecyclelog.info('initial-sign-in path: account-no-workspace')
             self._initial_sign_in_completed = True
             _babase.app.on_initial_sign_in_complete()
 
@@ -208,6 +214,7 @@ class AccountV2Subsystem:
         :meta private:
         """
         if not self._initial_sign_in_completed:
+            lifecyclelog.info('initial-sign-in path: no-account')
             self._initial_sign_in_completed = True
             _babase.app.on_initial_sign_in_complete()
 
@@ -352,6 +359,9 @@ class AccountV2Subsystem:
                 elif login_type is LoginType.EMAIL:
                     # Not possible; just here for exhaustive coverage.
                     service_str = None
+                elif login_type is LoginType.DISCORD:
+                    # Not platform-implicit; can't fire here.
+                    service_str = None
                 else:
                     assert_never(login_type)
                 if service_str is not None:
@@ -408,6 +418,21 @@ class AccountV2Subsystem:
         Once credentials are set, they will be verified in the cloud
         asynchronously. If verification is successful, the
         :attr:`primary` attr will be set to the resulting account.
+        """
+        raise NotImplementedError()
+
+    def on_discord_auth_received(
+        self, refresh_token: str | None, discord_user_id: str | None
+    ) -> None:
+        """Receive a Discord OAuth2 refresh token + user-id from native.
+
+        Called whenever the Discord SDK obtains a new refresh token —
+        on initial sign-in and on each subsequent token rotation during
+        a successful ``RefreshToken`` call. Implementations should
+        persist the pair atomically so a crash cannot leave us with a
+        stale token.
+
+        :meta private:
         """
         raise NotImplementedError()
 
@@ -554,6 +579,7 @@ class AccountV2Subsystem:
 
     def _on_set_active_workspace_completed(self) -> None:
         if not self._initial_sign_in_completed:
+            lifecyclelog.info('initial-sign-in path: workspace-loaded')
             self._initial_sign_in_completed = True
             _babase.app.on_initial_sign_in_complete()
 

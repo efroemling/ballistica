@@ -874,6 +874,9 @@
     <ClInclude Include="..\..\src\ballistica\core\python\core_python.h">
       <Filter>ballistica\core\python</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\core\python\pyembed.h">
+      <Filter>ballistica\core\python</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\core\support\base_soft.h">
       <Filter>ballistica\core\support</Filter>
     </ClInclude>
@@ -1456,6 +1459,9 @@
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_common.h">
       <Filter>ballistica\shared\buildconfig</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_generic.h">
+      <Filter>ballistica\shared\buildconfig</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_headless.h">
       <Filter>ballistica\shared\buildconfig</Filter>
     </ClInclude>
@@ -2005,6 +2011,18 @@
     <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_VolumeCollider.cpp">
       <Filter>external\open_dynamics_engine-ef\ode</Filter>
     </ClCompile>
+    <ClInclude Include="..\..\src\external\monocypher\monocypher.h">
+      <Filter>external\monocypher</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\external\monocypher\monocypher.c">
+      <Filter>external\monocypher</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\external\monocypher\monocypher-ed25519.h">
+      <Filter>external\monocypher</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\external\monocypher\monocypher-ed25519.c">
+      <Filter>external\monocypher</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\external\qr_code_generator\QrCode.cpp">
       <Filter>external\qr_code_generator</Filter>
     </ClCompile>
@@ -2085,6 +2103,7 @@
     <Filter Include="ballistica\ui_v1\python\methods" />
     <Filter Include="ballistica\ui_v1\widget" />
     <Filter Include="external" />
+    <Filter Include="external\monocypher" />
     <Filter Include="external\open_dynamics_engine-ef" />
     <Filter Include="external\open_dynamics_engine-ef\ode" />
     <Filter Include="external\qr_code_generator" />

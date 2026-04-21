@@ -24,8 +24,6 @@ def gen_monolithic_register_modules() -> None:
     from efro.error import CleanError
     from batools.featureset import FeatureSet
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 3:
         raise CleanError('Expected 1 arg.')
     outpath = sys.argv[2]
@@ -132,8 +130,6 @@ def py_examine() -> None:
     from pathlib import Path
     import efrotools.emacs
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 7:
         print('ERROR: expected 7 args')
         sys.exit(255)
@@ -170,8 +166,6 @@ def clean_orphaned_assets() -> None:
     import json
     import subprocess
 
-    pcommand.disallow_in_batch()
-
     # Operate from dist root..
     os.chdir(pcommand.PROJROOT)
 
@@ -205,8 +199,6 @@ def win_ci_install_prereqs() -> None:
     import json
 
     from efrotools.efrocache import get_target
-
-    pcommand.disallow_in_batch()
 
     # We'll need to pull a handful of things out of efrocache for the
     # build to succeed. Normally this would happen through our Makefile
@@ -244,8 +236,6 @@ def win_ci_binary_build() -> None:
     """Simple windows binary build for ci."""
     import subprocess
 
-    pcommand.disallow_in_batch()
-
     # Do the thing.
     subprocess.run(
         [
@@ -267,8 +257,6 @@ def update_cmake_prefab_lib() -> None:
     import os
     from efro.error import CleanError
     from batools.build import PrefabPlatform
-
-    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 5:
         raise CleanError(
@@ -318,8 +306,6 @@ def android_archive_unstripped_libs() -> None:
     from efro.error import CleanError
     from efro.terminal import Clr
 
-    pcommand.disallow_in_batch()
-
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args; src-dir and dst-dir')
     src = Path(sys.argv[2])
@@ -361,8 +347,6 @@ def spinoff_check_submodule_parent() -> None:
     import os
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
     # Make sure we're a spinoff dst project. The spinoff command will be
     # a symlink if this is the case.
     if not os.path.exists('tools/spinoff'):
@@ -387,8 +371,6 @@ def gen_python_init_module() -> None:
     from efro.terminal import Clr
 
     from batools.project import project_centric_path
-
-    pcommand.disallow_in_batch()
 
     if len(sys.argv) != 3:
         raise CleanError('Expected an outfile arg.')
@@ -415,12 +397,10 @@ def tests_warm_start() -> None:
     """
     from batools import apprun
 
-    pcommand.disallow_in_batch()
-
     # We do lots of apprun.python_command() within test. Pre-build the
     # binary that they need to do their thing.
     if not apprun.test_runs_disabled():
-        apprun.acquire_binary_for_python_command(purpose='running tests')
+        apprun.acquire_binary(purpose='running tests')
 
 
 def wsl_build_check_win_drive() -> None:
@@ -436,7 +416,6 @@ def wsl_build_check_win_drive() -> None:
 
     # We use env vars to influence our behavior and thus can't support
     # batch.
-    pcommand.disallow_in_batch()
 
     if (
         subprocess.run(
@@ -532,8 +511,6 @@ def wsl_path_to_win() -> None:
     import os
     from efro.error import CleanError
 
-    pcommand.disallow_in_batch()
-
     try:
         create = False
         escape = False
@@ -584,8 +561,6 @@ def get_modern_make() -> None:
     import platform
     import subprocess
 
-    pcommand.disallow_in_batch()
-
     # Mac gnu make is outdated (due to newer versions using GPL3 I believe).
     # so let's return 'gmake' there which will point to homebrew make which
     # should be up to date.
@@ -614,7 +589,6 @@ def asset_package_resolve() -> None:
     from efro.error import CleanError
     from efrotools.project import getprojectconfig
 
-    pcommand.disallow_in_batch()
     args = pcommand.get_args()
     if len(args) != 1:
         raise CleanError('Expected 1 arg.')
@@ -651,7 +625,6 @@ def asset_package_assemble() -> None:
     from efro.terminal import Clr
     from efrotools.project import getprojectconfig
 
-    pcommand.disallow_in_batch()
     args = pcommand.get_args()
     if len(args) != 2:
         raise CleanError('Expected 2 args.')

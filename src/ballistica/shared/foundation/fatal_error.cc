@@ -8,6 +8,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
@@ -46,6 +47,15 @@ void FatalErrorHandling::ReportFatalError(const std::string& message,
     return;
   }
   reported_ = true;
+
+  // If we died before the Python LogHandler came up (e.g. during
+  // baenv.configure itself), any C++ log calls we made are still sitting
+  // in the early-log buffer. Drop them to stderr/platform-log now so
+  // they aren't silently lost along with whatever context they'd
+  // provide.
+  if (g_core && g_core->python) {
+    g_core->python->DrainEarlyLogsToStderr();
+  }
 
   // Our main goal here varies based off whether we are an unmodified
   // blessed build. If we are, our main goal is to communicate as much info

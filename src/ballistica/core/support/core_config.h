@@ -14,7 +14,8 @@ namespace ballistica::core {
 /// initing the core feature-set.
 class CoreConfig {
  public:
-  static auto ForArgsAndEnvVars(int argc, char** argv) -> CoreConfig;
+  static auto ForArgsAndEnvVars(int argc, char** argv, seconds_t launch_time)
+      -> CoreConfig;
 
   static auto ForEnvVars() -> CoreConfig;
 
@@ -63,6 +64,24 @@ class CoreConfig {
 
   /// Disable writing of bytecode (.pyc) files.
   bool dont_write_bytecode{};
+
+  /// Wall-clock seconds-since-epoch captured as early as possible at
+  /// process start (typically the first line of main()). Passed on to
+  /// baenv.configure() so the Python-side log-handler's 'relative time'
+  /// anchor matches process start rather than baenv.configure() entry.
+  /// Unit matches Python's time.time() so the two can be compared.
+  seconds_t launch_time{};
+
+  /// If true, indicates the caller intends to bring up a Python
+  /// LogHandler later in startup (typically via
+  /// baenv.configure(setup_logging=True)). When set, C++ log calls made
+  /// before that handler is wired up are buffered and replayed through
+  /// it with their original timestamps, rather than being emitted to
+  /// Python's default root logger (which at default WARNING would drop
+  /// INFO/DEBUG messages silently). When false (the default) log calls
+  /// flow through to Python as soon as the interpreter is ready.
+  /// Auto-derived by ForArgsAndEnvVars() as !call_command.has_value().
+  bool expect_log_handler_setup{};
 };
 
 }  // namespace ballistica::core

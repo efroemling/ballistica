@@ -65,6 +65,7 @@ class ButtonWidget : public Widget {
   void set_better_bg_fit(bool val) { better_bg_fit_ = val; }
   auto set_style(Style s) { style_ = s; }
   enum class IconType : uint8_t { kNone, kCancel, kStart };
+  enum class TransitionType : uint8_t { kInLeft, kScale };
   void SetTextLiteral(bool val);
   void SetText(const std::string& text);
   auto text() const -> std::string { return text_->text_raw(); }
@@ -84,6 +85,7 @@ class ButtonWidget : public Widget {
   void SetMeshTransparent(base::MeshAsset* val);
   void SetMeshOpaque(base::MeshAsset* val);
   auto set_transition_delay(millisecs_t val) { transition_delay_ = val; }
+  void set_transition_type(TransitionType val) { transition_type_ = val; }
   void OnRepeatTimerExpired();
   auto set_extra_touch_border_scale(float scale) {
     extra_touch_border_scale_ = scale;
@@ -112,6 +114,7 @@ class ButtonWidget : public Widget {
 
   IconType icon_type_{};
   Style style_{};
+  TransitionType transition_type_{TransitionType::kInLeft};
   bool enabled_{true};
   bool selectable_{true};
   bool sound_enabled_{true};

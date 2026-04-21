@@ -103,6 +103,8 @@ class BasePython {
     kHaveAccountV2CredentialsCall,
     kImplicitSignInCall,
     kImplicitSignOutCall,
+    kDiscordAuthReceivedCall,
+    kDiscordSignInTokenResponseCall,
     kLoginAdapterGetSignInTokenResponseCall,
     kPreEnv,
     kOpenURLWithWebBrowserModuleCall,

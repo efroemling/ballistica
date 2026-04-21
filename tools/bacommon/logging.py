@@ -41,7 +41,9 @@ class ClientLoggerName(Enum):
     ACCOUNT_CLIENT_V2 = 'ba.accountclientv2'
     ACCOUNT = 'ba.account'
     LOGIN_ADAPTER = 'ba.loginadapter'
+    DISCORD = 'ba.discord'
     UI = 'ba.ui'
+    WORKSPACE = 'ba.workspace'
 
     @property
     def description(self) -> str:
@@ -87,8 +89,12 @@ class ClientLoggerName(Enum):
             return 'account functionality'
         if self is cls.LOGIN_ADAPTER:
             return 'support for particular login types'
+        if self is cls.DISCORD:
+            return 'Discord Social SDK integration'
         if self is cls.UI:
             return 'anything user-interface related'
+        if self is cls.WORKSPACE:
+            return 'cloud workspace syncing'
         assert_never(self)
 
 

@@ -72,6 +72,8 @@ values = [
     _hooks.have_account_v2_credentials,  # kHaveAccountV2CredentialsCall
     _hooks.implicit_sign_in,  # kImplicitSignInCall
     _hooks.implicit_sign_out,  # kImplicitSignOutCall
+    _hooks.discord_auth_received,  # kDiscordAuthReceivedCall
+    _hooks.discord_sign_in_token_response,  # kDiscordSignInTokenResponseCall
     _hooks.login_adapter_get_sign_in_token_response,  # kLoginAdapterGetSignInTokenResponseCall
     _hooks.open_url_with_webbrowser_module,  # kOpenURLWithWebBrowserModuleCall
     _env.on_native_module_import,  # kEnvOnNativeModuleImportCall
