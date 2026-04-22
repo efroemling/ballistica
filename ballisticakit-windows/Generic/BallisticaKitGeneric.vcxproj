@@ -246,6 +246,8 @@
     <ClInclude Include="..\..\src\ballistica\base\audio\audio_streamer.h" />
     <ClCompile Include="..\..\src\ballistica\base\audio\ogg_stream.cc" />
     <ClInclude Include="..\..\src\ballistica\base\audio\ogg_stream.h" />
+    <ClCompile Include="..\..\src\ballistica\base\automation\automation.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\automation\automation.h" />
     <ClCompile Include="..\..\src\ballistica\base\base.cc" />
     <ClInclude Include="..\..\src\ballistica\base\base.h" />
     <ClCompile Include="..\..\src\ballistica\base\discord\discord.cc" />

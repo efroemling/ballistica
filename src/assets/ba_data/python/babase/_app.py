@@ -456,32 +456,62 @@ class App:
     def _pre_interpreter_shutdown(self) -> None:
         """Called just before interpreter is finalized."""
         import gc
+        import faulthandler
         from babase._env import interpreter_shutdown_sanity_checks
 
-        # Spin down connection pools or whatever else used for
-        # networking.
-        self.net.pre_interpreter_shutdown()
+        # Arm a traceback-dump timer for all Python threads in case
+        # anything below wedges (e.g. a threadpool worker stuck on a
+        # socket, a bg thread ignoring engine-done). The C++ side has a
+        # 15s suicide timer armed at shutdown start; by the time we get
+        # here some of that budget has already been consumed, so pick a
+        # shorter window that still fires before the suicide. On a
+        # healthy shutdown this work completes in well under 5s and we
+        # cancel below. Output goes directly to fd 2 rather than
+        # sys.stderr because sys.stderr is replaced by a log-forwarding
+        # wrapper (no fileno()) in headless builds; fd 2 is the raw
+        # stderr, which for headless under basn lands in the task
+        # output stream. Only arm if fd 2 is actually open; on
+        # environments without a stderr attached (Windows GUI with no
+        # console, services run with 2>/dev/null, some embedded
+        # setups) the dump would silently write to a closed fd, so
+        # skip the diagnostic in those cases and let the C++ suicide
+        # timer handle the exit on its own.
+        try:
+            os.fstat(2)
+            stderr_fd_ok = True
+        except OSError:
+            stderr_fd_ok = False
+        if stderr_fd_ok:
+            faulthandler.dump_traceback_later(5.0, exit=False, file=2)
+        try:
+            # Spin down connection pools or whatever else used for
+            # networking.
+            self.net.pre_interpreter_shutdown()
 
-        # Run a last round of cyclic garbage collection - mostly so
-        # we keep ourselves aware of reference cycles that need cleaning
-        # up.
-        self.gc.collect(force=True)
+            # Run a last round of cyclic garbage collection - mostly so
+            # we keep ourselves aware of reference cycles that need
+            # cleaning up.
+            self.gc.collect(force=True)
 
-        # Turn off any garbage-collector debugging or we'll get a huge
-        # dump of stuff as Python is tearing itself down, which we don't
-        # care about.
-        if gc.get_debug() != 0:
-            gc.set_debug(0)
-            # Clear garbage or else we get warnings about uncollectable
-            # objects if we've been running with gc.DEBUG_SAVEALL.
-            gc.garbage.clear()
+            # Turn off any garbage-collector debugging or we'll get a
+            # huge dump of stuff as Python is tearing itself down, which
+            # we don't care about.
+            if gc.get_debug() != 0:
+                gc.set_debug(0)
+                # Clear garbage or else we get warnings about
+                # uncollectable objects if we've been running with
+                # gc.DEBUG_SAVEALL.
+                gc.garbage.clear()
 
-        # Finish up anything the threadpool is working on and kill its
-        # threads.
-        self.threadpool.shutdown()
+            # Finish up anything the threadpool is working on and kill
+            # its threads.
+            self.threadpool.shutdown()
 
-        # General sanity checks for lingering threads/etc.
-        interpreter_shutdown_sanity_checks()
+            # General sanity checks for lingering threads/etc.
+            interpreter_shutdown_sanity_checks()
+        finally:
+            if stderr_fd_ok:
+                faulthandler.cancel_dump_traceback_later()
 
     def run(self) -> None:
         """Run the app to completion.

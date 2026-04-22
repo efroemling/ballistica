@@ -30,6 +30,7 @@ local.properties
 .style.yapf
 .irony
 .claude/worktrees/
+.claude/*.lock
 PUBSYNC_IN_PROGRESS
 _fulltest_buildfile_*
 ballistica_files/

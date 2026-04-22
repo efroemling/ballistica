@@ -166,6 +166,12 @@
     <ClInclude Include="..\..\src\ballistica\base\audio\ogg_stream.h">
       <Filter>ballistica\base\audio</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\automation\automation.cc">
+      <Filter>ballistica\base\automation</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\automation\automation.h">
+      <Filter>ballistica\base\automation</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\base.cc">
       <Filter>ballistica\base</Filter>
     </ClCompile>
@@ -2039,6 +2045,7 @@
     <Filter Include="ballistica\base\app_platform\windows" />
     <Filter Include="ballistica\base\assets" />
     <Filter Include="ballistica\base\audio" />
+    <Filter Include="ballistica\base\automation" />
     <Filter Include="ballistica\base\discord" />
     <Filter Include="ballistica\base\dynamics" />
     <Filter Include="ballistica\base\dynamics\bg" />

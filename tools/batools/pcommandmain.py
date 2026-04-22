@@ -153,6 +153,7 @@ from batools.pcommands3 import (
     generate_flathub_manifest,
     gen_pyembed,
 )
+from batools._automation import test_game_cmd
 
 # pylint: enable=unused-import
 

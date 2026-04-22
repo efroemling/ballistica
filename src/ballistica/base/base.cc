@@ -91,6 +91,15 @@ BaseFeatureSet::BaseFeatureSet()
   // We modify some app behavior when run under the server manager.
   auto* envval = getenv("BA_SERVER_WRAPPER_MANAGED");
   server_wrapper_managed_ = (envval && strcmp(envval, "1") == 0);
+#if BA_ENABLE_AUTOMATION
+  // Opt-in automation FIFO. Inert unless BA_AUTOMATION_FIFO env
+  // var points at a path; tools/pcommand test_game_run sets it
+  // automatically per-silo. See base/automation/automation.h.
+  if (getenv("BA_AUTOMATION_FIFO") != nullptr
+      && getenv("BA_AUTOMATION_FIFO")[0] != '\0') {
+    automation = new Automation(getenv("BA_AUTOMATION_FIFO"));
+  }
+#endif
 }
 
 void BaseFeatureSet::OnModuleExec(PyObject* module) {

@@ -132,6 +132,152 @@ static PyMethodDef PyDiscordAvailableDef = {
     "on this.\n",
 };
 
+// ----------------------- automation native hooks ----------------------------
+// Opt-in via BA_ENABLE_AUTOMATION (CMake -DENABLE_AUTOMATION=ON). See
+// ballistica/base/automation/automation.h and babase/automation.py.
+// Unstable, unsupported API; compiled out of default builds.
+#if BA_ENABLE_AUTOMATION
+
+// --------------- automation_capture_screenshot ------------------------------
+
+static auto PyAutomationCaptureScreenshot(PyObject* self, PyObject* args,
+                                          PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* path = nullptr;
+  const char* tag = "screenshot";
+  static const char* kwlist[] = {"path", "tag", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|s",
+                                   const_cast<char**>(kwlist), &path, &tag)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(BA_AUTOMATION_FIFO env var not set at startup).",
+        PyExcType::kRuntime);
+  }
+  g_base->automation->CaptureScreenshot(path, tag);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationCaptureScreenshotDef = {
+    "automation_capture_screenshot",             // name
+    (PyCFunction)PyAutomationCaptureScreenshot,  // method
+    METH_VARARGS | METH_KEYWORDS,                // flags
+
+    "automation_capture_screenshot(path: str, tag: str = 'screenshot')"
+    " -> None\n"
+    "\n"
+    "Save the next-rendered framebuffer to a PNG file. Requires a\n"
+    "build with ``BA_ENABLE_AUTOMATION`` set.\n"
+    "\n"
+    "Fire-and-forget; the actual glReadPixels + encode + write run on\n"
+    "the graphics thread, and a single ``[automation] <tag> ok|fail\n"
+    "<payload>`` line gets logged to ``ba.app`` when complete. Path\n"
+    "should be absolute. Raises RuntimeError if automation isn't\n"
+    "active in this run (i.e. ``BA_AUTOMATION_FIFO`` wasn't set).\n",
+};
+
+// ----------------- automation_press_at_virtual ------------------------------
+
+static auto PyAutomationPressAtVirtual(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int button = 1;
+  double vx = 0.0;
+  double vy = 0.0;
+  static const char* kwlist[] = {"button", "x", "y", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "idd", const_cast<char**>(kwlist), &button, &vx, &vy)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(BA_AUTOMATION_FIFO env var not set at startup).",
+        PyExcType::kRuntime);
+  }
+  // Synthesized input makes no sense headless (no UI to target).
+  // Surface as a RuntimeError so Python helpers can catch and emit
+  // a structured fail with the caller's tag.
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  g_base->input->PushMouseClickAtVirtualCoords(button, static_cast<float>(vx),
+                                               static_cast<float>(vy));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationPressAtVirtualDef = {
+    "automation_press_at_virtual",            // name
+    (PyCFunction)PyAutomationPressAtVirtual,  // method
+    METH_VARARGS | METH_KEYWORDS,             // flags
+
+    "automation_press_at_virtual(button: int, x: float, y: float) -> None\n"
+    "\n"
+    "Synthesize a mouse-click at the given virtual-screen coordinates.\n"
+    "Requires a build with ``BA_ENABLE_AUTOMATION`` set. Routes through\n"
+    "the normal UI dispatch path so modals, hit-testing, and focus\n"
+    "chain behave like a real click. Raises RuntimeError in headless\n"
+    "builds (no UI to target).\n"
+    "\n"
+    "The coordinate system is the same Widget::GetCenter uses (virtual\n"
+    "screen pixels, origin at top-left). Use a Widget's\n"
+    "``get_screen_space_center()`` plus the screen virtual size to\n"
+    "compute the absolute coords for a given widget.\n",
+};
+
+// --------------- automation_scroll_at_virtual -------------------------------
+
+static auto PyAutomationScrollAtVirtual(PyObject* self, PyObject* args,
+                                        PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  double vx = 0.0;
+  double vy = 0.0;
+  double dx = 0.0;
+  double dy = 0.0;
+  static const char* kwlist[] = {"x", "y", "dx", "dy", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddd",
+                                   const_cast<char**>(kwlist), &vx, &vy, &dx,
+                                   &dy)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(BA_AUTOMATION_FIFO env var not set at startup).",
+        PyExcType::kRuntime);
+  }
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  g_base->input->PushMouseScrollAtVirtualCoords(
+      static_cast<float>(vx), static_cast<float>(vy), static_cast<float>(dx),
+      static_cast<float>(dy));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationScrollAtVirtualDef = {
+    "automation_scroll_at_virtual",            // name
+    (PyCFunction)PyAutomationScrollAtVirtual,  // method
+    METH_VARARGS | METH_KEYWORDS,              // flags
+
+    "automation_scroll_at_virtual(x: float, y: float,\n"
+    "                             dx: float, dy: float) -> None\n"
+    "\n"
+    "Synthesize a mouse-wheel scroll at the given virtual-screen\n"
+    "coordinates. Requires a build with ``BA_ENABLE_AUTOMATION`` set.\n"
+    "Positive dy = scroll up, positive dx = scroll right (matches real\n"
+    "wheel-event sign). Cursor is moved to the target point first\n"
+    "since wheel events dispatch to whatever is under the cursor.\n"
+    "Raises RuntimeError in headless builds (no UI to target).\n",
+};
+
+#endif  // BA_ENABLE_AUTOMATION
+
 // ---------------- discord_reconnect_with_refresh_token ----------------------
 
 static auto PyDiscordReconnectWithRefreshToken(PyObject* self, PyObject* args,
@@ -1789,6 +1935,11 @@ static PyMethodDef PyCrashDef = {
 
 auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
   return {
+#if BA_ENABLE_AUTOMATION
+      PyAutomationCaptureScreenshotDef,
+      PyAutomationPressAtVirtualDef,
+      PyAutomationScrollAtVirtualDef,
+#endif
       PyDiscordRequestSignInTokenDef,
       PyDiscordUpdatePresenceDef,
       PyDiscordAvailableDef,

@@ -119,13 +119,6 @@ def _get_py_targets(
                 f'{ASSETS_SRC}/server'
             ):
                 in_subset = 'public'
-                # Specific files under ba_data that are internal-only
-                # despite living in the otherwise-public tree.
-                if os.path.join(proot, fname) in {
-                    f'{ASSETS_SRC}/ba_data/python/babase/automation.py',
-                    f'{ASSETS_SRC}/ba_data/python/bauiv1/automation.py',
-                }:
-                    in_subset = 'private-common'
             elif proot.startswith('tools/efro') and not proot.startswith(
                 'tools/efrotools'
             ):

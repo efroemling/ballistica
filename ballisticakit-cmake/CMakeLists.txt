@@ -109,6 +109,18 @@ if(TEST_BUILD)
   target_compile_definitions(common_deps INTERFACE BA_VARIANT_TEST_BUILD=1)
 endif()
 
+# Opt-in automation control channel (FIFO + in-process Python dispatch).
+# Unstable, unsupported public API — gated off by default; users opt in
+# via -DENABLE_AUTOMATION=ON. POSIX-only; fail fast on Windows rather
+# than silently producing a build that won't work.
+if(ENABLE_AUTOMATION AND WIN32)
+  message(FATAL_ERROR
+    "ENABLE_AUTOMATION is POSIX-only and not supported on Windows.")
+endif()
+if(ENABLE_AUTOMATION)
+  target_compile_definitions(common_deps INTERFACE BA_ENABLE_AUTOMATION=1)
+endif()
+
 set(BA_SRC_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../src")
 target_include_directories(common_deps INTERFACE
   "${BA_SRC_ROOT}"
@@ -278,6 +290,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/audio/audio_streamer.h
   ${BA_SRC_ROOT}/ballistica/base/audio/ogg_stream.cc
   ${BA_SRC_ROOT}/ballistica/base/audio/ogg_stream.h
+  ${BA_SRC_ROOT}/ballistica/base/automation/automation.cc
+  ${BA_SRC_ROOT}/ballistica/base/automation/automation.h
   ${BA_SRC_ROOT}/ballistica/base/base.cc
   ${BA_SRC_ROOT}/ballistica/base/base.h
   ${BA_SRC_ROOT}/ballistica/base/discord/discord.cc

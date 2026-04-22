@@ -67,8 +67,13 @@ Discord::Discord() : client_{std::make_unique<discordpp::Client>()} {
         // Warning-severity each time. That's harmless noise for users
         // who don't have Discord desktop installed, so demote it to
         // Debug — still visible at DEBUG, silent at default WARNING.
+        // analytics.cpp fires similarly when the SDK's internal
+        // analytics subsystem tries to emit an event before a token
+        // is available — routine SDK-side race, not anything we care
+        // about (we don't use the SDK's analytics).
         auto level{TranslateSeverity(severity)};
-        if (message.find("rpc_manager.cpp") != std::string::npos) {
+        if (message.find("rpc_manager.cpp") != std::string::npos
+            || message.find("analytics.cpp") != std::string::npos) {
           level = LogLevel::kDebug;
         }
         g_core->logging->Log(LogName::kBaDiscord, level, "SDK: " + message);

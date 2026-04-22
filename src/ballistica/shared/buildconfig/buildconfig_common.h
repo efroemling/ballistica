@@ -186,6 +186,14 @@ namespace ballistica {
 #define BA_MINSDL_BUILD 0
 #endif
 
+// Is the opt-in automation control channel compiled in? See
+// ``src/ballistica/base/automation/`` and ``babase.automation``.
+// Unstable/unsupported dev tool; off by default. Enable in CMake via
+// -DENABLE_AUTOMATION=ON (POSIX-only).
+#ifndef BA_ENABLE_AUTOMATION
+#define BA_ENABLE_AUTOMATION 0
+#endif
+
 // Is this a debug build?
 #ifndef BA_DEBUG_BUILD
 #define BA_DEBUG_BUILD 0
