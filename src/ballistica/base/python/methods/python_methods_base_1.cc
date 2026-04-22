@@ -10,6 +10,9 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/empty_app_mode.h"
 #include "ballistica/base/audio/audio_server.h"
+#if BA_ENABLE_AUTOMATION
+#include "ballistica/base/automation/automation.h"
+#endif
 #include "ballistica/base/discord/discord.h"
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/input/input.h"

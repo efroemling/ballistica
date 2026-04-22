@@ -13,6 +13,9 @@
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_server.h"
+#if BA_ENABLE_AUTOMATION
+#include "ballistica/base/automation/automation.h"
+#endif
 #include "ballistica/base/discord/discord.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_server.h"
 #include "ballistica/base/graphics/graphics.h"
