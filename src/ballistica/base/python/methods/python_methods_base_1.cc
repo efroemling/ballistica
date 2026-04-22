@@ -137,7 +137,7 @@ static PyMethodDef PyDiscordAvailableDef = {
 
 // ----------------------- automation native hooks ----------------------------
 // Opt-in via BA_ENABLE_AUTOMATION (CMake -DENABLE_AUTOMATION=ON). See
-// ballistica/base/automation/automation.h and babase/automation.py.
+// ballistica/base/automation/automation.h and babase/_automation.py.
 // Unstable, unsupported API; compiled out of default builds.
 #if BA_ENABLE_AUTOMATION
 

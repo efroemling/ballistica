@@ -187,7 +187,7 @@ namespace ballistica {
 #endif
 
 // Is the opt-in automation control channel compiled in? See
-// ``src/ballistica/base/automation/`` and ``babase.automation``.
+// ``src/ballistica/base/automation/`` and ``babase._automation``.
 // Unstable/unsupported dev tool; off by default. Enable in CMake via
 // -DENABLE_AUTOMATION=ON (POSIX-only).
 #ifndef BA_ENABLE_AUTOMATION

@@ -15,7 +15,7 @@
 // Unstable, unsupported API — no backward-compatibility guarantees.
 // POSIX-only (named FIFOs). Intentionally siloed from the rest of
 // the engine: it owns its own directory, instantiation site, and
-// Python-side helper module (babase/automation.py). If the design
+// Python-side helper module (babase/_automation.py). If the design
 // needs to change, look here first.
 
 #include "ballistica/shared/buildconfig/buildconfig_common.h"

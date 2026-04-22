@@ -7,7 +7,7 @@
    notice. No backward-compatibility guarantees across versions.
    Use at your own risk.
 
-Companion to :mod:`babase.automation`. Holds the helpers that drive
+Companion to :mod:`babase._automation`. Holds the helpers that drive
 the live widget tree — press/scroll by id or label, wait for widgets,
 inspect / dump widgets. These live here rather than in babase
 because they reach into ``bauiv1``, which isn't present in base-only
@@ -17,7 +17,7 @@ Gating is the same as the babase side (compile-time
 ``BA_ENABLE_AUTOMATION``; runtime ``BA_AUTOMATION_FIFO``); emission
 format is identical (``[automation] <tag> <status> <payload>`` via
 ``ba.app``). The :func:`inspect` helper here bridges back to
-:func:`babase.automation.screenshot`.
+:func:`babase._automation.screenshot`.
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ from __future__ import annotations
 import babase
 import _bauiv1
 
-from babase.automation import _badev, _emit, _evaluate_lstr_json, screenshot
+from babase._automation import _badev, _emit, _evaluate_lstr_json, screenshot
 
 # Toolbar special-widget names exposed by ``bauiv1.get_special_widget``.
 # Enumerated here so automation can reach buttons outside the main-window

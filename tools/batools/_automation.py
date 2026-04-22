@@ -8,7 +8,7 @@
    guarantees. May change or be removed without notice.
 
 Companion to ``src/ballistica/base/automation/`` and
-``babase.automation``: this module provides the ``test_game_cmd``
+``babase._automation``: this module provides the ``test_game_cmd``
 pcommand, which writes a single line of Python to a running game's
 ``<silo>/cmd.fifo`` for execution on its logic thread.
 

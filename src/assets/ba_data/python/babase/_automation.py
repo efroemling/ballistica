@@ -26,7 +26,7 @@ Two-stage opt-in:
 
 This module holds the UI-agnostic helpers. Anything that reaches
 into the live widget tree (press/scroll by id or label, widget
-inspection, waits) lives in :mod:`bauiv1.automation` so that
+inspection, waits) lives in :mod:`bauiv1._automation` so that
 base-only spinoffs don't pull in a ``bauiv1`` dependency.
 
 Results of every helper are reported via a single standardized log
@@ -161,7 +161,7 @@ def _automation_screenshots_dir() -> str:
 def _evaluate_lstr_json(raw: str) -> str:
     """Evaluate a JSON-encoded :class:`babase.Lstr` blob to its display text.
 
-    Exposed so :mod:`bauiv1.automation` can flatten localized labels
+    Exposed so :mod:`bauiv1._automation` can flatten localized labels
     without reaching into the private ``_babase`` module directly.
     """
     return str(_babase.evaluate_lstr(raw))
