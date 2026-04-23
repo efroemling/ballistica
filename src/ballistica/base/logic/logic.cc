@@ -236,8 +236,16 @@ void Logic::OnAppShutdown() {
   assert(g_base->CurrentContext().IsEmpty());
   assert(shutting_down_);
 
+  // Arm a Python traceback dump in case shutdown wedges; on platforms
+  // where it can write (fd 2 usable) it will fire at the hard deadline
+  // and the returned suicide-timer delay includes a bit of extra
+  // runway for the dump to finish. On platforms where it can't arm,
+  // the returned delay is just the hard deadline.
+  auto suicide_delay_seconds = g_base->python->ShutdownFaultHandlerArm();
+
   // Nuke the app from orbit if we get stuck while shutting down.
-  g_core->StartSuicideTimer("shutdown", 15000);
+  g_core->StartSuicideTimer("shutdown",
+                            static_cast<int>(suicide_delay_seconds * 1000.0));
 
   // Tell base to disallow shutdown-suppressors from here on out.
   g_base->ShutdownSuppressDisallow();

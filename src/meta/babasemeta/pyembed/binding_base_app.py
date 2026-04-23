@@ -18,6 +18,8 @@ values = [
     app.on_native_unsuspend,  # kAppOnNativeUnsuspendCall
     app.on_native_shutdown,  # kAppOnNativeShutdownCall
     app.on_native_shutdown_complete,  # kAppOnNativeShutdownCompleteCall
+    app.shutdown_fault_handler_arm,  # kAppShutdownFaultHandlerArmCall
+    app.shutdown_fault_handler_disarm,  # kAppShutdownFaultHandlerDisarmCall
     app.on_native_active_changed,  # kAppOnNativeActiveChangedCall
     app.devconsole.do_refresh_tab,  # kAppDevConsoleDoRefreshTabCall
     app.devconsole.save_tab,  # kAppDevConsoleSaveTabCall

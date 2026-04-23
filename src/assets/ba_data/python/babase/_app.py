@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import io
 import os
 import time
 import asyncio
@@ -76,6 +77,20 @@ class App:
     #: so we need to keep it under that. Staying above 10 should allow
     #: 10 second network timeouts to happen though.
     SHUTDOWN_TASK_TIMEOUT_SECONDS = 12
+
+    #: Hard deadline for shutdown. The C++ side arms a suicide timer at
+    #: this many seconds from the start of shutdown; if shutdown hasn't
+    #: completed by then we're considered officially hung. On platforms
+    #: where the Python faulthandler can write to fd 2, a traceback dump
+    #: is also armed to fire at this same deadline (so we get a dump of
+    #: every thread before we die) and the suicide timer is extended by
+    #: :attr:`SHUTDOWN_FAULTHANDLER_RUNWAY_SECONDS` to give the dump
+    #: time to finish writing.
+    SHUTDOWN_SUICIDE_TIMEOUT_SECONDS: float = 15.0
+
+    #: Extra time added to the suicide timer on faulthandler-capable
+    #: platforms so the dump has room to complete before we die.
+    SHUTDOWN_FAULTHANDLER_RUNWAY_SECONDS: float = 2.0
 
     def __init__(self) -> None:
         """(internal)
@@ -162,6 +177,7 @@ class App:
         self._native_suspended = False
         self._native_shutdown_called = False
         self._native_shutdown_complete_called = False
+        self._fault_handler_armed = False
         self._initial_sign_in_completed = False
         self._called_on_initing = False
         self._called_on_loading = False
@@ -453,36 +469,71 @@ class App:
             )
         self._shutdown_tasks.append(coro)
 
+    def shutdown_fault_handler_arm(self) -> float:
+        """Arm a Python traceback dump for shutdown diagnostics.
+
+        Called from the C++ shutdown path, colocated with the
+        suicide-timer arm. Returns the number of seconds C++ should use
+        for its suicide timer: :attr:`SHUTDOWN_SUICIDE_TIMEOUT_SECONDS`
+        if the faulthandler dump can't be armed (e.g. ``fd 2`` is not
+        available), or that value plus
+        :attr:`SHUTDOWN_FAULTHANDLER_RUNWAY_SECONDS` if it was armed
+        successfully — the extra time gives the dump room to finish
+        writing before the process is killed.
+
+        Pairs with :meth:`shutdown_fault_handler_disarm`, which is
+        called at the end of ``_pre_interpreter_shutdown``.
+        """
+        import faulthandler
+
+        # Output goes directly to fd 2 rather than sys.stderr because
+        # sys.stderr is replaced by a log-forwarding wrapper (no
+        # fileno()) in headless builds; fd 2 is the raw stderr, which
+        # for headless under basn lands in the task output stream. Only
+        # arm if fd 2 is actually open; on environments without a
+        # stderr attached (Windows GUI with no console, services run
+        # with 2>/dev/null, some embedded setups) the dump would
+        # silently write to a closed fd, so skip the diagnostic in
+        # those cases and let the C++ suicide timer handle the exit on
+        # its own.
+        try:
+            os.fstat(2)
+        except OSError:
+            return self.SHUTDOWN_SUICIDE_TIMEOUT_SECONDS
+        # Flip the armed flag before arming so that if something goes
+        # wrong mid-arm a subsequent disarm still cancels the timer.
+        self._fault_handler_armed = True
+        try:
+            faulthandler.dump_traceback_later(
+                self.SHUTDOWN_SUICIDE_TIMEOUT_SECONDS, exit=False, file=2
+            )
+        except Exception:
+            self._fault_handler_armed = False
+            return self.SHUTDOWN_SUICIDE_TIMEOUT_SECONDS
+        return (
+            self.SHUTDOWN_SUICIDE_TIMEOUT_SECONDS
+            + self.SHUTDOWN_FAULTHANDLER_RUNWAY_SECONDS
+        )
+
+    def shutdown_fault_handler_disarm(self) -> None:
+        """Cancel the shutdown faulthandler dump armed earlier.
+
+        Safe to call even if :meth:`shutdown_fault_handler_arm` was
+        never called or didn't arm anything — in that case it's a
+        no-op.
+        """
+        if not self._fault_handler_armed:
+            return
+        self._fault_handler_armed = False
+        import faulthandler
+
+        faulthandler.cancel_dump_traceback_later()
+
     def _pre_interpreter_shutdown(self) -> None:
         """Called just before interpreter is finalized."""
         import gc
-        import faulthandler
         from babase._env import interpreter_shutdown_sanity_checks
 
-        # Arm a traceback-dump timer for all Python threads in case
-        # anything below wedges (e.g. a threadpool worker stuck on a
-        # socket, a bg thread ignoring engine-done). The C++ side has a
-        # 15s suicide timer armed at shutdown start; by the time we get
-        # here some of that budget has already been consumed, so pick a
-        # shorter window that still fires before the suicide. On a
-        # healthy shutdown this work completes in well under 5s and we
-        # cancel below. Output goes directly to fd 2 rather than
-        # sys.stderr because sys.stderr is replaced by a log-forwarding
-        # wrapper (no fileno()) in headless builds; fd 2 is the raw
-        # stderr, which for headless under basn lands in the task
-        # output stream. Only arm if fd 2 is actually open; on
-        # environments without a stderr attached (Windows GUI with no
-        # console, services run with 2>/dev/null, some embedded
-        # setups) the dump would silently write to a closed fd, so
-        # skip the diagnostic in those cases and let the C++ suicide
-        # timer handle the exit on its own.
-        try:
-            os.fstat(2)
-            stderr_fd_ok = True
-        except OSError:
-            stderr_fd_ok = False
-        if stderr_fd_ok:
-            faulthandler.dump_traceback_later(5.0, exit=False, file=2)
         try:
             # Spin down connection pools or whatever else used for
             # networking.
@@ -510,8 +561,11 @@ class App:
             # General sanity checks for lingering threads/etc.
             interpreter_shutdown_sanity_checks()
         finally:
-            if stderr_fd_ok:
-                faulthandler.cancel_dump_traceback_later()
+            # Cancel the shutdown faulthandler dump armed by the C++
+            # side alongside the suicide timer. If anything above
+            # raises, we still want to cancel so a slow interpreter
+            # finalize doesn't get a spurious dump.
+            self.shutdown_fault_handler_disarm()
 
     def run(self) -> None:
         """Run the app to completion.
@@ -1092,14 +1146,45 @@ class App:
         """Run a shutdown task; report errors and abort if taking too long."""
 
         task = asyncio.create_task(coro)
-        try:
-            await asyncio.wait_for(task, self.SHUTDOWN_TASK_TIMEOUT_SECONDS)
-        except TimeoutError:
-            # Log simple error message if it times out.
-            balog.error('Timed out waiting for shutdown task %s.', coro)
-        except Exception:
+
+        # Use asyncio.wait (not wait_for) so that if we do time out we
+        # still have an uncancelled Task we can call print_stack() on.
+        # wait_for auto-cancels and awaits the task past the timeout,
+        # which leaves print_stack returning 'No stack for <cancelled
+        # Task ...>' by the time we'd try to use it.
+        done, _pending = await asyncio.wait(
+            [task], timeout=self.SHUTDOWN_TASK_TIMEOUT_SECONDS
+        )
+        if task not in done:
+            # Task hung past our timeout. Snapshot its current
+            # suspended stack so the log names a culprit even when
+            # the faulthandler dump can't reach this phase (the
+            # usual case: shutdown completes normally after the
+            # cancel and _pre_interpreter_shutdown disarms the dump
+            # before the 15s deadline).
+            stack_buf = io.StringIO()
+            try:
+                task.print_stack(file=stack_buf)
+            except Exception:  # pylint: disable=broad-exception-caught
+                stack_buf.write('(failed to capture task stack)')
+            stack_text = stack_buf.getvalue().rstrip() or '(empty)'
+            balog.error(
+                'Timed out waiting for shutdown task %s.'
+                ' Current task stack:\n%s',
+                coro,
+                stack_text,
+            )
+            task.cancel()
+            # Let the cancellation propagate briefly so the coroutine
+            # unwinds cleanly; don't block shutdown indefinitely on a
+            # task that may also be ignoring cancel.
+            try:
+                await asyncio.wait([task], timeout=1.0)
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+        elif (exc := task.exception()) is not None:
             # Go with full ugly stack trace for anything unexpected.
-            balog.exception('Error in shutdown task %s.', coro)
+            balog.error('Error in shutdown task %s.', coro, exc_info=exc)
 
     def _on_suspend(self) -> None:
         """Called when the app goes to a suspended state."""

@@ -190,6 +190,19 @@ void BasePython::OnAppShutdownComplete() {
   objs().Get(ObjID::kAppOnNativeShutdownCompleteCall).Call();
 }
 
+auto BasePython::ShutdownFaultHandlerArm() -> double {
+  assert(g_base->InLogicThread());
+  return objs()
+      .Get(ObjID::kAppShutdownFaultHandlerArmCall)
+      .Call()
+      .ValueAsDouble();
+}
+
+void BasePython::ShutdownFaultHandlerDisarm() {
+  assert(g_base->InLogicThread());
+  objs().Get(ObjID::kAppShutdownFaultHandlerDisarmCall).Call();
+}
+
 void BasePython::ApplyAppConfig() { assert(g_base->InLogicThread()); }
 
 void BasePython::OnScreenSizeChange() {
