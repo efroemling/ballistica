@@ -515,6 +515,29 @@ class PrivateGatherTab(GatherTab):
                 )
 
     def _build_join_tab(self) -> None:
+
+        plus = bui.app.plus
+        assert plus is not None
+
+        # Require both V1 and V2 accounts to be valid
+        # block if either is invalid
+        if (
+            plus.get_v1_account_state() != 'signed_in'
+            or plus.accounts.primary is None
+        ):
+            bui.textwidget(
+                parent=self._container,
+                size=(0, 0),
+                h_align='center',
+                v_align='center',
+                maxwidth=self._c_width * 0.8,
+                scale=0.8,
+                color=(0.6, 0.56, 0.6),
+                position=(self._c_width * 0.5, self._c_height * 0.5),
+                text=bui.Lstr(resource='notSignedInErrorText'),
+            )
+            return
+
         bui.textwidget(
             parent=self._container,
             position=(self._c_width * 0.5, self._c_height - 140),

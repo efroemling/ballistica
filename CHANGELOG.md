@@ -36,6 +36,8 @@
   instead of in-left transitions.
 - Very early logs should now be displayed consistently and with accurate timing
   info (good for debugging bootstrapping/lifecycle issues).
+- Fixed an issue allowing unauthenticated users to join private parties.
+
   
 
 ### 1.7.61 (build 22772, api 9, 2026-03-16)
