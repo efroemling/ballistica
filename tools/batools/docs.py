@@ -187,6 +187,22 @@ def generate_sphinx_docs() -> None:
     # Filter all files. Doing this with multiprocessing gives us a very
     # nice speedup vs multithreading which seems gil-constrained.
     _printstatus('Filtering sources...')
+
+    # ProcessPoolExecutor's init calls os.sysconf('SC_SEM_NSEMS_MAX')
+    # to verify enough POSIX semaphores are available. Some agent
+    # sandboxes deny that syscall; when they do, stub the check out
+    # so the pool can still be constructed. Non-sandboxed runs probe
+    # successfully and are untouched. Same trick lives in
+    # efrotools.code for the parallel pylint path.
+    try:
+        os.sysconf('SC_SEM_NSEMS_MAX')
+    except PermissionError:
+        import concurrent.futures.process as _cfp
+
+        # pylint: disable=protected-access
+        _cfp._check_system_limits = lambda: None
+        # pylint: enable=protected-access
+
     futures: list[Future] = []
     with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
         for root, _dirs, files in os.walk(filtered_data_dir):

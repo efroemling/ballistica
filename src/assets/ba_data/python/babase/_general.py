@@ -10,8 +10,14 @@ import weakref
 import random
 import logging
 import inspect
-import warnings
 from typing import TYPE_CHECKING, TypeVar, Protocol, NewType, override
+
+# ``deprecated`` is available from the stdlib in Python 3.13+, but
+# mypy's type stubs currently point at typing_extensions for
+# compatibility across versions (see mypy #16166). Using
+# typing_extensions avoids a mypy-attr-defined error while still
+# giving us the same runtime semantics.
+from typing_extensions import deprecated
 
 from efro.terminal import Clr
 
@@ -256,8 +262,24 @@ else:
                 f' _args={self.args!r} _keywds={self.keywds!r}>'
             )
 
+    @deprecated(
+        'WeakCall should be replaced with either WeakCallPartial'
+        ' (if passing extra args at call time) or WeakCallStrict'
+        ' (if not). Once API 9 support ends, WeakCall can again be'
+        ' used, but it will behave like WeakCallStrict instead of'
+        ' WeakCallPartial.'
+    )
     class WeakCall:
-        """Currently alias of :meth:`WeakCallPartial`."""
+        """Transitional alias of :class:`WeakCallPartial`.
+
+        Deprecated — pick :class:`WeakCallPartial` or
+        :class:`WeakCallStrict` explicitly. The ``@deprecated``
+        decorator emits the runtime warning and is picked up by
+        type-checkers/IDEs so call sites are flagged statically. The
+        ``WeakCall`` name will return after API 9 support ends but
+        will then alias :class:`WeakCallStrict`, so migrating away
+        now avoids a silent behavior change later.
+        """
 
         # Optimize performance a bit; we shouldn't need to be super dynamic.
         __slots__ = ['_call', '_args', '_keywds']
@@ -265,15 +287,6 @@ else:
         _did_invalid_call_warning = False
 
         def __init__(self, call: Any, /, *args: Any, **keywds: Any) -> None:
-            warnings.warn(
-                'WeakCall should be replaced with either WeakCallPartial'
-                ' (if passing extra args at call time) or WeakCallStrict'
-                ' (it not). Once API 9 support ends, WeakCall can again be'
-                ' used, but it will behave like WeakCallStrict instead of'
-                ' WeakCallPartial.',
-                DeprecationWarning,
-                stacklevel=2,
-            )
             # Note: keeping _call, _args, _keywds private in this case
             # since we sub functools.partial for ourself in
             # type-checking so they will be unrecognized anyway. Use
@@ -316,22 +329,28 @@ else:
                 f' _args={self._args!r} _keywds={self._keywds!r}>'
             )
 
+    @deprecated(
+        'Call should be replaced with either CallPartial'
+        ' (if passing extra args at call time) or CallStrict'
+        ' (if not). Once API 9 support ends, Call can again be'
+        ' used, but it will behave like CallStrict instead'
+        ' of CallPartial.'
+    )
     class Call:
-        """Currently alias of :meth:`CallPartial`."""
+        """Transitional alias of :class:`CallPartial`.
+
+        Deprecated — pick :class:`CallPartial` or :class:`CallStrict`
+        explicitly. The ``@deprecated`` decorator emits the runtime
+        warning and is picked up by type-checkers/IDEs so call sites
+        are flagged statically. The ``Call`` name will return after
+        API 9 support ends but will then alias :class:`CallStrict`,
+        so migrating away now avoids a silent behavior change later.
+        """
 
         # Optimize performance a bit; we shouldn't need to be super dynamic.
         __slots__ = ['_call', '_args', '_keywds']
 
         def __init__(self, call: Any, /, *args: Any, **keywds: Any):
-            warnings.warn(
-                'Call should be replaced with either CallPartial'
-                ' (if passing extra args at call time) or CallStrict'
-                ' (it not). Once API 9 support ends, Call can again be'
-                ' used, but it will behave like CallStrict instead'
-                ' of CallPartial.',
-                DeprecationWarning,
-                stacklevel=2,
-            )
             # Note: keeping _call, _args, _keywds private in this case
             # since we sub functools.partial for ourself in
             # type-checking so they will be unrecognized anyway. Use

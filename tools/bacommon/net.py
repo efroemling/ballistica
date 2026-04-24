@@ -71,15 +71,16 @@ class InsecureDirectivePayload:
     time.
     """
 
-    #: Whether the server is telling the client it's OK to use
-    #: insecure (non-TLS) connections — used in regions where TLS is
-    #: blocked/degraded and the client would otherwise have no way to
-    #: reach the service.
-    allow_insecure: Annotated[bool, IOAttrs('a')]
-
-    #: Directive is invalid after this time. Short-lived to limit the
-    #: replay window if a signed response is intercepted.
-    expires: Annotated[datetime.datetime, IOAttrs('e')]
+    #: Directs the client whether to use insecure (non-TLS) connections
+    #: for this server. Intended for regions where TLS is actively
+    #: interfered with by middleboxes (handshake blocking, forced
+    #: termination, etc.) and secure connections to our infra are
+    #: unreliable. Clients latch the first directive they see for the
+    #: session, so the server's signal is take-it-or-leave-it-once
+    #: rather than a continuously-consulted state. Storage-alias ``a``
+    #: is retained so old signed payloads in flight continue to
+    #: deserialize.
+    use_insecure: Annotated[bool, IOAttrs('a')]
 
 
 @ioprepped

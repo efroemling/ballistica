@@ -1,4 +1,4 @@
-### 1.7.62 (build 22825, api 9, 2026-04-23)
+### 1.7.62 (build 22827, api 9, 2026-04-23)
 - Added initial support for signing in with a Discord account as a first-class
   V2 login type, via Discord's Social SDK. Discord support is included in Mac,
   Windows, and Linux test-builds for now, but will expand to Android and Mac App
@@ -36,6 +36,10 @@
   instead of in-left transitions.
 - Very early logs should now be displayed consistently and with accurate timing
   info (good for debugging bootstrapping/lifecycle issues).
+- The 'Use insecure connections' checkbox is now an always/auto/never popup with
+  'auto' being the default. In auto mode the app may opt to use insecure
+  connections in environments that are known to muck with or block secure ones.
+  Choose always or never if you don't want to give it that choice.
   
 
 ### 1.7.61 (build 22772, api 9, 2026-03-16)

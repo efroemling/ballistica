@@ -130,6 +130,11 @@ def _run_shutdown_scenario(instance: str, exec_code: str) -> str:
     # on this step.
     apprun.acquire_binary(purpose=f'shutdown-watchdog {instance}')
 
+    # Skip the UDP listener: these tests don't exercise inbound
+    # networking, and binding the default game port fatals when
+    # multiple smoke jobs run in parallel on the same CI host.
+    env = {**os.environ, 'BA_NO_UDP_LISTENER': '1'}
+
     proc = subprocess.run(
         [
             'tools/pcommand',
@@ -142,6 +147,7 @@ def _run_shutdown_scenario(instance: str, exec_code: str) -> str:
             exec_code,
         ],
         cwd=_PROJROOT,
+        env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         timeout=_SUBPROCESS_TIMEOUT_SECONDS,

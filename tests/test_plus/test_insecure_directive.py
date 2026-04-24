@@ -7,7 +7,7 @@ Exercises the end-to-end path against the prod master server:
 - HTTPS servernodequery (no force arg) should return no directive.
 - Plain-HTTP servernodequery with the force arg should return a
   signed directive that verifies against the embedded public key and
-  carries ``allow_insecure=True`` with a near-future expiry.
+  carries ``use_insecure=True`` with a near-future expiry.
 - The ``ws://`` WebSocket endpoint on one of the returned basn hosts
   should accept a plain-text connection and complete the transport
   handshake -- proof that insecure-mode is actually usable on real
@@ -66,16 +66,14 @@ def test_signed_directive_on_http_force() -> None:
     """Plain-HTTP with the force arg should return a verifiable directive.
 
     Covers the full flow: server signs, client verifies against the
-    embedded public key, payload decodes, expiry is in the expected
-    window. Any of these breaking means the feature is broken.
+    embedded public key, payload decodes. Any of these breaking means
+    the feature is broken.
     """
     pytest.importorskip('cryptography')
 
-    import datetime
     import base64
     from cryptography.hazmat.primitives.asymmetric import ed25519
     from cryptography.exceptions import InvalidSignature
-    from efro.util import utc_now
     from efro.dataclassio import dataclass_from_json
     from bacommon.net import InsecureDirectivePayload
     from bacommon.securedata import STATIC_DATA_PUBLIC_KEYS
@@ -108,17 +106,8 @@ def test_signed_directive_on_http_force() -> None:
 
     parsed = dataclass_from_json(InsecureDirectivePayload, payload.decode())
     assert (
-        parsed.allow_insecure is True
-    ), f'Expected allow_insecure=True from force arg; got {parsed}'
-
-    # Expiry should be near-future and not absurdly far out.
-    now = utc_now()
-    assert (
-        parsed.expires > now
-    ), f'Directive expired ({parsed.expires}) before our clock ({now})'
-    assert parsed.expires < now + datetime.timedelta(
-        minutes=5
-    ), f'Directive expiry is suspiciously far out: {parsed.expires}'
+        parsed.use_insecure is True
+    ), f'Expected use_insecure=True from force arg; got {parsed}'
 
 
 @pytest.mark.skipif(FAST_MODE, reason='fast mode')

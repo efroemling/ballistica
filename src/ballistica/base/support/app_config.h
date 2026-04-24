@@ -47,6 +47,7 @@ class AppConfig {
     kVRHeadRelativeAudio,
     kMacControllerSubsystem,
     kDevConsoleActiveTab,
+    kInsecureConnections,
     kLast  // Sentinel.
   };
 

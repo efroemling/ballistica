@@ -205,6 +205,14 @@ void AppConfig::SetupEntries_() {
       StringEntry("Mac Controller Subsystem", "Classic");
   string_entries_[StringID::kDevConsoleActiveTab] =
       StringEntry("Dev Console Tab", "Python");
+  // Tri-state replacement for the legacy ``Use Insecure Connections``
+  // bool. Values: ``always`` (force ws:// + http://), ``auto`` (use
+  // secure by default, honor server-signed insecure-directive when
+  // present — matches the pre-existing default behavior), ``never``
+  // (force secure, ignore server directive). See
+  // src/assets/ba_data/python/bauiv1lib/settings/advanced.py for UI.
+  string_entries_[StringID::kInsecureConnections] =
+      StringEntry("Insecure Connections", "auto");
 
   int_entries_[IntID::kPort] = IntEntry("Port", kDefaultPort);
   int_entries_[IntID::kMaxFPS] = IntEntry("Max FPS", 60);
