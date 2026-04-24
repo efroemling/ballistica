@@ -368,7 +368,7 @@ class Blast(bs.Actor):
             },
         )
 
-        bs.timer(0.05, self.node.delete)
+        bs.timer(0.05, bs.WeakCallStrict(self.handlemessage, bs.DieMessage()))
 
         # Throw in an explosion and flash.
         evel = (velocity[0], max(-1.0, velocity[1]), velocity[2])
@@ -1028,7 +1028,7 @@ class Bomb(bs.Actor):
 
         # We blew up so we need to go away.
         # NOTE TO SELF: do we actually need this delay?
-        bs.timer(0.001, bs.WeakCallStrict(self.handlemessage, bs.DieMessage()))
+        bs.pushcall(bs.WeakCallStrict(self.handlemessage, bs.DieMessage()))
 
     def _handle_warn(self) -> None:
         if self.texture_sequence and self.node:
