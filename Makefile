@@ -784,6 +784,7 @@ update-check: env-pre-update
 # Bump any pinned version numbers to latest.
 upgrade: env
 	@$(MAKE) venv-upgrade
+	@$(MAKE) python-site-packages
 	@$(PCOMMANDBATCH) echo GRN Upgrade-Project: SUCCESS!
 
 # Tell make which of these targets don't represent files.
@@ -957,6 +958,13 @@ test-ex-verbose: py_check_prepass
 	@$(PCOMMAND) pytest -o log_cli=true -o log_cli_level=debug \
       -s -vv $(TEST_TARGET)
 
+# Run slice 1 of 10 of the extended tests (pytest-split shard).
+# Lets multiple shards run concurrently across CI executors.
+test-ex-split1: py_check_prepass
+	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 1/10\)...
+	@$(PCOMMAND) tests_warm_start
+	@$(PCOMMAND) pytest -v --splits 10 --group 1 $(TEST_TARGET)
+
 # Run tests with any caching disabled.
 test-full: test
 
@@ -984,7 +992,7 @@ test-threadpool:
       tests/test_efro/test_threadpool.py
 
 # Tell make which of these targets don't represent files.
-.PHONY: test test-ex test-ex-verbose test-full test-ex-full \
+.PHONY: test test-ex test-ex-verbose test-ex-split1 test-full test-ex-full \
         test-message test-dataclassio test-rpc
 
 # Run live-server tests for the public REST API (accounts, workspaces).

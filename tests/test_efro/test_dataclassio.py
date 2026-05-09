@@ -975,6 +975,129 @@ def test_extended_data() -> None:
     assert dataclass_to_dict(_TestClass2(vals=(1, 2))) == {'vals': [0, 0]}
 
 
+_NESTED_CB_LOG: list[str] = []
+
+
+@ioprepped
+@dataclass
+class _NestedInner(IOExtendedData):
+    ival: int = 0
+
+    @override
+    @classmethod
+    def will_input(cls, data: dict) -> None:
+        _NESTED_CB_LOG.append('will_input:inner')
+        # Migrate legacy 'ival_old' -> 'ival'.
+        if 'ival_old' in data:
+            data['ival'] = data.pop('ival_old')
+
+    @override
+    def did_input(self) -> None:
+        _NESTED_CB_LOG.append('did_input:inner')
+
+    @override
+    def will_output(self) -> None:
+        _NESTED_CB_LOG.append('will_output:inner')
+        self.ival += 100
+
+
+@ioprepped
+@dataclass
+class _NestedOuter(IOExtendedData):
+    inner: _NestedInner
+    inner_list: list[_NestedInner] = field(default_factory=list)
+    inner_dict: dict[str, _NestedInner] = field(default_factory=dict)
+
+    @override
+    @classmethod
+    def will_input(cls, data: dict) -> None:
+        _NESTED_CB_LOG.append('will_input:outer')
+
+    @override
+    def did_input(self) -> None:
+        _NESTED_CB_LOG.append('did_input:outer')
+
+    @override
+    def will_output(self) -> None:
+        _NESTED_CB_LOG.append('will_output:outer')
+
+
+def test_extended_data_nested() -> None:
+    """IOExtendedData callbacks must fire for nested instances too."""
+    _NESTED_CB_LOG.clear()
+
+    # Input: nested via plain field, list, and dict. All inner instances
+    # use the legacy 'ival_old' key to prove will_input fires on each.
+    indata = {
+        'inner': {'ival_old': 1},
+        'inner_list': [{'ival_old': 2}, {'ival_old': 3}],
+        'inner_dict': {'a': {'ival_old': 4}},
+    }
+    obj = dataclass_from_dict(_NestedOuter, indata)
+
+    # Migrations applied to every nested instance.
+    assert obj.inner.ival == 1
+    assert [i.ival for i in obj.inner_list] == [2, 3]
+    assert obj.inner_dict['a'].ival == 4
+
+    # will_input is top-down: outer fires first, then each inner. We
+    # don't pin the *order* of the four inner calls (dict iteration
+    # order is well-defined for our input but not interesting to test),
+    # only that there are exactly four.
+    will_input_calls = [s for s in _NESTED_CB_LOG if s.startswith('will_input')]
+    assert will_input_calls[0] == 'will_input:outer'
+    assert will_input_calls[1:] == ['will_input:inner'] * 4
+
+    # did_input is bottom-up: all four inners fire before outer.
+    did_input_calls = [s for s in _NESTED_CB_LOG if s.startswith('did_input')]
+    assert did_input_calls == ['did_input:inner'] * 4 + ['did_input:outer']
+
+    # Output: will_output fires on every instance, top-down.
+    _NESTED_CB_LOG.clear()
+    out = dataclass_to_dict(obj)
+    will_output_calls = [
+        s for s in _NESTED_CB_LOG if s.startswith('will_output')
+    ]
+    assert will_output_calls[0] == 'will_output:outer'
+    assert will_output_calls[1:] == ['will_output:inner'] * 4
+
+    # The +100 mutation in inner.will_output reached every nested
+    # instance, proving the callback actually ran on each one and that
+    # mutations are visible to the caller.
+    assert out == {
+        'inner': {'ival': 101},
+        'inner_list': [{'ival': 102}, {'ival': 103}],
+        'inner_dict': {'a': {'ival': 104}},
+    }
+
+
+@ioprepped
+@dataclass
+class _NestedFallbackInner(IOExtendedData):
+    ival: int
+
+    @override
+    @classmethod
+    def handle_input_error(cls, exc: Exception) -> _NestedFallbackInner | None:
+        del exc
+        return cls(ival=-1)
+
+
+@ioprepped
+@dataclass
+class _NestedFallbackOuter:
+    inner: _NestedFallbackInner
+
+
+def test_extended_data_nested_handle_input_error() -> None:
+    """``handle_input_error`` fires for nested dataclasses."""
+
+    # Bad data for _NestedFallbackInner (ival missing) gets rescued by
+    # its handle_input_error even though it's nested, not the root.
+    out = dataclass_from_dict(_NestedFallbackOuter, {'inner': {}})
+    assert out.inner.ival == -1
+
+
 def test_soft_default() -> None:
     """Test soft_default IOAttr value."""
 

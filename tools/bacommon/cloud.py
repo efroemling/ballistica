@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Annotated, override
 from efro.message import Message, Response
 from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.analytics import AnalyticsEvent
-from bacommon.securedata import SecureDataChecker
+from bacommon import securedata
 from bacommon.transfer import DirectoryManifest
 from bacommon.login import LoginType
 from bacommon.docui import DocUIRequest, DocUIResponse
@@ -331,7 +331,46 @@ class SecureDataCheckerRequest(Message):
 class SecureDataCheckerResponse(Response):
     """Here's that checker ya asked for, boss."""
 
-    checker: Annotated[SecureDataChecker, IOAttrs('c')]
+    checker: Annotated[securedata.Reader, IOAttrs('c')]
+
+
+@ioprepped
+@dataclass
+class SecureDataSigningTestRequest(Message):
+    """Ask basn to sign a test payload two ways for client verification.
+
+    Test-only round-trip used to confirm that ed25519 verify
+    (``_babase.verify_ed25519`` in the app binary; ``cryptography``
+    fallback in pytest) accepts both master-signed and
+    delegate-signed payloads against the embedded
+    :data:`~bacommon.securedata.STATIC_DATA_PUBLIC_KEYS`. basn
+    handles this without forwarding to bamaster.
+    """
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [SecureDataSigningTestResponse]
+
+
+@ioprepped
+@dataclass
+class SecureDataSigningTestResponse(Response):
+    """Master- and delegate-signed archives over the same payload.
+
+    The verifier recovers the original payload via
+    :meth:`~bacommon.securedata.Reader.read` regardless of which
+    signing flow produced the archive.
+    """
+
+    #: Archive built with basn's cached static-data master key
+    #: (no cert).
+    master_archive: Annotated[securedata.Archive, IOAttrs('m')]
+
+    #: Archive built with basn's delegated
+    #: :class:`~bacommon.securedata.Writer` (carries a
+    #: master-signed cert).
+    delegate_archive: Annotated[securedata.Archive, IOAttrs('d')]
 
 
 @ioprepped

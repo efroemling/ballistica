@@ -814,6 +814,12 @@ pylsp-mypy==0.7.1 \
 pytest==9.0.3 \
     --hash=sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9 \
     --hash=sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c
+    # via
+    #   -r config/requirements.txt
+    #   pytest-split
+pytest-split==0.11.0 \
+    --hash=sha256:899d7c0f5730da91e2daf283860eb73b503259cb416851a65599368849c7f382 \
+    --hash=sha256:8ebdb29cc72cc962e8eb1ec07db1eeb98ab25e215ed8e3216f6b9fc7ce0ec2b5
     # via -r config/requirements.txt
 python-daemon==3.1.2 \
     --hash=sha256:b906833cef63502994ad48e2eab213259ed9bb18d54fa8774dcba2ff7864cec6 \
@@ -1035,17 +1041,17 @@ types-certifi==2021.10.8.3 \
     --hash=sha256:72cf7798d165bc0b76e1c10dd1ea3097c7063c42c21d664523b928e88b554a4f \
     --hash=sha256:b2d1e325e69f71f7c78e5943d410e650b4707bb0ef32e4ddf3da37f54176e88a
     # via -r config/requirements.txt
-types-docutils==0.22.3.20260408 \
-    --hash=sha256:22d5d45e4e0d65a1bc8280987a73e28669bb1cc9d16b18d0afc91713d1be26da \
-    --hash=sha256:2545a86966022cdf1468d430b0007eba0837be77974a7f3fafa1b04a6815d531
+types-docutils==0.22.3.20260508 \
+    --hash=sha256:47bbac43bee53bcaf99f12f5b4253bf864777c31ac4eda6e3bf6660aa6ceac40 \
+    --hash=sha256:f043dd1fffad161cb671b0e3bf593bb5229b8d40bf365ac7d8337296dc97e6bc
     # via -r config/requirements.txt
 types-filelock==3.2.7 \
     --hash=sha256:0673a25b45725c5c45661fe3744c3d8058653a16e683f0ae4a74afb44a0cdef4 \
     --hash=sha256:ee0ee2b4ec3d491ebe71f7343e21435c3a07f910881275a94788cac42acf4339
     # via -r config/requirements.txt
-types-requests==2.33.0.20260503 \
-    --hash=sha256:02aaa7e3577a13471715bb1bddb693cc985ea514f754b503bf033e6a09a3e528 \
-    --hash=sha256:9721b2d9dbee7131f2fb39f20f0ebb1999c18cef4b512c9a7932f3722de7c5f4
+types-requests==2.33.0.20260508 \
+    --hash=sha256:81b2ae5f0d20967714a6aa5ef9284c05570d7cb06b7de8f2a77b918b63ddd411 \
+    --hash=sha256:fa01459cca184229713df03709db46a905325906d27e042cd4fd7ea3d15d3400
     # via -r config/requirements.txt
 typing-extensions==4.15.0 \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \
@@ -1135,9 +1141,9 @@ ujson==5.12.1 \
     # via
     #   python-lsp-jsonrpc
     #   python-lsp-server
-urllib3==2.6.3 \
-    --hash=sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed \
-    --hash=sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4
+urllib3==2.7.0 \
+    --hash=sha256:231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c \
+    --hash=sha256:9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897
     # via
     #   -r config/requirements.txt
     #   requests

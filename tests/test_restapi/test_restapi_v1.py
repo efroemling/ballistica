@@ -25,13 +25,23 @@ FAST_MODE = os.environ.get('BA_TEST_FAST_MODE') == '1'
 def _delete_workspaces_named(
     authed: AuthedClient, server_url: str, name: str
 ) -> None:
-    """Delete all workspaces with the given name (idempotent cleanup)."""
+    """Delete all workspaces with the given name (idempotent cleanup).
+
+    Accepts 404 on the DELETE in addition to 204 — a parallel session
+    or manual cleanup may have removed the workspace between our LIST
+    and DELETE. Any other status surfaces as a test error so real
+    server/auth regressions don't silently leak storage.
+    """
     r = authed.get(f'{server_url}{Endpoint.WORKSPACES}', timeout=10)
     assert r.status == 200
     for ws in json.loads(r.data).get('workspaces', []):
         if ws['name'] == name:
             path = Endpoint.WORKSPACE.format(workspace_id=ws['id'])
-            authed.delete(f'{server_url}{path}', timeout=10)
+            dr = authed.delete(f'{server_url}{path}', timeout=10)
+            assert dr.status in (
+                204,
+                404,
+            ), f'cleanup DELETE {path} returned {dr.status}: {dr.data!r}'
 
 
 def _upload_workspace_file(

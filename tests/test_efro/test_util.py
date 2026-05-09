@@ -56,3 +56,87 @@ def test_do_once_periodically_reset() -> None:
 
     assert not call(on_iteration=2, period=td)  # count reset to 1, False
     assert call(on_iteration=2, period=td)  # count=2, True again
+
+
+def test_strip_exception_tracebacks_exception_group() -> None:
+    """Tracebacks should be stripped from ExceptionGroup children."""
+    from efro.util import strip_exception_tracebacks
+
+    children: list[Exception] = []
+    for i in range(3):
+        try:
+            raise ValueError(f'child {i}')
+        except ValueError as exc:
+            children.append(exc)
+
+    try:
+        raise ExceptionGroup('group', children)
+    except ExceptionGroup as group:
+        strip_exception_tracebacks(group)
+        assert group.__traceback__ is None
+        for child in group.exceptions:
+            assert child.__traceback__ is None
+
+
+def test_strip_exception_tracebacks_breaks_reference_cycle() -> None:
+    """Without strip, the exc/tb/frame/locals cycle survives refcount.
+
+    The cycle is: ``holder -> exc -> __traceback__ -> tb_frame ->
+    f_localsplus['holder'] -> holder``. PEP 3134 auto-clears the
+    ``as exc:`` binding at except-exit but not the parameter, so
+    the frame keeps a back-reference to the holder.
+    """
+    import gc
+    import weakref
+    from efro.util import strip_exception_tracebacks
+
+    class _Holder:
+        exc: BaseException | None = None
+
+    def _build(holder: _Holder, *, strip: bool) -> None:
+        try:
+            raise ValueError('x')
+        except ValueError as exc:
+            holder.exc = exc
+            if strip:
+                strip_exception_tracebacks(exc)
+
+    was_enabled = gc.isenabled()
+    gc.disable()
+    try:
+        # Without strip: cycle keeps the holder alive past refcount
+        # drop; only cyclic GC reclaims it.
+        h1 = _Holder()
+        _build(h1, strip=False)
+        ref1 = weakref.ref(h1)
+        del h1
+        assert ref1() is not None, 'cycle should keep holder alive'
+        gc.collect()
+        assert ref1() is None, 'cyclic GC should reclaim the cycle'
+
+        # With strip: no cycle; refcount alone reclaims it.
+        h2 = _Holder()
+        _build(h2, strip=True)
+        ref2 = weakref.ref(h2)
+        del h2
+        assert ref2() is None, 'strip should let refcount reclaim it'
+    finally:
+        if was_enabled:
+            gc.enable()
+
+
+def test_strip_exception_tracebacks_nested_group() -> None:
+    """Strip should recurse into nested ExceptionGroups."""
+    from efro.util import strip_exception_tracebacks
+
+    try:
+        raise ValueError('leaf')
+    except ValueError as leaf:
+        inner = ExceptionGroup('inner', [leaf])
+        try:
+            raise ExceptionGroup('outer', [inner]) from leaf
+        except ExceptionGroup as outer:
+            strip_exception_tracebacks(outer)
+            assert outer.__traceback__ is None
+            assert inner.__traceback__ is None
+            assert leaf.__traceback__ is None

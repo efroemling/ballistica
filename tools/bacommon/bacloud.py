@@ -21,6 +21,7 @@ from efro.dataclassio import (
     IOAttrs,
     IOMultiType,
 )
+from bacommon import securedata
 
 if TYPE_CHECKING:
     pass
@@ -70,7 +71,61 @@ if TYPE_CHECKING:
 #               sense (old clients ignore the unknown field and use
 #               ``end_command`` as before), but bumped so logs make
 #               version-skew obvious during the rollout.
-BACLOUD_VERSION = 20
+# 21 (2026-05): WS capability-token wire shape switched from a v1
+#               ad-hoc dotted base64 string (HMAC over the basn
+#               node's comm-token) to a
+#               :class:`bacommon.securedata.Archive`. Embedding
+#               directly skips the base64-of-base64 nesting and
+#               unifies signing on the same Reader/Writer pipeline
+#               every other server-signed artifact uses, which
+#               also lets any basn (not just the issuing one)
+#               verify the token. ``StreamWS.ws_token`` field type
+#               changes accordingly. ``MIN_VERSION`` is bumped to
+#               match so older clients fail loudly rather than
+#               silently mishandling the new field type.
+# 22 (2026-05): Auth unified on ``Authorization: Bearer <value>``
+#               for both API-key and session-login flows. Server
+#               distinguishes by prefix (``bsac-`` = API key;
+#               otherwise session token). Brings bacloud auth in
+#               line with universally-recognized standards: every
+#               intermediary now sees a Bearer header it can
+#               recognize for redaction, masking, etc., instead
+#               of a custom body field that looks like opaque
+#               payload. ``RequestData.token`` is deprecated —
+#               kept on the wire as a soft-default'd ``null`` so
+#               v21 basn nodes parse v22 requests OK during the
+#               rollout window — and will be removed in v23
+#               after rollout completes. Server-side response
+#               still ships ``ResponseData.login`` for
+#               sign-in/sign-out — only the *outbound* direction
+#               changes. ``MIN_VERSION`` is bumped to match (v21
+#               clients send body-token but no Authorization
+#               header; the unified server only reads Bearer, so
+#               v21 clients would silently authenticate as
+#               anonymous).
+# 23 (2026-05): Streamcall WS routing decoupled from kickoff
+#               node, plus loose-end cleanup. Three changes:
+#               (1) ``StreamWS.basn_url`` becomes ``str | None``;
+#               ``None`` means the bacloud client opens the WS to
+#               its own kickoff hostname (whatever it sent the
+#               original request to). Server only fills in a
+#               specific URL when the stream genuinely lives on
+#               one basn (Phase 3 game-server-logs case;
+#               unused today). All current streams are
+#               node-agnostic, so server now sets ``None`` and
+#               WS handshakes can land on any basn the LB
+#               routes them to (any basn can verify the token
+#               post-securedata). (2) ``StreamWS.call_id`` added
+#               as an explicit field — needed for the client to
+#               construct its own URL when ``basn_url`` is
+#               ``None``, and gets call_ids out of URLs (which
+#               leak into proxy/CDN logs) along the way.
+#               (3) ``RequestData.token`` removed entirely;
+#               unified Bearer auth from v22 means it's been
+#               dead code for a wire-version cycle. Drops a
+#               soft-default field that no client populates and
+#               no server reads. ``MIN_VERSION`` matched.
+BACLOUD_VERSION = 23
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -95,10 +150,14 @@ def asset_file_cache_path(filehash: str) -> str:
 @ioprepped
 @dataclass
 class RequestData:
-    """Request sent to bacloud server."""
+    """Request sent to bacloud server.
+
+    Auth: bacloud always passes its current credential (API key or
+    login_token) as ``Authorization: Bearer <value>``. There is no
+    in-body token field — both flows look identical on the wire.
+    """
 
     command: Annotated[str, IOAttrs('c')]
-    token: Annotated[str | None, IOAttrs('t')]
     payload: Annotated[dict, IOAttrs('p')]
     tzoffset: Annotated[float, IOAttrs('z')]
     isatty: Annotated[bool, IOAttrs('y')]
@@ -302,36 +361,51 @@ class StreamFinal(StreamFrame):
 class StreamWS:
     """Direct-WebSocket pickup info for a streamed bacloud call.
 
-    Phase 2 of the streamcall-unification initiative. When a kickoff
-    response carries a ``stream_ws`` field, the bacloud client should
-    open a WebSocket to ``basn_url`` (passing ``ws_token`` on the
-    handshake) instead of falling into the ``_streamcall_poll``
-    loop. The token is a signed capability blob — basn validates it
-    locally with no bamaster hop. Old clients (v19) that don't know
-    about this field naturally fall back to the polling path via
-    ``end_command``; both fields are populated on responses to the
-    new clients to keep the fallback available.
+    When a kickoff response carries a ``stream_ws`` field, the
+    bacloud client should open a WebSocket carrying ``ws_token``
+    on the handshake instead of falling into the ``_streamcall_poll``
+    polling loop. Old clients that don't know about this field fall
+    back to the polling path via ``end_command``; both are
+    populated on responses for compatibility.
 
-    The token expires after a short window (~5 min). For mid-stream
-    WS drops past expiry, the client refreshes via a small bamaster
-    RPC rather than re-kicking-off the whole stream.
+    The token is a signed capability Archive — any basn holding a
+    current :class:`bacommon.securedata.Reader` validates it
+    locally with no bamaster hop. The token expires after a short
+    window (~5 min); for mid-stream drops past expiry, the client
+    refreshes via a small RPC rather than re-kicking off the
+    whole stream.
     """
 
-    #: Hostname (and path) the client should open a WebSocket to.
-    #: Specific basn node — bamaster picks one at kickoff time
-    #: based on capacity in the originator's region. Stream's
-    #: lifetime is bound to that node.
-    basn_url: Annotated[str, IOAttrs('u')]
+    #: ID of the streamcall this token authorizes attaching to.
+    #: Used by the client to construct its own WS URL when
+    #: :attr:`basn_url` is ``None``, and by basn at handshake time
+    #: to confirm the URL path matches the token's claim.
+    call_id: Annotated[str, IOAttrs('c')]
 
-    #: Signed capability token. Carries call_id + originator
-    #: accountid + expiry + HMAC over the basn node's comm-token.
-    #: basn validates locally; bacloud passes it on the WS handshake
-    #: header without needing to inspect the contents.
-    ws_token: Annotated[str, IOAttrs('t')]
+    #: Signed capability Archive — carries the call_id, originator
+    #: accountid, and expiry. Verifiable by any basn holding a
+    #: current :class:`bacommon.securedata.Reader` (which clients
+    #: also receive via the v2-transport handshake). bacloud
+    #: passes it on the WS handshake header without needing to
+    #: inspect the contents.
+    ws_token: Annotated[securedata.Archive, IOAttrs('t')]
 
     #: Unix-seconds expiry of ``ws_token``. Surfaced so the client
     #: knows when to refresh on a mid-stream reconnect.
     expiry_unix_seconds: Annotated[int, IOAttrs('e')]
+
+    #: Optional explicit WSS URL. When ``None`` (the default for
+    #: node-agnostic streams — i.e. all current bacloud streams),
+    #: the client opens its WS to whatever hostname it sent the
+    #: kickoff request to (``regional.ballistica.net`` in prod;
+    #: a per-node dev hostname when ``BACLOUD_SERVER`` is
+    #: overridden), at the path implied by :attr:`call_id`. The
+    #: server fills in a specific URL only when the stream's data
+    #: genuinely lives on one basn (Phase 3 game-server-logs
+    #: case); not used today.
+    basn_url: Annotated[
+        str | None, IOAttrs('u', soft_default=None, store_default=False)
+    ] = None
 
 
 @ioprepped

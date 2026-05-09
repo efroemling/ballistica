@@ -118,20 +118,8 @@ class _Inputter:
         else:
             outcls = self._cls
 
-        # FIXME - should probably move this into _dataclass_from_input
-        # so it can work on nested values.
-        if issubclass(outcls, IOExtendedData):
-            is_ext = True
-            outcls.will_input(values)
-        else:
-            is_ext = False
-
         out = self._dataclass_from_input(outcls, '', values)
         assert isinstance(out, outcls)
-
-        if is_ext:
-            assert isinstance(out, IOExtendedData)
-            out.did_input()
 
         # If we're running in lossy mode, flag the object as such so we
         # don't allow writing it back out and potentially accidentally
@@ -365,6 +353,15 @@ class _Inputter:
                 f' got a {type(values)}.'
             )
 
+        # For special extended data types, give them a chance to mutate
+        # incoming data before construction. Note that this fires for
+        # *every* dataclass we construct, not just the top-level one.
+        if issubclass(cls, IOExtendedData):
+            is_ext = True
+            cls.will_input(values)
+        else:
+            is_ext = False
+
         prep = PrepSession(explicit=False).prep_dataclass(
             cls, recursion_level=0
         )
@@ -480,6 +477,9 @@ class _Inputter:
             ) from exc
         if extra_attrs:
             setattr(out, EXTRA_ATTRS_ATTR, extra_attrs)
+        if is_ext:
+            assert isinstance(out, IOExtendedData)
+            out.did_input()
         return out
 
     def _type_check_soft_default(

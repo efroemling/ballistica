@@ -249,21 +249,18 @@ class App:
 
         url = f'https://{BACLOUD_SERVER}/bacloudcmd'
         headers = {'User-Agent': f'bacloud/{BACLOUD_VERSION}'}
-        if self._api_key is not None:
-            headers['Authorization'] = f'Bearer {self._api_key}'
+        # Single auth path: API key takes precedence; otherwise the
+        # login_token from interactive sign-in. Either way, it
+        # rides as a standard Authorization Bearer header.
+        bearer = self._api_key or self._state.login_token
+        if bearer is not None:
+            headers['Authorization'] = f'Bearer {bearer}'
 
         rdata = {
             'v': BACLOUD_VERSION,
             'r': dataclass_to_json(
                 RequestData(
                     command=cmd,
-                    # In API-key mode we explicitly send no
-                    # session token; auth travels via the header.
-                    token=(
-                        None
-                        if self._api_key is not None
-                        else self._state.login_token
-                    ),
                     payload=payload,
                     tzoffset=get_tz_offset_seconds(),
                     isatty=sys.stdout.isatty(),
@@ -789,9 +786,7 @@ class App:
         # pylint: disable=cyclic-import
         from bacommontools.streamws import consume_via_ws
 
-        bearer = self._api_key
-        if bearer is None and self._state.login_token is not None:
-            bearer = self._state.login_token
+        bearer = self._api_key or self._state.login_token
         return consume_via_ws(response, bearer=bearer)
 
     def run_interactive_command(self, cwd: str, args: list[str]) -> None:

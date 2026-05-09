@@ -55,7 +55,10 @@ class IOExtendedData:
         """Called before data is sent to an outputter.
 
         Can be overridden to validate or filter data before
-        sending it on its way.
+        sending it on its way. Fires on every dataclass instance in
+        the object graph (not just the top level), in top-down order.
+        Mutations made here are visible to the caller after output,
+        since this runs on the caller's own instance.
         """
 
     @classmethod
@@ -63,13 +66,19 @@ class IOExtendedData:
         """Called on data before a class instance is created from it.
 
         Can be overridden to migrate old data formats to new, etc.
+        Fires on every dataclass-shaped dict in the input (not just
+        the top level), in top-down order. Mutations to ``data`` are
+        applied in place and are visible to the caller.
         """
 
     def did_input(self) -> None:
         """Called on a class instance after created from data.
 
         Can be useful to correct values from the db, etc. in the
-        type-safe form.
+        type-safe form. Fires on every dataclass instance in the
+        object graph (not just the top level), in bottom-up order
+        (children are fully constructed and have had their own
+        ``did_input`` called before their parent's runs).
         """
 
     # pylint: disable=useless-return

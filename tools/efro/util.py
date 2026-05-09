@@ -1125,8 +1125,9 @@ def strip_exception_tracebacks(exc: BaseException) -> None:
     garbage collector.
 
     This call strips tracebacks from the provided exception, any
-    exceptions that were active when it was raised, and any it was
-    explicitly raised from, recursively.
+    exceptions that were active when it was raised, any it was
+    explicitly raised from, and (for :class:`BaseExceptionGroup`)
+    any nested child exceptions, recursively.
 
     Important: ONLY call this when you are fully done with the
     exception — typically at the tail end of an ``except`` block,
@@ -1174,6 +1175,10 @@ def strip_exception_tracebacks(exc: BaseException) -> None:
         cause = getattr(e, '__cause__', None)
         if cause is not None:
             stack.append(cause)
+
+        # Children of a PEP 654 ExceptionGroup.
+        if isinstance(e, BaseExceptionGroup):
+            stack.extend(e.exceptions)
 
 
 def secure_id() -> str:

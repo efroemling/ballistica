@@ -70,12 +70,6 @@ class _Outputter:
                 'Object has been flagged as lossy; output is disallowed.'
             )
 
-        # For special extended data types, call their 'will_output' callback.
-        # FIXME - should probably move this into _process_dataclass so it
-        # can work on nested values.
-        if isinstance(obj, IOExtendedData):
-            obj.will_output()
-
         return self._process_dataclass(type(obj), obj, '')
 
     def soft_default_check(
@@ -92,6 +86,13 @@ class _Outputter:
 
     def _process_dataclass(self, cls: type, obj: Any, fieldpath: str) -> Any:
         # pylint: disable=too-many-branches
+
+        # For special extended data types, call their 'will_output'
+        # callback. Note that this fires for *every* dataclass we
+        # process, not just the top-level one.
+        if isinstance(obj, IOExtendedData):
+            obj.will_output()
+
         prep = PrepSession(explicit=False).prep_dataclass(
             type(obj), recursion_level=0
         )

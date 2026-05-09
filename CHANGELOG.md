@@ -1,4 +1,4 @@
-### 1.7.63 (build 22841, api 9, 2026-05-07)
+### 1.7.63 (build 22844, api 9, 2026-05-08)
 - Fixed mouse-wheel zooming in manual camera mode
 - Now using `uv` instead of `pip`. So now you'll need to install `uv` before
   working with the repo, but this makes things lots faster to work with.
