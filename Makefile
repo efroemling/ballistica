@@ -958,12 +958,44 @@ test-ex-verbose: py_check_prepass
 	@$(PCOMMAND) pytest -o log_cli=true -o log_cli_level=debug \
       -s -vv $(TEST_TARGET)
 
-# Run slice 1 of 10 of the extended tests (pytest-split shard).
+# Path to the pytest-split test-duration database used by the
+# test-ex-splitN shards. Regenerate with test-ex-split-durations.
+TEST_EX_DURATIONS_PATH = config/test_ex_durations
+
+# Run a slice of the extended tests (pytest-split shard 1..4 of 4).
 # Lets multiple shards run concurrently across CI executors.
 test-ex-split1: py_check_prepass
-	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 1/10\)...
+	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 1/4\)...
 	@$(PCOMMAND) tests_warm_start
-	@$(PCOMMAND) pytest -v --splits 10 --group 1 $(TEST_TARGET)
+	@$(PCOMMAND) pytest -v --splits 4 --group 1 \
+      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+
+test-ex-split2: py_check_prepass
+	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 2/4\)...
+	@$(PCOMMAND) tests_warm_start
+	@$(PCOMMAND) pytest -v --splits 4 --group 2 \
+      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+
+test-ex-split3: py_check_prepass
+	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 3/4\)...
+	@$(PCOMMAND) tests_warm_start
+	@$(PCOMMAND) pytest -v --splits 4 --group 3 \
+      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+
+test-ex-split4: py_check_prepass
+	@$(PCOMMANDBATCH) echo BLU Running extended tests \(slice 4/4\)...
+	@$(PCOMMAND) tests_warm_start
+	@$(PCOMMAND) pytest -v --splits 4 --group 4 \
+      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
+
+# Run the full extended test suite and record per-test durations
+# at $(TEST_EX_DURATIONS_PATH) so future test-ex-splitN shards
+# can balance by historical runtime instead of test count.
+test-ex-split-durations: py_check_prepass
+	@$(PCOMMANDBATCH) echo BLU Running extended tests \(recording durations\)...
+	@$(PCOMMAND) tests_warm_start
+	@$(PCOMMAND) pytest -v --store-durations \
+      --durations-path $(TEST_EX_DURATIONS_PATH) $(TEST_TARGET)
 
 # Run tests with any caching disabled.
 test-full: test
@@ -992,7 +1024,9 @@ test-threadpool:
       tests/test_efro/test_threadpool.py
 
 # Tell make which of these targets don't represent files.
-.PHONY: test test-ex test-ex-verbose test-ex-split1 test-full test-ex-full \
+.PHONY: test test-ex test-ex-verbose \
+        test-ex-split1 test-ex-split2 test-ex-split3 test-ex-split4 \
+        test-ex-split-durations test-full test-ex-full \
         test-message test-dataclassio test-rpc
 
 # Run live-server tests for the public REST API (accounts, workspaces).

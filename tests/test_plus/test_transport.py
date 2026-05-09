@@ -9,9 +9,9 @@ Runs against the binary's compiled-in fleet (prod) by default.
 Set ``BA_FLEET=dev`` + ``BA_BOOTSTRAP_OVERRIDE=https://<host>``
 externally to test against dev — useful during development before
 new server endpoints have rolled to prod. ``apprun.acquire_binary``
-provides a headless-server binary (prefab or locally built depending
-on ``BA_APP_RUN_ENABLE_BUILDS``) which is sufficient for transport
-tests.
+provides a headless-server binary (locally built by default; set
+``BA_APP_RUN_USE_PREFAB=1`` to use a prefab instead) which is
+sufficient for transport tests.
 """
 
 from __future__ import annotations

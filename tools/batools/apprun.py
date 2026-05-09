@@ -85,19 +85,70 @@ def acquire_binary(purpose: str, *, gui: bool = False) -> str:
     full asset source tree available; environments like ba-check that
     strip audio/textures/meshes will fail the asset build in this mode.
 
-    By default, downloaded prefab builds will be used here. This allows
-    people without full compiler setups to still perform app runs for
-    things like dummy-module generation. However, someone who *is* able
-    to compile their own binaries might prefer to use their own binaries
-    here so that changes to their local repo are properly reflected in
-    app runs and whatnot. Set environment variable
-    BA_APP_RUN_ENABLE_BUILDS=1 to enable that.
+    By default the binary is built locally so the caller's working-tree
+    edits are reflected in the run. Set ``BA_APP_RUN_USE_PREFAB=1`` to
+    use a prefab binary instead — useful for environments without a
+    full compiler toolchain (public-repo CI, casual contributors). In
+    repos that publish prefabs via efrocache (spinoff/public) the
+    prefab path is a download; in ballistica-internal it falls back to
+    a remote cmake build via cloudshell.
     """
-    import textwrap
-
     binary_build_command: list[str]
-    if os.environ.get('BA_APP_RUN_ENABLE_BUILDS') == '1':
-        # Going the build-it-ourselves route.
+    if os.environ.get('BA_APP_RUN_USE_PREFAB') == '1':
+        # Going the prefab route.
+
+        # Prefab build targets on WSL (Linux running on Windows) will
+        # give us Windows builds which won't work right here. Ask it
+        # for Linux builds instead.
+        env = dict(os.environ, BA_WSL_TARGETS_WINDOWS='0')
+
+        kind = 'gui' if gui else 'headless'
+        if gui:
+            binary_build_command = ['make', 'prefab-gui-release-build']
+            prefab_target = 'gui-release'
+        else:
+            binary_build_command = ['make', 'prefab-server-release-build']
+            prefab_target = 'server-release'
+        binary_path = (
+            subprocess.run(
+                ['tools/pcommand', 'prefab_binary_path', prefab_target],
+                env=env,
+                check=True,
+                capture_output=True,
+            )
+            .stdout.decode()
+            .strip()
+        )
+
+        # The prefab make rule is annotated with __EFROCACHE_TARGET__
+        # so repos that publish prefab artifacts (spinoffs, public)
+        # rewrite it to fetch from efrocache; repos without an
+        # .efrocachemap (ballistica-internal) build from source
+        # instead. Word the message based on which path will run.
+        will_fetch = False
+        if os.path.exists('.efrocachemap'):
+            try:
+                import json
+
+                with open('.efrocachemap', encoding='utf-8') as efh:
+                    will_fetch = binary_path in json.load(efh)
+            except (OSError, ValueError):
+                pass
+
+        if will_fetch:
+            print(
+                f'{Clr.SMAG}Fetching prefab {kind} binary & assets for'
+                f' {purpose}...{Clr.RST}',
+                flush=True,
+            )
+        else:
+            print(
+                f'{Clr.SMAG}Building {kind} binary & assets for'
+                f' {purpose} (via prefab path)...{Clr.RST}',
+                flush=True,
+            )
+    else:
+        # Going the build-it-ourselves route (the default).
 
         if gui:
             print(
@@ -118,58 +169,6 @@ def acquire_binary(purpose: str, *, gui: bool = False) -> str:
                 'build/cmake/server-debug/staged/dist/ballisticakit_headless'
             )
         env = None
-    else:
-        # Ok; going with a downloaded prefab build.
-
-        # By default, prefab build targets on WSL (Linux running on
-        # Windows) will give us Windows builds which won't work right
-        # here. Ask it for Linux builds instead.
-        env = dict(os.environ, BA_WSL_TARGETS_WINDOWS='0')
-
-        # Let the user know how to use their own built binaries instead
-        # if they prefer.
-        note = '\n' + textwrap.fill(
-            f'NOTE: You can set env-var BA_APP_RUN_ENABLE_BUILDS=1'
-            f' to use locally-built binaries for {purpose} instead'
-            f' of prefab ones. This will properly reflect any changes'
-            f' you\'ve made to the C/C++ layer.',
-            80,
-        )
-
-        if gui:
-            print(
-                f'{Clr.SMAG}Fetching prefab gui binary & assets for'
-                f' {purpose}...{note}{Clr.RST}',
-                flush=True,
-            )
-            binary_build_command = ['make', 'prefab-gui-release-build']
-            binary_path = (
-                subprocess.run(
-                    ['tools/pcommand', 'prefab_binary_path', 'gui-release'],
-                    env=env,
-                    check=True,
-                    capture_output=True,
-                )
-                .stdout.decode()
-                .strip()
-            )
-        else:
-            print(
-                f'{Clr.SMAG}Fetching prefab headless binary & assets for'
-                f' {purpose}...{note}{Clr.RST}',
-                flush=True,
-            )
-            binary_build_command = ['make', 'prefab-server-release-build']
-            binary_path = (
-                subprocess.run(
-                    ['tools/pcommand', 'prefab_binary_path', 'server-release'],
-                    env=env,
-                    check=True,
-                    capture_output=True,
-                )
-                .stdout.decode()
-                .strip()
-            )
 
     subprocess.run(binary_build_command, env=env, check=True)
     if not os.path.exists(binary_path):
@@ -195,7 +194,7 @@ def run_headless_capture(
     Designed for capture-style tests that boot the client, observe a
     bit of behavior in the logs, and quit. Like ``python_command``,
     this goes through ``acquire_binary``, so build-vs-prefab is
-    controlled by ``BA_APP_RUN_ENABLE_BUILDS=1`` (default: prefab).
+    controlled by ``BA_APP_RUN_USE_PREFAB=1`` (default: build).
 
     By default ``BA_NO_UDP_LISTENER=1`` is exported so the binary
     never opens a UDP socket. That sidesteps Claude Code's sandbox
