@@ -50,6 +50,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         rsync \
         zstd
 
+# Install uv (used by make env / make cmake-build for venv setup).
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
 # Copy source code
 COPY ./ /ballistica
 

@@ -89,6 +89,9 @@ modules:
     build-commands:
       # FLATPAK_DEST=/app, FLATPAK_ID=net.froemling.bombsquad
       - mkdir -p ${FLATPAK_DEST}/bin/bombsquad
+      # Install uv into /app/bin (already on build PATH) so subsequent
+      # ``make env`` / ``make cmake-build`` can build the project venv.
+      - curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/app/bin INSTALLER_NO_MODIFY_PATH=1 sh
       # we need to fix .venv/bin/python3.13 which is a symlink to system python
       # of the machine the venv was created on, and then update the venv to fix
       # all the shebangs according to the current build env
