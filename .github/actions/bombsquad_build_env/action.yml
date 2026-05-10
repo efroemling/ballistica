@@ -24,7 +24,7 @@ runs:
     # installs uv and uses requirements.txt-keyed caching the same
     # way ``setup-python``'s ``cache: pip`` did before this switch.
     - name: Set up uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@v8.1.0
       with:
         enable-cache: true
         cache-dependency-glob: "config/requirements.txt"
@@ -68,6 +68,6 @@ runs:
         echo CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache" >> $GITHUB_ENV
     - name: Setup sccache
       if: ${{ inputs.using-cmake == 'true' }}
-      uses: mozilla-actions/sccache-action@v0.0.9
+      uses: mozilla-actions/sccache-action@v0.0.10
       with:
         disable_annotations: true
