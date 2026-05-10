@@ -139,12 +139,11 @@ def asset_file_cache_path(filehash: str) -> str:
     assert filehash.islower()
     assert filehash.isalnum()
 
-    # Split into a few levels of directories to keep directory listings
-    # and operations reasonable. This will give 256 top level dirs, each
-    # with 256 subdirs. So if we have 65,536 files in our cache then
-    # dirs will average 1 file each. That seems like a reasonable spread
-    # I think.
-    return f'{filehash[:2]}/{filehash[2:4]}/{filehash[4:]}'
+    # Single level of 256 dirs. Modern filesystems handle huge flat
+    # dirs fine via b-tree/hashed indexing, but a single shard keeps us
+    # under any per-dir entry limits on older/unusual filesystems and
+    # avoids the inode overhead of deeper sharding.
+    return f'{filehash[:2]}/{filehash[2:]}'
 
 
 @ioprepped
