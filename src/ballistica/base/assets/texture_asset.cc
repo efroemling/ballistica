@@ -61,17 +61,21 @@ TextureAsset::TextureAsset() = default;
 TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
                            TextureMinQuality min_quality_in)
     : file_name_(file_in), type_(type_in), min_quality_(min_quality_in) {
+  file_name_full_ =
+      g_base->assets->FindAssetFile(Assets::FileType::kTexture, file_in);
   // CAS-form ref (``<apverid>:<asset_name>``) resolves to a CAS blob
   // whose on-disk name is just a hash — no extension. Set an
   // explicit container hint so the loader can dispatch without
   // sniffing the path. Hardcoded to ``.ktx2`` (FALLBACK_V1 produces
   // KTX2 per initiative decision #12); Phase 3 construct-mode
-  // replaces this with per-profile dispatch.
-  if (file_in.find(':') != std::string::npos) {
+  // replaces this with per-profile dispatch. Headless mode resolves
+  // to a ``.nop`` dummy path which has its own loader branch, so
+  // we leave the container empty in that case and let the matcher's
+  // path-suffix fallback pick the right branch.
+  if (file_in.find(':') != std::string::npos
+      && !file_name_full_.ends_with(".nop")) {
     container_ = ".ktx2";
   }
-  file_name_full_ =
-      g_base->assets->FindAssetFile(Assets::FileType::kTexture, file_in);
   valid_ = true;
 }
 

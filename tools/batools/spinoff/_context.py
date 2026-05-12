@@ -371,6 +371,22 @@ class SpinoffContext:
 
         self._read_state()
 
+        # Defensive: nuke leftover src/config/ from the pre-rename
+        # state. The dir was renamed config/ → pconfig/ on
+        # 2026-05-12 across all repos. Leftover gitignored files
+        # in the old config/ on long-lived workspaces show up as
+        # untracked after the rename pulls through, and the
+        # untracked check below would trip. Safe to drop once
+        # every workspace has cycled past the rename.
+        stale_config = os.path.join(self._src_root, 'config')
+        if os.path.isdir(stale_config):
+            print(
+                f'{Clr.BLU}Removing pre-rename src config/ at'
+                f" '{stale_config}'...{Clr.RST}",
+                flush=True,
+            )
+            subprocess.run(['rm', '-rf', stale_config], check=True)
+
         # First, ask git if there are any untracked files in src. we use
         # git's managed file list so these wouldn't get synced which
         # would be confusing. So we'd rather just error in this case.

@@ -133,9 +133,7 @@ def spinoff_test(args: list[str]) -> None:
                         f" at '{stale_config}'...{Clr.RST}",
                         flush=True,
                     )
-                    subprocess.run(
-                        ['rm', '-rf', stale_config], check=True
-                    )
+                    subprocess.run(['rm', '-rf', stale_config], check=True)
         else:
             # No spinoff project there yet; create it.
             cmd = [
