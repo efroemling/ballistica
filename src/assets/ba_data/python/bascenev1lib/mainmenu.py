@@ -144,26 +144,33 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # ``<apverid>:<asset>`` qualified-ref path through gettexture.
         # Apverid is resolved from the loaded manifest so it tracks dev
         # snapshot rebinds without a hand-edit per build.
+        # Gated on a path that only exists on the original dev's Mac
+        # so this temp test code stays invisible after pubsyncs until
+        # we tear it out.
+        import os
         import babase
 
-        _apverids = [
-            a
-            for a in babase.loaded_asset_package_apverids()
-            if a.startswith('a-0.bastdassets')
-        ]
-        if _apverids:
-            self._cas_hello_image = bs.NodeActor(
-                bs.newnode(
-                    'image',
-                    attrs={
-                        'position': (0.0, 0.0),
-                        'texture': bs.gettexture(f'{_apverids[0]}:helloworld'),
-                        'attach': 'center',
-                        'scale': (300.0, 300.0),
-                        'absolute_scale': True,
-                    },
+        if os.path.isdir('/Users/ericf'):
+            _apverids = [
+                a
+                for a in babase.loaded_asset_package_apverids()
+                if a.startswith('a-0.bastdassets')
+            ]
+            if _apverids:
+                self._cas_hello_image = bs.NodeActor(
+                    bs.newnode(
+                        'image',
+                        attrs={
+                            'position': (0.0, 0.0),
+                            'texture': bs.gettexture(
+                                f'{_apverids[0]}:helloworld'
+                            ),
+                            'attach': 'center',
+                            'scale': (300.0, 300.0),
+                            'absolute_scale': True,
+                        },
+                    )
                 )
-            )
 
         self._update_timer = bs.Timer(0.1, self._update, repeat=True)
         self._update()
