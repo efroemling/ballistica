@@ -118,6 +118,24 @@ def spinoff_test(args: list[str]) -> None:
                     shell=True,
                     check=True,
                 )
+                # Defensive: nuke leftover config/ in the submodule
+                # if it exists. The dir was renamed config/ → pconfig/
+                # on 2026-05-12 across all repos. Leftover gitignored
+                # files in the old config/ on long-lived Jenkins
+                # workspaces show up as untracked after the pull,
+                # and spinoff requires the src to have no untracked
+                # files. Safe to drop once every workspace has cycled
+                # past it.
+                stale_config = os.path.join(submpath, 'config')
+                if os.path.isdir(stale_config):
+                    print(
+                        f'{Clr.BLU}Removing pre-rename submodule config/'
+                        f" at '{stale_config}'...{Clr.RST}",
+                        flush=True,
+                    )
+                    subprocess.run(
+                        ['rm', '-rf', stale_config], check=True
+                    )
         else:
             # No spinoff project there yet; create it.
             cmd = [
