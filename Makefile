@@ -62,15 +62,15 @@ ENV_REQS_POST_UPDATE_ONLY = $(ENV_COMPILE_COMMANDS_DB)
 
 # Target that should be built before building almost any other target. This
 # installs tool config files, sets up the Python virtual environment, etc.
-env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY) config/localconfig.json
+env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY) pconfig/localconfig.json
 
 # Set of prereqs safe to run if the project state is dirty.
-env-pre-update: $(ENV_REQS_SAFE) config/localconfig.json
+env-pre-update: $(ENV_REQS_SAFE) pconfig/localconfig.json
 
 env-clean:
 	rm -rf $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY)
 
-# Bootstrap config/localconfig.json on first run so env is always
+# Bootstrap pconfig/localconfig.json on first run so env is always
 # satisfied. In a worktree we try to mirror the main checkout's file
 # (following any existing symlink to its ultimate target); otherwise
 # we create an empty JSON dict, which is behaviorally equivalent to
@@ -78,12 +78,12 @@ env-clean:
 # (returns {} for missing keys). This is a normal file target so
 # make skips it entirely after the first run, leaving zero per-
 # invocation overhead for the common env dependency.
-config/localconfig.json:
+pconfig/localconfig.json:
 	@GITDIR=$$(git rev-parse --git-dir 2>/dev/null); \
 	 CMNDIR=$$(git rev-parse --git-common-dir 2>/dev/null); \
 	 if [ -n "$$GITDIR" ] && [ "$$GITDIR" != "$$CMNDIR" ]; then \
 	   MAINROOT=$$(cd "$$(dirname "$$CMNDIR")" && pwd); \
-	   SRC="$$MAINROOT/config/localconfig.json"; \
+	   SRC="$$MAINROOT/pconfig/localconfig.json"; \
 	   if [ -e "$$SRC" ]; then \
 	     TARGET=$$(readlink "$$SRC" 2>/dev/null || echo "$$SRC"); \
 	     ln -s "$$TARGET" $@; \
@@ -198,13 +198,13 @@ dummymodules-clean: env
 venv: .venv/.efro_venv_complete
 
 # Update pip requirements to latest versions, then regenerate the
-# lockfile from them. The make rule for ``config/requirements_lock.txt``
+# lockfile from them. The make rule for ``pconfig/requirements_lock.txt``
 # (further down) handles the actual regeneration based on
 # requirements.txt's mtime — calling ``make`` again here pulls
 # that rule in once requirements_upgrade has finished writing.
 venv-upgrade: env
-	$(PCOMMAND) requirements_upgrade config/requirements.txt
-	@$(MAKE) config/requirements_lock.txt
+	$(PCOMMAND) requirements_upgrade pconfig/requirements.txt
+	@$(MAKE) pconfig/requirements_lock.txt
 
 venv-clean:
 	rm -rf .venv
@@ -960,7 +960,7 @@ test-ex-verbose: py_check_prepass
 
 # Path to the pytest-split test-duration database used by the
 # test-ex-splitN shards. Regenerate with test-ex-split-durations.
-TEST_EX_DURATIONS_PATH = config/test_ex_durations
+TEST_EX_DURATIONS_PATH = pconfig/test_ex_durations
 
 # Run a slice of the extended tests (pytest-split shard 1..4 of 4).
 # Lets multiple shards run concurrently across CI executors.
@@ -1030,8 +1030,9 @@ test-threadpool:
         test-message test-dataclassio test-rpc
 
 # Run live-server tests for the public REST API (accounts, workspaces).
-# Requires a running dev server; reads ballistica_api_key from config/localconfig.json.
-BALLISTICA_URL ?= https://dev.ballistica.net
+# Requires a running server; reads ballistica_api_key from pconfig/localconfig.json.
+# Target fleet comes from BA_FLEET (default 'prod'); BALLISTICA_URL is an
+# optional explicit-URL override.
 test-restapi: env
 	@$(PCOMMAND) require_ballistica_api_key
 	@$(PCOMMAND) pytest -v tests/test_restapi
@@ -1357,7 +1358,7 @@ flatpak-linux: env
 	--force-clean --keep-build-dirs \
 	--state-dir=./.cache/flatpak/flatpak-builder \
 	./.cache/flatpak/build_dir \
-	config/flatpak/net.froemling.bombsquad.yml
+	pconfig/flatpak/net.froemling.bombsquad.yml
 	flatpak build-bundle ./.cache/flatpak/repo \
 	build/flatpak/bombsquad.flatpak net.froemling.bombsquad
 
@@ -1403,7 +1404,7 @@ LAZYBUILDDIR = .cache/lazybuild
 # Things to ignore when doing root level cleans. Note that we exclude build
 # and just blow that away manually; it might contain git repos or other things
 # that can confuse git.
-ROOT_CLEAN_IGNORES = --exclude=config/localconfig.json \
+ROOT_CLEAN_IGNORES = --exclude=pconfig/localconfig.json \
   --exclude=.spinoffdata \
   --exclude=/build
 
@@ -1413,7 +1414,7 @@ CHECK_CLEAN_SAFETY = $(PCOMMAND) check_clean_safety
 TOOL_CFG_INST = $(PCOMMAND) tool_config_install
 
 # Anything required for tool-config generation.
-TOOL_CFG_SRC = tools/efrotools/toolconfig.py config/projectconfig.json \
+TOOL_CFG_SRC = tools/efrotools/toolconfig.py pconfig/projectconfig.json \
  tools/pcommand
 
 # Anything that should trigger an environment-check when changed.
@@ -1440,28 +1441,28 @@ tools/bacloud: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@PYTHONPATH=tools python3 -m \
  efrotools.genwrapper bacloud bacommontools.bacloud tools/bacloud
 
-.clang-format: config/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
+.clang-format: pconfig/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.pylintrc: config/toolconfigsrc/pylintrc $(TOOL_CFG_SRC)
+.pylintrc: pconfig/toolconfigsrc/pylintrc $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.projectile: config/toolconfigsrc/projectile $(TOOL_CFG_SRC)
+.projectile: pconfig/toolconfigsrc/projectile $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.editorconfig: config/toolconfigsrc/editorconfig $(TOOL_CFG_SRC)
+.editorconfig: pconfig/toolconfigsrc/editorconfig $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.dir-locals.el: config/toolconfigsrc/dir-locals.el $(TOOL_CFG_SRC)
+.dir-locals.el: pconfig/toolconfigsrc/dir-locals.el $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.rgignore: config/toolconfigsrc/rgignore $(TOOL_CFG_SRC)
+.rgignore: pconfig/toolconfigsrc/rgignore $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.mypy.ini: config/toolconfigsrc/mypy.ini $(TOOL_CFG_SRC)
+.mypy.ini: pconfig/toolconfigsrc/mypy.ini $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.pyrightconfig.json: config/toolconfigsrc/pyrightconfig.toml $(TOOL_CFG_SRC)
+.pyrightconfig.json: pconfig/toolconfigsrc/pyrightconfig.toml $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
 # Set this to 1 to skip environment checks.
@@ -1494,13 +1495,13 @@ VENV_STATE = 5
 # successor to this format. uv supports installing from pylock.toml
 # but that path is currently labeled experimental — switch when
 # uv graduates it.)
-config/requirements_lock.txt: config/requirements.txt
+pconfig/requirements_lock.txt: pconfig/requirements.txt
 	@command -v uv >/dev/null \
  || (echo 'uv not found on PATH.' \
  && echo 'Install via your package manager (brew install uv) or' \
  && echo 'run: curl -LsSf https://astral.sh/uv/install.sh | sh' \
  && exit 1)
-	@echo Regenerating config/requirements_lock.txt from config/requirements.txt...
+	@echo Regenerating pconfig/requirements_lock.txt from pconfig/requirements.txt...
 # Pass ``--python $(VENV_PYTHON)`` so the resolver always sees the
 # same interpreter as the eventual install. Without this, uv falls
 # back to whatever Python is on PATH or auto-detected from a venv
@@ -1510,7 +1511,7 @@ config/requirements_lock.txt: config/requirements.txt
 # resolver's view of the target Python).
 	@uv pip compile --universal --generate-hashes --quiet \
  --python $(VENV_PYTHON) \
- config/requirements.txt -o config/requirements_lock.txt
+ pconfig/requirements.txt -o pconfig/requirements_lock.txt
 
 # Update our virtual environment whenever the lockfile changes,
 # Python version changes, our venv's Python symlink breaks (can
@@ -1527,7 +1528,7 @@ config/requirements_lock.txt: config/requirements.txt
 # install packages should go through ``uv pip install`` rather
 # than ``.venv/bin/pip``.
 .venv/.efro_venv_complete: \
-      config/requirements_lock.txt \
+      pconfig/requirements_lock.txt \
       tools/efrotools/pyver.py \
       .venv/bin/$(VENV_PYTHON) \
       .venv/.efro_venv_state_$(VENV_STATE)
@@ -1546,7 +1547,7 @@ config/requirements_lock.txt: config/requirements.txt
  && rm -rf .venv && uv venv --python $(VENV_PYTHON) .venv \
  && touch .venv/.efro_venv_state_$(VENV_STATE))
 	uv pip install --python .venv/bin/$(VENV_PYTHON) --require-hashes \
- -r config/requirements_lock.txt
+ -r pconfig/requirements_lock.txt
 	@touch .venv/.efro_venv_complete # Done last to signal fully-built venv.
 	@echo Project virtual environment for $(VENV_PYTHON) at .venv is ready to use.
 

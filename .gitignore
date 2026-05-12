@@ -43,8 +43,8 @@ tools/bacloud
 /venv
 
 # Project/tool files
-config/localconfig.json
-config/.*
+pconfig/localconfig.json
+pconfig/.*
 .dir-locals.el
 .rgignore
 .spinoffdata

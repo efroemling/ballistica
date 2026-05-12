@@ -396,12 +396,12 @@ class StreamWS:
     #: Optional explicit WSS URL. When ``None`` (the default for
     #: node-agnostic streams — i.e. all current bacloud streams),
     #: the client opens its WS to whatever hostname it sent the
-    #: kickoff request to (``regional.ballistica.net`` in prod;
-    #: a per-node dev hostname when ``BACLOUD_SERVER`` is
-    #: overridden), at the path implied by :attr:`call_id`. The
-    #: server fills in a specific URL only when the stream's data
-    #: genuinely lives on one basn (Phase 3 game-server-logs
-    #: case); not used today.
+    #: kickoff request to (``regional.ballistica.net`` in prod; a
+    #: fleet-resolved basn hostname for non-prod ``BA_FLEET``
+    #: values; or a ``BACLOUD_SERVER`` override), at the path
+    #: implied by :attr:`call_id`. The server fills in a specific
+    #: URL only when the stream's data genuinely lives on one basn
+    #: (Phase 3 game-server-logs case); not used today.
     basn_url: Annotated[
         str | None, IOAttrs('u', soft_default=None, store_default=False)
     ] = None

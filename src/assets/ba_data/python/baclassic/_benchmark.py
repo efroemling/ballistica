@@ -13,7 +13,7 @@ import bascenev1
 import _baclassic
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any
 
 
 def run_cpu_benchmark() -> None:
@@ -29,9 +29,7 @@ def run_cpu_benchmark() -> None:
         """Session type for cpu benchmark."""
 
         def __init__(self) -> None:
-            depsets: Sequence[bascenev1.DependencySet] = []
-
-            super().__init__(depsets)
+            super().__init__()
 
             # Store old graphics settings.
             self._old_quality = babase.app.config.resolve('Graphics Quality')

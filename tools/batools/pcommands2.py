@@ -582,8 +582,24 @@ def get_modern_make() -> None:
         print('make')
 
 
-def asset_package_resolve() -> None:
-    """Resolve exact asset-package-version we'll use (if any)."""
+def asset_bundle_resolve() -> None:
+    """Gate the asset-bundle build target for stable vs dev versions.
+
+    Mirrors the legacy ``asset_package_resolve`` pattern: writes
+    a sentinel file naming the resolved asset-package-version for
+    stable versions; removes the sentinel for dev versions. The
+    sentinel is a real prerequisite of the downstream bundle-
+    build make rule:
+
+    - Stable: sentinel exists, so the bundle-build rule short-
+      circuits via standard mtime comparison after the first
+      build.
+    - Dev: sentinel is absent, so the outer
+      ``LazyBuildContext.srcpaths_exist`` in
+      ``tools/batools/build.py`` keeps forcing the surrounding
+      assets target to re-run; bacloud's own caching makes the
+      cloud round-trip cheap when nothing has changed.
+    """
     import os
 
     from efro.error import CleanError
@@ -591,13 +607,15 @@ def asset_package_resolve() -> None:
 
     args = pcommand.get_args()
     if len(args) != 1:
-        raise CleanError('Expected 1 arg.')
-
+        raise CleanError('Expected exactly 1 arg (sentinel-file path).')
     resolve_path = args[0]
 
     apversion = getprojectconfig(pcommand.PROJROOT).get('assets')
-    if apversion is None:
-        raise CleanError("No 'assets' value found in projectconfig.")
+    if not isinstance(apversion, str):
+        raise CleanError(
+            f"Need a string 'assets' value in projectconfig;"
+            f' got {type(apversion).__name__}.'
+        )
 
     splits = apversion.split('.')
     if len(splits) != 3:
@@ -605,19 +623,41 @@ def asset_package_resolve() -> None:
             f"'{apversion}' is not a valid asset-package-version id."
         )
 
-    # 'dev' versions are a special case; in that case we don't create
-    # a resolve file, which effectively causes our manifest fetch logic
-    # to run each time.
+    # Dev versions have form '<owner>.<name>.dev' and are always
+    # re-fetched; resolved dev snapshots (e.g.
+    # '<owner>.<name>.dev260510a') are pinned and treated as
+    # stable.
     if splits[2] == 'dev':
         if os.path.exists(resolve_path):
             os.unlink(resolve_path)
     else:
+        os.makedirs(os.path.dirname(resolve_path), exist_ok=True)
         with open(resolve_path, 'w', encoding='utf-8') as outfile:
             outfile.write(apversion)
 
 
-def asset_package_assemble() -> None:
-    """Assemble asset package data and its manifest."""
+def asset_bundle_build() -> None:
+    """Build a bundled-asset variant for this project's construct package.
+
+    Takes two args: the resolve-sentinel path and a variant name
+    (``gui`` or ``headless``).
+
+    - ``gui``: real renderable assets (fallback-profile
+      regular-quality textures + English language + constant).
+    - ``headless``: same bucket *shape* as gui, but with
+      ``null``-profile textures (single shared empty blob) so
+      headless server builds keep the same wrapper-module
+      layout (and same type-checks) without shipping image data.
+
+    Writes
+    ``.cache/asset_bundle/<variant>/manifest.json`` plus the
+    CAS-keyed bucket-manifest + data blobs under
+    ``.cache/assetdata/``. Both variants share the same
+    ``.cache/assetdata/`` (CAS dedup), and the shared
+    ``.cache/asset_bundle/resolved`` sentinel covers them both.
+    Staging picks the right variant to copy into
+    ``<staged>/ba_data/`` based on the build target.
+    """
     import os
     import subprocess
 
@@ -627,44 +667,72 @@ def asset_package_assemble() -> None:
 
     args = pcommand.get_args()
     if len(args) != 2:
-        raise CleanError('Expected 2 args.')
+        raise CleanError('Expected 2 args (resolve-file path, variant name).')
+    resolve_path, variant = args
 
-    resolve_path, flavor = args
+    valid_variants = ('gui', 'headless')
+    if variant not in valid_variants:
+        raise CleanError(
+            f"Invalid variant {variant!r};"
+            f' expected one of {valid_variants}.'
+        )
 
-    # If resolve path exists, it is the exact asset-package-version we
-    # should use.
+    # Stable: read the pinned apversion from the sentinel.
+    # Dev: no sentinel; fall back to projectconfig (the server
+    # resolves the live dev snapshot at assemble time).
     apversion: str | None
     if os.path.exists(resolve_path):
         with open(resolve_path, encoding='utf-8') as infile:
-            apversion = infile.read()
+            apversion = infile.read().strip()
     else:
-        # If there's no resolve file, look up the value directly from
-        # project-config. Generally this means it's set to a dev
-        # version.
         apversion = getprojectconfig(pcommand.PROJROOT).get('assets')
-    if not isinstance(apversion, str):
+    if not isinstance(apversion, str) or not apversion:
         raise CleanError(
-            f'Expected a string asset-package-version; got {type(apversion)}.'
+            f'Failed to determine apversion for bundle build;'
+            f' got {type(apversion).__name__} value {apversion!r}.'
         )
 
+    # The gui variant ships real renderable textures; the
+    # headless variant uses the special ``null`` profile so the
+    # bucket manifest has the same logical paths but every
+    # entry points at a single shared empty blob.
+    texture_profile = 'fallback_v1' if variant == 'gui' else 'null'
+    bundle_path = f'.cache/asset_bundle/{variant}/manifest.json'
+
+    print(
+        f'{Clr.BLU}Building {variant} asset bundle for'
+        f' {apversion}...{Clr.RST}',
+        flush=True,
+    )
     try:
-        print(
-            f'{Clr.BLU}Assembling {apversion} ({flavor} flavor)...', flush=True
-        )
         subprocess.run(
             [
                 f'{pcommand.PROJROOT}/tools/bacloud',
                 'assetpackage',
                 '_assemble',
                 apversion,
-                flavor,
+                '--texture-profile',
+                texture_profile,
+                '--texture-quality',
+                'regular',
+                '--language',
+                'eng',
+                '--bundle-path',
+                bundle_path,
             ],
             check=True,
         )
     except Exception as exc:
         raise CleanError(
-            f'Failed to assemble {apversion} ({flavor} flavor).'
+            f'Failed to build {variant} asset bundle for' f' {apversion}.'
         ) from exc
+
+    bundle_manifest = os.path.join(pcommand.PROJROOT, bundle_path)
+    if not os.path.exists(bundle_manifest):
+        raise CleanError(
+            f'Asset bundle build completed but {bundle_manifest}'
+            f' is missing.'
+        )
 
 
 def cst_test() -> None:

@@ -691,9 +691,17 @@ class App:
 
         :meta private:
         """
+        # pylint: disable=cyclic-import
+        from babase._asset_packages import load_bundled_asset_packages
+
         assert _babase.in_logic_thread()
         assert not self._native_bootstrapping_completed
         self._native_bootstrapping_completed = True
+
+        # Populate the C++ asset-package CAS registry from the bundled
+        # manifest before any qualified-ref gettexture calls can land.
+        load_bundled_asset_packages()
+
         self._update_state()
 
     def on_native_suspend(self) -> None:

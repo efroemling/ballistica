@@ -1097,17 +1097,23 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
   // We don't protect package-path access so make sure its always from here.
   assert(g_base->InLogicThread());
 
+  // CAS-form qualified ref: ``<apverid>:<asset_name>``. Resolve via
+  // the asset-package registry instead of searching the on-disk tree.
+  // Bare names (no ``:``) fall through to the legacy path below.
+  auto colon_pos = name.find(':');
+  if (colon_pos != std::string::npos) {
+    return FindAssetFileCas_(type, name, colon_pos);
+  }
+
   const char* ext = "";
-  const char* prefix1 = "";
-  const char* prefix2 = "";
+  const char* prefix = "";
 
   switch (type) {
     case FileType::kSound:
       if (g_core->HeadlessMode()) {
         return "headless_dummy_path.sound";
       }
-      prefix1 = "audio/";
-      prefix2 = "audio2/";
+      prefix = "audio/";
       ext = ".ogg";
       break;
 
@@ -1115,20 +1121,17 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
       if (g_core->HeadlessMode()) {
         return "headless_dummy_path.mesh";
       }
-      prefix1 = "meshes/";
-      prefix2 = "meshes2/";
+      prefix = "meshes/";
       ext = ".bob";
       break;
 
     case FileType::kCollisionMesh:
-      prefix1 = "meshes/";
-      prefix2 = "meshes2/";
+      prefix = "meshes/";
       ext = ".cob";
       break;
 
     case FileType::kData:
-      prefix1 = "data/";
-      prefix2 = "data2/";
+      prefix = "data/";
       ext = ".json";
       break;
 
@@ -1148,8 +1151,7 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
       //        g_base->graphics_server->texture_compression_types_are_set());
       // assert(g_base->graphics_server
       //        && g_base->graphics_server->texture_quality_set());
-      prefix1 = "textures/";
-      prefix2 = "textures2/";
+      prefix = "textures/";
 
 #if BA_PLATFORM_ANDROID && !BA_ANDROID_DDS_BUILD
       // On most android builds we go for .ktx, which contains etc2 and etc1.
@@ -1170,23 +1172,20 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
   const std::vector<std::string>& asset_paths_used = asset_paths_;
 
   for (auto&& i : asset_paths_used) {
-    // TEMP - try our '2' stuff first.
-    for (auto&& prefix : {prefix2, prefix1}) {
-      file_out = i + "/" + prefix + name + ext;  // NOLINT
-      bool exists;
+    file_out = i + "/" + prefix + name + ext;
+    bool exists;
 
-      // '#' denotes a cube map texture, which is actually 6 files.
-      if (strchr(file_out.c_str(), '#')) {
-        // Just look for one of them i guess.
-        std::string tmp_name = file_out;
-        tmp_name.replace(tmp_name.find('#'), 1, "_+x");
-        exists = g_core->platform->FilePathExists(tmp_name);
-      } else {
-        exists = g_core->platform->FilePathExists(file_out);
-      }
-      if (exists) {
-        return file_out;
-      }
+    // '#' denotes a cube map texture, which is actually 6 files.
+    if (strchr(file_out.c_str(), '#')) {
+      // Just look for one of them i guess.
+      std::string tmp_name = file_out;
+      tmp_name.replace(tmp_name.find('#'), 1, "_+x");
+      exists = g_core->platform->FilePathExists(tmp_name);
+    } else {
+      exists = g_core->platform->FilePathExists(file_out);
+    }
+    if (exists) {
+      return file_out;
     }
   }
 
@@ -1202,6 +1201,56 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
   }
 
   throw Exception("Can't find asset: \"" + name + "\"");
+}
+
+auto Assets::FindAssetFileCas_(FileType type, const std::string& name,
+                               size_t colon_pos) -> std::string {
+  // v1: only textures are CAS-routed. Other asset categories land
+  // here in Phase 1b as their buckets come online (strings, audio,
+  // meshes, etc.).
+  if (type != FileType::kTexture) {
+    throw Exception("CAS asset refs only support textures in v1: '" + name
+                    + "'");
+  }
+
+  // Headless builds use the NULL texture profile; they don't actually
+  // sample image bytes. Match the legacy headless short-circuit and
+  // return a dummy path so the renderer-stub path is consistent.
+  if (g_core->HeadlessMode()) {
+    return "headless_dummy_path.nop";
+  }
+
+  std::string apverid = name.substr(0, colon_pos);
+  std::string asset_name = name.substr(colon_pos + 1);
+
+  // Active bucket + extension come from one policy chokepoint so
+  // future profile dispatch (DESKTOP_V1, MOBILE_V1) is an
+  // ``ActiveTextureBucket`` edit, not a hunt-and-replace.
+  auto bucket = ActiveTextureBucket();
+  std::string logical_path =
+      "ba_data/textures/" + asset_name + bucket.file_extension;
+
+  auto hash = package_registry_.LookupAssetHash(apverid, bucket.bucket_id,
+                                                logical_path);
+  if (hash.empty()) {
+    throw Exception("Asset not found in package: '" + name
+                    + "' (bucket=" + bucket.bucket_id
+                    + ", logical_path=" + logical_path + ").");
+  }
+  return package_registry_.CasBlobPath(hash);
+}
+
+auto Assets::ActiveTextureBucket() const -> TextureBucketInfo {
+  // V1: hardcoded to FALLBACK_V1 / regular quality / KTX2. Future
+  // dispatch reads from:
+  //   - platform texture-compression caps (BC family on desktop GPUs,
+  //     ASTC LDR on modern mobile, FALLBACK_V1 otherwise),
+  //   - user quality preference (regular vs. high),
+  //   - possibly construct-mode bootstrap state (FALLBACK_V1 baseline
+  //     while bootstrapping any platform).
+  // Each shipped profile then contributes a ``(bucket_id, extension)``
+  // entry. Phase 3 work.
+  return {"textures/fallback_v1_regular", ".ktx2"};
 }
 
 void Assets::AddPendingLoad(Object::Ref<Asset>* c) {

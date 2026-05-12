@@ -587,7 +587,7 @@ def generate_flathub_manifest() -> None:
     This function is intended to be run within a GitHub Actions workflow.
 
     This function:
-    1. Copies files from config/flatpak/ to config/flatpak/flathub
+    1. Copies files from pconfig/flatpak/ to pconfig/flatpak/flathub
     2. Generates the manifest from template using latest GitHub release info
     """
     import json
@@ -627,7 +627,7 @@ def generate_flathub_manifest() -> None:
             ) from e
 
     # Paths
-    flatpak_src_dir = os.path.join(pcommand.PROJROOT, 'config', 'flatpak')
+    flatpak_src_dir = os.path.join(pcommand.PROJROOT, 'pconfig', 'flatpak')
     flathub_dir = os.path.join(pcommand.PROJROOT, 'build', 'flathub')
     template_path = os.path.join(
         flatpak_src_dir, 'net.froemling.bombsquad.yml.template'
@@ -637,7 +637,7 @@ def generate_flathub_manifest() -> None:
 
     print(f'{Clr.BLD}Generating Flathub manifest...{Clr.RST}')
 
-    # Step 1: Copy files from config/flatpak/ to config/flatpak/flathub
+    # Step 1: Copy files from pconfig/flatpak/ to pconfig/flatpak/flathub
     print(
         f'{Clr.BLD}Copying files from {flatpak_src_dir} to '
         f'{flathub_dir}...{Clr.RST}'

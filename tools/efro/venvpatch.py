@@ -9,7 +9,7 @@ upstream-rejected behaviour. This module provides a simple,
 declarative way to manage such patches.
 
 Patches are described in a JSON file (commonly
-``config/venv_patches.json``) using the :class:`VenvPatches` schema
+``pconfig/venv_patches.json``) using the :class:`VenvPatches` schema
 below. Each entry is a literal-string find-and-replace, validated
 by an exact occurrence count so silent drift across upstream
 versions surfaces immediately as a hard error.
@@ -82,7 +82,7 @@ class VenvPatch:
 class VenvPatches:
     """Top-level container for a list of venv patches.
 
-    This is the schema for ``config/venv_patches.json``.
+    This is the schema for ``pconfig/venv_patches.json``.
     """
 
     patches: Annotated[list[VenvPatch], IOAttrs('patches')] = field(

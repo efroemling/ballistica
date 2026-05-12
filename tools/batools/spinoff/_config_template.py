@@ -18,7 +18,7 @@ ctx = SpinoffContext.get_active()
 ctx.dst_name = 'SPINOFF_TEMPLATE_NAME'
 
 # Feature sets from the source project that we should include in dst.
-# Set to None to include all feature sets. Check config/featuresets to
+# Set to None to include all feature sets. Check pconfig/featuresets to
 # see what is available. These will be names like 'base', 'scene_v1',
 # etc. Note that the 'core' feature set as well as feature sets required
 # by ones we pass will be implicitly included as well.

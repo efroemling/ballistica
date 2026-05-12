@@ -24,8 +24,6 @@ if TYPE_CHECKING:
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
     """Activity showing the rotating main menu bg stuff."""
 
-    _stdassets = bs.Dependency(bs.AssetPackage, 'stdassets@1')
-
     _did_initial_transition = False
 
     def __init__(self, settings: dict):
@@ -41,6 +39,10 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         self.map: bs.Map | None = None
         self.bot_sets: list[DemoSpazBotSet] = []
         self.trees: bs.NodeActor | None = None
+        # TEMP: asset-package CAS load test (initiative Phase 2). Drop
+        # once Phase 3 wrapper modules generate qualified refs and
+        # there's a less ad-hoc place to exercise this.
+        self._cas_hello_image: bs.NodeActor | None = None
         self._ts = 0.86
         self._language: str | None = None
         self._update_timer: bs.Timer | None = None
@@ -136,6 +138,32 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 },
             )
         )
+
+        # TEMP: asset-package CAS load smoke test. Loads helloworld
+        # from the bundled bastdassets package via the new
+        # ``<apverid>:<asset>`` qualified-ref path through gettexture.
+        # Apverid is resolved from the loaded manifest so it tracks dev
+        # snapshot rebinds without a hand-edit per build.
+        import babase
+
+        _apverids = [
+            a
+            for a in babase.loaded_asset_package_apverids()
+            if a.startswith('a-0.bastdassets')
+        ]
+        if _apverids:
+            self._cas_hello_image = bs.NodeActor(
+                bs.newnode(
+                    'image',
+                    attrs={
+                        'position': (0.0, 0.0),
+                        'texture': bs.gettexture(f'{_apverids[0]}:helloworld'),
+                        'attach': 'center',
+                        'scale': (300.0, 300.0),
+                        'absolute_scale': True,
+                    },
+                )
+            )
 
         self._update_timer = bs.Timer(0.1, self._update, repeat=True)
         self._update()
@@ -907,10 +935,7 @@ class MainMenuSession(bs.Session):
     """Session that runs the main menu environment."""
 
     def __init__(self) -> None:
-        # Gather dependencies we'll need (just our activity).
-        self._activity_deps = bs.DependencySet(bs.Dependency(MainMenuActivity))
-
-        super().__init__([self._activity_deps])
+        super().__init__()
         self._locked = False
         self.setactivity(bs.newactivity(MainMenuActivity))
 

@@ -97,7 +97,6 @@ class Session:
 
     def __init__(
         self,
-        depsets: Sequence[bascenev1.DependencySet],
         *,
         team_names: Sequence[str] | None = None,
         team_colors: Sequence[Sequence[float]] | None = None,
@@ -105,62 +104,14 @@ class Session:
         max_players: int = 8,
         submit_score: bool = True,
     ):
-        """Instantiate a session.
-
-        depsets should be a sequence of successfully resolved
-        bascenev1.DependencySet instances; one for each bascenev1.Activity
-        the session may potentially run.
-        """
+        """Instantiate a session."""
         # pylint: disable=cyclic-import
         from efro.util import empty_weakref
-        from bascenev1._dependency import (
-            Dependency,
-            AssetPackage,
-            DependencyError,
-        )
         from bascenev1._lobby import Lobby
         from bascenev1._stats import Stats
         from bascenev1._gameactivity import GameActivity
         from bascenev1._activity import Activity
         from bascenev1._team import SessionTeam
-
-        # First off, resolve all dependency-sets we were passed.
-        # If things are missing, we'll try to gather them into a single
-        # missing-deps exception if possible to give the caller a clean
-        # path to download missing stuff and try again.
-        missing_asset_packages: set[str] = set()
-        for depset in depsets:
-            try:
-                depset.resolve()
-            except DependencyError as exc:
-                # Gather/report missing assets only; barf on anything else.
-                if all(issubclass(d.cls, AssetPackage) for d in exc.deps):
-                    for dep in exc.deps:
-                        assert isinstance(dep.config, str)
-                        missing_asset_packages.add(dep.config)
-                else:
-                    missing_info = [(d.cls, d.config) for d in exc.deps]
-                    raise RuntimeError(
-                        f'Missing non-asset dependencies: {missing_info}'
-                    ) from exc
-
-        # Throw a combined exception if we found anything missing.
-        if missing_asset_packages:
-            raise DependencyError(
-                [
-                    Dependency(AssetPackage, set_id)
-                    for set_id in missing_asset_packages
-                ]
-            )
-
-        # Ok; looks like our dependencies check out.
-        # Now give the engine a list of asset-set-ids to pass along to clients.
-        required_asset_packages: set[str] = set()
-        for depset in depsets:
-            required_asset_packages.update(depset.get_asset_package_ids())
-
-        # print('Would set host-session asset-reqs to:',
-        # required_asset_packages)
 
         # Init our C++ layer data.
         self._sessiondata = _bascenev1.register_session(self)

@@ -169,9 +169,6 @@ nitpick_ignore = [
     ('py:class', 'bs.Player'),
     ('py:class', 'bs.Timer'),
     ('py:class', 'bs.Vec3'),
-    #
-    # Private module types.
-    ('py:class', 'bascenev1._dependency.DependencyEntry'),
 ]
 
 # Regex-based nitpick ignores for whole categories of references.

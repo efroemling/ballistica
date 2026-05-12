@@ -32,7 +32,7 @@ ctx.git_mirrored_paths = {
     '.gitignore',
     '.gitattributes',
     'README.md',
-    'config/jenkins',
+    'pconfig/jenkins',
 }
 
 # File names that can be quietly ignored or cleared out when found. This
@@ -47,7 +47,7 @@ ctx.cruft_file_names = {'.DS_Store'}
 # to 'override' with its own versions.
 ctx.src_omit_paths = {
     '.gitignore',
-    'config/spinoffconfig.py',
+    'pconfig/spinoffconfig.py',
     'tools/spinoff',
     '.editorconfig',
     'src/assets/workspace',
@@ -68,7 +68,7 @@ ctx.src_omit_paths = {
 # carve out the minimal set of exact file/dir paths that you need.
 ctx.src_write_paths = {
     'tools/spinoff',
-    'config/spinoffconfig.py',
+    'pconfig/spinoffconfig.py',
 }
 
 # Use this to 'carve out' files or directories under spinoff managed
@@ -152,7 +152,7 @@ ctx.project_file_suffixes = {
 ctx.filter_dirs = {
     'ballisticakit-cmake',
     'ballisticakit-xcode/BallisticaKit.xcodeproj',
-    'config',
+    'pconfig',
     'src/assets/pdoc',
 }
 

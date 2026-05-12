@@ -10,7 +10,7 @@ def bacurl() -> None:
 
     Usage: bacurl [curl-args...] <url>
 
-    Reads ``ballistica_api_key`` from ``config/localconfig.json`` and
+    Reads ``ballistica_api_key`` from ``pconfig/localconfig.json`` and
     passes it as a Bearer token in the Authorization header. All
     arguments are forwarded to curl. The ``-s`` (silent) flag is added
     automatically.
@@ -33,14 +33,14 @@ def bacurl() -> None:
         raise CleanError('Usage: bacurl [curl-args...] <url>')
 
     try:
-        with open('config/localconfig.json', encoding='utf-8') as f:
+        with open('pconfig/localconfig.json', encoding='utf-8') as f:
             cfg = json.load(f)
     except FileNotFoundError as exc:
-        raise CleanError('config/localconfig.json not found.') from exc
+        raise CleanError('pconfig/localconfig.json not found.') from exc
 
     api_key = cfg.get('ballistica_api_key')
     if not api_key:
-        raise CleanError('No ballistica_api_key in config/localconfig.json.')
+        raise CleanError('No ballistica_api_key in pconfig/localconfig.json.')
 
     cmd = [
         'curl',
@@ -69,5 +69,5 @@ def require_ballistica_api_key() -> None:
     raise CleanError(
         'No Ballistica API key found.\n'
         'Set the BALLISTICA_API_KEY env var or add'
-        ' ballistica_api_key to config/localconfig.json.'
+        ' ballistica_api_key to pconfig/localconfig.json.'
     )

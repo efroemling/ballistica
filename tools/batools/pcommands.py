@@ -723,7 +723,11 @@ def efro_gradle() -> None:
     enabled_tags: set[str] = {'true'}
     target_words = [w.lower() for w in _camel_case_split(args[-1])]
     if 'google' in target_words:
-        enabled_tags = {'google', 'crashlytics'}
+        # Augment rather than replace; otherwise we lose the 'true'
+        # tag and the single-arch flavor declarations (arm/arm64/
+        # x86/x86_64, gated by ``// EFRO_IF true``) stay commented
+        # out — breaking ANDROID_MODE!=prod for google builds.
+        enabled_tags |= {'google', 'crashlytics'}
     prev_suffix = 'efro_gradle_prev'
 
     buildfilename = 'BallisticaKit/build.gradle'

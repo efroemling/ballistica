@@ -110,7 +110,7 @@ class MetaMakefileGenerator:
 
         # Base feature set bits.
         if os.path.exists(
-            f'{self._projroot}/config/featuresets/featureset_base.py'
+            f'{self._projroot}/pconfig/featuresets/featureset_base.py'
         ):
             self._add_init_module_target(targets, moduledir=OUT_DIR_BASE_PYTHON)
             self._add_base_enums_module_target(targets)
@@ -256,14 +256,14 @@ class MetaMakefileGenerator:
         featureset_fnames = [
             n
             for n in os.listdir(
-                os.path.join(self._projroot, 'config/featuresets')
+                os.path.join(self._projroot, 'pconfig/featuresets')
             )
             if n.startswith('featureset_') and n.endswith('.py')
         ]
         targets.append(
             Target(
                 src=[
-                    f'$(PROJ_DIR)/config/featuresets/{n}'
+                    f'$(PROJ_DIR)/pconfig/featuresets/{n}'
                     for n in sorted(featureset_fnames)
                 ],
                 dst=f'{OUT_DIR_ROOT_CPP}/core/mgen/python_modules_monolithic.h',
@@ -355,7 +355,7 @@ class MetaMakefileGenerator:
 
     def _add_extra_targets_internal(self, targets: list[Target]) -> None:
         if os.path.exists(
-            f'{self._projroot}/config/featuresets/featureset_plus.py'
+            f'{self._projroot}/pconfig/featuresets/featureset_plus.py'
         ):
             # Add targets to generate message sender/receiver classes
             # for our basn/client protocols. Their outputs go to 'mgen'
@@ -389,6 +389,56 @@ class MetaMakefileGenerator:
                             f'{name}.inc',
                         ),
                         cmd='$(PCOMMAND) gen_pyembed $< $@ encrypt=1',
+                    )
+                )
+
+        # Typed Android JNI message bus. Spec lives in babasemeta;
+        # codegen emits one Java bridge class and a pair of C++
+        # .inc files (decl + impl) included by hand-written glue
+        # files under src/ballistica/base/platform/android/.
+        #
+        # The Java file lives under src/ballistica/base/mgen/java
+        # (a project-name-independent path) rather than the Android
+        # app tree. Gradle's build.gradle adds this dir to its
+        # sourceSets.main.java.srcDirs. This avoids needing project-
+        # name-specific paths (ballisticakit-android/BallisticaKit/...
+        # vs template-android/Template/...) in the generated Makefile,
+        # which the spinoff sync doesn't substitute correctly in
+        # auto-generated sections.
+        if os.path.exists(
+            f'{self._projroot}/pconfig/featuresets/featureset_base.py'
+        ):
+            spec = 'babasemeta/android_messages.py'
+            targets.append(
+                Target(
+                    src=[spec],
+                    dst=os.path.join(
+                        OUT_DIR_ROOT_CPP,
+                        'base',
+                        'mgen',
+                        'java',
+                        'com',
+                        'ericfroemling',
+                        'ballistica',
+                        'mgen',
+                        'BallisticaJniBridge.java',
+                    ),
+                    cmd='$(PCOMMAND) gen_android_message_java $@',
+                    mkdir=True,
+                )
+            )
+            for inc in (
+                'android_messages_decl.inc',
+                'android_messages_impl.inc',
+            ):
+                targets.append(
+                    Target(
+                        src=[spec],
+                        dst=os.path.join(
+                            OUT_DIR_ROOT_CPP, 'base', 'mgen', 'android', inc
+                        ),
+                        cmd='$(PCOMMAND) gen_android_message_cpp $@',
+                        mkdir=True,
                     )
                 )
 

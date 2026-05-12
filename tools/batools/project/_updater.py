@@ -175,7 +175,7 @@ class ProjectUpdater:
         """Prepare"""
         # Make sure we're operating from a project root.
         if not os.path.isdir(
-            os.path.join(self.projroot, 'config')
+            os.path.join(self.projroot, 'pconfig')
         ) or not os.path.isdir(os.path.join(self.projroot, 'tools')):
             raise RuntimeError(
                 f"ProjectUpdater projroot '{self.projroot}' is not valid."

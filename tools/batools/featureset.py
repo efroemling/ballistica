@@ -229,7 +229,7 @@ class FeatureSet:
     @property
     def path_config_file(self) -> str:
         """Project-relative path to the file defining this feature-set."""
-        return f'config/featuresets/featureset_{self.name}.py'
+        return f'pconfig/featuresets/featureset_{self.name}.py'
 
     @property
     def path_python_package(self) -> str:
@@ -358,7 +358,7 @@ class FeatureSet:
 
 def _build_feature_set_list(project_root: str) -> list[FeatureSet]:
     featuresets: list[FeatureSet] = []
-    fsdir = os.path.join(project_root, 'config', 'featuresets')
+    fsdir = os.path.join(project_root, 'pconfig', 'featuresets')
     prefix = 'featureset_'
     filenames = os.listdir(fsdir)
     for filename in sorted(filenames):

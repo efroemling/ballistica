@@ -894,57 +894,6 @@ auto SceneV1Python::GetPyPlayer(PyObject* o, bool allow_empty_ref,
       pyexctype);
 }
 
-auto SceneV1Python::ValidatedPackageAssetName(PyObject* package,
-                                              const char* name) -> std::string {
-  assert(g_base->InLogicThread());
-  assert(g_scene_v1->python->objs().Exists(
-      SceneV1Python::ObjID::kAssetPackageClass));
-
-  if (!PyObject_IsInstance(package,
-                           g_scene_v1->python->objs()
-                               .Get(SceneV1Python::ObjID::kAssetPackageClass)
-                               .get())) {
-    throw Exception("Object is not an AssetPackage.", PyExcType::kType);
-  }
-
-  // Ok; they've passed us an asset-package object.
-  // Now validate that its context is current...
-  PythonRef context_obj(PyObject_GetAttrString(package, "context_ref"),
-                        PythonRef::kSteal);
-  if (!context_obj.exists()
-      || !(PyObject_IsInstance(context_obj.get(),
-                               reinterpret_cast<PyObject*>(
-                                   &base::PythonClassContextRef::type_obj)))) {
-    throw Exception("Asset package context_ref not found.",
-                    PyExcType::kNotFound);
-  }
-  auto* pycontext =
-      reinterpret_cast<base::PythonClassContextRef*>(context_obj.get());
-  auto* ctargetref = pycontext->context_ref().Get();
-  if (!ctargetref) {
-    throw Exception("Asset package context_ref does not exist.",
-                    PyExcType::kNotFound);
-  }
-  auto* ctargetref2 = g_base->CurrentContext().Get();
-  if (ctargetref != ctargetref2) {
-    throw Exception("Asset package context_ref is not current.");
-  }
-
-  // Hooray; the asset package's context exists and is current.
-  // Ok; now pull the package id...
-  PythonRef package_id(PyObject_GetAttrString(package, "package_id"),
-                       PythonRef::kSteal);
-  if (!PyUnicode_Check(package_id.get())) {
-    throw Exception("Got non-string AssetPackage ID.", PyExcType::kType);
-  }
-
-  // TODO(ericf): make sure the package is valid for this context,
-  // and return a fully qualified name with the package included.
-
-  printf("would give %s:%s\n", PyUnicode_AsUTF8(package_id.get()), name);
-  return name;
-}
-
 auto SceneV1Python::GetPySceneSound(PyObject* o, bool allow_empty_ref,
                                     bool allow_none) -> SceneSound* {
   assert(Python::HaveGIL());

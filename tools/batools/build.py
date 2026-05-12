@@ -161,7 +161,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'tools/efrotoolsinternal',
                 'tools/batools',
                 'tools/batoolsinternal',
-                'config/featuresets',
+                'pconfig/featuresets',
             ],
             # Maintain a hash of all srcpaths and do a full-clean
             # whenever that changes. Takes care of orphaned files if a
@@ -257,14 +257,20 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'tools',
                 'src/assets',
                 '.efrocachemap',
-                # Needed to rebuild on asset-package changes.
-                'config/projectconfig.json',
+                # Needed to rebuild on asset-bundle apversion
+                # changes ("assets" field).
+                'pconfig/projectconfig.json',
             ],
-            # This file won't exist if we are using a dev asset-package,
-            # in which case we want to always run so we can ask the
-            # server for package updates each time.
+            # Absence forces lazybuild to re-run the wrapped
+            # assets target. For stable asset-package-versions
+            # the resolve pcommand writes this sentinel, so
+            # lazybuild caches after the first build; for dev
+            # versions it removes the sentinel, so lazybuild
+            # keeps re-forcing and the bundle re-pings the
+            # cloud every build (matches the legacy
+            # asset_package_resolved sentinel pattern).
             srcpaths_exist=[
-                '.cache/asset_package_resolved',
+                '.cache/asset_bundle/resolved',
             ],
             command=command,
             filefilter=_filefilter,
@@ -301,7 +307,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # definitely want to restrict to one at a time.
             buildlockname=category.value,
             srcpaths=[
-                'config/featuresets',
+                'pconfig/featuresets',
                 'tools/batools/dummymodule.py',
                 'src/ballistica',
                 '.efrocachemap',

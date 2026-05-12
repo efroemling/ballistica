@@ -8,7 +8,7 @@ services:
   bombsquad_gui:
     build:
       context: ../..
-      dockerfile: config/docker/Dockerfile
+      dockerfile: pconfig/docker/Dockerfile
       args:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-0} # why not just remove BS_HEADLESS_BUILD?
@@ -36,7 +36,7 @@ services:
   bombsquad_server: # need to add volume to access config.yaml and mods folder
     build:
       context: ../..
-      dockerfile: config/docker/Dockerfile
+      dockerfile: pconfig/docker/Dockerfile
       args:
         - cmake_build_type=${BS_CMAKE_BUILD_TYPE:-Release}
         - headless_build=${BS_HEADLESS_BUILD:-1}

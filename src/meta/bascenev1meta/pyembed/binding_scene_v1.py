@@ -7,7 +7,6 @@ from __future__ import annotations
 from bascenev1 import _messages
 from bascenev1 import _hooks
 from bascenev1._player import Player
-from bascenev1._dependency import AssetPackage
 from bascenev1._activity import Activity
 from bascenev1._session import Session
 from bascenev1._net import HostInfo
@@ -28,7 +27,6 @@ values = [
     _messages.PickUpMessage,  # kPickUpMessageClass
     _messages.DropMessage,  # kDropMessageClass
     Player,  # kPlayerClass
-    AssetPackage,  # kAssetPackageClass
     Activity,  # kActivityClass
     Session,  # kSceneV1SessionClass
     HostInfo,  # kHostInfoClass

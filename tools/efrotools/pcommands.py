@@ -825,7 +825,7 @@ def showtime() -> None:
 
 
 def apply_venv_patches() -> None:
-    """Apply patches listed in ``config/venv_patches.json`` to the venv.
+    """Apply patches listed in ``pconfig/venv_patches.json`` to the venv.
 
     Run this after package install on freshly-built venvs (``uv pip
     install`` in current Makefile flows; historically ``pip install``).
@@ -834,7 +834,7 @@ def apply_venv_patches() -> None:
 
     Args (positional, all optional):
       patches_path: path to the patches JSON. Default
-        ``config/venv_patches.json``. If the file does not exist,
+        ``pconfig/venv_patches.json``. If the file does not exist,
         this command is a clean no-op (so projects without any
         patches don't need to opt out explicitly).
       ``--no-error``: if present, mismatched / missing patches are
@@ -848,7 +848,7 @@ def apply_venv_patches() -> None:
     args = pcommand.get_args()
     allow_mismatches = '--no-error' in args
     positional = [a for a in args if not a.startswith('--')]
-    patches_path = positional[0] if positional else 'config/venv_patches.json'
+    patches_path = positional[0] if positional else 'pconfig/venv_patches.json'
 
     if not os.path.exists(patches_path):
         return
@@ -868,7 +868,7 @@ def apply_venv_patches() -> None:
 
 
 def check_venv_patches() -> None:
-    """Verify ``config/venv_patches.json`` patches are applied.
+    """Verify ``pconfig/venv_patches.json`` patches are applied.
 
     Prints a summary and exits non-zero if any mismatch is found.
     See :func:`efro.venvpatch.check_patches` for log details — each
@@ -879,7 +879,7 @@ def check_venv_patches() -> None:
 
     args = pcommand.get_args()
     positional = [a for a in args if not a.startswith('--')]
-    patches_path = positional[0] if positional else 'config/venv_patches.json'
+    patches_path = positional[0] if positional else 'pconfig/venv_patches.json'
 
     if not os.path.exists(patches_path):
         return

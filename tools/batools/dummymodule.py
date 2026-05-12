@@ -239,7 +239,7 @@ def _writefuncs(
             elif returns in {'bascenev1.Session', 'bascenev1.Session | None'}:
                 returnstr = (
                     'import bascenev1  # pylint: disable=cyclic-import\nreturn '
-                    + 'bascenev1.Session([])'
+                    + 'bascenev1.Session()'
                 )
             elif returns == 'bascenev1.SessionPlayer | None':
                 returnstr = (

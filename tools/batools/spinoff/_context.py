@@ -260,14 +260,14 @@ class SpinoffContext:
         self.dst_name = 'Untitled'
 
         self._src_config_path = os.path.join(
-            self._src_root, 'config', 'spinoffconfig.py'
+            self._src_root, 'pconfig', 'spinoffconfig.py'
         )
         if not os.path.exists(self._src_config_path):
             raise CleanError(
                 f"Spinoff src config not found at '{self._src_config_path}'."
             )
         self._dst_config_path = os.path.join(
-            self._dst_root, 'config', 'spinoffconfig.py'
+            self._dst_root, 'pconfig', 'spinoffconfig.py'
         )
         if not os.path.exists(self._dst_config_path):
             raise CleanError(
@@ -340,7 +340,7 @@ class SpinoffContext:
 
             # Omit its config file.
             # Make sure this featureset exists on src.
-            fsconfigpath = f'config/featuresets/featureset_{fsname}.py'
+            fsconfigpath = f'pconfig/featuresets/featureset_{fsname}.py'
             paths.add(fsconfigpath)
 
             # Omit its Python package.
@@ -765,12 +765,12 @@ class SpinoffContext:
         start_line = (
             '# Ignore everything managed by spinoff.\n'
             '# To control this, modify src_write_paths in'
-            " 'config/spinoffconfig.py'.\n"
+            " 'pconfig/spinoffconfig.py'.\n"
             "# If you ever want to 'flatten' your project and remove it"
             ' from spinoff\n'
             '# control completely: simply delete this section, delete'
             " the 'tools/spinoff'\n"
-            "# symlink, and delete 'config/spinoffconfig.py'. Then you can add"
+            "# symlink, and delete 'pconfig/spinoffconfig.py'. Then you can add"
             ' everything\n'
             '# in its current state to your git repo and forget that spinoff'
             ' ever existed.'

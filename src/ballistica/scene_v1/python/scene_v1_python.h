@@ -70,12 +70,6 @@ class SceneV1Python {
   /// Pass a chat message along to the python UI layer for handling..
   void HandleLocalChatMessage(const std::string& message);
 
-  /// Given an asset-package python object and a media name, verify
-  /// that the asset-package is valid in the current context_ref and return
-  /// its fully qualified name if so.  Throw an Exception if not.
-  auto ValidatedPackageAssetName(PyObject* package, const char* name)
-      -> std::string;
-
   void ReloadHooks();
 
   /// Specific Python objects we hold in objs_.
@@ -89,7 +83,6 @@ class SceneV1Python {
     kPickUpMessageClass,
     kDropMessageClass,
     kPlayerClass,
-    kAssetPackageClass,
     kActivityClass,
     kSceneV1SessionClass,
     kLaunchMainMenuSessionCall,

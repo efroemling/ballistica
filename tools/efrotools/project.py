@@ -58,7 +58,7 @@ def getlocalconfig(projroot: Path | str) -> dict[str, Any]:
         # Allow overriding path via env var.
         path = os.environ.get('EFRO_LOCALCONFIG_PATH')
         if path is None:
-            path = 'config/localconfig.json'
+            path = 'pconfig/localconfig.json'
 
         try:
             with open(Path(projroot, path), encoding='utf-8') as infile:
@@ -77,7 +77,7 @@ def getprojectconfig(projroot: Path | str) -> dict[str, Any]:
         config: dict[str, Any]
         try:
             with open(
-                Path(projroot, 'config/projectconfig.json'), encoding='utf-8'
+                Path(projroot, 'pconfig/projectconfig.json'), encoding='utf-8'
             ) as infile:
                 config = json.loads(infile.read())
         except FileNotFoundError:
@@ -90,8 +90,8 @@ def setprojectconfig(projroot: Path | str, config: dict[str, Any]) -> None:
     """Set the project config contents."""
     projrootstr = str(projroot)
     _g_project_configs[projrootstr] = config
-    os.makedirs(Path(projroot, 'config'), exist_ok=True)
-    with Path(projroot, 'config/projectconfig.json').open(
+    os.makedirs(Path(projroot, 'pconfig'), exist_ok=True)
+    with Path(projroot, 'pconfig/projectconfig.json').open(
         'w', encoding='utf-8'
     ) as outfile:
         outfile.write(json.dumps(config, indent=2))

@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 import babase
 import _bascenev1
-from bascenev1._dependency import DependencyComponent
 from bascenev1._messages import UNHANDLED
 
 if TYPE_CHECKING:
@@ -18,9 +17,7 @@ if TYPE_CHECKING:
     import bascenev1
 
 
-class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
-    DependencyComponent
-):
+class Activity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team]:
     """Units of execution wrangled by a :class:`bascenev1.Session`.
 
     Examples of activities include games, score-screens, cutscenes, etc.

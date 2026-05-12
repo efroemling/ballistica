@@ -76,6 +76,12 @@
     <ClInclude Include="..\..\src\ballistica\base\assets\asset.h">
       <Filter>ballistica\base\assets</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\asset_package_registry.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\asset_package_registry.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\assets\assets.cc">
       <Filter>ballistica\base\assets</Filter>
     </ClCompile>
@@ -568,6 +574,12 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\texture\ktx.h">
       <Filter>ballistica\base\graphics\texture</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\graphics\texture\ktx2.cc">
+      <Filter>ballistica\base\graphics\texture</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\graphics\texture\ktx2.h">
+      <Filter>ballistica\base\graphics\texture</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\graphics\texture\pvr.cc">
       <Filter>ballistica\base\graphics\texture</Filter>
     </ClCompile>
@@ -645,6 +657,12 @@
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\base\networking\networking.h">
       <Filter>ballistica\base\networking</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\platform\android\android_message_bus.cc">
+      <Filter>ballistica\base\platform\android</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\platform\android\android_message_bus.h">
+      <Filter>ballistica\base\platform\android</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\python\base_python.cc">
       <Filter>ballistica\base\python</Filter>
@@ -2064,6 +2082,8 @@
     <Filter Include="ballistica\base\input\support" />
     <Filter Include="ballistica\base\logic" />
     <Filter Include="ballistica\base\networking" />
+    <Filter Include="ballistica\base\platform" />
+    <Filter Include="ballistica\base\platform\android" />
     <Filter Include="ballistica\base\python" />
     <Filter Include="ballistica\base\python\class" />
     <Filter Include="ballistica\base\python\methods" />

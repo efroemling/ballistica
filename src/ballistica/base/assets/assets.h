@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
 
@@ -120,7 +121,44 @@ class Assets {
 
   auto asset_loads_allowed() const { return asset_loads_allowed_; }
 
+  /// In-memory CAS manifest registry for asset-packages. Populated
+  /// at startup from the bundled ``manifest.json``; queried on the
+  /// hot path by ``gettexture`` and friends when given a qualified
+  /// ``<apverid>:<asset_name>`` ref.
+  auto package_registry() -> AssetPackageRegistry* {
+    return &package_registry_;
+  }
+
+  /// Describes which asset-package texture bucket the runtime is
+  /// currently sampling from. Returned by :meth:`ActiveTextureBucket`.
+  struct TextureBucketInfo {
+    /// Bucket id in the bundled manifest (e.g.
+    /// ``"textures/fallback_v1_regular"``).
+    std::string bucket_id;
+    /// On-disk file extension for entries in this bucket (e.g.
+    /// ``".ktx2"`` for KTX2-packaged textures). Drives loader
+    /// dispatch downstream.
+    std::string file_extension;
+  };
+
+  /// The active texture bucket for this build's runtime. Hardcoded
+  /// to FALLBACK_V1 / regular quality / KTX2 for v1; Phase 3
+  /// construct-mode replaces this with real dispatch driven by
+  /// platform texture-compression support and user quality
+  /// preferences. Centralizing the policy here keeps
+  /// :meth:`FindAssetFileCas_` independent of profile choice.
+  auto ActiveTextureBucket() const -> TextureBucketInfo;
+
  private:
+  /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a
+  /// CAS blob path via :class:`AssetPackageRegistry`. Called from the
+  /// top of :meth:`FindAssetFile` when a ``:`` is detected — bare
+  /// names continue on the legacy filename-on-disk path. ``colon_pos``
+  /// is the location of the first ``:`` in ``name``, hoisted by the
+  /// caller to avoid a redundant find.
+  auto FindAssetFileCas_(FileType type, const std::string& name,
+                         size_t colon_pos) -> std::string;
+
   static void MarkAssetForLoad(Asset* c);
   void LoadSystemTexture(SysTextureID id, const char* name);
   void LoadSystemCubeMapTexture(SysCubeMapTextureID id, const char* name);
@@ -150,6 +188,7 @@ class Assets {
 
   std::vector<std::string> asset_paths_;
   std::unordered_map<std::string, std::string> packages_;
+  AssetPackageRegistry package_registry_;
 
   // For use by AssetListLock; don't manually acquire.
   std::mutex asset_lists_mutex_;
