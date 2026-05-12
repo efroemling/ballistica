@@ -455,7 +455,7 @@ jobs:
             .cache/flatpak/flatpak-builder
             .cache/flatpak/build_dir
             .cache/flatpak/repo
-          key: ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}
+          key: ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-${{ hashFiles('pconfig/flatpak/net.froemling.BombSquad.yml') }}
           restore-keys: |
             ${{ runner.os }}-${{runner.arch}}-${{ env.cache-name }}-
       - name: Install dependencies
@@ -468,8 +468,8 @@ jobs:
       #   uses: flatpak/flatpak-github-actions/flatpak-builder@v6
       #   with:
       #     bundle: bombsquad.flatpak
-      #     manifest-path: config/flatpak/net.froemling.BombSquad.yml
-      #     cache-key: flatpak-builder-${{ hashFiles('config/flatpak/net.froemling.BombSquad.yml') }}-${{ github.sha }}
+      #     manifest-path: pconfig/flatpak/net.froemling.BombSquad.yml
+      #     cache-key: flatpak-builder-${{ hashFiles('pconfig/flatpak/net.froemling.BombSquad.yml') }}-${{ github.sha }}
       - name: Make the build
         run: |
           sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
