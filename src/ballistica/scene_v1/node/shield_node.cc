@@ -183,28 +183,32 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate(0.5f, half_height);
           c.Scale(1.1f, height + 0.1f);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              base::BuiltinMeshOldID::kImage1x1));
         }
         c.SetColor(0.4f * o, 0.4f * o, 0.8f * o, 0.0f * o);
         {
           auto xf = c.ScopedTransform();
           c.Translate(p_left * 0.5f, half_height);
           c.Scale(p_left, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              base::BuiltinMeshOldID::kImage1x1));
         }
         c.SetColor(1.0f * o, 1.0f * o, 1.0f * o, 0.0f);
         {
           auto xf = c.ScopedTransform();
           c.Translate((p_left + p_right) * 0.5f, half_height);
           c.Scale(p_right - p_left, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              base::BuiltinMeshOldID::kImage1x1));
         }
         c.SetColor(0.1f * o, 0.1f * o, 0.2f * o, 0.4f * o);
         {
           auto xf = c.ScopedTransform();
           c.Translate((p_right + 1.0f) * 0.5f, half_height);
           c.Scale(1.0f - p_right, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              base::BuiltinMeshOldID::kImage1x1));
         }
       }
       c.Submit();
@@ -236,7 +240,8 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     c.SetLightShadow(base::LightShadowType::kNone);
     c.SetReflection(base::ReflectionType::kSharp);
     c.SetReflectionScale(0.34f * o, 0.34f * o, 0.34f * o);
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kShield));
+    c.SetTexture(
+        g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kShield));
     c.SetColor(col[0], col[1], col[2], 0.13f * o);
     Vector3f to_cam =
         Vector3f(cx - position_[0], cy - position_[1], cz - position_[2])
@@ -258,8 +263,9 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
       c.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360, 0,
                1, 0);
       c.Scale(r2, r2, r2);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield),
-                      base::kMeshDrawFlagNoReflection);
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kShield),
+          base::kMeshDrawFlagNoReflection);
     }
     c.Submit();
 
@@ -273,7 +279,8 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
         c2.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360,
                   0, 1, 0);
         c2.Scale(r2, r2, r2);
-        c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield));
+        c2.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kShield));
       }
       c2.Submit();
     }
@@ -288,7 +295,8 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
                   0, 1, 0);
         float sc = r2 * 1.1f;
         c2.Scale(sc, sc, sc);
-        c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kShield));
+        c2.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kShield));
       }
       c2.Submit();
     }

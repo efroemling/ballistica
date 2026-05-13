@@ -114,7 +114,7 @@ src/assets/src_master
 # XCode
 xcuserdata/
 
-# Meta-generated sources
+# Meta-generated sources (see docs/design/codegen.md for rationale).
 /src/ballistica/mgen
 /src/ballistica/*/mgen
 /src/assets/ba_data/python/*/_mgen

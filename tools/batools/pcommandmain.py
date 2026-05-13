@@ -120,6 +120,7 @@ from batools.pcommands import (
     version,
 )
 from batools.pcommands2 import (
+    gen_builtin_asset_ids,
     gen_python_init_module,
     gen_monolithic_register_modules,
     py_examine,

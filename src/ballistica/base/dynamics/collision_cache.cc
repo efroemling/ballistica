@@ -42,7 +42,7 @@ void CollisionCache::Draw(FrameDef* frame_def) {
     {
       auto xf = c.ScopedTransform();
       c.Scale(1, 0.01f, 1);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
+      c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBox));
     }
     c.Translate(-0.5f + 0.5f * cell_width, 0, -0.5f + 0.5f * cell_height);
     for (int x = 0; x < grid_width_; x++) {
@@ -60,7 +60,8 @@ void CollisionCache::Draw(FrameDef* frame_def) {
                       cells_[cell_index].height_confirmed_collide_,
                       static_cast<float>(z) / static_cast<float>(grid_height_));
           c.Scale(0.95f * cell_width, 0.01f, 0.95f * cell_height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
+          c.DrawMeshAsset(
+              g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBox));
         }
         if (glow_[cell_index]) {
           c.SetColor(1, 1, 1, 0.2f);
@@ -73,7 +74,8 @@ void CollisionCache::Draw(FrameDef* frame_def) {
                       cells_[cell_index].height_confirmed_empty_,
                       static_cast<float>(z) / static_cast<float>(grid_height_));
           c.Scale(0.95f * cell_width, 0.01f, 0.95f * cell_height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
+          c.DrawMeshAsset(
+              g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBox));
         }
         glow_[cell_index] = 0;
       }
@@ -95,7 +97,8 @@ void CollisionCache::Draw(FrameDef* frame_def) {
       {
         auto xf = c2.ScopedTransform();
         c2.Scale(1, 0.01f, 1);
-        c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
+        c2.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBox));
       }
       c2.Translate(-0.5f + 0.5f * cell_width2, 0, -0.5f + 0.5f * cell_height2);
       for (int x = 0; x < grid_width_; x++) {
@@ -115,7 +118,8 @@ void CollisionCache::Draw(FrameDef* frame_def) {
                 cells_[cell_index].height_confirmed_empty_,
                 static_cast<float>(z) / static_cast<float>(grid_height_));
             c2.Scale(0.95f * cell_width2, 0.01f, 0.95f * cell_height2);
-            c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
+            c2.DrawMeshAsset(
+                g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBox));
           }
           if (glow_[cell_index]) {
             c2.SetColor(1, 1, 1, 0.2f);
@@ -129,7 +133,8 @@ void CollisionCache::Draw(FrameDef* frame_def) {
                 cells_[cell_index].height_confirmed_collide_,
                 static_cast<float>(z) / static_cast<float>(grid_height_));
             c2.Scale(0.95f * cell_width2, 0.01f, 0.95f * cell_height2);
-            c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBox));
+            c2.DrawMeshAsset(
+                g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBox));
           }
           glow_[cell_index] = 0;
         }

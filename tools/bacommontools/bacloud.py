@@ -305,7 +305,8 @@ class App:
             raise CleanError(
                 f'bacloud_node ({BA_FLEET}): missing hostname in response.'
             )
-        print(f'{Clr.BLU}bacloud: fleet {BA_FLEET!r} -> {host}{Clr.RST}')
+        if VERBOSE:
+            print(f'{Clr.BLU}bacloud: fleet {BA_FLEET!r} -> {host}{Clr.RST}')
         return host
 
     def _servercmd(self, cmd: str, payload: dict, stream: bool) -> ResponseData:

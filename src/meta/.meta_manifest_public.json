@@ -1,6 +1,9 @@
 [
+ ".cache/asset_bundle/gui/manifest.json",
  "src/assets/ba_data/python/babase/_mgen/__init__.py",
  "src/assets/ba_data/python/babase/_mgen/enums.py",
+ "src/ballistica/base/mgen/builtin_asset_ids.h",
+ "src/ballistica/base/mgen/builtin_asset_load.inc",
  "src/ballistica/base/mgen/pyembed/binding_base.inc",
  "src/ballistica/base/mgen/pyembed/binding_base_app.inc",
  "src/ballistica/classic/mgen/pyembed/binding_classic.inc",

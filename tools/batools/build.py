@@ -147,6 +147,13 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'src/meta',
                 'src/ballistica/shared/ballistica.h',
                 '.efrocachemap',
+                # Construct asset-package bundle manifests drive the
+                # builtin-asset id generator; without this, a workspace
+                # or projectconfig-apverid change refreshes the cache
+                # without re-running meta and the generated files go
+                # stale. Missing on fresh checkouts is fine — os.walk
+                # treats absent paths as empty.
+                '.cache/asset_bundle',
             ],
             # Our meta Makefile targets generally don't list tools
             # scripts that can affect their creation as sources, so

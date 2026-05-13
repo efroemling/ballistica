@@ -433,7 +433,8 @@ def _do_featureset_copy_dir(
     filtered_exts = ['.cc', '.h', '.py', '.md', '.inc']
 
     # Eww; reinventing the wheel here; should tap into existing
-    # spinoff logic or something.
+    # spinoff logic or something. mgen/_mgen strip: see
+    # docs/design/codegen.md.
     cruft_names = ['.DS_Store', 'mgen', '_mgen']
     cruft_exts = ['.pyc']
 

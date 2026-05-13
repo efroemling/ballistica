@@ -642,7 +642,8 @@ class ProjectUpdater:
                 if any(ftst.endswith(ext) for ext in header_exts):
                     header_files.add(os.path.join(root, ftst)[len(scan_dir) :])
 
-        # IMPORTANT - exclude generated files.
+        # IMPORTANT - exclude generated files. (See docs/design/codegen.md
+        # for the broader mgen convention this exclusion is part of.)
         # For now these just consist of headers so its ok to completely
         # ignore their existence here, but at some point if we start
         # generating .cc files that need to be compiled we'll have to

@@ -440,7 +440,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
       if (movement_control_type_ == MovementControlType::kSwipe) sc2 *= 0.6f;
 
       if (movement_control_type_ == MovementControlType::kSwipe) {
-        c.SetTexture(g_base->assets->SysTexture(SysTextureID::kTouchArrows));
+        c.SetTexture(g_base->assets->BuiltinTextureOld(
+            BuiltinTextureOldID::kTouchArrows));
         if (editing_) {
           float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
           c.SetColor(val, val, 1.0f, 1.0f);
@@ -453,7 +454,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           val = 0.35f;
         }
         c.SetColor(0.5f, 0.3f, 0.8f, val);
-        c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircle));
+        c.SetTexture(
+            g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kCircle));
       }
 
       float x_offs =
@@ -465,7 +467,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(d_pad_base_x_ + x_offs, d_pad_base_y_ + y_offs, kDrawDepth);
         c.Scale(sc2, sc2);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
       }
 
       if (movement_control_type_ == MovementControlType::kJoystick) {
@@ -480,7 +483,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate(d_pad_x_ + x_offs, d_pad_y_ + y_offs, kDrawDepth);
           c.Scale(sc_move * 0.5f, sc_move * 0.5f);
-          c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+          c.DrawMeshAsset(
+              g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
         }
       }
     }
@@ -488,8 +492,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
     if (!buttons_touch_ && action_control_type_ == ActionControlType::kSwipe
         && !swipe_controls_hidden_) {
       float sc2{sc_actions * 0.6f};
-      c.SetTexture(
-          g_base->assets->SysTexture(SysTextureID::kTouchArrowsActions));
+      c.SetTexture(g_base->assets->BuiltinTextureOld(
+          BuiltinTextureOldID::kTouchArrowsActions));
       if (editing_) {
         float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
         c.SetColor(val, val, 1.0f, 1.0f);
@@ -504,7 +508,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
             height * (-0.1f - buttons_default_frac_y_) * (1.0f - presence_);
         c.Translate(buttons_x_ + x_offs, buttons_y_ + y_offs, kDrawDepth);
         c.Scale(sc2, sc2);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
       }
     }
     c.Submit();
@@ -540,7 +545,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
       base_fade = 0.25f;
     } else {
       base_fade = 0.8f;
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kActionButtons));
+      c.SetTexture(g_base->assets->BuiltinTextureOld(
+          BuiltinTextureOldID::kActionButtons));
     }
 
     float x_offs;
@@ -635,8 +641,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(
-              g_base->assets->SysMesh(SysMeshID::kActionButtonRight));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              BuiltinMeshOldID::kActionButtonRight));
         }
       }
 
@@ -664,8 +670,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(
-              g_base->assets->SysMesh(SysMeshID::kActionButtonLeft));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              BuiltinMeshOldID::kActionButtonLeft));
         }
       }
 
@@ -692,8 +698,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(
-              g_base->assets->SysMesh(SysMeshID::kActionButtonBottom));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              BuiltinMeshOldID::kActionButtonBottom));
         }
       }
 
@@ -722,13 +728,15 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kActionButtonTop));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              BuiltinMeshOldID::kActionButtonTop));
         }
       }
 
       // Center point.
       if (buttons_touch_ && action_control_type_ == ActionControlType::kSwipe) {
-        c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircle));
+        c.SetTexture(
+            g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kCircle));
         c.SetColor(1.0f, 1.0f, 0.0f, 0.8f);
         {
           auto xf = c.ScopedTransform();
@@ -755,7 +763,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
                         kDrawDepth);
           }
           c.Scale(b_width * 0.3f, b_width * 0.3f);
-          c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+          c.DrawMeshAsset(
+              g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
         }
       }
     }
@@ -795,7 +804,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
       dist = 0.05f;
     }
 
-    c2.SetTexture(g_base->assets->SysTexture(SysTextureID::kArrow));
+    c2.SetTexture(
+        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kArrow));
     Matrix44f orient =
         Matrix44fOrient(d_pad_draw_dir_, Vector3f(0.0f, 1.0f, 0.0f));
     {
@@ -829,14 +839,16 @@ void TouchInput::Draw(FrameDef* frame_def) {
         auto xf = c2.ScopedTransform();
         c2.Translate(0.0f, dist * -0.5f, 0.0f);
         c2.Scale(0.15f, dist, 0.2f);
-        c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kArrowBack));
+        c2.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kArrowBack));
       }
 
       {
         auto xf = c2.ScopedTransform();
         c2.Translate(0.0f, dist * -1.0f - 0.15f, 0.0f);
         c2.Scale(0.45f, 0.3f, 0.3f);
-        c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kArrowFront));
+        c2.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kArrowFront));
       }
     }
     c2.Submit();

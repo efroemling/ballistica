@@ -22,6 +22,21 @@ if TYPE_CHECKING:
     pass
 
 
+class WrapperType(Enum):
+    """Python wrapper-module flavor for an asset-package version.
+
+    Selects which feature-set's loader API the generated wrapper
+    delegates to. Members today correspond 1:1 with feature-sets, but
+    the type is deliberately named ``WrapperType`` (not
+    ``WrapperFeatureset``) to leave room for non-featureset-shaped
+    variants (e.g. tooling-only or future loader APIs) without a
+    rename.
+    """
+
+    BASCENEV1 = 'bascenev1'
+    BAUIV1 = 'bauiv1'
+
+
 @ioprepped
 @dataclass
 class AssetsV1GlobalVals:

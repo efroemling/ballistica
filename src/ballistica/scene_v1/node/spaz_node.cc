@@ -1817,16 +1817,16 @@ void SpazNode::DoFlyPress() {
         const dReal* p_torso = dGeomGetPosition(body_torso_->geom());
         s->SetPosition(p_torso[0], p_torso[1], p_torso[2]);
         s->SetGain(0.3f);
-        base::SysSoundID s_id;
+        base::BuiltinSoundOldID s_id;
         int r = rand() % 100;  // NOLINT
         if (r < 33) {
-          s_id = base::SysSoundID::kSparkle;
+          s_id = base::BuiltinSoundOldID::kSparkle;
         } else if (r < 66) {
-          s_id = base::SysSoundID::kSparkle2;
+          s_id = base::BuiltinSoundOldID::kSparkle2;
         } else {
-          s_id = base::SysSoundID::kSparkle3;
+          s_id = base::BuiltinSoundOldID::kSparkle3;
         }
-        s->Play(g_base->assets->SysSound(s_id));
+        s->Play(g_base->assets->BuiltinSoundOld(s_id));
         s->End();
       }
     }
@@ -3966,10 +3966,11 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
   if (blink_smooth_ < 0.9f) {
     if (shading) {
       oc->SetLightShadow(base::LightShadowType::kObject);
-      oc->SetTexture(g_base->assets->SysTexture(base::SysTextureID::kEye));
+      oc->SetTexture(
+          g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kEye));
       oc->SetColorizeColor(eye_color_red_, eye_color_green_, eye_color_blue_);
-      oc->SetColorizeTexture(
-          g_base->assets->SysTexture(base::SysTextureID::kEyeTint));
+      oc->SetColorizeTexture(g_base->assets->BuiltinTextureOld(
+          base::BuiltinTextureOldID::kEyeTint));
       oc->SetReflection(base::ReflectionType::kSharpest);
       oc->SetReflectionScale(3, 3, 3);
       oc->SetAddColor(add_color[0], add_color[1], add_color[2]);
@@ -3993,14 +3994,15 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
           c->Scale(death_scale, death_scale, death_scale);
         }
         if (!frosty_ && !eyeless_) {
-          c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeBall));
+          c->DrawMeshAsset(
+              g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kEyeBall));
           if (shading) {
             oc->SetReflectionScale(2, 2, 2);
           }
           if (death_scale != 1.0f)
             c->Scale(death_scale, death_scale, death_scale);
-          c->DrawMeshAsset(
-              g_base->assets->SysMesh(base::SysMeshID::kEyeBallIris));
+          c->DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              base::BuiltinMeshOldID::kEyeBallIris));
         }
       }
 
@@ -4017,15 +4019,16 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
           if (death_scale != 1.0f) {
             c->Scale(death_scale, death_scale, death_scale);
           }
-          c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeBall));
+          c->DrawMeshAsset(
+              g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kEyeBall));
           if (death_scale != 1.0f) {
             c->Scale(death_scale, death_scale, death_scale);
           }
           if (shading) {
             oc->SetReflectionScale(2, 2, 2);
           }
-          c->DrawMeshAsset(
-              g_base->assets->SysMesh(base::SysMeshID::kEyeBallIris));
+          c->DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              base::BuiltinMeshOldID::kEyeBallIris));
         }
       }
     }
@@ -4034,7 +4037,8 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
 
 void SpazNode::SetupEyeLidShading(base::ObjectComponent* c, float death_fade,
                                   float* add_color) {
-  c->SetTexture(g_base->assets->SysTexture(base::SysTextureID::kEye));
+  c->SetTexture(
+      g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kEye));
   c->SetColorizeTexture(nullptr);
   float r, g, b;
   r = eye_lid_color_red_;
@@ -4081,7 +4085,8 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
     }
 
     if (!frosty_ && !eyeless_) {
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeLid));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kEyeLid));
     }
   }
 
@@ -4106,7 +4111,8 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
       c->Scale(death_scale, death_scale, death_scale);
     }
     if (!pirate_ && !frosty_ && !eyeless_) {
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeLid));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kEyeLid));
     }
   }
   c->FlipCullFace();  // back to normal
@@ -4175,7 +4181,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft1));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kHairTuft1));
     }
 
     // Hair tuft 1b; just reuse tuft 1 with some extra translating.
@@ -4190,7 +4197,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft1b));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kHairTuft1b));
     }
   }
 
@@ -4200,7 +4208,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       auto xf = c->ScopedTransform();
       hair_front_left_body_->ApplyToRenderComponent(c);
       if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft2));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kHairTuft2));
     }
   }
 
@@ -4212,7 +4221,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft3));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kHairTuft3));
     }
   }
 
@@ -4224,7 +4234,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft4));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kHairTuft4));
     }
   }
 
@@ -4923,7 +4934,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c.Translate(torso_pos[0] - 0.3f, torso_pos[1] + 1.47f,
                     torso_pos[2] - 0.2f);
         c.Scale(1.5f * 0.2f, 1.5f * 0.2f, 1.5f * 0.2f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
       }
       c.Submit();
     }
@@ -5033,7 +5045,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       auto xf = c.ScopedTransform();
       c.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
       c.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
     }
     c.Submit();
 
@@ -5048,7 +5061,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c2.ScopedTransform();
         c2.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
         c2.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
-        c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kCrossOut));
+        c2.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kCrossOut));
       }
       c2.Submit();
     }
@@ -5100,7 +5114,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate(0.5f, half_height);
           c.Scale(1.1f, height + 0.1f);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              base::BuiltinMeshOldID::kImage1x1));
         }
 
         c.SetColor(0, 0.35f * o, 0, 0.3f * o);
@@ -5109,7 +5124,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate(p_left * 0.5f, half_height);
           c.Scale(p_left, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              base::BuiltinMeshOldID::kImage1x1));
         }
 
         if (dead_ && scene()->stepnum() % 10 < 5) {
@@ -5122,7 +5138,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate((p_left + p_right) * 0.5f, half_height);
           c.Scale(p_right - p_left, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              base::BuiltinMeshOldID::kImage1x1));
         }
 
         c.SetColor(
@@ -5133,7 +5150,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate((p_right + 1.0f) * 0.5f, half_height);
           c.Scale(1.0f - p_right, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              base::BuiltinMeshOldID::kImage1x1));
         }
       }
       c.Submit();
@@ -5173,7 +5191,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     c.SetColor(1, 1, 1, 1.0f);
     c.SetReflection(base::ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kWings));
+    c.SetTexture(
+        g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kWings));
 
     // Fade to reddish on death.
     if (dead_ && !frozen_) {
@@ -5194,7 +5213,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(p_wing_l[0], p_wing_l[1], p_wing_l[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBox));
       }
 
       // Draw wing point.
@@ -5202,7 +5222,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(wing_pos_left_.x, wing_pos_left_.y, wing_pos_left_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBox));
       }
 
       // Draw target.
@@ -5212,7 +5233,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(p_wing_r[0], p_wing_r[1], p_wing_r[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBox));
       }
 
       // Draw wing point.
@@ -5220,7 +5242,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(wing_pos_right_.x, wing_pos_right_.y, wing_pos_right_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBox));
       }
     }
 
@@ -5248,7 +5271,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kWing));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kWing));
     }
 
     Vector3f to_right_wing = wing_pos_right_ - torso_pos2;
@@ -5267,7 +5291,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kWing));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kWing));
     }
     c.Submit();
   }
@@ -5304,7 +5329,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       }
     }
     c.SetLightShadow(base::LightShadowType::kObject);
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kBoxingGlove));
+    c.SetTexture(g_base->assets->BuiltinTextureOld(
+        base::BuiltinTextureOldID::kBoxingGlove));
 
     {
       auto xf = c.ScopedTransform();
@@ -5312,7 +5338,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBoxingGlove));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBoxingGlove));
     }
 
     c.FlipCullFace();
@@ -5323,7 +5350,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBoxingGlove));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBoxingGlove));
       c.FlipCullFace();
     }
     c.Submit();
@@ -6243,8 +6271,8 @@ void SpazNode::SetCurseDeathTime(millisecs_t val) {
         s->SetLooping(true);
         const dReal* p_head = dGeomGetPosition(body_head_->geom());
         s->SetPosition(p_head[0], p_head[1], p_head[2]);
-        tick_play_id_ =
-            s->Play(g_base->assets->SysSound(base::SysSoundID::kTickingCrazy));
+        tick_play_id_ = s->Play(g_base->assets->BuiltinSoundOld(
+            base::BuiltinSoundOldID::kTickingCrazy));
         s->End();
       }
     }

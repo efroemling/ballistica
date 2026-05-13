@@ -422,7 +422,7 @@ enum class ShadingType : uint8_t {
   kCount
 };
 
-enum class SysTextureID : uint8_t {
+enum class BuiltinTextureOldID : uint8_t {
   kUIAtlas,
   kButtonSquare,
   kWhite,
@@ -507,7 +507,7 @@ enum class SysTextureID : uint8_t {
   kFontExtras5,
 };
 
-enum class SysCubeMapTextureID : uint8_t {
+enum class BuiltinCubeMapTextureOldID : uint8_t {
   kReflectionChar,
   kReflectionPowerup,
   kReflectionSoft,
@@ -516,7 +516,7 @@ enum class SysCubeMapTextureID : uint8_t {
   kReflectionSharpest
 };
 
-enum class SysSoundID {
+enum class BuiltinSoundOldID {
   kDeek,
   kBlip,
   kBlank,
@@ -541,7 +541,7 @@ enum class SysSoundID {
 
 enum class SystemDataID : uint8_t {};
 
-enum class SysMeshID : uint8_t {
+enum class BuiltinMeshOldID : uint8_t {
   kButtonSmallTransparent,
   kButtonSmallOpaque,
   kButtonMediumTransparent,

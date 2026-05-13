@@ -494,7 +494,7 @@ auto UI::RequestMainUIControl(InputDevice* input_device) -> bool {
     // they're not the chosen one.
     if (time - last_widget_input_reject_err_sound_time_ > 5000) {
       last_widget_input_reject_err_sound_time_ = time;
-      g_base->audio->SafePlaySysSound(SysSoundID::kErrorBeep);
+      g_base->audio->SafePlayBuiltinSoundOld(BuiltinSoundOldID::kErrorBeep);
       print_ui_owner = true;
     }
     ret_val = false;  // Rejected!
@@ -635,7 +635,8 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
 
   SimpleComponent c(frame_def->overlay_front_pass());
   c.SetTransparent(true);
-  c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircleShadow));
+  c.SetTexture(
+      g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kCircleShadow));
   if (dev_console_button_pressed_) {
     c.SetColor(1.0f, 1.0f, 1.0f, 0.8f);
   } else {
@@ -645,7 +646,8 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
     auto xf = c.ScopedTransform();
     c.Translate(vwidth - bsz * 0.5f, vheight * 0.5f, kDevConsoleZDepth + 0.01f);
     c.Scale(bsz, bsz, 1.0f);
-    c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+    c.DrawMeshAsset(
+        g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
     {
       auto xf = c.ScopedTransform();
       c.Scale(0.017f, 0.017f, 1.0f);

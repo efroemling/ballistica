@@ -936,13 +936,14 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         base::SimpleComponent c(pass);
         c.SetTransparent(true);
         c.SetColor(1.0f, 1.0f, 1.0f, border_opacity_);
-        c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
+        c.SetTexture(g_base->assets->BuiltinTextureOld(
+            base::BuiltinTextureOldID::kUIAtlas));
         {
           auto xf = c.ScopedTransform();
           c.Translate(trough_center_x_, trough_center_y_, 0.05f);
           c.Scale(trough_width_, trough_height_, 0.1f);
-          c.DrawMeshAsset(g_base->assets->SysMesh(
-              base::SysMeshID::kScrollBarTroughTransparent));
+          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+              base::BuiltinMeshOldID::kScrollBarTroughTransparent));
         }
         c.Submit();
       }
@@ -997,7 +998,8 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.SetColor(color_red_ * c_scale, color_green_ * c_scale,
                    color_blue_ * c_scale, 1.0f);
 
-        c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
+        c.SetTexture(g_base->assets->BuiltinTextureOld(
+            base::BuiltinTextureOldID::kUIAtlas));
         {
           auto scissor =
               c.ScopedScissor({l + border_width_, b + border_height_ + 1.0f,
@@ -1006,15 +1008,15 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           c.Translate(thumb_center_x_, thumb_center_y_, 0.8f);
           c.Scale(thumb_width_, thumb_height_, 0.1f);
           if (draw_transparent) {
-            c.DrawMeshAsset(g_base->assets->SysMesh(
+            c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
                 sb_thumb_height > 100
-                    ? base::SysMeshID::kScrollBarThumbTransparent
-                    : base::SysMeshID::kScrollBarThumbShortTransparent));
+                    ? base::BuiltinMeshOldID::kScrollBarThumbTransparent
+                    : base::BuiltinMeshOldID::kScrollBarThumbShortTransparent));
           } else {
-            c.DrawMeshAsset(g_base->assets->SysMesh(
+            c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
                 sb_thumb_height > 100
-                    ? base::SysMeshID::kScrollBarThumbOpaque
-                    : base::SysMeshID::kScrollBarThumbShortOpaque));
+                    ? base::BuiltinMeshOldID::kScrollBarThumbOpaque
+                    : base::BuiltinMeshOldID::kScrollBarThumbShortOpaque));
           }
         }
       }
@@ -1043,14 +1045,14 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetColor(1, 1, 1, border_opacity_);
-      c.SetTexture(
-          g_base->assets->SysTexture(base::SysTextureID::kScrollWidget));
+      c.SetTexture(g_base->assets->BuiltinTextureOld(
+          base::BuiltinTextureOldID::kScrollWidget));
       {
         auto xf = c.ScopedTransform();
         c.Translate(outline_center_x_, outline_center_y_, 0.9f);
         c.Scale(outline_width_, outline_height_, 0.1f);
-        c.DrawMeshAsset(
-            g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
+        c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+            base::BuiltinMeshOldID::kSoftEdgeOutside));
       }
     }
   }
@@ -1084,14 +1086,14 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.SetPremultiplied(true);
     c.SetColor(0.4f * m, 0.5f * m, 0.05f * m, 0.0f);
-    c.SetTexture(
-        g_base->assets->SysTexture(base::SysTextureID::kScrollWidgetGlow));
+    c.SetTexture(g_base->assets->BuiltinTextureOld(
+        base::BuiltinTextureOldID::kScrollWidgetGlow));
     {
       auto xf = c.ScopedTransform();
       c.Translate(glow_center_x_, glow_center_y_, 0.9f);
       c.Scale(glow_width_, glow_height_, 0.1f);
-      c.DrawMeshAsset(
-          g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
+      c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+          base::BuiltinMeshOldID::kSoftEdgeOutside));
     }
     c.Submit();
   }

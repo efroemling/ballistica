@@ -4,6 +4,7 @@
 # pylint: disable=useless-suppression, missing-module-docstring, line-too-long
 from __future__ import annotations
 from babase import app
+from babase._asset_packages import load_bundled_asset_packages
 
 # The C++ layer looks for this variable:
 values = [
@@ -13,6 +14,7 @@ values = [
     app.lang.translate,  # kTranslateCall
     app.push_apply_app_config,  # kAppPushApplyAppConfigCall
     app.on_native_start,  # kAppOnNativeStartCall
+    load_bundled_asset_packages,  # kLoadBundledAssetPackagesCall
     app.on_native_bootstrapping_complete,  # kAppOnNativeBootstrappingCompleteCall
     app.on_native_suspend,  # kAppOnNativeSuspendCall
     app.on_native_unsuspend,  # kAppOnNativeUnsuspendCall

@@ -164,7 +164,8 @@ auto Audio::ShouldPlay(SoundAsset* sound) -> bool {
   return (time - sound->last_play_time() > 50);
 }
 
-auto Audio::SafePlaySysSound(SysSoundID sound_id) -> std::optional<uint32_t> {
+auto Audio::SafePlayBuiltinSoundOld(BuiltinSoundOldID sound_id)
+    -> std::optional<uint32_t> {
   // Save some time on headless.
   if (g_core->HeadlessMode()) {
     return {};
@@ -172,25 +173,25 @@ auto Audio::SafePlaySysSound(SysSoundID sound_id) -> std::optional<uint32_t> {
   if (!g_base->InLogicThread()) {
     g_core->logging->Log(
         LogName::kBaAudio, LogLevel::kError,
-        "Audio::SafePlaySysSound called from non-logic thread. id="
+        "Audio::SafePlayBuiltinSoundOld called from non-logic thread. id="
             + std::to_string(static_cast<int>(sound_id)));
     return {};
   }
   if (!g_base->assets->sys_assets_loaded()) {
     g_core->logging->Log(
         LogName::kBaAudio, LogLevel::kWarning,
-        "Audio::SafePlaySysSound called before sys assets loaded. id="
+        "Audio::SafePlayBuiltinSoundOld called before sys assets loaded. id="
             + std::to_string(static_cast<int>(sound_id)));
     return {};
   }
-  if (!g_base->assets->IsValidSysSound(sound_id)) {
+  if (!g_base->assets->IsValidBuiltinSoundOld(sound_id)) {
     g_core->logging->Log(
         LogName::kBaAudio, LogLevel::kWarning,
-        "Audio::SafePlaySysSound called with invalid sound_id. id="
+        "Audio::SafePlayBuiltinSoundOld called with invalid sound_id. id="
             + std::to_string(static_cast<int>(sound_id)));
     return {};
   }
-  return PlaySound(g_base->assets->SysSound(sound_id));
+  return PlaySound(g_base->assets->BuiltinSoundOld(sound_id));
 }
 
 auto Audio::PlaySound(SoundAsset* sound, float volume)

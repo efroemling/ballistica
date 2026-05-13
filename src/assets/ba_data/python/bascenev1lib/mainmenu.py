@@ -163,7 +163,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         attrs={
                             'position': (0.0, 0.0),
                             'texture': bs.gettexture(
-                                f'{_apverids[0]}:helloworld'
+                                f'{_apverids[0]}:mydir/helloworld'
                             ),
                             'attach': 'center',
                             'scale': (300.0, 300.0),

@@ -79,7 +79,7 @@ class Graphics {
 
   static auto IsShaderTransparent(ShadingType c) -> bool;
   static auto CubeMapFromReflectionType(ReflectionType reflection_type)
-      -> SysCubeMapTextureID;
+      -> BuiltinCubeMapTextureOldID;
 
   // Given a string, return a reflection type.
   static auto ReflectionTypeFromString(const std::string& s) -> ReflectionType;

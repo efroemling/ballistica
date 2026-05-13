@@ -16,6 +16,31 @@ if TYPE_CHECKING:
     from libcst.metadata import CodeRange
 
 
+def gen_builtin_asset_ids() -> None:
+    """Generate C++ ids/load-block for the construct asset-package.
+
+    Reads the cached bundle manifest under .cache/asset_bundle/gui/ and
+    writes src/ballistica/base/mgen/builtin_asset_ids.h and
+    src/ballistica/base/mgen/builtin_asset_load.inc. Pass ``--check``
+    to fail (without writing) if outputs are out of date.
+    """
+    from pathlib import Path
+    from batools.builtinassetids import generate
+
+    check = '--check' in sys.argv
+    # Path.cwd() is unreliable here — meta-build invokes us from
+    # src/meta/. Use the pcommand-provided projroot which points at
+    # the real top of the tree regardless of caller cwd.
+    changed = generate(Path(pcommand.PROJROOT), check=check)
+    if check and changed:
+        from efro.error import CleanError
+
+        raise CleanError(
+            'Generated builtin-asset id files are out of date; '
+            "run 'make update' to regenerate."
+        )
+
+
 def gen_monolithic_register_modules() -> None:
     """Generate .h file for registering py modules."""
     import os

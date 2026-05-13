@@ -10,6 +10,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/mgen/builtin_asset_ids.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {
@@ -75,11 +76,20 @@ class Assets {
 
   // Get system assets. These are loaded at startup so are always instantly
   // available.
-  auto SysTexture(SysTextureID id) -> TextureAsset*;
-  auto SysCubeMapTexture(SysCubeMapTextureID id) -> TextureAsset*;
-  auto IsValidSysSound(SysSoundID id) -> bool;
-  auto SysSound(SysSoundID id) -> SoundAsset*;
-  auto SysMesh(SysMeshID id) -> MeshAsset*;
+  auto BuiltinTextureOld(BuiltinTextureOldID id) -> TextureAsset*;
+  auto BuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID id) -> TextureAsset*;
+  auto IsValidBuiltinSoundOld(BuiltinSoundOldID id) -> bool;
+  auto BuiltinSoundOld(BuiltinSoundOldID id) -> SoundAsset*;
+  auto BuiltinMeshOld(BuiltinMeshOldID id) -> MeshAsset*;
+
+  // Same as above but for the new CAS-backed asset-package path. Enum
+  // values + load-bindings are generated from the projectconfig
+  // ``"assets"`` package by tools/batools/builtinassetids.py.
+  auto BuiltinTexture(BuiltinTextureID id) -> TextureAsset*;
+  auto BuiltinCubeMapTexture(BuiltinCubeMapTextureID id) -> TextureAsset*;
+  auto IsValidBuiltinSound(BuiltinSoundID id) -> bool;
+  auto BuiltinSound(BuiltinSoundID id) -> SoundAsset*;
+  auto BuiltinMesh(BuiltinMeshID id) -> MeshAsset*;
 
   /// Load/cache custom assets. Make sure you hold a AssetListLock.
   auto GetTexture(const std::string& file_name) -> Object::Ref<TextureAsset>;
@@ -160,11 +170,19 @@ class Assets {
                          size_t colon_pos) -> std::string;
 
   static void MarkAssetForLoad(Asset* c);
-  void LoadSystemTexture(SysTextureID id, const char* name);
-  void LoadSystemCubeMapTexture(SysCubeMapTextureID id, const char* name);
-  void LoadSystemSound(SysSoundID id, const char* name);
+  void LoadBuiltinTextureOld(BuiltinTextureOldID id, const char* name);
+  void LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID id,
+                                    const char* name);
+  void LoadBuiltinSoundOld(BuiltinSoundOldID id, const char* name);
   void LoadSystemData(SystemDataID id, const char* name);
-  void LoadSystemMesh(SysMeshID id, const char* name);
+  void LoadBuiltinMeshOld(BuiltinMeshOldID id, const char* name);
+  // CAS-backed builtin loaders; called from generated
+  // builtin_asset_load.inc. ``name`` is the qualified-ref form
+  // ``<apverid>:<logical_name>`` baked in by the generator.
+  void LoadBuiltinTexture(BuiltinTextureID id, const char* name);
+  void LoadBuiltinCubeMapTexture(BuiltinCubeMapTextureID id, const char* name);
+  void LoadBuiltinSound(BuiltinSoundID id, const char* name);
+  void LoadBuiltinMesh(BuiltinMeshID id, const char* name);
   void InitSpecialChars();
 
   template <typename T>
@@ -193,11 +211,16 @@ class Assets {
   // For use by AssetListLock; don't manually acquire.
   std::mutex asset_lists_mutex_;
 
-  std::vector<Object::Ref<TextureAsset> > system_textures_;
-  std::vector<Object::Ref<TextureAsset> > system_cube_map_textures_;
-  std::vector<Object::Ref<SoundAsset> > system_sounds_;
+  std::vector<Object::Ref<TextureAsset> > builtin_textures_old_;
+  std::vector<Object::Ref<TextureAsset> > builtin_cube_map_textures_old_;
+  std::vector<Object::Ref<SoundAsset> > builtin_sounds_old_;
   std::vector<Object::Ref<DataAsset> > system_datas_;
-  std::vector<Object::Ref<MeshAsset> > system_meshes_;
+  std::vector<Object::Ref<MeshAsset> > builtin_meshes_old_;
+
+  std::vector<Object::Ref<TextureAsset> > builtin_textures_;
+  std::vector<Object::Ref<TextureAsset> > builtin_cube_map_textures_;
+  std::vector<Object::Ref<SoundAsset> > builtin_sounds_;
+  std::vector<Object::Ref<MeshAsset> > builtin_meshes_;
 
   // All existing assets by filename (including internal).
   std::unordered_map<std::string, Object::Ref<TextureAsset> > textures_;
