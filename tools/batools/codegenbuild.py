@@ -1,6 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Functionality used in meta-builds (dynamically generated sources)."""
+"""Functionality used in codegen-builds (dynamically generated sources)."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ import os
 from efro.terminal import Clr
 
 # Can be plugged into hashes/etc to give us a convenient way to blow away
-# all built meta output on CI/etc. (by incrementing this value).
-META_BUILD_MAGIC_NUMBER = 1
+# all built codegen output on CI/etc. (by incrementing this value).
+CODEGEN_BUILD_MAGIC_NUMBER = 1
 
 
 def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
@@ -86,6 +86,6 @@ def gen_binding_code(projroot: str, in_path: str, out_path: str) -> None:
     pretty_path = os.path.abspath(out_path)
     if pretty_path.startswith(projroot + '/'):
         pretty_path = pretty_path[len(projroot) + 1 :]
-    print(f'Meta-building {Clr.BLD}{pretty_path}{Clr.RST}')
+    print(f'Codegen-building {Clr.BLD}{pretty_path}{Clr.RST}')
     with open(out_path, 'w', encoding='utf-8') as outfile:
         outfile.write(ccode)

@@ -70,7 +70,7 @@ void BasePython::AddPythonClasses(PyObject* module) {
 void BasePython::ImportPythonObjs() {
   // Import and grab all the Python stuff we use from C++.
   // Note: Binding .inc files expect 'ObjID' and 'objs_' to be defined.
-#include "ballistica/base/mgen/pyembed/binding_base.inc"
+#include "ballistica/base/generated/pyembed/binding_base.inc"
 
   // Grab and store our enum values for things like AppPlatform, AppVariant,
   // etc. from the enum types we just grabbed.
@@ -112,7 +112,7 @@ void BasePython::ImportPythonObjs() {
 void BasePython::ImportPythonAppObjs() {
   // Import and grab all the Python stuff we use from C++.
   // Note: Binding .inc files expect 'ObjID' and 'objs_' to be defined.
-#include "ballistica/base/mgen/pyembed/binding_base_app.inc"
+#include "ballistica/base/generated/pyembed/binding_base_app.inc"
 }
 
 void BasePython::SoftImportPlus() {

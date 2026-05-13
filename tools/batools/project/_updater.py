@@ -107,7 +107,7 @@ class ProjectUpdater:
             self.run_file_checks = False
         else:
             # Schedule updates for all the things in normal mode.
-            self._update_meta_makefile()
+            self._update_codegen_makefile()
             self._update_resources_makefile()
             self._update_assets_makefile()
             self._update_top_level_makefile()
@@ -403,14 +403,14 @@ class ProjectUpdater:
 
             elif path == 'src/resources/Makefile':
                 self._generate_resources_makefile(path, existing_data)
-            elif path == 'src/meta/Makefile':
-                self._generate_meta_makefile(existing_data)
+            elif path == 'src/codegen/Makefile':
+                self._generate_codegen_makefile(existing_data)
             elif path == 'src/assets/ba_data/python/babase/_app.py':
                 self._generate_app_module(path, existing_data)
-            elif path.startswith('src/meta/.meta_manifest_'):
+            elif path.startswith('src/codegen/.codegen_manifest_'):
                 # These are always generated as a side-effect of the
-                # meta Makefile.
-                self.generate_file('src/meta/Makefile')
+                # codegen Makefile.
+                self.generate_file('src/codegen/Makefile')
                 assert path in self._generated_files
             else:
                 raise RuntimeError(
@@ -643,15 +643,18 @@ class ProjectUpdater:
                     header_files.add(os.path.join(root, ftst)[len(scan_dir) :])
 
         # IMPORTANT - exclude generated files. (See docs/design/codegen.md
-        # for the broader mgen convention this exclusion is part of.)
-        # For now these just consist of headers so its ok to completely
-        # ignore their existence here, but at some point if we start
-        # generating .cc files that need to be compiled we'll have to
-        # ask the meta system which files it *will* be generating and
-        # add THAT list (not what we see on disk) to projects.
-        self._source_files = sorted(s for s in src_files if '/mgen/' not in s)
+        # for the broader codegen-output convention this exclusion is
+        # part of.) For now these just consist of headers so its ok to
+        # completely ignore their existence here, but at some point if
+        # we start generating .cc files that need to be compiled we'll
+        # have to ask the codegen system which files it *will* be
+        # generating and add THAT list (not what we see on disk) to
+        # projects.
+        self._source_files = sorted(
+            s for s in src_files if '/generated/' not in s
+        )
         self._header_files = sorted(
-            h for h in header_files if '/mgen/' not in h
+            h for h in header_files if '/generated/' not in h
         )
 
     def _update_assets_makefile(self) -> None:
@@ -687,26 +690,30 @@ class ProjectUpdater:
                                 self._generated_files[manpath] = infile.read()
                 return
 
-        # We need to know what files meta will be creating (since they
-        # can be asset sources).
-        meta_manifests: dict[str, str] = {}
+        # We need to know what files codegen will be creating (since
+        # they can be asset sources).
+        codegen_manifests: dict[str, str] = {}
         for mantype in ['public', 'private']:
-            manifest_file_name = f'src/meta/.meta_manifest_{mantype}.json'
-            meta_manifests[manifest_file_name] = self.generate_file(
+            manifest_file_name = f'src/codegen/.codegen_manifest_{mantype}.json'
+            codegen_manifests[manifest_file_name] = self.generate_file(
                 manifest_file_name
             )
 
         # Special case; the app module file in the base feature set
         # is created/updated here as a project file. It may or may not
         # exist on disk, but we want to ignore it if it does and add it
-        # explicitly similarly to meta-manifests.
+        # explicitly similarly to codegen-manifests.
         if 'base' in self.feature_sets:
             explicit_sources = {'src/assets/ba_data/python/babase/_app.py'}
         else:
             explicit_sources = set()
 
         outfiles = generate_assets_makefile(
-            self.projroot, path, existing_data, meta_manifests, explicit_sources
+            self.projroot,
+            path,
+            existing_data,
+            codegen_manifests,
+            explicit_sources,
         )
 
         for out_path, out_contents in outfiles.items():
@@ -731,16 +738,16 @@ class ProjectUpdater:
             self.projroot, self.feature_sets, existing_data
         )
 
-    def _update_meta_makefile(self) -> None:
-        self.enqueue_update('src/meta/Makefile')
+    def _update_codegen_makefile(self) -> None:
+        self.enqueue_update('src/codegen/Makefile')
 
     def _generate_passthrough_file(self, path: str, existing_data: str) -> None:
         self._generated_files[path] = existing_data
 
-    def _generate_meta_makefile(self, existing_data: str) -> None:
-        from batools.metamakefile import generate_meta_makefile
+    def _generate_codegen_makefile(self, existing_data: str) -> None:
+        from batools.codegenmakefile import generate_codegen_makefile
 
-        outfiles = generate_meta_makefile(self.projroot, existing_data)
+        outfiles = generate_codegen_makefile(self.projroot, existing_data)
         for out_path, out_contents in outfiles.items():
             self._generated_files[out_path] = out_contents
 

@@ -224,7 +224,7 @@ def get_code_filenames(projroot: Path, include_generated: bool) -> list[str]:
             for fname in files:
                 if any(fname.endswith(ext) for ext in exts):
                     path = os.path.join(root, fname)
-                    if '/mgen/' in path and not include_generated:
+                    if '/generated/' in path and not include_generated:
                         pass
                     else:
                         codefilenames.append(path)
@@ -734,7 +734,7 @@ def _apply_pylint_run_to_cache(
         dep
         for dep in untracked_deps
         if dep not in ignored_untracked_deps
-        # and not dep.startswith('baplusmeta')
+        # and not dep.startswith('bapluscodegen')
     )
     if untracked_deps:
         raise CleanError(

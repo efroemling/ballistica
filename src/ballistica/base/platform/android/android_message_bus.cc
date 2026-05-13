@@ -18,7 +18,7 @@ namespace ballistica::base {
 // Generated trampolines, native-method table, sender bodies, and
 // installer. See `src/meta/babasemeta/android_messages.py` for the
 // source spec.
-#include "ballistica/base/mgen/android/android_messages_impl.inc"
+#include "ballistica/base/generated/android/android_messages_impl.inc"
 
 }  // namespace ballistica::base
 

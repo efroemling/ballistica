@@ -60,11 +60,16 @@ ENV_REQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .rgignore	\
 # which would leave us stuck in a broken state.
 ENV_REQS_POST_UPDATE_ONLY = $(ENV_COMPILE_COMMANDS_DB)
 
-# Target that should be built before building almost any other target. This
-# installs tool config files, sets up the Python virtual environment, etc.
+# The full dev environment. Most targets list this as their env dep.
+# Includes env-pre-update plus any post-update tooling that needs
+# project state to be current (compile-commands-db, assets-resolve in
+# the future, etc.).
 env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY) pconfig/localconfig.json
 
-# Set of prereqs safe to run if the project state is dirty.
+# Bootstrap env: things safe to run before `update` runs. Sets up
+# tools/pcommand, the venv, tool-config files, etc. `update` itself
+# depends on this. Anything else that only needs the safe-bootstrap
+# form (rare) can depend on it too.
 env-pre-update: $(ENV_REQS_SAFE) pconfig/localconfig.json
 
 env-clean:
@@ -95,47 +100,47 @@ pconfig/localconfig.json:
 	 echo "Created empty $@ (no main-checkout source found)."
 
 # Build all assets for all platforms.
-assets: env meta
+assets: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS)
 
 # Build assets required for cmake builds (linux, mac).
-assets-cmake: env meta
+assets-cmake: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) cmake
 
 # Build assets required for server builds.
-assets-server: env meta
+assets-server: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) server
 
 # Build assets required for WINDOWS_PLATFORM windows builds.
-assets-windows: env meta
+assets-windows: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) win-$(WINDOWS_PLATFORM)
 
 # Build assets required for Win32 windows builds.
-assets-windows-Win32: env meta
+assets-windows-Win32: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) win-Win32
 
 # Build assets required for x64 windows builds.
-assets-windows-x64: env meta
+assets-windows-x64: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) win-x64
 
 # Build assets required for mac xcode builds
-assets-mac: env meta
+assets-mac: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) mac
 
 # Build assets required for ios.
-assets-ios: env meta
+assets-ios: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) ios
 
 # Build assets required for android.
-assets-android: env meta
+assets-android: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) android
 
@@ -145,7 +150,7 @@ assets-clean:
 	cd src/assets && $(MAKE) clean
 
 # Build resources.
-resources: env meta
+resources: env codegen
 	@$(PCOMMAND) lazybuild resources_src $(LAZYBUILDDIR)/$@ \
  cd src/resources \&\& $(MAKE) -j$(CPUS)
 
@@ -156,16 +161,16 @@ resources-clean:
 
 # Build our generated sources.
 #
-# Meta builds can affect sources used by asset builds, resource builds, and
+# Codegen builds can affect sources used by asset builds, resource builds, and
 # compiles, so it should be listed as a dependency of any of those.
-meta: env
-	@$(PCOMMAND) lazybuild meta_src $(LAZYBUILDDIR)/$@ \
- cd src/meta \&\& $(MAKE) -j$(CPUS)
+codegen: env
+	@$(PCOMMAND) lazybuild codegen_src $(LAZYBUILDDIR)/$@ \
+ cd src/codegen \&\& $(MAKE) -j$(CPUS)
 
 # Clean our generated sources.
-meta-clean:
-	rm -f $(LAZYBUILDDIR)/meta
-	cd src/meta && $(MAKE) clean
+codegen-clean:
+	rm -f $(LAZYBUILDDIR)/codegen
+	cd src/codegen && $(MAKE) clean
 
 # Remove ALL files and directories that aren't managed by git (except for a
 # few things such as localconfig.json).
@@ -185,7 +190,7 @@ clean-list: env
 # IMPORTANT - building this target can kick off full builds/cleans and so it
 # should not be built in parallel with other targets. See py_check_prepass
 # target for more info.
-dummymodules: env meta
+dummymodules: env codegen
 	@$(PCOMMAND) lazybuild dummymodules_src $(LAZYBUILDDIR)/$@ \
  rm -rf build/dummymodules \&\& $(PCOMMAND) gen_dummy_modules
 
@@ -233,7 +238,7 @@ pcommandbatch_speed_test: env
 .PHONY: help env env-pre-update env-clean assets assets-cmake			\
         assets-windows assets-windows-Win32													\
         assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
-        resources resources-clean meta meta-clean clean clean-list						\
+        resources resources-clean codegen codegen-clean clean clean-list						\
         dummymodules venv venv-clean docs docs-clean pcommandbatch_speed_test
 
 
@@ -859,11 +864,11 @@ check-ex-full: py_check_prepass
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
-cpplint: env meta
+cpplint: env codegen
 	@$(PCOMMAND) cpplint
 
 # Run Cpplint checks without caching (all files are checked).
-cpplint-full: env meta
+cpplint-full: env codegen
 	@$(PCOMMAND) cpplint -full
 
 # Run Pylint checks on all Python Code.
@@ -908,7 +913,7 @@ pyright: py_check_prepass
 
 # Build prerequisites needed for python checks.
 #
-# IMPORTANT - this target may kick off new meta/asset/binary builds/cleans as
+# IMPORTANT - this target may kick off new codegen/asset/binary builds/cleans as
 # part of doing its thing. For this reason, be sure this target gets built
 # alone in a make process and not mixed in with others as it would likely
 # stomp on them or their dependencies.
@@ -1101,7 +1106,7 @@ WINDOWS_PLATFORM ?= x64
 WINDOWS_CONFIGURATION ?= Debug
 
 # Stage assets and other files so a built binary will run.
-windows-staging: assets-windows resources meta
+windows-staging: assets-windows resources codegen
 	@$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) build/windows/$(WINCFG)_$(WINPLT)
 
 # Build and run a debug windows build (from WSL).
@@ -1213,7 +1218,7 @@ cmake-build: assets-cmake resources cmake-binary
       $(CMAKE_BUILD_DIR)/staged
 	@$(PCOMMANDBATCH) echo BLD Build complete: BLU $(CMAKE_BUILD_DIR)/staged
 
-cmake-binary: meta
+cmake-binary: codegen
 	@$(PCOMMAND) cmake_prep_dir $(CMAKE_BUILD_DIR)
 	@cd $(CMAKE_BUILD_DIR) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DENABLE_AUTOMATION=ON $(shell pwd)/ballisticakit-cmake
@@ -1227,14 +1232,14 @@ cmake-clean:
 cmake-server: cmake-server-build
 	cd build/cmake/server-$(CM_BT_LC)/staged && ./ballisticakit_server
 
-cmake-server-build: assets-server meta cmake-server-binary
+cmake-server-build: assets-server codegen cmake-server-binary
 	@$(STAGE_BUILD) -cmakeserver -$(CM_BT_LC) \
       -builddir build/cmake/server-$(CM_BT_LC) \
       build/cmake/server-$(CM_BT_LC)/staged
 	@$(PCOMMANDBATCH) echo BLD \
       Server build complete: BLU build/cmake/server-$(CM_BT_LC)/staged
 
-cmake-server-binary: meta
+cmake-server-binary: codegen
 	@$(PCOMMAND) cmake_prep_dir build/cmake/server-$(CM_BT_LC)
 	@cd build/cmake/server-$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true -DENABLE_AUTOMATION=ON $(shell pwd)/ballisticakit-cmake
@@ -1245,7 +1250,7 @@ cmake-server-binary: meta
 cmake-server-clean:
 	rm -rf build/cmake/server-$(CM_BT_LC)
 
-cmake-modular-build: assets-cmake meta cmake-modular-binary
+cmake-modular-build: assets-cmake codegen cmake-modular-binary
 	@$(STAGE_BUILD) -cmakemodular -$(CM_BT_LC) \
       -builddir build/cmake/modular-$(CM_BT_LC) \
       build/cmake/modular-$(CM_BT_LC)/staged
@@ -1255,7 +1260,7 @@ cmake-modular-build: assets-cmake meta cmake-modular-binary
 cmake-modular: cmake-modular-build
 	cd build/cmake/modular-$(CM_BT_LC)/staged && ./ballisticakit
 
-cmake-modular-binary: meta
+cmake-modular-binary: codegen
 	@$(PCOMMAND) cmake_prep_dir build/cmake/modular-$(CM_BT_LC)
 	@cd build/cmake/modular-$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DENABLE_AUTOMATION=ON $(shell pwd)/ballisticakit-cmake
@@ -1269,14 +1274,14 @@ cmake-modular-clean:
 cmake-modular-server: cmake-modular-server-build
 	cd build/cmake/modular-server-$(CM_BT_LC)/staged && ./ballisticakit_server
 
-cmake-modular-server-build: assets-server meta cmake-modular-server-binary
+cmake-modular-server-build: assets-server codegen cmake-modular-server-binary
 	@$(STAGE_BUILD) -cmakemodularserver -$(CM_BT_LC) \
       -builddir build/cmake/modular-server-$(CM_BT_LC) \
       build/cmake/modular-server-$(CM_BT_LC)/staged
 	@$(PCOMMANDBATCH) echo BLD \
       Server build complete: BLU build/cmake/modular-server-$(CM_BT_LC)/staged
 
-cmake-modular-server-binary: meta
+cmake-modular-server-binary: codegen
 	@$(PCOMMAND) cmake_prep_dir build/cmake/modular-server-$(CM_BT_LC)
 	@cd build/cmake/modular-server-$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true -DENABLE_AUTOMATION=ON $(shell pwd)/ballisticakit-cmake

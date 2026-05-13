@@ -350,9 +350,9 @@ class SpinoffContext:
             # Omit its C++ dir.
             paths.add(f'src/ballistica/{fsname}')
 
-            # Omits its meta dir.
-            fsmetapackagename = featureset.name_python_package_meta
-            paths.add(f'src/meta/{fsmetapackagename}')
+            # Omits its codegen dir.
+            fscodegenpackagename = featureset.name_python_package_codegen
+            paths.add(f'src/codegen/{fscodegenpackagename}')
 
             # Omit its tests package.
             fstestspackagename = featureset.name_python_package_tests

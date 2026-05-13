@@ -51,7 +51,7 @@ void UIV1Python::AddPythonClasses(PyObject* module) {
 void UIV1Python::ImportPythonObjs() {
   // Import and grab all our objs_. This code blob expects 'ObjID' and
   // 'objs_' to be defined.
-#include "ballistica/ui_v1/mgen/pyembed/binding_ui_v1.inc"
+#include "ballistica/ui_v1/generated/pyembed/binding_ui_v1.inc"
 }
 
 auto UIV1Python::GetPyWidget(PyObject* o) -> Widget* {

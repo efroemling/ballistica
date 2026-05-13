@@ -82,10 +82,10 @@ class LazyBuildContext:
 
         # We support a mechanism where some paths can be passed as 'fullclean'
         # paths - these will trigger a separate 'fullclean' command as well as
-        # the regular command when any of them change. This is handy for 'meta'
-        # type builds where a lot of tools scripts can conceivably influence
-        # target creation, but where it would be unwieldy to list all of them
-        # as dependency relationships in a Makefile.
+        # the regular command when any of them change. This is handy for
+        # 'codegen' type builds where a lot of tools scripts can influence
+        # target creation, but where it would be unwieldy to list all of
+        # them as dependency relationships in a Makefile.
         self.srcpaths_fullclean = srcpaths_fullclean
         self.command_fullclean = command_fullclean
 

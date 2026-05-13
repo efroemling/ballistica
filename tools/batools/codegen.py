@@ -2,7 +2,7 @@
 #
 """Generate code from input files.
 
-Used for various metaprogramming type applications.
+Used for various code-generation applications.
 """
 
 from __future__ import annotations
@@ -109,6 +109,6 @@ def gen_pyembed(
     )
 
     pretty_path = project_centric_path(projroot=projroot, path=out_path)
-    print(f'Meta-building {Clr.BLD}{pretty_path}{Clr.RST}')
+    print(f'Codegen-building {Clr.BLD}{pretty_path}{Clr.RST}')
     with open(out_path, 'w', encoding='utf-8') as outfile:
         outfile.write(out)

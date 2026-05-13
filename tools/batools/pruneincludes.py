@@ -45,7 +45,7 @@ class Pruner:
 
         # Exact lines we never flag as removable.
         self.line_whitelist = {
-            '#include "ballistica/mgen/pyembed/binding_ba.inc"'
+            '#include "ballistica/generated/pyembed/binding_ba.inc"'
         }
 
     def run(self) -> None:

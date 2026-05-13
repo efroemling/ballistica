@@ -41,7 +41,7 @@ automatically excluded from the copied tree (see
 - `pconfig/featuresets/featureset_foo.py`
 - `src/assets/ba_data/python/bafoo/` (Python package)
 - `src/ballistica/foo/` (C++ source)
-- `src/meta/bafoometa/` (meta-codegen specs)
+- `src/codegen/bafoocodegen/` (codegen specs)
 - `tests/test_foo/`
 
 These are mechanical, name-based mappings — same conventions as
@@ -67,7 +67,7 @@ of this repo are private-equivalent, so internal tools come along.
 
 The two axes are orthogonal: a `core`-only spinoff that is also
 private will include `tools/batoolsinternal/` but exclude
-`src/ballistica/base/`, `src/meta/babasemeta/`, etc.
+`src/ballistica/base/`, `src/codegen/babasecodegen/`, etc.
 
 ### 3. Inline strip markers
 
@@ -100,7 +100,7 @@ feature-set-specific by default.
 This matters when a tool processes spec data owned by a feature-set
 — e.g. codegen libraries that read spec files. The codegen lib lives
 in `tools/` (always present) but the spec lives in
-`src/meta/<fs>meta/` (omitted when `<fs>` is). If the codegen lib
+`src/codegen/<fs>codegen/` (omitted when `<fs>` is). If the codegen lib
 has a *static* reference to the spec — even a TYPE_CHECKING import
 for an annotation — mypy fails in any spinoff that strips the
 owning feature-set.
@@ -113,22 +113,22 @@ When a codegen library and its spec share data types (e.g. a
 The spec then defines only the data instances.
 
 ```text
-tools/batoolsinternal/foo_codegen.py   ← owns Message, Field, Dir
-src/meta/<fs>meta/foo_spec.py          ← imports those types, declares MESSAGES
+tools/batoolsinternal/foo_codegen.py        ← owns Message, Field, Dir
+src/codegen/<fs>codegen/foo_spec.py         ← imports those types, declares MESSAGES
 ```
 
 - `tools/` is always present → mypy always finds the types.
-- The spec is stripped along with its feature-set's meta dir → no
-  dangling reference to a missing module.
+- The spec is stripped along with its feature-set's codegen dir →
+  no dangling reference to a missing module.
 - The codegen lib stays statically valid even when its spec
   doesn't exist (because there are no static references TO it).
 - At runtime the codegen lib uses `importlib.import_module` to
   load the spec dynamically — invisible to mypy.
 
-### Pattern: feature-set guard in meta targets
+### Pattern: feature-set guard in codegen targets
 
-`tools/batools/metamakefile.py` generates `src/meta/Makefile`. Add
-targets for a feature-set behind a runtime check:
+`tools/batools/codegenmakefile.py` generates `src/codegen/Makefile`.
+Add targets for a feature-set behind a runtime check:
 
 ```python
 if os.path.exists(

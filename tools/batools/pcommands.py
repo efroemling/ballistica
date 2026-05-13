@@ -447,7 +447,7 @@ def efrocache_update() -> None:
     """Build & push files to efrocache for public access."""
     from efrotools.efrocache import update_cache
 
-    makefile_dirs = ['', 'src/assets', 'src/resources', 'src/meta']
+    makefile_dirs = ['', 'src/assets', 'src/resources', 'src/codegen']
     update_cache(makefile_dirs)
 
 
@@ -822,13 +822,15 @@ def cmake_prep_dir() -> None:
 def gen_binding_code() -> None:
     """Generate a binding_foo.inc file."""
     from efro.error import CleanError
-    import batools.metabuild
+    import batools.codegenbuild
 
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args (srcfile, dstfile)')
     inpath = sys.argv[2]
     outpath = sys.argv[3]
-    batools.metabuild.gen_binding_code(str(pcommand.PROJROOT), inpath, outpath)
+    batools.codegenbuild.gen_binding_code(
+        str(pcommand.PROJROOT), inpath, outpath
+    )
 
 
 def genchangelog() -> None:

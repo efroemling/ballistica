@@ -313,7 +313,7 @@ def check_python_files(self: ProjectUpdater) -> None:
         'tools',
         'tests',
         'src/assets/ba_data/python',
-        'src/meta',
+        'src/codegen',
     ]
 
     # EXCEPT for the following specifics.

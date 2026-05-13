@@ -361,7 +361,7 @@ def _do_featureset_copy() -> None:
         paths_to_copy.append((srcpath, dstpath))
 
     # Replace variations of our name. Note that we don't have to include
-    # stuff like name_python_package_meta here because that is covered
+    # stuff like name_python_package_codegen here because that is covered
     # by our base name replacement. Also note that we include upper()
     # for C/C++ header #ifndefs.
     subs = [
@@ -433,9 +433,9 @@ def _do_featureset_copy_dir(
     filtered_exts = ['.cc', '.h', '.py', '.md', '.inc']
 
     # Eww; reinventing the wheel here; should tap into existing
-    # spinoff logic or something. mgen/_mgen strip: see
+    # spinoff logic or something. generated/_generated strip: see
     # docs/design/codegen.md.
-    cruft_names = ['.DS_Store', 'mgen', '_mgen']
+    cruft_names = ['.DS_Store', 'generated', '_generated']
     cruft_exts = ['.pyc']
 
     def _is_cruft(name: str) -> bool:

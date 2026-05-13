@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from bacommon.app import AppArchitecture, AppPlatform, AppVariant
-from babase._mgen import enums
+from babase._generated import enums
 
 from babase import _language, _apputils, _hooks, _env, _error, _general, _ui
 

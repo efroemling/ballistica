@@ -407,7 +407,7 @@ void Assets::StartLoading() {
 
   // CAS-backed builtin loads (generated from the projectconfig
   // ``"assets"`` package; see docs/design/codegen.md).
-#include "ballistica/base/mgen/builtin_asset_load.inc"  // NOLINT
+#include "ballistica/base/generated/builtin_asset_load.inc"  // NOLINT
 
   sys_assets_loaded_ = true;
 }

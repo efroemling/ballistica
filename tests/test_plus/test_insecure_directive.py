@@ -132,7 +132,7 @@ def test_ws_insecure_endpoint_accepts_handshake() -> None:
     host = hosts[0]
 
     # Handshake message. Keys match IOAttrs tags on
-    # baplusmeta.pyembed.batocloud.TransportAgentHandshakeMessage;
+    # bapluscodegen.pyembed.batocloud.TransportAgentHandshakeMessage;
     # providing the legacy 4 fields lets the server identify us
     # without needing the newer app_instance_info bundle.
     handshake_msg = {

@@ -10,7 +10,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/base.h"
-#include "ballistica/base/mgen/builtin_asset_ids.h"
+#include "ballistica/base/generated/builtin_asset_ids.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {

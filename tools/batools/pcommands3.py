@@ -895,7 +895,7 @@ def gen_pyembed() -> None:
     gen_flat_data_code (encrypt=0) for pyembed modules.
     """
     from efro.error import CleanError
-    from batools.meta import gen_pyembed as gen
+    from batools.codegen import gen_pyembed as gen
 
     if len(sys.argv) < 4:
         raise CleanError(

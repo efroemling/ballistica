@@ -77,7 +77,7 @@ def standard_message_sender_gen_pcommand(
     )
     out = format_python_str(projroot, out)
 
-    print(f'Meta-building {Clr.BLD}{dst}{Clr.RST}')
+    print(f'Codegen-building {Clr.BLD}{dst}{Clr.RST}')
     Path(dst).parent.mkdir(parents=True, exist_ok=True)
     with open(dst, 'w', encoding='utf-8') as outfile:
         outfile.write(out)
@@ -146,7 +146,7 @@ def standard_message_receiver_gen_pcommand(
     )
     out = format_python_str(projroot, out)
 
-    print(f'Meta-building {Clr.BLD}{dst}{Clr.RST}')
+    print(f'Codegen-building {Clr.BLD}{dst}{Clr.RST}')
     Path(dst).parent.mkdir(parents=True, exist_ok=True)
     with open(dst, 'w', encoding='utf-8') as outfile:
         outfile.write(out)

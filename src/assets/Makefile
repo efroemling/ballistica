@@ -198,6 +198,8 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_error.py \
   $(BUILD_DIR)/ba_data/python/babase/_gc.py \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
+  $(BUILD_DIR)/ba_data/python/babase/_generated/__init__.py \
+  $(BUILD_DIR)/ba_data/python/babase/_generated/enums.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
   $(BUILD_DIR)/ba_data/python/babase/_locale.py \
@@ -205,8 +207,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_login.py \
   $(BUILD_DIR)/ba_data/python/babase/_math.py \
   $(BUILD_DIR)/ba_data/python/babase/_meta.py \
-  $(BUILD_DIR)/ba_data/python/babase/_mgen/__init__.py \
-  $(BUILD_DIR)/ba_data/python/babase/_mgen/enums.py \
   $(BUILD_DIR)/ba_data/python/babase/_net.py \
   $(BUILD_DIR)/ba_data/python/babase/_plugin.py \
   $(BUILD_DIR)/ba_data/python/babase/_stringedit.py \

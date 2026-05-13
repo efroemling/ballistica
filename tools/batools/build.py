@@ -123,7 +123,7 @@ class LazyBuildCategory(Enum):
 
     RESOURCES = 'resources_src'
     ASSETS = 'assets_src'
-    META = 'meta_src'
+    CODEGEN = 'codegen_src'
     CMAKE = 'cmake_src'
     WIN = 'win_src'
     DUMMYMODULES = 'dummymodules_src'
@@ -132,8 +132,8 @@ class LazyBuildCategory(Enum):
 def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
     """Run some lazybuild presets."""
 
-    # Meta builds.
-    if category is LazyBuildCategory.META:
+    # Codegen builds.
+    if category is LazyBuildCategory.CODEGEN:
         LazyBuildContext(
             target=target,
             command=command,
@@ -141,24 +141,17 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # away, its not safe to have multiple builds going with it
             # at once.
             buildlockname=category.value,
-            # Regular paths; changes to these will trigger meta build.
+            # Regular paths; changes to these will trigger codegen build.
             srcpaths=[
                 'Makefile',
-                'src/meta',
+                'src/codegen',
                 'src/ballistica/shared/ballistica.h',
                 '.efrocachemap',
-                # Construct asset-package bundle manifests drive the
-                # builtin-asset id generator; without this, a workspace
-                # or projectconfig-apverid change refreshes the cache
-                # without re-running meta and the generated files go
-                # stale. Missing on fresh checkouts is fine — os.walk
-                # treats absent paths as empty.
-                '.cache/asset_bundle',
             ],
-            # Our meta Makefile targets generally don't list tools
+            # Our codegen Makefile targets generally don't list tools
             # scripts that can affect their creation as sources, so
             # let's set up a catch-all here: when any of our tools stuff
-            # changes we'll blow away all existing meta builds.
+            # changes we'll blow away all existing codegen builds.
             #
             # Update: also including featureset-defs here; any time
             # we're mucking with those it's good to start things fresh
@@ -174,7 +167,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # whenever that changes. Takes care of orphaned files if a
             # featureset is removed/etc.
             manifest_file=f'.cache/lazybuild/manifest_{category.value}',
-            command_fullclean='make meta-clean',
+            command_fullclean='make codegen-clean',
         ).run()
 
     # CMake builds.
@@ -195,7 +188,8 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             ],
             dirfilter=(
                 lambda root, dirname: not (
-                    root == 'src' and dirname in {'meta', 'tools', 'external'}
+                    root == 'src'
+                    and dirname in {'codegen', 'tools', 'external'}
                 )
             ),
             command=command,
@@ -205,7 +199,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
     elif category is LazyBuildCategory.WIN:
 
         def _win_dirfilter(root: str, dirname: str) -> bool:
-            if root == 'src' and dirname in {'meta', 'tools'}:
+            if root == 'src' and dirname in {'codegen', 'tools'}:
                 return False
             if root == 'src/external' and dirname != 'windows':
                 return False

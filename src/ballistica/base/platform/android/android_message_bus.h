@@ -15,7 +15,7 @@ namespace ballistica::base {
 // abstract base, sender class, install/setter declarations) is
 // generated from `src/meta/babasemeta/android_messages.py` via
 // `tools/pcommand gen_android_message_cpp`.
-#include "ballistica/base/mgen/android/android_messages_decl.inc"
+#include "ballistica/base/generated/android/android_messages_decl.inc"
 
 }  // namespace ballistica::base
 

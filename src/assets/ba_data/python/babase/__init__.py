@@ -196,7 +196,7 @@ from babase._logging import (
     uilog,
 )
 from babase._login import LoginAdapter, LoginInfo, discord_sign_in
-from babase._mgen.enums import (
+from babase._generated.enums import (
     InputType,
     Permission,
     QuitType,

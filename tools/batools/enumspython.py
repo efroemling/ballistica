@@ -167,7 +167,7 @@ def generate(projroot: str, infilename: str, outfilename: str) -> None:
     out += _gen_enums(infilename)
 
     path = project_centric_path(projroot=projroot, path=outfilename)
-    print(f'Meta-building {Clr.BLD}{path}{Clr.RST}')
+    print(f'Codegen-building {Clr.BLD}{path}{Clr.RST}')
     os.makedirs(os.path.dirname(outfilename), exist_ok=True)
     with open(outfilename, 'w', encoding='utf-8') as outfile:
         outfile.write(out)

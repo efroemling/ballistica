@@ -895,7 +895,7 @@ class Generator:
         enum_import_lines = (
             ''
             if self.mname == '_babase'
-            # else 'from babase._mgen.enums import TimeFormat, TimeType\n\n'
+            # else 'from babase._generated.enums import TimeFormat\n\n'
             else '' if self.mname == '_bascenev1' else ''
         )
         out = (

@@ -55,7 +55,7 @@ def _get_targets(
 
 def _get_py_targets(
     projroot: str,
-    meta_manifests: dict[str, str],
+    codegen_manifests: dict[str, str],
     explicit_sources: set[str],
     src: str,
     dst: str,
@@ -68,7 +68,7 @@ def _get_py_targets(
     # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-branches
 
-    py_generated_root = f'{ASSETS_SRC}/ba_data/python/babase/_mgen'
+    py_generated_root = f'{ASSETS_SRC}/ba_data/python/babase/_generated'
 
     def _do_get_targets(
         proot: str, fnames: list[str], is_explicit: bool = False
@@ -168,8 +168,8 @@ def _get_py_targets(
     for physical_root, _dname, physical_fnames in os.walk(
         os.path.join(projroot, src)
     ):
-        # Skip any generated files; we'll add those from the meta manifest.
-        # (dont want our results to require a meta build beforehand)
+        # Skip any generated files; we'll add those from the codegen manifest.
+        # (dont want our results to require a codegen build beforehand)
         if physical_root == os.path.join(
             projroot, py_generated_root
         ) or physical_root.startswith(
@@ -183,23 +183,23 @@ def _get_py_targets(
 
     # Now create targets for any of our dynamically generated stuff that
     # lives under this dir.
-    meta_targets: list[str] = []
-    for manifest in meta_manifests.values():
-        # Sanity check; make sure meta system is giving actual paths;
+    codegen_targets: list[str] = []
+    for manifest in codegen_manifests.values():
+        # Sanity check; make sure codegen system is giving actual paths;
         # no accidental makefile vars.
         if '$' in manifest:
             raise RuntimeError(
-                'meta-manifest value contains a $; probably a bug.'
+                'codegen-manifest value contains a $; probably a bug.'
             )
-        meta_targets += json.loads(manifest)
+        codegen_targets += json.loads(manifest)
 
-    meta_targets = [
+    codegen_targets = [
         t
-        for t in meta_targets
+        for t in codegen_targets
         if t.startswith(src + '/') and t.startswith(py_generated_root + '/')
     ]
 
-    for target in meta_targets:
+    for target in codegen_targets:
         _do_get_targets(
             proot=os.path.dirname(target), fnames=[os.path.basename(target)]
         )
@@ -216,7 +216,7 @@ def _get_py_targets(
 
 def _get_py_targets_subset(
     projroot: str,
-    meta_manifests: dict[str, str],
+    codegen_manifests: dict[str, str],
     explicit_sources: set[str],
     all_targets: set[str],
     subset: str,
@@ -259,7 +259,7 @@ def _get_py_targets_subset(
 
     _get_py_targets(
         projroot,
-        meta_manifests,
+        codegen_manifests,
         explicit_sources,
         src,
         dst,
@@ -460,7 +460,7 @@ def generate_assets_makefile(
     projroot: str,
     fname: str,
     existing_data: str,
-    meta_manifests: dict[str, str],
+    codegen_manifests: dict[str, str],
     explicit_sources: set[str],
 ) -> dict[str, str]:
     """Main script entry point."""
@@ -485,7 +485,7 @@ def generate_assets_makefile(
     our_lines_public = [
         _get_py_targets_subset(
             projroot,
-            meta_manifests,
+            codegen_manifests,
             explicit_sources,
             all_targets_public,
             subset='public',
@@ -493,7 +493,7 @@ def generate_assets_makefile(
         ),
         _get_py_targets_subset(
             projroot,
-            meta_manifests,
+            codegen_manifests,
             explicit_sources,
             all_targets_public,
             subset='public_tools',
@@ -508,7 +508,7 @@ def generate_assets_makefile(
         our_lines_private = [
             _get_py_targets_subset(
                 projroot,
-                meta_manifests,
+                codegen_manifests,
                 explicit_sources,
                 all_targets_private,
                 subset='private-apple-mac',
@@ -516,7 +516,7 @@ def generate_assets_makefile(
             ),
             _get_py_targets_subset(
                 projroot,
-                meta_manifests,
+                codegen_manifests,
                 explicit_sources,
                 all_targets_private,
                 subset='private-android',
@@ -524,7 +524,7 @@ def generate_assets_makefile(
             ),
             _get_py_targets_subset(
                 projroot,
-                meta_manifests,
+                codegen_manifests,
                 explicit_sources,
                 all_targets_private,
                 subset='private-common',
@@ -532,7 +532,7 @@ def generate_assets_makefile(
             ),
             _get_py_targets_subset(
                 projroot,
-                meta_manifests,
+                codegen_manifests,
                 explicit_sources,
                 all_targets_private,
                 subset='private-windows-Win32',
@@ -540,7 +540,7 @@ def generate_assets_makefile(
             ),
             _get_py_targets_subset(
                 projroot,
-                meta_manifests,
+                codegen_manifests,
                 explicit_sources,
                 all_targets_private,
                 subset='private-windows-x64',

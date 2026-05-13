@@ -86,7 +86,7 @@ void SceneV1Python::AddPythonClasses(PyObject* module) {
 }
 
 void SceneV1Python::ImportPythonObjs() {
-#include "ballistica/scene_v1/mgen/pyembed/binding_scene_v1.inc"
+#include "ballistica/scene_v1/generated/pyembed/binding_scene_v1.inc"
 }
 
 void SceneV1Python::Reset() {

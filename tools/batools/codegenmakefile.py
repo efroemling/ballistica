@@ -3,7 +3,7 @@
 """Procedurally regenerates our code Makefile.
 
 This Makefiles builds our generated code such as encrypted python strings,
-node types, etc). Outputs land in ``mgen/`` / ``_mgen/`` dirs per
+node types, etc). Outputs land in ``generated/`` / ``_generated/`` dirs per
 feature-set; see docs/design/codegen.md for why that's the convention.
 """
 
@@ -31,7 +31,7 @@ PROJ_SRC_DIR = '..'
 # vars ourself but it's nice to build a makefile that feels like one
 # we'd build by hand.
 OUT_DIR_ROOT_CPP = '$(PROJ_SRC_DIR)/ballistica'
-OUT_DIR_BASE_PYTHON = '$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_mgen'
+OUT_DIR_BASE_PYTHON = '$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated'
 
 
 @dataclass
@@ -61,15 +61,17 @@ class Target:
         return out
 
 
-def generate_meta_makefile(projroot: str, existing_data: str) -> dict[str, str]:
-    """Update the project meta Makefile.
+def generate_codegen_makefile(
+    projroot: str, existing_data: str
+) -> dict[str, str]:
+    """Update the project codegen Makefile.
 
     Returns file names and contents.
     """
-    return MetaMakefileGenerator(projroot, existing_data).run()
+    return CodegenMakefileGenerator(projroot, existing_data).run()
 
 
-class MetaMakefileGenerator:
+class CodegenMakefileGenerator:
     """Thing that does the thing."""
 
     def __init__(self, projroot: str, existing_data: str) -> None:
@@ -85,9 +87,9 @@ class MetaMakefileGenerator:
         public = getprojectconfig(Path(self._projroot))['public']
         assert isinstance(public, bool)
 
-        fname = 'src/meta/Makefile'
-        fname_pub_man = 'src/meta/.meta_manifest_public.json'
-        fname_priv_man = 'src/meta/.meta_manifest_private.json'
+        fname = 'src/codegen/Makefile'
+        fname_pub_man = 'src/codegen/.codegen_manifest_public.json'
+        fname_priv_man = 'src/codegen/.codegen_manifest_private.json'
 
         original = self._existing_data
         lines = original.splitlines()
@@ -246,18 +248,18 @@ class MetaMakefileGenerator:
         # on the .h so make orders things and only invokes the cmd
         # once per regen cycle.
         #
-        # Bundle-manifest stub: on a fresh checkout, meta runs before
-        # assets-cmake (which is the real producer of the manifest),
-        # so the prerequisite below would otherwise have no rule and
-        # break the build. The stub rule writes an empty
+        # Bundle-manifest stub: on a fresh checkout, codegen runs
+        # before assets-cmake (which is the real producer of the
+        # manifest), so the prerequisite below would otherwise have
+        # no rule and break the build. The stub rule writes an empty
         # ``asset_packages: []`` placeholder if missing — the
         # generator handles that case by emitting empty enums. Once
         # assets-cmake later writes the real manifest, the outer
-        # lazybuild ``meta_src`` watch picks up the change and meta
-        # re-fires for the real content.
+        # lazybuild ``codegen_src`` watch picks up the change and
+        # codegen re-fires for the real content.
         manifest_path = '$(PROJ_DIR)/.cache/asset_bundle/gui/manifest.json'
-        header_dst = f'{OUT_DIR_ROOT_CPP}/base/mgen/builtin_asset_ids.h'
-        inc_dst = f'{OUT_DIR_ROOT_CPP}/base/mgen/builtin_asset_load.inc'
+        header_dst = f'{OUT_DIR_ROOT_CPP}/base/generated/builtin_asset_ids.h'
+        inc_dst = f'{OUT_DIR_ROOT_CPP}/base/generated/builtin_asset_load.inc'
         targets.append(
             Target(
                 src=[],
@@ -317,7 +319,10 @@ class MetaMakefileGenerator:
                     f'$(PROJ_DIR)/pconfig/featuresets/{n}'
                     for n in sorted(featureset_fnames)
                 ],
-                dst=f'{OUT_DIR_ROOT_CPP}/core/mgen/python_modules_monolithic.h',
+                dst=(
+                    f'{OUT_DIR_ROOT_CPP}/core/generated/'
+                    'python_modules_monolithic.h'
+                ),
                 cmd='$(PCOMMAND) gen_monolithic_register_modules $@',
             )
         )
@@ -327,13 +332,15 @@ class MetaMakefileGenerator:
     ) -> None:
         featuresets = [f for f in self._featuresets if internal == f.internal]
 
-        # For featureset 'foo_bar', stuff under 'bafoobarmeta' goes into
-        # 'ballistica/foo_bar/mgen'.
+        # For featureset 'foo_bar', stuff under 'bafoobarcodegen' goes
+        # into 'ballistica/foo_bar/generated'.
         for featureset in featuresets:
             entries.append(
                 (
-                    featureset.name_python_package_meta,
-                    os.path.join(OUT_DIR_ROOT_CPP, featureset.name, 'mgen'),
+                    featureset.name_python_package_codegen,
+                    os.path.join(
+                        OUT_DIR_ROOT_CPP, featureset.name, 'generated'
+                    ),
                 )
             )
 
@@ -344,7 +351,7 @@ class MetaMakefileGenerator:
         internal: bool,
     ) -> None:
         for pkg, out_dir in entries:
-            base_src_dir = os.path.join(self._projroot, f'src/meta/{pkg}')
+            base_src_dir = os.path.join(self._projroot, f'src/codegen/{pkg}')
             if not os.path.exists(base_src_dir):
                 continue
 
@@ -394,8 +401,8 @@ class MetaMakefileGenerator:
     def _add_pyembed_targets(self, targets: list[Target]) -> None:
         entries: list[tuple[str, str]] = []
 
-        # Map stuff from other featureset meta packages to a mgen dir
-        # under their C++ root.
+        # Map stuff from other featureset codegen packages to a
+        # generated dir under their C++ root.
         self._add_featureset_entries(entries, internal=False)
         self._create_featureset_targets(entries, targets, internal=False)
 
@@ -409,17 +416,19 @@ class MetaMakefileGenerator:
             f'{self._projroot}/pconfig/featuresets/featureset_plus.py'
         ):
             # Add targets to generate message sender/receiver classes
-            # for our basn/client protocols. Their outputs go to 'mgen'
-            # so they don't get added to git.
-            self._add_init_module_target(targets, moduledir='baplusmeta/mgen')
+            # for our basn/client protocols. Their outputs go to
+            # 'generated' so they don't get added to git.
+            self._add_init_module_target(
+                targets, moduledir='bapluscodegen/generated'
+            )
             for srcname, dstname, gencmd in [
                 ('batocloud', 'basnmessagesender', 'gen_basn_msg_sender'),
                 ('cloudtoba', 'basnmessagereceiver', 'gen_basn_msg_receiver'),
             ]:
                 targets.append(
                     Target(
-                        src=[f'baplusmeta/pyembed/{srcname}.py'],
-                        dst=f'baplusmeta/mgen/{dstname}.py',
+                        src=[f'bapluscodegen/pyembed/{srcname}.py'],
+                        dst=f'bapluscodegen/generated/{dstname}.py',
                         cmd=f'$(PCOMMAND) {gencmd} $@',
                     )
                 )
@@ -431,11 +440,11 @@ class MetaMakefileGenerator:
             for name in ['basnmessagesender', 'basnmessagereceiver']:
                 targets.append(
                     Target(
-                        src=[f'baplusmeta/mgen/{name}.py'],
+                        src=[f'bapluscodegen/generated/{name}.py'],
                         dst=os.path.join(
                             OUT_DIR_ROOT_CPP,
                             'plus',
-                            'mgen',
+                            'generated',
                             'pyembed',
                             f'{name}.inc',
                         ),
@@ -443,12 +452,12 @@ class MetaMakefileGenerator:
                     )
                 )
 
-        # Typed Android JNI message bus. Spec lives in babasemeta;
+        # Typed Android JNI message bus. Spec lives in babasecodegen;
         # codegen emits one Java bridge class and a pair of C++
         # .inc files (decl + impl) included by hand-written glue
         # files under src/ballistica/base/platform/android/.
         #
-        # The Java file lives under src/ballistica/base/mgen/java
+        # The Java file lives under src/ballistica/base/generated/java
         # (a project-name-independent path) rather than the Android
         # app tree. Gradle's build.gradle adds this dir to its
         # sourceSets.main.java.srcDirs. This avoids needing project-
@@ -459,19 +468,19 @@ class MetaMakefileGenerator:
         if os.path.exists(
             f'{self._projroot}/pconfig/featuresets/featureset_base.py'
         ):
-            spec = 'babasemeta/android_messages.py'
+            spec = 'babasecodegen/android_messages.py'
             targets.append(
                 Target(
                     src=[spec],
                     dst=os.path.join(
                         OUT_DIR_ROOT_CPP,
                         'base',
-                        'mgen',
+                        'generated',
                         'java',
                         'com',
                         'ericfroemling',
                         'ballistica',
-                        'mgen',
+                        'generated',
                         'BallisticaJniBridge.java',
                     ),
                     cmd='$(PCOMMAND) gen_android_message_java $@',
@@ -486,7 +495,11 @@ class MetaMakefileGenerator:
                     Target(
                         src=[spec],
                         dst=os.path.join(
-                            OUT_DIR_ROOT_CPP, 'base', 'mgen', 'android', inc
+                            OUT_DIR_ROOT_CPP,
+                            'base',
+                            'generated',
+                            'android',
+                            inc,
                         ),
                         cmd='$(PCOMMAND) gen_android_message_cpp $@',
                         mkdir=True,
@@ -508,7 +521,7 @@ class MetaMakefileGenerator:
         projpath = f'{self._projroot}/'
         assert '\\' not in projpath  # Don't expect to work on windows.
         abspath = os.path.abspath(
-            os.path.join(self._projroot, 'src', 'meta', path)
+            os.path.join(self._projroot, 'src', 'codegen', path)
         )
         if not abspath.startswith(projpath):
             raise RuntimeError(

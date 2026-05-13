@@ -95,10 +95,10 @@ ctx.src_write_paths = {
 # either sync the file ourself or expect someone else to write it, but
 # not both).
 ctx.src_unchecked_paths = {
-    'src/ballistica/mgen',
-    'src/ballistica/*/mgen',
-    'src/assets/ba_data/python/*/_mgen',
-    'src/meta/*/mgen',
+    'src/ballistica/generated',
+    'src/ballistica/*/generated',
+    'src/assets/ba_data/python/*/_generated',
+    'src/codegen/*/generated',
     'ballisticakit-cmake/.clang-format',
     'ballisticakit-windows/*/BallisticaKit.ico',
     'ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/*/*.png',
