@@ -147,14 +147,6 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'src/codegen',
                 'src/ballistica/shared/ballistica.h',
                 '.efrocachemap',
-                # Bundle manifest produced by env's assets-resolve;
-                # codegen's builtin-asset-ids generator reads it.
-                # Watching it here keeps codegen in sync with
-                # apverid changes. Safe to watch (unlike the legacy
-                # attempt removed in 24efdb6dec) because the
-                # manifest is finalized in env's sequential phase
-                # before any parallel siblings run.
-                '.cache/asset_bundle',
             ],
             # Our codegen Makefile targets generally don't list tools
             # scripts that can affect their creation as sources, so

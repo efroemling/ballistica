@@ -1,8 +1,6 @@
 [
  "src/assets/ba_data/python/babase/_generated/__init__.py",
  "src/assets/ba_data/python/babase/_generated/enums.py",
- "src/ballistica/base/generated/builtin_asset_ids.h",
- "src/ballistica/base/generated/builtin_asset_load.inc",
  "src/ballistica/base/generated/pyembed/binding_base.inc",
  "src/ballistica/base/generated/pyembed/binding_base_app.inc",
  "src/ballistica/classic/generated/pyembed/binding_classic.inc",

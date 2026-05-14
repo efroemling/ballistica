@@ -5670,12 +5670,33 @@ assets: assets-cmake assets-win-x64
 clean:
 	@rm -rf $(BUILD_DIR)
 
-# Asset bundle manifests (gui + headless) live in
-# ``$(PROJ_DIR)/.cache/asset_bundle/<variant>/manifest.json``.
-# Production lives in the top-level Makefile's ``assets-resolve``
-# target (a dep of ``env``) so the manifests are finalized
-# BEFORE codegen runs. From here we just consume them; nothing
-# to do if env has run.
+# Asset bundle (construct-mode minimum). Two-step
+# resolve→build pattern:
+#
+# - Resolve pcommand: for stable apversions, writes
+#   ``.cache/asset_bundle/resolved`` so subsequent builds can
+#   short-circuit via standard mtime comparison; for dev
+#   apversions, removes the sentinel so the outer
+#   ``LazyBuildContext.srcpaths_exist`` keeps forcing the
+#   surrounding assets target to re-run.
+# - Build pcommand: shells out to bacloud assemble for the
+#   construct-mode minimum bucket set; fetches manifest + CAS
+#   blobs into the local cache.
+#
+# Cloud-talking happens here as a build-time on-demand pull
+# (the only build-flow surface that may touch the network).
+# Steady-state builds hit the cache and exit fast.
+$(PROJ_DIR)/.cache/asset_bundle/resolved: \
+      $(PROJ_DIR)/pconfig/projectconfig.json
+	@$(PCOMMAND) asset_bundle_resolve $@
+
+$(PROJ_DIR)/.cache/asset_bundle/gui/manifest.json: \
+      $(PROJ_DIR)/.cache/asset_bundle/resolved
+	@$(PCOMMAND) asset_bundle_build $< gui
+
+$(PROJ_DIR)/.cache/asset_bundle/headless/manifest.json: \
+      $(PROJ_DIR)/.cache/asset_bundle/resolved
+	@$(PCOMMAND) asset_bundle_build $< headless
 
 # These targets don't correspond to actual files; make sure make knows that.
 .PHONY: cmake win mac ios android audio audio-clean fonts fonts-clean data	\

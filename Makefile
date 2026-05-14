@@ -58,12 +58,11 @@ ENV_REQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .rgignore	\
 # fail if the CMakeList files don't match what's on disk. If such a target was
 # included in ENV_REQS_SAFE it would try to build *before* project updates
 # which would leave us stuck in a broken state.
-ENV_REQS_POST_UPDATE_ONLY = $(ENV_COMPILE_COMMANDS_DB) assets-resolve
+ENV_REQS_POST_UPDATE_ONLY = $(ENV_COMPILE_COMMANDS_DB)
 
 # The full dev environment. Most targets list this as their env dep.
 # Includes env-pre-update plus any post-update tooling that needs
-# project state to be current (compile-commands-db, assets-resolve,
-# etc.).
+# project state to be current (compile-commands-db, etc.).
 env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY) pconfig/localconfig.json
 
 # Bootstrap env: things safe to run before `update` runs. Sets up
@@ -172,18 +171,25 @@ codegen-clean:
 	rm -f $(LAZYBUILDDIR)/codegen
 	cd src/codegen && $(MAKE) clean
 
-# Fetch / refresh the asset-bundle manifests for both gui and headless
-# variants. Runs as part of `env` (post-update lane) so the manifests
-# are finalized BEFORE `codegen` fires — codegen's builtin-asset-ids
-# generator reads them. See docs/global_design/build_system.md
-# (efrohome) for the broader pattern: cheap inputs that feed
-# downstream lanes belong upstream in the sequential env trunk.
-#
-# Phony so we re-check on every env build; asset_bundle_build has its
-# own early-out for the stable + cached case so this is a near-no-op
-# when nothing has changed. For dev apverids the sentinel is missing,
-# which keeps forcing a re-fetch through bacloud (cheap when the
-# server has no fresh content).
+# Inspect / upgrade asset-package pins. Convenience aliases for the
+# pcommand subcommands; richer invocations should go through
+# ``tools/pcommand assetpins ...`` directly (since make targets
+# can't take CLI-style args). `assetpins` is the only build-flow
+# entry that talks to the cloud and the only one that mutates
+# checked-in source as part of normal use — see
+# docs/global_design/build_system.md (efrohome).
+assetpins:
+	@$(PCOMMAND) assetpins
+
+assetpins-upgrade:
+	@$(PCOMMAND) assetpins upgrade
+
+# Internal helper: re-resolve + fetch asset-bundle manifests for both
+# gui and headless variants. Invoked by assets-cmake / assets-server
+# (as a prereq) so a fresh clone's first build can populate the
+# local CAS without requiring an explicit make assetpins-upgrade.
+# asset_bundle_build's early-out keeps this near-instant in steady
+# state.
 assets-resolve:
 	@$(PCOMMAND) asset_bundle_resolve .cache/asset_bundle/resolved
 	@$(PCOMMAND) asset_bundle_build .cache/asset_bundle/resolved gui
@@ -260,6 +266,7 @@ pcommandbatch_speed_test: env
         assets-windows assets-windows-Win32													\
         assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
         assets-resolve assets-resolve-clean																\
+        assetpins assetpins-upgrade																				\
         resources resources-clean codegen codegen-clean clean clean-list						\
         dummymodules venv venv-clean docs docs-clean pcommandbatch_speed_test
 

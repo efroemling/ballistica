@@ -117,7 +117,6 @@ class CodegenMakefileGenerator:
         ):
             self._add_init_module_target(targets, moduledir=OUT_DIR_BASE_PYTHON)
             self._add_base_enums_module_target(targets)
-            self._add_builtin_asset_ids_targets(targets)
 
         our_lines_public = (
             _empty_line_if(bool(targets))
@@ -238,42 +237,6 @@ class CodegenMakefileGenerator:
                 ],
                 dst=os.path.join(OUT_DIR_BASE_PYTHON, 'enums.py'),
                 cmd='$(PCOMMAND) gen_python_enums_module $< $@',
-            )
-        )
-
-    def _add_builtin_asset_ids_targets(self, targets: list[Target]) -> None:
-        # C++ enum-header + load-block generated from the construct
-        # asset-package's cached bundle manifest. Both outputs come
-        # from a single pcommand invocation; the .inc target depends
-        # on the .h so make orders things and only invokes the cmd
-        # once per regen cycle.
-        #
-        # The bundle manifest is produced by the top-level
-        # ``assets-resolve`` target (a dep of ``env``), so it's
-        # guaranteed to exist and match projectconfig's apverid by
-        # the time codegen fires.
-        manifest_path = '$(PROJ_DIR)/.cache/asset_bundle/gui/manifest.json'
-        header_dst = f'{OUT_DIR_ROOT_CPP}/base/generated/builtin_asset_ids.h'
-        inc_dst = f'{OUT_DIR_ROOT_CPP}/base/generated/builtin_asset_load.inc'
-        targets.append(
-            Target(
-                src=[
-                    manifest_path,
-                    '$(TOOLS_DIR)/batools/builtinassetids.py',
-                ],
-                dst=header_dst,
-                cmd='$(PCOMMAND) gen_builtin_asset_ids',
-                mkdir=True,
-            )
-        )
-        targets.append(
-            Target(
-                src=[header_dst],
-                dst=inc_dst,
-                # No-op: the previous target's command writes both
-                # outputs. ``test -f`` guards against a stale make
-                # state where the .h exists but the .inc doesn't.
-                cmd=f'test -f {inc_dst}',
             )
         )
 

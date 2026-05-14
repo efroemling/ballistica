@@ -10,7 +10,6 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/base.h"
-#include "ballistica/base/generated/builtin_asset_ids.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {
@@ -176,9 +175,10 @@ class Assets {
   void LoadBuiltinSoundOld(BuiltinSoundOldID id, const char* name);
   void LoadSystemData(SystemDataID id, const char* name);
   void LoadBuiltinMeshOld(BuiltinMeshOldID id, const char* name);
-  // CAS-backed builtin loaders; called from generated
-  // builtin_asset_load.inc. ``name`` is the qualified-ref form
-  // ``<apverid>:<logical_name>`` baked in by the generator.
+  // CAS-backed builtin loaders; called from the autogen section
+  // inside ``Assets::StartLoading()``. ``name`` is the
+  // qualified-ref form ``<apverid>:<logical_name>`` baked in by
+  // the generator (see tools/batools/builtinassetids.py).
   void LoadBuiltinTexture(BuiltinTextureID id, const char* name);
   void LoadBuiltinCubeMapTexture(BuiltinCubeMapTextureID id, const char* name);
   void LoadBuiltinSound(BuiltinSoundID id, const char* name);
