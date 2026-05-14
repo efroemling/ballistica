@@ -169,44 +169,39 @@ def _strip_logical_prefix(logical_path: str) -> str:
 def collect(projroot: Path) -> BuildResult:
     """Read cached manifests and produce a validated build result.
 
-    Tolerant of three not-yet-resolved states so meta can complete
-    on builds where assets-cmake hasn't run yet (fresh checkout or
-    stale cache from a previous projectconfig apverid):
-
-    * Manifest file absent → return empty result.
-    * Manifest present but ``asset_packages`` empty → same.
-    * Manifest's apverid differs from projectconfig's ``"assets"``
-      → cache is stale relative to projectconfig; treat as empty.
-      Subsequent assets-cmake refreshes the cache and a follow-up
-      build emits real content.
+    The manifest is produced by ``make env``'s ``assets-resolve``
+    step before ``codegen`` runs, so by the time we read it the
+    file exists and matches projectconfig's ``"assets"`` apverid.
+    Anything else is a build-system bug we want to surface, not
+    paper over.
     """
     # pylint: disable=import-outside-toplevel, too-many-locals
     from efrotools.project import getprojectconfig
 
     bundle_path = projroot / '.cache/asset_bundle/gui/manifest.json'
     if not bundle_path.is_file():
-        return BuildResult(apverid='')
+        raise CleanError(
+            f'Asset-bundle manifest not found at {bundle_path}; '
+            'run `make env` first to produce it.'
+        )
     bundle = json.loads(bundle_path.read_text())
     packages = bundle.get('asset_packages') or []
-    if not packages:
-        return BuildResult(apverid='')
     if len(packages) != 1:
         raise CleanError(
-            'Expected at most one entry in asset_packages; got '
-            f'{len(packages)}.'
+            f'Expected exactly one entry in asset_packages at '
+            f'{bundle_path}; got {len(packages)}.'
         )
     pkg = packages[0]
     apverid: str = pkg['apverid']
 
-    # Stale-cache guard: if the cached manifest is for a different
-    # apverid than projectconfig declares, treat as empty. meta runs
-    # before assets-cmake, so on a projectconfig change the first
-    # build sees stale content; rather than fail (which blocks meta
-    # and prevents assets-cmake from running at all), emit empty
-    # enums and let assets-cmake refresh.
     projectconfig_apverid = getprojectconfig(projroot).get('assets')
     if projectconfig_apverid != apverid:
-        return BuildResult(apverid='')
+        raise CleanError(
+            f"Bundle manifest apverid {apverid!r} does not match "
+            f"projectconfig 'assets' {projectconfig_apverid!r}; "
+            '`make env` should have refreshed the bundle. '
+            'Try `make assets-resolve-clean && make env`.'
+        )
 
     cas_root = projroot / '.cache/assetdata'
 

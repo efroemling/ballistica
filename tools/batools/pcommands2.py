@@ -654,13 +654,26 @@ def asset_bundle_resolve() -> None:
     # re-fetched; resolved dev snapshots (e.g.
     # '<owner>.<name>.dev260510a') are pinned and treated as
     # stable.
+    #
+    # Stay idempotent on the file system: skip the write when the
+    # sentinel already exists with matching content. Touching it
+    # every run would update its mtime, which would propagate to
+    # codegen's `.cache/asset_bundle` lazybuild watch and cause
+    # spurious codegen re-fires (potentially colliding on the
+    # codegen_src buildlock under parallel sub-builds like
+    # efrocache-build).
     if splits[2] == 'dev':
         if os.path.exists(resolve_path):
             os.unlink(resolve_path)
     else:
-        os.makedirs(os.path.dirname(resolve_path), exist_ok=True)
-        with open(resolve_path, 'w', encoding='utf-8') as outfile:
-            outfile.write(apversion)
+        existing: str | None = None
+        if os.path.exists(resolve_path):
+            with open(resolve_path, encoding='utf-8') as infile:
+                existing = infile.read().strip()
+        if existing != apversion:
+            os.makedirs(os.path.dirname(resolve_path), exist_ok=True)
+            with open(resolve_path, 'w', encoding='utf-8') as outfile:
+                outfile.write(apversion)
 
 
 def asset_bundle_build() -> None:
@@ -686,6 +699,7 @@ def asset_bundle_build() -> None:
     ``<staged>/ba_data/`` based on the build target.
     """
     import os
+    import json
     import subprocess
 
     from efro.error import CleanError
@@ -725,6 +739,29 @@ def asset_bundle_build() -> None:
     # entry points at a single shared empty blob.
     texture_profile = 'fallback_v1' if variant == 'gui' else 'null'
     bundle_path = f'.cache/asset_bundle/{variant}/manifest.json'
+
+    # Steady-state early-out: stable apverid + existing manifest at
+    # the same apverid → nothing to do. Avoids a bacloud round-trip
+    # on every `make env` invocation (this pcommand runs as part of
+    # `env`'s assets-resolve target so it fires on the steady-state
+    # path). Dev apverids skip the early-out: the sentinel is
+    # absent, so we always re-fetch (cheap when the server has no
+    # new content thanks to bacloud's plan-level caching).
+    if os.path.exists(resolve_path) and os.path.exists(bundle_path):
+        try:
+            with open(bundle_path, encoding='utf-8') as infile:
+                existing = json.load(infile)
+        except Exception:
+            existing = None
+        if isinstance(existing, dict):
+            packages = existing.get('asset_packages') or []
+            if (
+                isinstance(packages, list)
+                and len(packages) == 1
+                and isinstance(packages[0], dict)
+                and packages[0].get('apverid') == apversion
+            ):
+                return
 
     print(
         f'{Clr.BLU}Building {variant} asset bundle for'

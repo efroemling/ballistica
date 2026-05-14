@@ -248,26 +248,13 @@ class CodegenMakefileGenerator:
         # on the .h so make orders things and only invokes the cmd
         # once per regen cycle.
         #
-        # Bundle-manifest stub: on a fresh checkout, codegen runs
-        # before assets-cmake (which is the real producer of the
-        # manifest), so the prerequisite below would otherwise have
-        # no rule and break the build. The stub rule writes an empty
-        # ``asset_packages: []`` placeholder if missing — the
-        # generator handles that case by emitting empty enums. Once
-        # assets-cmake later writes the real manifest, the outer
-        # lazybuild ``codegen_src`` watch picks up the change and
-        # codegen re-fires for the real content.
+        # The bundle manifest is produced by the top-level
+        # ``assets-resolve`` target (a dep of ``env``), so it's
+        # guaranteed to exist and match projectconfig's apverid by
+        # the time codegen fires.
         manifest_path = '$(PROJ_DIR)/.cache/asset_bundle/gui/manifest.json'
         header_dst = f'{OUT_DIR_ROOT_CPP}/base/generated/builtin_asset_ids.h'
         inc_dst = f'{OUT_DIR_ROOT_CPP}/base/generated/builtin_asset_load.inc'
-        targets.append(
-            Target(
-                src=[],
-                dst=manifest_path,
-                cmd=('printf \'%s\\n\'' ' \'{"asset_packages": []}\'' ' > $@'),
-                mkdir=True,
-            )
-        )
         targets.append(
             Target(
                 src=[

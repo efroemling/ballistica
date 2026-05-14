@@ -5670,32 +5670,12 @@ assets: assets-cmake assets-win-x64
 clean:
 	@rm -rf $(BUILD_DIR)
 
-# Asset bundle (construct-mode minimum). Two-step
-# resolve→build pattern like the legacy asset-package pipeline:
-#
-# - Resolve pcommand: for stable apversions, writes
-#   ``.cache/asset_bundle/resolved`` so subsequent builds can
-#   short-circuit; for dev apversions, removes the sentinel so
-#   the outer ``LazyBuildContext.srcpaths_exist`` (see
-#   tools/batools/build.py) keeps forcing the assets target.
-# - Build pcommand: shells out to bacloud assemble with the
-#   construct-mode minimum bucket set.
-#
-# Keeping the rules as standard prerequisite chains (rather
-# than FORCE-style) is essential so ``make --dry-run`` reports
-# "Nothing to be done" once everything's built, which is what
-# ``make_ensure`` verifies after cloud-driven asset builds.
-$(PROJ_DIR)/.cache/asset_bundle/resolved: \
-      $(PROJ_DIR)/pconfig/projectconfig.json
-	@$(PCOMMAND) asset_bundle_resolve $@
-
-$(PROJ_DIR)/.cache/asset_bundle/gui/manifest.json: \
-      $(PROJ_DIR)/.cache/asset_bundle/resolved
-	@$(PCOMMAND) asset_bundle_build $< gui
-
-$(PROJ_DIR)/.cache/asset_bundle/headless/manifest.json: \
-      $(PROJ_DIR)/.cache/asset_bundle/resolved
-	@$(PCOMMAND) asset_bundle_build $< headless
+# Asset bundle manifests (gui + headless) live in
+# ``$(PROJ_DIR)/.cache/asset_bundle/<variant>/manifest.json``.
+# Production lives in the top-level Makefile's ``assets-resolve``
+# target (a dep of ``env``) so the manifests are finalized
+# BEFORE codegen runs. From here we just consume them; nothing
+# to do if env has run.
 
 # These targets don't correspond to actual files; make sure make knows that.
 .PHONY: cmake win mac ios android audio audio-clean fonts fonts-clean data	\

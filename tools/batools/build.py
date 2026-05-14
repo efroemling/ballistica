@@ -147,6 +147,14 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'src/codegen',
                 'src/ballistica/shared/ballistica.h',
                 '.efrocachemap',
+                # Bundle manifest produced by env's assets-resolve;
+                # codegen's builtin-asset-ids generator reads it.
+                # Watching it here keeps codegen in sync with
+                # apverid changes. Safe to watch (unlike the legacy
+                # attempt removed in 24efdb6dec) because the
+                # manifest is finalized in env's sequential phase
+                # before any parallel siblings run.
+                '.cache/asset_bundle',
             ],
             # Our codegen Makefile targets generally don't list tools
             # scripts that can affect their creation as sources, so
@@ -263,13 +271,12 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'pconfig/projectconfig.json',
             ],
             # Absence forces lazybuild to re-run the wrapped
-            # assets target. For stable asset-package-versions
-            # the resolve pcommand writes this sentinel, so
-            # lazybuild caches after the first build; for dev
-            # versions it removes the sentinel, so lazybuild
-            # keeps re-forcing and the bundle re-pings the
-            # cloud every build (matches the legacy
-            # asset_package_resolved sentinel pattern).
+            # assets target. The sentinel is written by
+            # ``asset_bundle_resolve`` (called from env's
+            # ``assets-resolve`` target) for stable apverids and
+            # deleted for dev apverids — the missing-sentinel
+            # signal keeps assets-cmake re-staging on every dev
+            # build so manifest changes propagate.
             srcpaths_exist=[
                 '.cache/asset_bundle/resolved',
             ],

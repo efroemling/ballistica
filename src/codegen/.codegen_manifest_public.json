@@ -1,5 +1,4 @@
 [
- ".cache/asset_bundle/gui/manifest.json",
  "src/assets/ba_data/python/babase/_generated/__init__.py",
  "src/assets/ba_data/python/babase/_generated/enums.py",
  "src/ballistica/base/generated/builtin_asset_ids.h",

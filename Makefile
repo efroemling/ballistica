@@ -58,12 +58,12 @@ ENV_REQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .rgignore	\
 # fail if the CMakeList files don't match what's on disk. If such a target was
 # included in ENV_REQS_SAFE it would try to build *before* project updates
 # which would leave us stuck in a broken state.
-ENV_REQS_POST_UPDATE_ONLY = $(ENV_COMPILE_COMMANDS_DB)
+ENV_REQS_POST_UPDATE_ONLY = $(ENV_COMPILE_COMMANDS_DB) assets-resolve
 
 # The full dev environment. Most targets list this as their env dep.
 # Includes env-pre-update plus any post-update tooling that needs
-# project state to be current (compile-commands-db, assets-resolve in
-# the future, etc.).
+# project state to be current (compile-commands-db, assets-resolve,
+# etc.).
 env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY) pconfig/localconfig.json
 
 # Bootstrap env: things safe to run before `update` runs. Sets up
@@ -172,6 +172,27 @@ codegen-clean:
 	rm -f $(LAZYBUILDDIR)/codegen
 	cd src/codegen && $(MAKE) clean
 
+# Fetch / refresh the asset-bundle manifests for both gui and headless
+# variants. Runs as part of `env` (post-update lane) so the manifests
+# are finalized BEFORE `codegen` fires — codegen's builtin-asset-ids
+# generator reads them. See docs/global_design/build_system.md
+# (efrohome) for the broader pattern: cheap inputs that feed
+# downstream lanes belong upstream in the sequential env trunk.
+#
+# Phony so we re-check on every env build; asset_bundle_build has its
+# own early-out for the stable + cached case so this is a near-no-op
+# when nothing has changed. For dev apverids the sentinel is missing,
+# which keeps forcing a re-fetch through bacloud (cheap when the
+# server has no fresh content).
+assets-resolve:
+	@$(PCOMMAND) asset_bundle_resolve .cache/asset_bundle/resolved
+	@$(PCOMMAND) asset_bundle_build .cache/asset_bundle/resolved gui
+	@$(PCOMMAND) asset_bundle_build .cache/asset_bundle/resolved headless
+
+# Clean asset-bundle outputs (manifests + CAS blobs).
+assets-resolve-clean:
+	rm -rf .cache/asset_bundle .cache/assetdata
+
 # Remove ALL files and directories that aren't managed by git (except for a
 # few things such as localconfig.json).
 clean: env
@@ -238,6 +259,7 @@ pcommandbatch_speed_test: env
 .PHONY: help env env-pre-update env-clean assets assets-cmake			\
         assets-windows assets-windows-Win32													\
         assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
+        assets-resolve assets-resolve-clean																\
         resources resources-clean codegen codegen-clean clean clean-list						\
         dummymodules venv venv-clean docs docs-clean pcommandbatch_speed_test
 
