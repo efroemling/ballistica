@@ -149,7 +149,7 @@ them.
 A pcommand function in `tools/batoolsinternal/pcommands.py` that
 delegates to a codegen lib needs no special markers. The function
 itself is harmless to define always; what matters is whether it's
-ever called. The metamakefile gate above handles that.
+ever called. The codegenmakefile gate above handles that.
 
 If the function body has *static* imports from a feature-set's
 modules, those static imports are the problem — refactor them away

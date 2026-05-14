@@ -13,7 +13,7 @@ namespace ballistica::base {
 
 // Typed Java<->C++ message bus. The body of this header (handler
 // abstract base, sender class, install/setter declarations) is
-// generated from `src/meta/babasemeta/android_messages.py` via
+// generated from `src/codegen/babasecodegen/android_messages.py` via
 // `tools/pcommand gen_android_message_cpp`.
 #include "ballistica/base/generated/android/android_messages_decl.inc"
 

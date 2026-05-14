@@ -4,7 +4,7 @@
 
 Consumed by codegen via the ``gen_android_message_java`` and
 ``gen_android_message_cpp`` pcommands. Adding a new message here
-and running ``make meta`` regenerates bindings + abstract handler
+and running ``make codegen`` regenerates bindings + abstract handler
 base classes on both sides; any side that fails to implement the
 new handler method is a compile error.
 
