@@ -1290,8 +1290,9 @@ void RootWidget::StepLeagueRank_(base::RenderPass* renderpass, seconds_t dt) {
       g_base->audio->PushSourceStopSoundCall(*league_rank_anim_sound_play_id_);
       league_rank_anim_sound_play_id_.reset();
     }
-    g_base->audio->SafePlaySysSound(improving ? base::SysSoundID::kCashRegister
-                                              : base::SysSoundID::kPowerDown);
+    g_base->audio->SafePlayBuiltinSoundOld(
+        improving ? base::BuiltinSoundOldID::kCashRegister
+                  : base::BuiltinSoundOldID::kPowerDown);
     league_rank_text_->widget->SetText(
         "#" + std::to_string(league_rank_vis_value_));
     trophy_meter_mult_ = {1.0f, 1.0f, 1.0f};
@@ -1354,7 +1355,7 @@ void RootWidget::StepTicketsMeter_(base::RenderPass* renderpass, seconds_t dt) {
       // Anim is done; reset stuff and do an update to get things back
       // to their default display.
       tickets_meter_animating_ = false;
-      // g_base->audio->SafePlaySysSound(base::SysSoundID::kCashRegister);
+      // g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kCashRegister);
       // Make note that we need to go back to a live value after this
       // animation. It might not be possible immediately if updates are
       // paused/etc.
@@ -1412,7 +1413,7 @@ void RootWidget::StepTokensMeter_(base::RenderPass* renderpass, seconds_t dt) {
       // Anim is done; reset stuff and do an update to get things back
       // to their default display.
       tokens_meter_animating_ = false;
-      // g_base->audio->SafePlaySysSound(base::SysSoundID::kCashRegister);
+      // g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kCashRegister);
       // Make note that we need to go back to a live value after this
       // animation. It might not be possible immediately if updates are
       // paused/etc.
@@ -2451,7 +2452,7 @@ void RootWidget::UpdateInboxDisplay_() {
   if (flash) {
     inbox_animating_ = true;
     inbox_anim_flash_time_ = g_base->logic->display_time() + 1.5;
-    g_base->audio->SafePlaySysSound(base::SysSoundID::kDing);
+    g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kDing);
   }
 }
 
@@ -2523,8 +2524,9 @@ void RootWidget::UpdateLeagueRankDisplay_() {
       if (improving) {
         if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
           s->SetPositional(false);
-          league_rank_anim_sound_play_id_ = s->Play(
-              g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+          league_rank_anim_sound_play_id_ =
+              s->Play(g_base->assets->BuiltinSoundOld(
+                  base::BuiltinSoundOldID::kScoreIncrease));
           s->End();
         }
       }
@@ -3109,7 +3111,8 @@ void RootWidget::AnimateChestUnlockTime(const std::string& chestid,
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
       chest_unlock_time_anim_sound_play_id_ =
-          s->Play(g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+          s->Play(g_base->assets->BuiltinSoundOld(
+              base::BuiltinSoundOldID::kScoreIncrease));
       s->End();
     }
   }
@@ -3130,8 +3133,8 @@ void RootWidget::AnimateTickets(seconds_t duration, int startvalue,
   if (!tickets_anim_sound_play_id_.has_value()) {
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
-      tickets_anim_sound_play_id_ =
-          s->Play(g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+      tickets_anim_sound_play_id_ = s->Play(g_base->assets->BuiltinSoundOld(
+          base::BuiltinSoundOldID::kScoreIncrease));
       s->End();
     }
   }
@@ -3152,8 +3155,8 @@ void RootWidget::AnimateTokens(seconds_t duration, int startvalue,
   if (!tokens_anim_sound_play_id_.has_value()) {
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
-      tokens_anim_sound_play_id_ =
-          s->Play(g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+      tokens_anim_sound_play_id_ = s->Play(g_base->assets->BuiltinSoundOld(
+          base::BuiltinSoundOldID::kScoreIncrease));
       s->End();
     }
   }

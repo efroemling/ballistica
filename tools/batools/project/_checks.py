@@ -313,7 +313,7 @@ def check_python_files(self: ProjectUpdater) -> None:
         'tools',
         'tests',
         'src/assets/ba_data/python',
-        'src/meta',
+        'src/codegen',
     ]
 
     # EXCEPT for the following specifics.
@@ -510,7 +510,7 @@ def _check_python_file_license(
         disable_note = (
             'NOTE: You can disable license line'
             ' checks by adding "license_line_checks": false\n'
-            'to the root dict in config/localconfig.json.\n'
+            'to the root dict in pconfig/localconfig.json.\n'
             'see https://ballistica.net/wiki'
             '/Knowledge-Nuggets#'
             'hello-world-creating-a-new-game-type'

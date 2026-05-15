@@ -260,14 +260,14 @@ class SpinoffContext:
         self.dst_name = 'Untitled'
 
         self._src_config_path = os.path.join(
-            self._src_root, 'config', 'spinoffconfig.py'
+            self._src_root, 'pconfig', 'spinoffconfig.py'
         )
         if not os.path.exists(self._src_config_path):
             raise CleanError(
                 f"Spinoff src config not found at '{self._src_config_path}'."
             )
         self._dst_config_path = os.path.join(
-            self._dst_root, 'config', 'spinoffconfig.py'
+            self._dst_root, 'pconfig', 'spinoffconfig.py'
         )
         if not os.path.exists(self._dst_config_path):
             raise CleanError(
@@ -340,7 +340,7 @@ class SpinoffContext:
 
             # Omit its config file.
             # Make sure this featureset exists on src.
-            fsconfigpath = f'config/featuresets/featureset_{fsname}.py'
+            fsconfigpath = f'pconfig/featuresets/featureset_{fsname}.py'
             paths.add(fsconfigpath)
 
             # Omit its Python package.
@@ -350,9 +350,9 @@ class SpinoffContext:
             # Omit its C++ dir.
             paths.add(f'src/ballistica/{fsname}')
 
-            # Omits its meta dir.
-            fsmetapackagename = featureset.name_python_package_meta
-            paths.add(f'src/meta/{fsmetapackagename}')
+            # Omits its codegen dir.
+            fscodegenpackagename = featureset.name_python_package_codegen
+            paths.add(f'src/codegen/{fscodegenpackagename}')
 
             # Omit its tests package.
             fstestspackagename = featureset.name_python_package_tests
@@ -370,6 +370,22 @@ class SpinoffContext:
         # pylint: disable=too-many-branches
 
         self._read_state()
+
+        # Defensive: nuke leftover src/config/ from the pre-rename
+        # state. The dir was renamed config/ → pconfig/ on
+        # 2026-05-12 across all repos. Leftover gitignored files
+        # in the old config/ on long-lived workspaces show up as
+        # untracked after the rename pulls through, and the
+        # untracked check below would trip. Safe to drop once
+        # every workspace has cycled past the rename.
+        stale_config = os.path.join(self._src_root, 'config')
+        if os.path.isdir(stale_config):
+            print(
+                f'{Clr.BLU}Removing pre-rename src config/ at'
+                f" '{stale_config}'...{Clr.RST}",
+                flush=True,
+            )
+            subprocess.run(['rm', '-rf', stale_config], check=True)
 
         # First, ask git if there are any untracked files in src. we use
         # git's managed file list so these wouldn't get synced which
@@ -765,12 +781,12 @@ class SpinoffContext:
         start_line = (
             '# Ignore everything managed by spinoff.\n'
             '# To control this, modify src_write_paths in'
-            " 'config/spinoffconfig.py'.\n"
+            " 'pconfig/spinoffconfig.py'.\n"
             "# If you ever want to 'flatten' your project and remove it"
             ' from spinoff\n'
             '# control completely: simply delete this section, delete'
             " the 'tools/spinoff'\n"
-            "# symlink, and delete 'config/spinoffconfig.py'. Then you can add"
+            "# symlink, and delete 'pconfig/spinoffconfig.py'. Then you can add"
             ' everything\n'
             '# in its current state to your git repo and forget that spinoff'
             ' ever existed.'

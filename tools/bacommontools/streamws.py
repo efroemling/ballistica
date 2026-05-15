@@ -68,7 +68,7 @@ _BROKEN_RECONNECT_HOST = '127.0.0.1:1'
 
 
 def consume_via_ws(
-    response: ResponseData, *, bearer: str | None
+    response: ResponseData, *, bearer: str | None, host: str
 ) -> ResponseData:
     """Drain a stream over WebSocket and return a terminal-only response.
 
@@ -77,12 +77,18 @@ def consume_via_ws(
     falls through to the usual terminal handling
     (message/error/end_command).
 
+    ``host`` is the bacloud client's resolved kickoff hostname
+    (the basn the kickoff went to); used to construct the WS URL
+    when the producer didn't pin one.
+
     Caller must check ``response.stream_ws is not None`` first.
     Raises :class:`~efro.error.CleanError` on unrecoverable WS
     failure (token-bad, reconnect-budget exhausted, etc.).
     """
     assert response.stream_ws is not None
-    terminal = asyncio.run(_consume_with_reconnect(response.stream_ws, bearer))
+    terminal = asyncio.run(
+        _consume_with_reconnect(response.stream_ws, bearer, host)
+    )
     return ResponseData(stream_frames=[terminal])
 
 
@@ -125,25 +131,21 @@ def _ws_url_for_reconnect(ws_url: str) -> str:
     return ws_url
 
 
-def _resolve_ws_url(sw: 'StreamWS') -> str:
+def _resolve_ws_url(sw: 'StreamWS', host: str) -> str:
     """Determine the WS URL the client should connect to.
 
     When ``sw.basn_url`` is set the producer pinned the stream to
     a specific basn (Phase 3 case); we honor that. Otherwise we
-    construct the URL from the bacloud client's own kickoff
-    hostname (``BACLOUD_SERVER`` env var or its default), so the
-    LB routes us to a healthy basn anywhere in the fleet.
+    construct the URL from the bacloud client's own kickoff host,
+    so the LB routes us to a healthy basn anywhere in the fleet.
     """
     if sw.basn_url is not None:
         return sw.basn_url
-    # pylint: disable=cyclic-import
-    from bacommontools.bacloud import BACLOUD_SERVER
-
-    return f'wss://{BACLOUD_SERVER}/streamcall/{sw.call_id}'
+    return f'wss://{host}/streamcall/{sw.call_id}'
 
 
 async def _consume_with_reconnect(
-    sw: StreamWS, bearer: str | None
+    sw: StreamWS, bearer: str | None, host: str
 ) -> StreamFinal:
     """Open the WS (with reconnect on transient failure)."""
     import websockets
@@ -154,7 +156,7 @@ async def _consume_with_reconnect(
     # — HTTP headers don't carry raw JSON cleanly, and basn does
     # the inverse decode on receipt.
     current_token = _encode_archive_for_header(sw.ws_token)
-    base_ws_url = _resolve_ws_url(sw)
+    base_ws_url = _resolve_ws_url(sw, host)
     deadline = time.monotonic() + _reconnect_budget_seconds()
     backoff = _RECONNECT_BACKOFF_MIN
     is_first_connection = True

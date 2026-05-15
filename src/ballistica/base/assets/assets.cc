@@ -58,22 +58,22 @@ Assets::Assets() {
   InitSpecialChars();
 }
 
-void Assets::LoadSystemTexture(SysTextureID id, const char* name) {
+void Assets::LoadBuiltinTextureOld(BuiltinTextureOldID id, const char* name) {
   assert(asset_lists_locked_);
-  system_textures_.push_back(GetTexture(name));
-  assert(system_textures_.size() == static_cast<int>(id) + 1);
+  builtin_textures_old_.push_back(GetTexture(name));
+  assert(builtin_textures_old_.size() == static_cast<int>(id) + 1);
 }
 
-void Assets::LoadSystemCubeMapTexture(SysCubeMapTextureID id,
-                                      const char* name) {
+void Assets::LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID id,
+                                          const char* name) {
   assert(asset_lists_locked_);
-  system_cube_map_textures_.push_back(GetCubeMapTexture(name));
-  assert(system_cube_map_textures_.size() == static_cast<int>(id) + 1);
+  builtin_cube_map_textures_old_.push_back(GetCubeMapTexture(name));
+  assert(builtin_cube_map_textures_old_.size() == static_cast<int>(id) + 1);
 }
 
-void Assets::LoadSystemSound(SysSoundID id, const char* name) {
-  system_sounds_.push_back(GetSound(name));
-  assert(system_sounds_.size() == static_cast<int>(id) + 1);
+void Assets::LoadBuiltinSoundOld(BuiltinSoundOldID id, const char* name) {
+  builtin_sounds_old_.push_back(GetSound(name));
+  assert(builtin_sounds_old_.size() == static_cast<int>(id) + 1);
 }
 
 void Assets::LoadSystemData(SystemDataID id, const char* name) {
@@ -81,9 +81,71 @@ void Assets::LoadSystemData(SystemDataID id, const char* name) {
   assert(system_datas_.size() == static_cast<int>(id) + 1);
 }
 
-void Assets::LoadSystemMesh(SysMeshID id, const char* name) {
-  system_meshes_.push_back(GetMesh(name));
-  assert(system_meshes_.size() == static_cast<int>(id) + 1);
+void Assets::LoadBuiltinMeshOld(BuiltinMeshOldID id, const char* name) {
+  builtin_meshes_old_.push_back(GetMesh(name));
+  assert(builtin_meshes_old_.size() == static_cast<int>(id) + 1);
+}
+
+// Bring-up note: the four LoadBuiltin* loaders below catch lookup
+// failures so a stale local cached manifest (or in-progress workspace
+// migration) doesn't crash engine startup. They push a null Ref on
+// miss to keep the per-id slot invariant intact. Tighten to a hard
+// failure once the cache-refresh path is reliable.
+void Assets::LoadBuiltinTexture(BuiltinTextureID id, const char* name) {
+  assert(asset_lists_locked_);
+  Object::Ref<TextureAsset> tex;
+  try {
+    tex = GetTexture(name);
+  } catch (const std::exception& exc) {
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                         std::string("LoadBuiltinTexture failed for '") + name
+                             + "': " + exc.what());
+  }
+  builtin_textures_.push_back(tex);
+  assert(builtin_textures_.size() == static_cast<int>(id) + 1);
+}
+
+void Assets::LoadBuiltinCubeMapTexture(BuiltinCubeMapTextureID id,
+                                       const char* name) {
+  assert(asset_lists_locked_);
+  Object::Ref<TextureAsset> tex;
+  try {
+    tex = GetCubeMapTexture(name);
+  } catch (const std::exception& exc) {
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                         std::string("LoadBuiltinCubeMapTexture failed for '")
+                             + name + "': " + exc.what());
+  }
+  builtin_cube_map_textures_.push_back(tex);
+  assert(builtin_cube_map_textures_.size() == static_cast<int>(id) + 1);
+}
+
+void Assets::LoadBuiltinSound(BuiltinSoundID id, const char* name) {
+  assert(asset_lists_locked_);
+  Object::Ref<SoundAsset> snd;
+  try {
+    snd = GetSound(name);
+  } catch (const std::exception& exc) {
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                         std::string("LoadBuiltinSound failed for '") + name
+                             + "': " + exc.what());
+  }
+  builtin_sounds_.push_back(snd);
+  assert(builtin_sounds_.size() == static_cast<int>(id) + 1);
+}
+
+void Assets::LoadBuiltinMesh(BuiltinMeshID id, const char* name) {
+  assert(asset_lists_locked_);
+  Object::Ref<MeshAsset> mesh;
+  try {
+    mesh = GetMesh(name);
+  } catch (const std::exception& exc) {
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kWarning,
+                         std::string("LoadBuiltinMesh failed for '") + name
+                             + "': " + exc.what());
+  }
+  builtin_meshes_.push_back(mesh);
+  assert(builtin_meshes_.size() == static_cast<int>(id) + 1);
 }
 
 void Assets::StartLoading() {
@@ -97,220 +159,261 @@ void Assets::StartLoading() {
   assert(!asset_loads_allowed_);
   asset_loads_allowed_ = true;
 
+  // Populate the asset-package CAS registry before the LoadBuiltin*
+  // calls below land — those use qualified-ref names that require the
+  // registry to be live.
+  g_base->python->objs()
+      .Get(BasePython::ObjID::kLoadBundledAssetPackagesCall)
+      .Call();
+
   // Just grab the lock once for all this stuff for efficiency.
   AssetListLock lock;
 
   // System textures:
-  LoadSystemTexture(SysTextureID::kUIAtlas, "uiAtlas");
-  LoadSystemTexture(SysTextureID::kButtonSquare, "buttonSquare");
-  LoadSystemTexture(SysTextureID::kWhite, "white");
-  LoadSystemTexture(SysTextureID::kFontSmall0, "fontSmall0");
-  LoadSystemTexture(SysTextureID::kFontBig, "fontBig");
-  LoadSystemTexture(SysTextureID::kCursor, "cursor");
-  LoadSystemTexture(SysTextureID::kBoxingGlove, "boxingGlovesColor");
-  LoadSystemTexture(SysTextureID::kShield, "shield");
-  LoadSystemTexture(SysTextureID::kExplosion, "explosion");
-  LoadSystemTexture(SysTextureID::kTextClearButton, "textClearButton");
-  LoadSystemTexture(SysTextureID::kWindowHSmallVMed, "windowHSmallVMed");
-  LoadSystemTexture(SysTextureID::kWindowHSmallVSmall, "windowHSmallVSmall");
-  LoadSystemTexture(SysTextureID::kGlow, "glow");
-  LoadSystemTexture(SysTextureID::kScrollWidget, "scrollWidget");
-  LoadSystemTexture(SysTextureID::kScrollWidgetGlow, "scrollWidgetGlow");
-  LoadSystemTexture(SysTextureID::kFlagPole, "flagPoleColor");
-  LoadSystemTexture(SysTextureID::kScorch, "scorch");
-  LoadSystemTexture(SysTextureID::kScorchBig, "scorchBig");
-  LoadSystemTexture(SysTextureID::kShadow, "shadow");
-  LoadSystemTexture(SysTextureID::kLight, "light");
-  LoadSystemTexture(SysTextureID::kShadowSharp, "shadowSharp");
-  LoadSystemTexture(SysTextureID::kLightSharp, "lightSharp");
-  LoadSystemTexture(SysTextureID::kShadowSoft, "shadowSoft");
-  LoadSystemTexture(SysTextureID::kLightSoft, "lightSoft");
-  LoadSystemTexture(SysTextureID::kSparks, "sparks");
-  LoadSystemTexture(SysTextureID::kEye, "eyeColor");
-  LoadSystemTexture(SysTextureID::kEyeTint, "eyeColorTintMask");
-  LoadSystemTexture(SysTextureID::kFuse, "fuse");
-  LoadSystemTexture(SysTextureID::kShrapnel1, "shrapnel1Color");
-  LoadSystemTexture(SysTextureID::kSmoke, "smoke");
-  LoadSystemTexture(SysTextureID::kCircle, "circle");
-  LoadSystemTexture(SysTextureID::kCircleOutline, "circleOutline");
-  LoadSystemTexture(SysTextureID::kCircleNoAlpha, "circleNoAlpha");
-  LoadSystemTexture(SysTextureID::kCircleOutlineNoAlpha,
-                    "circleOutlineNoAlpha");
-  LoadSystemTexture(SysTextureID::kCircleShadow, "circleShadow");
-  LoadSystemTexture(SysTextureID::kSoftRect, "softRect");
-  LoadSystemTexture(SysTextureID::kSoftRect2, "softRect2");
-  LoadSystemTexture(SysTextureID::kSoftRectVertical, "softRectVertical");
-  LoadSystemTexture(SysTextureID::kStartButton, "startButton");
-  LoadSystemTexture(SysTextureID::kBombButton, "bombButton");
-  LoadSystemTexture(SysTextureID::kOuyaAButton, "ouyaAButton");
-  LoadSystemTexture(SysTextureID::kBackIcon, "backIcon");
-  LoadSystemTexture(SysTextureID::kNub, "nub");
-  LoadSystemTexture(SysTextureID::kArrow, "arrow");
-  LoadSystemTexture(SysTextureID::kMenuButton, "menuButton");
-  LoadSystemTexture(SysTextureID::kUsersButton, "usersButton");
-  LoadSystemTexture(SysTextureID::kActionButtons, "actionButtons");
-  LoadSystemTexture(SysTextureID::kTouchArrows, "touchArrows");
-  LoadSystemTexture(SysTextureID::kTouchArrowsActions, "touchArrowsActions");
-  LoadSystemTexture(SysTextureID::kRGBStripes, "rgbStripes");
-  LoadSystemTexture(SysTextureID::kUIAtlas2, "uiAtlas2");
-  LoadSystemTexture(SysTextureID::kFontSmall1, "fontSmall1");
-  LoadSystemTexture(SysTextureID::kFontSmall2, "fontSmall2");
-  LoadSystemTexture(SysTextureID::kFontSmall3, "fontSmall3");
-  LoadSystemTexture(SysTextureID::kFontSmall4, "fontSmall4");
-  LoadSystemTexture(SysTextureID::kFontSmall5, "fontSmall5");
-  LoadSystemTexture(SysTextureID::kFontSmall6, "fontSmall6");
-  LoadSystemTexture(SysTextureID::kFontSmall7, "fontSmall7");
-  LoadSystemTexture(SysTextureID::kFontExtras, "fontExtras");
-  LoadSystemTexture(SysTextureID::kFontExtras2, "fontExtras2");
-  LoadSystemTexture(SysTextureID::kFontExtras3, "fontExtras3");
-  LoadSystemTexture(SysTextureID::kFontExtras4, "fontExtras4");
-  LoadSystemTexture(SysTextureID::kCharacterIconMask, "characterIconMask");
-  LoadSystemTexture(SysTextureID::kBlack, "black");
-  LoadSystemTexture(SysTextureID::kWings, "wings");
-  LoadSystemTexture(SysTextureID::kSpinner, "spinner");
-  LoadSystemTexture(SysTextureID::kSpinner0, "spinner0");
-  LoadSystemTexture(SysTextureID::kSpinner1, "spinner1");
-  LoadSystemTexture(SysTextureID::kSpinner2, "spinner2");
-  LoadSystemTexture(SysTextureID::kSpinner3, "spinner3");
-  LoadSystemTexture(SysTextureID::kSpinner4, "spinner4");
-  LoadSystemTexture(SysTextureID::kSpinner5, "spinner5");
-  LoadSystemTexture(SysTextureID::kSpinner6, "spinner6");
-  LoadSystemTexture(SysTextureID::kSpinner7, "spinner7");
-  LoadSystemTexture(SysTextureID::kSpinner8, "spinner8");
-  LoadSystemTexture(SysTextureID::kSpinner9, "spinner9");
-  LoadSystemTexture(SysTextureID::kSpinner10, "spinner10");
-  LoadSystemTexture(SysTextureID::kSpinner11, "spinner11");
-  LoadSystemTexture(SysTextureID::kCircleSoft, "circleSoft");
-  LoadSystemTexture(SysTextureID::kButtonSquareWide, "buttonSquareWide");
-  LoadSystemTexture(SysTextureID::kPageLeftRight, "pageLeftRight");
-  LoadSystemTexture(SysTextureID::kFontExtras5, "fontExtras5");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kUIAtlas, "uiAtlas");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kButtonSquare, "buttonSquare");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kWhite, "white");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall0, "fontSmall0");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontBig, "fontBig");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kCursor, "cursor");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kBoxingGlove, "boxingGlovesColor");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kShield, "shield");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kExplosion, "explosion");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kTextClearButton,
+                        "textClearButton");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kWindowHSmallVMed,
+                        "windowHSmallVMed");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kWindowHSmallVSmall,
+                        "windowHSmallVSmall");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kGlow, "glow");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kScrollWidget, "scrollWidget");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kScrollWidgetGlow,
+                        "scrollWidgetGlow");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFlagPole, "flagPoleColor");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kScorch, "scorch");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kScorchBig, "scorchBig");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kShadow, "shadow");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kLight, "light");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kShadowSharp, "shadowSharp");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kLightSharp, "lightSharp");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kShadowSoft, "shadowSoft");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kLightSoft, "lightSoft");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSparks, "sparks");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kEye, "eyeColor");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kEyeTint, "eyeColorTintMask");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFuse, "fuse");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kShrapnel1, "shrapnel1Color");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSmoke, "smoke");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircle, "circle");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircleOutline, "circleOutline");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircleNoAlpha, "circleNoAlpha");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircleOutlineNoAlpha,
+                        "circleOutlineNoAlpha");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircleShadow, "circleShadow");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSoftRect, "softRect");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSoftRect2, "softRect2");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSoftRectVertical,
+                        "softRectVertical");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kStartButton, "startButton");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kBombButton, "bombButton");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kOuyaAButton, "ouyaAButton");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kBackIcon, "backIcon");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kNub, "nub");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kArrow, "arrow");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kMenuButton, "menuButton");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kUsersButton, "usersButton");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kActionButtons, "actionButtons");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kTouchArrows, "touchArrows");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kTouchArrowsActions,
+                        "touchArrowsActions");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kRGBStripes, "rgbStripes");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kUIAtlas2, "uiAtlas2");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall1, "fontSmall1");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall2, "fontSmall2");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall3, "fontSmall3");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall4, "fontSmall4");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall5, "fontSmall5");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall6, "fontSmall6");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall7, "fontSmall7");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontExtras, "fontExtras");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontExtras2, "fontExtras2");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontExtras3, "fontExtras3");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontExtras4, "fontExtras4");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kCharacterIconMask,
+                        "characterIconMask");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kBlack, "black");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kWings, "wings");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner, "spinner");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner0, "spinner0");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner1, "spinner1");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner2, "spinner2");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner3, "spinner3");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner4, "spinner4");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner5, "spinner5");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner6, "spinner6");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner7, "spinner7");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner8, "spinner8");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner9, "spinner9");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner10, "spinner10");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner11, "spinner11");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircleSoft, "circleSoft");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kButtonSquareWide,
+                        "buttonSquareWide");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kPageLeftRight, "pageLeftRight");
+  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontExtras5, "fontExtras5");
 
   // System cube map textures:
-  LoadSystemCubeMapTexture(SysCubeMapTextureID::kReflectionChar,
-                           "reflectionChar#");
-  LoadSystemCubeMapTexture(SysCubeMapTextureID::kReflectionPowerup,
-                           "reflectionPowerup#");
-  LoadSystemCubeMapTexture(SysCubeMapTextureID::kReflectionSoft,
-                           "reflectionSoft#");
-  LoadSystemCubeMapTexture(SysCubeMapTextureID::kReflectionSharp,
-                           "reflectionSharp#");
-  LoadSystemCubeMapTexture(SysCubeMapTextureID::kReflectionSharper,
-                           "reflectionSharper#");
-  LoadSystemCubeMapTexture(SysCubeMapTextureID::kReflectionSharpest,
-                           "reflectionSharpest#");
+  LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID::kReflectionChar,
+                               "reflectionChar#");
+  LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID::kReflectionPowerup,
+                               "reflectionPowerup#");
+  LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID::kReflectionSoft,
+                               "reflectionSoft#");
+  LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID::kReflectionSharp,
+                               "reflectionSharp#");
+  LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID::kReflectionSharper,
+                               "reflectionSharper#");
+  LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID::kReflectionSharpest,
+                               "reflectionSharpest#");
 
   // System sounds:
-  LoadSystemSound(SysSoundID::kDeek, "deek");
-  LoadSystemSound(SysSoundID::kBlip, "blip");
-  LoadSystemSound(SysSoundID::kBlank, "blank");
-  LoadSystemSound(SysSoundID::kPunch, "punch01");
-  LoadSystemSound(SysSoundID::kClick, "click01");
-  LoadSystemSound(SysSoundID::kErrorBeep, "error");
-  LoadSystemSound(SysSoundID::kSwish, "swish");
-  LoadSystemSound(SysSoundID::kSwish2, "swish2");
-  LoadSystemSound(SysSoundID::kSwish3, "swish3");
-  LoadSystemSound(SysSoundID::kTap, "tap");
-  LoadSystemSound(SysSoundID::kCorkPop, "corkPop");
-  LoadSystemSound(SysSoundID::kGunCock, "gunCocking");
-  LoadSystemSound(SysSoundID::kTickingCrazy, "tickingCrazy");
-  LoadSystemSound(SysSoundID::kSparkle, "sparkle01");
-  LoadSystemSound(SysSoundID::kSparkle2, "sparkle02");
-  LoadSystemSound(SysSoundID::kSparkle3, "sparkle03");
-  LoadSystemSound(SysSoundID::kScoreIncrease, "scoreIncrease");
-  LoadSystemSound(SysSoundID::kCashRegister, "cashRegister");
-  LoadSystemSound(SysSoundID::kPowerDown, "powerdown01");
-  LoadSystemSound(SysSoundID::kDing, "ding");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kDeek, "deek");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kBlip, "blip");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kBlank, "blank");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kPunch, "punch01");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kClick, "click01");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kErrorBeep, "error");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kSwish, "swish");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kSwish2, "swish2");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kSwish3, "swish3");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kTap, "tap");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kCorkPop, "corkPop");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kGunCock, "gunCocking");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kTickingCrazy, "tickingCrazy");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kSparkle, "sparkle01");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kSparkle2, "sparkle02");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kSparkle3, "sparkle03");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kScoreIncrease, "scoreIncrease");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kCashRegister, "cashRegister");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kPowerDown, "powerdown01");
+  LoadBuiltinSoundOld(BuiltinSoundOldID::kDing, "ding");
 
   // System datas:
   // (crickets)
 
   // System meshes:
-  LoadSystemMesh(SysMeshID::kButtonSmallTransparent, "buttonSmallTransparent");
-  LoadSystemMesh(SysMeshID::kButtonSmallOpaque, "buttonSmallOpaque");
-  LoadSystemMesh(SysMeshID::kButtonMediumTransparent,
-                 "buttonMediumTransparent");
-  LoadSystemMesh(SysMeshID::kButtonMediumOpaque, "buttonMediumOpaque");
-  LoadSystemMesh(SysMeshID::kButtonBackTransparent, "buttonBackTransparent");
-  LoadSystemMesh(SysMeshID::kButtonBackOpaque, "buttonBackOpaque");
-  LoadSystemMesh(SysMeshID::kButtonBackSmallTransparent,
-                 "buttonBackSmallTransparent");
-  LoadSystemMesh(SysMeshID::kButtonBackSmallOpaque, "buttonBackSmallOpaque");
-  LoadSystemMesh(SysMeshID::kButtonTabTransparent, "buttonTabTransparent");
-  LoadSystemMesh(SysMeshID::kButtonTabOpaque, "buttonTabOpaque");
-  LoadSystemMesh(SysMeshID::kButtonLargeTransparent, "buttonLargeTransparent");
-  LoadSystemMesh(SysMeshID::kButtonLargeOpaque, "buttonLargeOpaque");
-  LoadSystemMesh(SysMeshID::kButtonLargerTransparent,
-                 "buttonLargerTransparent");
-  LoadSystemMesh(SysMeshID::kButtonLargerOpaque, "buttonLargerOpaque");
-  LoadSystemMesh(SysMeshID::kButtonSquareTransparent,
-                 "buttonSquareTransparent");
-  LoadSystemMesh(SysMeshID::kButtonSquareOpaque, "buttonSquareOpaque");
-  LoadSystemMesh(SysMeshID::kCheckTransparent, "checkTransparent");
-  LoadSystemMesh(SysMeshID::kScrollBarThumbTransparent,
-                 "scrollBarThumbTransparent");
-  LoadSystemMesh(SysMeshID::kScrollBarThumbOpaque, "scrollBarThumbOpaque");
-  LoadSystemMesh(SysMeshID::kScrollBarThumbSimple, "scrollBarThumbSimple");
-  LoadSystemMesh(SysMeshID::kScrollBarThumbShortTransparent,
-                 "scrollBarThumbShortTransparent");
-  LoadSystemMesh(SysMeshID::kScrollBarThumbShortOpaque,
-                 "scrollBarThumbShortOpaque");
-  LoadSystemMesh(SysMeshID::kScrollBarThumbShortSimple,
-                 "scrollBarThumbShortSimple");
-  LoadSystemMesh(SysMeshID::kScrollBarTroughTransparent,
-                 "scrollBarTroughTransparent");
-  LoadSystemMesh(SysMeshID::kTextBoxTransparent, "textBoxTransparent");
-  LoadSystemMesh(SysMeshID::kImage1x1, "image1x1");
-  LoadSystemMesh(SysMeshID::kImage1x1FullScreen, "image1x1FullScreen");
-  LoadSystemMesh(SysMeshID::kImage2x1, "image2x1");
-  LoadSystemMesh(SysMeshID::kImage4x1, "image4x1");
-  LoadSystemMesh(SysMeshID::kImage16x1, "image16x1");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonSmallTransparent,
+                     "buttonSmallTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonSmallOpaque, "buttonSmallOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonMediumTransparent,
+                     "buttonMediumTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonMediumOpaque,
+                     "buttonMediumOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonBackTransparent,
+                     "buttonBackTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonBackOpaque, "buttonBackOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonBackSmallTransparent,
+                     "buttonBackSmallTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonBackSmallOpaque,
+                     "buttonBackSmallOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonTabTransparent,
+                     "buttonTabTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonTabOpaque, "buttonTabOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonLargeTransparent,
+                     "buttonLargeTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonLargeOpaque, "buttonLargeOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonLargerTransparent,
+                     "buttonLargerTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonLargerOpaque,
+                     "buttonLargerOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonSquareTransparent,
+                     "buttonSquareTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonSquareOpaque,
+                     "buttonSquareOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kCheckTransparent, "checkTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbTransparent,
+                     "scrollBarThumbTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbOpaque,
+                     "scrollBarThumbOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbSimple,
+                     "scrollBarThumbSimple");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbShortTransparent,
+                     "scrollBarThumbShortTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbShortOpaque,
+                     "scrollBarThumbShortOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbShortSimple,
+                     "scrollBarThumbShortSimple");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarTroughTransparent,
+                     "scrollBarTroughTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kTextBoxTransparent,
+                     "textBoxTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage1x1, "image1x1");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage1x1FullScreen,
+                     "image1x1FullScreen");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage2x1, "image2x1");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage4x1, "image4x1");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage16x1, "image16x1");
 #if BA_VR_BUILD
-  LoadSystemMesh(SysMeshID::kImage1x1VRFullScreen, "image1x1VRFullScreen");
-  LoadSystemMesh(SysMeshID::kVROverlay, "vrOverlay");
-  LoadSystemMesh(SysMeshID::kVRFade, "vrFade");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage1x1VRFullScreen,
+                     "image1x1VRFullScreen");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kVROverlay, "vrOverlay");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kVRFade, "vrFade");
 #endif  // BA_VR_BUILD
-  LoadSystemMesh(SysMeshID::kOverlayGuide, "overlayGuide");
-  LoadSystemMesh(SysMeshID::kWindowHSmallVMedTransparent,
-                 "windowHSmallVMedTransparent");
-  LoadSystemMesh(SysMeshID::kWindowHSmallVMedOpaque, "windowHSmallVMedOpaque");
-  LoadSystemMesh(SysMeshID::kWindowHSmallVSmallTransparent,
-                 "windowHSmallVSmallTransparent");
-  LoadSystemMesh(SysMeshID::kWindowHSmallVSmallOpaque,
-                 "windowHSmallVSmallOpaque");
-  LoadSystemMesh(SysMeshID::kSoftEdgeOutside, "softEdgeOutside");
-  LoadSystemMesh(SysMeshID::kSoftEdgeInside, "softEdgeInside");
-  LoadSystemMesh(SysMeshID::kBoxingGlove, "boxingGlove");
-  LoadSystemMesh(SysMeshID::kShield, "shield");
-  LoadSystemMesh(SysMeshID::kFlagPole, "flagPole");
-  LoadSystemMesh(SysMeshID::kFlagStand, "flagStand");
-  LoadSystemMesh(SysMeshID::kScorch, "scorch");
-  LoadSystemMesh(SysMeshID::kEyeBall, "eyeBall");
-  LoadSystemMesh(SysMeshID::kEyeBallIris, "eyeBallIris");
-  LoadSystemMesh(SysMeshID::kEyeLid, "eyeLid");
-  LoadSystemMesh(SysMeshID::kHairTuft1, "hairTuft1");
-  LoadSystemMesh(SysMeshID::kHairTuft1b, "hairTuft1b");
-  LoadSystemMesh(SysMeshID::kHairTuft2, "hairTuft2");
-  LoadSystemMesh(SysMeshID::kHairTuft3, "hairTuft3");
-  LoadSystemMesh(SysMeshID::kHairTuft4, "hairTuft4");
-  LoadSystemMesh(SysMeshID::kShrapnel1, "shrapnel1");
-  LoadSystemMesh(SysMeshID::kShrapnelSlime, "shrapnelSlime");
-  LoadSystemMesh(SysMeshID::kShrapnelBoard, "shrapnelBoard");
-  LoadSystemMesh(SysMeshID::kShockWave, "shockWave");
-  LoadSystemMesh(SysMeshID::kFlash, "flash");
-  LoadSystemMesh(SysMeshID::kCylinder, "cylinder");
-  LoadSystemMesh(SysMeshID::kArrowFront, "arrowFront");
-  LoadSystemMesh(SysMeshID::kArrowBack, "arrowBack");
-  LoadSystemMesh(SysMeshID::kActionButtonLeft, "actionButtonLeft");
-  LoadSystemMesh(SysMeshID::kActionButtonTop, "actionButtonTop");
-  LoadSystemMesh(SysMeshID::kActionButtonRight, "actionButtonRight");
-  LoadSystemMesh(SysMeshID::kActionButtonBottom, "actionButtonBottom");
-  LoadSystemMesh(SysMeshID::kBox, "box");
-  LoadSystemMesh(SysMeshID::kLocator, "locator");
-  LoadSystemMesh(SysMeshID::kLocatorBox, "locatorBox");
-  LoadSystemMesh(SysMeshID::kLocatorCircle, "locatorCircle");
-  LoadSystemMesh(SysMeshID::kLocatorCircleOutline, "locatorCircleOutline");
-  LoadSystemMesh(SysMeshID::kCrossOut, "crossOut");
-  LoadSystemMesh(SysMeshID::kWing, "wing");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kOverlayGuide, "overlayGuide");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kWindowHSmallVMedTransparent,
+                     "windowHSmallVMedTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kWindowHSmallVMedOpaque,
+                     "windowHSmallVMedOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kWindowHSmallVSmallTransparent,
+                     "windowHSmallVSmallTransparent");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kWindowHSmallVSmallOpaque,
+                     "windowHSmallVSmallOpaque");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kSoftEdgeOutside, "softEdgeOutside");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kSoftEdgeInside, "softEdgeInside");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kBoxingGlove, "boxingGlove");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kShield, "shield");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kFlagPole, "flagPole");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kFlagStand, "flagStand");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kScorch, "scorch");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kEyeBall, "eyeBall");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kEyeBallIris, "eyeBallIris");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kEyeLid, "eyeLid");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kHairTuft1, "hairTuft1");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kHairTuft1b, "hairTuft1b");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kHairTuft2, "hairTuft2");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kHairTuft3, "hairTuft3");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kHairTuft4, "hairTuft4");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kShrapnel1, "shrapnel1");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kShrapnelSlime, "shrapnelSlime");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kShrapnelBoard, "shrapnelBoard");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kShockWave, "shockWave");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kFlash, "flash");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kCylinder, "cylinder");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kArrowFront, "arrowFront");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kArrowBack, "arrowBack");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kActionButtonLeft, "actionButtonLeft");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kActionButtonTop, "actionButtonTop");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kActionButtonRight, "actionButtonRight");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kActionButtonBottom,
+                     "actionButtonBottom");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kBox, "box");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kLocator, "locator");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kLocatorBox, "locatorBox");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kLocatorCircle, "locatorCircle");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kLocatorCircleOutline,
+                     "locatorCircleOutline");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kCrossOut, "crossOut");
+  LoadBuiltinMeshOld(BuiltinMeshOldID::kWing, "wing");
+
+  // CAS-backed builtin loads. The block below is auto-generated;
+  // each line corresponds to one entry in ``BuiltinTextureID`` /
+  // ``BuiltinSoundID`` / ``BuiltinMeshID`` / ``BuiltinCubeMapTextureID``
+  // in base.h. Rerun ``make update`` to regenerate.
+  // __AUTOGENERATED_BUILTIN_ASSET_LOAD_BEGIN__
+  // textures
+  LoadBuiltinTexture(BuiltinTextureID::kMydirHelloworld,
+                     "a-0.bastdassets.260513:mydir/helloworld");
+  // __AUTOGENERATED_BUILTIN_ASSET_LOAD_END__
 
   sys_assets_loaded_ = true;
 }
@@ -1097,17 +1200,23 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
   // We don't protect package-path access so make sure its always from here.
   assert(g_base->InLogicThread());
 
+  // CAS-form qualified ref: ``<apverid>:<asset_name>``. Resolve via
+  // the asset-package registry instead of searching the on-disk tree.
+  // Bare names (no ``:``) fall through to the legacy path below.
+  auto colon_pos = name.find(':');
+  if (colon_pos != std::string::npos) {
+    return FindAssetFileCas_(type, name, colon_pos);
+  }
+
   const char* ext = "";
-  const char* prefix1 = "";
-  const char* prefix2 = "";
+  const char* prefix = "";
 
   switch (type) {
     case FileType::kSound:
       if (g_core->HeadlessMode()) {
         return "headless_dummy_path.sound";
       }
-      prefix1 = "audio/";
-      prefix2 = "audio2/";
+      prefix = "audio/";
       ext = ".ogg";
       break;
 
@@ -1115,20 +1224,17 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
       if (g_core->HeadlessMode()) {
         return "headless_dummy_path.mesh";
       }
-      prefix1 = "meshes/";
-      prefix2 = "meshes2/";
+      prefix = "meshes/";
       ext = ".bob";
       break;
 
     case FileType::kCollisionMesh:
-      prefix1 = "meshes/";
-      prefix2 = "meshes2/";
+      prefix = "meshes/";
       ext = ".cob";
       break;
 
     case FileType::kData:
-      prefix1 = "data/";
-      prefix2 = "data2/";
+      prefix = "data/";
       ext = ".json";
       break;
 
@@ -1148,8 +1254,7 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
       //        g_base->graphics_server->texture_compression_types_are_set());
       // assert(g_base->graphics_server
       //        && g_base->graphics_server->texture_quality_set());
-      prefix1 = "textures/";
-      prefix2 = "textures2/";
+      prefix = "textures/";
 
 #if BA_PLATFORM_ANDROID && !BA_ANDROID_DDS_BUILD
       // On most android builds we go for .ktx, which contains etc2 and etc1.
@@ -1167,26 +1272,43 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
       break;
   }
 
+  // Modder-override prefix: probe ``<type>2/`` before ``<type>/`` so
+  // existing mods that drop assets into ``textures2/`` / ``audio2/``
+  // / ``meshes2/`` keep working until they migrate to the
+  // asset-package wrapper flow. Our builds never populate these dirs
+  // — the probe is a no-op when absent. Remove once mod migration is
+  // complete.
+  std::string prefix_override;
+  {
+    std::string base_prefix(prefix);
+    if (!base_prefix.empty() && base_prefix.back() == '/') {
+      prefix_override = base_prefix.substr(0, base_prefix.size() - 1) + "2/";
+    }
+  }
+
   const std::vector<std::string>& asset_paths_used = asset_paths_;
 
-  for (auto&& i : asset_paths_used) {
-    // TEMP - try our '2' stuff first.
-    for (auto&& prefix : {prefix2, prefix1}) {
-      file_out = i + "/" + prefix + name + ext;  // NOLINT
-      bool exists;
+  auto check_exists = [](const std::string& path) -> bool {
+    // '#' denotes a cube map texture, which is actually 6 files.
+    if (strchr(path.c_str(), '#')) {
+      // Just look for one of them i guess.
+      std::string tmp_name = path;
+      tmp_name.replace(tmp_name.find('#'), 1, "_+x");
+      return g_core->platform->FilePathExists(tmp_name);
+    }
+    return g_core->platform->FilePathExists(path);
+  };
 
-      // '#' denotes a cube map texture, which is actually 6 files.
-      if (strchr(file_out.c_str(), '#')) {
-        // Just look for one of them i guess.
-        std::string tmp_name = file_out;
-        tmp_name.replace(tmp_name.find('#'), 1, "_+x");
-        exists = g_core->platform->FilePathExists(tmp_name);
-      } else {
-        exists = g_core->platform->FilePathExists(file_out);
-      }
-      if (exists) {
+  for (auto&& i : asset_paths_used) {
+    if (!prefix_override.empty()) {
+      file_out = i + "/" + prefix_override + name + ext;
+      if (check_exists(file_out)) {
         return file_out;
       }
+    }
+    file_out = i + "/" + prefix + name + ext;
+    if (check_exists(file_out)) {
+      return file_out;
     }
   }
 
@@ -1202,6 +1324,56 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
   }
 
   throw Exception("Can't find asset: \"" + name + "\"");
+}
+
+auto Assets::FindAssetFileCas_(FileType type, const std::string& name,
+                               size_t colon_pos) -> std::string {
+  // v1: only textures are CAS-routed. Other asset categories land
+  // here in Phase 1b as their buckets come online (strings, audio,
+  // meshes, etc.).
+  if (type != FileType::kTexture) {
+    throw Exception("CAS asset refs only support textures in v1: '" + name
+                    + "'");
+  }
+
+  // Headless builds use the NULL texture profile; they don't actually
+  // sample image bytes. Match the legacy headless short-circuit and
+  // return a dummy path so the renderer-stub path is consistent.
+  if (g_core->HeadlessMode()) {
+    return "headless_dummy_path.nop";
+  }
+
+  std::string apverid = name.substr(0, colon_pos);
+  std::string asset_name = name.substr(colon_pos + 1);
+
+  // Active bucket + extension come from one policy chokepoint so
+  // future profile dispatch (DESKTOP_V1, MOBILE_V1) is an
+  // ``ActiveTextureBucket`` edit, not a hunt-and-replace.
+  auto bucket = ActiveTextureBucket();
+  std::string logical_path =
+      "ba_data/textures/" + asset_name + bucket.file_extension;
+
+  auto hash = package_registry_.LookupAssetHash(apverid, bucket.bucket_id,
+                                                logical_path);
+  if (hash.empty()) {
+    throw Exception("Asset not found in package: '" + name
+                    + "' (bucket=" + bucket.bucket_id
+                    + ", logical_path=" + logical_path + ").");
+  }
+  return package_registry_.CasBlobPath(hash);
+}
+
+auto Assets::ActiveTextureBucket() const -> TextureBucketInfo {
+  // V1: hardcoded to FALLBACK_V1 / regular quality / KTX2. Future
+  // dispatch reads from:
+  //   - platform texture-compression caps (BC family on desktop GPUs,
+  //     ASTC LDR on modern mobile, FALLBACK_V1 otherwise),
+  //   - user quality preference (regular vs. high),
+  //   - possibly construct-mode bootstrap state (FALLBACK_V1 baseline
+  //     while bootstrapping any platform).
+  // Each shipped profile then contributes a ``(bucket_id, extension)``
+  // entry. Phase 3 work.
+  return {"textures/fallback_v1_regular", ".ktx2"};
 }
 
 void Assets::AddPendingLoad(Object::Ref<Asset>* c) {
@@ -1598,36 +1770,70 @@ Assets::AssetListLock::~AssetListLock() {
   g_base->assets->asset_lists_mutex_.unlock();
 }
 
-auto Assets::SysTexture(SysTextureID id) -> TextureAsset* {
+auto Assets::BuiltinTextureOld(BuiltinTextureOldID id) -> TextureAsset* {
   assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
-  assert(static_cast<size_t>(id) < system_textures_.size());
-  return system_textures_[static_cast<int>(id)].get();
+  assert(static_cast<size_t>(id) < builtin_textures_old_.size());
+  return builtin_textures_old_[static_cast<int>(id)].get();
 }
 
-auto Assets::SysCubeMapTexture(SysCubeMapTextureID id) -> TextureAsset* {
+auto Assets::BuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID id)
+    -> TextureAsset* {
   assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
-  assert(static_cast<size_t>(id) < system_cube_map_textures_.size());
-  return system_cube_map_textures_[static_cast<int>(id)].get();
+  assert(static_cast<size_t>(id) < builtin_cube_map_textures_old_.size());
+  return builtin_cube_map_textures_old_[static_cast<int>(id)].get();
 }
 
-auto Assets::IsValidSysSound(SysSoundID id) -> bool {
-  return static_cast<size_t>(id) < system_sounds_.size();
+auto Assets::IsValidBuiltinSoundOld(BuiltinSoundOldID id) -> bool {
+  return static_cast<size_t>(id) < builtin_sounds_old_.size();
 }
 
-auto Assets::SysSound(SysSoundID id) -> SoundAsset* {
+auto Assets::BuiltinSoundOld(BuiltinSoundOldID id) -> SoundAsset* {
   assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
-  assert(IsValidSysSound(id));
-  return system_sounds_[static_cast<int>(id)].get();
+  assert(IsValidBuiltinSoundOld(id));
+  return builtin_sounds_old_[static_cast<int>(id)].get();
 }
 
-auto Assets::SysMesh(SysMeshID id) -> MeshAsset* {
+auto Assets::BuiltinMeshOld(BuiltinMeshOldID id) -> MeshAsset* {
   assert(asset_loads_allowed_ && sys_assets_loaded_);
   assert(g_base->InLogicThread());
-  assert(static_cast<size_t>(id) < system_meshes_.size());
-  return system_meshes_[static_cast<int>(id)].get();
+  assert(static_cast<size_t>(id) < builtin_meshes_old_.size());
+  return builtin_meshes_old_[static_cast<int>(id)].get();
+}
+
+auto Assets::BuiltinTexture(BuiltinTextureID id) -> TextureAsset* {
+  assert(asset_loads_allowed_ && sys_assets_loaded_);
+  assert(g_base->InLogicThread());
+  assert(static_cast<size_t>(id) < builtin_textures_.size());
+  return builtin_textures_[static_cast<int>(id)].get();
+}
+
+auto Assets::BuiltinCubeMapTexture(BuiltinCubeMapTextureID id)
+    -> TextureAsset* {
+  assert(asset_loads_allowed_ && sys_assets_loaded_);
+  assert(g_base->InLogicThread());
+  assert(static_cast<size_t>(id) < builtin_cube_map_textures_.size());
+  return builtin_cube_map_textures_[static_cast<int>(id)].get();
+}
+
+auto Assets::IsValidBuiltinSound(BuiltinSoundID id) -> bool {
+  return static_cast<size_t>(id) < builtin_sounds_.size();
+}
+
+auto Assets::BuiltinSound(BuiltinSoundID id) -> SoundAsset* {
+  assert(asset_loads_allowed_ && sys_assets_loaded_);
+  assert(g_base->InLogicThread());
+  assert(IsValidBuiltinSound(id));
+  return builtin_sounds_[static_cast<int>(id)].get();
+}
+
+auto Assets::BuiltinMesh(BuiltinMeshID id) -> MeshAsset* {
+  assert(asset_loads_allowed_ && sys_assets_loaded_);
+  assert(g_base->InLogicThread());
+  assert(static_cast<size_t>(id) < builtin_meshes_.size());
+  return builtin_meshes_[static_cast<int>(id)].get();
 }
 
 }  // namespace ballistica::base

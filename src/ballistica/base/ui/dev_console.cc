@@ -184,7 +184,7 @@ static void DrawRect(RenderPass* pass, Mesh* mesh, float x, float y,
   SimpleComponent c(pass);
   c.SetTransparent(true);
   c.SetColor(bgcolor.x, bgcolor.y, bgcolor.z, alpha);
-  c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircle));
+  c.SetTexture(g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kCircle));
   // Draw mesh bg.
   if (mesh) {
     auto xf = c.ScopedTransform();
@@ -1406,7 +1406,7 @@ void DevConsole::CycleState(bool backwards) {
       g_base->logic->event_loop()->PushCall([this] { RefreshTabContents_(); });
     }
   }
-  g_base->audio->SafePlaySysSound(SysSoundID::kBlip);
+  g_base->audio->SafePlayBuiltinSoundOld(BuiltinSoundOldID::kBlip);
   transition_start_ = g_base->logic->display_time();
 }
 
@@ -1550,14 +1550,16 @@ void DevConsole::Draw(FrameDef* frame_def) {
     SimpleComponent c(pass);
     c.SetTransparent(true);
     c.SetColor(0.03, 0, 0.09, 0.9f);
-    c.SetTexture(g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
+    c.SetTexture(g_base->assets->BuiltinTextureOld(
+        BuiltinTextureOldID::kSoftRectVertical));
     {
       auto scissor = c.ScopedScissor({0.0f, 0.0f, pass->virtual_width(),
                                       bottom - (border_height * 0.75f) * bs});
       auto xf = c.ScopedTransform();
       c.Translate(pass->virtual_width() * 0.5f, bottom + 160.0f);
       c.Scale(pass->virtual_width() * 1.2f, 600.0f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
     }
   }
 
@@ -1635,7 +1637,8 @@ void DevConsole::Draw(FrameDef* frame_def) {
     if (since_change < 300 || since_change % 1000 < 500) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kShadow));
+      c.SetTexture(
+          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kShadow));
       c.SetColor(0.8, 0.0, 1.0, 0.3f);
       {
         auto xf = c.ScopedTransform();
@@ -1645,7 +1648,8 @@ void DevConsole::Draw(FrameDef* frame_def) {
         c.Translate(carat_x, 0.0f, 0.0f);
         c.DrawMesh(carat_glow_mesh_.get());
       }
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kShadowSharp));
+      c.SetTexture(
+          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kShadowSharp));
       c.SetColor(1.0, 1.0, 1.0, 1.0f);
       {
         auto xf = c.ScopedTransform();
@@ -1769,7 +1773,8 @@ auto DevConsole::PasteFromClipboard() -> bool {
           }
 
           if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
-            g_base->audio->SafePlaySysSound(SysSoundID::kErrorBeep);
+            g_base->audio->SafePlayBuiltinSoundOld(
+                BuiltinSoundOldID::kErrorBeep);
             g_base->ScreenMessage("Can only paste single lines of text.",
                                   Vector3f(1.0f, 0.0f, 0.0f));
           } else {

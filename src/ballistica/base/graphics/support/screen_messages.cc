@@ -112,8 +112,9 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
         SimpleComponent c(pass);
         c.SetTransparent(true);
         c.SetTexture(
-            // g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
-            g_base->assets->SysTexture(SysTextureID::kShadowSharp));
+            // g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kSoftRectVertical));
+            g_base->assets->BuiltinTextureOld(
+                BuiltinTextureOldID::kShadowSharp));
 
         float screen_width = g_base->graphics->screen_virtual_width();
 
@@ -222,7 +223,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
               // Align our bottom with where we just scaled from.
               c.Translate(0, 0.5f, 0);
             }
-            // c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+            // c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
             assert(i->shadow_mesh_.exists());
             c.DrawMesh(i->shadow_mesh_.get());
           }
@@ -396,8 +397,8 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             c2.SetColorizeTexture(i->tint_texture.get());
             c2.SetColorizeColor(i->tint.x, i->tint.y, i->tint.z);
             c2.SetColorizeColor2(i->tint2.x, i->tint2.y, i->tint2.z);
-            c2.SetMaskTexture(
-                g_base->assets->SysTexture(SysTextureID::kCharacterIconMask));
+            c2.SetMaskTexture(g_base->assets->BuiltinTextureOld(
+                BuiltinTextureOldID::kCharacterIconMask));
           }
           c2.SetColor(1, 1, 1, a);
           {
@@ -405,7 +406,8 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             c2.Translate(h - 14, v_base + 10 + i->v_smoothed,
                          kScreenMessageZDepth);
             c2.Scale(22.0f * s_extra, 22.0f * s_extra);
-            c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+            c2.DrawMeshAsset(
+                g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
           }
           c2.Submit();
         }

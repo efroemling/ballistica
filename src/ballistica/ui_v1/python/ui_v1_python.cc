@@ -51,7 +51,7 @@ void UIV1Python::AddPythonClasses(PyObject* module) {
 void UIV1Python::ImportPythonObjs() {
   // Import and grab all our objs_. This code blob expects 'ObjID' and
   // 'objs_' to be defined.
-#include "ballistica/ui_v1/mgen/pyembed/binding_ui_v1.inc"
+#include "ballistica/ui_v1/generated/pyembed/binding_ui_v1.inc"
 }
 
 auto UIV1Python::GetPyWidget(PyObject* o) -> Widget* {
@@ -89,7 +89,7 @@ void UIV1Python::InvokeStringEditor(PyObject* string_edit_adapter_instance) {
   BA_PRECONDITION(string_edit_adapter_instance);
 
   base::ScopedSetContext ssc(nullptr);
-  g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish);
+  g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kSwish);
 
   PythonRef args(Py_BuildValue("(O)", string_edit_adapter_instance),
                  PythonRef::kSteal);
@@ -122,7 +122,7 @@ void UIV1Python::InvokeQuitWindow(QuitType quit_type) {
     }
   }
 
-  g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish);
+  g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kSwish);
   auto py_enum = g_base->python->PyQuitType(quit_type);
   auto args = PythonRef::Stolen(Py_BuildValue("(O)", py_enum.get()));
   objs().Get(UIV1Python::ObjID::kQuitWindowCall).Call(args);

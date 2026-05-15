@@ -624,7 +624,8 @@ auto ContainerWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
               // First click just selects.
               if (click_count == 1) {
-                g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+                g_base->audio->SafePlayBuiltinSoundOld(
+                    base::BuiltinSoundOldID::kTap);
               }
             } else {
               // Special case: If we've got a child text widget that's
@@ -973,16 +974,17 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // Update bg vals if need be (we may need these even if bg is turned off
   // so always calc them).
   if (bg_dirty_) {
-    base::SysTextureID tex_id;
+    base::BuiltinTextureOldID tex_id;
     float l_border, r_border, b_border, t_border;
     [[maybe_unused]] float center_x_amt;
     [[maybe_unused]] float center_y_amt;
     float width = r - l;
     float height = t - b;
     if (height > width * 0.6f) {
-      tex_id = base::SysTextureID::kWindowHSmallVMed;
-      bg_mesh_transparent_id_ = base::SysMeshID::kWindowHSmallVMedTransparent;
-      bg_mesh_opaque_id_ = base::SysMeshID::kWindowHSmallVMedOpaque;
+      tex_id = base::BuiltinTextureOldID::kWindowHSmallVMed;
+      bg_mesh_transparent_id_ =
+          base::BuiltinMeshOldID::kWindowHSmallVMedTransparent;
+      bg_mesh_opaque_id_ = base::BuiltinMeshOldID::kWindowHSmallVMedOpaque;
       l_border = width * 0.07f;
       r_border = width * 0.19f;
       b_border = height * 0.1f;
@@ -992,9 +994,10 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       bg_center_fudge_x_ = -0.05f;
       bg_center_fudge_y_ = 0.0f;
     } else {
-      tex_id = base::SysTextureID::kWindowHSmallVSmall;
-      bg_mesh_transparent_id_ = base::SysMeshID::kWindowHSmallVSmallTransparent;
-      bg_mesh_opaque_id_ = base::SysMeshID::kWindowHSmallVSmallOpaque;
+      tex_id = base::BuiltinTextureOldID::kWindowHSmallVSmall;
+      bg_mesh_transparent_id_ =
+          base::BuiltinMeshOldID::kWindowHSmallVSmallTransparent;
+      bg_mesh_opaque_id_ = base::BuiltinMeshOldID::kWindowHSmallVSmallOpaque;
       l_border = width * 0.12f;
       r_border = width * 0.19f;
       b_border = height * 0.45f;
@@ -1009,7 +1012,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     bg_center_x_ = l - l_border + bg_width_ * 0.5f;
     bg_center_y_ = b - b_border + bg_height_ * 0.5f;
     if (background_) {
-      tex_ = g_base->assets->SysTexture(tex_id);
+      tex_ = g_base->assets->BuiltinTextureOld(tex_id);
     }
     bg_dirty_ = false;
   }
@@ -1070,15 +1073,15 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             amt = 1.0f;
           }
           c.SetColor(0.0f, 0.0f, 0.0f, 0.6 * amt);
-          c.SetTexture(
-              g_base->assets->SysTexture(base::SysTextureID::kCircleSoft));
+          c.SetTexture(g_base->assets->BuiltinTextureOld(
+              base::BuiltinTextureOldID::kCircleSoft));
           auto s{8.0f * std::max(bg_width_, bg_height_)};
           {
             auto xf = c.ScopedTransform();
             c.Translate(bg_center_x_, bg_center_y_);
             c.Scale(s, s);
-            c.DrawMeshAsset(
-                g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+            c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+                base::BuiltinMeshOldID::kImage1x1));
           }
           c.Submit();
         }
@@ -1097,7 +1100,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         auto xf = c.ScopedTransform();
         c.Translate(bg_center_x_, bg_center_y_, zoffs);
         c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
-        c.DrawMeshAsset(g_base->assets->SysMesh(
+        c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
             draw_transparent ? bg_mesh_transparent_id_ : bg_mesh_opaque_id_));
       }
       c.Submit();
@@ -1128,13 +1131,15 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetPremultiplied(true);
-      c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kGlow));
+      c.SetTexture(
+          g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kGlow));
       c.SetColor(0.25f * m, 0.25f * m, 0, 0.3f * m);
       {
         auto xf = c.ScopedTransform();
         c.Translate(glow_center_x_, glow_center_y_);
         c.Scale(glow_width_, glow_height_);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage4x1));
       }
       c.Submit();
     }
@@ -1765,7 +1770,7 @@ void ContainerWidget::SelectDownWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+          g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kTap);
         }
       }
     } else {
@@ -1833,7 +1838,7 @@ void ContainerWidget::SelectUpWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+          g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kTap);
         }
       }
     } else {
@@ -1889,7 +1894,7 @@ void ContainerWidget::SelectLeftWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+          g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kTap);
         }
       }
     } else {
@@ -1945,7 +1950,7 @@ void ContainerWidget::SelectRightWidget() {
         // Avoid tap sounds and whatnot if we're just re-selecting ourself.
         if (w != selected_widget_) {
           w->GlobalSelect();
-          g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+          g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kTap);
         }
       }
     } else {
@@ -2028,7 +2033,7 @@ void ContainerWidget::SelectNextWidget() {
     }
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::kNextSelected);
-      g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+      g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kTap);
       return;
     }
     i++;
@@ -2043,7 +2048,8 @@ void ContainerWidget::PrintExitListInstructions(
     if ((t - old_last_prev_next_time > 250)
         && (t - last_list_exit_instructions_print_time_ > 5000)) {
       last_list_exit_instructions_print_time_ = t;
-      g_base->audio->SafePlaySysSound(base::SysSoundID::kErrorBeep);
+      g_base->audio->SafePlayBuiltinSoundOld(
+          base::BuiltinSoundOldID::kErrorBeep);
       std::string s = g_base->assets->GetResourceString("arrowsToExitListText");
       {
         // Left arrow.
@@ -2116,7 +2122,7 @@ void ContainerWidget::SelectPrevWidget() {
 
     if ((**i).IsSelectable() && (**i).IsSelectableViaKeys()) {
       SelectWidget(&(**i), SelectionCause::kPrevSelected);
-      g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+      g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kTap);
       return;
     }
     i++;

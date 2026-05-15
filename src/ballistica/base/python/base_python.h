@@ -50,6 +50,7 @@ class BasePython {
     kCallPartialClass,
     kAppGCCollectCall,
     kConfig,
+    kLoadBundledAssetPackagesCall,
     kAppOnNativeBootstrappingCompleteCall,
     kResetToMainMenuCall,
     kStoreConfigFullscreenOnCall,

@@ -30,7 +30,7 @@ extern "C" auto PyInit__baclassic() -> PyObject* {
 }
 
 void ClassicPython::ImportPythonObjs() {
-#include "ballistica/classic/mgen/pyembed/binding_classic.inc"
+#include "ballistica/classic/generated/pyembed/binding_classic.inc"
 
   // Cache some basic display values for chests from the Python layer. This
   // way C++ UI stuff doesn't have to call out to Python when drawing the

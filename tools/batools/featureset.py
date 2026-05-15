@@ -171,9 +171,9 @@ class FeatureSet:
         return f'ba{self.name_compact}'
 
     @property
-    def name_python_package_meta(self) -> str:
-        """The name of our meta Python package."""
-        return f'ba{self.name_compact}meta'
+    def name_python_package_codegen(self) -> str:
+        """The name of our codegen Python package."""
+        return f'ba{self.name_compact}codegen'
 
     @property
     def name_python_package_tests(self) -> str:
@@ -229,7 +229,7 @@ class FeatureSet:
     @property
     def path_config_file(self) -> str:
         """Project-relative path to the file defining this feature-set."""
-        return f'config/featuresets/featureset_{self.name}.py'
+        return f'pconfig/featuresets/featureset_{self.name}.py'
 
     @property
     def path_python_package(self) -> str:
@@ -241,13 +241,13 @@ class FeatureSet:
         return f'src/assets/ba_data/python/{self.name_python_package}'
 
     @property
-    def path_python_package_meta(self) -> str:
-        """Project-relative path for this feature-set's Python meta package.
+    def path_python_package_codegen(self) -> str:
+        """Project-relative path for this feature-set's Python codegen package.
 
         Note that this does not mean that the package actually exists;
         this just shows where it would.
         """
-        return f'src/meta/{self.name_python_package_meta}'
+        return f'src/codegen/{self.name_python_package_codegen}'
 
     @property
     def path_python_package_tests(self) -> str:
@@ -278,7 +278,7 @@ class FeatureSet:
             self.path_config_file,
             self.path_python_package,
             self.path_native_source,
-            self.path_python_package_meta,
+            self.path_python_package_codegen,
             self.path_python_package_tests,
         ]
 
@@ -358,7 +358,7 @@ class FeatureSet:
 
 def _build_feature_set_list(project_root: str) -> list[FeatureSet]:
     featuresets: list[FeatureSet] = []
-    fsdir = os.path.join(project_root, 'config', 'featuresets')
+    fsdir = os.path.join(project_root, 'pconfig', 'featuresets')
     prefix = 'featureset_'
     filenames = os.listdir(fsdir)
     for filename in sorted(filenames):

@@ -132,6 +132,7 @@ from babase._app import App, AppState
 from babase._appcomponent import AppComponentSubsystem
 from babase._appconfig import commit_app_config
 from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
+from babase._asset_packages import loaded_asset_package_apverids
 from babase._appmode import AppMode
 from babase._appsubsystem import AppSubsystem
 from babase._appmodeselector import AppModeSelector
@@ -195,7 +196,7 @@ from babase._logging import (
     uilog,
 )
 from babase._login import LoginAdapter, LoginInfo, discord_sign_in
-from babase._mgen.enums import (
+from babase._generated.enums import (
     InputType,
     Permission,
     QuitType,
@@ -317,6 +318,7 @@ __all__ = [
     'is_point_in_box',
     'is_xcode_build',
     'LanguageSubsystem',
+    'loaded_asset_package_apverids',
     'LocaleSubsystem',
     'lifecyclelog',
     'lock_all_input',

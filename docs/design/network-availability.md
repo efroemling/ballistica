@@ -61,7 +61,7 @@ platform's first OS report has arrived.
   confirming *non-functional* states (airplane mode, ethernet
   unplugged, etc.).
 
-### Connectivity subsystem — `src/meta/baplusmeta/pyembed/connectivity.py`
+### Connectivity subsystem — `src/codegen/bapluscodegen/pyembed/connectivity.py`
 
 - `ConnectivityManager.network_available: bool` — local mirror,
   self-contained (subscribes via its own callback rather than reading
@@ -75,7 +75,7 @@ platform's first OS report has arrived.
   failed" path) and avoids per-cycle error-log spam.
 - `_run_due_pings` and `_ping` also gate via the local field.
 
-### v2transport subsystem — `src/meta/baplusmeta/pyembed/v2transport.py`
+### v2transport subsystem — `src/codegen/bapluscodegen/pyembed/v2transport.py`
 
 - `V2Transport.network_available: bool` — local mirror, same pattern.
 - `_wake_event: asyncio.Event` — set on `False → True`.
@@ -415,6 +415,6 @@ paths.
   `Python::ScopedInterpreterLock` in
   `src/ballistica/shared/python/python.h`.
 - Coordinated subsystem pattern: ConnectivityManager and v2transport
-  in `src/meta/baplusmeta/pyembed/`.
+  in `src/codegen/bapluscodegen/pyembed/`.
 - End-to-end test:
   `tests/test_plus/test_network_availability_gating.py`.

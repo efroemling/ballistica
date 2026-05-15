@@ -3,10 +3,13 @@
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_platform/app_platform.h"
+#include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
@@ -1092,8 +1095,61 @@ static PyMethodDef PyAtExitDef = {
     "should still be used on modular builds as this function is not available\n"
     "there."};
 
+// ---------------- register_asset_package_bucket ------------------------------
+
+static auto PyRegisterAssetPackageBucket(PyObject* self, PyObject* args,
+                                         PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* apverid;
+  const char* bucket_id;
+  PyObject* entries_obj;
+  static const char* kwlist[] = {"apverid", "bucket_id", "entries", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssO",
+                                   const_cast<char**>(kwlist), &apverid,
+                                   &bucket_id, &entries_obj)) {
+    return nullptr;
+  }
+  if (!PyDict_Check(entries_obj)) {
+    PyErr_SetString(PyExc_TypeError, "entries must be a dict[str, str].");
+    return nullptr;
+  }
+  std::unordered_map<std::string, std::string> entries;
+  PyObject* key;
+  PyObject* value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(entries_obj, &pos, &key, &value)) {
+    if (!PyUnicode_Check(key) || !PyUnicode_Check(value)) {
+      PyErr_SetString(PyExc_TypeError, "entries keys/values must be strings.");
+      return nullptr;
+    }
+    entries.emplace(PyUnicode_AsUTF8(key), PyUnicode_AsUTF8(value));
+  }
+  g_base->assets->package_registry()->RegisterBucket(apverid, bucket_id,
+                                                     std::move(entries));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyRegisterAssetPackageBucketDef = {
+    "register_asset_package_bucket",            // name
+    (PyCFunction)PyRegisterAssetPackageBucket,  // method
+    METH_VARARGS | METH_KEYWORDS,               // flags
+
+    "register_asset_package_bucket(apverid: str, bucket_id: str,\n"
+    "                              entries: dict[str, str]) -> None\n"
+    "\n"
+    "(internal) Register one bucket of an asset-package's manifest into\n"
+    "the C++ runtime registry. Called from the babase startup path after\n"
+    "parsing the bundled top-level ``manifest.json`` and each referenced\n"
+    "bucket-manifest blob from the CAS store. ``entries`` maps logical\n"
+    "asset paths (e.g. ``ba_data/textures/helloworld.dds``) to CAS\n"
+    "hashes."};
+
+// -----------------------------------------------------------------------------
+
 auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      PyRegisterAssetPackageBucketDef,
       PyOpenURLDef,
       PyOverlayWebBrowserIsSupportedDef,
       PyOverlayWebBrowserOpenURLDef,

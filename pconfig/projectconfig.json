@@ -1,0 +1,92 @@
+{
+  "assets": "a-0.bastdassets.260513",
+  "code_source_dirs": [
+    "src/ballistica"
+  ],
+  "cpplint_blacklist": [
+    "src/ballistica/shared/generic/json.cc",
+    "src/ballistica/shared/generic/json.h",
+    "src/ballistica/shared/generic/utf8.cc",
+    "src/ballistica/base/graphics/texture/dds.h",
+    "src/ballistica/base/graphics/texture/ktx.cc",
+    "src/ballistica/core/platform/android/android_gl3.h",
+    "src/ballistica/base/app_platform/apple/MacMusicApp.h",
+    "src/ballistica/base/app_platform/apple/MacMusicAppScriptingBridge.h",
+    "src/ballistica/core/platform/android/utf8/checked.h",
+    "src/ballistica/core/platform/android/utf8/unchecked.h",
+    "src/ballistica/core/platform/android/utf8/core.h",
+    "src/ballistica/base/app_platform/oculus/main_rift.cc",
+    "src/ballistica/core/platform/android/android_gl3.c"
+  ],
+  "default_app_modes": [
+    "baclassic.ClassicAppMode",
+    "babase.EmptyAppMode"
+  ],
+  "default_convenience_imports": {
+    "bascenev1": "bs",
+    "bascenev1lib": "bsl",
+    "bauiv1": "bui",
+    "bauiv1lib": "buil"
+  },
+  "efrocache_repository_url": "https://files.ballistica.net/cache/ba1",
+  "name": "BallisticaKit",
+  "public": true,
+  "pylint_ignored_untracked_deps": [
+    "__main__",
+    "urllib3",
+    "urllib3.util",
+    "astroid.modutils",
+    "astroid.nodes",
+    "astroid",
+    "pylint.lint",
+    "pytest",
+    "requests",
+    "typing_extensions",
+    "cpplint",
+    "libcst",
+    "ansiwrap",
+    "filelock",
+    "Cocoa",
+    "pdoc",
+    "certifi",
+    "libcst.metadata",
+    "docutils.nodes",
+    "sphinx.application",
+    "psutil",
+    "pbxproj.XcodeProject",
+    "pbxproj.pbxextensions",
+    "openstep_parser",
+    "daemon",
+    "jinja2",
+    "jinja2.Environment",
+    "tomlkit",
+    "urllib3.exceptions",
+    "urllib3.response",
+    "cryptography.exceptions",
+    "cryptography.hazmat.primitives.asymmetric.ed25519",
+    "sphinx.util.logging",
+    "pylint.checkers",
+    "websockets",
+    "websockets.asyncio.client",
+    "websockets.asyncio.connection",
+    "websockets.asyncio.server",
+    "websockets.exceptions"
+  ],
+  "python_paths": [
+    "src/assets/ba_data/python",
+    "build/dummymodules",
+    "src/meta",
+    "tools",
+    "tests"
+  ],
+  "python_source_dirs": [
+    "src/assets/ba_data/python",
+    "src/assets/server_package",
+    "src/assets/workspace",
+    "src/assets/sphinx/static",
+    "src/meta",
+    "tools",
+    "tests",
+    "config"
+  ]
+}

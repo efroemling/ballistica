@@ -694,6 +694,7 @@ class App:
         assert _babase.in_logic_thread()
         assert not self._native_bootstrapping_completed
         self._native_bootstrapping_completed = True
+
         self._update_state()
 
     def on_native_suspend(self) -> None:

@@ -27,7 +27,7 @@ runs:
       uses: astral-sh/setup-uv@v8.1.0
       with:
         enable-cache: true
-        cache-dependency-glob: "config/requirements.txt"
+        cache-dependency-glob: "pconfig/requirements.txt"
     - name: Cache Bombsquad assets
       id: cache-assets
       uses: actions/cache@v5

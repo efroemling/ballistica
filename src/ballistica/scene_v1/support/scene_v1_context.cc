@@ -91,7 +91,7 @@ auto SceneV1Context::GetTime(TimeType timetype) -> millisecs_t {
 
 auto SceneV1Context::GetTexture(const std::string& name)
     -> Object::Ref<SceneTexture> {
-  throw Exception("SysTexture() not supported in this context_ref");
+  throw Exception("BuiltinTextureOld() not supported in this context_ref");
 }
 
 auto SceneV1Context::GetSound(const std::string& name)
@@ -106,7 +106,7 @@ auto SceneV1Context::GetData(const std::string& name)
 
 auto SceneV1Context::GetMesh(const std::string& name)
     -> Object::Ref<SceneMesh> {
-  throw Exception("SysMesh() not supported in this context_ref");
+  throw Exception("BuiltinMeshOld() not supported in this context_ref");
 }
 
 auto SceneV1Context::GetCollisionMesh(const std::string& name)

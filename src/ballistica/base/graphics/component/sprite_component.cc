@@ -11,7 +11,7 @@ void SpriteComponent::WriteConfig() {
   // this is not a common case and easier than forking all our shaders
   // to create non-textured versions.
   if (!texture_.exists()) {
-    texture_ = g_base->assets->SysTexture(SysTextureID::kWhite);
+    texture_ = g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kWhite);
   }
   if (exponent_ == 1) {
     ConfigForShading(ShadingType::kSprite);

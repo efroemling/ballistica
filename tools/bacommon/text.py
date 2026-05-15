@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class SpecialChar(Enum):
     """Custom unicode characters the engine can display.
 
-    Keep this in sync with babase._mgen.enums.SpecialChar.
+    Keep this in sync with babase._generated.enums.SpecialChar.
     """
 
     LEFT_ARROW = '\ue001'

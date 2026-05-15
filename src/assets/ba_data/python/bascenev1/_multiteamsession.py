@@ -15,7 +15,7 @@ import _bascenev1
 from bascenev1._session import Session
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any
 
     import bascenev1
 
@@ -54,11 +54,7 @@ class MultiTeamSession(Session):
             team_names = None
             team_colors = None
 
-        # print('FIXME: TEAM BASE SESSION WOULD CALC DEPS.')
-        depsets: Sequence[bascenev1.DependencySet] = []
-
         super().__init__(
-            depsets,
             team_names=team_names,
             team_colors=team_colors,
             min_players=1,

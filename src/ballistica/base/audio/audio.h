@@ -63,7 +63,8 @@ class Audio {
 
   /// Load and play a sys sound if possible. Gracefully fail if not
   /// (possibly logging warnings or errors).
-  auto SafePlaySysSound(SysSoundID sound_id) -> std::optional<uint32_t>;
+  auto SafePlayBuiltinSoundOld(BuiltinSoundOldID sound_id)
+      -> std::optional<uint32_t>;
 
   /// Call this if you want to prevent repeated plays of the same sound. It'll
   /// tell you if the sound has been played recently.  The one-shot sound-play

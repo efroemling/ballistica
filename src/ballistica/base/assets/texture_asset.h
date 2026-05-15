@@ -48,6 +48,13 @@ class TextureAsset : public Asset {
   bool is_qr_code_{};
   std::string file_name_;
   std::string file_name_full_;
+  /// Explicit container type for the file at ``file_name_full_``,
+  /// when the path's suffix doesn't itself convey it (CAS blobs are
+  /// named by hash with no extension). Empty for legacy filename-on-
+  /// disk assets, in which case the loader dispatches on the path's
+  /// suffix. Values match the suffix-dispatch keys: ``.dds``,
+  /// ``.android_dds``, ``.ktx``, ``.pvr``, ``.nop``.
+  std::string container_;
   std::vector<TextureAssetPreloadData> preload_datas_;
   TextureType type_{TextureType::k2D};
   TextureMinQuality min_quality_{TextureMinQuality::kLow};

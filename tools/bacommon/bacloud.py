@@ -139,12 +139,11 @@ def asset_file_cache_path(filehash: str) -> str:
     assert filehash.islower()
     assert filehash.isalnum()
 
-    # Split into a few levels of directories to keep directory listings
-    # and operations reasonable. This will give 256 top level dirs, each
-    # with 256 subdirs. So if we have 65,536 files in our cache then
-    # dirs will average 1 file each. That seems like a reasonable spread
-    # I think.
-    return f'{filehash[:2]}/{filehash[2:4]}/{filehash[4:]}'
+    # Single level of 256 dirs. Modern filesystems handle huge flat
+    # dirs fine via b-tree/hashed indexing, but a single shard keeps us
+    # under any per-dir entry limits on older/unusual filesystems and
+    # avoids the inode overhead of deeper sharding.
+    return f'{filehash[:2]}/{filehash[2:]}'
 
 
 @ioprepped
@@ -397,12 +396,12 @@ class StreamWS:
     #: Optional explicit WSS URL. When ``None`` (the default for
     #: node-agnostic streams — i.e. all current bacloud streams),
     #: the client opens its WS to whatever hostname it sent the
-    #: kickoff request to (``regional.ballistica.net`` in prod;
-    #: a per-node dev hostname when ``BACLOUD_SERVER`` is
-    #: overridden), at the path implied by :attr:`call_id`. The
-    #: server fills in a specific URL only when the stream's data
-    #: genuinely lives on one basn (Phase 3 game-server-logs
-    #: case); not used today.
+    #: kickoff request to (``regional.ballistica.net`` in prod; a
+    #: fleet-resolved basn hostname for non-prod ``BA_FLEET``
+    #: values; or a ``BACLOUD_SERVER`` override), at the path
+    #: implied by :attr:`call_id`. The server fills in a specific
+    #: URL only when the stream's data genuinely lives on one basn
+    #: (Phase 3 game-server-logs case); not used today.
     basn_url: Annotated[
         str | None, IOAttrs('u', soft_default=None, store_default=False)
     ] = None

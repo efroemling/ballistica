@@ -326,6 +326,12 @@ class IOAttrs:
     #: Does not actually affect value input/output.
     text_literal: bool | None = None
 
+    #: If provided for a string field, supplies placeholder/hint text
+    #: shown in the input when its value is empty. Can be referenced
+    #: when creating UI for editing the value. Does not actually affect
+    #: value input/output.
+    placeholder: str | None = None
+
     def __init__(  # pylint: disable=too-many-branches
         self,
         storagename: str | None = storagename,
@@ -343,6 +349,7 @@ class IOAttrs:
         multiline: bool | None = None,
         edit_as_options: bool | None = None,
         text_literal: bool | None = None,
+        placeholder: str | None = None,
     ):
 
         # Only store values that differ from class defaults to keep
@@ -394,6 +401,8 @@ class IOAttrs:
             self.edit_as_options = edit_as_options
         if text_literal is not cls.text_literal:
             self.text_literal = text_literal
+        if placeholder is not cls.placeholder:
+            self.placeholder = placeholder
 
     def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs is ok to use with provided field."""

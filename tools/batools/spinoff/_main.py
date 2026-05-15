@@ -185,11 +185,11 @@ def _do_create(src_root: str, dst_root: str | None) -> None:
 
     # The components we need for a spinoff dst project are:
     # - a tools/spinoff symlink pointing to our src project's tools/spinoff
-    # - a config/spinoffconfig.py
+    # - a pconfig/spinoffconfig.py
 
     subprocess.run(['mkdir', '-p', path], check=True)
     subprocess.run(['mkdir', os.path.join(path, 'tools')], check=True)
-    subprocess.run(['mkdir', os.path.join(path, 'config')], check=True)
+    subprocess.run(['mkdir', os.path.join(path, 'pconfig')], check=True)
 
     # Read in the dummy module we use as a template.
     template_path = os.path.join(
@@ -215,7 +215,7 @@ def _do_create(src_root: str, dst_root: str | None) -> None:
     )
 
     with open(
-        os.path.join(path, 'config', 'spinoffconfig.py'), 'w', encoding='utf-8'
+        os.path.join(path, 'pconfig', 'spinoffconfig.py'), 'w', encoding='utf-8'
     ) as outfile:
         outfile.write(template)
 
@@ -282,7 +282,7 @@ def _do_featureset_delete() -> None:
     # exist. (custom name formatting shouldnt matter here anyway)
     fset = FeatureSet(name)
 
-    if not os.path.exists('config/featuresets'):
+    if not os.path.exists('pconfig/featuresets'):
         raise CleanError('Cannot run from this directory.')
 
     paths_to_delete: list[str] = fset.paths
@@ -329,7 +329,7 @@ def _do_featureset_copy() -> None:
     src = args[0]
     dst = args[1]
 
-    if not os.path.exists('config/featuresets'):
+    if not os.path.exists('pconfig/featuresets'):
         raise CleanError('Cannot run from this directory.')
 
     # This will make sure both feature-set names are valid and give us
@@ -346,7 +346,7 @@ def _do_featureset_copy() -> None:
     dstfs = FeatureSet(dst)
 
     # Make sure src *does* exist.
-    if not os.path.exists(f'config/featuresets/featureset_{src}.py'):
+    if not os.path.exists(f'pconfig/featuresets/featureset_{src}.py'):
         raise CleanError(f"Src feature-set '{src}' not found.")
 
     # Make sure dst does *not* exist (unless we're forcing).
@@ -361,7 +361,7 @@ def _do_featureset_copy() -> None:
         paths_to_copy.append((srcpath, dstpath))
 
     # Replace variations of our name. Note that we don't have to include
-    # stuff like name_python_package_meta here because that is covered
+    # stuff like name_python_package_codegen here because that is covered
     # by our base name replacement. Also note that we include upper()
     # for C/C++ header #ifndefs.
     subs = [
@@ -433,8 +433,9 @@ def _do_featureset_copy_dir(
     filtered_exts = ['.cc', '.h', '.py', '.md', '.inc']
 
     # Eww; reinventing the wheel here; should tap into existing
-    # spinoff logic or something.
-    cruft_names = ['.DS_Store', 'mgen', '_mgen']
+    # spinoff logic or something. generated/_generated strip: see
+    # docs/design/codegen.md.
+    cruft_names = ['.DS_Store', 'generated', '_generated']
     cruft_exts = ['.pyc']
 
     def _is_cruft(name: str) -> bool:

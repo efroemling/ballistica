@@ -120,6 +120,7 @@ from batools.pcommands import (
     version,
 )
 from batools.pcommands2 import (
+    gen_builtin_asset_ids,
     gen_python_init_module,
     gen_monolithic_register_modules,
     py_examine,
@@ -134,8 +135,9 @@ from batools.pcommands2 import (
     wsl_path_to_win,
     wsl_build_check_win_drive,
     get_modern_make,
-    asset_package_resolve,
-    asset_package_assemble,
+    assetpins,
+    asset_bundle_resolve,
+    asset_bundle_build,
     cst_test,
 )
 from batools.pcommands3 import (

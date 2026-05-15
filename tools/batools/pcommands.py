@@ -447,7 +447,7 @@ def efrocache_update() -> None:
     """Build & push files to efrocache for public access."""
     from efrotools.efrocache import update_cache
 
-    makefile_dirs = ['', 'src/assets', 'src/resources', 'src/meta']
+    makefile_dirs = ['', 'src/assets', 'src/resources', 'src/codegen']
     update_cache(makefile_dirs)
 
 
@@ -723,7 +723,11 @@ def efro_gradle() -> None:
     enabled_tags: set[str] = {'true'}
     target_words = [w.lower() for w in _camel_case_split(args[-1])]
     if 'google' in target_words:
-        enabled_tags = {'google', 'crashlytics'}
+        # Augment rather than replace; otherwise we lose the 'true'
+        # tag and the single-arch flavor declarations (arm/arm64/
+        # x86/x86_64, gated by ``// EFRO_IF true``) stay commented
+        # out — breaking ANDROID_MODE!=prod for google builds.
+        enabled_tags |= {'google', 'crashlytics'}
     prev_suffix = 'efro_gradle_prev'
 
     buildfilename = 'BallisticaKit/build.gradle'
@@ -818,13 +822,15 @@ def cmake_prep_dir() -> None:
 def gen_binding_code() -> None:
     """Generate a binding_foo.inc file."""
     from efro.error import CleanError
-    import batools.metabuild
+    import batools.codegenbuild
 
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args (srcfile, dstfile)')
     inpath = sys.argv[2]
     outpath = sys.argv[3]
-    batools.metabuild.gen_binding_code(str(pcommand.PROJROOT), inpath, outpath)
+    batools.codegenbuild.gen_binding_code(
+        str(pcommand.PROJROOT), inpath, outpath
+    )
 
 
 def genchangelog() -> None:

@@ -10,10 +10,52 @@ from typing import TYPE_CHECKING
 
 import pytest
 import urllib3
+from efro.error import CleanError
 from efrotools.project import getlocalconfig
 
 if TYPE_CHECKING:
     from typing import Any
+
+
+# Fleet selection precedence:
+#   1. ``BALLISTICA_URL`` — explicit URL override (e.g. a custom
+#      test server). Wins if set; otherwise we derive the URL from
+#      ``BA_FLEET``.
+#   2. ``BA_FLEET`` — ``'prod'`` (default), ``'test'``, or ``'dev'``.
+# Default is intentionally ``prod``: this file lands in the public
+# repo via spinoff, and a random clone running these tests should
+# never accidentally talk to the dev server. Dev/test runs override
+# explicitly.
+_FLEET_URLS = {
+    'prod': 'https://ballistica.net',
+    'test': 'https://test.ballistica.net',
+    'dev': 'https://dev.ballistica.net',
+}
+
+
+def _resolve_fleet() -> str:
+    """Return the selected fleet name; raise on invalid values."""
+    fleet = os.environ.get('BA_FLEET', 'prod').lower()
+    if fleet not in _FLEET_URLS:
+        raise CleanError(
+            f'Invalid BA_FLEET value {fleet!r};'
+            f' expected one of {sorted(_FLEET_URLS)}.'
+        )
+    return fleet
+
+
+def _resolve_server_url() -> str:
+    """Return the resolved base URL of the server under test."""
+    override = os.environ.get('BALLISTICA_URL')
+    if override:
+        return override
+    return _FLEET_URLS[_resolve_fleet()]
+
+
+#: The resolved fleet for the current test run. Test modules import
+#: this for prod-vs-non-prod branching at module scope (replacing
+#: the older ad-hoc URL-string parsing).
+BALLISTICA_FLEET: str = _resolve_fleet()
 
 
 def _read_ballistica_api_key() -> str | None:
@@ -88,7 +130,7 @@ def http() -> urllib3.PoolManager:
 @pytest.fixture(scope='session')
 def server_url() -> str:
     """Base URL of the server under test."""
-    return os.environ.get('BALLISTICA_URL', 'https://dev.ballistica.net')
+    return _resolve_server_url()
 
 
 @pytest.fixture(scope='session')

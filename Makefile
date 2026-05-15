@@ -60,17 +60,21 @@ ENV_REQS_SAFE = .cache/checkenv $(PCOMMANDBATCHBIN) .dir-locals.el .rgignore	\
 # which would leave us stuck in a broken state.
 ENV_REQS_POST_UPDATE_ONLY = $(ENV_COMPILE_COMMANDS_DB)
 
-# Target that should be built before building almost any other target. This
-# installs tool config files, sets up the Python virtual environment, etc.
-env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY) config/localconfig.json
+# The full dev environment. Most targets list this as their env dep.
+# Includes env-pre-update plus any post-update tooling that needs
+# project state to be current (compile-commands-db, etc.).
+env: $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY) pconfig/localconfig.json
 
-# Set of prereqs safe to run if the project state is dirty.
-env-pre-update: $(ENV_REQS_SAFE) config/localconfig.json
+# Bootstrap env: things safe to run before `update` runs. Sets up
+# tools/pcommand, the venv, tool-config files, etc. `update` itself
+# depends on this. Anything else that only needs the safe-bootstrap
+# form (rare) can depend on it too.
+env-pre-update: $(ENV_REQS_SAFE) pconfig/localconfig.json
 
 env-clean:
 	rm -rf $(ENV_REQS_SAFE) $(ENV_REQS_POST_UPDATE_ONLY)
 
-# Bootstrap config/localconfig.json on first run so env is always
+# Bootstrap pconfig/localconfig.json on first run so env is always
 # satisfied. In a worktree we try to mirror the main checkout's file
 # (following any existing symlink to its ultimate target); otherwise
 # we create an empty JSON dict, which is behaviorally equivalent to
@@ -78,12 +82,12 @@ env-clean:
 # (returns {} for missing keys). This is a normal file target so
 # make skips it entirely after the first run, leaving zero per-
 # invocation overhead for the common env dependency.
-config/localconfig.json:
+pconfig/localconfig.json:
 	@GITDIR=$$(git rev-parse --git-dir 2>/dev/null); \
 	 CMNDIR=$$(git rev-parse --git-common-dir 2>/dev/null); \
 	 if [ -n "$$GITDIR" ] && [ "$$GITDIR" != "$$CMNDIR" ]; then \
 	   MAINROOT=$$(cd "$$(dirname "$$CMNDIR")" && pwd); \
-	   SRC="$$MAINROOT/config/localconfig.json"; \
+	   SRC="$$MAINROOT/pconfig/localconfig.json"; \
 	   if [ -e "$$SRC" ]; then \
 	     TARGET=$$(readlink "$$SRC" 2>/dev/null || echo "$$SRC"); \
 	     ln -s "$$TARGET" $@; \
@@ -95,47 +99,47 @@ config/localconfig.json:
 	 echo "Created empty $@ (no main-checkout source found)."
 
 # Build all assets for all platforms.
-assets: env meta
+assets: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS)
 
 # Build assets required for cmake builds (linux, mac).
-assets-cmake: env meta
+assets-cmake: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) cmake
 
 # Build assets required for server builds.
-assets-server: env meta
+assets-server: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) server
 
 # Build assets required for WINDOWS_PLATFORM windows builds.
-assets-windows: env meta
+assets-windows: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) win-$(WINDOWS_PLATFORM)
 
 # Build assets required for Win32 windows builds.
-assets-windows-Win32: env meta
+assets-windows-Win32: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) win-Win32
 
 # Build assets required for x64 windows builds.
-assets-windows-x64: env meta
+assets-windows-x64: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) win-x64
 
 # Build assets required for mac xcode builds
-assets-mac: env meta
+assets-mac: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) mac
 
 # Build assets required for ios.
-assets-ios: env meta
+assets-ios: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) ios
 
 # Build assets required for android.
-assets-android: env meta
+assets-android: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) android
 
@@ -145,7 +149,7 @@ assets-clean:
 	cd src/assets && $(MAKE) clean
 
 # Build resources.
-resources: env meta
+resources: env codegen
 	@$(PCOMMAND) lazybuild resources_src $(LAZYBUILDDIR)/$@ \
  cd src/resources \&\& $(MAKE) -j$(CPUS)
 
@@ -156,16 +160,44 @@ resources-clean:
 
 # Build our generated sources.
 #
-# Meta builds can affect sources used by asset builds, resource builds, and
+# Codegen builds can affect sources used by asset builds, resource builds, and
 # compiles, so it should be listed as a dependency of any of those.
-meta: env
-	@$(PCOMMAND) lazybuild meta_src $(LAZYBUILDDIR)/$@ \
- cd src/meta \&\& $(MAKE) -j$(CPUS)
+codegen: env
+	@$(PCOMMAND) lazybuild codegen_src $(LAZYBUILDDIR)/$@ \
+ cd src/codegen \&\& $(MAKE) -j$(CPUS)
 
 # Clean our generated sources.
-meta-clean:
-	rm -f $(LAZYBUILDDIR)/meta
-	cd src/meta && $(MAKE) clean
+codegen-clean:
+	rm -f $(LAZYBUILDDIR)/codegen
+	cd src/codegen && $(MAKE) clean
+
+# Inspect / upgrade asset-package pins. Convenience aliases for the
+# pcommand subcommands; richer invocations should go through
+# ``tools/pcommand assetpins ...`` directly (since make targets
+# can't take CLI-style args). `assetpins` is the only build-flow
+# entry that talks to the cloud and the only one that mutates
+# checked-in source as part of normal use — see
+# docs/global_design/build_system.md (efrohome).
+assetpins:
+	@$(PCOMMAND) assetpins
+
+assetpins-upgrade:
+	@$(PCOMMAND) assetpins upgrade
+
+# Internal helper: re-resolve + fetch asset-bundle manifests for both
+# gui and headless variants. Invoked by assets-cmake / assets-server
+# (as a prereq) so a fresh clone's first build can populate the
+# local CAS without requiring an explicit make assetpins-upgrade.
+# asset_bundle_build's early-out keeps this near-instant in steady
+# state.
+assets-resolve:
+	@$(PCOMMAND) asset_bundle_resolve .cache/asset_bundle/resolved
+	@$(PCOMMAND) asset_bundle_build .cache/asset_bundle/resolved gui
+	@$(PCOMMAND) asset_bundle_build .cache/asset_bundle/resolved headless
+
+# Clean asset-bundle outputs (manifests + CAS blobs).
+assets-resolve-clean:
+	rm -rf .cache/asset_bundle .cache/assetdata
 
 # Remove ALL files and directories that aren't managed by git (except for a
 # few things such as localconfig.json).
@@ -185,7 +217,7 @@ clean-list: env
 # IMPORTANT - building this target can kick off full builds/cleans and so it
 # should not be built in parallel with other targets. See py_check_prepass
 # target for more info.
-dummymodules: env meta
+dummymodules: env codegen
 	@$(PCOMMAND) lazybuild dummymodules_src $(LAZYBUILDDIR)/$@ \
  rm -rf build/dummymodules \&\& $(PCOMMAND) gen_dummy_modules
 
@@ -198,13 +230,13 @@ dummymodules-clean: env
 venv: .venv/.efro_venv_complete
 
 # Update pip requirements to latest versions, then regenerate the
-# lockfile from them. The make rule for ``config/requirements_lock.txt``
+# lockfile from them. The make rule for ``pconfig/requirements_lock.txt``
 # (further down) handles the actual regeneration based on
 # requirements.txt's mtime — calling ``make`` again here pulls
 # that rule in once requirements_upgrade has finished writing.
 venv-upgrade: env
-	$(PCOMMAND) requirements_upgrade config/requirements.txt
-	@$(MAKE) config/requirements_lock.txt
+	$(PCOMMAND) requirements_upgrade pconfig/requirements.txt
+	@$(MAKE) pconfig/requirements_lock.txt
 
 venv-clean:
 	rm -rf .venv
@@ -233,7 +265,9 @@ pcommandbatch_speed_test: env
 .PHONY: help env env-pre-update env-clean assets assets-cmake			\
         assets-windows assets-windows-Win32													\
         assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
-        resources resources-clean meta meta-clean clean clean-list						\
+        assets-resolve assets-resolve-clean																\
+        assetpins assetpins-upgrade																				\
+        resources resources-clean codegen codegen-clean clean clean-list						\
         dummymodules venv venv-clean docs docs-clean pcommandbatch_speed_test
 
 
@@ -859,11 +893,11 @@ check-ex-full: py_check_prepass
 	@$(PCOMMANDBATCH) echo SGRN BLD ALL CHECKS PASSED!
 
 # Run Cpplint checks on all C/C++ code.
-cpplint: env meta
+cpplint: env codegen
 	@$(PCOMMAND) cpplint
 
 # Run Cpplint checks without caching (all files are checked).
-cpplint-full: env meta
+cpplint-full: env codegen
 	@$(PCOMMAND) cpplint -full
 
 # Run Pylint checks on all Python Code.
@@ -908,7 +942,7 @@ pyright: py_check_prepass
 
 # Build prerequisites needed for python checks.
 #
-# IMPORTANT - this target may kick off new meta/asset/binary builds/cleans as
+# IMPORTANT - this target may kick off new codegen/asset/binary builds/cleans as
 # part of doing its thing. For this reason, be sure this target gets built
 # alone in a make process and not mixed in with others as it would likely
 # stomp on them or their dependencies.
@@ -960,7 +994,7 @@ test-ex-verbose: py_check_prepass
 
 # Path to the pytest-split test-duration database used by the
 # test-ex-splitN shards. Regenerate with test-ex-split-durations.
-TEST_EX_DURATIONS_PATH = config/test_ex_durations
+TEST_EX_DURATIONS_PATH = pconfig/test_ex_durations
 
 # Run a slice of the extended tests (pytest-split shard 1..4 of 4).
 # Lets multiple shards run concurrently across CI executors.
@@ -1030,8 +1064,9 @@ test-threadpool:
         test-message test-dataclassio test-rpc
 
 # Run live-server tests for the public REST API (accounts, workspaces).
-# Requires a running dev server; reads ballistica_api_key from config/localconfig.json.
-BALLISTICA_URL ?= https://dev.ballistica.net
+# Requires a running server; reads ballistica_api_key from pconfig/localconfig.json.
+# Target fleet comes from BA_FLEET (default 'prod'); BALLISTICA_URL is an
+# optional explicit-URL override.
 test-restapi: env
 	@$(PCOMMAND) require_ballistica_api_key
 	@$(PCOMMAND) pytest -v tests/test_restapi
@@ -1100,7 +1135,7 @@ WINDOWS_PLATFORM ?= x64
 WINDOWS_CONFIGURATION ?= Debug
 
 # Stage assets and other files so a built binary will run.
-windows-staging: assets-windows resources meta
+windows-staging: assets-windows resources codegen
 	@$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) build/windows/$(WINCFG)_$(WINPLT)
 
 # Build and run a debug windows build (from WSL).
@@ -1212,7 +1247,7 @@ cmake-build: assets-cmake resources cmake-binary
       $(CMAKE_BUILD_DIR)/staged
 	@$(PCOMMANDBATCH) echo BLD Build complete: BLU $(CMAKE_BUILD_DIR)/staged
 
-cmake-binary: meta
+cmake-binary: codegen
 	@$(PCOMMAND) cmake_prep_dir $(CMAKE_BUILD_DIR)
 	@cd $(CMAKE_BUILD_DIR) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DENABLE_AUTOMATION=ON $(shell pwd)/ballisticakit-cmake
@@ -1226,14 +1261,14 @@ cmake-clean:
 cmake-server: cmake-server-build
 	cd build/cmake/server-$(CM_BT_LC)/staged && ./ballisticakit_server
 
-cmake-server-build: assets-server meta cmake-server-binary
+cmake-server-build: assets-server codegen cmake-server-binary
 	@$(STAGE_BUILD) -cmakeserver -$(CM_BT_LC) \
       -builddir build/cmake/server-$(CM_BT_LC) \
       build/cmake/server-$(CM_BT_LC)/staged
 	@$(PCOMMANDBATCH) echo BLD \
       Server build complete: BLU build/cmake/server-$(CM_BT_LC)/staged
 
-cmake-server-binary: meta
+cmake-server-binary: codegen
 	@$(PCOMMAND) cmake_prep_dir build/cmake/server-$(CM_BT_LC)
 	@cd build/cmake/server-$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true -DENABLE_AUTOMATION=ON $(shell pwd)/ballisticakit-cmake
@@ -1244,7 +1279,7 @@ cmake-server-binary: meta
 cmake-server-clean:
 	rm -rf build/cmake/server-$(CM_BT_LC)
 
-cmake-modular-build: assets-cmake meta cmake-modular-binary
+cmake-modular-build: assets-cmake codegen cmake-modular-binary
 	@$(STAGE_BUILD) -cmakemodular -$(CM_BT_LC) \
       -builddir build/cmake/modular-$(CM_BT_LC) \
       build/cmake/modular-$(CM_BT_LC)/staged
@@ -1254,7 +1289,7 @@ cmake-modular-build: assets-cmake meta cmake-modular-binary
 cmake-modular: cmake-modular-build
 	cd build/cmake/modular-$(CM_BT_LC)/staged && ./ballisticakit
 
-cmake-modular-binary: meta
+cmake-modular-binary: codegen
 	@$(PCOMMAND) cmake_prep_dir build/cmake/modular-$(CM_BT_LC)
 	@cd build/cmake/modular-$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DENABLE_AUTOMATION=ON $(shell pwd)/ballisticakit-cmake
@@ -1268,14 +1303,14 @@ cmake-modular-clean:
 cmake-modular-server: cmake-modular-server-build
 	cd build/cmake/modular-server-$(CM_BT_LC)/staged && ./ballisticakit_server
 
-cmake-modular-server-build: assets-server meta cmake-modular-server-binary
+cmake-modular-server-build: assets-server codegen cmake-modular-server-binary
 	@$(STAGE_BUILD) -cmakemodularserver -$(CM_BT_LC) \
       -builddir build/cmake/modular-server-$(CM_BT_LC) \
       build/cmake/modular-server-$(CM_BT_LC)/staged
 	@$(PCOMMANDBATCH) echo BLD \
       Server build complete: BLU build/cmake/modular-server-$(CM_BT_LC)/staged
 
-cmake-modular-server-binary: meta
+cmake-modular-server-binary: codegen
 	@$(PCOMMAND) cmake_prep_dir build/cmake/modular-server-$(CM_BT_LC)
 	@cd build/cmake/modular-server-$(CM_BT_LC) && test -f Makefile \
       || cmake -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_EXTRA_ARGS) -DHEADLESS=true -DENABLE_AUTOMATION=ON $(shell pwd)/ballisticakit-cmake
@@ -1357,7 +1392,7 @@ flatpak-linux: env
 	--force-clean --keep-build-dirs \
 	--state-dir=./.cache/flatpak/flatpak-builder \
 	./.cache/flatpak/build_dir \
-	config/flatpak/net.froemling.bombsquad.yml
+	pconfig/flatpak/net.froemling.bombsquad.yml
 	flatpak build-bundle ./.cache/flatpak/repo \
 	build/flatpak/bombsquad.flatpak net.froemling.bombsquad
 
@@ -1403,7 +1438,7 @@ LAZYBUILDDIR = .cache/lazybuild
 # Things to ignore when doing root level cleans. Note that we exclude build
 # and just blow that away manually; it might contain git repos or other things
 # that can confuse git.
-ROOT_CLEAN_IGNORES = --exclude=config/localconfig.json \
+ROOT_CLEAN_IGNORES = --exclude=pconfig/localconfig.json \
   --exclude=.spinoffdata \
   --exclude=/build
 
@@ -1413,7 +1448,7 @@ CHECK_CLEAN_SAFETY = $(PCOMMAND) check_clean_safety
 TOOL_CFG_INST = $(PCOMMAND) tool_config_install
 
 # Anything required for tool-config generation.
-TOOL_CFG_SRC = tools/efrotools/toolconfig.py config/projectconfig.json \
+TOOL_CFG_SRC = tools/efrotools/toolconfig.py pconfig/projectconfig.json \
  tools/pcommand
 
 # Anything that should trigger an environment-check when changed.
@@ -1440,28 +1475,28 @@ tools/bacloud: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@PYTHONPATH=tools python3 -m \
  efrotools.genwrapper bacloud bacommontools.bacloud tools/bacloud
 
-.clang-format: config/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
+.clang-format: pconfig/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.pylintrc: config/toolconfigsrc/pylintrc $(TOOL_CFG_SRC)
+.pylintrc: pconfig/toolconfigsrc/pylintrc $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.projectile: config/toolconfigsrc/projectile $(TOOL_CFG_SRC)
+.projectile: pconfig/toolconfigsrc/projectile $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.editorconfig: config/toolconfigsrc/editorconfig $(TOOL_CFG_SRC)
+.editorconfig: pconfig/toolconfigsrc/editorconfig $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.dir-locals.el: config/toolconfigsrc/dir-locals.el $(TOOL_CFG_SRC)
+.dir-locals.el: pconfig/toolconfigsrc/dir-locals.el $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.rgignore: config/toolconfigsrc/rgignore $(TOOL_CFG_SRC)
+.rgignore: pconfig/toolconfigsrc/rgignore $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.mypy.ini: config/toolconfigsrc/mypy.ini $(TOOL_CFG_SRC)
+.mypy.ini: pconfig/toolconfigsrc/mypy.ini $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
-.pyrightconfig.json: config/toolconfigsrc/pyrightconfig.toml $(TOOL_CFG_SRC)
+.pyrightconfig.json: pconfig/toolconfigsrc/pyrightconfig.toml $(TOOL_CFG_SRC)
 	@$(TOOL_CFG_INST) $< $@
 
 # Set this to 1 to skip environment checks.
@@ -1494,13 +1529,13 @@ VENV_STATE = 5
 # successor to this format. uv supports installing from pylock.toml
 # but that path is currently labeled experimental — switch when
 # uv graduates it.)
-config/requirements_lock.txt: config/requirements.txt
+pconfig/requirements_lock.txt: pconfig/requirements.txt
 	@command -v uv >/dev/null \
  || (echo 'uv not found on PATH.' \
  && echo 'Install via your package manager (brew install uv) or' \
  && echo 'run: curl -LsSf https://astral.sh/uv/install.sh | sh' \
  && exit 1)
-	@echo Regenerating config/requirements_lock.txt from config/requirements.txt...
+	@echo Regenerating pconfig/requirements_lock.txt from pconfig/requirements.txt...
 # Pass ``--python $(VENV_PYTHON)`` so the resolver always sees the
 # same interpreter as the eventual install. Without this, uv falls
 # back to whatever Python is on PATH or auto-detected from a venv
@@ -1510,7 +1545,7 @@ config/requirements_lock.txt: config/requirements.txt
 # resolver's view of the target Python).
 	@uv pip compile --universal --generate-hashes --quiet \
  --python $(VENV_PYTHON) \
- config/requirements.txt -o config/requirements_lock.txt
+ pconfig/requirements.txt -o pconfig/requirements_lock.txt
 
 # Update our virtual environment whenever the lockfile changes,
 # Python version changes, our venv's Python symlink breaks (can
@@ -1527,7 +1562,7 @@ config/requirements_lock.txt: config/requirements.txt
 # install packages should go through ``uv pip install`` rather
 # than ``.venv/bin/pip``.
 .venv/.efro_venv_complete: \
-      config/requirements_lock.txt \
+      pconfig/requirements_lock.txt \
       tools/efrotools/pyver.py \
       .venv/bin/$(VENV_PYTHON) \
       .venv/.efro_venv_state_$(VENV_STATE)
@@ -1546,7 +1581,7 @@ config/requirements_lock.txt: config/requirements.txt
  && rm -rf .venv && uv venv --python $(VENV_PYTHON) .venv \
  && touch .venv/.efro_venv_state_$(VENV_STATE))
 	uv pip install --python .venv/bin/$(VENV_PYTHON) --require-hashes \
- -r config/requirements_lock.txt
+ -r pconfig/requirements_lock.txt
 	@touch .venv/.efro_venv_complete # Done last to signal fully-built venv.
 	@echo Project virtual environment for $(VENV_PYTHON) at .venv is ready to use.
 

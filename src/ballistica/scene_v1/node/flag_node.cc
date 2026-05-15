@@ -313,7 +313,8 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
 
     float s_scale, s_density;
     base::SimpleComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kShadow));
+    c.SetTexture(
+        g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kShadow));
     c.SetTransparent(true);
 
     // Update our shadow objects.
@@ -377,13 +378,15 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
   // Flag pole.
   {
     base::ObjectComponent c(frame_def->beauty_pass());
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kFlagPole));
+    c.SetTexture(g_base->assets->BuiltinTextureOld(
+        base::BuiltinTextureOldID::kFlagPole));
     c.SetReflection(base::ReflectionType::kSharp);
     c.SetReflectionScale(0.1f, 0.1f, 0.1f);
     {
       auto xf = c.ScopedTransform();
       body_->ApplyToRenderComponent(&c);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kFlagPole));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kFlagPole));
     }
     c.Submit();
   }

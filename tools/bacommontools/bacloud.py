@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """A tool for interacting with ballistica's cloud services.
 This facilitates workflows such as creating asset-packages, etc.
 """
@@ -39,8 +40,22 @@ TIMEOUT_SECONDS = 60 * 5
 
 VERBOSE = os.environ.get('BACLOUD_VERBOSE') == '1'
 
-# Server we talk to (can override via env var).
-BACLOUD_SERVER = os.getenv('BACLOUD_SERVER', 'regional.ballistica.net')
+# Server selection precedence:
+#   1. BACLOUD_SERVER — explicit host override (e.g. a specific basn
+#      node). Wins if set; otherwise we derive from BA_FLEET.
+#   2. BA_FLEET — matches the env var the client uses. 'prod'
+#      (default) routes to regional.ballistica.net directly. 'test'
+#      and 'dev' query their fleet's master server for a healthy
+#      basn node hostname (since those fleets have no regional.*
+#      equivalent).
+BACLOUD_SERVER_OVERRIDE = os.getenv('BACLOUD_SERVER')
+BA_FLEET = os.getenv('BA_FLEET', 'prod').lower()
+
+_FLEET_MASTER_HOSTS = {
+    'prod': 'regional.ballistica.net',
+    'test': 'test.ballistica.net',
+    'dev': 'dev.ballistica.net',
+}
 
 
 def _hash_file(path: str) -> tuple[int, str]:
@@ -100,7 +115,7 @@ def _resolve_api_key(project_root: Path) -> str | None:
        build hosts (fromini/etc.) see credentials bound via
        Jenkins ``withCredentials``.
     3. ``ballistica_api_key`` in
-       ``<project_root>/config/localconfig.json``.
+       ``<project_root>/pconfig/localconfig.json``.
     """
     import json
 
@@ -113,7 +128,7 @@ def _resolve_api_key(project_root: Path) -> str | None:
     if override:
         opath = Path(override)
         cfgpaths.append(opath if opath.is_absolute() else project_root / opath)
-    cfgpaths.append(project_root / 'config' / 'localconfig.json')
+    cfgpaths.append(project_root / 'pconfig' / 'localconfig.json')
 
     for cfgpath in cfgpaths:
         if not cfgpath.exists():
@@ -174,6 +189,7 @@ class App:
         self._end_command_args: dict = {}
         self._return_code = 0
         self._api_key: str | None = None
+        self._server: str | None = None
 
     def run(self) -> int:
         """Run the tool."""
@@ -186,7 +202,7 @@ class App:
         # when bacloud lived exclusively in ballistica-internal.
         if not all(
             Path(self._project_root, name).exists()
-            for name in ['config/projectconfig.json', 'tools/bacommontools']
+            for name in ['pconfig/projectconfig.json', 'tools/bacommontools']
         ):
             raise CleanError('Unable to locate project directory.')
 
@@ -204,6 +220,8 @@ class App:
                 f'{Clr.BLU}bacloud: authenticating with API key'
                 f' ({self._api_key[:8]}\u2026){Clr.RST}'
             )
+
+        self._server = self._resolve_server()
 
         # Simply pass all args to the server and let it do the thing.
         self.run_interactive_command(cwd=os.getcwd(), args=sys.argv[1:])
@@ -242,12 +260,62 @@ class App:
         with open(self._state_data_path, 'w', encoding='utf-8') as outfile:
             outfile.write(dataclass_to_json(self._state))
 
+    def _resolve_server(self) -> str:
+        """Return the bacloud server host to talk to.
+
+        Honors ``BACLOUD_SERVER`` as an explicit override; otherwise
+        derives the host from ``BA_FLEET``. For non-prod fleets, asks
+        that fleet's master server for a healthy basn node.
+        """
+        if BACLOUD_SERVER_OVERRIDE:
+            return BACLOUD_SERVER_OVERRIDE
+
+        if BA_FLEET not in _FLEET_MASTER_HOSTS:
+            raise CleanError(
+                f'Invalid BA_FLEET value {BA_FLEET!r};'
+                f' expected one of {sorted(_FLEET_MASTER_HOSTS)}.'
+            )
+
+        if BA_FLEET == 'prod':
+            return _FLEET_MASTER_HOSTS['prod']
+
+        master = _FLEET_MASTER_HOSTS[BA_FLEET]
+        try:
+            with requests.get(
+                f'https://{master}/bacloud_node',
+                timeout=TIMEOUT_SECONDS,
+            ) as resp:
+                resp.raise_for_status()
+                data = resp.json()
+        except Exception as exc:
+            if VERBOSE:
+                import traceback
+
+                traceback.print_exc()
+            raise CleanError(
+                f'Unable to look up a basn node via {master}.'
+                f' Set env-var BACLOUD_VERBOSE=1 for details.'
+            ) from exc
+
+        err = data.get('error')
+        if err is not None:
+            raise CleanError(f'bacloud_node ({BA_FLEET}): {err}')
+        host = data.get('hostname')
+        if not isinstance(host, str) or not host:
+            raise CleanError(
+                f'bacloud_node ({BA_FLEET}): missing hostname in response.'
+            )
+        if VERBOSE:
+            print(f'{Clr.BLU}bacloud: fleet {BA_FLEET!r} -> {host}{Clr.RST}')
+        return host
+
     def _servercmd(self, cmd: str, payload: dict, stream: bool) -> ResponseData:
         """Issue a command to the server and get a response."""
 
         response_content: str | None = None
 
-        url = f'https://{BACLOUD_SERVER}/bacloudcmd'
+        assert self._server is not None
+        url = f'https://{self._server}/bacloudcmd'
         headers = {'User-Agent': f'bacloud/{BACLOUD_VERSION}'}
         # Single auth path: API key takes precedence; otherwise the
         # login_token from interactive sign-in. Either way, it
@@ -786,8 +854,9 @@ class App:
         # pylint: disable=cyclic-import
         from bacommontools.streamws import consume_via_ws
 
+        assert self._server is not None
         bearer = self._api_key or self._state.login_token
-        return consume_via_ws(response, bearer=bearer)
+        return consume_via_ws(response, bearer=bearer, host=self._server)
 
     def run_interactive_command(self, cwd: str, args: list[str]) -> None:
         """Run a single user command to completion."""

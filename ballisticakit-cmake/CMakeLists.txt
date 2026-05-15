@@ -260,6 +260,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows.h
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.h
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_package_registry.cc
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_package_registry.h
   ${BA_SRC_ROOT}/ballistica/base/assets/assets.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/assets.h
   ${BA_SRC_ROOT}/ballistica/base/assets/assets_server.cc
@@ -424,6 +426,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/dds.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/ktx.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/ktx.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/texture/ktx2.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/texture/ktx2.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/pvr.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/pvr.h
   ${BA_SRC_ROOT}/ballistica/base/input/device/input_device.cc
@@ -450,6 +454,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/networking/network_writer.h
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.cc
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.h
+  ${BA_SRC_ROOT}/ballistica/base/platform/android/android_message_bus.cc
+  ${BA_SRC_ROOT}/ballistica/base/platform/android/android_message_bus.h
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.cc
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_app_timer.cc

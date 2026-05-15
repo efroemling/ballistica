@@ -123,7 +123,7 @@ class LazyBuildCategory(Enum):
 
     RESOURCES = 'resources_src'
     ASSETS = 'assets_src'
-    META = 'meta_src'
+    CODEGEN = 'codegen_src'
     CMAKE = 'cmake_src'
     WIN = 'win_src'
     DUMMYMODULES = 'dummymodules_src'
@@ -132,8 +132,8 @@ class LazyBuildCategory(Enum):
 def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
     """Run some lazybuild presets."""
 
-    # Meta builds.
-    if category is LazyBuildCategory.META:
+    # Codegen builds.
+    if category is LazyBuildCategory.CODEGEN:
         LazyBuildContext(
             target=target,
             command=command,
@@ -141,17 +141,17 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # away, its not safe to have multiple builds going with it
             # at once.
             buildlockname=category.value,
-            # Regular paths; changes to these will trigger meta build.
+            # Regular paths; changes to these will trigger codegen build.
             srcpaths=[
                 'Makefile',
-                'src/meta',
+                'src/codegen',
                 'src/ballistica/shared/ballistica.h',
                 '.efrocachemap',
             ],
-            # Our meta Makefile targets generally don't list tools
+            # Our codegen Makefile targets generally don't list tools
             # scripts that can affect their creation as sources, so
             # let's set up a catch-all here: when any of our tools stuff
-            # changes we'll blow away all existing meta builds.
+            # changes we'll blow away all existing codegen builds.
             #
             # Update: also including featureset-defs here; any time
             # we're mucking with those it's good to start things fresh
@@ -161,13 +161,13 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'tools/efrotoolsinternal',
                 'tools/batools',
                 'tools/batoolsinternal',
-                'config/featuresets',
+                'pconfig/featuresets',
             ],
             # Maintain a hash of all srcpaths and do a full-clean
             # whenever that changes. Takes care of orphaned files if a
             # featureset is removed/etc.
             manifest_file=f'.cache/lazybuild/manifest_{category.value}',
-            command_fullclean='make meta-clean',
+            command_fullclean='make codegen-clean',
         ).run()
 
     # CMake builds.
@@ -188,7 +188,8 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             ],
             dirfilter=(
                 lambda root, dirname: not (
-                    root == 'src' and dirname in {'meta', 'tools', 'external'}
+                    root == 'src'
+                    and dirname in {'codegen', 'tools', 'external'}
                 )
             ),
             command=command,
@@ -198,7 +199,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
     elif category is LazyBuildCategory.WIN:
 
         def _win_dirfilter(root: str, dirname: str) -> bool:
-            if root == 'src' and dirname in {'meta', 'tools'}:
+            if root == 'src' and dirname in {'codegen', 'tools'}:
                 return False
             if root == 'src/external' and dirname != 'windows':
                 return False
@@ -257,14 +258,19 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'tools',
                 'src/assets',
                 '.efrocachemap',
-                # Needed to rebuild on asset-package changes.
-                'config/projectconfig.json',
+                # Needed to rebuild on asset-bundle apversion
+                # changes ("assets" field).
+                'pconfig/projectconfig.json',
             ],
-            # This file won't exist if we are using a dev asset-package,
-            # in which case we want to always run so we can ask the
-            # server for package updates each time.
+            # Absence forces lazybuild to re-run the wrapped
+            # assets target. The sentinel is written by
+            # ``asset_bundle_resolve`` (called from env's
+            # ``assets-resolve`` target) for stable apverids and
+            # deleted for dev apverids — the missing-sentinel
+            # signal keeps assets-cmake re-staging on every dev
+            # build so manifest changes propagate.
             srcpaths_exist=[
-                '.cache/asset_package_resolved',
+                '.cache/asset_bundle/resolved',
             ],
             command=command,
             filefilter=_filefilter,
@@ -301,7 +307,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # definitely want to restrict to one at a time.
             buildlockname=category.value,
             srcpaths=[
-                'config/featuresets',
+                'pconfig/featuresets',
                 'tools/batools/dummymodule.py',
                 'src/ballistica',
                 '.efrocachemap',

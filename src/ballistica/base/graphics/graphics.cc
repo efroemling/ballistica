@@ -928,7 +928,8 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0, 7, -3.3f);
         c.Scale(10, 10, 10);
         c.Rotate(a, 0, 0, 1);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBoxingGlove));
       }
       c.Submit();
     }
@@ -936,7 +937,8 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
     // Beauty.
     if (explicit_bool(false)) {
       ObjectComponent c(frame_def->beauty_pass());
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kBoxingGlove));
+      c.SetTexture(
+          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kBoxingGlove));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       {
@@ -944,7 +946,8 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0.0f, 3.7f, -3.3f);
         c.Scale(10.0f, 10.0f, 10.0f);
         c.Rotate(a, 0.0f, 0.0f, 1.0f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBoxingGlove));
       }
       c.Submit();
     }
@@ -959,7 +962,8 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0.0f, 3.7f, -3.3f);
         c.Scale(10.0f, 10.0f, 10.0f);
         c.Rotate(a, 0.0f, 0.0f, 1.0f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBoxingGlove));
       }
       c.Submit();
     }
@@ -975,7 +979,8 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
         auto xf = c.ScopedTransform();
         c.Translate(70, 400, kDebugImgZDepth);
         c.Scale(csize, csize);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
       }
       c.Submit();
     }
@@ -986,7 +991,8 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
         auto xf = c.ScopedTransform();
         c.Translate(70, 250, kDebugImgZDepth);
         c.Scale(csize, csize);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
       }
       c.Submit();
     }
@@ -1168,7 +1174,8 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
       SimpleComponent c(frame_def->overlay_front_pass());
       c.SetTransparent(true);
       float csize = 50.0f;
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCursor));
+      c.SetTexture(
+          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kCursor));
       {
         auto xf = c.ScopedTransform();
 
@@ -1178,7 +1185,8 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
         c.CursorTranslate();
         c.Translate(csize * 0.40f, csize * -0.38f, kCursorZDepth);
         c.Scale(csize, csize);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
       }
       c.Submit();
     }
@@ -1195,7 +1203,8 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_verts_.size(), &blotch_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLight));
+    c.SetTexture(
+        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kLight));
     c.DrawMesh(shadow_blotch_mesh_.get());
     c.Submit();
   }
@@ -1208,7 +1217,8 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_soft_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_soft_verts_.size(), &blotch_soft_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLightSoft));
+    c.SetTexture(
+        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kLightSoft));
     c.DrawMesh(shadow_blotch_soft_mesh_.get());
     c.Submit();
   }
@@ -1221,7 +1231,8 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_soft_obj_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_soft_obj_verts_.size(), &blotch_soft_obj_verts_[0]));
     SpriteComponent c(frame_def->light_pass());
-    c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLightSoft));
+    c.SetTexture(
+        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kLightSoft));
     c.DrawMesh(shadow_blotch_soft_obj_mesh_.get());
     c.Submit();
   }
@@ -1643,20 +1654,20 @@ void Graphics::UpdateScreen_() {
 }
 
 auto Graphics::CubeMapFromReflectionType(ReflectionType reflection_type)
-    -> SysCubeMapTextureID {
+    -> BuiltinCubeMapTextureOldID {
   switch (reflection_type) {
     case ReflectionType::kChar:
-      return SysCubeMapTextureID::kReflectionChar;
+      return BuiltinCubeMapTextureOldID::kReflectionChar;
     case ReflectionType::kPowerup:
-      return SysCubeMapTextureID::kReflectionPowerup;
+      return BuiltinCubeMapTextureOldID::kReflectionPowerup;
     case ReflectionType::kSoft:
-      return SysCubeMapTextureID::kReflectionSoft;
+      return BuiltinCubeMapTextureOldID::kReflectionSoft;
     case ReflectionType::kSharp:
-      return SysCubeMapTextureID::kReflectionSharp;
+      return BuiltinCubeMapTextureOldID::kReflectionSharp;
     case ReflectionType::kSharper:
-      return SysCubeMapTextureID::kReflectionSharper;
+      return BuiltinCubeMapTextureOldID::kReflectionSharper;
     case ReflectionType::kSharpest:
-      return SysCubeMapTextureID::kReflectionSharpest;
+      return BuiltinCubeMapTextureOldID::kReflectionSharpest;
     default:
       throw Exception();
   }
@@ -1813,7 +1824,8 @@ void Graphics::DrawVirtualSafeAreaBounds(RenderPass* pass) {
       c.Translate(0.5f * pass->virtual_width(), 0.5f * pass->virtual_height(),
                   0.0f);
       c.Scale(width, height, 0.01f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kOverlayGuide));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kOverlayGuide));
     }
     c.Submit();
   }

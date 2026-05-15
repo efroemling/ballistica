@@ -209,6 +209,8 @@
     <ClInclude Include="..\..\src\ballistica\base\app_platform\windows\app_platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\asset.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\asset.h" />
+    <ClCompile Include="..\..\src\ballistica\base\assets\asset_package_registry.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\assets\asset_package_registry.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\assets.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\assets.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\assets_server.cc" />
@@ -373,6 +375,8 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\texture\dds.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\texture\ktx.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\texture\ktx.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\texture\ktx2.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\texture\ktx2.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\texture\pvr.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\texture\pvr.h" />
     <ClCompile Include="..\..\src\ballistica\base\input\device\input_device.cc" />
@@ -399,6 +403,8 @@
     <ClInclude Include="..\..\src\ballistica\base\networking\network_writer.h" />
     <ClCompile Include="..\..\src\ballistica\base\networking\networking.cc" />
     <ClInclude Include="..\..\src\ballistica\base\networking\networking.h" />
+    <ClCompile Include="..\..\src\ballistica\base\platform\android\android_message_bus.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\platform\android\android_message_bus.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\base_python.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\base_python.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_app_timer.cc" />

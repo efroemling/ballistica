@@ -239,7 +239,7 @@ def _writefuncs(
             elif returns in {'bascenev1.Session', 'bascenev1.Session | None'}:
                 returnstr = (
                     'import bascenev1  # pylint: disable=cyclic-import\nreturn '
-                    + 'bascenev1.Session([])'
+                    + 'bascenev1.Session()'
                 )
             elif returns == 'bascenev1.SessionPlayer | None':
                 returnstr = (
@@ -895,7 +895,7 @@ class Generator:
         enum_import_lines = (
             ''
             if self.mname == '_babase'
-            # else 'from babase._mgen.enums import TimeFormat, TimeType\n\n'
+            # else 'from babase._generated.enums import TimeFormat\n\n'
             else '' if self.mname == '_bascenev1' else ''
         )
         out = (

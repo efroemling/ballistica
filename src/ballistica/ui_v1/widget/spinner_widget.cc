@@ -51,52 +51,53 @@ void SpinnerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   c.SetColor(1.0f, 1.0f, 1.0f, alpha);
 
   if (style_ == Style::kSimple) {
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kSpinner));
+    c.SetTexture(
+        g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kSpinner));
   } else {
     assert(style_ == Style::kBomb);
     // Advance through our 12 frames at 24fps.
     auto frame{
         static_cast<int>(std::floor(std::fmod(current_time * 24.0, 12.0)))};
-    base::SysTextureID tex;
+    base::BuiltinTextureOldID tex;
     switch (frame) {
       case 0:
-        tex = base::SysTextureID::kSpinner0;
+        tex = base::BuiltinTextureOldID::kSpinner0;
         break;
       case 1:
-        tex = base::SysTextureID::kSpinner1;
+        tex = base::BuiltinTextureOldID::kSpinner1;
         break;
       case 2:
-        tex = base::SysTextureID::kSpinner2;
+        tex = base::BuiltinTextureOldID::kSpinner2;
         break;
       case 3:
-        tex = base::SysTextureID::kSpinner3;
+        tex = base::BuiltinTextureOldID::kSpinner3;
         break;
       case 4:
-        tex = base::SysTextureID::kSpinner4;
+        tex = base::BuiltinTextureOldID::kSpinner4;
         break;
       case 5:
-        tex = base::SysTextureID::kSpinner5;
+        tex = base::BuiltinTextureOldID::kSpinner5;
         break;
       case 6:
-        tex = base::SysTextureID::kSpinner6;
+        tex = base::BuiltinTextureOldID::kSpinner6;
         break;
       case 7:
-        tex = base::SysTextureID::kSpinner7;
+        tex = base::BuiltinTextureOldID::kSpinner7;
         break;
       case 8:
-        tex = base::SysTextureID::kSpinner8;
+        tex = base::BuiltinTextureOldID::kSpinner8;
         break;
       case 9:
-        tex = base::SysTextureID::kSpinner9;
+        tex = base::BuiltinTextureOldID::kSpinner9;
         break;
       case 10:
-        tex = base::SysTextureID::kSpinner10;
+        tex = base::BuiltinTextureOldID::kSpinner10;
         break;
       default:
-        tex = base::SysTextureID::kSpinner11;
+        tex = base::BuiltinTextureOldID::kSpinner11;
         break;
     }
-    c.SetTexture(g_base->assets->SysTexture(tex));
+    c.SetTexture(g_base->assets->BuiltinTextureOld(tex));
   }
 
   {
@@ -108,7 +109,8 @@ void SpinnerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     if (style_ == Style::kSimple) {
       c.Rotate(-360.0f * std::fmod(current_time * 2.0, 1.0), 0.0f, 0.0f, 1.0f);
     }
-    c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+    c.DrawMeshAsset(
+        g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
   }
   c.Submit();
 }

@@ -110,26 +110,26 @@ void LocatorNode::SetSize(const std::vector<float>& vals) {
 }
 
 void LocatorNode::Draw(base::FrameDef* frame_def) {
-  base::SysMeshID mesh;
+  base::BuiltinMeshOldID mesh;
   if (shape_ == Shape::kBox) {
-    mesh = base::SysMeshID::kLocatorBox;
+    mesh = base::BuiltinMeshOldID::kLocatorBox;
   } else if (shape_ == Shape::kCircle) {
-    mesh = base::SysMeshID::kLocatorCircle;
+    mesh = base::BuiltinMeshOldID::kLocatorCircle;
   } else if (shape_ == Shape::kCircleOutline) {
-    mesh = base::SysMeshID::kLocatorCircleOutline;
+    mesh = base::BuiltinMeshOldID::kLocatorCircleOutline;
   } else {
-    mesh = base::SysMeshID::kLocator;
+    mesh = base::BuiltinMeshOldID::kLocator;
   }
 
-  base::SysTextureID texture;
+  base::BuiltinTextureOldID texture;
   if (shape_ == Shape::kCircle) {
-    texture = additive_ ? base::SysTextureID::kCircleNoAlpha
-                        : base::SysTextureID::kCircle;
+    texture = additive_ ? base::BuiltinTextureOldID::kCircleNoAlpha
+                        : base::BuiltinTextureOldID::kCircle;
   } else if (shape_ == Shape::kCircleOutline) {
-    texture = additive_ ? base::SysTextureID::kCircleOutlineNoAlpha
-                        : base::SysTextureID::kCircleOutline;
+    texture = additive_ ? base::BuiltinTextureOldID::kCircleOutlineNoAlpha
+                        : base::BuiltinTextureOldID::kCircleOutline;
   } else {
-    texture = base::SysTextureID::kRGBStripes;
+    texture = base::BuiltinTextureOldID::kRGBStripes;
   }
 
   bool transparent = false;
@@ -144,12 +144,12 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
       c.SetTransparent(true);
     }
     c.SetColor(color_[0], color_[1], color_[2], opacity_);
-    c.SetTexture(g_base->assets->SysTexture(texture));
+    c.SetTexture(g_base->assets->BuiltinTextureOld(texture));
     {
       auto xf = c.ScopedTransform();
       c.Translate(position_[0], position_[1], position_[2]);
       c.Scale(size_[0], size_[1], size_[2]);
-      c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
+      c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(mesh));
     }
     c.Submit();
   }
@@ -169,12 +169,12 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
       } else {
         c.SetColor(color_[0], color_[1], color_[2], opacity_);
       }
-      c.SetTexture(g_base->assets->SysTexture(texture));
+      c.SetTexture(g_base->assets->BuiltinTextureOld(texture));
       {
         auto xf = c.ScopedTransform();
         c.Translate(position_[0], position_[1], position_[2]);
         c.Scale(size_[0], size_[1], size_[2]);
-        c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
+        c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(mesh));
       }
       c.Submit();
     } else {
@@ -186,7 +186,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(position_[0], position_[1], position_[2]);
         c.Scale(size_[0], size_[1], size_[2]);
-        c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
+        c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(mesh));
       }
       c.Submit();
     }

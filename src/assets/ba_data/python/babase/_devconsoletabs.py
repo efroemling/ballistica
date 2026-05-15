@@ -118,7 +118,7 @@ class DevConsoleTabUI(DevConsoleTab):
 
     @override
     def refresh(self) -> None:
-        from babase._mgen.enums import UIScale
+        from babase._generated.enums import UIScale
 
         xoffs = -305.0
         yoffs = 10.0
