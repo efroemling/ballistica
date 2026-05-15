@@ -55,7 +55,7 @@ class DirectoryScan:
     Pure-Python; no runtime dependencies. Construct with a list of
     paths (which must already be on PYTHONPATH if discovered
     modules will be imported by the consumer), then call
-    :meth:`run`. Results land in :attr:`results`.
+    :meth:`run`. Results land in ``results``.
 
     If ``expected_api_version`` is set, modules whose
     ``# ba_meta require api`` value doesn't match are skipped and
