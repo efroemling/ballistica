@@ -81,6 +81,7 @@
  "ba_data/python/bacommon/loggercontrol.py",
  "ba_data/python/bacommon/logging.py",
  "ba_data/python/bacommon/login.py",
+ "ba_data/python/bacommon/metascan.py",
  "ba_data/python/bacommon/net.py",
  "ba_data/python/bacommon/restapi/__init__.py",
  "ba_data/python/bacommon/restapi/v1/__init__.py",
