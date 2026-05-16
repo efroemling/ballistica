@@ -274,6 +274,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_stats.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_team.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_teamgame.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/coopjoin.py \
@@ -357,6 +358,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \
@@ -505,6 +507,9 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/logging.py \
   $(BUILD_DIR)/ba_data/python/bacommon/login.py \
   $(BUILD_DIR)/ba_data/python/bacommon/metascan.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/msg/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/msg/basntosandbox.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/msg/sandboxtobasn.py \
   $(BUILD_DIR)/ba_data/python/bacommon/net.py \
   $(BUILD_DIR)/ba_data/python/bacommon/restapi/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/restapi/v1/__init__.py \
@@ -5671,33 +5676,25 @@ assets: assets-cmake assets-win-x64
 clean:
 	@rm -rf $(BUILD_DIR)
 
-# Asset bundle (construct-mode minimum). Two-step
-# resolve→build pattern:
+# Asset bundle (construct-mode minimum).
 #
-# - Resolve pcommand: for stable apversions, writes
-#   ``.cache/asset_bundle/resolved`` so subsequent builds can
-#   short-circuit via standard mtime comparison; for dev
-#   apversions, removes the sentinel so the outer
-#   ``LazyBuildContext.srcpaths_exist`` keeps forcing the
-#   surrounding assets target to re-run.
-# - Build pcommand: shells out to bacloud assemble for the
-#   construct-mode minimum bucket set; fetches manifest + CAS
-#   blobs into the local cache.
-#
-# Cloud-talking happens here as a build-time on-demand pull
-# (the only build-flow surface that may touch the network).
-# Steady-state builds hit the cache and exit fast.
-$(PROJ_DIR)/.cache/asset_bundle/resolved: \
-      $(PROJ_DIR)/pconfig/projectconfig.json
-	@$(PCOMMAND) asset_bundle_resolve $@
-
+# The build path consumes a fully-resolved apverid from
+# projectconfig's ``"assets"`` field. Dev resolution + pin
+# writeback lives exclusively in ``tools/pcommand assetpins``;
+# the build itself just reads projectconfig and asks bacloud for
+# the manifest. Cloud-talking happens here as a build-time
+# on-demand pull (the only build-flow surface that may touch
+# the network — and only to fetch blob/manifest content for the
+# already-resolved apverid). Steady-state builds hit the cache
+# and exit fast via ``asset_bundle_build``'s apverid-match
+# early-out.
 $(PROJ_DIR)/.cache/asset_bundle/gui/manifest.json: \
-      $(PROJ_DIR)/.cache/asset_bundle/resolved
-	@$(PCOMMAND) asset_bundle_build $< gui
+      $(PROJ_DIR)/pconfig/projectconfig.json
+	@$(PCOMMAND) asset_bundle_build gui
 
 $(PROJ_DIR)/.cache/asset_bundle/headless/manifest.json: \
-      $(PROJ_DIR)/.cache/asset_bundle/resolved
-	@$(PCOMMAND) asset_bundle_build $< headless
+      $(PROJ_DIR)/pconfig/projectconfig.json
+	@$(PCOMMAND) asset_bundle_build headless
 
 # These targets don't correspond to actual files; make sure make knows that.
 .PHONY: cmake win mac ios android audio audio-clean fonts fonts-clean data	\

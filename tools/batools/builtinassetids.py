@@ -179,9 +179,10 @@ def _strip_logical_prefix(logical_path: str) -> str:
 def collect(projroot: Path) -> BuildResult:
     """Read cached manifests and produce a validated build result.
 
-    The manifest is produced as part of ``make update`` (the
-    update-time ``assets-resolve`` invocation), so by the time
-    we're reading it the file exists and its apverid matches
+    The manifest is produced by ``asset_bundle_build`` (invoked
+    via the make rule whose direct dep is
+    ``pconfig/projectconfig.json``), so by the time we're
+    reading it the file exists and its apverid matches
     projectconfig's ``"assets"``. Anything else is a build-system
     bug we want to surface, not paper over.
     """
@@ -192,7 +193,8 @@ def collect(projroot: Path) -> BuildResult:
     if not bundle_path.is_file():
         raise CleanError(
             f'Asset-bundle manifest not found at {bundle_path}; '
-            'run `make update` first to produce it.'
+            'run `make cmake-build` (or `make assetpins-latest`) '
+            'to produce it.'
         )
     bundle = json.loads(bundle_path.read_text())
     packages = bundle.get('asset_packages') or []
@@ -209,8 +211,8 @@ def collect(projroot: Path) -> BuildResult:
         raise CleanError(
             f"Bundle manifest apverid {apverid!r} does not match "
             f"projectconfig 'assets' {projectconfig_apverid!r}; "
-            '`make env` should have refreshed the bundle. '
-            'Try `make assets-resolve-clean && make env`.'
+            'the manifest is stale. Try '
+            '`make assets-resolve-clean && make cmake-build`.'
         )
 
     cas_root = projroot / '.cache/assetdata'

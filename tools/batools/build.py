@@ -259,18 +259,11 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'src/assets',
                 '.efrocachemap',
                 # Needed to rebuild on asset-bundle apversion
-                # changes ("assets" field).
+                # changes ("assets" field). projectconfig is the
+                # single source of truth post-migration; any
+                # change here flows through to bundle-manifest
+                # rules that depend on it directly.
                 'pconfig/projectconfig.json',
-            ],
-            # Absence forces lazybuild to re-run the wrapped
-            # assets target. The sentinel is written by
-            # ``asset_bundle_resolve`` (called from env's
-            # ``assets-resolve`` target) for stable apverids and
-            # deleted for dev apverids — the missing-sentinel
-            # signal keeps assets-cmake re-staging on every dev
-            # build so manifest changes propagate.
-            srcpaths_exist=[
-                '.cache/asset_bundle/resolved',
             ],
             command=command,
             filefilter=_filefilter,

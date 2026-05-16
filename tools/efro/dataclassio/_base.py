@@ -332,6 +332,16 @@ class IOAttrs:
     #: value input/output.
     placeholder: str | None = None
 
+    #: If provided for a string field, caps the maximum length of the
+    #: value at the form/UI layer. This is a *form-only* hint — it is
+    #: NOT enforced by dataclassio at serialization (read or write)
+    #: time. Form builders (e.g. ``FormDataclass``) read this to emit
+    #: an HTML ``maxlength`` attribute and reject oversize submissions
+    #: server-side. Existing in-DB data exceeding the cap continues to
+    #: deserialize normally. Only meaningful for ``str`` fields; ignored
+    #: for sequence/collection types.
+    max_length: int | None = None
+
     def __init__(  # pylint: disable=too-many-branches
         self,
         storagename: str | None = storagename,
@@ -350,6 +360,7 @@ class IOAttrs:
         edit_as_options: bool | None = None,
         text_literal: bool | None = None,
         placeholder: str | None = None,
+        max_length: int | None = None,
     ):
 
         # Only store values that differ from class defaults to keep
@@ -403,6 +414,8 @@ class IOAttrs:
             self.text_literal = text_literal
         if placeholder is not cls.placeholder:
             self.placeholder = placeholder
+        if max_length is not cls.max_length:
+            self.max_length = max_length
 
     def validate_for_field(self, cls: type, field: dataclasses.Field) -> None:
         """Ensure the IOAttrs is ok to use with provided field."""

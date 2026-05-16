@@ -171,29 +171,32 @@ codegen-clean:
 	rm -f $(LAZYBUILDDIR)/codegen
 	cd src/codegen && $(MAKE) clean
 
-# Inspect / upgrade asset-package pins. Convenience aliases for the
-# pcommand subcommands; richer invocations should go through
-# ``tools/pcommand assetpins ...`` directly (since make targets
-# can't take CLI-style args). `assetpins` is the only build-flow
-# entry that talks to the cloud and the only one that mutates
-# checked-in source as part of normal use — see
+# Inspect / update asset-package pins. Convenience aliases for the
+# pcommand subcommands; richer invocations (specific
+# VERSION/TARGET combos, track switching, etc.) should go through
+# ``tools/pcommand assetpins update <VERSION> <TARGET>`` directly
+# (since make targets can't take CLI-style args). `assetpins` is
+# the only build-flow entry that talks to the cloud and the only
+# one that mutates checked-in source as part of normal use — see
 # docs/global_design/build_system.md (efrohome).
 assetpins:
 	@$(PCOMMAND) assetpins
 
-assetpins-upgrade:
-	@$(PCOMMAND) assetpins upgrade
+# Move every pin to the newest version on its current track.
+# Dev pins re-resolve; prod/test pins move to the newest of
+# their type if upstream has published one. Convenience for
+# `tools/pcommand assetpins update latest all`. For finer
+# control (single package, single file, track switching, exact
+# version), invoke the underlying pcommand directly.
+assetpins-latest:
+	@$(PCOMMAND) assetpins update latest all
 
-# Internal helper: re-resolve + fetch asset-bundle manifests for both
-# gui and headless variants. Invoked by assets-cmake / assets-server
-# (as a prereq) so a fresh clone's first build can populate the
-# local CAS without requiring an explicit make assetpins-upgrade.
-# asset_bundle_build's early-out keeps this near-instant in steady
-# state.
-assets-resolve:
-	@$(PCOMMAND) asset_bundle_resolve .cache/asset_bundle/resolved
-	@$(PCOMMAND) asset_bundle_build .cache/asset_bundle/resolved gui
-	@$(PCOMMAND) asset_bundle_build .cache/asset_bundle/resolved headless
+# (No dedicated assetpins-check make target — non-prod pins are
+# flagged prominently in ``make assetpins`` output, and the
+# check fires automatically as part of ``blessing check``,
+# pubsync push, and other gates that already enforce
+# "shippable build" invariants. Callers that want the bare
+# check can run ``tools/pcommand assetpins check`` directly.)
 
 # Clean asset-bundle outputs (manifests + CAS blobs).
 assets-resolve-clean:
@@ -265,8 +268,8 @@ pcommandbatch_speed_test: env
 .PHONY: help env env-pre-update env-clean assets assets-cmake			\
         assets-windows assets-windows-Win32													\
         assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
-        assets-resolve assets-resolve-clean																\
-        assetpins assetpins-upgrade																				\
+        assets-resolve-clean																					\
+        assetpins assetpins-latest																				\
         resources resources-clean codegen codegen-clean clean clean-list						\
         dummymodules venv venv-clean docs docs-clean pcommandbatch_speed_test
 

@@ -617,23 +617,44 @@ def get_modern_make() -> None:
 
 
 def assetpins() -> None:
-    """Inspect and upgrade asset-package pins.
+    """Inspect and update asset-package pins.
 
     Subcommands::
 
-        assetpins             # default: same as 'list'
-        assetpins list        # list all known asset-package pins
-        assetpins upgrade     # re-resolve all pins, refetch
-                              # wrapper-relevant manifest data, and
-                              # rewrite wrappers
+        assetpins                            # default: same as 'list'
+        assetpins list                       # list pins + master's
+                                             #   latest-available
+        assetpins help                       # show usage examples
+        assetpins update <VERSION> <TARGET>  # mutate matched pins
+        assetpins check                      # exit non-zero on any
+                                             #   dev/test pin
 
-    Pins live in the wrapper files themselves (the C++ wrapper's
-    autogen section in ``base.h`` carries
-    ``kBuiltinAssetsApverid``; Python wrappers — when they land —
-    will carry their pin via the ``# ba_meta require
-    asset-package <id>`` line). ``assetpins`` is the only command
-    that mutates pin state, and the only build-flow phase that
-    talks to the cloud — see
+    VERSION can be:
+
+    - ``latest`` — current track, newest version.
+    - ``prod`` / ``test`` / ``dev`` — switch (or stay on) the
+      named track, newest version of it.
+    - A concrete third-segment like ``260513``, ``dev260513a``,
+      or ``test260512a`` — pin to that exact version (account
+      and package come from each pin's own apverid).
+
+    TARGET can be:
+
+    - ``all`` — every discovered pin.
+    - ``<package-name>`` (e.g. ``bastdassets``) — every pin of
+      that asset-package across accounts.
+    - A file path (e.g. ``pconfig/projectconfig.json``) —
+      exactly one pin.
+
+    Pins live in ``pconfig/projectconfig.json`` (the
+    construct-mode/bootloader pin) and per-wrapper
+    ``# ba_meta require asset-package <id>`` lines in Python
+    wrapper modules under ``src/assets/ba_data/python/``. Each
+    pin is independent — moving one pin does not move any
+    other; track-switching is an explicit deliberate operation.
+
+    ``assetpins`` is the only command that mutates pin state,
+    and the only build-flow phase that talks to the cloud — see
     ``efrohome/docs/global_design/build_system.md``.
     """
     from pathlib import Path
@@ -647,94 +668,55 @@ def assetpins() -> None:
     if not args or args == ['list']:
         assetpins_module.do_list(Path(pcommand.PROJROOT))
         return
-    if args[0] == 'upgrade':
-        # Future: per-package args; for now upgrade everything.
-        if len(args) > 1:
-            raise CleanError(
-                'assetpins upgrade: per-package arg not yet supported;'
-                ' currently upgrades all pins.'
-            )
-        assetpins_module.do_upgrade(Path(pcommand.PROJROOT))
+    if args == ['help']:
+        assetpins_module.do_help()
         return
+    if args[0] == 'update':
+        rest = args[1:]
+        if len(rest) != 2:
+            raise CleanError(
+                f'assetpins update: expected exactly two args'
+                f' (VERSION TARGET), got {len(rest)}.'
+                f' Try {Clr.BLD}assetpins update latest all{Clr.RST}.'
+            )
+        version_str, target_str = rest
+        assetpins_module.do_update(
+            Path(pcommand.PROJROOT), version_str, target_str
+        )
+        return
+    if args[0] == 'check':
+        if len(args) > 1:
+            raise CleanError('assetpins check: takes no args.')
+        offenders = assetpins_module.do_check(Path(pcommand.PROJROOT))
+        if not offenders:
+            print(f'{Clr.GRN}assetpins check: clean.{Clr.RST}')
+            return
+        lines = [f'{Clr.RED}assetpins check: found non-prod pin(s):{Clr.RST}']
+        for pin in offenders:
+            lines.append(
+                f'  {Clr.BLD}{pin.file_path}{Clr.RST}:'
+                f' {Clr.CYN}{pin.apverid}{Clr.RST}'
+                f' ({pin.pin_type.value})'
+            )
+        lines.append(
+            f'{Clr.YLW}Fix: run `make assetpins-latest` to move to the'
+            f' current-track latest, or `tools/pcommand assetpins update'
+            f' prod <target>` to switch to prod.{Clr.RST}'
+        )
+        raise CleanError('\n'.join(lines))
     raise CleanError(
         f'Unknown assetpins subcommand: {args[0]!r}.'
-        f' Try {Clr.BLD}assetpins list{Clr.RST} or'
-        f' {Clr.BLD}assetpins upgrade{Clr.RST}.'
+        f' Try {Clr.BLD}assetpins{Clr.RST} (list),'
+        f' {Clr.BLD}assetpins help{Clr.RST} (examples),'
+        f' {Clr.BLD}assetpins update <VERSION> <TARGET>{Clr.RST}, or'
+        f' {Clr.BLD}assetpins check{Clr.RST}.'
     )
 
 
-def asset_bundle_resolve() -> None:
-    """Gate the asset-bundle build target for stable vs dev versions.
-
-    Mirrors the legacy ``asset_package_resolve`` pattern: writes
-    a sentinel file naming the resolved asset-package-version for
-    stable versions; removes the sentinel for dev versions. The
-    sentinel is a real prerequisite of the downstream bundle-
-    build make rule:
-
-    - Stable: sentinel exists, so the bundle-build rule short-
-      circuits via standard mtime comparison after the first
-      build.
-    - Dev: sentinel is absent, so the outer
-      ``LazyBuildContext.srcpaths_exist`` in
-      ``tools/batools/build.py`` keeps forcing the surrounding
-      assets target to re-run; bacloud's own caching makes the
-      cloud round-trip cheap when nothing has changed.
-    """
-    import os
-
-    from efro.error import CleanError
-    from efrotools.project import getprojectconfig
-
-    args = pcommand.get_args()
-    if len(args) != 1:
-        raise CleanError('Expected exactly 1 arg (sentinel-file path).')
-    resolve_path = args[0]
-
-    apversion = getprojectconfig(pcommand.PROJROOT).get('assets')
-    if not isinstance(apversion, str):
-        raise CleanError(
-            f"Need a string 'assets' value in projectconfig;"
-            f' got {type(apversion).__name__}.'
-        )
-
-    splits = apversion.split('.')
-    if len(splits) != 3:
-        raise CleanError(
-            f"'{apversion}' is not a valid asset-package-version id."
-        )
-
-    # Dev versions have form '<owner>.<name>.dev' and are always
-    # re-fetched; resolved dev snapshots (e.g.
-    # '<owner>.<name>.dev260510a') are pinned and treated as
-    # stable.
-    #
-    # Stay idempotent on the file system: skip the write when the
-    # sentinel already exists with matching content. Touching it
-    # every run would update its mtime, which would propagate to
-    # codegen's `.cache/asset_bundle` lazybuild watch and cause
-    # spurious codegen re-fires (potentially colliding on the
-    # codegen_src buildlock under parallel sub-builds like
-    # efrocache-build).
-    if splits[2] == 'dev':
-        if os.path.exists(resolve_path):
-            os.unlink(resolve_path)
-    else:
-        existing: str | None = None
-        if os.path.exists(resolve_path):
-            with open(resolve_path, encoding='utf-8') as infile:
-                existing = infile.read().strip()
-        if existing != apversion:
-            os.makedirs(os.path.dirname(resolve_path), exist_ok=True)
-            with open(resolve_path, 'w', encoding='utf-8') as outfile:
-                outfile.write(apversion)
-
-
 def asset_bundle_build() -> None:
-    """Build a bundled-asset variant for this project's construct package.
+    """Build a bundled-asset variant for the projectconfig pin.
 
-    Takes two args: the resolve-sentinel path and a variant name
-    (``gui`` or ``headless``).
+    Takes one arg: a variant name (``gui`` or ``headless``).
 
     - ``gui``: real renderable assets (fallback-profile
       regular-quality textures + English language + constant).
@@ -743,14 +725,21 @@ def asset_bundle_build() -> None:
       headless server builds keep the same wrapper-module
       layout (and same type-checks) without shipping image data.
 
-    Writes
-    ``.cache/asset_bundle/<variant>/manifest.json`` plus the
-    CAS-keyed bucket-manifest + data blobs under
+    Reads the apverid from ``pconfig/projectconfig.json``'s
+    ``"assets"`` field. The projectconfig value is expected to
+    be a fully-resolved apverid (``<owner>.<name>.<seg>`` where
+    ``<seg>`` is digits, ``devN``, or ``testN``). If it's the
+    unresolved pseudo-id ``<owner>.<name>.dev``, the build
+    refuses with a single-tunnel "run ``make
+    assetpins-latest``" error. Pin-state mutation lives
+    exclusively in ``tools/pcommand assetpins``.
+
+    Writes ``.cache/asset_bundle/<variant>/manifest.json`` plus
+    CAS-keyed bucket manifests + data blobs under
     ``.cache/assetdata/``. Both variants share the same
-    ``.cache/assetdata/`` (CAS dedup), and the shared
-    ``.cache/asset_bundle/resolved`` sentinel covers them both.
-    Staging picks the right variant to copy into
-    ``<staged>/ba_data/`` based on the build target.
+    ``.cache/assetdata/`` (CAS dedup). Staging picks the right
+    variant to copy into ``<staged>/ba_data/`` based on the
+    build target.
     """
     import os
     import json
@@ -760,10 +749,12 @@ def asset_bundle_build() -> None:
     from efro.terminal import Clr
     from efrotools.project import getprojectconfig
 
+    from batools.assetpins import is_unresolved_dev
+
     args = pcommand.get_args()
-    if len(args) != 2:
-        raise CleanError('Expected 2 args (resolve-file path, variant name).')
-    resolve_path, variant = args
+    if len(args) != 1:
+        raise CleanError('Expected 1 arg (variant name).')
+    variant = args[0]
 
     valid_variants = ('gui', 'headless')
     if variant not in valid_variants:
@@ -772,19 +763,23 @@ def asset_bundle_build() -> None:
             f' expected one of {valid_variants}.'
         )
 
-    # Stable: read the pinned apversion from the sentinel.
-    # Dev: no sentinel; fall back to projectconfig (the server
-    # resolves the live dev snapshot at assemble time).
-    apversion: str | None
-    if os.path.exists(resolve_path):
-        with open(resolve_path, encoding='utf-8') as infile:
-            apversion = infile.read().strip()
-    else:
-        apversion = getprojectconfig(pcommand.PROJROOT).get('assets')
+    apversion = getprojectconfig(pcommand.PROJROOT).get('assets')
     if not isinstance(apversion, str) or not apversion:
         raise CleanError(
-            f'Failed to determine apversion for bundle build;'
+            f"Need a string 'assets' value in projectconfig;"
             f' got {type(apversion).__name__} value {apversion!r}.'
+        )
+
+    # Bare ``<owner>.<name>.dev`` is a request for the latest
+    # dev snapshot; it must be resolved before any build path
+    # consumes it. ``assetpins upgrade`` owns the resolution +
+    # writeback; we just refuse here with the single-tunnel
+    # fix-message.
+    if is_unresolved_dev(apversion):
+        raise CleanError(
+            f"projectconfig 'assets' is the unresolved pseudo-id"
+            f' {apversion!r}; run `make assetpins-latest` to'
+            f' resolve it to a concrete devN snapshot first.'
         )
 
     # The gui variant ships real renderable textures; the
@@ -794,14 +789,11 @@ def asset_bundle_build() -> None:
     texture_profile = 'fallback_v1' if variant == 'gui' else 'null'
     bundle_path = f'.cache/asset_bundle/{variant}/manifest.json'
 
-    # Steady-state early-out: stable apverid + existing manifest at
-    # the same apverid → nothing to do. Avoids a bacloud round-trip
-    # on every `make env` invocation (this pcommand runs as part of
-    # `env`'s assets-resolve target so it fires on the steady-state
-    # path). Dev apverids skip the early-out: the sentinel is
-    # absent, so we always re-fetch (cheap when the server has no
-    # new content thanks to bacloud's plan-level caching).
-    if os.path.exists(resolve_path) and os.path.exists(bundle_path):
+    # Steady-state early-out: resolved apverid + existing manifest
+    # at the same apverid → nothing to do. The pre-resolved-id
+    # invariant means we can short-circuit unconditionally when
+    # the apverid matches; no more "is this dev?" branching.
+    if os.path.exists(bundle_path):
         try:
             with open(bundle_path, encoding='utf-8') as infile:
                 existing = json.load(infile)
@@ -842,7 +834,10 @@ def asset_bundle_build() -> None:
         )
     except Exception as exc:
         raise CleanError(
-            f'Failed to build {variant} asset bundle for' f' {apversion}.'
+            f'Failed to build {variant} asset bundle for'
+            f' {apversion}. If the apverid no longer exists on'
+            f' master (dev snapshots get pruned quickly), run'
+            f' `make assetpins-latest` to re-resolve.'
         ) from exc
 
     bundle_manifest = os.path.join(pcommand.PROJROOT, bundle_path)
