@@ -625,7 +625,7 @@ def assetpins() -> None:
         assetpins list                       # list pins + master's
                                              #   latest-available
         assetpins help                       # show usage examples
-        assetpins update <VERSION> <TARGET>  # mutate matched pins
+        assetpins update <TARGET> <VERSION>  # mutate matched pins
         assetpins check                      # exit non-zero on any
                                              #   dev/test pin
 
@@ -634,9 +634,12 @@ def assetpins() -> None:
     - ``latest`` — current track, newest version.
     - ``prod`` / ``test`` / ``dev`` — switch (or stay on) the
       named track, newest version of it.
-    - A concrete third-segment like ``260513``, ``dev260513a``,
-      or ``test260512a`` — pin to that exact version (account
-      and package come from each pin's own apverid).
+    - A full version string as seen in the third segment of an
+      apverid: ``<digits>`` for prod (e.g. ``260513a``),
+      ``test<digits>`` for test (e.g. ``test260512a``), or
+      ``dev<digits>`` for dev (e.g. ``dev260513a``). The track
+      is inferred from the prefix; account and package come
+      from each pin's own apverid.
 
     TARGET can be:
 
@@ -676,12 +679,12 @@ def assetpins() -> None:
         if len(rest) != 2:
             raise CleanError(
                 f'assetpins update: expected exactly two args'
-                f' (VERSION TARGET), got {len(rest)}.'
-                f' Try {Clr.BLD}assetpins update latest all{Clr.RST}.'
+                f' (TARGET VERSION), got {len(rest)}.'
+                f' Try {Clr.BLD}assetpins update all latest{Clr.RST}.'
             )
-        version_str, target_str = rest
+        target_str, version_str = rest
         assetpins_module.do_update(
-            Path(pcommand.PROJROOT), version_str, target_str
+            Path(pcommand.PROJROOT), target_str, version_str
         )
         return
     if args[0] == 'check':
@@ -708,7 +711,7 @@ def assetpins() -> None:
         f'Unknown assetpins subcommand: {args[0]!r}.'
         f' Try {Clr.BLD}assetpins{Clr.RST} (list),'
         f' {Clr.BLD}assetpins help{Clr.RST} (examples),'
-        f' {Clr.BLD}assetpins update <VERSION> <TARGET>{Clr.RST}, or'
+        f' {Clr.BLD}assetpins update <TARGET> <VERSION>{Clr.RST}, or'
         f' {Clr.BLD}assetpins check{Clr.RST}.'
     )
 

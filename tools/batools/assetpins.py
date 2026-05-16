@@ -32,16 +32,16 @@ meaning "give me the latest dev snapshot". The build refuses to
 consume it; ``assetpins update`` resolves it via master and
 writes the resolved ``devN`` form back to the pin's source file.
 
-The ``update`` operation takes a VERSION and a TARGET:
+The ``update`` operation takes a TARGET and a VERSION:
 
-- VERSION: ``latest`` (current track, newest version),
-  ``prod`` / ``test`` / ``dev`` (switch to or stay on that track,
-  newest version), or a concrete third-segment like ``260513``,
-  ``dev260513a``, ``test260512a`` (exact pin; account+package
-  come from the pin's own apverid).
 - TARGET: ``all``, an asset-package name (e.g. ``bastdassets``)
   matching any pin of that package across accounts, or a file
   path matching exactly one pin.
+- VERSION: ``latest`` (current track, newest version),
+  ``prod`` / ``test`` / ``dev`` (switch to or stay on that track,
+  newest version), or a full third-segment like ``260513a``
+  (prod), ``test260512a``, or ``dev260513a`` (exact pin;
+  account+package come from the pin's own apverid).
 
 Each pin is independent — moving one pin does not move any
 other. Track-switching is an explicit, deliberate operation.
@@ -63,10 +63,25 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-# Maximum total width of the `assetpins` table output. The file
-# column is the flex column — it shrinks (with leading-``...``
-# truncation) so the rest of the table fits inside this budget.
-MAX_COLUMNS = 80
+# Total-width policy for the `assetpins` table output. We
+# compute a "natural" width (everything visible, no clipping)
+# from the data, then clamp it against an upper bound from the
+# environment: terminal width when on a TTY (no narrower than
+# ``MIN_TTY_COLS``); a stable fallback otherwise (so logs and
+# tests stay deterministic). If the upper bound is below
+# natural, the file column clips with leading ``...``.
+MIN_TTY_COLS = 60
+FALLBACK_COLS = 80
+
+
+def _max_table_width() -> int:
+    """Upper bound on total table width for the current env."""
+    import sys
+    import shutil
+
+    if not sys.stdout.isatty():
+        return FALLBACK_COLS
+    return max(shutil.get_terminal_size().columns, MIN_TTY_COLS)
 
 
 class PinType(enum.Enum):
@@ -177,7 +192,7 @@ def do_list(projroot: Path) -> None:
 
 
 def _print_pin_table(pins: list[Pin]) -> None:
-    """Render the discovered-pins table within ``MAX_COLUMNS``."""
+    """Render the discovered-pins table within the column budget."""
     headers = ('file', 'package', 'version', 'status')
     rows = [
         (
@@ -190,17 +205,22 @@ def _print_pin_table(pins: list[Pin]) -> None:
         for pin in pins
     ]
 
-    # All columns except `file` size to fit their content. `file`
-    # gets whatever's left in the MAX_COLUMNS budget and clips
-    # from the front with ``...`` if a path is too long.
+    # Non-file columns always size to fit their content.
     pkg_w = max(len(headers[1]), *(len(r[1]) for r in rows))
     pin_w = max(len(headers[2]), *(len(r[2]) for r in rows))
     status_w = max(len(headers[3]), *(len(r[4]) for r in rows))
     # 3 inter-column gaps of 2 spaces each = 6.
-    file_w = MAX_COLUMNS - pkg_w - pin_w - status_w - 6
-    # Don't let the file column collapse below its header.
-    file_w = max(file_w, len(headers[0]))
-    total_w = file_w + pkg_w + pin_w + status_w + 6
+    fixed_w = pkg_w + pin_w + status_w + 6
+
+    # Natural file-column width = enough to show every path
+    # unclipped. We cap the total table width at the smaller of
+    # (natural total, env upper bound) — never wider than needed,
+    # never wider than the terminal. If the env bound is below
+    # natural, the file column clips with leading ``...``.
+    natural_file_w = max(len(headers[0]), *(len(r[0]) for r in rows))
+    natural_total = natural_file_w + fixed_w
+    total_w = min(natural_total, _max_table_width())
+    file_w = max(len(headers[0]), total_w - fixed_w)
 
     sep = '-' * total_w
 
@@ -218,7 +238,7 @@ def _print_pin_table(pins: list[Pin]) -> None:
     )
     print(f'{Clr.SBLK}{header_line}{Clr.RST}')
     for file_path, package, pin_label, pin_clr, status in rows:
-        # Pad pin_label to width as visible text *first*, then
+        # Pad each cell to width as visible text *first*, then
         # wrap with color codes so column alignment is based on
         # visible width (ANSI codes have zero printable width
         # but the formatter doesn't know that).
@@ -230,9 +250,10 @@ def _print_pin_table(pins: list[Pin]) -> None:
         colored_status = (
             f'{status_clr}{status}{Clr.RST}' if status_clr else status
         )
+        padded_package = f'{package:<{pkg_w}}'
         print(
             f'{_clip_left(file_path, file_w):<{file_w}}  '
-            f'{package:<{pkg_w}}  '
+            f'{Clr.BLD}{padded_package}{Clr.RST}  '
             f'{colored_pin}  '
             f'{colored_status}'
         )
@@ -305,30 +326,42 @@ def _clip_left(text: str, width: int) -> str:
 def do_help() -> None:
     """Print usage examples for ``assetpins update``."""
     print(
-        f'{Clr.BLD}Common assetpins update invocations:{Clr.RST}\n'
+        f'\n'
+        f'{Clr.BLD}USAGE{Clr.RST}\n'
+        f'\n'
+        f'  {Clr.BLD}VIEWING PINS{Clr.RST}\n'
+        f'    tools/pcommand assetpins\n'
+        f'\n'
+        f'  {Clr.BLD}UPDATING PINS{Clr.RST}\n'
+        f'    tools/pcommand assetpins update <TARGET> <VERSION>\n'
+        f'    TARGET:  all | <package-name> | <file-path>\n'
+        f'    VERSION: latest | prod | test | dev | <full-third-segment>\n'
+        '\n'
+        f'{Clr.BLD}EXAMPLES{Clr.RST}\n'
+        f'\n'
+        f'  {Clr.MAG}make assetpins{Clr.RST}\n'
+        f'      Show current pins.\n'
+        f'      Same as `tools/pcommand assetpins`.\n'
         f'\n'
         f'  {Clr.MAG}make assetpins-latest{Clr.RST}\n'
         f'      Bump every pin to the newest version on its'
-        f' current track. Same as\n'
-        f'      `tools/pcommand assetpins update latest all`.\n'
+        f' current track.\n'
+        f'      Same as `tools/pcommand assetpins update all latest`.\n'
         f'\n'
         f'  {Clr.MAG}tools/pcommand assetpins update'
-        f' prod bastdassets{Clr.RST}\n'
-        f'      Switch every bastdassets pin to the latest prod'
-        f' version (cross-account safe).\n'
+        f' all prod{Clr.RST}\n'
+        f'      Switch every pin to the latest prod'
+        f' version.\n'
         f'\n'
-        f'  {Clr.MAG}tools/pcommand assetpins update dev'
-        f' pconfig/projectconfig.json{Clr.RST}\n'
+        f'  {Clr.MAG}tools/pcommand assetpins update'
+        f' pconfig/projectconfig.json dev{Clr.RST}\n'
         f'      Re-resolve just the projectconfig pin to the'
         f' current dev snapshot.\n'
         f'\n'
-        f'  {Clr.MAG}tools/pcommand assetpins update 260513a all{Clr.RST}\n'
-        f'      Pin every pin to a specific prod version'
-        f' (account+package come from each pin).\n'
+        f'  {Clr.MAG}tools/pcommand assetpins update myassetpack'
+        f' test260513a{Clr.RST}\n'
+        f'      Pin every myassetpack instance to a specific version.\n'
         f'\n'
-        f'Full grammar: `tools/pcommand assetpins update <VERSION> <TARGET>`.\n'
-        f'VERSION: latest | prod | test | dev | <concrete-third-segment>\n'
-        f'TARGET:  all | <package-name> | <file-path>'
     )
 
 
@@ -339,15 +372,15 @@ def _print_help_pointer() -> None:
     )
 
 
-def do_update(projroot: Path, version_str: str, target_str: str) -> None:
+def do_update(projroot: Path, target_str: str, version_str: str) -> None:
     """Update one or more pins to a chosen version.
-
-    ``version_str``: ``latest`` (track-preserving), ``prod`` /
-    ``test`` / ``dev`` (track-switching), or a concrete third
-    segment (e.g. ``260513``, ``dev260513a``, ``test260512a``).
 
     ``target_str``: ``all``, an asset-package name (e.g.
     ``bastdassets``), or a file path matching exactly one pin.
+
+    ``version_str``: ``latest`` (track-preserving), ``prod`` /
+    ``test`` / ``dev`` (track-switching), or a full third
+    segment (e.g. ``260513a``, ``dev260513a``, ``test260512a``).
     """
     pins = _discover_pins(projroot)
     if not pins:
