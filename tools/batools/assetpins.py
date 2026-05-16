@@ -51,7 +51,6 @@ from __future__ import annotations
 
 import re
 import enum
-import json
 import subprocess
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -678,40 +677,36 @@ def _query_latest_for_track(projroot: Path, pin: Pin, track: PinType) -> str:
 def _resolve_bare_dev(projroot: Path, account: str, package: str) -> str:
     """Ask master to resolve to the current dev snapshot.
 
-    Implementation: run ``_assemble`` (server resolves
-    ``<account>.<name>.dev`` to the current snapshot at assemble
-    time); read the resolved apverid out of the resulting
-    manifest. Uses the gui variant (any variant would do — the
-    resolved apverid is the same).
+    Uses ``bacloud assetpackage version --dev`` which routes
+    through the workspace-aware dev-resolve path on master and
+    returns just the resolved apverid — no assemble, no
+    recipe-cache work, no local manifest side-effects.
     """
-    bare_dev = f'{account}.{package}.dev'
-    bundle_path = '.cache/asset_bundle/gui/manifest.json'
-    try:
-        subprocess.run(
-            [
-                str(projroot / 'tools' / 'bacloud'),
-                'assetpackage',
-                '_assemble',
-                bare_dev,
-                '--texture-profile',
-                'fallback_v1',
-                '--texture-quality',
-                'regular',
-                '--language',
-                'eng',
-                '--bundle-path',
-                bundle_path,
-            ],
-            check=True,
-            cwd=projroot,
-        )
-    except Exception as exc:
+    cmd = [
+        str(projroot / 'tools' / 'bacloud'),
+        'assetpackage',
+        'version',
+        package,
+        '--account',
+        account,
+        '--dev',
+    ]
+    result = subprocess.run(
+        cmd, cwd=projroot, capture_output=True, text=True, check=False
+    )
+    if result.returncode != 0:
         raise CleanError(
-            f'Failed to resolve {bare_dev}'
-            f' via bacloud assetpackage _assemble.'
-        ) from exc
-
-    return _read_manifest_apverid(projroot, bundle_path)
+            f'Failed to resolve {account}.{package}.dev via'
+            f' bacloud assetpackage version --dev:'
+            f' {result.stderr.strip()}'
+        )
+    out = result.stdout.strip()
+    if not out:
+        raise CleanError(
+            f'bacloud assetpackage version --dev returned empty'
+            f' output for {account}.{package}.'
+        )
+    return out
 
 
 def _bacloud_version(
@@ -785,27 +780,6 @@ def _fetch_wrapper(projroot: Path, apverid: str, wrapper_type: str) -> str:
             f' valid wrapper source (first chars: {content[:80]!r}).'
         )
     return content
-
-
-def _read_manifest_apverid(projroot: Path, bundle_path: str) -> str:
-    """Read the resolved apverid out of a freshly-built manifest."""
-    full = projroot / bundle_path
-    try:
-        data = json.loads(full.read_text())
-    except Exception as exc:
-        raise CleanError(
-            f'Could not read bundle manifest {full}: {exc}.'
-        ) from exc
-    pkgs = data.get('asset_packages')
-    if not isinstance(pkgs, list) or len(pkgs) != 1:
-        raise CleanError(
-            f'Bundle manifest {full} has unexpected asset_packages'
-            f' shape; expected a single-entry list.'
-        )
-    apverid = pkgs[0].get('apverid')
-    if not isinstance(apverid, str) or not apverid:
-        raise CleanError(f'Bundle manifest {full} has no apverid string.')
-    return apverid
 
 
 # --------------------------------------------------------------------
