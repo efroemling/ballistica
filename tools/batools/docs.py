@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 import os
+import re
+import json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -184,6 +186,25 @@ def generate_sphinx_docs() -> None:
         )
         shutil.copytree(srcdir, dstdir, dirs_exist_ok=True, ignore=ignore)
 
+    # Inject auto-generated forward-declarations for instance
+    # re-exports. Anything in a package's ``__all__`` that's an
+    # instance (not a class/function/module) gets a ``#:`` block +
+    # type annotation prepended to the filtered ``__init__.py`` so
+    # sphinx documents it at the re-export site, not only at the
+    # canonical home. Errors out if any public instance lacks a
+    # ``#:`` block at canonical home; the design rationale is in
+    # ``docs/design/python-api-packages.md``.
+    _printstatus('Injecting re-export docs...')
+    from batools.reexportdocs import (
+        gather_reexport_injections,
+        apply_injections,
+    )
+
+    reexport_injections = gather_reexport_injections(
+        '.', str(ba_data_filtered_dir)
+    )
+    apply_injections(reexport_injections)
+
     # Filter all files. Doing this with multiprocessing gives us a very
     # nice speedup vs multithreading which seems gil-constrained.
     _printstatus('Filtering sources...')
@@ -309,6 +330,17 @@ def generate_sphinx_docs() -> None:
     # click a package which feels clean to me.
     module_first_arg = '--module-first'
 
+    # Exclude private submodule rst pages from the runtime tree. Each
+    # ``_foo.py`` / ``_foo/`` under a featureset package is the
+    # canonical home for an implementation that the package re-
+    # exposes via its ``__all__`` (see
+    # ``docs/design/python-api-packages.md``). Documenting them as
+    # standalone pages duplicates every re-exported class/function
+    # and triggers sphinx ``duplicate object description`` warnings.
+    # Skipping the pages lets the re-exports be the sole doc home —
+    # which is exactly the user-facing-surface design philosophy.
+    ba_data_excludes = _collect_private_submodule_paths(ba_data_filtered_dir)
+
     _printstatus('Generating runtimemodules...')
     subprocess.run(
         sphinx_apidoc_cmd
@@ -322,7 +354,8 @@ def generate_sphinx_docs() -> None:
             module_list_max_depth,
             '-f',
             str(ba_data_filtered_dir),
-        ],
+        ]
+        + ba_data_excludes,
         check=True,
         env=environ,
     )
@@ -344,6 +377,14 @@ def generate_sphinx_docs() -> None:
         # Assume anything with 'tools' in the name goes with tools.
         exclude_list = excludes_common if 'tools' in name else excludes_tools
         exclude_list.append(str(Path(tools_filtered_dir, name)))
+
+    # Also exclude private submodules across the tools tree, same
+    # reasoning as the runtime case above. Each public package
+    # re-exports its private implementation modules via ``__all__``;
+    # documenting both produces duplicate-object warnings.
+    tools_private = _collect_private_submodule_paths(tools_filtered_dir)
+    excludes_tools = excludes_tools + tools_private
+    excludes_common = excludes_common + tools_private
 
     _printstatus('Generating toolsmodules...')
     subprocess.run(
@@ -383,7 +424,16 @@ def generate_sphinx_docs() -> None:
         check=True,
     )
 
-    # raise RuntimeError('SO FAR SO GOOD')
+    # Inject ``:imported-members:`` into apidoc-generated rst for
+    # any ``automodule`` whose target module declares ``__all__``.
+    # The flag tells autodoc not to skip members whose ``__module__``
+    # is foreign — which is what we want for our user-facing
+    # packages that deliberately re-export from babase / efro /
+    # etc. (see ``docs/design/python-api-packages.md``). Modules
+    # without ``__all__`` are left alone so their docs only show
+    # their own native members, not every imported helper.
+    _printstatus('Injecting imported-members for __all__-declared modules...')
+    _inject_imported_members(cache_dir, environ)
 
     _printstatus('Running sphinx-build...')
     subprocess.run(
@@ -403,6 +453,110 @@ def generate_sphinx_docs() -> None:
 
     duration = time.monotonic() - starttime
     print(f'Generated sphinx documentation in {duration:.1f}s.')
+
+
+def _inject_imported_members(rst_dir: Path, environ: dict[str, str]) -> None:
+    """Add ``:imported-members:`` to apidoc rst directives selectively.
+
+    Walks every ``.rst`` file produced by sphinx-apidoc, finds every
+    ``.. automodule:: <name>`` directive, imports ``<name>`` in a
+    subprocess (so dummy-modules are available) to check if it
+    declares ``__all__``, and prepends an ``:imported-members:``
+    option line when it does.
+
+    Per ``docs/design/python-api-packages.md``: we want re-exports
+    documented at consumer pages, but only when the consumer
+    explicitly opted in via ``__all__``. Implementation submodules
+    without ``__all__`` show only their own native members.
+    """
+    # Collect all module names referenced from rst files.
+    rst_files = sorted(rst_dir.glob('*.rst'))
+    automodule_re = re.compile(r'^\.\. automodule:: ([A-Za-z0-9_.]+)\s*$', re.M)
+    referenced: set[str] = set()
+    for rst in rst_files:
+        with open(rst, encoding='utf-8') as infile:
+            referenced.update(automodule_re.findall(infile.read()))
+
+    if not referenced:
+        return
+
+    # Spawn a single subprocess to resolve ``__all__`` for every
+    # referenced module. Cheaper than one import per file and
+    # keeps the docs.py process clean of game-runtime imports.
+    has_all = _modules_with_all(sorted(referenced), environ)
+
+    def _add_option(match: re.Match[str]) -> str:
+        modname = match.group(1)
+        if modname not in has_all:
+            return match.group(0)
+        # Append the directive option as a sibling line under the
+        # automodule. Sphinx rst format: option lines are indented
+        # 3 spaces under the directive head.
+        return match.group(0) + '\n   :imported-members:'
+
+    for rst in rst_files:
+        with open(rst, encoding='utf-8') as infile:
+            text = infile.read()
+        new_text = automodule_re.sub(_add_option, text)
+        if new_text != text:
+            with open(rst, 'w', encoding='utf-8') as outfile:
+                outfile.write(new_text)
+
+
+def _modules_with_all(modnames: list[str], environ: dict[str, str]) -> set[str]:
+    """Return the subset of ``modnames`` that declare ``__all__``.
+
+    Runs in a subprocess so the orchestrator's interpreter doesn't
+    have to import all the game modules.
+    """
+    probe = (
+        'import importlib, json, sys\n'
+        'out = []\n'
+        'for name in sys.argv[1:]:\n'
+        '    try:\n'
+        '        m = importlib.import_module(name)\n'
+        '    except Exception:\n'
+        '        continue\n'
+        '    if hasattr(m, "__all__"):\n'
+        '        out.append(name)\n'
+        'print(json.dumps(out))\n'
+    )
+    result = subprocess.run(
+        ['python3', '-c', probe, *modnames],
+        env=environ,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return set(json.loads(result.stdout.strip().splitlines()[-1]))
+
+
+def _collect_private_submodule_paths(root: Path) -> list[str]:
+    """Walk a tree, return paths of underscore-prefixed submodules.
+
+    Used to feed sphinx-apidoc as exclude positional args so it
+    won't generate rst pages for private implementation modules.
+    The runtime API surface lives in the public package
+    ``__init__.py`` via re-exports; private submodules are
+    implementation detail and shouldn't have their own doc pages.
+
+    Skips ``__init__.py`` / ``__pycache__`` / other dunder names —
+    only ``_<single-underscore>`` items are private by convention.
+    """
+    paths: list[str] = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        # Filter dirnames in-place so os.walk doesn't recurse into
+        # private dirs (those we just collected the dir path for).
+        for d in list(dirnames):
+            if d.startswith('_') and not d.startswith('__'):
+                paths.append(str(Path(dirpath, d)))
+                dirnames.remove(d)
+        for f in filenames:
+            if not f.endswith('.py'):
+                continue
+            if f.startswith('_') and not f.startswith('__'):
+                paths.append(str(Path(dirpath, f)))
+    return paths
 
 
 def _sphinx_pre_filter_file(path: str) -> None:

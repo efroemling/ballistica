@@ -32,12 +32,13 @@ if TYPE_CHECKING:
 # type-checker can help prevent us from mixing and matching accidentally,
 # even if the *actual* types being used are the same.
 
-# Our monotonic time measurement that starts at 0 when the app launches
-# and pauses while the app is suspended.
+#: Monotonic time measurement that starts at 0 when the app launches
+#: and pauses while the app is suspended.
 AppTime = NewType('AppTime', float)
 
-# Like app-time but incremented at frame draw time and in a smooth
-# consistent manner; useful to keep animations smooth and jitter-free.
+#: Like :data:`AppTime` but incremented at frame draw time and in a
+#: smooth consistent manner; useful to keep animations smooth and
+#: jitter-free.
 DisplayTime = NewType('DisplayTime', float)
 
 

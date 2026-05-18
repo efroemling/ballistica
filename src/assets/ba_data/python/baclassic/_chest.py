@@ -29,8 +29,9 @@ class ChestAppearanceDisplayInfo:
     tint2: tuple[float, float, float]
 
 
-# Info for chest types we know how to draw. Anything not found in here
-# should fall back to the DEFAULT entry.
+#: Fallback :class:`ChestAppearanceDisplayInfo` used when a chest's
+#: declared appearance has no entry in
+#: :data:`CHEST_APPEARANCE_DISPLAY_INFOS`.
 CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT = ChestAppearanceDisplayInfo(
     texclosed='chestIcon',
     texclosedtint='chestIconTint',
@@ -41,6 +42,9 @@ CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT = ChestAppearanceDisplayInfo(
     tint2=(1, 1, 1),
 )
 
+#: Per-:class:`ClassicChestAppearance` rendering info for chests
+#: the engine knows how to draw. Entries absent here fall back to
+#: :data:`CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT`.
 CHEST_APPEARANCE_DISPLAY_INFOS: dict[
     ClassicChestAppearance, ChestAppearanceDisplayInfo
 ] = {

@@ -16,7 +16,13 @@ if TYPE_CHECKING:
 
     import bascenev1
 
+#: Monotonic time measurement local to a scene activity — pauses
+#: when the activity pauses, resets when the activity ends.
 Time = NewType('Time', float)
+
+#: Like :data:`Time` but tied to the underlying scene's clock rather
+#: than an activity — keeps advancing across activity transitions
+#: within the same session.
 BaseTime = NewType('BaseTime', float)
 
 TROPHY_CHARS = {

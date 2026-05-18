@@ -19,7 +19,11 @@ if TYPE_CHECKING:
 
     import bascenev1
 
+#: Default RGB colors for the two teams in a :class:`MultiTeamSession`,
+#: used when a session doesn't specify its own.
 DEFAULT_TEAM_COLORS = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
+
+#: Default display names for the two teams in a :class:`MultiTeamSession`.
 DEFAULT_TEAM_NAMES = ('Blue', 'Red')
 
 

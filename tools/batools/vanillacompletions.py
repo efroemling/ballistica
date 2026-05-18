@@ -232,7 +232,15 @@ def _emit_module(
     out: list[dict[str, Any]],
     aliases: dict[str, str],
 ) -> None:
-    """Emit one ``module`` entry plus an entry per public attribute."""
+    """Emit one ``module`` entry plus an entry per public attribute.
+
+    Honors ``__all__`` as the package author's "this is part of my
+    public surface" signal — see ``docs/design/python-api-packages.md``
+    for the design rationale. Names listed in ``__all__`` bypass the
+    ``__module__``-based owner check so re-exports (e.g. ``bauiv1.app``
+    forwarding to ``babase.app``) are emitted under their importing
+    package, not only at the canonical home.
+    """
     if _is_meta_private(mod):
         return
     out.append(
@@ -244,33 +252,52 @@ def _emit_module(
         }
     )
 
+    all_names: set[str] = set(getattr(mod, '__all__', None) or ())
+
     for name, value in inspect.getmembers(mod):
         if _should_skip(name):
             continue
         if _is_meta_private(value):
             continue
-        # Skip re-exports from outside this module. ``__module__``
-        # is the canonical home for the symbol; if it disagrees we
-        # let the canonical location emit it.
-        owner = getattr(value, '__module__', None)
-        if owner is not None and not _owns(qualname, owner):
-            continue
+        # Re-exports listed in ``__all__`` are public by design and
+        # bypass the owner check. Everything else must originate
+        # here (or in our paired private module) to avoid surfacing
+        # incidental imports like ``babase.strict_partial``.
+        is_canonical = True
+        if name not in all_names:
+            owner = getattr(value, '__module__', None)
+            if owner is not None and not _owns(qualname, owner):
+                continue
+        else:
+            owner = getattr(value, '__module__', None)
+            if owner is not None and not _owns(qualname, owner):
+                # In __all__, but the canonical home is elsewhere —
+                # this is a re-export. Emit it, but don't claim
+                # alias-ownership; the canonical-home walk does that
+                # so chain resolution prefers the original namespace.
+                is_canonical = False
         sub_qualname = f'{qualname}.{name}'
         entry = _build_entry(sub_qualname, value)
         if entry is None:
             continue
         out.append(entry)
         # When the attribute is a class, walk its members too AND
-        # record an alias from its source-canonical name to the
-        # public name we're emitting under. Canonical names are
-        # deliberately disabled in babase, so without this map the
-        # editor would chain ``babase.app`` → ``babase._app.App``
-        # and miss our emitted ``babase.App.*`` entries.
+        # (canonical home only) record an alias from its source-
+        # canonical name to the public name we're emitting under.
+        # Canonical names are deliberately disabled in babase, so
+        # without this map the editor would chain ``babase.app`` →
+        # ``babase._app.App`` and miss our emitted ``babase.App.*``
+        # entries. Re-exports skip the alias-write so chains land
+        # on the canonical-home members (e.g. ``babase.App.*``
+        # rather than ``bauiv1.App.*``).
         if inspect.isclass(value):
-            real_mod = getattr(value, '__module__', None) or ''
-            real_qual = getattr(value, '__qualname__', None) or value.__name__
-            if real_mod:
-                aliases[f'{real_mod}.{real_qual}'] = sub_qualname
+            if is_canonical:
+                real_mod = getattr(value, '__module__', None) or ''
+                real_qual = (
+                    getattr(value, '__qualname__', None) or value.__name__
+                )
+                if real_mod:
+                    aliases[f'{real_mod}.{real_qual}'] = sub_qualname
             _emit_class_members(sub_qualname, value, out)
             _emit_class_instance_attrs(sub_qualname, value, out)
 

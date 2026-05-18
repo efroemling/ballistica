@@ -13,24 +13,68 @@ from bacommon.logging import ClientLoggerName
 _g_logger_descs: dict[str, str] | None = None
 
 # Common loggers we may want convenient access to.
+
+#: Top-level Ballistica :class:`~logging.Logger` — use this to
+#: adjust verbosity across everything Ballistica logs.
 balog = logging.getLogger(ClientLoggerName.BA.value)
+
+#: Logger for general app operation; ``INFO`` is visible by default.
 applog = logging.getLogger(ClientLoggerName.APP.value)
+
+#: Logger for asset loading — textures, sounds, models, etc.
 assetslog = logging.getLogger(ClientLoggerName.ASSETS.value)
+
+#: Logger for sound and music playback.
 audiolog = logging.getLogger(ClientLoggerName.AUDIO.value)
+
+#: Logger for the on-disk cache (pycache, downloaded assets, etc.).
 cachelog = logging.getLogger(ClientLoggerName.CACHE.value)
+
+#: Logger for display-time machinery (smooth animation timing).
 displaytimelog = logging.getLogger(ClientLoggerName.DISPLAYTIME.value)
+
+#: Logger for garbage-collection activity — useful for debugging
+#: memory leaks and reference cycles.
 gc_log = logging.getLogger(ClientLoggerName.GARBAGE_COLLECTION.value)
+
+#: Logger for graphics-related messages.
 gfxlog = logging.getLogger(ClientLoggerName.GRAPHICS.value)
+
+#: Logger for performance investigations — render speed, hitches, etc.
 perflog = logging.getLogger(ClientLoggerName.PERFORMANCE.value)
+
+#: Logger for input devices — keyboards, touchscreens, gamepads, etc.
 inputlog = logging.getLogger(ClientLoggerName.INPUT.value)
+
+#: Logger for app lifecycle events — bootstrapping, pausing,
+#: resuming, shutdown, etc.
 lifecyclelog = logging.getLogger(ClientLoggerName.LIFECYCLE.value)
+
+#: Logger for general networking activity.
 netlog = logging.getLogger(ClientLoggerName.NETWORKING.value)
+
+#: Logger for connectivity bring-up — picking the nearest/best
+#: regional server.
 connectivitylog = logging.getLogger(ClientLoggerName.CONNECTIVITY.value)
+
+#: Logger for persistent v2 transport connections to regional
+#: servers.
 v2transportlog = logging.getLogger(ClientLoggerName.V2TRANSPORT.value)
+
+#: Logger for cloud-subscription updates — live values fed from
+#: regional servers.
 cloudsublog = logging.getLogger(ClientLoggerName.CLOUD_SUBSCRIPTION.value)
+
+#: Logger for account functionality.
 accountlog = logging.getLogger(ClientLoggerName.ACCOUNT.value)
+
+#: Logger for v2-account server communication.
 accountclientv2log = logging.getLogger(ClientLoggerName.ACCOUNT_CLIENT_V2.value)
+
+#: Logger for login-adapter support (per login-type plumbing).
 loginadapterlog = logging.getLogger(ClientLoggerName.LOGIN_ADAPTER.value)
+
+#: Logger for user-interface activity.
 uilog = logging.getLogger(ClientLoggerName.UI.value)
 
 
