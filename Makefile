@@ -228,6 +228,19 @@ dummymodules-clean: env
 	rm -f $(LAZYBUILDDIR)/dummymodules
 	rm -rf build/dummymodules
 
+# Build/update the vanilla-API completion JSON consumed by sibling
+# projects' code editors (e.g. bamaster's workspace editor).
+#
+# Inputs: src/assets/ba_data/python plus the generator. Depends on
+# dummymodules so the runtime imports resolve C-extension stubs.
+vanilla_completions: env dummymodules
+	@$(PCOMMAND) lazybuild vanilla_completions_src $(LAZYBUILDDIR)/$@ \
+ $(PCOMMAND) gen_vanilla_completions
+
+vanilla_completions-clean: env
+	rm -f $(LAZYBUILDDIR)/vanilla_completions
+	rm -f build/vanilla_completions.json
+
 # Build the project's Python virtual environment. This should happen
 # automatically as a dependency of the env target.
 venv: .venv/.efro_venv_complete

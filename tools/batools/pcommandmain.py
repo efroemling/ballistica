@@ -117,6 +117,7 @@ from batools.pcommands import (
     logcat,
     gen_python_enums_module,
     gen_dummy_modules,
+    gen_vanilla_completions,
     version,
 )
 from batools.pcommands2 import (

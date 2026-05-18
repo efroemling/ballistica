@@ -127,6 +127,7 @@ class LazyBuildCategory(Enum):
     CMAKE = 'cmake_src'
     WIN = 'win_src'
     DUMMYMODULES = 'dummymodules_src'
+    VANILLA_COMPLETIONS = 'vanilla_completions_src'
 
 
 def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
@@ -312,6 +313,22 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # featureset is removed/etc.
             manifest_file=f'.cache/lazybuild/manifest_{category.value}',
             command_fullclean='make dummymodules-clean',
+        ).run()
+
+    # Vanilla completions: introspect the runtime Python tree against
+    # the dummy modules and dump a JSON completion index. Inputs are
+    # the runtime Python sources plus the generator script; the
+    # dummymodules dep handled at Make level since DUMMYMODULES has
+    # its own srcpath set.
+    elif category is LazyBuildCategory.VANILLA_COMPLETIONS:
+        LazyBuildContext(
+            target=target,
+            buildlockname=category.value,
+            srcpaths=[
+                'src/assets/ba_data/python',
+                'tools/batools/vanillacompletions.py',
+            ],
+            command=command,
         ).run()
 
     else:
