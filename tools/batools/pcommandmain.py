@@ -118,6 +118,7 @@ from batools.pcommands import (
     gen_python_enums_module,
     gen_dummy_modules,
     gen_vanilla_completions,
+    gen_check_environment,
     version,
 )
 from batools.pcommands2 import (

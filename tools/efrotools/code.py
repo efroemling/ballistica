@@ -366,8 +366,17 @@ def get_script_filenames(projroot: Path) -> list[str]:
     return out
 
 
-def runpylint(projroot: Path, filenames: list[str], extra: bool) -> None:
-    """Run Pylint explicitly on files."""
+def runpylint(
+    projroot: Path,
+    filenames: list[str],
+    extra: bool,
+    output_format: str = 'text',
+) -> None:
+    """Run Pylint explicitly on files.
+
+    ``output_format`` selects ``'text'`` (default human-readable) or
+    ``'json'`` (structured ``json2`` report on stdout).
+    """
 
     pylintrc = Path(projroot, '.pylintrc')
     if not os.path.isfile(pylintrc):
@@ -383,11 +392,31 @@ def runpylint(projroot: Path, filenames: list[str], extra: bool) -> None:
         dirtyfiles=filenames,
         allfiles=None,
         extra=extra,
+        output_format=output_format,
     )
 
 
-def pylint(projroot: Path, full: bool, fast: bool, extra: bool) -> None:
-    """Run Pylint on all scripts in our project (with smart dep tracking)."""
+def pylint(
+    projroot: Path,
+    full: bool,
+    fast: bool,
+    extra: bool,
+    nocache: bool = False,
+    output_format: str = 'text',
+) -> None:
+    """Run Pylint on all scripts in our project (with smart dep tracking).
+
+    ``nocache=True`` skips the FileCache + dirty-file dep tracking
+    entirely and lints every file every time. Used by the standalone
+    check-environment (which is freshly extracted on each run, so
+    persisted cache state would be meaningless), and any caller
+    where determinism matters more than incremental speed.
+
+    ``output_format='json'`` requests pylint's ``json2`` structured
+    report on stdout. Human-readable progress prints are suppressed
+    in that mode so the JSON stream isn't corrupted.
+    """
+    # pylint: disable=too-many-positional-arguments
     from efrotools.util import get_files_hash
     from efro.terminal import Clr
 
@@ -400,6 +429,34 @@ def pylint(projroot: Path, full: bool, fast: bool, extra: bool) -> None:
         raise RuntimeError('found space in path; unexpected')
     script_blacklist: list[str] = []
     filenames = [f for f in filenames if f not in script_blacklist]
+
+    # No-cache path: lint everything via the same ``_run_pylint``
+    # used by the cached path. Identical args/jobs/SC_SEM_NSEMS_MAX
+    # shim — only the file-cache + dirty-dep-tracking layer is
+    # skipped.
+    if nocache:
+        if output_format == 'text':
+            print(
+                f'{Clr.BLU}Pylint checking'
+                f' {len(filenames)} file(s)...{Clr.RST}',
+                flush=True,
+            )
+        _run_pylint(
+            projroot,
+            pylintrc,
+            cache=None,
+            dirtyfiles=filenames,
+            allfiles=None,
+            extra=extra,
+            output_format=output_format,
+        )
+        if output_format == 'text':
+            print(
+                f'{Clr.GRN}Pylint: all {len(filenames)} files are'
+                f' passing.{Clr.RST}',
+                flush=True,
+            )
+        return
 
     cachebasename = 'check_pylint_fast' if fast else 'check_pylint'
     cachepath = Path(projroot, '.cache', cachebasename)
@@ -514,7 +571,20 @@ def _run_pylint(
     dirtyfiles: list[str],
     allfiles: list[str] | None,
     extra: bool,
+    output_format: str = 'text',
 ) -> dict[str, Any]:
+    """Inner pylint invocation.
+
+    ``output_format`` selects the report format:
+
+    - ``'text'`` (default) — pylint's ``colorized`` text output, with
+      a human-readable status line printed before/after the run.
+      Suitable for terminal/CI consumers.
+    - ``'json'`` — pylint's structured ``json2`` output. Status
+      prints are suppressed (they'd corrupt the JSON stream). The
+      caller parses the JSON for diagnostics and uses the non-zero
+      exit code as a "had errors" signal.
+    """
     # pylint: disable=too-many-positional-arguments
     from pylint import lint
     from efro.terminal import Clr
@@ -528,11 +598,12 @@ def _run_pylint(
         cpucount = 1
     jobcount = 1 if extra else max(cpucount, 8)
 
+    pylint_output_format = 'json2' if output_format == 'json' else 'colorized'
     start_time = time.monotonic()
     args = [
         '--rcfile',
         str(pylintrc),
-        '--output-format=colorized',
+        f'--output-format={pylint_output_format}',
         '--jobs',
         str(jobcount),
     ]
@@ -572,15 +643,22 @@ def _run_pylint(
                 ' but we did not; this is probably a bug.'
             )
     else:
-        if run.linter.msg_status != 0:
+        # JSON-mode contract: structured output IS the report; the
+        # caller parses it for diagnostics. Suppress the raise so
+        # the JSON stream isn't shadowed by a CleanError traceback.
+        if output_format == 'text' and run.linter.msg_status != 0:
             raise CleanError('Pylint failed.')
 
     duration = time.monotonic() - start_time
-    print(
-        f'{Clr.GRN}Pylint passed for {name}'
-        f' in {duration:.1f} seconds.{Clr.RST}'
-    )
-    sys.stdout.flush()
+    # JSON-mode consumers parse stdout; skip the status print so it
+    # doesn't show up between pylint's JSON output and the caller's
+    # parser.
+    if output_format == 'text':
+        print(
+            f'{Clr.GRN}Pylint passed for {name}'
+            f' in {duration:.1f} seconds.{Clr.RST}'
+        )
+        sys.stdout.flush()
     return {'f': dirtyfiles, 't': duration}
 
 
@@ -845,40 +923,80 @@ def zmypy(projroot: Path, full: bool) -> None:
 
 
 def mypy_files(
-    projroot: Path, filenames: list[str], full: bool = False, check: bool = True
+    projroot: Path,
+    filenames: list[str],
+    full: bool = False,
+    check: bool = True,
+    output_format: str = 'text',
 ) -> None:
-    """Run MyPy on provided filenames."""
+    """Run MyPy on provided filenames.
+
+    ``output_format`` selects the report format:
+
+    - ``'text'`` (default) — mypy's ``--pretty`` colorized text
+      output with no summary line. Suitable for terminal/CI
+      consumers.
+    - ``'json'`` — mypy's structured ``--output=json`` NDJSON
+      output. Each diagnostic carries file/line/column/end_line/
+      end_column/severity/code/message (``--show-error-end`` is
+      added in this mode for editor span highlighting); the caller
+      parses it and uses the non-zero exit code as a "had errors"
+      signal.
+    """
 
     args = [
         sys.executable,
         '-m',
         'mypy',
-        '--pretty',
-        '--no-error-summary',
         '--config-file',
         str(Path(projroot, '.mypy.ini')),
-    ] + filenames
+    ]
+    if output_format == 'json':
+        # ``--show-error-end`` adds end-line/end-col span info to
+        # each diagnostic, which editor consumers need to highlight
+        # the full erroring expression. Kept out of text mode to
+        # avoid cluttering human-readable output.
+        args.extend(['--output=json', '--show-error-end'])
+        # JSON-mode contract: the structured output IS the report.
+        # The caller parses it for diagnostics; we don't want a
+        # subprocess.CalledProcessError traceback muddying stderr
+        # when mypy exits non-zero because of errors in the JSON.
+        check = False
+    else:
+        # Default human-readable mode: pretty + no summary line.
+        # ``--no-error-summary`` would corrupt JSON streams, hence
+        # the branch.
+        args.extend(['--pretty', '--no-error-summary'])
+    args += filenames
     if full:
         args.insert(args.index('mypy') + 1, '--no-incremental')
     subprocess.run(args, check=check)
 
 
-def mypy(projroot: Path, full: bool) -> None:
-    """Type check all of our scripts using mypy."""
+def mypy(projroot: Path, full: bool, output_format: str = 'text') -> None:
+    """Type check all of our scripts using mypy.
+
+    ``output_format='json'`` requests mypy's structured NDJSON
+    output (see :func:`mypy_files`). Human-readable progress prints
+    are suppressed in that mode so the JSON stream isn't corrupted.
+    """
     from efro.terminal import Clr
 
     filenames = get_script_filenames(projroot)
     desc = '(full)' if full else '(incremental)'
-    print(f'{Clr.BLU}Running Mypy {desc}...{Clr.RST}', flush=True)
+    if output_format == 'text':
+        print(f'{Clr.BLU}Running Mypy {desc}...{Clr.RST}', flush=True)
     starttime = time.monotonic()
     try:
-        mypy_files(projroot, filenames, full)
+        mypy_files(projroot, filenames, full, output_format=output_format)
     except Exception as exc:
         raise CleanError('Mypy failed.') from exc
     duration = time.monotonic() - starttime
-    print(
-        f'{Clr.GRN}Mypy passed in {duration:.1f} seconds.{Clr.RST}', flush=True
-    )
+    if output_format == 'text':
+        print(
+            f'{Clr.GRN}Mypy passed in {duration:.1f} seconds.{Clr.RST}',
+            flush=True,
+        )
 
 
 def dmypy(projroot: Path) -> None:

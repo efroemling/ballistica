@@ -241,6 +241,20 @@ vanilla_completions-clean: env
 	rm -f $(LAZYBUILDDIR)/vanilla_completions
 	rm -f build/vanilla_completions.json
 
+# Assemble a standalone mypy/pylint check-environment. Output lands
+# at build/check_environment/ + build/check_environment.tar.gz.
+# Inputs: runtime python tree + dummymodules + efro/efrotools + the
+# generator + toolconfig source templates. See
+# tools/batools/checkenvironment.py for what gets bundled.
+check_environment: env dummymodules
+	@$(PCOMMAND) lazybuild check_environment_src $(LAZYBUILDDIR)/$@ \
+ $(PCOMMAND) gen_check_environment
+
+check_environment-clean: env
+	rm -f $(LAZYBUILDDIR)/check_environment
+	rm -rf build/check_environment
+	rm -f build/check_environment.tar.gz
+
 # Build the project's Python virtual environment. This should happen
 # automatically as a dependency of the env target.
 venv: .venv/.efro_venv_complete

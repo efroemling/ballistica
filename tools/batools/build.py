@@ -128,6 +128,7 @@ class LazyBuildCategory(Enum):
     WIN = 'win_src'
     DUMMYMODULES = 'dummymodules_src'
     VANILLA_COMPLETIONS = 'vanilla_completions_src'
+    CHECK_ENVIRONMENT = 'check_environment_src'
 
 
 def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
@@ -327,6 +328,23 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             srcpaths=[
                 'src/assets/ba_data/python',
                 'tools/batools/vanillacompletions.py',
+            ],
+            command=command,
+        ).run()
+
+    elif category is LazyBuildCategory.CHECK_ENVIRONMENT:
+        LazyBuildContext(
+            target=target,
+            buildlockname=category.value,
+            srcpaths=[
+                'src/assets/ba_data/python',
+                'build/dummymodules',
+                'tools/efro',
+                'tools/efrotools',
+                'tools/bacommon',
+                'tools/batools/checkenvironment.py',
+                'pconfig/toolconfigsrc/mypy.ini',
+                'pconfig/toolconfigsrc/pylintrc',
             ],
             command=command,
         ).run()
