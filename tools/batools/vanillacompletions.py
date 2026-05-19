@@ -231,6 +231,7 @@ def _emit_module(
     mod: object,
     out: list[dict[str, Any]],
     aliases: dict[str, str],
+    visited: set[str] | None = None,
 ) -> None:
     """Emit one ``module`` entry plus an entry per public attribute.
 
@@ -240,7 +241,19 @@ def _emit_module(
     ``__module__``-based owner check so re-exports (e.g. ``bauiv1.app``
     forwarding to ``babase.app``) are emitted under their importing
     package, not only at the canonical home.
+
+    For packages (modules with ``__path__``), walks public submodules
+    via ``pkgutil.iter_modules()`` and recurses. This is what makes
+    completion work for libraries like ``bascenev1lib`` whose
+    ``__init__.py`` doesn't pre-import its submodules — without the
+    explicit walk those submodules are invisible to introspection.
     """
+    if visited is None:
+        visited = set()
+    if qualname in visited:
+        return
+    visited.add(qualname)
+
     if _is_meta_private(mod):
         return
     out.append(
@@ -253,6 +266,13 @@ def _emit_module(
     )
 
     all_names: set[str] = set(getattr(mod, '__all__', None) or ())
+
+    # Recurse into public submodules discovered via package layout.
+    # Skipped when the package declares ``__all__`` — there the
+    # author's curated surface is the source of truth and we don't
+    # want to surface submodules they didn't opt to re-export.
+    if not all_names:
+        _emit_package_submodules(qualname, mod, out, aliases, visited)
 
     for name, value in inspect.getmembers(mod):
         if _should_skip(name):
@@ -300,6 +320,50 @@ def _emit_module(
                     aliases[f'{real_mod}.{real_qual}'] = sub_qualname
             _emit_class_members(sub_qualname, value, out)
             _emit_class_instance_attrs(sub_qualname, value, out)
+
+
+def _emit_package_submodules(
+    pkg_qualname: str,
+    pkg: object,
+    out: list[dict[str, Any]],
+    aliases: dict[str, str],
+    visited: set[str],
+) -> None:
+    """Discover and emit public submodules of a package.
+
+    Some packages (notably ``bascenev1lib``, ``bauiv1lib``) don't
+    pre-import their submodules in ``__init__.py``, so
+    ``inspect.getmembers`` doesn't see them. Use ``pkgutil``
+    to enumerate the filesystem-level submodules and recurse.
+
+    Skips private (underscore-prefixed) submodules to match our
+    general rule that anything ``_``-prefixed is implementation
+    detail.
+    """
+    import pkgutil
+
+    pkg_path = getattr(pkg, '__path__', None)
+    if pkg_path is None:
+        return  # not a package, nothing to enumerate
+
+    for info in pkgutil.iter_modules(pkg_path):
+        if _should_skip(info.name):
+            continue
+        sub_qualname = f'{pkg_qualname}.{info.name}'
+        try:
+            submod = importlib.import_module(sub_qualname)
+        except Exception as exc:
+            # Surface but don't blow up — some submodules might
+            # fail to import under dummy-modules (e.g. ones that
+            # need a real C-extension init).
+            print(
+                f'{Clr.YLW}vanilla_completions:'
+                f' skipping {sub_qualname!r}'
+                f' (import failed: {exc}){Clr.RST}',
+                file=sys.stderr,
+            )
+            continue
+        _emit_module(sub_qualname, submod, out, aliases, visited)
 
 
 def _emit_class_members(
