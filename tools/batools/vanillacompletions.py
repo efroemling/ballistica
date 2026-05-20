@@ -48,6 +48,41 @@ _RUNTIME_MODULES = [
     'baenv',
 ]
 
+#: Curated stdlib modules surfaced in completions. Workspace
+#: scripts have full stdlib access via BombSquad's embedded
+#: Python, so users routinely reach for ``logging``, ``json``,
+#: ``re``, etc. Walked through the same ``_emit_module`` path as
+#: ``_RUNTIME_MODULES``; just listed separately so the intent is
+#: clear and removals don't affect Ballistica's own surface.
+#:
+#: ``os.path`` is listed alongside ``os`` because ``os`` is not a
+#: package — its ``path`` attribute is the platform-specific
+#: ``posixpath``/``ntpath`` module — so the package-submodule walk
+#: doesn't pick it up; explicit listing emits it under its
+#: conventional ``os.path`` qualname.
+_STDLIB_MODULES = [
+    'asyncio',
+    'collections',
+    'contextlib',
+    'dataclasses',
+    'datetime',
+    'enum',
+    'functools',
+    'io',
+    'itertools',
+    'json',
+    'logging',
+    'math',
+    'os',
+    'os.path',
+    'pathlib',
+    'random',
+    're',
+    'sys',
+    'time',
+    'typing',
+]
+
 #: Module attribute names we never expose. ``__all__`` semantics are
 #: messy across our tree so we filter by leading underscore and a
 #: small ignore-set instead.
@@ -126,7 +161,7 @@ def _worker_main(outpath: str) -> None:
     # in the editor lands on entries we actually emit.
     aliases: dict[str, str] = {}
 
-    for modname in _RUNTIME_MODULES:
+    for modname in _RUNTIME_MODULES + _STDLIB_MODULES:
         try:
             mod = importlib.import_module(modname)
         except Exception as exc:
