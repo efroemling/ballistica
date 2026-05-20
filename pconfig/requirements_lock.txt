@@ -978,9 +978,9 @@ pyyaml-ft==8.0.0 ; python_full_version < '3.14' \
     --hash=sha256:de04cfe9439565e32f178106c51dd6ca61afaa2907d143835d501d84703d3793 \
     --hash=sha256:e64fa5f3e2ceb790d50602b2fd4ec37abbd760a8c778e46354df647e7c5a4ebb
     # via libcst
-requests==2.34.0 \
-    --hash=sha256:7d62fe92f50eb82c529b0916bb445afa1531a566fc8f35ffdc64446e771b856a \
-    --hash=sha256:917520a21b767485ce7c588f4ebb917c436b24a31231b44228715eaeb5a52c60
+requests==2.34.2 \
+    --hash=sha256:2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0 \
+    --hash=sha256:f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed
     # via
     #   -r pconfig/requirements.txt
     #   sphinx
@@ -1041,17 +1041,21 @@ types-certifi==2021.10.8.3 \
     --hash=sha256:72cf7798d165bc0b76e1c10dd1ea3097c7063c42c21d664523b928e88b554a4f \
     --hash=sha256:b2d1e325e69f71f7c78e5943d410e650b4707bb0ef32e4ddf3da37f54176e88a
     # via -r pconfig/requirements.txt
-types-docutils==0.22.3.20260508 \
-    --hash=sha256:47bbac43bee53bcaf99f12f5b4253bf864777c31ac4eda6e3bf6660aa6ceac40 \
-    --hash=sha256:f043dd1fffad161cb671b0e3bf593bb5229b8d40bf365ac7d8337296dc97e6bc
+types-docutils==0.22.3.20260518 \
+    --hash=sha256:2c45ba63a9ac64246335359b68fe9c27602926499c9b67caec3780745f6aadee \
+    --hash=sha256:9c4cbc37d9e37f47dfe971ac09e9880380dc948ff1f23956892e810d0bf08676
     # via -r pconfig/requirements.txt
 types-filelock==3.2.7 \
     --hash=sha256:0673a25b45725c5c45661fe3744c3d8058653a16e683f0ae4a74afb44a0cdef4 \
     --hash=sha256:ee0ee2b4ec3d491ebe71f7343e21435c3a07f910881275a94788cac42acf4339
     # via -r pconfig/requirements.txt
-types-requests==2.33.0.20260508 \
-    --hash=sha256:81b2ae5f0d20967714a6aa5ef9284c05570d7cb06b7de8f2a77b918b63ddd411 \
-    --hash=sha256:fa01459cca184229713df03709db46a905325906d27e042cd4fd7ea3d15d3400
+types-psutil==7.2.2.20260518 \
+    --hash=sha256:6a3d697665754a60d7b5a41d5a2cff12b53f5e0676d77810cd28ba5e14cb4049 \
+    --hash=sha256:9f825f631463a5b4d26f19f63aebc9ec25f01140d655026f3ad8a67841f9b331
+    # via -r pconfig/requirements.txt
+types-requests==2.33.0.20260518 \
+    --hash=sha256:626d697d1adaaff76e2044dc8c5c051d8f21abc157bdfe204a75558076fe0bf0 \
+    --hash=sha256:df7bd3bfe0ca8402dfb841e7d9be714bb5578203283d66d7dc4ef69343449a5e
     # via -r pconfig/requirements.txt
 typing-extensions==4.15.0 \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \

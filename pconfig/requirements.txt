@@ -14,13 +14,14 @@ pytest==9.0.3
 python-daemon==3.1.2
 python-lsp-black==2.0.0
 python-lsp-server==1.14.0
-requests==2.34.0
+requests==2.34.2
 Sphinx==9.1.0
 tomlkit==0.15.0
 types-certifi==2021.10.8.3
-types-docutils==0.22.3.20260508
+types-docutils==0.22.3.20260518
 types-filelock==3.2.7
-types-requests==2.33.0.20260508
+types-psutil==7.2.2.20260518
+types-requests==2.33.0.20260518
 typing_extensions==4.15.0
 urllib3==2.7.0
 websockets==16.0

@@ -100,6 +100,13 @@ def generate_check_environment(projroot: str) -> None:
     _write_check_entry(out_root)
     _write_makefile(out_root)
 
+    # No ``.mypy_cache`` is populated here. Downstream consumers
+    # (e.g. bamaster's workspace checker) build the cache against
+    # *their own* venv at staging time so the cache's options hash
+    # and stub-package resolution match what the runtime mypy sees.
+    # See ``bamastertools/project.py:_prepopulate_mypy_cache`` for
+    # the consumer-side step.
+
     tar_path = os.path.join(projroot, 'build', 'check_environment.tar.gz')
     if os.path.isfile(tar_path):
         os.remove(tar_path)
