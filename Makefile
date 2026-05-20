@@ -1604,30 +1604,12 @@ pconfig/requirements_lock.txt: pconfig/requirements.txt
  && echo 'run: curl -LsSf https://astral.sh/uv/install.sh | sh' \
  && exit 1)
 # Update venv in place when possible; otherwise create from scratch.
-#
-# WSL + /mnt/c/ workaround: when cwd lives on the NTFS mount (the
-# cloudshell winbeast pattern), uv's wheel-copy step into .venv hits
-# "Cannot allocate memory (os error 12)" after a handful of installs
-# — kernel can't keep up with simultaneous mmaps across the 9p
-# boundary. Sidestep by putting the actual venv on ext4
-# (``$HOME/.cache/efro-venvs/<workspace-hash>``) and symlinking
-# ``.venv`` to it. No-op on every other system. The hash is derived
-# from ``$PWD`` so concurrent workspaces don't collide.
-	@if [ -e /mnt/c ] && case "$$PWD" in /mnt/c/*) true;; *) false;; esac; then \
- venv_target="$$HOME/.cache/efro-venvs/$$(printf '%s' "$$PWD" | sha1sum | cut -c1-12)"; \
- else \
- venv_target=".venv"; \
- fi; \
- if [ -f .venv/bin/$(VENV_PYTHON) ] && [ -f .venv/.efro_venv_state_$(VENV_STATE) ]; then \
- echo "Updating existing $(VENV_PYTHON) virtual environment in '.venv'..."; \
- else \
- echo "Creating new $(VENV_PYTHON) virtual environment in '.venv'..."; \
- rm -rf .venv "$$venv_target"; \
- mkdir -p "$$(dirname "$$venv_target")"; \
- uv venv --python $(VENV_PYTHON) "$$venv_target"; \
- [ "$$venv_target" = ".venv" ] || ln -sfn "$$venv_target" .venv; \
- touch .venv/.efro_venv_state_$(VENV_STATE); \
- fi
+	@[ -f .venv/bin/$(VENV_PYTHON) ] \
+ && [ -f .venv/.efro_venv_state_$(VENV_STATE) ] \
+ && echo Updating existing $(VENV_PYTHON) virtual environment in \'.venv\'... \
+ || (echo Creating new $(VENV_PYTHON) virtual environment in \'.venv\'... \
+ && rm -rf .venv && uv venv --python $(VENV_PYTHON) .venv \
+ && touch .venv/.efro_venv_state_$(VENV_STATE))
 	uv pip install --python .venv/bin/$(VENV_PYTHON) --require-hashes \
  -r pconfig/requirements_lock.txt
 	@touch .venv/.efro_venv_complete # Done last to signal fully-built venv.
