@@ -415,10 +415,14 @@ def pylint(
     ``output_format='json'`` requests pylint's ``json2`` structured
     report on stdout. Human-readable progress prints are suppressed
     in that mode so the JSON stream isn't corrupted.
+
+    Thin wrapper around :func:`pylint_files` that derives the file
+    list from the project root via :func:`get_script_filenames`.
+    Other consumers (e.g. workspace-check runners that lint a
+    specific list of files) should call :func:`pylint_files`
+    directly with explicit ``filenames`` / ``cache_path``.
     """
     # pylint: disable=too-many-positional-arguments
-    from efrotools.util import get_files_hash
-    from efro.terminal import Clr
 
     pylintrc = Path(projroot, '.pylintrc')
     if not os.path.isfile(pylintrc):
@@ -430,18 +434,81 @@ def pylint(
     script_blacklist: list[str] = []
     filenames = [f for f in filenames if f not in script_blacklist]
 
+    cache_path: Path | None
+    if nocache:
+        cache_path = None
+    else:
+        cachebasename = 'check_pylint_fast' if fast else 'check_pylint'
+        cache_path = Path(projroot, '.cache', cachebasename)
+        if full and cache_path.exists():
+            cache_path.unlink()
+    pylint_files(
+        pylintrc,
+        filenames,
+        projroot=projroot,
+        cache_path=cache_path,
+        fast=fast,
+        extra=extra,
+        output_format=output_format,
+    )
+
+
+def pylint_files(
+    pylintrc: Path | str,
+    filenames: list[str],
+    *,
+    projroot: Path,
+    cache_path: Path | None = None,
+    fast: bool = False,
+    extra: bool = False,
+    output_format: str = 'text',
+    capture: bool = False,
+) -> dict[str, Any] | None:
+    """Lint a specific list of files with optional dep-tracking cache.
+
+    The orchestration layer between callers (which know what to
+    lint and where to cache state) and the inner ``_run_pylint``
+    (which runs pylint itself). Used by:
+
+    - :func:`pylint` — the in-tree ``make pylint`` path, with the
+      cache rooted at ``<projroot>/.cache/check_pylint{_fast}``
+      and file list from :func:`get_script_filenames`.
+    - Workspace-check runners and other dynamic-input callers,
+      with the cache rooted at a consumer-supplied path and an
+      explicit ``filenames`` list.
+
+    Parameters mostly mirror :func:`pylint`:
+
+    - ``cache_path`` — ``None`` for ``nocache`` mode (lint
+      everything every call); a writable path enables the
+      ``FileCache``-backed dirty-dep-tracking layer described in
+      :func:`pylint`'s docstring.
+    - ``projroot`` — used by the cache-apply step to find
+      ``pconfig/projectconfig.json`` for the
+      ``pylint_ignored_untracked_deps`` setting.
+    - ``capture`` — when true, returns the inner result dict
+      (``stdout``, ``msg_status``, etc.) instead of printing to
+      this process's stdout; see the inner ``_run_pylint`` for
+      details.
+
+    Returns the inner-call result dict when ``capture=True`` (with
+    ``stdout``, ``msg_status``, etc.), or ``None`` in text mode.
+    """
+    from efrotools.util import get_files_hash
+    from efro.terminal import Clr
+
     # No-cache path: lint everything via the same ``_run_pylint``
     # used by the cached path. Identical args/jobs/SC_SEM_NSEMS_MAX
     # shim — only the file-cache + dirty-dep-tracking layer is
     # skipped.
-    if nocache:
-        if output_format == 'text':
+    if cache_path is None:
+        if output_format == 'text' and not capture:
             print(
                 f'{Clr.BLU}Pylint checking'
                 f' {len(filenames)} file(s)...{Clr.RST}',
                 flush=True,
             )
-        _run_pylint(
+        nc_result = _run_pylint(
             projroot,
             pylintrc,
             cache=None,
@@ -449,20 +516,17 @@ def pylint(
             allfiles=None,
             extra=extra,
             output_format=output_format,
+            capture=capture,
         )
-        if output_format == 'text':
+        if output_format == 'text' and not capture:
             print(
                 f'{Clr.GRN}Pylint: all {len(filenames)} files are'
                 f' passing.{Clr.RST}',
                 flush=True,
             )
-        return
+        return nc_result if capture else None
 
-    cachebasename = 'check_pylint_fast' if fast else 'check_pylint'
-    cachepath = Path(projroot, '.cache', cachebasename)
-    if full and cachepath.exists():
-        cachepath.unlink()
-    cache = FileCache(cachepath)
+    cache = FileCache(cache_path)
 
     # Clear out entries and hashes for files that have changed/etc.
     cache.update(filenames, get_files_hash([pylintrc]))
@@ -479,23 +543,38 @@ def pylint(
     # to fix get linted first and we see remaining errors faster.
     dirtyfiles.sort(reverse=True, key=lambda f: os.stat(f).st_mtime)
 
+    result = None
     if dirtyfiles:
+        if output_format == 'text' and not capture:
+            print(
+                f'{Clr.BLU}Pylint checking'
+                f' {len(dirtyfiles)} file(s)...{Clr.RST}',
+                flush=True,
+            )
+        try:
+            result = _run_pylint(
+                projroot,
+                pylintrc,
+                cache,
+                dirtyfiles,
+                filenames,
+                extra,
+                output_format=output_format,
+                capture=capture,
+            )
+        finally:
+            # No matter what happens, we still want to update our
+            # disk cache (since some lints may have passed).
+            cache.write()
+    if output_format == 'text' and not capture:
         print(
-            f'{Clr.BLU}Pylint checking {len(dirtyfiles)} file(s)...{Clr.RST}',
+            f'{Clr.GRN}Pylint: all {len(filenames)} files are'
+            f' passing.{Clr.RST}',
             flush=True,
         )
-        try:
-            _run_pylint(projroot, pylintrc, cache, dirtyfiles, filenames, extra)
-        finally:
-            # No matter what happens, we still want to
-            # update our disk cache (since some lints may have passed).
-            cache.write()
-    print(
-        f'{Clr.GRN}Pylint: all {len(filenames)} files are passing.{Clr.RST}',
-        flush=True,
-    )
 
     cache.write()
+    return result if capture else None
 
 
 def _dirty_dep_check(
@@ -572,6 +651,8 @@ def _run_pylint(
     allfiles: list[str] | None,
     extra: bool,
     output_format: str = 'text',
+    *,
+    capture: bool = False,
 ) -> dict[str, Any]:
     """Inner pylint invocation.
 
@@ -584,19 +665,35 @@ def _run_pylint(
       prints are suppressed (they'd corrupt the JSON stream). The
       caller parses the JSON for diagnostics and uses the non-zero
       exit code as a "had errors" signal.
+
+    When ``capture=True``, pylint's stdout (the formatted report —
+    colorized text or json2 JSON depending on ``output_format``) is
+    redirected through ``contextlib.redirect_stdout`` and returned in
+    the result dict as ``'stdout'``. The status-line print
+    (text-mode only) is also suppressed under capture so callers get
+    only pylint's own report. Useful for consumers that consume the
+    report programmatically (workspace-check runner) rather than
+    showing it to the user. Caveat: ``sys.stdout`` redirection is
+    process-global; callers must not run concurrent threads that
+    print to stdout during the captured pylint invocation.
     """
     # pylint: disable=too-many-positional-arguments
     from pylint import lint
     from efro.terminal import Clr
 
-    # By default we use up to 8 cpus if available. However if they pass
-    # 'extra' we limit to one. This is intended to keep things as
-    # deterministic as possible for things such as CI where speed isn't
-    # as important.
-    cpucount = os.cpu_count()
-    if cpucount is None:
-        cpucount = 1
-    jobcount = 1 if extra else max(cpucount, 8)
+    # By default we use up to 8 cpus if available — capping at 8
+    # since pylint workers are predominantly CPU-bound (astroid
+    # parsing + analysis) and additional workers beyond cpu count
+    # mostly thrash. ``extra=True`` forces single-process mode for
+    # CI determinism. We use the *container-aware* cpu count
+    # (which respects cgroup CPU quotas on Cloud Run / Docker /
+    # k8s) rather than the host-CPU-count that ``os.cpu_count()``
+    # returns — otherwise a 1-CPU Cloud Run container running on a
+    # 16-CPU host would still try to fork 8 pylint workers.
+    from efrotools.util import container_aware_cpu_count
+
+    cpucount = container_aware_cpu_count()
+    jobcount = 1 if extra else min(cpucount, 8)
 
     pylint_output_format = 'json2' if output_format == 'json' else 'colorized'
     start_time = time.monotonic()
@@ -625,13 +722,29 @@ def _run_pylint(
         _cfp._check_system_limits = lambda: None
         # pylint: enable=protected-access
 
-    run = lint.Run(args, exit=False)
+    captured_stdout: str | None = None
+    if capture:
+        import io
+        import contextlib
+
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            run = lint.Run(args, exit=False)
+        captured_stdout = buf.getvalue()
+    else:
+        run = lint.Run(args, exit=False)
     if cache is not None:
         assert allfiles is not None
         result = _apply_pylint_run_to_cache(
             projroot, run, dirtyfiles, allfiles, cache
         )
-        if result != 0:
+        if result != 0 and not capture:
+            # Default (in-tree ``make pylint``) consumer raises on
+            # any lint failures so CI/devs see a non-zero exit.
+            # Capture-mode consumers (workspace-check runner, etc.)
+            # parse the JSON themselves and need the result dict
+            # back even when pylint flagged issues — suppress the
+            # raise in that case.
             raise CleanError(f'Pylint failed for {result} file(s).')
 
         # Sanity check: when the linter fails we should always be
@@ -646,20 +759,32 @@ def _run_pylint(
         # JSON-mode contract: structured output IS the report; the
         # caller parses it for diagnostics. Suppress the raise so
         # the JSON stream isn't shadowed by a CleanError traceback.
-        if output_format == 'text' and run.linter.msg_status != 0:
+        # Capture-mode also implicitly returns the report — same
+        # suppression rationale.
+        if (
+            output_format == 'text'
+            and not capture
+            and run.linter.msg_status != 0
+        ):
             raise CleanError('Pylint failed.')
 
     duration = time.monotonic() - start_time
     # JSON-mode consumers parse stdout; skip the status print so it
     # doesn't show up between pylint's JSON output and the caller's
-    # parser.
-    if output_format == 'text':
+    # parser. Capture-mode consumers similarly want only pylint's own
+    # report.
+    if output_format == 'text' and not capture:
         print(
             f'{Clr.GRN}Pylint passed for {name}'
             f' in {duration:.1f} seconds.{Clr.RST}'
         )
         sys.stdout.flush()
-    return {'f': dirtyfiles, 't': duration}
+    return {
+        'f': dirtyfiles,
+        't': duration,
+        'stdout': captured_stdout,
+        'msg_status': run.linter.msg_status,
+    }
 
 
 def _apply_pylint_run_to_cache(
@@ -928,7 +1053,12 @@ def mypy_files(
     full: bool = False,
     check: bool = True,
     output_format: str = 'text',
-) -> None:
+    *,
+    cwd: Path | str | None = None,
+    env: dict[str, str] | None = None,
+    cache_dir: Path | str | None = None,
+    capture: bool = False,
+) -> subprocess.CompletedProcess[str] | None:
     """Run MyPy on provided filenames.
 
     ``output_format`` selects the report format:
@@ -942,6 +1072,22 @@ def mypy_files(
       added in this mode for editor span highlighting); the caller
       parses it and uses the non-zero exit code as a "had errors"
       signal.
+
+    Keyword-only knobs (default to inheriting from this process,
+    which is the in-tree-``make mypy`` use case):
+
+    - ``cwd`` / ``env`` — passed through to :func:`subprocess.run`.
+      Needed by consumers that run mypy against files outside
+      ``projroot`` (e.g. workspace-check runners staging user
+      code into a per-workspace cache dir).
+    - ``cache_dir`` — sets ``--cache-dir``. By default mypy uses
+      ``.mypy_cache`` relative to its cwd; per-consumer cache dirs
+      let one process drive multiple isolated cache lifecycles.
+    - ``capture`` — when true, return a
+      :class:`~subprocess.CompletedProcess` with ``stdout`` and
+      ``stderr`` captured (text mode). When false (default), output
+      goes to the parent process's terminals and ``None`` is returned.
+      JSON-mode consumers typically want ``capture=True``.
     """
 
     args = [
@@ -951,6 +1097,8 @@ def mypy_files(
         '--config-file',
         str(Path(projroot, '.mypy.ini')),
     ]
+    if cache_dir is not None:
+        args.extend(['--cache-dir', str(cache_dir)])
     if output_format == 'json':
         # ``--show-error-end`` adds end-line/end-col span info to
         # each diagnostic, which editor consumers need to highlight
@@ -970,7 +1118,17 @@ def mypy_files(
     args += filenames
     if full:
         args.insert(args.index('mypy') + 1, '--no-incremental')
-    subprocess.run(args, check=check)
+    if capture:
+        return subprocess.run(
+            args,
+            check=check,
+            cwd=cwd,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+    subprocess.run(args, check=check, cwd=cwd, env=env)
+    return None
 
 
 def mypy(projroot: Path, full: bool, output_format: str = 'text') -> None:

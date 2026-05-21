@@ -19,6 +19,60 @@ def explicit_bool(value: bool) -> bool:
     return value
 
 
+def container_aware_cpu_count() -> int:
+    """CPU count available to this process, respecting cgroup CPU quota.
+
+    Cloud Run (and modern Docker/k8s) impose CPU limits via cgroup
+    CFS bandwidth quotas, NOT via scheduling affinity. ``os.cpu_count()``
+    (and the newer ``os.process_cpu_count()`` in 3.13+) reflect
+    scheduling affinity / cpuset cgroup pinning, but ignore the
+    bandwidth quota — so on a 16-CPU host running a 1-CPU Cloud Run
+    container they still return 16.
+
+    This reads the cpu cgroup quota directly:
+
+    - cgroup v2 (modern Linux, including Cloud Run): ``/sys/fs/cgroup/cpu.max``
+      contains ``"<quota> <period>"`` (or ``"max <period>"`` when
+      unconstrained). CPUs = ``quota // period``.
+    - cgroup v1 (older systems): ``cpu.cfs_quota_us`` /
+      ``cpu.cfs_period_us`` under ``/sys/fs/cgroup/cpu/``.
+
+    Falls back to :func:`os.cpu_count` outside Linux or when no
+    cgroup quota is set / accessible. Floors at 1 — sub-CPU quotas
+    (e.g. Cloud Run ``--cpu=0.5`` → 50000/100000) round down to 0
+    which would be meaningless as a worker count.
+    """
+    import os
+
+    # cgroup v2
+    try:
+        with open('/sys/fs/cgroup/cpu.max', 'r', encoding='utf-8') as f:
+            quota_str, period_str = f.read().strip().split()
+        if quota_str != 'max':
+            quota, period = int(quota_str), int(period_str)
+            if period > 0:
+                return max(1, quota // period)
+    except (OSError, ValueError):
+        pass
+
+    # cgroup v1
+    try:
+        with open(
+            '/sys/fs/cgroup/cpu/cpu.cfs_quota_us', 'r', encoding='utf-8'
+        ) as f:
+            quota = int(f.read().strip())
+        with open(
+            '/sys/fs/cgroup/cpu/cpu.cfs_period_us', 'r', encoding='utf-8'
+        ) as f:
+            period = int(f.read().strip())
+        if quota > 0 and period > 0:
+            return max(1, quota // period)
+    except (OSError, ValueError):
+        pass
+
+    return os.cpu_count() or 1
+
+
 def replace_section(
     text: str,
     begin_marker: str,
