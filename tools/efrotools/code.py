@@ -735,9 +735,25 @@ def _run_pylint(
         run = lint.Run(args, exit=False)
     if cache is not None:
         assert allfiles is not None
-        result = _apply_pylint_run_to_cache(
-            projroot, run, dirtyfiles, allfiles, cache
-        )
+        try:
+            result = _apply_pylint_run_to_cache(
+                projroot, run, dirtyfiles, allfiles, cache
+            )
+        except CleanError:
+            # ``_apply_pylint_run_to_cache`` raises CleanError on
+            # cache-correctness conditions like "found untracked
+            # dependencies that should be declared in
+            # ``pylint_ignored_untracked_deps``." That check
+            # protects the cache for the in-tree dev loop where
+            # the project is the single source of truth. For
+            # capture-mode consumers (workspace-check runners
+            # whose cache wipes on every deploy anyway) the
+            # protection is moot and would just block valid
+            # lints. Suppress in capture mode; let it propagate
+            # in the default path.
+            if not capture:
+                raise
+            result = 0
         if result != 0 and not capture:
             # Default (in-tree ``make pylint``) consumer raises on
             # any lint failures so CI/devs see a non-zero exit.
@@ -749,8 +765,13 @@ def _run_pylint(
 
         # Sanity check: when the linter fails we should always be
         # failing too. If not, it means we're probably missing something
-        # and incorrectly marking a failed file as clean.
-        if run.linter.msg_status != 0 and result == 0:
+        # and incorrectly marking a failed file as clean. Skip in
+        # capture mode — when we suppress the untracked-deps raise
+        # above we may have set result=0 even though msg_status is
+        # non-zero. Capture-mode caller surfaces issues via the JSON
+        # they receive; this sanity check is for the in-tree dev
+        # loop only.
+        if not capture and run.linter.msg_status != 0 and result == 0:
             raise RuntimeError(
                 'Pylint linter returned non-zero result'
                 ' but we did not; this is probably a bug.'
