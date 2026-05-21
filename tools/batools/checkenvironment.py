@@ -212,7 +212,9 @@ def _write_projectconfig(out_root: str) -> None:
     downstream consumers override at invocation time (e.g. by
     pointing at a user workspace).
     """
-    config = {'python_source_dirs': ['python']}
+    config = {
+        'python_source_dirs': ['python'],
+    }
     pconfig_dir = os.path.join(out_root, 'pconfig')
     os.makedirs(pconfig_dir, exist_ok=True)
     with open(

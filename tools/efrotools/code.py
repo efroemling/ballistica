@@ -25,6 +25,10 @@ from efrotools.filecache import FileCache
 if TYPE_CHECKING:
     from typing import Any
 
+#: Bumped any time the pylint :class:`FileCache` entry shape changes
+#: so old on-disk caches invalidate cleanly on first new-code run.
+_PYLINT_CACHE_SCHEMA = 'v2-extdeps'
+
 
 def format_cpp_str(
     projroot: Path, text: str, filename: str = 'untitled.cc'
@@ -483,9 +487,9 @@ def pylint_files(
       everything every call); a writable path enables the
       ``FileCache``-backed dirty-dep-tracking layer described in
       :func:`pylint`'s docstring.
-    - ``projroot`` — used by the cache-apply step to find
-      ``pconfig/projectconfig.json`` for the
-      ``pylint_ignored_untracked_deps`` setting.
+    - ``projroot`` — currently unused by the cache-apply step
+      (external deps are tracked by resolved path+mtime, not by a
+      projectconfig allowlist); reserved for future use.
     - ``capture`` — when true, returns the inner result dict
       (``stdout``, ``msg_status``, etc.) instead of printing to
       this process's stdout; see the inner ``_run_pylint`` for
@@ -529,7 +533,12 @@ def pylint_files(
     cache = FileCache(cache_path)
 
     # Clear out entries and hashes for files that have changed/etc.
-    cache.update(filenames, get_files_hash([pylintrc]))
+    # The schema tag is folded into the per-file hash so any future
+    # cache-entry shape change auto-invalidates pre-existing on-disk
+    # caches without needing a manual wipe.
+    cache.update(
+        filenames, f'{_PYLINT_CACHE_SCHEMA}:' + get_files_hash([pylintrc])
+    )
 
     # Do a recursive dependency check and mark all files who are
     # either dirty or have a dependency that is dirty.
@@ -577,6 +586,35 @@ def pylint_files(
     return result if capture else None
 
 
+def _deps_are_dirty(
+    cacheentry: dict[str, Any],
+    filestates: dict[str, bool],
+    cache: FileCache,
+    fast: bool,
+    recursion: int,
+) -> bool:
+    """Return True if any tracked dep of this entry looks stale."""
+
+    # External deps (modules outside our managed source set): tracked
+    # by resolved path + mtime. Any path that's now missing or has a
+    # different mtime invalidates us.
+    for ext in cacheentry.get('extdeps', []):
+        ext_path, ext_mtime = ext[0], ext[1]
+        try:
+            if os.path.getmtime(ext_path) != ext_mtime:
+                return True
+        except OSError:
+            return True
+
+    # Managed-source deps: recurse to check transitive freshness.
+    for dep in cacheentry.get('deps', []):
+        if not os.path.exists(dep):
+            return True
+        if _dirty_dep_check(dep, filestates, cache, fast, recursion):
+            return True
+    return False
+
+
 def _dirty_dep_check(
     fname: str,
     filestates: dict[str, bool],
@@ -611,28 +649,17 @@ def _dirty_dep_check(
         if 'hash' not in cacheentry:
             dirty = True
         else:
-            # Ok we're clean; now check our dependencies..
-            dirty = False
-
-            # Only increment recursion in fast mode, and
-            # skip dependencies if we're pass the recursion limit.
+            # Only increment recursion in fast mode, and skip
+            # dependencies if we're past the recursion limit.
             recursion2 = recursion
-            if fast:
-                # Our one exception is top level ba which basically aggregates.
-                if not fname.endswith('/babase/__init__.py'):
-                    recursion2 += 1
-            if recursion2 <= 1:
-                deps = cacheentry.get('deps', [])
-                for dep in deps:
-                    # If we have a dep that no longer exists, WE are dirty.
-                    if not os.path.exists(dep):
-                        dirty = True
-                        break
-                    if _dirty_dep_check(
-                        dep, filestates, cache, fast, recursion2
-                    ):
-                        dirty = True
-                        break
+            if fast and not fname.endswith('/babase/__init__.py'):
+                recursion2 += 1
+            if recursion2 > 1:
+                dirty = False
+            else:
+                dirty = _deps_are_dirty(
+                    cacheentry, filestates, cache, fast, recursion2
+                )
 
     # Cache and return our dirty state.
     #
@@ -735,25 +762,9 @@ def _run_pylint(
         run = lint.Run(args, exit=False)
     if cache is not None:
         assert allfiles is not None
-        try:
-            result = _apply_pylint_run_to_cache(
-                projroot, run, dirtyfiles, allfiles, cache
-            )
-        except CleanError:
-            # ``_apply_pylint_run_to_cache`` raises CleanError on
-            # cache-correctness conditions like "found untracked
-            # dependencies that should be declared in
-            # ``pylint_ignored_untracked_deps``." That check
-            # protects the cache for the in-tree dev loop where
-            # the project is the single source of truth. For
-            # capture-mode consumers (workspace-check runners
-            # whose cache wipes on every deploy anyway) the
-            # protection is moot and would just block valid
-            # lints. Suppress in capture mode; let it propagate
-            # in the default path.
-            if not capture:
-                raise
-            result = 0
+        result = _apply_pylint_run_to_cache(
+            projroot, run, dirtyfiles, allfiles, cache
+        )
         if result != 0 and not capture:
             # Default (in-tree ``make pylint``) consumer raises on
             # any lint failures so CI/devs see a non-zero exit.
@@ -764,13 +775,8 @@ def _run_pylint(
             raise CleanError(f'Pylint failed for {result} file(s).')
 
         # Sanity check: when the linter fails we should always be
-        # failing too. If not, it means we're probably missing something
-        # and incorrectly marking a failed file as clean. Skip in
-        # capture mode — when we suppress the untracked-deps raise
-        # above we may have set result=0 even though msg_status is
-        # non-zero. Capture-mode caller surfaces issues via the JSON
-        # they receive; this sanity check is for the in-tree dev
-        # loop only.
+        # failing too. If not, it means we're probably missing
+        # something and incorrectly marking a failed file as clean.
         if not capture and run.linter.msg_status != 0 and result == 0:
             raise RuntimeError(
                 'Pylint linter returned non-zero result'
@@ -817,10 +823,9 @@ def _apply_pylint_run_to_cache(
 ) -> int:
     # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches
+    # pylint: disable=unused-argument
 
     from astroid import modutils
-
-    from efrotools.project import getprojectconfig
 
     # First off, build a map of dirtyfiles to module names (and the
     # corresponding reverse map).
@@ -860,135 +865,61 @@ def _apply_pylint_run_to_cache(
     for key, val in run.linter.stats.dependencies.items():
         sval = [_filter_module_name(m) for m in val]
         reversedeps[_filter_module_name(key)] = sval
+
+    # Bucket each (importer -> imported) edge as either a managed-source
+    # dep (importer depends on one of OUR files) or an external dep
+    # (stdlib, site-packages, env-bundled module, etc.). Both buckets
+    # are tracked by the cache; the old "declare external deps in
+    # projectconfig or we raise" gate is gone.
     deps: dict[str, set[str]] = {}
-    untracked_deps = set()
+    extdeps: dict[str, set[str]] = {}
     for mname, mallimportedby in reversedeps.items():
         for mimportedby in mallimportedby:
             if mname in names_to_paths:
                 deps.setdefault(mimportedby, set()).add(mname)
             else:
-                untracked_deps.add(mname)
+                extdeps.setdefault(mimportedby, set()).add(mname)
 
-    ignored_untracked_deps: set[str] = set(
-        getprojectconfig(projroot).get('pylint_ignored_untracked_deps', [])
-    )
+    # Resolve external module names to (path, mtime) once per run.
+    # ``None`` means we couldn't pin it to a file — those go into
+    # extmissing for diagnostics; the cache can't track changes to
+    # things it can't locate.
+    ext_resolved: dict[str, tuple[str, float] | None] = {}
 
-    # Add a few that this package itself triggers.
-    ignored_untracked_deps |= {'pylint.lint', 'astroid.modutils', 'astroid'}
+    def _resolve_ext(modname: str) -> tuple[str, float] | None:
+        if modname in ext_resolved:
+            return ext_resolved[modname]
+        path: str | None
+        try:
+            path = modutils.file_from_modpath(modname.split('.'))
+        except ImportError:
+            path = None
+        result: tuple[str, float] | None
+        if path is not None and os.path.isfile(path):
+            try:
+                result = (path, os.path.getmtime(path))
+            except OSError:
+                result = None
+        else:
+            result = None
+        ext_resolved[modname] = result
+        return result
 
-    # EW; as of Python 3.9, suddenly I'm seeing system modules showing
-    # up here where I wasn't before. I wonder what changed. Anyway,
-    # explicitly suppressing them here but should come up with a more
-    # robust system as I feel this will get annoying fast.
-    ignored_untracked_deps |= {
-        're',
-        'importlib',
-        'os',
-        'xml.dom',
-        'weakref',
-        'random',
-        'collections.abc',
-        'textwrap',
-        'webbrowser',
-        'signal',
-        'pathlib',
-        'zlib',
-        'json',
-        'pydoc',
-        'base64',
-        'functools',
-        'asyncio',
-        'xml',
-        '__future__',
-        'traceback',
-        'typing',
-        'urllib.parse',
-        'ctypes.wintypes',
-        'code',
-        'urllib.error',
-        'threading',
-        'xml.etree.ElementTree',
-        'pickle',
-        'dataclasses',
-        'enum',
-        'py_compile',
-        'urllib.request',
-        'math',
-        'multiprocessing',
-        'socket',
-        'getpass',
-        'hashlib',
-        'ctypes',
-        'inspect',
-        'rlcompleter',
-        'http.client',
-        'readline',
-        'platform',
-        'datetime',
-        'copy',
-        'concurrent.futures',
-        'ast',
-        'subprocess',
-        'numbers',
-        'logging',
-        'xml.dom.minidom',
-        'uuid',
-        'types',
-        'tempfile',
-        'shutil',
-        'shlex',
-        'stat',
-        'wave',
-        'html',
-        'binascii',
-    }
-
-    # Special case:
-    #
-    # Ignore generated dummy-modules (we don't directly check those anymore
-    # so they'll be listed as external).
-    if os.path.exists('build/dummymodules'):
-        assert os.path.isdir('build/dummymodules')
-        for fname in os.listdir('build/dummymodules'):
-            if fname.endswith('.py'):
-                ignored_untracked_deps.add(fname.removesuffix('.py'))
-
-    # Ignore some specific untracked deps; complain about any others.
-    untracked_deps = set(
-        dep
-        for dep in untracked_deps
-        if dep not in ignored_untracked_deps
-        # and not dep.startswith('bapluscodegen')
-    )
-    if untracked_deps:
-        raise CleanError(
-            f'Pylint found untracked dependencies: {untracked_deps}.'
-            ' If these are external to your project, add them to'
-            ' "pylint_ignored_untracked_deps" in the project config.'
-        )
-
-    # Finally add the dependency lists to our entries (operate on
-    # everything in the run; it may not be mentioned in deps).
-    no_deps_modules = set()
+    # Finally write the dependency state to each cache entry.
     for fname in dirtyfiles:
         fmod = paths_to_names[fname]
-        if fmod not in deps:
-            # Since this code is a bit flaky, lets always announce when we
-            # come up empty and keep a whitelist of expected values to ignore.
-            no_deps_modules.add(fmod)
-            depsval: list[str] = []
-        else:
-            # Our deps here are module names; store paths.
-            depsval = [names_to_paths[dep] for dep in deps[fmod]]
+        depsval = sorted(names_to_paths[d] for d in deps.get(fmod, set()))
+        extdepsval: list[list[str | float]] = []
+        extmissing: list[str] = []
+        for ext_name in sorted(extdeps.get(fmod, set())):
+            resolved = _resolve_ext(ext_name)
+            if resolved is None:
+                extmissing.append(ext_name)
+            else:
+                extdepsval.append([resolved[0], resolved[1]])
         cache.entries[fname]['deps'] = depsval
-
-    # Let's print a list of modules with no detected deps so we can make
-    # sure this is behaving.
-    if no_deps_modules:
-        if bool(False):
-            print(
-                'NOTE: no dependencies found for:', ', '.join(no_deps_modules)
-            )
+        cache.entries[fname]['extdeps'] = extdepsval
+        cache.entries[fname]['extmissing'] = extmissing
 
     # Ok, now go through all dirtyfiles involved in this run. Mark them
     # as either errored or clean depending on whether there's error info
