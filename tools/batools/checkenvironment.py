@@ -43,7 +43,29 @@ from efro.terminal import Clr
 #: into a venv at ``<env_root>/.venv/`` so the env is fully
 #: self-contained and can evolve independently of the consumer's
 #: own Python version pinning.
-_CHECKENV_TOP_LEVEL_PACKAGES: set[str] = {'black', 'mypy', 'pylint'}
+#:
+#: Two categories:
+#:
+#: - **Lint/type-check tools** (``black``, ``mypy``, ``pylint``):
+#:   the tools the bamaster workspace runner actually invokes.
+#: - **Runtime imports referenced by the bundled python tree**
+#:   (``cryptography``, ``urllib3``, ``requests`` + its stubs,
+#:   ``certifi``): without these in the venv mypy can't resolve
+#:   the relevant ``import`` statements in the env's own python
+#:   tree, and ``verify_check_environment`` reports failures.
+#:   Keep this list in sync as the bundled tree's runtime
+#:   imports evolve — the daily ``verify_check_environment``
+#:   upkeep run will catch additions.
+_CHECKENV_TOP_LEVEL_PACKAGES: set[str] = {
+    'black',
+    'certifi',
+    'cryptography',
+    'mypy',
+    'pylint',
+    'requests',
+    'types-requests',
+    'urllib3',
+}
 
 
 #: Trees copied verbatim into the assembled env.
