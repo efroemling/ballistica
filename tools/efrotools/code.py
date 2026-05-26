@@ -318,6 +318,42 @@ def format_python_str(projroot: Path | str, code: str) -> str:
     )
 
 
+def format_python_files(
+    projroot: Path, filenames: list[str], *, capture: bool = False
+) -> dict[str, Any] | None:
+    """Format a specific list of Python files in place via black.
+
+    Parallel to :func:`pylint_files` and :func:`mypy_files`: the
+    ``filenames`` are exactly what black runs on, no
+    project-config / blacklist filtering applied (callers that
+    want that should pre-filter). No FileCache layer either —
+    black's own internal cache (``--cache``) handles
+    "already-formatted file" skips, and ad-hoc consumers (the
+    workspace-check runner) don't share a stable cache path
+    across runs anyway.
+
+    ``capture=True`` returns a result dict with
+    ``stdout``/``stderr``/``returncode`` and suppresses the raise
+    on non-zero exit, mirroring the capture mode that
+    ``pylint_files`` / ``mypy_files`` callers rely on for
+    programmatic consumption.
+    """
+    cmd = black_base_args(projroot) + filenames
+    if capture:
+        cp = subprocess.run(cmd, capture_output=True, check=False)
+        return {
+            'f': filenames,
+            'stdout': cp.stdout.decode('utf-8', errors='replace'),
+            'stderr': cp.stderr.decode('utf-8', errors='replace'),
+            'returncode': cp.returncode,
+        }
+    if subprocess.run(cmd, check=False).returncode != 0:
+        raise CleanError(
+            f'Black formatting failed for {len(filenames)} file(s).'
+        )
+    return None
+
+
 def _should_include_script(fnamefull: str) -> bool:
     fname = os.path.basename(fnamefull)
 

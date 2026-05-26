@@ -230,6 +230,20 @@ def formatscripts() -> None:
     efrotools.code.format_project_python_files(pcommand.PROJROOT, full)
 
 
+def format_files() -> None:
+    """Format the provided Python filenames in place via black."""
+    from efro.terminal import Clr
+    from efro.error import CleanError
+    import efrotools.code
+
+    if len(sys.argv) < 3:
+        raise CleanError('Expected at least 1 filename arg.')
+
+    filenames = sys.argv[2:]
+    efrotools.code.format_python_files(pcommand.PROJROOT, filenames)
+    print(f'{Clr.GRN}Formatted {len(filenames)} file(s).{Clr.RST}')
+
+
 def formatmakefile() -> None:
     """Format the main makefile."""
     from efrotools.makefile import Makefile

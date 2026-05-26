@@ -22,6 +22,7 @@ from efrotools.pcommands import (
     efrosync,
     formatcode,
     formatscripts,
+    format_files,
     formatmakefile,
     cpplint,
     pylint,
