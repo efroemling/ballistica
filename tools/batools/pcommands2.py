@@ -803,14 +803,23 @@ def asset_bundle_build() -> None:
         except Exception:
             existing = None
         if isinstance(existing, dict):
-            packages = existing.get('asset_packages') or []
-            if (
-                isinstance(packages, list)
-                and len(packages) == 1
-                and isinstance(packages[0], dict)
-                and packages[0].get('apverid') == apversion
-            ):
-                return
+            # DUAL-READ (remove old branch after manifest-schema flip;
+            # see asset-packages.md "Manifest schema"): short-circuit
+            # only when the cache already holds exactly this apverid.
+            # Any other / old / missing shape falls through to rebuild.
+            apvs = existing.get('asset_package_versions')
+            if isinstance(apvs, dict):
+                if list(apvs.keys()) == [apversion]:
+                    return
+            else:
+                packages = existing.get('asset_packages') or []
+                if (
+                    isinstance(packages, list)
+                    and len(packages) == 1
+                    and isinstance(packages[0], dict)
+                    and packages[0].get('apverid') == apversion
+                ):
+                    return
 
     print(
         f'{Clr.BLU}Building {variant} asset bundle for'

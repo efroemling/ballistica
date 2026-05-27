@@ -189,7 +189,7 @@ assetpins:
 # control (single package, single file, track switching, exact
 # version), invoke the underlying pcommand directly.
 assetpins-latest:
-	@$(PCOMMAND) assetpins update latest all
+	@$(PCOMMAND) assetpins update all latest
 
 # (No dedicated assetpins-check make target — non-prod pins are
 # flagged prominently in ``make assetpins`` output, and the

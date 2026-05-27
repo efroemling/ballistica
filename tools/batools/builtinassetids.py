@@ -38,7 +38,26 @@ from typing import TYPE_CHECKING
 from efro.error import CleanError
 
 if TYPE_CHECKING:
-    pass
+    from typing import Any
+
+
+def _packages_from_manifest(
+    bundle: dict[str, Any],
+) -> list[tuple[str, dict[str, str]]]:
+    """Return ``(apverid, flavor_manifests)`` pairs from a parsed manifest.
+
+    DUAL-READ (remove the old-shape branch after the manifest-schema
+    flip — see ``asset-packages.md`` "Manifest schema"): tolerates both
+    the new shape (``asset_package_versions`` dict) and the original
+    (``asset_packages`` list of ``{apverid, bundled_buckets}``).
+    """
+    apvs = bundle.get('asset_package_versions')
+    if isinstance(apvs, dict):
+        return [(apv, e['flavor_manifests']) for apv, e in apvs.items()]
+    return [
+        (e['apverid'], e['bundled_buckets'])
+        for e in (bundle.get('asset_packages') or [])
+    ]
 
 
 class AssetKind(Enum):
@@ -197,19 +216,22 @@ def collect(projroot: Path) -> BuildResult:
             'to produce it.'
         )
     bundle = json.loads(bundle_path.read_text())
-    packages = bundle.get('asset_packages') or []
+    # DUAL-READ (remove old branch after manifest-schema flip; see
+    # asset-packages.md "Manifest schema"): accept the new shape
+    # (asset_package_versions dict) and the original (asset_packages
+    # list of {apverid, bundled_buckets}).
+    packages = _packages_from_manifest(bundle)
     if len(packages) != 1:
         raise CleanError(
-            f'Expected exactly one entry in asset_packages at '
+            f'Expected exactly one asset-package entry at '
             f'{bundle_path}; got {len(packages)}.'
         )
-    pkg = packages[0]
-    apverid: str = pkg['apverid']
+    apverid, flavor_manifests = packages[0]
 
     projectconfig_apverid = getprojectconfig(projroot).get('assets')
     if projectconfig_apverid != apverid:
         raise CleanError(
-            f"Bundle manifest apverid {apverid!r} does not match "
+            f"Manifest apverid {apverid!r} does not match "
             f"projectconfig 'assets' {projectconfig_apverid!r}; "
             'the manifest is stale. Try '
             '`make assets-resolve-clean && make cmake-build`.'
@@ -220,7 +242,7 @@ def collect(projroot: Path) -> BuildResult:
     result = BuildResult(apverid=apverid)
     errors: list[str] = []
 
-    for bucket_id, manifest_sha in pkg['bundled_buckets'].items():
+    for bucket_id, manifest_sha in flavor_manifests.items():
         bucket_path = cas_root / manifest_sha[:2] / manifest_sha[2:]
         if not bucket_path.is_file():
             raise CleanError(
