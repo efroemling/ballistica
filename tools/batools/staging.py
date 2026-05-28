@@ -571,14 +571,10 @@ class BuildStager:
         with open(bundle_manifest_path, encoding='utf-8') as infile:
             bundle = json.loads(infile.read())
 
-        # DUAL-READ (remove after manifest-schema flip; see
-        # asset-packages.md "Manifest schema"): accept new + old shapes.
-        apvs = bundle.get('asset_package_versions')
-        flavor_manifest_maps = (
-            [e['flavor_manifests'] for e in apvs.values()]
-            if apvs is not None
-            else [e['bundled_buckets'] for e in bundle['asset_packages']]
-        )
+        flavor_manifest_maps = [
+            e['flavor_manifests']
+            for e in bundle['asset_package_versions'].values()
+        ]
 
         hashes: set[str] = set()
         for flavor_manifests in flavor_manifest_maps:

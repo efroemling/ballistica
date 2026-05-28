@@ -88,23 +88,10 @@ def load_bundled_asset_packages() -> None:
 def _iter_manifest_packages(
     bundle: dict[str, Any],
 ) -> list[tuple[str, dict[str, str]]]:
-    """Return ``(apverid, flavor_manifests)`` pairs from a parsed manifest.
-
-    DUAL-READ (remove the old-shape branch after the manifest-schema
-    flip — see ``asset-packages.md`` "Manifest schema"): tolerates both
-    the new shape (top-level ``asset_package_versions`` dict keyed by
-    apverid, each value carrying a ``flavor_manifests`` map) and the
-    original (``asset_packages`` list of ``{apverid, bundled_buckets}``).
-    """
-    apvs = bundle.get('asset_package_versions')
-    if isinstance(apvs, dict):
-        return [
-            (apverid, entry['flavor_manifests'])
-            for apverid, entry in apvs.items()
-        ]
+    """Return ``(apverid, flavor_manifests)`` pairs from a parsed manifest."""
     return [
-        (entry['apverid'], entry['bundled_buckets'])
-        for entry in bundle.get('asset_packages', [])
+        (apverid, entry['flavor_manifests'])
+        for apverid, entry in bundle.get('asset_package_versions', {}).items()
     ]
 
 

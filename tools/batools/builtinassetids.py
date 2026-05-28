@@ -44,19 +44,10 @@ if TYPE_CHECKING:
 def _packages_from_manifest(
     bundle: dict[str, Any],
 ) -> list[tuple[str, dict[str, str]]]:
-    """Return ``(apverid, flavor_manifests)`` pairs from a parsed manifest.
-
-    DUAL-READ (remove the old-shape branch after the manifest-schema
-    flip — see ``asset-packages.md`` "Manifest schema"): tolerates both
-    the new shape (``asset_package_versions`` dict) and the original
-    (``asset_packages`` list of ``{apverid, bundled_buckets}``).
-    """
-    apvs = bundle.get('asset_package_versions')
-    if isinstance(apvs, dict):
-        return [(apv, e['flavor_manifests']) for apv, e in apvs.items()]
+    """Return ``(apverid, flavor_manifests)`` pairs from a parsed manifest."""
     return [
-        (e['apverid'], e['bundled_buckets'])
-        for e in (bundle.get('asset_packages') or [])
+        (apv, e['flavor_manifests'])
+        for apv, e in bundle.get('asset_package_versions', {}).items()
     ]
 
 
@@ -216,10 +207,6 @@ def collect(projroot: Path) -> BuildResult:
             'to produce it.'
         )
     bundle = json.loads(bundle_path.read_text())
-    # DUAL-READ (remove old branch after manifest-schema flip; see
-    # asset-packages.md "Manifest schema"): accept the new shape
-    # (asset_package_versions dict) and the original (asset_packages
-    # list of {apverid, bundled_buckets}).
     packages = _packages_from_manifest(bundle)
     if len(packages) != 1:
         raise CleanError(
