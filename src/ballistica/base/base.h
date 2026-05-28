@@ -627,7 +627,8 @@ enum class BuiltinMeshOldID : uint8_t {
 // the workspace gains them; old hand-coded ``Builtin*OldID`` entries
 // above retire one at a time as their callsites migrate.
 
-inline constexpr const char* kBuiltinAssetsApverid = "a-0.bastdassets.260527";
+inline constexpr const char* kBuiltinAssetsApverid =
+    "a-0.babuiltinassets.260528a";
 
 enum class BuiltinTextureID : uint16_t {
   kMydirHelloworld,  // ba_data/textures/mydir/helloworld.ktx2
