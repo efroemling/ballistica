@@ -80,7 +80,9 @@ class CoreConfig {
   /// Python's default root logger (which at default WARNING would drop
   /// INFO/DEBUG messages silently). When false (the default) log calls
   /// flow through to Python as soon as the interpreter is ready.
-  /// Auto-derived by ForArgsAndEnvVars() as !call_command.has_value().
+  /// Auto-derived by ForArgsAndEnvVars() as true only for monolithic
+  /// builds without a -c command; modular builds and bare-interpreter
+  /// invocations want emit-immediately behavior (false).
   bool expect_log_handler_setup{};
 };
 

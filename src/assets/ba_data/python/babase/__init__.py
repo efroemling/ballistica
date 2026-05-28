@@ -212,7 +212,11 @@ from babase._stringedit import StringEditAdapter, StringEditSubsystem
 from babase._text import timestring
 from babase._workspace import WorkspaceSubsystem
 
-_babase.app = app = App()
+#: The :class:`~babase.App` singleton for the current process. Also
+#: exposed at ``bauiv1.app``, ``bascenev1.app``, etc. — they all
+#: refer to this same object.
+app = App()
+_babase.app = app
 
 __all__ = [
     'accountlog',

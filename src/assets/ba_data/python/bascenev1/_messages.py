@@ -24,9 +24,11 @@ class _UnhandledType:
     pass
 
 
-# A special value that should be returned from handlemessage()
-# functions for unhandled message types.  This may result
-# in fallback message types being attempted/etc.
+#: Sentinel value to return from a ``handlemessage()`` override when
+#: the message type isn't recognized. The dispatcher will fall back
+#: to other handlers / base-class behavior, so returning this is
+#: distinct from returning ``None`` (which signals "handled, no
+#: result").
 UNHANDLED = _UnhandledType()
 
 

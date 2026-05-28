@@ -891,6 +891,28 @@ def gen_dummy_modules() -> None:
     generate_dummy_modules(projroot=str(pcommand.PROJROOT))
 
 
+def gen_vanilla_completions() -> None:
+    """Generate a JSON completion index for the vanilla API."""
+    from efro.error import CleanError
+    from batools.vanillacompletions import generate_vanilla_completions
+
+    if len(sys.argv) != 2:
+        raise CleanError(f'Expected no args; got {len(sys.argv) - 2}.')
+
+    generate_vanilla_completions(projroot=str(pcommand.PROJROOT))
+
+
+def gen_check_environment() -> None:
+    """Generate a standalone mypy/pylint check environment."""
+    from efro.error import CleanError
+    from batools.checkenvironment import generate_check_environment
+
+    if len(sys.argv) != 2:
+        raise CleanError(f'Expected no args; got {len(sys.argv) - 2}.')
+
+    generate_check_environment(projroot=str(pcommand.PROJROOT))
+
+
 def version() -> None:
     """Check app versions."""
     from batools.version import run

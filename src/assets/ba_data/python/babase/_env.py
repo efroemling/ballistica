@@ -22,9 +22,9 @@ if TYPE_CHECKING:
 
     from efro.logging import LogEntry, LogHandler
 
-# Timeout for standard functions talking to the master-server/etc. We
-# generally try to fail fast and retry instead of waiting a long time
-# for things.
+#: Timeout for standard functions talking to the master-server/etc.
+#: We generally try to fail fast and retry instead of waiting a long
+#: time for things.
 DEFAULT_REQUEST_TIMEOUT_SECONDS = 10
 
 _g_babase_imported: bool = False

@@ -571,17 +571,22 @@ class BuildStager:
         with open(bundle_manifest_path, encoding='utf-8') as infile:
             bundle = json.loads(infile.read())
 
+        flavor_manifest_maps = [
+            e['flavor_manifests']
+            for e in bundle['asset_package_versions'].values()
+        ]
+
         hashes: set[str] = set()
-        for ap_entry in bundle['asset_packages']:
-            for manifest_hash in ap_entry['bundled_buckets'].values():
+        for flavor_manifests in flavor_manifest_maps:
+            for manifest_hash in flavor_manifests.values():
                 hashes.add(manifest_hash)
-                bucket_path = (
+                blob_path = (
                     f'{self.projroot}/.cache/assetdata/'
                     f'{manifest_hash[:2]}/{manifest_hash[2:]}'
                 )
-                with open(bucket_path, encoding='utf-8') as infile:
-                    bucket_manifest = json.loads(infile.read())
-                hashes.update(bucket_manifest['h'].values())
+                with open(blob_path, encoding='utf-8') as infile:
+                    flavor_manifest = json.loads(infile.read())
+                hashes.update(flavor_manifest['h'].values())
         return hashes
 
     def _sync_asset_bundle(self) -> None:

@@ -139,38 +139,34 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             )
         )
 
-        # TEMP: asset-package CAS load smoke test. Loads helloworld
-        # from the bundled bastdassets package via the new
-        # ``<apverid>:<asset>`` qualified-ref path through gettexture.
-        # Apverid is resolved from the loaded manifest so it tracks dev
-        # snapshot rebinds without a hand-edit per build.
-        # Gated on a path that only exists on the original dev's Mac
-        # so this temp test code stays invisible after pubsyncs until
-        # we tear it out.
+        # TEMP: asset-package CAS load smoke test. Pulls
+        # helloworld via the typed ``bastdassets`` wrapper
+        # (``bascenev1.builtinassets``) so we exercise the full
+        # wrapper-module pin path end-to-end. The wrapper
+        # resolves to ``<apverid>:mydir/helloworld`` under the
+        # hood; ``assetpins`` keeps its embedded apverid in
+        # lockstep with the projectconfig pin via
+        # ``make assetpins-latest``.
+        # Gated on a path that only exists on the original
+        # dev's Mac so this temp test code stays invisible after
+        # pubsyncs until we tear it out.
         import os
-        import babase
 
         if os.path.isdir('/Users/ericf'):
-            _apverids = [
-                a
-                for a in babase.loaded_asset_package_apverids()
-                if a.startswith('a-0.bastdassets')
-            ]
-            if _apverids:
-                self._cas_hello_image = bs.NodeActor(
-                    bs.newnode(
-                        'image',
-                        attrs={
-                            'position': (0.0, 0.0),
-                            'texture': bs.gettexture(
-                                f'{_apverids[0]}:mydir/helloworld'
-                            ),
-                            'attach': 'center',
-                            'scale': (300.0, 300.0),
-                            'absolute_scale': True,
-                        },
-                    )
+            from bascenev1 import builtinassets
+
+            self._cas_hello_image = bs.NodeActor(
+                bs.newnode(
+                    'image',
+                    attrs={
+                        'position': (0.0, 0.0),
+                        'texture': builtinassets.mydir.helloworld,
+                        'attach': 'center',
+                        'scale': (300.0, 300.0),
+                        'absolute_scale': True,
+                    },
                 )
+            )
 
         self._update_timer = bs.Timer(0.1, self._update, repeat=True)
         self._update()

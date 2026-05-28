@@ -22,6 +22,7 @@ from efrotools.pcommands import (
     efrosync,
     formatcode,
     formatscripts,
+    format_files,
     formatmakefile,
     cpplint,
     pylint,
@@ -117,6 +118,8 @@ from batools.pcommands import (
     logcat,
     gen_python_enums_module,
     gen_dummy_modules,
+    gen_vanilla_completions,
+    gen_check_environment,
     version,
 )
 from batools.pcommands2 import (
@@ -136,7 +139,6 @@ from batools.pcommands2 import (
     wsl_build_check_win_drive,
     get_modern_make,
     assetpins,
-    asset_bundle_resolve,
     asset_bundle_build,
     cst_test,
 )

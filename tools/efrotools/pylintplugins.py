@@ -221,7 +221,7 @@ def class_annotations_filter(
     if not using_future_annotations(node):
         return node
 
-    assert isinstance(node, astroid.ClassDef)
+    assert isinstance(node, astroid.nodes.ClassDef)
 
     # UPDATE: Not clearing annotations on parent classes, since in
     # some cases we use them at runtime.
@@ -279,10 +279,10 @@ def var_annotations_filter(node: astroid.nodes.NodeNG) -> astroid.nodes.NodeNG:
         fnode = node
         willeval = False
         while fnode is not None:
-            if isinstance(fnode, astroid.FunctionDef):
+            if isinstance(fnode, astroid.nodes.FunctionDef):
                 # Assigns within functions never eval.
                 break
-            if isinstance(fnode, astroid.ClassDef):
+            if isinstance(fnode, astroid.nodes.ClassDef):
                 # Ok; the assign seems to be at the class level. See if
                 # its an ioprepped dataclass.
                 if fnode.decorators is not None:
@@ -320,11 +320,15 @@ def var_annotations_filter(node: astroid.nodes.NodeNG) -> astroid.nodes.NodeNG:
         willeval = True
         while fnode is not None:
             if isinstance(
-                fnode, (astroid.FunctionDef, astroid.AsyncFunctionDef)
+                fnode,
+                (
+                    astroid.nodes.FunctionDef,
+                    astroid.nodes.AsyncFunctionDef,
+                ),
             ):
                 willeval = False
                 break
-            if isinstance(fnode, astroid.ClassDef):
+            if isinstance(fnode, astroid.nodes.ClassDef):
                 willeval = True
                 break
             fnode = fnode.parent
@@ -490,23 +494,25 @@ def register_plugins(manager: astroid.Manager) -> None:
     # Completely ignore everything under an 'if TYPE_CHECKING'
     # conditional. That stuff only gets run for mypy, and in general we
     # want to check code as if it doesn't exist at all.
-    manager.register_transform(astroid.If, ignore_type_check_filter)
+    manager.register_transform(astroid.nodes.If, ignore_type_check_filter)
 
     # We use 'reveal_type()' quite often, which tells mypy to print
     # the type of an expression. Let's ignore it in Pylint's eyes so
     # we don't see an ugly error there.
-    manager.register_transform(astroid.Call, ignore_reveal_type_call)
+    manager.register_transform(astroid.nodes.Call, ignore_reveal_type_call)
 
     # We make use of 'from __future__ import annotations' which causes
     # Python to receive annotations as strings, and also 'if
     # TYPE_CHECKING:' blocks, which lets us do imports and whatnot that
     # are limited to type-checking. Let's make Pylint understand these.
-    manager.register_transform(astroid.AnnAssign, var_annotations_filter)
-    manager.register_transform(astroid.FunctionDef, func_annotations_filter)
+    manager.register_transform(astroid.nodes.AnnAssign, var_annotations_filter)
     manager.register_transform(
-        astroid.AsyncFunctionDef, func_annotations_filter
+        astroid.nodes.FunctionDef, func_annotations_filter
     )
-    manager.register_transform(astroid.ClassDef, class_annotations_filter)
+    manager.register_transform(
+        astroid.nodes.AsyncFunctionDef, func_annotations_filter
+    )
+    manager.register_transform(astroid.nodes.ClassDef, class_annotations_filter)
 
 
 register_plugins(astroid.MANAGER)

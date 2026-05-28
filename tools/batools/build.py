@@ -127,6 +127,8 @@ class LazyBuildCategory(Enum):
     CMAKE = 'cmake_src'
     WIN = 'win_src'
     DUMMYMODULES = 'dummymodules_src'
+    VANILLA_COMPLETIONS = 'vanilla_completions_src'
+    CHECK_ENVIRONMENT = 'check_environment_src'
 
 
 def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
@@ -259,18 +261,11 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'src/assets',
                 '.efrocachemap',
                 # Needed to rebuild on asset-bundle apversion
-                # changes ("assets" field).
+                # changes ("assets" field). projectconfig is the
+                # single source of truth post-migration; any
+                # change here flows through to bundle-manifest
+                # rules that depend on it directly.
                 'pconfig/projectconfig.json',
-            ],
-            # Absence forces lazybuild to re-run the wrapped
-            # assets target. The sentinel is written by
-            # ``asset_bundle_resolve`` (called from env's
-            # ``assets-resolve`` target) for stable apverids and
-            # deleted for dev apverids — the missing-sentinel
-            # signal keeps assets-cmake re-staging on every dev
-            # build so manifest changes propagate.
-            srcpaths_exist=[
-                '.cache/asset_bundle/resolved',
             ],
             command=command,
             filefilter=_filefilter,
@@ -319,6 +314,39 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # featureset is removed/etc.
             manifest_file=f'.cache/lazybuild/manifest_{category.value}',
             command_fullclean='make dummymodules-clean',
+        ).run()
+
+    # Vanilla completions: introspect the runtime Python tree against
+    # the dummy modules and dump a JSON completion index. Inputs are
+    # the runtime Python sources plus the generator script; the
+    # dummymodules dep handled at Make level since DUMMYMODULES has
+    # its own srcpath set.
+    elif category is LazyBuildCategory.VANILLA_COMPLETIONS:
+        LazyBuildContext(
+            target=target,
+            buildlockname=category.value,
+            srcpaths=[
+                'src/assets/ba_data/python',
+                'tools/batools/vanillacompletions.py',
+            ],
+            command=command,
+        ).run()
+
+    elif category is LazyBuildCategory.CHECK_ENVIRONMENT:
+        LazyBuildContext(
+            target=target,
+            buildlockname=category.value,
+            srcpaths=[
+                'src/assets/ba_data/python',
+                'build/dummymodules',
+                'tools/efro',
+                'tools/efrotools',
+                'tools/bacommon',
+                'tools/batools/checkenvironment.py',
+                'pconfig/toolconfigsrc/mypy.ini',
+                'pconfig/toolconfigsrc/pylintrc',
+            ],
+            command=command,
         ).run()
 
     else:

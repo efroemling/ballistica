@@ -38,7 +38,17 @@ from typing import TYPE_CHECKING
 from efro.error import CleanError
 
 if TYPE_CHECKING:
-    pass
+    from typing import Any
+
+
+def _packages_from_manifest(
+    bundle: dict[str, Any],
+) -> list[tuple[str, dict[str, str]]]:
+    """Return ``(apverid, flavor_manifests)`` pairs from a parsed manifest."""
+    return [
+        (apv, e['flavor_manifests'])
+        for apv, e in bundle.get('asset_package_versions', {}).items()
+    ]
 
 
 class AssetKind(Enum):
@@ -179,9 +189,10 @@ def _strip_logical_prefix(logical_path: str) -> str:
 def collect(projroot: Path) -> BuildResult:
     """Read cached manifests and produce a validated build result.
 
-    The manifest is produced as part of ``make update`` (the
-    update-time ``assets-resolve`` invocation), so by the time
-    we're reading it the file exists and its apverid matches
+    The manifest is produced by ``asset_bundle_build`` (invoked
+    via the make rule whose direct dep is
+    ``pconfig/projectconfig.json``), so by the time we're
+    reading it the file exists and its apverid matches
     projectconfig's ``"assets"``. Anything else is a build-system
     bug we want to surface, not paper over.
     """
@@ -192,25 +203,25 @@ def collect(projroot: Path) -> BuildResult:
     if not bundle_path.is_file():
         raise CleanError(
             f'Asset-bundle manifest not found at {bundle_path}; '
-            'run `make update` first to produce it.'
+            'run `make cmake-build` (or `make assetpins-latest`) '
+            'to produce it.'
         )
     bundle = json.loads(bundle_path.read_text())
-    packages = bundle.get('asset_packages') or []
+    packages = _packages_from_manifest(bundle)
     if len(packages) != 1:
         raise CleanError(
-            f'Expected exactly one entry in asset_packages at '
+            f'Expected exactly one asset-package entry at '
             f'{bundle_path}; got {len(packages)}.'
         )
-    pkg = packages[0]
-    apverid: str = pkg['apverid']
+    apverid, flavor_manifests = packages[0]
 
     projectconfig_apverid = getprojectconfig(projroot).get('assets')
     if projectconfig_apverid != apverid:
         raise CleanError(
-            f"Bundle manifest apverid {apverid!r} does not match "
+            f"Manifest apverid {apverid!r} does not match "
             f"projectconfig 'assets' {projectconfig_apverid!r}; "
-            '`make env` should have refreshed the bundle. '
-            'Try `make assets-resolve-clean && make env`.'
+            'the manifest is stale. Try '
+            '`make assets-resolve-clean && make cmake-build`.'
         )
 
     cas_root = projroot / '.cache/assetdata'
@@ -218,7 +229,7 @@ def collect(projroot: Path) -> BuildResult:
     result = BuildResult(apverid=apverid)
     errors: list[str] = []
 
-    for bucket_id, manifest_sha in pkg['bundled_buckets'].items():
+    for bucket_id, manifest_sha in flavor_manifests.items():
         bucket_path = cas_root / manifest_sha[:2] / manifest_sha[2:]
         if not bucket_path.is_file():
             raise CleanError(
@@ -427,23 +438,40 @@ def compute_splices(
     updater that's already loaded the file); pass ``None`` to read
     from disk here.
     """
+    # Run the spliced result through clang-format so our output matches
+    # what ``make format`` produces. Without this the generator emits
+    # raw (e.g. single-line) content that the formatter then rewrites
+    # (e.g. wrapping a long apverid assignment), leaving the two in a
+    # tug-of-war and making any "is the splice up to date?" check
+    # unreliable. The non-autogen parts of these files are already
+    # clang-formatted, so this only normalizes the spliced region.
+    from efrotools.code import format_cpp_str
+
     result = collect(projroot)
     if base_h_existing is None:
         base_h_existing = (projroot / TARGET_BASE_H).read_text()
     if assets_cc_existing is None:
         assets_cc_existing = (projroot / TARGET_ASSETS_CC).read_text()
     return {
-        TARGET_BASE_H: _splice_autogen(
-            base_h_existing,
-            _MARKERS_BASE_H[0],
-            _MARKERS_BASE_H[1],
-            render_enum_block(result),
+        TARGET_BASE_H: format_cpp_str(
+            projroot,
+            _splice_autogen(
+                base_h_existing,
+                _MARKERS_BASE_H[0],
+                _MARKERS_BASE_H[1],
+                render_enum_block(result),
+            ),
+            filename='base.h',
         ),
-        TARGET_ASSETS_CC: _splice_autogen(
-            assets_cc_existing,
-            _MARKERS_ASSETS_CC[0],
-            _MARKERS_ASSETS_CC[1],
-            render_load_block(result),
+        TARGET_ASSETS_CC: format_cpp_str(
+            projroot,
+            _splice_autogen(
+                assets_cc_existing,
+                _MARKERS_ASSETS_CC[0],
+                _MARKERS_ASSETS_CC[1],
+                render_load_block(result),
+            ),
+            filename='assets.cc',
         ),
     }
 

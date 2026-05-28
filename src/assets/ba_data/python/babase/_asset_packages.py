@@ -17,8 +17,12 @@ from __future__ import annotations
 import json
 import logging
 import os
+from typing import TYPE_CHECKING
 
 import _babase
+
+if TYPE_CHECKING:
+    from typing import Any
 
 _lifecyclelog = logging.getLogger('ba.lifecycle')
 
@@ -60,16 +64,15 @@ def load_bundled_asset_packages() -> None:
     pkg_count = 0
     bucket_count = 0
     entry_count = 0
-    for pkg in bundle.get('asset_packages', []):
-        apverid = pkg['apverid']
+    for apverid, flavor_manifests in _iter_manifest_packages(bundle):
         pkg_count += 1
         _loaded_apverids.append(apverid)
-        for bucket_id, bucket_hash in pkg.get('bundled_buckets', {}).items():
-            bucket_path = _cas_blob_path(data_dir, bucket_hash)
-            with open(bucket_path, encoding='utf-8') as bfile:
-                bucket = json.load(bfile)
-            entries = bucket.get('h', {})
-            _babase.register_asset_package_bucket(apverid, bucket_id, entries)
+        for coord, manifest_hash in flavor_manifests.items():
+            blob_path = _cas_blob_path(data_dir, manifest_hash)
+            with open(blob_path, encoding='utf-8') as bfile:
+                flavor_manifest = json.load(bfile)
+            entries = flavor_manifest.get('h', {})
+            _babase.register_asset_package_bucket(apverid, coord, entries)
             bucket_count += 1
             entry_count += len(entries)
 
@@ -80,6 +83,16 @@ def load_bundled_asset_packages() -> None:
         bucket_count,
         entry_count,
     )
+
+
+def _iter_manifest_packages(
+    bundle: dict[str, Any],
+) -> list[tuple[str, dict[str, str]]]:
+    """Return ``(apverid, flavor_manifests)`` pairs from a parsed manifest."""
+    return [
+        (apverid, entry['flavor_manifests'])
+        for apverid, entry in bundle.get('asset_package_versions', {}).items()
+    ]
 
 
 def _cas_blob_path(data_dir: str, filehash: str) -> str:

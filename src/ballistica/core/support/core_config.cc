@@ -218,11 +218,20 @@ auto CoreConfig::ForArgsAndEnvVars(int argc, char** argv, seconds_t launch_time)
   cfg.ApplyEnvVars();
   cfg.ApplyArgs(argc, argv);
 
-  // Unless we're acting as a bare Python interpreter (-c), assume the
-  // caller is going to bring up a LogHandler via baenv.configure() and
-  // defer C++ log emission until then. This keeps pre-handler log lines
-  // from being dropped silently by Python's default root-logger filter.
-  cfg.expect_log_handler_setup = !cfg.call_command.has_value();
+  // For the full monolithic app path, assume the caller is going to bring
+  // up a LogHandler via baenv.configure() and defer C++ log emission until
+  // then. This keeps pre-handler log lines from being dropped silently by
+  // Python's default root-logger filter.
+  //
+  // We exclude two cases, both of which want emit-immediately behavior:
+  // bare-interpreter (-c) invocations (no handler is coming), and modular
+  // builds. In modular builds baenv.configure() runs from Python *before*
+  // the engine is imported, so the handler is already up by the time core
+  // comes up; and nothing on that path ever calls OnLogHandlerReady() to
+  // flush a deferred buffer, so deferring would strand logs (and trip the
+  // python_logging_calls_enabled_ assert in UpdateInternalLoggerLevels).
+  cfg.expect_log_handler_setup =
+      g_buildconfig.monolithic_build() && !cfg.call_command.has_value();
 
   return cfg;
 }
