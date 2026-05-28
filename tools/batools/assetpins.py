@@ -52,6 +52,7 @@ from __future__ import annotations
 import re
 import enum
 import subprocess
+import concurrent.futures
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -160,6 +161,10 @@ class Pin:
     #: Filled by ``do_list`` (master roundtrip); None if not
     #: queried.
     latest_available: str | None = None
+    #: Account tag (e.g. ``efro``) resolved from ``account`` by
+    #: ``do_list``. None if the account no longer exists (deleted) or
+    #: the lookup failed — rendered as the raw account id in red.
+    account_tag: str | None = None
 
 
 # --------------------------------------------------------------------
@@ -175,27 +180,85 @@ def do_list(projroot: Path) -> None:
         _print_help_pointer()
         return
 
-    # Master roundtrips happen here (one per pin, sequential —
-    # the pin set is small).
-    for pin in pins:
+    # One master roundtrip per pin to find the newest version on
+    # each pin's track. They're independent I/O-bound calls (each
+    # shells out to its own bacloud subprocess), so run them in a
+    # bounded thread pool — modders may reference many asset-packages
+    # and serial lookups would scale linearly. Each worker mutates
+    # only its own pin, and ``map`` returns the per-pin error strings
+    # in input order, so output stays deterministic regardless of
+    # completion order.
+    def _lookup(pin: Pin) -> str | None:
         try:
             pin.latest_available = _query_latest_for_track(
                 projroot, pin, pin.pin_type
             )
+            return None
         except Exception as exc:
-            print(f'  {pin.file_path}: lookup failed: {exc}')
             pin.latest_available = None
+            return f'  {pin.file_path}: lookup failed: {exc}'
+
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=min(len(pins), 16)
+    ) as executor:
+        errors = list(executor.map(_lookup, pins))
+
+    for error in errors:
+        if error is not None:
+            print(error)
+
+    # Resolve account ids -> display tags (e.g. ``a-0`` -> ``efro``).
+    # Dedupe by account (pins frequently share one) and resolve the
+    # unique set in parallel, same as the version lookups above.
+    accounts = sorted({pin.account for pin in pins})
+
+    def _tag_lookup(account: str) -> tuple[str, str | None, str | None]:
+        try:
+            return (account, _query_account_tag(projroot, account), None)
+        except Exception as exc:
+            return (
+                account,
+                None,
+                f'  account {account}: tag lookup failed: {exc}',
+            )
+
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=min(len(accounts), 16)
+    ) as executor:
+        tag_results = list(executor.map(_tag_lookup, accounts))
+
+    account_tags: dict[str, str | None] = {}
+    for account, tag, tag_error in tag_results:
+        account_tags[account] = tag
+        if tag_error is not None:
+            print(tag_error)
+    for pin in pins:
+        pin.account_tag = account_tags.get(pin.account)
 
     _print_pin_table(pins)
     _print_help_pointer()
 
 
+def _account_cell(pin: Pin) -> tuple[str, str | None]:
+    """Return ``(text, color)`` for a pin's ``account`` column.
+
+    The resolved account tag (e.g. ``efro``) in normal color, or — if
+    the account couldn't be resolved to a tag (deleted, or the lookup
+    failed) — the raw account id (e.g. ``a-0``) in red.
+    """
+    if pin.account_tag is not None:
+        return (pin.account_tag, None)
+    return (pin.account, Clr.RED)
+
+
 def _print_pin_table(pins: list[Pin]) -> None:
     """Render the discovered-pins table within the column budget."""
-    headers = ('file', 'package', 'version', 'status')
+    # pylint: disable=too-many-locals
+    headers = ('file', 'account', 'package', 'version', 'status')
     rows = [
         (
             str(pin.file_path),
+            *_account_cell(pin),
             pin.package,
             _format_pin_label(pin),
             _pin_color(pin),
@@ -205,11 +268,12 @@ def _print_pin_table(pins: list[Pin]) -> None:
     ]
 
     # Non-file columns always size to fit their content.
-    pkg_w = max(len(headers[1]), *(len(r[1]) for r in rows))
-    pin_w = max(len(headers[2]), *(len(r[2]) for r in rows))
-    status_w = max(len(headers[3]), *(len(r[4]) for r in rows))
-    # 3 inter-column gaps of 2 spaces each = 6.
-    fixed_w = pkg_w + pin_w + status_w + 6
+    account_w = max(len(headers[1]), *(len(r[1]) for r in rows))
+    pkg_w = max(len(headers[2]), *(len(r[3]) for r in rows))
+    pin_w = max(len(headers[3]), *(len(r[4]) for r in rows))
+    status_w = max(len(headers[4]), *(len(r[6]) for r in rows))
+    # 4 inter-column gaps of 2 spaces each = 8.
+    fixed_w = account_w + pkg_w + pin_w + status_w + 8
 
     # Natural file-column width = enough to show every path
     # unclipped. We cap the total table width at the smaller of
@@ -231,16 +295,31 @@ def _print_pin_table(pins: list[Pin]) -> None:
     # padding stays based on visible-text length.
     header_line = (
         f'{headers[0]:<{file_w}}  '
-        f'{headers[1]:<{pkg_w}}  '
-        f'{headers[2]:<{pin_w}}  '
-        f'{headers[3]}'
+        f'{headers[1]:<{account_w}}  '
+        f'{headers[2]:<{pkg_w}}  '
+        f'{headers[3]:<{pin_w}}  '
+        f'{headers[4]}'
     )
     print(f'{Clr.SBLK}{header_line}{Clr.RST}')
-    for file_path, package, pin_label, pin_clr, status in rows:
+    for (
+        file_path,
+        account_text,
+        account_clr,
+        package,
+        pin_label,
+        pin_clr,
+        status,
+    ) in rows:
         # Pad each cell to width as visible text *first*, then
         # wrap with color codes so column alignment is based on
         # visible width (ANSI codes have zero printable width
         # but the formatter doesn't know that).
+        padded_account = f'{account_text:<{account_w}}'
+        colored_account = (
+            f'{account_clr}{padded_account}{Clr.RST}'
+            if account_clr
+            else padded_account
+        )
         padded_pin = f'{pin_label:<{pin_w}}'
         colored_pin = (
             f'{pin_clr}{padded_pin}{Clr.RST}' if pin_clr else padded_pin
@@ -252,6 +331,7 @@ def _print_pin_table(pins: list[Pin]) -> None:
         padded_package = f'{package:<{pkg_w}}'
         print(
             f'{_clip_left(file_path, file_w):<{file_w}}  '
+            f'{colored_account}  '
             f'{Clr.BLD}{padded_package}{Clr.RST}  '
             f'{colored_pin}  '
             f'{colored_status}'
@@ -302,13 +382,13 @@ def _pin_color(pin: Pin) -> str:
 
 def _format_pin_status(pin: Pin) -> str:
     if pin.latest_available is None or pin.latest_available == pin.apverid:
-        return 'up to date'
-    return 'UPDATE AVAILABLE'
+        return 'up-to-date'
+    return 'UPDATE-AVAILABLE'
 
 
 def _status_color(status: str) -> str:
     """Return the ANSI color for a status label, or ``''``."""
-    if status == 'UPDATE AVAILABLE':
+    if status == 'UPDATE-AVAILABLE':
         return f'{Clr.BLD}{Clr.CYN}'
     return ''
 
@@ -744,23 +824,66 @@ def _bacloud_version(
     return out or None
 
 
+def _query_account_tag(projroot: Path, account: str) -> str | None:
+    """Return the display tag for ``account`` (e.g. ``efro``).
+
+    Uses ``bacloud account info --json`` (the caller's own bacloud
+    auth). Returns None if no such account exists (bacloud exit 1 —
+    e.g. the account was deleted); raises on any other failure.
+    """
+    from efro.dataclassio import dataclass_from_json
+
+    from bacommon.restapi.v1.accounts import AccountResponse
+
+    result = subprocess.run(
+        [
+            str(projroot / 'tools' / 'bacloud'),
+            'account',
+            'info',
+            account,
+            '--json',
+        ],
+        cwd=projroot,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    # bacloud convention: exit 0 = found, exit 1 = no such account,
+    # anything else = error.
+    if result.returncode == 1:
+        return None
+    if result.returncode != 0:
+        raise CleanError(
+            f'bacloud account info failed for {account}:'
+            f' {result.stderr.strip()}'
+        )
+    return dataclass_from_json(AccountResponse, result.stdout.strip()).tag
+
+
 def _fetch_wrapper(projroot: Path, apverid: str, wrapper_type: str) -> str:
     """Fetch a freshly-generated wrapper module from master.
 
-    Hits the admin REST endpoint via ``tools/pcommand bacurl``
-    (which injects Bearer auth from localconfig). Returns the
-    wrapper source as a string.
+    Uses ``bacloud assetpackage wrapper``, which authenticates with
+    the caller's own bacloud login — uniform with the version
+    lookups and requiring no admin Bearer key (so it works for any
+    signed-in user, and bacloud handles the not-signed-in case).
+    bacloud writes the generated module to a path, so we route it
+    through a scratch file under ``build/tmp`` and return the
+    contents (the caller compares against the on-disk file and only
+    rewrites on change).
     """
-    url = (
-        f'https://www.ballistica.net/api/v1/admin/'
-        f'asset-package-versions/{apverid}/python-wrapper'
-        f'?wrapper_type={wrapper_type}'
-    )
+    tmpdir = projroot / 'build' / 'tmp'
+    tmpdir.mkdir(parents=True, exist_ok=True)
+    out_rel = f'build/tmp/assetpins_wrapper_{wrapper_type}.py'
+    out_path = projroot / out_rel
     result = subprocess.run(
         [
-            str(projroot / 'tools' / 'pcommand'),
-            'bacurl',
-            url,
+            str(projroot / 'tools' / 'bacloud'),
+            'assetpackage',
+            'wrapper',
+            apverid,
+            wrapper_type,
+            out_rel,
         ],
         cwd=projroot,
         capture_output=True,
@@ -773,7 +896,10 @@ def _fetch_wrapper(projroot: Path, apverid: str, wrapper_type: str) -> str:
             f' (wrapper_type={wrapper_type}):'
             f' {result.stderr.strip()}'
         )
-    content = result.stdout
+    try:
+        content = out_path.read_text()
+    finally:
+        out_path.unlink(missing_ok=True)
     if not content.lstrip().startswith('# Released under'):
         raise CleanError(
             f'Fetched wrapper for {apverid} does not look like a'

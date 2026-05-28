@@ -162,6 +162,7 @@ class ProjectUpdater:
             _checks.check_misc(self)
             _checks.check_source_files(self)
             _checks.check_headers(self)
+            _checks.check_builtin_asset_ids(self)
 
         # Make sure nobody is changing this while processing.
         self._can_generate_files = False

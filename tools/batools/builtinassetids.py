@@ -438,23 +438,40 @@ def compute_splices(
     updater that's already loaded the file); pass ``None`` to read
     from disk here.
     """
+    # Run the spliced result through clang-format so our output matches
+    # what ``make format`` produces. Without this the generator emits
+    # raw (e.g. single-line) content that the formatter then rewrites
+    # (e.g. wrapping a long apverid assignment), leaving the two in a
+    # tug-of-war and making any "is the splice up to date?" check
+    # unreliable. The non-autogen parts of these files are already
+    # clang-formatted, so this only normalizes the spliced region.
+    from efrotools.code import format_cpp_str
+
     result = collect(projroot)
     if base_h_existing is None:
         base_h_existing = (projroot / TARGET_BASE_H).read_text()
     if assets_cc_existing is None:
         assets_cc_existing = (projroot / TARGET_ASSETS_CC).read_text()
     return {
-        TARGET_BASE_H: _splice_autogen(
-            base_h_existing,
-            _MARKERS_BASE_H[0],
-            _MARKERS_BASE_H[1],
-            render_enum_block(result),
+        TARGET_BASE_H: format_cpp_str(
+            projroot,
+            _splice_autogen(
+                base_h_existing,
+                _MARKERS_BASE_H[0],
+                _MARKERS_BASE_H[1],
+                render_enum_block(result),
+            ),
+            filename='base.h',
         ),
-        TARGET_ASSETS_CC: _splice_autogen(
-            assets_cc_existing,
-            _MARKERS_ASSETS_CC[0],
-            _MARKERS_ASSETS_CC[1],
-            render_load_block(result),
+        TARGET_ASSETS_CC: format_cpp_str(
+            projroot,
+            _splice_autogen(
+                assets_cc_existing,
+                _MARKERS_ASSETS_CC[0],
+                _MARKERS_ASSETS_CC[1],
+                render_load_block(result),
+            ),
+            filename='assets.cc',
         ),
     }
 
