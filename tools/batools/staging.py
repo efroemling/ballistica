@@ -586,7 +586,15 @@ class BuildStager:
                 )
                 with open(blob_path, encoding='utf-8') as infile:
                     flavor_manifest = json.loads(infile.read())
-                hashes.update(flavor_manifest['h'].values())
+                # Dual-read during the manifest-schema rollout: new shape
+                # {'e': {path: {'h': hash, 's': size}}}, old shape
+                # {'h': {path: hash}}. Drop the 'h' fallback after the
+                # master producer flip propagates (Phase 4).
+                bucket_entries = flavor_manifest.get('e')
+                if bucket_entries is not None:
+                    hashes.update(v['h'] for v in bucket_entries.values())
+                else:
+                    hashes.update(flavor_manifest['h'].values())
         return hashes
 
     def _sync_asset_bundle(self) -> None:

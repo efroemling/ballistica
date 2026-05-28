@@ -237,7 +237,14 @@ def collect(projroot: Path) -> BuildResult:
                 f'(bucket {bucket_id!r}).'
             )
         bucket = json.loads(bucket_path.read_text())
-        for logical_path in sorted(bucket.get('h', {}).keys()):
+        # Dual-read during the manifest-schema rollout: new shape
+        # {'e': {path: {...}}}, old shape {'h': {path: hash}}. Keys
+        # (logical paths) are identical in both. Drop the 'h' fallback
+        # after the master producer flip propagates (Phase 4).
+        bucket_entries = bucket.get('e')
+        if bucket_entries is None:
+            bucket_entries = bucket.get('h', {})
+        for logical_path in sorted(bucket_entries.keys()):
             kind = _kind_for(bucket_id, logical_path)
             if kind is None:
                 continue

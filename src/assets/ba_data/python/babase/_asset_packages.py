@@ -71,7 +71,15 @@ def load_bundled_asset_packages() -> None:
             blob_path = _cas_blob_path(data_dir, manifest_hash)
             with open(blob_path, encoding='utf-8') as bfile:
                 flavor_manifest = json.load(bfile)
-            entries = flavor_manifest.get('h', {})
+            # Dual-read during the manifest-schema rollout: new shape is
+            # {'e': {path: {'h': hash, 's': size}}}; old shape was
+            # {'h': {path: hash}}. Drop the 'h' fallback once the master
+            # producer flip has fully propagated (asset-packages Phase 4).
+            new_entries = flavor_manifest.get('e')
+            if new_entries is not None:
+                entries = {p: info['h'] for p, info in new_entries.items()}
+            else:
+                entries = dict(flavor_manifest.get('h', {}))
             _babase.register_asset_package_bucket(apverid, coord, entries)
             bucket_count += 1
             entry_count += len(entries)
