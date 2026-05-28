@@ -47,6 +47,11 @@ Each pin is independent — moving one pin does not move any
 other. Track-switching is an explicit, deliberate operation.
 """
 
+# This module is the single cohesive home for asset-package pin
+# inspection/update; it has grown past the default module-size cap but
+# splitting it would scatter tightly-related logic.
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
 
 import re
@@ -61,6 +66,8 @@ from efro.terminal import Clr
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from bacommon.restapi.v1.accounts import AccountResponse
 
 
 # Total-width policy for the `assetpins` table output. We
@@ -414,7 +421,8 @@ def do_help() -> None:
         f'  {Clr.BLD}UPDATING PINS{Clr.RST}\n'
         f'    tools/pcommand assetpins update <TARGET> <VERSION>\n'
         f'    TARGET:  all | <package-name> | <file-path>\n'
-        f'    VERSION: latest | prod | test | dev | <full-third-segment>\n'
+        f'    VERSION: latest | prod | test | dev | <version>\n'
+        f'             | <account>.<package>.<version>\n'
         '\n'
         f'{Clr.BLD}EXAMPLES{Clr.RST}\n'
         f'\n'
@@ -423,23 +431,28 @@ def do_help() -> None:
         f'      Same as `tools/pcommand assetpins`.\n'
         f'\n'
         f'  {Clr.MAG}make assetpins-latest{Clr.RST}\n'
-        f'      Bump every pin to the newest version on its'
-        f' current track.\n'
+        f'      Pin everything to the latest version in its'
+        f' current track (dev/test/prod).\n'
         f'      Same as `tools/pcommand assetpins update all latest`.\n'
         f'\n'
         f'  {Clr.MAG}tools/pcommand assetpins update'
         f' all prod{Clr.RST}\n'
-        f'      Switch every pin to the latest prod'
-        f' version.\n'
+        f'      Pin everything to the latest prod'
+        f' version of itself.\n'
         f'\n'
         f'  {Clr.MAG}tools/pcommand assetpins update'
         f' pconfig/projectconfig.json dev{Clr.RST}\n'
-        f'      Re-resolve just the projectconfig pin to the'
-        f' current dev snapshot.\n'
+        f'      Pin a specific file to the'
+        f' latest dev version of itself.\n'
         f'\n'
         f'  {Clr.MAG}tools/pcommand assetpins update myassetpack'
         f' test260513a{Clr.RST}\n'
         f'      Pin every myassetpack instance to a specific version.\n'
+        f'\n'
+        f'  {Clr.MAG}tools/pcommand assetpins update myoldassets'
+        f' efro.mynewassets.test260518{Clr.RST}\n'
+        f'      Pin every myoldassets instance to a specific version.\n'
+        f'      With this long form you can switch assetpacks completely.\n'
         f'\n'
     )
 
@@ -458,8 +471,11 @@ def do_update(projroot: Path, target_str: str, version_str: str) -> None:
     ``bastdassets``), or a file path matching exactly one pin.
 
     ``version_str``: ``latest`` (track-preserving), ``prod`` /
-    ``test`` / ``dev`` (track-switching), or a full third
-    segment (e.g. ``260513a``, ``dev260513a``, ``test260512a``).
+    ``test`` / ``dev`` (track-switching), a full third segment
+    (e.g. ``260513a``, ``dev260513a``, ``test260512a``), or a full
+    ``<account-or-tag>.<package>.<version>`` spec to *retarget* the
+    pin to a different asset-package (e.g.
+    ``efro.mynewassets.test260518``).
     """
     pins = _discover_pins(projroot)
     if not pins:
@@ -686,8 +702,15 @@ def _compute_new_apverid(projroot: Path, pin: Pin, version_str: str) -> str:
     Track-preserving (``latest``) and track-switching
     (``prod``/``test``/``dev``) forms query master. Concrete
     third-segment forms (e.g. ``260513``, ``dev260513a``) are
-    used as-is, combined with the pin's own account+package.
+    used as-is, combined with the pin's own account+package. A full
+    dotted ``<account-or-tag>.<package>.<version>`` form *retargets*
+    the pin to a different asset-package (see
+    :func:`_compute_retarget_apverid`).
     """
+    # A dotted VERSION is the full retarget form; version segments and
+    # track keywords never contain dots, so this is unambiguous.
+    if '.' in version_str:
+        return _compute_retarget_apverid(projroot, version_str)
     if version_str == 'latest':
         return _query_latest_for_track(projroot, pin, pin.pin_type)
     if version_str == 'prod':
@@ -708,6 +731,64 @@ def _compute_new_apverid(projroot: Path, pin: Pin, version_str: str) -> str:
             f' pass `dev` (without the third-segment quotes) as a'
             f' track-switching form to resolve to the current'
             f' devN snapshot.'
+        )
+    classify_apverid(new)  # raises on malformed
+    return new
+
+
+def _compute_retarget_apverid(projroot: Path, spec: str) -> str:
+    """Compute a cross-package apverid from a full retarget spec.
+
+    ``spec`` is ``<account-or-tag>.<package>.<version>`` — used to
+    point a pin at a *different* asset-package, not just a new version
+    of its current one. The account may be an account id (``a-0``) or
+    a tag (``efro``). ``<version>`` is a concrete segment
+    (``test260518``) or a ``prod``/``test``/``dev`` track keyword
+    resolved against the target package. ``latest`` is not valid here
+    (it preserves an existing pin's track; a retarget has none).
+
+    No permission checks: master enforces those when assets are
+    actually fetched, so an unauthorized reference simply fails there.
+    """
+    parts = spec.split('.')
+    if len(parts) != 3 or not all(parts):
+        raise CleanError(
+            f'VERSION {spec!r}: a dotted VERSION must be a full'
+            f' <account-or-tag>.<package>.<version> spec'
+            f' (e.g. efro.mynewassets.test260518).'
+        )
+    account_or_tag, package, version_seg = parts
+    accountid = _resolve_account_id(projroot, account_or_tag)
+
+    if version_seg == 'latest':
+        raise CleanError(
+            "VERSION 'latest' is track-preserving and needs an existing"
+            ' pin; in the full <account>.<package>.<version> form pass'
+            ' prod/test/dev or a concrete version segment instead.'
+        )
+    if version_seg == 'prod':
+        result = _bacloud_version(projroot, accountid, package, prod=True)
+        if result is None:
+            raise CleanError(
+                f'No prod version of {accountid}.{package} found on master.'
+            )
+        return result
+    if version_seg == 'test':
+        result = _bacloud_version(projroot, accountid, package, prod=False)
+        if result is None:
+            raise CleanError(
+                f'No test version of {accountid}.{package} found on master.'
+            )
+        return result
+    if version_seg == 'dev':
+        return _resolve_bare_dev(projroot, accountid, package)
+
+    # Concrete version segment.
+    new = f'{accountid}.{package}.{version_seg}'
+    if is_unresolved_dev(new):
+        raise CleanError(
+            f'VERSION {spec!r}: bare dev pseudo-id; pass the third'
+            f' segment as `dev` to resolve the current devN snapshot.'
         )
     classify_apverid(new)  # raises on malformed
     return new
@@ -824,12 +905,15 @@ def _bacloud_version(
     return out or None
 
 
-def _query_account_tag(projroot: Path, account: str) -> str | None:
-    """Return the display tag for ``account`` (e.g. ``efro``).
+def _fetch_account_info(
+    projroot: Path, account_or_tag: str
+) -> AccountResponse | None:
+    """Return account info via ``bacloud account info --json``.
 
-    Uses ``bacloud account info --json`` (the caller's own bacloud
-    auth). Returns None if no such account exists (bacloud exit 1 —
-    e.g. the account was deleted); raises on any other failure.
+    Accepts an account id (``a-0``) or a tag (``efro``) — bacloud
+    resolves either, using the caller's own bacloud auth. Returns
+    None if no such account exists (bacloud exit 1); raises on any
+    other failure.
     """
     from efro.dataclassio import dataclass_from_json
 
@@ -840,7 +924,7 @@ def _query_account_tag(projroot: Path, account: str) -> str | None:
             str(projroot / 'tools' / 'bacloud'),
             'account',
             'info',
-            account,
+            account_or_tag,
             '--json',
         ],
         cwd=projroot,
@@ -854,10 +938,34 @@ def _query_account_tag(projroot: Path, account: str) -> str | None:
         return None
     if result.returncode != 0:
         raise CleanError(
-            f'bacloud account info failed for {account}:'
+            f'bacloud account info failed for {account_or_tag}:'
             f' {result.stderr.strip()}'
         )
-    return dataclass_from_json(AccountResponse, result.stdout.strip()).tag
+    return dataclass_from_json(AccountResponse, result.stdout.strip())
+
+
+def _query_account_tag(projroot: Path, account: str) -> str | None:
+    """Return the display tag for ``account`` (e.g. ``efro``).
+
+    None if no such account exists (deleted); raises on lookup
+    failure.
+    """
+    info = _fetch_account_info(projroot, account)
+    return None if info is None else info.tag
+
+
+def _resolve_account_id(projroot: Path, account_or_tag: str) -> str:
+    """Resolve an account id or tag to the canonical account id.
+
+    ``a-...`` ids are used as-is (no roundtrip); anything else is
+    treated as a tag and resolved to its account id via master.
+    """
+    if account_or_tag.startswith('a-'):
+        return account_or_tag
+    info = _fetch_account_info(projroot, account_or_tag)
+    if info is None:
+        raise CleanError(f'No account found for tag {account_or_tag!r}.')
+    return info.id
 
 
 def _fetch_wrapper(projroot: Path, apverid: str, wrapper_type: str) -> str:
