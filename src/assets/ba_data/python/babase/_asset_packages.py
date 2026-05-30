@@ -71,7 +71,7 @@ def load_bundled_asset_packages() -> None:
             blob_path = _cas_blob_path(data_dir, manifest_hash)
             with open(blob_path, encoding='utf-8') as bfile:
                 flavor_manifest = json.load(bfile)
-            entries = flavor_manifest.get('h', {})
+            entries = {p: info['h'] for p, info in flavor_manifest['e'].items()}
             _babase.register_asset_package_bucket(apverid, coord, entries)
             bucket_count += 1
             entry_count += len(entries)

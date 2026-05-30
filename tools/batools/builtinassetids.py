@@ -237,7 +237,7 @@ def collect(projroot: Path) -> BuildResult:
                 f'(bucket {bucket_id!r}).'
             )
         bucket = json.loads(bucket_path.read_text())
-        for logical_path in sorted(bucket.get('h', {}).keys()):
+        for logical_path in sorted(bucket.get('e', {}).keys()):
             kind = _kind_for(bucket_id, logical_path)
             if kind is None:
                 continue

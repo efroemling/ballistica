@@ -586,7 +586,9 @@ class BuildStager:
                 )
                 with open(blob_path, encoding='utf-8') as infile:
                     flavor_manifest = json.loads(infile.read())
-                hashes.update(flavor_manifest['h'].values())
+                hashes.update(
+                    info['h'] for info in flavor_manifest['e'].values()
+                )
         return hashes
 
     def _sync_asset_bundle(self) -> None:
