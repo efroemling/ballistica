@@ -1643,9 +1643,9 @@ $(PCOMMANDBATCHBIN): $(PCOMMANDBATCHSRC) $(PCOMMAND)
 CM_BT_LC = $(shell echo $(CMAKE_BUILD_TYPE) | tr A-Z a-z)
 
 # Eww; no way to do multi-line constants in make without spaces :-(
-_WMSBE_1 = \"C:\\Program Files\\Microsoft Visual Studio\\2022
+_WMSBE_1 = \"C:\\Program Files\\Microsoft Visual Studio\\2026
 _WMSBE_2 = \\Community\\MSBuild\\Current\\Bin\\MSBuild.exe\"
-_WMSBE_1B = /mnt/c/Program Files/Microsoft Visual Studio/2022
+_WMSBE_1B = /mnt/c/Program Files/Microsoft Visual Studio/2026
 _WMSBE_2B = /Community/MSBuild/Current/Bin/MSBuild.exe
 
 # Sets WSL build type to the user's choice (defaults to Windows).
