@@ -1655,7 +1655,7 @@ WSLL=BA_WSL_TARGETS_WINDOWS=0
 # Sets WSL build type to Windows.
 WSLW=BA_WSL_TARGETS_WINDOWS=1
 
-VISUAL_STUDIO_VERSION = -property:VisualStudioVersion=17
+VISUAL_STUDIO_VERSION = -property:VisualStudioVersion=18
 WIN_MSBUILD_EXE = $(_WMSBE_1)$(_WMSBE_2)
 WIN_MSBUILD_EXE_B = "$(_WMSBE_1B)$(_WMSBE_2B)"
 WIN_POWERSHELL_EXE_B = /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
