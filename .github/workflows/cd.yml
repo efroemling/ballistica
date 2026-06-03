@@ -12,9 +12,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             arch: x86_64
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
@@ -39,9 +39,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             arch: x86_64
-          - os: ubuntu-24.04-arm
+          - os: ubuntu-26.04-arm
             arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
