@@ -59,21 +59,26 @@ static_assert(sizeof(KTX2LevelIndex) == 24,
 #pragma pack(pop)
 
 /// Load a KTX 2.0 file into the engine's mip-buffer representation.
-/// Matches the signature shape of :func:`LoadDDS` / :func:`LoadKTX` so
-/// callers in ``texture_asset.cc`` can dispatch uniformly.
 ///
-/// ``buffers[i]`` is malloc'd for ``i >= *base_level``; entries below
-/// ``*base_level`` are left ``nullptr`` (skipped for quality
-/// dropdowns). ``widths`` / ``heights`` / ``formats`` / ``sizes`` are
-/// populated for every level. ``*base_level`` indicates the starting
-/// (largest) mip level the caller should sample from.
+/// This is the asset-package CAS texture loader. Unlike the legacy
+/// loaders (:func:`LoadDDS` / :func:`LoadKTX`), it takes **no
+/// texture-quality argument** and never skips mips: asset-package
+/// textures load every mip level present in the chosen *flavor*, and the
+/// legacy ``TextureQualityFromAppConfig`` mip-skip knob applies only to
+/// legacy textures (initiative: asset-packages §7 texture-quality
+/// decoupling). ``regular`` vs. ``high`` is a flavor distinction baked
+/// into the bytes, not a load-time dropdown.
+///
+/// ``buffers[i]`` is malloc'd for every level (``*base_level`` is always
+/// 0). ``widths`` / ``heights`` / ``formats`` / ``sizes`` are populated
+/// for every level. ``*base_level`` is written for caller uniformity.
 ///
 /// Throws on parse error, unsupported ``vkFormat``, or
 /// non-zero ``supercompressionScheme`` (BasisU/zstd not implemented
 /// for v1 — see initiative decision #12).
 void LoadKTX2(const std::string& file_name, unsigned char** buffers,
               int* widths, int* heights, TextureFormat* formats, size_t* sizes,
-              TextureQuality texture_quality, int min_quality, int* base_level);
+              int* base_level);
 
 }  // namespace ballistica::base
 

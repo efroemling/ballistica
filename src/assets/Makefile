@@ -188,9 +188,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_asset_packages.py \
+  $(BUILD_DIR)/ba_data/python/babase/_assetsubsystem.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
   $(BUILD_DIR)/ba_data/python/babase/_automation.py \
+  $(BUILD_DIR)/ba_data/python/babase/_baeventloop.py \
   $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
+  $(BUILD_DIR)/ba_data/python/babase/_constructmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsoletabs.py \
   $(BUILD_DIR)/ba_data/python/babase/_emptyappmode.py \
@@ -275,6 +278,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_team.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_teamgame.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/builtinassets.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/stdassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/coopjoin.py \
@@ -360,6 +364,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/stdassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/settings.py \
@@ -5414,7 +5419,7 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/DLLs/zlib1.dll \
   $(BUILD_DIR)/windows/Win32/Lib/email/architecture.rst \
   $(BUILD_DIR)/windows/Win32/OpenAL32.dll \
-  $(BUILD_DIR)/windows/Win32/SDL2.dll \
+  $(BUILD_DIR)/windows/Win32/SDL3.dll \
   $(BUILD_DIR)/windows/Win32/libEGL.dll \
   $(BUILD_DIR)/windows/Win32/libGLESv2.dll \
   $(BUILD_DIR)/windows/Win32/libvorbis.dll \
@@ -5510,7 +5515,7 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/DLLs/zlib1.dll \
   $(BUILD_DIR)/windows/x64/Lib/email/architecture.rst \
   $(BUILD_DIR)/windows/x64/OpenAL32.dll \
-  $(BUILD_DIR)/windows/x64/SDL2.dll \
+  $(BUILD_DIR)/windows/x64/SDL3.dll \
   $(BUILD_DIR)/windows/x64/libEGL.dll \
   $(BUILD_DIR)/windows/x64/libGLESv2.dll \
   $(BUILD_DIR)/windows/x64/libvorbis.dll \

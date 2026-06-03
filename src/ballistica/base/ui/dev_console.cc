@@ -24,6 +24,7 @@
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/vector4f.h"
 #include "ballistica/shared/python/python_command.h"
@@ -971,7 +972,7 @@ void DevConsole::InputAdapterFinish() {
   string_edit_adapter_.Release();
 }
 
-auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
+auto DevConsole::HandleKeyPress(const BAKeysym* keysym) -> bool {
   assert(g_base->InLogicThread());
 
   // Any presses or releases cancels repeat actions.
@@ -983,7 +984,7 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
 
   // Stuff we always look for.
   switch (keysym->sym) {
-    case SDLK_ESCAPE:
+    case BAK_ESCAPE:
       Dismiss();
       return true;
     default:
@@ -1007,98 +1008,98 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
     bool do_move_to_beginning{};
     bool do_kill_line{};
     switch (keysym->sym) {
-      case SDLK_BACKSPACE: {
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_BACKSPACE: {
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_backspace = true;
         } else {
           do_backspace = true;
         }
         break;
       }
-      case SDLK_DELETE: {
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_DELETE: {
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_forward_delete = true;
         } else {
           do_forward_delete = true;
         }
         break;
       }
-      case SDLK_HOME:
+      case BAK_HOME:
         do_move_to_beginning = true;
         break;
-      case SDLK_END:
+      case BAK_END:
         do_move_to_end = true;
         break;
-      case SDLK_UP:
+      case BAK_UP:
         do_history_up = true;
         break;
-      case SDLK_DOWN:
+      case BAK_DOWN:
         do_history_down = true;
         break;
-      case SDLK_RIGHT:
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_RIGHT:
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_right = true;
         } else {
           do_carat_right = true;
         }
         break;
-      case SDLK_LEFT:
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_LEFT:
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_left = true;
         } else {
           do_carat_left = true;
         }
         break;
-      case SDLK_KP_ENTER:
-      case SDLK_RETURN: {
+      case BAK_KP_ENTER:
+      case BAK_RETURN: {
         Exec();
         break;
       }
 
       // Wheeee emacs key shortcuts!!
-      case SDLK_n:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_n:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_history_down = true;
         }
         break;
-      case SDLK_f:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_f:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_carat_right = true;
-        } else if (keysym->mod & KMOD_ALT) {
+        } else if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_right = true;
         }
         break;
-      case SDLK_b:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_b:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_carat_left = true;
-        } else if (keysym->mod & KMOD_ALT) {
+        } else if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_left = true;
         }
         break;
-      case SDLK_p:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_p:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_history_up = true;
         }
         break;
-      case SDLK_a:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_a:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_move_to_beginning = true;
         }
         break;
-      case SDLK_d:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_d:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_forward_delete = true;
-        } else if (keysym->mod & KMOD_ALT) {
+        } else if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_forward_delete = true;
         }
         break;
-      case SDLK_e:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_e:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_move_to_end = true;
         }
         break;
-      case SDLK_k:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_k:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_kill_line = true;
         }
       default: {
@@ -1287,7 +1288,7 @@ auto DevConsole::HandleTextEditing(const std::string& text) -> bool {
   return true;
 }
 
-auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
+auto DevConsole::HandleKeyRelease(const BAKeysym* keysym) -> bool {
   // Any presses or releases cancels repeat actions.
   key_repeater_.Clear();
 

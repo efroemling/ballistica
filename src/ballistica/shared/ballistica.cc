@@ -18,10 +18,12 @@
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 
-// Make sure min_sdl.h stays in here even though this file compiles fine
-// without it. On some platforms it does a bit of magic to redefine main as
-// SDL_main which leads us to a tricky-to-diagnose linker error if it
-// removed from here.
+// Make sure min_sdl.h stays included above; on real-SDL builds it provides
+// SDL.h (and sets SDL_MAIN_HANDLED). Historically including it here was also
+// what redefined main as SDL_main; under SDL3 we instead keep our own plain
+// main() (this is the real Console-subsystem entry point) and call
+// SDL_SetMainReady() before SDL_Init (see app_adapter_sdl), so no SDL entry
+// shim is involved.
 #ifndef BALLISTICA_CORE_PLATFORM_SUPPORT_MIN_SDL_H_
 #error Please include min_sdl.h here.
 #endif
@@ -49,7 +51,7 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22861;
+const int kEngineBuildNumber = 22862;
 const char* kEngineVersion = "1.7.63";
 const int kEngineApiVersion = 9;
 
@@ -236,7 +238,12 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       }
     }
   }
-  return 0;
+
+  // Return whatever exit code the app requested during its (clean)
+  // shutdown; defaults to 0. A headless run that hit a clean-but-failing
+  // condition (e.g. a construct-mode asset bring-up failure) sets a
+  // specific nonzero code here without going through the fatal path.
+  return l_base ? l_base->AppExitCode() : 0;
 }
 
 // A way to do the same as above except in an incremental manner. This can

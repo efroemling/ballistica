@@ -842,14 +842,17 @@ def _resolve_bare_dev(projroot: Path, account: str, package: str) -> str:
     through the workspace-aware dev-resolve path on master and
     returns just the resolved apverid — no assemble, no
     recipe-cache work, no local manifest side-effects.
+
+    Note ``--dev`` deliberately can't be combined with ``--account``:
+    dev resolution always operates on the authenticated account's own
+    packages (you can only resolve the ``.dev`` snapshot of a workspace
+    you own). ``account`` is therefore used only for messaging here.
     """
     cmd = [
         str(projroot / 'tools' / 'bacloud'),
         'assetpackage',
         'version',
         package,
-        '--account',
-        account,
         '--dev',
     ]
     result = subprocess.run(

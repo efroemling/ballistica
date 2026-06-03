@@ -20,7 +20,7 @@
 // On SDL builds, let SDL handle this for us.
 // (Skipped on Windows+ANGLE: we use GLES3 headers there instead.)
 #if BA_SDL_BUILD && !(BA_PLATFORM_WINDOWS && BA_OPENGL_IS_ES)
-#include <SDL_opengl.h>
+#include <SDL3/SDL_opengl.h>
 #endif
 
 // For XCode builds, grab Apple's framework-y headers.
@@ -66,6 +66,30 @@
 #define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 0x83F2
 #define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 0x83F3
 #endif /* GL_EXT_texture_compression_s3tc */
+
+// BC7 (BPTC) — desktop_v1 asset-package profile. Core in GL 4.2+ and
+// available on Mac GL 4.1 via ARB_texture_compression_bptc, but not
+// always in the platform glext.h, so define if needed. We use the
+// non-sRGB (UNORM) variant to match the engine's convention of
+// sampling sRGB-encoded texels raw (no GPU sRGB decode), same as the
+// RGBA8/DXT paths.
+#ifndef GL_COMPRESSED_RGBA_BPTC_UNORM
+#define GL_COMPRESSED_RGBA_BPTC_UNORM 0x8E8C
+#endif
+
+// ASTC LDR (mobile_v1 profile) — the block sizes our recipe emits. Core
+// in GL ES 3.2 / the KHR_texture_compression_astc_ldr extension (present
+// on Apple Silicon macOS GL, Android, etc.). We use the non-sRGB (RGBA)
+// variants to match the engine's raw-sample convention (see BC7 above).
+#ifndef GL_COMPRESSED_RGBA_ASTC_4x4_KHR
+#define GL_COMPRESSED_RGBA_ASTC_4x4_KHR 0x93B0
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_6x6_KHR
+#define GL_COMPRESSED_RGBA_ASTC_6x6_KHR 0x93B4
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_8x8_KHR
+#define GL_COMPRESSED_RGBA_ASTC_8x8_KHR 0x93B7
+#endif
 
 // Anisotropic texturing is still an extension in GL 3 and ES 3.2, so
 // define its values if need be (they seem to exist in desktop glext.h

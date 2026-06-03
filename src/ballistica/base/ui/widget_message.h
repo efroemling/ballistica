@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ballistica/core/platform/support/min_sdl.h"
+#include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
 
@@ -39,7 +40,7 @@ struct WidgetMessage {
 
   Type type{};
   bool has_keysym{};
-  SDL_Keysym keysym{};
+  BAKeysym keysym{};
   float fval1{};
   float fval2{};
   float fval3{};
@@ -47,7 +48,7 @@ struct WidgetMessage {
   std::string* sval{};
 
   explicit WidgetMessage(Type t = Type::kEmptyMessage,
-                         const SDL_Keysym* k = nullptr, float f1 = 0,
+                         const BAKeysym* k = nullptr, float f1 = 0,
                          float f2 = 0, float f3 = 0, float f4 = 0,
                          const char* s = nullptr)
       : type(t), has_keysym(false), fval1(f1), fval2(f2), fval3(f3), fval4(f4) {

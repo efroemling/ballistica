@@ -138,25 +138,32 @@ class Assets {
     return &package_registry_;
   }
 
-  /// Describes which asset-package texture bucket the runtime is
-  /// currently sampling from. Returned by :meth:`ActiveTextureBucket`.
-  struct TextureBucketInfo {
-    /// Bucket id in the bundled manifest (e.g.
-    /// ``"textures/fallback_v1_regular"``).
-    std::string bucket_id;
-    /// On-disk file extension for entries in this bucket (e.g.
-    /// ``".ktx2"`` for KTX2-packaged textures). Drives loader
-    /// dispatch downstream.
-    std::string file_extension;
-  };
+  /// The texture *profile* name this build should request for
+  /// asset-package resolves (the ``<profile>`` in a
+  /// ``textures/<profile>_<quality>`` bucket coord). This is the native
+  /// home for texture-format/preference policy (initiative:
+  /// asset-packages §7); the Python asset-subsystem reads it to form its
+  /// resolve dimensions, so fetch-dims track GPU capability without the
+  /// subsystem needing format knowledge.
+  ///
+  /// Returns ``"null"`` in headless (no renderer; only the NULL flavor is
+  /// ever bundled/needed) and otherwise ``"fallback_v1"`` — the only
+  /// profile the client KTX2 loader can currently decode (uncompressed
+  /// RGBA). Real GPU-caps selection (BC→``desktop_v1``,
+  /// ASTC/ETC→``mobile_v1``) lands alongside KTX2 BC/ASTC decode support
+  /// + per-platform native-format bundles; see the implementation.
+  auto PreferredTextureProfile() const -> std::string;
 
-  /// The active texture bucket for this build's runtime. Hardcoded
-  /// to FALLBACK_V1 / regular quality / KTX2 for v1; Phase 3
-  /// construct-mode replaces this with real dispatch driven by
-  /// platform texture-compression support and user quality
-  /// preferences. Centralizing the policy here keeps
-  /// :meth:`FindAssetFileCas_` independent of profile choice.
-  auto ActiveTextureBucket() const -> TextureBucketInfo;
+  /// Resolve one *part* of a texture qualified-ref (``<apverid>:<name>``)
+  /// to its CAS blob path. Textures are single-part today — part ``"t"``
+  /// is the texture-data component (the placeholder ``"j"`` sidecar was
+  /// dropped; see decision #16 follow-up). The part argument is kept
+  /// general so multi-file logical assets (e.g. fonts: atlas + metrics)
+  /// can pull individual component files. Returns ``""`` if the name isn't
+  /// a CAS ref, the part is absent, or in headless mode. A transitional
+  /// seam until the full AssetLayout resolve (decision #16, shape b) lands.
+  auto FindCasTexturePartPath(const std::string& name, const std::string& part)
+      -> std::string;
 
  private:
   /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a

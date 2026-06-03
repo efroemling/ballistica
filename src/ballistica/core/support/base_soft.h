@@ -23,6 +23,12 @@ class BaseSoftInterface {
   virtual void StartApp() = 0;
   virtual auto AppManagesMainThreadEventLoop() -> bool = 0;
   virtual void RunAppToCompletion() = 0;
+
+  /// Process exit code to return from a clean app shutdown. Defaults to
+  /// 0; a clean-but-failing exit (e.g. a headless construct-mode asset
+  /// bring-up failure) sets a specific nonzero code. Distinct from a
+  /// fatal-error/abort exit.
+  virtual auto AppExitCode() const -> int = 0;
   virtual auto InAssetsThread() const -> bool = 0;
   virtual auto InLogicThread() const -> bool = 0;
   virtual auto InAudioThread() const -> bool = 0;

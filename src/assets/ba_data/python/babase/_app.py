@@ -24,6 +24,7 @@ from babase._plugin import PluginSubsystem
 from babase._meta import MetadataSubsystem
 from babase._net import NetworkSubsystem
 from babase._workspace import WorkspaceSubsystem
+from babase._assetsubsystem import AssetSubsystem
 from babase._appcomponent import AppComponentSubsystem
 from babase._appmodeselector import AppModeSelector
 from babase._appintent import AppIntentDefault, AppIntentExec
@@ -150,6 +151,9 @@ class App:
         #: Subsystem for wrangling metadata.
         self.meta: MetadataSubsystem = MetadataSubsystem()
 
+        #: Subsystem for acquiring + tracking downloadable asset packages.
+        self.assets: AssetSubsystem = self.register_subsystem(AssetSubsystem())
+
         #: Subsystem for wrangling workspaces.
         self.workspaces: WorkspaceSubsystem = WorkspaceSubsystem()
 
@@ -185,7 +189,6 @@ class App:
         self._pending_apply_app_config = False
         self._asyncio_loop: asyncio.AbstractEventLoop | None = None
         self._asyncio_tasks: set[asyncio.Task] = set()
-        self._asyncio_timer: babase.AppTimer | None = None
         self._pending_intent: AppIntent | None = None
         self._intent: AppIntent | None = None
         self._mode_selector: babase.AppModeSelector | None = None
@@ -243,13 +246,11 @@ class App:
         errors and garbage-collected tasks disappearing before their
         work is done.
 
-        Note that, at this time, the asyncio loop is encapsulated and
-        explicitly stepped by the engine's logic thread loop and thus
-        things like :meth:`asyncio.get_running_loop()` will
-        unintuitively *not* return this loop from most places in the
-        logic thread; only from within a task explicitly created in this
-        loop. Hopefully this situation will be improved in the future
-        with a unified event loop.
+        This loop is integrated directly into the logic thread's event
+        loop, so :meth:`asyncio.get_running_loop()` returns it from
+        anywhere on the logic thread, and work posted from other threads
+        (such as ``run_in_executor`` completions) wakes the logic thread
+        immediately.
         """
         assert self._asyncio_loop is not None
         return self._asyncio_loop
@@ -942,6 +943,53 @@ class App:
                 'Error handling intent %s in app-mode %s.', intent, mode
             )
 
+    def _enter_construct_mode(self, intent: AppIntent) -> None:
+        """Enter construct-mode directly as the boot-time bring-up gate.
+
+        Construct-mode is not an intent handler and is never returned by
+        the mode-selector, so we activate it here by hand — mirroring the
+        mode-swap half of :meth:`_apply_intent`, minus intent handling. It
+        readies the required asset-packages and then releases ``intent`` to
+        the normal app-mode (via :meth:`set_intent`) once bring-up
+        completes.
+        """
+        # pylint: disable=cyclic-import
+        from babase._constructmode import ConstructAppMode
+
+        assert _babase.in_logic_thread()
+
+        # If a mode is somehow already active (e.g. a plugin drove an
+        # intent alongside an exec command), don't disrupt it; just
+        # dispatch normally and skip the construct-mode gate.
+        if self._mode is not None:
+            self.set_intent(intent)
+            return
+
+        mode = ConstructAppMode(deferred_intent=intent)
+
+        # Reset all subsystems, matching what _apply_intent does when a
+        # mode becomes active. (Subsystem registration is closed by now.)
+        assert self._subsystem_registration_ended
+        for subsystem in self._subsystems:
+            try:
+                subsystem.reset()
+            except Exception:
+                balog.exception('Error in reset() for subsystem %s.', subsystem)
+
+        self._mode = mode
+        try:
+            mode.on_activate()
+        except Exception:
+            balog.exception('Error activating construct-mode %s.', mode)
+
+        # First app-mode is now set; start the consoles / enable input.
+        # (Under the server manager, the stdin reader itself holds off on
+        # processing commands until a real intent-handling app-mode is
+        # active — construct-mode's C++ app_mode stays EmptyAppMode — so
+        # the wrapper's commands wait safely; see StdioConsole. Interactive
+        # sessions can use stdin/dev-console during construct-mode.)
+        _babase.on_initial_app_mode_set()
+
     def _display_set_intent_error(self, intent: AppIntent) -> None:
         """Show the *user* something went wrong setting an intent."""
         from babase._language import Lstr
@@ -1076,15 +1124,24 @@ class App:
         # Cut off new subsystem additions at this point.
         self._subsystem_registration_ended = True
 
-        # If 'exec' code was provided to the app, always kick that off
-        # here as an intent.
+        # Determine the launch intent: an explicit 'exec' command if one
+        # was provided, else our default thing — but only if a plugin
+        # hasn't already driven an intent.
         exec_cmd = _babase.exec_arg()
+        initial_intent: AppIntent | None
         if exec_cmd is not None:
-            self.set_intent(AppIntentExec(exec_cmd))
+            initial_intent = AppIntentExec(exec_cmd)
         elif self._pending_intent is None:
-            # Otherwise tell the app to do its default thing *only* if a
-            # plugin hasn't already told it to do something.
-            self.set_intent(AppIntentDefault())
+            initial_intent = AppIntentDefault()
+        else:
+            initial_intent = None
+
+        # Bring required assets up in construct-mode first; it releases
+        # this intent to the app-mode that actually handles it once
+        # bring-up completes. (If a plugin already drove an intent,
+        # initial_intent is None and we leave that flow untouched.)
+        if initial_intent is not None:
+            self._enter_construct_mode(initial_intent)
 
         lifecyclelog.info('on-running end')
 

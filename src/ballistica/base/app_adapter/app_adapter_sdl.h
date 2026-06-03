@@ -12,8 +12,11 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/shared/math/vector2f.h"
 
-// Predeclare for pointers.
+// Predeclare for pointers. This is an SDL-only adapter, so it deals in
+// real SDL types directly (converting to engine-native BA types at its
+// boundary — see HandleSDLEvent_).
 struct SDL_Window;
+union SDL_Event;
 
 namespace ballistica::base {
 
@@ -72,7 +75,8 @@ class AppAdapterSDL : public AppAdapter {
   auto GetSDLJoystickInput_(int sdl_joystick_id) const -> JoystickInput*;
   // The same but using sdl events.
   auto GetSDLJoystickInput_(const SDL_Event* e) const -> JoystickInput*;
-  void AddSDLInputDevice_(JoystickInput* input, int index);
+  void AddSDLInputDevice_(JoystickInput* input, SDL_Joystick* handle,
+                          int index);
   void RemoveSDLInputDevice_(int index);
   void SleepUntilNextEventCycle_(microsecs_t cycle_start_time);
   void LogEventProcessingTime_(microsecs_t duration, int count);
@@ -98,6 +102,10 @@ class AppAdapterSDL : public AppAdapter {
   std::vector<Runnable*> strict_graphics_calls_;
   microsecs_t oversleep_{};
   std::vector<JoystickInput*> sdl_joysticks_;
+  // The SDL_Joystick handles we own, parallel to sdl_joysticks_ (keyed by
+  // SDL instance-id). We open these in OnSDLJoystickAdded_ and close them
+  // in RemoveSDLInputDevice_.
+  std::vector<SDL_Joystick*> sdl_joystick_handles_;
   Vector2f window_size_{1.0f, 1.0f};
   SDL_Window* sdl_window_{};
   void* sdl_gl_context_{};

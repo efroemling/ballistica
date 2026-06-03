@@ -1666,6 +1666,33 @@ static PyMethodDef PyGetImmediateReturnCodeDef = {
     ":meta private:\n",
 };
 
+// --------------------------- set_app_exit_code -------------------------------
+
+static auto PySetAppExitCode(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base);
+  int code;
+  static const char* kwlist[] = {"code", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &code)) {
+    return nullptr;
+  }
+  g_base->set_app_exit_code(code);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetAppExitCodeDef = {
+    "set_app_exit_code",            // name
+    (PyCFunction)PySetAppExitCode,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
+
+    "set_app_exit_code(code: int) -> None\n"
+    "\n"
+    ":meta private:\n",
+};
+
 // ----------------------- shutdown_suppress_begin -----------------------------
 
 static auto PyShutdownSuppressBegin(PyObject* self) -> PyObject* {
@@ -1988,6 +2015,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyEmptyAppModeHandleAppIntentDefaultDef,
       PyEmptyAppModeHandleAppIntentExecDef,
       PyGetImmediateReturnCodeDef,
+      PySetAppExitCodeDef,
       PyCompleteShutdownDef,
       PyShutdownSuppressBeginDef,
       PyShutdownSuppressEndDef,

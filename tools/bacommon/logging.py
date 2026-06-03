@@ -26,6 +26,7 @@ class ClientLoggerName(Enum):
     ENV = 'ba.env'
     APP = 'ba.app'
     ASSETS = 'ba.assets'
+    ASSET_MANAGER = 'ba.assetmanager'
     AUDIO = 'ba.audio'
     CACHE = 'ba.cache'
     DISPLAYTIME = 'ba.displaytime'
@@ -59,6 +60,8 @@ class ClientLoggerName(Enum):
             return 'general app operation - INFO is visible by default'
         if self is cls.ASSETS:
             return 'textures, sounds, models, etc.'
+        if self is cls.ASSET_MANAGER:
+            return 'downloading/tracking downloadable asset-packages'
         if self is cls.AUDIO:
             return 'sound and music playback'
         if self is cls.CACHE:

@@ -504,6 +504,12 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
     // Set and build up new one.
     app_mode_ = mode;
 
+    // Publish a thread-safe "real app-mode is active" flag for consumers
+    // that can't touch the logic-thread-only EmptyAppMode singleton
+    // (e.g. the stdin reader). Construct-mode never calls set_app_mode,
+    // so this stays false through the boot-time bring-up phase.
+    app_mode_is_real_.store(mode != EmptyAppMode::GetSingleton());
+
     // App modes each provide their own input-device delegate types.
     input->RebuildInputDeviceDelegates();
 

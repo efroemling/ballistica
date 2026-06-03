@@ -36,7 +36,6 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/exception.h"
@@ -567,21 +566,15 @@ auto Platform::HandleFatalError(bool exit_cleanly,
 }
 
 auto Platform::CanShowBlockingFatalErrorDialog() -> bool {
-  if (g_buildconfig.sdl_build()) {
-    return true;
-  } else {
-    return false;
-  }
+  // Base default: no dialog. OS subclasses that can show one override this
+  // (Windows via MessageBoxW, macOS via Cocoa or SDL, Linux via SDL). This
+  // keeps SDL out of cross-platform core; see sdl_message_box.h.
+  return false;
 }
 
 void Platform::BlockingFatalErrorDialog(const std::string& message) {
-#if BA_SDL_BUILD
-  assert(g_core->InMainThread());
-  if (!g_core->HeadlessMode()) {
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error",
-                             message.c_str(), nullptr);
-  }
-#endif
+  // Base default is a no-op; OS subclasses override to show a real dialog.
+  (void)message;
 }
 
 auto Platform::DoGetDataDirectoryMonolithicDefault() -> std::string {

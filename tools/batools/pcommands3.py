@@ -35,7 +35,7 @@ def _test_game_run_parse_args() -> dict[str, object]:
     Returns a dict with keys ``instance``, ``log_levels``, ``timeout``,
     ``fleet``, ``headless``, ``exec_code``, ``port``, ``ex_build``,
     ``user_data``, ``reset_connectivity``, ``debug_network_toggle``,
-    ``gc_warning_threshold``, ``gc_debug_types``,
+    ``asset_no_bundle_reuse``, ``gc_warning_threshold``, ``gc_debug_types``,
     ``gc_debug_type_limit``. Default is a headless server build; pass
     ``--gui`` for an interactive GUI client build.
     """
@@ -52,6 +52,8 @@ def _test_game_run_parse_args() -> dict[str, object]:
         'user_data': False,
         'reset_connectivity': False,
         'debug_network_toggle': False,
+        'asset_no_bundle_reuse': False,
+        'force_texture_profile': None,
         'gc_warning_threshold': None,
         'gc_debug_types': None,
         'gc_debug_type_limit': None,
@@ -90,6 +92,12 @@ def _test_game_run_parse_args() -> dict[str, object]:
         elif args[0] == '--debug-network-toggle':
             out['debug_network_toggle'] = True
             args = args[1:]
+        elif args[0] == '--asset-no-bundle-reuse':
+            out['asset_no_bundle_reuse'] = True
+            args = args[1:]
+        elif args[0] == '--force-texture-profile' and len(args) > 1:
+            out['force_texture_profile'] = args[1]
+            args = args[2:]
         elif args[0] == '--gc-warning-threshold' and len(args) > 1:
             out['gc_warning_threshold'] = int(args[1])
             args = args[2:]
@@ -289,8 +297,47 @@ def _test_game_build_cmd(
     return (staged, cmd)
 
 
+def _test_game_run_env(opts: dict[str, object]) -> dict[str, str]:
+    """Build the child process env from parsed ``test_game_run`` opts.
+
+    Translates debug-flavored pcommand flags into the ``BA_*`` env vars
+    the engine already reads. Routing them through flags (rather than
+    caller-set env vars) keeps the wrapper's command signature stable, so
+    no fresh sandbox permission prompt fires per invocation.
+    """
+    import os
+
+    env = dict(os.environ)
+    log_levels = opts['log_levels']
+    fleet = opts['fleet']
+    assert isinstance(log_levels, str)
+    assert isinstance(fleet, str)
+    if log_levels:
+        env['BA_LOG_LEVELS'] = log_levels
+    if fleet:
+        env['BA_FLEET'] = fleet
+    # Boolean flags -> '1' when set.
+    for key, env_name in (
+        ('reset_connectivity', 'BA_CONNECTIVITY_RESET'),
+        ('debug_network_toggle', 'BA_NETWORK_AVAILABILITY_DEBUG_TOGGLE'),
+        ('asset_no_bundle_reuse', 'BA_ASSET_NO_BUNDLE_REUSE'),
+    ):
+        if opts[key]:
+            env[env_name] = '1'
+    # Value flags -> str(value) when not None.
+    for key, env_name in (
+        ('force_texture_profile', 'BA_FORCE_TEXTURE_PROFILE'),
+        ('gc_warning_threshold', 'BA_GC_WARNING_THRESHOLD'),
+        ('gc_debug_types', 'BA_GC_DEBUG_TYPES'),
+        ('gc_debug_type_limit', 'BA_GC_DEBUG_TYPE_LIMIT'),
+    ):
+        val = opts[key]
+        if val is not None:
+            env[env_name] = str(val)
+    return env
+
+
 def test_game_run() -> None:
-    # pylint: disable=too-many-statements
     """Run the game for testing purposes in a siloed instance dir.
 
     Usage::
@@ -299,6 +346,7 @@ def test_game_run() -> None:
             [--port N] [--exec CODE] [--log LEVELS] [--timeout SECONDS]
             [--fleet FLEET] [--user-data]
             [--reset-connectivity] [--debug-network-toggle]
+            [--asset-no-bundle-reuse] [--force-texture-profile PROFILE]
             [--gc-warning-threshold N]
             [--gc-debug-types TYPE1,TYPE2,...]
             [--gc-debug-type-limit N]
@@ -364,6 +412,18 @@ def test_game_run() -> None:
       starts in the unavailable state and toggles every 5 seconds
       thereafter — exercises gating consumers without actually
       severing the network.
+    - ``--asset-no-bundle-reuse``: Sets ``BA_ASSET_NO_BUNDLE_REUSE=1``
+      for the child process so the asset-subsystem (``app.assets``)
+      diff ignores the bundle CAS root and treats even bundled blobs
+      as absent — forcing them to be (re)downloaded into the writable
+      cache. Lets the download + atomic-write leg be exercised against
+      an otherwise-fully-bundled package.
+    - ``--force-texture-profile PROFILE``: Sets
+      ``BA_FORCE_TEXTURE_PROFILE`` so ``Assets::PreferredTextureProfile``
+      returns ``PROFILE`` (e.g. ``fallback_v1``) regardless of
+      platform/headless. Lets a headless run request a non-null texture
+      flavor so the real multi-file (``t``+``j``) blob download + write
+      path is exercised without a display.
     - ``--gc-warning-threshold N``: Sets ``BA_GC_WARNING_THRESHOLD``.
       Override the object-count threshold above which a cyclic-gc
       pass logs a WARNING (default 50). Lower it to surface smaller
@@ -392,30 +452,18 @@ def test_game_run() -> None:
     import subprocess
 
     opts = _test_game_run_parse_args()
+    # Locals used outside env-building (silo/binary/cmd/timeout); the
+    # BA_* env-translation flags are handled in _test_game_run_env.
     instance = opts['instance']
-    log_levels = opts['log_levels']
     timeout = opts['timeout']
-    fleet = opts['fleet']
     headless = opts['headless']
     exec_code = opts['exec_code']
     port = opts['port']
     user_data = opts['user_data']
-    reset_connectivity = opts['reset_connectivity']
-    debug_network_toggle = opts['debug_network_toggle']
-    gc_warning_threshold = opts['gc_warning_threshold']
-    gc_debug_types = opts['gc_debug_types']
-    gc_debug_type_limit = opts['gc_debug_type_limit']
     assert isinstance(instance, str)
-    assert isinstance(log_levels, str)
     assert isinstance(timeout, int)
-    assert isinstance(fleet, str)
     assert isinstance(headless, bool)
     assert isinstance(user_data, bool)
-    assert isinstance(reset_connectivity, bool)
-    assert isinstance(debug_network_toggle, bool)
-    assert gc_warning_threshold is None or isinstance(gc_warning_threshold, int)
-    assert gc_debug_types is None or isinstance(gc_debug_types, str)
-    assert gc_debug_type_limit is None or isinstance(gc_debug_type_limit, int)
     assert exec_code is None or isinstance(exec_code, str)
     assert port is None or isinstance(port, int)
 
@@ -447,26 +495,7 @@ def test_game_run() -> None:
         user_data=user_data,
     )
 
-    env = dict(os.environ)
-    if log_levels:
-        env['BA_LOG_LEVELS'] = log_levels
-    if fleet:
-        env['BA_FLEET'] = fleet
-    # Translate debug-flavored flags into the env vars the engine
-    # already reads. Routing them through pcommand flags (rather than
-    # caller-set env vars) keeps the wrapper's command signature
-    # stable, so no fresh sandbox permission prompt fires per
-    # invocation.
-    if reset_connectivity:
-        env['BA_CONNECTIVITY_RESET'] = '1'
-    if debug_network_toggle:
-        env['BA_NETWORK_AVAILABILITY_DEBUG_TOGGLE'] = '1'
-    if gc_warning_threshold is not None:
-        env['BA_GC_WARNING_THRESHOLD'] = str(gc_warning_threshold)
-    if gc_debug_types is not None:
-        env['BA_GC_DEBUG_TYPES'] = gc_debug_types
-    if gc_debug_type_limit is not None:
-        env['BA_GC_DEBUG_TYPE_LIMIT'] = str(gc_debug_type_limit)
+    env = _test_game_run_env(opts)
     # Hand the silo's automation FIFO path to the binary; it'll create
     # the fifo on startup if it doesn't exist and start a reader thread.
     # See src/ballistica/base/automation/automation.h. Ignored entirely

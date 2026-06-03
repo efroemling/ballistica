@@ -419,6 +419,9 @@ void GraphicsServer::SetTextureCompressionTypes(
     texture_compression_types_ |= (0x01u << (static_cast<uint32_t>(i)));
   }
   texture_compression_types_set_ = true;
+  // Publish the thread-safe mirror for cross-thread readers
+  // (e.g. Assets::PreferredTextureProfile on the logic thread).
+  texture_compression_types_atomic_.store(texture_compression_types_);
 }
 
 void GraphicsServer::SetOrthoProjection(float left, float right, float bottom,

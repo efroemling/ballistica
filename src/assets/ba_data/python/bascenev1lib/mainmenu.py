@@ -43,6 +43,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # once Phase 3 wrapper modules generate qualified refs and
         # there's a less ad-hoc place to exercise this.
         self._cas_hello_image: bs.NodeActor | None = None
+        self._cas_std_image: bs.NodeActor | None = None
         self._ts = 0.86
         self._language: str | None = None
         self._update_timer: bs.Timer | None = None
@@ -139,28 +140,40 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             )
         )
 
-        # TEMP: asset-package CAS load smoke test. Pulls
-        # helloworld via the typed ``bastdassets`` wrapper
-        # (``bascenev1.builtinassets``) so we exercise the full
-        # wrapper-module pin path end-to-end. The wrapper
-        # resolves to ``<apverid>:mydir/helloworld`` under the
-        # hood; ``assetpins`` keeps its embedded apverid in
-        # lockstep with the projectconfig pin via
-        # ``make assetpins-latest``.
-        # Gated on a path that only exists on the original
-        # dev's Mac so this temp test code stays invisible after
-        # pubsyncs until we tear it out.
+        # TEMP: asset-package CAS load smoke test. Loads helloworld via
+        # the typed wrapper modules so we exercise the full
+        # wrapper-module pin path end-to-end (each resolves to
+        # ``<apverid>:mydir/helloworld``; ``assetpins`` keeps the embedded
+        # apverids current). Two packages are loaded to cover both paths:
+        # ``builtinassets`` (bundled — registered before construct-mode)
+        # and ``stdassets`` (bastdassets — downloaded by construct-mode
+        # before we get here, so this also exercises the fetch path).
+        # Gated on a path that only exists on the original dev's Mac so
+        # this temp test code stays invisible after pubsyncs until we
+        # tear it out.
         import os
 
         if os.path.isdir('/Users/ericf'):
-            from bascenev1 import builtinassets
+            from bascenev1 import builtinassets, stdassets
 
             self._cas_hello_image = bs.NodeActor(
                 bs.newnode(
                     'image',
                     attrs={
-                        'position': (0.0, 0.0),
+                        'position': (-180.0, 0.0),
                         'texture': builtinassets.mydir.helloworld,
+                        'attach': 'center',
+                        'scale': (300.0, 300.0),
+                        'absolute_scale': True,
+                    },
+                )
+            )
+            self._cas_std_image = bs.NodeActor(
+                bs.newnode(
+                    'image',
+                    attrs={
+                        'position': (180.0, 0.0),
+                        'texture': stdassets.mydir.helloworld,
                         'attach': 'center',
                         'scale': (300.0, 300.0),
                         'absolute_scale': True,

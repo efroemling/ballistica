@@ -276,6 +276,13 @@ enum class TextureFormat : uint8_t {
   kPVR4,
   kETC2_RGB,
   kETC2_RGBA,
+  kBC7,
+  // ASTC LDR (mobile_v1 profile). One enum per block size we emit
+  // (per-texture quality knob: HIGH=4x4, MED=6x6, LOW=8x8); each maps
+  // to a distinct GL internal format.
+  kASTC_4x4,
+  kASTC_6x6,
+  kASTC_8x8,
 };
 
 enum class TextureCompressionType : uint8_t {
@@ -284,6 +291,7 @@ enum class TextureCompressionType : uint8_t {
   kETC1,
   kETC2,
   kASTC,
+  kBPTC,
 };
 
 enum class TextureMinQuality : uint8_t {
@@ -628,7 +636,7 @@ enum class BuiltinMeshOldID : uint8_t {
 // above retire one at a time as their callsites migrate.
 
 inline constexpr const char* kBuiltinAssetsApverid =
-    "a-0.babuiltinassets.260528b";
+    "a-0.babuiltinassets.260602";
 
 enum class BuiltinTextureID : uint16_t {
   kMydirHelloworld,  // ba_data/textures/mydir/helloworld.ktx2
@@ -869,6 +877,14 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   void set_app_mode(AppMode* mode);
   auto* app_mode() const { return app_mode_; }
+
+  /// Whether a *real* (non-empty) app-mode is currently active. Thread-
+  /// safe (unlike comparing :meth:`app_mode()` against the EmptyAppMode
+  /// singleton, whose accessor is logic-thread-only), so it can be polled
+  /// from e.g. the stdin-reading thread to hold off on commands that
+  /// assume a real intent-handling mode until the boot-time construct
+  /// phase (which leaves the empty mode in place) hands off.
+  auto app_mode_is_real() const -> bool { return app_mode_is_real_.load(); }
   auto app_active() -> bool const { return app_active_; }
 
   /// Whether we're running under ballisticakit_server.py
@@ -881,6 +897,15 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   auto config_and_state_writes_suppressed() const {
     return config_and_state_writes_suppressed_;
   }
+
+  auto AppExitCode() const -> int override { return app_exit_code_; }
+
+  /// Set the process exit code returned from a clean app shutdown. Lets
+  /// a clean-but-failing run (e.g. a headless construct-mode asset
+  /// bring-up failure) surface a specific nonzero code without going
+  /// through the fatal-error/crash path. See
+  /// BaseSoftInterface::AppExitCode().
+  void set_app_exit_code(int code) { app_exit_code_ = code; }
 
   auto base_import_completed() const { return base_import_completed_; }
 
@@ -935,6 +960,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   void PrintContextUnavailable_();
 
   AppMode* app_mode_;
+  std::atomic_bool app_mode_is_real_{false};
   PlusSoftInterface* plus_soft_{};
   ClassicSoftInterface* classic_soft_{};
   std::string local_app_instance_uuid_;
@@ -947,6 +973,7 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   std::optional<std::string> global_app_instance_uuid_;
   seconds_t global_app_instance_uuid_expire_time_{};
   int shutdown_suppress_count_{};
+  int app_exit_code_{};
   bool have_clipboard_is_supported_{};
   bool clipboard_is_supported_{};
   bool app_active_set_{};

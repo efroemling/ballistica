@@ -3,6 +3,7 @@
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -1097,6 +1098,43 @@ static PyMethodDef PyAtExitDef = {
 
 // ---------------- register_asset_package_bucket ------------------------------
 
+// Parse a Python ``entries`` dict ``{logical_path: {part: hash}}`` into an
+// EntryMap (part-keyed component files per logical asset; initiative
+// decision #16). A null asset is an empty part dict. Returns false with a
+// Python error set on bad shape.
+static auto ParseAssetEntryMap_(PyObject* entries_obj,
+                                AssetPackageRegistry::EntryMap* out) -> bool {
+  if (!PyDict_Check(entries_obj)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "entries must be a dict[str, dict[str, str]].");
+    return false;
+  }
+  PyObject* path_key;
+  PyObject* parts_obj;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(entries_obj, &pos, &path_key, &parts_obj)) {
+    if (!PyUnicode_Check(path_key) || !PyDict_Check(parts_obj)) {
+      PyErr_SetString(PyExc_TypeError,
+                      "entries must map str paths to dict[str, str] parts.");
+      return false;
+    }
+    AssetPackageRegistry::PartMap parts;
+    PyObject* part_key;
+    PyObject* hash_val;
+    Py_ssize_t rpos = 0;
+    while (PyDict_Next(parts_obj, &rpos, &part_key, &hash_val)) {
+      if (!PyUnicode_Check(part_key) || !PyUnicode_Check(hash_val)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "entry part keys/values must be strings.");
+        return false;
+      }
+      parts.emplace(PyUnicode_AsUTF8(part_key), PyUnicode_AsUTF8(hash_val));
+    }
+    out->emplace(PyUnicode_AsUTF8(path_key), std::move(parts));
+  }
+  return true;
+}
+
 static auto PyRegisterAssetPackageBucket(PyObject* self, PyObject* args,
                                          PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
@@ -1109,20 +1147,9 @@ static auto PyRegisterAssetPackageBucket(PyObject* self, PyObject* args,
                                    &bucket_id, &entries_obj)) {
     return nullptr;
   }
-  if (!PyDict_Check(entries_obj)) {
-    PyErr_SetString(PyExc_TypeError, "entries must be a dict[str, str].");
+  AssetPackageRegistry::EntryMap entries;
+  if (!ParseAssetEntryMap_(entries_obj, &entries)) {
     return nullptr;
-  }
-  std::unordered_map<std::string, std::string> entries;
-  PyObject* key;
-  PyObject* value;
-  Py_ssize_t pos = 0;
-  while (PyDict_Next(entries_obj, &pos, &key, &value)) {
-    if (!PyUnicode_Check(key) || !PyUnicode_Check(value)) {
-      PyErr_SetString(PyExc_TypeError, "entries keys/values must be strings.");
-      return nullptr;
-    }
-    entries.emplace(PyUnicode_AsUTF8(key), PyUnicode_AsUTF8(value));
   }
   g_base->assets->package_registry()->RegisterBucket(apverid, bucket_id,
                                                      std::move(entries));
@@ -1136,20 +1163,113 @@ static PyMethodDef PyRegisterAssetPackageBucketDef = {
     METH_VARARGS | METH_KEYWORDS,               // flags
 
     "register_asset_package_bucket(apverid: str, bucket_id: str,\n"
-    "                              entries: dict[str, str]) -> None\n"
+    "                              entries: dict[str, dict[str, str]])"
+    " -> None\n"
     "\n"
     "(internal) Register one bucket of an asset-package's manifest into\n"
     "the C++ runtime registry. Called from the babase startup path after\n"
     "parsing the bundled top-level ``manifest.json`` and each referenced\n"
     "bucket-manifest blob from the CAS store. ``entries`` maps logical\n"
-    "asset paths (e.g. ``ba_data/textures/helloworld.dds``) to CAS\n"
-    "hashes."};
+    "asset paths (e.g. ``ba_data/textures/helloworld.ktx2``) to a\n"
+    "part-keyed component map ``{part: CAS_hash}`` (e.g. ``t`` = texture\n"
+    "data, ``j`` = descriptor); a null asset maps to an empty dict."};
+
+// ---------------- register_asset_package_buckets -----------------------------
+
+static auto PyRegisterAssetPackageBuckets(PyObject* self, PyObject* args,
+                                          PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* buckets_obj;
+  static const char* kwlist[] = {"buckets", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &buckets_obj)) {
+    return nullptr;
+  }
+  PythonRef seq(PySequence_Fast(buckets_obj, "buckets must be a sequence."),
+                PythonRef::kSteal);
+  if (!seq.exists()) {
+    return nullptr;
+  }
+  Py_ssize_t count = PySequence_Fast_GET_SIZE(seq.get());
+  std::vector<AssetPackageRegistry::BucketSpec> specs;
+  specs.reserve(static_cast<size_t>(count));
+  for (Py_ssize_t i = 0; i < count; ++i) {
+    PyObject* item = PySequence_Fast_GET_ITEM(seq.get(), i);  // (borrowed)
+    const char* apverid;
+    const char* bucket_id;
+    PyObject* entries_obj;
+    if (!PyArg_ParseTuple(item, "ssO", &apverid, &bucket_id, &entries_obj)) {
+      return nullptr;
+    }
+    AssetPackageRegistry::EntryMap entries;
+    if (!ParseAssetEntryMap_(entries_obj, &entries)) {
+      return nullptr;
+    }
+    specs.emplace_back(apverid, bucket_id, std::move(entries));
+  }
+  g_base->assets->package_registry()->RegisterBucketsAtomic(std::move(specs));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyRegisterAssetPackageBucketsDef = {
+    "register_asset_package_buckets",            // name
+    (PyCFunction)PyRegisterAssetPackageBuckets,  // method
+    METH_VARARGS | METH_KEYWORDS,                // flags
+
+    "register_asset_package_buckets(\n"
+    "    buckets: Sequence[tuple[str, str, dict[str, dict[str, str]]]])"
+    " -> None\n"
+    "\n"
+    "(internal) Register several asset-package buckets into the C++\n"
+    "runtime registry in a single atomic swap. Each tuple is\n"
+    "``(apverid, bucket_id, entries)`` where ``entries`` maps logical\n"
+    "asset paths to a part-keyed component map ``{part: CAS_hash}`` (a\n"
+    "null asset maps to an empty dict). Unlike\n"
+    "``register_asset_package_bucket``\n"
+    "(used by the startup bundle parser), this is the runtime path for\n"
+    "the asset-subsystem to commit a fully-resolved downloaded package:\n"
+    "the whole batch becomes visible to lookups at once, so native never\n"
+    "sees a half-registered package. Safe to call while other threads are\n"
+    "doing asset lookups."};
+
+// ---------------- preferred_texture_profile ----------------------------------
+
+static auto PyPreferredTextureProfile(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  return PyUnicode_FromString(
+      g_base->assets->PreferredTextureProfile().c_str());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyPreferredTextureProfileDef = {
+    "preferred_texture_profile",             // name
+    (PyCFunction)PyPreferredTextureProfile,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "preferred_texture_profile() -> str\n"
+    "\n"
+    "(internal) Return the texture-profile name the asset-subsystem\n"
+    "should request for asset-package resolves on this build (the\n"
+    "``<profile>`` in a ``textures/<profile>_<quality>`` bucket coord).\n"
+    "Native owns texture-format/preference policy; the Python\n"
+    "asset-subsystem reads this so its fetch dimensions track GPU\n"
+    "capability without it needing format knowledge. ``'null'`` in\n"
+    "headless, otherwise ``'fallback_v1'`` for now."};
 
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyRegisterAssetPackageBucketDef,
+      PyRegisterAssetPackageBucketsDef,
+      PyPreferredTextureProfileDef,
       PyOpenURLDef,
       PyOverlayWebBrowserIsSupportedDef,
       PyOverlayWebBrowserOpenURLDef,

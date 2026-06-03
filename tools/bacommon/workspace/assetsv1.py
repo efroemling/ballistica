@@ -184,10 +184,34 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
         MEDIUM = 'medium'
         HIGH = 'high'
 
+    class Role(Enum):
+        """What a texture is for (its authoring intent).
+
+        Drives mip-filtering math and encoder flags (asset-packages
+        initiative decision #19). Intent-based rather than a bundle of
+        low-level mechanical flags — the recipe maps each role to a
+        concrete filtering/encoding behavior. Ships with the two live
+        values; ``normal_map`` / ``data`` are reserved slots for when
+        such content (and the compressed-profile recipes) land.
+        """
+
+        #: sRGB color whose alpha, if present, is opacity. Gamma-correct,
+        #: premultiply-weighted mip filtering; alpha-blend-aware encoding.
+        DEFAULT = 'default'
+
+        #: sRGB color whose RGB is already premultiplied by its alpha
+        #: (e.g. glow sprites). Mips filter the premultiplied RGB
+        #: directly rather than re-premultiplying.
+        PREMULTIPLIED = 'premultiplied'
+
     # Just dummy testing values for now.
     texture_quality: Annotated[
         TextureQuality, IOAttrs('texture_quality', store_default=False)
     ] = TextureQuality.MEDIUM
+
+    texture_role: Annotated[
+        Role, IOAttrs('texture_role', store_default=False)
+    ] = Role.DEFAULT
 
     @override
     @classmethod

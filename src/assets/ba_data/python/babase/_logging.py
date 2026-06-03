@@ -24,6 +24,10 @@ applog = logging.getLogger(ClientLoggerName.APP.value)
 #: Logger for asset loading — textures, sounds, models, etc.
 assetslog = logging.getLogger(ClientLoggerName.ASSETS.value)
 
+#: Logger for the downloadable asset-package manager — resolving,
+#: downloading, and tracking asset-packages fetched at runtime.
+assetmanagerlog = logging.getLogger(ClientLoggerName.ASSET_MANAGER.value)
+
 #: Logger for sound and music playback.
 audiolog = logging.getLogger(ClientLoggerName.AUDIO.value)
 

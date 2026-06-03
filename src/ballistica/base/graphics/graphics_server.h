@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_GRAPHICS_GRAPHICS_SERVER_H_
 #define BALLISTICA_BASE_GRAPHICS_GRAPHICS_SERVER_H_
 
+#include <atomic>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -238,6 +239,18 @@ class GraphicsServer {
             != 0u);
   }
 
+  /// Thread-safe variant of the above, readable from any thread (e.g.
+  /// the logic thread's ``Assets::PreferredTextureProfile``). Mirrors
+  /// the bitmask into an atomic when caps are set; returns false for
+  /// everything until then (so a profile decision made before the
+  /// graphics context comes up safely falls back rather than racing).
+  auto SupportsTextureCompressionTypeThreadsafe(TextureCompressionType t) const
+      -> bool {
+    return ((texture_compression_types_atomic_.load()
+             & (0x01u << static_cast<uint32_t>(t)))
+            != 0u);
+  }
+
   void SetTextureCompressionTypes(
       const std::list<TextureCompressionType>& types);
 
@@ -338,6 +351,9 @@ class GraphicsServer {
   Matrix44f model_view_projection_matrix_{kMatrix44fIdentity};
   Matrix44f model_world_matrix_{kMatrix44fIdentity};
   uint32_t texture_compression_types_{};
+  // Thread-safe mirror of the above for cross-thread reads (see
+  // SupportsTextureCompressionTypeThreadsafe).
+  std::atomic<uint32_t> texture_compression_types_atomic_{};
   int render_hold_{};
   int projection_matrix_state_{};
   int model_view_projection_matrix_state_{};

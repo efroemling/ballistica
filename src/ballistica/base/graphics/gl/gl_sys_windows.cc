@@ -3,7 +3,8 @@
 #if BA_ENABLE_OPENGL && BA_PLATFORM_WINDOWS
 #include "ballistica/base/graphics/gl/gl_sys_windows.h"
 
-#include "SDL.h"
+#include <SDL3/SDL.h>
+
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/shared/ballistica.h"
@@ -103,9 +104,14 @@ PFNGLGETSTRINGIPROC glGetStringi{};
 namespace ballistica::base {
 
 static auto GetGLFunc_(const char* name, bool required) -> void* {
-  void* func = SDL_GL_GetProcAddress(name);
+  // SDL3's SDL_GL_GetProcAddress returns an SDL_FunctionPointer (a function
+  // pointer type), so reinterpret_cast it to void* (valid on the platforms
+  // this desktop-GL path targets, where function and object pointers share
+  // a representation).
+  auto* func = reinterpret_cast<void*>(SDL_GL_GetProcAddress(name));
   if (!func) {
-    func = SDL_GL_GetProcAddress((std::string(name) + "EXT").c_str());
+    func = reinterpret_cast<void*>(
+        SDL_GL_GetProcAddress((std::string(name) + "EXT").c_str()));
   }
   if (required && func == nullptr) {
     FatalError("OpenGL function '" + std::string(name)

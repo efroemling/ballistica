@@ -391,7 +391,7 @@ class BuildStager:
                 'libvorbisfile.dll',
                 'ogg.dll',
                 'OpenAL32.dll',
-                'SDL2.dll',
+                'SDL3.dll',
                 # zlib1.dll lives in DLLs/ (Python dependency) but also needs
                 # to be at the top level because ANGLE (libGLESv2.dll) depends
                 # on it for shader blob caching.
@@ -586,8 +586,12 @@ class BuildStager:
                 )
                 with open(blob_path, encoding='utf-8') as infile:
                     flavor_manifest = json.loads(infile.read())
+                # Each entry is a part-keyed component map (decision #16);
+                # flatten over parts to collect every data-blob hash.
                 hashes.update(
-                    info['h'] for info in flavor_manifest['e'].values()
+                    comp['h']
+                    for info in flavor_manifest['e'].values()
+                    for comp in info.values()
                 )
         return hashes
 

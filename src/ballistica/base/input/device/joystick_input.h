@@ -8,6 +8,7 @@
 #include <string>
 
 #include "ballistica/base/input/device/input_device.h"
+#include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
 
@@ -30,14 +31,13 @@ class JoystickInput : public InputDevice {
 
   ~JoystickInput() override;
 
-  void HandleSDLEvent(const SDL_Event* e) override;
+  void HandleSDLEvent(const BAEvent* e) override;
 
   void ApplyAppConfig() override;
   void Update() override;
   void ResetHeldStates() override;
 
   auto sdl_joystick_id() const -> int { return sdl_joystick_id_; }
-  auto sdl_joystick() const -> SDL_Joystick* { return sdl_joystick_; }
 
   auto GetAllowsConfiguring() -> bool override { return can_configure_; }
 
@@ -53,7 +53,7 @@ class JoystickInput : public InputDevice {
   auto GetAxisName(int index) -> std::string override;
 
   auto IsController() -> bool override { return true; }
-  auto IsSDLController() -> bool override { return (sdl_joystick_ != nullptr); }
+  auto IsSDLController() -> bool override { return is_sdl_joystick_; }
 
   auto ShouldBeHiddenFromUser() -> bool override;
 
@@ -97,10 +97,9 @@ class JoystickInput : public InputDevice {
   millisecs_t last_ui_only_print_time_{};
   millisecs_t creation_time_{};
 
-  // FIXME - should take this out and replace it with a bool
-  //  (we never actually access the sdl joystick directly outside of our
-  //  constructor)
-  SDL_Joystick* sdl_joystick_{};
+  // Whether this is an SDL joystick (the SDL app-adapter owns the actual
+  // SDL_Joystick handle; we just carry its instance-id + name).
+  bool is_sdl_joystick_{};
 
   bool ui_only_{};
   bool unassigned_buttons_run_{true};

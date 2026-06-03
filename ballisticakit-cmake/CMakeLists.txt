@@ -56,7 +56,7 @@ else()
   find_package(PkgConfig REQUIRED)
   
   pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
-  pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
+  pkg_check_modules(SDL3 REQUIRED IMPORTED_TARGET sdl3)
   
   if(STATIC_BUILD)
     message(WARNING "Static build enabled - ensure that all dependencies are available as static libraries and that the appropriate -dev packages are installed.")
@@ -76,7 +76,7 @@ else()
   if(STATIC_BUILD)
     target_link_libraries(ba_deps INTERFACE
       openal
-      PkgConfig::SDL2
+      PkgConfig::SDL3
       PkgConfig::OGG
       PkgConfig::VORBISFILE
       OpenGL::GL
@@ -84,7 +84,7 @@ else()
   else()
     target_link_libraries(ba_deps INTERFACE
       PkgConfig::OPENAL
-      PkgConfig::SDL2
+      PkgConfig::SDL3
       PkgConfig::OGG
       PkgConfig::VORBISFILE
       OpenGL::GL
@@ -530,6 +530,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/core/platform/platform.h
   ${BA_SRC_ROOT}/ballistica/core/platform/support/min_sdl.h
   ${BA_SRC_ROOT}/ballistica/core/platform/support/platform_pango.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/support/sdl_message_box.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/support/sdl_message_box.h
   ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.cc
   ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.h
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.cc
@@ -741,6 +743,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/inline.cc
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/input_types.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/macros.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/macros.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/object.cc

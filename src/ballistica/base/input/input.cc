@@ -20,6 +20,7 @@
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -751,9 +752,9 @@ void Input::PushTextInputEvent(const std::string& text) {
     // Also ignore if there are any mod keys being held. We process some of
     // our own keyboard shortcuts and don't want text input to come through
     // at the same time.
-    if (keys_held_.contains(SDLK_LCTRL) || keys_held_.contains(SDLK_RCTRL)
-        || keys_held_.contains(SDLK_LALT) || keys_held_.contains(SDLK_RALT)
-        || keys_held_.contains(SDLK_LGUI) || keys_held_.contains(SDLK_RGUI)) {
+    if (keys_held_.contains(BAK_LCTRL) || keys_held_.contains(BAK_RCTRL)
+        || keys_held_.contains(BAK_LALT) || keys_held_.contains(BAK_RALT)
+        || keys_held_.contains(BAK_LGUI) || keys_held_.contains(BAK_RGUI)) {
       return;
     }
 
@@ -794,15 +795,14 @@ void Input::PushTextInputEvent(const std::string& text) {
   });
 }
 
-void Input::PushJoystickEvent(const SDL_Event& event,
-                              InputDevice* input_device) {
+void Input::PushJoystickEvent(const BAEvent& event, InputDevice* input_device) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall([this, event, input_device] {
     HandleJoystickEvent_(event, input_device);
   });
 }
 
-void Input::HandleJoystickEvent_(const SDL_Event& event,
+void Input::HandleJoystickEvent_(const BAEvent& event,
                                  InputDevice* input_device) {
   assert(g_base->InLogicThread());
   assert(input_device);
@@ -840,13 +840,13 @@ void Input::PushKeyReleaseEventSimple(int key) {
       [this, key] { HandleKeyReleaseSimple_(key); });
 }
 
-void Input::PushKeyPressEvent(const SDL_Keysym& keysym) {
+void Input::PushKeyPressEvent(const BAKeysym& keysym) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
       [this, keysym] { HandleKeyPress_(keysym); });
 }
 
-void Input::PushKeyReleaseEvent(const SDL_Keysym& keysym) {
+void Input::PushKeyReleaseEvent(const BAKeysym& keysym) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
       [this, keysym] { HandleKeyRelease_(keysym); });
@@ -883,27 +883,27 @@ void Input::ReleaseJoystickInput() {
   joystick_input_capture_ = nullptr;
 }
 
-void Input::AddFakeKeyMods_(SDL_Keysym* sym) {
+void Input::AddFakeKeyMods_(BAKeysym* sym) {
   // In cases where we are only passed simple keycodes, we fill in modifiers
   // ourself by looking at currently held key states. This is less than
   // ideal because modifier key states can fall out of sync in some cases
   // but is generally 'good enough' for our minimal keyboard needs.
-  if (keys_held_.contains(SDLK_LCTRL) || keys_held_.contains(SDLK_RCTRL)) {
-    sym->mod |= KMOD_CTRL;
+  if (keys_held_.contains(BAK_LCTRL) || keys_held_.contains(BAK_RCTRL)) {
+    sym->mod |= BA_KMOD_CTRL;
   }
-  if (keys_held_.contains(SDLK_LSHIFT) || keys_held_.contains(SDLK_RSHIFT)) {
-    sym->mod |= KMOD_SHIFT;
+  if (keys_held_.contains(BAK_LSHIFT) || keys_held_.contains(BAK_RSHIFT)) {
+    sym->mod |= BA_KMOD_SHIFT;
   }
-  if (keys_held_.contains(SDLK_LALT) || keys_held_.contains(SDLK_RALT)) {
-    sym->mod |= KMOD_ALT;
+  if (keys_held_.contains(BAK_LALT) || keys_held_.contains(BAK_RALT)) {
+    sym->mod |= BA_KMOD_ALT;
   }
-  if (keys_held_.contains(SDLK_LGUI) || keys_held_.contains(SDLK_RGUI)) {
-    sym->mod |= KMOD_GUI;
+  if (keys_held_.contains(BAK_LGUI) || keys_held_.contains(BAK_RGUI)) {
+    sym->mod |= BA_KMOD_GUI;
   }
 }
 
 void Input::HandleKeyPressSimple_(int keycode) {
-  SDL_Keysym keysym{};
+  BAKeysym keysym{};
   keysym.sym = keycode;
   AddFakeKeyMods_(&keysym);
   HandleKeyPress_(keysym);
@@ -911,13 +911,13 @@ void Input::HandleKeyPressSimple_(int keycode) {
 
 void Input::HandleKeyReleaseSimple_(int keycode) {
   // See notes above.
-  SDL_Keysym keysym{};
+  BAKeysym keysym{};
   keysym.sym = keycode;
   AddFakeKeyMods_(&keysym);
   HandleKeyRelease_(keysym);
 }
 
-void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
+void Input::HandleKeyPress_(const BAKeysym& keysym) {
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
@@ -977,8 +977,8 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     // On our SDL builds we support both F11 and Alt+Enter for toggling
     // fullscreen.
     if (g_buildconfig.sdl_build()) {
-      if ((keysym.sym == SDLK_F11
-           || (keysym.sym == SDLK_RETURN && ((keysym.mod & KMOD_ALT))))) {
+      if ((keysym.sym == BAK_F11
+           || (keysym.sym == BAK_RETURN && ((keysym.mod & BA_KMOD_ALT))))) {
         do_toggle = true;
       }
     }
@@ -992,8 +992,8 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
 
   // Ctrl-V or Cmd-V sends paste commands to the console or any interested
   // text fields.
-  if (keysym.sym == SDLK_v
-      && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
+  if (keysym.sym == BAK_v
+      && ((keysym.mod & BA_KMOD_CTRL) || (keysym.mod & BA_KMOD_GUI))) {
     if (auto* console = g_base->ui->dev_console()) {
       if (console->PasteFromClipboard()) {
         return;
@@ -1005,10 +1005,10 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
 
   // Dev Console.
   if (auto* console = g_base->ui->dev_console()) {
-    if (keysym.sym == SDLK_BACKQUOTE || keysym.sym == SDLK_F2) {
+    if (keysym.sym == BAK_BACKQUOTE || keysym.sym == BAK_F2) {
       // Reset input so characters don't continue walking and stuff.
       g_base->input->ResetHoldStates();
-      auto backwards = (keysym.mod & KMOD_SHIFT) != 0;
+      auto backwards = (keysym.mod & BA_KMOD_SHIFT) != 0;
       console->CycleState(backwards);
       return;
     }
@@ -1021,7 +1021,7 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
 
   switch (keysym.sym) {
       // Menu button on android/etc. pops up the menu.
-    case SDLK_MENU: {
+    case BAK_MENU: {
       if (!g_base->ui->IsMainUIVisible()) {
         g_base->ui->RequestMainUI(GetFuzzyInputDeviceForMenuButton());
       }
@@ -1029,22 +1029,22 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
       break;
     }
 
-    case SDLK_EQUALS:
-    case SDLK_PLUS:
-      if (keysym.mod & KMOD_CTRL) {
+    case BAK_EQUALS:
+    case BAK_PLUS:
+      if (keysym.mod & BA_KMOD_CTRL) {
         g_base->app_mode()->ChangeGameSpeed(1);
         handled = true;
       }
       break;
 
-    case SDLK_MINUS:
-      if (keysym.mod & KMOD_CTRL) {
+    case BAK_MINUS:
+      if (keysym.mod & BA_KMOD_CTRL) {
         g_base->app_mode()->ChangeGameSpeed(-1);
         handled = true;
       }
       break;
 
-    case SDLK_F5: {
+    case BAK_F5: {
       if (g_base->ui->IsPartyIconVisible()) {
         g_base->ui->ActivatePartyIcon();
       }
@@ -1052,34 +1052,34 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
       break;
     }
 
-    case SDLK_F7:
+    case BAK_F7:
       assert(g_base->logic->event_loop());
       g_base->logic->event_loop()->PushCall(
           [] { g_base->graphics->ToggleManualCamera(); });
       handled = true;
       break;
 
-    case SDLK_F8:
+    case BAK_F8:
       assert(g_base->logic->event_loop());
       g_base->logic->event_loop()->PushCall(
           [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
       handled = true;
       break;
 
-    case SDLK_F9:
+    case BAK_F9:
       g_base->python->objs().PushCall(
           BasePython::ObjID::kLanguageTestToggleCall);
       handled = true;
       break;
 
-    case SDLK_F10:
+    case BAK_F10:
       assert(g_base->logic->event_loop());
       g_base->logic->event_loop()->PushCall(
           [] { g_base->graphics->ToggleDebugDraw(); });
       handled = true;
       break;
 
-    case SDLK_ESCAPE:
+    case BAK_ESCAPE:
       if (!g_base->ui->IsMainUIVisible()) {
         // There's no main menu up. Ask for one.
         g_base->ui->RequestMainUI(GetFuzzyInputDeviceForEscapeKey());
@@ -1103,7 +1103,7 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   }
 }
 
-void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
+void Input::HandleKeyRelease_(const BAKeysym& keysym) {
   assert(g_base->InLogicThread());
 
   // Note: we want to let releases through even if input is locked.
@@ -1138,24 +1138,24 @@ void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
   }
 }
 
-void Input::UpdateModKeyStates_(const SDL_Keysym* keysym, bool press) {
+void Input::UpdateModKeyStates_(const BAKeysym* keysym, bool press) {
   switch (keysym->sym) {
-    case SDLK_LCTRL:
-    case SDLK_RCTRL: {
+    case BAK_LCTRL:
+    case BAK_RCTRL: {
       if (Camera* c = g_base->graphics->camera()) {
         c->set_ctrl_down(press);
       }
       break;
     }
-    case SDLK_LALT:
-    case SDLK_RALT: {
+    case BAK_LALT:
+    case BAK_RALT: {
       if (Camera* c = g_base->graphics->camera()) {
         c->set_alt_down(press);
       }
       break;
     }
-    case SDLK_LGUI:
-    case SDLK_RGUI: {
+    case BAK_LGUI:
+    case BAK_RGUI: {
       if (Camera* c = g_base->graphics->camera()) {
         c->set_cmd_down(press);
       }
@@ -1351,13 +1351,13 @@ void Input::HandleMouseDown_(int button, const Vector2f& position) {
   Camera* camera = g_base->graphics->camera();
   if (!handled && camera) {
     switch (button) {
-      case SDL_BUTTON_LEFT:
+      case BA_BUTTON_LEFT:
         camera->set_mouse_left_down(true);
         break;
-      case SDL_BUTTON_RIGHT:
+      case BA_BUTTON_RIGHT:
         camera->set_mouse_right_down(true);
         break;
-      case SDL_BUTTON_MIDDLE:
+      case BA_BUTTON_MIDDLE:
         camera->set_mouse_middle_down(true);
         break;
       default:
@@ -1376,13 +1376,13 @@ void Input::PushMouseUpEvent(int button, const Vector2f& position) {
 static void ApplyMouseUpCancelToCamera(int button) {
   if (Camera* camera = g_base->graphics->camera()) {
     switch (button) {
-      case SDL_BUTTON_LEFT:
+      case BA_BUTTON_LEFT:
         camera->set_mouse_left_down(false);
         break;
-      case SDL_BUTTON_RIGHT:
+      case BA_BUTTON_RIGHT:
         camera->set_mouse_right_down(false);
         break;
-      case SDL_BUTTON_MIDDLE:
+      case BA_BUTTON_MIDDLE:
         camera->set_mouse_middle_down(false);
         break;
       default:
@@ -1523,7 +1523,7 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
   // which covers most UI stuff.
   if (e.type == TouchEvent::Type::kDown && single_touch_ == nullptr) {
     single_touch_ = e.touch;
-    HandleMouseDown_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
+    HandleMouseDown_(BA_BUTTON_LEFT, Vector2f(e.x, e.y));
   }
 
   if (e.type == TouchEvent::Type::kMoved && e.touch == single_touch_) {
@@ -1533,13 +1533,13 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
   if ((e.type == TouchEvent::Type::kUp)
       && (e.touch == single_touch_ || e.overall)) {
     single_touch_ = nullptr;
-    HandleMouseUp_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
+    HandleMouseUp_(BA_BUTTON_LEFT, Vector2f(e.x, e.y));
   }
 
   if ((e.type == TouchEvent::Type::kCanceled)
       && (e.touch == single_touch_ || e.overall)) {
     single_touch_ = nullptr;
-    HandleMouseCancel_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
+    HandleMouseCancel_(BA_BUTTON_LEFT, Vector2f(e.x, e.y));
   }
   // If we've got a touch input device, forward events along to it.
   if (touch_input_) {
@@ -1561,9 +1561,9 @@ void Input::ResetKeyboardHeldKeys() {
   if (!g_core->HeadlessMode()) {
     // Synthesize key-ups for all our held keys.
     while (!keys_held_.empty()) {
-      SDL_Keysym k;
+      BAKeysym k;
       memset(&k, 0, sizeof(k));
-      k.sym = (SDL_Keycode)(*keys_held_.begin());
+      k.sym = (BAKeycode)(*keys_held_.begin());
       HandleKeyRelease_(k);
     }
   }

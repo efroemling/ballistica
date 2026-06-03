@@ -8,6 +8,7 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/scene_v1/scene_v1.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/python/python_object_set.h"
 
 namespace ballistica::scene_v1 {
@@ -99,16 +100,16 @@ class SceneV1Python {
   const auto& objs() { return objs_; }
 
  private:
-  static auto HandleCapturedJoystickEventCall(const SDL_Event& event,
+  static auto HandleCapturedJoystickEventCall(const BAEvent& event,
                                               base::InputDevice* input_device)
       -> bool;
-  static auto HandleCapturedKeyPressCall(const SDL_Keysym& keysym) -> bool;
-  static auto HandleCapturedKeyReleaseCall(const SDL_Keysym& keysym) -> bool;
-  auto HandleCapturedJoystickEvent(const SDL_Event& event,
+  static auto HandleCapturedKeyPressCall(const BAKeysym& keysym) -> bool;
+  static auto HandleCapturedKeyReleaseCall(const BAKeysym& keysym) -> bool;
+  auto HandleCapturedJoystickEvent(const BAEvent& event,
                                    base::InputDevice* input_device = nullptr)
       -> bool;
-  auto HandleCapturedKeyPress(const SDL_Keysym& keysym) -> bool;
-  auto HandleCapturedKeyRelease(const SDL_Keysym& keysym) -> bool;
+  auto HandleCapturedKeyPress(const BAKeysym& keysym) -> bool;
+  auto HandleCapturedKeyRelease(const BAKeysym& keysym) -> bool;
 
   PythonObjectSet<ObjID> objs_;
   PythonRef joystick_capture_call_;

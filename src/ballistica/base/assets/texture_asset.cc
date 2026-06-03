@@ -23,6 +23,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/generic/utils.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
 namespace ballistica::base {
@@ -255,10 +256,11 @@ void TextureAsset::DoPreload() {
       // Uncompressed RGBA8 + mipmaps (KTX 2.0, ``.ktx2`` files).
       // Used by the asset-package CAS pipeline for FALLBACK_V1.
       if (matches(".ktx2")) {
+        // Asset-package textures load full mips from the flavor; they do
+        // not consult the legacy texture-quality knob (see LoadKTX2).
         LoadKTX2(file_name_full_, preload_datas_[0].buffers,
                  preload_datas_[0].widths, preload_datas_[0].heights,
                  preload_datas_[0].formats, preload_datas_[0].sizes,
-                 texture_quality, static_cast<int>(min_quality_),
                  &preload_datas_[0].base_level);
       } else if (matches(".android_dds")) {
         // Etc1 or dxt3 for non-alpha and dxt5 for alpha (.android_dds).

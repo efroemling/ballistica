@@ -19,6 +19,7 @@ from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.analytics import AnalyticsEvent
 from bacommon import securedata
 from bacommon.transfer import DirectoryManifest
+from bacommon.locale import Locale
 from bacommon.login import LoginType
 from bacommon.docui import DocUIRequest, DocUIResponse
 import bacommon.displayitem as ditm
@@ -371,6 +372,134 @@ class SecureDataSigningTestResponse(Response):
     #: :class:`~bacommon.securedata.Writer` (carries a
     #: master-signed cert).
     delegate_archive: Annotated[securedata.Archive, IOAttrs('d')]
+
+
+@ioprepped
+@dataclass
+class ResolvedFlavorManifest:
+    """A resolved flavor-manifest blob, delivered inline (Tier 1).
+
+    Client-facing counterpart to the basn↔master
+    ``basntobamaster.ResolvedFlavorManifest``; basn relays it unchanged
+    when returning a resolved manifest to the client.
+
+    The flavor-manifest's canonical JSON bytes travel inline in
+    :attr:`data` (they are small — a ``logical_path -> {hash, size}``
+    map). The client writes them verbatim into its CAS store under
+    :attr:`hash` (sha256-verified), references that hash from its
+    top-level cache manifest exactly as the bundled manifest does, and
+    parses :attr:`data` (the ``{"e": {logical_path: {"h", "s"}}}``
+    shape) to discover the data-blob hashes to fetch via
+    ``GET /casblob/{hash}`` (Tier 2).
+    """
+
+    #: sha256 hex of :attr:`data` — the flavor-manifest's CAS hash.
+    hash: Annotated[str, IOAttrs('h')]
+
+    #: Canonical flavor-manifest JSON bytes (stored verbatim client-side
+    #: as a CAS blob; its sha256 equals :attr:`hash`).
+    data: Annotated[bytes, IOAttrs('d')]
+
+
+class AssetPackageResolveError(Enum):
+    """Why an asset-package resolve failed (structured for client branching).
+
+    Travels back to the client on :class:`ResolveAssetPackageResponse` so
+    the runtime can react precisely (e.g. prompt for sign-in on
+    ``AUTH_REQUIRED``) rather than parsing the human-readable ``error``
+    string.
+    """
+
+    #: Caller is unauthenticated and the version is non-public; signing in
+    #: with an account that has access may resolve it.
+    AUTH_REQUIRED = 'auth'
+    #: Caller is authenticated but lacks access to this (non-public)
+    #: version (not the owner / not on the package's dev team).
+    ACCESS_DENIED = 'access'
+    #: The requested asset-package-version id is unknown / invalid.
+    NOT_FOUND = 'notfound'
+    #: A requested dimension value was invalid (texture profile/quality,
+    #: language, etc.).
+    INVALID = 'invalid'
+    #: An internal/assemble error occurred server-side.
+    INTERNAL = 'internal'
+
+
+@ioprepped
+@dataclass
+class ResolveAssetPackageMessage(Message):
+    """Resolve an asset-package-version's manifest for download (Tier 1).
+
+    Sent by a client to the basn node it is connected to when it needs
+    to download an asset package. basn resolves the manifest via
+    bamaster on the client's behalf and returns, per bucket, the
+    resolved flavor-manifest blob (its CAS hash + canonical bytes,
+    inline) plus a short-lived capability token. The client then fetches
+    each data blob the flavor-manifests reference from the same node via
+    ``GET /casblob/{hash}`` (Tier 2), presenting the token.
+
+    Texture dimensions travel as plain strings (the ``TextureProfile``
+    / ``TextureQuality`` enum values) so this module stays decoupled
+    from the master-only ``baserver.workspace.assetsv1``; the master
+    converts + validates them.
+
+    The requesting account is conveyed via the standard
+    account-session-channel sidecar that basn auto-attaches to every
+    client message (no explicit field needed): a signed-in client
+    resolves against its account (required for non-public DEV/TEST
+    versions), while an anonymous client resolves PROD versions only
+    (which are public).
+    """
+
+    #: Fully-qualified ``account.package.version`` id to resolve.
+    apverid: Annotated[str, IOAttrs('a')]
+
+    #: Chosen locale for the ``language`` bucket.
+    language: Annotated[Locale, IOAttrs('l')]
+
+    #: Chosen ``TextureProfile`` value (e.g. ``'fallback_v1'``).
+    texture_profile: Annotated[str, IOAttrs('tp')]
+
+    #: Chosen ``TextureQuality`` value (e.g. ``'regular'``).
+    texture_quality: Annotated[str, IOAttrs('tq')]
+
+    @override
+    @classmethod
+    def get_response_types(cls) -> list[type[Response] | None]:
+        return [ResolveAssetPackageResponse]
+
+
+@ioprepped
+@dataclass
+class ResolveAssetPackageResponse(Response):
+    """Resolved flavor-manifests + capability token for a download.
+
+    ``buckets`` maps a ``bucket/flavor`` coordinate (e.g.
+    ``'textures/fallback_v1_regular'``, ``'constant'``) to that
+    flavor's resolved flavor-manifest blob (CAS hash + canonical bytes,
+    delivered inline). On failure ``error`` carries a human-readable
+    message and ``buckets`` is empty / ``token`` is ``None``.
+    """
+
+    #: Human-readable failure message (bad apverid, access denied, bad
+    #: dimension value, assemble failure), or ``None`` on success.
+    error: Annotated[str | None, IOAttrs('e')]
+
+    #: Structured failure reason accompanying ``error`` (lets the client
+    #: branch — e.g. prompt for sign-in — without parsing the message).
+    #: ``None`` on success, or when an older server didn't supply one.
+    error_code: Annotated[
+        AssetPackageResolveError | None, IOAttrs('ec', soft_default=None)
+    ]
+
+    #: ``bucket/flavor`` coordinate -> the resolved flavor-manifest blob
+    #: for that flavor. Empty when ``error`` is set.
+    buckets: Annotated[dict[str, ResolvedFlavorManifest], IOAttrs('b')]
+
+    #: Short-lived capability token the client presents to
+    #: ``GET /casblob/{hash}`` to fetch the resolved blobs. ``None``
+    #: when ``error`` is set.
+    token: Annotated[securedata.Archive | None, IOAttrs('tok')]
 
 
 @ioprepped
