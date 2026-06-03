@@ -508,8 +508,8 @@ def do_update(projroot: Path, target_str: str, version_str: str) -> None:
     # used at runtime, and the construct-mode pin in projectconfig
     # is what drives the build's bundled assets.)
     if projectconfig_changed:
-        for variant in ('gui', 'headless'):
-            _run_pcommand(projroot, 'asset_bundle_build', variant)
+        for profile in ('gui-minimal', 'headless-minimal'):
+            _run_pcommand(projroot, 'asset_bundle_build', profile)
         from batools.builtinassetids import generate
 
         changed = generate(projroot, check=False)

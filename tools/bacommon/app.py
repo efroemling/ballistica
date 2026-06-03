@@ -24,7 +24,7 @@ class ExitCode(Enum):
     of these as its process exit code. This is distinct from a
     fatal-error/abort exit (which routes through crash reporting); a
     nonzero value here means "we shut down cleanly, but the run was a
-    failure". Supervisors such as the ``ballisticakit_server`` wrapper
+    failure". Supervisors such as the headless server-wrapper script
     (and BASN task orchestration) interpret nonzero values to decide
     whether restarting is worthwhile.
     """

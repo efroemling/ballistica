@@ -128,6 +128,21 @@ assets-windows-x64: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
  cd src/assets \&\& $(MAKE) -j$(CPUS) win-x64
 
+# Build assets required for WINDOWS_PLATFORM windows server builds.
+assets-windows-server: env codegen
+	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
+ cd src/assets \&\& $(MAKE) -j$(CPUS) win-server-$(WINDOWS_PLATFORM)
+
+# Build assets required for Win32 windows server builds.
+assets-windows-server-Win32: env codegen
+	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
+ cd src/assets \&\& $(MAKE) -j$(CPUS) win-server-Win32
+
+# Build assets required for x64 windows server builds.
+assets-windows-server-x64: env codegen
+	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
+ cd src/assets \&\& $(MAKE) -j$(CPUS) win-server-x64
+
 # Build assets required for mac xcode builds
 assets-mac: env codegen
 	@$(PCOMMAND) lazybuild assets_src $(LAZYBUILDDIR)/$@ \
@@ -294,7 +309,8 @@ pcommandbatch_speed_test: env
 # Tell make which of these targets don't represent files.
 .PHONY: help env env-pre-update env-clean assets assets-cmake			\
         assets-windows assets-windows-Win32													\
-        assets-windows-x64 assets-mac assets-ios assets-android assets-clean	\
+        assets-windows-x64 assets-windows-server assets-windows-server-Win32			\
+        assets-windows-server-x64 assets-mac assets-ios assets-android assets-clean	\
         assets-resolve-clean																					\
         assetpins assetpins-latest																				\
         resources resources-clean codegen codegen-clean clean clean-list						\
@@ -662,7 +678,7 @@ prefab-windows-x86-64-server-debug: prefab-windows-x86-64-server-debug-build
 	$(RUN_PREFAB_WINDOWS_X86_64_SERVER_DEBUG)
 
 prefab-windows-x86-64-server-debug-build: env \
-   assets-windows-$(WINPREVSP) \
+   assets-windows-server-$(WINPREVSP) \
    build/prefab/full/windows_x86_64_server/debug/dist/BallisticaKitHeadless.exe
 	@$(STAGE_BUILD) -winserver-$(WINPREVSP) -debug \
       build/prefab/full/windows_x86_64_server/debug
@@ -687,7 +703,7 @@ prefab-windows-x86-64-server-release: prefab-windows-x86-64-server-release-build
 	$(RUN_PREFAB_WINDOWS_X86_64_SERVER_RELEASE)
 
 prefab-windows-x86-64-server-release-build: env \
-   assets-windows-$(WINPREVSP) \
+   assets-windows-server-$(WINPREVSP) \
  build/prefab/full/windows_x86_64_server/release/dist/BallisticaKitHeadless.exe
 	@$(STAGE_BUILD) -winserver-$(WINPREVSP) -release \
       build/prefab/full/windows_x86_64_server/release
@@ -1164,9 +1180,29 @@ WINDOWS_PLATFORM ?= x64
 # Can be Debug or Release
 WINDOWS_CONFIGURATION ?= Debug
 
-# Stage assets and other files so a built binary will run.
-windows-staging: assets-windows resources codegen
+# Windows staging variant follows the project: the Headless project is
+# a server build (server-subset assets + null-texture bundle); every
+# other project (Generic, TestBuild, Oculus) is a gui build. This keeps
+# gui and server builds depending on disjoint asset sets, so a server
+# package never drags in (or races against) the gui asset build.
+ifeq ($(WINDOWS_PROJECT),Headless)
+  WIN_STAGE_VARIANT = server
+else
+  WIN_STAGE_VARIANT = gui
+endif
+
+# Stage assets and other files so a built binary will run. This is an
+# alias resolving to the gui or server staging per WIN_STAGE_VARIANT;
+# the many windows-cloud-* / windows-cloudwork-* targets depend on it
+# and automatically get the right variant.
+windows-staging: windows-staging-$(WIN_STAGE_VARIANT)
+
+windows-staging-gui: assets-windows resources codegen
 	@$(STAGE_BUILD) -win-$(WINPLT) -$(WINCFGLC) build/windows/$(WINCFG)_$(WINPLT)
+
+windows-staging-server: assets-windows-server resources codegen
+	@$(STAGE_BUILD) -winserver-$(WINPLT) -$(WINCFGLC) \
+      build/windows/$(WINCFG)_$(WINPLT)
 
 # Build and run a debug windows build (from WSL).
 windows-debug: windows-debug-build
