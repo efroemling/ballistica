@@ -14,7 +14,7 @@ jobs:
   # we can always add an explicit mac job later if it seems worthwhile.
 
   check_linux:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - name: Setup build env
@@ -32,7 +32,7 @@ jobs:
 
   # Compile a server binary and run some tests.
   build_and_test_linux:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - name: Setup build env
@@ -68,7 +68,7 @@ jobs:
   # Make a copy of the template feature-set and build with it included.
   # Also take the opportunity to test a modular build (we did monolithic above).
   feature_set_copy_test_linux:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - name: Setup build env

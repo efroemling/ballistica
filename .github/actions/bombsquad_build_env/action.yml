@@ -57,8 +57,31 @@ runs:
         sudo apt-get install -y --no-install-recommends \
           libglut-dev \
           libopenal-dev \
-          libsdl3-dev \
-          libvorbis-dev
+          libvorbis-dev \
+          ninja-build \
+          libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev \
+          libxfixes-dev libxss-dev libxkbcommon-dev libwayland-dev \
+          libdecor-0-dev libgl1-mesa-dev libegl1-mesa-dev libasound2-dev \
+          libpulse-dev libdbus-1-dev libudev-dev
+    # libsdl3-dev isn't in Ubuntu 24.04 (ubuntu-latest) apt yet, and
+    # ubuntu-26.04 GitHub-hosted runners aren't available, so build SDL3 from
+    # source. Revisit (back to `apt install libsdl3-dev` on ubuntu-26.04) once
+    # those runners go GA.
+    - name: Build and install SDL3 from source
+      if: ${{ inputs.using-cmake == 'true' }}
+      shell: bash
+      run: |
+        SDL_VER=3.4.10
+        curl -fsSL -o /tmp/SDL3.tar.gz \
+          "https://github.com/libsdl-org/SDL/releases/download/release-$SDL_VER/SDL3-$SDL_VER.tar.gz"
+        tar -xzf /tmp/SDL3.tar.gz -C /tmp
+        cmake -S "/tmp/SDL3-$SDL_VER" -B /tmp/SDL3-build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF \
+          -DSDL_TEST_LIBRARY=OFF -DSDL_EXAMPLES=OFF \
+          -DCMAKE_INSTALL_PREFIX=/usr/local
+        cmake --build /tmp/SDL3-build -j"$(nproc)"
+        sudo cmake --install /tmp/SDL3-build
+        sudo ldconfig
     - name: Setup env variables
       if: ${{ inputs.using-cmake == 'true' }}
       shell: bash
