@@ -60,7 +60,7 @@ runs:
           libvorbis-dev \
           ninja-build \
           libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev \
-          libxfixes-dev libxss-dev libxkbcommon-dev libwayland-dev \
+          libxtst-dev libxfixes-dev libxss-dev libxkbcommon-dev libwayland-dev \
           libdecor-0-dev libgl1-mesa-dev libegl1-mesa-dev libasound2-dev \
           libpulse-dev libdbus-1-dev libudev-dev
     # libsdl3-dev isn't in Ubuntu 24.04 (ubuntu-latest) apt yet, and
