@@ -18,8 +18,9 @@
 // ----------------------------- BASE GL INCLUDES ------------------------------
 
 // On SDL builds, let SDL handle this for us.
-// (Skipped on Windows+ANGLE: we use GLES3 headers there instead.)
-#if BA_SDL_BUILD && !(BA_PLATFORM_WINDOWS && BA_OPENGL_IS_ES)
+// (Skipped on ANGLE/ES SDL builds -- Windows and macOS -- where we include
+// the GLES3 headers ourselves instead of SDL's desktop-GL header.)
+#if BA_SDL_BUILD && !BA_OPENGL_IS_ES
 #include <SDL3/SDL_opengl.h>
 #endif
 
@@ -51,6 +52,20 @@
 // any inline wrappers below.
 #if BA_PLATFORM_WINDOWS
 #include "ballistica/base/graphics/gl/gl_sys_windows.h"
+#endif
+
+// On macOS with ANGLE (cmake/SDL builds) the GLES3 headers come from the
+// vendored ANGLE xcframework's include dir, which cmake adds to the include
+// path. Pull them in here so the ES entry points are visible before the
+// inline wrappers below (mirrors the Android/Windows ES paths). Apple's
+// GL_GLEXT_PROTOTYPES is defined above (non-Windows), so the ext prototypes
+// resolve against the libGLESv2 we link.
+#if BA_PLATFORM_MACOS && BA_OPENGL_IS_ES && BA_SDL_BUILD
+// clang-format off
+#include <GLES3/gl3.h>
+// NOLINTNEXTLINE(build/include) -- mutually-exclusive #if vs the android block
+#include <GLES2/gl2ext.h>  // GL_KHR_debug constants and typedefs (needs gl3.h)
+// clang-format on
 #endif
 
 // -----------------------------------------------------------------------------

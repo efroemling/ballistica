@@ -147,11 +147,15 @@ class Assets {
   /// subsystem needing format knowledge.
   ///
   /// Returns ``"null"`` in headless (no renderer; only the NULL flavor is
-  /// ever bundled/needed) and otherwise ``"fallback_v1"`` — the only
-  /// profile the client KTX2 loader can currently decode (uncompressed
-  /// RGBA). Real GPU-caps selection (BC→``desktop_v1``,
-  /// ASTC/ETC→``mobile_v1``) lands alongside KTX2 BC/ASTC decode support
-  /// + per-platform native-format bundles; see the implementation.
+  /// bundled/needed). Otherwise selects by form factor first, then GPU
+  /// capability: desktop (Mac/Windows/Linux) → ``"desktop_v1"`` (BC7) else
+  /// ``"fallback_v1"``; mobile (Android/iOS/tvOS) → ``"mobile_v1"`` (ASTC)
+  /// else ``"fallback_v1"``. Form factor (not raw format support) picks the
+  /// flavor family because a flavor bundles more than its compression
+  /// (resolution, etc.). ``BA_FORCE_TEXTURE_PROFILE`` hard-pins the result;
+  /// ``BA_FORCE_TEXTURE_FORM_FACTOR=mobile|desktop`` runs the other family's
+  /// branch (caps still consulted) for on-desktop testing of the mobile
+  /// path. See the implementation.
   auto PreferredTextureProfile() const -> std::string;
 
   /// Resolve one *part* of a texture qualified-ref (``<apverid>:<name>``)

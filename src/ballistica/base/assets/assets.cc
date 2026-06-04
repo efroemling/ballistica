@@ -1411,31 +1411,52 @@ auto Assets::PreferredTextureProfile() const -> std::string {
     return "null";
   }
 
-  // Desktop: if the GPU supports BC7 (BPTC) — essentially all desktop
-  // GPUs — request the desktop_v1 profile, which the KTX2 loader now
-  // decodes (GL_COMPRESSED_RGBA_BPTC_UNORM). Uses the thread-safe caps
-  // mirror since we're on the logic thread; it reads false until the
-  // graphics context has detected caps, so a profile decision made
-  // before then safely falls back to fallback_v1 rather than racing.
+  // Pick the flavor *family* by form factor, then let GPU capability decide
+  // whether we get that family's compressed flavor or the universal
+  // uncompressed fallback. Form factor -- not raw format support -- chooses
+  // the family because a flavor bundles more than just its compression
+  // (resolution, etc.); a desktop must never pull the mobile flavor just
+  // because its GPU happens to expose ASTC, and vice versa.
   //
-  // Profile by GPU capability (format, not form factor): BC7 → desktop,
-  // else ASTC LDR → mobile, else the universal uncompressed fallback.
-  // Both compressed profiles are decoded by the KTX2 loader. Uses the
-  // thread-safe caps mirror since we're on the logic thread; it reads
-  // false until the graphics context has detected caps, so a profile
-  // decision made before then safely falls back rather than racing.
-  //
-  // Note BC7 is preferred over ASTC where both exist (true desktop
-  // GPUs); Apple Silicon Macs land on ASTC here, since their macOS GL
-  // (4.1) doesn't expose BPTC even though the hardware supports BC7.
+  // Debug override (BA_FORCE_TEXTURE_FORM_FACTOR=mobile|desktop): pretend to
+  // be the given form factor. Lets a desktop machine -- e.g. a Mac, whose
+  // ANGLE/Metal GPU exposes ASTC -- exercise the mobile/ASTC branch
+  // end-to-end without a mobile device.
+  bool mobile = g_buildconfig.platform_mobile();
+  if (const char* ff = getenv("BA_FORCE_TEXTURE_FORM_FACTOR")) {
+    if (std::string(ff) == "mobile") {
+      mobile = true;
+    } else if (std::string(ff) == "desktop") {
+      mobile = false;
+    }
+  }
+
+  // Caps come from the thread-safe mirror since we're on the logic thread;
+  // it reads false until the graphics context has detected caps, so a
+  // decision made before then safely lands on fallback rather than racing.
+  // Both compressed profiles are decoded by the KTX2 loader.
   auto* gs = g_base->graphics_server;
+  if (mobile) {
+    // Mobile: ASTC LDR if the GPU exposes it, else the universal fallback.
+    // iOS/tvOS always have ASTC; only a small, shrinking tail of older
+    // Android GPUs lack it. We deliberately carry no ETC2 tier -- the
+    // half-res uncompressed fallback lands at ~the same VRAM as full-res
+    // ETC2-with-alpha, so those devices aren't materially worse off.
+    if (gs->SupportsTextureCompressionTypeThreadsafe(
+            TextureCompressionType::kASTC)) {
+      return "mobile_v1";
+    }
+    return "fallback_v1";
+  }
+
+  // Desktop: BC7 (BPTC) if exposed -- essentially all desktop GPUs via
+  // D3D11 (Windows/ANGLE), Metal (Mac/ANGLE), or modern GL (Linux) -- else
+  // the universal fallback. Note a desktop GPU that exposes ASTC but not
+  // BC7 (e.g. an Apple Silicon Mac on the desktop-GL fallback build, no
+  // ANGLE) deliberately lands on fallback, not mobile: it's a desktop.
   if (gs->SupportsTextureCompressionTypeThreadsafe(
           TextureCompressionType::kBPTC)) {
     return "desktop_v1";
-  }
-  if (gs->SupportsTextureCompressionTypeThreadsafe(
-          TextureCompressionType::kASTC)) {
-    return "mobile_v1";
   }
   return "fallback_v1";
 }

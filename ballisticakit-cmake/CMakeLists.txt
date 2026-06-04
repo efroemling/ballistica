@@ -70,8 +70,46 @@ else()
   
   # On linux, prefer modern libOpenGL.so over legacy libGL.so.
   set(OpenGL_GL_PREFERENCE GLVND)
-  find_package(OpenGL REQUIRED)
-  
+
+  # GL backend selection. On macOS we build against ANGLE (GL ES -> Metal)
+  # when the vendored xcframework is present, and otherwise fall back to the
+  # (deprecated) system desktop GL. The fallback is deliberate: the public
+  # repo doesn't ship the ANGLE xcframework, so this keeps public macOS cmake
+  # builds working. BALLISTICA_USE_ANGLE forces the choice -- AUTO (default;
+  # ANGLE if present), ON (require it, error if missing), OFF (desktop GL).
+  set(_BA_USE_ANGLE OFF)
+  if(APPLE)
+    set(BALLISTICA_USE_ANGLE "AUTO" CACHE STRING
+      "macOS GL backend: AUTO (ANGLE if present) / ON (require) / OFF (desktop GL)")
+    set(_BA_ANGLE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../src/external/angle-apple")
+    set(_BA_ANGLE_GLES
+      "${_BA_ANGLE_ROOT}/libGLESv2.xcframework/macos-arm64_x86_64/libGLESv2.dylib")
+    set(_BA_ANGLE_EGL
+      "${_BA_ANGLE_ROOT}/libEGL.xcframework/macos-arm64_x86_64/libEGL.dylib")
+    if(BALLISTICA_USE_ANGLE STREQUAL "OFF")
+      # Forced desktop GL.
+    elseif(EXISTS "${_BA_ANGLE_GLES}")
+      set(_BA_USE_ANGLE ON)
+    elseif(BALLISTICA_USE_ANGLE STREQUAL "ON")
+      message(FATAL_ERROR
+        "BALLISTICA_USE_ANGLE=ON but no ANGLE xcframework found at "
+        "${_BA_ANGLE_ROOT}. Run 'make angle-apple-build' + "
+        "'make angle-apple-gather' first, or use AUTO/OFF.")
+    endif()
+  endif()
+
+  if(_BA_USE_ANGLE)
+    message(STATUS "Ballistica GL backend: ANGLE (GL ES -> Metal)")
+    target_compile_definitions(common_deps INTERFACE BA_OPENGL_IS_ES=1)
+    target_include_directories(ba_deps INTERFACE "${_BA_ANGLE_ROOT}/include")
+    set(_BA_GL_LIBS "${_BA_ANGLE_GLES}" "${_BA_ANGLE_EGL}")
+  else()
+    if(APPLE)
+      message(STATUS "Ballistica GL backend: system desktop GL")
+    endif()
+    find_package(OpenGL REQUIRED)
+    set(_BA_GL_LIBS OpenGL::GL)
+  endif()
 
   if(STATIC_BUILD)
     target_link_libraries(ba_deps INTERFACE
@@ -79,7 +117,7 @@ else()
       PkgConfig::SDL3
       PkgConfig::OGG
       PkgConfig::VORBISFILE
-      OpenGL::GL
+      ${_BA_GL_LIBS}
     )
   else()
     target_link_libraries(ba_deps INTERFACE
@@ -87,7 +125,7 @@ else()
       PkgConfig::SDL3
       PkgConfig::OGG
       PkgConfig::VORBISFILE
-      OpenGL::GL
+      ${_BA_GL_LIBS}
     )
   endif()
 
@@ -915,6 +953,23 @@ if(DISCORD)
   endif()
 endif()
 # ========================================================
+
+
+# ============= ANGLE DYLIB STAGING (macOS) =============
+# When building against ANGLE, copy its dylibs next to the binary (where
+# @executable_path resolves -- dev builds symlink the staged binary back to
+# this build dir) and ensure the rpath, mirroring the Discord staging above.
+# SDL is pointed at these explicitly at GL-context-creation time.
+if(_BA_USE_ANGLE)
+  add_custom_command(TARGET ballisticakitbin POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${_BA_ANGLE_GLES}" "${_BA_ANGLE_EGL}"
+      $<TARGET_FILE_DIR:ballisticakitbin>)
+  set_target_properties(ballisticakitbin PROPERTIES
+    BUILD_RPATH "@executable_path"
+    INSTALL_RPATH "@executable_path")
+endif()
+# ======================================================
 
 
 # ============= STATIC BUILD LINKING CONFIGURATION =============

@@ -54,6 +54,7 @@ def _test_game_run_parse_args() -> dict[str, object]:
         'debug_network_toggle': False,
         'asset_no_bundle_reuse': False,
         'force_texture_profile': None,
+        'force_texture_form_factor': None,
         'gc_warning_threshold': None,
         'gc_debug_types': None,
         'gc_debug_type_limit': None,
@@ -97,6 +98,9 @@ def _test_game_run_parse_args() -> dict[str, object]:
             args = args[1:]
         elif args[0] == '--force-texture-profile' and len(args) > 1:
             out['force_texture_profile'] = args[1]
+            args = args[2:]
+        elif args[0] == '--force-texture-form-factor' and len(args) > 1:
+            out['force_texture_form_factor'] = args[1]
             args = args[2:]
         elif args[0] == '--gc-warning-threshold' and len(args) > 1:
             out['gc_warning_threshold'] = int(args[1])
@@ -327,6 +331,7 @@ def _test_game_run_env(opts: dict[str, object]) -> dict[str, str]:
     # Value flags -> str(value) when not None.
     for key, env_name in (
         ('force_texture_profile', 'BA_FORCE_TEXTURE_PROFILE'),
+        ('force_texture_form_factor', 'BA_FORCE_TEXTURE_FORM_FACTOR'),
         ('gc_warning_threshold', 'BA_GC_WARNING_THRESHOLD'),
         ('gc_debug_types', 'BA_GC_DEBUG_TYPES'),
         ('gc_debug_type_limit', 'BA_GC_DEBUG_TYPE_LIMIT'),
@@ -347,6 +352,7 @@ def test_game_run() -> None:
             [--fleet FLEET] [--user-data]
             [--reset-connectivity] [--debug-network-toggle]
             [--asset-no-bundle-reuse] [--force-texture-profile PROFILE]
+            [--force-texture-form-factor mobile|desktop]
             [--gc-warning-threshold N]
             [--gc-debug-types TYPE1,TYPE2,...]
             [--gc-debug-type-limit N]
@@ -424,6 +430,13 @@ def test_game_run() -> None:
       platform/headless. Lets a headless run request a non-null texture
       flavor so the real multi-file (``t``+``j``) blob download + write
       path is exercised without a display.
+    - ``--force-texture-form-factor mobile|desktop``: Sets
+      ``BA_FORCE_TEXTURE_FORM_FACTOR`` so ``PreferredTextureProfile``
+      runs the given form factor's selection branch (rather than the
+      build's actual platform). Unlike ``--force-texture-profile`` (which
+      hard-pins the result string), this still consults real GPU caps --
+      so ``mobile`` on a Mac whose ANGLE/Metal GPU exposes ASTC actually
+      resolves to ``mobile_v1`` and exercises the ASTC path end-to-end.
     - ``--gc-warning-threshold N``: Sets ``BA_GC_WARNING_THRESHOLD``.
       Override the object-count threshold above which a cyclic-gc
       pass logs a WARNING (default 50). Lower it to surface smaller

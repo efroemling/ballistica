@@ -6,7 +6,8 @@ Make the engine's internal input vocabulary independent of SDL, so SDL's
 surface area collapses to (effectively) just the SDL app-adapter. This is
 the long-documented endgame noted at the top of
 `core/platform/support/min_sdl.h`, and a cleanup we want done before the
-ANGLE-across-all-platforms work begins.
+ANGLE-across-all-platforms work begins (see
+`docs/initiatives/angle-on-apple.md`).
 
 Today `min_sdl.h` either includes real SDL (`BA_SDL_BUILD`) or, for
 non-SDL builds, hand-defines a minimal subset of SDL types

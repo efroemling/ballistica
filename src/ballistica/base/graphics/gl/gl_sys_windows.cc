@@ -11,9 +11,12 @@
 
 #if BA_OPENGL_IS_ES
 
-// Link against ANGLE import libs. The corresponding DLLs (libEGL.dll,
-// libGLESv2.dll) must be present alongside the executable at runtime.
-#pragma comment(lib, "libEGL.lib")
+// Link against ANGLE's GLES import lib so the engine's direct gl* calls
+// resolve to libGLESv2.dll. We intentionally do NOT link libEGL.lib: the
+// engine never calls egl* itself -- SDL creates and manages the EGL
+// context (via SDL_HINT_OPENGL_ES_DRIVER). Both DLLs (libEGL.dll, and
+// libGLESv2.dll which depends on it) must still be present alongside the
+// executable at runtime.
 #pragma comment(lib, "libGLESv2.lib")
 
 namespace ballistica::base {

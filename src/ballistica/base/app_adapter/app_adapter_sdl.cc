@@ -9,6 +9,14 @@
 #include <string>
 #include <vector>
 
+#if BA_PLATFORM_MACOS && BA_OPENGL_IS_ES
+#include <mach-o/dyld.h>
+
+#include <climits>
+#include <cstdint>
+#include <cstdlib>
+#endif
+
 #include "ballistica/base/base.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
@@ -28,6 +36,35 @@
 #include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
+
+#if BA_PLATFORM_MACOS && BA_OPENGL_IS_ES
+// Point SDL at the ANGLE dylibs we bundle next to the binary. SDL loads its
+// EGL/GLES libraries via a plain-name dlopen which wouldn't find them via
+// @executable_path, so we resolve the real executable dir (dev builds stage
+// the binary as a symlink back to the build dir, where the dylibs live) and
+// hand SDL absolute paths.
+static void SetAngleLibPaths_() {
+  char buf[PATH_MAX];
+  uint32_t size = sizeof(buf);
+  if (_NSGetExecutablePath(buf, &size) != 0) {
+    return;
+  }
+  char real[PATH_MAX];
+  if (realpath(buf, real) == nullptr) {
+    return;
+  }
+  std::string dir = real;
+  auto slash = dir.rfind('/');
+  if (slash == std::string::npos) {
+    return;
+  }
+  dir = dir.substr(0, slash + 1);
+  std::string egl = dir + "libEGL.dylib";
+  std::string gles = dir + "libGLESv2.dylib";
+  SDL_SetHint(SDL_HINT_EGL_LIBRARY, egl.c_str());
+  SDL_SetHint(SDL_HINT_OPENGL_LIBRARY, gles.c_str());
+}
+#endif  // BA_PLATFORM_MACOS && BA_OPENGL_IS_ES
 
 /// RAII-friendly way to mark where in the main thread we're allowed to run
 /// graphics code (only applies in strict-graphics-context mode).
@@ -859,25 +896,29 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
     }
 
     int context_flags{};
+#if BA_OPENGL_IS_ES
+    // ANGLE: OpenGL ES 3.0 via D3D11 (Windows) or Metal (macOS). SDL creates
+    // and manages the EGL/ANGLE context for us.
+    SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
+#if BA_PLATFORM_MACOS
+    // On Windows the ANGLE DLLs sit beside the .exe and load automatically;
+    // on macOS SDL's dlopen needs to be pointed at our bundled dylibs.
+    SetAngleLibPaths_();
+#endif
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else   // BA_OPENGL_IS_ES
     if (g_buildconfig.platform_macos()) {
-      // On Mac we ask for a GL 4.1 Core profile. This is supported by all
-      // hardware that we officially support and is also the last version of
-      // GL supported on Apple hardware. So we have a nice fixed target to
-      // work with.
+      // On Mac (desktop-GL fallback, when ANGLE isn't bundled) we ask for a
+      // GL 4.1 Core profile. This is supported by all hardware that we
+      // officially support and is also the last version of GL supported on
+      // Apple hardware. So we have a nice fixed target to work with.
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                           SDL_GL_CONTEXT_PROFILE_CORE);
       context_flags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
-#if BA_OPENGL_IS_ES
-    } else if (g_buildconfig.platform_windows()) {
-      // Use ANGLE (libEGL.dll) for OpenGL ES via D3D11 on Windows.
-      SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                          SDL_GL_CONTEXT_PROFILE_ES);
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#endif
     } else {
       // On other platforms, let's not ask for anything in particular.
       // We'll work with whatever they give us if its 4.x or 3.x or we'll
@@ -891,6 +932,7 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
       // slightly slower due to extra checks, so what we're doing here might
       // be optimal.
     }
+#endif  // BA_OPENGL_IS_ES
     if (g_buildconfig.debug_build()) {
       // Curious if this has any real effects anywhere.
       context_flags |= SDL_GL_CONTEXT_DEBUG_FLAG;

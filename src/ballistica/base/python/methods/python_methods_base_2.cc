@@ -1259,9 +1259,11 @@ static PyMethodDef PyPreferredTextureProfileDef = {
     "should request for asset-package resolves on this build (the\n"
     "``<profile>`` in a ``textures/<profile>_<quality>`` bucket coord).\n"
     "Native owns texture-format/preference policy; the Python\n"
-    "asset-subsystem reads this so its fetch dimensions track GPU\n"
-    "capability without it needing format knowledge. ``'null'`` in\n"
-    "headless, otherwise ``'fallback_v1'`` for now."};
+    "asset-subsystem reads this so its fetch dimensions track form\n"
+    "factor + GPU capability without it needing format knowledge.\n"
+    "``'null'`` in headless; otherwise ``'desktop_v1'`` (BC7) on\n"
+    "desktop / ``'mobile_v1'`` (ASTC) on mobile, each falling back to\n"
+    "``'fallback_v1'`` when the compressed format isn't supported."};
 
 // -----------------------------------------------------------------------------
 
