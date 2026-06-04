@@ -235,22 +235,15 @@ class BuildStager:
 
         # Every staged build bundles a named asset-package profile (see
         # batools.assetbundleprofiles): server builds (``serverdst`` set)
-        # get the headless profile, other builds the gui one.
-        #
-        # Exception: Apple Xcode builds run their staging phase remotely
-        # (inside xcodebuild on the ba-apple env), where the
-        # .cache/asset_bundle tree isn't present, so they can't stage a
-        # bundle yet -- they skip it (None). TODO: assemble the bundle on
-        # the remote env (or sync .cache to it) and re-enable -- see
-        # docs/followups.md.
+        # get the headless profile, other builds the gui one. This now
+        # includes Apple Xcode builds -- their staging phase runs
+        # remotely (inside xcodebuild on the ba-apple env), so their
+        # cloud-build Make targets (_mac-cloud-build / _ios-cloud-build /
+        # _tvos-cloud-build) run `asset_bundle_build gui-minimal` on that
+        # remote env before xcodebuild, ensuring the .cache/asset_bundle
+        # tree is present when this staging phase reads it there.
         self.asset_bundle_profile = (
-            None
-            if self.desc in ('xcode mac', 'xcode ios')
-            else (
-                'headless-minimal'
-                if self.serverdst is not None
-                else 'gui-minimal'
-            )
+            'headless-minimal' if self.serverdst is not None else 'gui-minimal'
         )
 
         # Special case: running rsync to a windows drive via WSL fails
