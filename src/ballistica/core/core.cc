@@ -76,7 +76,7 @@ void CoreFeatureSet::DoImport_(const CoreConfig& config) {
   g_core->PostInit_();
 
   // We can't report core import begin since core didn't exist at that point.
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "core import end");
 }
 

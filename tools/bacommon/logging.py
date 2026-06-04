@@ -77,7 +77,10 @@ class ClientLoggerName(Enum):
         if self is cls.INPUT:
             return 'keyboards, touchscreens, game-controllers, etc.'
         if self is cls.LIFECYCLE:
-            return 'bootstrapping, pausing, resuming, shutdown, etc.'
+            return (
+                'bootstrapping, pausing, resuming, shutdown, etc.'
+                ' (INFO=app-phase milestones, DEBUG=init sub-steps)'
+            )
         if self is cls.NETWORKING:
             return 'anything network related'
         if self is cls.CONNECTIVITY:

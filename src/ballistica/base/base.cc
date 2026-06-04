@@ -115,7 +115,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_babase exec begin");
 
   // This locks in a baenv configuration.
@@ -160,7 +160,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(!g_base->base_native_import_completed_);
   g_base->base_native_import_completed_ = true;
 
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_babase exec end");
 }
 

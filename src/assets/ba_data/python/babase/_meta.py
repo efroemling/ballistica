@@ -76,7 +76,7 @@ class MetadataSubsystem:
             expects_extras=True,
         )
 
-        lifecyclelog.info('meta-scan bg thread kicked off')
+        lifecyclelog.debug('meta-scan bg thread kicked off')
         Thread(target=self._run_scan_in_bg).start()
 
     def start_extra_scan(self) -> None:
@@ -182,7 +182,7 @@ class MetadataSubsystem:
 
         # Place results and tell the logic thread they're ready.
         self.scanresults = results
-        lifecyclelog.info('meta-scan bg thread done')
+        lifecyclelog.debug('meta-scan bg thread done')
         _babase.pushcall(self._handle_scan_results, from_other_thread=True)
 
     def _handle_scan_results(self) -> None:

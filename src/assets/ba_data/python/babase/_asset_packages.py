@@ -81,7 +81,7 @@ def load_bundled_asset_packages() -> None:
             bucket_count += 1
             entry_count += len(entries)
 
-    _lifecyclelog.info(
+    _lifecyclelog.debug(
         'asset-package CAS registry: loaded %d package(s),'
         ' %d bucket(s), %d entry(ies).',
         pkg_count,
