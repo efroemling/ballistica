@@ -1,15 +1,18 @@
 # Released under the MIT License. See LICENSE for details.
 """Build ANGLE OpenGL ES libraries for Apple platforms via vcpkg.
 
-The Apple analog of ``tools/update_angle_windows.ps1``. Builds ANGLE (with
+The Apple analog of ``tools/batools/buildanglewindows.ps1``. Builds ANGLE (with
 the Metal backend) via vcpkg for the Apple triplets, assembles the
 per-platform/arch dylibs into xcframeworks (``libEGL.xcframework`` and
 ``libGLESv2.xcframework``) plus a shared header tree, and stages everything
-to ``build/angle-artifacts/`` for pickup by ``make angle-apple-gather``.
+to ``build/angle-artifacts/`` for pickup by ``gather()`` (which installs
+them into ``src/external/angle-apple/``).
 
-Invoked remotely via ``make angle-apple-build``; do not run directly (it
-clones and bootstraps a throwaway vcpkg and shells out to xcodebuild/lipo,
-so it expects a full Xcode + command-line-tools host such as fromini).
+This is a self-contained local build: it clones and bootstraps a throwaway
+vcpkg and shells out to xcodebuild/lipo/install_name_tool/codesign, so it
+expects a full Xcode + command-line-tools host. Drive it via
+``make angle-apple-build-local`` (build) and ``make angle-apple-gather``
+(install).
 
 iOS note: vcpkg's ``angle`` port only selects the Metal ("Mac") buildsystem
 for ``VCPKG_TARGET_IS_OSX``; iOS triplets fall through to the desktop-GL
@@ -17,14 +20,12 @@ for ``VCPKG_TARGET_IS_OSX``; iOS triplets fall through to the desktop-GL
 triplets are built by default. The xcframework assembly here is written to
 accept additional slice groups (``ios``/``ios-sim``) the moment a working
 iOS build exists (a patched port or a native gn build) -- pass
-``--include-ios`` to attempt them once that lands.
+``include_ios=True`` to attempt them once that lands.
 """
 
 from __future__ import annotations
 
-import sys
 import shutil
-import argparse
 import subprocess
 from pathlib import Path
 from dataclasses import dataclass
@@ -249,7 +250,7 @@ def _stage_headers(install_dir: Path, staging: Path) -> None:
         print(f'  Staged headers: {hdir}', flush=True)
 
 
-def build(triplets: list[BuildTriplet], repo_root: Path) -> None:
+def _build_all(triplets: list[BuildTriplet], repo_root: Path) -> None:
     """Build all triplets and assemble the staged xcframeworks."""
     staging = repo_root / 'build' / 'angle-artifacts'
     if staging.exists():
@@ -291,35 +292,66 @@ def build(triplets: list[BuildTriplet], repo_root: Path) -> None:
     print(f'\nANGLE artifacts staged to: {staging}\n', flush=True)
 
 
-def main() -> None:
-    """Entry point."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        '--include-ios',
-        action='store_true',
-        help='Also attempt the iOS triplets (see iOS note; not yet usable).',
-    )
-    parser.add_argument(
-        '--triplets',
-        help='Comma-separated overlay-triplet names to limit the build to'
-        ' (for testing). Defaults to all selected triplets.',
-    )
-    args = parser.parse_args()
+def build(
+    projroot: str, *, include_ios: bool = False, triplets: str | None = None
+) -> None:
+    """Build the requested triplets and stage their xcframeworks.
 
-    triplets = list(MACOS_TRIPLETS)
-    if args.include_ios:
-        triplets += IOS_TRIPLETS
-    if args.triplets:
-        wanted = set(args.triplets.split(','))
-        triplets = [t for t in triplets if t.name in wanted]
-        if not triplets:
-            print(f'No triplets matched: {args.triplets}', file=sys.stderr)
-            sys.exit(1)
+    ``include_ios`` adds the (not-yet-usable) iOS triplets; ``triplets`` is
+    an optional comma-separated subset of overlay-triplet names to limit the
+    build to (for testing).
+    """
+    from efro.error import CleanError
 
-    # Repo root is one level up from the tools/ dir holding this script.
-    repo_root = Path(__file__).resolve().parent.parent
-    build(triplets, repo_root)
+    selected = list(MACOS_TRIPLETS)
+    if include_ios:
+        selected += IOS_TRIPLETS
+    if triplets:
+        wanted = set(triplets.split(','))
+        selected = [t for t in selected if t.name in wanted]
+        if not selected:
+            raise CleanError(f'No triplets matched: {triplets}')
+
+    _build_all(selected, Path(projroot))
 
 
-if __name__ == '__main__':
-    main()
+def gather(projroot: str) -> None:
+    """Install staged ANGLE artifacts into the source tree.
+
+    Copies the headers and xcframeworks staged under ``build/angle-artifacts``
+    into ``src/external/angle-apple/`` where the cmake build picks them up.
+    """
+    from efro.error import CleanError
+
+    root = Path(projroot)
+    staging = root / 'build' / 'angle-artifacts'
+    dst_root = root / 'src' / 'external' / 'angle-apple'
+
+    if not staging.is_dir():
+        raise CleanError(
+            f"Staging dir not found: '{staging}'."
+            ' Run make angle-apple-build-local first.'
+        )
+
+    # Install shared headers.
+    for hdir in HEADER_DIRS:
+        src = staging / 'include' / hdir
+        dst = dst_root / 'include' / hdir
+        if src.is_dir():
+            if dst.exists():
+                shutil.rmtree(dst)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(src, dst)
+            print(f'Installed headers: {dst}')
+
+    # Install xcframeworks (whole-dir replace).
+    for lib in LIBS:
+        fwk = f'{lib}.xcframework'
+        src = staging / fwk
+        dst = dst_root / fwk
+        if src.is_dir():
+            if dst.exists():
+                shutil.rmtree(dst)
+            dst_root.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(src, dst)
+            print(f'Installed: {dst}')

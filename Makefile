@@ -1270,6 +1270,20 @@ windows-clean-list: env
 	git clean -dnx ballisticakit-windows
 	echo would also remove build/windows $(LAZYBUILDDIR)
 
+# Build apple ANGLE GL-ES xcframeworks locally and stage them to
+# build/angle-artifacts/. Self-contained (clones a throwaway vcpkg); needs
+# Xcode command-line tools. Follow with 'make angle-apple-gather' to install.
+angle-apple-build-local: env
+	@$(PCOMMAND) build_angle_apple
+
+# Install staged apple ANGLE artifacts from build/angle-artifacts/ into the
+# source tree (src/external/angle-apple/).
+angle-apple-gather: env
+	@$(PCOMMAND) install_angle_apple_artifacts
+	@$(PCOMMAND) echo GRN BLD ANGLE Apple artifacts installed successfully.
+
+.PHONY: angle-apple-build-local angle-apple-gather
+
 
 ################################################################################
 #                                                                              #

@@ -1,13 +1,15 @@
 # Builds ANGLE OpenGL ES libraries for Windows via vcpkg and stages the
 # artifacts to build/angle-artifacts/ for pickup by the build system.
 #
-# Invoked remotely via: make update-angle-windows
-# Do not run this script directly.
+# The Windows analog of tools/batools/buildangleapple.py. PowerShell (rather
+# than a Python pcommand) because it must run natively on the windows host,
+# across the WSL boundary from our make/python tooling. Invoked remotely via
+# 'make _update-angle-windows'; do not run directly.
 
 $ErrorActionPreference = 'Stop'
 
-# Repo root is one level up from the tools/ directory containing this script.
-$RepoRoot = (Resolve-Path "$PSScriptRoot\..").Path
+# Repo root is two levels up from the tools/batools/ dir holding this script.
+$RepoRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
 $StagingDir = "$RepoRoot\build\angle-artifacts"
 
 $Triplets = @(

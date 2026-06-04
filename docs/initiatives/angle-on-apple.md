@@ -95,8 +95,9 @@ Structurally identical to Windows + the Python xcframework assembly. Named
 `src/external/python-apple` / `gen_fulltest_buildfile_apple`.
 
 1. `make angle-apple-build` → `tools/cloudshell $(CLOUDSHELL_HOST_MAC_ARM64)
-   --env angle-apple --out build/angle-artifacts/ -- make _update-angle-apple`
-   → runs `python3 tools/update_angle_apple.py` on fromini, which:
+   --env angle-apple --out build/angle-artifacts/ -- make angle-apple-build-local`
+   → runs the `build_angle_apple` pcommand (`tools/batools/buildangleapple.py`)
+   on fromini, which:
    - clones + bootstraps a throwaway vcpkg;
    - writes **dynamic** overlay triplets (`arm64-osx-dynamic`,
      `x64-osx-dynamic`) — the stock osx triplet is static, but we need
@@ -125,17 +126,55 @@ Structurally identical to Windows + the Python xcframework assembly. Named
    day so they don't always coincide) — build-only, no gather, so the
    pipeline stays exercised without auto-updating.
 
-Files: `tools/update_angle_apple.py` (stdlib-only so the cloudshell env stays
-minimal like Windows), Makefile `angle-apple-build`/`angle-apple-gather`/
-`_update-angle-apple`, cloudshell `angle-apple` EnvConfig,
-`install_angle_apple_artifacts` pcommand, nightly line in `build.py`.
+Files: `tools/batools/buildangleapple.py` (the recipe module),
+`build_angle_apple` + `install_angle_apple_artifacts` pcommands (public, in
+`tools/batools/pcommands.py`), Makefile public `angle-apple-build-local` /
+`angle-apple-gather` + private cloud wrapper `angle-apple-build`, cloudshell
+`angle-apple` EnvConfig (now syncs the full tools tree so the remote can run
+`make env` + pcommand), nightly line in `build.py`.
 
-**iOS-ready by construction:** `update_angle_apple.py` groups triplets into
+**Public build-it-yourself path:** the build recipe + install are public
+pcommands, so anyone with the source can build the xcframeworks themselves
+(`make angle-apple-build-local` then `make angle-apple-gather`) — no
+reference to our cloud build architecture (cloudshell/fromini) ships. Only the
+`angle-apple-build` cloud wrapper, the cloudshell env, and the nightly canary
+(all spinoff-stripped/private) reference our infra.
+
+**iOS-ready by construction:** `buildangleapple.py` groups triplets into
 xcframework slices generically (`macos`/`ios`/`ios-sim`) and has the iOS
 triplets defined behind `--include-ios`; the moment a working iOS ANGLE build
 exists (patched port or gn), its slices drop into the same xcframeworks. The
 packaging tail (rename + lipo + create-xcframework + vendoring) is agnostic to
 which build system produced the dylibs.
+
+## Keeping ANGLE out of the public repo (2026-06-03)
+
+The vendored binaries must NOT reach public (public macOS cmake builds fall
+back to desktop GL). Two independent layers enforce this — note the public
+repo does **not** behave like the spinoffs here:
+
+1. **Pubsync exclusion.** The public repo (via pubsync) *commits*
+   `src/external/*` binaries (e.g. the Windows ANGLE `.lib`s the public
+   Windows build needs) — unlike the bombsquad/spinoff repos, which gitignore
+   `/src/external` wholesale. So a new `src/external/<dir>` flows to public by
+   default. `src/external/angle-apple` is therefore added to `NO_SYNC_DIRS` in
+   `tools/batoolsinternal/pubsync.py` to keep the binaries private. (The build
+   recipe `tools/batools/buildangleapple.py` + its pcommands and the initiative
+   docs DO go public — they reference no build infra — matching the
+   already-public `buildanglewindows.ps1` + existing initiative docs. Only
+   the binaries are excluded.)
+2. **Prefab forced to desktop GL.** The prebuilt mac prefab binary (what
+   public users download) is built via the `ba-cmake-alldeps` cloud env, which
+   *does* sync the xcframework (so dev `cmake-cloud-build` can validate the
+   ANGLE path). So `_cmake_prefab_gui_binary` passes `-DBALLISTICA_USE_ANGLE=OFF`
+   explicitly — public prefab binaries are always desktop-GL and never ANGLE-
+   linked (an ANGLE-linked prefab would also be broken, since the prefab ships
+   only the binary, not the dylibs).
+
+Gotcha: public-bound `tools/` Python needs the MIT license header
+(`# Released under the MIT License. See LICENSE for details.`), not the
+internal `# Copyright (c) …` one — pubsync passes it through unchanged and the
+public license check enforces it.
 
 ## Runtime integration
 
@@ -281,7 +320,7 @@ tvOS ANGLE support is genuinely wanted.
 ## References
 
 - Windows precedent: `Makefile` (`angle-windows-build` /
-  `angle-windows-gather`), `tools/update_angle_windows.ps1`,
+  `angle-windows-gather`), `tools/batools/buildanglewindows.ps1`,
   `install_angle_artifacts` (`tools/batoolsinternal/pcommands.py`),
   cloudshell `angle-windows` EnvConfig, `src/external/windows/`.
 - xcframework assembly precedent: `tools/efrotools/python_build_apple.py`
