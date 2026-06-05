@@ -135,7 +135,7 @@ class ConstructAppMode(AppMode):
           with the screen left untouched — the real app-mode drives the
           fade-in.
         * If a real download is needed, :meth:`_on_download_starting` fires
-          (fade in + ``Loading assets…``). If the server then reports
+          (fade in + ``Updating assets…``). If the server then reports
           authentication is needed, show ``Authenticating…``, wait for
           auto-sign-in, then retry. Failures surface a screenmessage and we
           stay put.
@@ -161,7 +161,7 @@ class ConstructAppMode(AppMode):
         # exists this early (typically none — we don't pre-wait for sign-in,
         # so the public-package path isn't gated on it). A fully-local set
         # passes straight through; a real download triggers
-        # _on_download_starting (fade + 'Loading assets…').
+        # _on_download_starting (fade + 'Updating assets…').
         outcome = await self._attempt(assets, required, auth_recoverable=True)
 
         if outcome is _ResolveOutcome.AUTH_REQUIRED:
@@ -314,13 +314,13 @@ class ConstructAppMode(AppMode):
     def _on_download_starting(self) -> None:
         """Resolve callback: a real asset download is about to begin.
 
-        Surface progress — fade in and show ``Loading assets…``. A
+        Surface progress — fade in and show ``Updating assets…``. A
         fully-local (warm/bundled) resolve never calls this, so that boot
         passes straight through with the screen untouched (the real
         app-mode drives the fade-in). May fire on each retry; idempotent.
         """
         self._begin_visible()
-        self._screenmessage('Loading assets…')
+        self._screenmessage('Updating assets…')
 
     def _begin_visible(self) -> None:
         """Fade the screen up from the boot black-out (idempotent, gui).

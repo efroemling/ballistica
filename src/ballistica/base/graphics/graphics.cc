@@ -220,7 +220,7 @@ auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
   if (v_sync == "Auto") {
     return VSyncRequest::kAuto;
   } else if (v_sync == "Always") {
-    return VSyncRequest::kAuto;
+    return VSyncRequest::kAlways;
   } else if (v_sync == "Never") {
     return VSyncRequest::kNever;
   }

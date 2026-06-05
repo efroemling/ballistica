@@ -789,11 +789,23 @@ def asset_bundle_build() -> None:
     )
     expected_apverids = sorted(apv for apv, _ in resolved)
 
+    # Opt-in force-refetch for iterating on the server-side pipeline. The
+    # apverid-keyed early-out below treats a cache at the same apverid as
+    # current -- but a recipe/pipeline-version bump changes the built
+    # *output* (new texture blobs, etc.) WITHOUT changing the apverid, so
+    # the early-out would otherwise serve stale bundled assets. Set
+    # ``BA_ASSET_BUNDLE_FORCE_REFETCH=1`` to bypass the early-out and
+    # re-assemble (re-fetching the manifest + blobs from the server) every
+    # build, so a pipeline bump propagates into the bundled builtin assets
+    # without a manual ``.cache`` clear.
+    force_refetch = os.environ.get('BA_ASSET_BUNDLE_FORCE_REFETCH') == '1'
+
     # Steady-state early-out: the cache already holds exactly this
     # profile's package set at these apverids → nothing to do. (This
     # keys on apverid only; editing a profile's flavor in place without
-    # bumping the pin needs a manual `.cache` clear -- same as before.)
-    if os.path.exists(bundle_path):
+    # bumping the pin needs ``BA_ASSET_BUNDLE_FORCE_REFETCH=1`` or a
+    # manual `.cache` clear.)
+    if not force_refetch and os.path.exists(bundle_path):
         try:
             with open(bundle_path, encoding='utf-8') as infile:
                 existing = json.load(infile)

@@ -242,7 +242,18 @@ class ResolveProgress:
     #: the server-side reporting lands.
     detail: str | None = None
 
+    #: Server-side build progress for the package currently building
+    #: (the BUILDING phase): buckets built so far and the total for that
+    #: one package. Per-package (the server builds one package at a time);
+    #: ``None`` when not building or when the server hasn't reported counts
+    #: yet (e.g. the initial 'preparing' sub-phase).
+    build_units_done: int | None = None
+    build_units_total: int | None = None
+
     #: Data blobs fetched so far, and the number known to need fetching.
+    #: Unlike the build counts, these are a running total across ALL
+    #: packages in the resolve (they only grow), so a single
+    #: "N remaining" download readout spans the whole resolve.
     blobs_done: int = 0
     blobs_total: int = 0
 
@@ -258,6 +269,19 @@ _PROGRESS_SCREENMESSAGE_INTERVAL = 1.5
 #: Seconds between Tier-1 resolve polls while the server reports it's
 #: still building the requested flavors.
 _BUILD_POLL_INTERVAL_SECONDS = 1.0
+
+
+def _package_display_name(apverid: str | None) -> str:
+    """Package name from an apverid, for progress messages.
+
+    ``a-0.babuiltinassets.dev260605g`` -> ``babuiltinassets``. Falls back
+    to the raw apverid (or a generic word) if it isn't the expected
+    ``account.package.version`` shape.
+    """
+    if not apverid:
+        return 'package'
+    parts = apverid.split('.')
+    return parts[1] if len(parts) == 3 and parts[1] else apverid
 
 
 def make_screenmessage_progress_reporter(
@@ -279,9 +303,10 @@ def make_screenmessage_progress_reporter(
     post = screenmessage if screenmessage is not None else _babase.screenmessage
     last_time = -1.0e9
     last_phase: ResolvePhase | None = None
+    last_apverid: str | None = None
 
     def report(progress: ResolveProgress) -> None:
-        nonlocal last_time, last_phase
+        nonlocal last_time, last_phase, last_apverid
         downloading = progress.phase is ResolvePhase.DOWNLOADING
         # Always let the "caught up" point through (e.g. the final X/X), even
         # under the throttle, so a quick download doesn't appear stuck at its
@@ -292,32 +317,81 @@ def make_screenmessage_progress_reporter(
             and progress.blobs_done >= progress.blobs_total
         )
         now = _babase.apptime()
+        # Post immediately on a phase change OR a package change (so a
+        # per-package build line's package name updates promptly); else
+        # throttle to avoid spamming a slow download.
         if (
             progress.phase is last_phase
+            and progress.apverid == last_apverid
             and now - last_time < _PROGRESS_SCREENMESSAGE_INTERVAL
             and not caught_up
         ):
+            # TEMP trace: note throttled updates so the log reflects
+            # exactly what was (and wasn't) shown, and when.
+            logger.debug(
+                'temp-progress: throttled update (phase=%s build=%s/%s'
+                ' blobs=%d/%d apverid=%s)',
+                progress.phase.value,
+                progress.build_units_done,
+                progress.build_units_total,
+                progress.blobs_done,
+                progress.blobs_total,
+                progress.apverid,
+            )
             return
         last_time = now
         last_phase = progress.phase
+        last_apverid = progress.apverid
 
-        # A server-reported status (once that exists) wins; otherwise build a
-        # message from the phase.
+        # Build the message for this phase. A server-provided detail is an
+        # escape hatch (unused by the standard flow) and wins if present.
+        message: str | None
         if progress.detail:
             message = progress.detail
-        elif downloading and progress.blobs_total:
-            message = (
-                f'Downloading assets… {progress.blobs_done}'
-                f'/{progress.blobs_total}'
-                f' ({progress.bytes_done / 1048576.0:.1f}'
-                f'/{progress.bytes_total / 1048576.0:.1f} MB)'
-            )
         elif progress.phase is ResolvePhase.BUILDING:
-            message = 'Building assets…'
+            # Per-package build (the server builds one package at a time);
+            # name the package so successive packages don't look like a
+            # single bar restarting, and count its buckets down.
+            pkg = _package_display_name(progress.apverid)
+            done = progress.build_units_done
+            total = progress.build_units_total
+            if done is not None and total is not None and total > 0:
+                remaining = max(total - done, 0)
+                message = f'Building {pkg} assets ({remaining} remaining)…'
+            else:
+                # Counts not reported yet (the initial 'preparing' step).
+                message = f'Building {pkg} assets…'
+        elif downloading and progress.blobs_total:
+            # Single running total across the whole resolve (all packages).
+            remaining = max(progress.blobs_total - progress.blobs_done, 0)
+            message = f'Downloading assets ({remaining} remaining)…'
         else:
-            # RESOLVING with no server detail: nothing extra to say (the
-            # caller's own 'Loading assets…' covers the initial state).
+            # RESOLVING with no detail: nothing to add (construct-mode's
+            # own 'Updating assets…' covers the initial state).
+            logger.debug(
+                'temp-progress: no message for update (phase=%s apverid=%s)',
+                progress.phase.value,
+                progress.apverid,
+            )
             return
+        # TEMP trace (DEBUG so it stays out of default logs but is there
+        # under ``ba.assetmanager=DEBUG``): log every screen-message we post
+        # with the structured fields behind it, so the exact on-screen
+        # sequence and timing are fully reconstructable. (The posted text
+        # itself is also logged at INFO by construct-mode's _screenmessage.)
+        logger.debug(
+            'temp-progress: screenmessage %r (phase=%s build=%s/%s'
+            ' blobs=%d/%d bytes=%d/%d apverid=%s)',
+            message,
+            progress.phase.value,
+            progress.build_units_done,
+            progress.build_units_total,
+            progress.blobs_done,
+            progress.blobs_total,
+            progress.bytes_done,
+            progress.bytes_total,
+            progress.apverid,
+        )
         post(message)
 
     return report
@@ -587,14 +661,20 @@ class AssetSubsystem(AppSubsystem):
 
         The server sends structured progress (phase + optional counts +
         optional detail) while it (re)builds the requested flavors; we
-        surface it as the BUILDING phase. The detail text is shown
-        verbatim when present (today English), else the phase renders a
-        generic message; structured fields leave room to build a
-        localized message later.
+        surface it as the BUILDING phase for the named package and carry
+        its per-package bucket counts so the reporter can render a
+        ``Building <pkg> assets (N remaining)…`` line. We deliberately do
+        NOT pass the server's ``detail`` through as the display string --
+        it's internal jargon (``Building N asset bucket(s)…``) and would
+        also shadow the download readout once we move on; the structured
+        ``phase``/``units`` are the source of truth. (``detail`` remains
+        on the wire as a future escape hatch.)
         """
         self._progress.phase = ResolvePhase.BUILDING
         self._progress.apverid = apverid
-        self._progress.detail = bp.detail
+        self._progress.detail = None
+        self._progress.build_units_done = bp.units_done
+        self._progress.build_units_total = bp.units_total
         logger.debug(
             'resolve build-progress %s: phase=%s units=%s/%s detail=%r',
             apverid,
@@ -793,6 +873,9 @@ class AssetSubsystem(AppSubsystem):
         self._progress.phase = ResolvePhase.RESOLVING
         self._progress.apverid = apverid
         self._progress.detail = None
+        # Clear any prior package's build counts as we start this one.
+        self._progress.build_units_done = None
+        self._progress.build_units_total = None
         self._emit_progress()
 
         # Scan local state (off-thread): which desired coords are already

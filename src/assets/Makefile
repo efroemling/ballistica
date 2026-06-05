@@ -5721,12 +5721,28 @@ clean:
 # already-resolved apverid). Steady-state builds hit the cache
 # and exit fast via ``asset_bundle_build``'s apverid-match
 # early-out.
+# These rules are keyed on projectconfig mtime, so a build with an
+# unchanged pin normally skips them. When iterating on the server-side
+# asset pipeline, a recipe/pipeline-version bump changes the built
+# output WITHOUT changing the apverid, so the rule would otherwise stay
+# satisfied and bake stale bundled assets. BA_ASSET_BUNDLE_FORCE_REFETCH=1
+# adds a phony prereq so these always re-run; asset_bundle_build then also
+# bypasses its own apverid early-out (see pcommands2.py) so it actually
+# re-fetches the manifest + blobs from the server.
+_ASSET_BUNDLE_FORCE :=
+ifeq ($(BA_ASSET_BUNDLE_FORCE_REFETCH),1)
+  _ASSET_BUNDLE_FORCE := _asset_bundle_force
+endif
+
+.PHONY: _asset_bundle_force
+_asset_bundle_force:
+
 $(PROJ_DIR)/.cache/asset_bundle/gui-minimal/manifest.json: \
-      $(PROJ_DIR)/pconfig/projectconfig.json
+      $(PROJ_DIR)/pconfig/projectconfig.json $(_ASSET_BUNDLE_FORCE)
 	@$(PCOMMAND) asset_bundle_build gui-minimal
 
 $(PROJ_DIR)/.cache/asset_bundle/headless-minimal/manifest.json: \
-      $(PROJ_DIR)/pconfig/projectconfig.json
+      $(PROJ_DIR)/pconfig/projectconfig.json $(_ASSET_BUNDLE_FORCE)
 	@$(PCOMMAND) asset_bundle_build headless-minimal
 
 # These targets don't correspond to actual files; make sure make knows that.

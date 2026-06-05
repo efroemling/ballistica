@@ -229,13 +229,22 @@ void AppAdapterSDL::ApplyGraphicsSettings(
         break;
       }
       case VSync::kAdaptive: {
-        // In this case, let's try setting to 'adaptive' and turn it off if
-        // that is unsupported. (SDL3 returns bool; true == success.)
+        // Try 'adaptive' (late-swap-tearing) first. This needs the
+        // EGL_EXT_swap_control_tear / GLX/WGL equivalent, which not every
+        // backend provides -- notably ANGLE's Metal backend does not. If it's
+        // unsupported, fall back to plain vsync-on rather than off: adaptive's
+        // intent is "vsync, but allow tearing under load", so the faithful
+        // degradation is vsync-on, not vsync-off (which would tear
+        // constantly). (SDL3 returns bool; true == success.)
         if (SDL_GL_SetSwapInterval(-1)) {
           vsync_actually_enabled_ = true;
         } else {
-          SDL_GL_SetSwapInterval(0);
-          vsync_actually_enabled_ = false;
+          g_core->logging->Log(
+              LogName::kBaGraphics, LogLevel::kDebug,
+              "Adaptive vsync unsupported by this backend; falling back to "
+              "plain vsync-on.");
+          SDL_GL_SetSwapInterval(1);
+          vsync_actually_enabled_ = true;
         }
         break;
       }
