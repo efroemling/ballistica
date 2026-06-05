@@ -569,6 +569,65 @@ void Assets::UnloadRendererBits(bool do_textures, bool do_meshes) {
   }
 }
 
+// Phase 1 (logic thread): re-resolve loaded textures/meshes and flag any
+// whose underlying CAS blob changed (e.g. fallback -> ideal after a
+// downloading asset-package resolve). FindAssetFile (used by ReResolveSource)
+// is logic-thread-only, so the re-resolution must happen here; the actual GPU
+// unload + reload runs on the graphics thread (UnloadReloadPendingRendererBits,
+// kicked off below via the graphics server). No change -> no-op (the warm
+// case). (Sound/audio flavors aren't handled here; they'd need an audio-thread
+// unload path.)
+void Assets::ReloadChangedAssets() {
+  assert(g_base->InLogicThread());
+  bool any{};
+  {
+    AssetListLock m_lock;
+    for (auto&& i : textures_) {
+      Asset::LockGuard lock(i.second.get());
+      if (i.second->loaded() && i.second->ReResolveSource()) {
+        i.second->set_reload_pending(true);
+        any = true;
+      }
+    }
+    for (auto&& i : meshes_) {
+      Asset::LockGuard lock(i.second.get());
+      if (i.second->loaded() && i.second->ReResolveSource()) {
+        i.second->set_reload_pending(true);
+        any = true;
+      }
+    }
+  }
+  if (any) {
+    g_base->graphics_server->PushReloadChangedMediaCall();
+  }
+}
+
+// Phase 2 (graphics thread): unload the renderer assets flagged for reload by
+// ReloadChangedAssets() (re-resolution already happened there). Returns
+// whether anything was unloaded.
+auto Assets::UnloadReloadPendingRendererBits() -> bool {
+  assert(g_base->app_adapter->InGraphicsContext());
+  AssetListLock m_lock;
+  bool any{};
+  for (auto&& i : textures_) {
+    Asset::LockGuard lock(i.second.get());
+    if (i.second->reload_pending()) {
+      i.second->Unload(true);
+      i.second->set_reload_pending(false);
+      any = true;
+    }
+  }
+  for (auto&& i : meshes_) {
+    Asset::LockGuard lock(i.second.get());
+    if (i.second->reload_pending()) {
+      i.second->Unload(true);
+      i.second->set_reload_pending(false);
+      any = true;
+    }
+  }
+  return any;
+}
+
 auto Assets::GetMesh(const std::string& file_name) -> Object::Ref<MeshAsset> {
   return GetAsset(file_name, &meshes_);
 }
@@ -875,7 +934,6 @@ auto Assets::RunPendingLoadsLogicThread() -> bool {
 
 template <typename T>
 auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
-  bool flush = false;
   millisecs_t starttime = g_core->AppTimeMillisecs();
 
   std::vector<Object::Ref<T>*> l;
@@ -883,13 +941,6 @@ auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
   std::vector<Object::Ref<T>*> l_finished;
   {
     std::scoped_lock lock(pending_load_list_mutex_);
-
-    // If we're already out of time.
-    if (!flush
-        && g_core->AppTimeMillisecs() - starttime > PENDING_LOAD_PROCESS_TIME) {
-      bool return_val = (!c_list->empty());
-      return return_val;
-    }
 
     // Save time if there's nothing to load.
     if (c_list->empty()) {
@@ -900,37 +951,24 @@ auto Assets::RunPendingLoadList(std::vector<Object::Ref<T>*>* c_list) -> bool {
     l.swap(*c_list);
   }
 
-  // Run loads on our list until either the list is empty or we're out of time
-  // (don't want to block here for very long...)
-  // We should also think about the fact that even if a load is quick here it
-  // may add work on the graphics thread/etc so maybe we should add other
-  // restrictions.
+  // Run loads until the list is empty or we hit our per-call time budget.
+  // We don't want to block the calling thread for long -- and even a quick
+  // load here may add work on another thread (graphics/audio), so we keep our
+  // slices short and finish the rest on a later call.
   bool out_of_time = false;
-  if (!l.empty()) {
-    while (true) {
-      for (auto i = l.begin(); i != l.end(); i++) {
-        if (!out_of_time) {
-          (***i).Load(false);
-
-          // If the load finished, pop it on our "done-loading" list.. otherwise
-          // keep it around.
-          l_finished.push_back(*i);  // else l_unfinished.push_back(*i);
-          if (g_core->AppTimeMillisecs() - starttime > PENDING_LOAD_PROCESS_TIME
-              && !flush) {
-            out_of_time = true;
-          }
-        } else {
-          // Already out of time - just save this one for later.
-          l_unfinished.push_back(*i);
-        }
-      }
-      l = l_unfinished;
-      l_unfinished.clear();
-      if (l.empty() || out_of_time) {
-        break;
-      }
+  for (auto&& ref : l) {
+    if (out_of_time) {
+      // Already over budget -- save this one for later.
+      l_unfinished.push_back(ref);
+      continue;
+    }
+    (**ref).Load();
+    l_finished.push_back(ref);
+    if (g_core->AppTimeMillisecs() - starttime > PENDING_LOAD_PROCESS_TIME) {
+      out_of_time = true;
     }
   }
+  l.swap(l_unfinished);
 
   // Now add unfinished ones back onto the original list and finished ones into
   // the done list.

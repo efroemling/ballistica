@@ -32,7 +32,8 @@ import base64
 import hashlib
 import asyncio
 import tempfile
-from dataclasses import dataclass, field
+from enum import Enum
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Annotated, override
 
 import _babase
@@ -55,6 +56,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from bacommon import securedata
+    from bacommon.cloud import AssetPackageBuildProgress
     from bacommon.locale import Locale
     from babase._accountv2 import AccountV2Handle
 
@@ -199,6 +201,128 @@ class ResolveResult:
     fell_back: dict[str, str] = field(default_factory=dict)
 
 
+class ResolvePhase(Enum):
+    """Coarse phase of an in-flight resolve, for progress feedback."""
+
+    #: Talking to the server to resolve the requested flavor(s).
+    RESOLVING = 'resolving'
+    #: The server is assembling/compiling the package (not emitted by the
+    #: client today -- a slot for the server to report build status into;
+    #: see :attr:`ResolveProgress.detail`).
+    BUILDING = 'building'
+    #: Fetching data blobs from the connected node.
+    DOWNLOADING = 'downloading'
+
+
+@dataclass
+class ResolveProgress:
+    """A snapshot of an in-flight resolve, for progress feedback.
+
+    Handed to the ``on_progress`` callback of :meth:`AssetSubsystem.resolve`
+    (on the logic thread) whenever progress advances. Counts are cumulative
+    across the whole resolve; the totals grow as each package's manifest
+    reveals its blobs, so ``done``/``total`` is a moving target rather than a
+    value known up front -- fine for a status line and good enough for a
+    simple progress bar.
+
+    Intentionally minimal scaffolding; a richer model can extend it later.
+    """
+
+    #: What the resolve is doing right now.
+    phase: ResolvePhase = ResolvePhase.RESOLVING
+
+    #: The package currently being resolved/downloaded, if any.
+    apverid: str | None = None
+
+    #: Optional human-readable status line. The allowance for the server to
+    #: report what it's doing (e.g. ``'Compiling 5 assets…'``) during a
+    #: resolve -- nothing populates it from the server yet (the Tier-1
+    #: resolve is a single blocking request today), but consumers should
+    #: prefer it over the phase when present so it lights up for free once
+    #: the server-side reporting lands.
+    detail: str | None = None
+
+    #: Data blobs fetched so far, and the number known to need fetching.
+    blobs_done: int = 0
+    blobs_total: int = 0
+
+    #: Bytes fetched so far, and the total of the blobs known to need
+    #: fetching (from the manifests; the on-disk write may differ slightly).
+    bytes_done: int = 0
+    bytes_total: int = 0
+
+
+#: Min seconds between placeholder progress screen-messages.
+_PROGRESS_SCREENMESSAGE_INTERVAL = 1.5
+
+#: Seconds between Tier-1 resolve polls while the server reports it's
+#: still building the requested flavors.
+_BUILD_POLL_INTERVAL_SECONDS = 1.0
+
+
+def make_screenmessage_progress_reporter(
+    screenmessage: Callable[[str], None] | None = None,
+) -> Callable[[ResolveProgress], None]:
+    """Build a throttled progress reporter that posts screen-messages.
+
+    Placeholder progress UI: pass the returned callable as ``on_progress``
+    to :meth:`AssetSubsystem.resolve`. It posts a message immediately on a
+    phase change and then at most one per
+    :data:`_PROGRESS_SCREENMESSAGE_INTERVAL` seconds, so a slow download
+    keeps the user informed without spamming. A server-provided
+    :attr:`ResolveProgress.detail` is shown verbatim when present.
+
+    ``screenmessage`` defaults to :func:`_babase.screenmessage`; pass a
+    custom poster (e.g. one that also logs) to override. This is a stopgap
+    until a real progress bar exists.
+    """
+    post = screenmessage if screenmessage is not None else _babase.screenmessage
+    last_time = -1.0e9
+    last_phase: ResolvePhase | None = None
+
+    def report(progress: ResolveProgress) -> None:
+        nonlocal last_time, last_phase
+        downloading = progress.phase is ResolvePhase.DOWNLOADING
+        # Always let the "caught up" point through (e.g. the final X/X), even
+        # under the throttle, so a quick download doesn't appear stuck at its
+        # starting 0/X count.
+        caught_up = (
+            downloading
+            and progress.blobs_total > 0
+            and progress.blobs_done >= progress.blobs_total
+        )
+        now = _babase.apptime()
+        if (
+            progress.phase is last_phase
+            and now - last_time < _PROGRESS_SCREENMESSAGE_INTERVAL
+            and not caught_up
+        ):
+            return
+        last_time = now
+        last_phase = progress.phase
+
+        # A server-reported status (once that exists) wins; otherwise build a
+        # message from the phase.
+        if progress.detail:
+            message = progress.detail
+        elif downloading and progress.blobs_total:
+            message = (
+                f'Downloading assets… {progress.blobs_done}'
+                f'/{progress.blobs_total}'
+                f' ({progress.bytes_done / 1048576.0:.1f}'
+                f'/{progress.bytes_total / 1048576.0:.1f} MB)'
+            )
+        elif progress.phase is ResolvePhase.BUILDING:
+            message = 'Building assets…'
+        else:
+            # RESOLVING with no server detail: nothing extra to say (the
+            # caller's own 'Loading assets…' covers the initial state).
+            return
+        post(message)
+
+    return report
+
+
 @ioprepped
 @dataclass
 class _CachedPackage:
@@ -262,6 +386,12 @@ class AssetSubsystem(AppSubsystem):
         # data blobs). Reset each process; not persisted.
         self._pinned_apverids: set[str] = set()
         self._pinned_fm_hashes: set[str] = set()
+
+        # Progress for the in-flight resolve. Single-in-flight (see
+        # _busy_lock), so one running snapshot is enough; the callback is set
+        # per-resolve by resolve(on_progress=...).
+        self._progress = ResolveProgress()
+        self._progress_cb: Callable[[ResolveProgress], None] | None = None
 
         # Texture quality is hard-coded for now; language is wired from the
         # real locale at resolve time; texture profile comes from the
@@ -386,6 +516,7 @@ class AssetSubsystem(AppSubsystem):
         *,
         allow_downloads: bool = True,
         on_download_starting: Callable[[], None] | None = None,
+        on_progress: Callable[[ResolveProgress], None] | None = None,
     ) -> ResolveResult:
         """Make every requested asset-package-version available natively.
 
@@ -429,12 +560,84 @@ class AssetSubsystem(AppSubsystem):
                 'Another asset resolve is already in progress.'
             ) from None
 
+        self._progress = ResolveProgress()
+        self._progress_cb = on_progress
         try:
             return await self._resolve(
                 apverids, allow_downloads, on_download_starting
             )
         finally:
+            self._progress_cb = None
             self._busy_lock.release()
+
+    def _emit_progress(self) -> None:
+        """Hand the current progress snapshot to the on_progress callback.
+
+        A copy is passed so a consumer can stash it without aliasing our
+        mutable running state.
+        """
+        cb = self._progress_cb
+        if cb is not None:
+            cb(replace(self._progress))
+
+    def _apply_build_progress(
+        self, apverid: str, bp: AssetPackageBuildProgress
+    ) -> None:
+        """Reflect a server-side build-progress update into the UI.
+
+        The server sends structured progress (phase + optional counts +
+        optional detail) while it (re)builds the requested flavors; we
+        surface it as the BUILDING phase. The detail text is shown
+        verbatim when present (today English), else the phase renders a
+        generic message; structured fields leave room to build a
+        localized message later.
+        """
+        self._progress.phase = ResolvePhase.BUILDING
+        self._progress.apverid = apverid
+        self._progress.detail = bp.detail
+        logger.debug(
+            'resolve build-progress %s: phase=%s units=%s/%s detail=%r',
+            apverid,
+            bp.phase.value,
+            bp.units_done,
+            bp.units_total,
+            bp.detail,
+        )
+        self._emit_progress()
+
+    def resolve_local(self, apverids: list[str]) -> ResolveResult:
+        """Synchronously register the best LOCAL flavor of each package.
+
+        A downloads-disabled, fully-synchronous resolve: for each apverid it
+        registers the desired flavor when that flavor's blobs are already on
+        disk (cache ∪ bundle), else -- for builtin packages -- the bundled
+        fallback. No network, executor, or asyncio, so it is safe to call
+        from the boot path *before any asset loads* -- so builtin assets come
+        up at their ideal flavor on warm starts instead of loading a fallback
+        that a later downloading resolve has to swap back out.
+
+        Shares the per-package scan/finalize, accumulation, and register/pin
+        with the async :meth:`resolve`; it differs only in doing no downloads
+        and running inline rather than on the threadpool. Does not persist the
+        cache manifest (it registers only already-present blobs; a later
+        downloading :meth:`resolve` owns the on-disk manifest).
+
+        Must be called on the logic thread.
+        """
+        assert _babase.in_logic_thread()
+        desired = self._desired_coords(_babase.app.locale.current_locale)
+        results = [self._resolve_one_local(apv, desired) for apv in apverids]
+        register_specs, manifest_pkgs, fell_back = self._accumulate_results(
+            apverids, results
+        )
+        _babase.register_asset_package_buckets(register_specs)
+        self._pin(manifest_pkgs)
+        logger.info(
+            'Registered %d builtin package(s) at best-local flavor%s.',
+            len(apverids),
+            f' ({len(fell_back)} on fallback)' if fell_back else '',
+        )
+        return ResolveResult(apverids=list(apverids), fell_back=fell_back)
 
     # ---------------------------------------------------------------------
     # Resolve internals.
@@ -483,9 +686,7 @@ class AssetSubsystem(AppSubsystem):
         _babase.register_asset_package_buckets(register_specs)
         # Pin everything we just told the engine about — never retracted
         # this process lifetime (GC-/cap-immune).
-        for apverid, coords in manifest_pkgs.items():
-            self._pinned_apverids.add(apverid)
-            self._pinned_fm_hashes.update(coords.values())
+        self._pin(manifest_pkgs)
         await loop.run_in_executor(
             pool, self._commit_manifest, manifest_pkgs, now
         )
@@ -514,23 +715,19 @@ class AssetSubsystem(AppSubsystem):
         in a single executor hop.
         """
         desired = self._desired_coords(language)
-        register_specs: list[tuple[str, str, dict[str, dict[str, str]]]] = []
-        manifest_pkgs: dict[str, dict[str, str]] = {}
-        fell_back: dict[str, str] = {}
+        results: list[_OneResult] = []
         for apverid in apverids:
             local, missing = self._scan_local(apverid, desired)
             if missing:
                 # Not fully local; let the online path handle this set
                 # (download desired flavors / builtin fallback / fail).
                 return None
-            result = self._finalize_one(
-                apverid, desired, local, self._is_builtin(apverid)
+            results.append(
+                self._finalize_one(
+                    apverid, desired, local, self._is_builtin(apverid)
+                )
             )
-            manifest_pkgs[apverid] = result.coords
-            for coord in result.coords:
-                register_specs.append((apverid, coord, result.entries[coord]))
-            fell_back.update(result.fell_back)
-        return register_specs, manifest_pkgs, fell_back
+        return self._accumulate_results(apverids, results)
 
     async def _resolve_online(
         self, apverids: list[str], language: Locale, allow_downloads: bool
@@ -540,16 +737,43 @@ class AssetSubsystem(AppSubsystem):
         Used when the warm fast-path can't satisfy the set locally. Each
         package scans, optionally fetches missing flavors, and finalizes.
         """
+        results: list[_OneResult] = []
+        for apverid in apverids:
+            results.append(
+                await self._resolve_one(apverid, language, allow_downloads)
+            )
+        return self._accumulate_results(apverids, results)
+
+    @staticmethod
+    def _accumulate_results(
+        apverids: list[str], results: list[_OneResult]
+    ) -> _ResolveAccum:
+        """Fold per-package results into the resolve accumulator.
+
+        Builds ``(register_specs, manifest_pkgs, fell_back)`` from the
+        :class:`_OneResult` for each apverid. Shared by every resolve path
+        (offline fast-path, online, and the synchronous boot resolve).
+        """
         register_specs: list[tuple[str, str, dict[str, dict[str, str]]]] = []
         manifest_pkgs: dict[str, dict[str, str]] = {}
         fell_back: dict[str, str] = {}
-        for apverid in apverids:
-            result = await self._resolve_one(apverid, language, allow_downloads)
+        for apverid, result in zip(apverids, results):
             manifest_pkgs[apverid] = result.coords
             for coord in result.coords:
                 register_specs.append((apverid, coord, result.entries[coord]))
             fell_back.update(result.fell_back)
         return register_specs, manifest_pkgs, fell_back
+
+    def _pin(self, manifest_pkgs: dict[str, dict[str, str]]) -> None:
+        """Pin resolved packages + flavor-manifest hashes (GC-/cap-immune).
+
+        Once pinned, an apverid and its flavor-manifest blobs are never
+        retracted for this process lifetime. Shared by the sync + async
+        resolve commits.
+        """
+        for apverid, coords in manifest_pkgs.items():
+            self._pinned_apverids.add(apverid)
+            self._pinned_fm_hashes.update(coords.values())
 
     async def _resolve_one(
         self, apverid: str, language: Locale, allow_downloads: bool
@@ -565,6 +789,11 @@ class AssetSubsystem(AppSubsystem):
         pool = _babase.app.threadpool
         is_builtin = self._is_builtin(apverid)
         desired = self._desired_coords(language)
+
+        self._progress.phase = ResolvePhase.RESOLVING
+        self._progress.apverid = apverid
+        self._progress.detail = None
+        self._emit_progress()
 
         # Scan local state (off-thread): which desired coords are already
         # complete on disk, and the full local coord→hash map.
@@ -591,6 +820,21 @@ class AssetSubsystem(AppSubsystem):
         available = {**local_coords, **downloaded}
         return await loop.run_in_executor(
             pool, self._finalize_one, apverid, desired, available, is_builtin
+        )
+
+    def _resolve_one_local(
+        self, apverid: str, desired: dict[str, str]
+    ) -> _OneResult:
+        """Best-local resolve of one package: scan local + finalize.
+
+        The fully-synchronous, no-download core (no executor, no Tier-1):
+        picks the desired flavor when its blobs are local, else (builtin
+        only) the bundled fallback, else raises. Building block of
+        :meth:`resolve_local`; ``available`` is just the local coords.
+        """
+        local, _missing = self._scan_local(apverid, desired)
+        return self._finalize_one(
+            apverid, desired, local, self._is_builtin(apverid)
         )
 
     def _scan_local(
@@ -734,9 +978,18 @@ class AssetSubsystem(AppSubsystem):
         # account (see _resolve_tier1). None → anonymous (PROD/public).
         plus = _babase.app.plus
         primary = plus.accounts.primary if plus is not None else None
-        response = await loop.run_in_executor(
-            pool, self._resolve_tier1, apverid, language, primary
-        )
+        # Resolve, polling while the master is (re)building the requested
+        # flavors. While build_progress is set the manifest isn't ready;
+        # render the progress and re-send the same resolve (same nonce)
+        # after a short wait until it resolves to a manifest (or errors).
+        while True:
+            response = await loop.run_in_executor(
+                pool, self._resolve_tier1, apverid, language, primary
+            )
+            if response.build_progress is None:
+                break
+            self._apply_build_progress(apverid, response.build_progress)
+            await asyncio.sleep(_BUILD_POLL_INTERVAL_SECONDS)
         if response.error is not None:
             msg = f'{apverid}: {response.error}'
             code = response.error_code
@@ -789,14 +1042,25 @@ class AssetSubsystem(AppSubsystem):
                     f'{apverid}: not connected to a node; cannot download.'
                 )
             token_header = self._encode_token(response.token)
-            await asyncio.gather(
-                *[
-                    loop.run_in_executor(
-                        pool, self._acquire_data_blob, host, token_header, h, s
-                    )
-                    for h, s in to_fetch
-                ]
-            )
+
+            # Progress: bump the running totals, then count each blob off as
+            # its fetch completes (each _fetch resumes on the logic thread
+            # after the off-thread fetch, so updating progress there is safe).
+            self._progress.phase = ResolvePhase.DOWNLOADING
+            self._progress.apverid = apverid
+            self._progress.blobs_total += len(to_fetch)
+            self._progress.bytes_total += sum(s for _h, s in to_fetch)
+            self._emit_progress()
+
+            async def _fetch(h: str, s: int) -> None:
+                await loop.run_in_executor(
+                    pool, self._acquire_data_blob, host, token_header, h, s
+                )
+                self._progress.blobs_done += 1
+                self._progress.bytes_done += s
+                self._emit_progress()
+
+            await asyncio.gather(*[_fetch(h, s) for h, s in to_fetch])
         return coords
 
     def _resolve_tier1(

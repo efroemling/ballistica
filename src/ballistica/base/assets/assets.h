@@ -46,6 +46,19 @@ class Assets {
   /// recreating/adjusting the renderer.
   void UnloadRendererBits(bool textures, bool meshes);
 
+  /// Phase 1 (logic thread): re-resolve loaded textures/meshes and flag any
+  /// whose underlying CAS blob changed (e.g. fallback -> ideal flavor after a
+  /// downloading asset-package resolve), then kick off the graphics-thread
+  /// unload/reload. No-op when nothing changed. Entry point for the
+  /// reload_changed_media binding.
+  void ReloadChangedAssets();
+
+  /// Phase 2 (graphics thread): unload the renderer assets flagged for reload
+  /// by ReloadChangedAssets(). Returns whether anything was unloaded; if so
+  /// the caller MarkAllAssetsForLoad()s + draws a progress bar (see
+  /// GraphicsServer::ReloadChangedMedia_).
+  auto UnloadReloadPendingRendererBits() -> bool;
+
   /// Should be called from the logic thread after UnloadRendererBits();
   /// kicks off bg loads for all existing unloaded assets.
   void MarkAllAssetsForLoad();

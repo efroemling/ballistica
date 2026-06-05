@@ -121,6 +121,28 @@ auto TextureAsset::GetNameFull() const -> std::string {
   return file_name_full();
 }
 
+auto TextureAsset::ReResolveSource() -> bool {
+  // Only file-backed CAS textures (qualified ``<apverid>:<name>`` refs) can
+  // change their underlying blob when the asset-package registry is
+  // re-resolved. Text-textures and QR codes are generated in-engine, and
+  // legacy bare-filename textures resolve to a fixed on-disk path.
+  if (packer_.exists() || is_qr_code_
+      || file_name_.find(':') == std::string::npos) {
+    return false;
+  }
+  auto new_full =
+      g_base->assets->FindAssetFile(Assets::FileType::kTexture, file_name_);
+  if (new_full == file_name_full_) {
+    return false;
+  }
+  file_name_full_ = new_full;
+  // Re-derive the container hint exactly as the constructor does: CAS blobs
+  // are extensionless KTX2; the headless ``.nop`` dummy keeps it empty so the
+  // matcher's path-suffix fallback picks the right branch.
+  container_ = file_name_full_.ends_with(".nop") ? "" : ".ktx2";
+  return true;
+}
+
 void TextureAsset::DoPreload() {
   assert(valid_);
 

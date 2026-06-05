@@ -453,9 +453,34 @@ void Python::MarkReachedEndOfModule(PyObject* module) {
   BA_PRECONDITION_FATAL(result == 0);
 }
 
+#if BA_DEBUG_BUILD
+// Thread-local depth of "no-GIL-block" leaf locks held by this thread (e.g.
+// Asset locks). See Asset's lock-ordering invariant. Checked when a
+// ScopedInterpreterLock acquires the GIL.
+static thread_local int g_no_gil_lock_depth{};
+void Python::PushNoGilLockZone() { g_no_gil_lock_depth++; }
+void Python::PopNoGilLockZone() {
+  g_no_gil_lock_depth--;
+  assert(g_no_gil_lock_depth >= 0);
+}
+#endif  // BA_DEBUG_BUILD
+
 class Python::ScopedInterpreterLock::Impl {
  public:
   Impl() {
+#if BA_DEBUG_BUILD
+    // Lock-ordering guard: blocking to acquire the GIL while holding a leaf
+    // lock the GIL must order after (e.g. an Asset lock) can deadlock against
+    // the logic thread (which holds the GIL and may block on that same lock).
+    // Re-acquiring the GIL when we already hold it is reentrant and safe, so
+    // only flag the case where we would actually block. See Asset's invariant.
+    if (g_no_gil_lock_depth > 0 && !static_cast<bool>(PyGILState_Check())) {
+      FatalError(
+          "Acquiring the GIL while holding a no-GIL lock (e.g. an Asset lock) "
+          "without already holding the GIL; this risks deadlock. See Asset's "
+          "lock-ordering invariant (asset.h).");
+    }
+#endif  // BA_DEBUG_BUILD
     // Grab the python GIL.
     gil_state_ = PyGILState_Ensure();
   }

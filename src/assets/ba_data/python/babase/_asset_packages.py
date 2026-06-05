@@ -43,11 +43,19 @@ def loaded_asset_package_apverids() -> list[str]:
 
 
 def load_bundled_asset_packages() -> None:
-    """Populate the C++ asset-package registry from the bundled manifest.
+    """Register builtin asset-packages at their best LOCAL flavor.
 
-    Called once during native bootstrapping. A missing ``manifest.json``
-    is treated as "no bundled CAS assets" and logged at debug level —
-    headless/server builds and tests may run without one.
+    Called once during native bootstrapping, *before* ``StartLoading``'s
+    builtin asset loads. Discovers the builtin packages from the bundled
+    ``manifest.json`` (its keys) and hands them to
+    :meth:`~babase.AssetSubsystem.resolve_local`, which registers the ideal
+    flavor of each when its blobs are already cached (warm starts) and the
+    bundled fallback otherwise (cold starts -- until a later downloading
+    resolve fetches and swaps the ideal flavor in).
+
+    A missing ``manifest.json`` is treated as "no bundled CAS assets" and
+    logged at debug level -- headless/server builds and tests may run without
+    one.
     """
     data_dir = _babase.app.env.data_directory
     bundle_path = os.path.join(data_dir, 'ba_data', 'manifest.json')
@@ -61,33 +69,15 @@ def load_bundled_asset_packages() -> None:
     with open(bundle_path, encoding='utf-8') as infile:
         bundle = json.load(infile)
 
-    pkg_count = 0
-    bucket_count = 0
-    entry_count = 0
-    for apverid, flavor_manifests in _iter_manifest_packages(bundle):
-        pkg_count += 1
-        _loaded_apverids.append(apverid)
-        for coord, manifest_hash in flavor_manifests.items():
-            blob_path = _cas_blob_path(data_dir, manifest_hash)
-            with open(blob_path, encoding='utf-8') as bfile:
-                flavor_manifest = json.load(bfile)
-            # logical_path -> {part -> data-hash} (decision #16); a null
-            # asset is an empty part map {}.
-            entries = {
-                p: {part: comp['h'] for part, comp in info.items()}
-                for p, info in flavor_manifest['e'].items()
-            }
-            _babase.register_asset_package_bucket(apverid, coord, entries)
-            bucket_count += 1
-            entry_count += len(entries)
-
-    _lifecyclelog.debug(
-        'asset-package CAS registry: loaded %d package(s),'
-        ' %d bucket(s), %d entry(ies).',
-        pkg_count,
-        bucket_count,
-        entry_count,
-    )
+    # The bundled packages are builtin by definition. Record them (so
+    # _is_builtin and ref-construction see them) before resolving, then let
+    # the AssetSubsystem register the best-local flavor of each.
+    apverids = [apverid for apverid, _ in _iter_manifest_packages(bundle)]
+    for apverid in apverids:
+        if apverid not in _loaded_apverids:
+            _loaded_apverids.append(apverid)
+    if apverids:
+        _babase.app.assets.resolve_local(apverids)
 
 
 def _iter_manifest_packages(
@@ -98,17 +88,3 @@ def _iter_manifest_packages(
         (apverid, entry['flavor_manifests'])
         for apverid, entry in bundle.get('asset_package_versions', {}).items()
     ]
-
-
-def _cas_blob_path(data_dir: str, filehash: str) -> str:
-    """Return the on-disk path for a CAS blob under the bundle root.
-
-    Mirrors :func:`bacommon.bacloud.asset_file_cache_path` (single-level
-    sharding by the first 2 hex chars). The C++ side derives the same
-    path via :meth:`AssetPackageRegistry.CasBlobPath`; we duplicate the
-    formula here only for the small subset of blobs we read at
-    startup (bucket manifests).
-    """
-    return os.path.join(
-        data_dir, 'ba_data', 'assets', filehash[:2], filehash[2:]
-    )

@@ -15,6 +15,7 @@ from babase._logging import assetmanagerlog as logger
 from babase._assetsubsystem import (
     AssetAuthRequiredError,
     AssetAccessDeniedError,
+    make_screenmessage_progress_reporter,
 )
 
 if TYPE_CHECKING:
@@ -179,6 +180,12 @@ class ConstructAppMode(AppMode):
             outcome = await self._resolve_signed_in(assets, required)
 
         if outcome is _ResolveOutcome.SUCCESS:
+            # The resolve may have fetched ideal flavors of assets that came
+            # up earlier on fallbacks (e.g. builtin textures loaded at boot,
+            # before their ideal versions were cached). Reload those so the
+            # real app-mode renders at the ideal flavor, behind a progress
+            # bar. Cheap no-op when nothing changed (the warm path).
+            _babase.reload_changed_media()
             self._hand_off()
         # Else: _attempt already surfaced the failure message; stay put.
 
@@ -240,6 +247,9 @@ class ConstructAppMode(AppMode):
                 required,
                 allow_downloads=True,
                 on_download_starting=self._on_download_starting,
+                on_progress=make_screenmessage_progress_reporter(
+                    self._screenmessage
+                ),
             )
             return _ResolveOutcome.SUCCESS
         except AssetAuthRequiredError:

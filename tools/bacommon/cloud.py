@@ -425,6 +425,56 @@ class AssetPackageResolveError(Enum):
     INTERNAL = 'internal'
 
 
+class AssetPackageBuildPhase(Enum):
+    """Coarse phase of an in-progress server-side asset-package build.
+
+    Client-facing and deliberately decoupled from internal cloud-build
+    state — the master translates its build status into this. Combined
+    with the optional counts on :class:`AssetPackageBuildProgress` it
+    lets the client render a localized progress message (today English
+    only; structured so it can be translated later).
+    """
+
+    #: Spinning up / queued — the build hasn't begun real work yet.
+    PREPARING = 'prep'
+    #: Building the package's constituent assets.
+    BUILDING = 'build'
+    #: Assembling built outputs into the final manifest.
+    FINALIZING = 'final'
+
+
+@ioprepped
+@dataclass
+class AssetPackageBuildProgress:
+    """Progress of a server-side asset-package build, for the client.
+
+    Returned on :class:`ResolveAssetPackageResponse` when a resolve
+    can't be satisfied immediately because the master is (re)building
+    the requested flavors (a build can take noticeably longer than a
+    plain download). The client renders this and re-sends the same
+    resolve to poll until the manifest is ready.
+
+    Intentionally a resolve-specific, client-facing type — it does
+    **not** expose internal cloud-build types. The master translates
+    its build status into this at the resolve boundary.
+    """
+
+    #: Coarse phase, for a phase-appropriate (localized) message.
+    phase: Annotated[AssetPackageBuildPhase, IOAttrs('p')]
+
+    #: Optional 'done of total' unit counts (e.g. assets built) for a
+    #: progress readout. Typically both set or both unset.
+    units_done: Annotated[int | None, IOAttrs('ud', store_default=False)] = None
+    units_total: Annotated[int | None, IOAttrs('ut', store_default=False)] = (
+        None
+    )
+
+    #: Optional free-form text shown as-is (untranslated) — an escape
+    #: hatch for custom/modder build status the fixed phases can't
+    #: express.
+    detail: Annotated[str | None, IOAttrs('d', store_default=False)] = None
+
+
 @ioprepped
 @dataclass
 class ResolveAssetPackageMessage(Message):
@@ -500,6 +550,14 @@ class ResolveAssetPackageResponse(Response):
     #: ``GET /casblob/{hash}`` to fetch the resolved blobs. ``None``
     #: when ``error`` is set.
     token: Annotated[securedata.Archive | None, IOAttrs('tok')]
+
+    #: Set when the manifest isn't ready yet because the master is
+    #: building the requested flavors; the client renders this progress
+    #: and re-sends the same resolve to poll. ``None`` once resolved
+    #: (then ``buckets`` / ``token`` are populated) or on ``error``.
+    build_progress: Annotated[
+        AssetPackageBuildProgress | None, IOAttrs('bp', soft_default=None)
+    ]
 
 
 @ioprepped

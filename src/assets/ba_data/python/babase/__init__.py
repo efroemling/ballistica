@@ -211,6 +211,8 @@ from babase._meta import MetadataSubsystem
 from babase._assetsubsystem import (
     AssetSubsystem,
     ResolveResult,
+    ResolveProgress,
+    ResolvePhase,
     AssetResolveError,
 )
 from babase._env import DEFAULT_REQUEST_TIMEOUT_SECONDS
@@ -381,6 +383,8 @@ __all__ = [
     'reload_media',
     'request_permission',
     'ResolveResult',
+    'ResolveProgress',
+    'ResolvePhase',
     'safecolor',
     'screenmessage',
     'SessionNotFoundError',

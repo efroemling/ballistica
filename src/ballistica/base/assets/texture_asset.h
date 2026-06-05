@@ -26,6 +26,7 @@ class TextureAsset : public Asset {
   auto GetName() const -> std::string override;
   auto GetNameFull() const -> std::string override;
   auto GetAssetType() const -> AssetType override;
+  auto ReResolveSource() -> bool override;
   void DoPreload() override;
   void DoLoad() override;
   void DoUnload() override;

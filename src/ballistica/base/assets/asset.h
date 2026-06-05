@@ -26,15 +26,39 @@ class Asset : public Object {
   /// Get a human readable name for an AssetType.
   static auto AssetTypeName(AssetType assettype) -> const char*;
 
-  void Preload(bool already_locked = false);
-  void Load(bool already_locked = false);
+  // Lock-ordering invariant: NEVER acquire the GIL (call into Python --
+  // including logging, which routes through Python's logging module) while
+  // holding an Asset lock. The GIL is the outer lock and per-asset mutexes
+  // are leaf locks: the logic thread holds the GIL and then takes asset
+  // locks when scene nodes load their assets, so an asset-loader thread that
+  // took an asset lock and then blocked on the GIL would deadlock against it.
+  // Preload()/Load() honor this by doing their work under the lock but
+  // emitting their logs only after releasing it (see asset.cc).
+  void Preload();
+  void Load();
   void Unload(bool already_locked = false);
   auto preloaded() const -> bool { return preloaded_; }
   auto loaded() const -> bool { return preloaded_ && loaded_; }
 
+  // Flag set on the logic thread (by Assets::ReloadChangedAssets, after
+  // ReResolveSource reports a changed source) and consumed on the asset's
+  // load thread (which unloads + reloads this asset). Lets the cross-thread
+  // reload pass the work along without passing refs across threads.
+  auto reload_pending() const -> bool { return reload_pending_; }
+  void set_reload_pending(bool val) { reload_pending_ = val; }
+
   // Return name or another identifier. For debugging purposes.
   virtual auto GetName() const -> std::string { return "invalid"; }
   virtual auto GetNameFull() const -> std::string { return GetName(); }
+
+  // Re-resolve this asset's underlying source from its name -- e.g. after the
+  // asset-package registry is re-resolved to a different flavor (fallback ->
+  // desktop, a language swap, etc.) so the same logical asset now maps to a
+  // different CAS blob. If the resolved source changed, update it and return
+  // true (the caller then unloads + reloads this asset to pick it up). The
+  // default is a no-op returning false, for asset types whose source can't
+  // change at runtime. MUST be called with the asset locked.
+  virtual auto ReResolveSource() -> bool { return false; }
 
   // Used to lock asset payloads for modification in a RAII manner.
   // FIXME - need to better define the times when payloads need to
@@ -57,15 +81,10 @@ class Asset : public Object {
 
   // Attempt to lock the component without blocking.  returns true if
   // successful. In the case of success, use a LockGuard with
-  // kInheritLock to release the lock.
-  auto TryLock() -> bool {
-    bool val = mutex_.try_lock();
-    if (val) {
-      assert(!locked_);
-      locked_ = true;
-    }
-    return val;
-  }
+  // kInheritLock to release the lock. (Out-of-line because, like Lock(), a
+  // successful acquire must arm the no-GIL-lock-zone debug guard -- see
+  // asset.cc and the lock-ordering invariant above.)
+  auto TryLock() -> bool;
 
   auto locked() const -> bool { return locked_; }
   auto last_used_time() const -> millisecs_t { return last_used_time_; }
@@ -105,6 +124,16 @@ class Asset : public Object {
   bool valid_ = false;
 
  private:
+  // Does the actual preload/load work with the asset lock held; emits no logs
+  // and takes no GIL (see the lock-ordering invariant above). Reports which
+  // steps ran so the unlocked caller can log them via EmitLoadLogs_.
+  void DoLoadWork_(bool want_load, bool* did_preload, bool* did_load,
+                   millisecs_t* load_ms);
+
+  // Emits the preload/load logs (and slow-load warning) for steps that just
+  // ran. MUST be called with no asset lock held -- it takes the GIL.
+  void EmitLoadLogs_(bool did_preload, bool did_load, millisecs_t load_ms);
+
   // Lock the component - components must be locked whenever using them.
   void Lock();
 
@@ -124,6 +153,7 @@ class Asset : public Object {
   millisecs_t last_used_time_ = 0;
   bool preloaded_ = false;
   bool loaded_ = false;
+  bool reload_pending_ = false;
   std::mutex mutex_;
   BA_DISALLOW_CLASS_COPIES(Asset);
 };

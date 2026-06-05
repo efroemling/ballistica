@@ -56,6 +56,7 @@ class GraphicsServer {
   void ApplySettings(const GraphicsSettings* settings);
 
   void PushReloadMediaCall();
+  void PushReloadChangedMediaCall();
   void PushRemoveRenderHoldCall();
   void PushComponentUnloadCall(
       const std::vector<Object::Ref<Asset>*>& components);
@@ -312,6 +313,7 @@ class GraphicsServer {
   // void UpdateVirtualScreenRes_();
   void UpdateCamOrientMatrix_();
   void ReloadMedia_();
+  void ReloadChangedMedia_();
   void UpdateModelViewProjectionMatrix_() {
     if (model_view_projection_matrix_dirty_) {
       model_view_projection_matrix_ = model_view_matrix_ * projection_matrix_;
