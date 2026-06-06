@@ -99,7 +99,7 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.Translate(highlight_center_x_, highlight_center_y_);
       c.Scale(highlight_width_, highlight_height_);
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage4x1));
+          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
     }
     c.Submit();
   }

@@ -1139,7 +1139,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.Translate(glow_center_x_, glow_center_y_);
         c.Scale(glow_width_, glow_height_);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage4x1));
+            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
       }
       c.Submit();
     }

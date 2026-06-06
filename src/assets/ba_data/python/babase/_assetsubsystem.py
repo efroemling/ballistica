@@ -111,7 +111,7 @@ _BUCKETS = ('constant', 'language', 'textures')
 _BUCKET_FALLBACKS: dict[str, str | None] = {
     'constant': None,  # No flavor dimension; 'constant' is always present.
     'language': 'language/eng',
-    'textures': 'textures/fallback_v1_regular',
+    'textures': 'textures/fallback_v1.gamma.regular',
 }
 
 
@@ -360,7 +360,10 @@ def make_screenmessage_progress_reporter(
                 message = f'Building {pkg} assets ({remaining} remaining)…'
             else:
                 # Counts not reported yet (the initial 'preparing' step).
-                message = f'Building {pkg} assets…'
+                # Drop the word "assets" when there's no count -- it reads
+                # cleaner ("Building <pkg>…"); with a count, "assets" gives
+                # the number something to refer to.
+                message = f'Building {pkg}…'
         elif downloading and progress.blobs_total:
             # Single running total across the whole resolve (all packages).
             remaining = max(progress.blobs_total - progress.blobs_done, 0)
@@ -472,6 +475,12 @@ class AssetSubsystem(AppSubsystem):
         # _texture_profile property (headless-aware).
         self._texture_quality = 'regular'
 
+        # Render-space (compositing space) flavor dimension (decision
+        # #23). Hard-coded to 'gamma' — the only space the renderer
+        # composites in today. Becomes runtime-toggleable when the
+        # linear renderer lands; for now every client requests gamma.
+        self._render_space = 'gamma'
+
         # Debug/repair affordance: when bundle reuse is disabled, the diff
         # ignores the bundle root so even bundled blobs are (re)downloaded
         # into the writable cache — lets the download+write leg be
@@ -553,13 +562,19 @@ class AssetSubsystem(AppSubsystem):
 
         Coords must be formed exactly as the build pipeline stores them in
         the manifests: ``constant``, ``language/<locale>``,
-        ``textures/<profile>_<quality>``.
+        ``textures/<profile>.<render_space>.<quality>``. The textures
+        coordinate is ``.``-delimited (decision #23): ``/`` separates the
+        asset-type from the flavor and ``.`` separates flavor dimensions,
+        so neither may appear inside a value (``_`` is free, keeping
+        ``desktop_v1``). Kept strictly one-way (built, never parsed).
         """
         return {
             'constant': 'constant',
             'language': f'language/{language.value}',
             'textures': (
-                f'textures/{self._texture_profile}_{self._texture_quality}'
+                f'textures/{self._texture_profile}'
+                f'.{self._render_space}'
+                f'.{self._texture_quality}'
             ),
         }
 

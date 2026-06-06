@@ -283,7 +283,8 @@ void TextureAsset::DoPreload() {
         LoadKTX2(file_name_full_, preload_datas_[0].buffers,
                  preload_datas_[0].widths, preload_datas_[0].heights,
                  preload_datas_[0].formats, preload_datas_[0].sizes,
-                 &preload_datas_[0].base_level);
+                 &preload_datas_[0].base_level,
+                 &preload_datas_[0].premultiplied);
       } else if (matches(".android_dds")) {
         // Etc1 or dxt3 for non-alpha and dxt5 for alpha (.android_dds).
         LoadDDS(file_name_full_, preload_datas_[0].buffers,
@@ -519,6 +520,11 @@ void TextureAsset::DoLoad() {
   assert(!preload_datas_.empty());
   base_level_ = preload_datas_[0].base_level;
 
+  // Carry the premultiplied-alpha flag onto the persistent asset for
+  // draw-time premult-blend selection (decision #23); the preload data is
+  // about to be cleared. Re-read on every (re)load, like base_level_.
+  premultiplied_ = preload_datas_[0].premultiplied;
+
   // If we're done, kill our preload data.
   preload_datas_.clear();
 }
@@ -529,6 +535,7 @@ void TextureAsset::DoUnload() {
   assert(renderer_data_.exists());
   renderer_data_.Clear();
   base_level_ = 0;
+  premultiplied_ = false;
 }
 
 }  // namespace ballistica::base

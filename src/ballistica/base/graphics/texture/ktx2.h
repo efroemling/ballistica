@@ -73,12 +73,17 @@ static_assert(sizeof(KTX2LevelIndex) == 24,
 /// 0). ``widths`` / ``heights`` / ``formats`` / ``sizes`` are populated
 /// for every level. ``*base_level`` is written for caller uniformity.
 ///
+/// ``*premultiplied`` is set from the DFD's
+/// ``KHR_DF_FLAG_ALPHA_PREMULTIPLIED`` flag (asset-packages decision
+/// #23). It is data-only for now — fed in but not yet consumed by the
+/// renderer/blend path; a future premult-aware renderer reads it.
+///
 /// Throws on parse error, unsupported ``vkFormat``, or
 /// non-zero ``supercompressionScheme`` (BasisU/zstd not implemented
 /// for v1 — see initiative decision #12).
 void LoadKTX2(const std::string& file_name, unsigned char** buffers,
               int* widths, int* heights, TextureFormat* formats, size_t* sizes,
-              int* base_level);
+              int* base_level, bool* premultiplied);
 
 }  // namespace ballistica::base
 

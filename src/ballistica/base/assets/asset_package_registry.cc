@@ -86,8 +86,8 @@ auto AssetPackageRegistry::LookupTextureBucketId(
     return "";
   }
   // Each package registers exactly one textures bucket — its resolved
-  // flavor, e.g. "textures/desktop_v1_regular" or
-  // "textures/fallback_v1_regular". Find it by prefix.
+  // flavor, e.g. "textures/desktop_v1.gamma.regular" or
+  // "textures/fallback_v1.gamma.regular". Find it by prefix.
   for (auto&& bucket : pkg_it->second) {
     if (bucket.first.rfind("textures/", 0) == 0) {
       return bucket.first;

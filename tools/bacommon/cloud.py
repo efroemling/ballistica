@@ -525,7 +525,7 @@ class ResolveAssetPackageResponse(Response):
     """Resolved flavor-manifests + capability token for a download.
 
     ``buckets`` maps a ``bucket/flavor`` coordinate (e.g.
-    ``'textures/fallback_v1_regular'``, ``'constant'``) to that
+    ``'textures/fallback_v1.gamma.regular'``, ``'constant'``) to that
     flavor's resolved flavor-manifest blob (CAS hash + canonical bytes,
     delivered inline). On failure ``error`` carries a human-readable
     message and ``buckets`` is empty / ``token`` is ``None``.

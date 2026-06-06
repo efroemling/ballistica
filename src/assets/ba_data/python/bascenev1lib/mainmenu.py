@@ -868,10 +868,6 @@ def _preload1() -> None:
     for tex in [
         'iconRunaround',
         'iconOnslaught',
-        'medalComplete',
-        'medalBronze',
-        'medalSilver',
-        'medalGold',
         'characterIconMask',
     ]:
         bs.gettexture(tex)
@@ -936,7 +932,7 @@ def _preload3() -> None:
 
 
 def _preload4() -> None:
-    for tname in ['bar', 'meter', 'null', 'flagColor', 'achievementOutline']:
+    for tname in ['bar', 'null', 'flagColor', 'achievementOutline']:
         bs.gettexture(tname)
     for mname in ['frameInset', 'meterTransparent', 'achievementOutline']:
         bs.getmesh(mname)

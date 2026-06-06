@@ -234,7 +234,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
           c.Scale(highlight_width_, highlight_height_);
           c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage4x1));
+              base::BuiltinMeshOldID::kImage1x1));
         }
       } else {
         assert(glow_type_ == GlowType::kUniform);

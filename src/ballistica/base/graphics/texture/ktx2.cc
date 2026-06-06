@@ -58,11 +58,12 @@ static auto BytesPerPixelForFormat(TextureFormat fmt) -> size_t {
 
 void LoadKTX2(const std::string& file_name, unsigned char** buffers,
               int* widths, int* heights, TextureFormat* formats, size_t* sizes,
-              int* base_level) {
+              int* base_level, bool* premultiplied) {
   // Asset-package textures always load every mip in the chosen flavor;
   // the legacy texture-quality mip-skip knob does not apply here (see
   // the header and initiative §7 texture-quality decoupling).
   *base_level = 0;
+  *premultiplied = false;
 
   FILE* f = g_core->platform->FOpen(file_name.c_str(), "rb");
   if (!f) {
@@ -115,6 +116,28 @@ void LoadKTX2(const std::string& file_name, unsigned char** buffers,
       != hdr.level_count) {
     fclose(f);
     throw Exception("Short read on KTX2 level index: \"" + file_name + "\".");
+  }
+
+  // Read the premultiplied-alpha flag from the DFD. Data-only for now —
+  // the renderer does not yet consume it (asset-packages decision #23).
+  // DFD section layout (see write_ktx2 in bamaster assetsv1tex.py):
+  //   +0  uint32 dfdTotalSize
+  //   +4  word0  (vendorId | descriptorType)
+  //   +8  word1  (versionNumber | descriptorBlockSize)
+  //   +12 word2  (colorModel | primaries | transfer | flags)
+  // The flags byte is word2's high byte; KHR_DF_FLAG_ALPHA_PREMULTIPLIED
+  // is its bit 0. KTX2 is little-endian, matching all our targets (same
+  // assumption as the raw header struct read above). A malformed/missing
+  // DFD just leaves *premultiplied false (straight).
+  if (hdr.dfd_byte_offset != 0 && hdr.dfd_byte_length >= 16) {
+    if (fseek(f, static_cast<long>(hdr.dfd_byte_offset) + 12,  // NOLINT
+              SEEK_SET)
+        == 0) {
+      uint32_t dfd_word2{};
+      if (fread(&dfd_word2, sizeof(dfd_word2), 1, f) == 1) {
+        *premultiplied = ((dfd_word2 >> 24u) & 1u) != 0u;
+      }
+    }
   }
 
   // No quality-driven base_level bump: asset-package textures load all

@@ -636,7 +636,7 @@ enum class BuiltinMeshOldID : uint8_t {
 // above retire one at a time as their callsites migrate.
 
 inline constexpr const char* kBuiltinAssetsApverid =
-    "a-0.babuiltinassets.260602";
+    "a-0.babuiltinassets.260606";
 
 enum class BuiltinTextureID : uint16_t {
   kMydirHelloworld,  // ba_data/textures/mydir/helloworld.ktx2
