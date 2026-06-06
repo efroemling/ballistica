@@ -187,28 +187,43 @@ def do_list(projroot: Path) -> None:
         _print_help_pointer()
         return
 
-    # One master roundtrip per pin to find the newest version on
-    # each pin's track. They're independent I/O-bound calls (each
-    # shells out to its own bacloud subprocess), so run them in a
-    # bounded thread pool — modders may reference many asset-packages
-    # and serial lookups would scale linearly. Each worker mutates
-    # only its own pin, and ``map`` returns the per-pin error strings
-    # in input order, so output stays deterministic regardless of
-    # completion order.
-    def _lookup(pin: Pin) -> str | None:
+    # One master roundtrip per *unique* (account, package, track) to
+    # find the newest version on each track. Multiple pins commonly
+    # reference the same package (e.g. babuiltinassets has a
+    # projectconfig pin plus per-feature-set wrapper pins), and for the
+    # dev track a resolve has a *write* side-effect on master: it
+    # auto-creates/updates the dev version. Resolving the same package
+    # concurrently would therefore fire redundant racing writes into a
+    # non-transactional read-modify-write on master — exactly how stale
+    # duplicate dev versions used to accumulate. So dedupe to one lookup
+    # per unique target and share the result across its pins. The unique
+    # lookups are independent I/O-bound calls (each shells out to its
+    # own bacloud subprocess), so run them in a bounded thread pool —
+    # modders may reference many asset-packages and serial lookups would
+    # scale linearly. ``map`` returns errors in input order, so output
+    # stays deterministic regardless of completion order.
+    unique_targets: dict[tuple[str, str, PinType], list[Pin]] = {}
+    for pin in pins:
+        unique_targets.setdefault(
+            (pin.account, pin.package, pin.pin_type), []
+        ).append(pin)
+
+    def _lookup(item: tuple[tuple[str, str, PinType], list[Pin]]) -> str | None:
+        (_account, _package, track), group = item
         try:
-            pin.latest_available = _query_latest_for_track(
-                projroot, pin, pin.pin_type
-            )
+            latest = _query_latest_for_track(projroot, group[0], track)
+            for pin in group:
+                pin.latest_available = latest
             return None
         except Exception as exc:
-            pin.latest_available = None
-            return f'  {pin.file_path}: lookup failed: {exc}'
+            for pin in group:
+                pin.latest_available = None
+            return f'  {group[0].file_path}: lookup failed: {exc}'
 
     with concurrent.futures.ThreadPoolExecutor(
-        max_workers=min(len(pins), 16)
+        max_workers=min(len(unique_targets), 16)
     ) as executor:
-        errors = list(executor.map(_lookup, pins))
+        errors = list(executor.map(_lookup, unique_targets.items()))
 
     for error in errors:
         if error is not None:
@@ -483,9 +498,28 @@ def do_update(projroot: Path, target_str: str, version_str: str) -> None:
 
     matched = _match_target(pins, target_str)
 
+    # Multiple matched pins often reference the same package (e.g.
+    # babuiltinassets' projectconfig + wrapper pins all resolve to the
+    # same version). Resolving once per pin would fire redundant master
+    # roundtrips — and for the dev track each is a write that
+    # delete-alls-and-recreates the dev version — so memoize the resolve
+    # and reuse the resolved apverid. The key includes the pin's current
+    # track because ``version_str='latest'`` is track-preserving (it
+    # resolves against ``pin.pin_type``); other version specs ignore the
+    # current track, so including it is just harmlessly conservative.
+    resolve_cache: dict[tuple[str, str, PinType, str], str] = {}
+
+    def _resolve_for(pin: Pin) -> str:
+        key = (pin.account, pin.package, pin.pin_type, version_str)
+        cached = resolve_cache.get(key)
+        if cached is None:
+            cached = _compute_new_apverid(projroot, pin, version_str)
+            resolve_cache[key] = cached
+        return cached
+
     projectconfig_changed = False
     for pin in matched:
-        new_apverid = _compute_new_apverid(projroot, pin, version_str)
+        new_apverid = _resolve_for(pin)
         if new_apverid == pin.apverid:
             print(
                 f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
@@ -508,8 +542,8 @@ def do_update(projroot: Path, target_str: str, version_str: str) -> None:
     # used at runtime, and the construct-mode pin in projectconfig
     # is what drives the build's bundled assets.)
     if projectconfig_changed:
-        for variant in ('gui', 'headless'):
-            _run_pcommand(projroot, 'asset_bundle_build', variant)
+        for profile in ('gui-minimal', 'headless-minimal'):
+            _run_pcommand(projroot, 'asset_bundle_build', profile)
         from batools.builtinassetids import generate
 
         changed = generate(projroot, check=False)
@@ -842,14 +876,17 @@ def _resolve_bare_dev(projroot: Path, account: str, package: str) -> str:
     through the workspace-aware dev-resolve path on master and
     returns just the resolved apverid — no assemble, no
     recipe-cache work, no local manifest side-effects.
+
+    Note ``--dev`` deliberately can't be combined with ``--account``:
+    dev resolution always operates on the authenticated account's own
+    packages (you can only resolve the ``.dev`` snapshot of a workspace
+    you own). ``account`` is therefore used only for messaging here.
     """
     cmd = [
         str(projroot / 'tools' / 'bacloud'),
         'assetpackage',
         'version',
         package,
-        '--account',
-        account,
         '--dev',
     ]
     result = subprocess.run(

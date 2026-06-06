@@ -115,7 +115,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_babase exec begin");
 
   // This locks in a baenv configuration.
@@ -160,7 +160,7 @@ void BaseFeatureSet::OnModuleExec(PyObject* module) {
   assert(!g_base->base_native_import_completed_);
   g_base->base_native_import_completed_ = true;
 
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_babase exec end");
 }
 
@@ -503,6 +503,12 @@ void BaseFeatureSet::set_app_mode(AppMode* mode) {
 
     // Set and build up new one.
     app_mode_ = mode;
+
+    // Publish a thread-safe "real app-mode is active" flag for consumers
+    // that can't touch the logic-thread-only EmptyAppMode singleton
+    // (e.g. the stdin reader). Construct-mode never calls set_app_mode,
+    // so this stays false through the boot-time bring-up phase.
+    app_mode_is_real_.store(mode != EmptyAppMode::GetSingleton());
 
     // App modes each provide their own input-device delegate types.
     input->RebuildInputDeviceDelegates();

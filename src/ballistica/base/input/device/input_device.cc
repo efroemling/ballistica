@@ -9,6 +9,7 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
 
@@ -29,7 +30,7 @@ auto InputDevice::IsRemoteApp() -> bool { return false; }
 void InputDevice::ApplyAppConfig() {}
 
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
-void InputDevice::HandleSDLEvent(const SDL_Event* e) {}
+void InputDevice::HandleSDLEvent(const BAEvent* e) {}
 #endif
 
 auto InputDevice::ShouldBeHiddenFromUser() -> bool {

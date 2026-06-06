@@ -23,6 +23,7 @@
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
@@ -233,7 +234,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
           c.Scale(highlight_width_, highlight_height_);
           c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage4x1));
+              base::BuiltinMeshOldID::kImage1x1));
         }
       } else {
         assert(glow_type_ == GlowType::kUniform);
@@ -736,13 +737,13 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     text_group_dirty_ = true;
     bool claimed = false;
     switch (m.keysym.sym) {
-      case SDLK_UP:
-      case SDLK_DOWN:
-      case SDLK_TAB:
+      case BAK_UP:
+      case BAK_DOWN:
+      case BAK_TAB:
         // never claim up/down/tab
         return false;
-      case SDLK_RETURN:
-      case SDLK_KP_ENTER:
+      case BAK_RETURN:
+      case BAK_KP_ENTER:
         if (g_buildconfig.platform_ios_tvos()
             || g_buildconfig.platform_android()) {
           // On mobile, return currently just deselects us.
@@ -758,7 +759,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           }
         }
         break;
-      case SDLK_LEFT:
+      case BAK_LEFT:
         if (editable()) {
           claimed = true;
           if (carat_position_ > 0) {
@@ -766,14 +767,14 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           }
         }
         break;
-      case SDLK_RIGHT:
+      case BAK_RIGHT:
         if (editable()) {
           claimed = true;
           carat_position_++;
         }
         break;
-      case SDLK_BACKSPACE:
-      case SDLK_DELETE:
+      case BAK_BACKSPACE:
+      case BAK_DELETE:
         if (editable()) {
           claimed = true;
           std::vector<uint32_t> unichars =

@@ -8,6 +8,7 @@
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
 
@@ -19,33 +20,33 @@ KeyboardInput::KeyboardInput(KeyboardInput* parent_keyboard_input_in) {
     // Currently we assume only 2 keyboard inputs.
     assert(parent_keyboard_input_->parent_keyboard_input_ == nullptr);
     parent_keyboard_input_->child_keyboard_input_ = this;
-    up_key_ = SDLK_w;
-    down_key_ = SDLK_s;
-    left_key_ = SDLK_a;
-    right_key_ = SDLK_d;
-    jump_key_ = SDLK_1;
-    punch_key_ = SDLK_2;
-    bomb_key_ = SDLK_3;
-    pick_up_key_ = SDLK_4;
-    hold_position_key_ = SDLK_6;
-    start_key_ = SDLK_KP_7;
+    up_key_ = BAK_w;
+    down_key_ = BAK_s;
+    left_key_ = BAK_a;
+    right_key_ = BAK_d;
+    jump_key_ = BAK_1;
+    punch_key_ = BAK_2;
+    bomb_key_ = BAK_3;
+    pick_up_key_ = BAK_4;
+    hold_position_key_ = BAK_6;
+    start_key_ = BAK_KP_7;
   } else {
-    up_key_ = SDLK_UP;
-    down_key_ = SDLK_DOWN;
-    left_key_ = SDLK_LEFT;
-    right_key_ = SDLK_RIGHT;
-    jump_key_ = SDLK_SPACE;
-    punch_key_ = SDLK_v;
-    bomb_key_ = SDLK_b;
-    pick_up_key_ = SDLK_c;
-    hold_position_key_ = SDLK_y;
-    start_key_ = SDLK_F5;
+    up_key_ = BAK_UP;
+    down_key_ = BAK_DOWN;
+    left_key_ = BAK_LEFT;
+    right_key_ = BAK_RIGHT;
+    jump_key_ = BAK_SPACE;
+    punch_key_ = BAK_v;
+    bomb_key_ = BAK_b;
+    pick_up_key_ = BAK_c;
+    hold_position_key_ = BAK_y;
+    start_key_ = BAK_F5;
   }
 }
 
 KeyboardInput::~KeyboardInput() = default;
 
-auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
+auto KeyboardInput::HandleKey(const BAKeysym* keysym, bool down) -> bool {
   // Only allow the *main* keyboard to talk to the UI
   if (parent_keyboard_input_ == nullptr) {
     // Any new event coming in cancels repeats.
@@ -56,37 +57,37 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
       auto c = WidgetMessage::Type::kEmptyMessage;
       if (down) {
         switch (keysym->sym) {
-          case SDLK_TAB:
-            // if (keysym->mod & KMOD_SHIFT) {  // NOLINT (signed bitwise)
+          case BAK_TAB:
+            // if (keysym->mod & BA_KMOD_SHIFT) {  // NOLINT (signed bitwise)
             //   c = WidgetMessage::Type::kTabPrev;
             // } else {
             //   c = WidgetMessage::Type::kTabNext;
             // }
             pass = true;
             break;
-          case SDLK_LEFT:
+          case BAK_LEFT:
             c = WidgetMessage::Type::kMoveLeft;
             pass = true;
             break;
-          case SDLK_RIGHT:
+          case BAK_RIGHT:
             c = WidgetMessage::Type::kMoveRight;
             pass = true;
             break;
-          case SDLK_UP:
+          case BAK_UP:
             c = WidgetMessage::Type::kMoveUp;
             pass = true;
             break;
-          case SDLK_DOWN:
+          case BAK_DOWN:
             c = WidgetMessage::Type::kMoveDown;
             pass = true;
             break;
-          case SDLK_SPACE:
-          case SDLK_KP_ENTER:
-          case SDLK_RETURN:
+          case BAK_SPACE:
+          case BAK_KP_ENTER:
+          case BAK_RETURN:
             c = WidgetMessage::Type::kActivate;
             pass = true;
             break;
-          case SDLK_ESCAPE:
+          case BAK_ESCAPE:
             // (limit to kb1 so we don't get double-beeps on failure)
             c = WidgetMessage::Type::kCancel;
             pass = true;
@@ -170,8 +171,8 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
             || (keysym->sym == bomb_key_)
             || (keysym->sym == pick_up_key_)
             // Main keyboard accepts enter/return as join-request.
-            || (number() == 1 && (keysym->sym == SDLK_KP_ENTER))
-            || (number() == 1 && (keysym->sym == SDLK_RETURN)))) {
+            || (number() == 1 && (keysym->sym == BAK_KP_ENTER))
+            || (number() == 1 && (keysym->sym == BAK_RETURN)))) {
       RequestPlayer();
       return true;
     }
@@ -194,7 +195,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
 
   // Keyboard 1 supports assigned keys plus arrow keys if they're unused.
   if (keysym->sym == left_key_
-      || (number() == 1 && keysym->sym == SDLK_LEFT && !left_key_assigned())) {
+      || (number() == 1 && keysym->sym == BAK_LEFT && !left_key_assigned())) {
     player_input = true;
     input_type = InputType::kLeftRight;
     left_held_ = down;
@@ -210,7 +211,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
       }
     }
   } else if (keysym->sym == right_key_
-             || (number() == 1 && keysym->sym == SDLK_RIGHT
+             || (number() == 1 && keysym->sym == BAK_RIGHT
                  && !right_key_assigned())) {
     // Keyboard 1 supports assigned keys plus arrow keys if they're unused.
     player_input = true;
@@ -228,7 +229,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
       }
     }
   } else if (keysym->sym == up_key_
-             || (number() == 1 && keysym->sym == SDLK_UP
+             || (number() == 1 && keysym->sym == BAK_UP
                  && !up_key_assigned())) {
     player_input = true;
     input_type = InputType::kUpDown;
@@ -243,7 +244,7 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
       if (down_held_) input_value = -32767;
     }
   } else if (keysym->sym == down_key_
-             || (number() == 1 && keysym->sym == SDLK_DOWN
+             || (number() == 1 && keysym->sym == BAK_DOWN
                  && !down_key_assigned())) {
     player_input = true;
     input_type = InputType::kUpDown;
@@ -287,8 +288,8 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
     } else {
       input_type = InputType::kPickUpRelease;
     }
-  } else if ((number() == 1 && keysym->sym == SDLK_RETURN)
-             || (number() == 1 && keysym->sym == SDLK_KP_ENTER)
+  } else if ((number() == 1 && keysym->sym == BAK_RETURN)
+             || (number() == 1 && keysym->sym == BAK_KP_ENTER)
              || keysym->sym == jump_key_) {
     // Keyboard 1 claims certain keys if they are otherwise unclaimed
     // (arrow keys, enter/return, etc).
@@ -307,19 +308,19 @@ auto KeyboardInput::HandleKey(const SDL_Keysym* keysym, bool down) -> bool {
     // Any other keys get processed as run keys.
     // keypad keys go to player 2 - anything else to player 1.
     switch (keysym->sym) {
-      case SDLK_KP_0:
-      case SDLK_KP_1:
-      case SDLK_KP_2:
-      case SDLK_KP_3:
-      case SDLK_KP_4:
-      case SDLK_KP_5:
-      case SDLK_KP_6:
-      case SDLK_KP_7:
-      case SDLK_KP_8:
-      case SDLK_KP_9:
-      case SDLK_KP_PLUS:
-      case SDLK_KP_MINUS:
-      case SDLK_KP_ENTER:
+      case BAK_KP_0:
+      case BAK_KP_1:
+      case BAK_KP_2:
+      case BAK_KP_3:
+      case BAK_KP_4:
+      case BAK_KP_5:
+      case BAK_KP_6:
+      case BAK_KP_7:
+      case BAK_KP_8:
+      case BAK_KP_9:
+      case BAK_KP_PLUS:
+      case BAK_KP_MINUS:
+      case BAK_KP_ENTER:
         if (number() == 2) {
           UpdateRun_(keysym->sym, down);
           return true;
@@ -357,7 +358,7 @@ void KeyboardInput::ResetHeldStates() {
   }
 }
 
-void KeyboardInput::UpdateRun_(SDL_Keycode key, bool down) {
+void KeyboardInput::UpdateRun_(BAKeycode key, bool down) {
   bool was_held = (!keys_held_.empty());
   if (down) {
     keys_held_.insert(key);
@@ -382,35 +383,35 @@ void KeyboardInput::ApplyAppConfig() {
 
   auto* cl{g_base->HaveClassic() ? g_base->classic() : nullptr};
 
-  SDL_Keycode up_key_default, down_key_default, left_key_default,
+  BAKeycode up_key_default, down_key_default, left_key_default,
       right_key_default, jump_key_default, punch_key_default, bomb_key_default,
       pick_up_key_default, hold_position_key_default, start_key_default;
 
   if (parent_keyboard_input_) {
-    up_key_default = SDLK_UP;
-    down_key_default = SDLK_DOWN;
-    left_key_default = SDLK_LEFT;
-    right_key_default = SDLK_RIGHT;
+    up_key_default = BAK_UP;
+    down_key_default = BAK_DOWN;
+    left_key_default = BAK_LEFT;
+    right_key_default = BAK_RIGHT;
 
-    jump_key_default = SDLK_KP_2;
-    punch_key_default = SDLK_KP_1;
-    bomb_key_default = SDLK_KP_6;
-    pick_up_key_default = SDLK_KP_5;
-    hold_position_key_default = (SDL_Keycode)-1;
-    start_key_default = SDLK_KP_7;
+    jump_key_default = BAK_KP_2;
+    punch_key_default = BAK_KP_1;
+    bomb_key_default = BAK_KP_6;
+    pick_up_key_default = BAK_KP_5;
+    hold_position_key_default = (BAKeycode)-1;
+    start_key_default = BAK_KP_7;
 
   } else {
-    up_key_default = SDLK_w;
-    down_key_default = SDLK_s;
-    left_key_default = SDLK_a;
-    right_key_default = SDLK_d;
-    jump_key_default = SDLK_k;
-    punch_key_default = SDLK_j;
-    bomb_key_default = SDLK_o;
-    pick_up_key_default = SDLK_i;
+    up_key_default = BAK_w;
+    down_key_default = BAK_s;
+    left_key_default = BAK_a;
+    right_key_default = BAK_d;
+    jump_key_default = BAK_k;
+    punch_key_default = BAK_j;
+    bomb_key_default = BAK_o;
+    pick_up_key_default = BAK_i;
 
-    hold_position_key_default = (SDL_Keycode)-1;
-    start_key_default = (SDL_Keycode)-1;
+    hold_position_key_default = (BAKeycode)-1;
+    start_key_default = (BAKeycode)-1;
   }
 
   // We keep track of whether anyone is using arrow keys
@@ -419,44 +420,43 @@ void KeyboardInput::ApplyAppConfig() {
       down_key_assigned_ = false;
 
   int val = cl ? cl->GetControllerValue(this, "buttonJump") : -1;
-  jump_key_ = (val == -1) ? jump_key_default : (SDL_Keycode)val;
+  jump_key_ = (val == -1) ? jump_key_default : (BAKeycode)val;
   UpdateArrowKeys_(jump_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonPunch") : -1;
-  punch_key_ = (val == -1) ? punch_key_default : (SDL_Keycode)val;
+  punch_key_ = (val == -1) ? punch_key_default : (BAKeycode)val;
   UpdateArrowKeys_(punch_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonBomb") : -1;
-  bomb_key_ = (val == -1) ? bomb_key_default : (SDL_Keycode)val;
+  bomb_key_ = (val == -1) ? bomb_key_default : (BAKeycode)val;
   UpdateArrowKeys_(bomb_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonPickUp") : -1;
-  pick_up_key_ = (val == -1) ? pick_up_key_default : (SDL_Keycode)val;
+  pick_up_key_ = (val == -1) ? pick_up_key_default : (BAKeycode)val;
   UpdateArrowKeys_(pick_up_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonHoldPosition") : -1;
-  hold_position_key_ =
-      (val == -1) ? hold_position_key_default : (SDL_Keycode)val;
+  hold_position_key_ = (val == -1) ? hold_position_key_default : (BAKeycode)val;
   UpdateArrowKeys_(hold_position_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonStart") : -1;
-  start_key_ = (val == -1) ? start_key_default : (SDL_Keycode)val;
+  start_key_ = (val == -1) ? start_key_default : (BAKeycode)val;
   UpdateArrowKeys_(start_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonUp") : -1;
-  up_key_ = (val == -1) ? up_key_default : (SDL_Keycode)val;
+  up_key_ = (val == -1) ? up_key_default : (BAKeycode)val;
   UpdateArrowKeys_(up_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonDown") : -1;
-  down_key_ = (val == -1) ? down_key_default : (SDL_Keycode)val;
+  down_key_ = (val == -1) ? down_key_default : (BAKeycode)val;
   UpdateArrowKeys_(down_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonLeft") : -1;
-  left_key_ = (val == -1) ? left_key_default : (SDL_Keycode)val;
+  left_key_ = (val == -1) ? left_key_default : (BAKeycode)val;
   UpdateArrowKeys_(left_key_);
 
   val = cl ? cl->GetControllerValue(this, "buttonRight") : -1;
-  right_key_ = (val == -1) ? right_key_default : (SDL_Keycode)val;
+  right_key_ = (val == -1) ? right_key_default : (BAKeycode)val;
   UpdateArrowKeys_(right_key_);
 
   enable_child_ = true;
@@ -464,14 +464,14 @@ void KeyboardInput::ApplyAppConfig() {
   up_held_ = down_held_ = left_held_ = right_held_ = false;
 }
 
-void KeyboardInput::UpdateArrowKeys_(SDL_Keycode key) {
-  if (key == SDLK_UP) {
+void KeyboardInput::UpdateArrowKeys_(BAKeycode key) {
+  if (key == BAK_UP) {
     up_key_assigned_ = true;
-  } else if (key == SDLK_DOWN) {
+  } else if (key == BAK_DOWN) {
     down_key_assigned_ = true;
-  } else if (key == SDLK_LEFT) {
+  } else if (key == BAK_LEFT) {
     left_key_assigned_ = true;
-  } else if (key == SDLK_RIGHT) {
+  } else if (key == BAK_RIGHT) {
     right_key_assigned_ = true;
   }
 }

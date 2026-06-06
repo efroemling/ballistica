@@ -2,9 +2,12 @@
 #
 """Asyncio related functionality.
 
-Exploring the idea of allowing Python coroutines to run gracefully
-besides our internal event loop. They could prove useful for networking
-operations or possibly game logic.
+Python coroutines run on the logic thread alongside our internal event
+loop. They are useful for networking operations and game logic. The
+asyncio loop is integrated directly into the logic thread's C++ event
+loop (see :class:`~babase._baeventloop.BAEventLoop`) so that work posted
+from other threads — ``run_in_executor`` completions in particular —
+wakes the logic thread immediately rather than waiting for a poll.
 """
 
 from __future__ import annotations
@@ -12,88 +15,59 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import asyncio
 import logging
-import time
-import os
 
 from efro.util import strip_exception_tracebacks
 
 if TYPE_CHECKING:
     from typing import Any
 
-    import babase
-
-# Our timer and event loop for the ballistica logic thread.
-_g_asyncio_timer: babase.AppTimer | None = None
+# Our event loop for the ballistica logic thread.
 _g_asyncio_event_loop: asyncio.AbstractEventLoop | None = None
-
-DEBUG_TIMING = os.environ.get('BA_DEBUG_TIMING') == '1'
 
 
 def setup_asyncio() -> asyncio.AbstractEventLoop:
     """Setup asyncio functionality for the logic thread."""
     # pylint: disable=global-statement
 
+    import threading
+
     import _babase
     import babase
 
+    from babase._baeventloop import BAEventLoop
+
     assert _babase.in_logic_thread()
 
-    # Create our event-loop. We don't expect there to be one
-    # running on this thread before we do.
+    # We don't expect an asyncio loop to be running on this thread before
+    # we set ours up.
     try:
         asyncio.get_running_loop()
-        print('Found running asyncio loop; unexpected.')
+        logging.warning(
+            'Found running asyncio loop on logic thread; unexpected.'
+        )
     except RuntimeError:
         pass
 
     global _g_asyncio_event_loop
-    _g_asyncio_event_loop = asyncio.new_event_loop()
-    _g_asyncio_event_loop.set_default_executor(babase.app.threadpool)
+    loop = BAEventLoop()
+    loop.set_default_executor(babase.app.threadpool)
 
     # Try to avoid reference loops from exceptions.
-    _g_asyncio_event_loop.set_exception_handler(_exception_handler)
+    loop.set_exception_handler(_exception_handler)
 
-    # Ideally we should integrate asyncio into our C++ Thread class's
-    # low level event loop so that asyncio timers/sockets/etc. could
-    # be true first-class citizens. For now, though, we can explicitly
-    # pump an asyncio loop periodically which gets us a decent
-    # approximation of that, which should be good enough for
-    # all but extremely time sensitive uses.
-    # See https://stackoverflow.com/questions/29782377/
-    # is-it-possible-to-run-only-a-single-step-of-the-asyncio-event-loop
-    def run_cycle() -> None:
-        assert _g_asyncio_event_loop is not None
-        _g_asyncio_event_loop.call_soon(_g_asyncio_event_loop.stop)
-        starttime = time.monotonic() if DEBUG_TIMING else 0
-        _g_asyncio_event_loop.run_forever()
-        endtime = time.monotonic() if DEBUG_TIMING else 0
+    # Mark this as the thread's running loop *without* ever calling
+    # run_forever(); the C++ EventLoop drives it. This makes
+    # get_running_loop(), is_running(), and Task/Future creation all work
+    # normally. This bit of asyncio-internal coupling is the one thing to
+    # re-verify on Python upgrades.
+    # pylint: disable=protected-access
+    loop._thread_id = threading.get_ident()
+    asyncio.events._set_running_loop(loop)
+    # pylint: enable=protected-access
+    asyncio.set_event_loop(loop)
 
-        # Let's aim to have nothing take longer than 1/120 of a second.
-        if DEBUG_TIMING:
-            warn_time = 1.0 / 120
-            duration = endtime - starttime
-            if duration > warn_time:
-                logging.warning(
-                    'Asyncio loop step took %.4fs; ideal max is %.4f',
-                    duration,
-                    warn_time,
-                )
-
-    global _g_asyncio_timer
-    _g_asyncio_timer = _babase.AppTimer(1.0 / 30.0, run_cycle, repeat=True)
-
-    if bool(False):
-
-        async def aio_test() -> None:
-            print('TEST AIO TASK STARTING')
-            assert _g_asyncio_event_loop is not None
-            assert asyncio.get_running_loop() is _g_asyncio_event_loop
-            await asyncio.sleep(2.0)
-            print('TEST AIO TASK ENDING')
-
-        _testtask = _g_asyncio_event_loop.create_task(aio_test())
-
-    return _g_asyncio_event_loop
+    _g_asyncio_event_loop = loop
+    return loop
 
 
 def _exception_handler(

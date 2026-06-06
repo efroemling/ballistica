@@ -36,7 +36,7 @@
 // On SDL builds, SDL.h provides SDL_GL_GetProcAddress for loading GL extension
 // function pointers at runtime (used by TrySetupGLDebugOutput_).
 #if BA_SDL_BUILD
-#include "SDL.h"
+#include <SDL3/SDL.h>
 #endif
 
 // On Android, EGL provides eglGetProcAddress for extension function loading.
@@ -384,9 +384,60 @@ void RendererGL::CheckGLCapabilities_() {
     c_types.push_back(TextureCompressionType::kASTC);
   }
 
+  // BC7 (BPTC) — the desktop_v1 asset-package profile. Core in GL 4.2+
+  // and present on essentially all desktop GPUs (incl. Mac GL 4.1 via
+  // the ARB extension); exposed as a ``texture_compression_bptc``
+  // extension string on both the ARB and EXT spellings.
+  if (CheckGLExtension(extensions, "texture_compression_bptc")) {
+    c_types.push_back(TextureCompressionType::kBPTC);
+  }
+
   g_base->graphics_server->SetTextureCompressionTypes(c_types);
 
+  // Log the detected compressed-texture families — handy when
+  // diagnosing which asset-package texture profile a platform can use
+  // (S3TC→legacy DXT, BPTC→desktop_v1 BC7, ASTC→mobile_v1; none of the
+  // AP-profile ones → fallback_v1). E.g. macOS GL 4.1 exposes only
+  // S3TC, so it lands on fallback_v1.
+  {
+    std::string detected;
+    const char* names[] = {"S3TC", "PVR", "ETC1", "ETC2", "ASTC", "BPTC"};
+    for (auto t : c_types) {
+      auto idx = static_cast<size_t>(t);
+      detected += std::string(" ") + (idx < 6 ? names[idx] : "?");
+    }
+    g_core->logging->Log(
+        LogName::kBaGraphics, LogLevel::kInfo,
+        "Supported compressed-texture families:"
+            + (detected.empty() ? std::string(" (none)") : detected) + ".");
+  }
+
   // Store the tex-compression type we support.
+  BA_DEBUG_CHECK_GL_ERROR;
+
+  // Sanity-check max texture size. ES 3 only guarantees 2048, but in
+  // practice all ES3-class hardware supports at least 4096, and our
+  // asset-package native (desktop/mobile) profiles assume a 4096 ceiling
+  // (only the universal 'fallback' profile stays <=2048). So we never
+  // expect to see less than 4096 in the wild; log an error if we do so we
+  // get a signal that such hardware exists.
+  //
+  // TODO(ericf): wire these caps limitations into actual behavior. We should
+  // store max-texture-size as a graphics-server caps value (sibling to
+  // the texture-compression-types bitmask above) and have
+  // Assets::PreferredTextureProfile() consult it so that a sub-4096
+  // device disqualifies the native (desktop/mobile) profiles and falls
+  // back to 'fallback' textures instead of trying to load textures it
+  // can't support. For now this is purely informational. We should also
+  // add a fatal-error when attempting to upload any texture larger than
+  // this reported max (the actual invariant we never expect to violate).
+  int max_texture_size = GLGetInt(GL_MAX_TEXTURE_SIZE);
+  if (max_texture_size < 4096) {
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                         "GL_MAX_TEXTURE_SIZE is "
+                             + std::to_string(max_texture_size)
+                             + "; expected at least 4096.");
+  }
   BA_DEBUG_CHECK_GL_ERROR;
 
   // Anisotropic sampling is still an extension as of both GL 3 and ES 3, so
@@ -544,6 +595,18 @@ auto RendererGL::GetGLTextureFormat(TextureFormat f) -> GLenum {
       break;
     case TextureFormat::kETC2_RGBA:
       return GL_COMPRESSED_RGBA8_ETC2_EAC;
+      break;
+    case TextureFormat::kBC7:
+      return GL_COMPRESSED_RGBA_BPTC_UNORM;
+      break;
+    case TextureFormat::kASTC_4x4:
+      return GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
+      break;
+    case TextureFormat::kASTC_6x6:
+      return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
+      break;
+    case TextureFormat::kASTC_8x8:
+      return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
       break;
     default:
       throw Exception("Invalid TextureFormat: "

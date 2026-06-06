@@ -25,6 +25,7 @@
 #include "ballistica/core/platform/support/platform_pango.h"
 #endif
 
+#include "ballistica/core/platform/support/sdl_message_box.h"
 #include "ballistica/shared/ballistica.h"
 
 #if BA_XCODE_BUILD
@@ -497,17 +498,17 @@ auto PlatformApple::GetLocaleTag() -> std::string {
 }
 
 auto PlatformApple::CanShowBlockingFatalErrorDialog() -> bool {
-  if (g_buildconfig.xcode_build() && g_buildconfig.platform_macos()) {
-    return true;
-  }
-  return Platform::CanShowBlockingFatalErrorDialog();
+  // macOS can always show one: native Cocoa under xcode, SDL under cmake.
+  // (iOS/tvOS get none.)
+  return g_buildconfig.platform_macos();
 }
 
 void PlatformApple::BlockingFatalErrorDialog(const std::string& message) {
 #if BA_XCODE_BUILD && BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::blockingFatalErrorDialog(message);
-#else
-  Platform::BlockingFatalErrorDialog(message);
+#elif BA_SDL_BUILD && BA_PLATFORM_MACOS
+  // cmake macOS has no Cocoa bridge; use SDL (see sdl_message_box.h).
+  ShowSDLFatalErrorDialog(message);
 #endif
 }
 

@@ -886,6 +886,12 @@
     <ClInclude Include="..\..\src\ballistica\core\platform\support\platform_pango.h">
       <Filter>ballistica\core\platform\support</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\core\platform\support\sdl_message_box.cc">
+      <Filter>ballistica\core\platform\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\core\platform\support\sdl_message_box.h">
+      <Filter>ballistica\core\platform\support</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\core\platform\windows\platform_windows.cc">
       <Filter>ballistica\core\platform\windows</Filter>
     </ClCompile>
@@ -1519,6 +1525,9 @@
     <ClCompile Include="..\..\src\ballistica\shared\foundation\inline.cc">
       <Filter>ballistica\shared\foundation</Filter>
     </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\input_types.h">
+      <Filter>ballistica\shared\foundation</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\shared\foundation\macros.cc">
       <Filter>ballistica\shared\foundation</Filter>
     </ClCompile>

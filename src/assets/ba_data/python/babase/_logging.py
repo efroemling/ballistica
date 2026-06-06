@@ -24,6 +24,10 @@ applog = logging.getLogger(ClientLoggerName.APP.value)
 #: Logger for asset loading — textures, sounds, models, etc.
 assetslog = logging.getLogger(ClientLoggerName.ASSETS.value)
 
+#: Logger for the downloadable asset-package manager — resolving,
+#: downloading, and tracking asset-packages fetched at runtime.
+assetmanagerlog = logging.getLogger(ClientLoggerName.ASSET_MANAGER.value)
+
 #: Logger for sound and music playback.
 audiolog = logging.getLogger(ClientLoggerName.AUDIO.value)
 
@@ -48,6 +52,28 @@ inputlog = logging.getLogger(ClientLoggerName.INPUT.value)
 
 #: Logger for app lifecycle events — bootstrapping, pausing,
 #: resuming, shutdown, etc.
+#:
+#: This logger follows a two-tier convention so an opted-in user can
+#: pick their depth. Log at ``INFO`` for big-picture milestones: the
+#: top-level app-phase begin/end brackets (``start-app``,
+#: ``on-app-start``, ``on-loading``, ``on-running``,
+#: ``apply-app-config``, and the shutdown-sequence phases),
+#: app-state/app-active transitions, and one-shot completions
+#: (``app native bootstrapping complete``, ``meta-scan complete``,
+#: ``initial-sign-in complete``). Log at ``DEBUG`` for sub-step detail
+#: nested *within* those phases: per-featureset C-extension
+#: exec/import begin/end, early-bootstrap sub-steps
+#: (``baenv.configure()``), individual plus-subsystem start/shutdown
+#: sub-steps (runtime, connectivity, v2-transport, account clients),
+#: background meta-scan thread spawn/join, ``initial-sign-in path:
+#: <name>`` selection, and the bundled asset-package registry load.
+#: The intent:
+#: ``INFO`` answers "where did startup (or shutdown) time go" without
+#: subsystem-init noise, while ``DEBUG`` is the deep-dive lens. (Rare
+#: shutdown diagnostics — gc-collect timing, the suicide-watchdog arm
+#: — stay at ``INFO`` despite being sub-steps: they fire at most once
+#: per run and are load-bearing for diagnosing prod shutdown hangs.)
+#: When adding a new lifecycle log, place it per this split.
 lifecyclelog = logging.getLogger(ClientLoggerName.LIFECYCLE.value)
 
 #: Logger for general networking activity.

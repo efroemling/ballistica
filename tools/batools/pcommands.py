@@ -360,6 +360,48 @@ def python_apple_gather() -> None:
     _python_build_apple_mod.gather(str(pcommand.PROJROOT))
 
 
+def build_angle_apple() -> None:
+    """Build Apple ANGLE (GL-ES -> Metal) xcframeworks via vcpkg.
+
+    Stages libEGL.xcframework / libGLESv2.xcframework + headers to
+    build/angle-artifacts/ for pickup by 'make angle-apple-gather'. This is a
+    self-contained local build (clones a throwaway vcpkg; requires Xcode
+    command-line tools). Pass --include-ios to also attempt the (not yet
+    usable) iOS triplets, or --triplets=a,b to limit the build for testing.
+    """
+    import os
+    import argparse
+    from batools import buildangleapple
+
+    parser = argparse.ArgumentParser(prog='pcommand build_angle_apple')
+    parser.add_argument(
+        '--include-ios',
+        action='store_true',
+        help='Also attempt the iOS triplets (not yet usable; see module doc).',
+    )
+    parser.add_argument(
+        '--triplets',
+        help='Comma-separated overlay-triplet names to limit the build to.',
+    )
+    args = parser.parse_args(sys.argv[2:])
+
+    os.chdir(pcommand.PROJROOT)
+    buildangleapple.build(
+        str(pcommand.PROJROOT),
+        include_ios=args.include_ios,
+        triplets=args.triplets,
+    )
+
+
+def install_angle_apple_artifacts() -> None:
+    """Install staged Apple ANGLE artifacts into the source tree."""
+    import os
+    from batools import buildangleapple
+
+    os.chdir(pcommand.PROJROOT)
+    buildangleapple.gather(str(pcommand.PROJROOT))
+
+
 def python_build_android_old_debug() -> None:
     """Build embeddable Android Python lib (old pipeline, debug ver)."""
 

@@ -3,7 +3,7 @@
 """Generate C++ id-enum + load-block code for the construct asset-package.
 
 Reads the cached bundle manifest at
-``.cache/asset_bundle/gui/manifest.json``, walks each per-bucket CAS
+``.cache/asset_bundle/gui-minimal/manifest.json``, walks each per-bucket CAS
 manifest, and splices generated content into two pre-marked autogen
 sections in checked-in source files:
 
@@ -199,7 +199,7 @@ def collect(projroot: Path) -> BuildResult:
     # pylint: disable=import-outside-toplevel, too-many-locals
     from efrotools.project import getprojectconfig
 
-    bundle_path = projroot / '.cache/asset_bundle/gui/manifest.json'
+    bundle_path = projroot / '.cache/asset_bundle/gui-minimal/manifest.json'
     if not bundle_path.is_file():
         raise CleanError(
             f'Asset-bundle manifest not found at {bundle_path}; '

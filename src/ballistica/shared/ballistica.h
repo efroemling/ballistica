@@ -21,10 +21,18 @@ typedef struct _ts PyThreadState;
 struct PyMethodDef;
 struct sockaddr_storage;
 
+// Engine-native input types (always available; defined in
+// shared/foundation/input_types.h). Forward-declared here so signatures
+// can pass them by ref/pointer without pulling the full header.
+union BAEvent;
+struct BAKeysym;
+
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
-union SDL_Event;
-struct SDL_Keysym;
-typedef struct _SDL_Joystick SDL_Joystick;
+// Real SDL joystick handle (opaque; only dereferenced under
+// BA_ENABLE_SDL_JOYSTICKS in the SDL build). Tag must match SDL3's own
+// (SDL2 used 'struct _SDL_Joystick') so this and the real SDL header agree
+// when both are visible in the SDL app-adapter.
+typedef struct SDL_Joystick SDL_Joystick;
 #endif
 
 // Predeclare types from other feature sets that we use.

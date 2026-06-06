@@ -562,7 +562,7 @@ void CorePython::VerifyPythonEnvironment() {
 void CorePython::MonolithicModeBaEnvImport() {
   assert(g_buildconfig.monolithic_build());
   assert(g_core);
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "baenv.configure() begin");
 
   auto gil{Python::ScopedInterpreterLock()};
@@ -650,7 +650,7 @@ void CorePython::MonolithicModeBaEnvConfigure() {
   // captured timestamps.
   OnLogHandlerReady();
 
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "baenv.configure() end");
 }
 

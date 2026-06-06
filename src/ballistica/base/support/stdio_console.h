@@ -19,6 +19,7 @@ class StdioConsole {
   void StartInMainThread_();
   void StartNativePythonREPL_();
   void StartLegacyConsole_();
+  void WaitForRealAppModeIfNeeded_();
   void PushCommand_(const std::string& command);
   void Clear_();
   EventLoop* event_loop_{};

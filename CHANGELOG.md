@@ -1,7 +1,11 @@
-### 1.7.63 (build 22861, api 9, 2026-05-28)
-- Fixed mouse-wheel zooming in manual camera mode
+### 1.7.63 (build 22868, api 9, 2026-06-06)
+- Upgraded from SDL2 to SDL3.
+- Fixed mouse-wheel zooming in manual camera mode.
 - Now using `uv` instead of `pip`. So now you'll need to install `uv` before
   working with the repo, but this makes things lots faster to work with.
+- Finally got rid of the weird square textures containing non-square contents
+  split into two pieces. This was a long-obsolete artifact of targeting pvrtc
+  texture compression which was limited to square dimensions.
 
 ### 1.7.62 (build 22837, api 9, 2026-05-04)
 - Added initial support for signing in with a Discord account as a first-class

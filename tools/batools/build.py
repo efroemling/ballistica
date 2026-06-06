@@ -269,6 +269,14 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             ],
             command=command,
             filefilter=_filefilter,
+            # Force a rebuild when re-fetching bundled assets: a
+            # server-side recipe/pipeline-version bump changes the built
+            # output without touching any local input the source-hashing
+            # sees, so without this the whole assets sub-build is skipped
+            # before the Makefile bundle rule (and asset_bundle_build's own
+            # early-out, also keyed on this var) ever run. See the
+            # BA_ASSET_BUNDLE_FORCE_REFETCH note in the /baclient skill.
+            force=os.environ.get('BA_ASSET_BUNDLE_FORCE_REFETCH') == '1',
         )
 
         # TEMP HACK - rebuild with any src-master assets change on my

@@ -22,6 +22,8 @@ class PlatformLinux : public Platform {
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
   auto DoGetDeviceDescription() -> std::string override;
   auto GetOSVersionString() -> std::string override;
+  auto CanShowBlockingFatalErrorDialog() -> bool override;
+  void BlockingFatalErrorDialog(const std::string& message) override;
 
 #if BA_ENABLE_OS_FONT_RENDERING
   void GetTextBoundsAndWidth(const std::string& text, Rect* r,

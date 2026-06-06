@@ -11,6 +11,13 @@ void SimpleComponent::WriteConfig() {
   // swapping (ie: when color is 1). This is because it can affect draw
   // order, which is important unlike with opaque stuff.
   if (transparent_) {
+    // A premultiplied-alpha texture (KTX2 DFD flag; decision #23) forces
+    // premult-blend, OR'd with the caller's manual flag (which still
+    // independently forces it for additive/glow effects and the
+    // textureless color draws below, where texture_ is absent so this
+    // reduces to premultiplied_).
+    bool premult_blend =
+        premultiplied_ || (texture_.exists() && texture_->premultiplied());
     if (texture_.exists()) {
       if (colorize_texture_.exists()) {
         assert(flatness_ == 0.0f);            // unimplemented combo
@@ -23,7 +30,7 @@ void SimpleComponent::WriteConfig() {
             ConfigForShading(
                 ShadingType::
                     kSimpleTextureModulatedTransparentColorized2Masked);
-            cmd_buffer_->PutInt(premultiplied_);
+            cmd_buffer_->PutInt(premult_blend);
             cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                    colorize_color_r_, colorize_color_g_,
                                    colorize_color_b_, colorize_color2_r_,
@@ -34,7 +41,7 @@ void SimpleComponent::WriteConfig() {
           } else {
             ConfigForShading(
                 ShadingType::kSimpleTextureModulatedTransparentColorized2);
-            cmd_buffer_->PutInt(premultiplied_);
+            cmd_buffer_->PutInt(premult_blend);
             cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                    colorize_color_r_, colorize_color_g_,
                                    colorize_color_b_, colorize_color2_r_,
@@ -46,7 +53,7 @@ void SimpleComponent::WriteConfig() {
           assert(!mask_texture_.exists());  // unimplemented combo
           ConfigForShading(
               ShadingType::kSimpleTextureModulatedTransparentColorized);
-          cmd_buffer_->PutInt(premultiplied_);
+          cmd_buffer_->PutInt(premult_blend);
           cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                  colorize_color_r_, colorize_color_g_,
                                  colorize_color_b_);
@@ -64,7 +71,7 @@ void SimpleComponent::WriteConfig() {
           assert(!mask_uv2_texture_.exists());  // unimplemented combo
           ConfigForShading(
               ShadingType::kSimpleTextureModulatedTransparentDoubleSided);
-          cmd_buffer_->PutInt(premultiplied_);
+          cmd_buffer_->PutInt(premult_blend);
           cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_);
           cmd_buffer_->PutTexture(texture_);
         } else {
@@ -75,7 +82,7 @@ void SimpleComponent::WriteConfig() {
             if (flatness_ != 0.0f) {
               ConfigForShading(
                   ShadingType::kSimpleTexModulatedTransShadowFlatness);
-              cmd_buffer_->PutInt(premultiplied_);
+              cmd_buffer_->PutInt(premult_blend);
               cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                      shadow_offset_x_, shadow_offset_y_,
                                      shadow_blur_, shadow_opacity_, flatness_);
@@ -84,7 +91,7 @@ void SimpleComponent::WriteConfig() {
             } else {
               ConfigForShading(
                   ShadingType::kSimpleTextureModulatedTransparentShadow);
-              cmd_buffer_->PutInt(premultiplied_);
+              cmd_buffer_->PutInt(premult_blend);
               cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                      shadow_offset_x_, shadow_offset_y_,
                                      shadow_blur_, shadow_opacity_);
@@ -98,7 +105,7 @@ void SimpleComponent::WriteConfig() {
               if (mask_uv2_texture_.exists()) {
                 ConfigForShading(
                     ShadingType::kSimpleTextureModulatedTransparentGlowMaskUV2);
-                cmd_buffer_->PutInt(premultiplied_);
+                cmd_buffer_->PutInt(premult_blend);
                 cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                        glow_amount_, glow_blur_);
                 cmd_buffer_->PutTexture(texture_);
@@ -106,7 +113,7 @@ void SimpleComponent::WriteConfig() {
               } else {
                 ConfigForShading(
                     ShadingType::kSimpleTextureModulatedTransparentGlow);
-                cmd_buffer_->PutInt(premultiplied_);
+                cmd_buffer_->PutInt(premult_blend);
                 cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                        glow_amount_, glow_blur_);
                 cmd_buffer_->PutTexture(texture_);
@@ -116,7 +123,7 @@ void SimpleComponent::WriteConfig() {
                 assert(!mask_texture_.exists());  // unimplemented combo
                 ConfigForShading(
                     ShadingType::kSimpleTextureModulatedTransFlatness);
-                cmd_buffer_->PutInt(premultiplied_);
+                cmd_buffer_->PutInt(premult_blend);
                 cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                        flatness_);
                 cmd_buffer_->PutTexture(texture_);
@@ -127,7 +134,7 @@ void SimpleComponent::WriteConfig() {
                   ConfigForShading(
                       ShadingType::
                           kSimpleTextureModulatedTransparentColorized2Masked);
-                  cmd_buffer_->PutInt(premultiplied_);
+                  cmd_buffer_->PutInt(premult_blend);
                   cmd_buffer_->PutFloats(
                       color_r_, color_g_, color_b_, color_a_, colorize_color_r_,
                       colorize_color_g_, colorize_color_b_, colorize_color2_r_,
@@ -139,7 +146,7 @@ void SimpleComponent::WriteConfig() {
                 } else {
                   ConfigForShading(
                       ShadingType::kSimpleTextureModulatedTransparent);
-                  cmd_buffer_->PutInt(premultiplied_);
+                  cmd_buffer_->PutInt(premult_blend);
                   cmd_buffer_->PutFloats(color_r_, color_g_, color_b_,
                                          color_a_);
                   cmd_buffer_->PutTexture(texture_);
@@ -158,11 +165,11 @@ void SimpleComponent::WriteConfig() {
       assert(!mask_uv2_texture_.exists());  // unimplemented combo
       if (double_sided_) {
         ConfigForShading(ShadingType::kSimpleColorTransparentDoubleSided);
-        cmd_buffer_->PutInt(premultiplied_);
+        cmd_buffer_->PutInt(premult_blend);
         cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_);
       } else {
         ConfigForShading(ShadingType::kSimpleColorTransparent);
-        cmd_buffer_->PutInt(premultiplied_);
+        cmd_buffer_->PutInt(premult_blend);
         cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_);
       }
     }

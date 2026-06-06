@@ -169,10 +169,18 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
                          preload_data->heights[src_level], 0, GL_RGBA,
                          GL_UNSIGNED_BYTE, preload_data->buffers[src_level]);
 
-            // At the moment we always just let GL generate mipmaps for
-            // uncompressed textures; is there any reason not to?
-            glGenerateMipmap(GL_TEXTURE_2D);
-            all_levels_handled = true;
+            // If the source carries its own mip chain (KTX2 asset-package
+            // textures, whose mips we build gamma-correctly + halo-free
+            // on the recipe side), upload every provided level — the
+            // loop continues to the next. Otherwise (single-image legacy
+            // textures) let GL generate them.
+            const bool have_more_levels =
+                (base_src_level + 1 < kMaxTextureLevels)
+                && preload_data->buffers[base_src_level + 1] != nullptr;
+            if (!have_more_levels) {
+              glGenerateMipmap(GL_TEXTURE_2D);
+              all_levels_handled = true;
+            }
             break;
           }
           case TextureFormat::kRGBA_4444: {

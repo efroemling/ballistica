@@ -1276,6 +1276,33 @@ static PyMethodDef PyReloadMediaDef = {
     ":meta private:",
 };
 
+// ------------------------- reload_changed_media ------------------------------
+
+static auto PyReloadChangedMedia(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  // Phase 1 runs here on the logic thread (re-resolve is logic-thread-only);
+  // it kicks off the graphics-thread unload/reload itself if anything changed.
+  assert(g_base->InLogicThread());
+  g_base->assets->ReloadChangedAssets();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyReloadChangedMediaDef = {
+    "reload_changed_media",  // name
+    PyReloadChangedMedia,    // method
+    METH_VARARGS,            // flags
+
+    "reload_changed_media() -> None\n"
+    "\n"
+    "Reload only assets whose underlying flavor changed since they loaded\n"
+    "(e.g. fallback textures that an asset-package resolve has since fetched\n"
+    "ideal versions of). No-ops when nothing changed, so it is safe to call\n"
+    "after any resolve; reloading runs behind a progress bar.\n"
+    "\n"
+    ":meta private:",
+};
+
 // --------------------------- mac_music_app_init ------------------------------
 
 static auto PyMacMusicAppInit(PyObject* self, PyObject* args, PyObject* keywds)
@@ -1666,6 +1693,33 @@ static PyMethodDef PyGetImmediateReturnCodeDef = {
     ":meta private:\n",
 };
 
+// --------------------------- set_app_exit_code -------------------------------
+
+static auto PySetAppExitCode(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base);
+  int code;
+  static const char* kwlist[] = {"code", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &code)) {
+    return nullptr;
+  }
+  g_base->set_app_exit_code(code);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetAppExitCodeDef = {
+    "set_app_exit_code",            // name
+    (PyCFunction)PySetAppExitCode,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
+
+    "set_app_exit_code(code: int) -> None\n"
+    "\n"
+    ":meta private:\n",
+};
+
 // ----------------------- shutdown_suppress_begin -----------------------------
 
 static auto PyShutdownSuppressBegin(PyObject* self) -> PyObject* {
@@ -1971,6 +2025,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyAppInstanceUUIDDef,
       PyUserRanCommandsDef,
       PyReloadMediaDef,
+      PyReloadChangedMediaDef,
       PyMacMusicAppInitDef,
       PyMacMusicAppGetVolumeDef,
       PyMacMusicAppSetVolumeDef,
@@ -1988,6 +2043,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyEmptyAppModeHandleAppIntentDefaultDef,
       PyEmptyAppModeHandleAppIntentExecDef,
       PyGetImmediateReturnCodeDef,
+      PySetAppExitCodeDef,
       PyCompleteShutdownDef,
       PyShutdownSuppressBeginDef,
       PyShutdownSuppressEndDef,

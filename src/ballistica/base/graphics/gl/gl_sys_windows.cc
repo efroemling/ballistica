@@ -3,16 +3,20 @@
 #if BA_ENABLE_OPENGL && BA_PLATFORM_WINDOWS
 #include "ballistica/base/graphics/gl/gl_sys_windows.h"
 
-#include "SDL.h"
+#include <SDL3/SDL.h>
+
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/shared/ballistica.h"
 
 #if BA_OPENGL_IS_ES
 
-// Link against ANGLE import libs. The corresponding DLLs (libEGL.dll,
-// libGLESv2.dll) must be present alongside the executable at runtime.
-#pragma comment(lib, "libEGL.lib")
+// Link against ANGLE's GLES import lib so the engine's direct gl* calls
+// resolve to libGLESv2.dll. We intentionally do NOT link libEGL.lib: the
+// engine never calls egl* itself -- SDL creates and manages the EGL
+// context (via SDL_HINT_OPENGL_ES_DRIVER). Both DLLs (libEGL.dll, and
+// libGLESv2.dll which depends on it) must still be present alongside the
+// executable at runtime.
 #pragma comment(lib, "libGLESv2.lib")
 
 namespace ballistica::base {
@@ -103,9 +107,14 @@ PFNGLGETSTRINGIPROC glGetStringi{};
 namespace ballistica::base {
 
 static auto GetGLFunc_(const char* name, bool required) -> void* {
-  void* func = SDL_GL_GetProcAddress(name);
+  // SDL3's SDL_GL_GetProcAddress returns an SDL_FunctionPointer (a function
+  // pointer type), so reinterpret_cast it to void* (valid on the platforms
+  // this desktop-GL path targets, where function and object pointers share
+  // a representation).
+  auto* func = reinterpret_cast<void*>(SDL_GL_GetProcAddress(name));
   if (!func) {
-    func = SDL_GL_GetProcAddress((std::string(name) + "EXT").c_str());
+    func = reinterpret_cast<void*>(
+        SDL_GL_GetProcAddress((std::string(name) + "EXT").c_str()));
   }
   if (required && func == nullptr) {
     FatalError("OpenGL function '" + std::string(name)

@@ -4,16 +4,15 @@
 
 from __future__ import annotations
 
-import hashlib
 import os
 import sys
 import subprocess
-from functools import partial
 
 from efro.terminal import Clr
 from efro.util import extract_arg, extract_flag
 from efrotools.util import is_wsl_windows_build_path
 from efrotools.pyver import PYVER, PYVERNODOT
+from batools._androidpayload import write_payload_file
 
 
 def stage_build(projroot: str, args: list[str] | None = None) -> None:
@@ -49,10 +48,12 @@ class BuildStager:
         self.include_fonts = True
         self.include_json = True
         self.include_pylib = False
-        # When set, copies ``.cache/asset_bundle/<variant>/manifest.json``
-        # + the CAS blobs it references into ``<staged>/ba_data/``.
-        # None means no bundle is staged for this build.
-        self.asset_bundle_variant: str | None = None
+        # Name of the asset-bundle profile to stage (see
+        # batools.assetbundleprofiles). When set, copies
+        # ``.cache/asset_bundle/<profile>/manifest.json`` + the CAS
+        # blobs it references into ``<staged>/ba_data/``. None means no
+        # bundle is staged for this build.
+        self.asset_bundle_profile: str | None = None
         self.include_binary_executable = False
         self.executable_name: str | None = None
         self.pylib_src_path: str | None = None
@@ -115,7 +116,7 @@ class BuildStager:
         # Legacy assets going into ba_data.
         self._sync_ba_data_legacy()
 
-        if self.asset_bundle_variant is not None:
+        if self.asset_bundle_profile is not None:
             self._sync_asset_bundle()
 
         if self.include_binary_executable:
@@ -131,7 +132,7 @@ class BuildStager:
         # pull out of the apk.
         if self.include_payload_file:
             assert self.dst is not None
-            _write_payload_file(self.dst, self.is_payload_full)
+            write_payload_file(self.dst, self.is_payload_full)
 
     def _parse_args(self, args: list[str]) -> None:
         """Parse args and apply to ourself."""
@@ -169,7 +170,7 @@ class BuildStager:
 
         if platform_arg == '-android':
             self.desc = 'android'
-            self._parse_android_args(args)
+            self._parse_android_args()
         elif platform_arg.startswith('-win'):
             self.desc = 'windows'
             self._parse_win_args(platform_arg, args)
@@ -177,7 +178,6 @@ class BuildStager:
             self.desc = 'cmake'
             self.dst = args[-1]
             self.tex_suffix = '.dds'
-            self.asset_bundle_variant = 'gui'
             # Link/copy in a binary *if* builddir is provided.
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit'
@@ -195,7 +195,6 @@ class BuildStager:
             self.include_textures = False
             self.include_audio = False
             self.include_meshes = False
-            self.asset_bundle_variant = 'headless'
             # Link/copy in a binary *if* builddir is provided.
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit_headless'
@@ -234,6 +233,19 @@ class BuildStager:
         else:
             raise RuntimeError('No valid platform arg provided.')
 
+        # Every staged build bundles a named asset-package profile (see
+        # batools.assetbundleprofiles): server builds (``serverdst`` set)
+        # get the headless profile, other builds the gui one. This now
+        # includes Apple Xcode builds -- their staging phase runs
+        # remotely (inside xcodebuild on the ba-apple env), so their
+        # cloud-build Make targets (_mac-cloud-build / _ios-cloud-build /
+        # _tvos-cloud-build) run `asset_bundle_build gui-minimal` on that
+        # remote env before xcodebuild, ensuring the .cache/asset_bundle
+        # tree is present when this staging phase reads it there.
+        self.asset_bundle_profile = (
+            'headless-minimal' if self.serverdst is not None else 'gui-minimal'
+        )
+
         # Special case: running rsync to a windows drive via WSL fails
         # to overwrite non-writable files.
         #
@@ -244,51 +256,16 @@ class BuildStager:
         if is_wsl_windows_build_path(self.projroot):
             self.wsl_chmod_workaround = True
 
-    def _parse_android_args(self, args: list[str]) -> None:
-        # On Android we get nitpicky with exactly what we want to copy
-        # in since we can speed up iterations by installing stripped
-        # down apks.
+    def _parse_android_args(self) -> None:
+        # Android pulls its assets out of the apk at runtime via the
+        # payload manifest; we always stage the full asset set (the
+        # per-asset-type 'partial apk' selection has been retired).
         self.dst = 'assets/ballistica_files'
         self.pylib_src_path = 'pylib-android'
         self.include_payload_file = True
+        self.is_payload_full = True
         self.tex_suffix = '.ktx'
-        self.include_audio = False
-        self.include_meshes = False
-        self.include_collision_meshes = False
-        self.include_scripts = False
-        self.include_python = False
-        self.include_textures = False
-        self.include_fonts = False
-        self.include_json = False
-        self.include_pylib = False
-        for arg in args:
-            if arg == '-full':
-                self.include_audio = True
-                self.include_meshes = True
-                self.include_collision_meshes = True
-                self.include_scripts = True
-                self.include_python = True
-                self.include_textures = True
-                self.include_fonts = True
-                self.include_json = True
-                self.is_payload_full = True
-                self.include_pylib = True
-            elif arg == '-none':
-                pass
-            elif arg == '-meshes':
-                self.include_meshes = True
-                self.include_collision_meshes = True
-            elif arg == '-python':
-                self.include_python = True
-                self.include_pylib = True
-            elif arg == '-textures':
-                self.include_textures = True
-            elif arg == '-fonts':
-                self.include_fonts = True
-            elif arg == '-scripts':
-                self.include_scripts = True
-            elif arg == '-audio':
-                self.include_audio = True
+        self.include_pylib = True
 
     def _parse_win_args(self, platform: str, args: list[str]) -> None:
         """Parse sub-args in the windows platform string."""
@@ -391,7 +368,7 @@ class BuildStager:
                 'libvorbisfile.dll',
                 'ogg.dll',
                 'OpenAL32.dll',
-                'SDL2.dll',
+                'SDL3.dll',
                 # zlib1.dll lives in DLLs/ (Python dependency) but also needs
                 # to be at the top level because ANGLE (libGLESv2.dll) depends
                 # on it for shader blob caching.
@@ -586,19 +563,24 @@ class BuildStager:
                 )
                 with open(blob_path, encoding='utf-8') as infile:
                     flavor_manifest = json.loads(infile.read())
+                # Each entry is a part-keyed component map (decision #16);
+                # flatten over parts to collect every data-blob hash.
                 hashes.update(
-                    info['h'] for info in flavor_manifest['e'].values()
+                    comp['h']
+                    for info in flavor_manifest['e'].values()
+                    for comp in info.values()
                 )
         return hashes
 
     def _sync_asset_bundle(self) -> None:
         """Stage the build's asset bundle into ba_data/.
 
-        Reads ``.cache/asset_bundle/<variant>/manifest.json``
-        for whichever variant (``gui`` / ``headless``) this
-        build was configured for, walks it to collect every
-        transitively-referenced CAS blob (bucket-manifests plus
-        the data blobs those manifests reference), and mirrors
+        Reads ``.cache/asset_bundle/<profile>/manifest.json``
+        for whichever bundle profile (e.g. ``gui-minimal`` /
+        ``headless-minimal``) this build was configured for, walks
+        it to collect every transitively-referenced CAS blob
+        (bucket-manifests plus the data blobs those manifests
+        reference), and mirrors
         the resulting set into ``<staged>/ba_data/assets/``.
         Already-correct blobs (right hash already at the right
         path) are left alone, missing ones are copied in, and
@@ -611,16 +593,28 @@ class BuildStager:
         import concurrent.futures
 
         assert self.dst is not None
-        assert self.asset_bundle_variant is not None
+        assert self.asset_bundle_profile is not None
 
         bundle_manifest_path = (
             f'{self.projroot}/.cache/asset_bundle/'
-            f'{self.asset_bundle_variant}/manifest.json'
+            f'{self.asset_bundle_profile}/manifest.json'
         )
         if not os.path.exists(bundle_manifest_path):
             raise RuntimeError(
-                f'Asset bundle expected at {bundle_manifest_path};'
-                f' has `make pcommand asset_bundle_build` run?'
+                f"Asset bundle manifest for profile"
+                f" '{self.asset_bundle_profile}' was not found at"
+                f' {bundle_manifest_path}. The'
+                f' asset-build phase should have produced it (the manifest'
+                f' rides the COMMON_GUI / COMMON_SERVER target lists in'
+                f' src/assets/Makefile). This almost always means this build'
+                f' stages a different bundle variant than its asset'
+                f' prerequisite builds -- e.g. a server staging path'
+                f' (-cmakeserver / -winserver) sourcing a gui assets target.'
+                f' Point the build at the assets target that builds the'
+                f' matching variant: gui staging needs a gui assets target'
+                f' (assets-cmake / assets-windows), server staging needs a'
+                f' server assets target (assets-server /'
+                f' assets-windows-server).'
             )
 
         wanted_hashes = self._collect_bundle_hashes(bundle_manifest_path)
@@ -859,52 +853,6 @@ class BuildStager:
                 infilename=f'{self.projroot}/src/assets/server_package/{fname}',
                 outfilename=os.path.join(self.serverdst, fname),
             )
-
-
-def _filehash(filename: str) -> str:
-    """Generate a hash for a file."""
-    md5 = hashlib.md5()
-    with open(filename, mode='rb') as infile:
-        for buf in iter(partial(infile.read, 1024), b''):
-            md5.update(buf)
-    return md5.hexdigest()
-
-
-def _write_payload_file(assets_root: str, full: bool) -> None:
-    if not assets_root.endswith('/'):
-        assets_root = f'{assets_root}/'
-
-    # Now construct a payload file if we have any files.
-    file_list = []
-    payload_str = ''
-    for root, _subdirs, fnames in os.walk(assets_root):
-        for fname in fnames:
-            if fname.startswith('.'):
-                continue
-            if fname == 'payload_info':
-                continue
-            fpath = os.path.join(root, fname)
-            fpathshort = fpath.replace(assets_root, '')
-            if ' ' in fpathshort:
-                raise RuntimeError(
-                    f"Invalid filename (contains spaces): '{fpathshort}'"
-                )
-            payload_str += f'{fpathshort} {_filehash(fpath)}\n'
-            file_list.append(fpathshort)
-
-    payload_path = f'{assets_root}/payload_info'
-    if file_list:
-        # Write the file count, whether this is a 'full' payload, and
-        # finally the file list.
-        fullstr = '1' if full else '0'
-        payload_str = f'{len(file_list)}\n{fullstr}\n{payload_str}'
-        with open(payload_path, 'w', encoding='utf-8') as outfile:
-            outfile.write(payload_str)
-    else:
-        # Remove the payload file; this will cause the game to
-        # completely skip the payload processing step.
-        if os.path.exists(payload_path):
-            os.unlink(payload_path)
 
 
 def _write_if_changed(

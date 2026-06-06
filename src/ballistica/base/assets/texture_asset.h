@@ -26,6 +26,7 @@ class TextureAsset : public Asset {
   auto GetName() const -> std::string override;
   auto GetNameFull() const -> std::string override;
   auto GetAssetType() const -> AssetType override;
+  auto ReResolveSource() -> bool override;
   void DoPreload() override;
   void DoLoad() override;
   void DoUnload() override;
@@ -42,6 +43,14 @@ class TextureAsset : public Asset {
     return renderer_data_.get();
   }
   auto base_level() const -> int { return base_level_; }
+
+  /// Whether this texture's RGB is premultiplied by its alpha (read from
+  /// the KTX2 DFD at load; asset-packages decision #23). Drives per-draw
+  /// premult-blend selection in the graphics components. False for
+  /// straight-alpha textures and for loaders that don't carry the flag
+  /// (only the KTX2 path sets it). Re-read on every (re)load, mirroring
+  /// base_level_.
+  auto premultiplied() const -> bool { return premultiplied_; }
 
  private:
   Object::Ref<TextPacker> packer_;
@@ -60,6 +69,7 @@ class TextureAsset : public Asset {
   TextureMinQuality min_quality_{TextureMinQuality::kLow};
   Object::Ref<TextureAssetRendererData> renderer_data_;
   int base_level_{};
+  bool premultiplied_{};
 };
 
 }  // namespace ballistica::base

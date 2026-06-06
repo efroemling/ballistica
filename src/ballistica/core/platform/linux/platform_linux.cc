@@ -16,12 +16,22 @@
 #include "ballistica/core/platform/support/platform_pango.h"
 #endif
 
+#include "ballistica/core/platform/support/sdl_message_box.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/exception.h"
 
 namespace ballistica::core {
 
 PlatformLinux::PlatformLinux() {}
+
+auto PlatformLinux::CanShowBlockingFatalErrorDialog() -> bool {
+  // Linux has no trivial native dialog, so we lean on SDL where present.
+  return g_buildconfig.sdl_build();
+}
+
+void PlatformLinux::BlockingFatalErrorDialog(const std::string& message) {
+  ShowSDLFatalErrorDialog(message);
+}
 
 auto PlatformLinux::DoGetDeviceDescription() -> std::string {
   // Let's look for something pretty like "Ubuntu 20.04", etc.

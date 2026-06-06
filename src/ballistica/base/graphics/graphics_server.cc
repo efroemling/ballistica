@@ -271,6 +271,39 @@ void GraphicsServer::ReloadMedia_() {
   });
 }
 
+// Reload only assets whose underlying flavor changed (e.g. fallback -> ideal
+// after a downloading asset-package resolve). A scoped sibling of
+// ReloadMedia_: same render-hold + re-mark + progress-bar dance, but it
+// unloads only the textures/meshes whose CAS blob actually changed -- and
+// no-ops entirely when nothing changed (the common warm-start case), so it
+// is safe to call unconditionally after any resolve.
+void GraphicsServer::ReloadChangedMedia_() {
+  assert(g_base->app_adapter->InGraphicsContext());
+  if (!renderer_ || !renderer_loaded_) {
+    return;
+  }
+
+  // Unload the textures/meshes the logic thread flagged for reload (the
+  // re-resolution already happened there -- FindAssetFile is logic-thread-
+  // only). If nothing was flagged there's nothing to reload -- bail without a
+  // render-hold or progress bar.
+  if (!g_base->assets->UnloadReloadPendingRendererBits()) {
+    return;
+  }
+
+  // Hold rendering until the reloads are queued and the progress bar is up,
+  // so we never render a frame referencing a just-unloaded texture.
+  SetRenderHold();
+
+  // Re-mark the now-unloaded assets for load, flip on progress-bar drawing,
+  // then tell the graphics thread to stop ignoring frame-defs.
+  g_base->logic->event_loop()->PushCall([this] {
+    g_base->assets->MarkAllAssetsForLoad();
+    g_base->graphics->EnableProgressBar(false);
+    PushRemoveRenderHoldCall();
+  });
+}
+
 // Call when a renderer context has been lost.
 void GraphicsServer::ReloadLostRenderer() {
   assert(g_base->app_adapter->InGraphicsContext());
@@ -419,6 +452,9 @@ void GraphicsServer::SetTextureCompressionTypes(
     texture_compression_types_ |= (0x01u << (static_cast<uint32_t>(i)));
   }
   texture_compression_types_set_ = true;
+  // Publish the thread-safe mirror for cross-thread readers
+  // (e.g. Assets::PreferredTextureProfile on the logic thread).
+  texture_compression_types_atomic_.store(texture_compression_types_);
 }
 
 void GraphicsServer::SetOrthoProjection(float left, float right, float bottom,
@@ -525,6 +561,11 @@ void GraphicsServer::UpdateCamOrientMatrix_() {
 
 void GraphicsServer::PushReloadMediaCall() {
   g_base->app_adapter->PushGraphicsContextCall([this] { ReloadMedia_(); });
+}
+
+void GraphicsServer::PushReloadChangedMediaCall() {
+  g_base->app_adapter->PushGraphicsContextCall(
+      [this] { ReloadChangedMedia_(); });
 }
 
 void GraphicsServer::PushComponentUnloadCall(

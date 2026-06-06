@@ -178,16 +178,70 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
     """Path-specific values for an assets_v1 workspace path."""
 
     class TextureQuality(Enum):
-        """Quality settings for our textures."""
+        """Per-texture authoring quality knob (decision #19).
+
+        ``DEFAULT`` is the normal case (the vast majority of textures);
+        ``LOW`` and ``HIGH`` are deliberate per-texture overrides for
+        special cases (e.g. ``HIGH`` for a hero texture that must stay
+        crisp, ``LOW`` for one that can afford to be cheap). Named
+        ``DEFAULT`` rather than ``MEDIUM`` to communicate that — it's the
+        baseline, not a middle setting you'd routinely reach past.
+
+        Maps to the ASTC block size on the mobile profile (the real
+        bitrate lever); distinct from the bucket-level ``TextureTier``.
+        """
 
         LOW = 'low'
-        MEDIUM = 'medium'
+        DEFAULT = 'default'
         HIGH = 'high'
 
-    # Just dummy testing values for now.
+    class Role(Enum):
+        """What a texture is for (its authoring intent).
+
+        Drives mip-filtering math and encoder flags (asset-packages
+        initiative decisions #19/#23). Intent-based rather than a bundle
+        of low-level mechanical flags — the recipe maps each role to a
+        concrete filtering/encoding behavior. ``normal_map`` / ``data``
+        are reserved slots for when such content (and the compressed-
+        profile recipes) land.
+        """
+
+        #: sRGB color with straight opacity alpha. The pipeline
+        #: premultiplies it by its alpha for storage (decision #23):
+        #: premult-weighted, halo-free mip filtering in the requested
+        #: render_space, premult output bytes, ``ALPHA_PREMULTIPLIED``
+        #: DFD flag set. The common case for color sprites. Renders
+        #: correctly only with premult-blend (the renderer wiring lands
+        #: in a later step; until then ``DEFAULT`` output shows darkened
+        #: edges under the legacy straight-blend path).
+        DEFAULT = 'default'
+
+        #: sRGB color whose SOURCE RGB is already premultiplied by its
+        #: alpha (e.g. glow sprites — they carry additive ``RGB > alpha``
+        #: values that straight alpha cannot represent). The pipeline does
+        #: NOT re-multiply; mips filter the premultiplied RGB directly (in
+        #: the requested render_space) and the flag is set. Renders
+        #: identically to ``DEFAULT`` (both premult-blend); they differ
+        #: only in whether the pipeline applies the multiply.
+        SOURCE_PREMULTIPLIED = 'source_premultiplied'
+
+        #: sRGB color with straight alpha whose RGB channels carry
+        #: meaningful color even in transparent regions, so they must be
+        #: preserved (decision #23). The pipeline does NOT premultiply:
+        #: mips filter RGB and alpha INDEPENDENTLY (color still filtered
+        #: in the requested render_space, but with no premult round-trip,
+        #: which would zero — and fail to recover — the transparent-region
+        #: color). Straight output bytes; ``ALPHA_PREMULTIPLIED`` flag
+        #: clear. Renders with ordinary straight-alpha blending.
+        STRAIGHT_ALPHA = 'straight_alpha'
+
     texture_quality: Annotated[
         TextureQuality, IOAttrs('texture_quality', store_default=False)
-    ] = TextureQuality.MEDIUM
+    ] = TextureQuality.DEFAULT
+
+    texture_role: Annotated[
+        Role, IOAttrs('texture_role', store_default=False)
+    ] = Role.DEFAULT
 
     @override
     @classmethod

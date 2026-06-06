@@ -89,6 +89,8 @@ from batools.pcommands import (
     python_android_gather,
     python_build_apple,
     python_apple_gather,
+    build_angle_apple,
+    install_angle_apple_artifacts,
     python_android_patch_old,
     python_android_patch_ssl_old,
     python_gather,

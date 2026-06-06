@@ -104,6 +104,7 @@ from _babase import (
     safecolor,
     screenmessage,
     set_analytics_screen,
+    set_app_exit_code,
     set_low_level_config_value,
     set_thread_name,
     set_main_ui_input_device,
@@ -152,6 +153,7 @@ from babase._devconsole import (
     DevConsoleTabEntry,
 )
 from babase._emptyappmode import EmptyAppMode
+from babase._constructmode import ConstructAppMode
 from babase._error import (
     ActivityNotFoundError,
     ActorNotFoundError,
@@ -190,6 +192,7 @@ from babase._locale import LocaleSubsystem
 from babase._logging import (
     accountlog,
     applog,
+    assetmanagerlog,
     balog,
     lifecyclelog,
     netlog,
@@ -205,6 +208,13 @@ from babase._generated.enums import (
 )
 from babase._math import normalized_color, is_point_in_box, vec3validate
 from babase._meta import MetadataSubsystem
+from babase._assetsubsystem import (
+    AssetSubsystem,
+    ResolveResult,
+    ResolveProgress,
+    ResolvePhase,
+    AssetResolveError,
+)
 from babase._env import DEFAULT_REQUEST_TIMEOUT_SECONDS
 from babase._net import get_ip_address_type, NetworkSubsystem
 from babase._plugin import PluginSpec, Plugin, PluginSubsystem
@@ -249,6 +259,9 @@ __all__ = [
     'apptimer',
     'AppTimer',
     'asset_loads_allowed',
+    'assetmanagerlog',
+    'AssetSubsystem',
+    'AssetResolveError',
     'atexit',
     'balog',
     'Call',
@@ -281,6 +294,7 @@ __all__ = [
     'DisplayTimer',
     'discord_sign_in',
     'do_once',
+    'ConstructAppMode',
     'EmptyAppMode',
     'env',
     'Env',
@@ -368,12 +382,16 @@ __all__ = [
     'reload_hooks',
     'reload_media',
     'request_permission',
+    'ResolveResult',
+    'ResolveProgress',
+    'ResolvePhase',
     'safecolor',
     'screenmessage',
     'SessionNotFoundError',
     'SessionPlayerNotFoundError',
     'SessionTeamNotFoundError',
     'set_analytics_screen',
+    'set_app_exit_code',
     'set_low_level_config_value',
     'set_main_ui_input_device',
     'set_thread_name',

@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ballistica/base/input/device/input_device_delegate.h"
+#include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
 
@@ -73,7 +74,7 @@ class InputDevice : public Object {
   virtual void ApplyAppConfig();
 
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
-  virtual void HandleSDLEvent(const SDL_Event* e);
+  virtual void HandleSDLEvent(const BAEvent* e);
 #endif
 
   virtual auto GetAllowsConfiguring() -> bool;

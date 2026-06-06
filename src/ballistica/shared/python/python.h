@@ -64,6 +64,23 @@ class Python {
   /// sanity checking that.
   static auto HaveGIL() -> bool;
 
+  /// Debug-only lock-ordering guard. Code holding a "leaf" lock that must
+  /// never be held while *blocking* to acquire the GIL (e.g. an Asset lock --
+  /// see Asset's lock-ordering invariant) brackets that hold with
+  /// Push/PopNoGilLockZone(). If a ScopedInterpreterLock then blocks to
+  /// acquire the GIL inside such a zone (i.e. the thread did not already hold
+  /// the GIL), it fires a fatal error pinpointing the offending call -- which
+  /// is exactly the pattern that deadlocks against the logic thread. No-ops in
+  /// release builds. Same-thread bracketing only (the locking thread is the
+  /// unlocking thread).
+#if BA_DEBUG_BUILD
+  static void PushNoGilLockZone();
+  static void PopNoGilLockZone();
+#else
+  static void PushNoGilLockZone() {}
+  static void PopNoGilLockZone() {}
+#endif
+
   /// For use in specific cases when a thread exits our control. In most
   /// cases Scoped Locks/Unlocks should be used.
   static void PermanentlyReleaseGIL();

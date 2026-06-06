@@ -41,6 +41,7 @@
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
@@ -1323,21 +1324,20 @@ void SceneV1Python::ReleaseKeyboardInputCapture() {
 }
 
 auto SceneV1Python::HandleCapturedJoystickEventCall(
-    const SDL_Event& event, base::InputDevice* input_device) -> bool {
+    const BAEvent& event, base::InputDevice* input_device) -> bool {
   return g_scene_v1->python->HandleCapturedJoystickEvent(event, input_device);
 }
 
-auto SceneV1Python::HandleCapturedKeyPressCall(const SDL_Keysym& keysym)
-    -> bool {
+auto SceneV1Python::HandleCapturedKeyPressCall(const BAKeysym& keysym) -> bool {
   return g_scene_v1->python->HandleCapturedKeyPress(keysym);
 }
 
-auto SceneV1Python::HandleCapturedKeyReleaseCall(const SDL_Keysym& keysym)
+auto SceneV1Python::HandleCapturedKeyReleaseCall(const BAKeysym& keysym)
     -> bool {
   return g_scene_v1->python->HandleCapturedKeyRelease(keysym);
 }
 
-auto SceneV1Python::HandleCapturedKeyPress(const SDL_Keysym& keysym) -> bool {
+auto SceneV1Python::HandleCapturedKeyPress(const BAKeysym& keysym) -> bool {
   assert(g_base->InLogicThread());
   if (!keyboard_capture_call_.exists()) {
     return false;
@@ -1362,7 +1362,7 @@ auto SceneV1Python::HandleCapturedKeyPress(const SDL_Keysym& keysym) -> bool {
   }
   return true;
 }
-auto SceneV1Python::HandleCapturedKeyRelease(const SDL_Keysym& keysym) -> bool {
+auto SceneV1Python::HandleCapturedKeyRelease(const BAKeysym& keysym) -> bool {
   assert(g_base->InLogicThread());
   if (!keyboard_capture_call_.exists()) {
     return false;
@@ -1388,7 +1388,7 @@ auto SceneV1Python::HandleCapturedKeyRelease(const SDL_Keysym& keysym) -> bool {
   return true;
 }
 
-auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
+auto SceneV1Python::HandleCapturedJoystickEvent(const BAEvent& event,
                                                 base::InputDevice* input_device)
     -> bool {
   assert(g_base->InLogicThread());
@@ -1403,7 +1403,7 @@ auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
     // If we got a device we can pass events.
     if (input_device) {
       switch (event.type) {
-        case SDL_JOYBUTTONDOWN: {
+        case BA_JOYBUTTONDOWN: {
           PythonRef args(
               Py_BuildValue("({s:s,s:i,s:O})", "type", "BUTTONDOWN", "button",
                             static_cast<int>(event.jbutton.button)
@@ -1413,7 +1413,7 @@ auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
           joystick_capture_call_.Call(args);
           break;
         }
-        case SDL_JOYBUTTONUP: {
+        case BA_JOYBUTTONUP: {
           PythonRef args(
               Py_BuildValue("({s:s,s:i,s:O})", "type", "BUTTONUP", "button",
                             static_cast<int>(event.jbutton.button)
@@ -1423,7 +1423,7 @@ auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
           joystick_capture_call_.Call(args);
           break;
         }
-        case SDL_JOYHATMOTION: {
+        case BA_JOYHATMOTION: {
           PythonRef args(
               Py_BuildValue(
                   "({s:s,s:i,s:i,s:O})", "type", "HATMOTION", "hat",
@@ -1434,7 +1434,7 @@ auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
           joystick_capture_call_.Call(args);
           break;
         }
-        case SDL_JOYAXISMOTION: {
+        case BA_JOYAXISMOTION: {
           PythonRef args(
               Py_BuildValue(
                   "({s:s,s:i,s:f,s:O})", "type", "AXISMOTION", "axis",

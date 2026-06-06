@@ -16,6 +16,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/foundation/macros.h"
 
 namespace ballistica::base {
@@ -33,11 +34,10 @@ const int kJoystickCalibrationTimeThreshold{1000};
 const float kJoystickCalibrationSpeed = 0.7f;
 
 JoystickInput::JoystickInput(int sdl_joystick_id,
-                             const std::string& custom_device_name,
-                             bool can_configure, bool calibrate)
+                             const std::string& device_name, bool can_configure,
+                             bool calibrate)
     : calibration_threshold_(kJoystickCalibrationThreshold),
       calibration_break_threshold_(kJoystickCalibrationBreakThreshold),
-      custom_device_name_(custom_device_name),
       can_configure_(can_configure),
       creation_time_(g_core->AppTimeMillisecs()),
       calibrate_(calibrate) {
@@ -48,50 +48,16 @@ JoystickInput::JoystickInput(int sdl_joystick_id,
 
   sdl_joystick_id_ = sdl_joystick_id;
 
-  // Non-negative values here mean its an SDL joystick.
+  // Non-negative values here mean it's an SDL joystick. The SDL app-adapter
+  // has already opened the SDL_Joystick and resolved its instance-id + name
+  // (and owns the handle); we just record what it hands us and stay
+  // SDL-free here.
   if (sdl_joystick_id != -1) {
-#if BA_ENABLE_SDL_JOYSTICKS
-    // Standard SDL joysticks should be getting created in the main thread.
-    // Custom joysticks can come from anywhere.
-    assert(g_core->InMainThread());
-
-    sdl_joystick_ = SDL_JoystickOpen(sdl_joystick_id);
-    if (sdl_joystick_ == nullptr) {
-      auto* err = SDL_GetError();
-      if (!err) {
-        err = "Unknown SDL error.";
-      }
-      throw Exception(std::string("Error in SDL_JoystickOpen: ") + err + ".");
-    }
-
-    // In SDL2 we're passed a device-id but that's only used to open the
-    // joystick; events and most everything else use an instance ID, so we store
-    // that instead.
-    // #if BA_SDL2_BUILD
-    sdl_joystick_id_ = SDL_JoystickInstanceID(sdl_joystick_);
-    if (auto* name = SDL_JoystickName(sdl_joystick_)) {
-      raw_sdl_joystick_name_ = name;
-    } else {
-      // This can return nullptr if SDL can't find a name.
-      raw_sdl_joystick_name_ = "Unknown Controller";
-    }
-
-    // Special case: on windows, xinput stuff comes in with unique names
-    // "XInput Controller #3", etc.  Let's replace these with simply "XInput
-    // Controller" so configuring/etc is sane.
-    if (strstr(raw_sdl_joystick_name_.c_str(), "XInput Controller")
-        && raw_sdl_joystick_name_.size() >= 20
-        && raw_sdl_joystick_name_.size() <= 22) {
-      raw_sdl_joystick_name_ = "XInput Controller";
-    }
-
-#else   // BA_ENABLE_SDL_JOYSTICKS
-    throw Exception();  // Shouldn't happen.
-#endif  // BA_ENABLE_SDL_JOYSTICKS
-
+    is_sdl_joystick_ = true;
+    raw_sdl_joystick_name_ = device_name;
   } else {
-    // Its a manual joystick.
-    sdl_joystick_ = nullptr;
+    // It's a manual joystick.
+    custom_device_name_ = device_name;
 
     // Hard code a few remote controls.
     // The newer way to do this is just set 'UI-Only' on the device config
@@ -284,24 +250,9 @@ JoystickInput::~JoystickInput() {
     child_joy_stick_ = nullptr;
   }
 
-  // Have SDL actually close the joystick in the main thread.
-  // Send a message back to the main thread to close this SDL Joystick.
-  // HMMM - can we just have the main thread close the joystick immediately
-  // before informing us its dead?.. i don't think we actually use it at all
-  // here in the logic thread..
-  if (sdl_joystick_) {
-#if BA_ENABLE_SDL_JOYSTICKS
-    assert(g_base->app_adapter);
-    auto joystick = sdl_joystick_;
-    g_base->app_adapter->PushMainThreadCall(
-        [joystick] { SDL_JoystickClose(joystick); });
-    sdl_joystick_ = nullptr;
-#else
-    g_core->logging->Log(
-        LogName::kBaInput, LogLevel::kError,
-        "sdl_joystick_ set in non-sdl-joystick build destructor.");
-#endif  // BA_ENABLE_SDL_JOYSTICKS
-  }
+  // Note: for SDL joysticks, the SDL_Joystick handle is owned and closed by
+  // the SDL app-adapter (on device-removal, in the main thread) — not here.
+  // This keeps SDL out of JoystickInput entirely.
 }
 
 void JoystickInput::OnAdded() { assert(g_base->InLogicThread()); }
@@ -451,7 +402,7 @@ void JoystickInput::ResetHeldStates() {
   resetting_ = true;
 
   // Send ourself neutral joystick events.
-  SDL_Event e;
+  BAEvent e;
 
   dpad_right_held_ = dpad_left_held_ = dpad_up_held_ = dpad_down_held_ = false;
   ui_repeater_.Clear();
@@ -461,18 +412,18 @@ void JoystickInput::ResetHeldStates() {
   UpdateRunningState();
 
   if (hat_held_) {
-    e.type = SDL_JOYHATMOTION;
+    e.type = BA_JOYHATMOTION;
     e.jhat.hat = static_cast_check_fit<uint8_t>(hat_);
-    e.jhat.value = SDL_HAT_CENTERED;
+    e.jhat.value = BA_HAT_CENTERED;
     HandleSDLEvent(&e);
   }
 
-  e.type = SDL_JOYAXISMOTION;
+  e.type = BA_JOYAXISMOTION;
   e.jaxis.axis = static_cast_check_fit<uint8_t>(analog_lr_);
   e.jaxis.value = static_cast<int16_t>(calibrated_neutral_x_);
   HandleSDLEvent(&e);
 
-  e.type = SDL_JOYAXISMOTION;
+  e.type = BA_JOYAXISMOTION;
   e.jaxis.axis = static_cast_check_fit<uint8_t>(analog_ud_);
   e.jaxis.value = static_cast<int16_t>(calibrated_neutral_y_);
   HandleSDLEvent(&e);
@@ -480,7 +431,7 @@ void JoystickInput::ResetHeldStates() {
   resetting_ = false;
 }
 
-void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
+void JoystickInput::HandleSDLEvent(const BAEvent* e) {
   assert(g_base->InLogicThread());
 
   // If we've got a child joystick, send them any events they're set to handle.
@@ -489,7 +440,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
 
     bool send = false;
     switch (e->type) {
-      case SDL_JOYAXISMOTION: {
+      case BA_JOYAXISMOTION: {
         // If its their analog stick or one of their run-triggers, send.
         if (e->jaxis.axis == child_joy_stick_->analog_lr_
             || e->jaxis.axis == child_joy_stick_->analog_ud_
@@ -498,13 +449,13 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
           send = true;
         break;
       }
-      case SDL_JOYHATMOTION: {
+      case BA_JOYHATMOTION: {
         // If its their dpad hat, send.
         if (e->jhat.hat == child_joy_stick_->hat_) send = true;
         break;
       }
-      case SDL_JOYBUTTONDOWN:
-      case SDL_JOYBUTTONUP: {
+      case BA_JOYBUTTONDOWN:
+      case BA_JOYBUTTONUP: {
         // If its one of their 4 action buttons, 2 run buttons, or start, send.
         if (e->jbutton.button == child_joy_stick_->jump_button_
             || e->jbutton.button == child_joy_stick_->punch_button_
@@ -532,11 +483,11 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
   }
 
   millisecs_t time = g_core->AppTimeMillisecs();
-  SDL_Event e2;
+  BAEvent e2;
 
   // Ignore analog-stick input while we're holding a hat switch or d-pad
   // buttons.
-  if ((e->type == SDL_JOYAXISMOTION
+  if ((e->type == BA_JOYAXISMOTION
        && (e->jaxis.axis == analog_lr_ || e->jaxis.axis == analog_ud_))
       && (hat_held_ || dpad_right_held_ || dpad_left_held_ || dpad_up_held_
           || dpad_down_held_))
@@ -547,14 +498,13 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
   // Keep track of whether hold-position is being held. If so, we don't send
   // window events (some joysticks always give us significant axis values but
   // rely on hold position to keep from doing stuff usually).
-  if (e->type == SDL_JOYBUTTONDOWN
+  if (e->type == BA_JOYBUTTONDOWN
       && e->jbutton.button == hold_position_button_) {
     need_to_send_held_state_ = true;
     hold_position_held_ = true;
     is_hold_position_event = true;
   }
-  if (e->type == SDL_JOYBUTTONUP
-      && e->jbutton.button == hold_position_button_) {
+  if (e->type == BA_JOYBUTTONUP && e->jbutton.button == hold_position_button_) {
     need_to_send_held_state_ = true;
     hold_position_held_ = false;
     is_hold_position_event = true;
@@ -575,13 +525,13 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
       || down_button_ >= 0 || up_button2_ >= 0 || left_button2_ >= 0
       || right_button2_ >= 0 || down_button2_ >= 0) {
     switch (e->type) {
-      case SDL_JOYBUTTONDOWN:
-      case SDL_JOYBUTTONUP:
+      case BA_JOYBUTTONDOWN:
+      case BA_JOYBUTTONUP:
         if (e->jbutton.button == right_button_
             || e->jbutton.button == right_button2_) {  // D-pad right.
-          e2.type = SDL_JOYAXISMOTION;
+          e2.type = BA_JOYAXISMOTION;
           e2.jaxis.axis = static_cast_check_fit<uint8_t>(analog_lr_);
-          dpad_right_held_ = (e->type == SDL_JOYBUTTONDOWN);
+          dpad_right_held_ = (e->type == BA_JOYBUTTONDOWN);
           e2.jaxis.value = static_cast_check_fit<int16_t>(
               dpad_right_held_  ? (dpad_left_held_ ? 0 : 32767)
               : dpad_left_held_ ? -32767
@@ -589,9 +539,9 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
           e = &e2;
         } else if (e->jbutton.button == left_button_
                    || e->jbutton.button == left_button2_) {
-          e2.type = SDL_JOYAXISMOTION;
+          e2.type = BA_JOYAXISMOTION;
           e2.jaxis.axis = static_cast_check_fit<uint8_t>(analog_lr_);
-          dpad_left_held_ = (e->type == SDL_JOYBUTTONDOWN);
+          dpad_left_held_ = (e->type == BA_JOYBUTTONDOWN);
           e2.jaxis.value = static_cast_check_fit<int16_t>(
               dpad_right_held_  ? (dpad_left_held_ ? 0 : 32767)
               : dpad_left_held_ ? -32767
@@ -599,9 +549,9 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
           e = &e2;
         } else if (e->jbutton.button == up_button_
                    || e->jbutton.button == up_button2_) {
-          e2.type = SDL_JOYAXISMOTION;
+          e2.type = BA_JOYAXISMOTION;
           e2.jaxis.axis = static_cast_check_fit<uint8_t>(analog_ud_);
-          dpad_up_held_ = (e->type == SDL_JOYBUTTONDOWN);
+          dpad_up_held_ = (e->type == BA_JOYBUTTONDOWN);
           e2.jaxis.value = static_cast_check_fit<int16_t>(
               dpad_up_held_     ? (dpad_down_held_ ? 0 : -32767)
               : dpad_down_held_ ? 32767
@@ -609,9 +559,9 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
           e = &e2;
         } else if (e->jbutton.button == down_button_
                    || e->jbutton.button == down_button2_) {
-          e2.type = SDL_JOYAXISMOTION;
+          e2.type = BA_JOYAXISMOTION;
           e2.jaxis.axis = static_cast_check_fit<uint8_t>(analog_ud_);
-          dpad_down_held_ = (e->type == SDL_JOYBUTTONDOWN);
+          dpad_down_held_ = (e->type == BA_JOYBUTTONDOWN);
           e2.jaxis.value = static_cast_check_fit<int16_t>(
               dpad_up_held_     ? (dpad_down_held_ ? 0 : -32767)
               : dpad_down_held_ ? 32767
@@ -625,19 +575,19 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
   }
 
   // Track our hat-held state independently.
-  if (e->type == SDL_JOYHATMOTION && e->jhat.hat == hat_) {
+  if (e->type == BA_JOYHATMOTION && e->jhat.hat == hat_) {
     switch (e->jhat.value) {
-      case SDL_HAT_CENTERED:
+      case BA_HAT_CENTERED:
         hat_held_ = false;
         break;
-      case SDL_HAT_UP:
-      case SDL_HAT_DOWN:
-      case SDL_HAT_LEFT:
-      case SDL_HAT_RIGHT:
-      case SDL_HAT_LEFTUP:     // NOLINT (signed bitwise)
-      case SDL_HAT_RIGHTUP:    // NOLINT (signed bitwise)
-      case SDL_HAT_RIGHTDOWN:  // NOLINT (signed bitwise)
-      case SDL_HAT_LEFTDOWN:   // NOLINT (signed bitwise)
+      case BA_HAT_UP:
+      case BA_HAT_DOWN:
+      case BA_HAT_LEFT:
+      case BA_HAT_RIGHT:
+      case BA_HAT_LEFTUP:     // NOLINT (signed bitwise)
+      case BA_HAT_RIGHTUP:    // NOLINT (signed bitwise)
+      case BA_HAT_RIGHTDOWN:  // NOLINT (signed bitwise)
+      case BA_HAT_LEFTDOWN:   // NOLINT (signed bitwise)
         hat_held_ = true;
         break;
       default:
@@ -649,7 +599,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
   }
 
   // If its an ignored button, ignore it.
-  if ((e->type == SDL_JOYBUTTONDOWN || e->type == SDL_JOYBUTTONUP)
+  if ((e->type == BA_JOYBUTTONDOWN || e->type == BA_JOYBUTTONUP)
       && (e->jbutton.button == ignored_button_
           || e->jbutton.button == ignored_button2_
           || e->jbutton.button == ignored_button3_
@@ -658,7 +608,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
   }
 
   // A few high level button press interceptions.
-  if (e->type == SDL_JOYBUTTONDOWN) {
+  if (e->type == BA_JOYBUTTONDOWN) {
     if (e->jbutton.button == start_button_
         || e->jbutton.button == start_button_2_) {
       // If there's no main ui up, request one with us as owner.
@@ -679,7 +629,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
   }
 
   // Update some calibration parameters.
-  if (e->type == SDL_JOYAXISMOTION) {
+  if (e->type == BA_JOYAXISMOTION) {
     if (e->jaxis.axis == analog_lr_) {
       // If we've moved by more than a small amount, break calibration.
       if (static_cast<float>(abs(e->jaxis.value - jaxis_raw_x_))
@@ -718,7 +668,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
   // their states ourselves since they don't both come through at once).
   // FIXME: Ugh need to rip out this old hold-position stuff.
   bool is_analog_stick_jaxis_event = false;
-  if (e->type == SDL_JOYAXISMOTION) {
+  if (e->type == BA_JOYAXISMOTION) {
     if (e->jaxis.axis == analog_lr_) {
       dialog_jaxis_x_ = e->jaxis.value;
       is_analog_stick_jaxis_event = true;
@@ -772,8 +722,8 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
     if ((!down_held_) && ui_jaxis_y > kJoystickDiscreteThreshold) {
       would_go_to_ui = true;
     }
-  } else if ((e->type == SDL_JOYHATMOTION && e->jhat.hat == hat_)
-             || (e->type == SDL_JOYBUTTONDOWN
+  } else if ((e->type == BA_JOYHATMOTION && e->jhat.hat == hat_)
+             || (e->type == BA_JOYBUTTONDOWN
                  && e->jbutton.button != hold_position_button_)) {
     // Other button-downs and hat motions always go.
     would_go_to_ui = true;
@@ -827,13 +777,13 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
     }
 
     switch (e->type) {
-      case SDL_JOYAXISMOTION:
+      case BA_JOYAXISMOTION:
         break;
 
-      case SDL_JOYHATMOTION: {
+      case BA_JOYHATMOTION: {
         if (e->jhat.hat == hat_) {
           switch (e->jhat.value) {
-            case SDL_HAT_LEFT: {
+            case BA_HAT_LEFT: {
               if (!left_held_) {
                 wm = WidgetMessage::Type::kMoveLeft;
                 pass = true;
@@ -843,7 +793,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
               break;
             }
 
-            case SDL_HAT_RIGHT: {
+            case BA_HAT_RIGHT: {
               if (!right_held_) {
                 wm = WidgetMessage::Type::kMoveRight;
                 pass = true;
@@ -852,7 +802,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
               }
               break;
             }
-            case SDL_HAT_UP: {
+            case BA_HAT_UP: {
               if (!up_held_) {
                 wm = WidgetMessage::Type::kMoveUp;
                 pass = true;
@@ -861,7 +811,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
               }
               break;
             }
-            case SDL_HAT_DOWN: {
+            case BA_HAT_DOWN: {
               if (!down_held_) {
                 wm = WidgetMessage::Type::kMoveDown;
                 pass = true;
@@ -870,7 +820,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
               }
               break;
             }
-            case SDL_HAT_CENTERED: {
+            case BA_HAT_CENTERED: {
               up_held_ = false;
               down_held_ = false;
               left_held_ = false;
@@ -883,7 +833,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
         }
         break;
       }
-      case SDL_JOYBUTTONDOWN: {
+      case BA_JOYBUTTONDOWN: {
         if (e->jbutton.button != hold_position_button_) {
           pass = true;
           if (e->jbutton.button == start_button_
@@ -940,7 +890,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
   }
 
   if (!AttachedToPlayer()) {
-    if (e->type == SDL_JOYBUTTONDOWN
+    if (e->type == BA_JOYBUTTONDOWN
         && (e->jbutton.button != hold_position_button_)
         && (e->jbutton.button != back_button_)) {
       if (ui_only_ || e->jbutton.button == remote_enter_button_) {
@@ -976,7 +926,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
   }
 
   switch (e->type) {
-    case SDL_JOYAXISMOTION: {
+    case BA_JOYAXISMOTION: {
       // Handle run-trigger presses.
       if (e->jaxis.axis == run_trigger1_ || e->jaxis.axis == run_trigger2_) {
         if (e->jaxis.axis == run_trigger1_) {
@@ -1079,7 +1029,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
       InputCommand(input_type, static_cast<float>(input_value) / 32767.0f);
       break;
     }
-    case SDL_JOYBUTTONDOWN: {
+    case BA_JOYBUTTONDOWN: {
       if (unassigned_buttons_run_ || e->jbutton.button == punch_button_
           || e->jbutton.button == jump_button_
           || e->jbutton.button == bomb_button_
@@ -1103,7 +1053,7 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
       }
       break;
     }
-    case SDL_JOYBUTTONUP: {
+    case BA_JOYBUTTONUP: {
       {
         auto i = run_buttons_held_.find(e->jbutton.button);
         if (i != run_buttons_held_.end()) {
@@ -1123,47 +1073,47 @@ void JoystickInput::HandleSDLEvent(const SDL_Event* e) {
       }
       break;
     }
-    case SDL_JOYBALLMOTION: {
+    case BA_JOYBALLMOTION: {
       break;
     }
-    case SDL_JOYHATMOTION: {
+    case BA_JOYHATMOTION: {
       if (e->jhat.hat == hat_) {
         int16_t input_value_lr = 0;
         int16_t input_value_ud = 0;
         switch (e->jhat.value) {
-          case SDL_HAT_CENTERED:
+          case BA_HAT_CENTERED:
             input_value_lr = 0;
             input_value_ud = 0;
             break;
-          case SDL_HAT_UP:
+          case BA_HAT_UP:
             input_value_lr = 0;
             input_value_ud = 32767;
             break;
-          case SDL_HAT_DOWN:
+          case BA_HAT_DOWN:
             input_value_lr = 0;
             input_value_ud = -32767;
             break;
-          case SDL_HAT_LEFT:
+          case BA_HAT_LEFT:
             input_value_lr = -32767;
             input_value_ud = 0;
             break;
-          case SDL_HAT_RIGHT:
+          case BA_HAT_RIGHT:
             input_value_lr = 32767;
             input_value_ud = 0;
             break;
-          case SDL_HAT_LEFTUP:  // NOLINT (signed bitwise)
+          case BA_HAT_LEFTUP:  // NOLINT (signed bitwise)
             input_value_lr = -32767;
             input_value_ud = 32767;
             break;
-          case SDL_HAT_RIGHTUP:  // NOLINT (signed bitwise)
+          case BA_HAT_RIGHTUP:  // NOLINT (signed bitwise)
             input_value_lr = 32767;
             input_value_ud = 32767;
             break;
-          case SDL_HAT_RIGHTDOWN:  // NOLINT (signed bitwise)
+          case BA_HAT_RIGHTDOWN:  // NOLINT (signed bitwise)
             input_value_lr = 32767;
             input_value_ud = -32767;
             break;
-          case SDL_HAT_LEFTDOWN:  // NOLINT (signed bitwise)
+          case BA_HAT_LEFTDOWN:  // NOLINT (signed bitwise)
             input_value_lr = -32767;
             input_value_ud = -32767;
             break;
@@ -1407,7 +1357,7 @@ auto JoystickInput::DoGetDeviceName() -> std::string {
   }
 
   // For sdl joysticks just return the sdl string.
-  if (sdl_joystick_) {
+  if (is_sdl_joystick_) {
     std::string s = raw_sdl_joystick_name_;
     if (s.empty()) {
       s = "untitled joystick";

@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {
@@ -136,8 +137,8 @@ class Input {
   void PushTextInputEvent(const std::string& text);
   void PushKeyPressEventSimple(int keycode);
   void PushKeyReleaseEventSimple(int keycode);
-  void PushKeyPressEvent(const SDL_Keysym& keysym);
-  void PushKeyReleaseEvent(const SDL_Keysym& keysym);
+  void PushKeyPressEvent(const BAKeysym& keysym);
+  void PushKeyReleaseEvent(const BAKeysym& keysym);
   void PushMouseDownEvent(int button, const Vector2f& position);
   void PushMouseUpEvent(int button, const Vector2f& position);
   void PushMouseMotionEvent(const Vector2f& position);
@@ -162,7 +163,7 @@ class Input {
 
   void PushSmoothMouseScrollEvent(const Vector2f& velocity, bool momentum);
   void PushMouseScrollEvent(const Vector2f& amount);
-  void PushJoystickEvent(const SDL_Event& event, InputDevice* input_device);
+  void PushJoystickEvent(const BAEvent& event, InputDevice* input_device);
   void PushAddInputDeviceCall(InputDevice* input_device, bool standard_message);
   void PushRemoveInputDeviceCall(InputDevice* input_device,
                                  bool standard_message);
@@ -174,10 +175,10 @@ class Input {
   /// Roughly how long in milliseconds have all input devices been idle.
   auto input_idle_time() const { return input_idle_time_; }
 
-  typedef bool(HandleJoystickEventCall)(const SDL_Event& event,
+  typedef bool(HandleJoystickEventCall)(const BAEvent& event,
                                         InputDevice* input_device);
-  typedef bool(HandleKeyPressCall)(const SDL_Keysym& keysym);
-  typedef bool(HandleKeyReleaseCall)(const SDL_Keysym& keysym);
+  typedef bool(HandleKeyPressCall)(const BAKeysym& keysym);
+  typedef bool(HandleKeyReleaseCall)(const BAKeysym& keysym);
 
   void CaptureKeyboardInput(HandleKeyPressCall* press_call,
                             HandleKeyReleaseCall* release_call);
@@ -198,23 +199,23 @@ class Input {
   void AnnounceDisconnects_();
   void HandleKeyPressSimple_(int keycode);
   void HandleKeyReleaseSimple_(int keycode);
-  void HandleKeyPress_(const SDL_Keysym& keysym);
-  void HandleKeyRelease_(const SDL_Keysym& keysym);
+  void HandleKeyPress_(const BAKeysym& keysym);
+  void HandleKeyRelease_(const BAKeysym& keysym);
   void HandleMouseMotion_(const Vector2f& position);
   void HandleMouseDown_(int button, const Vector2f& position);
   void HandleMouseUp_(int button, const Vector2f& position);
   void HandleMouseCancel_(int button, const Vector2f& position);
   void HandleMouseScroll_(const Vector2f& amount);
   void HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum);
-  void HandleJoystickEvent_(const SDL_Event& event, InputDevice* input_device);
+  void HandleJoystickEvent_(const BAEvent& event, InputDevice* input_device);
   void HandleTouchEvent_(const TouchEvent& e);
   void ShowStandardInputDeviceConnectedMessage_(InputDevice* j);
   void ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j);
   void PrintLockLabels_();
-  void UpdateModKeyStates_(const SDL_Keysym* keysym, bool press);
+  void UpdateModKeyStates_(const BAKeysym* keysym, bool press);
   void CreateKeyboardInputDevices_();
   void DestroyKeyboardInputDevices_();
-  void AddFakeKeyMods_(SDL_Keysym* sym);
+  void AddFakeKeyMods_(BAKeysym* sym);
   auto GetFuzzyInputDevice_() -> InputDevice*;
 
   std::list<std::string> input_lock_temp_labels_;

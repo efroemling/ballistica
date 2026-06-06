@@ -100,7 +100,7 @@
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
@@ -122,7 +122,7 @@
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
@@ -144,7 +144,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
@@ -168,7 +168,7 @@
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
@@ -479,6 +479,8 @@
     <ClInclude Include="..\..\src\ballistica\core\platform\platform.h" />
     <ClInclude Include="..\..\src\ballistica\core\platform\support\min_sdl.h" />
     <ClInclude Include="..\..\src\ballistica\core\platform\support\platform_pango.h" />
+    <ClCompile Include="..\..\src\ballistica\core\platform\support\sdl_message_box.cc" />
+    <ClInclude Include="..\..\src\ballistica\core\platform\support\sdl_message_box.h" />
     <ClCompile Include="..\..\src\ballistica\core\platform\windows\platform_windows.cc" />
     <ClInclude Include="..\..\src\ballistica\core\platform\windows\platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\core\python\core_python.cc" />
@@ -690,6 +692,7 @@
     <ClCompile Include="..\..\src\ballistica\shared\foundation\feature_set_native_component.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\foundation\feature_set_native_component.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\inline.cc" />
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\input_types.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\macros.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\foundation\macros.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\object.cc" />

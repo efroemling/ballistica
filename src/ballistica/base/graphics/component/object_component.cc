@@ -13,6 +13,11 @@ void ObjectComponent::WriteConfig() {
   if (!texture_.exists()) {
     texture_ = g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kWhite);
   }
+  // A premultiplied-alpha texture (KTX2 DFD flag; decision #23) forces
+  // premult-blend, OR'd with the caller's manual flag (which still
+  // independently forces it for additive effects). The default white
+  // builtin above is straight, so unprovided-texture draws are unaffected.
+  bool premult_blend = premultiplied_ || texture_->premultiplied();
   if (reflection_ == ReflectionType::kNone) {
     assert(!double_sided_);               // Unsupported combo.
     assert(!colorize_texture_.exists());  // Unsupported combo.
@@ -20,7 +25,7 @@ void ObjectComponent::WriteConfig() {
     if (light_shadow_ == LightShadowType::kNone) {
       if (transparent_) {
         ConfigForShading(ShadingType::kObjectTransparent);
-        cmd_buffer_->PutInt(premultiplied_);
+        cmd_buffer_->PutInt(premult_blend);
         cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_);
         cmd_buffer_->PutTexture(texture_);
       } else {
@@ -32,7 +37,7 @@ void ObjectComponent::WriteConfig() {
       if (transparent_) {
         assert(!world_space_);  // Unsupported combo.
         ConfigForShading(ShadingType::kObjectLightShadowTransparent);
-        cmd_buffer_->PutInt(premultiplied_);
+        cmd_buffer_->PutInt(premult_blend);
         cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
         cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_);
         cmd_buffer_->PutTexture(texture_);
@@ -52,7 +57,7 @@ void ObjectComponent::WriteConfig() {
         assert(!world_space_);  // Unsupported combo.
         if (have_color_add_) {
           ConfigForShading(ShadingType::kObjectReflectAddTransparent);
-          cmd_buffer_->PutInt(premultiplied_);
+          cmd_buffer_->PutInt(premult_blend);
           cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                  color_add_r_, color_add_g_, color_add_b_,
                                  reflection_scale_r_, reflection_scale_g_,
@@ -64,7 +69,7 @@ void ObjectComponent::WriteConfig() {
               g_base->assets->BuiltinCubeMapTextureOld(r));
         } else {
           ConfigForShading(ShadingType::kObjectReflectTransparent);
-          cmd_buffer_->PutInt(premultiplied_);
+          cmd_buffer_->PutInt(premult_blend);
           cmd_buffer_->PutFloats(color_r_, color_g_, color_b_, color_a_,
                                  reflection_scale_r_, reflection_scale_g_,
                                  reflection_scale_b_);

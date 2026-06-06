@@ -51,8 +51,10 @@
 #pragma comment(lib, "libvorbis.lib")
 #pragma comment(lib, "libvorbisfile.lib")
 #pragma comment(lib, "OpenAL32.lib")
-#pragma comment(lib, "SDL2.lib")
-#pragma comment(lib, "SDL2main.lib")
+// SDL3 ships a single import lib; its 'main' shim is header-only now (see
+// SDL_main.h usage in ballistica.cc / main_rift.cc), so there's no separate
+// SDL2main.lib equivalent to link.
+#pragma comment(lib, "SDL3.lib")
 
 #if BA_ENABLE_OS_FONT_RENDERING
 #include <d2d1_1.h>
@@ -320,6 +322,16 @@ auto PlatformWindows::UTF8Decode(std::string_view str) -> std::wstring {
   }
 
   return wstr;
+}
+
+auto PlatformWindows::CanShowBlockingFatalErrorDialog() -> bool { return true; }
+
+void PlatformWindows::BlockingFatalErrorDialog(const std::string& message) {
+  // Native Win32 dialog (user32). More robust than SDL for the fatal case
+  // since it works even if SDL never initialized; also keeps SDL out of
+  // the Windows platform layer.
+  ::MessageBoxW(nullptr, UTF8Decode(message).c_str(), L"Fatal Error",
+                MB_OK | MB_ICONERROR | MB_TASKMODAL);
 }
 
 PlatformWindows::PlatformWindows() {

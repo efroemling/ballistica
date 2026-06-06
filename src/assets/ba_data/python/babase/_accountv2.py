@@ -165,7 +165,7 @@ class AccountV2Subsystem:
 
         # Ok; no workspace to worry about; carry on.
         if not self._initial_sign_in_completed:
-            lifecyclelog.info('initial-sign-in path: account-no-workspace')
+            lifecyclelog.debug('initial-sign-in path: account-no-workspace')
             self._initial_sign_in_completed = True
             _babase.app.on_initial_sign_in_complete()
 
@@ -214,7 +214,7 @@ class AccountV2Subsystem:
         :meta private:
         """
         if not self._initial_sign_in_completed:
-            lifecyclelog.info('initial-sign-in path: no-account')
+            lifecyclelog.debug('initial-sign-in path: no-account')
             self._initial_sign_in_completed = True
             _babase.app.on_initial_sign_in_complete()
 
@@ -579,7 +579,7 @@ class AccountV2Subsystem:
 
     def _on_set_active_workspace_completed(self) -> None:
         if not self._initial_sign_in_completed:
-            lifecyclelog.info('initial-sign-in path: workspace-loaded')
+            lifecyclelog.debug('initial-sign-in path: workspace-loaded')
             self._initial_sign_in_completed = True
             _babase.app.on_initial_sign_in_complete()
 

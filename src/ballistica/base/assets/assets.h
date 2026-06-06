@@ -46,6 +46,19 @@ class Assets {
   /// recreating/adjusting the renderer.
   void UnloadRendererBits(bool textures, bool meshes);
 
+  /// Phase 1 (logic thread): re-resolve loaded textures/meshes and flag any
+  /// whose underlying CAS blob changed (e.g. fallback -> ideal flavor after a
+  /// downloading asset-package resolve), then kick off the graphics-thread
+  /// unload/reload. No-op when nothing changed. Entry point for the
+  /// reload_changed_media binding.
+  void ReloadChangedAssets();
+
+  /// Phase 2 (graphics thread): unload the renderer assets flagged for reload
+  /// by ReloadChangedAssets(). Returns whether anything was unloaded; if so
+  /// the caller MarkAllAssetsForLoad()s + draws a progress bar (see
+  /// GraphicsServer::ReloadChangedMedia_).
+  auto UnloadReloadPendingRendererBits() -> bool;
+
   /// Should be called from the logic thread after UnloadRendererBits();
   /// kicks off bg loads for all existing unloaded assets.
   void MarkAllAssetsForLoad();
@@ -138,25 +151,36 @@ class Assets {
     return &package_registry_;
   }
 
-  /// Describes which asset-package texture bucket the runtime is
-  /// currently sampling from. Returned by :meth:`ActiveTextureBucket`.
-  struct TextureBucketInfo {
-    /// Bucket id in the bundled manifest (e.g.
-    /// ``"textures/fallback_v1_regular"``).
-    std::string bucket_id;
-    /// On-disk file extension for entries in this bucket (e.g.
-    /// ``".ktx2"`` for KTX2-packaged textures). Drives loader
-    /// dispatch downstream.
-    std::string file_extension;
-  };
+  /// The texture *profile* name this build should request for
+  /// asset-package resolves (the ``<profile>`` in a
+  /// ``textures/<profile>_<quality>`` bucket coord). This is the native
+  /// home for texture-format/preference policy (initiative:
+  /// asset-packages §7); the Python asset-subsystem reads it to form its
+  /// resolve dimensions, so fetch-dims track GPU capability without the
+  /// subsystem needing format knowledge.
+  ///
+  /// Returns ``"null"`` in headless (no renderer; only the NULL flavor is
+  /// bundled/needed). Otherwise selects by form factor first, then GPU
+  /// capability: desktop (Mac/Windows/Linux) → ``"desktop_v1"`` (BC7) else
+  /// ``"fallback_v1"``; mobile (Android/iOS/tvOS) → ``"mobile_v1"`` (ASTC)
+  /// else ``"fallback_v1"``. Form factor (not raw format support) picks the
+  /// flavor family because a flavor bundles more than its compression
+  /// (resolution, etc.). ``BA_FORCE_TEXTURE_PROFILE`` hard-pins the result;
+  /// ``BA_FORCE_TEXTURE_FORM_FACTOR=mobile|desktop`` runs the other family's
+  /// branch (caps still consulted) for on-desktop testing of the mobile
+  /// path. See the implementation.
+  auto PreferredTextureProfile() const -> std::string;
 
-  /// The active texture bucket for this build's runtime. Hardcoded
-  /// to FALLBACK_V1 / regular quality / KTX2 for v1; Phase 3
-  /// construct-mode replaces this with real dispatch driven by
-  /// platform texture-compression support and user quality
-  /// preferences. Centralizing the policy here keeps
-  /// :meth:`FindAssetFileCas_` independent of profile choice.
-  auto ActiveTextureBucket() const -> TextureBucketInfo;
+  /// Resolve one *part* of a texture qualified-ref (``<apverid>:<name>``)
+  /// to its CAS blob path. Textures are single-part today — part ``"t"``
+  /// is the texture-data component (the placeholder ``"j"`` sidecar was
+  /// dropped; see decision #16 follow-up). The part argument is kept
+  /// general so multi-file logical assets (e.g. fonts: atlas + metrics)
+  /// can pull individual component files. Returns ``""`` if the name isn't
+  /// a CAS ref, the part is absent, or in headless mode. A transitional
+  /// seam until the full AssetLayout resolve (decision #16, shape b) lands.
+  auto FindCasTexturePartPath(const std::string& name, const std::string& part)
+      -> std::string;
 
  private:
   /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a

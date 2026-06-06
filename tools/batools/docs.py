@@ -152,6 +152,17 @@ def generate_sphinx_docs() -> None:
     build_dir.mkdir(parents=True, exist_ok=True)
     cache_dir.mkdir(parents=True, exist_ok=True)
 
+    # sphinx-apidoc (-f) overwrites the rst for modules that still exist but
+    # never deletes the rst for modules that have since been removed or
+    # renamed. Our cache_dir persists across builds on CI workspaces, so a
+    # leftover rst would keep trying to autodoc-import a now-gone module and
+    # trip sphinx's --fail-on-warning (and orphan itself from every toctree).
+    # Clear the generated rst up front; everything here is regenerated below
+    # (index.rst + the apidoc tocfiles + per-module rst). Doctree/pickle
+    # caches are left in place so incremental builds stay fast.
+    for stale_rst in cache_dir.glob('*.rst'):
+        stale_rst.unlink()
+
     os.environ['BALLISTICA_ROOT'] = os.getcwd()  # used in sphinx conf.py
 
     def _printstatus(msg: str) -> None:

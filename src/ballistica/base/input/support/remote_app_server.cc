@@ -16,6 +16,7 @@
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -466,14 +467,14 @@ void RemoteAppServer::HandleRemoteEvent(RemoteAppClient* client,
   // Ok we got some data from the remote.
   // All we have to do is translate it into an SDL event and feed it to our
   // manual joystick we made.
-  SDL_Event e{};
+  BAEvent e{};
   switch (b) {
     case RemoteEventType::kBombPress:
-      e.type = SDL_JOYBUTTONDOWN;
+      e.type = BA_JOYBUTTONDOWN;
       e.jbutton.button = 2;
       break;
     case RemoteEventType::kBombRelease:
-      e.type = SDL_JOYBUTTONUP;
+      e.type = BA_JOYBUTTONUP;
       e.jbutton.button = 2;
       break;
 
@@ -481,51 +482,51 @@ void RemoteAppServer::HandleRemoteEvent(RemoteAppClient* client,
       // but it should be fine to just emulate it via the button-press.
     case RemoteEventType::kMenu:
     case RemoteEventType::kMenuPress:
-      e.type = SDL_JOYBUTTONDOWN;
+      e.type = BA_JOYBUTTONDOWN;
       e.jbutton.button = 5;
       break;
     case RemoteEventType::kMenuRelease:
-      e.type = SDL_JOYBUTTONUP;
+      e.type = BA_JOYBUTTONUP;
       e.jbutton.button = 5;
       break;
     case RemoteEventType::kJumpPress:
-      e.type = SDL_JOYBUTTONDOWN;
+      e.type = BA_JOYBUTTONDOWN;
       e.jbutton.button = 0;
       break;
     case RemoteEventType::kJumpRelease:
-      e.type = SDL_JOYBUTTONUP;
+      e.type = BA_JOYBUTTONUP;
       e.jbutton.button = 0;
       break;
     case RemoteEventType::kThrowPress:
-      e.type = SDL_JOYBUTTONDOWN;
+      e.type = BA_JOYBUTTONDOWN;
       e.jbutton.button = 3;
       break;
     case RemoteEventType::kThrowRelease:
-      e.type = SDL_JOYBUTTONUP;
+      e.type = BA_JOYBUTTONUP;
       e.jbutton.button = 3;
       break;
     case RemoteEventType::kPunchPress:
-      e.type = SDL_JOYBUTTONDOWN;
+      e.type = BA_JOYBUTTONDOWN;
       e.jbutton.button = 1;
       break;
     case RemoteEventType::kPunchRelease:
-      e.type = SDL_JOYBUTTONUP;
+      e.type = BA_JOYBUTTONUP;
       e.jbutton.button = 1;
       break;
     case RemoteEventType::kHoldPositionPress:
-      e.type = SDL_JOYBUTTONDOWN;
+      e.type = BA_JOYBUTTONDOWN;
       e.jbutton.button = 25;
       break;
     case RemoteEventType::kHoldPositionRelease:
-      e.type = SDL_JOYBUTTONUP;
+      e.type = BA_JOYBUTTONUP;
       e.jbutton.button = 25;
       break;
     case RemoteEventType::kRunPress:
-      e.type = SDL_JOYBUTTONDOWN;
+      e.type = BA_JOYBUTTONDOWN;
       e.jbutton.button = 64;
       break;
     case RemoteEventType::kRunRelease:
-      e.type = SDL_JOYBUTTONUP;
+      e.type = BA_JOYBUTTONUP;
       e.jbutton.button = 64;
       break;
 
@@ -545,16 +546,16 @@ void RemoteAppServer::HandleRemoteEvent(RemoteAppClient* client,
 
 void RemoteAppServer::HandleRemoteFloatEvent(RemoteAppClient* client,
                                              RemoteEventType b, float val) {
-  SDL_Event e{};
+  BAEvent e{};
   bool send = true;
   switch (b) {
     case RemoteEventType::kDPadH:
-      e.type = SDL_JOYAXISMOTION;
+      e.type = BA_JOYAXISMOTION;
       e.jaxis.axis = 0;
       e.jaxis.value = static_cast<int16_t>(32767 * val);
       break;
     case RemoteEventType::kDPadV:
-      e.type = SDL_JOYAXISMOTION;
+      e.type = BA_JOYAXISMOTION;
       e.jaxis.axis = 1;
       e.jaxis.value = static_cast<int16_t>(32767 * val);
       break;

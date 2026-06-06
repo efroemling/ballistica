@@ -15,6 +15,7 @@
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/input_types.h"
 
 // clang-format off
 // This needs to be below ballistica headers since it relies on

@@ -135,6 +135,19 @@ class CloudSubsystem(babase.AppSubsystem):
         """
         raise NotImplementedError()
 
+    def get_connected_node_address(self) -> str | None:
+        """Return the ``host:port`` of the basn node we're connected to.
+
+        Used by the asset-download path to issue ``GET /casblob/{hash}``
+        requests to the same node serving our transport session (the
+        node's aiohttp app serves both the WebSocket transport and plain
+        HTTPS at this address). Returns ``None`` when not connected (or
+        in implementations without a node-based transport).
+
+        :meta private:
+        """
+        return None
+
     def on_connectivity_changed(self, connected: bool) -> None:
         """Called when cloud connectivity state changes.
 
@@ -427,6 +440,11 @@ class CloudSubsystem(babase.AppSubsystem):
     def send_message(
         self, msg: bacommon.cloud.FulfillDocUIRequest
     ) -> bacommon.cloud.FulfillDocUIResponse: ...
+
+    @overload
+    def send_message(
+        self, msg: bacommon.cloud.ResolveAssetPackageMessage
+    ) -> bacommon.cloud.ResolveAssetPackageResponse: ...
 
     def send_message(self, msg: Message) -> Response | None:
         """Synchronously send a message to the cloud.
