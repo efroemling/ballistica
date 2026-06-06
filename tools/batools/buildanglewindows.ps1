@@ -28,7 +28,7 @@ function Find-Git {
     )
     foreach ($vsEdition in @('Community', 'Professional', 'Enterprise', 'BuildTools')) {
         $candidates += (
-            "C:\Program Files\Microsoft Visual Studio\2022\$vsEdition\" +
+            "C:\Program Files\Microsoft Visual Studio\2026\$vsEdition\" +
             'Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\' +
             'Team Explorer\Git\cmd\git.exe'
         )
