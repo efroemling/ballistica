@@ -470,10 +470,10 @@ class AssetSubsystem(AppSubsystem):
         self._progress = ResolveProgress()
         self._progress_cb: Callable[[ResolveProgress], None] | None = None
 
-        # Texture quality is hard-coded for now; language is wired from the
+        # Texture tier is hard-coded for now; language is wired from the
         # real locale at resolve time; texture profile comes from the
         # _texture_profile property (headless-aware).
-        self._texture_quality = 'regular'
+        self._texture_tier = 'regular'
 
         # Render-space (compositing space) flavor dimension (decision
         # #23). Hard-coded to 'gamma' — the only space the renderer
@@ -574,7 +574,7 @@ class AssetSubsystem(AppSubsystem):
             'textures': (
                 f'textures/{self._texture_profile}'
                 f'.{self._render_space}'
-                f'.{self._texture_quality}'
+                f'.{self._texture_tier}'
             ),
         }
 
@@ -1187,7 +1187,7 @@ class AssetSubsystem(AppSubsystem):
             apverid=apverid,
             language=language,
             texture_profile=self._texture_profile,
-            texture_quality=self._texture_quality,
+            texture_tier=self._texture_tier,
         )
         if primary is not None:
             with primary:

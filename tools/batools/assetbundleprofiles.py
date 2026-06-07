@@ -40,7 +40,7 @@ class BundlePackage:
     texture_profile: str
 
     #: Texture quality tier (e.g. ``'regular'``, ``'high'``).
-    texture_quality: str
+    texture_tier: str
 
     #: Language bucket to include (e.g. ``'eng'``).
     language: str
@@ -61,13 +61,13 @@ class BundleProfile:
 _BUILTINS_GUI = BundlePackage(
     projectconfig_key='assets',
     texture_profile='fallback_v1',
-    texture_quality='regular',
+    texture_tier='regular',
     language='eng',
 )
 _BUILTINS_HEADLESS = BundlePackage(
     projectconfig_key='assets',
     texture_profile='null',
-    texture_quality='regular',
+    texture_tier='regular',
     language='eng',
 )
 

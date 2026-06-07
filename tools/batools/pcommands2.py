@@ -832,7 +832,12 @@ def asset_bundle_build() -> None:
 
     os.makedirs(os.path.dirname(bundle_path), exist_ok=True)
     with open(bundle_path, 'w', encoding='utf-8') as outfile:
-        json.dump(merged, outfile)
+        # indent=1: newline-delimited for readability/debuggability while
+        # staying maximally brief, matching the flavor-manifest blobs
+        # (compute_bucket_manifest_blobs). sort_keys for stable diffs.
+        # This top-level manifest is not content-addressed (stable path,
+        # only json.load-parsed), so the format is free to change.
+        json.dump(merged, outfile, indent=1, sort_keys=True)
 
 
 def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
@@ -862,8 +867,8 @@ def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
                 apverid,
                 '--texture-profile',
                 pkg.texture_profile,
-                '--texture-quality',
-                pkg.texture_quality,
+                '--texture-tier',
+                pkg.texture_tier,
                 '--language',
                 pkg.language,
                 '--bundle-path',

@@ -489,7 +489,7 @@ class ResolveAssetPackageMessage(Message):
     ``GET /casblob/{hash}`` (Tier 2), presenting the token.
 
     Texture dimensions travel as plain strings (the ``TextureProfile``
-    / ``TextureQuality`` enum values) so this module stays decoupled
+    / ``TextureTier`` enum values) so this module stays decoupled
     from the master-only ``baserver.workspace.assetsv1``; the master
     converts + validates them.
 
@@ -510,8 +510,12 @@ class ResolveAssetPackageMessage(Message):
     #: Chosen ``TextureProfile`` value (e.g. ``'fallback_v1'``).
     texture_profile: Annotated[str, IOAttrs('tp')]
 
-    #: Chosen ``TextureQuality`` value (e.g. ``'regular'``).
-    texture_quality: Annotated[str, IOAttrs('tq')]
+    #: Chosen ``TextureTier`` value (e.g. ``'regular'``). Wire key stays
+    #: the historical ``'tq'`` (it predates the tier/quality rename) so
+    #: this message stays compatible with un-migrated basn nodes and
+    #: older clients — construct-mode asset resolve sends it on every
+    #: boot, so the key must not break across versions.
+    texture_tier: Annotated[str, IOAttrs('tq')]
 
     @override
     @classmethod
