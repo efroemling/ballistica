@@ -265,16 +265,16 @@ class Bc7Rdo(Enum):
     (best quality, largest). Consulted only when a :class:`Bc7Settings`
     has its ``texture_quality`` set to ``CUSTOM``; otherwise the blanket
     ``LOW``/``DEFAULT``/``HIGH`` map to a value in this range
-    (``LOW`` = ``EIGHT``, ``HIGH`` = ``OFF``).
+    (``LOW`` = ``FOUR``, ``HIGH`` = ``OFF``).
     """
 
     OFF = 'off'
+    ZERO_POINT_ONE_TWO_FIVE = '0.125'
+    ZERO_POINT_TWO_FIVE = '0.25'
     ZERO_POINT_FIVE = '0.5'
     ONE = '1'
     TWO = '2'
     FOUR = '4'
-    SIX = '6'
-    EIGHT = '8'
 
 
 @ioprepped
@@ -350,6 +350,42 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
         return AssetsV1PathValsTypeID.TEX_V1
+
+    def normalize(self) -> None:
+        """Reset redundant/unused settings to defaults, in place.
+
+        A pure tidiness pass to run before storing: it never changes the
+        resolved result, only drops dead data so ``store_default=False``
+        can strip it from workspace.json. Resolution consults the
+        per-format settings only when the top-level ``texture_quality``
+        is ``CUSTOM``, and a format's explicit ``block_size``/``rdo`` only
+        when that format's own ``texture_quality`` is ``CUSTOM`` -- so
+        anything outside those paths is unused and gets cleared here.
+        """
+        astc_defaults = AstcSettings()
+        bc7_defaults = Bc7Settings()
+
+        # A non-CUSTOM format quality ignores the explicit value: clear it.
+        if self.astc_settings.texture_quality is not TextureQuality.CUSTOM:
+            self.astc_settings.block_size = astc_defaults.block_size
+        if self.bc7_settings.texture_quality is not TextureQuality.CUSTOM:
+            self.bc7_settings.rdo = bc7_defaults.rdo
+
+        # Both formats on the same non-CUSTOM blanket value is identical to
+        # just setting the top-level knob: collapse to it.
+        if (
+            self.texture_quality is TextureQuality.CUSTOM
+            and self.astc_settings.texture_quality
+            is self.bc7_settings.texture_quality
+            and self.astc_settings.texture_quality is not TextureQuality.CUSTOM
+        ):
+            self.texture_quality = self.astc_settings.texture_quality
+
+        # A non-CUSTOM top-level quality never consults per-format settings:
+        # clear them entirely.
+        if self.texture_quality is not TextureQuality.CUSTOM:
+            self.astc_settings = astc_defaults
+            self.bc7_settings = bc7_defaults
 
 
 @ioprepped
