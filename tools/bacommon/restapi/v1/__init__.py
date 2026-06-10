@@ -109,15 +109,31 @@ class Endpoint(StrEnum):
 
     #: ``GET`` — download a file. Returns raw file bytes.
     #:
-    #: ``PUT`` — upload or replace a file. Raw body = file contents.
-    #: Parent directories are created automatically. Returns HTTP 204.
+    #: ``POST`` — perform a structured file operation; the ``op`` field
+    #: of the JSON body selects which:
+    #:
+    #: - ``{"op": "mkdir"}`` — create a directory. Returns HTTP 204.
+    #: - ``{"op": "move", "dest": "path"}`` — move the file or
+    #:   directory. Returns HTTP 204.
+    #: - ``{"op": "copy", "dest": "path"}`` — copy the file or
+    #:   directory. Returns HTTP 204.
+    #: - ``{"op": "upload-init", "size": 123, "sha256": "<hex>"}`` —
+    #:   begin uploading or replacing a file. ``size`` is the file's
+    #:   byte length and ``sha256`` its 64-char lowercase-hex digest.
+    #:   If the server already has that exact content, the file is
+    #:   wired into the workspace immediately and ``{"status":
+    #:   "exists"}`` is returned — no upload needed. Otherwise returns
+    #:   ``{"status": "upload_required", "session_id": ...,
+    #:   "upload_url": ..., "upload_headers": ..., "expires_at": ...}``;
+    #:   ``PUT`` the raw file bytes to ``upload_url`` with the given
+    #:   headers, then issue ``upload-finalize``.
+    #: - ``{"op": "upload-finalize", "session_id": "<id>"}`` — complete
+    #:   an upload after the signed-url ``PUT`` succeeds. Returns HTTP
+    #:   204.
+    #:
+    #: Parent directories are created automatically by uploads.
     #:
     #: ``DELETE`` — delete a file or directory. Returns HTTP 204.
-    #:
-    #: ``POST`` — perform a structured file operation.
-    #: JSON body: ``{"op": "mkdir"}``, ``{"op": "move", "dest": "path"}``,
-    #: or ``{"op": "copy", "dest": "path"}``.
-    #: Returns HTTP 204.
     WORKSPACE_FILE = '/api/v1/workspaces/{workspace_id}/files/{file_path}'
 
     #: ``GET`` — fetch the active workspace for the authenticated account.
